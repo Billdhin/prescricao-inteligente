@@ -9,3 +9,13 @@ export function cn(...inputs: ClassValue[]) {
 export function fmt(n: number) {
   return new Intl.NumberFormat("pt-BR").format(n);
 }
+
+/**
+ * Prefixa um caminho de asset em `public/` com o base do Vite, para funcionar
+ * tanto em "/" (dev/host na raiz) quanto em "/<repo>/" (GitHub Pages). Use em
+ * `<img src>` de imagens vindas dos dados (que guardam caminho root-absoluto).
+ */
+export function withBase(path: string) {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  return base + (path.startsWith("/") ? path : `/${path}`);
+}

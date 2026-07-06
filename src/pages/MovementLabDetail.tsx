@@ -25,7 +25,7 @@ import { ExecutionScene, AnalysisScene } from "@/data/scenes";
 import { getExercise, exercises } from "@/data/exercises";
 import type { Exercise, TrustLevel, HotspotCamadas } from "@/data/types";
 import { useUser, useFavorites, useProgress, isPremiumUnlocked } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, withBase } from "@/lib/utils";
 
 const trustTone: Record<TrustLevel, PillTone> = {
   "princípio biomecânico": "analysis",
@@ -148,7 +148,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
                 before={
                   exercise.imagem ? (
                     <img
-                      src={exercise.imagem}
+                      src={withBase(exercise.imagem)}
                       alt={`Execução: ${exercise.nome}`}
                       className="h-full w-full object-cover"
                     />
@@ -160,7 +160,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
                   exercise.imagemAnalise ? (
                     <div className="relative h-full w-full">
                       <img
-                        src={exercise.imagemAnalise}
+                        src={withBase(exercise.imagemAnalise)}
                         alt={`Análise biomecânica: ${exercise.nome}`}
                         className="h-full w-full object-cover"
                       />

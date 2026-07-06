@@ -5,7 +5,7 @@ import { Card, Pill, SectionHeader } from "@/components/ui/primitives";
 import { MuscleThumb, activationFromExercise } from "@/components/anatomy/MuscleMap";
 import { exercises } from "@/data/exercises";
 import { useUser, isPremiumUnlocked } from "@/lib/store";
-import { cn } from "@/lib/utils";
+import { cn, withBase } from "@/lib/utils";
 
 const ALL = "Todos";
 
@@ -70,7 +70,7 @@ export function MovementLabList() {
               <Card key={e.slug} className="flex flex-col overflow-hidden">
                 <div className="relative h-44 border-b border-border bg-surface-soft">
                   {e.imagem ? (
-                    <img src={e.imagem} alt={`Execução: ${e.nome}`} className="h-full w-full object-cover" />
+                    <img src={withBase(e.imagem)} alt={`Execução: ${e.nome}`} className="h-full w-full object-cover" />
                   ) : (
                     <MuscleThumb activation={activationFromExercise(e)} className="py-2" />
                   )}
