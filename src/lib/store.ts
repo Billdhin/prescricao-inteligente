@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { Aluno, Avaliacao, Prescricao } from "@/data/alunos";
+import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
 
 /* ----------------------------- Usuário / plano ---------------------------- */
 
@@ -90,7 +92,7 @@ interface ProgressState {
   solveCase: (id: string) => void;
 }
 
-function uid() {
+export function uid() {
   return Math.random().toString(36).slice(2, 10);
 }
 
@@ -151,3 +153,82 @@ export const useGps = create<GpsState>()(
 
 export const FREE_GPS_LIMIT = 3;
 export const FREE_CASES_LIMIT = 2;
+
+/* ---------------------------------- Modo ---------------------------------- */
+// "atender" = ferramenta profissional (alunos/avaliações/prescrições) ·
+// "aprender" = estudo (trilhas/casos/gamificação). Persistido.
+
+export type AppMode = "atender" | "aprender";
+
+interface ModeState {
+  mode: AppMode;
+  setMode: (m: AppMode) => void;
+}
+
+export const useMode = create<ModeState>()(
+  persist(
+    (set) => ({
+      mode: "atender",
+      setMode: (mode) => set({ mode }),
+    }),
+    { name: "pi-mode" },
+  ),
+);
+
+/* --------------------------------- Alunos --------------------------------- */
+
+export const FREE_ALUNOS_LIMIT = 3;
+/** intervalo padrão sugerido entre reavaliações (dias) */
+export const REAVALIACAO_DIAS = 60;
+
+interface AlunosState {
+  alunos: Aluno[];
+  avaliacoes: Avaliacao[];
+  prescricoes: Prescricao[];
+  addAluno: (a: Aluno) => void;
+  updateAluno: (id: string, patch: Partial<Aluno>) => void;
+  removeAluno: (id: string) => void;
+  addAvaliacao: (av: Avaliacao) => void;
+  addPrescricao: (p: Prescricao) => void;
+  archivePrescricao: (id: string) => void;
+}
+
+export const useAlunos = create<AlunosState>()(
+  persist(
+    (set) => ({
+      alunos: seedAlunos,
+      avaliacoes: seedAvaliacoes,
+      prescricoes: seedPrescricoes,
+      addAluno: (a) => set((s) => ({ alunos: [a, ...s.alunos] })),
+      updateAluno: (id, patch) =>
+        set((s) => ({ alunos: s.alunos.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
+      removeAluno: (id) =>
+        set((s) => ({
+          alunos: s.alunos.filter((a) => a.id !== id),
+          avaliacoes: s.avaliacoes.filter((a) => a.alunoId !== id),
+          prescricoes: s.prescricoes.filter((p) => p.alunoId !== id),
+        })),
+      addAvaliacao: (av) =>
+        set((s) => ({
+          avaliacoes: [av, ...s.avaliacoes],
+          alunos: s.alunos.map((a) =>
+            a.id === av.alunoId
+              ? {
+                  ...a,
+                  ultimaAvaliacaoEm: av.data,
+                  proximaReavaliacaoEm: av.data + REAVALIACAO_DIAS * 86_400_000,
+                }
+              : a,
+          ),
+        })),
+      addPrescricao: (p) => set((s) => ({ prescricoes: [p, ...s.prescricoes] })),
+      archivePrescricao: (id) =>
+        set((s) => ({
+          prescricoes: s.prescricoes.map((p) =>
+            p.id === id ? { ...p, status: "arquivada" as const } : p,
+          ),
+        })),
+    }),
+    { name: "pi-alunos", version: 1 },
+  ),
+);

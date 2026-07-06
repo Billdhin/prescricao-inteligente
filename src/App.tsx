@@ -15,7 +15,10 @@ import { TrackDetail } from "@/pages/TrackDetail";
 import { Library } from "@/pages/Library";
 import { History } from "@/pages/History";
 import { Account } from "@/pages/Account";
-import { ComingSoon } from "@/pages/ComingSoon";
+import { Alunos } from "@/pages/Alunos";
+import { AlunoDetail } from "@/pages/AlunoDetail";
+import { Avaliacoes } from "@/pages/Avaliacoes";
+import { Protocolos } from "@/pages/Protocolos";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -47,13 +50,15 @@ export default function App() {
           <Route path="/movement-lab/:slug" element={<MovementLabDetail />} />
           <Route path="/cases" element={<CasesList />} />
           <Route path="/cases/:slug" element={<CaseSolve />} />
+          <Route path="/alunos" element={<Alunos />} />
+          <Route path="/alunos/:id" element={<AlunoDetail />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/tracks" element={<TracksList />} />
           <Route path="/tracks/:slug" element={<TrackDetail />} />
           <Route path="/library" element={<Library />} />
           <Route path="/history" element={<History />} />
-          <Route path="/protocols" element={<ComingSoon title="Protocolos" subtitle="Modelos e roteiros de prescrição — em breve." />} />
-          <Route path="/assessments" element={<ComingSoon title="Avaliações" subtitle="Registre e acompanhe avaliações — em breve." />} />
+          <Route path="/protocols" element={<Protocolos />} />
+          <Route path="/assessments" element={<Avaliacoes />} />
           <Route path="/account" element={<Account />} />
         </Route>
 

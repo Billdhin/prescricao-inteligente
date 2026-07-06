@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Navigation,
@@ -20,11 +20,53 @@ import {
   ChevronDown,
   Check,
   CheckCheck,
+  Users,
+  Briefcase,
+  GraduationCap,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
-import { useUI, useUser, useProgress, planLabel, type Plan } from "@/lib/store";
+import {
+  useUI,
+  useUser,
+  useProgress,
+  useMode,
+  planLabel,
+  type Plan,
+  type AppMode,
+} from "@/lib/store";
 import { cn } from "@/lib/utils";
+
+type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
+
+const navByMode: Record<AppMode, { primary: NavItem[]; secondary: NavItem[] }> = {
+  atender: {
+    primary: [
+      { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
+      { to: "/alunos", label: "Alunos", icon: Users },
+      { to: "/gps", label: "GPS da Prescrição", icon: Navigation },
+      { to: "/assessments", label: "Avaliações", icon: BarChart3 },
+      { to: "/protocols", label: "Protocolos", icon: ClipboardList },
+      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
+      { to: "/library", label: "Biblioteca", icon: Library },
+    ],
+    secondary: [{ to: "/account", label: "Configurações", icon: Settings }],
+  },
+  aprender: {
+    primary: [
+      { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
+      { to: "/tracks", label: "Trilhas", icon: RouteIcon },
+      { to: "/cases", label: "Casos", icon: BookOpen },
+      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
+      { to: "/library", label: "Biblioteca", icon: Library },
+    ],
+    secondary: [
+      { to: "/favorites", label: "Favoritos", icon: Star },
+      { to: "/history", label: "Histórico", icon: History },
+      { to: "/account", label: "Configurações", icon: Settings },
+    ],
+  },
+};
 
 function tempoRelativo(ts: number) {
   const diff = Date.now() - ts;
@@ -70,8 +112,17 @@ export function AppLayout() {
 
 function Sidebar() {
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useUI();
+  const { mode, setMode } = useMode();
+  const navigate = useNavigate();
   const location = useLocation();
   const asideRef = React.useRef<HTMLElement>(null);
+  const nav = navByMode[mode];
+
+  const changeMode = (m: AppMode) => {
+    setMode(m);
+    navigate("/dashboard");
+    setMobileOpen(false);
+  };
 
   // Fecha o drawer ao trocar de rota
   React.useEffect(() => {
@@ -130,14 +181,16 @@ function Sidebar() {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
-          <NavGroup items={primary} collapsed={collapsed && !mobileOpen} />
+        <ModeSwitch mode={mode} onChange={changeMode} collapsed={collapsed && !mobileOpen} />
+
+        <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4 pt-2">
+          <NavGroup items={nav.primary} collapsed={collapsed && !mobileOpen} />
           {(!collapsed || mobileOpen) && (
             <div className="px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
               Sua conta
             </div>
           )}
-          <NavGroup items={secondary} collapsed={collapsed && !mobileOpen} />
+          <NavGroup items={nav.secondary} collapsed={collapsed && !mobileOpen} />
         </nav>
 
         {(!collapsed || mobileOpen) && (
@@ -161,6 +214,66 @@ function Sidebar() {
         )}
       </aside>
     </>
+  );
+}
+
+function ModeSwitch({
+  mode,
+  onChange,
+  collapsed,
+}: {
+  mode: AppMode;
+  onChange: (m: AppMode) => void;
+  collapsed: boolean;
+}) {
+  if (collapsed) {
+    const next: AppMode = mode === "atender" ? "aprender" : "atender";
+    const Icon = mode === "atender" ? Briefcase : GraduationCap;
+    return (
+      <div className="px-3 pt-3">
+        <button
+          onClick={() => onChange(next)}
+          title={`Modo: ${mode === "atender" ? "Atender" : "Aprender"} — clique para trocar`}
+          aria-label="Alternar modo"
+          className="grid h-10 w-full place-items-center rounded-xl bg-surface-soft text-primary hover:bg-primary-tint"
+        >
+          <Icon className="h-5 w-5" />
+        </button>
+      </div>
+    );
+  }
+  const opts: { value: AppMode; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { value: "atender", label: "Atender", icon: Briefcase },
+    { value: "aprender", label: "Aprender", icon: GraduationCap },
+  ];
+  return (
+    <div className="px-3 pt-3">
+      <div
+        role="tablist"
+        aria-label="Modo do aplicativo"
+        className="grid grid-cols-2 gap-1 rounded-xl bg-surface-soft p-1"
+      >
+        {opts.map((o) => {
+          const active = mode === o.value;
+          const Icon = o.icon;
+          return (
+            <button
+              key={o.value}
+              role="tab"
+              aria-selected={active}
+              onClick={() => onChange(o.value)}
+              className={cn(
+                "flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold transition-colors",
+                active ? "bg-surface text-ink shadow-soft" : "text-ink-2 hover:text-ink",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

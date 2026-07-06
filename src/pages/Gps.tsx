@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import {
   Navigation,
   ArrowRight,
@@ -11,6 +11,8 @@ import {
   X,
   Check,
   Plus,
+  UserCheck,
+  Save,
 } from "lucide-react";
 import { Card, Pill, ScoreRing, StatBar, buttonClasses, Progress } from "@/components/ui/primitives";
 import {
@@ -24,7 +26,15 @@ import {
 } from "@/lib/gps/engine";
 import { exercises } from "@/data/exercises";
 import type { Nivel } from "@/data/types";
-import { useUser, useGps, useProgress, isPremiumUnlocked, FREE_GPS_LIMIT } from "@/lib/store";
+import {
+  useUser,
+  useGps,
+  useProgress,
+  useAlunos,
+  isPremiumUnlocked,
+  FREE_GPS_LIMIT,
+  uid,
+} from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
@@ -54,6 +64,39 @@ export function Gps() {
   const [results, setResults] = React.useState<Recommendation[] | null>(null);
   const [justify, setJustify] = React.useState<Recommendation | null>(null);
   const [compare, setCompare] = React.useState<string[]>([]);
+
+  // Prescrever para um aluno: pré-preenche o perfil e permite salvar no aluno.
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const { alunos, addPrescricao } = useAlunos();
+  const alunoId = params.get("aluno");
+  const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
+
+  React.useEffect(() => {
+    if (!aluno) return;
+    setAnswers((a) => ({
+      ...a,
+      objetivo: aluno.objetivo,
+      nivel: aluno.nivel,
+      restricao: aluno.restricoes[0] ?? "Nenhuma",
+      equipamentos: aluno.equipamentos.length ? aluno.equipamentos : a.equipamentos,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aluno?.id]);
+
+  const salvarPrescricao = () => {
+    if (!aluno || !results) return;
+    addPrescricao({
+      id: uid(),
+      alunoId: aluno.id,
+      data: Date.now(),
+      titulo: `${answers.objetivo} · ${answers.grupoMuscular}`,
+      answers,
+      itens: results.slice(0, 3).map((r) => ({ slug: r.exercise.slug, score: r.score })),
+      status: "ativa",
+    });
+    navigate(`/alunos/${aluno.id}`);
+  };
 
   const restantes = Math.max(0, FREE_GPS_LIMIT - consultations);
   const bloqueado = !unlocked && restantes <= 0;
@@ -102,6 +145,27 @@ export function Gps() {
         </div>
       </div>
 
+      {aluno && (
+        <Card className="flex flex-wrap items-center gap-3 border-primary/30 bg-primary-tint/40 p-4">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
+            {aluno.iniciais}
+          </span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+              <UserCheck className="h-4 w-4 text-primary" /> Prescrevendo para {aluno.nome}
+            </div>
+            <p className="text-xs text-ink-2">
+              Perfil pré-preenchido ({aluno.objetivo} · {aluno.nivel}
+              {aluno.restricoes.length ? ` · ${aluno.restricoes.join(", ")}` : ""}). Escolha o
+              grupo-alvo e gere as opções.
+            </p>
+          </div>
+          <Link to={`/alunos/${aluno.id}`} className="ml-auto text-sm font-medium text-ink-2 hover:text-ink">
+            Ver aluno
+          </Link>
+        </Card>
+      )}
+
       {bloqueado ? (
         <Paywall />
       ) : !results ? (
@@ -120,6 +184,8 @@ export function Gps() {
           onJustify={setJustify}
           compare={compare}
           setCompare={setCompare}
+          alunoNome={aluno?.nome}
+          onSalvar={aluno ? salvarPrescricao : undefined}
         />
       )}
 
@@ -325,6 +391,8 @@ function Results({
   onJustify,
   compare,
   setCompare,
+  alunoNome,
+  onSalvar,
 }: {
   answers: GpsAnswers;
   results: Recommendation[];
@@ -332,6 +400,8 @@ function Results({
   onJustify: (r: Recommendation) => void;
   compare: string[];
   setCompare: React.Dispatch<React.SetStateAction<string[]>>;
+  alunoNome?: string;
+  onSalvar?: () => void;
 }) {
   const best = results[0];
   const others = results.slice(1);
@@ -342,6 +412,20 @@ function Results({
 
   return (
     <div className="space-y-6">
+      {onSalvar && alunoNome && (
+        <Card className="flex flex-wrap items-center gap-3 border-success/30 bg-[#e7f8ed]/50 p-4">
+          <UserCheck className="h-5 w-5 shrink-0 text-success" />
+          <div className="min-w-0">
+            <div className="font-semibold text-ink">Prescrição para {alunoNome}</div>
+            <p className="text-sm text-ink-2">
+              Salva as 3 melhores opções no perfil do aluno, com o raciocínio por trás.
+            </p>
+          </div>
+          <button onClick={onSalvar} className={cn(buttonClasses("primary"), "ml-auto")}>
+            <Save className="h-4 w-4" /> Salvar prescrição
+          </button>
+        </Card>
+      )}
       {/* Suas respostas */}
       <Card className="flex flex-wrap items-center gap-2 p-4">
         <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">Suas respostas</span>
