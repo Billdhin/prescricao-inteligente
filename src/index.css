@@ -44,6 +44,16 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Itens de grid/flex têm min-width:auto por padrão e não encolhem abaixo do
+ * conteúdo (pills, textos longos) — isso estoura os tracks e o overflow-x-hidden
+ * do shell acaba CORTANDO o conteúdo no mobile. Resetar min-width:0 nos itens de
+ * grid dentro do conteúdo do app corrige o blowout na origem (padrão consolidado).
+ */
+main .grid > * {
+  min-width: 0;
+}
+
 .gradient-brand {
   background-image: linear-gradient(135deg, var(--primary) 0%, var(--analysis) 100%);
 }

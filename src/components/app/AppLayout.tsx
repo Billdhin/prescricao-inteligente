@@ -16,15 +16,26 @@ import {
   ChevronsLeft,
   X,
   PanelLeft,
-  Search,
   Bell,
-  MessageCircle,
   ChevronDown,
   Check,
+  CheckCheck,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
-import { useUI, useUser, planLabel, type Plan } from "@/lib/store";
+import { GlobalSearch } from "@/components/app/GlobalSearch";
+import { useUI, useUser, useProgress, planLabel, type Plan } from "@/lib/store";
 import { cn } from "@/lib/utils";
+
+function tempoRelativo(ts: number) {
+  const diff = Date.now() - ts;
+  const min = Math.round(diff / 60000);
+  if (min < 1) return "agora";
+  if (min < 60) return `há ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `há ${h} h`;
+  const d = Math.round(h / 24);
+  return `há ${d} d`;
+}
 
 const primary = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -206,35 +217,90 @@ function Topbar() {
         <PanelLeft className="h-4 w-4" />
       </button>
 
-      <div className="relative mx-auto w-full min-w-0 max-w-2xl">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
-        <input
-          placeholder="Buscar exercícios, músculos, casos..."
-          aria-label="Buscar"
-          className="h-11 w-full rounded-full border border-transparent bg-surface-soft pl-10 pr-4 text-sm outline-none focus-visible:border-primary/40 sm:pr-16"
-        />
-        <kbd className="tabular absolute right-3 top-1/2 hidden -translate-y-1/2 items-center rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] font-semibold text-ink-2 sm:inline-flex">
-          ⌘K
-        </kbd>
-      </div>
+      <GlobalSearch />
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
-        <button
-          aria-label="Notificações"
-          className="relative hidden h-9 w-9 place-items-center rounded-full text-ink-2 hover:bg-surface-soft sm:grid"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cta" />
-        </button>
-        <button
-          aria-label="Mensagens"
-          className="hidden h-9 w-9 place-items-center rounded-full text-ink-2 hover:bg-surface-soft sm:grid"
-        >
-          <MessageCircle className="h-4 w-4" />
-        </button>
+        <NotificationsMenu />
         <UserMenu />
       </div>
     </header>
+  );
+}
+
+function NotificationsMenu() {
+  const activities = useProgress((s) => s.activities);
+  const [open, setOpen] = React.useState(false);
+  const [seenAt, setSeenAt] = React.useState<number>(() =>
+    Number(localStorage.getItem("pi-notif-seen") || 0),
+  );
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  const unseen = activities.filter((a) => a.ts > seenAt).length;
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const openMenu = () => {
+    setOpen((o) => !o);
+    const now = Date.now();
+    setSeenAt(now);
+    localStorage.setItem("pi-notif-seen", String(now));
+  };
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={openMenu}
+        aria-label={`Notificações${unseen ? ` (${unseen} novas)` : ""}`}
+        aria-expanded={open}
+        className="relative grid h-9 w-9 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
+      >
+        <Bell className="h-4 w-4" />
+        {unseen > 0 && (
+          <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-cta px-1 text-[9px] font-bold text-white">
+            {unseen}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-1.5rem)] rounded-card border border-border bg-surface p-1.5 shadow-elevated">
+          <div className="flex items-center justify-between px-2 py-1.5">
+            <span className="text-sm font-semibold text-ink">Notificações</span>
+            <span className="text-xs text-ink-3">Atividade recente</span>
+          </div>
+          <div className="max-h-80 overflow-y-auto">
+            {activities.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
+                <CheckCheck className="h-6 w-6 text-success" />
+                <p className="text-sm text-ink-2">Você está em dia. Nada novo por aqui.</p>
+              </div>
+            ) : (
+              activities.map((a) => (
+                <div key={a.id} className="flex gap-3 rounded-lg px-2 py-2 hover:bg-surface-soft">
+                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                  <div className="min-w-0">
+                    <div className="text-sm text-ink">{a.label}</div>
+                    <div className="tabular text-xs text-ink-3">{tempoRelativo(a.ts)}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
