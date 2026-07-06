@@ -1,0 +1,27 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+.env
+.env.*
+!.env.example
+.vite
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Artefatos gerados pelo tsc a partir de vite.config.ts
+vite.config.js
+vite.config.d.ts
+
+# QA / ferramentas
+.playwright-mcp/
+/*.jpeg
+/*.png
+
+# Node
+npm-debug.log*
+
+# Bundles de skills do agente (ferramental, não faz parte do app)
+.agents/

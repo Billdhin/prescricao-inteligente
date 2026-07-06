@@ -1,0 +1,75 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-soft: #f8fafc;
+  --border: #e7ecf3;
+  --ink: #1e293b;
+  --ink-2: #55606f; /* escurecido p/ AA (>=4.5 em branco e no fundo) */
+  --ink-3: #6b7484; /* escurecido p/ legibilidade do texto terciário */
+  --primary: #2563eb;
+  --primary-tint: #eaf1fe;
+  --analysis: #0e9aab; /* teal mais profundo: melhora contraste de texto/branco */
+  --cta: #f97316;
+  --success: #16a34a; /* verde mais escuro p/ texto em tint */
+  --warning: #b45309; /* âmbar mais escuro p/ texto em tint */
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.font-display {
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.gradient-brand {
+  background-image: linear-gradient(135deg, var(--primary) 0%, var(--analysis) 100%);
+}
+
+.gradient-cta {
+  background-image: linear-gradient(135deg, #fb923c 0%, var(--cta) 100%);
+}
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: var(--primary-tint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
