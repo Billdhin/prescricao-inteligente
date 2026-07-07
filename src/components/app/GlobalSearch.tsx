@@ -81,8 +81,8 @@ const INDEX: SearchItem[] = [
     haystack: norm("dashboard inicio visao geral"), Icon: LayoutDashboard,
   },
   {
-    id: "nav-gps", label: "GPS da Prescrição", group: "Ir para", to: "/gps",
-    haystack: norm("gps prescricao recomendacao motor"), Icon: Navigation,
+    id: "nav-gps", label: "Prescrever", group: "Ir para", to: "/gps",
+    haystack: norm("prescrever gps prescricao recomendacao motor decisao rapida"), Icon: Navigation,
   },
   {
     id: "nav-lab", label: "Laboratório Visual", group: "Ir para", to: "/movement-lab",

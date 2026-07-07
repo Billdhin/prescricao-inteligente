@@ -207,8 +207,8 @@ export function SpecialGroupDetail() {
             <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
               <UserPlus className="h-4 w-4" /> Aplicar a um aluno
             </button>
-            <Link to={`/decisao?grupo=${g.slug}`} className={buttonClasses("secondary")}>
-              Decisão rápida <ArrowRight className="h-4 w-4" />
+            <Link to={`/gps?grupo=${g.slug}`} className={buttonClasses("secondary")}>
+              Prescrever <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </>
@@ -314,8 +314,8 @@ function ResumoDecisao({
             <h2 className="font-display text-lg font-bold text-ink">Resumo de decisão</h2>
           </div>
           {!locked && (
-            <Link to={`/decisao?grupo=${g.slug}`} className={buttonClasses("secondary", "sm")}>
-              Abrir Decisão rápida <ArrowRight className="h-4 w-4" />
+            <Link to={`/gps?grupo=${g.slug}`} className={buttonClasses("secondary", "sm")}>
+              Prescrever <ArrowRight className="h-4 w-4" />
             </Link>
           )}
         </div>

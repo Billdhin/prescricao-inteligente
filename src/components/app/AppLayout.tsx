@@ -24,7 +24,6 @@ import {
   Briefcase,
   GraduationCap,
   HeartPulse,
-  Sparkles,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
@@ -40,42 +39,66 @@ import {
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type NavSection = { label?: string; items: NavItem[] };
 
-const navByMode: Record<AppMode, { primary: NavItem[]; secondary: NavItem[] }> = {
-  atender: {
-    primary: [
-      { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
-      { to: "/decisao", label: "Decisão rápida", icon: Sparkles },
-      { to: "/alunos", label: "Alunos", icon: Users },
-      { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
-      { to: "/gps", label: "GPS da Prescrição", icon: Navigation },
-      { to: "/assessments", label: "Avaliações", icon: BarChart3 },
-      { to: "/protocols", label: "Protocolos", icon: ClipboardList },
-      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
-      { to: "/library", label: "Biblioteca", icon: Library },
-    ],
-    secondary: [{ to: "/account", label: "Configurações", icon: Settings }],
-  },
-  aprender: {
-    primary: [
-      { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
-      { to: "/tracks", label: "Trilhas", icon: RouteIcon },
-      { to: "/cases", label: "Casos", icon: BookOpen },
-      { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
-      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
-      { to: "/library", label: "Biblioteca", icon: Library },
-    ],
-    secondary: [
-      { to: "/favorites", label: "Favoritos", icon: Star },
-      { to: "/history", label: "Histórico", icon: History },
-      { to: "/account", label: "Configurações", icon: Settings },
-    ],
-  },
+// Navegação enxuta e agrupada: poucos destinos no topo (o trabalho do dia) e o
+// resto em "Referência" / "Avançado" / "Sua conta".
+const navByMode: Record<AppMode, NavSection[]> = {
+  atender: [
+    {
+      items: [
+        { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
+        { to: "/alunos", label: "Alunos", icon: Users },
+        { to: "/gps", label: "Prescrever", icon: Navigation },
+      ],
+    },
+    {
+      label: "Referência",
+      items: [
+        { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
+        { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
+        { to: "/library", label: "Biblioteca", icon: Library },
+      ],
+    },
+    {
+      label: "Avançado",
+      items: [
+        { to: "/assessments", label: "Avaliações", icon: BarChart3 },
+        { to: "/protocols", label: "Protocolos", icon: ClipboardList },
+      ],
+    },
+    { label: "Sua conta", items: [{ to: "/account", label: "Configurações", icon: Settings }] },
+  ],
+  aprender: [
+    {
+      items: [
+        { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
+        { to: "/tracks", label: "Trilhas", icon: RouteIcon },
+        { to: "/cases", label: "Casos", icon: BookOpen },
+      ],
+    },
+    {
+      label: "Referência",
+      items: [
+        { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
+        { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
+        { to: "/library", label: "Biblioteca", icon: Library },
+      ],
+    },
+    {
+      label: "Sua conta",
+      items: [
+        { to: "/favorites", label: "Favoritos", icon: Star },
+        { to: "/history", label: "Histórico", icon: History },
+        { to: "/account", label: "Configurações", icon: Settings },
+      ],
+    },
+  ],
 };
 
 // Rotas exclusivas de cada modo (não compartilhadas). Ao trocar de modo, só
 // redireciona ao Painel se a rota atual pertencer só ao modo que está saindo.
-const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps", "/decisao"];
+const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps"];
 const APRENDER_ONLY = ["/tracks", "/cases", "/favorites", "/history"];
 
 function tempoRelativo(ts: number) {
@@ -181,14 +204,17 @@ function Sidebar() {
 
         <ModeSwitch mode={mode} onChange={changeMode} collapsed={collapsed && !mobileOpen} />
 
-        <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4 pt-2">
-          <NavGroup items={nav.primary} collapsed={collapsed && !mobileOpen} />
-          {(!collapsed || mobileOpen) && (
-            <div className="px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-              Sua conta
+        <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-2">
+          {nav.map((section, i) => (
+            <div key={section.label ?? `sec-${i}`}>
+              {section.label && (!collapsed || mobileOpen) && (
+                <div className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+                  {section.label}
+                </div>
+              )}
+              <NavGroup items={section.items} collapsed={collapsed && !mobileOpen} />
             </div>
-          )}
-          <NavGroup items={nav.secondary} collapsed={collapsed && !mobileOpen} />
+          ))}
         </nav>
 
         {(!collapsed || mobileOpen) && (

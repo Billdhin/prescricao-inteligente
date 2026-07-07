@@ -13,6 +13,11 @@ import {
   Plus,
   UserCheck,
   Save,
+  HeartPulse,
+  ShieldAlert,
+  Target,
+  CheckCircle2,
+  Activity,
 } from "lucide-react";
 import { Card, Pill, ScoreRing, StatBar, buttonClasses, Progress } from "@/components/ui/primitives";
 import {
@@ -35,9 +40,15 @@ import {
   FREE_GPS_LIMIT,
   uid,
 } from "@/lib/store";
-import { getSpecialGroup, AVISO_SEGURANCA, type SpecialGroup, type JourneyPhase } from "@/data/specialGroups";
-import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
-import { HeartPulse, ShieldAlert } from "lucide-react";
+import {
+  specialGroups,
+  getSpecialGroup,
+  complexidadeTone,
+  AVISO_SEGURANCA,
+  type SpecialGroup,
+  type JourneyPhase,
+} from "@/data/specialGroups";
+import { ParametroPills } from "@/components/special/SpecialUI";
 import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +67,25 @@ export function Gps() {
   const unlocked = isPremiumUnlocked(plan);
   const { consultations, increment, reset } = useGps();
   const addActivity = useProgress((s) => s.addActivity);
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const { alunos, addPrescricao } = useAlunos();
+
+  // Passo 0 — contexto editável (para quem / grupo / fase). Absorve a antiga
+  // "Decisão rápida": lê ?aluno / ?grupo / ?fase e deixa o usuário ajustar.
+  const [alunoId, setAlunoId] = React.useState<string>(params.get("aluno") ?? "");
+  const alunoInicial = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
+  const [grupoSlug, setGrupoSlug] = React.useState<string>(
+    alunoInicial?.grupoEspecial ?? params.get("grupo") ?? "",
+  );
+  const [fase, setFase] = React.useState<number>(
+    Math.min(4, Math.max(1, alunoInicial?.faseJornada ?? (Number(params.get("fase")) || 1))),
+  );
+
+  const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
+  const grupo = grupoSlug ? getSpecialGroup(grupoSlug) : undefined;
+  const faseObj = grupo ? grupo.fases[fase - 1] ?? grupo.fases[0] : undefined;
+  const grupoLocked = !!grupo && grupo.premium && !unlocked;
 
   const [step, setStep] = React.useState(0);
   const [answers, setAnswers] = React.useState<GpsAnswers>({
@@ -69,17 +99,13 @@ export function Gps() {
   const [justify, setJustify] = React.useState<Recommendation | null>(null);
   const [compare, setCompare] = React.useState<string[]>([]);
 
-  // Prescrever para um aluno: pré-preenche o perfil e permite salvar no aluno.
-  const [params] = useSearchParams();
-  const navigate = useNavigate();
-  const { alunos, addPrescricao } = useAlunos();
-  const alunoId = params.get("aluno");
-  const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
-  // Contexto de jornada vem do aluno OU dos params ?grupo/?fase (vindo da Decisão rápida).
-  const grupoSlugCtx = aluno?.grupoEspecial ?? params.get("grupo") ?? undefined;
-  const grupo = grupoSlugCtx ? getSpecialGroup(grupoSlugCtx) : undefined;
-  const faseNum = Math.min(4, Math.max(1, aluno?.faseJornada ?? (Number(params.get("fase")) || 1)));
-  const faseObj = grupo ? grupo.fases[faseNum - 1] ?? grupo.fases[0] : undefined;
+  // Ao escolher um aluno, herda o grupo/fase dele (se tiver) e pré-preenche o perfil.
+  const onAluno = (id: string) => {
+    setAlunoId(id);
+    const a = alunos.find((x) => x.id === id);
+    if (a?.grupoEspecial) setGrupoSlug(a.grupoEspecial);
+    if (a?.faseJornada) setFase(a.faseJornada);
+  };
 
   React.useEffect(() => {
     if (!aluno) return;
@@ -99,14 +125,14 @@ export function Gps() {
       id: uid(),
       alunoId: aluno.id,
       data: Date.now(),
-      titulo: grupo ? `${grupo.nome} · Fase ${faseNum}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
+      titulo: grupo ? `${grupo.nome} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
       answers,
       itens: results.slice(0, 3).map((r) => ({ slug: r.exercise.slug, score: r.score })),
       status: "ativa",
       grupoEspecial: grupo?.slug,
       modalidadePrincipal: faseObj?.modalidades[0],
       modalidadesSecundarias: faseObj?.modalidades.slice(1),
-      faseJornada: grupo ? faseNum : undefined,
+      faseJornada: grupo ? fase : undefined,
       parametrosControle: faseObj?.parametros,
       criteriosProgressao: faseObj?.criteriosAvancar,
       criteriosRegressao: faseObj?.criteriosRegredir,
@@ -121,7 +147,7 @@ export function Gps() {
   const gerar = () => {
     if (bloqueado) return;
     if (!unlocked) increment();
-    addActivity(`Consulta ao GPS: ${answers.grupoMuscular}`);
+    addActivity(`Prescrição: ${answers.grupoMuscular}`);
     const rank = rankExercises(exercises, answers);
     if (!rank.length) return;
     setResults(rank);
@@ -141,10 +167,9 @@ export function Gps() {
           <Pill tone="primary" icon={<Navigation className="h-3 w-3" />} className="mb-3">
             Assistente de decisão
           </Pill>
-          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">GPS da Prescrição</h1>
+          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Prescrever</h1>
           <p className="mt-2 max-w-2xl text-ink-2">
-            Responda 5 perguntas rápidas e receba recomendações de exercícios ranqueadas por
-            critérios transparentes.
+            Diga para quem e receba as opções de exercício ranqueadas, com o raciocínio por trás.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -154,7 +179,7 @@ export function Gps() {
             </Pill>
           ) : (
             <Pill tone={restantes > 0 ? "primary" : "warning"}>
-              {restantes} de {FREE_GPS_LIMIT} análises gratuitas restantes
+              {restantes} de {FREE_GPS_LIMIT} análises gratuitas
             </Pill>
           )}
           {plan === "admin" && (
@@ -165,26 +190,21 @@ export function Gps() {
         </div>
       </div>
 
-      {aluno && (
-        <Card className="flex flex-wrap items-center gap-3 border-primary/30 bg-primary-tint/40 p-4">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
-            {aluno.iniciais}
-          </span>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-              <UserCheck className="h-4 w-4 text-primary" /> Prescrevendo para {aluno.nome}
-            </div>
-            <p className="text-xs text-ink-2">
-              Perfil pré-preenchido ({aluno.objetivo} · {aluno.nivel}
-              {aluno.restricoes.length ? ` · ${aluno.restricoes.join(", ")}` : ""}). Escolha o
-              grupo-alvo e gere as opções.
-            </p>
-          </div>
-          <Link to={`/alunos/${aluno.id}`} className="ml-auto text-sm font-medium text-ink-2 hover:text-ink">
-            Ver aluno
-          </Link>
-        </Card>
-      )}
+      {/* Passo 0 — Para quem? */}
+      <ContextoCard
+        alunos={alunos}
+        alunoId={alunoId}
+        onAluno={onAluno}
+        grupoSlug={grupoSlug}
+        setGrupoSlug={setGrupoSlug}
+        fase={fase}
+        setFase={setFase}
+        unlocked={unlocked}
+      />
+
+      {/* Foco agora — a decisão rápida, inline (quando há grupo em contexto) */}
+      {grupo && faseObj && !grupoLocked && <FocoAgora grupo={grupo} faseObj={faseObj} fase={fase} />}
+      {grupo && grupoLocked && <JornadaLockedNote grupo={grupo} />}
 
       {bloqueado ? (
         <Paywall />
@@ -195,6 +215,7 @@ export function Gps() {
           answers={answers}
           setAnswers={setAnswers}
           onFinish={gerar}
+          aluno={aluno}
         />
       ) : (
         <Results
@@ -206,9 +227,6 @@ export function Gps() {
           setCompare={setCompare}
           alunoNome={aluno?.nome}
           onSalvar={aluno ? salvarPrescricao : undefined}
-          grupo={grupo}
-          faseObj={faseObj}
-          faseNum={faseNum}
         />
       )}
 
@@ -222,6 +240,163 @@ export function Gps() {
   );
 }
 
+/* ------------------------------ Passo 0 / contexto ------------------------ */
+
+function ContextoCard({
+  alunos,
+  alunoId,
+  onAluno,
+  grupoSlug,
+  setGrupoSlug,
+  fase,
+  setFase,
+  unlocked,
+}: {
+  alunos: { id: string; nome: string }[];
+  alunoId: string;
+  onAluno: (id: string) => void;
+  grupoSlug: string;
+  setGrupoSlug: (s: string) => void;
+  fase: number;
+  setFase: (n: number) => void;
+  unlocked: boolean;
+}) {
+  const temGrupo = grupoSlug !== "";
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+          <UserCheck className="h-4 w-4" />
+        </span>
+        <h2 className="font-display text-base font-bold text-ink">Para quem?</h2>
+        <span className="text-xs text-ink-3">opcional — em branco = prescrição geral</span>
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno</span>
+          <select value={alunoId} onChange={(e) => onAluno(e.target.value)} className="input">
+            <option value="">— Sem aluno (avulso) —</option>
+            {alunos.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-semibold text-ink">Grupo / condição</span>
+          <select value={grupoSlug} onChange={(e) => setGrupoSlug(e.target.value)} className="input">
+            <option value="">— Nenhum (geral) —</option>
+            {specialGroups.map((g) => (
+              <option key={g.slug} value={g.slug}>
+                {g.nome}
+                {g.premium && !unlocked ? " (Premium)" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div>
+          <span className="mb-1.5 block text-sm font-semibold text-ink">Fase da jornada</span>
+          <div className="flex gap-1.5">
+            {[1, 2, 3, 4].map((n) => (
+              <button
+                key={n}
+                onClick={() => temGrupo && setFase(n)}
+                aria-pressed={n === fase}
+                disabled={!temGrupo}
+                className={cn(
+                  "h-11 flex-1 rounded-control text-sm font-bold transition-colors disabled:opacity-40",
+                  n === fase && temGrupo
+                    ? "gradient-brand text-white"
+                    : "bg-surface-soft text-ink-2 hover:bg-primary-tint disabled:hover:bg-surface-soft",
+                )}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* Foco agora — resumo de decisão condensado (substitui a antiga Decisão rápida
+   e o painel de jornada gigante que existia nos resultados). */
+function FocoAgora({ grupo, faseObj, fase }: { grupo: SpecialGroup; faseObj: JourneyPhase; fase: number }) {
+  return (
+    <Card variant="raised" className="border-l-4 border-l-primary p-5 md:p-6">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+          <HeartPulse className="h-4 w-4" />
+        </span>
+        <h2 className="font-display text-lg font-bold text-ink">{grupo.nome}</h2>
+        <Pill tone="primary">Fase {fase} · {faseObj.nome}</Pill>
+        <Pill tone={complexidadeTone[grupo.complexidade]}>{grupo.complexidade}</Pill>
+        <Link
+          to={`/special-groups/${grupo.slug}`}
+          className="ml-auto text-sm font-semibold text-primary hover:underline"
+        >
+          Ver jornada completa
+        </Link>
+      </div>
+
+      <div className="rounded-xl bg-primary-tint/60 p-4">
+        <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+          <Target className="h-3.5 w-3.5" /> Foco agora
+        </div>
+        <p className="text-base font-medium text-ink">{faseObj.objetivo}</p>
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-border p-3">
+          <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
+            <CheckCircle2 className="h-3.5 w-3.5 text-success" /> Avançar quando
+          </div>
+          <ul className="space-y-1 text-sm text-ink">
+            {faseObj.criteriosAvancar.slice(0, 2).map((c) => (
+              <li key={c} className="flex gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
+                {c}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-xl border border-border p-3">
+          <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
+            <ShieldAlert className="h-3.5 w-3.5 text-warning" /> Cautela principal
+          </div>
+          <p className="text-sm text-ink">{grupo.riscosCautelas[0]}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-border bg-surface-soft p-3">
+        <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
+          <Activity className="h-3.5 w-3.5" /> Monitore principalmente
+        </div>
+        <ParametroPills ids={faseObj.parametros} />
+      </div>
+
+      <p className="mt-3 text-xs text-ink-3">{AVISO_SEGURANCA}</p>
+    </Card>
+  );
+}
+
+function JornadaLockedNote({ grupo }: { grupo: SpecialGroup }) {
+  return (
+    <Card className="flex flex-wrap items-center gap-3 border-warning/30 bg-[#fef4e2]/40 p-4">
+      <ShieldAlert className="h-5 w-5 shrink-0 text-warning" />
+      <p className="min-w-0 flex-1 text-sm text-ink-2">
+        A jornada de <span className="font-semibold text-ink">{grupo.nome}</span> é do plano
+        Profissional. Você ainda pode gerar uma prescrição geral abaixo.
+      </p>
+      <Link to="/pricing" className={buttonClasses("secondary", "sm")}>
+        <Crown className="h-4 w-4" /> Assinar
+      </Link>
+    </Card>
+  );
+}
+
 /* --------------------------------- Wizard -------------------------------- */
 
 function Wizard({
@@ -230,12 +405,14 @@ function Wizard({
   answers,
   setAnswers,
   onFinish,
+  aluno,
 }: {
   step: number;
   setStep: (n: number) => void;
   answers: GpsAnswers;
   setAnswers: React.Dispatch<React.SetStateAction<GpsAnswers>>;
   onFinish: () => void;
+  aluno?: { nome: string };
 }) {
   const pct = Math.round(((step + 1) / 5) * 100);
   const last = step === 4;
@@ -250,8 +427,9 @@ function Wizard({
 
       <h2 className="font-display text-2xl font-bold text-ink">{STEP_LABELS[step]}</h2>
       <p className="mt-1 text-sm text-ink-2">
-        Respostas educacionais para ajudar na tomada de decisão — não substituem avaliação
-        individualizada.
+        {aluno
+          ? `Perfil pré-preenchido a partir de ${aluno.nome} — ajuste se precisar.`
+          : "Respostas educacionais para apoiar a decisão — não substituem avaliação individualizada."}
       </p>
 
       <div className="mt-6">
@@ -416,9 +594,6 @@ function Results({
   setCompare,
   alunoNome,
   onSalvar,
-  grupo,
-  faseObj,
-  faseNum,
 }: {
   answers: GpsAnswers;
   results: Recommendation[];
@@ -428,9 +603,6 @@ function Results({
   setCompare: React.Dispatch<React.SetStateAction<string[]>>;
   alunoNome?: string;
   onSalvar?: () => void;
-  grupo?: SpecialGroup;
-  faseObj?: JourneyPhase;
-  faseNum?: number;
 }) {
   const best = results[0];
   const others = results.slice(1);
@@ -441,8 +613,6 @@ function Results({
 
   return (
     <div className="space-y-6">
-      {grupo && faseObj && <JourneyAwareGpsPanel grupo={grupo} fase={faseObj} faseNum={faseNum ?? 1} />}
-
       {onSalvar && alunoNome && (
         <Card className="flex flex-wrap items-center gap-3 border-success/30 bg-[#e7f8ed]/50 p-4">
           <UserCheck className="h-5 w-5 shrink-0 text-success" />
@@ -457,21 +627,21 @@ function Results({
           </button>
         </Card>
       )}
+
       {/* Suas respostas */}
-      <Card className="flex flex-wrap items-center gap-2 p-4">
-        <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">Suas respostas</span>
+      <Card variant="soft" className="flex flex-wrap items-center gap-2 p-4">
+        <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">Perfil</span>
         <Pill tone="primary">{answers.objetivo}</Pill>
         <Pill tone="primary">{answers.grupoMuscular}</Pill>
         <Pill tone="neutral">{answers.nivel}</Pill>
         <Pill tone={answers.restricao === "Nenhuma" ? "success" : "warning"}>{answers.restricao}</Pill>
-        <Pill tone="neutral">{answers.equipamentos.length} equipamentos</Pill>
         <button onClick={onRefazer} className="ml-auto text-sm font-medium text-ink-2 hover:text-ink">
-          Refazer análise
+          Refazer
         </button>
       </Card>
 
-      {/* Melhor recomendação */}
-      <Card className="overflow-hidden">
+      {/* Melhor recomendação — âncora */}
+      <Card variant="raised" className="overflow-hidden">
         <div className="gradient-brand px-5 py-2 text-xs font-bold uppercase tracking-wider text-white">
           <span className="inline-flex items-center gap-1">
             <Sparkles className="h-3.5 w-3.5" /> Melhor recomendação
@@ -501,7 +671,7 @@ function Results({
                   <Info className="h-4 w-4" /> Ver justificativa
                 </button>
                 <Link to={`/movement-lab/${best.exercise.slug}`} className={buttonClasses("primary", "sm")}>
-                  Ver no Laboratório Visual <ArrowRight className="h-4 w-4" />
+                  Ver no Laboratório <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
               {best.cautions.length > 0 && (
@@ -521,7 +691,7 @@ function Results({
 
       {/* Outras opções */}
       <div>
-        <h3 className="mb-3 font-display text-lg font-bold text-ink">Outras opções</h3>
+        <h3 className="mb-3 font-display text-base font-bold text-ink">Outras opções</h3>
         <div className="grid gap-4 md:grid-cols-2">
           {others.map((r) => {
             const inCompare = compare.includes(r.exercise.slug);
@@ -543,7 +713,6 @@ function Results({
                     <div className="text-[10px] uppercase text-ink-3">match</div>
                   </div>
                 </div>
-                <p className="mt-2 text-sm text-ink-2">Objetivo: {answers.objetivo}</p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <button onClick={() => onJustify(r)} className="text-sm font-semibold text-primary hover:underline">
                     Justificativa
@@ -578,69 +747,6 @@ function Results({
   );
 }
 
-function JourneyAwareGpsPanel({
-  grupo,
-  fase,
-  faseNum,
-}: {
-  grupo: SpecialGroup;
-  fase: JourneyPhase;
-  faseNum: number;
-}) {
-  return (
-    <Card className="overflow-hidden border-analysis/30">
-      <div className="flex items-center gap-2 bg-[#e0f7f9] px-5 py-2 text-xs font-bold uppercase tracking-wider text-analysis">
-        <HeartPulse className="h-3.5 w-3.5" /> Estratégia orientada pela jornada
-      </div>
-      <div className="space-y-4 p-5 md:p-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-display text-lg font-bold text-ink">{grupo.nome}</h3>
-          <Pill tone="primary">
-            Fase {faseNum} · {fase.nome}
-          </Pill>
-        </div>
-        <p className="text-sm text-ink-2">{fase.objetivo}</p>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <RotuloG>Modalidades prioritárias</RotuloG>
-            <ModalidadePills ids={fase.modalidades} />
-          </div>
-          <div>
-            <RotuloG>Parâmetros a monitorar</RotuloG>
-            <ParametroPills ids={fase.parametros} />
-          </div>
-        </div>
-        <CriteriosLista titulo="Critérios para progredir" itens={fase.criteriosAvancar} tipo="avancar" />
-        <div className="rounded-xl border border-warning/30 bg-[#fef4e2]/40 p-3">
-          <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-warning">
-            <ShieldAlert className="h-3.5 w-3.5" /> Cautelas
-          </div>
-          <ul className="space-y-1">
-            {grupo.riscosCautelas.slice(0, 3).map((c) => (
-              <li key={c} className="flex gap-2 text-sm text-ink-2">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
-                {c}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="rounded-xl bg-surface-soft p-3 text-sm text-ink-2">
-          <span className="font-semibold text-ink">Justificativa: </span>
-          {fase.justificativa}
-        </div>
-        <p className="text-xs text-ink-3">{AVISO_SEGURANCA}</p>
-        <p className="text-xs text-ink-3">
-          Abaixo, exercícios úteis dentro dessas modalidades — ranqueados para o perfil do aluno.
-        </p>
-      </div>
-    </Card>
-  );
-}
-
-function RotuloG({ children }: { children: React.ReactNode }) {
-  return <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">{children}</div>;
-}
-
 function Comparador({
   compare,
   setCompare,
@@ -665,11 +771,11 @@ function Comparador({
   return (
     <Card className="p-6">
       <div className="mb-1 flex items-center justify-between">
-        <h3 className="font-display text-lg font-bold text-ink">Comparador</h3>
+        <h3 className="font-display text-base font-bold text-ink">Comparar lado a lado</h3>
         <span className="text-xs text-ink-3">{selected.length}/3 selecionados</span>
       </div>
       <p className="mb-4 text-sm text-ink-2">
-        Selecione até 3 exercícios (botão “Comparar”) para ver os trade-offs lado a lado.
+        Selecione até 3 exercícios (botão “Comparar”) para ver os trade-offs.
       </p>
       {selected.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-4 text-sm text-ink-3">
@@ -772,9 +878,9 @@ function Paywall() {
         <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-white/15">
           <Lock className="h-6 w-6" />
         </span>
-        <h2 className="font-display text-2xl font-bold">Você usou suas 3 análises gratuitas do GPS</h2>
+        <h2 className="font-display text-2xl font-bold">Você usou suas 3 análises gratuitas</h2>
         <p className="mx-auto mt-2 max-w-md text-white/85">
-          Assine o plano Profissional para análises ilimitadas, comparador e todos os casos e
+          Assine o plano Profissional para prescrições ilimitadas, comparador e todos os casos e
           exercícios.
         </p>
         <Link
