@@ -12,6 +12,8 @@ import {
   History as HistoryIcon,
   Settings,
   CornerDownLeft,
+  GraduationCap,
+  LifeBuoy,
 } from "lucide-react";
 import { exercises } from "@/data/exercises";
 import { cases } from "@/data/cases";
@@ -111,6 +113,14 @@ const INDEX: SearchItem[] = [
   {
     id: "nav-account", label: "Configurações", group: "Ir para", to: "/account",
     haystack: norm("configuracoes conta perfil plano"), Icon: Settings,
+  },
+  {
+    id: "nav-tutorial", label: "Tutoriais", group: "Ir para", to: "/tutorial",
+    haystack: norm("tutoriais tutorial como usar ajuda passo a passo guias aprender a usar"), Icon: GraduationCap,
+  },
+  {
+    id: "nav-suporte", label: "Suporte", group: "Ir para", to: "/suporte",
+    haystack: norm("suporte ajuda contato faq duvida problema fale conosco"), Icon: LifeBuoy,
   },
 ];
 

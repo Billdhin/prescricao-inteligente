@@ -24,6 +24,8 @@ import {
   Briefcase,
   GraduationCap,
   HeartPulse,
+  LifeBuoy,
+  HelpCircle,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
@@ -69,6 +71,13 @@ const navByMode: Record<AppMode, NavSection[]> = {
         { to: "/protocols", label: "Protocolos", icon: ClipboardList },
       ],
     },
+    {
+      label: "Ajuda",
+      items: [
+        { to: "/tutorial", label: "Tutoriais", icon: GraduationCap },
+        { to: "/suporte", label: "Suporte", icon: LifeBuoy },
+      ],
+    },
     { label: "Sua conta", items: [{ to: "/account", label: "Configurações", icon: Settings }] },
   ],
   aprender: [
@@ -85,6 +94,13 @@ const navByMode: Record<AppMode, NavSection[]> = {
         { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
         { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
         { to: "/library", label: "Biblioteca", icon: Library },
+      ],
+    },
+    {
+      label: "Ajuda",
+      items: [
+        { to: "/tutorial", label: "Tutoriais", icon: GraduationCap },
+        { to: "/suporte", label: "Suporte", icon: LifeBuoy },
       ],
     },
     {
@@ -444,6 +460,13 @@ function Topbar() {
       <GlobalSearch />
 
       <div className="ml-auto flex shrink-0 items-center gap-1">
+        <Link
+          to="/tutorial"
+          aria-label="Ajuda e tutoriais"
+          className="grid h-9 w-9 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
+        >
+          <HelpCircle className="h-4 w-4" />
+        </Link>
         <NotificationsMenu />
         <UserMenu />
       </div>
