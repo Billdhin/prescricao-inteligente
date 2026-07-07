@@ -4,15 +4,16 @@ import type { MuscleRegion } from "@/data/muscle-regions";
 import { cn } from "@/lib/utils";
 
 /**
- * Tags AR DENTRO da imagem de análise — nada de rótulos externos nem linhas:
- * um ponto discreto sobre cada músculo; o músculo ativo mostra o chip de vidro
- * (nome · %) ancorado nele mesmo. O músculo primário já abre selecionado, então
- * a imagem se explica sozinha. Hover/toque em outro ponto troca a seleção;
- * clique fixa. Teclado: Tab percorre os pontos, Enter fixa, Esc solta.
+ * Padrão da indústria (Muscle&Motion, players de vídeo): NADA flutua sobre a
+ * anatomia. A imagem carrega apenas o BRILHO do músculo ativo; a informação
+ * vive numa BARRA encaixada na base da imagem, com os músculos como chips
+ * (nome · %) ordenados por ativação. O primário abre selecionado. Selecionar
+ * um chip (ou passar o mouse na própria região) acende o músculo na foto.
+ * Sobreposição é impossível por construção.
  */
 
 const PAPEL_META: Record<string, { label: string; color: string }> = {
-  primário: { label: "músculo primário", color: "#ef4444" },
+  primário: { label: "primário", color: "#ef4444" },
   sinergista: { label: "sinergista", color: "#f59e0b" },
   estabilizador: { label: "estabilizador", color: "#14b8c4" },
 };
@@ -24,25 +25,24 @@ export function MuscleRegions({
   regions: MuscleRegion[];
   ativacao: MuscleActivation[];
 }) {
-  const enriched = React.useMemo(
+  // Junta região autorada + dados do seed, ordenado por ativação (desc).
+  const items = React.useMemo(
     () =>
       regions
         .map((r) => {
           const a = ativacao.find((x) => x.musculo === r.musculo);
           return a ? { ...r, percentual: a.percentual, papel: a.papel } : null;
         })
-        .filter(Boolean) as (MuscleRegion & { percentual: number; papel: string })[],
+        .filter(Boolean)
+        .sort((a, b) => b!.percentual - a!.percentual) as (MuscleRegion & {
+        percentual: number;
+        papel: string;
+      })[],
     [regions, ativacao],
   );
 
-  // O músculo de maior ativação (primário) abre selecionado por padrão.
-  const padrao = React.useMemo(
-    () => enriched.reduce((m, r) => (r.percentual > (m?.percentual ?? -1) ? r : m), enriched[0])?.musculo ?? null,
-    [enriched],
-  );
-
+  const padrao = items[0]?.musculo ?? null;
   const [active, setActive] = React.useState<string | null>(padrao);
-  const [pinned, setPinned] = React.useState(false);
   React.useEffect(() => setActive(padrao), [padrao]);
 
   // Vinheta de foco no centroide das regiões (fundo recua, músculo salta).
@@ -55,30 +55,7 @@ export function MuscleRegions({
     };
   }, [regions]);
 
-  if (enriched.length === 0) return null;
-
-  const enter = (m: string) => {
-    if (!pinned) setActive(m);
-  };
-  const leave = () => {
-    if (!pinned) setActive(padrao);
-  };
-  const togglePin = (m: string) => {
-    if (pinned && active === m) {
-      setPinned(false);
-      setActive(padrao);
-    } else {
-      setActive(m);
-      setPinned(true);
-    }
-  };
-
-  const current = active ? enriched.find((r) => r.musculo === active) : null;
-  const anchor = current?.shapes[0];
-  const meta = current ? (PAPEL_META[current.papel] ?? PAPEL_META["sinergista"]) : null;
-  const above = anchor ? anchor.cy - anchor.ry > 20 : true;
-  const chipLeft = anchor ? Math.max(16, Math.min(84, anchor.cx)) : 50;
-  const chipTop = anchor ? (above ? anchor.cy - anchor.ry - 2 : anchor.cy + anchor.ry + 2) : 0;
+  if (items.length === 0) return null;
 
   return (
     <>
@@ -87,28 +64,28 @@ export function MuscleRegions({
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
-          background: `radial-gradient(ellipse 62% 58% at ${focal.x}% ${focal.y}%, transparent 38%, rgba(2,6,23,0.12) 62%, rgba(2,6,23,0.52) 100%)`,
+          background: `radial-gradient(ellipse 62% 58% at ${focal.x}% ${focal.y}%, transparent 38%, rgba(2,6,23,0.12) 62%, rgba(2,6,23,0.55) 100%)`,
         }}
       />
 
-      {/* Regiões (hover acende o contorno do músculo ativo) */}
+      {/* Regiões: só o BRILHO do músculo ativo (hover na foto também seleciona) */}
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden
         className="absolute inset-0 h-full w-full"
       >
-        {enriched.map((r) => {
+        {items.map((r) => {
           const isActive = active === r.musculo;
           return (
             <g
               key={r.musculo}
-              onMouseEnter={() => enter(r.musculo)}
-              onMouseLeave={leave}
+              onMouseEnter={() => setActive(r.musculo)}
+              onMouseLeave={() => setActive(padrao)}
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => {
                 e.stopPropagation();
-                togglePin(r.musculo);
+                setActive(r.musculo);
               }}
               className="cursor-pointer"
               style={{ pointerEvents: "all" }}
@@ -125,11 +102,11 @@ export function MuscleRegions({
                   className="transition-[fill-opacity,stroke-opacity] duration-200"
                   style={{
                     fill: "#fff",
-                    fillOpacity: isActive ? 0.13 : 0,
+                    fillOpacity: isActive ? 0.14 : 0,
                     stroke: "#fff",
                     strokeWidth: 1.5,
-                    strokeOpacity: isActive ? 0.85 : 0,
-                    filter: isActive ? "drop-shadow(0 0 4px rgba(255,255,255,0.55))" : undefined,
+                    strokeOpacity: isActive ? 0.9 : 0,
+                    filter: isActive ? "drop-shadow(0 0 5px rgba(255,255,255,0.6))" : undefined,
                   }}
                 />
               ))}
@@ -138,67 +115,49 @@ export function MuscleRegions({
         })}
       </svg>
 
-      {/* Pontos AR sobre cada músculo */}
-      {enriched.map((r) => {
-        const isActive = active === r.musculo;
-        const m = PAPEL_META[r.papel] ?? PAPEL_META["sinergista"];
-        return r.shapes.map((s, i) => (
-          <button
-            key={`${r.musculo}-${i}`}
-            type="button"
-            tabIndex={i === 0 ? 0 : -1}
-            aria-hidden={i > 0 || undefined}
-            aria-label={
-              i === 0 ? `${r.musculo}: ${r.percentual}% de ativação estimada, ${m.label}` : undefined
-            }
-            aria-pressed={i === 0 ? pinned && isActive : undefined}
-            onMouseEnter={() => enter(r.musculo)}
-            onMouseLeave={leave}
-            onFocus={() => setActive(r.musculo)}
-            onBlur={() => {
-              setPinned(false);
-              setActive(padrao);
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePin(r.musculo);
-            }}
-            className="absolute z-20 grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full outline-none"
-            style={{ left: `${s.cx}%`, top: `${s.cy}%` }}
-          >
-            <span
+      {/* Barra de músculos encaixada na base (padrão player de vídeo) */}
+      <div
+        role="tablist"
+        aria-label="Músculos ativados neste exercício"
+        onPointerDown={(e) => e.stopPropagation()}
+        className={cn(
+          "absolute inset-x-2 bottom-2 z-20 flex items-center gap-1 overflow-x-auto rounded-xl",
+          "border border-white/15 bg-slate-900/75 p-1.5 backdrop-blur-md",
+          "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        )}
+      >
+        {items.map((r) => {
+          const isActive = active === r.musculo;
+          const meta = PAPEL_META[r.papel] ?? PAPEL_META["sinergista"];
+          return (
+            <button
+              key={r.musculo}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={`${r.musculo}: ${r.percentual}% de ativação estimada, músculo ${meta.label}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActive(r.musculo);
+              }}
+              onMouseEnter={() => setActive(r.musculo)}
+              onFocus={() => setActive(r.musculo)}
               className={cn(
-                "block rounded-full ring-2 ring-white/95 shadow-[0_1px_4px_rgba(0,0,0,0.45)] transition-transform duration-150",
-                isActive ? "h-3 w-3 scale-110" : "h-2.5 w-2.5",
+                "flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors",
+                isActive ? "bg-white/16 ring-1 ring-white/35" : "hover:bg-white/8",
               )}
-              style={{ background: m.color }}
-            />
-          </button>
-        ));
-      })}
-
-      {/* Chip do músculo ativo — ancorado NO próprio músculo */}
-      {current && anchor && meta && (
-        <div
-          role="status"
-          className="pointer-events-none absolute z-30 transition-all duration-200"
-          style={{
-            left: `${chipLeft}%`,
-            top: `${chipTop}%`,
-            transform: `translate(-50%, ${above ? "-100%" : "0"})`,
-          }}
-        >
-          <div className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/20 bg-slate-900/80 px-2.5 py-1.5 shadow-elevated backdrop-blur-sm">
-            <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: meta.color }} />
-            <span className="text-xs font-semibold text-white">{current.musculo}</span>
-            <span className="tabular text-sm font-bold text-white">{current.percentual}%</span>
-          </div>
-          <div className="mt-0.5 text-center text-[9.5px] font-semibold uppercase tracking-wider text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.7)]">
-            {meta.label}
-          </div>
-        </div>
-      )}
+            >
+              <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: meta.color }} />
+              <span className={cn("text-xs font-semibold leading-none", isActive ? "text-white" : "text-white/75")}>
+                {r.musculo}
+              </span>
+              <span className={cn("tabular text-xs font-bold leading-none", isActive ? "text-white" : "text-white/75")}>
+                {r.percentual}%
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </>
   );
 }

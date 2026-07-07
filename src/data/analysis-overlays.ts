@@ -15,9 +15,9 @@ export interface AnalysisOverlayData {
 export const analysisOverlays: Record<string, AnalysisOverlayData> = {
   // --- Membros inferiores -------------------------------------------------
   "leg-press-45": {
-    // Joelho ≈(58,43); força ao longo do eixo coxa→plataforma.
-    angle: { x: 64, y: 38, value: "95°" },
-    force: { x1: 60, y1: 42, x2: 74, y2: 28 },
+    // Joelho ≈(58,43) [hotspot]; ângulo abaixo da canela, força partindo acima.
+    angle: { x: 68, y: 45, value: "95°" },
+    force: { x1: 63, y1: 39, x2: 75, y2: 27 },
   },
   "agachamento-livre": {
     angle: { x: 67, y: 64, value: "115°" },
