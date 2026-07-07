@@ -38,11 +38,18 @@ function Section({ id, className = "", children }: { id?: string; className?: st
   );
 }
 
+/* Kicker editorial: filete + versalete espaçado (etiqueta de prancha científica),
+   no lugar do pill-bolha genérico. */
 function Kicker({ children, tone = "primary" }: { children: React.ReactNode; tone?: "primary" | "analysis" | "cta" }) {
+  const text =
+    tone === "analysis" ? "text-analysis" : tone === "cta" ? "text-[color:var(--cta-text)]" : "text-primary";
+  const rule = tone === "analysis" ? "bg-analysis/50" : tone === "cta" ? "bg-cta/50" : "bg-primary/50";
   return (
-    <Pill tone={tone} className="mb-3">
+    <span className={`mb-3 inline-flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.18em] ${text}`}>
+      <span aria-hidden className={`h-px w-7 ${rule}`} />
       {children}
-    </Pill>
+      <span aria-hidden className={`h-px w-7 ${rule}`} />
+    </span>
   );
 }
 
@@ -78,8 +85,25 @@ export function Landing() {
           <div>
             <Kicker tone="analysis">Para estudantes e profissionais de Educação Física</Kicker>
             <h1 className="font-display text-4xl font-extrabold leading-[1.05] text-ink md:text-[3.4rem]">
-              A prescrição do seu aluno em <span className="text-primary">3 passos</span> — com o
-              porquê de cada exercício.
+              A prescrição do seu aluno em{" "}
+              <span className="relative inline-block whitespace-nowrap text-primary">
+                3 passos
+                <svg
+                  aria-hidden
+                  className="absolute -bottom-2 left-0 h-2.5 w-full"
+                  viewBox="0 0 120 10"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M2 7 C 28 10.5, 62 2.5, 118 6.5"
+                    fill="none"
+                    stroke="var(--cta)"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>{" "}
+              — com o porquê de cada exercício.
             </h1>
             <p className="mt-5 max-w-lg text-lg text-ink-2">
               Diga o perfil, receba exercícios ranqueados com justificativa científica e entregue em

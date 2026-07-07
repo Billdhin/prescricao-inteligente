@@ -101,7 +101,7 @@ export function VisualCompareSlider({
           </Pill>
         </div>
 
-        {/* Hotspots (na camada de análise) */}
+        {/* Hotspots (pontos de aprofundamento): anéis discretos de instrumento */}
         {hotspots.map((h) => (
           <button
             key={h.id}
@@ -112,13 +112,14 @@ export function VisualCompareSlider({
               e.stopPropagation();
               setOpenHotspot(h);
             }}
-            className="absolute z-20 grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-analysis text-white shadow-elevated"
+            className={cn(
+              "absolute z-20 grid h-5 w-5 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full",
+              "border-2 border-white/90 bg-slate-900/40 shadow-soft backdrop-blur-[2px]",
+              !reduce && "transition-transform duration-150 hover:scale-125 focus-visible:scale-125",
+            )}
             style={{ left: `${h.x}%`, top: `${h.y}%` }}
           >
-            {!reduce && (
-              <span className="absolute inset-0 animate-pulseDot rounded-full bg-analysis opacity-60" />
-            )}
-            <span className="relative h-1.5 w-1.5 rounded-full bg-white" />
+            <span className="h-1.5 w-1.5 rounded-full bg-analysis" />
           </button>
         ))}
 

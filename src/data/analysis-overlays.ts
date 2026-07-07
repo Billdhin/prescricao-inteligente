@@ -16,7 +16,7 @@ export const analysisOverlays: Record<string, AnalysisOverlayData> = {
   // --- Membros inferiores -------------------------------------------------
   "leg-press-45": {
     // Joelho ≈(58,43); força ao longo do eixo coxa→plataforma.
-    angle: { x: 58, y: 45, value: "95°" },
+    angle: { x: 64, y: 38, value: "95°" },
     force: { x1: 60, y1: 42, x2: 74, y2: 28 },
   },
   "agachamento-livre": {
@@ -25,7 +25,7 @@ export const analysisOverlays: Record<string, AnalysisOverlayData> = {
   },
   "cadeira-extensora": {
     // sentada, pernas estendendo p/ a esquerda; quadríceps na coxa. Joelho ≈(45,64).
-    angle: { x: 45, y: 61, value: "150°" },
+    angle: { x: 39, y: 70, value: "150°" },
     force: { x1: 44, y1: 63, x2: 28, y2: 60 },
   },
   "mesa-flexora": {
@@ -35,7 +35,7 @@ export const analysisOverlays: Record<string, AnalysisOverlayData> = {
   },
   "levantamento-terra-romeno": {
     // dobradiça de quadril, vista lateral; isquios + glúteos + eretores. Quadril ~(60,34).
-    angle: { x: 62, y: 36, value: "110°" },
+    angle: { x: 69, y: 32, value: "110°" },
     force: { x1: 53, y1: 58, x2: 53, y2: 40 },
   },
   "hip-thrust": {
@@ -45,7 +45,7 @@ export const analysisOverlays: Record<string, AnalysisOverlayData> = {
   },
   "afundo-passada": {
     // afundo lateral virado p/ esquerda; quadríceps + glúteo da perna da frente. Joelho ~(35,63).
-    angle: { x: 31, y: 60, value: "90°" },
+    angle: { x: 25, y: 57, value: "90°" },
     force: { x1: 37, y1: 64, x2: 42, y2: 48 },
   },
 
@@ -62,7 +62,7 @@ export const analysisOverlays: Record<string, AnalysisOverlayData> = {
   },
   "triceps-polia": {
     // vista lateral virado p/ polia; tríceps no braço posterior. Cotovelo ~(50,37).
-    angle: { x: 42, y: 42, value: "90°" },
+    angle: { x: 36, y: 45, value: "90°" },
     force: { x1: 46, y1: 40, x2: 51, y2: 52 },
   },
 
