@@ -32,7 +32,7 @@ export function Avaliacoes() {
         {/* A reavaliar */}
         <Card className="p-5 md:p-6">
           <div className="mb-4 flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff1e6] text-cta">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff1e6] text-[color:var(--cta-text)]">
               <CalendarClock className="h-4 w-4" />
             </span>
             <h2 className="font-display text-lg font-bold text-ink">A reavaliar</h2>

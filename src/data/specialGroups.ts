@@ -606,10 +606,11 @@ export function getSpecialGroup(slug: string) {
   return specialGroups.find((g) => g.slug === slug);
 }
 
-export const complexidadeTone: Record<Complexidade, "success" | "warning" | "cta"> = {
+// Laranja (cta) reservado p/ AÇÃO. Complexidade alta usa âmbar (warning); moderada, neutro.
+export const complexidadeTone: Record<Complexidade, "success" | "neutral" | "warning"> = {
   Baixa: "success",
-  Moderada: "warning",
-  Alta: "cta",
+  Moderada: "neutral",
+  Alta: "warning",
 };
 
 /** Aviso padrão de segurança/escopo, para reuso nas telas do eixo. */

@@ -70,17 +70,22 @@ export function Accordion({ items }: { items: AccordionItemData[] }) {
             <button
               onClick={() => toggle(it.id)}
               aria-expanded={isOpen}
+              aria-controls={`acc-panel-${it.id}`}
               className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
             >
               <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-analysis" />
+                <span className="h-2 w-2 rounded-full bg-ink-3/40" />
                 <span className="font-semibold text-ink">{it.title}</span>
               </span>
               <ChevronDown
                 className={cn("h-4 w-4 shrink-0 text-ink-3 transition-transform", isOpen && "rotate-180")}
               />
             </button>
-            {isOpen && <div className="px-4 pb-4">{it.content}</div>}
+            {isOpen && (
+              <div id={`acc-panel-${it.id}`} role="region" className="px-4 pb-4">
+                {it.content}
+              </div>
+            )}
           </div>
         );
       })}

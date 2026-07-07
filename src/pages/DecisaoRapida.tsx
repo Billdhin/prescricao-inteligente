@@ -34,11 +34,11 @@ export function DecisaoRapida() {
     alunoInicial?.grupoEspecial ?? params.get("grupo") ?? specialGroups[0].slug,
   );
   const [fase, setFase] = React.useState<1 | 2 | 3 | 4>(
-    (alunoInicial?.faseJornada ?? (Number(params.get("fase")) || 1)) as 1 | 2 | 3 | 4,
+    (Math.min(4, Math.max(1, alunoInicial?.faseJornada ?? (Number(params.get("fase")) || 1))) as 1 | 2 | 3 | 4),
   );
 
   const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
-  const grupo = getSpecialGroup(grupoSlug)!;
+  const grupo = getSpecialGroup(grupoSlug) ?? specialGroups[0];
   const faseObj = grupo.fases[fase - 1] ?? grupo.fases[0];
   const locked = grupo.premium && !unlocked;
 
@@ -158,11 +158,16 @@ export function DecisaoRapida() {
                 </Link>
               </div>
 
-              {/* Foco + próximo passo */}
-              <div className="grid gap-4 lg:grid-cols-3">
-                <ResumoBloco icon={<Target className="h-4 w-4" />} titulo="Foco agora">
-                  {faseObj.objetivo}
-                </ResumoBloco>
+              {/* Foco agora — a resposta principal, em destaque */}
+              <div className="rounded-xl bg-primary-tint/60 p-4">
+                <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+                  <Target className="h-3.5 w-3.5" /> Foco agora
+                </div>
+                <p className="text-base font-medium text-ink">{faseObj.objetivo}</p>
+              </div>
+
+              {/* Próximo passo + cautela */}
+              <div className="grid gap-4 sm:grid-cols-2">
                 <ResumoBloco icon={<CheckCircle2 className="h-4 w-4 text-success" />} titulo="Próximo passo (avançar quando)">
                   <ul className="space-y-1">
                     {faseObj.criteriosAvancar.slice(0, 2).map((c) => (
@@ -189,7 +194,7 @@ export function DecisaoRapida() {
               {/* Ações */}
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
-                  to={aluno ? `/gps?aluno=${aluno.id}` : "/gps"}
+                  to={`/gps?${aluno ? `aluno=${aluno.id}&` : ""}grupo=${grupo.slug}&fase=${fase}`}
                   className={buttonClasses("primary")}
                 >
                   <Navigation className="h-4 w-4" /> Gerar plano no GPS

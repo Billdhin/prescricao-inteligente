@@ -216,7 +216,7 @@ export function Comparador() {
                     </li>
                   ))}
                 </ul>
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-cta">Quando evitar</div>
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-[color:var(--cta-text)]">Quando evitar</div>
                 <ul className="space-y-1">
                   {e.blocos.quandoEvitar.slice(0, 2).map((it) => (
                     <li key={it} className="flex gap-2 text-sm text-ink-2">

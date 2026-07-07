@@ -3,6 +3,7 @@ import { useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { Hotspot } from "@/data/types";
 import { cn } from "@/lib/utils";
+import { useDialog } from "@/lib/useDialog";
 import { Pill } from "@/components/ui/primitives";
 
 interface Props {
@@ -130,6 +131,7 @@ export function VisualCompareSlider({
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(pos)}
+          aria-valuetext={`${Math.round(pos)}% de análise revelada`}
           onKeyDown={onKeyDown}
           onPointerDown={(e) => {
             e.stopPropagation();
@@ -161,23 +163,20 @@ const CAMADAS = [
 
 function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => void }) {
   const [level, setLevel] = React.useState(1);
-
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   return (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm"
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={hotspot.titulo}
     >
       <div
-        className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated"
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={hotspot.titulo}
+        className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-start justify-between gap-3">
@@ -185,7 +184,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="rounded-md p-1 text-ink-3 hover:bg-surface-soft"
+            className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft"
           >
             <X className="h-4 w-4" />
           </button>

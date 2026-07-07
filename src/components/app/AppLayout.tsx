@@ -84,23 +84,6 @@ function tempoRelativo(ts: number) {
   return `há ${d} d`;
 }
 
-const primary = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/gps", label: "GPS da Prescrição", icon: Navigation },
-  { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
-  { to: "/cases", label: "Casos", icon: BookOpen },
-  { to: "/tracks", label: "Trilhas", icon: RouteIcon },
-  { to: "/library", label: "Biblioteca", icon: Library },
-];
-
-const secondary = [
-  { to: "/favorites", label: "Favoritos", icon: Star },
-  { to: "/history", label: "Histórico", icon: History },
-  { to: "/protocols", label: "Protocolos", icon: ClipboardList },
-  { to: "/assessments", label: "Avaliações", icon: BarChart3 },
-  { to: "/account", label: "Configurações", icon: Settings },
-];
-
 export function AppLayout() {
   return (
     <div className="flex min-h-screen w-full overflow-x-hidden bg-bg">
@@ -254,7 +237,7 @@ function ModeSwitch({
   return (
     <div className="px-3 pt-3">
       <div
-        role="tablist"
+        role="group"
         aria-label="Modo do aplicativo"
         className="grid grid-cols-2 gap-1 rounded-xl bg-surface-soft p-1"
       >
@@ -264,8 +247,7 @@ function ModeSwitch({
           return (
             <button
               key={o.value}
-              role="tab"
-              aria-selected={active}
+              aria-pressed={active}
               onClick={() => onChange(o.value)}
               className={cn(
                 "flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold transition-colors",
@@ -432,8 +414,13 @@ function UserMenu() {
     const onDoc = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("");

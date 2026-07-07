@@ -307,7 +307,7 @@ function SolCard({ icon, eyebrow, title, text }: { icon: React.ReactNode; eyebro
 }
 
 function MiniList({ tone, icon, title, items }: { tone: "success" | "cta"; icon: React.ReactNode; title: string; items: string[] }) {
-  const c = tone === "success" ? "bg-[#e7f8ed] text-success" : "bg-[#fff1e6] text-cta";
+  const c = tone === "success" ? "bg-[#e7f8ed] text-success" : "bg-[#fff1e6] text-[color:var(--cta-text)]";
   return (
     <div className="rounded-xl border border-border p-3">
       <div className="mb-2 flex items-center gap-2">

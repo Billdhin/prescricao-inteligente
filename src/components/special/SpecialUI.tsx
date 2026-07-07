@@ -93,7 +93,7 @@ export function VisualModalidadeCard({ id, cautela }: { id: string; cautela?: bo
         {imgOk ? (
           <img
             src={withBase(modalidadeImagem(m.id))}
-            alt={m.nome}
+            alt=""
             onError={() => setImgOk(false)}
             className="h-full w-full object-cover"
           />
@@ -102,12 +102,9 @@ export function VisualModalidadeCard({ id, cautela }: { id: string; cautela?: bo
             <FallbackIcon className="h-9 w-9" />
           </div>
         )}
-        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          <Pill tone={impactoTone[m.impacto]} className="bg-white/85 shadow-soft">
+        <div className="absolute left-3 top-3">
+          <Pill tone={impactoTone[m.impacto]} className="bg-white/90 shadow-soft">
             impacto {m.impacto}
-          </Pill>
-          <Pill tone="neutral" className="bg-white/85 shadow-soft">
-            {m.ambiente}
           </Pill>
         </div>
         {cautela && (
@@ -119,7 +116,10 @@ export function VisualModalidadeCard({ id, cautela }: { id: string; cautela?: bo
         )}
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <h4 className="font-display font-bold text-ink">{m.nome}</h4>
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <h4 className="font-display font-bold text-ink">{m.nome}</h4>
+          <span className="text-xs text-ink-3">· {m.ambiente}</span>
+        </div>
         <p className="mt-1 text-sm text-ink-2">{m.resumo}</p>
         <button
           onClick={() => setOpen((o) => !o)}
@@ -257,7 +257,7 @@ export function CriteriosLista({
   tipo: "avancar" | "regredir";
 }) {
   const Icon = tipo === "avancar" ? ArrowUpCircle : ArrowDownCircle;
-  const color = tipo === "avancar" ? "text-success" : "text-cta";
+  const color = tipo === "avancar" ? "text-success" : "text-[color:var(--cta-text)]";
   return (
     <div className="rounded-xl border border-border p-3">
       <div className={cn("mb-1.5 flex items-center gap-1.5 text-sm font-semibold", color)}>

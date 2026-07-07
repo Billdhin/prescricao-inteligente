@@ -211,15 +211,16 @@ export const useAlunos = create<AlunosState>()(
       addAvaliacao: (av) =>
         set((s) => ({
           avaliacoes: [av, ...s.avaliacoes],
-          alunos: s.alunos.map((a) =>
-            a.id === av.alunoId
-              ? {
-                  ...a,
-                  ultimaAvaliacaoEm: av.data,
-                  proximaReavaliacaoEm: av.data + REAVALIACAO_DIAS * 86_400_000,
-                }
-              : a,
-          ),
+          alunos: s.alunos.map((a) => {
+            if (a.id !== av.alunoId) return a;
+            // avaliação retroativa (data anterior à última) não reprograma a reavaliação
+            if (av.data < (a.ultimaAvaliacaoEm ?? 0)) return a;
+            return {
+              ...a,
+              ultimaAvaliacaoEm: av.data,
+              proximaReavaliacaoEm: av.data + REAVALIACAO_DIAS * 86_400_000,
+            };
+          }),
         })),
       addPrescricao: (p) => set((s) => ({ prescricoes: [p, ...s.prescricoes] })),
       archivePrescricao: (id) =>

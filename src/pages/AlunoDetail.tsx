@@ -16,11 +16,12 @@ import {
   Route as RouteIcon,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
-import { useAlunos, uid } from "@/lib/store";
+import { useAlunos, useUser, isPremiumUnlocked, uid } from "@/lib/store";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
+import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
@@ -248,6 +249,7 @@ export function AlunoDetail() {
 }
 
 function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 4) => void }) {
+  const unlocked = isPremiumUnlocked(useUser((s) => s.plan));
   const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
 
   if (!grupo) {
@@ -269,14 +271,28 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
     );
   }
 
-  const fase = aluno.faseJornada ?? 1;
+  if (grupo.premium && !unlocked) {
+    return (
+      <Card className="flex flex-wrap items-center gap-3 p-5">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#fff1e6] text-[color:var(--cta-text)]">
+          <HeartPulse className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-display font-bold text-ink">Jornada de Prescrição · {grupo.nome}</div>
+          <p className="text-sm text-ink-2">Este grupo faz parte do plano Profissional. Assine para ver a jornada.</p>
+        </div>
+        <Link to="/pricing" className={buttonClasses("primary", "sm")}>
+          Assinar
+        </Link>
+      </Card>
+    );
+  }
+
+  // Modalidades/parâmetros seguem a FASE selecionada (evita dessincronizar ao trocar de fase).
+  const fase = (Math.min(4, Math.max(1, aluno.faseJornada ?? 1))) as 1 | 2 | 3 | 4;
   const faseObj = grupo.fases[fase - 1] ?? grupo.fases[0];
-  const modalidades = aluno.modalidadesPreferenciais?.length
-    ? aluno.modalidadesPreferenciais
-    : grupo.modalidadesIndicadas;
-  const parametros = aluno.parametrosPrioritarios?.length
-    ? aluno.parametrosPrioritarios
-    : faseObj.parametros;
+  const modalidades = faseObj.modalidades;
+  const parametros = faseObj.parametros;
 
   return (
     <Card className="p-5 md:p-6">
@@ -412,7 +428,7 @@ function Evolucao({ avals }: { avals: Avaliacao[] }) {
           <span className="text-sm text-ink-2">
             {cfg.label}: {ultimo}
             {cfg.unit} ·{" "}
-            <span className={cn("font-semibold", delta <= 0 ? "text-success" : "text-cta")}>
+            <span className={cn("font-semibold", delta <= 0 ? "text-success" : "text-[color:var(--cta-text)]")}>
               {delta > 0 ? "+" : ""}
               {delta}
               {cfg.unit}
@@ -475,12 +491,7 @@ function NovaAvaliacaoModal({
   const [gordura, setGordura] = React.useState("");
   const [dor, setDor] = React.useState("");
   const [obs, setObs] = React.useState("");
-
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   const num = (s: string) => (s.trim() === "" ? undefined : Number(s.replace(",", ".")));
 
@@ -496,17 +507,19 @@ function NovaAvaliacaoModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Nova avaliação"
-    >
-      <div className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated md:p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Nova avaliação"
+        className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-ink">Nova avaliação</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-1 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>

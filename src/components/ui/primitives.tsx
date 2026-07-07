@@ -55,7 +55,7 @@ export type PillTone =
 const pillTones: Record<PillTone, string> = {
   primary: "bg-primary-tint text-primary",
   analysis: "bg-[#e0f7f9] text-analysis",
-  cta: "bg-[#fff1e6] text-cta",
+  cta: "bg-[#fff1e6] text-[color:var(--cta-text)]",
   success: "bg-[#e7f8ed] text-success",
   warning: "bg-[#fef4e2] text-warning",
   neutral: "bg-surface-soft text-ink-2",

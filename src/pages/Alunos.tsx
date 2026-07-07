@@ -12,6 +12,7 @@ import {
 import { OBJETIVOS, RESTRICOES, EQUIPAMENTOS, type GpsObjetivo, type GpsRestricao } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
 import { iniciaisDe, type Aluno } from "@/data/alunos";
+import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
@@ -143,12 +144,7 @@ function NovoAlunoModal({ onClose, onCreate }: { onClose: () => void; onCreate: 
   const [restricoes, setRestricoes] = React.useState<Exclude<GpsRestricao, "Nenhuma">[]>([]);
   const [equipamentos, setEquipamentos] = React.useState<string[]>([...EQUIPAMENTOS]);
   const [observacoes, setObservacoes] = React.useState("");
-
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   const toggle = <T,>(arr: T[], v: T, set: (x: T[]) => void) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
@@ -171,20 +167,19 @@ function NovoAlunoModal({ onClose, onCreate }: { onClose: () => void; onCreate: 
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Novo aluno"
-    >
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="max-h-[88vh] w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-elevated md:p-6"
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Novo aluno"
+        className="max-h-[88vh] w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-ink">Novo aluno</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-1 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>

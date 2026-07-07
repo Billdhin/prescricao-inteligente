@@ -28,6 +28,7 @@ import {
 import { getSpecialGroup, complexidadeTone, AVISO_SEGURANCA } from "@/data/specialGroups";
 import { getCase } from "@/data/cases";
 import { useUser, useAlunos, isPremiumUnlocked } from "@/lib/store";
+import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
 export function SpecialGroupDetail() {
@@ -276,18 +277,22 @@ function AplicarModal({
   alunos: { id: string; nome: string; iniciais: string; objetivo: string }[];
   onAplicar: (id: string) => void;
 }) {
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose} role="dialog" aria-modal="true" aria-label="Aplicar a um aluno">
-      <div className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated md:p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Aplicar a um aluno"
+        className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-ink">Aplicar jornada a um aluno</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-1 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>

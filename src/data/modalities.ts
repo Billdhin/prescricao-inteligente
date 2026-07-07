@@ -190,8 +190,9 @@ export function modalidadeImagem(id: string) {
   return `/modalities/${id}.webp`;
 }
 
-export const impactoTone: Record<Impacto, "success" | "warning" | "cta"> = {
+// Laranja (cta) reservado para AÇÃO/CTA. Impacto alto usa âmbar (warning); moderado, neutro.
+export const impactoTone: Record<Impacto, "success" | "neutral" | "warning"> = {
   baixo: "success",
-  moderado: "warning",
-  alto: "cta",
+  moderado: "neutral",
+  alto: "warning",
 };

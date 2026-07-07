@@ -38,6 +38,7 @@ import {
 import { getSpecialGroup, AVISO_SEGURANCA, type SpecialGroup, type JourneyPhase } from "@/data/specialGroups";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { HeartPulse, ShieldAlert } from "lucide-react";
+import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
@@ -74,8 +75,10 @@ export function Gps() {
   const { alunos, addPrescricao } = useAlunos();
   const alunoId = params.get("aluno");
   const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
-  const grupo = aluno?.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
-  const faseNum = aluno?.faseJornada ?? 1;
+  // Contexto de jornada vem do aluno OU dos params ?grupo/?fase (vindo da Decisão rápida).
+  const grupoSlugCtx = aluno?.grupoEspecial ?? params.get("grupo") ?? undefined;
+  const grupo = grupoSlugCtx ? getSpecialGroup(grupoSlugCtx) : undefined;
+  const faseNum = Math.min(4, Math.max(1, aluno?.faseJornada ?? (Number(params.get("fase")) || 1)));
   const faseObj = grupo ? grupo.fases[faseNum - 1] ?? grupo.fases[0] : undefined;
 
   React.useEffect(() => {
@@ -120,6 +123,7 @@ export function Gps() {
     if (!unlocked) increment();
     addActivity(`Consulta ao GPS: ${answers.grupoMuscular}`);
     const rank = rankExercises(exercises, answers);
+    if (!rank.length) return;
     setResults(rank);
     setCompare([rank[0].exercise.slug]);
   };
@@ -153,9 +157,11 @@ export function Gps() {
               {restantes} de {FREE_GPS_LIMIT} análises gratuitas restantes
             </Pill>
           )}
-          <button onClick={reset} className="text-sm font-medium text-ink-2 hover:text-ink">
-            Zerar contador
-          </button>
+          {plan === "admin" && (
+            <button onClick={reset} className="text-sm font-medium text-ink-2 hover:text-ink">
+              Zerar contador
+            </button>
+          )}
         </div>
       </div>
 
@@ -677,7 +683,7 @@ function Comparador({
                 key={e.slug}
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold",
-                  i === 0 ? "bg-primary-tint text-primary" : i === 1 ? "bg-[#e0f7f9] text-analysis" : "bg-[#fff1e6] text-cta",
+                  i === 0 ? "bg-primary-tint text-primary" : i === 1 ? "bg-[#e0f7f9] text-analysis" : "bg-[#fff1e6] text-[color:var(--cta-text)]",
                 )}
               >
                 {e.nome}
@@ -708,26 +714,25 @@ function Comparador({
 /* ------------------------------ Justificativa ---------------------------- */
 
 function JustifyDialog({ rec, onClose }: { rec: Recommendation; onClose: () => void }) {
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-elevated" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Justificativa: ${rec.exercise.nome}`}
+        className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-1 flex items-start justify-between gap-3">
           <div>
             <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">Justificativa</div>
             <h3 className="font-display text-lg font-bold text-ink">{rec.exercise.nome}</h3>
           </div>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-1 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -738,7 +743,7 @@ function JustifyDialog({ rec, onClose }: { rec: Recommendation; onClose: () => v
           {rec.breakdown.map((b) => {
             const ratio = b.pontosPossiveis > 0 ? b.peso / b.pontosPossiveis : 0;
             const tone =
-              b.peso < 0 ? "text-cta" : ratio >= 0.85 ? "text-success" : ratio >= 0.4 ? "text-ink" : "text-warning";
+              b.peso < 0 ? "text-[color:var(--cta-text)]" : ratio >= 0.85 ? "text-success" : ratio >= 0.4 ? "text-ink" : "text-warning";
             return (
               <li key={b.criterio} className="rounded-lg border border-border bg-surface-soft p-3">
                 <div className="flex items-center justify-between text-sm">
@@ -778,9 +783,6 @@ function Paywall() {
         >
           Assinar Profissional
         </Link>
-        <p className="mt-3 text-xs text-white/70">
-          (Dica de teste: troque o plano no menu do usuário ou use “Zerar contador”.)
-        </p>
       </div>
     </Card>
   );

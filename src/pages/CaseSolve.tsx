@@ -80,9 +80,6 @@ function CaseLocked({ premiumLock }: { premiumLock: boolean }) {
           >
             Assinar Profissional
           </Link>
-          <p className="mt-3 text-xs text-white/70">
-            (Dica de teste: troque o plano no menu do usuário.)
-          </p>
         </div>
       </Card>
     </div>
@@ -286,7 +283,7 @@ function FeedbackBlock({
 }) {
   const bg: Record<string, string> = {
     success: "bg-[#e7f8ed] text-success",
-    cta: "bg-[#fff1e6] text-cta",
+    cta: "bg-[#fff1e6] text-[color:var(--cta-text)]",
     primary: "bg-primary-tint text-primary",
     analysis: "bg-[#e0f7f9] text-analysis",
   };

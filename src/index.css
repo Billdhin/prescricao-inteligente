@@ -11,11 +11,12 @@
   --border: #e7ecf3;
   --ink: #1e293b;
   --ink-2: #55606f; /* escurecido p/ AA (>=4.5 em branco e no fundo) */
-  --ink-3: #6b7484; /* escurecido p/ legibilidade do texto terciário */
+  --ink-3: #5b6472; /* escurecido p/ AA mesmo sobre surface-soft/tint */
   --primary: #2563eb;
   --primary-tint: #eaf1fe;
   --analysis: #0e9aab; /* teal mais profundo: melhora contraste de texto/branco */
-  --cta: #f97316;
+  --cta: #f97316; /* laranja de marca — só preenchimento/ícone grande */
+  --cta-text: #c2410c; /* laranja escuro p/ TEXTO/pills (>=4.5:1 em branco) */
   --success: #16a34a; /* verde mais escuro p/ texto em tint */
   --warning: #b45309; /* âmbar mais escuro p/ texto em tint */
 }
@@ -58,8 +59,9 @@ main .grid > * {
   background-image: linear-gradient(135deg, var(--primary) 0%, var(--analysis) 100%);
 }
 
+/* Escurecido p/ o texto branco passar em AA (branco sobre laranja claro falhava ~2.3:1). */
 .gradient-cta {
-  background-image: linear-gradient(135deg, #fb923c 0%, var(--cta) 100%);
+  background-image: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
 }
 
 /* Campo de formulário reutilizável (inputs, selects, textarea) */
