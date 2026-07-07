@@ -1,283 +1,415 @@
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
-  Navigation,
-  FlaskConical,
-  BookOpen,
+  ArrowDown,
   Check,
   CheckCircle2,
-  ShieldAlert,
+  ShieldCheck,
   GraduationCap,
   Dumbbell,
   UserCheck,
+  FileDown,
+  HeartPulse,
+  FlaskConical,
+  BookOpen,
   Users,
-  ShieldCheck,
+  GitCompare,
+  Navigation,
+  Info,
+  ChevronDown,
 } from "lucide-react";
+import * as React from "react";
 import { Logo } from "@/components/brand/Logo";
-import { Card, Pill, ScoreRing, StatBar, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
-import { ExecutionScene, AnalysisScene } from "@/data/scenes";
+import { TutorialScene } from "@/components/tutorial/TutorialScene";
+import { withBase } from "@/lib/utils";
+
+/* ---------------------------------- base --------------------------------- */
 
 function Section({ id, className = "", children }: { id?: string; className?: string; children: React.ReactNode }) {
   return (
-    <section id={id} className={`mx-auto max-w-6xl px-4 py-14 md:px-6 md:py-16 ${className}`}>
+    <section id={id} className={`mx-auto max-w-6xl px-4 py-14 md:px-6 md:py-20 ${className}`}>
       {children}
     </section>
   );
 }
 
+function Kicker({ children, tone = "primary" }: { children: React.ReactNode; tone?: "primary" | "analysis" | "cta" }) {
+  return (
+    <Pill tone={tone} className="mb-3">
+      {children}
+    </Pill>
+  );
+}
+
+/* --------------------------------- página -------------------------------- */
+
 export function Landing() {
   return (
     <div className="min-h-screen bg-bg">
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border bg-white/80 backdrop-blur">
+      {/* ------------------------------- Header ------------------------------ */}
+      <header className="sticky top-0 z-30 border-b border-border bg-white/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
           <Logo />
-          <nav className="hidden items-center gap-6 text-sm font-medium text-ink-2 md:flex">
-            <a href="#solucao" className="hover:text-ink">Como funciona</a>
-            <a href="#para-quem" className="hover:text-ink">Para quem é</a>
+          <nav aria-label="Seções da página" className="hidden items-center gap-6 text-sm font-medium text-ink-2 md:flex">
+            <a href="#como-funciona" className="hover:text-ink">Como funciona</a>
+            <a href="#recursos" className="hover:text-ink">Recursos</a>
             <a href="#planos" className="hover:text-ink">Planos</a>
+            <a href="#faq" className="hover:text-ink">Dúvidas</a>
           </nav>
           <div className="flex items-center gap-2">
             <Link to="/dashboard" className="hidden text-sm font-medium text-ink-2 hover:text-ink sm:block">
               Entrar
             </Link>
             <Link to="/dashboard" className={buttonClasses("primary", "sm")}>
-              Começar gratuitamente
+              Começar grátis
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <Section className="!pt-10 md:!pt-16">
+      {/* -------------------------------- Hero ------------------------------- */}
+      <Section className="!pb-10 !pt-10 md:!pt-16">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div>
-            <Pill tone="analysis" className="mb-4">Educação em Ciências do Exercício</Pill>
-            <h1 className="font-display text-4xl font-extrabold leading-[1.05] text-ink md:text-5xl">
-              Aprenda a prescrever com <span className="text-primary">raciocínio</span>, não com
-              decoreba.
+            <Kicker tone="analysis">Para estudantes e profissionais de Educação Física</Kicker>
+            <h1 className="font-display text-4xl font-extrabold leading-[1.05] text-ink md:text-[3.4rem]">
+              A prescrição do seu aluno em <span className="text-primary">3 passos</span> — com o
+              porquê de cada exercício.
             </h1>
             <p className="mt-5 max-w-lg text-lg text-ink-2">
-              Não é um atlas de exercícios nem um gerador genérico de treino. É uma plataforma para
-              <span className="font-semibold text-ink"> raciocinar a prescrição</span> — biomecânica,
-              fisiologia, grupos especiais e progressão — para você{" "}
-              <span className="font-semibold text-ink">aprender a decidir e levar isso direto para o
-              atendimento dos seus alunos</span>.
+              Diga o perfil, receba exercícios ranqueados com justificativa científica e entregue em
+              PDF com a sua marca. Simples de usar, sério no raciocínio.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/dashboard" className={buttonClasses("primary")}>
                 Começar gratuitamente <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link to="/movement-lab" className={buttonClasses("secondary")}>
-                Ver demonstração
-              </Link>
+              <a href="#como-funciona" className={buttonClasses("secondary")}>
+                Ver os 3 passos <ArrowDown className="h-4 w-4" />
+              </a>
             </div>
-            <p className="mt-4 flex items-center gap-2 text-xs text-ink-3">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Conteúdo educacional. Não substitui avaliação profissional individualizada.
-            </p>
+            <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink-2">
+              {["Grátis para começar", "Sem cartão", "Feito por doutor em Educação Física"].map((t) => (
+                <li key={t} className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-success" /> {t}
+                </li>
+              ))}
+            </ul>
           </div>
-          <Card className="p-3 shadow-elevated">
+
+          {/* Demo real e interativa: foto de execução × análise biomecânica */}
+          <Card variant="raised" className="p-3">
             <VisualCompareSlider
-              before={<ExecutionScene />}
-              after={<AnalysisScene angle="95°" />}
+              before={
+                <img
+                  src={withBase("/exercises/leg-press-45.webp")}
+                  alt="Execução real do leg press 45°"
+                  className="h-full w-full object-cover"
+                />
+              }
+              after={
+                <img
+                  src={withBase("/exercises/leg-press-45-analysis.webp")}
+                  alt="Análise biomecânica do leg press 45°"
+                  className="h-full w-full object-cover"
+                />
+              }
               className="aspect-[4/3]"
             />
             <p className="px-2 py-2 text-center text-xs text-ink-3">
-              Arraste o divisor para comparar execução × análise biomecânica.
+              Experimente: arraste o divisor e revele a análise biomecânica sobre a foto real.
             </p>
           </Card>
         </div>
       </Section>
 
-      {/* Dor */}
-      <Section id="dor">
-        <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+      {/* --------------------------- Faixa da dor ---------------------------- */}
+      <div className="border-y border-border bg-surface">
+        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 md:grid-cols-[1.2fr_1fr] md:items-center md:px-6">
           <div>
-            <Pill tone="cta" className="mb-3">A dor</Pill>
-            <h2 className="font-display text-3xl font-bold text-ink">
-              Você sabe o nome dos exercícios, mas trava na hora de justificar a escolha.
+            <h2 className="font-display text-2xl font-bold text-ink">
+              Você sabe o nome dos exercícios. O difícil é responder{" "}
+              <span className="text-[color:var(--cta-text)]">“por que esse e não aquele?”</span>
             </h2>
-            <p className="mt-3 text-ink-2">
-              Decorar séries e planilhas não resolve quando o aluno pergunta “por que esse e não
-              aquele?”. Falta clareza para responder com segurança científica.
+            <p className="mt-2 max-w-xl text-ink-2">
+              Planilha decorada não segura a pergunta do aluno. A plataforma pensa junto com você — e
+              te dá a resposta com critério, na hora.
             </p>
           </div>
-          <div className="space-y-3">
-            {[
-              "“Isso pega mais reto ou vasto lateral?”",
-              "“Posso trocar por leg press?”",
-              "“Por que evitar em quem tem desconforto lombar?”",
-            ].map((q) => (
-              <Card key={q} className="flex items-center gap-3 p-4">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-tint text-primary">?</span>
-                <span className="text-ink">{q}</span>
-              </Card>
+          <div className="space-y-2">
+            {["“Isso pega mais reto ou vasto lateral?”", "“Posso trocar por leg press?”", "“É seguro pra quem tem dor lombar?”"].map((q) => (
+              <div key={q} className="flex items-center gap-3 rounded-xl border border-border bg-bg px-4 py-2.5 text-sm text-ink">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-tint text-xs font-bold text-primary">?</span>
+                {q}
+              </div>
             ))}
           </div>
         </div>
-      </Section>
+      </div>
 
-      {/* Solução */}
-      <Section id="solucao" className="text-center">
-        <Pill tone="primary" className="mb-3">A solução</Pill>
-        <h2 className="font-display text-3xl font-bold text-ink">Três camadas que se conversam</h2>
+      {/* --------------------------- Como funciona --------------------------- */}
+      <Section id="como-funciona" className="text-center">
+        <Kicker>Simples assim</Kicker>
+        <h2 className="font-display text-3xl font-bold text-ink md:text-4xl">Três passos. Só isso.</h2>
         <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-          Do conceito ao caso real, você aprende a decidir com critério — e a defender a decisão.
+          Sem planilhas, sem adivinhação. Um caminho guiado do perfil do aluno até a entrega.
         </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <SolCard icon={<Navigation className="h-5 w-5" />} eyebrow="O cérebro" title="GPS da Prescrição" text="Recomendações justificadas para cada objetivo e restrição." />
-          <SolCard icon={<FlaskConical className="h-5 w-5" />} eyebrow="A vitrine" title="Laboratório Visual" text="Compare execução e análise biomecânica lado a lado." />
-          <SolCard icon={<BookOpen className="h-5 w-5" />} eyebrow="A aprendizagem" title="Casos práticos" text="Situações reais que treinam o seu julgamento clínico-esportivo." />
-        </div>
-      </Section>
 
-      {/* Da avaliação à progressão */}
-      <Section id="jornada" className="text-center">
-        <Pill tone="analysis" className="mb-3">Da avaliação à progressão</Pill>
-        <h2 className="font-display text-3xl font-bold text-ink">Um fluxo de decisão, não um treino avulso</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-          Da avaliação do aluno até a reavaliação — passando por grupo especial, modalidade,
-          parâmetros e progressão. É assim que se conduz diferentes perfis com segurança.
-        </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-          {["Perfil do aluno", "Grupo especial", "Modalidade", "Parâmetros", "Prescrição", "Progressão", "Reavaliação"].map(
-            (step, i, arr) => (
-              <span key={step} className="flex items-center gap-2">
-                <span className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink shadow-soft">
-                  {step}
-                </span>
-                {i < arr.length - 1 && <ArrowRight className="h-4 w-4 text-ink-3" />}
+        <div className="relative mt-10 grid gap-6 md:grid-cols-3">
+          {/* linha conectora (desktop) */}
+          <div aria-hidden className="absolute left-[16.6%] right-[16.6%] top-6 hidden border-t-2 border-dashed border-border md:block" />
+          {[
+            {
+              n: 1,
+              t: "Diga para quem",
+              d: "Escolha o aluno (ou um perfil): objetivo, nível, restrições e equipamentos. Leva menos de um minuto.",
+              scene: "wizard" as const,
+            },
+            {
+              n: 2,
+              t: "Receba com o porquê",
+              d: "Exercícios ranqueados por critérios transparentes — toque em “Ver justificativa” e defenda cada escolha.",
+              scene: "recomendacao" as const,
+            },
+            {
+              n: 3,
+              t: "Entregue com a sua marca",
+              d: "Exporte a prescrição em PDF profissional: exercícios, séries sugeridas e o raciocínio, prontos para o aluno.",
+              scene: "pdf" as const,
+            },
+          ].map((s) => (
+            <div key={s.n} className="relative">
+              <span className="relative z-10 mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full gradient-brand font-display text-lg font-bold text-white shadow-elevated">
+                {s.n}
               </span>
-            ),
-          )}
+              <Card className="p-5 text-left">
+                <div className="mb-3 overflow-hidden rounded-xl border border-border bg-surface-soft p-2">
+                  <TutorialScene id={s.scene} label={`Passo ${s.n}: ${s.t}`} />
+                </div>
+                <h3 className="font-display text-lg font-bold text-ink">{s.t}</h3>
+                <p className="mt-1 text-sm text-ink-2">{s.d}</p>
+              </Card>
+            </div>
+          ))}
         </div>
-        <p className="mx-auto mt-6 max-w-2xl rounded-card border border-border bg-surface p-4 text-sm text-ink-2">
-          Exemplo real: “Como treino alguém com obesidade grave que caminha pouco? Se começar na
-          hidroginástica, o que monitoro sem frequência cardíaca? Quando troco para caminhada ou
-          musculação?” — a plataforma apoia esse raciocínio, passo a passo.
+
+        <Link to="/dashboard" className={buttonClasses("primary") + " mt-10"}>
+          Dar o primeiro passo <ArrowRight className="h-4 w-4" />
+        </Link>
+        <p className="mt-3 text-xs text-ink-3">
+          Prefere ver antes? <Link to="/tutorial" className="font-semibold text-primary hover:underline">Abra os tutoriais visuais</Link>.
         </p>
       </Section>
 
-      {/* GPS exemplo */}
-      <Section id="gps">
-        <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
-          <Card className="p-6">
-            <div className="flex items-center gap-5">
-              <ScoreRing value={84} size={104} label="Aderência" />
-              <div>
-                <div className="text-xs uppercase tracking-wider text-ink-3">Recomendação</div>
-                <div className="font-display text-lg font-bold text-ink">Leg press 45°</div>
-                <Pill tone="success" className="mt-1">Ênfase em quadríceps</Pill>
-              </div>
+      {/* ------------------------ O porquê visível --------------------------- */}
+      <div className="border-y border-border bg-surface">
+        <Section className="!py-14">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div>
+              <Kicker>O diferencial</Kicker>
+              <h2 className="font-display text-3xl font-bold text-ink">
+                Não é um gerador de treino. É o <span className="text-primary">raciocínio visível</span>.
+              </h2>
+              <p className="mt-3 text-ink-2">
+                Cada recomendação mostra como cada critério pesou — objetivo, nível, restrição,
+                equipamento. Você entende, ajusta e defende a decisão diante de qualquer aluno.
+              </p>
+              <ul className="mt-5 space-y-2.5">
+                {[
+                  "Critérios transparentes, ponto a ponto — nada de caixa-preta",
+                  "Linguagem prudente: “tende a favorecer”, nunca promessa clínica",
+                  "Você continua no comando: a plataforma apoia, quem decide é você",
+                ].map((t) => (
+                  <li key={t} className="flex gap-2.5 text-ink">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <MiniList tone="success" icon={<CheckCircle2 className="h-4 w-4" />} title="Quando usar" items={["Aprendizado inicial", "Menor demanda lombar"]} />
-              <MiniList tone="cta" icon={<ShieldAlert className="h-4 w-4" />} title="Quando evitar" items={["Dor no joelho não controlada", "Foco em barra livre"]} />
-            </div>
-          </Card>
-          <div>
-            <Pill tone="primary" className="mb-3">GPS da Prescrição</Pill>
-            <h2 className="font-display text-3xl font-bold text-ink">Escolhas defendidas com critério.</h2>
-            <p className="mt-3 text-ink-2">
-              Um assistente educacional que ajuda você a raciocinar sobre objetivo, contexto e
-              restrições — tende a orientar melhores decisões, sem prometer prescrição clínica.
-            </p>
-            <div className="mt-5 space-y-2.5 rounded-card border border-border bg-surface p-4">
-              <StatBar label="Quadríceps" value={92} tone="primary" />
-              <StatBar label="Demanda lombar" value={34} tone="cta" />
-              <StatBar label="Complexidade técnica" value={41} tone="cta" />
-            </div>
+            <JustifyMock />
           </div>
-        </div>
-      </Section>
+        </Section>
+      </div>
 
-      {/* Casos */}
-      <Section id="casos" className="text-center">
-        <Pill tone="analysis" className="mb-3">Casos práticos</Pill>
-        <h2 className="font-display text-3xl font-bold text-ink">Corrige o raciocínio, não só a resposta.</h2>
+      {/* ------------------------------ Recursos ----------------------------- */}
+      <Section id="recursos" className="text-center">
+        <Kicker>Tudo no mesmo lugar</Kicker>
+        <h2 className="font-display text-3xl font-bold text-ink">O consultório e a sala de aula, juntos.</h2>
         <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-          Cada caso mostra por que uma escolha pode favorecer o objetivo — ou merecer cautela.
+          Modo <span className="font-semibold text-ink">Atender</span> para o dia a dia com alunos; modo{" "}
+          <span className="font-semibold text-ink">Aprender</span> para treinar sua decisão. Você alterna quando quiser.
         </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { n: "Iniciante", t: "Iniciante quer glúteo", d: "Sequência com menor demanda técnica." },
-            { n: "Intermediário", t: "Aluno relata desconforto lombar", d: "Ajuste de carga, técnica e alternativa." },
-            { n: "Avançado", t: "Atleta em fase de força", d: "Prioriza padrões livres bem executados." },
-          ].map((c) => (
-            <Card key={c.t} className="p-5 text-left">
-              <Pill tone={c.n === "Iniciante" ? "success" : "warning"} className="mb-2">{c.n}</Pill>
-              <div className="font-display font-bold text-ink">{c.t}</div>
-              <p className="mt-1 text-sm text-ink-2">{c.d}</p>
-            </Card>
-          ))}
-        </div>
-      </Section>
-
-      {/* Para quem */}
-      <Section id="para-quem" className="text-center">
-        <Pill tone="primary" className="mb-3">Para quem é</Pill>
-        <h2 className="font-display text-3xl font-bold text-ink">Feito para quem estuda o movimento.</h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {[
-            { icon: <GraduationCap className="h-5 w-5" />, t: "Estudantes de EF" },
-            { icon: <UserCheck className="h-5 w-5" />, t: "Personais recém-formados" },
-            { icon: <Dumbbell className="h-5 w-5" />, t: "Professores de musculação" },
-            { icon: <ShieldCheck className="h-5 w-5" />, t: "Quem quer justificar com segurança" },
-            { icon: <Users className="h-5 w-5" />, t: "Professores universitários" },
-          ].map((p) => (
-            <Card key={p.t} className="flex flex-col items-center p-5 text-center">
-              <span className="mb-3 grid h-11 w-11 place-items-center rounded-xl bg-primary-tint text-primary">
-                {p.icon}
+            { icon: <Navigation className="h-5 w-5" />, t: "Prescrever com raciocínio", d: "Exercícios ranqueados + justificativa por critério, em 3 passos." },
+            { icon: <FileDown className="h-5 w-5" />, t: "PDF com a sua marca", d: "A prescrição vira um documento profissional para entregar ao aluno." },
+            { icon: <Users className="h-5 w-5" />, t: "Alunos e evolução", d: "Avaliações na linha do tempo, gráfico de evolução e reavaliações em dia." },
+            { icon: <HeartPulse className="h-5 w-5" />, t: "Grupos especiais", d: "Jornadas em 4 fases para obesidade, hipertensão, idosos, dor e mais." },
+            { icon: <FlaskConical className="h-5 w-5" />, t: "Laboratório Visual", d: "Foto real × análise biomecânica no divisor interativo, com hotspots." },
+            { icon: <BookOpen className="h-5 w-5" />, t: "Casos práticos", d: "Cenários reais com feedback do raciocínio — não só certo ou errado." },
+          ].map((f) => (
+            <Card key={f.t} className="p-5 text-left">
+              <span className="mb-3 inline-grid h-11 w-11 place-items-center rounded-xl bg-primary-tint text-primary">
+                {f.icon}
               </span>
-              <span className="text-sm font-medium text-ink">{p.t}</span>
+              <h3 className="font-display text-lg font-bold text-ink">{f.t}</h3>
+              <p className="mt-1 text-sm text-ink-2">{f.d}</p>
             </Card>
           ))}
         </div>
       </Section>
 
-      {/* Planos */}
+      {/* ------------------------------ Para quem ---------------------------- */}
+      <div className="border-y border-border bg-surface">
+        <Section className="!py-14 text-center">
+          <Kicker tone="analysis">Para quem é</Kicker>
+          <h2 className="font-display text-3xl font-bold text-ink">Feito para quem leva o movimento a sério.</h2>
+          <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-3">
+            {[
+              {
+                icon: <GraduationCap className="h-6 w-6" />,
+                t: "Estudante de EF",
+                d: "Treine a decisão com casos e trilhas — chegue no estágio sabendo o porquê.",
+              },
+              {
+                icon: <UserCheck className="h-6 w-6" />,
+                t: "Personal recém-formado",
+                d: "Prescreva com segurança desde o primeiro aluno — e mostre profissionalismo no PDF.",
+              },
+              {
+                icon: <Dumbbell className="h-6 w-6" />,
+                t: "Professor de musculação",
+                d: "Conduza perfis diferentes — do iniciante ao grupo especial — com critério e progressão.",
+              },
+            ].map((p) => (
+              <Card key={p.t} className="p-6 text-left">
+                <span className="mb-3 inline-grid h-12 w-12 place-items-center rounded-xl bg-primary-tint text-primary">
+                  {p.icon}
+                </span>
+                <h3 className="font-display text-lg font-bold text-ink">{p.t}</h3>
+                <p className="mt-1 text-sm text-ink-2">{p.d}</p>
+              </Card>
+            ))}
+          </div>
+        </Section>
+      </div>
+
+      {/* ------------------------------- Planos ------------------------------ */}
       <Section id="planos" className="text-center">
-        <Pill tone="primary" className="mb-3">Planos</Pill>
-        <h2 className="font-display text-3xl font-bold text-ink">Comece grátis, evolua quando quiser.</h2>
+        <Kicker>Planos</Kicker>
+        <h2 className="font-display text-3xl font-bold text-ink">Comece grátis. Assine quando fizer sentido.</h2>
+        <p className="mx-auto mt-2 max-w-xl text-ink-2">
+          Sem cartão para começar. O plano gratuito já entrega o raciocínio; o Profissional libera o
+          uso sem limites e a entrega ao aluno.
+        </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 md:grid-cols-2">
           <PlanCard
             nome="Grátis"
             preco="R$ 0"
-            desc="Para começar a explorar."
-            items={["Acesso ao Laboratório Visual (parcial)", "3 análises no GPS", "2 casos práticos", "Biblioteca essencial"]}
+            desc="Para sentir o raciocínio na prática."
+            items={[
+              "3 prescrições com justificativa",
+              "Até 3 alunos com avaliações",
+              "Laboratório Visual (exercício completo)",
+              "2 casos práticos com feedback",
+            ]}
             cta="Criar conta gratuita"
           />
           <PlanCard
             destaque
             nome="Profissional"
             preco="R$ 39"
-            desc="Para atuar com segurança."
-            items={["Laboratório Visual completo", "GPS ilimitado + comparador", "Todos os casos com feedback", "Trilhas e progresso"]}
+            desc="Para atender com segurança, todo dia."
+            items={[
+              "Prescrições e alunos ilimitados",
+              "Exportação em PDF com a sua marca",
+              "Grupos especiais completos (4 fases)",
+              "Laboratório, casos e comparador completos",
+            ]}
             cta="Assinar Profissional"
           />
         </div>
       </Section>
 
-      {/* CTA final */}
+      {/* --------------------------------- FAQ ------------------------------- */}
+      <div className="border-y border-border bg-surface">
+        <Section id="faq" className="!py-14">
+          <div className="mx-auto max-w-3xl">
+            <div className="text-center">
+              <Kicker tone="analysis">Dúvidas rápidas</Kicker>
+              <h2 className="font-display text-3xl font-bold text-ink">Perguntas frequentes</h2>
+            </div>
+            <div className="mt-8 space-y-2">
+              {[
+                {
+                  q: "Isso substitui minha avaliação profissional?",
+                  a: "Não — e nem deveria. Todo o conteúdo é educacional e de apoio à decisão. A plataforma organiza o raciocínio; a avaliação individualizada e a decisão final são suas.",
+                },
+                {
+                  q: "Preciso de cartão para começar?",
+                  a: "Não. Você cria a conta, usa o plano gratuito e só assina o Profissional se (e quando) fizer sentido para a sua rotina.",
+                },
+                {
+                  q: "Funciona no celular?",
+                  a: "Sim. É uma plataforma web responsiva — funciona no celular, no tablet e no computador, sem instalar nada.",
+                },
+                {
+                  q: "O que o meu aluno recebe?",
+                  a: "Um PDF profissional com a sua marca: os exercícios recomendados, as séries sugeridas e a justificativa de cada escolha — algo que nenhuma planilha genérica entrega.",
+                },
+              ].map((f) => (
+                <FaqItem key={f.q} q={f.q} a={f.a} />
+              ))}
+            </div>
+            <p className="mt-6 text-center text-sm text-ink-2">
+              Outras dúvidas?{" "}
+              <Link to="/suporte" className="font-semibold text-primary hover:underline">
+                Fale com o suporte
+              </Link>{" "}
+              ou veja os{" "}
+              <Link to="/tutorial" className="font-semibold text-primary hover:underline">
+                tutoriais passo a passo
+              </Link>
+              .
+            </p>
+          </div>
+        </Section>
+      </div>
+
+      {/* ------------------------------ CTA final ---------------------------- */}
       <Section>
         <div className="rounded-card gradient-brand p-10 text-center text-white shadow-elevated md:p-14">
-          <h2 className="font-display text-3xl font-bold">Pare de decorar exercícios. Comece a entender o porquê.</h2>
+          <h2 className="font-display text-3xl font-bold md:text-4xl">
+            Seu primeiro aluno, prescrito em minutos.
+          </h2>
           <p className="mx-auto mt-3 max-w-xl text-white/85">
-            Em minutos você já experimenta o Laboratório Visual e o GPS da Prescrição.
+            Três passos, o porquê de cada exercício e um PDF pronto para entregar. Comece agora — é grátis.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link to="/dashboard" className="inline-flex items-center gap-2 rounded-control bg-white px-5 py-2.5 font-semibold text-primary hover:bg-white/90">
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 rounded-control bg-white px-6 py-3 font-semibold text-primary hover:bg-white/90"
+            >
               Começar gratuitamente <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link to="/movement-lab" className="inline-flex items-center gap-2 rounded-control border border-white/40 px-5 py-2.5 font-semibold text-white hover:bg-white/10">
-              Ver demonstração
+            <Link
+              to="/tutorial"
+              className="inline-flex items-center gap-2 rounded-control border border-white/40 px-6 py-3 font-semibold text-white hover:bg-white/10"
+            >
+              Ver os tutoriais
             </Link>
           </div>
+          <p className="mt-5 inline-flex items-center gap-2 text-xs text-white/70">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Conteúdo educacional e de apoio à decisão — não substitui avaliação profissional individualizada.
+          </p>
         </div>
       </Section>
 
+      {/* -------------------------------- Footer ----------------------------- */}
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 md:flex-row md:items-center md:justify-between md:px-6">
           <Logo />
@@ -286,9 +418,9 @@ export function Landing() {
             profissional individualizada.
           </p>
           <div className="flex gap-4 text-sm text-ink-2">
-            <Link to="/planos" className="hover:text-ink">Planos</Link>
-            <a href="#" className="hover:text-ink">Termos</a>
-            <a href="#" className="hover:text-ink">Privacidade</a>
+            <Link to="/tutorial" className="hover:text-ink">Tutoriais</Link>
+            <Link to="/suporte" className="hover:text-ink">Suporte</Link>
+            <Link to="/pricing" className="hover:text-ink">Planos</Link>
           </div>
         </div>
       </footer>
@@ -296,31 +428,65 @@ export function Landing() {
   );
 }
 
-function SolCard({ icon, eyebrow, title, text }: { icon: React.ReactNode; eyebrow: string; title: string; text: string }) {
+/* ----------------------- mock da justificativa (o "aha") ------------------ */
+
+function JustifyMock() {
+  const rows = [
+    { c: "Compatível com o objetivo (Hipertrofia)", v: "+30,0", max: "30", tone: "text-success" },
+    { c: "Adequado ao nível Iniciante", v: "+20,0", max: "20", tone: "text-success" },
+    { c: "Equipamento disponível", v: "+15,0", max: "20", tone: "text-ink" },
+    { c: "Cautela: desconforto lombar", v: "−8,0", max: "—", tone: "text-[color:var(--cta-text)]" },
+  ];
   return (
-    <Card className="p-6 text-left">
-      <span className="mb-3 inline-grid h-10 w-10 place-items-center rounded-xl bg-primary-tint text-primary">{icon}</span>
-      <div className="text-xs font-semibold uppercase tracking-wider text-analysis">{eyebrow}</div>
-      <h3 className="font-display text-lg font-bold text-ink">{title}</h3>
-      <p className="mt-1 text-sm text-ink-2">{text}</p>
+    <Card variant="raised" className="p-5 md:p-6">
+      <div className="mb-1 flex items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">Justificativa</div>
+          <h3 className="font-display text-lg font-bold text-ink">Leg press 45°</h3>
+        </div>
+        <Pill tone="success">82% match</Pill>
+      </div>
+      <p className="mb-3 text-sm text-ink-2">Como cada critério pesou no ranqueamento:</p>
+      <ul className="space-y-2">
+        {rows.map((r) => (
+          <li key={r.c} className="rounded-lg border border-border bg-surface-soft p-3">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="font-semibold text-ink">{r.c}</span>
+              <span className={`tabular shrink-0 font-bold ${r.tone}`}>
+                {r.v}
+                {r.max !== "—" && <span className="ml-1 text-xs font-medium text-ink-3">/ {r.max}</span>}
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-ink-3">
+        <Info className="h-3.5 w-3.5" /> Exemplo real de como a recomendação é explicada dentro da plataforma.
+      </p>
     </Card>
   );
 }
 
-function MiniList({ tone, icon, title, items }: { tone: "success" | "cta"; icon: React.ReactNode; title: string; items: string[] }) {
-  const c = tone === "success" ? "bg-[#e7f8ed] text-success" : "bg-[#fff1e6] text-[color:var(--cta-text)]";
+/* --------------------------------- FAQ item ------------------------------- */
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = React.useState(false);
   return (
-    <div className="rounded-xl border border-border p-3">
-      <div className="mb-2 flex items-center gap-2">
-        <span className={`grid h-7 w-7 place-items-center rounded-lg ${c}`}>{icon}</span>
-        <span className="text-sm font-semibold text-ink">{title}</span>
-      </div>
-      <ul className="space-y-1 text-xs text-ink-2">
-        {items.map((i) => <li key={i}>• {i}</li>)}
-      </ul>
+    <div className="overflow-hidden rounded-xl border border-border bg-bg">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
+      >
+        <span className="font-semibold text-ink">{q}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-ink-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && <p className="px-4 pb-4 text-sm text-ink-2">{a}</p>}
     </div>
   );
 }
+
+/* --------------------------------- planos --------------------------------- */
 
 function PlanCard({
   nome,

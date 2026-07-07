@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   Users,
@@ -74,6 +74,15 @@ export function ProfessionalDashboard() {
         <EmptyPro onExemplos={loadExamples} />
       ) : (
         <>
+      {/* Passo a passo guiado (some sozinho quando o fluxo está dominado) */}
+      <ProximosPassos
+        temAluno={alunos.length > 0}
+        temAvaliacao={avaliacoes.length > 0}
+        temPrescricao={prescricoes.length > 0}
+        temEvolucao={avaliacoes.length >= 2}
+        primeiroAlunoId={ativos[0]?.id ?? alunos[0]?.id}
+      />
+
       {/* Faixa de contexto (apoio, de-enfatizada) */}
       <Card variant="soft" className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
         <StatInline icon={<Users className="h-4 w-4 text-primary" />} value={ativos.length} label="alunos ativos" to="/alunos" />
@@ -170,6 +179,90 @@ export function ProfessionalDashboard() {
 }
 
 /* ------------------------------- Auxiliares ------------------------------- */
+
+/* Checklist guiado do fluxo de trabalho: 4 passos com estado real. Some quando
+   tudo está feito (o usuário "formou") ou quando o profissional oculta. */
+function ProximosPassos({
+  temAluno,
+  temAvaliacao,
+  temPrescricao,
+  temEvolucao,
+  primeiroAlunoId,
+}: {
+  temAluno: boolean;
+  temAvaliacao: boolean;
+  temPrescricao: boolean;
+  temEvolucao: boolean;
+  primeiroAlunoId?: string;
+}) {
+  const [oculto, setOculto] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("pi-passos-ocultos") === "1",
+  );
+
+  const passos = [
+    { done: temAluno, label: "Cadastre um aluno", to: "/alunos?novo=1" },
+    { done: temAvaliacao, label: "Registre uma avaliação", to: primeiroAlunoId ? `/alunos/${primeiroAlunoId}` : "/alunos" },
+    { done: temPrescricao, label: "Prescreva com justificativa", to: primeiroAlunoId ? `/gps?aluno=${primeiroAlunoId}` : "/gps" },
+    { done: temEvolucao, label: "Acompanhe a evolução", to: "/assessments" },
+  ];
+  const feitos = passos.filter((p) => p.done).length;
+  const atualIdx = passos.findIndex((p) => !p.done);
+
+  if (oculto || feitos === passos.length) return null;
+
+  const ocultar = () => {
+    localStorage.setItem("pi-passos-ocultos", "1");
+    setOculto(true);
+  };
+
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <h2 className="font-display text-base font-bold text-ink">Seu passo a passo</h2>
+        <Pill tone="primary">{feitos} de {passos.length}</Pill>
+        <button onClick={ocultar} className="ml-auto text-xs font-medium text-ink-3 hover:text-ink">
+          Ocultar
+        </button>
+      </div>
+      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {passos.map((p, i) => {
+          const atual = i === atualIdx;
+          return (
+            <li key={p.label}>
+              <Link
+                to={p.to}
+                aria-current={atual ? "step" : undefined}
+                className={cn(
+                  "flex h-full items-center gap-2.5 rounded-xl border p-3 text-sm transition-colors",
+                  p.done
+                    ? "border-border bg-surface-soft text-ink-3"
+                    : atual
+                      ? "border-primary bg-primary-tint font-semibold text-ink hover:bg-primary-tint/70"
+                      : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
+                )}
+              >
+                {p.done ? (
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+                ) : (
+                  <span
+                    className={cn(
+                      "tabular grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] font-bold",
+                      atual ? "bg-primary text-white" : "bg-surface-soft text-ink-3",
+                    )}
+                  >
+                    {i + 1}
+                  </span>
+                )}
+                <span className={cn(p.done && "line-through decoration-ink-3/50")}>{p.label}</span>
+                {atual && <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-primary" />}
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
+    </Card>
+  );
+}
 
 function EmptyPro({ onExemplos }: { onExemplos: () => void }) {
   return (

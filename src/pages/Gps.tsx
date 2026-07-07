@@ -234,6 +234,9 @@ export function Gps() {
         </div>
       </div>
 
+      {/* Mapa do fluxo: onde estou, o que falta */}
+      <FlowSteps atual={results ? 3 : alunoId || grupoSlug ? 2 : 1} />
+
       {/* Passo 0 — Para quem? */}
       <ContextoCard
         alunos={alunos}
@@ -283,6 +286,47 @@ export function Gps() {
         clínica.
       </p>
     </div>
+  );
+}
+
+/* ------------------------- Mapa do fluxo (stepper) ------------------------ */
+// Torna o macro-caminho visível: 1 Para quem → 2 Perfil → 3 Recomendações.
+function FlowSteps({ atual }: { atual: 1 | 2 | 3 }) {
+  const steps = ["Para quem?", "Perfil de treino", "Recomendações"];
+  return (
+    <ol aria-label="Etapas da prescrição" className="flex flex-wrap items-center gap-x-1 gap-y-2">
+      {steps.map((label, i) => {
+        const n = (i + 1) as 1 | 2 | 3;
+        const done = n < atual;
+        const current = n === atual;
+        return (
+          <li key={label} className="flex items-center gap-1">
+            <span
+              aria-current={current ? "step" : undefined}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
+                current ? "bg-primary-tint text-primary" : done ? "text-ink-2" : "text-ink-3",
+              )}
+            >
+              {done ? (
+                <Check className="h-3.5 w-3.5 text-success" />
+              ) : (
+                <span
+                  className={cn(
+                    "tabular grid h-4 w-4 place-items-center rounded-full text-[10px] font-bold",
+                    current ? "bg-primary text-white" : "bg-surface-soft text-ink-3",
+                  )}
+                >
+                  {n}
+                </span>
+              )}
+              {label}
+            </span>
+            {i < steps.length - 1 && <ArrowRight aria-hidden className="h-3.5 w-3.5 text-ink-3/60" />}
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 
