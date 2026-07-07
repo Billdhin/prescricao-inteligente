@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
+import { useDialog } from "@/lib/useDialog";
 import {
   useUI,
   useUser,
@@ -121,6 +122,72 @@ export function AppLayout() {
         <main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
           <Outlet />
         </main>
+      </div>
+      <OnboardingGate />
+    </div>
+  );
+}
+
+/* Boas-vindas no primeiro acesso: define o modo (o app deixa de "adivinhar"). */
+function OnboardingGate() {
+  const setMode = useMode((s) => s.setMode);
+  const [show, setShow] = React.useState(
+    () => typeof window !== "undefined" && !localStorage.getItem("pi-onboarded"),
+  );
+  const dialogRef = useDialog<HTMLDivElement>(() => {});
+  if (!show) return null;
+
+  const choose = (m: AppMode) => {
+    setMode(m);
+    localStorage.setItem("pi-onboarded", "1");
+    setShow(false);
+  };
+
+  const opcoes: {
+    mode: AppMode;
+    icon: React.ComponentType<{ className?: string }>;
+    title: string;
+    desc: string;
+  }[] = [
+    { mode: "atender", icon: Briefcase, title: "Já atendo alunos", desc: "Gerencie alunos, avalie e prescreva com justificativa." },
+    { mode: "aprender", icon: GraduationCap, title: "Estou estudando", desc: "Trilhas, casos e o raciocínio da prescrição." },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/50 p-4 backdrop-blur-sm">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Bem-vindo"
+        className="w-full max-w-lg rounded-card bg-surface p-6 text-center shadow-elevated outline-none md:p-8"
+      >
+        <div className="mx-auto mb-4 w-fit">
+          <Logo />
+        </div>
+        <h2 className="font-display text-2xl font-bold text-ink">Bem-vindo!</h2>
+        <p className="mx-auto mt-1 max-w-sm text-ink-2">
+          Como você vai usar a plataforma agora? Você pode alternar quando quiser lá no topo.
+        </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {opcoes.map((o) => {
+            const Icon = o.icon;
+            return (
+              <button
+                key={o.mode}
+                onClick={() => choose(o.mode)}
+                className="flex flex-col items-center gap-2 rounded-card border border-border bg-surface p-5 text-center transition-colors hover:border-primary hover:bg-primary-tint"
+              >
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary-tint text-primary">
+                  <Icon className="h-6 w-6" />
+                </span>
+                <span className="font-display font-bold text-ink">{o.title}</span>
+                <span className="text-sm text-ink-2">{o.desc}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

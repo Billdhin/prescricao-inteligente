@@ -60,9 +60,10 @@ export function Landing() {
             </h1>
             <p className="mt-5 max-w-lg text-lg text-ink-2">
               Não é um atlas de exercícios nem um gerador genérico de treino. É uma plataforma para
-              <span className="font-semibold text-ink"> raciocinar a prescrição</span> — unindo
-              biomecânica, fisiologia, grupos especiais, modalidades e progressão — e decidir como
-              treinar diferentes pessoas, em diferentes contextos.
+              <span className="font-semibold text-ink"> raciocinar a prescrição</span> — biomecânica,
+              fisiologia, grupos especiais e progressão — para você{" "}
+              <span className="font-semibold text-ink">aprender a decidir e levar isso direto para o
+              atendimento dos seus alunos</span>.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/dashboard" className={buttonClasses("primary")}>
