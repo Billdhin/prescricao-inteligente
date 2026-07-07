@@ -2,14 +2,23 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /* --------------------------------- Card ---------------------------------- */
+// Dois níveis de ênfase para criar hierarquia: `raised` = âncora (no máx. 1 por
+// tela), `soft` = apoio/satélite (fundo fosco, sem sombra). `base` = padrão.
 
-export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("rounded-card border border-border bg-surface shadow-soft", className)}
-      {...props}
-    />
-  );
+export type CardVariant = "base" | "raised" | "soft";
+
+const cardVariants: Record<CardVariant, string> = {
+  base: "border border-border bg-surface shadow-soft",
+  raised: "border border-border bg-surface shadow-elevated",
+  soft: "border border-border bg-surface-soft",
+};
+
+export function Card({
+  variant = "base",
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & { variant?: CardVariant }) {
+  return <div className={cn("rounded-card", cardVariants[variant], className)} {...props} />;
 }
 
 /* -------------------------------- Button --------------------------------- */
