@@ -79,18 +79,52 @@ export function BiomechanicsComparisonSlider({
   };
 
   // Máscara suave (união de elipses) que revela a musculatura da imagem de
-  // análise sobre a base — integrada à perna, sem contornos duros.
+  // análise sobre a base. Justa e com fade curto: a transição acontece SOBRE a
+  // própria perna (pele→músculo), sem halo de montagem.
   const mask = React.useMemo(
     () =>
       regions
         .flatMap((r) => r.shapes)
         .map(
           (s) =>
-            `radial-gradient(ellipse ${(s.rx * 1.55).toFixed(1)}% ${(s.ry * 1.6).toFixed(1)}% at ${s.cx}% ${s.cy}%, black 52%, transparent 96%)`,
+            `radial-gradient(ellipse ${(s.rx * 1.18).toFixed(1)}% ${(s.ry * 1.25).toFixed(1)}% at ${s.cx}% ${s.cy}%, black 44%, transparent 88%)`,
         )
         .join(","),
     [regions],
   );
+
+  // Glifo de ângulo com raios: valor CALCULADO da geometria (unidades reais da
+  // imagem 4:3), arredondado a 5° — o número sempre bate com a pose visível.
+  const angleGeom = React.useMemo(() => {
+    const a = overlay?.angle;
+    if (!a?.rays) return null;
+    const vx = a.x * 4;
+    const vy = a.y * 3;
+    const v1 = { x: a.rays.ax * 4 - vx, y: a.rays.ay * 3 - vy };
+    const v2 = { x: a.rays.bx * 4 - vx, y: a.rays.by * 3 - vy };
+    const n1 = Math.hypot(v1.x, v1.y);
+    const n2 = Math.hypot(v2.x, v2.y);
+    if (!n1 || !n2) return null;
+    const deg = Math.round((Math.acos((v1.x * v2.x + v1.y * v2.y) / (n1 * n2)) * 180) / Math.PI / 5) * 5;
+    const a1 = Math.atan2(v1.y, v1.x);
+    const a2 = Math.atan2(v2.y, v2.x);
+    let diff = a2 - a1;
+    while (diff > Math.PI) diff -= 2 * Math.PI;
+    while (diff < -Math.PI) diff += 2 * Math.PI;
+    const r = 16;
+    const arc = {
+      x1: vx + r * Math.cos(a1),
+      y1: vy + r * Math.sin(a1),
+      x2: vx + r * Math.cos(a2),
+      y2: vy + r * Math.sin(a2),
+      sweep: diff > 0 ? 1 : 0,
+    };
+    // rótulo na ANTI-bissetriz: do lado de fora da articulação (área livre,
+    // nunca sobre o músculo em foco, que fica entre os raios)
+    const mid = a1 + diff / 2;
+    const label = { x: (vx - 34 * Math.cos(mid)) / 4, y: (vy - 34 * Math.sin(mid)) / 3 };
+    return { vx, vy, v1, v2, n1, n2, deg, arc, label };
+  }, [overlay]);
 
   // No corpo: apenas os 2 principais músculos como linha fina + rótulo.
   const rotulados = React.useMemo(() => {
@@ -126,16 +160,19 @@ export function BiomechanicsComparisonSlider({
       {/* Base única: execução limpa */}
       <img src={baseSrc} alt={alt} draggable={false} className="absolute inset-0 h-full w-full object-cover" />
 
-      {/* Camada de análise — a MESMA imagem, revelada à direita do slider */}
+      {/* Camada de análise, revelada à direita do slider. FOCO NATURAL: uma
+          imagem só (a anatômica, alinhada à base) escurecida por inteiro, com
+          os músculos mantidos brilhantes por um "spotlight" da MESMA imagem —
+          a diferença é apenas de luz, então não existe emenda de montagem. */}
       <div className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${pos}%)` }}>
-        <img src={baseSrc} alt="" aria-hidden draggable={false} className="absolute inset-0 h-full w-full object-cover" />
+        <img src={analysisSrc} alt="" aria-hidden draggable={false} className="absolute inset-0 h-full w-full object-cover" />
         {/* escurecimento navy + vignette */}
-        <div className="absolute inset-0 bg-slate-950/55" />
+        <div className="absolute inset-0 bg-slate-950/45" />
         <div
           className="absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 75% 70% at 50% 46%, transparent 45%, rgba(2,6,23,0.55) 100%)" }}
+          style={{ background: "radial-gradient(ellipse 78% 72% at 50% 46%, transparent 48%, rgba(2,6,23,0.5) 100%)" }}
         />
-        {/* musculatura em foco: imagem de análise mascarada às regiões */}
+        {/* spotlight: a mesma imagem, em brilho pleno, apenas sobre os músculos */}
         {mask && (
           <img
             src={analysisSrc}
@@ -146,7 +183,7 @@ export function BiomechanicsComparisonSlider({
             style={{
               maskImage: mask,
               WebkitMaskImage: mask,
-              filter: "saturate(1.15) contrast(1.05) brightness(1.04)",
+              filter: "saturate(1.08)",
             }}
           />
         )}
@@ -171,15 +208,49 @@ export function BiomechanicsComparisonSlider({
               markerEnd="url(#bio-arrow)"
             />
           )}
+          {angleGeom && (
+            <>
+              {/* raios finos ao longo dos segmentos + arco na articulação */}
+              <line
+                x1={angleGeom.vx}
+                y1={angleGeom.vy}
+                x2={angleGeom.vx + angleGeom.v1.x * 0.55}
+                y2={angleGeom.vy + angleGeom.v1.y * 0.55}
+                stroke="rgba(255,255,255,0.65)"
+                strokeWidth={1}
+                strokeDasharray="3 4"
+                vectorEffect="non-scaling-stroke"
+              />
+              <line
+                x1={angleGeom.vx}
+                y1={angleGeom.vy}
+                x2={angleGeom.vx + angleGeom.v2.x * 0.55}
+                y2={angleGeom.vy + angleGeom.v2.y * 0.55}
+                stroke="rgba(255,255,255,0.65)"
+                strokeWidth={1}
+                strokeDasharray="3 4"
+                vectorEffect="non-scaling-stroke"
+              />
+              <path
+                d={`M ${angleGeom.arc.x1} ${angleGeom.arc.y1} A 16 16 0 0 ${angleGeom.arc.sweep} ${angleGeom.arc.x2} ${angleGeom.arc.y2}`}
+                fill="none"
+                stroke="#22d3ee"
+                strokeWidth={1.6}
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            </>
+          )}
           {rotulados.map((r) => {
-            const x1 = (r.s.cx + Math.max(r.s.rx, r.s.ry) * 0.55) * 4;
+            const side = r.s.cy > 55 ? -1 : 1;
+            const x1 = (r.s.cx + side * Math.max(r.s.rx, r.s.ry) * 0.55) * 4;
             const y = r.s.cy * 3;
             return (
               <line
                 key={r.nome}
                 x1={x1}
                 y1={y}
-                x2={x1 + 34}
+                x2={x1 + side * 34}
                 y2={y}
                 stroke="rgba(255,255,255,0.75)"
                 strokeWidth={1}
@@ -197,21 +268,34 @@ export function BiomechanicsComparisonSlider({
             Linha de força
           </span>
         )}
-        {overlay?.angle && (
-          <span
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10.5px] font-bold tabular-nums text-white backdrop-blur-sm"
-            style={{ left: `${overlay.angle.x}%`, top: `${overlay.angle.y}%` }}
-          >
-            ≈{overlay.angle.value}
-          </span>
-        )}
+        {overlay?.angle &&
+          (angleGeom ? (
+            <span
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10.5px] font-bold tabular-nums text-white backdrop-blur-sm"
+              style={{ left: `${angleGeom.label.x}%`, top: `${angleGeom.label.y}%` }}
+            >
+              ≈{angleGeom.deg}°
+            </span>
+          ) : (
+            <span
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10.5px] font-bold tabular-nums text-white backdrop-blur-sm"
+              style={{ left: `${overlay.angle.x}%`, top: `${overlay.angle.y}%` }}
+            >
+              ≈{overlay.angle.value}
+            </span>
+          ))}
         {rotulados.map((r) => {
-          const lx = r.s.cx + Math.max(r.s.rx, r.s.ry) * 0.55 + 9.2;
+          const side = r.s.cy > 55 ? -1 : 1;
+          const lx = r.s.cx + side * (Math.max(r.s.rx, r.s.ry) * 0.55 + 9.2);
           return (
             <span
               key={r.nome}
               className="absolute -translate-y-1/2 whitespace-nowrap text-[11px] font-medium text-white/95 [text-shadow:0_1px_3px_rgba(0,0,0,0.85)]"
-              style={{ left: `${Math.min(lx, 78)}%`, top: `${r.s.cy}%` }}
+              style={{
+                left: `${side === 1 ? Math.min(lx, 78) : Math.max(lx, 4)}%`,
+                top: `${r.s.cy}%`,
+                transform: side === 1 ? "translateY(-50%)" : "translate(-100%, -50%)",
+              }}
             >
               {r.nome}
             </span>
@@ -219,7 +303,18 @@ export function BiomechanicsComparisonSlider({
         })}
 
         {/* Card: contribuição muscular (glass, canto inferior direito) */}
-        <div className="absolute bottom-2.5 right-2.5 w-64 max-w-[68%] rounded-xl border border-white/15 bg-slate-950/70 p-2.5 backdrop-blur-md sm:bottom-3 sm:right-3 sm:p-3">
+        {/* Mobile: faixa compacta (o card completo cobriria a imagem) */}
+        <div className="absolute inset-x-2 bottom-2 flex items-center gap-2.5 overflow-x-auto rounded-lg border border-white/15 bg-slate-950/70 px-2.5 py-1.5 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
+          {contribuicoes.map((m, i) => (
+            <span key={m.musculo} className="flex shrink-0 items-center gap-1">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: DOT_COLORS[i] }} />
+              <span className="text-[10px] font-medium text-white/85">{m.musculo}</span>
+              <span className="tabular text-[10px] font-bold text-white">{m.percentual}%</span>
+            </span>
+          ))}
+        </div>
+
+        <div className="absolute bottom-3 right-3 hidden w-64 max-w-[68%] rounded-xl border border-white/15 bg-slate-950/70 p-3 backdrop-blur-md sm:block">
           <div className="mb-2 text-[11px] font-semibold tracking-wide text-white/85">Contribuição muscular</div>
           <div className="space-y-1.5">
             {contribuicoes.map((m, i) => (

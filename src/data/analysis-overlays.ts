@@ -8,15 +8,19 @@
  */
 
 export interface AnalysisOverlayData {
-  angle?: { x: number; y: number; value: string };
+  /** vértice do ângulo (articulação). Com `rays`, o valor exibido é CALCULADO
+   *  da geometria (segmento A = ex. coxa, segmento B = ex. canela) e o glifo
+   *  desenha raios + arco na articulação — nada de chip solto. */
+  angle?: { x: number; y: number; value: string; rays?: { ax: number; ay: number; bx: number; by: number } };
   force?: { x1: number; y1: number; x2: number; y2: number };
 }
 
 export const analysisOverlays: Record<string, AnalysisOverlayData> = {
   // --- Membros inferiores -------------------------------------------------
   "leg-press-45": {
-    // Joelho ≈(58,43) [hotspot]; ângulo abaixo da canela, força partindo acima.
-    angle: { x: 68, y: 45, value: "95°" },
+    // Vértice no joelho (58,43); raio A → quadril, raio B → tornozelo. O valor
+    // exibido é calculado da geometria (pose quase estendida neste frame).
+    angle: { x: 58, y: 43, value: "95°", rays: { ax: 47, ay: 63, bx: 73, by: 29 } },
     force: { x1: 63, y1: 39, x2: 75, y2: 27 },
   },
   "agachamento-livre": {
