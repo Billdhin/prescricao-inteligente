@@ -21,10 +21,10 @@ import {
 import * as React from "react";
 import { Logo } from "@/components/brand/Logo";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
-import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
-import { MuscleRegions } from "@/components/movement-lab/MuscleRegions";
+import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
 import { TutorialScene } from "@/components/tutorial/TutorialScene";
 import { muscleRegions } from "@/data/muscle-regions";
+import { analysisOverlays } from "@/data/analysis-overlays";
 import { getExercise } from "@/data/exercises";
 import { withBase } from "@/lib/utils";
 
@@ -126,30 +126,18 @@ export function Landing() {
             </ul>
           </div>
 
-          {/* Demo real e interativa: foto de execução × análise biomecânica */}
+          {/* Demo real e interativa: análise revelada sobre a MESMA imagem */}
           <Card variant="raised" className="p-3">
-            <VisualCompareSlider
-              before={
-                <img
-                  src={withBase("/exercises/leg-press-45.webp")}
-                  alt="Execução real do leg press 45°"
-                  className="h-full w-full object-cover"
-                />
-              }
-              after={
-                <div className="relative h-full w-full">
-                  <img
-                    src={withBase("/exercises/leg-press-45-analysis.webp")}
-                    alt="Análise biomecânica do leg press 45°"
-                    className="h-full w-full object-cover"
-                  />
-                  <HeroRegions />
-                </div>
-              }
-              className="aspect-[4/3]"
+            <BiomechanicsComparisonSlider
+              baseSrc={withBase("/exercises/leg-press-45.webp")}
+              analysisSrc={withBase("/exercises/leg-press-45-analysis.webp")}
+              alt="Leg press 45° — execução real"
+              regions={muscleRegions["leg-press-45"] ?? []}
+              ativacao={getExercise("leg-press-45")?.ativacao ?? []}
+              overlay={analysisOverlays["leg-press-45"]}
             />
             <p className="px-2 py-2 text-center text-xs text-ink-3">
-              Experimente: arraste o divisor e passe o mouse nos músculos para ver a ativação.
+              Experimente: arraste o divisor e revele a análise biomecânica sobre a mesma imagem.
             </p>
           </Card>
         </div>
@@ -456,15 +444,6 @@ export function Landing() {
       </footer>
     </div>
   );
-}
-
-/* ----------- regiões musculares interativas da demo do hero --------------- */
-
-function HeroRegions() {
-  const regions = muscleRegions["leg-press-45"];
-  const ex = getExercise("leg-press-45");
-  if (!regions || !ex) return null;
-  return <MuscleRegions regions={regions} ativacao={ex.ativacao} />;
 }
 
 /* ----------------------- mock da justificativa (o "aha") ------------------ */

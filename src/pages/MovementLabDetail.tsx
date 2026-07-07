@@ -17,9 +17,8 @@ import {
 import { Card, Pill, ScoreRing, StatBar, buttonClasses, type PillTone } from "@/components/ui/primitives";
 import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
+import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
 import { MuscleMap, activationFromExercise } from "@/components/anatomy/MuscleMap";
-import { AnalysisOverlay } from "@/components/movement-lab/AnalysisOverlay";
-import { MuscleRegions } from "@/components/movement-lab/MuscleRegions";
 import { analysisOverlays } from "@/data/analysis-overlays";
 import { muscleRegions } from "@/data/muscle-regions";
 import { ExecutionScene, AnalysisScene } from "@/data/scenes";
@@ -133,48 +132,29 @@ function Detail({ exercise }: { exercise: Exercise }) {
         <div className="space-y-4">
           <div className="relative">
             <div className={cn(locked && "pointer-events-none blur-[6px] saturate-50")}>
-              <VisualCompareSlider
-                before={
-                  exercise.imagem ? (
-                    <img
-                      src={withBase(exercise.imagem)}
-                      alt={`Execução: ${exercise.nome}`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <ExecutionScene />
-                  )
-                }
-                after={
-                  exercise.imagemAnalise ? (
-                    <div className="relative h-full w-full">
-                      <img
-                        src={withBase(exercise.imagemAnalise)}
-                        alt={`Análise biomecânica: ${exercise.nome}`}
-                        className="h-full w-full object-cover"
-                      />
-                      {overlay && <AnalysisOverlay overlay={overlay} />}
-                      {regions && <MuscleRegions regions={regions} ativacao={exercise.ativacao} />}
-                    </div>
-                  ) : (
-                    <AnalysisScene angle={exercise.anguloArticular} />
-                  )
-                }
-                hotspots={exercise.hotspots}
-              />
+              {exercise.imagem && exercise.imagemAnalise ? (
+                <BiomechanicsComparisonSlider
+                  baseSrc={withBase(exercise.imagem)}
+                  analysisSrc={withBase(exercise.imagemAnalise)}
+                  alt={`Execução: ${exercise.nome}`}
+                  regions={regions ?? []}
+                  ativacao={exercise.ativacao}
+                  overlay={overlay}
+                />
+              ) : (
+                <VisualCompareSlider
+                  before={<ExecutionScene />}
+                  after={<AnalysisScene angle={exercise.anguloArticular} />}
+                />
+              )}
             </div>
             {locked && <LockedOverlay />}
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-1 text-sm">
-            <Legend swatch="bg-[#ef4444]" label="Músculo trabalhado" />
-            <Legend swatch="bg-cta" label="Ângulo articular" />
-            <Legend swatch="bg-primary" label="Linha de força" />
-            <span className="text-xs text-ink-3">
-              Arraste o divisor para comparar · selecione um músculo na barra (ou toque nele na
-              foto) · os anéis brancos abrem a análise em camadas.
-            </span>
-          </div>
+          <p className="px-1 text-xs text-ink-3">
+            Arraste o divisor: a análise é revelada sobre a <span className="font-semibold text-ink-2">mesma imagem</span> —
+            músculos em foco, ângulo articular e linha de força.
+          </p>
         </div>
 
         {/* Índice de eficiência — âncora */}
