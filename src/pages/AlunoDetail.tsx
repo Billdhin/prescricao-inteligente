@@ -13,10 +13,13 @@ import {
   Clock,
   FlaskConical,
   HeartPulse,
+  FileDown,
+  Lock,
   Route as RouteIcon,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, uid } from "@/lib/store";
+import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -33,6 +36,8 @@ const nomeEx = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ??
 export function AlunoDetail() {
   const { id = "" } = useParams();
   const { alunos, avaliacoes, prescricoes, addAvaliacao, updateAluno } = useAlunos();
+  const { name: profNome, plan } = useUser();
+  const premium = isPremiumUnlocked(plan);
   const [avaliar, setAvaliar] = React.useState(false);
 
   const aluno = alunos.find((a) => a.id === id);
@@ -226,6 +231,23 @@ export function AlunoDetail() {
                         {p.raciocinio}
                       </p>
                     )}
+                    <div className="mt-3 border-t border-border pt-2.5">
+                      {premium ? (
+                        <button
+                          onClick={() => exportPrescricaoPDF({ aluno, presc: p, profissional: profNome })}
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                        >
+                          <FileDown className="h-4 w-4" /> Exportar PDF (com sua marca)
+                        </button>
+                      ) : (
+                        <Link
+                          to="/pricing"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-3 hover:text-ink"
+                        >
+                          <Lock className="h-3.5 w-3.5" /> Exportar PDF para o aluno — plano Profissional
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
