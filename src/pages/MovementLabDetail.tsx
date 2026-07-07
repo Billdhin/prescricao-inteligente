@@ -19,7 +19,9 @@ import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
 import { MuscleMap, activationFromExercise } from "@/components/anatomy/MuscleMap";
 import { AnalysisOverlay } from "@/components/movement-lab/AnalysisOverlay";
+import { MuscleRegions } from "@/components/movement-lab/MuscleRegions";
 import { analysisOverlays } from "@/data/analysis-overlays";
+import { muscleRegions } from "@/data/muscle-regions";
 import { ExecutionScene, AnalysisScene } from "@/data/scenes";
 import { getExercise, exercises } from "@/data/exercises";
 import type { Exercise, TrustLevel, HotspotCamadas } from "@/data/types";
@@ -74,6 +76,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
   const plan = useUser((s) => s.plan);
   const locked = exercise.premium && !isPremiumUnlocked(plan);
   const overlay = analysisOverlays[exercise.slug];
+  const regions = muscleRegions[exercise.slug];
   const favSlugs = useFavorites((s) => s.slugs);
   const toggleFav = useFavorites((s) => s.toggle);
   const addActivity = useProgress((s) => s.addActivity);
@@ -151,6 +154,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
                         className="h-full w-full object-cover"
                       />
                       {overlay && <AnalysisOverlay overlay={overlay} />}
+                      {regions && <MuscleRegions regions={regions} ativacao={exercise.ativacao} />}
                     </div>
                   ) : (
                     <AnalysisScene angle={exercise.anguloArticular} />
@@ -166,7 +170,10 @@ function Detail({ exercise }: { exercise: Exercise }) {
             <Legend swatch="bg-[#ef4444]" label="Músculo trabalhado" />
             <Legend swatch="bg-cta" label="Ângulo articular" />
             <Legend swatch="bg-primary" label="Linha de força" />
-            <span className="text-xs text-ink-3">Arraste o divisor para comparar.</span>
+            <span className="text-xs text-ink-3">
+              Arraste o divisor para comparar · passe o mouse (ou toque) nos músculos para ver a
+              ativação.
+            </span>
           </div>
         </div>
 

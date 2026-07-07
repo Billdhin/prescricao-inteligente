@@ -22,7 +22,10 @@ import * as React from "react";
 import { Logo } from "@/components/brand/Logo";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
+import { MuscleRegions } from "@/components/movement-lab/MuscleRegions";
 import { TutorialScene } from "@/components/tutorial/TutorialScene";
+import { muscleRegions } from "@/data/muscle-regions";
+import { getExercise } from "@/data/exercises";
 import { withBase } from "@/lib/utils";
 
 /* ---------------------------------- base --------------------------------- */
@@ -110,16 +113,19 @@ export function Landing() {
                 />
               }
               after={
-                <img
-                  src={withBase("/exercises/leg-press-45-analysis.webp")}
-                  alt="Análise biomecânica do leg press 45°"
-                  className="h-full w-full object-cover"
-                />
+                <div className="relative h-full w-full">
+                  <img
+                    src={withBase("/exercises/leg-press-45-analysis.webp")}
+                    alt="Análise biomecânica do leg press 45°"
+                    className="h-full w-full object-cover"
+                  />
+                  <HeroRegions />
+                </div>
               }
               className="aspect-[4/3]"
             />
             <p className="px-2 py-2 text-center text-xs text-ink-3">
-              Experimente: arraste o divisor e revele a análise biomecânica sobre a foto real.
+              Experimente: arraste o divisor e passe o mouse nos músculos para ver a ativação.
             </p>
           </Card>
         </div>
@@ -426,6 +432,15 @@ export function Landing() {
       </footer>
     </div>
   );
+}
+
+/* ----------- regiões musculares interativas da demo do hero --------------- */
+
+function HeroRegions() {
+  const regions = muscleRegions["leg-press-45"];
+  const ex = getExercise("leg-press-45");
+  if (!regions || !ex) return null;
+  return <MuscleRegions regions={regions} ativacao={ex.ativacao} />;
 }
 
 /* ----------------------- mock da justificativa (o "aha") ------------------ */

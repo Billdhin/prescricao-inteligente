@@ -81,6 +81,12 @@ main .grid > * {
   border-radius: 6px;
 }
 
+/* Regiões musculares (SVG esticado): o outline seguiria a geometria distorcida e
+   viraria um anel gigante — o próprio brilho branco da região é o foco visível. */
+.muscle-region:focus-visible {
+  outline: none;
+}
+
 ::selection {
   background: var(--primary-tint);
 }

@@ -43,8 +43,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 46,
-        y: 58,
+        x: 58,
+        y: 43,
         titulo: "Alinhamento do joelho",
         camadas: {
           resumo: "O joelho tende a acompanhar a linha do pé, sem colapsar para dentro.",
@@ -57,7 +57,7 @@ export const exercises: Exercise[] = [
       {
         id: "h2",
         x: 30,
-        y: 78,
+        y: 56,
         titulo: "Contato lombar",
         camadas: {
           resumo: "A lombar deve permanecer em contato com o encosto durante a descida.",
@@ -69,8 +69,8 @@ export const exercises: Exercise[] = [
       },
       {
         id: "h3",
-        x: 66,
-        y: 40,
+        x: 68,
+        y: 32,
         titulo: "Trajetória de força",
         camadas: {
           resumo: "A força se dirige ao longo do eixo da plataforma, distribuída nos dois pés.",
@@ -158,8 +158,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 40,
-        y: 40,
+        x: 56,
+        y: 46,
         titulo: "Inclinação de tronco",
         camadas: {
           resumo: "Certa inclinação do tronco é natural e varia com as proporções do indivíduo.",
@@ -171,8 +171,8 @@ export const exercises: Exercise[] = [
       },
       {
         id: "h2",
-        x: 55,
-        y: 60,
+        x: 44,
+        y: 62,
         titulo: "Trajetória do joelho",
         camadas: {
           resumo: "Os joelhos avançam sobre os pés, acompanhando a direção deles.",
@@ -259,8 +259,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 50,
-        y: 45,
+        x: 58,
+        y: 47,
         titulo: "Posição do ombro",
         camadas: {
           resumo: "As escápulas permanecem retraídas e deprimidas ('encaixadas').",
@@ -343,8 +343,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 55,
-        y: 55,
+        x: 45,
+        y: 63,
         titulo: "Amplitude no joelho",
         camadas: {
           resumo: "Trabalhe a amplitude confortável, evitando hiperextensão forçada.",
@@ -411,8 +411,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 55,
-        y: 60,
+        x: 48,
+        y: 50,
         titulo: "Estabilidade da pelve",
         camadas: {
           resumo: "Mantenha o quadril apoiado, sem 'levantar' para ajudar o movimento.",
@@ -478,8 +478,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 45,
-        y: 50,
+        x: 60,
+        y: 38,
         titulo: "Dobradiça de quadril",
         camadas: {
           resumo: "O movimento vem do quadril indo para trás, não da flexão da lombar.",
@@ -545,8 +545,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 50,
-        y: 50,
+        x: 52,
+        y: 44,
         titulo: "Posição no topo",
         camadas: {
           resumo: "Termine com quadril estendido e costelas para baixo, sem 'jogar' a lombar.",
@@ -612,8 +612,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 50,
-        y: 60,
+        x: 30,
+        y: 66,
         titulo: "Controle do joelho",
         camadas: {
           resumo: "O joelho da frente segue a linha do pé, sem colapsar para dentro.",
@@ -678,8 +678,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 50,
-        y: 40,
+        x: 52,
+        y: 46,
         titulo: "Início pela escápula",
         camadas: {
           resumo: "O movimento começa deprimindo/retraindo as escápulas, não puxando com o braço.",
@@ -744,8 +744,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 50,
-        y: 50,
+        x: 51,
+        y: 55,
         titulo: "Tronco estável",
         camadas: {
           resumo: "Mantenha o tronco firme, sem balançar para frente e para trás.",
@@ -810,8 +810,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 50,
-        y: 45,
+        x: 43,
+        y: 33,
         titulo: "Amplitude do ombro",
         camadas: {
           resumo: "Desça até uma amplitude confortável, sem forçar o ombro sensível.",
@@ -875,8 +875,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 50,
-        y: 55,
+        x: 45,
+        y: 30,
         titulo: "Cotovelo fixo",
         camadas: {
           resumo: "O cotovelo permanece junto ao tronco, sem 'jogar' para frente.",
@@ -940,8 +940,8 @@ export const exercises: Exercise[] = [
     hotspots: [
       {
         id: "h1",
-        x: 50,
-        y: 50,
+        x: 44,
+        y: 42,
         titulo: "Cotovelos junto ao corpo",
         camadas: {
           resumo: "Os cotovelos ficam junto ao tronco durante todo o movimento.",
