@@ -4,11 +4,11 @@ import type { MuscleRegion } from "@/data/muscle-regions";
 import { cn } from "@/lib/utils";
 
 /**
- * PRANCHA ANATÔMICA sobre a imagem de análise — estilo atlas: rótulos fixos na
- * margem direita, ligados por linhas-guia finas ao músculo exato. O rótulo já
- * traz nome, % de ativação e papel (ponto colorido). Hover/toque/foco no rótulo
- * (ou no próprio músculo) acende a região correspondente na foto.
- * Nada de tooltips flutuantes nem contornos sempre visíveis: uma linguagem só.
+ * Tags AR DENTRO da imagem de análise — nada de rótulos externos nem linhas:
+ * um ponto discreto sobre cada músculo; o músculo ativo mostra o chip de vidro
+ * (nome · %) ancorado nele mesmo. O músculo primário já abre selecionado, então
+ * a imagem se explica sozinha. Hover/toque em outro ponto troca a seleção;
+ * clique fixa. Teclado: Tab percorre os pontos, Enter fixa, Esc solta.
  */
 
 const PAPEL_META: Record<string, { label: string; color: string }> = {
@@ -17,9 +17,6 @@ const PAPEL_META: Record<string, { label: string; color: string }> = {
   estabilizador: { label: "estabilizador", color: "#14b8c4" },
 };
 
-const LABEL_X = 96; // % — coluna de rótulos na margem direita (lado da análise)
-const MIN_GAP = 12; // % — espaçamento vertical mínimo entre rótulos
-
 export function MuscleRegions({
   regions,
   ativacao,
@@ -27,40 +24,28 @@ export function MuscleRegions({
   regions: MuscleRegion[];
   ativacao: MuscleActivation[];
 }) {
-  const [active, setActive] = React.useState<string | null>(null);
+  const enriched = React.useMemo(
+    () =>
+      regions
+        .map((r) => {
+          const a = ativacao.find((x) => x.musculo === r.musculo);
+          return a ? { ...r, percentual: a.percentual, papel: a.papel } : null;
+        })
+        .filter(Boolean) as (MuscleRegion & { percentual: number; papel: string })[],
+    [regions, ativacao],
+  );
+
+  // O músculo de maior ativação (primário) abre selecionado por padrão.
+  const padrao = React.useMemo(
+    () => enriched.reduce((m, r) => (r.percentual > (m?.percentual ?? -1) ? r : m), enriched[0])?.musculo ?? null,
+    [enriched],
+  );
+
+  const [active, setActive] = React.useState<string | null>(padrao);
   const [pinned, setPinned] = React.useState(false);
+  React.useEffect(() => setActive(padrao), [padrao]);
 
-  // Junta região autorada + dados científicos do seed e calcula a posição dos
-  // rótulos: ordenados pela altura do músculo, com colisões resolvidas.
-  const items = React.useMemo(() => {
-    const enriched = regions
-      .map((r) => {
-        const a = ativacao.find((x) => x.musculo === r.musculo);
-        return a ? { ...r, percentual: a.percentual, papel: a.papel } : null;
-      })
-      .filter(Boolean) as (MuscleRegion & { percentual: number; papel: string })[];
-
-    // Ordena por altura; em alturas quase iguais, o músculo MAIS PRÓXIMO da
-    // coluna de rótulos vem primeiro — a linha mais longa passa por baixo da
-    // curta e as guias nunca se cruzam.
-    const sorted = [...enriched].sort((a, b) => {
-      const dy = a.shapes[0].cy - b.shapes[0].cy;
-      if (Math.abs(dy) < 7) return b.shapes[0].cx - a.shapes[0].cx;
-      return dy;
-    });
-    let prev = -Infinity;
-    const withY = sorted.map((r) => {
-      let y = Math.max(10, Math.min(88, r.shapes[0].cy));
-      if (y < prev + MIN_GAP) y = prev + MIN_GAP;
-      prev = y;
-      return { ...r, labelY: y };
-    });
-    // se estourou embaixo, empurra o bloco todo para cima
-    const overflow = prev - 92;
-    return overflow > 0 ? withY.map((r) => ({ ...r, labelY: r.labelY - overflow })) : withY;
-  }, [regions, ativacao]);
-
-  // Centro de massa dos músculos → foco da vinheta (escurece o fundo ao redor).
+  // Vinheta de foco no centroide das regiões (fundo recua, músculo salta).
   const focal = React.useMemo(() => {
     const pts = regions.flatMap((r) => r.shapes.map((s) => ({ x: s.cx, y: s.cy })));
     if (!pts.length) return { x: 50, y: 50 };
@@ -70,27 +55,34 @@ export function MuscleRegions({
     };
   }, [regions]);
 
-  if (items.length === 0) return null;
+  if (enriched.length === 0) return null;
 
   const enter = (m: string) => {
     if (!pinned) setActive(m);
   };
-  const leaveAll = () => {
-    if (!pinned) setActive(null);
+  const leave = () => {
+    if (!pinned) setActive(padrao);
   };
   const togglePin = (m: string) => {
     if (pinned && active === m) {
       setPinned(false);
-      setActive(null);
+      setActive(padrao);
     } else {
       setActive(m);
       setPinned(true);
     }
   };
 
+  const current = active ? enriched.find((r) => r.musculo === active) : null;
+  const anchor = current?.shapes[0];
+  const meta = current ? (PAPEL_META[current.papel] ?? PAPEL_META["sinergista"]) : null;
+  const above = anchor ? anchor.cy - anchor.ry > 20 : true;
+  const chipLeft = anchor ? Math.max(16, Math.min(84, anchor.cx)) : 50;
+  const chipTop = anchor ? (above ? anchor.cy - anchor.ry - 2 : anchor.cy + anchor.ry + 2) : 0;
+
   return (
     <>
-      {/* Vinheta de foco: escurece o fundo ao redor dos músculos */}
+      {/* Vinheta de foco */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -99,129 +91,114 @@ export function MuscleRegions({
         }}
       />
 
-      {/* Linhas-guia + regiões (SVG esticado; traços com espessura constante) */}
+      {/* Regiões (hover acende o contorno do músculo ativo) */}
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden
         className="absolute inset-0 h-full w-full"
       >
-        {items.map((r) => {
+        {enriched.map((r) => {
           const isActive = active === r.musculo;
-          const dimmed = active !== null && !isActive;
-          const a = r.shapes[0];
-          // Âncora na BORDA do músculo voltada ao rótulo (linhas curtas, sem
-          // atravessar a musculatura) — nunca no centro.
-          const ax = Math.min(a.cx + Math.max(a.rx, a.ry) * 0.8, LABEL_X - 4);
-          const ay = a.cy;
           return (
-            <g key={r.musculo} className="transition-opacity duration-150" opacity={dimmed ? 0.35 : 1}>
-              {/* linha-guia: sub-traço escuro p/ contraste + traço branco */}
-              <line
-                x1={LABEL_X}
-                y1={r.labelY}
-                x2={ax}
-                y2={ay}
-                stroke="rgba(2,6,23,0.45)"
-                strokeWidth={isActive ? 3 : 2.5}
-                vectorEffect="non-scaling-stroke"
-              />
-              <line
-                x1={LABEL_X}
-                y1={r.labelY}
-                x2={ax}
-                y2={ay}
-                stroke="#fff"
-                strokeOpacity={isActive ? 0.95 : 0.65}
-                strokeWidth={isActive ? 1.5 : 1}
-                vectorEffect="non-scaling-stroke"
-              />
-              <circle cx={ax} cy={ay} r={0.7} fill="#fff" fillOpacity={isActive ? 1 : 0.85} />
-              {/* região: invisível em repouso; acende no hover/foco */}
-              <g
-                onMouseEnter={() => enter(r.musculo)}
-                onMouseLeave={leaveAll}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  togglePin(r.musculo);
-                }}
-                className="cursor-pointer"
-                style={{ pointerEvents: "all" }}
-              >
-                {r.shapes.map((s, i) => (
-                  <ellipse
-                    key={i}
-                    cx={s.cx}
-                    cy={s.cy}
-                    rx={s.rx}
-                    ry={s.ry}
-                    transform={s.rot ? `rotate(${s.rot} ${s.cx} ${s.cy})` : undefined}
-                    vectorEffect="non-scaling-stroke"
-                    className="transition-[fill-opacity,stroke-opacity] duration-150"
-                    style={{
-                      fill: "#fff",
-                      fillOpacity: isActive ? 0.16 : 0,
-                      stroke: "#fff",
-                      strokeWidth: 1.5,
-                      strokeOpacity: isActive ? 0.9 : 0,
-                      filter: isActive ? "drop-shadow(0 0 4px rgba(255,255,255,0.6))" : undefined,
-                    }}
-                  />
-                ))}
-              </g>
+            <g
+              key={r.musculo}
+              onMouseEnter={() => enter(r.musculo)}
+              onMouseLeave={leave}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePin(r.musculo);
+              }}
+              className="cursor-pointer"
+              style={{ pointerEvents: "all" }}
+            >
+              {r.shapes.map((s, i) => (
+                <ellipse
+                  key={i}
+                  cx={s.cx}
+                  cy={s.cy}
+                  rx={s.rx}
+                  ry={s.ry}
+                  transform={s.rot ? `rotate(${s.rot} ${s.cx} ${s.cy})` : undefined}
+                  vectorEffect="non-scaling-stroke"
+                  className="transition-[fill-opacity,stroke-opacity] duration-200"
+                  style={{
+                    fill: "#fff",
+                    fillOpacity: isActive ? 0.13 : 0,
+                    stroke: "#fff",
+                    strokeWidth: 1.5,
+                    strokeOpacity: isActive ? 0.85 : 0,
+                    filter: isActive ? "drop-shadow(0 0 4px rgba(255,255,255,0.55))" : undefined,
+                  }}
+                />
+              ))}
             </g>
           );
         })}
       </svg>
 
-      {/* Rótulos (HTML: tipografia nítida + alvos de toque/teclado) */}
-      {items.map((r) => {
+      {/* Pontos AR sobre cada músculo */}
+      {enriched.map((r) => {
         const isActive = active === r.musculo;
-        const dimmed = active !== null && !isActive;
-        const meta = PAPEL_META[r.papel] ?? PAPEL_META["sinergista"];
-        return (
+        const m = PAPEL_META[r.papel] ?? PAPEL_META["sinergista"];
+        return r.shapes.map((s, i) => (
           <button
-            key={r.musculo}
+            key={`${r.musculo}-${i}`}
             type="button"
-            aria-label={`${r.musculo}: ${r.percentual}% de ativação estimada, ${meta.label}`}
-            aria-pressed={pinned && isActive}
+            tabIndex={i === 0 ? 0 : -1}
+            aria-hidden={i > 0 || undefined}
+            aria-label={
+              i === 0 ? `${r.musculo}: ${r.percentual}% de ativação estimada, ${m.label}` : undefined
+            }
+            aria-pressed={i === 0 ? pinned && isActive : undefined}
             onMouseEnter={() => enter(r.musculo)}
-            onMouseLeave={leaveAll}
+            onMouseLeave={leave}
             onFocus={() => setActive(r.musculo)}
             onBlur={() => {
               setPinned(false);
-              setActive(null);
+              setActive(padrao);
             }}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               togglePin(r.musculo);
             }}
-            className={cn(
-              "absolute z-20 flex max-w-[44%] -translate-y-1/2 items-center gap-1.5 rounded-md",
-              "border px-2 py-1 text-left backdrop-blur-sm transition-all duration-150",
-              isActive
-                ? "border-white/50 bg-slate-900/85 shadow-elevated"
-                : "border-white/15 bg-slate-900/65",
-              dimmed && "opacity-50",
-            )}
-            style={{ right: "1.5%", top: `${r.labelY}%` }}
+            className="absolute z-20 grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full outline-none"
+            style={{ left: `${s.cx}%`, top: `${s.cy}%` }}
           >
             <span
-              aria-hidden
-              className="h-1.5 w-1.5 shrink-0 rounded-full"
-              style={{ background: meta.color }}
+              className={cn(
+                "block rounded-full ring-2 ring-white/95 shadow-[0_1px_4px_rgba(0,0,0,0.45)] transition-transform duration-150",
+                isActive ? "h-3 w-3 scale-110" : "h-2.5 w-2.5",
+              )}
+              style={{ background: m.color }}
             />
-            <span className="truncate text-[10.5px] font-medium leading-tight text-white/95">
-              {r.musculo}
-            </span>
-            <span className="tabular shrink-0 text-[11px] font-bold leading-tight text-white">
-              {r.percentual}%
-            </span>
           </button>
-        );
+        ));
       })}
+
+      {/* Chip do músculo ativo — ancorado NO próprio músculo */}
+      {current && anchor && meta && (
+        <div
+          role="status"
+          className="pointer-events-none absolute z-30 transition-all duration-200"
+          style={{
+            left: `${chipLeft}%`,
+            top: `${chipTop}%`,
+            transform: `translate(-50%, ${above ? "-100%" : "0"})`,
+          }}
+        >
+          <div className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/20 bg-slate-900/80 px-2.5 py-1.5 shadow-elevated backdrop-blur-sm">
+            <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: meta.color }} />
+            <span className="text-xs font-semibold text-white">{current.musculo}</span>
+            <span className="tabular text-sm font-bold text-white">{current.percentual}%</span>
+          </div>
+          <div className="mt-0.5 text-center text-[9.5px] font-semibold uppercase tracking-wider text-white/85 [text-shadow:0_1px_2px_rgba(0,0,0,0.7)]">
+            {meta.label}
+          </div>
+        </div>
+      )}
     </>
   );
 }

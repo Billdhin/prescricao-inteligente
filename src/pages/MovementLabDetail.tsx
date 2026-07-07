@@ -171,8 +171,8 @@ function Detail({ exercise }: { exercise: Exercise }) {
             <Legend swatch="bg-cta" label="Ângulo articular" />
             <Legend swatch="bg-primary" label="Linha de força" />
             <span className="text-xs text-ink-3">
-              Arraste o divisor para comparar · toque nos rótulos (ou nos músculos) para destacar a
-              região · os anéis abrem a análise em camadas.
+              Arraste o divisor para comparar · toque nos pontos coloridos para ver cada músculo ·
+              os anéis brancos abrem a análise em camadas.
             </span>
           </div>
         </div>
