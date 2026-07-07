@@ -122,7 +122,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
           </div>
         </div>
         <div className="mt-5 flex flex-wrap gap-2">
-          <Link to="/movement-lab" className={buttonClasses("outline")}>
+          <Link to={`/comparador?base=${exercise.slug}`} className={buttonClasses("outline")}>
             <Repeat2 className="h-4 w-4" /> Comparar com outro exercício
           </Link>
           <Link to="/gps" className={buttonClasses("outline")}>
@@ -460,9 +460,11 @@ function Bullets({
 }
 
 function Comparador({ exercise }: { exercise: Exercise }) {
-  const other =
-    exercises.find((e) => e.slug !== exercise.slug && e.grupoMuscular === exercise.grupoMuscular) ??
-    exercises.find((e) => e.slug !== exercise.slug)!;
+  const candidatos = exercises.filter((e) => e.slug !== exercise.slug);
+  const inicial =
+    candidatos.find((e) => e.grupoMuscular === exercise.grupoMuscular) ?? candidatos[0];
+  const [otherSlug, setOtherSlug] = React.useState(inicial.slug);
+  const other = exercises.find((e) => e.slug === otherSlug) ?? inicial;
   const metricPair = (nome: string, fallback = 50) => ({
     a: exercise.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor ?? fallback,
     b: other.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor ?? fallback,
@@ -480,10 +482,23 @@ function Comparador({ exercise }: { exercise: Exercise }) {
         </span>
         <h3 className="font-display text-lg font-bold text-ink">Comparador</h3>
       </div>
-      <div className="mb-3 flex items-center justify-between gap-2 text-sm">
-        <span className="font-semibold text-primary">{exercise.nome}</span>
+      <div className="mb-3 flex items-center gap-2 text-sm">
+        <span className="min-w-0 flex-1 truncate font-semibold text-primary">{exercise.nome}</span>
         <span className="rounded-full bg-surface-soft px-2 py-0.5 text-xs font-bold text-ink-2">VS</span>
-        <span className="font-semibold text-analysis">{other.nome}</span>
+        <label className="min-w-0 flex-1">
+          <span className="sr-only">Comparar com</span>
+          <select
+            value={otherSlug}
+            onChange={(e) => setOtherSlug(e.target.value)}
+            className="h-9 w-full rounded-control border border-border bg-surface px-2 text-sm font-semibold text-analysis outline-none focus-visible:border-primary/50"
+          >
+            {candidatos.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.nome}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <div className="space-y-4">
         {rows.map((r) => (
@@ -500,6 +515,12 @@ function Comparador({ exercise }: { exercise: Exercise }) {
           </div>
         ))}
       </div>
+      <Link
+        to={`/comparador?base=${exercise.slug}`}
+        className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+      >
+        Comparar até 3 no comparador completo <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
     </Card>
   );
 }

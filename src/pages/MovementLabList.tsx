@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Lock, SlidersHorizontal, Sparkles, FlaskConical } from "lucide-react";
-import { Card, Pill, SectionHeader } from "@/components/ui/primitives";
+import { ArrowRight, Lock, SlidersHorizontal, Sparkles, FlaskConical, GitCompare } from "lucide-react";
+import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { MuscleThumb, activationFromExercise } from "@/components/anatomy/MuscleMap";
 import { exercises } from "@/data/exercises";
 import { useUser, isPremiumUnlocked } from "@/lib/store";
@@ -42,6 +42,11 @@ export function MovementLabList() {
         icon={<FlaskConical className="h-3 w-3" />}
         title="Laboratório Visual"
         subtitle="Compare a execução do movimento com uma análise biomecânica lado a lado. Explore hotspots interativos para aprofundar da observação prática à evidência."
+        right={
+          <Link to="/comparador" className={buttonClasses("secondary")}>
+            <GitCompare className="h-4 w-4" /> Comparador
+          </Link>
+        }
       />
 
       {/* Filtros */}

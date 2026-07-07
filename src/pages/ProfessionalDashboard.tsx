@@ -173,7 +173,7 @@ export function ProfessionalDashboard() {
             )}
             aria-hidden={!premium}
           >
-            <PremiumCard icon={<GitCompare className="h-4 w-4" />} tone="primary" title="Comparador avançado" sub="Ranqueie variações por eficiência" to="/gps">
+            <PremiumCard icon={<GitCompare className="h-4 w-4" />} tone="primary" title="Comparador avançado" sub="Ranqueie variações por eficiência" to="/comparador">
               <div className="space-y-2.5">
                 {["agachamento-livre", "leg-press-45", "cadeira-extensora"]
                   .map((s) => exercises.find((e) => e.slug === s))

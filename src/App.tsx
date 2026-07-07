@@ -19,6 +19,7 @@ import { Alunos } from "@/pages/Alunos";
 import { AlunoDetail } from "@/pages/AlunoDetail";
 import { Avaliacoes } from "@/pages/Avaliacoes";
 import { Protocolos } from "@/pages/Protocolos";
+import { Comparador } from "@/pages/Comparador";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/gps" element={<Gps />} />
           <Route path="/movement-lab" element={<MovementLabList />} />
           <Route path="/movement-lab/:slug" element={<MovementLabDetail />} />
+          <Route path="/comparador" element={<Comparador />} />
           <Route path="/cases" element={<CasesList />} />
           <Route path="/cases/:slug" element={<CaseSolve />} />
           <Route path="/alunos" element={<Alunos />} />
