@@ -229,6 +229,21 @@ export const useAlunos = create<AlunosState>()(
           ),
         })),
     }),
-    { name: "pi-alunos", version: 1 },
+    // v2: seed passou a incluir a jornada (grupoEspecial/fase) em alguns alunos.
+    // migrate: em versões antigas (dados mock/demo), re-semeia para trazer a jornada.
+    {
+      name: "pi-alunos",
+      version: 2,
+      migrate: (persisted, version) => {
+        if (version < 2) {
+          return {
+            alunos: seedAlunos,
+            avaliacoes: seedAvaliacoes,
+            prescricoes: seedPrescricoes,
+          } as unknown as AlunosState;
+        }
+        return persisted as AlunosState;
+      },
+    },
   ),
 );

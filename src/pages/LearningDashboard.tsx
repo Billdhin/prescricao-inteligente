@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   Route as RouteIcon,
   PlayCircle,
+  HeartPulse,
 } from "lucide-react";
 import { Card, Pill, ScoreRing, Progress, buttonClasses } from "@/components/ui/primitives";
 import {
@@ -233,6 +234,26 @@ export function LearningDashboard() {
           />
         </div>
       </section>
+
+      {/* Grupos Especiais (educacional) */}
+      <Link
+        to="/special-groups"
+        className="flex flex-wrap items-center gap-4 rounded-card border border-border bg-surface p-5 shadow-soft transition-colors hover:bg-surface-soft"
+      >
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[#e0f7f9] text-analysis">
+          <HeartPulse className="h-6 w-6" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-display text-lg font-bold text-ink">Grupos Especiais e Modalidades</h3>
+          <p className="text-sm text-ink-2">
+            Aprenda a conduzir diferentes perfis — obesidade, hipertensão, idosos, dor — por
+            modalidades, parâmetros e fases de progressão. Treine também nos casos práticos.
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+          Explorar <ArrowRight className="h-4 w-4" />
+        </span>
+      </Link>
 
       {/* --------------------- Área do Profissional (premium) ------------------ */}
       <section>

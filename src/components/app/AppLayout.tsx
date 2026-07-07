@@ -23,6 +23,7 @@ import {
   Users,
   Briefcase,
   GraduationCap,
+  HeartPulse,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
@@ -44,6 +45,7 @@ const navByMode: Record<AppMode, { primary: NavItem[]; secondary: NavItem[] }> =
     primary: [
       { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
       { to: "/alunos", label: "Alunos", icon: Users },
+      { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
       { to: "/gps", label: "GPS da Prescrição", icon: Navigation },
       { to: "/assessments", label: "Avaliações", icon: BarChart3 },
       { to: "/protocols", label: "Protocolos", icon: ClipboardList },
@@ -57,6 +59,7 @@ const navByMode: Record<AppMode, { primary: NavItem[]; secondary: NavItem[] }> =
       { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
       { to: "/tracks", label: "Trilhas", icon: RouteIcon },
       { to: "/cases", label: "Casos", icon: BookOpen },
+      { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
       { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
       { to: "/library", label: "Biblioteca", icon: Library },
     ],

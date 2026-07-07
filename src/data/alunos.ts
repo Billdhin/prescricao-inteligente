@@ -26,6 +26,18 @@ export interface Aluno {
   criadoEm: number;
   ultimaAvaliacaoEm?: number;
   proximaReavaliacaoEm?: number;
+
+  /* ---- Jornada de prescrição (grupos especiais) — todos opcionais ---- */
+  /** slug do grupo especial principal (ver src/data/specialGroups.ts) */
+  grupoEspecial?: string;
+  condicoesAtencao?: string;
+  /** ids de modalidades (ver src/data/modalities.ts) */
+  modalidadesPreferenciais?: string[];
+  modalidadesEvitadas?: string[];
+  /** ids de monitoringParameters prioritários */
+  parametrosPrioritarios?: string[];
+  faseJornada?: 1 | 2 | 3 | 4;
+  criterioProgressao?: string;
 }
 
 export interface Avaliacao {
@@ -58,6 +70,21 @@ export interface Prescricao {
   itens: PrescricaoItem[];
   observacoes?: string;
   status: "ativa" | "arquivada";
+
+  /* ---- Camada orientada por jornada (opcional; estrutura pronta p/ evoluir) ---- */
+  grupoEspecial?: string;
+  /** id de modalidade principal / secundárias */
+  modalidadePrincipal?: string;
+  modalidadesSecundarias?: string[];
+  faseJornada?: number;
+  frequenciaSemanal?: string;
+  estrutura?: { aquecimento?: string; principal?: string; voltaCalma?: string };
+  /** ids de monitoringParameters a controlar */
+  parametrosControle?: string[];
+  criteriosProgressao?: string[];
+  criteriosRegressao?: string[];
+  /** explicação do raciocínio (fisiológico/prático) da prescrição */
+  raciocinio?: string;
 }
 
 const DIA = 86_400_000;
@@ -89,6 +116,11 @@ export const seedAlunos: Aluno[] = [
     criadoEm: dias(-120),
     ultimaAvaliacaoEm: dias(-20),
     proximaReavaliacaoEm: dias(40),
+    grupoEspecial: "dor-lombar-inespecifica",
+    faseJornada: 2,
+    modalidadesPreferenciais: ["m-musculacao", "m-bike", "m-mobilidade"],
+    parametrosPrioritarios: ["p-dor", "p-rpe", "p-adesao"],
+    criterioProgressao: "Tolera carga leve sem piora da dor por 2–3 semanas.",
   },
   {
     id: "al2",
@@ -105,6 +137,11 @@ export const seedAlunos: Aluno[] = [
     criadoEm: dias(-90),
     ultimaAvaliacaoEm: dias(-75),
     proximaReavaliacaoEm: dias(-15), // reavaliação vencida → precisa de atenção
+    grupoEspecial: "osteoartrite-joelho",
+    faseJornada: 1,
+    modalidadesPreferenciais: ["m-musculacao", "m-bike"],
+    parametrosPrioritarios: ["p-dor", "p-rpe"],
+    criterioProgressao: "Força sem dor crescente e sem edema pós-sessão.",
   },
   {
     id: "al3",

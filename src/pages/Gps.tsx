@@ -35,6 +35,9 @@ import {
   FREE_GPS_LIMIT,
   uid,
 } from "@/lib/store";
+import { getSpecialGroup, AVISO_SEGURANCA, type SpecialGroup, type JourneyPhase } from "@/data/specialGroups";
+import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
+import { HeartPulse, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
@@ -71,6 +74,9 @@ export function Gps() {
   const { alunos, addPrescricao } = useAlunos();
   const alunoId = params.get("aluno");
   const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
+  const grupo = aluno?.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
+  const faseNum = aluno?.faseJornada ?? 1;
+  const faseObj = grupo ? grupo.fases[faseNum - 1] ?? grupo.fases[0] : undefined;
 
   React.useEffect(() => {
     if (!aluno) return;
@@ -90,10 +96,18 @@ export function Gps() {
       id: uid(),
       alunoId: aluno.id,
       data: Date.now(),
-      titulo: `${answers.objetivo} · ${answers.grupoMuscular}`,
+      titulo: grupo ? `${grupo.nome} · Fase ${faseNum}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
       answers,
       itens: results.slice(0, 3).map((r) => ({ slug: r.exercise.slug, score: r.score })),
       status: "ativa",
+      grupoEspecial: grupo?.slug,
+      modalidadePrincipal: faseObj?.modalidades[0],
+      modalidadesSecundarias: faseObj?.modalidades.slice(1),
+      faseJornada: grupo ? faseNum : undefined,
+      parametrosControle: faseObj?.parametros,
+      criteriosProgressao: faseObj?.criteriosAvancar,
+      criteriosRegressao: faseObj?.criteriosRegredir,
+      raciocinio: faseObj?.justificativa,
     });
     navigate(`/alunos/${aluno.id}`);
   };
@@ -186,6 +200,9 @@ export function Gps() {
           setCompare={setCompare}
           alunoNome={aluno?.nome}
           onSalvar={aluno ? salvarPrescricao : undefined}
+          grupo={grupo}
+          faseObj={faseObj}
+          faseNum={faseNum}
         />
       )}
 
@@ -393,6 +410,9 @@ function Results({
   setCompare,
   alunoNome,
   onSalvar,
+  grupo,
+  faseObj,
+  faseNum,
 }: {
   answers: GpsAnswers;
   results: Recommendation[];
@@ -402,6 +422,9 @@ function Results({
   setCompare: React.Dispatch<React.SetStateAction<string[]>>;
   alunoNome?: string;
   onSalvar?: () => void;
+  grupo?: SpecialGroup;
+  faseObj?: JourneyPhase;
+  faseNum?: number;
 }) {
   const best = results[0];
   const others = results.slice(1);
@@ -412,6 +435,8 @@ function Results({
 
   return (
     <div className="space-y-6">
+      {grupo && faseObj && <JourneyAwareGpsPanel grupo={grupo} fase={faseObj} faseNum={faseNum ?? 1} />}
+
       {onSalvar && alunoNome && (
         <Card className="flex flex-wrap items-center gap-3 border-success/30 bg-[#e7f8ed]/50 p-4">
           <UserCheck className="h-5 w-5 shrink-0 text-success" />
@@ -545,6 +570,69 @@ function Results({
       <Comparador compare={compare} setCompare={setCompare} />
     </div>
   );
+}
+
+function JourneyAwareGpsPanel({
+  grupo,
+  fase,
+  faseNum,
+}: {
+  grupo: SpecialGroup;
+  fase: JourneyPhase;
+  faseNum: number;
+}) {
+  return (
+    <Card className="overflow-hidden border-analysis/30">
+      <div className="flex items-center gap-2 bg-[#e0f7f9] px-5 py-2 text-xs font-bold uppercase tracking-wider text-analysis">
+        <HeartPulse className="h-3.5 w-3.5" /> Estratégia orientada pela jornada
+      </div>
+      <div className="space-y-4 p-5 md:p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-display text-lg font-bold text-ink">{grupo.nome}</h3>
+          <Pill tone="primary">
+            Fase {faseNum} · {fase.nome}
+          </Pill>
+        </div>
+        <p className="text-sm text-ink-2">{fase.objetivo}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <RotuloG>Modalidades prioritárias</RotuloG>
+            <ModalidadePills ids={fase.modalidades} />
+          </div>
+          <div>
+            <RotuloG>Parâmetros a monitorar</RotuloG>
+            <ParametroPills ids={fase.parametros} />
+          </div>
+        </div>
+        <CriteriosLista titulo="Critérios para progredir" itens={fase.criteriosAvancar} tipo="avancar" />
+        <div className="rounded-xl border border-warning/30 bg-[#fef4e2]/40 p-3">
+          <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-warning">
+            <ShieldAlert className="h-3.5 w-3.5" /> Cautelas
+          </div>
+          <ul className="space-y-1">
+            {grupo.riscosCautelas.slice(0, 3).map((c) => (
+              <li key={c} className="flex gap-2 text-sm text-ink-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
+                {c}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-xl bg-surface-soft p-3 text-sm text-ink-2">
+          <span className="font-semibold text-ink">Justificativa: </span>
+          {fase.justificativa}
+        </div>
+        <p className="text-xs text-ink-3">{AVISO_SEGURANCA}</p>
+        <p className="text-xs text-ink-3">
+          Abaixo, exercícios úteis dentro dessas modalidades — ranqueados para o perfil do aluno.
+        </p>
+      </div>
+    </Card>
+  );
+}
+
+function RotuloG({ children }: { children: React.ReactNode }) {
+  return <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">{children}</div>;
 }
 
 function Comparador({

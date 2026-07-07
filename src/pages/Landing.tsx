@@ -59,8 +59,10 @@ export function Landing() {
               decoreba.
             </h1>
             <p className="mt-5 max-w-lg text-lg text-ink-2">
-              Uma plataforma visual e prática para estudantes e profissionais de Educação Física
-              entenderem biomecânica, fisiologia e tomada de decisão no treinamento.
+              Não é um atlas de exercícios nem um gerador genérico de treino. É uma plataforma para
+              <span className="font-semibold text-ink"> raciocinar a prescrição</span> — unindo
+              biomecânica, fisiologia, grupos especiais, modalidades e progressão — e decidir como
+              treinar diferentes pessoas, em diferentes contextos.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/dashboard" className={buttonClasses("primary")}>
@@ -128,6 +130,33 @@ export function Landing() {
           <SolCard icon={<FlaskConical className="h-5 w-5" />} eyebrow="A vitrine" title="Laboratório Visual" text="Compare execução e análise biomecânica lado a lado." />
           <SolCard icon={<BookOpen className="h-5 w-5" />} eyebrow="A aprendizagem" title="Casos práticos" text="Situações reais que treinam o seu julgamento clínico-esportivo." />
         </div>
+      </Section>
+
+      {/* Da avaliação à progressão */}
+      <Section id="jornada" className="text-center">
+        <Pill tone="analysis" className="mb-3">Da avaliação à progressão</Pill>
+        <h2 className="font-display text-3xl font-bold text-ink">Um fluxo de decisão, não um treino avulso</h2>
+        <p className="mx-auto mt-2 max-w-2xl text-ink-2">
+          Da avaliação do aluno até a reavaliação — passando por grupo especial, modalidade,
+          parâmetros e progressão. É assim que se conduz diferentes perfis com segurança.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+          {["Perfil do aluno", "Grupo especial", "Modalidade", "Parâmetros", "Prescrição", "Progressão", "Reavaliação"].map(
+            (step, i, arr) => (
+              <span key={step} className="flex items-center gap-2">
+                <span className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink shadow-soft">
+                  {step}
+                </span>
+                {i < arr.length - 1 && <ArrowRight className="h-4 w-4 text-ink-3" />}
+              </span>
+            ),
+          )}
+        </div>
+        <p className="mx-auto mt-6 max-w-2xl rounded-card border border-border bg-surface p-4 text-sm text-ink-2">
+          Exemplo real: “Como treino alguém com obesidade grave que caminha pouco? Se começar na
+          hidroginástica, o que monitoro sem frequência cardíaca? Quando troco para caminhada ou
+          musculação?” — a plataforma apoia esse raciocínio, passo a passo.
+        </p>
       </Section>
 
       {/* GPS exemplo */}

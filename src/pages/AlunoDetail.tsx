@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
+  ArrowRight,
   Navigation,
   CalendarPlus,
   Target,
@@ -11,11 +12,15 @@ import {
   X,
   Clock,
   FlaskConical,
+  HeartPulse,
+  Route as RouteIcon,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, uid } from "@/lib/store";
 import { exercises } from "@/data/exercises";
-import type { Avaliacao } from "@/data/alunos";
+import type { Aluno, Avaliacao } from "@/data/alunos";
+import { getSpecialGroup } from "@/data/specialGroups";
+import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
@@ -26,7 +31,7 @@ const nomeEx = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ??
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, addAvaliacao } = useAlunos();
+  const { alunos, avaliacoes, prescricoes, addAvaliacao, updateAluno } = useAlunos();
   const [avaliar, setAvaliar] = React.useState(false);
 
   const aluno = alunos.find((a) => a.id === id);
@@ -90,6 +95,9 @@ export function AlunoDetail() {
           </div>
         </div>
       </Card>
+
+      {/* Jornada de Prescrição */}
+      <JornadaCard aluno={aluno} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Coluna principal: evolução + avaliações */}
@@ -211,6 +219,12 @@ export function AlunoDetail() {
                       ))}
                     </ul>
                     {p.observacoes && <p className="mt-2 text-xs text-ink-2">{p.observacoes}</p>}
+                    {p.raciocinio && (
+                      <p className="mt-1 text-xs text-ink-3">
+                        <span className="font-semibold">Raciocínio: </span>
+                        {p.raciocinio}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -231,6 +245,113 @@ export function AlunoDetail() {
       )}
     </div>
   );
+}
+
+function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 4) => void }) {
+  const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
+
+  if (!grupo) {
+    return (
+      <Card className="flex flex-wrap items-center gap-3 p-5">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-tint text-primary">
+          <HeartPulse className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-display font-bold text-ink">Jornada de Prescrição</div>
+          <p className="text-sm text-ink-2">
+            Associe um grupo especial para guiar modalidades, parâmetros e progressão deste aluno.
+          </p>
+        </div>
+        <Link to="/special-groups" className={buttonClasses("secondary", "sm")}>
+          Escolher grupo <ArrowRight className="h-4 w-4" />
+        </Link>
+      </Card>
+    );
+  }
+
+  const fase = aluno.faseJornada ?? 1;
+  const faseObj = grupo.fases[fase - 1] ?? grupo.fases[0];
+  const modalidades = aluno.modalidadesPreferenciais?.length
+    ? aluno.modalidadesPreferenciais
+    : grupo.modalidadesIndicadas;
+  const parametros = aluno.parametrosPrioritarios?.length
+    ? aluno.parametrosPrioritarios
+    : faseObj.parametros;
+
+  return (
+    <Card className="p-5 md:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+            <RouteIcon className="h-4 w-4" />
+          </span>
+          <h2 className="font-display text-lg font-bold text-ink">Jornada de Prescrição</h2>
+        </div>
+        <Link to={`/special-groups/${grupo.slug}`} className="text-sm font-semibold text-primary hover:underline">
+          Ver jornada completa
+        </Link>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-3">
+          <div>
+            <RotuloJ>Grupo especial</RotuloJ>
+            <div className="font-semibold text-ink">{grupo.nome}</div>
+          </div>
+          <div>
+            <RotuloJ>Fase atual</RotuloJ>
+            <div className="mb-2 flex gap-1.5">
+              {([1, 2, 3, 4] as const).map((n) => (
+                <button
+                  key={n}
+                  onClick={() => onFase(n)}
+                  aria-label={`Definir fase ${n}`}
+                  className={cn(
+                    "h-8 w-8 rounded-full text-sm font-bold transition-colors",
+                    n === fase ? "gradient-brand text-white" : "bg-surface-soft text-ink-2 hover:bg-primary-tint",
+                  )}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            <div className="text-sm font-semibold text-ink">{faseObj.nome}</div>
+            <p className="text-sm text-ink-2">{faseObj.objetivo}</p>
+          </div>
+          <div>
+            <RotuloJ>Modalidades recomendadas</RotuloJ>
+            <ModalidadePills ids={modalidades} />
+          </div>
+          <div>
+            <RotuloJ>Parâmetros a acompanhar</RotuloJ>
+            <ParametroPills ids={parametros} />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <CriteriosLista titulo="Próximos critérios para avançar" itens={faseObj.criteriosAvancar} tipo="avancar" />
+          <div className="rounded-xl border border-warning/30 bg-[#fef4e2]/40 p-3">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-warning">Cautelas</div>
+            <ul className="space-y-1">
+              {grupo.riscosCautelas.slice(0, 3).map((c) => (
+                <li key={c} className="flex gap-2 text-sm text-ink-2">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <Link to={`/gps?aluno=${aluno.id}`} className={cn(buttonClasses("primary"), "w-full")}>
+            <Navigation className="h-4 w-4" /> Gerar plano orientado por jornada
+          </Link>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function RotuloJ({ children }: { children: React.ReactNode }) {
+  return <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">{children}</div>;
 }
 
 function Medida({ label, value }: { label: string; value: string }) {

@@ -261,6 +261,176 @@ export const cases: PracticeCase[] = [
       },
     ],
   },
+
+  /* --------------------------- Grupos especiais --------------------------- */
+  {
+    id: "c7",
+    slug: "caso-obesidade-grave-inicio",
+    titulo: "Obesidade grave querendo emagrecer",
+    tema: "Grupos especiais",
+    dificuldade: "Iniciante",
+    premium: false,
+    contexto:
+      "Aluno com obesidade grave, iniciante, relata dor no joelho ao caminhar por mais de 8 minutos, quer emagrecer e tem baixa autoconfiança. Não há como medir a frequência cardíaca com precisão.",
+    pergunta: "Qual seria a estratégia inicial mais prudente?",
+    melhorOpcaoId: "b",
+    trustLevel: "cuidado de segurança",
+    opcoes: [
+      {
+        id: "a",
+        texto: "Caminhada de 30 min em ritmo forte para acelerar a perda de peso",
+        correta: false,
+        analise:
+          "Impacto e volume altos logo no início tendem a agravar a dor no joelho e a minar a adesão de quem já tem baixa autoconfiança.",
+        criterio: "Ignora a tolerância ao impacto, a dor articular e o risco de abandono.",
+        lembrar: "Nas fases iniciais, completar a sessão e voltar costuma valer mais que intensidade.",
+      },
+      {
+        id: "b",
+        texto: "Começar com baixo impacto (hidroginástica ou bike), sessões curtas, esforço leve por PSE/teste da fala",
+        correta: true,
+        analise:
+          "Baixo impacto reduz a sobrecarga do joelho e a dispneia; sessões curtas e frequentes favorecem a adesão. Sem FC confiável, PSE e teste da fala guiam bem a intensidade.",
+        criterio: "Considera dor articular, baixa tolerância, adesão e parâmetros viáveis.",
+        lembrar: "Quando a FC não é confiável, parâmetros perceptivos apoiam a decisão de forma prudente.",
+      },
+      {
+        id: "c",
+        texto: "Só musculação pesada, evitando qualquer aeróbio",
+        correta: false,
+        analise:
+          "Força é importante, mas abrir mão do componente aeróbio de baixo impacto tende a deixar uma lacuna relevante para este objetivo e perfil.",
+        criterio: "Ignora a combinação de estímulos e a construção gradual de capacidade.",
+        lembrar: "Força e aeróbio de baixo impacto costumam se complementar nas fases iniciais.",
+      },
+    ],
+  },
+  {
+    id: "c8",
+    slug: "caso-hipertensao-monitoramento",
+    titulo: "Hipertenso e o monitoramento na força",
+    tema: "Grupos especiais",
+    dificuldade: "Intermediário",
+    premium: true,
+    contexto:
+      "Aluno com hipertensão em uso de medicação que altera a resposta de frequência cardíaca. Quer treinar força. Você tem PSE e teste da fala disponíveis; FC pouco confiável.",
+    pergunta: "Como conduzir e monitorar de forma mais prudente?",
+    melhorOpcaoId: "a",
+    trustLevel: "tendência prática",
+    opcoes: [
+      {
+        id: "a",
+        texto: "Força em máquinas com respiração contínua (sem apneia) e intensidade guiada por PSE",
+        correta: true,
+        analise:
+          "Evitar a manobra de Valsalva reduz picos de esforço; com FC pouco confiável sob medicação, a PSE tende a ser um guia mais prático de intensidade.",
+        criterio: "Considera a apneia como risco e a limitação da FC neste contexto.",
+        lembrar: "Sob certas medicações, a FC perde valor como guia — parâmetros perceptivos ajudam.",
+      },
+      {
+        id: "b",
+        texto: "Guiar tudo pela frequência cardíaca-alvo calculada por fórmula",
+        correta: false,
+        analise:
+          "A resposta de FC pode estar alterada pela medicação, tornando a meta calculada pouco confiável para dosar o esforço.",
+        criterio: "Ignora o efeito da medicação sobre a FC.",
+        lembrar: "Fórmulas de FC são estimativas — o contexto do aluno pode invalidá-las.",
+      },
+      {
+        id: "c",
+        texto: "Permitir séries até a falha com apneia para maximizar força",
+        correta: false,
+        analise:
+          "A apneia (Valsalva) tende a gerar picos de esforço pouco prudentes neste perfil.",
+        criterio: "Ignora a cautela com a respiração em hipertensos.",
+        lembrar: "Respiração contínua é um cuidado simples e relevante na força.",
+      },
+    ],
+  },
+  {
+    id: "c9",
+    slug: "caso-idoso-progressao",
+    titulo: "Idoso destreinado: por onde começar",
+    tema: "Grupos especiais",
+    dificuldade: "Intermediário",
+    premium: true,
+    contexto:
+      "Idoso destreinado, com receio de cair, quer 'ficar mais firme'. Boa disposição, sem dor relevante. Sala com máquinas e espaço para equilíbrio com apoio.",
+    pergunta: "Qual prioridade inicial tende a ser mais adequada?",
+    melhorOpcaoId: "c",
+    trustLevel: "regra pedagógica",
+    opcoes: [
+      {
+        id: "a",
+        texto: "Somente caminhada, por ser mais segura",
+        correta: false,
+        analise:
+          "Caminhada ajuda a aptidão, mas isoladamente tende a não resolver a perda de força e o risco de queda deste perfil.",
+        criterio: "Ignora a centralidade da força e do equilíbrio para autonomia.",
+        lembrar: "Em idosos, força e equilíbrio costumam ser prioridade tão ou mais que o aeróbio.",
+      },
+      {
+        id: "b",
+        texto: "Exercícios instáveis avançados para desafiar o equilíbrio desde o início",
+        correta: false,
+        analise:
+          "Desafios de equilíbrio sem base e sem apoio tendem a aumentar o risco de queda no início.",
+        criterio: "Ignora a progressão segura do equilíbrio.",
+        lembrar: "Equilíbrio também se progride — começa com apoio e evolui gradualmente.",
+      },
+      {
+        id: "c",
+        texto: "Força em máquinas guiadas + equilíbrio com apoio, progressão lenta",
+        correta: true,
+        analise:
+          "Força guiada e equilíbrio com apoio constroem a base de função e reduzem o risco de queda, respeitando a recuperação mais lenta.",
+        criterio: "Considera segurança, função e prevenção de quedas.",
+        lembrar: "Base de força e equilíbrio primeiro; desafios maiores vêm depois.",
+      },
+    ],
+  },
+  {
+    id: "c10",
+    slug: "caso-osteoartrite-modalidade",
+    titulo: "Dor no joelho e a escolha de modalidade",
+    tema: "Grupos especiais",
+    dificuldade: "Intermediário",
+    premium: true,
+    contexto:
+      "Aluno com osteoartrite de joelho sente dor ao caminhar mais que alguns minutos, mas quer melhorar condicionamento e função. Sala com máquinas, bike e acesso à piscina.",
+    pergunta: "Qual combinação inicial tende a ser mais prudente?",
+    melhorOpcaoId: "b",
+    trustLevel: "cuidado de segurança",
+    opcoes: [
+      {
+        id: "a",
+        texto: "Insistir na caminhada, empurrando a dor para 'condicionar'",
+        correta: false,
+        analise:
+          "Insistir no impacto doloroso tende a gerar edema e piora funcional, além de minar a adesão.",
+        criterio: "Ignora a intolerância ao impacto e a dor como guia.",
+        lembrar: "Dor crescente e edema pós-sessão são sinais para ajustar, não para insistir.",
+      },
+      {
+        id: "b",
+        texto: "Força de membros inferiores em amplitude confortável + aeróbio de baixo impacto (bike/água)",
+        correta: true,
+        analise:
+          "Fortalecer o suporte do joelho com baixo impacto costuma melhorar função e reduzir dor, mantendo o condicionamento por bike ou água.",
+        criterio: "Considera baixo impacto, força de suporte e dor tolerável.",
+        lembrar: "Baixo impacto + força de MMII em amplitude confortável é uma base prudente.",
+      },
+      {
+        id: "c",
+        texto: "Evitar totalmente qualquer exercício de joelho para 'não piorar'",
+        correta: false,
+        analise:
+          "Evitar todo estímulo tende a enfraquecer o suporte do joelho e piorar a função a médio prazo.",
+        criterio: "Ignora o papel da força na proteção articular.",
+        lembrar: "Fugir do movimento costuma piorar a função; a chave é dosar, não evitar.",
+      },
+    ],
+  },
 ];
 
 export function getCase(slug: string) {
