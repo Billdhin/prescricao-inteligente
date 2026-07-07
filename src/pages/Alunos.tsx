@@ -19,7 +19,7 @@ const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
 const RESTRICOES_REAIS = RESTRICOES.filter((r) => r !== "Nenhuma") as Exclude<GpsRestricao, "Nenhuma">[];
 
 export function Alunos() {
-  const { alunos, addAluno } = useAlunos();
+  const { alunos, addAluno, loadExamples } = useAlunos();
   const plan = useUser((s) => s.plan);
   const premium = isPremiumUnlocked(plan);
   const [params, setParams] = useSearchParams();
@@ -61,34 +61,38 @@ export function Alunos() {
         }
       />
 
-      {!premium && (
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-ink-2">
-          <Lock className="h-4 w-4 text-ink-3" />
-          Plano free: até {FREE_ALUNOS_LIMIT} alunos ({alunos.length}/{FREE_ALUNOS_LIMIT} usados).
-          <Link to="/pricing" className="font-semibold text-primary hover:underline">
-            Assinar Profissional
-          </Link>
-        </div>
-      )}
-
-      <div className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar aluno por nome, objetivo, restrição..."
-          aria-label="Buscar aluno"
-          className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary/40"
-        />
-      </div>
-
-      {filtrados.length === 0 ? (
-        <Card className="grid place-items-center p-10 text-center">
-          <p className="text-ink-2">Nenhum aluno encontrado.</p>
-        </Card>
+      {alunos.length === 0 ? (
+        <EmptyAlunos onNovo={() => setNovo(true)} onExemplos={loadExamples} />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtrados.map((a) => (
+        <>
+          {!premium && (
+            <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-ink-2">
+              <Lock className="h-4 w-4 text-ink-3" />
+              Plano free: até {FREE_ALUNOS_LIMIT} alunos ({alunos.length}/{FREE_ALUNOS_LIMIT} usados).
+              <Link to="/pricing" className="font-semibold text-primary hover:underline">
+                Assinar Profissional
+              </Link>
+            </div>
+          )}
+
+          <div className="relative max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar aluno por nome, objetivo, restrição..."
+              aria-label="Buscar aluno"
+              className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary/40"
+            />
+          </div>
+
+          {filtrados.length === 0 ? (
+            <Card className="grid place-items-center p-10 text-center">
+              <p className="text-ink-2">Nenhum aluno encontrado para “{q}”.</p>
+            </Card>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {filtrados.map((a) => (
             <Link
               key={a.id}
               to={`/alunos/${a.id}`}
@@ -118,9 +122,11 @@ export function Alunos() {
                   <Pill tone="neutral">Sem restrição</Pill>
                 )}
               </div>
-            </Link>
-          ))}
-        </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {novo && (
@@ -133,6 +139,34 @@ export function Alunos() {
         />
       )}
     </div>
+  );
+}
+
+function EmptyAlunos({ onNovo, onExemplos }: { onNovo: () => void; onExemplos: () => void }) {
+  return (
+    <Card variant="raised" className="flex flex-col items-center gap-4 p-8 text-center md:p-12">
+      <span className="grid h-16 w-16 place-items-center rounded-2xl bg-primary-tint text-primary">
+        <UserPlus className="h-8 w-8" />
+      </span>
+      <div>
+        <h2 className="font-display text-xl font-bold text-ink">Comece pelo seu primeiro aluno</h2>
+        <p className="mx-auto mt-1 max-w-md text-ink-2">
+          Cadastre um aluno para avaliar, prescrever com justificativa e acompanhar a evolução — cada
+          decisão com o raciocínio científico por trás.
+        </p>
+      </div>
+      <div className="flex flex-wrap justify-center gap-2">
+        <button onClick={onNovo} className={buttonClasses("primary")}>
+          <UserPlus className="h-4 w-4" /> Cadastrar aluno
+        </button>
+        <button onClick={onExemplos} className={buttonClasses("secondary")}>
+          Carregar exemplos
+        </button>
+      </div>
+      <p className="text-xs text-ink-3">
+        Os exemplos são dados de demonstração — você pode removê-los depois.
+      </p>
+    </Card>
   );
 }
 

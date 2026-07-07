@@ -23,7 +23,9 @@ export const useUser = create<UserState>()(
   persist(
     (set) => ({
       name: "Rafael Trainer",
-      plan: "assinante",
+      // Novo usuário começa no plano free (vê o valor + os paywalls no momento
+      // certo). O dono alterna via UserMenu (dev toggle) para testar.
+      plan: "free",
       setPlan: (plan) => set({ plan }),
     }),
     { name: "pi-user" },
@@ -191,14 +193,19 @@ interface AlunosState {
   addAvaliacao: (av: Avaliacao) => void;
   addPrescricao: (p: Prescricao) => void;
   archivePrescricao: (id: string) => void;
+  /** carrega os alunos de demonstração (para experimentar sem cadastrar) */
+  loadExamples: () => void;
 }
 
 export const useAlunos = create<AlunosState>()(
   persist(
     (set) => ({
-      alunos: seedAlunos,
-      avaliacoes: seedAvaliacoes,
-      prescricoes: seedPrescricoes,
+      // Novo usuário começa VAZIO (estado vazio real + "carregar exemplos").
+      alunos: [],
+      avaliacoes: [],
+      prescricoes: [],
+      loadExamples: () =>
+        set({ alunos: seedAlunos, avaliacoes: seedAvaliacoes, prescricoes: seedPrescricoes }),
       addAluno: (a) => set((s) => ({ alunos: [a, ...s.alunos] })),
       updateAluno: (id, patch) =>
         set((s) => ({ alunos: s.alunos.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
