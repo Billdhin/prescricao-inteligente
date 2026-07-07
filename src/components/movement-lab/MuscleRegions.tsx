@@ -40,7 +40,14 @@ export function MuscleRegions({
       })
       .filter(Boolean) as (MuscleRegion & { percentual: number; papel: string })[];
 
-    const sorted = [...enriched].sort((a, b) => a.shapes[0].cy - b.shapes[0].cy);
+    // Ordena por altura; em alturas quase iguais, o músculo MAIS PRÓXIMO da
+    // coluna de rótulos vem primeiro — a linha mais longa passa por baixo da
+    // curta e as guias nunca se cruzam.
+    const sorted = [...enriched].sort((a, b) => {
+      const dy = a.shapes[0].cy - b.shapes[0].cy;
+      if (Math.abs(dy) < 7) return b.shapes[0].cx - a.shapes[0].cx;
+      return dy;
+    });
     let prev = -Infinity;
     const withY = sorted.map((r) => {
       let y = Math.max(10, Math.min(88, r.shapes[0].cy));
@@ -52,6 +59,16 @@ export function MuscleRegions({
     const overflow = prev - 92;
     return overflow > 0 ? withY.map((r) => ({ ...r, labelY: r.labelY - overflow })) : withY;
   }, [regions, ativacao]);
+
+  // Centro de massa dos músculos → foco da vinheta (escurece o fundo ao redor).
+  const focal = React.useMemo(() => {
+    const pts = regions.flatMap((r) => r.shapes.map((s) => ({ x: s.cx, y: s.cy })));
+    if (!pts.length) return { x: 50, y: 50 };
+    return {
+      x: pts.reduce((s, p) => s + p.x, 0) / pts.length,
+      y: pts.reduce((s, p) => s + p.y, 0) / pts.length,
+    };
+  }, [regions]);
 
   if (items.length === 0) return null;
 
@@ -73,6 +90,15 @@ export function MuscleRegions({
 
   return (
     <>
+      {/* Vinheta de foco: escurece o fundo ao redor dos músculos */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(ellipse 62% 58% at ${focal.x}% ${focal.y}%, transparent 38%, rgba(2,6,23,0.12) 62%, rgba(2,6,23,0.52) 100%)`,
+        }}
+      />
+
       {/* Linhas-guia + regiões (SVG esticado; traços com espessura constante) */}
       <svg
         viewBox="0 0 100 100"
@@ -84,26 +110,33 @@ export function MuscleRegions({
           const isActive = active === r.musculo;
           const dimmed = active !== null && !isActive;
           const a = r.shapes[0];
+          // Âncora na BORDA do músculo voltada ao rótulo (linhas curtas, sem
+          // atravessar a musculatura) — nunca no centro.
+          const ax = Math.min(a.cx + Math.max(a.rx, a.ry) * 0.8, LABEL_X - 4);
+          const ay = a.cy;
           return (
             <g key={r.musculo} className="transition-opacity duration-150" opacity={dimmed ? 0.35 : 1}>
-              {/* linha-guia: rótulo → músculo, com ponto na extremidade */}
+              {/* linha-guia: sub-traço escuro p/ contraste + traço branco */}
               <line
                 x1={LABEL_X}
                 y1={r.labelY}
-                x2={a.cx}
-                y2={a.cy}
+                x2={ax}
+                y2={ay}
+                stroke="rgba(2,6,23,0.45)"
+                strokeWidth={isActive ? 3 : 2.5}
+                vectorEffect="non-scaling-stroke"
+              />
+              <line
+                x1={LABEL_X}
+                y1={r.labelY}
+                x2={ax}
+                y2={ay}
                 stroke="#fff"
-                strokeOpacity={isActive ? 0.95 : 0.55}
+                strokeOpacity={isActive ? 0.95 : 0.65}
                 strokeWidth={isActive ? 1.5 : 1}
                 vectorEffect="non-scaling-stroke"
               />
-              <circle
-                cx={a.cx}
-                cy={a.cy}
-                r={0.7}
-                fill="#fff"
-                fillOpacity={isActive ? 1 : 0.75}
-              />
+              <circle cx={ax} cy={ay} r={0.7} fill="#fff" fillOpacity={isActive ? 1 : 0.85} />
               {/* região: invisível em repouso; acende no hover/foco */}
               <g
                 onMouseEnter={() => enter(r.musculo)}
