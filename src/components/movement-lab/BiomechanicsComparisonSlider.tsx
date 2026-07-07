@@ -27,6 +27,103 @@ interface Props {
 }
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
+const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+
+type Shape = MuscleRegion["shapes"][number];
+type Masks = { todos: string; porMusculo: Record<string, string> };
+
+/**
+ * Máscara com a SILHUETA REAL dos músculos, extraída da própria imagem de
+ * análise por chave de cor (os músculos-alvo são os únicos pixels vermelho-
+ * saturados do render), limitada às regiões autoradas. Determinístico, sem IA:
+ * o brilho segue o contorno anatômico — nada vaza para o fundo e o músculo
+ * acende inteiro, não "círculos" sobre ele.
+ */
+function buildMasks(img: HTMLImageElement, regions: MuscleRegion[]): Masks {
+  const W = 480;
+  const H = 360;
+  const src = document.createElement("canvas");
+  src.width = W;
+  src.height = H;
+  const sctx = src.getContext("2d", { willReadFrequently: true })!;
+  sctx.drawImage(img, 0, 0, W, H);
+  const px = sctx.getImageData(0, 0, W, H).data;
+
+  // vermelhidão por pixel: separa músculo em destaque (vermelho saturado) da
+  // musculatura pálida/pele/fundo
+  const red = new Float32Array(W * H);
+  for (let p = 0, i = 0; p < W * H; p++, i += 4) {
+    const k = Math.min(px[i] - px[i + 1], px[i] - px[i + 2]);
+    red[p] = clamp01((k - 38) / 52);
+  }
+
+  const render = (shapes: Shape[]) => {
+    const out = new ImageData(W, H);
+    const d = out.data;
+    for (let y = 0; y < H; y++) {
+      const py = (y / H) * 100;
+      for (let x = 0; x < W; x++) {
+        const p = y * W + x;
+        if (red[p] === 0) continue;
+        const pxx = (x / W) * 100;
+        let gate = 0;
+        for (const s of shapes) {
+          const rot = (((s as { rot?: number }).rot ?? 0) * Math.PI) / 180;
+          const dx = pxx - s.cx;
+          const dy = py - s.cy;
+          const u = (dx * Math.cos(rot) + dy * Math.sin(rot)) / s.rx;
+          const v = (-dx * Math.sin(rot) + dy * Math.cos(rot)) / s.ry;
+          const dist = u * u + v * v; // 1 = borda da elipse autorada
+          gate = Math.max(gate, clamp01((2.4 - dist) / 1.1));
+          if (gate === 1) break;
+        }
+        const a = red[p] * gate;
+        if (a > 0) {
+          const q = p * 4;
+          d[q] = 255;
+          d[q + 1] = 255;
+          d[q + 2] = 255;
+          d[q + 3] = Math.round(a * 255);
+        }
+      }
+    }
+    const c = document.createElement("canvas");
+    c.width = W;
+    c.height = H;
+    c.getContext("2d")!.putImageData(out, 0, 0);
+    // borda suavizada = recorte natural
+    const blur = document.createElement("canvas");
+    blur.width = W;
+    blur.height = H;
+    const bctx = blur.getContext("2d")!;
+    bctx.filter = "blur(1.2px)";
+    bctx.drawImage(c, 0, 0);
+    return blur.toDataURL();
+  };
+
+  return {
+    todos: render(regions.flatMap((r) => r.shapes)),
+    porMusculo: Object.fromEntries(regions.map((r) => [r.musculo, render(r.shapes)])),
+  };
+}
+
+function useMuscleMasks(srcUrl: string, regions: MuscleRegion[]) {
+  const [masks, setMasks] = React.useState<Masks | null>(null);
+  React.useEffect(() => {
+    let alive = true;
+    setMasks(null);
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => {
+      if (alive) setMasks(buildMasks(img, regions));
+    };
+    img.src = srcUrl;
+    return () => {
+      alive = false;
+    };
+  }, [srcUrl, regions]);
+  return masks;
+}
 
 // Cores por ordem de contribuição (1º quente → 3º ciano), conforme spec.
 const BAR_COLORS = [
@@ -78,10 +175,11 @@ export function BiomechanicsComparisonSlider({
     e.preventDefault();
   };
 
-  // Máscara suave (união de elipses) que revela a musculatura da imagem de
-  // análise sobre a base. Justa e com fade curto: a transição acontece SOBRE a
-  // própria perna (pele→músculo), sem halo de montagem.
-  const mask = React.useMemo(
+  // Silhueta real dos músculos (chave de cor da própria imagem); enquanto o
+  // canvas processa, cai no gradiente de elipses para não piscar.
+  const masks = useMuscleMasks(analysisSrc, regions);
+  const [foco, setFoco] = React.useState<string | null>(null);
+  const maskFallback = React.useMemo(
     () =>
       regions
         .flatMap((r) => r.shapes)
@@ -92,6 +190,7 @@ export function BiomechanicsComparisonSlider({
         .join(","),
     [regions],
   );
+  const maskAtiva = foco && masks?.porMusculo[foco] ? masks.porMusculo[foco] : masks?.todos;
 
   // Glifo de ângulo com raios: valor CALCULADO da geometria (unidades reais da
   // imagem 4:3), arredondado a 5° — o número sempre bate com a pose visível.
@@ -172,21 +271,31 @@ export function BiomechanicsComparisonSlider({
           className="absolute inset-0"
           style={{ background: "radial-gradient(ellipse 78% 72% at 50% 46%, transparent 48%, rgba(2,6,23,0.5) 100%)" }}
         />
-        {/* spotlight: a mesma imagem, em brilho pleno, apenas sobre os músculos */}
-        {mask && (
-          <img
-            src={analysisSrc}
-            alt=""
-            aria-hidden
-            draggable={false}
-            className="absolute inset-0 h-full w-full object-cover"
-            style={{
-              maskImage: mask,
-              WebkitMaskImage: mask,
-              filter: "saturate(1.08)",
-            }}
-          />
-        )}
+        {/* spotlight: a mesma imagem, em brilho pleno, apenas na SILHUETA dos músculos */}
+        <img
+          src={analysisSrc}
+          alt=""
+          aria-hidden
+          draggable={false}
+          className="absolute inset-0 h-full w-full object-cover"
+          style={
+            maskAtiva
+              ? {
+                  maskImage: `url(${maskAtiva})`,
+                  WebkitMaskImage: `url(${maskAtiva})`,
+                  maskSize: "100% 100%",
+                  WebkitMaskSize: "100% 100%",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskRepeat: "no-repeat",
+                  filter: "saturate(1.08)",
+                }
+              : {
+                  maskImage: maskFallback,
+                  WebkitMaskImage: maskFallback,
+                  filter: "saturate(1.08)",
+                }
+          }
+        />
 
         {/* Anotações mínimas: vetor de força + ângulo + 2 rótulos finos */}
         <svg viewBox="0 0 400 300" preserveAspectRatio="none" aria-hidden className="absolute inset-0 h-full w-full">
@@ -245,17 +354,20 @@ export function BiomechanicsComparisonSlider({
             const side = r.s.cy > 55 ? -1 : 1;
             const x1 = (r.s.cx + side * Math.max(r.s.rx, r.s.ry) * 0.55) * 4;
             const y = r.s.cy * 3;
+            const dim = foco !== null && foco !== r.nome;
             return (
-              <line
-                key={r.nome}
-                x1={x1}
-                y1={y}
-                x2={x1 + side * 34}
-                y2={y}
-                stroke="rgba(255,255,255,0.75)"
-                strokeWidth={1}
-                vectorEffect="non-scaling-stroke"
-              />
+              <g key={r.nome} opacity={dim ? 0.3 : 1}>
+                <circle cx={x1} cy={y} r={2} fill="#fff" opacity={0.9} />
+                <line
+                  x1={x1}
+                  y1={y}
+                  x2={x1 + side * 34}
+                  y2={y}
+                  stroke="rgba(255,255,255,0.75)"
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </g>
             );
           })}
         </svg>
@@ -286,16 +398,23 @@ export function BiomechanicsComparisonSlider({
           ))}
         {rotulados.map((r) => {
           const side = r.s.cy > 55 ? -1 : 1;
-          const lx = r.s.cx + side * (Math.max(r.s.rx, r.s.ry) * 0.55 + 9.2);
+          const lx = clamp(r.s.cx + side * (Math.max(r.s.rx, r.s.ry) * 0.55 + 9.2));
+          const dim = foco !== null && foco !== r.nome;
           return (
+            // caixa ancorada na borda da imagem (nunca corta o texto)
             <span
               key={r.nome}
-              className="absolute -translate-y-1/2 whitespace-nowrap text-[11px] font-medium text-white/95 [text-shadow:0_1px_3px_rgba(0,0,0,0.85)]"
-              style={{
-                left: `${side === 1 ? Math.min(lx, 78) : Math.max(lx, 4)}%`,
-                top: `${r.s.cy}%`,
-                transform: side === 1 ? "translateY(-50%)" : "translate(-100%, -50%)",
-              }}
+              onPointerEnter={() => setFoco(r.nome)}
+              onPointerLeave={() => setFoco(null)}
+              className={cn(
+                "absolute -translate-y-1/2 truncate text-[11px] font-medium text-white/95 [text-shadow:0_1px_3px_rgba(0,0,0,0.85)] transition-opacity",
+                dim && "opacity-30",
+              )}
+              style={
+                side === 1
+                  ? { left: `${lx}%`, width: `${98 - lx}%`, top: `${r.s.cy}%`, textAlign: "left" }
+                  : { left: "2%", width: `${Math.max(lx - 2, 10)}%`, top: `${r.s.cy}%`, textAlign: "right" }
+              }
             >
               {r.nome}
             </span>
@@ -306,19 +425,47 @@ export function BiomechanicsComparisonSlider({
         {/* Mobile: faixa compacta (o card completo cobriria a imagem) */}
         <div className="absolute inset-x-2 bottom-2 flex items-center gap-2.5 overflow-x-auto rounded-lg border border-white/15 bg-slate-950/70 px-2.5 py-1.5 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
           {contribuicoes.map((m, i) => (
-            <span key={m.musculo} className="flex shrink-0 items-center gap-1">
+            <button
+              key={m.musculo}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFoco((f) => (f === m.musculo ? null : m.musculo));
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              aria-pressed={foco === m.musculo}
+              aria-label={`Destacar ${m.musculo} na imagem`}
+              className={cn(
+                "flex shrink-0 items-center gap-1 rounded px-1 py-0.5",
+                foco === m.musculo && "bg-white/10",
+              )}
+            >
               <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: DOT_COLORS[i] }} />
               <span className="text-[10px] font-medium text-white/85">{m.musculo}</span>
               <span className="tabular text-[10px] font-bold text-white">{m.percentual}%</span>
-            </span>
+            </button>
           ))}
         </div>
 
         <div className="absolute bottom-3 right-3 hidden w-64 max-w-[68%] rounded-xl border border-white/15 bg-slate-950/70 p-3 backdrop-blur-md sm:block">
           <div className="mb-2 text-[11px] font-semibold tracking-wide text-white/85">Contribuição muscular</div>
-          <div className="space-y-1.5">
+          <div className="space-y-0.5">
             {contribuicoes.map((m, i) => (
-              <div key={m.musculo} className="flex items-center gap-1.5">
+              <button
+                key={m.musculo}
+                type="button"
+                onPointerEnter={() => setFoco(m.musculo)}
+                onPointerLeave={() => setFoco(null)}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                onFocus={() => setFoco(m.musculo)}
+                onBlur={() => setFoco(null)}
+                aria-label={`Destacar ${m.musculo} na imagem`}
+                className={cn(
+                  "-mx-1 flex w-[calc(100%+8px)] items-center gap-1.5 rounded-md px-1 py-1 text-left outline-none transition-colors",
+                  foco === m.musculo ? "bg-white/10" : "hover:bg-white/5",
+                )}
+              >
                 <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: DOT_COLORS[i] }} />
                 <span className="min-w-0 flex-1 truncate text-[11px] leading-tight text-white/90">{m.musculo}</span>
                 <span className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-white/12 sm:w-16">
@@ -327,7 +474,7 @@ export function BiomechanicsComparisonSlider({
                 <span className="tabular w-8 shrink-0 text-right text-[11px] font-bold leading-tight text-white">
                   {m.percentual}%
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
