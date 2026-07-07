@@ -22,6 +22,7 @@ import { Protocolos } from "@/pages/Protocolos";
 import { Comparador } from "@/pages/Comparador";
 import { SpecialGroups } from "@/pages/SpecialGroups";
 import { SpecialGroupDetail } from "@/pages/SpecialGroupDetail";
+import { DecisaoRapida } from "@/pages/DecisaoRapida";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="/alunos/:id" element={<AlunoDetail />} />
           <Route path="/special-groups" element={<SpecialGroups />} />
           <Route path="/special-groups/:slug" element={<SpecialGroupDetail />} />
+          <Route path="/decisao" element={<DecisaoRapida />} />
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/tracks" element={<TracksList />} />
           <Route path="/tracks/:slug" element={<TrackDetail />} />

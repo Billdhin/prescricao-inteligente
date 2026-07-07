@@ -1,10 +1,19 @@
-import type { ReactNode } from "react";
-import { ShieldAlert, AlertTriangle, ArrowUpCircle, ArrowDownCircle, Activity, Dumbbell } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import {
+  ShieldAlert,
+  AlertTriangle,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Activity,
+  Dumbbell,
+  ChevronDown,
+  Waves,
+} from "lucide-react";
 import { Card, Pill } from "@/components/ui/primitives";
-import { getModalidade, impactoTone } from "@/data/modalities";
+import { getModalidade, impactoTone, modalidadeImagem } from "@/data/modalities";
 import { getParam, paramCategoriaTone } from "@/data/monitoringParameters";
 import type { JourneyPhase } from "@/data/specialGroups";
-import { cn } from "@/lib/utils";
+import { cn, withBase } from "@/lib/utils";
 
 /* ------------------------- chips de modalidade/parâmetro ------------------- */
 
@@ -67,6 +76,75 @@ function Linha({ rotulo, texto }: { rotulo: string; texto: string }) {
       <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">{rotulo}: </span>
       <span className="text-ink-2">{texto}</span>
     </div>
+  );
+}
+
+/* ------------------- cartão VISUAL de modalidade (foto + selos) ------------- */
+
+export function VisualModalidadeCard({ id, cautela }: { id: string; cautela?: boolean }) {
+  const m = getModalidade(id);
+  const [open, setOpen] = useState(false);
+  const [imgOk, setImgOk] = useState(true);
+  if (!m) return null;
+  const FallbackIcon = m.ambiente === "aquático" ? Waves : Dumbbell;
+  return (
+    <Card className={cn("flex flex-col overflow-hidden", cautela && "border-warning/40")}>
+      <div className="relative h-40 bg-surface-soft">
+        {imgOk ? (
+          <img
+            src={withBase(modalidadeImagem(m.id))}
+            alt={m.nome}
+            onError={() => setImgOk(false)}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-primary-tint to-[#e0f7f9] text-analysis">
+            <FallbackIcon className="h-9 w-9" />
+          </div>
+        )}
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+          <Pill tone={impactoTone[m.impacto]} className="bg-white/85 shadow-soft">
+            impacto {m.impacto}
+          </Pill>
+          <Pill tone="neutral" className="bg-white/85 shadow-soft">
+            {m.ambiente}
+          </Pill>
+        </div>
+        {cautela && (
+          <div className="absolute right-3 top-3">
+            <Pill tone="warning" className="bg-white/90 shadow-soft" icon={<AlertTriangle className="h-3 w-3" />}>
+              cautela
+            </Pill>
+          </div>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-4">
+        <h4 className="font-display font-bold text-ink">{m.nome}</h4>
+        <p className="mt-1 text-sm text-ink-2">{m.resumo}</p>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          className="mt-3 inline-flex items-center gap-1 self-start text-sm font-semibold text-primary hover:underline"
+        >
+          {open ? "Ocultar detalhes" : "Ver detalhes"}
+          <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
+        </button>
+        {open && (
+          <div className="mt-3 space-y-2 border-t border-border pt-3 text-sm">
+            <Linha rotulo="Como início" texto={m.quandoInicio} />
+            <Linha rotulo="Como progressão" texto={m.quandoProgressao} />
+            <Linha rotulo="Evitar / adaptar" texto={m.quandoEvitar} />
+            <Linha rotulo="Sem FC confiável" texto={m.monitorarSemFC} />
+            <div className="pt-1">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">
+                Parâmetros úteis
+              </div>
+              <ParametroPills ids={m.parametrosUteis} />
+            </div>
+          </div>
+        )}
+      </div>
+    </Card>
   );
 }
 

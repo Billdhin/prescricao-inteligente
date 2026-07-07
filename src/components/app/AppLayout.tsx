@@ -24,6 +24,7 @@ import {
   Briefcase,
   GraduationCap,
   HeartPulse,
+  Sparkles,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
@@ -44,6 +45,7 @@ const navByMode: Record<AppMode, { primary: NavItem[]; secondary: NavItem[] }> =
   atender: {
     primary: [
       { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
+      { to: "/decisao", label: "Decisão rápida", icon: Sparkles },
       { to: "/alunos", label: "Alunos", icon: Users },
       { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
       { to: "/gps", label: "GPS da Prescrição", icon: Navigation },

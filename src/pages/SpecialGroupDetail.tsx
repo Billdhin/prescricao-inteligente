@@ -5,21 +5,23 @@ import {
   Target,
   Dumbbell,
   Activity,
-  Route as RouteIcon,
   PlayCircle,
   Lightbulb,
   ShieldAlert,
-  BookOpen,
+  Sparkles,
   UserPlus,
   Crown,
   Lock,
   X,
   ArrowRight,
+  ChevronsDownUp,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Accordion } from "@/components/ui/disclosure";
 import {
-  ModalidadeCard,
+  VisualModalidadeCard,
   ParametroCard,
+  ParametroPills,
   SafetyFlags,
   JourneyTimeline,
 } from "@/components/special/SpecialUI";
@@ -92,112 +94,153 @@ export function SpecialGroupDetail() {
         </Card>
       ) : (
         <>
-          {/* Visão geral + objetivos */}
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Secao icon={<Target className="h-4 w-4" />} titulo="Visão geral">
-              <p className="text-sm text-ink">{g.perfil}</p>
-            </Secao>
-            <Secao icon={<Target className="h-4 w-4" />} titulo="Objetivos do treino">
-              <ul className="space-y-1.5">
-                {g.objetivos.map((o) => (
-                  <li key={o} className="flex gap-2 text-sm text-ink-2">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                    {o}
-                  </li>
-                ))}
-              </ul>
-            </Secao>
-          </div>
-
-          {/* Como começar */}
-          <Card className="flex gap-3 border-primary/20 bg-primary-tint/40 p-5">
-            <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-            <div>
-              <div className="font-display font-bold text-ink">Como começar (aluno iniciante)</div>
-              <p className="mt-1 text-sm text-ink">{g.comoComecar}</p>
-            </div>
-          </Card>
-
-          {/* Modalidades */}
-          <div>
-            <TituloBloco icon={<Dumbbell className="h-5 w-5" />} texto="Modalidades indicadas" />
-            <div className="grid gap-4 md:grid-cols-2">
-              {g.modalidadesIndicadas.map((id) => (
-                <ModalidadeCard key={id} id={id} />
-              ))}
-            </div>
-            {g.modalidadesCautela.length > 0 && (
-              <>
-                <TituloBloco icon={<ShieldAlert className="h-5 w-5 text-warning" />} texto="Modalidades que exigem cautela" className="mt-6" />
-                <div className="grid gap-4 md:grid-cols-2">
-                  {g.modalidadesCautela.map((id) => (
-                    <ModalidadeCard key={id} id={id} cautela />
-                  ))}
+          {/* -------- RESUMO DE DECISÃO (resultado primeiro) -------- */}
+          <div className="rounded-card border border-primary/20 bg-primary-tint/30 p-1">
+            <div className="space-y-4 rounded-[14px] bg-surface p-5 md:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+                    <Sparkles className="h-4 w-4" />
+                  </span>
+                  <h2 className="font-display text-lg font-bold text-ink">Resumo de decisão</h2>
                 </div>
-              </>
-            )}
-          </div>
+                <Link to={`/decisao?grupo=${g.slug}`} className={buttonClasses("secondary", "sm")}>
+                  Abrir Decisão rápida <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
 
-          {/* Parâmetros */}
-          <div>
-            <TituloBloco icon={<Activity className="h-5 w-5" />} texto="Parâmetros a monitorar" />
-            <div className="grid gap-4 md:grid-cols-2">
-              {g.parametros.map((id) => (
-                <ParametroCard key={id} id={id} />
-              ))}
-            </div>
-          </div>
+              <div className="flex gap-3 rounded-xl bg-primary-tint/60 p-3">
+                <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                <p className="text-sm text-ink">
+                  <span className="font-semibold">Como começar: </span>
+                  {g.comoComecar}
+                </p>
+              </div>
 
-          {/* Sinais de alerta */}
-          <SafetyFlags sinais={g.sinaisAlerta} aviso={AVISO_SEGURANCA} />
-
-          {/* Jornada de progressão */}
-          <div>
-            <TituloBloco icon={<RouteIcon className="h-5 w-5" />} texto="Jornada de progressão" />
-            <JourneyTimeline fases={g.fases} />
-          </div>
-
-          {/* Erros comuns */}
-          <Secao icon={<ShieldAlert className="h-4 w-4 text-cta" />} titulo="Erros comuns">
-            <ul className="space-y-1.5">
-              {g.errosComuns.map((e) => (
-                <li key={e} className="flex gap-2 text-sm text-ink-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cta" />
-                  {e}
-                </li>
-              ))}
-            </ul>
-          </Secao>
-
-          {/* Casos relacionados */}
-          {relacionados.length > 0 && (
-            <div>
-              <TituloBloco icon={<BookOpen className="h-5 w-5" />} texto="Casos práticos relacionados" />
-              <div className="grid gap-3 md:grid-cols-2">
-                {relacionados.map((c) => (
-                  <Link
-                    key={c!.slug}
-                    to={`/cases/${c!.slug}`}
-                    className="flex items-center gap-3 rounded-card border border-border bg-surface p-4 shadow-soft transition-colors hover:bg-surface-soft"
-                  >
-                    <PlayCircle className="h-5 w-5 shrink-0 text-cta" />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-semibold text-ink">{c!.titulo}</div>
-                      <div className="truncate text-xs text-ink-3">{c!.tema} · {c!.dificuldade}</div>
-                    </div>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
-                  </Link>
-                ))}
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div>
+                  <Rotulo icon={<Target className="h-3.5 w-3.5" />}>Objetivos do treino</Rotulo>
+                  <ul className="space-y-1">
+                    {g.objetivos.map((o) => (
+                      <li key={o} className="flex gap-2 text-sm text-ink-2">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        {o}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <Rotulo icon={<Activity className="h-3.5 w-3.5" />}>Parâmetros essenciais</Rotulo>
+                  <ParametroPills ids={g.parametros} />
+                  <p className="mt-3 text-sm text-ink-2">{g.perfil}</p>
+                </div>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* -------- Modalidades indicadas (visual) -------- */}
+          <div>
+            <TituloBloco icon={<Dumbbell className="h-5 w-5" />} texto="Por onde treinar — modalidades indicadas" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {g.modalidadesIndicadas.map((id) => (
+                <VisualModalidadeCard key={id} id={id} />
+              ))}
+            </div>
+          </div>
+
+          {/* -------- Detalhes sob demanda (accordion) -------- */}
+          <div>
+            <TituloBloco icon={<ChevronsDownUp className="h-5 w-5" />} texto="Aprofundar" />
+            <Accordion
+              items={[
+                {
+                  id: "jornada",
+                  title: "Jornada de progressão (4 fases)",
+                  content: <JourneyTimeline fases={g.fases} />,
+                },
+                {
+                  id: "parametros",
+                  title: "Parâmetros — quando usar e como interpretar",
+                  content: (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {g.parametros.map((id) => (
+                        <ParametroCard key={id} id={id} />
+                      ))}
+                    </div>
+                  ),
+                },
+                ...(g.modalidadesCautela.length
+                  ? [
+                      {
+                        id: "cautela",
+                        title: "Modalidades que exigem cautela",
+                        content: (
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {g.modalidadesCautela.map((id) => (
+                              <VisualModalidadeCard key={id} id={id} cautela />
+                            ))}
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+                {
+                  id: "alerta",
+                  title: "Sinais de alerta e segurança",
+                  content: <SafetyFlags sinais={g.sinaisAlerta} aviso={AVISO_SEGURANCA} />,
+                },
+                {
+                  id: "erros",
+                  title: "Erros comuns",
+                  content: (
+                    <ul className="space-y-1.5">
+                      {g.errosComuns.map((e) => (
+                        <li key={e} className="flex gap-2 text-sm text-ink-2">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cta" />
+                          {e}
+                        </li>
+                      ))}
+                    </ul>
+                  ),
+                },
+                ...(relacionados.length
+                  ? [
+                      {
+                        id: "casos",
+                        title: "Casos práticos relacionados",
+                        content: (
+                          <div className="grid gap-3 md:grid-cols-2">
+                            {relacionados.map((c) => (
+                              <Link
+                                key={c!.slug}
+                                to={`/cases/${c!.slug}`}
+                                className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-soft"
+                              >
+                                <PlayCircle className="h-5 w-5 shrink-0 text-cta" />
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate font-semibold text-ink">{c!.titulo}</div>
+                                  <div className="truncate text-xs text-ink-3">
+                                    {c!.tema} · {c!.dificuldade}
+                                  </div>
+                                </div>
+                                <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
+                              </Link>
+                            ))}
+                          </div>
+                        ),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          </div>
 
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
               <UserPlus className="h-4 w-4" /> Aplicar a um aluno
             </button>
-            <Link to="/gps" className={buttonClasses("secondary")}>
-              Abrir GPS da Prescrição <ArrowRight className="h-4 w-4" />
+            <Link to={`/decisao?grupo=${g.slug}`} className={buttonClasses("secondary")}>
+              Decisão rápida <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </>
@@ -281,23 +324,19 @@ function AplicarModal({
   );
 }
 
-function TituloBloco({ icon, texto, className }: { icon: React.ReactNode; texto: string; className?: string }) {
+function TituloBloco({ icon, texto }: { icon: React.ReactNode; texto: string }) {
   return (
-    <div className={cn("mb-3 flex items-center gap-2", className)}>
+    <div className="mb-3 flex items-center gap-2">
       <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">{icon}</span>
       <h2 className="font-display text-lg font-bold text-ink">{texto}</h2>
     </div>
   );
 }
 
-function Secao({ icon, titulo, children }: { icon: React.ReactNode; titulo: string; children: React.ReactNode }) {
+function Rotulo({ icon, children }: { icon?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <Card className="p-5">
-      <div className="mb-2 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">{icon}</span>
-        <h3 className="font-display font-bold text-ink">{titulo}</h3>
-      </div>
-      {children}
-    </Card>
+    <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
+      {icon} {children}
+    </div>
   );
 }

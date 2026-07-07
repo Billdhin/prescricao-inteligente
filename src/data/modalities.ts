@@ -185,6 +185,11 @@ export function getModalidade(id: string) {
   return modalities.find((m) => m.id === id);
 }
 
+/** Caminho da foto da modalidade em public/modalities/<id>.webp (com fallback no componente). */
+export function modalidadeImagem(id: string) {
+  return `/modalities/${id}.webp`;
+}
+
 export const impactoTone: Record<Impacto, "success" | "warning" | "cta"> = {
   baixo: "success",
   moderado: "warning",
