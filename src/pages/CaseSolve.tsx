@@ -3,7 +3,6 @@ import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
-  Lock,
   CheckCircle2,
   RefreshCcw,
   Target,
@@ -12,6 +11,7 @@ import {
   Brain,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, type PillTone } from "@/components/ui/primitives";
+import { PaywallCard } from "@/components/ui/PaywallCard";
 import { cases, getCase } from "@/data/cases";
 import type { PracticeCase, CaseOption, TrustLevel } from "@/data/types";
 import { useUser, useProgress, isPremiumUnlocked, FREE_CASES_LIMIT } from "@/lib/store";
@@ -62,26 +62,10 @@ function CaseLocked({ premiumLock }: { premiumLock: boolean }) {
       <Link to="/cases" className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-ink-2 hover:text-ink">
         <ArrowLeft className="h-4 w-4" /> Voltar aos casos
       </Link>
-      <Card className="overflow-hidden">
-        <div className="gradient-brand p-8 text-center text-white">
-          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-white/15">
-            <Lock className="h-6 w-6" />
-          </span>
-          <h2 className="font-display text-2xl font-bold">
-            {premiumLock ? "Caso do plano Profissional" : "Você usou seus 2 casos gratuitos"}
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-white/85">
-            Assine o plano Profissional para resolver todos os casos, com feedback de raciocínio
-            ilimitado.
-          </p>
-          <Link
-            to="/pricing"
-            className="mt-5 inline-flex rounded-control bg-white px-5 py-2.5 font-semibold text-primary hover:bg-white/90"
-          >
-            Assinar Profissional
-          </Link>
-        </div>
-      </Card>
+      <PaywallCard
+        titulo={premiumLock ? "Caso do plano Profissional" : "Você usou seus 2 casos gratuitos"}
+        descricao="Assine o plano Profissional para resolver todos os casos, com feedback de raciocínio ilimitado."
+      />
     </div>
   );
 }

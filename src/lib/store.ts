@@ -231,19 +231,34 @@ export const useAlunos = create<AlunosState>()(
         })),
     }),
     // v2: seed passou a incluir a jornada (grupoEspecial/fase) em alguns alunos.
-    // migrate: em versões antigas (dados mock/demo), re-semeia para trazer a jornada.
+    // migrate por MERGE: preserva os dados do usuário (alunos/avaliações/prescrições que
+    // ele criou) e apenas faz backfill dos campos novos do seed nos alunos-semente por id.
+    // Assim, futuros bumps de versão não apagam o trabalho do profissional.
     {
       name: "pi-alunos",
       version: 2,
-      migrate: (persisted, version) => {
-        if (version < 2) {
+      migrate: (persisted) => {
+        const p = persisted as Partial<AlunosState> | null | undefined;
+        // sem estado válido → primeira carga: usa o seed.
+        if (!p || !Array.isArray(p.alunos)) {
           return {
             alunos: seedAlunos,
             avaliacoes: seedAvaliacoes,
             prescricoes: seedPrescricoes,
           } as unknown as AlunosState;
         }
-        return persisted as AlunosState;
+        const seedById = new Map(seedAlunos.map((a) => [a.id, a]));
+        return {
+          ...p,
+          // { ...seed, ...usuário }: edições do usuário vencem; campos novos do seed
+          // (ex.: jornada, adicionados numa versão posterior) são preenchidos.
+          alunos: p.alunos.map((a) => {
+            const s = seedById.get(a.id);
+            return s ? { ...s, ...a } : a;
+          }),
+          avaliacoes: Array.isArray(p.avaliacoes) ? p.avaliacoes : seedAvaliacoes,
+          prescricoes: Array.isArray(p.prescricoes) ? p.prescricoes : seedPrescricoes,
+        } as unknown as AlunosState;
       },
     },
   ),

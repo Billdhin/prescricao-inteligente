@@ -13,11 +13,32 @@ export interface TabItem {
 export function Tabs({ items, initial }: { items: TabItem[]; initial?: string }) {
   const [active, setActive] = React.useState(initial ?? items[0]?.id);
   const current = items.find((i) => i.id === active) ?? items[0];
+  const uid = React.useId();
+  const tabId = (id: string) => `tab-${uid}-${id}`;
+  const panelId = (id: string) => `tabpanel-${uid}-${id}`;
+  const refs = React.useRef<Record<string, HTMLButtonElement | null>>({});
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const i = items.findIndex((it) => it.id === active);
+    if (i === -1) return;
+    let next = i;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (i + 1) % items.length;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (i - 1 + items.length) % items.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = items.length - 1;
+    else return;
+    e.preventDefault();
+    const id = items[next].id;
+    setActive(id);
+    refs.current[id]?.focus();
+  };
+
   return (
     <div>
       <div
         role="tablist"
         aria-label="Seções do exercício"
+        onKeyDown={onKeyDown}
         className="flex flex-wrap gap-1 rounded-control bg-surface-soft p-1"
       >
         {items.map((it) => {
@@ -25,8 +46,14 @@ export function Tabs({ items, initial }: { items: TabItem[]; initial?: string })
           return (
             <button
               key={it.id}
+              ref={(el) => (refs.current[it.id] = el)}
+              id={tabId(it.id)}
               role="tab"
               aria-selected={selected}
+              // só o painel ativo é renderizado; referencia-o apenas na aba ativa
+              // para não deixar um aria-controls apontando para id inexistente.
+              aria-controls={selected ? panelId(it.id) : undefined}
+              tabIndex={selected ? 0 : -1}
               onClick={() => setActive(it.id)}
               className={cn(
                 "rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
@@ -38,9 +65,17 @@ export function Tabs({ items, initial }: { items: TabItem[]; initial?: string })
           );
         })}
       </div>
-      <div role="tabpanel" className="pt-5">
-        {current?.content}
-      </div>
+      {current && (
+        <div
+          role="tabpanel"
+          id={panelId(current.id)}
+          aria-labelledby={tabId(current.id)}
+          tabIndex={0}
+          className="pt-5 outline-none"
+        >
+          {current.content}
+        </div>
+      )}
     </div>
   );
 }

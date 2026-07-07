@@ -197,6 +197,7 @@ export function SafetyFlags({ sinais, aviso }: { sinais: string[]; aviso?: strin
 /* ------------------------------ jornada (timeline) ------------------------- */
 
 export function FaseCard({ fase, atual }: { fase: JourneyPhase; atual?: boolean }) {
+  const [maisDetalhes, setMaisDetalhes] = useState(false);
   return (
     <Card className={cn("p-5", atual && "border-primary shadow-elevated")}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -227,11 +228,24 @@ export function FaseCard({ fase, atual }: { fase: JourneyPhase; atual?: boolean 
           <CriteriosLista titulo="Critérios para avançar" itens={fase.criteriosAvancar} tipo="avancar" />
           <CriteriosLista titulo="Critérios para regredir" itens={fase.criteriosRegredir} tipo="regredir" />
         </div>
-        <Bloco titulo="Exemplo de estrutura semanal">{fase.estruturaSemanal}</Bloco>
-        <div className="rounded-xl bg-surface-soft p-3 text-sm text-ink-2">
-          <span className="font-semibold text-ink">Por quê: </span>
-          {fase.justificativa}
-        </div>
+
+        <button
+          onClick={() => setMaisDetalhes((v) => !v)}
+          aria-expanded={maisDetalhes}
+          className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+        >
+          {maisDetalhes ? "Ocultar estrutura e justificativa" : "Ver estrutura semanal e justificativa"}
+          <ChevronDown className={cn("h-4 w-4 transition-transform", maisDetalhes && "rotate-180")} />
+        </button>
+        {maisDetalhes && (
+          <div className="space-y-3 border-t border-border pt-3">
+            <Bloco titulo="Exemplo de estrutura semanal">{fase.estruturaSemanal}</Bloco>
+            <div className="rounded-xl bg-surface-soft p-3 text-sm text-ink-2">
+              <span className="font-semibold text-ink">Por quê: </span>
+              {fase.justificativa}
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );

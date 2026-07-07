@@ -73,6 +73,11 @@ const navByMode: Record<AppMode, { primary: NavItem[]; secondary: NavItem[] }> =
   },
 };
 
+// Rotas exclusivas de cada modo (não compartilhadas). Ao trocar de modo, só
+// redireciona ao Painel se a rota atual pertencer só ao modo que está saindo.
+const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps", "/decisao"];
+const APRENDER_ONLY = ["/tracks", "/cases", "/favorites", "/history"];
+
 function tempoRelativo(ts: number) {
   const diff = Date.now() - ts;
   const min = Math.round(diff / 60000);
@@ -108,8 +113,13 @@ function Sidebar() {
 
   const changeMode = (m: AppMode) => {
     setMode(m);
-    navigate("/dashboard");
     setMobileOpen(false);
+    // Preserva a rota atual, exceto quando ela é exclusiva do modo que está saindo
+    // (aí não faz sentido no novo contexto → volta ao Painel).
+    const exclusive = m === "atender" ? APRENDER_ONLY : ATENDER_ONLY;
+    if (exclusive.some((prefix) => location.pathname.startsWith(prefix))) {
+      navigate("/dashboard");
+    }
   };
 
   // Fecha o drawer ao trocar de rota

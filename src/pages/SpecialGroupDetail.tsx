@@ -11,12 +11,12 @@ import {
   Sparkles,
   UserPlus,
   Crown,
-  Lock,
   X,
   ArrowRight,
   ChevronsDownUp,
 } from "lucide-react";
-import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Pill, buttonClasses } from "@/components/ui/primitives";
+import { PaywallCard } from "@/components/ui/PaywallCard";
 import { Accordion } from "@/components/ui/disclosure";
 import {
   VisualModalidadeCard,
@@ -24,6 +24,7 @@ import {
   ParametroPills,
   SafetyFlags,
   JourneyTimeline,
+  FaseCard,
 } from "@/components/special/SpecialUI";
 import { getSpecialGroup, complexidadeTone, AVISO_SEGURANCA } from "@/data/specialGroups";
 import { getCase } from "@/data/cases";
@@ -78,66 +79,32 @@ export function SpecialGroupDetail() {
       </div>
 
       {locked ? (
-        <Card className="overflow-hidden">
-          <div className="gradient-brand p-8 text-center text-white">
-            <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-white/15">
-              <Lock className="h-6 w-6" />
-            </span>
-            <h2 className="font-display text-2xl font-bold">Jornada do plano Profissional</h2>
-            <p className="mx-auto mt-2 max-w-md text-white/85">
-              Assine para abrir a jornada completa deste grupo — modalidades, parâmetros, fases de
-              progressão e aplicação a alunos reais.
-            </p>
-            <Link to="/pricing" className="mt-5 inline-flex rounded-control bg-white px-5 py-2.5 font-semibold text-primary hover:bg-white/90">
-              Assinar Profissional
-            </Link>
-          </div>
-        </Card>
+        <>
+          {/* Prévia (teaser): resumo + Fase 1 abertos, resto atrás do paywall */}
+          <ResumoDecisao g={g} locked />
+
+          {g.fases[0] && (
+            <div>
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <h2 className="font-display text-lg font-bold text-ink">Prévia da jornada — Fase 1</h2>
+                <Pill tone="neutral">amostra grátis</Pill>
+              </div>
+              <FaseCard fase={g.fases[0]} />
+            </div>
+          )}
+
+          <PaywallCard
+            titulo="Jornada completa do plano Profissional"
+            descricao="Você viu a Fase 1. Assine para abrir as 4 fases, as modalidades visuais, os parâmetros de monitoramento e a aplicação a alunos reais."
+          />
+        </>
       ) : (
         <>
           {/* -------- RESUMO DE DECISÃO (resultado primeiro) -------- */}
-          <div className="rounded-card border border-primary/20 bg-primary-tint/30 p-1">
-            <div className="space-y-4 rounded-[14px] bg-surface p-5 md:p-6">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
-                    <Sparkles className="h-4 w-4" />
-                  </span>
-                  <h2 className="font-display text-lg font-bold text-ink">Resumo de decisão</h2>
-                </div>
-                <Link to={`/decisao?grupo=${g.slug}`} className={buttonClasses("secondary", "sm")}>
-                  Abrir Decisão rápida <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              <div className="flex gap-3 rounded-xl bg-primary-tint/60 p-3">
-                <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                <p className="text-sm text-ink">
-                  <span className="font-semibold">Como começar: </span>
-                  {g.comoComecar}
-                </p>
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div>
-                  <Rotulo icon={<Target className="h-3.5 w-3.5" />}>Objetivos do treino</Rotulo>
-                  <ul className="space-y-1">
-                    {g.objetivos.map((o) => (
-                      <li key={o} className="flex gap-2 text-sm text-ink-2">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                        {o}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <Rotulo icon={<Activity className="h-3.5 w-3.5" />}>Parâmetros essenciais</Rotulo>
-                  <ParametroPills ids={g.parametros} />
-                  <p className="mt-3 text-sm text-ink-2">{g.perfil}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ResumoDecisao g={g} />
 
           {/* -------- Modalidades indicadas (visual) -------- */}
           <div>
@@ -324,6 +291,61 @@ function AplicarModal({
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ResumoDecisao({
+  g,
+  locked,
+}: {
+  g: NonNullable<ReturnType<typeof getSpecialGroup>>;
+  locked?: boolean;
+}) {
+  return (
+    <div className="rounded-card border border-primary/20 bg-primary-tint/30 p-1">
+      <div className="space-y-4 rounded-[14px] bg-surface p-5 md:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <h2 className="font-display text-lg font-bold text-ink">Resumo de decisão</h2>
+          </div>
+          {!locked && (
+            <Link to={`/decisao?grupo=${g.slug}`} className={buttonClasses("secondary", "sm")}>
+              Abrir Decisão rápida <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
+
+        <div className="flex gap-3 rounded-xl bg-primary-tint/60 p-3">
+          <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <p className="text-sm text-ink">
+            <span className="font-semibold">Como começar: </span>
+            {g.comoComecar}
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <Rotulo icon={<Target className="h-3.5 w-3.5" />}>Objetivos do treino</Rotulo>
+            <ul className="space-y-1">
+              {g.objetivos.map((o) => (
+                <li key={o} className="flex gap-2 text-sm text-ink-2">
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                  {o}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <Rotulo icon={<Activity className="h-3.5 w-3.5" />}>Parâmetros essenciais</Rotulo>
+            <ParametroPills ids={g.parametros} />
+            <p className="mt-3 text-sm text-ink-2">{g.perfil}</p>
+          </div>
+        </div>
       </div>
     </div>
   );

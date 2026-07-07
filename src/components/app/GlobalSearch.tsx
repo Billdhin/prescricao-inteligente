@@ -226,6 +226,7 @@ export function GlobalSearch() {
         role="combobox"
         aria-expanded={showPanel}
         aria-controls="global-search-list"
+        aria-activedescendant={showPanel && results.length ? `gsr-opt-${active}` : undefined}
         autoComplete="off"
         className="h-11 w-full rounded-full border border-transparent bg-surface-soft pl-10 pr-4 text-sm outline-none focus-visible:border-primary/40 sm:pr-16"
       />
@@ -260,6 +261,7 @@ export function GlobalSearch() {
                     return (
                       <button
                         key={it.id}
+                        id={`gsr-opt-${idx}`}
                         data-idx={idx}
                         role="option"
                         aria-selected={active === idx}
