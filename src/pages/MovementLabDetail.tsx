@@ -173,7 +173,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
         {/* Índice de eficiência — âncora */}
         <Card variant="raised" className="p-6">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold text-ink">Índice de Eficiência</h2>
+            <h2 className="font-display text-xl font-bold text-ink">Índice de Eficiência</h2>
             <TrustBadge level={exercise.trustLevel} />
           </div>
           <div className="mt-4 flex items-center gap-5">

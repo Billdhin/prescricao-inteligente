@@ -21,8 +21,8 @@ export function Pricing() {
         </Pill>
         <h1 className="font-display text-4xl font-extrabold text-ink">Comece grátis, evolua quando quiser.</h1>
         <p className="mx-auto mt-3 max-w-xl text-ink-2">
-          Sem cobrança real nesta versão de demonstração — os botões liberam o app para você
-          explorar.
+          Comece a prescrever com raciocínio hoje. Sem cartão para começar; assine o Profissional
+          quando fizer sentido.
         </p>
 
         <div className="mt-10 grid gap-4 text-left md:grid-cols-2">

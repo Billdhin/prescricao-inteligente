@@ -75,10 +75,12 @@ export function LearningDashboard() {
         </div>
       </div>
 
-      {/* ÂNCORA: Continue de onde parou */}
+      {/* ÂNCORA: Continue de onde parou (ou "Comece por aqui" p/ o novato) */}
       <Card variant="raised" className="p-5 md:p-6">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-xl font-bold text-ink">Continue de onde parou</h2>
+          <h2 className="font-display text-xl font-bold text-ink">
+            {casosResolvidos.length === 0 && streak === 0 ? "Comece por aqui" : "Continue de onde parou"}
+          </h2>
           <Link to="/tracks" className="text-sm font-semibold text-primary hover:underline">
             Ver trilhas
           </Link>

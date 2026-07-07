@@ -49,10 +49,22 @@ import {
   type JourneyPhase,
 } from "@/data/specialGroups";
 import { ParametroPills } from "@/components/special/SpecialUI";
+import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
+import { FileDown, Lock as LockIcon } from "lucide-react";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
+
+// Faixa de séries/reps sugerida por objetivo (educacional — ponto de partida, ajuste ao contexto).
+const SERIES_POR_OBJETIVO: Record<string, string> = {
+  Hipertrofia: "3–4 séries · 8–12 reps",
+  Força: "4–5 séries · 3–6 reps",
+  "Resistência muscular": "2–3 séries · 15–20 reps",
+  "Reabilitação/retorno": "2–3 séries · 12–15 reps · carga leve",
+  "Aprendizado técnico": "2–3 séries · 8–10 reps · foco na execução",
+};
+const seriesSugerida = (objetivo: string) => SERIES_POR_OBJETIVO[objetivo] ?? "3 séries · 10–12 reps";
 
 const STEP_LABELS = [
   "Qual é o objetivo?",
@@ -63,7 +75,7 @@ const STEP_LABELS = [
 ];
 
 export function Gps() {
-  const plan = useUser((s) => s.plan);
+  const { name: nome, plan } = useUser();
   const unlocked = isPremiumUnlocked(plan);
   const { consultations, increment, reset } = useGps();
   const addActivity = useProgress((s) => s.addActivity);
@@ -127,7 +139,11 @@ export function Gps() {
       data: Date.now(),
       titulo: grupo ? `${grupo.nome} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
       answers,
-      itens: results.slice(0, 3).map((r) => ({ slug: r.exercise.slug, score: r.score })),
+      itens: results.slice(0, 3).map((r) => ({
+        slug: r.exercise.slug,
+        score: r.score,
+        series: seriesSugerida(answers.objetivo),
+      })),
       status: "ativa",
       grupoEspecial: grupo?.slug,
       modalidadePrincipal: faseObj?.modalidades[0],
@@ -139,6 +155,34 @@ export function Gps() {
       raciocinio: faseObj?.justificativa,
     });
     navigate(`/alunos/${aluno.id}`);
+  };
+
+  // Exporta em PDF direto da tela de resultados (sem precisar salvar antes).
+  const exportarPDF = () => {
+    if (!aluno || !results) return;
+    exportPrescricaoPDF({
+      aluno,
+      profissional: nome,
+      presc: {
+        id: uid(),
+        alunoId: aluno.id,
+        data: Date.now(),
+        titulo: grupo ? `${grupo.nome} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
+        answers,
+        itens: results.slice(0, 3).map((r) => ({
+          slug: r.exercise.slug,
+          score: r.score,
+          series: seriesSugerida(answers.objetivo),
+        })),
+        status: "ativa",
+        grupoEspecial: grupo?.slug,
+        modalidadePrincipal: faseObj?.modalidades[0],
+        faseJornada: grupo ? fase : undefined,
+        parametrosControle: faseObj?.parametros,
+        criteriosProgressao: faseObj?.criteriosAvancar,
+        raciocinio: faseObj?.justificativa,
+      },
+    });
   };
 
   const restantes = Math.max(0, FREE_GPS_LIMIT - consultations);
@@ -154,9 +198,9 @@ export function Gps() {
     setCompare([rank[0].exercise.slug]);
   };
 
-  const refazer = () => {
+  // Volta ao wizard PRESERVANDO as respostas (para ajustar só uma variável).
+  const ajustarRespostas = () => {
     setResults(null);
-    setStep(0);
   };
 
   return (
@@ -169,7 +213,7 @@ export function Gps() {
           </Pill>
           <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Prescrever</h1>
           <p className="mt-2 max-w-2xl text-ink-2">
-            Diga para quem e receba as opções de exercício ranqueadas, com o raciocínio por trás.
+            Diga para quem e receba exercícios ranqueados — cada um com a justificativa do porquê.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -221,12 +265,14 @@ export function Gps() {
         <Results
           answers={answers}
           results={results}
-          onRefazer={refazer}
+          onRefazer={ajustarRespostas}
           onJustify={setJustify}
           compare={compare}
           setCompare={setCompare}
           alunoNome={aluno?.nome}
           onSalvar={aluno ? salvarPrescricao : undefined}
+          onExportar={aluno ? exportarPDF : undefined}
+          podeExportar={unlocked}
         />
       )}
 
@@ -269,13 +315,13 @@ function ContextoCard({
           <UserCheck className="h-4 w-4" />
         </span>
         <h2 className="font-display text-base font-bold text-ink">Para quem?</h2>
-        <span className="text-xs text-ink-3">opcional — em branco = prescrição geral</span>
+        <span className="text-xs text-ink-3">Opcional. Deixe em branco para uma prescrição geral.</span>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <label className="block">
           <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno</span>
           <select value={alunoId} onChange={(e) => onAluno(e.target.value)} className="input">
-            <option value="">— Sem aluno (avulso) —</option>
+            <option value="">— Prescrição geral (sem aluno) —</option>
             {alunos.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.nome}
@@ -297,11 +343,12 @@ function ContextoCard({
         </label>
         <div>
           <span className="mb-1.5 block text-sm font-semibold text-ink">Fase da jornada</span>
-          <div className="flex gap-1.5">
+          <div role="group" aria-label="Fase da jornada" className="flex gap-1.5">
             {[1, 2, 3, 4].map((n) => (
               <button
                 key={n}
                 onClick={() => temGrupo && setFase(n)}
+                aria-label={`Fase ${n}`}
                 aria-pressed={n === fase}
                 disabled={!temGrupo}
                 className={cn(
@@ -325,12 +372,12 @@ function ContextoCard({
    e o painel de jornada gigante que existia nos resultados). */
 function FocoAgora({ grupo, faseObj, fase }: { grupo: SpecialGroup; faseObj: JourneyPhase; fase: number }) {
   return (
-    <Card variant="raised" className="border-l-4 border-l-primary p-5 md:p-6">
+    <Card className="border-l-4 border-l-primary p-5 md:p-6">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
           <HeartPulse className="h-4 w-4" />
         </span>
-        <h2 className="font-display text-lg font-bold text-ink">{grupo.nome}</h2>
+        <h2 className="font-display text-xl font-bold text-ink">{grupo.nome}</h2>
         <Pill tone="primary">Fase {fase} · {faseObj.nome}</Pill>
         <Pill tone={complexidadeTone[grupo.complexidade]}>{grupo.complexidade}</Pill>
         <Link
@@ -343,7 +390,7 @@ function FocoAgora({ grupo, faseObj, fase }: { grupo: SpecialGroup; faseObj: Jou
 
       <div className="rounded-xl bg-primary-tint/60 p-4">
         <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-          <Target className="h-3.5 w-3.5" /> Foco agora
+          <Target className="h-3.5 w-3.5" /> Objetivo desta fase
         </div>
         <p className="text-base font-medium text-ink">{faseObj.objetivo}</p>
       </div>
@@ -384,7 +431,7 @@ function FocoAgora({ grupo, faseObj, fase }: { grupo: SpecialGroup; faseObj: Jou
 
 function JornadaLockedNote({ grupo }: { grupo: SpecialGroup }) {
   return (
-    <Card className="flex flex-wrap items-center gap-3 border-warning/30 bg-[#fef4e2]/40 p-4">
+    <Card tone="warning" className="flex flex-wrap items-center gap-3 p-4">
       <ShieldAlert className="h-5 w-5 shrink-0 text-warning" />
       <p className="min-w-0 flex-1 text-sm text-ink-2">
         A jornada de <span className="font-semibold text-ink">{grupo.nome}</span> é do plano
@@ -416,25 +463,37 @@ function Wizard({
 }) {
   const pct = Math.round(((step + 1) / 5) * 100);
   const last = step === 4;
+  const headingRef = React.useRef<HTMLHeadingElement>(null);
+  const first = React.useRef(true);
+  React.useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    headingRef.current?.focus();
+  }, [step]);
 
   return (
     <Card className="p-6 md:p-8">
       <div className="mb-1 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-ink-3">
-        <span>Etapa {step + 1} de 5</span>
+        <span aria-live="polite">Etapa {step + 1} de 5</span>
         <span className="tabular">{pct}%</span>
       </div>
       <Progress value={pct} className="mb-6" />
 
-      <h2 className="font-display text-2xl font-bold text-ink">{STEP_LABELS[step]}</h2>
+      <h2 ref={headingRef} tabIndex={-1} className="font-display text-2xl font-bold text-ink outline-none">
+        {STEP_LABELS[step]}
+      </h2>
       <p className="mt-1 text-sm text-ink-2">
         {aluno
           ? `Perfil pré-preenchido a partir de ${aluno.nome} — ajuste se precisar.`
-          : "Respostas educacionais para apoiar a decisão — não substituem avaliação individualizada."}
+          : "Escolhas educacionais para treinar sua decisão."}
       </p>
 
       <div className="mt-6">
         {step === 0 && (
           <Choices
+            ariaLabel={STEP_LABELS[0]}
             options={OBJETIVOS}
             value={answers.objetivo}
             onChange={(v) => setAnswers((a) => ({ ...a, objetivo: v as GpsAnswers["objetivo"] }))}
@@ -442,6 +501,7 @@ function Wizard({
         )}
         {step === 1 && (
           <Choices
+            ariaLabel={STEP_LABELS[1]}
             options={[...GRUPOS_MUSCULARES]}
             value={answers.grupoMuscular}
             onChange={(v) => setAnswers((a) => ({ ...a, grupoMuscular: v }))}
@@ -449,6 +509,7 @@ function Wizard({
         )}
         {step === 2 && (
           <Choices
+            ariaLabel={STEP_LABELS[2]}
             options={NIVEIS}
             value={answers.nivel}
             onChange={(v) => setAnswers((a) => ({ ...a, nivel: v as Nivel }))}
@@ -456,6 +517,7 @@ function Wizard({
         )}
         {step === 3 && (
           <Choices
+            ariaLabel={STEP_LABELS[3]}
             options={RESTRICOES}
             value={answers.restricao}
             onChange={(v) => setAnswers((a) => ({ ...a, restricao: v as GpsAnswers["restricao"] }))}
@@ -463,6 +525,7 @@ function Wizard({
         )}
         {step === 4 && (
           <MultiChoices
+            ariaLabel={STEP_LABELS[4]}
             options={[...EQUIPAMENTOS]}
             values={answers.equipamentos}
             onToggle={(v) =>
@@ -491,7 +554,7 @@ function Wizard({
             disabled={answers.equipamentos.length === 0}
             className={buttonClasses("primary")}
           >
-            <Sparkles className="h-4 w-4" /> Ver recomendações
+            <Sparkles className="h-4 w-4" /> Ver exercícios recomendados
           </button>
         ) : (
           <button onClick={() => setStep(step + 1)} className={buttonClasses("primary")}>
@@ -499,6 +562,16 @@ function Wizard({
           </button>
         )}
       </div>
+
+      {!last && (
+        <button
+          onClick={onFinish}
+          disabled={answers.equipamentos.length === 0}
+          className="mt-3 w-full text-center text-sm font-medium text-ink-2 hover:text-ink"
+        >
+          Pular para as recomendações →
+        </button>
+      )}
     </Card>
   );
 }
@@ -507,18 +580,36 @@ function Choices({
   options,
   value,
   onChange,
+  ariaLabel,
 }: {
   options: readonly string[];
   value: string;
   onChange: (v: string) => void;
+  ariaLabel: string;
 }) {
+  const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const i = options.indexOf(value);
+    if (i < 0) return;
+    let next = i;
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") next = (i + 1) % options.length;
+    else if (e.key === "ArrowUp" || e.key === "ArrowLeft") next = (i - 1 + options.length) % options.length;
+    else return;
+    e.preventDefault();
+    onChange(options[next]);
+    refs.current[next]?.focus();
+  };
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {options.map((o) => {
+    <div role="radiogroup" aria-label={ariaLabel} onKeyDown={onKeyDown} className="grid gap-3 sm:grid-cols-2">
+      {options.map((o, idx) => {
         const selected = o === value;
         return (
           <button
             key={o}
+            ref={(el) => (refs.current[idx] = el)}
+            role="radio"
+            aria-checked={selected}
+            tabIndex={selected ? 0 : -1}
             onClick={() => onChange(o)}
             className={cn(
               "flex items-center gap-3 rounded-control border px-4 py-3.5 text-left text-sm font-medium transition-colors",
@@ -547,18 +638,21 @@ function MultiChoices({
   options,
   values,
   onToggle,
+  ariaLabel,
 }: {
   options: string[];
   values: string[];
   onToggle: (v: string) => void;
+  ariaLabel: string;
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div role="group" aria-label={ariaLabel} className="grid gap-3 sm:grid-cols-2">
       {options.map((o) => {
         const selected = values.includes(o);
         return (
           <button
             key={o}
+            aria-pressed={selected}
             onClick={() => onToggle(o)}
             className={cn(
               "flex items-center gap-3 rounded-control border px-4 py-3.5 text-left text-sm font-medium transition-colors",
@@ -594,6 +688,8 @@ function Results({
   setCompare,
   alunoNome,
   onSalvar,
+  onExportar,
+  podeExportar,
 }: {
   answers: GpsAnswers;
   results: Recommendation[];
@@ -603,6 +699,8 @@ function Results({
   setCompare: React.Dispatch<React.SetStateAction<string[]>>;
   alunoNome?: string;
   onSalvar?: () => void;
+  onExportar?: () => void;
+  podeExportar?: boolean;
 }) {
   const best = results[0];
   const others = results.slice(1);
@@ -613,18 +711,39 @@ function Results({
 
   return (
     <div className="space-y-6">
-      {onSalvar && alunoNome && (
-        <Card className="flex flex-wrap items-center gap-3 border-success/30 bg-[#e7f8ed]/50 p-4">
-          <UserCheck className="h-5 w-5 shrink-0 text-success" />
-          <div className="min-w-0">
-            <div className="font-semibold text-ink">Prescrição para {alunoNome}</div>
-            <p className="text-sm text-ink-2">
-              Salva as 3 melhores opções no perfil do aluno, com o raciocínio por trás.
-            </p>
+      {onSalvar && alunoNome ? (
+        <Card tone="success" className="p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <UserCheck className="h-5 w-5 shrink-0 text-success" />
+            <div className="min-w-0">
+              <div className="font-semibold text-ink">Prescrição para {alunoNome}</div>
+              <p className="text-sm text-ink-2">
+                Salve no perfil ou entregue ao aluno em PDF com sua marca — com a justificativa.
+              </p>
+            </div>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <button onClick={onSalvar} className={buttonClasses("primary", "sm")}>
+                <Save className="h-4 w-4" /> Salvar
+              </button>
+              {podeExportar ? (
+                <button onClick={onExportar} className={buttonClasses("secondary", "sm")}>
+                  <FileDown className="h-4 w-4" /> Exportar PDF
+                </button>
+              ) : (
+                <Link to="/pricing" className={buttonClasses("secondary", "sm")}>
+                  <LockIcon className="h-3.5 w-3.5" /> PDF (Profissional)
+                </Link>
+              )}
+            </div>
           </div>
-          <button onClick={onSalvar} className={cn(buttonClasses("primary"), "ml-auto")}>
-            <Save className="h-4 w-4" /> Salvar prescrição
-          </button>
+        </Card>
+      ) : (
+        <Card tone="primary" className="flex flex-wrap items-center gap-3 p-4">
+          <Info className="h-5 w-5 shrink-0 text-primary" />
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            <span className="font-semibold text-ink">Prescrição avulsa.</span> Selecione um aluno no
+            topo para salvar no perfil e exportar em PDF com sua marca.
+          </p>
         </Card>
       )}
 
@@ -635,8 +754,8 @@ function Results({
         <Pill tone="primary">{answers.grupoMuscular}</Pill>
         <Pill tone="neutral">{answers.nivel}</Pill>
         <Pill tone={answers.restricao === "Nenhuma" ? "success" : "warning"}>{answers.restricao}</Pill>
-        <button onClick={onRefazer} className="ml-auto text-sm font-medium text-ink-2 hover:text-ink">
-          Refazer
+        <button onClick={onRefazer} className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink">
+          <ArrowLeft className="h-3.5 w-3.5" /> Ajustar respostas
         </button>
       </Card>
 
@@ -667,10 +786,10 @@ function Results({
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                <button onClick={() => onJustify(best)} className={buttonClasses("outline", "sm")}>
+                <button onClick={() => onJustify(best)} className={buttonClasses("primary", "sm")}>
                   <Info className="h-4 w-4" /> Ver justificativa
                 </button>
-                <Link to={`/movement-lab/${best.exercise.slug}`} className={buttonClasses("primary", "sm")}>
+                <Link to={`/movement-lab/${best.exercise.slug}`} className={buttonClasses("outline", "sm")}>
                   Ver no Laboratório <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -793,7 +912,7 @@ function Comparador({
                 )}
               >
                 {e.nome}
-                <button onClick={() => setCompare((c) => c.filter((x) => x !== e.slug))} aria-label="Remover">
+                <button onClick={() => setCompare((c) => c.filter((x) => x !== e.slug))} aria-label={`Remover ${e.nome}`}>
                   <X className="h-3 w-3" />
                 </button>
               </span>

@@ -33,6 +33,7 @@ import {
   useUser,
   useProgress,
   useMode,
+  useAlunos,
   planLabel,
   type Plan,
   type AppMode,
@@ -114,33 +115,46 @@ function tempoRelativo(ts: number) {
 }
 
 export function AppLayout() {
+  const [onboarding, setOnboarding] = React.useState(
+    () => typeof window !== "undefined" && !localStorage.getItem("pi-onboarded"),
+  );
   return (
-    <div className="flex min-h-screen w-full overflow-x-hidden bg-bg">
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar />
-        <main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
-          <Outlet />
-        </main>
+    <div className="min-h-screen w-full overflow-x-hidden bg-bg">
+      {/* Fundo fica inerte enquanto o onboarding está aberto (foco/leitura presos no diálogo) */}
+      <div className="flex min-h-screen w-full" {...(onboarding ? ({ inert: "" } as any) : {})}>
+        <Sidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Topbar />
+          <main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
+            <Outlet />
+          </main>
+        </div>
       </div>
-      <OnboardingGate />
+      {onboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
     </div>
   );
 }
 
 /* Boas-vindas no primeiro acesso: define o modo (o app deixa de "adivinhar"). */
-function OnboardingGate() {
+function OnboardingGate({ onDone }: { onDone: () => void }) {
   const setMode = useMode((s) => s.setMode);
-  const [show, setShow] = React.useState(
-    () => typeof window !== "undefined" && !localStorage.getItem("pi-onboarded"),
-  );
+  const loadExamples = useAlunos((s) => s.loadExamples);
+  const navigate = useNavigate();
   const dialogRef = useDialog<HTMLDivElement>(() => {});
-  if (!show) return null;
 
+  const finish = () => {
+    localStorage.setItem("pi-onboarded", "1");
+    onDone();
+  };
   const choose = (m: AppMode) => {
     setMode(m);
-    localStorage.setItem("pi-onboarded", "1");
-    setShow(false);
+    finish();
+  };
+  const explorar = () => {
+    setMode("atender");
+    loadExamples();
+    finish();
+    navigate("/dashboard");
   };
 
   const opcoes: {
@@ -188,6 +202,9 @@ function OnboardingGate() {
             );
           })}
         </div>
+        <button onClick={explorar} className="mt-4 text-sm font-semibold text-primary hover:underline">
+          Só quero explorar (com dados de exemplo)
+        </button>
       </div>
     </div>
   );
@@ -243,7 +260,7 @@ function Sidebar() {
       />
       <aside
         ref={asideRef}
-        aria-label="Menu principal"
+        aria-label="Barra lateral"
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-[280px] flex-col border-r border-border bg-surface shadow-elevated transition-transform duration-200",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
@@ -271,17 +288,21 @@ function Sidebar() {
 
         <ModeSwitch mode={mode} onChange={changeMode} collapsed={collapsed && !mobileOpen} />
 
-        <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-2">
-          {nav.map((section, i) => (
-            <div key={section.label ?? `sec-${i}`}>
-              {section.label && (!collapsed || mobileOpen) && (
-                <div className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-                  {section.label}
-                </div>
-              )}
-              <NavGroup items={section.items} collapsed={collapsed && !mobileOpen} />
-            </div>
-          ))}
+        <nav aria-label="Menu principal" className="flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-2">
+          {nav.map((section, i) => {
+            const showLabel = !!section.label && (!collapsed || mobileOpen);
+            const labelId = showLabel ? `navsec-${i}` : undefined;
+            return (
+              <div key={section.label ?? `sec-${i}`} role={labelId ? "group" : undefined} aria-labelledby={labelId}>
+                {showLabel && (
+                  <div id={labelId} className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+                    {section.label}
+                  </div>
+                )}
+                <NavGroup items={section.items} collapsed={collapsed && !mobileOpen} />
+              </div>
+            );
+          })}
         </nav>
 
         {(!collapsed || mobileOpen) && (

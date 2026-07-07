@@ -380,7 +380,7 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
             </ul>
           </div>
           <Link to={`/gps?aluno=${aluno.id}`} className={cn(buttonClasses("primary"), "w-full")}>
-            <Navigation className="h-4 w-4" /> Gerar plano orientado por jornada
+            <Navigation className="h-4 w-4" /> Prescrever para esta fase
           </Link>
         </div>
       </div>

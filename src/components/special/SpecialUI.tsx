@@ -174,7 +174,7 @@ export function ParametroCard({ id }: { id: string }) {
 
 export function SafetyFlags({ sinais, aviso }: { sinais: string[]; aviso?: string }) {
   return (
-    <Card className="border-warning/40 bg-[#fef4e2]/40 p-5">
+    <Card tone="warning" className="p-5">
       <div className="mb-3 flex items-center gap-2">
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#fef4e2] text-warning">
           <ShieldAlert className="h-4 w-4" />

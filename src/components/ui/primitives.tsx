@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 // tela), `soft` = apoio/satélite (fundo fosco, sem sombra). `base` = padrão.
 
 export type CardVariant = "base" | "raised" | "soft";
+export type CardTone = "warning" | "success" | "primary";
 
 const cardVariants: Record<CardVariant, string> = {
   base: "border border-border bg-surface shadow-soft",
@@ -13,12 +14,21 @@ const cardVariants: Record<CardVariant, string> = {
   soft: "border border-border bg-surface-soft",
 };
 
+// Cartões de "aviso"/destaque tonal (sem sombra) — padroniza os que eram feitos
+// à mão com hex+opacidade soltos. `tone` tem precedência sobre `variant`.
+const cardTones: Record<CardTone, string> = {
+  warning: "border border-warning/30 bg-[#fef4e2]/50",
+  success: "border border-success/30 bg-[#e7f8ed]/50",
+  primary: "border border-primary/25 bg-primary-tint/40",
+};
+
 export function Card({
   variant = "base",
+  tone,
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & { variant?: CardVariant }) {
-  return <div className={cn("rounded-card", cardVariants[variant], className)} {...props} />;
+}: React.HTMLAttributes<HTMLDivElement> & { variant?: CardVariant; tone?: CardTone }) {
+  return <div className={cn("rounded-card", tone ? cardTones[tone] : cardVariants[variant], className)} {...props} />;
 }
 
 /* -------------------------------- Button --------------------------------- */

@@ -106,12 +106,11 @@ export function nivelDoXp(xp: number) {
 export const useProgress = create<ProgressState>()(
   persist(
     (set) => ({
-      xp: 120,
-      streak: 3,
+      // Novo usuário começa do zero (coerente com a filosofia de "começar vazio").
+      xp: 0,
+      streak: 0,
       casosResolvidos: [],
-      activities: [
-        { id: "seed-1", label: "Estudo do Leg press 45°", ts: Date.now() - 86_400_000 },
-      ],
+      activities: [],
       addActivity: (label) =>
         set((s) => ({
           activities: [{ id: uid(), label, ts: Date.now() }, ...s.activities].slice(0, 8),

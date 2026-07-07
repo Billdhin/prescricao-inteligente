@@ -15,7 +15,7 @@ import {
   ArrowRight,
   ChevronsDownUp,
 } from "lucide-react";
-import { Pill, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { Accordion } from "@/components/ui/disclosure";
 import {
@@ -304,50 +304,48 @@ function ResumoDecisao({
   locked?: boolean;
 }) {
   return (
-    <div className="rounded-card border border-primary/20 bg-primary-tint/30 p-1">
-      <div className="space-y-4 rounded-[14px] bg-surface p-5 md:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <h2 className="font-display text-lg font-bold text-ink">Resumo de decisão</h2>
-          </div>
-          {!locked && (
-            <Link to={`/gps?grupo=${g.slug}`} className={buttonClasses("secondary", "sm")}>
-              Prescrever <ArrowRight className="h-4 w-4" />
-            </Link>
-          )}
+    <Card variant="raised" className="space-y-4 border-l-4 border-l-primary p-5 md:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <h2 className="font-display text-xl font-bold text-ink">Resumo de decisão</h2>
         </div>
+        {!locked && (
+          <Link to={`/gps?grupo=${g.slug}`} className={buttonClasses("secondary", "sm")}>
+            Prescrever <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
+      </div>
 
-        <div className="flex gap-3 rounded-xl bg-primary-tint/60 p-3">
-          <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-          <p className="text-sm text-ink">
-            <span className="font-semibold">Como começar: </span>
-            {g.comoComecar}
-          </p>
+      <div className="flex gap-3 rounded-xl bg-primary-tint/60 p-3">
+        <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+        <p className="text-sm text-ink">
+          <span className="font-semibold">Como começar: </span>
+          {g.comoComecar}
+        </p>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div>
+          <Rotulo icon={<Target className="h-3.5 w-3.5" />}>Objetivos do treino</Rotulo>
+          <ul className="space-y-1">
+            {g.objetivos.map((o) => (
+              <li key={o} className="flex gap-2 text-sm text-ink-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                {o}
+              </li>
+            ))}
+          </ul>
         </div>
-
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div>
-            <Rotulo icon={<Target className="h-3.5 w-3.5" />}>Objetivos do treino</Rotulo>
-            <ul className="space-y-1">
-              {g.objetivos.map((o) => (
-                <li key={o} className="flex gap-2 text-sm text-ink-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                  {o}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <Rotulo icon={<Activity className="h-3.5 w-3.5" />}>Parâmetros essenciais</Rotulo>
-            <ParametroPills ids={g.parametros} />
-            <p className="mt-3 text-sm text-ink-2">{g.perfil}</p>
-          </div>
+        <div>
+          <Rotulo icon={<Activity className="h-3.5 w-3.5" />}>Parâmetros essenciais</Rotulo>
+          <ParametroPills ids={g.parametros} />
+          <p className="mt-3 text-sm text-ink-2">{g.perfil}</p>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
