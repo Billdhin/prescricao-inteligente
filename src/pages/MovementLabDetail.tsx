@@ -2,7 +2,6 @@ import * as React from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
-  Box,
   Sparkles,
   Star,
   Repeat2,
@@ -79,7 +78,6 @@ function Detail({ exercise }: { exercise: Exercise }) {
   const toggleFav = useFavorites((s) => s.toggle);
   const addActivity = useProgress((s) => s.addActivity);
   const isFav = favSlugs.includes(exercise.slug);
-  const [phase, setPhase] = React.useState(0);
 
   const onFav = () => {
     toggleFav(exercise.slug);
@@ -88,7 +86,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
-      {/* Header */}
+      {/* Header enxuto */}
       <div>
         <Link
           to="/movement-lab"
@@ -96,38 +94,20 @@ function Detail({ exercise }: { exercise: Exercise }) {
         >
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{exercise.nome}</h1>
-              {exercise.premium ? (
-                <Pill tone="cta" icon={<Sparkles className="h-3 w-3" />}>
-                  Premium
-                </Pill>
-              ) : (
-                <Pill tone="success">Gratuito</Pill>
-              )}
-            </div>
-            <p className="mt-2 max-w-2xl text-ink-2">
-              Compare a execução real com a análise biomecânica detalhada.
-            </p>
-          </div>
-          <div className="relative shrink-0">
-            <button disabled className={buttonClasses("outline") + " opacity-70"}>
-              <Box className="h-4 w-4" /> Ver em 3D
-            </button>
-            <span className="absolute -right-2 -top-2 rounded-full bg-cta px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-              Em breve
-            </span>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{exercise.nome}</h1>
+          {exercise.premium ? (
+            <Pill tone="cta" icon={<Sparkles className="h-3 w-3" />}>
+              Premium
+            </Pill>
+          ) : (
+            <Pill tone="success">Gratuito</Pill>
+          )}
         </div>
+        <p className="mt-2 max-w-2xl text-ink-2">
+          Compare a execução real com a análise biomecânica — e aprofunde o que quiser.
+        </p>
         <div className="mt-5 flex flex-wrap gap-2">
-          <Link to={`/comparador?base=${exercise.slug}`} className={buttonClasses("outline")}>
-            <Repeat2 className="h-4 w-4" /> Comparar com outro exercício
-          </Link>
-          <Link to="/gps" className={buttonClasses("outline")}>
-            <Navigation className="h-4 w-4" /> Usar no GPS da Prescrição
-          </Link>
           <button
             onClick={onFav}
             aria-pressed={isFav}
@@ -136,10 +116,16 @@ function Detail({ exercise }: { exercise: Exercise }) {
             <Star className={cn("h-4 w-4", isFav && "fill-current")} />
             {isFav ? "Favorito salvo" : "Salvar favorito"}
           </button>
+          <Link to={`/comparador?base=${exercise.slug}`} className={buttonClasses("outline")}>
+            <Repeat2 className="h-4 w-4" /> Comparar
+          </Link>
+          <Link to="/gps" className={buttonClasses("outline")}>
+            <Navigation className="h-4 w-4" /> Usar no GPS
+          </Link>
         </div>
       </div>
 
-      {/* Bloco principal */}
+      {/* HERO: execução × análise + Índice de Eficiência (a âncora) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div className="space-y-4">
           <div className="relative">
@@ -176,144 +162,96 @@ function Detail({ exercise }: { exercise: Exercise }) {
             {locked && <LockedOverlay />}
           </div>
 
-          <Card className="p-4">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-              <Legend swatch="bg-[#ef4444]" label="Músculo trabalhado" />
-              <Legend swatch="bg-cta" label="Ângulo articular" />
-              <Legend swatch="bg-primary" label="Linha de força" />
-              <span className="ml-auto text-xs text-ink-3">
-                Arraste o divisor para comparar. Referências educacionais.
-              </span>
-            </div>
-          </Card>
-
-          <Card className="p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-display text-lg font-bold text-ink">Timeline do movimento</h3>
-              <Pill tone="neutral">{exercise.fases.length} fases</Pill>
-            </div>
-            <ol className="flex flex-wrap items-center gap-2">
-              {exercise.fases.map((f, i) => {
-                const active = i === phase;
-                return (
-                  <li key={f.nome} className="flex items-center gap-2">
-                    <button
-                      onClick={() => setPhase(i)}
-                      aria-pressed={active}
-                      className={cn(
-                        "flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors",
-                        active
-                          ? "border-primary bg-primary-tint text-primary"
-                          : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "tabular grid h-5 w-5 place-items-center rounded-full text-[11px]",
-                          active ? "bg-primary text-white" : "bg-surface-soft",
-                        )}
-                      >
-                        {i + 1}
-                      </span>
-                      {f.nome}
-                    </button>
-                    {i < exercise.fases.length - 1 && <ArrowRight className="h-4 w-4 text-ink-3" />}
-                  </li>
-                );
-              })}
-            </ol>
-            <p className="mt-4 rounded-xl border border-border bg-surface-soft p-3 text-sm text-ink">
-              <span className="font-semibold">{exercise.fases[phase].nome}: </span>
-              {exercise.fases[phase].descricao}
-            </p>
-          </Card>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 px-1 text-sm">
+            <Legend swatch="bg-[#ef4444]" label="Músculo trabalhado" />
+            <Legend swatch="bg-cta" label="Ângulo articular" />
+            <Legend swatch="bg-primary" label="Linha de força" />
+            <span className="text-xs text-ink-3">Arraste o divisor para comparar.</span>
+          </div>
         </div>
 
-        {/* Índice de eficiência */}
-        <div className="space-y-4">
-          <Card className="p-6 shadow-elevated">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-lg font-bold text-ink">Índice de Eficiência</h3>
-              <TrustBadge level={exercise.trustLevel} />
-            </div>
-            <div className="mt-4 flex items-center gap-5">
-              <ScoreRing value={exercise.indiceEficiencia.score} size={112} />
-              <div>
-                <div className="text-xs uppercase tracking-wider text-ink-3">Avaliação geral</div>
-                <div className="font-display text-xl font-bold text-ink">
-                  {qualitativo(exercise.indiceEficiencia.score)}
-                </div>
-                <div className="text-xs text-ink-2">
-                  {exercise.indiceEficiencia.score}/100 · {exercise.grupoMuscular}
-                </div>
+        {/* Índice de eficiência — âncora */}
+        <Card variant="raised" className="p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-bold text-ink">Índice de Eficiência</h2>
+            <TrustBadge level={exercise.trustLevel} />
+          </div>
+          <div className="mt-4 flex items-center gap-5">
+            <ScoreRing value={exercise.indiceEficiencia.score} size={112} />
+            <div>
+              <div className="text-xs uppercase tracking-wider text-ink-3">Avaliação geral</div>
+              <div className="font-display text-xl font-bold text-ink">
+                {qualitativo(exercise.indiceEficiencia.score)}
+              </div>
+              <div className="text-xs text-ink-2">
+                {exercise.indiceEficiencia.score}/100 · {exercise.grupoMuscular}
               </div>
             </div>
-            <div className="mt-5 space-y-2.5">
-              {exercise.indiceEficiencia.metrics.map((m) => (
-                <StatBar
-                  key={m.nome}
-                  label={m.nome}
-                  value={m.valor}
-                  tone={m.tipo === "positivo" ? "primary" : "cta"}
-                />
-              ))}
-            </div>
-            <div className="mt-5 border-t border-border pt-4">
-              <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">
-                Resumo prático
-              </div>
-              <p className="mt-1 text-sm text-ink">{exercise.resumoPratico}</p>
-            </div>
-            <div className="mt-4 flex gap-3 rounded-xl bg-primary-tint p-3">
-              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-              <p className="text-sm text-ink">
-                <span className="font-semibold">Dica: </span>
-                priorize a fase excêntrica com cadência controlada — em geral favorece o aprendizado
-                técnico antes de progredir carga.
-              </p>
-            </div>
-          </Card>
-
-          {/* Mapa muscular anatômico */}
-          <Card className="p-6">
-            <div className="mb-1 flex items-center justify-between">
-              <h3 className="font-display text-lg font-bold text-ink">Mapa muscular</h3>
-              <Pill tone="analysis" icon={<Info className="h-3 w-3" />}>
-                Ativação estimada
-              </Pill>
-            </div>
-            <p className="mb-3 text-sm text-ink-2">
-              Onde o movimento tende a gerar mais demanda — depende da execução.
+          </div>
+          <div className="mt-5 space-y-2.5">
+            {exercise.indiceEficiencia.metrics.map((m) => (
+              <StatBar
+                key={m.nome}
+                label={m.nome}
+                value={m.valor}
+                tone={m.tipo === "positivo" ? "primary" : "cta"}
+              />
+            ))}
+          </div>
+          <div className="mt-5 border-t border-border pt-4">
+            <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">Resumo prático</div>
+            <p className="mt-1 text-sm text-ink">{exercise.resumoPratico}</p>
+          </div>
+          <div className="mt-4 flex gap-3 rounded-xl bg-primary-tint p-3">
+            <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <p className="text-sm text-ink">
+              <span className="font-semibold">Dica: </span>
+              priorize a fase excêntrica com cadência controlada — em geral favorece o aprendizado
+              técnico antes de progredir carga.
             </p>
-            <MuscleMap activation={activationFromExercise(exercise)} />
-          </Card>
-        </div>
+          </div>
+        </Card>
       </div>
 
-      {/* 4 blocos */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <BlockCard title="Quando usar" items={exercise.blocos.quandoUsar} icon={<CheckCircle2 className="h-4 w-4" />} tone="success" />
-        <BlockCard title="Quando evitar" items={exercise.blocos.quandoEvitar} icon={<ShieldAlert className="h-4 w-4" />} tone="cta" />
-        <BlockCard title="Erros comuns" items={exercise.blocos.errosComuns} icon={<AlertTriangle className="h-4 w-4" />} tone="warning" />
-        <BlockCard title="Variações" items={exercise.blocos.variacoes} icon={<Repeat2 className="h-4 w-4" />} tone="primary" />
-      </div>
-
-      {/* Abas com progressive disclosure */}
+      {/* Análise do movimento — tudo o mais recolhido em abas (aprofundar sob demanda) */}
       <Card className="p-4 md:p-6">
         <Tabs
           items={[
-            { id: "visao", label: "Visão geral", content: <Concept text={exercise.conteudo.visaoGeral} ex={exercise} trust={exercise.trustLevel} /> },
-            { id: "bio", label: "Biomecânica", content: <Concept text={exercise.conteudo.biomecanica} ex={exercise} trust="princípio biomecânico" /> },
+            {
+              id: "visao",
+              label: "Visão geral",
+              content: (
+                <div className="space-y-5">
+                  <Concept text={exercise.conteudo.visaoGeral} ex={exercise} trust={exercise.trustLevel} showHotspots />
+                  <QuandoUsarEvitar ex={exercise} />
+                </div>
+              ),
+            },
+            {
+              id: "bio",
+              label: "Biomecânica",
+              content: (
+                <div className="space-y-5">
+                  <Concept text={exercise.conteudo.biomecanica} ex={exercise} trust="princípio biomecânico" />
+                  <Timeline ex={exercise} />
+                  <div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <h4 className="font-display font-bold text-ink">Mapa muscular</h4>
+                      <Pill tone="analysis">ativação estimada</Pill>
+                    </div>
+                    <MuscleMap activation={activationFromExercise(exercise)} />
+                  </div>
+                </div>
+              ),
+            },
             { id: "fis", label: "Fisiologia aplicada", content: <Concept text={exercise.conteudo.fisiologia} ex={exercise} trust="tendência prática" /> },
             { id: "erros", label: "Erros comuns", content: <Bullets items={exercise.blocos.errosComuns} trust="cuidado de segurança" tone="warning" /> },
             { id: "var", label: "Variações", content: <Bullets items={exercise.blocos.variacoes} trust="regra pedagógica" tone="primary" /> },
             { id: "pres", label: "Prescrição prática", content: <Concept text={exercise.conteudo.prescricaoPratica} ex={exercise} trust="depende do contexto" /> },
+            { id: "comp", label: "Comparar", content: <Comparador exercise={exercise} /> },
           ]}
         />
       </Card>
-
-      {/* Comparador */}
-      <Comparador exercise={exercise} />
 
       <p className="pt-2 text-xs text-ink-3">
         Conteúdo educacional — não substitui avaliação profissional individualizada nem prescrição
@@ -351,38 +289,103 @@ function LockedOverlay() {
   );
 }
 
-function BlockCard({
+/* Timeline do movimento (compacta, dentro da aba Biomecânica) */
+function Timeline({ ex }: { ex: Exercise }) {
+  const [phase, setPhase] = React.useState(0);
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-2">
+        <h4 className="font-display font-bold text-ink">Timeline do movimento</h4>
+        <Pill tone="neutral">{ex.fases.length} fases</Pill>
+      </div>
+      <ol className="flex flex-wrap items-center gap-2">
+        {ex.fases.map((f, i) => {
+          const active = i === phase;
+          return (
+            <li key={f.nome} className="flex items-center gap-2">
+              <button
+                onClick={() => setPhase(i)}
+                aria-pressed={active}
+                className={cn(
+                  "flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors",
+                  active
+                    ? "border-primary bg-primary-tint text-primary"
+                    : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
+                )}
+              >
+                <span
+                  className={cn(
+                    "tabular grid h-5 w-5 place-items-center rounded-full text-[11px]",
+                    active ? "bg-primary text-white" : "bg-surface-soft",
+                  )}
+                >
+                  {i + 1}
+                </span>
+                {f.nome}
+              </button>
+              {i < ex.fases.length - 1 && <ArrowRight className="h-4 w-4 text-ink-3" />}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-3 rounded-xl border border-border bg-surface-soft p-3 text-sm text-ink">
+        <span className="font-semibold">{ex.fases[phase].nome}: </span>
+        {ex.fases[phase].descricao}
+      </p>
+    </div>
+  );
+}
+
+/* Quando usar / Quando evitar (dentro da aba Visão geral) */
+function QuandoUsarEvitar({ ex }: { ex: Exercise }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <ListaBloco
+        title="Quando usar"
+        icon={<CheckCircle2 className="h-4 w-4" />}
+        items={ex.blocos.quandoUsar}
+        iconClass="bg-[#e7f8ed] text-success"
+        dot="bg-success"
+      />
+      <ListaBloco
+        title="Quando evitar"
+        icon={<ShieldAlert className="h-4 w-4" />}
+        items={ex.blocos.quandoEvitar}
+        iconClass="bg-[#fff1e6] text-[color:var(--cta-text)]"
+        dot="bg-cta"
+      />
+    </div>
+  );
+}
+
+function ListaBloco({
   title,
-  items,
   icon,
-  tone,
+  items,
+  iconClass,
+  dot,
 }: {
   title: string;
-  items: string[];
   icon: React.ReactNode;
-  tone: "success" | "cta" | "warning" | "primary";
+  items: string[];
+  iconClass: string;
+  dot: string;
 }) {
-  const toneBg: Record<string, string> = {
-    success: "bg-[#e7f8ed] text-success",
-    cta: "bg-[#fff1e6] text-cta",
-    warning: "bg-[#fef4e2] text-warning",
-    primary: "bg-primary-tint text-primary",
-  };
   return (
-    <Card className="flex h-full flex-col p-5">
-      <div className="mb-3 flex items-center gap-2">
-        <span className={cn("grid h-8 w-8 place-items-center rounded-lg", toneBg[tone])}>{icon}</span>
+    <div className="rounded-xl border border-border p-4">
+      <div className="mb-2 flex items-center gap-2">
+        <span className={cn("grid h-8 w-8 place-items-center rounded-lg", iconClass)}>{icon}</span>
         <h4 className="font-display text-base font-bold text-ink">{title}</h4>
       </div>
-      <ul className="flex-1 space-y-2 text-sm text-ink">
+      <ul className="space-y-2 text-sm text-ink">
         {items.map((it) => (
           <li key={it} className="flex gap-2">
-            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-ink-3" />
+            <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", dot)} />
             <span>{it}</span>
           </li>
         ))}
       </ul>
-    </Card>
+    </div>
   );
 }
 
@@ -394,14 +397,24 @@ const CAMADAS: { key: keyof HotspotCamadas; label: string }[] = [
   { key: "cuidados", label: "Cuidados" },
 ];
 
-function Concept({ text, ex, trust }: { text: string; ex: Exercise; trust: TrustLevel }) {
+function Concept({
+  text,
+  ex,
+  trust,
+  showHotspots,
+}: {
+  text: string;
+  ex: Exercise;
+  trust: TrustLevel;
+  showHotspots?: boolean;
+}) {
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <p className="max-w-3xl text-ink">{text}</p>
         <TrustBadge level={trust} />
       </div>
-      {ex.hotspots.length > 0 && (
+      {showHotspots && ex.hotspots.length > 0 && (
         <>
           <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">
             Aprofundar por ponto de análise
@@ -475,13 +488,7 @@ function Comparador({ exercise }: { exercise: Exercise }) {
     { label: "Complexidade técnica", ...metricPair("Complexidade técnica") },
   ];
   return (
-    <Card className="p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff1e6] text-cta">
-          <Repeat2 className="h-4 w-4" />
-        </span>
-        <h3 className="font-display text-lg font-bold text-ink">Comparador</h3>
-      </div>
+    <div>
       <div className="mb-3 flex items-center gap-2 text-sm">
         <span className="min-w-0 flex-1 truncate font-semibold text-primary">{exercise.nome}</span>
         <span className="rounded-full bg-surface-soft px-2 py-0.5 text-xs font-bold text-ink-2">VS</span>
@@ -490,7 +497,7 @@ function Comparador({ exercise }: { exercise: Exercise }) {
           <select
             value={otherSlug}
             onChange={(e) => setOtherSlug(e.target.value)}
-            className="h-9 w-full rounded-control border border-border bg-surface px-2 text-sm font-semibold text-analysis outline-none focus-visible:border-primary/50"
+            className="h-9 w-full rounded-control border border-border bg-surface px-2 text-sm font-semibold text-analysis outline-none focus-visible:border-primary"
           >
             {candidatos.map((c) => (
               <option key={c.slug} value={c.slug}>
@@ -521,6 +528,6 @@ function Comparador({ exercise }: { exercise: Exercise }) {
       >
         Comparar até 3 no comparador completo <ArrowRight className="h-3.5 w-3.5" />
       </Link>
-    </Card>
+    </div>
   );
 }
