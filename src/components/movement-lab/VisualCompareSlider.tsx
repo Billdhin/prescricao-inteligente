@@ -155,16 +155,31 @@ export function VisualCompareSlider({
 }
 
 const CAMADAS = [
-  { key: "resumo", label: "Resumo prático" },
-  { key: "biomecanica", label: "Biomecânica" },
-  { key: "fisiologia", label: "Fisiologia aplicada" },
-  { key: "evidencia", label: "Evidência / observação" },
-  { key: "cuidados", label: "Cuidados e exceções" },
+  { key: "resumo", label: "Resumo prático", short: "Resumo" },
+  { key: "biomecanica", label: "Biomecânica", short: "Biomecânica" },
+  { key: "fisiologia", label: "Fisiologia aplicada", short: "Fisiologia" },
+  { key: "evidencia", label: "Evidência / observação", short: "Evidência" },
+  { key: "cuidados", label: "Cuidados e exceções", short: "Cuidados" },
 ] as const;
 
+/**
+ * Modal do ponto de análise: altura ESTÁVEL (não cresce a cada clique), uma
+ * camada por vez, navegável por segmentos, setas do teclado e Anterior/Próxima.
+ */
 function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => void }) {
-  const [level, setLevel] = React.useState(1);
+  const [idx, setIdx] = React.useState(0);
   const dialogRef = useDialog<HTMLDivElement>(onClose);
+  const cam = CAMADAS[idx];
+
+  const onTabsKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setIdx((i) => Math.min(CAMADAS.length - 1, i + 1));
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setIdx((i) => Math.max(0, i - 1));
+    }
+  };
 
   return (
     <div
@@ -177,42 +192,94 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
         role="dialog"
         aria-modal="true"
         aria-label={hotspot.titulo}
-        className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated outline-none"
+        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-card bg-surface shadow-elevated outline-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <h3 className="font-display text-lg font-bold text-ink">{hotspot.titulo}</h3>
+        {/* Cabeçalho */}
+        <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+              Ponto de análise
+            </div>
+            <h3 className="truncate font-display text-lg font-bold text-ink">{hotspot.titulo}</h3>
+          </div>
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft"
+            className="shrink-0 rounded-md p-2.5 text-ink-3 hover:bg-surface-soft"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="space-y-2">
-          {CAMADAS.slice(0, level).map((c, i) => (
-            <div key={c.key} className="rounded-lg border border-border bg-surface-soft p-3">
-              <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-                <span className="tabular grid h-4 w-4 place-items-center rounded-full bg-primary text-[10px] text-white">
-                  {i + 1}
-                </span>
-                {c.label}
-              </div>
-              <p className="text-sm text-ink">{hotspot.camadas[c.key]}</p>
-            </div>
-          ))}
+
+        {/* Camadas (segmentos) */}
+        <div
+          role="tablist"
+          aria-label="Camadas da análise"
+          onKeyDown={onTabsKeyDown}
+          className="flex gap-1 overflow-x-auto px-5 pt-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {CAMADAS.map((c, i) => {
+            const on = i === idx;
+            const visto = i < idx;
+            return (
+              <button
+                key={c.key}
+                role="tab"
+                aria-selected={on}
+                tabIndex={on ? 0 : -1}
+                onClick={() => setIdx(i)}
+                className={cn(
+                  "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+                  on
+                    ? "bg-primary text-white"
+                    : visto
+                      ? "bg-primary-tint text-primary hover:bg-primary-tint/70"
+                      : "bg-surface-soft text-ink-2 hover:text-ink",
+                )}
+              >
+                {c.short}
+              </button>
+            );
+          })}
         </div>
-        {level < CAMADAS.length ? (
+
+        {/* Conteúdo da camada (altura mínima estável) */}
+        <div className="min-h-[8.5rem] flex-1 overflow-y-auto px-5 py-4" role="tabpanel">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+            {cam.label}
+          </div>
+          <p className="mt-1.5 text-[15px] leading-relaxed text-ink">{hotspot.camadas[cam.key]}</p>
+        </div>
+
+        {/* Navegação */}
+        <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
           <button
-            onClick={() => setLevel((n) => n + 1)}
-            className="mt-3 rounded-lg bg-primary-tint px-3 py-1.5 text-xs font-semibold text-primary"
+            onClick={() => setIdx((i) => Math.max(0, i - 1))}
+            disabled={idx === 0}
+            className="inline-flex items-center gap-1 rounded-control px-3 py-2 text-sm font-semibold text-ink-2 hover:text-ink disabled:opacity-40"
           >
-            Aprofundar em {CAMADAS[level].label} →
+            <ChevronLeft className="h-4 w-4" /> Anterior
           </button>
-        ) : (
-          <p className="mt-3 text-xs text-ink-3">Você viu todas as camadas desta análise.</p>
-        )}
+          <span className="tabular text-xs font-medium text-ink-3">
+            {idx + 1} de {CAMADAS.length}
+          </span>
+          {idx < CAMADAS.length - 1 ? (
+            <button
+              onClick={() => setIdx((i) => i + 1)}
+              className="inline-flex items-center gap-1 rounded-control bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
+            >
+              Próxima <ChevronRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              onClick={onClose}
+              className="inline-flex items-center gap-1 rounded-control border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-soft"
+            >
+              Concluir
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
