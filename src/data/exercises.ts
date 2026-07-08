@@ -1,4 +1,5 @@
 import type { Exercise } from "./types";
+import { extraExercises } from "./exercises-extra";
 
 export const exercises: Exercise[] = [
   /* ------------------------------- LEG PRESS ------------------------------ */
@@ -967,6 +968,7 @@ export const exercises: Exercise[] = [
     trustLevel: "regra pedagógica",
     temCena: false,
   },
+  ...extraExercises,
 ];
 
 export function getExercise(slug: string) {

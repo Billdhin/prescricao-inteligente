@@ -192,4 +192,99 @@ export const muscleRegions: Record<string, MuscleRegion[]> = {
       ],
     },
   ],
+
+  /* --------------------- Expansão: cardio/funcional/core ------------------ */
+
+  // Lateral andando p/ a direita; glúteo (≈51,47), coxa da frente desce ao joelho.
+  "caminhada-esteira": [
+    { musculo: "Glúteo máximo", shapes: [{ cx: 51.5, cy: 47, rx: 3, ry: 5 }] },
+    { musculo: "Quadríceps", shapes: [{ cx: 56, cy: 55, rx: 3.5, ry: 8, rot: 15 }] },
+    { musculo: "Posteriores de coxa", shapes: [{ cx: 53, cy: 56, rx: 2.5, ry: 7, rot: 15 }] },
+    { musculo: "Panturrilha", shapes: [{ cx: 48.5, cy: 63, rx: 2.5, ry: 5, rot: -12 }] },
+  ],
+
+  // Lateral pedalando virado p/ a esquerda; coxa quase horizontal.
+  "bicicleta-ergometrica": [
+    { musculo: "Quadríceps", shapes: [{ cx: 60, cy: 44, rx: 8, ry: 4.5, rot: -10 }] },
+    { musculo: "Glúteo máximo", shapes: [{ cx: 67.5, cy: 41, rx: 4, ry: 6.5, rot: -15 }] },
+    { musculo: "Posteriores de coxa", shapes: [{ cx: 60, cy: 52, rx: 4.5, ry: 3.5, rot: -8 }] },
+    { musculo: "Panturrilha", shapes: [{ cx: 60, cy: 64, rx: 2.5, ry: 5 }] },
+  ],
+
+  // 3/4 com tronco dominante; pernas na base do quadro, deltoide no ombro.
+  eliptico: [
+    { musculo: "Quadríceps", shapes: [{ cx: 61, cy: 92, rx: 5, ry: 7 }] },
+    { musculo: "Glúteo máximo", shapes: [{ cx: 79, cy: 85, rx: 6, ry: 9 }] },
+    { musculo: "Posteriores de coxa", shapes: [{ cx: 74, cy: 92, rx: 4, ry: 7 }] },
+    { musculo: "Deltoide", shapes: [{ cx: 76, cy: 45, rx: 5.5, ry: 6.5 }] },
+  ],
+
+  // Frontal na piscina; coxas sob a água, abdômen acima da linha.
+  "marcha-aquatica": [
+    {
+      musculo: "Quadríceps",
+      shapes: [
+        { cx: 51, cy: 75, rx: 3.5, ry: 6, rot: 10 },
+        { cx: 66, cy: 74, rx: 4, ry: 8, rot: -5 },
+      ],
+    },
+    { musculo: "Core", shapes: [{ cx: 58, cy: 62, rx: 4, ry: 5 }] },
+  ],
+
+  // Lateral; idoso em pé à frente do banco (posição final do levantar).
+  "sentar-levantar": [
+    { musculo: "Glúteo máximo", shapes: [{ cx: 43, cy: 45, rx: 3.5, ry: 6 }] },
+    { musculo: "Quadríceps", shapes: [{ cx: 46.5, cy: 55, rx: 3.5, ry: 8, rot: 5 }] },
+    { musculo: "Posteriores de coxa", shapes: [{ cx: 43.5, cy: 55, rx: 2.5, ry: 7, rot: 5 }] },
+  ],
+
+  // Lateral no topo da ponte; joelho (≈27,41) → quadril (≈45,58) → ombros no chão.
+  "ponte-gluteos": [
+    { musculo: "Glúteo máximo", shapes: [{ cx: 45.5, cy: 60, rx: 5, ry: 7 }] },
+    { musculo: "Posteriores de coxa", shapes: [{ cx: 36, cy: 51, rx: 7, ry: 4.5, rot: 25 }] },
+  ],
+
+  // Lateral em prancha alta (corpo horizontal, cabeça à direita); abdômen aceso.
+  "prancha-frontal": [
+    { musculo: "Core", shapes: [{ cx: 50, cy: 58, rx: 7, ry: 8 }] },
+    { musculo: "Reto abdominal", shapes: [{ cx: 49, cy: 56, rx: 5.5, ry: 7, rot: -10 }] },
+    { musculo: "Oblíquos", shapes: [{ cx: 53, cy: 60, rx: 3.5, ry: 5 }] },
+  ],
+
+  // Lateral deitada; parede abdominal vermelha no centro.
+  "dead-bug": [
+    { musculo: "Core", shapes: [{ cx: 54, cy: 60, rx: 7, ry: 6 }] },
+    { musculo: "Reto abdominal", shapes: [{ cx: 53, cy: 60, rx: 5.5, ry: 5.5 }] },
+    { musculo: "Oblíquos", shapes: [{ cx: 58.5, cy: 60, rx: 3, ry: 5 }] },
+  ],
+
+  // Vista traseira sentado; duas lâminas do dorsal + romboides no centro alto.
+  "remada-elastica": [
+    {
+      musculo: "Latíssimo do dorso",
+      shapes: [
+        { cx: 47.5, cy: 50, rx: 5, ry: 12, rot: -8 },
+        { cx: 61.5, cy: 50, rx: 5, ry: 12, rot: 8 },
+      ],
+    },
+    { musculo: "Romboides", shapes: [{ cx: 54, cy: 39, rx: 5.5, ry: 5 }] },
+    {
+      musculo: "Bíceps",
+      shapes: [
+        { cx: 37.5, cy: 36, rx: 2.5, ry: 5, rot: -25 },
+        { cx: 72, cy: 36, rx: 2.5, ry: 5, rot: 25 },
+      ],
+    },
+  ],
+
+  // Lateral em ponta de pé no step; panturrilha de apoio + da perna dobrada.
+  "panturrilha-em-pe": [
+    {
+      musculo: "Panturrilha",
+      shapes: [
+        { cx: 47, cy: 64, rx: 2.5, ry: 7, rot: 3 },
+        { cx: 52.5, cy: 52.5, rx: 3, ry: 4, rot: 60 },
+      ],
+    },
+  ],
 };

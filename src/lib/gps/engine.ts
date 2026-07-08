@@ -80,9 +80,11 @@ function metricValue(ex: Exercise, name: string): number | undefined {
 // "Corpo todo": pontua por massa muscular envolvida (maior custo energético) —
 // usado no Emagrecimento e disponível como alvo geral.
 const MASSA_MUSCULAR: Record<string, number> = {
+  "Corpo todo": 1,
   "Membros inferiores": 1,
   Costas: 0.9,
   Peitorais: 0.85,
+  "Core (tronco)": 0.6,
   Ombros: 0.55,
   Braços: 0.4,
 };
@@ -94,8 +96,18 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
 
   // 1) Grupo muscular
   const corpoTodo = ans.grupoMuscular === "Corpo todo";
-  const grupoOk = corpoTodo ? (MASSA_MUSCULAR[ex.grupoMuscular] ?? 0.5) >= 0.85 : ex.grupoMuscular === ans.grupoMuscular;
-  const grupoRatio = corpoTodo ? (MASSA_MUSCULAR[ex.grupoMuscular] ?? 0.5) : grupoOk ? 1 : 0.1;
+  const exCorpoTodo = ex.grupoMuscular === "Corpo todo";
+  const grupoOk = corpoTodo
+    ? (MASSA_MUSCULAR[ex.grupoMuscular] ?? 0.5) >= 0.85
+    : exCorpoTodo || ex.grupoMuscular === ans.grupoMuscular;
+  // exercício de corpo todo cobre parcialmente qualquer alvo específico
+  const grupoRatio = corpoTodo
+    ? (MASSA_MUSCULAR[ex.grupoMuscular] ?? 0.5)
+    : exCorpoTodo
+      ? 0.6
+      : grupoOk
+        ? 1
+        : 0.1;
   const grupoPts = grupoRatio * W_GRUPO;
   breakdown.push({
     criterio: "Grupo muscular",
@@ -105,11 +117,13 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
       ? grupoOk
         ? `${ex.grupoMuscular}: grande massa muscular — maior custo energético por série.`
         : `${ex.grupoMuscular}: massa muscular menor — contribui menos para o gasto global.`
-      : grupoOk
-        ? `Trabalha diretamente ${ex.grupoMuscular}.`
-        : `Grupo do exercício (${ex.grupoMuscular}) difere do alvo (${ans.grupoMuscular}).`,
+      : exCorpoTodo
+        ? `Exercício de corpo todo — cobre parcialmente o alvo (${ans.grupoMuscular}).`
+        : grupoOk
+          ? `Trabalha diretamente ${ex.grupoMuscular}.`
+          : `Grupo do exercício (${ex.grupoMuscular}) difere do alvo (${ans.grupoMuscular}).`,
   });
-  if (grupoOk) reasons.push(corpoTodo ? `Grande massa muscular (${ex.grupoMuscular})` : ex.grupoMuscular);
+  if (grupoOk && !exCorpoTodo) reasons.push(corpoTodo ? `Grande massa muscular (${ex.grupoMuscular})` : ex.grupoMuscular);
 
   // 2) Objetivo
   const objOk = ex.objetivo.includes(ans.objetivo);
@@ -273,6 +287,7 @@ export const GRUPOS_MUSCULARES = [
   "Membros inferiores",
   "Peitorais",
   "Costas",
+  "Core (tronco)",
   "Ombros",
   "Braços",
 ] as const;
@@ -306,4 +321,6 @@ export const EQUIPAMENTOS = [
   "Halter",
   "Polia",
   "Peso corporal",
+  "Elástico",
+  "Piscina",
 ] as const;

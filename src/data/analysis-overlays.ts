@@ -90,4 +90,47 @@ export const analysisOverlays: Record<string, AnalysisOverlayData> = {
     angle: { x: 57, y: 30, value: "90°" },
     force: { x1: 58, y1: 32, x2: 62, y2: 24 },
   },
+
+  // --- Expansão: cardio / funcional / core --------------------------------
+  "caminhada-esteira": {
+    // propulsão para a frente ao longo da esteira
+    force: { x1: 50, y1: 58, x2: 62, y2: 52 },
+  },
+  "bicicleta-ergometrica": {
+    // vértice no joelho alto; A→quadril, B→tornozelo (flexão no topo do pedal)
+    angle: { x: 52.5, y: 48.5, value: "75°", rays: { ax: 67, ay: 41, bx: 57, by: 65 } },
+    force: { x1: 55, y1: 52, x2: 57.5, y2: 64 },
+  },
+  eliptico: {
+    // empurrar do pedal em arco descendente
+    force: { x1: 62, y1: 84, x2: 66, y2: 96 },
+  },
+  "marcha-aquatica": {
+    // marcha contra a resistência da água (avança para a esquerda)
+    force: { x1: 58, y1: 73, x2: 46, y2: 69 },
+  },
+  "sentar-levantar": {
+    // subida: extensão de quadril/joelho, força vertical
+    force: { x1: 44, y1: 50, x2: 45, y2: 36 },
+    angle: { x: 52, y: 62, value: "90°" },
+  },
+  "ponte-gluteos": {
+    // vértice no quadril; A→joelho, B→ombro (extensão ≈ alinhamento no topo)
+    angle: { x: 45, y: 58, value: "165°", rays: { ax: 27, ay: 41, bx: 72, by: 71 } },
+    force: { x1: 46, y1: 55, x2: 45, y2: 42 },
+  },
+  "dead-bug": {
+    // vértice no quadril flexionado; A→joelho dobrado, B→ombro (≈90°)
+    angle: { x: 60, y: 55, value: "90°", rays: { ax: 47, ay: 36, bx: 78, by: 60 } },
+    force: { x1: 33, y1: 53, x2: 18, y2: 57 },
+  },
+  "remada-elastica": {
+    // retração: puxada em direção à coluna (vista traseira)
+    angle: { x: 68, y: 26, value: "90°" },
+    force: { x1: 67, y1: 44, x2: 56, y2: 43 },
+  },
+  "panturrilha-em-pe": {
+    // flexão plantar: empurra o corpo verticalmente
+    force: { x1: 47, y1: 70, x2: 47, y2: 58 },
+  },
 };

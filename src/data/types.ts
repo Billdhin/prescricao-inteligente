@@ -77,6 +77,8 @@ export interface Exercise {
   imagem?: string;
   /** Render anatômico opcional (músculos destacados) para a camada de análise. */
   imagemAnalise?: string;
+  /** id da modalidade (src/data/modalities.ts) a que o exercício pertence */
+  modalidade?: string;
   ativacao: MuscleActivation[];
   indiceEficiencia: IndiceEficiencia;
   fases: Fase[];
