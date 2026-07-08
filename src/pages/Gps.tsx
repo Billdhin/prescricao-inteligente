@@ -54,10 +54,15 @@ import {
   type JourneyPhase,
 } from "@/data/specialGroups";
 import { ParametroPills } from "@/components/special/SpecialUI";
-import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
+import { montarProntuario } from "@/lib/gps/prontuario";
+import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
+import { ProntuarioView } from "@/components/rcd/ProntuarioView";
+import { SeloRCD } from "@/components/rcd/SeloRCD";
+import type { ProntuarioSnapshot } from "@/data/alunos";
+import { marcarAtivacao } from "@/lib/ativacao";
 import { useDialog } from "@/lib/useDialog";
 import { cn, withBase } from "@/lib/utils";
-import { FileDown, Lock as LockIcon } from "lucide-react";
+import { FileDown, FileText, Lock as LockIcon } from "lucide-react";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
 
@@ -83,13 +88,13 @@ const stepLabels = (emagrecimento: boolean) => [
 ];
 
 export function Gps() {
-  const { name: nome, plan } = useUser();
+  const { name: nome, plan, cref } = useUser();
   const unlocked = isPremiumUnlocked(plan);
   const { consultations, increment, reset } = useGps();
   const addActivity = useProgress((s) => s.addActivity);
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { alunos, addPrescricao } = useAlunos();
+  const { alunos, addPrescricao, liberacoes } = useAlunos();
 
   // Passo 0 — contexto editável (para quem / grupo / fase). Absorve a antiga
   // "Decisão rápida": lê ?aluno / ?grupo / ?fase e deixa o usuário ajustar.
@@ -110,16 +115,35 @@ export function Gps() {
   const rule = grupo && !grupoLocked ? getGroupRule(grupo.slug) : undefined;
 
   const [step, setStep] = React.useState(0);
-  const [answers, setAnswers] = React.useState<GpsAnswers>({
-    objetivo: "Hipertrofia",
-    grupoMuscular: "Membros inferiores",
-    nivel: "Iniciante",
-    restricao: "Nenhuma",
-    equipamentos: [...EQUIPAMENTOS],
+  const [answers, setAnswers] = React.useState<GpsAnswers>(() => {
+    // Prefill do onboarding "Primeiro Caso Real" (?objetivo=&nivel=)
+    const obj = params.get("objetivo");
+    const niv = params.get("nivel");
+    return {
+      objetivo: obj && OBJETIVOS.includes(obj as GpsAnswers["objetivo"]) ? (obj as GpsAnswers["objetivo"]) : "Hipertrofia",
+      grupoMuscular: obj === "Emagrecimento" ? "Corpo todo" : "Membros inferiores",
+      prioridade: obj === "Emagrecimento" ? "Cardio + força (misto)" : undefined,
+      nivel: niv === "Intermediário" || niv === "Avançado" ? (niv as Nivel) : "Iniciante",
+      restricao: "Nenhuma",
+      equipamentos: [...EQUIPAMENTOS],
+    };
   });
   const [results, setResults] = React.useState<Recommendation[] | null>(null);
   const [justify, setJustify] = React.useState<Recommendation | null>(null);
   const [compare, setCompare] = React.useState<string[]>([]);
+  const [prontuarioAberto, setProntuarioAberto] = React.useState<ProntuarioSnapshot | null>(null);
+  const primeiroCaso = params.get("primeiro-caso") === "1";
+
+  // Última liberação do Semáforo aplicável (mesmo aluno/grupo, últimas 24h)
+  const liberacaoDoDia = React.useMemo(() => {
+    const corte = Date.now() - 24 * 3_600_000;
+    return liberacoes.find(
+      (l) =>
+        l.data >= corte &&
+        (aluno ? l.alunoId === aluno.id : l.grupoSlug === grupoSlug && !l.alunoId) &&
+        (!grupoSlug || l.grupoSlug === grupoSlug),
+    );
+  }, [liberacoes, aluno, grupoSlug]);
 
   // Ao escolher um aluno, herda o grupo/fase dele (se tiver) e pré-preenche o perfil.
   const onAluno = (id: string) => {
@@ -149,14 +173,47 @@ export function Gps() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rule?.slug]);
 
+  // Plano composto: modalidades como base da semana (jornada do grupo ou
+  // emagrecimento) + exercícios de força como complemento.
+  const modRecs = React.useMemo<ModalidadeRec[]>(
+    () =>
+      recommendModalidades({
+        answers,
+        grupo: grupoLocked ? undefined : grupo,
+        faseObj: grupoLocked ? undefined : faseObj,
+      }),
+    [answers, grupo, faseObj, grupoLocked],
+  );
+
+  // Prontuário de Decisão: snapshot completo do raciocínio (Motor RCD)
+  const gerarProntuario = React.useCallback(
+    () =>
+      results
+        ? montarProntuario({
+            results,
+            series: seriesSugerida(answers.objetivo),
+            rule,
+            liberacao: liberacaoDoDia,
+            modalidades: modRecs,
+            parametros:
+              faseObj?.parametros ??
+              (answers.objetivo === "Emagrecimento" ? ["p-rpe", "p-fala", "p-adesao", "p-volume"] : ["p-rpe", "p-dor"]),
+          })
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [results, answers, rule, liberacaoDoDia, faseObj],
+  );
+
   const salvarPrescricao = () => {
     if (!aluno || !results) return;
+    marcarAtivacao("primeiroSalvo");
     addPrescricao({
       id: uid(),
       alunoId: aluno.id,
       data: Date.now(),
       titulo: grupo ? `${grupo.nome} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
       answers,
+      prontuario: gerarProntuario() ?? undefined,
       itens: results.slice(0, 3).map((r) => ({
         slug: r.exercise.slug,
         score: r.score,
@@ -177,12 +234,16 @@ export function Gps() {
     navigate(`/alunos/${aluno.id}`);
   };
 
-  // Exporta em PDF direto da tela de resultados (sem precisar salvar antes).
+  // Exporta o PRONTUÁRIO DE DECISÃO direto da tela de resultados.
   const exportarPDF = () => {
     if (!aluno || !results) return;
-    exportPrescricaoPDF({
+    const prontuario = gerarProntuario();
+    if (!prontuario) return;
+    exportProntuarioPDF({
       aluno,
       profissional: nome,
+      cref,
+      prontuario,
       presc: {
         id: uid(),
         alunoId: aluno.id,
@@ -218,19 +279,8 @@ export function Gps() {
     if (!rank.length) return;
     setResults(rank);
     setCompare([rank[0].exercise.slug]);
+    marcarAtivacao("primeiroResultado");
   };
-
-  // Plano composto: modalidades como base da semana (jornada do grupo ou
-  // emagrecimento) + exercícios de força como complemento.
-  const modRecs = React.useMemo<ModalidadeRec[]>(
-    () =>
-      recommendModalidades({
-        answers,
-        grupo: grupoLocked ? undefined : grupo,
-        faseObj: grupoLocked ? undefined : faseObj,
-      }),
-    [answers, grupo, faseObj, grupoLocked],
-  );
 
   // Volta ao wizard PRESERVANDO as respostas (para ajustar só uma variável).
   const ajustarRespostas = () => {
@@ -242,12 +292,15 @@ export function Gps() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Pill tone="primary" icon={<Navigation className="h-3 w-3" />} className="mb-3">
-            Assistente de decisão
-          </Pill>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Pill tone="primary" icon={<Navigation className="h-3 w-3" />}>
+              Assistente de decisão
+            </Pill>
+            <SeloRCD compacto />
+          </div>
           <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Prescrever</h1>
           <p className="mt-2 max-w-2xl text-ink-2">
-            Diga para quem e receba exercícios ranqueados — cada um com a justificativa do porquê.
+            Diga para quem e receba exercícios ranqueados — cada decisão documentada com o porquê.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -267,6 +320,18 @@ export function Gps() {
           )}
         </div>
       </div>
+
+      {/* Onboarding "Primeiro Caso Real": o gatilho de compra é situacional */}
+      {primeiroCaso && !results && (
+        <Card tone="primary" className="flex flex-wrap items-center gap-3 p-4">
+          <Sparkles className="h-5 w-5 shrink-0 text-primary" />
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            <span className="font-semibold text-ink">Seu primeiro caso real.</span> Confirme o
+            perfil abaixo (ou pule direto), veja as recomendações documentadas e abra o
+            prontuário da decisão — em menos de 10 minutos.
+          </p>
+        </Card>
+      )}
 
       {/* Mapa do fluxo: onde estou, o que falta */}
       <FlowSteps atual={results ? 3 : alunoId || grupoSlug ? 2 : 1} />
@@ -289,7 +354,7 @@ export function Gps() {
           grupo={grupo}
           faseObj={faseObj}
           fase={fase}
-          contexto={{ alunoNome: aluno?.nome, objetivo: answers.objetivo }}
+          contexto={{ alunoNome: aluno?.nome, alunoId: aluno?.id, objetivo: answers.objetivo }}
         />
       )}
       {grupo && grupoLocked && <JornadaLockedNote grupo={grupo} />}
@@ -322,10 +387,25 @@ export function Gps() {
           grupoNome={grupoLocked ? undefined : grupo?.nome}
           faseNum={grupoLocked ? undefined : grupo ? fase : undefined}
           faseJustificativa={grupoLocked ? undefined : faseObj?.justificativa}
+          onProntuario={() => {
+            const p = gerarProntuario();
+            if (p) setProntuarioAberto(p);
+          }}
         />
       )}
 
       {justify && <JustifyDialog rec={justify} onClose={() => setJustify(null)} />}
+      {prontuarioAberto && (
+        <ProntuarioView
+          prontuario={prontuarioAberto}
+          titulo={
+            grupo ? `${grupo.nome} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`
+          }
+          onExportar={aluno ? exportarPDF : undefined}
+          podeExportar={unlocked}
+          onClose={() => setProntuarioAberto(null)}
+        />
+      )}
 
       <p className="pt-2 text-xs text-ink-3">
         Conteúdo educacional — não substitui avaliação profissional individualizada nem prescrição
@@ -469,7 +549,7 @@ function FocoAgora({
   grupo: SpecialGroup;
   faseObj: JourneyPhase;
   fase: number;
-  contexto?: { alunoNome?: string; objetivo?: string };
+  contexto?: { alunoNome?: string; alunoId?: string; objetivo?: string };
 }) {
   return (
     <Card className="border-l-4 border-l-primary p-5 md:p-6">
@@ -525,6 +605,15 @@ function FocoAgora({
           </span>
         </div>
         <ParametroPills ids={faseObj.parametros} contexto={contexto} />
+      </div>
+
+      <div className="mt-4">
+        <Link
+          to={`/semaforo?grupo=${grupo.slug}${contexto?.alunoId ? `&aluno=${contexto.alunoId}` : ""}`}
+          className={buttonClasses("secondary", "sm")}
+        >
+          <ShieldAlert className="h-4 w-4" /> Semáforo de hoje — libere a sessão em 30s
+        </Link>
       </div>
 
       <p className="mt-3 text-xs text-ink-3">{AVISO_SEGURANCA}</p>
@@ -837,6 +926,7 @@ function Results({
   onSalvar,
   onExportar,
   podeExportar,
+  onProntuario,
   modRecs,
   grupoNome,
   faseNum,
@@ -852,6 +942,7 @@ function Results({
   onSalvar?: () => void;
   onExportar?: () => void;
   podeExportar?: boolean;
+  onProntuario: () => void;
   modRecs: ModalidadeRec[];
   grupoNome?: string;
   faseNum?: number;
@@ -912,9 +1003,17 @@ function Results({
         </Pill>
         <Pill tone="neutral">{answers.nivel}</Pill>
         <Pill tone={answers.restricao === "Nenhuma" ? "success" : "warning"}>{answers.restricao}</Pill>
-        <button onClick={onRefazer} className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink">
-          <ArrowLeft className="h-3.5 w-3.5" /> Ajustar respostas
-        </button>
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          <button
+            onClick={onProntuario}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-analysis hover:underline"
+          >
+            <FileText className="h-4 w-4" /> Ver prontuário desta decisão
+          </button>
+          <button onClick={onRefazer} className="inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink">
+            <ArrowLeft className="h-3.5 w-3.5" /> Ajustar respostas
+          </button>
+        </div>
       </Card>
 
       {/* Base da semana — modalidades (plano composto: a musculação isolada não

@@ -60,6 +60,56 @@ export interface PrescricaoItem {
   series?: string;
 }
 
+/* ------------------- Motor RCD: liberação e prontuário ------------------- */
+
+/** Registro de uma passagem pelo Semáforo de Liberação (gate pré-sessão). */
+export interface Liberacao {
+  id: string;
+  alunoId?: string;
+  grupoSlug: string;
+  data: number;
+  /** respostas {itemId: valor} do checklist */
+  respostas: Record<string, string>;
+  resultado: "verde" | "amarelo" | "vermelho";
+  /** ações sugeridas registradas no momento (amarelo/vermelho) */
+  ajustes: { pergunta: string; acao: string }[];
+}
+
+/** Critério do breakdown do motor (espelha CriterioRacional do engine). */
+export interface CriterioSnapshot {
+  criterio: string;
+  peso: number;
+  pontosPossiveis: number;
+  detalhe: string;
+}
+
+/**
+ * PRONTUÁRIO DE DECISÃO TÉCNICA — snapshot completo do raciocínio no momento
+ * da prescrição: o que foi escolhido E o que foi descartado, com o porquê de
+ * cada um, o semáforo do dia e a bibliografia. É o rastro auditável que o
+ * profissional pode mostrar ao aluno/médico ou guardar como defesa técnica.
+ */
+export interface ProntuarioSnapshot {
+  escolhidos: {
+    slug: string;
+    nome: string;
+    score: number;
+    series?: string;
+    reasons: string[];
+    cautions: string[];
+    breakdown: CriterioSnapshot[];
+  }[];
+  descartados: { slug: string; nome: string; score: number; motivoPrincipal: string }[];
+  cuidadosGrupo?: { nome: string; cuidados: string[]; refs: string[] };
+  semaforo?: { resultado: "verde" | "amarelo" | "vermelho"; data: number; ajustes: string[] };
+  modalidades?: { id: string; nome: string; motivo: string }[];
+  parametros: string[];
+  /** ids de referencias.ts citadas (bibliografia numerada) */
+  refIds: string[];
+  geradoEm: number;
+  motorVersao: string;
+}
+
 export interface Prescricao {
   id: string;
   alunoId: string;
@@ -85,6 +135,8 @@ export interface Prescricao {
   criteriosRegressao?: string[];
   /** explicação do raciocínio (fisiológico/prático) da prescrição */
   raciocinio?: string;
+  /** Prontuário de Decisão Técnica — rastro completo do Motor RCD */
+  prontuario?: ProntuarioSnapshot;
 }
 
 const DIA = 86_400_000;

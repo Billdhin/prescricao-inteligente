@@ -13,9 +13,12 @@ import {
   Activity,
   Dumbbell,
   ClipboardList,
+  PartyPopper,
+  X,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
+import { getAtivacao, marcarCelebrado, minutosPrimeiroCaso } from "@/lib/ativacao";
 import type { Aluno } from "@/data/alunos";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +78,8 @@ export function ProfessionalDashboard() {
       ) : (
         <>
       {/* Passo a passo guiado (some sozinho quando o fluxo está dominado) */}
+      <CelebracaoPrimeiroCaso />
+
       <ProximosPassos
         temAluno={alunos.length > 0}
         temAvaliacao={avaliacoes.length > 0}
@@ -182,6 +187,35 @@ export function ProfessionalDashboard() {
 
 /* Checklist guiado do fluxo de trabalho: 4 passos com estado real. Some quando
    tudo está feito (o usuário "formou") ou quando o profissional oculta. */
+/* Celebra a ativação (1x): o primeiro caso real resolvido — a métrica-mãe. */
+function CelebracaoPrimeiroCaso() {
+  const [visivel, setVisivel] = useState(() => {
+    const a = getAtivacao();
+    return !!a.primeiroSalvo && !a.celebrado;
+  });
+  if (!visivel) return null;
+  const min = minutosPrimeiroCaso();
+  const fechar = () => {
+    marcarCelebrado();
+    setVisivel(false);
+  };
+  return (
+    <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
+      <PartyPopper className="h-5 w-5 shrink-0 text-success" />
+      <p className="min-w-0 flex-1 text-sm text-ink-2">
+        <span className="font-semibold text-ink">
+          Primeiro caso real resolvido{min ? ` em ${min} min` : ""}.
+        </span>{" "}
+        A decisão ficou documentada no prontuário do aluno — é assim que cada caso vira defesa
+        técnica sua.
+      </p>
+      <button onClick={fechar} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+        <X className="h-4 w-4" />
+      </button>
+    </Card>
+  );
+}
+
 function ProximosPassos({
   temAluno,
   temAvaliacao,

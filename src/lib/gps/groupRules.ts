@@ -15,6 +15,8 @@ export interface GroupGpsRule extends GroupRuleInput {
   restricaoSugerida?: GpsRestricao;
   /** cuidados exibidos como "já considerados pelo grupo" */
   cuidados: string[];
+  /** ids de referencias.ts que fundamentam as regras deste grupo (bibliografia do Prontuário) */
+  refs?: string[];
 }
 
 export const groupGpsRules: Record<string, GroupGpsRule> = {
@@ -39,6 +41,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       },
     ],
     complexidadeMax: 55,
+    refs: ["donnelly-2009", "acsm-getp11", "oms-2020"],
   },
 
   hipertensao: {
@@ -61,6 +64,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
         motivo: "Exercícios de alta exigência técnica tendem a elevar a resposta pressórica sob carga.",
       },
     ],
+    refs: ["sbc-2020", "pescatello-2004", "acsm-getp11"],
   },
 
   "diabetes-tipo-2": {
@@ -72,6 +76,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       "Consistência semanal tende a valer mais que picos de intensidade.",
     ],
     penalidades: [],
+    refs: ["colberg-2016", "sbd-2023"],
   },
 
   "idoso-destreinado": {
@@ -89,6 +94,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       },
     ],
     complexidadeMax: 50,
+    refs: ["chodzko-2009", "fragala-2019"],
   },
 
   "dor-lombar-inespecifica": {
@@ -101,6 +107,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     ],
     // a penalização vem da restrição pré-selecionada (evita punir duas vezes)
     penalidades: [],
+    refs: ["nice-ng59"],
   },
 
   "osteoartrite-joelho": {
@@ -112,6 +119,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       "Amplitude confortável; progrida guiado pela resposta de dor nas 24–48h seguintes.",
     ],
     penalidades: [],
+    refs: ["oarsi-2019", "acr-2019"],
   },
 };
 

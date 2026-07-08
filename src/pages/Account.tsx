@@ -11,7 +11,7 @@ const planos: { value: Plan; label: string; desc: string }[] = [
 ];
 
 export function Account() {
-  const { name, plan, setPlan } = useUser();
+  const { name, plan, cref, setPlan, setName, setCref } = useUser();
   const [confirmReset, setConfirmReset] = React.useState(false);
   const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("");
 
@@ -30,17 +30,42 @@ export function Account() {
       />
 
       {/* Perfil */}
-      <Card className="flex items-center gap-4 p-6">
-        <span className="grid h-14 w-14 place-items-center rounded-full gradient-brand text-lg font-bold text-white">
-          {initials}
-        </span>
-        <div>
-          <div className="font-display text-lg font-bold text-ink">{name}</div>
-          <div className="mt-1 flex items-center gap-2">
-            <Pill tone={isPremiumUnlocked(plan) ? "success" : "neutral"} icon={<Crown className="h-3 w-3" />}>
-              {planLabel[plan]}
-            </Pill>
+      <Card className="p-6">
+        <div className="flex items-center gap-4">
+          <span className="grid h-14 w-14 place-items-center rounded-full gradient-brand text-lg font-bold text-white">
+            {initials}
+          </span>
+          <div>
+            <div className="font-display text-lg font-bold text-ink">{name}</div>
+            <div className="mt-1 flex items-center gap-2">
+              <Pill tone={isPremiumUnlocked(plan) ? "success" : "neutral"} icon={<Crown className="h-3 w-3" />}>
+                {planLabel[plan]}
+              </Pill>
+            </div>
           </div>
+        </div>
+        <div className="mt-5 grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-ink">Nome profissional</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="input"
+              placeholder="Como aparecerá nos documentos"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-ink">CREF</span>
+            <input
+              value={cref}
+              onChange={(e) => setCref(e.target.value)}
+              className="input"
+              placeholder="ex.: 012345-G/SP"
+            />
+            <span className="mt-1 block text-xs text-ink-3">
+              Aparece no cabeçalho e no bloco de assinatura do Prontuário de Decisão.
+            </span>
+          </label>
         </div>
       </Card>
 

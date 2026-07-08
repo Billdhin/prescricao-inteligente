@@ -5,6 +5,7 @@ import {
   FlaskConical,
   BookOpen,
   Repeat2,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import type { SceneId } from "@/components/tutorial/TutorialScene";
@@ -30,6 +31,50 @@ export interface Tutorial {
 }
 
 export const tutorials: Tutorial[] = [
+  {
+    slug: "semaforo-ao-prontuario",
+    titulo: "Do semáforo ao prontuário assinado",
+    resumo: "O fluxo completo do Motor RCD: liberar a sessão, decidir documentado e assinar.",
+    icon: ShieldCheck,
+    duracao: "~4 min",
+    nivel: "Básico",
+    modo: "atender",
+    steps: [
+      {
+        titulo: "Faça o Semáforo de Liberação",
+        descricao:
+          "Antes da sessão do aluno com condição especial, abra o Semáforo e responda o checklist de ~30 segundos: pressão do dia, sintomas, medicação. O resultado sai na hora — liberado, liberado com ajuste ou não liberado hoje — sempre com o porquê.",
+        scene: "nav",
+        navLabel: "Semáforo",
+        cta: { label: "Abrir o Semáforo", to: "/semaforo" },
+      },
+      {
+        titulo: "Registre a liberação",
+        descricao:
+          "Toque em “Registrar liberação”. O resultado entra no histórico do aluno e será anexado automaticamente ao prontuário da prescrição — é o seu rastro de diligência.",
+        scene: "feedback",
+      },
+      {
+        titulo: "Prescreva com o motor",
+        descricao:
+          "No Prescrever, o Motor RCD ranqueia os exercícios pelo perfil e pelos cuidados do grupo — e mostra também o que foi DESCARTADO e por quê.",
+        scene: "recomendacao",
+        cta: { label: "Ir para Prescrever", to: "/gps" },
+      },
+      {
+        titulo: "Abra o prontuário da decisão",
+        descricao:
+          "Em “Ver prontuário desta decisão”, revise o raciocínio completo: escolhidos, descartados, semáforo do dia, parâmetros e referências numeradas.",
+        scene: "abas",
+      },
+      {
+        titulo: "Exporte e assine",
+        descricao:
+          "Salve no aluno e exporte o Prontuário de Decisão em PDF: ele sai com o seu nome, seu CREF, o ID do documento e o bloco de assinatura. O ChatGPT te dá um treino — isto é um registro que você pode assinar.",
+        scene: "pdf",
+      },
+    ],
+  },
   {
     slug: "prescrever-para-aluno",
     titulo: "Prescreva para um aluno",

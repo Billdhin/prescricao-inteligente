@@ -25,6 +25,10 @@ import { SpecialGroupDetail } from "@/pages/SpecialGroupDetail";
 import { Tutorial } from "@/pages/Tutorial";
 import { TutorialDetail } from "@/pages/TutorialDetail";
 import { Support } from "@/pages/Support";
+import { Semaforo } from "@/pages/Semaforo";
+import { Roi } from "@/pages/Roi";
+import { CasosRcd } from "@/pages/CasosRcd";
+import { CasoRcdDetail } from "@/pages/CasoRcdDetail";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -54,6 +58,9 @@ export default function App() {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/planos" element={<Navigate to="/pricing" replace />} />
         <Route path="/demo" element={<Navigate to="/movement-lab" replace />} />
+        <Route path="/roi" element={<Roi />} />
+        <Route path="/casos-rcd" element={<CasosRcd />} />
+        <Route path="/casos-rcd/:slug" element={<CasoRcdDetail />} />
 
         {/* App (dentro do shell) */}
         <Route element={<AppLayout />}>
@@ -76,6 +83,7 @@ export default function App() {
           <Route path="/history" element={<History />} />
           <Route path="/protocols" element={<Protocolos />} />
           <Route path="/assessments" element={<Avaliacoes />} />
+          <Route path="/semaforo" element={<Semaforo />} />
           <Route path="/tutorial" element={<Tutorial />} />
           <Route path="/tutorial/:slug" element={<TutorialDetail />} />
           <Route path="/suporte" element={<Support />} />

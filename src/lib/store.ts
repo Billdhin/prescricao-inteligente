@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Aluno, Avaliacao, Prescricao } from "@/data/alunos";
+import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
 
 /* ----------------------------- Usuário / plano ---------------------------- */
@@ -16,7 +16,11 @@ export const planLabel: Record<Plan, string> = {
 interface UserState {
   name: string;
   plan: Plan;
+  /** registro profissional (aparece no cabeçalho/assinatura do Prontuário) */
+  cref: string;
   setPlan: (p: Plan) => void;
+  setName: (n: string) => void;
+  setCref: (c: string) => void;
 }
 
 export const useUser = create<UserState>()(
@@ -26,7 +30,10 @@ export const useUser = create<UserState>()(
       // Novo usuário começa no plano free (vê o valor + os paywalls no momento
       // certo). O dono alterna via UserMenu (dev toggle) para testar.
       plan: "free",
+      cref: "",
       setPlan: (plan) => set({ plan }),
+      setName: (name) => set({ name }),
+      setCref: (cref) => set({ cref }),
     }),
     { name: "pi-user" },
   ),
@@ -186,12 +193,15 @@ interface AlunosState {
   alunos: Aluno[];
   avaliacoes: Avaliacao[];
   prescricoes: Prescricao[];
+  /** liberações do Semáforo (gate pré-sessão do Motor RCD) */
+  liberacoes: Liberacao[];
   addAluno: (a: Aluno) => void;
   updateAluno: (id: string, patch: Partial<Aluno>) => void;
   removeAluno: (id: string) => void;
   addAvaliacao: (av: Avaliacao) => void;
   addPrescricao: (p: Prescricao) => void;
   archivePrescricao: (id: string) => void;
+  addLiberacao: (l: Liberacao) => void;
   /** carrega os alunos de demonstração (para experimentar sem cadastrar) */
   loadExamples: () => void;
 }
@@ -203,6 +213,7 @@ export const useAlunos = create<AlunosState>()(
       alunos: [],
       avaliacoes: [],
       prescricoes: [],
+      liberacoes: [],
       loadExamples: () =>
         set({ alunos: seedAlunos, avaliacoes: seedAvaliacoes, prescricoes: seedPrescricoes }),
       addAluno: (a) => set((s) => ({ alunos: [a, ...s.alunos] })),
@@ -229,6 +240,7 @@ export const useAlunos = create<AlunosState>()(
           }),
         })),
       addPrescricao: (p) => set((s) => ({ prescricoes: [p, ...s.prescricoes] })),
+      addLiberacao: (l) => set((s) => ({ liberacoes: [l, ...s.liberacoes].slice(0, 200) })),
       archivePrescricao: (id) =>
         set((s) => ({
           prescricoes: s.prescricoes.map((p) =>
@@ -264,6 +276,7 @@ export const useAlunos = create<AlunosState>()(
           }),
           avaliacoes: Array.isArray(p.avaliacoes) ? p.avaliacoes : seedAvaliacoes,
           prescricoes: Array.isArray(p.prescricoes) ? p.prescricoes : seedPrescricoes,
+          liberacoes: Array.isArray(p.liberacoes) ? p.liberacoes : [],
         } as unknown as AlunosState;
       },
     },

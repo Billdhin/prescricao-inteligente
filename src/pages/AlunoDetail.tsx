@@ -14,12 +14,16 @@ import {
   FlaskConical,
   HeartPulse,
   FileDown,
+  FileText,
   Lock,
   Route as RouteIcon,
+  ShieldCheck,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, uid } from "@/lib/store";
 import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
+import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
+import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -35,10 +39,11 @@ const nomeEx = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ??
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, addAvaliacao, updateAluno } = useAlunos();
-  const { name: profNome, plan } = useUser();
+  const { alunos, avaliacoes, prescricoes, liberacoes, addAvaliacao, updateAluno } = useAlunos();
+  const { name: profNome, plan, cref } = useUser();
   const premium = isPremiumUnlocked(plan);
   const [avaliar, setAvaliar] = React.useState(false);
+  const [prontuarioDe, setProntuarioDe] = React.useState<string | null>(null);
 
   const aluno = alunos.find((a) => a.id === id);
   if (!aluno) {
@@ -56,6 +61,8 @@ export function AlunoDetail() {
   const avalsDesc = [...avals].reverse();
   const prescs = prescricoes.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
   const reavaliacaoVencida = aluno.proximaReavaliacaoEm ? aluno.proximaReavaliacaoEm < Date.now() : false;
+  const libsDoAluno = liberacoes.filter((l) => l.alunoId === id).slice(0, 3);
+  const prescAberta = prontuarioDe ? prescs.find((p) => p.id === prontuarioDe) : undefined;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -190,6 +197,48 @@ export function AlunoDetail() {
             )}
           </Card>
 
+          {aluno.grupoEspecial && (
+            <Card className="p-5">
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="font-display text-lg font-bold text-ink">Semáforo de Liberação</h2>
+              </div>
+              <p className="mb-3 text-sm text-ink-2">
+                Antes da sessão: libere o treino de hoje em 30 segundos, com o porquê registrado.
+              </p>
+              {libsDoAluno.length > 0 && (
+                <ul className="mb-3 space-y-1.5">
+                  {libsDoAluno.map((l) => (
+                    <li key={l.id} className="flex items-center gap-2 text-sm">
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "h-2.5 w-2.5 shrink-0 rounded-full",
+                          l.resultado === "verde" && "bg-success",
+                          l.resultado === "amarelo" && "bg-warning",
+                          l.resultado === "vermelho" && "bg-[#ef4444]",
+                        )}
+                      />
+                      <span className="text-ink">
+                        {l.resultado === "verde"
+                          ? "Liberado"
+                          : l.resultado === "amarelo"
+                            ? "Liberado com ajuste"
+                            : "Não liberado"}
+                      </span>
+                      <span className="tabular ml-auto text-xs text-ink-3">{fmtData(l.data)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link
+                to={`/semaforo?grupo=${aluno.grupoEspecial}&aluno=${aluno.id}`}
+                className={buttonClasses("secondary", "sm")}
+              >
+                <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
+              </Link>
+            </Card>
+          )}
+
           <Card className="p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold text-ink">Prescrições</h2>
@@ -231,13 +280,26 @@ export function AlunoDetail() {
                         {p.raciocinio}
                       </p>
                     )}
-                    <div className="mt-3 border-t border-border pt-2.5">
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-2.5">
+                      {p.prontuario && (
+                        <button
+                          onClick={() => setProntuarioDe(p.id)}
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-analysis hover:underline"
+                        >
+                          <FileText className="h-4 w-4" /> Ver prontuário ({idDocumento(p.id)})
+                        </button>
+                      )}
                       {premium ? (
                         <button
-                          onClick={() => exportPrescricaoPDF({ aluno, presc: p, profissional: profNome })}
+                          onClick={() =>
+                            p.prontuario
+                              ? exportProntuarioPDF({ aluno, presc: p, prontuario: p.prontuario, profissional: profNome, cref })
+                              : exportPrescricaoPDF({ aluno, presc: p, profissional: profNome })
+                          }
                           className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
                         >
-                          <FileDown className="h-4 w-4" /> Exportar PDF (com sua marca)
+                          <FileDown className="h-4 w-4" />
+                          {p.prontuario ? "Exportar prontuário assinável" : "Exportar PDF (com sua marca)"}
                         </button>
                       ) : (
                         <Link
@@ -264,6 +326,25 @@ export function AlunoDetail() {
             setAvaliar(false);
           }}
           alunoId={aluno.id}
+        />
+      )}
+
+      {prescAberta?.prontuario && (
+        <ProntuarioView
+          prontuario={prescAberta.prontuario}
+          titulo={prescAberta.titulo}
+          docId={idDocumento(prescAberta.id)}
+          onExportar={() =>
+            exportProntuarioPDF({
+              aluno,
+              presc: prescAberta,
+              prontuario: prescAberta.prontuario!,
+              profissional: profNome,
+              cref,
+            })
+          }
+          podeExportar={premium}
+          onClose={() => setProntuarioDe(null)}
         />
       )}
     </div>

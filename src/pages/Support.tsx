@@ -21,6 +21,16 @@ const ASSUNTOS = ["Dúvida de uso", "Problema técnico", "Sugestão", "Assinatur
 
 const FAQ = [
   {
+    id: "rcd",
+    q: "O que é o Raciocínio Clínico Documentado (RCD)?",
+    a: "É o mecanismo central da plataforma: um motor que ranqueia exercícios critério a critério para o perfil do aluno (incluindo os cuidados do grupo/condição), registra o que foi escolhido E o que foi descartado — com o porquê e referências — e transforma tudo num Prontuário de Decisão que você pode exportar e assinar. Inclui também o Semáforo de Liberação, o checklist de 30 segundos antes de cada sessão.",
+  },
+  {
+    id: "prescreve-por-mim",
+    q: "A ferramenta prescreve por mim?",
+    a: "Não — e isso é intencional. Só o profissional habilitado (CREF) prescreve. O Motor RCD apoia e documenta a SUA decisão: organiza os critérios, aponta cuidados e registra o raciocínio para você mostrar ao aluno, ao médico dele ou guardar como defesa técnica. A assinatura no prontuário é sua.",
+  },
+  {
     id: "pagar",
     q: "Preciso pagar para usar?",
     a: "Não. O plano gratuito já libera o essencial — Prescrever com justificativa, parte do Laboratório Visual e casos práticos. O plano Profissional abre o uso ilimitado, o comparador, os grupos especiais completos e a exportação de prescrições em PDF.",

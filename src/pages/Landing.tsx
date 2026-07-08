@@ -22,6 +22,7 @@ import * as React from "react";
 import { Logo } from "@/components/brand/Logo";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
+import { SeloRCD } from "@/components/rcd/SeloRCD";
 import { TutorialScene } from "@/components/tutorial/TutorialScene";
 import { muscleRegions } from "@/data/muscle-regions";
 import { analysisOverlays } from "@/data/analysis-overlays";
@@ -221,36 +222,112 @@ export function Landing() {
         </p>
       </Section>
 
-      {/* ------------------------ O porquê visível --------------------------- */}
+      {/* -------------------- O mecanismo: Motor RCD ------------------------- */}
       <div className="border-y border-border bg-surface">
-        <Section className="!py-14">
+        <Section id="rcd" className="!py-14">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
-              <Kicker>O diferencial</Kicker>
+              <div className="mb-3">
+                <SeloRCD />
+              </div>
               <h2 className="font-display text-3xl font-bold text-ink">
-                Não é um gerador de treino. É o <span className="text-primary">raciocínio visível</span>.
+                Não é um gerador de treino. É{" "}
+                <span className="text-primary">Raciocínio Clínico Documentado</span>.
               </h2>
               <p className="mt-3 text-ink-2">
-                Cada recomendação mostra como cada critério pesou — objetivo, nível, restrição,
-                equipamento. Você entende, ajusta e defende a decisão diante de qualquer aluno.
+                O Motor RCD acompanha a decisão inteira — do sinal verde para treinar hoje ao
+                documento que você pode assinar. Em três atos:
               </p>
-              <ul className="mt-5 space-y-2.5">
+              <ol className="mt-5 space-y-3">
                 {[
-                  "Critérios transparentes, ponto a ponto — nada de caixa-preta",
-                  "Linguagem prudente: “tende a favorecer”, nunca promessa clínica",
-                  "Você continua no comando: a plataforma apoia, quem decide é você",
-                ].map((t) => (
-                  <li key={t} className="flex gap-2.5 text-ink">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-success" />
-                    <span>{t}</span>
+                  {
+                    t: "Semáforo de Liberação",
+                    d: "30 segundos antes da sessão: liberado, liberado com ajuste ou não liberado hoje — com o porquê.",
+                  },
+                  {
+                    t: "Decisão justificada",
+                    d: "Exercícios ranqueados critério a critério — inclusive o que foi DESCARTADO, e por quê.",
+                  },
+                  {
+                    t: "Prontuário assinável",
+                    d: "O raciocínio vira um documento com referências numeradas, seu nome e seu CREF. Sua defesa técnica.",
+                  },
+                ].map((p, i) => (
+                  <li key={p.t} className="flex gap-3">
+                    <span className="tabular grid h-7 w-7 shrink-0 place-items-center rounded-full bg-analysis text-sm font-bold text-white">
+                      {i + 1}
+                    </span>
+                    <span>
+                      <span className="font-display font-bold text-ink">{p.t}</span>
+                      <span className="block text-sm text-ink-2">{p.d}</span>
+                    </span>
                   </li>
                 ))}
-              </ul>
+              </ol>
             </div>
             <JustifyMock />
           </div>
+
+          {/* ChatGPT × RCD — o hábito real do público, endereçado de frente */}
+          <div className="mx-auto mt-12 max-w-3xl">
+            <h3 className="text-center font-display text-xl font-bold text-ink">
+              “Mas eu já uso o ChatGPT pra montar treino…”
+            </h3>
+            <p className="mx-auto mt-1 max-w-xl text-center text-sm text-ink-2">
+              Ótimo pra rascunhar. Mas quando o aluno chega com laudo, a diferença aparece:
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <Card variant="soft" className="p-5">
+                <div className="mb-2 text-sm font-bold uppercase tracking-wider text-ink-3">IA genérica</div>
+                <ul className="space-y-2 text-sm text-ink-2">
+                  <li>Entrega um treino — sem rastro do porquê</li>
+                  <li>Não checa se o aluno pode treinar HOJE</li>
+                  <li>Não cita a base científica de cada escolha</li>
+                  <li>Não gera registro que você assine embaixo</li>
+                </ul>
+              </Card>
+              <Card className="border-analysis/40 p-5">
+                <div className="mb-2"><SeloRCD compacto /></div>
+                <ul className="space-y-2 text-sm text-ink">
+                  {[
+                    "Escolhidos E descartados, com o porquê de cada um",
+                    "Semáforo pré-sessão específico por condição",
+                    "Referências numeradas em cada decisão",
+                    "Prontuário em PDF com seu nome e CREF",
+                  ].map((t) => (
+                    <li key={t} className="flex gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+            <p className="mt-4 text-center text-xs text-ink-3">
+              Em ambos os casos, quem decide é o profissional habilitado (CREF). A diferença é o
+              que sobra documentado depois da decisão.
+            </p>
+          </div>
         </Section>
       </div>
+
+      {/* -------------------- Casos documentados + ROI ------------------------ */}
+      <Section className="!py-14 text-center">
+        <Kicker tone="analysis">Prova, não promessa</Kicker>
+        <h2 className="font-display text-3xl font-bold text-ink">Veja o motor decidir um caso real — agora.</h2>
+        <p className="mx-auto mt-2 max-w-2xl text-ink-2">
+          Sem cadastro: escolha um caso típico (hipertenso, dor lombar em idoso, obesidade grave…)
+          e veja o Motor RCD rodar ao vivo — escolhas, descartes e referências.
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Link to="/casos-rcd" className={buttonClasses("primary")}>
+            Abrir casos documentados <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link to="/roi" className={buttonClasses("outline")}>
+            Quanto vale sua especialização? (calculadora)
+          </Link>
+        </div>
+      </Section>
 
       {/* ------------------------------ Recursos ----------------------------- */}
       <Section id="recursos" className="text-center">
@@ -320,8 +397,8 @@ export function Landing() {
         <Kicker>Planos</Kicker>
         <h2 className="font-display text-3xl font-bold text-ink">Comece grátis. Assine quando fizer sentido.</h2>
         <p className="mx-auto mt-2 max-w-xl text-ink-2">
-          Sem cartão para começar. O plano gratuito já entrega o raciocínio; o Profissional libera o
-          uso sem limites e a entrega ao aluno.
+          Teste o Profissional por <span className="font-semibold text-ink">14 dias, sem cartão</span> —
+          resolva um caso real e veja o prontuário pronto antes de decidir.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 md:grid-cols-2">
           <PlanCard
@@ -330,8 +407,8 @@ export function Landing() {
             desc="Para sentir o raciocínio na prática."
             items={[
               "3 prescrições com justificativa",
+              "Semáforo de Liberação (obesidade e hipertensão)",
               "Até 3 alunos com avaliações",
-              "Laboratório Visual (exercício completo)",
               "2 casos práticos com feedback",
             ]}
             cta="Criar conta gratuita"
@@ -339,15 +416,15 @@ export function Landing() {
           <PlanCard
             destaque
             nome="Profissional"
-            preco="R$ 39"
-            desc="Para atender com segurança, todo dia."
+            preco="R$ 59"
+            desc="O Motor RCD completo — decisão documentada e assinável."
             items={[
+              "Prontuário de Decisão exportável e assinável",
+              "Semáforo de Liberação para todos os grupos",
               "Prescrições e alunos ilimitados",
-              "Exportação em PDF com a sua marca",
-              "Grupos especiais completos (4 fases)",
-              "Laboratório, casos e comparador completos",
+              "Laboratório, casos, comparador e trilhas completos",
             ]}
-            cta="Assinar Profissional"
+            cta="Testar 14 dias sem cartão"
           />
         </div>
       </Section>

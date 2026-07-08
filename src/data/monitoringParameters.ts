@@ -36,6 +36,8 @@ export interface MonitoringParameter {
   escala?: { valor: string; rotulo: string }[];
   /** referência bibliográfica/base do teste (sem substituir a diretriz local) */
   referencia?: string;
+  /** ids de referencias.ts (bibliografia numerada do Prontuário) */
+  refIds?: string[];
   /** ficha imprimível disponível: escala de bolso ou ficha semanal de adesão */
   ficha?: "escala" | "adesao";
 }
@@ -74,6 +76,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     ],
     referencia:
       "Adaptada da escala de percepção de esforço de Borg (CR10). Borg G., 1982 — Psychophysical bases of perceived exertion. Valide as faixas com a diretriz do seu contexto.",
+    refIds: ["borg-1982", "foster-2001"],
     ficha: "escala",
   },
   {
@@ -103,6 +106,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     ],
     referencia:
       "Talk Test — método consagrado na prescrição aeróbia (ex.: Persinger et al., 2004). Valide com a diretriz do seu contexto.",
+    refIds: ["persinger-2004"],
     ficha: "escala",
   },
   {
@@ -129,6 +133,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     ],
     referencia:
       "Uso de tendência de FC conforme diretrizes de prescrição de exercício (ex.: ACSM, edição vigente). Faixas-alvo devem ser validadas com a diretriz do seu contexto.",
+    refIds: ["acsm-getp11", "garber-2011"],
   },
   {
     id: "p-pa",
@@ -152,6 +157,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     ],
     referencia:
       "Técnica padrão de aferição conforme diretrizes de hipertensão vigentes. Decisões clínicas pertencem ao médico.",
+    refIds: ["sbc-2020"],
   },
   {
     id: "p-dispneia",

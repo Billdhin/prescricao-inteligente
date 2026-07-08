@@ -29,6 +29,10 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
+import { buttonClasses } from "@/components/ui/primitives";
+import { specialGroups } from "@/data/specialGroups";
+import { OBJETIVOS } from "@/lib/gps/engine";
+import { marcarAtivacao } from "@/lib/ativacao";
 import { useDialog } from "@/lib/useDialog";
 import {
   useUI,
@@ -151,18 +155,26 @@ export function AppLayout() {
   );
 }
 
-/* Boas-vindas no primeiro acesso: define o modo (o app deixa de "adivinhar"). */
+/* Boas-vindas no primeiro acesso: define o modo E, para o profissional, abre
+   direto o "Primeiro Caso Real" — o gatilho de uso é situacional (o aluno com
+   comorbidade chegou HOJE), então o onboarding espelha exatamente isso. */
 function OnboardingGate({ onDone }: { onDone: () => void }) {
   const setMode = useMode((s) => s.setMode);
   const loadExamples = useAlunos((s) => s.loadExamples);
   const navigate = useNavigate();
   const dialogRef = useDialog<HTMLDivElement>(() => {});
+  const [passo, setPasso] = React.useState<1 | 2>(1);
+  const [caso, setCaso] = React.useState({ grupo: "", objetivo: "Emagrecimento", nivel: "Iniciante" });
 
   const finish = () => {
     localStorage.setItem("pi-onboarded", "1");
     onDone();
   };
   const choose = (m: AppMode) => {
+    if (m === "atender") {
+      setPasso(2);
+      return;
+    }
     setMode(m);
     finish();
   };
@@ -171,6 +183,18 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
     loadExamples();
     finish();
     navigate("/dashboard");
+  };
+  const resolverCaso = () => {
+    setMode("atender");
+    marcarAtivacao("inicio");
+    finish();
+    const q = new URLSearchParams({ "primeiro-caso": "1", objetivo: caso.objetivo, nivel: caso.nivel });
+    if (caso.grupo) q.set("grupo", caso.grupo);
+    navigate(`/gps?${q.toString()}`);
+  };
+  const pularCaso = () => {
+    setMode("atender");
+    finish();
   };
 
   const opcoes: {
@@ -183,8 +207,14 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
     { mode: "aprender", icon: GraduationCap, title: "Estou estudando", desc: "Trilhas, casos e o raciocínio da prescrição." },
   ];
 
+  const chip = (ativo: boolean) =>
+    cn(
+      "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+      ativo ? "border-primary bg-primary-tint text-primary font-semibold" : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
+    );
+
   return (
-    <div className="fixed inset-0 z-[60] grid place-items-center bg-black/50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] grid place-items-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm">
       <div
         ref={dialogRef}
         tabIndex={-1}
@@ -196,31 +226,95 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
         <div className="mx-auto mb-4 w-fit">
           <Logo />
         </div>
-        <h2 className="font-display text-2xl font-bold text-ink">Bem-vindo!</h2>
-        <p className="mx-auto mt-1 max-w-sm text-ink-2">
-          Como você vai usar a plataforma agora? Você pode alternar quando quiser lá no topo.
-        </p>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          {opcoes.map((o) => {
-            const Icon = o.icon;
-            return (
-              <button
-                key={o.mode}
-                onClick={() => choose(o.mode)}
-                className="flex flex-col items-center gap-2 rounded-card border border-border bg-surface p-5 text-center transition-colors hover:border-primary hover:bg-primary-tint"
-              >
-                <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary-tint text-primary">
-                  <Icon className="h-6 w-6" />
-                </span>
-                <span className="font-display font-bold text-ink">{o.title}</span>
-                <span className="text-sm text-ink-2">{o.desc}</span>
-              </button>
-            );
-          })}
-        </div>
-        <button onClick={explorar} className="mt-4 text-sm font-semibold text-primary hover:underline">
-          Só quero explorar (com dados de exemplo)
-        </button>
+
+        {passo === 1 ? (
+          <>
+            <h2 className="font-display text-2xl font-bold text-ink">Bem-vindo!</h2>
+            <p className="mx-auto mt-1 max-w-sm text-ink-2">
+              Como você vai usar a plataforma agora? Você pode alternar quando quiser lá no topo.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {opcoes.map((o) => {
+                const Icon = o.icon;
+                return (
+                  <button
+                    key={o.mode}
+                    onClick={() => choose(o.mode)}
+                    className="flex flex-col items-center gap-2 rounded-card border border-border bg-surface p-5 text-center transition-colors hover:border-primary hover:bg-primary-tint"
+                  >
+                    <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary-tint text-primary">
+                      <Icon className="h-6 w-6" />
+                    </span>
+                    <span className="font-display font-bold text-ink">{o.title}</span>
+                    <span className="text-sm text-ink-2">{o.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={explorar} className="mt-4 text-sm font-semibold text-primary hover:underline">
+              Só quero explorar (com dados de exemplo)
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="font-display text-2xl font-bold text-ink">Resolva seu primeiro caso agora</h2>
+            <p className="mx-auto mt-1 max-w-sm text-ink-2">
+              Pense num aluno real que você tem hoje. Em menos de 10 minutos você sai com a
+              decisão documentada — não é demonstração, é o caso de verdade.
+            </p>
+
+            <div className="mt-5 space-y-4 text-left">
+              <fieldset>
+                <legend className="mb-1.5 text-sm font-semibold text-ink">Ele tem alguma condição?</legend>
+                <div className="flex flex-wrap gap-1.5">
+                  <button type="button" onClick={() => setCaso((c) => ({ ...c, grupo: "" }))} className={chip(caso.grupo === "")} aria-pressed={caso.grupo === ""}>
+                    Sem condição especial
+                  </button>
+                  {specialGroups.map((g) => (
+                    <button
+                      key={g.slug}
+                      type="button"
+                      onClick={() => setCaso((c) => ({ ...c, grupo: g.slug }))}
+                      className={chip(caso.grupo === g.slug)}
+                      aria-pressed={caso.grupo === g.slug}
+                    >
+                      {g.nome}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-semibold text-ink">Objetivo</span>
+                  <select value={caso.objetivo} onChange={(e) => setCaso((c) => ({ ...c, objetivo: e.target.value }))} className="input">
+                    {OBJETIVOS.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-semibold text-ink">Nível</span>
+                  <select value={caso.nivel} onChange={(e) => setCaso((c) => ({ ...c, nivel: e.target.value }))} className="input">
+                    {["Iniciante", "Intermediário", "Avançado"].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <button onClick={resolverCaso} className={cn(buttonClasses("primary"), "mt-5 w-full")}>
+              Resolver este caso agora →
+            </button>
+            <button onClick={pularCaso} className="mt-3 text-sm font-medium text-ink-2 hover:text-ink">
+              Pular — quero só conhecer o painel
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

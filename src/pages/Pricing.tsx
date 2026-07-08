@@ -21,8 +21,8 @@ export function Pricing() {
         </Pill>
         <h1 className="font-display text-4xl font-extrabold text-ink">Comece grátis, evolua quando quiser.</h1>
         <p className="mx-auto mt-3 max-w-xl text-ink-2">
-          Comece a prescrever com raciocínio hoje. Sem cartão para começar; assine o Profissional
-          quando fizer sentido.
+          Teste o Profissional por <strong className="text-ink">14 dias, sem cartão</strong> —
+          resolva um caso real e veja o prontuário pronto antes de decidir.
         </p>
 
         <div className="mt-10 grid gap-4 text-left md:grid-cols-2">
@@ -30,21 +30,39 @@ export function Pricing() {
             nome="Grátis"
             preco="R$ 0"
             desc="Para começar a explorar."
-            items={["Laboratório Visual (parcial)", "3 análises no GPS", "2 casos práticos", "Biblioteca essencial"]}
+            items={[
+              "3 análises no Prescrever",
+              "Semáforo de Liberação (obesidade e hipertensão)",
+              "Laboratório Visual (parcial)",
+              "2 casos práticos + biblioteca essencial",
+            ]}
             cta="Continuar grátis"
           />
           <Plan
             destaque
             nome="Profissional"
-            preco="R$ 39"
-            desc="Para atuar com segurança."
-            items={["Laboratório Visual completo", "GPS ilimitado + comparador", "Todos os casos com feedback", "Trilhas, progresso e favoritos"]}
-            cta="Assinar Profissional"
+            preco="R$ 59"
+            desc="O Motor RCD completo — decisão documentada e assinável."
+            items={[
+              "Prontuário de Decisão exportável e assinável (PDF)",
+              "Semáforo de Liberação para todos os grupos",
+              "Prescrições ilimitadas + comparador + protocolos",
+              "Laboratório completo, todos os casos e trilhas",
+            ]}
+            cta="Testar 14 dias sem cartão"
           />
         </div>
 
+        <p className="mt-6 text-sm text-ink-2">
+          Não sabe se vale?{" "}
+          <Link to="/roi" className="font-semibold text-primary hover:underline">
+            Calcule quanto sua especialização pode pagar →
+          </Link>
+        </p>
+
         <p className="mt-8 text-xs text-ink-3">
-          Conteúdo educacional — não substitui avaliação profissional individualizada.
+          Conteúdo educacional de apoio à decisão do profissional habilitado — não substitui
+          avaliação profissional individualizada.
         </p>
       </div>
     </div>
