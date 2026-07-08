@@ -230,11 +230,117 @@ export function BiomechanicsComparisonSlider({
     const enriched = regions
       .map((r) => {
         const a = ativacao.find((x) => x.musculo === r.musculo);
-        return a ? { nome: r.musculo, pct: a.percentual, s: r.shapes[0] } : null;
+        return a ? { nome: r.musculo, pct: a.percentual, s: r.shapes[0], labelSide: r.labelSide } : null;
       })
-      .filter(Boolean) as { nome: string; pct: number; s: MuscleRegion["shapes"][0] }[];
+      .filter(Boolean) as {
+      nome: string;
+      pct: number;
+      s: MuscleRegion["shapes"][0];
+      labelSide?: 1 | -1;
+    }[];
     return enriched.sort((a, b) => b.pct - a.pct).slice(0, 2);
   }, [regions, ativacao]);
+
+  // POSIÇÃO ADAPTATIVA do card/faixa: cada exercício tem a anatomia num lugar —
+  // o card vai para o canto com MENOR sobreposição com músculos e marcadores
+  // (determinístico, calculado das regiões autoradas; nada de posição fixa).
+  const layout = React.useMemo(() => {
+    const shapes = regions.flatMap((r) => r.shapes);
+    const pontos: { x: number; y: number }[] = [];
+    if (overlay?.force) {
+      pontos.push({ x: overlay.force.x1, y: overlay.force.y1 }, { x: overlay.force.x2, y: overlay.force.y2 });
+    }
+    if (overlay?.angle) pontos.push({ x: overlay.angle.x, y: overlay.angle.y });
+    for (const r of rotulados) pontos.push({ x: r.s.cx, y: r.s.cy });
+
+    const score = (rc: { x1: number; y1: number; x2: number; y2: number }) => {
+      let s = 0;
+      for (const sh of shapes) {
+        const w = Math.max(0, Math.min(sh.cx + sh.rx, rc.x2) - Math.max(sh.cx - sh.rx, rc.x1));
+        const h = Math.max(0, Math.min(sh.cy + sh.ry, rc.y2) - Math.max(sh.cy - sh.ry, rc.y1));
+        s += w * h;
+      }
+      for (const p of pontos) if (p.x >= rc.x1 && p.x <= rc.x2 && p.y >= rc.y1 && p.y <= rc.y2) s += 150;
+      return s;
+    };
+
+    // retângulos ≈ área REAL do card (w-64 sobre a caixa 4:3)
+    const rects = {
+      br: { x1: 66, y1: 64, x2: 98, y2: 98 },
+      bl: { x1: 2, y1: 64, x2: 34, y2: 98 },
+      tr: { x1: 66, y1: 10, x2: 98, y2: 46 },
+    } as const;
+    const br = score(rects.br);
+    const bl = score(rects.bl);
+    const tr = score(rects.tr);
+    // histerese: o canto padrão (inferior direito) só é trocado quando de fato
+    // carrega anatomia — evita pular de canto por ruído de poucos pontos.
+    let card: "br" | "bl" | "tr" = "br";
+    if (br > 25) {
+      if (bl < br && bl <= tr) card = "bl";
+      else if (tr < br && tr < bl) card = "tr";
+    }
+
+    // rect "gordo" do card escolhido (containers menores → card ocupa mais %)
+    const evitar = {
+      br: { x1: 58, y1: 60, x2: 99, y2: 99 },
+      bl: { x1: 1, y1: 60, x2: 42, y2: 99 },
+      tr: { x1: 58, y1: 6, x2: 99, y2: 50 },
+    }[card];
+
+    // faixa mobile: se a base da imagem está ocupada, sobe para o topo
+    const stripTop = score({ x1: 2, y1: 88, x2: 98, y2: 98 }) > 30;
+    return { card, evitar, stripTop };
+  }, [regions, overlay, rotulados]);
+
+  // Chips dos rótulos com RESOLUÇÃO DE COLISÃO: posição base ao lado do
+  // músculo; se dois chips (ou chip × marcador de ângulo/força) se cruzam,
+  // o de menor prioridade desliza verticalmente; se ainda assim cair sobre o
+  // card, o chip é OCULTADO (o card já lista o músculo com o percentual).
+  const chips = React.useMemo(() => {
+    const CHIP_W = 16; // % aprox. de largura de um chip
+    const list = rotulados.map((r) => {
+      const side = r.labelSide ?? (r.s.cy > 55 ? -1 : 1);
+      const lx = clamp(r.s.cx + side * (Math.max(r.s.rx, r.s.ry) * 0.55 + 9.2));
+      const x1 = side === 1 ? lx : lx - CHIP_W;
+      return { ...r, side, lx, x1, x2: side === 1 ? lx + CHIP_W : lx, y: r.s.cy };
+    });
+
+    // marcadores fixos a evitar (chip do ângulo + pill da linha de força)
+    const marcadores: { x1: number; x2: number; y: number }[] = [];
+    if (overlay?.angle) {
+      const ax = angleGeom ? angleGeom.label.x : overlay.angle.x;
+      const ay = angleGeom ? angleGeom.label.y : overlay.angle.y;
+      marcadores.push({ x1: ax - 5, x2: ax + 5, y: ay });
+    }
+    if (overlay?.force) {
+      const fx = Math.min(overlay.force.x2 + 2.5, 78);
+      marcadores.push({ x1: fx, x2: fx + 14, y: Math.max(overlay.force.y2, 6) });
+    }
+
+    const overlapH = (a: { x1: number; x2: number }, b: { x1: number; x2: number }) =>
+      a.x1 < b.x2 && b.x1 < a.x2;
+
+    // 2 passadas assentam os casos práticos (≤2 chips + ≤2 marcadores)
+    for (let pass = 0; pass < 2; pass++) {
+      for (const c of list) {
+        for (const m of marcadores) {
+          if (overlapH(c, m) && Math.abs(c.y - m.y) < 5) c.y = m.y + (m.y > 88 ? -6 : 6);
+        }
+      }
+      for (let i = 1; i < list.length; i++) {
+        const a = list[i - 1];
+        const b = list[i];
+        if (overlapH(a, b) && Math.abs(a.y - b.y) < 5.5) b.y = clamp(Math.max(a.y, b.y) + 5.5);
+      }
+    }
+    for (const c of list) c.y = Math.min(94, Math.max(6, c.y));
+    // último recurso: chip que cairia sobre o card some (info já está no card)
+    const ev = layout.evitar;
+    return list.filter(
+      (c) => !(c.x1 < ev.x2 && ev.x1 < c.x2 && c.y > ev.y1 - 2.5 && c.y < ev.y2 + 2.5),
+    );
+  }, [rotulados, overlay, angleGeom, layout]);
 
   // Card: contribuição muscular (dados reais do seed), até 4 linhas.
   const contribuicoes = React.useMemo(
@@ -350,19 +456,21 @@ export function BiomechanicsComparisonSlider({
               />
             </>
           )}
-          {rotulados.map((r) => {
-            const side = r.s.cy > 55 ? -1 : 1;
-            const x1 = (r.s.cx + side * Math.max(r.s.rx, r.s.ry) * 0.55) * 4;
-            const y = r.s.cy * 3;
+          {chips.map((r) => {
+            const x1 = (r.s.cx + r.side * Math.max(r.s.rx, r.s.ry) * 0.55) * 4;
+            const y1 = r.s.cy * 3;
+            const x2 = (r.lx - r.side * 0.8) * 4;
+            const y2 = r.y * 3;
             const dim = foco !== null && foco !== r.nome;
             return (
-              <g key={r.nome} opacity={dim ? 0.3 : 1}>
-                <circle cx={x1} cy={y} r={2} fill="#fff" opacity={0.9} />
+              // rótulos no corpo só ≥sm: no mobile a faixa compacta cobre a informação
+              <g key={r.nome} opacity={dim ? 0.3 : 1} className="hidden sm:block">
+                <circle cx={x1} cy={y1} r={2} fill="#fff" opacity={0.9} />
                 <line
                   x1={x1}
-                  y1={y}
-                  x2={x1 + side * 34}
-                  y2={y}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
                   stroke="rgba(255,255,255,0.75)"
                   strokeWidth={1}
                   vectorEffect="non-scaling-stroke"
@@ -372,14 +480,27 @@ export function BiomechanicsComparisonSlider({
           })}
         </svg>
 
-        {overlay?.force && (
-          <span
-            className="absolute -translate-y-1/2 whitespace-nowrap text-[10px] font-medium tracking-wide text-cyan-300/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.8)]"
-            style={{ left: `${Math.min(overlay.force.x2 + 2.5, 82)}%`, top: `${overlay.force.y2}%` }}
-          >
-            Linha de força
-          </span>
-        )}
+        {overlay?.force &&
+          (() => {
+            const fy = Math.max(overlay.force.y2, 6);
+            let fx = Math.min(overlay.force.x2 + 2.5, 78);
+            // se o rótulo invadiria o card adaptativo, ancora à ESQUERDA da seta
+            const ev = layout.evitar;
+            const flip = fx < ev.x2 && fx + 14 > ev.x1 && fy > ev.y1 - 2.5 && fy < ev.y2 + 2.5;
+            if (flip) fx = Math.max(overlay.force.x2 - 2.5, 16);
+            return (
+              <span
+                className="absolute hidden whitespace-nowrap rounded-full border border-cyan-400/25 bg-slate-950/60 px-2 py-0.5 text-[10px] font-medium tracking-wide text-cyan-300 backdrop-blur-sm sm:inline-flex"
+                style={{
+                  left: `${fx}%`,
+                  top: `${fy}%`,
+                  transform: flip ? "translate(-100%, -50%)" : "translateY(-50%)",
+                }}
+              >
+                Linha de força
+              </span>
+            );
+          })()}
         {overlay?.angle &&
           (angleGeom ? (
             <span
@@ -396,24 +517,22 @@ export function BiomechanicsComparisonSlider({
               ≈{overlay.angle.value}
             </span>
           ))}
-        {rotulados.map((r) => {
-          const side = r.s.cy > 55 ? -1 : 1;
-          const lx = clamp(r.s.cx + side * (Math.max(r.s.rx, r.s.ry) * 0.55 + 9.2));
+        {chips.map((r) => {
           const dim = foco !== null && foco !== r.nome;
           return (
-            // caixa ancorada na borda da imagem (nunca corta o texto)
+            // chip de vidro (revelação parcial pelo divisor fica intencional)
             <span
               key={r.nome}
               onPointerEnter={() => setFoco(r.nome)}
               onPointerLeave={() => setFoco(null)}
               className={cn(
-                "absolute -translate-y-1/2 truncate text-[11px] font-medium text-white/95 [text-shadow:0_1px_3px_rgba(0,0,0,0.85)] transition-opacity",
+                "absolute hidden -translate-y-1/2 truncate whitespace-nowrap rounded-full border border-white/15 bg-slate-950/70 px-2 py-0.5 text-[10.5px] font-medium text-white/95 backdrop-blur-sm transition-opacity sm:inline-flex",
                 dim && "opacity-30",
               )}
               style={
-                side === 1
-                  ? { left: `${lx}%`, width: `${98 - lx}%`, top: `${r.s.cy}%`, textAlign: "left" }
-                  : { left: "2%", width: `${Math.max(lx - 2, 10)}%`, top: `${r.s.cy}%`, textAlign: "right" }
+                r.side === 1
+                  ? { left: `${r.lx}%`, maxWidth: `${98 - r.lx}%`, top: `${r.y}%` }
+                  : { right: `${100 - r.lx}%`, maxWidth: `${Math.max(r.lx - 2, 12)}%`, top: `${r.y}%` }
               }
             >
               {r.nome}
@@ -421,9 +540,14 @@ export function BiomechanicsComparisonSlider({
           );
         })}
 
-        {/* Card: contribuição muscular (glass, canto inferior direito) */}
-        {/* Mobile: faixa compacta (o card completo cobriria a imagem) */}
-        <div className="absolute inset-x-2 bottom-2 flex items-center gap-2.5 overflow-x-auto rounded-lg border border-white/15 bg-slate-950/70 px-2.5 py-1.5 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
+        {/* Card: contribuição muscular (glass) — CANTO ADAPTATIVO por exercício */}
+        {/* Mobile: faixa compacta; sobe ao topo quando a base da imagem tem anatomia */}
+        <div
+          className={cn(
+            "absolute inset-x-2 flex items-center gap-2.5 overflow-x-auto rounded-lg border border-white/15 bg-slate-950/70 px-2.5 py-1.5 backdrop-blur-md [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden",
+            layout.stripTop ? "top-11" : "bottom-2",
+          )}
+        >
           {contribuicoes.map((m, i) => (
             <button
               key={m.musculo}
@@ -447,7 +571,14 @@ export function BiomechanicsComparisonSlider({
           ))}
         </div>
 
-        <div className="absolute bottom-3 right-3 hidden w-64 max-w-[68%] rounded-xl border border-white/15 bg-slate-950/70 p-3 backdrop-blur-md sm:block">
+        <div
+          className={cn(
+            "absolute hidden w-64 max-w-[68%] rounded-xl border border-white/15 bg-slate-950/70 p-3 backdrop-blur-md sm:block",
+            layout.card === "br" && "bottom-3 right-3",
+            layout.card === "bl" && "bottom-3 left-3",
+            layout.card === "tr" && "right-3 top-12",
+          )}
+        >
           <div className="mb-2 text-[11px] font-semibold tracking-wide text-white/85">Contribuição muscular</div>
           <div className="space-y-0.5">
             {contribuicoes.map((m, i) => (

@@ -20,6 +20,9 @@ export interface RegionShape {
 export interface MuscleRegion {
   musculo: string;
   shapes: RegionShape[];
+  /** lado do rótulo fino no slider: 1 = direita, -1 = esquerda (override do
+   *  heurístico por cy — autorado quando o padrão colide com algo na imagem) */
+  labelSide?: 1 | -1;
 }
 
 export const muscleRegions: Record<string, MuscleRegion[]> = {
@@ -212,23 +215,34 @@ export const muscleRegions: Record<string, MuscleRegion[]> = {
   ],
 
   // 3/4 com tronco dominante; pernas na base do quadro, deltoide no ombro.
+  // shapes[0] do quad = âncora mais alta do rótulo (evita o card no canto);
+  // a máscara é por chave de cor, então o gate extra não acende nada indevido.
   eliptico: [
-    { musculo: "Quadríceps", shapes: [{ cx: 61, cy: 92, rx: 5, ry: 7 }] },
+    {
+      musculo: "Quadríceps",
+      shapes: [
+        { cx: 63, cy: 86, rx: 4, ry: 5 },
+        { cx: 61, cy: 92, rx: 5, ry: 7 },
+      ],
+    },
     { musculo: "Glúteo máximo", shapes: [{ cx: 79, cy: 85, rx: 6, ry: 9 }] },
     { musculo: "Posteriores de coxa", shapes: [{ cx: 74, cy: 92, rx: 4, ry: 7 }] },
     { musculo: "Deltoide", shapes: [{ cx: 76, cy: 45, rx: 5.5, ry: 6.5 }] },
   ],
 
   // Frontal na piscina; coxas sob a água, abdômen acima da linha.
+  // shapes[0] = coxa direita (âncora do rótulo) + labelSide dir: a água à
+  // direita é a única área livre — à esquerda fica o card adaptativo.
   "marcha-aquatica": [
     {
       musculo: "Quadríceps",
+      labelSide: 1,
       shapes: [
-        { cx: 51, cy: 75, rx: 3.5, ry: 6, rot: 10 },
         { cx: 66, cy: 74, rx: 4, ry: 8, rot: -5 },
+        { cx: 51, cy: 75, rx: 3.5, ry: 6, rot: 10 },
       ],
     },
-    { musculo: "Core", shapes: [{ cx: 58, cy: 62, rx: 4, ry: 5 }] },
+    { musculo: "Core", labelSide: 1, shapes: [{ cx: 58, cy: 62, rx: 4, ry: 5 }] },
   ],
 
   // Lateral; idoso em pé à frente do banco (posição final do levantar).

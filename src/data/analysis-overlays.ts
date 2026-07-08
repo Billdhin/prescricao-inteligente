@@ -25,7 +25,8 @@ export const analysisOverlays: Record<string, AnalysisOverlayData> = {
   },
   "agachamento-livre": {
     angle: { x: 67, y: 64, value: "115°" },
-    force: { x1: 52, y1: 58, x2: 52, y2: 40 },
+    // seta deslocada 4% à esquerda: o rótulo não encosta no card adaptativo (topo-dir.)
+    force: { x1: 48, y1: 58, x2: 48, y2: 40 },
   },
   "cadeira-extensora": {
     // sentada, pernas estendendo p/ a esquerda; quadríceps na coxa. Joelho ≈(45,64).
