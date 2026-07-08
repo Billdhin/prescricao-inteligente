@@ -26,6 +26,7 @@ import {
   HeartPulse,
   LifeBuoy,
   HelpCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
@@ -58,6 +59,7 @@ const navByMode: Record<AppMode, NavSection[]> = {
         { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
         { to: "/alunos", label: "Alunos", icon: Users },
         { to: "/gps", label: "Prescrever", icon: Navigation },
+        { to: "/semaforo", label: "Semáforo", icon: ShieldCheck },
       ],
     },
     {
@@ -120,7 +122,7 @@ const navByMode: Record<AppMode, NavSection[]> = {
 
 // Rotas exclusivas de cada modo (não compartilhadas). Ao trocar de modo, só
 // redireciona ao Painel se a rota atual pertencer só ao modo que está saindo.
-const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps"];
+const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps", "/semaforo"];
 const APRENDER_ONLY = ["/tracks", "/cases", "/favorites", "/history"];
 
 function tempoRelativo(ts: number) {

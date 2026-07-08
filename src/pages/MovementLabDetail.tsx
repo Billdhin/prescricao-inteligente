@@ -19,6 +19,7 @@ import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
 import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
 import { MuscleMap, activationFromExercise } from "@/components/anatomy/MuscleMap";
+import { BaseCientifica } from "@/components/movement-lab/BaseCientifica";
 import { analysisOverlays } from "@/data/analysis-overlays";
 import { muscleRegions } from "@/data/muscle-regions";
 import { ExecutionScene, AnalysisScene } from "@/data/scenes";
@@ -185,6 +186,10 @@ function Detail({ exercise }: { exercise: Exercise }) {
               />
             ))}
           </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-3">
+            Índices relativos estimados da literatura de EMG/biomecânica — comparam exercícios, não
+            medem o aluno. Fontes na aba <span className="font-semibold text-ink-2">Biomecânica</span>.
+          </p>
           <div className="mt-5 border-t border-border pt-4">
             <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">Resumo prático</div>
             <p className="mt-1 text-sm text-ink">{exercise.resumoPratico}</p>
@@ -222,16 +227,32 @@ function Detail({ exercise }: { exercise: Exercise }) {
                   <Concept text={exercise.conteudo.biomecanica} ex={exercise} trust="princípio biomecânico" />
                   <Timeline ex={exercise} />
                   <div>
-                    <div className="mb-2 flex items-center gap-2">
+                    <div className="mb-1 flex items-center gap-2">
                       <h4 className="font-display font-bold text-ink">Mapa muscular</h4>
-                      <Pill tone="analysis">ativação estimada</Pill>
+                      <Pill tone="analysis" icon={<Info className="h-3 w-3" />}>
+                        ativação relativa estimada
+                      </Pill>
                     </div>
+                    <p className="mb-2 text-xs text-ink-3">
+                      Ênfase relativa entre músculos, sintetizada da literatura de EMG e biomecânica
+                      (fontes abaixo) — não é medição do aluno.
+                    </p>
                     <MuscleMap activation={activationFromExercise(exercise)} />
                   </div>
+                  <BaseCientifica slug={exercise.slug} contexto="ativacao" />
                 </div>
               ),
             },
-            { id: "fis", label: "Fisiologia aplicada", content: <Concept text={exercise.conteudo.fisiologia} ex={exercise} trust="tendência prática" /> },
+            {
+              id: "fis",
+              label: "Fisiologia aplicada",
+              content: (
+                <div className="space-y-5">
+                  <Concept text={exercise.conteudo.fisiologia} ex={exercise} trust="tendência prática" />
+                  <BaseCientifica slug={exercise.slug} contexto="ativacao" />
+                </div>
+              ),
+            },
             { id: "erros", label: "Erros comuns", content: <Bullets items={exercise.blocos.errosComuns} trust="cuidado de segurança" tone="warning" /> },
             { id: "var", label: "Variações", content: <Bullets items={exercise.blocos.variacoes} trust="regra pedagógica" tone="primary" /> },
             { id: "pres", label: "Prescrição prática", content: <Concept text={exercise.conteudo.prescricaoPratica} ex={exercise} trust="depende do contexto" /> },
@@ -515,6 +536,10 @@ function Comparador({ exercise }: { exercise: Exercise }) {
       >
         Comparar até 3 no comparador completo <ArrowRight className="h-3.5 w-3.5" />
       </Link>
+      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
+        Valores relativos estimados da literatura de EMG/biomecânica — comparam exercícios, não
+        medem o aluno. Fontes na aba Biomecânica de cada exercício.
+      </p>
     </div>
   );
 }

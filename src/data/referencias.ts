@@ -168,6 +168,92 @@ export const referencias: Referencia[] = [
     ano: 2013,
     nota: "Fundamenta o dever de diligência do profissional habilitado — o RCD documenta, o profissional decide.",
   },
+
+  /* ---- EMG / biomecânica: base da contribuição muscular estimada ---- */
+  {
+    id: "boeckh-behrens-2000",
+    autores: "Boeckh-Behrens WU, Buskies W",
+    titulo: "Fitness-Krafttraining: die besten Übungen und Methoden für Sport und Gesundheit (estudos comparativos de EMG)",
+    fonte: "Reinbek: Rowohlt",
+    ano: 2000,
+    nota: "Atlas de EMG comparado clássico — base das faixas relativas de ativação por exercício de musculação.",
+  },
+  {
+    id: "schoenfeld-2010",
+    autores: "Schoenfeld BJ",
+    titulo: "The mechanisms of muscle hypertrophy and their application to resistance training",
+    fonte: "Journal of Strength and Conditioning Research",
+    ano: 2010,
+    nota: "Tensão mecânica, estresse metabólico e dano — sustenta a leitura fisiológica de volume e ênfase muscular.",
+  },
+  {
+    id: "contreras-2015",
+    autores: "Contreras B, Vigotsky AD, Schoenfeld BJ, et al.",
+    titulo:
+      "A comparison of gluteus maximus, biceps femoris, and vastus lateralis EMG activity in the back squat and barbell hip thrust",
+    fonte: "Journal of Applied Biomechanics",
+    ano: 2015,
+    nota: "EMG comparado glúteo/isquios/quadríceps no agachamento vs hip thrust — base da ênfase glútea.",
+  },
+  {
+    id: "escamilla-1998",
+    autores: "Escamilla RF, Fleisig GS, Zheng N, et al.",
+    titulo:
+      "Biomechanics of the knee during closed kinetic chain and open kinetic chain exercises",
+    fonte: "Medicine & Science in Sports & Exercise",
+    ano: 1998,
+    nota: "Cadeia fechada (leg press) vs aberta (cadeira extensora): demanda de joelho e recrutamento do quadríceps.",
+  },
+  {
+    id: "escamilla-2001",
+    autores: "Escamilla RF, Fleisig GS, Zheng N, et al.",
+    titulo: "Effects of technique variations on knee biomechanics during the squat and leg press",
+    fonte: "Medicine & Science in Sports & Exercise",
+    ano: 2001,
+    nota: "Amplitude e posição do pé alteram demanda de joelho/quadril no agachamento e leg press.",
+  },
+  {
+    id: "gullett-2009",
+    autores: "Gullett JC, Tillman MD, Gutierrez GM, Chow JW",
+    titulo: "A biomechanical comparison of back and front squats in healthy trained individuals",
+    fonte: "Journal of Strength and Conditioning Research",
+    ano: 2009,
+    nota: "Forças articulares e envolvimento muscular no agachamento — base da leitura biomecânica do padrão.",
+  },
+  {
+    id: "andersen-2014",
+    autores: "Andersen V, Fimland MS, Wiik E, et al.",
+    titulo: "Effects of grip width on muscle strength and activation in the lat pull-down",
+    fonte: "Journal of Strength and Conditioning Research",
+    ano: 2014,
+    nota: "EMG de latíssimo/bíceps na puxada por pegada — base da ênfase dorsal em puxar vertical.",
+  },
+  {
+    id: "ekstrom-2007",
+    autores: "Ekstrom RA, Donatelli RA, Carp KC",
+    titulo:
+      "Electromyographic analysis of core trunk, hip, and thigh muscles during 9 rehabilitation exercises",
+    fonte: "Journal of Orthopaedic & Sports Physical Therapy",
+    ano: 2007,
+    nota: "EMG de core, quadril e coxa em exercícios de solo — base de ponte, prancha, dead bug e sentar-levantar.",
+  },
+  {
+    id: "rodriguez-ridao-2020",
+    autores: "Rodríguez-Ridao D, Antequera-Vique JA, Martín-Fuentes I, Muyor JM",
+    titulo:
+      "Effect of five bench inclinations on the electromyographic activity of the pectoralis major, anterior deltoid, and triceps brachii",
+    fonte: "International Journal of Environmental Research and Public Health",
+    ano: 2020,
+    nota: "EMG de peitoral/deltoide/tríceps no supino por inclinação — base da ênfase no empurrar horizontal.",
+  },
+  {
+    id: "mcgill-2010",
+    autores: "McGill SM",
+    titulo: "Core training: evidence translating to better performance and injury prevention",
+    fonte: "Strength and Conditioning Journal",
+    ano: 2010,
+    nota: "Estabilidade de tronco e resistência ao movimento — base da prancha e do dead bug (anti-extensão).",
+  },
 ];
 
 export function getReferencia(id: string) {

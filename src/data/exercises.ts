@@ -107,9 +107,9 @@ export const exercises: Exercise[] = [
       visaoGeral:
         "O leg press 45° é frequentemente utilizado como porta de entrada ao trabalho de membros inferiores, oferecendo um padrão guiado que tende a facilitar o aprendizado da mecânica do agachamento.",
       biomecanica:
-        "A máquina fixa a trajetória, o que reduz a exigência de estabilização de tronco e tende a diminuir a demanda sobre a coluna lombar em comparação ao agachamento livre.",
+        "Extensão simultânea de joelho e quadril em cadeia cinética fechada: a máquina fixa a trajetória e apoia o tronco, reduzindo a estabilização exigida e a demanda lombar frente ao agachamento livre. A posição dos pés desloca a ênfase — pés altos poupam o joelho e recrutam mais quadril e posteriores; pés baixos ampliam a demanda do joelho (Escamilla et al., 2001).",
       fisiologia:
-        "Com boa amplitude e cadência, o exercício permite acumular volume de quadríceps e glúteos com menor custo técnico e coordenativo.",
+        "Mobiliza grande massa muscular (quadríceps e glúteos) com baixo custo técnico, permitindo acumular volume e tensão mecânica — principal estímulo de força e hipertrofia — com menor fadiga coordenativa. Porta de entrada segura para progredir carga antes do agachamento livre.",
       prescricaoPratica:
         "Em geral, comece pela amplitude confortável que mantém o contato lombar, priorize a cadência excêntrica e progrida carga apenas quando a execução estiver consistente.",
     },
@@ -209,9 +209,9 @@ export const exercises: Exercise[] = [
       visaoGeral:
         "O agachamento livre é um padrão global multiarticular amplamente utilizado para desenvolvimento de força e hipertrofia de membros inferiores.",
       biomecanica:
-        "Por não ter trajetória guiada, exige estabilização ativa de tronco e coordenação entre quadril, joelho e tornozelo — o que aumenta a demanda técnica.",
+        "Padrão multiarticular com carga axial no tronco: sem trajetória guiada, exige estabilização ativa e coordenação de quadril, joelho e tornozelo. A inclinação do tronco distribui os momentos (mais inclinado → quadril e posteriores; mais vertical → joelho e quadríceps) e a mobilidade de tornozelo e quadril define a amplitude segura (Gullett et al., 2009).",
       fisiologia:
-        "O alto envolvimento de grandes grupos e da musculatura estabilizadora tende a favorecer respostas de força e transferência funcional.",
+        "O alto envolvimento de grandes grupos e da musculatura estabilizadora favorece força e transferência funcional, com forte demanda neuromuscular e de recuperação. Pede técnica consolidada antes de progredir carga.",
       prescricaoPratica:
         "Em geral, priorize domínio técnico e amplitude controlada antes de progredir carga; adapte a variação à mobilidade e ao histórico do indivíduo.",
     },
@@ -296,9 +296,9 @@ export const exercises: Exercise[] = [
       visaoGeral:
         "O supino reto com barra é um dos principais exercícios de empurrar horizontal para tronco superior.",
       biomecanica:
-        "A barra impõe uma trajetória comum aos dois lados; o controle escapular define a estabilidade e a segurança do ombro.",
+        "Empurrar horizontal: adução e flexão do ombro com extensão do cotovelo, tendo o peitoral maior como motor e deltoide anterior e tríceps como sinergistas. A retração e a depressão escapular criam base estável no banco e protegem o ombro; punho, cotovelo e barra permanecem alinhados sob a carga.",
       fisiologia:
-        "O alto envolvimento do peitoral e sinergistas favorece ganhos de força e hipertrofia da região.",
+        "Permite carga alta no empurrar horizontal, gerando tensão mecânica elevada no peitoral — estímulo central de força e hipertrofia de membros superiores. A inclinação do banco redistribui a ênfase entre porções do peitoral e o deltoide anterior (Rodríguez-Ridao et al., 2020).",
       prescricaoPratica:
         "Em geral, adapte amplitude e abertura de cotovelos ao ombro do indivíduo e priorize consistência antes de cargas máximas.",
     },
@@ -367,8 +367,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Exercício de isolamento do quadríceps em máquina, com trajetória guiada.",
-      biomecanica: "Concentra o trabalho na extensão do joelho, com mínima demanda de tronco.",
-      fisiologia: "Permite volume localizado de quadríceps com baixo custo coordenativo.",
+      biomecanica:
+        "Extensão de joelho em cadeia cinética aberta, isolando o quadríceps (incluindo o reto femoral) sem participação relevante do quadril. O braço de resistência é máximo perto da extensão terminal, onde cresce a força femoropatelar — por isso a amplitude é ajustada ao conforto articular do aluno.",
+      fisiologia:
+        "Isola o quadríceps para volume localizado e reforço específico (ex.: reabilitação de joelho conduzida), com baixo custo coordenativo. Transfere menos para padrões funcionais que a cadeia fechada, como o leg press (Escamilla et al., 1998).",
       prescricaoPratica: "Em geral, ajuste amplitude ao conforto e controle a fase excêntrica.",
     },
     trustLevel: "regra pedagógica",
@@ -432,8 +434,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Isolamento dos isquiotibiais em máquina.",
-      biomecanica: "Trabalha a flexão do joelho com mínima demanda de tronco.",
-      fisiologia: "Complementa o trabalho de quadríceps, ajudando o equilíbrio da coxa.",
+      biomecanica:
+        "Flexão de joelho em decúbito ventral, isolando os isquiotibiais como flexores do joelho. Estabilizar a pelve contra o apoio evita compensação lombar e mantém o esforço no alvo; a leve rotação do pé desloca a ênfase entre as porções medial e lateral.",
+      fisiologia:
+        "Complementa a dobradiça de quadril ao treinar os isquiotibiais na função de joelho, equilibrando a força entre a frente e o fundo da coxa — relevante para a saúde do joelho e a prevenção de desequilíbrios.",
       prescricaoPratica: "Em geral, controle a cadência e mantenha a pelve estável.",
     },
     trustLevel: "regra pedagógica",
@@ -499,8 +503,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Exercício de dobradiça de quadril focado em cadeia posterior.",
-      biomecanica: "Exige dissociação entre quadril e coluna para manter a lombar protegida.",
-      fisiologia: "Trabalha isquiotibiais e glúteos em amplitude alongada.",
+      biomecanica:
+        "Dobradiça de quadril com joelhos levemente fletidos e fixos: o quadril recua e o tronco inclina com a coluna neutra, alongando isquiotibiais e glúteos sob carga. A dissociação quadril-coluna é o cerne técnico — a lombar mantém a curva enquanto o movimento ocorre no quadril, exigindo forte ação estabilizadora dos eretores.",
+      fisiologia:
+        "Trabalha a cadeia posterior em grande alongamento sob tensão — estímulo eficaz de força e hipertrofia posterior e da capacidade de dobradiça de quadril. A carga excêntrica controlada é a chave; o alvo é amplitude com coluna neutra, não peso máximo.",
       prescricaoPratica: "Em geral, domine o padrão com carga leve antes de progredir.",
     },
     trustLevel: "cuidado de segurança",
@@ -566,8 +572,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Exercício de extensão de quadril focado no glúteo máximo.",
-      biomecanica: "O apoio das costas permite alta tensão no glúteo com pouca exigência de equilíbrio.",
-      fisiologia: "Bom para volume de glúteo com baixa demanda coordenativa.",
+      biomecanica:
+        "Extensão de quadril com o tronco apoiado no banco: o glúteo máximo atua no seu maior braço de momento no topo, onde a linha de carga é vertical. Terminar na extensão neutra do quadril, sem hiperestender a lombar, mantém o foco no glúteo e protege a coluna (Contreras et al., 2015).",
+      fisiologia:
+        "Alta ativação glútea com baixa demanda de equilíbrio e mobilidade, permitindo carga e volume focados no glúteo — útil para hipertrofia e reforço do quadril, inclusive em iniciantes e progressões conduzidas.",
       prescricaoPratica: "Em geral, priorize a posição neutra do tronco no topo.",
     },
     trustLevel: "tendência prática",
@@ -633,8 +641,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Padrão unilateral de membros inferiores com halteres.",
-      biomecanica: "Exige estabilização do quadril e controle do joelho de apoio.",
-      fisiologia: "Bom para força funcional e correção de desequilíbrios entre lados.",
+      biomecanica:
+        "Padrão unilateral: a perna da frente estende joelho e quadril enquanto a de trás estabiliza, exigindo equilíbrio e alinhamento joelho-pé (controle do valgo dinâmico). O comprimento do passo redistribui a ênfase — passo maior recruta mais glúteo; passo menor, mais quadríceps.",
+      fisiologia:
+        "Além de força de quadríceps e glúteos, treina estabilização unilateral e controle motor, com transferência funcional alta (marcha, escadas, esporte). O custo de equilíbrio o torna mais avançado que padrões bilaterais guiados.",
       prescricaoPratica: "Em geral, comece estático e progrida para caminhada e cargas maiores.",
     },
     trustLevel: "tendência prática",
@@ -699,8 +709,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Exercício de puxar vertical em polia alta.",
-      biomecanica: "A polia guia a trajetória, facilitando o aprendizado do controle escapular.",
-      fisiologia: "Trabalha dorsais e sinergistas com carga graduável.",
+      biomecanica:
+        "Puxar vertical: adução e extensão do úmero conduzidas pelo latíssimo do dorso, com bíceps e romboides sinergistas; a polia guia a trajetória e facilita o controle escapular. Iniciar pela depressão e adução da escápula ativa as costas antes dos braços; largura e tipo de pegada modulam a ênfase (Andersen et al., 2014).",
+      fisiologia:
+        "Desenvolve a musculatura de puxar em amplitude ampla — base para a força de costas e para a barra fixa. Conduzir o movimento pelas escápulas, e não pelos bíceps, direciona o estímulo ao dorsal.",
       prescricaoPratica: "Em geral, inicie o movimento pelas escápulas e controle a volta.",
     },
     trustLevel: "regra pedagógica",
@@ -765,8 +777,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Exercício de puxar horizontal sentado na polia.",
-      biomecanica: "Exige estabilização de tronco para isolar as costas.",
-      fisiologia: "Trabalha a espessura da região dorsal e o trapézio médio.",
+      biomecanica:
+        "Puxar horizontal com retração escapular: dorsais, romboides e trapézio médio aproximam a escápula da coluna, com o bíceps como sinergista. Manter o tronco estável, sem balanço lombar, concentra o esforço nas costas e protege a coluna.",
+      fisiologia:
+        "Fortalece a retração escapular — essencial para a postura e para equilibrar os empurradores (peitoral e deltoide). A qualidade da retração, não a carga balançada, define o estímulo.",
       prescricaoPratica: "Em geral, mantenha o tronco estável e retraia as escápulas.",
     },
     trustLevel: "tendência prática",
@@ -831,8 +845,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Exercício de empurrar vertical para os deltoides.",
-      biomecanica: "Exige estabilização de tronco e controle escapular.",
-      fisiologia: "Trabalha os deltoides com participação do tríceps.",
+      biomecanica:
+        "Empurrar vertical acima da cabeça: flexão e abdução do ombro com extensão do cotovelo, tendo o deltoide como motor e trapézio e tríceps como sinergistas. A rotação superior da escápula acompanha o úmero e protege o espaço subacromial; a amplitude sob carga é limitada pela mobilidade do ombro.",
+      fisiologia:
+        "Estímulo central de força e hipertrofia do deltoide e da estabilidade do ombro em posições acima da cabeça. Exige boa mobilidade e controle escapular antes de progredir carga.",
       prescricaoPratica: "Em geral, adapte a amplitude ao ombro e evite compensar com a lombar.",
     },
     trustLevel: "cuidado de segurança",
@@ -896,8 +912,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Isolamento de bíceps com halteres.",
-      biomecanica: "Concentra o trabalho na flexão do cotovelo.",
-      fisiologia: "Permite volume localizado com baixo custo coordenativo.",
+      biomecanica:
+        "Flexão isolada do cotovelo conduzida pelo bíceps braquial (com o braquial), mantendo o ombro fixo. Manter o cotovelo junto ao corpo evita que o ombro assuma parte do trabalho; o pico de tensão ocorre próximo aos 90° de flexão.",
+      fisiologia:
+        "Volume localizado de bíceps com baixo custo coordenativo — útil para hipertrofia de braço e reforço específico. Controlar a fase excêntrica aumenta o tempo sob tensão sem exigir carga alta.",
       prescricaoPratica: "Em geral, mantenha o cotovelo fixo e controle a descida.",
     },
     trustLevel: "regra pedagógica",
@@ -961,8 +979,10 @@ export const exercises: Exercise[] = [
     },
     conteudo: {
       visaoGeral: "Isolamento de tríceps na polia alta.",
-      biomecanica: "A polia mantém tensão ao longo da amplitude.",
-      fisiologia: "Bom para volume de tríceps com baixo custo coordenativo.",
+      biomecanica:
+        "Extensão de cotovelo contra a polia, isolando o tríceps braquial com o cotovelo estável junto ao tronco; a tração do cabo mantém tensão ao longo da amplitude. Abrir os cotovelos recruta o peitoral e desvia o foco do alvo.",
+      fisiologia:
+        "Estímulo localizado para o tríceps (maior massa do braço), útil para volume e para complementar os empurradores. A estabilidade do cotovelo direciona a tensão ao músculo-alvo.",
       prescricaoPratica: "Em geral, mantenha os cotovelos fixos e controle a volta.",
     },
     trustLevel: "regra pedagógica",

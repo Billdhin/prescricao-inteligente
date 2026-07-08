@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { GitCompare, X, Plus, ArrowRight, Trophy, FlaskConical } from "lucide-react";
+import { GitCompare, X, Plus, ArrowRight, Trophy, FlaskConical, BookOpen } from "lucide-react";
 import { Card, Pill, ScoreRing, StatBar, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { exercises } from "@/data/exercises";
 import type { Exercise } from "@/data/types";
@@ -239,6 +239,26 @@ export function Comparador() {
           Usar o GPS da Prescrição <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
+
+      {selected.length > 0 && (
+        <Card variant="soft" className="p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#e6f7f9] text-[#0e7c8a]">
+              <BookOpen className="h-4 w-4" />
+            </span>
+            <h4 className="font-display text-sm font-bold text-ink">Como ler estes números</h4>
+          </div>
+          <p className="text-xs leading-relaxed text-ink-2">
+            Eficiência, ativação e demandas são <span className="font-semibold text-ink">estimativas
+            relativas</span> sintetizadas da literatura de EMG e biomecânica (ex.: Boeckh-Behrens &amp;
+            Buskies 2000; Escamilla et al. 1998/2001; Contreras et al. 2015; Andersen et al. 2014;
+            Ekstrom et al. 2007). Servem para comparar a ênfase entre exercícios — não são medições do
+            seu aluno nem valores absolutos de um único estudo. As fontes completas de cada exercício
+            ficam na aba <span className="font-semibold text-ink">Biomecânica</span> do Laboratório.
+            Ajuste sempre ao caso e à diretriz vigente.
+          </p>
+        </Card>
+      )}
 
       <p className="pt-2 text-xs text-ink-3">
         Conteúdo educacional — não substitui avaliação profissional individualizada.
