@@ -184,7 +184,8 @@ export function Comparador() {
                     <div className="space-y-1.5">
                       {selected.map((e, i) => (
                         <div key={e.slug} className="flex items-center gap-2">
-                          <StatBar label={e.nome} value={m.get(e)} tone={COL_TONES[i]} className="flex-1" />
+                          {/* sem repetir o nome: os cartões coloridos no topo já mapeiam cor → exercício */}
+                          <StatBar srLabel={e.nome} value={m.get(e)} tone={COL_TONES[i]} className="flex-1" />
                           {selected.length >= 2 && i === win && (
                             <Pill tone="success" className="shrink-0">
                               melhor

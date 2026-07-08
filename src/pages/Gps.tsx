@@ -1223,7 +1223,8 @@ function Comparador({
                 <div className="mb-1 text-xs font-semibold text-ink-2">{r.label}</div>
                 <div className="space-y-1.5">
                   {selected.map((e, i) => (
-                    <StatBar key={e.slug} label={e.nome} value={r.get(e)} tone={tones[i]} />
+                    // sem repetir o nome: as pills coloridas acima já mapeiam cor → exercício
+                    <StatBar key={e.slug} srLabel={e.nome} value={r.get(e)} tone={tones[i]} />
                   ))}
                 </div>
               </div>

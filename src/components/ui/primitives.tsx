@@ -113,12 +113,16 @@ export function StatBar({
   tone = "primary",
   suffix = "%",
   className,
+  srLabel,
 }: {
-  label: string;
+  /** Rótulo à esquerda da barra. Vazio/omitido = coluna some (a barra ocupa a largura toda). */
+  label?: string;
   value: number;
   tone?: "primary" | "cta" | "analysis" | "success";
   suffix?: string;
   className?: string;
+  /** Nome acessível da barra quando não há rótulo visível (leitor de tela). */
+  srLabel?: string;
 }) {
   const v = Math.max(0, Math.min(100, value));
   const fill: Record<string, string> = {
@@ -128,10 +132,12 @@ export function StatBar({
     success: "bg-success",
   };
   return (
-    <div className={cn("flex items-center gap-3", className)}>
-      <span className="w-32 shrink-0 text-sm leading-tight text-ink-2 sm:w-40 [overflow-wrap:anywhere]">
-        {label}
-      </span>
+    <div className={cn("flex items-center gap-3", className)} aria-label={!label ? srLabel : undefined}>
+      {label ? (
+        <span className="w-32 shrink-0 text-sm leading-tight text-ink-2 sm:w-40 [overflow-wrap:anywhere]">
+          {label}
+        </span>
+      ) : null}
       <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-soft">
         <div
           className={cn("h-full rounded-full transition-[width] duration-500", fill[tone])}

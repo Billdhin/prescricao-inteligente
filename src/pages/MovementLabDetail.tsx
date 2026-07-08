@@ -524,9 +524,11 @@ function Comparador({ exercise }: { exercise: Exercise }) {
                 {r.a} · {r.b}
               </span>
             </div>
-            <StatBar label={exercise.nome} value={r.a} tone="primary" />
+            {/* sem repetir os nomes por linha: o cabeçalho já mapeia cor → exercício
+                (azul = exercício atual, ciano = comparado) */}
+            <StatBar srLabel={exercise.nome} value={r.a} tone="primary" />
             <div className="h-1" />
-            <StatBar label={other.nome} value={r.b} tone="analysis" />
+            <StatBar srLabel={other.nome} value={r.b} tone="analysis" />
           </div>
         ))}
       </div>
