@@ -486,20 +486,19 @@ export function BiomechanicsComparisonSlider({
 
         {overlay?.force &&
           (() => {
-            const fy = Math.max(overlay.force.y2, 6);
-            let fx = Math.min(overlay.force.x2 + 2.5, 78);
-            // se o rótulo invadiria o card adaptativo, ancora à ESQUERDA da seta
-            const ev = layout.evitar;
-            const flip = fx < ev.x2 && fx + 14 > ev.x1 && fy > ev.y1 - 2.5 && fy < ev.y2 + 2.5;
-            if (flip) fx = Math.max(overlay.force.x2 - 2.5, 16);
+            // rótulo ancorado na PONTA da seta e deslocado além dela, no sentido
+            // do movimento — como a seta agora fica na margem (fora do corpo),
+            // o rótulo acompanha e não invade a anatomia. Alinhamento pelo terço.
+            const { x2, y2, y1 } = overlay.force;
+            const up = y2 <= y1;
+            const ly = clamp(up ? y2 - 6 : y2 + 6);
+            const terco = x2 < 34 ? "L" : x2 > 66 ? "R" : "C";
+            const transform =
+              terco === "R" ? "translate(-100%, -50%)" : terco === "L" ? "translateY(-50%)" : "translate(-50%, -50%)";
             return (
               <span
-                className="absolute hidden whitespace-nowrap rounded-full border border-cyan-400/25 bg-slate-950/60 px-2 py-0.5 text-[10px] font-medium tracking-wide text-cyan-300 backdrop-blur-sm sm:inline-flex"
-                style={{
-                  left: `${fx}%`,
-                  top: `${fy}%`,
-                  transform: flip ? "translate(-100%, -50%)" : "translateY(-50%)",
-                }}
+                className="absolute hidden whitespace-nowrap rounded-full border border-cyan-400/25 bg-slate-950/70 px-2 py-0.5 text-[10px] font-medium tracking-wide text-cyan-300 backdrop-blur-sm sm:inline-flex"
+                style={{ left: `${clamp(x2)}%`, top: `${ly}%`, transform }}
               >
                 Linha de força
               </span>
