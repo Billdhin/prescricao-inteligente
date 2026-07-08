@@ -4,11 +4,18 @@
 import type { Exercise, Nivel } from "@/data/types";
 
 export type GpsObjetivo =
+  | "Emagrecimento"
   | "Hipertrofia"
   | "Força"
   | "Resistência muscular"
   | "Reabilitação/retorno"
   | "Aprendizado técnico";
+
+/** Prioridade física quando o objetivo é Emagrecimento (substitui músculo-alvo). */
+export type GpsPrioridade =
+  | "Condicionamento cardiorrespiratório"
+  | "Força geral (corpo todo)"
+  | "Cardio + força (misto)";
 
 export type GpsRestricao =
   | "Nenhuma"
@@ -20,9 +27,20 @@ export type GpsRestricao =
 export interface GpsAnswers {
   objetivo: GpsObjetivo;
   grupoMuscular: string;
+  /** só quando objetivo = Emagrecimento */
+  prioridade?: GpsPrioridade;
   nivel: Nivel;
   restricao: GpsRestricao;
   equipamentos: string[];
+}
+
+/** Cuidados automáticos de um grupo/condição aplicados ao ranqueamento
+ *  (penalização transparente — aparece no breakdown da justificativa). */
+export interface GroupRuleInput {
+  nome: string;
+  penalidades: { metrica: string; limite: number; motivo: string }[];
+  /** complexidade técnica acima disso é penalizada para o perfil */
+  complexidadeMax?: number;
 }
 
 export interface CriterioRacional {
@@ -59,23 +77,39 @@ function metricValue(ex: Exercise, name: string): number | undefined {
   )?.valor;
 }
 
-export function scoreExercise(ex: Exercise, ans: GpsAnswers): Recommendation {
+// "Corpo todo": pontua por massa muscular envolvida (maior custo energético) —
+// usado no Emagrecimento e disponível como alvo geral.
+const MASSA_MUSCULAR: Record<string, number> = {
+  "Membros inferiores": 1,
+  Costas: 0.9,
+  Peitorais: 0.85,
+  Ombros: 0.55,
+  Braços: 0.4,
+};
+
+export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInput): Recommendation {
   const breakdown: CriterioRacional[] = [];
   const cautions: string[] = [];
   const reasons: string[] = [];
 
   // 1) Grupo muscular
-  const grupoOk = ex.grupoMuscular === ans.grupoMuscular;
-  const grupoPts = (grupoOk ? 1 : 0.1) * W_GRUPO;
+  const corpoTodo = ans.grupoMuscular === "Corpo todo";
+  const grupoOk = corpoTodo ? (MASSA_MUSCULAR[ex.grupoMuscular] ?? 0.5) >= 0.85 : ex.grupoMuscular === ans.grupoMuscular;
+  const grupoRatio = corpoTodo ? (MASSA_MUSCULAR[ex.grupoMuscular] ?? 0.5) : grupoOk ? 1 : 0.1;
+  const grupoPts = grupoRatio * W_GRUPO;
   breakdown.push({
     criterio: "Grupo muscular",
     peso: +(grupoPts * COMPRESS).toFixed(1),
     pontosPossiveis: +(W_GRUPO * COMPRESS).toFixed(1),
-    detalhe: grupoOk
-      ? `Trabalha diretamente ${ex.grupoMuscular}.`
-      : `Grupo do exercício (${ex.grupoMuscular}) difere do alvo (${ans.grupoMuscular}).`,
+    detalhe: corpoTodo
+      ? grupoOk
+        ? `${ex.grupoMuscular}: grande massa muscular — maior custo energético por série.`
+        : `${ex.grupoMuscular}: massa muscular menor — contribui menos para o gasto global.`
+      : grupoOk
+        ? `Trabalha diretamente ${ex.grupoMuscular}.`
+        : `Grupo do exercício (${ex.grupoMuscular}) difere do alvo (${ans.grupoMuscular}).`,
   });
-  if (grupoOk) reasons.push(ex.grupoMuscular);
+  if (grupoOk) reasons.push(corpoTodo ? `Grande massa muscular (${ex.grupoMuscular})` : ex.grupoMuscular);
 
   // 2) Objetivo
   const objOk = ex.objetivo.includes(ans.objetivo);
@@ -176,9 +210,37 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers): Recommendation {
     detalhe: restDetalhe,
   });
 
+  // 6) Cuidados do grupo/condição (só penaliza — transparente no breakdown)
+  let grupoCondPen = 0;
+  if (rule) {
+    const motivos: string[] = [];
+    for (const p of rule.penalidades) {
+      const val = metricValue(ex, p.metrica);
+      if (val !== undefined && val >= p.limite) {
+        grupoCondPen -= 4;
+        motivos.push(`${p.motivo} (${p.metrica.toLowerCase()}: ${val}/100)`);
+        cautions.push(p.motivo);
+      }
+    }
+    if (rule.complexidadeMax !== undefined && complexidade > rule.complexidadeMax) {
+      grupoCondPen -= 3;
+      motivos.push(`Complexidade técnica ${complexidade}/100 acima do recomendado para este perfil.`);
+      cautions.push("Técnica exigente para este perfil — simplifique ou supervisione de perto.");
+    }
+    grupoCondPen = Math.max(grupoCondPen, -12);
+    breakdown.push({
+      criterio: `Cuidados do grupo (${rule.nome})`,
+      peso: +grupoCondPen.toFixed(1),
+      pontosPossiveis: 0,
+      detalhe: motivos.length
+        ? motivos.join(" ")
+        : "Sem conflito com os cuidados típicos deste grupo.",
+    });
+  }
+
   // Score final
   const soma = grupoPts + objPts + nivelPts + equipPts + restPts;
-  let score = soma * COMPRESS;
+  let score = soma * COMPRESS + grupoCondPen;
 
   const efic = ex.indiceEficiencia.score ?? 60;
   const tiebreak = ((efic - 50) / 50) * 2.5;
@@ -197,9 +259,9 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers): Recommendation {
   return { exercise: ex, score: clamped, equipDisponivel: equipOk, breakdown, cautions, reasons };
 }
 
-export function rankExercises(pool: Exercise[], ans: GpsAnswers): Recommendation[] {
+export function rankExercises(pool: Exercise[], ans: GpsAnswers, rule?: GroupRuleInput): Recommendation[] {
   return pool
-    .map((ex) => scoreExercise(ex, ans))
+    .map((ex) => scoreExercise(ex, ans, rule))
     .sort((a, b) => {
       if (a.equipDisponivel !== b.equipDisponivel) return a.equipDisponivel ? -1 : 1;
       return b.score - a.score;
@@ -207,6 +269,7 @@ export function rankExercises(pool: Exercise[], ans: GpsAnswers): Recommendation
 }
 
 export const GRUPOS_MUSCULARES = [
+  "Corpo todo",
   "Membros inferiores",
   "Peitorais",
   "Costas",
@@ -215,11 +278,18 @@ export const GRUPOS_MUSCULARES = [
 ] as const;
 
 export const OBJETIVOS: GpsObjetivo[] = [
+  "Emagrecimento",
   "Hipertrofia",
   "Força",
   "Resistência muscular",
   "Reabilitação/retorno",
   "Aprendizado técnico",
+];
+
+export const PRIORIDADES: GpsPrioridade[] = [
+  "Condicionamento cardiorrespiratório",
+  "Força geral (corpo todo)",
+  "Cardio + força (misto)",
 ];
 
 export const RESTRICOES: GpsRestricao[] = [

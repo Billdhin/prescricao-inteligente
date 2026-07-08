@@ -26,9 +26,14 @@ import {
   GRUPOS_MUSCULARES,
   RESTRICOES,
   EQUIPAMENTOS,
+  PRIORIDADES,
   type GpsAnswers,
+  type GpsPrioridade,
   type Recommendation,
 } from "@/lib/gps/engine";
+import { getGroupRule, type GroupGpsRule } from "@/lib/gps/groupRules";
+import { recommendModalidades, type ModalidadeRec } from "@/lib/gps/modalidadeRules";
+import { modalidadeImagem, impactoTone } from "@/data/modalities";
 import { exercises } from "@/data/exercises";
 import type { Nivel } from "@/data/types";
 import {
@@ -51,13 +56,14 @@ import {
 import { ParametroPills } from "@/components/special/SpecialUI";
 import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { useDialog } from "@/lib/useDialog";
-import { cn } from "@/lib/utils";
+import { cn, withBase } from "@/lib/utils";
 import { FileDown, Lock as LockIcon } from "lucide-react";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
 
 // Faixa de séries/reps sugerida por objetivo (educacional — ponto de partida, ajuste ao contexto).
 const SERIES_POR_OBJETIVO: Record<string, string> = {
+  Emagrecimento: "2–3 séries · 12–15 reps · descanso curto (30–60s), formato circuito",
   Hipertrofia: "3–4 séries · 8–12 reps",
   Força: "4–5 séries · 3–6 reps",
   "Resistência muscular": "2–3 séries · 15–20 reps",
@@ -66,9 +72,11 @@ const SERIES_POR_OBJETIVO: Record<string, string> = {
 };
 const seriesSugerida = (objetivo: string) => SERIES_POR_OBJETIVO[objetivo] ?? "3 séries · 10–12 reps";
 
-const STEP_LABELS = [
+// A etapa 2 se adapta ao objetivo: no Emagrecimento pergunta a PRIORIDADE
+// física (cardiorrespiratória/força/misto), não um músculo-alvo.
+const stepLabels = (emagrecimento: boolean) => [
   "Qual é o objetivo?",
-  "Qual grupo/músculo-alvo?",
+  emagrecimento ? "Qual a prioridade física?" : "Qual grupo/músculo-alvo?",
   "Qual o nível?",
   "Alguma restrição?",
   "Equipamentos disponíveis",
@@ -98,6 +106,8 @@ export function Gps() {
   const grupo = grupoSlug ? getSpecialGroup(grupoSlug) : undefined;
   const faseObj = grupo ? grupo.fases[fase - 1] ?? grupo.fases[0] : undefined;
   const grupoLocked = !!grupo && grupo.premium && !unlocked;
+  // Cuidados do grupo interligados ao ranqueamento (etapa 4 + motor)
+  const rule = grupo && !grupoLocked ? getGroupRule(grupo.slug) : undefined;
 
   const [step, setStep] = React.useState(0);
   const [answers, setAnswers] = React.useState<GpsAnswers>({
@@ -131,6 +141,14 @@ export function Gps() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aluno?.id]);
 
+  // O grupo já indica a própria restrição (ex.: dor lombar inespecífica →
+  // "Dor lombar" pré-selecionada). O usuário pode trocar na etapa 4.
+  React.useEffect(() => {
+    if (!rule?.restricaoSugerida) return;
+    setAnswers((a) => (a.restricao === "Nenhuma" ? { ...a, restricao: rule.restricaoSugerida! } : a));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rule?.slug]);
+
   const salvarPrescricao = () => {
     if (!aluno || !results) return;
     addPrescricao({
@@ -146,10 +164,12 @@ export function Gps() {
       })),
       status: "ativa",
       grupoEspecial: grupo?.slug,
-      modalidadePrincipal: faseObj?.modalidades[0],
-      modalidadesSecundarias: faseObj?.modalidades.slice(1),
+      modalidadePrincipal: faseObj?.modalidades[0] ?? modRecs[0]?.modalidade.id,
+      modalidadesSecundarias: faseObj?.modalidades.slice(1) ?? modRecs.slice(1).map((r) => r.modalidade.id),
       faseJornada: grupo ? fase : undefined,
-      parametrosControle: faseObj?.parametros,
+      parametrosControle:
+        faseObj?.parametros ??
+        (answers.objetivo === "Emagrecimento" ? ["p-rpe", "p-fala", "p-adesao", "p-volume"] : undefined),
       criteriosProgressao: faseObj?.criteriosAvancar,
       criteriosRegressao: faseObj?.criteriosRegredir,
       raciocinio: faseObj?.justificativa,
@@ -176,9 +196,11 @@ export function Gps() {
         })),
         status: "ativa",
         grupoEspecial: grupo?.slug,
-        modalidadePrincipal: faseObj?.modalidades[0],
+        modalidadePrincipal: faseObj?.modalidades[0] ?? modRecs[0]?.modalidade.id,
         faseJornada: grupo ? fase : undefined,
-        parametrosControle: faseObj?.parametros,
+        parametrosControle:
+          faseObj?.parametros ??
+          (answers.objetivo === "Emagrecimento" ? ["p-rpe", "p-fala", "p-adesao", "p-volume"] : undefined),
         criteriosProgressao: faseObj?.criteriosAvancar,
         raciocinio: faseObj?.justificativa,
       },
@@ -192,11 +214,23 @@ export function Gps() {
     if (bloqueado) return;
     if (!unlocked) increment();
     addActivity(`Prescrição: ${answers.grupoMuscular}`);
-    const rank = rankExercises(exercises, answers);
+    const rank = rankExercises(exercises, answers, rule);
     if (!rank.length) return;
     setResults(rank);
     setCompare([rank[0].exercise.slug]);
   };
+
+  // Plano composto: modalidades como base da semana (jornada do grupo ou
+  // emagrecimento) + exercícios de força como complemento.
+  const modRecs = React.useMemo<ModalidadeRec[]>(
+    () =>
+      recommendModalidades({
+        answers,
+        grupo: grupoLocked ? undefined : grupo,
+        faseObj: grupoLocked ? undefined : faseObj,
+      }),
+    [answers, grupo, faseObj, grupoLocked],
+  );
 
   // Volta ao wizard PRESERVANDO as respostas (para ajustar só uma variável).
   const ajustarRespostas = () => {
@@ -250,7 +284,14 @@ export function Gps() {
       />
 
       {/* Foco agora — a decisão rápida, inline (quando há grupo em contexto) */}
-      {grupo && faseObj && !grupoLocked && <FocoAgora grupo={grupo} faseObj={faseObj} fase={fase} />}
+      {grupo && faseObj && !grupoLocked && (
+        <FocoAgora
+          grupo={grupo}
+          faseObj={faseObj}
+          fase={fase}
+          contexto={{ alunoNome: aluno?.nome, objetivo: answers.objetivo }}
+        />
+      )}
       {grupo && grupoLocked && <JornadaLockedNote grupo={grupo} />}
 
       {bloqueado ? (
@@ -263,6 +304,7 @@ export function Gps() {
           setAnswers={setAnswers}
           onFinish={gerar}
           aluno={aluno}
+          rule={rule}
         />
       ) : (
         <Results
@@ -276,6 +318,10 @@ export function Gps() {
           onSalvar={aluno ? salvarPrescricao : undefined}
           onExportar={aluno ? exportarPDF : undefined}
           podeExportar={unlocked}
+          modRecs={modRecs}
+          grupoNome={grupoLocked ? undefined : grupo?.nome}
+          faseNum={grupoLocked ? undefined : grupo ? fase : undefined}
+          faseJustificativa={grupoLocked ? undefined : faseObj?.justificativa}
         />
       )}
 
@@ -414,7 +460,17 @@ function ContextoCard({
 
 /* Foco agora — resumo de decisão condensado (substitui a antiga Decisão rápida
    e o painel de jornada gigante que existia nos resultados). */
-function FocoAgora({ grupo, faseObj, fase }: { grupo: SpecialGroup; faseObj: JourneyPhase; fase: number }) {
+function FocoAgora({
+  grupo,
+  faseObj,
+  fase,
+  contexto,
+}: {
+  grupo: SpecialGroup;
+  faseObj: JourneyPhase;
+  fase: number;
+  contexto?: { alunoNome?: string; objetivo?: string };
+}) {
   return (
     <Card className="border-l-4 border-l-primary p-5 md:p-6">
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -464,8 +520,11 @@ function FocoAgora({ grupo, faseObj, fase }: { grupo: SpecialGroup; faseObj: Jou
       <div className="mt-4 rounded-xl border border-border bg-surface-soft p-3">
         <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
           <Activity className="h-3.5 w-3.5" /> Monitore principalmente
+          <span className="font-normal normal-case tracking-normal text-ink-3">
+            — toque num parâmetro para ver como aplicar
+          </span>
         </div>
-        <ParametroPills ids={faseObj.parametros} />
+        <ParametroPills ids={faseObj.parametros} contexto={contexto} />
       </div>
 
       <p className="mt-3 text-xs text-ink-3">{AVISO_SEGURANCA}</p>
@@ -497,6 +556,7 @@ function Wizard({
   setAnswers,
   onFinish,
   aluno,
+  rule,
 }: {
   step: number;
   setStep: (n: number) => void;
@@ -504,7 +564,10 @@ function Wizard({
   setAnswers: React.Dispatch<React.SetStateAction<GpsAnswers>>;
   onFinish: () => void;
   aluno?: { nome: string };
+  rule?: GroupGpsRule;
 }) {
+  const emagrecimento = answers.objetivo === "Emagrecimento";
+  const STEP_LABELS = stepLabels(emagrecimento);
   const pct = Math.round(((step + 1) / 5) * 100);
   const last = step === 4;
   const headingRef = React.useRef<HTMLHeadingElement>(null);
@@ -540,17 +603,36 @@ function Wizard({
             ariaLabel={STEP_LABELS[0]}
             options={OBJETIVOS}
             value={answers.objetivo}
-            onChange={(v) => setAnswers((a) => ({ ...a, objetivo: v as GpsAnswers["objetivo"] }))}
+            onChange={(v) =>
+              setAnswers((a) => ({
+                ...a,
+                objetivo: v as GpsAnswers["objetivo"],
+                // Emagrecimento trabalha o corpo todo; a etapa 2 vira prioridade física.
+                ...(v === "Emagrecimento"
+                  ? { grupoMuscular: "Corpo todo", prioridade: a.prioridade ?? "Cardio + força (misto)" }
+                  : {}),
+              }))
+            }
           />
         )}
-        {step === 1 && (
-          <Choices
-            ariaLabel={STEP_LABELS[1]}
-            options={[...GRUPOS_MUSCULARES]}
-            value={answers.grupoMuscular}
-            onChange={(v) => setAnswers((a) => ({ ...a, grupoMuscular: v }))}
-          />
-        )}
+        {step === 1 &&
+          (emagrecimento ? (
+            <Choices
+              ariaLabel={STEP_LABELS[1]}
+              options={PRIORIDADES}
+              value={answers.prioridade ?? "Cardio + força (misto)"}
+              onChange={(v) =>
+                setAnswers((a) => ({ ...a, prioridade: v as GpsPrioridade, grupoMuscular: "Corpo todo" }))
+              }
+            />
+          ) : (
+            <Choices
+              ariaLabel={STEP_LABELS[1]}
+              options={[...GRUPOS_MUSCULARES]}
+              value={answers.grupoMuscular}
+              onChange={(v) => setAnswers((a) => ({ ...a, grupoMuscular: v }))}
+            />
+          ))}
         {step === 2 && (
           <Choices
             ariaLabel={STEP_LABELS[2]}
@@ -560,12 +642,33 @@ function Wizard({
           />
         )}
         {step === 3 && (
-          <Choices
-            ariaLabel={STEP_LABELS[3]}
-            options={RESTRICOES}
-            value={answers.restricao}
-            onChange={(v) => setAnswers((a) => ({ ...a, restricao: v as GpsAnswers["restricao"] }))}
-          />
+          <div className="space-y-4">
+            {rule && (
+              <div className="rounded-xl border border-primary/25 bg-primary-tint/50 p-4">
+                <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+                  <ShieldAlert className="h-3.5 w-3.5" /> Já considerado pelo grupo: {rule.nome}
+                </div>
+                <ul className="space-y-1 text-sm text-ink">
+                  {rule.cuidados.map((c) => (
+                    <li key={c} className="flex gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-2 text-xs text-ink-2">
+                  Essas cautelas são aplicadas automaticamente no ranqueamento (aparecem na
+                  justificativa). Abaixo, marque restrições musculoesqueléticas adicionais.
+                </p>
+              </div>
+            )}
+            <Choices
+              ariaLabel={STEP_LABELS[3]}
+              options={RESTRICOES}
+              value={answers.restricao}
+              onChange={(v) => setAnswers((a) => ({ ...a, restricao: v as GpsAnswers["restricao"] }))}
+            />
+          </div>
         )}
         {step === 4 && (
           <MultiChoices
@@ -734,6 +837,10 @@ function Results({
   onSalvar,
   onExportar,
   podeExportar,
+  modRecs,
+  grupoNome,
+  faseNum,
+  faseJustificativa,
 }: {
   answers: GpsAnswers;
   results: Recommendation[];
@@ -745,9 +852,14 @@ function Results({
   onSalvar?: () => void;
   onExportar?: () => void;
   podeExportar?: boolean;
+  modRecs: ModalidadeRec[];
+  grupoNome?: string;
+  faseNum?: number;
+  faseJustificativa?: string;
 }) {
   const best = results[0];
   const others = results.slice(1);
+  const composto = modRecs.length > 0;
   const toggleCompare = (slug: string) =>
     setCompare((c) =>
       c.includes(slug) ? c.filter((x) => x !== slug) : c.length < 3 ? [...c, slug] : c,
@@ -795,7 +907,9 @@ function Results({
       <Card variant="soft" className="flex flex-wrap items-center gap-2 p-4">
         <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">Perfil</span>
         <Pill tone="primary">{answers.objetivo}</Pill>
-        <Pill tone="primary">{answers.grupoMuscular}</Pill>
+        <Pill tone="primary">
+          {answers.objetivo === "Emagrecimento" && answers.prioridade ? answers.prioridade : answers.grupoMuscular}
+        </Pill>
         <Pill tone="neutral">{answers.nivel}</Pill>
         <Pill tone={answers.restricao === "Nenhuma" ? "success" : "warning"}>{answers.restricao}</Pill>
         <button onClick={onRefazer} className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink">
@@ -803,11 +917,53 @@ function Results({
         </button>
       </Card>
 
+      {/* Base da semana — modalidades (plano composto: a musculação isolada não
+          é a porta de entrada de todo perfil) */}
+      {composto && (
+        <Card variant="raised" className="overflow-hidden">
+          <div className="bg-analysis px-5 py-2 text-xs font-bold uppercase tracking-wider text-white">
+            <span className="inline-flex items-center gap-1">
+              <HeartPulse className="h-3.5 w-3.5" /> Base da semana — modalidades
+            </span>
+          </div>
+          <div className="p-5">
+            <p className="mb-4 text-sm text-ink-2">
+              {grupoNome
+                ? `Neste perfil (${grupoNome}${faseNum ? `, fase ${faseNum}` : ""}), as modalidades abaixo são a base — os exercícios de força entram como complemento.`
+                : "Para emagrecimento, a base da semana é o volume nas modalidades abaixo — os exercícios de força entram como complemento para preservar massa magra."}
+              {faseJustificativa ? ` ${faseJustificativa}` : ""}
+            </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {modRecs.map((r) => (
+                <div key={r.modalidade.id} className="overflow-hidden rounded-xl border border-border">
+                  <img
+                    src={withBase(modalidadeImagem(r.modalidade.id))}
+                    alt=""
+                    loading="lazy"
+                    className="h-24 w-full object-cover"
+                    onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
+                  />
+                  <div className="p-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-display text-sm font-bold text-ink">{r.modalidade.nome}</span>
+                      {r.principal && <Pill tone="primary">principal</Pill>}
+                      <Pill tone={impactoTone[r.modalidade.impacto]}>impacto {r.modalidade.impacto}</Pill>
+                    </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-ink-2">{r.motivo}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Melhor recomendação — âncora */}
       <Card variant="raised" className="overflow-hidden">
         <div className="gradient-brand px-5 py-2 text-xs font-bold uppercase tracking-wider text-white">
           <span className="inline-flex items-center gap-1">
-            <Sparkles className="h-3.5 w-3.5" /> Melhor recomendação
+            <Sparkles className="h-3.5 w-3.5" />
+            {composto ? "Força complementar — melhor exercício" : "Melhor recomendação"}
           </span>
         </div>
         <div className="p-6">

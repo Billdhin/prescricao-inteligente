@@ -8,12 +8,23 @@ import {
   Dumbbell,
   ChevronDown,
   Waves,
+  X,
+  Printer,
+  BookOpen,
 } from "lucide-react";
-import { Card, Pill } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { getModalidade, impactoTone, modalidadeImagem } from "@/data/modalities";
-import { getParam, paramCategoriaTone } from "@/data/monitoringParameters";
+import { getParam, paramCategoriaTone, type MonitoringParameter } from "@/data/monitoringParameters";
 import type { JourneyPhase } from "@/data/specialGroups";
+import { printFichaParametro } from "@/lib/printFicha";
+import { useDialog } from "@/lib/useDialog";
 import { cn, withBase } from "@/lib/utils";
+
+/** Contexto opcional para personalizar fichas imprimíveis (ex.: ficha de adesão). */
+export interface ParametroContexto {
+  alunoNome?: string;
+  objetivo?: string;
+}
 
 /* ------------------------- chips de modalidade/parâmetro ------------------- */
 
@@ -33,18 +44,141 @@ export function ModalidadePills({ ids }: { ids: string[] }) {
   );
 }
 
-export function ParametroPills({ ids }: { ids: string[] }) {
+// Cada chip de parâmetro abre o guia de aplicação (como fazer o teste, escala,
+// referência e ficha para imprimir) — o chip deixa de ser só um rótulo.
+export function ParametroPills({ ids, contexto }: { ids: string[]; contexto?: ParametroContexto }) {
+  const [aberto, setAberto] = useState<MonitoringParameter | null>(null);
   return (
     <div className="flex flex-wrap gap-1.5">
       {ids.map((id) => {
         const p = getParam(id);
         if (!p) return null;
         return (
-          <Pill key={id} tone={paramCategoriaTone[p.categoria]} icon={<Activity className="h-3 w-3" />}>
-            {p.sigla ?? p.nome}
-          </Pill>
+          <button
+            key={id}
+            type="button"
+            onClick={() => setAberto(p)}
+            aria-haspopup="dialog"
+            aria-label={`Como aplicar: ${p.nome}`}
+            title="Ver como aplicar, escala e ficha"
+            className="rounded-full transition-transform hover:scale-[1.03] focus-visible:scale-[1.03]"
+          >
+            <Pill tone={paramCategoriaTone[p.categoria]} icon={<Activity className="h-3 w-3" />}>
+              {p.sigla ?? p.nome}
+              <BookOpen aria-hidden className="ml-1 inline h-3 w-3 opacity-70" />
+            </Pill>
+          </button>
         );
       })}
+      {aberto && <ParametroDialog param={aberto} contexto={contexto} onClose={() => setAberto(null)} />}
+    </div>
+  );
+}
+
+/* --------------------- guia do parâmetro (como aplicar) -------------------- */
+
+export function ParametroDialog({
+  param: p,
+  contexto,
+  onClose,
+}: {
+  param: MonitoringParameter;
+  contexto?: ParametroContexto;
+  onClose: () => void;
+}) {
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Como aplicar: ${p.nome}`}
+        className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-card bg-surface shadow-elevated outline-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border p-5 pb-3">
+          <div>
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <Pill tone={paramCategoriaTone[p.categoria]}>{p.categoria}</Pill>
+              {p.sigla && <Pill tone="neutral">{p.sigla}</Pill>}
+            </div>
+            <h3 className="font-display text-lg font-bold text-ink">{p.nome}</h3>
+            <p className="mt-0.5 text-sm text-ink-2">{p.resumo}</p>
+          </div>
+          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 space-y-4 overflow-auto p-5">
+          {p.comoAplicar && p.comoAplicar.length > 0 && (
+            <section>
+              <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-primary">Como aplicar</h4>
+              <ol className="space-y-1.5">
+                {p.comoAplicar.map((s, i) => (
+                  <li key={s} className="flex gap-2.5 text-sm text-ink">
+                    <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary-tint text-[11px] font-bold text-primary">
+                      {i + 1}
+                    </span>
+                    {s}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {p.escala && p.escala.length > 0 && (
+            <section>
+              <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-primary">Escala de referência</h4>
+              <div className="overflow-hidden rounded-xl border border-border">
+                {p.escala.map((e, i) => (
+                  <div
+                    key={e.valor}
+                    className={cn("flex gap-3 px-3 py-1.5 text-sm", i % 2 === 0 && "bg-surface-soft")}
+                  >
+                    <span className="tabular w-24 shrink-0 font-bold text-primary">{e.valor}</span>
+                    <span className="text-ink">{e.rotulo}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">Como interpretar</h4>
+            <p className="text-sm text-ink-2">{p.comoInterpretar}</p>
+          </section>
+          <section>
+            <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">Se estiver alterado</h4>
+            <p className="text-sm text-ink-2">{p.seAlterado}</p>
+          </section>
+          <section>
+            <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">Quando é menos confiável</h4>
+            <p className="text-sm text-ink-2">{p.menosConfiavel}</p>
+          </section>
+
+          {p.referencia && (
+            <p className="border-t border-border pt-3 text-xs text-ink-3">Referência: {p.referencia}</p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4">
+          {p.ficha && (
+            <button onClick={() => printFichaParametro(p, contexto)} className={buttonClasses("primary", "sm")}>
+              <Printer className="h-4 w-4" />
+              {p.ficha === "adesao" ? "Imprimir ficha de adesão" : "Imprimir escala (PDF)"}
+            </button>
+          )}
+          <button onClick={onClose} className={buttonClasses("ghost", "sm")}>
+            Fechar
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -152,6 +286,7 @@ export function VisualModalidadeCard({ id, cautela }: { id: string; cautela?: bo
 
 export function ParametroCard({ id }: { id: string }) {
   const p = getParam(id);
+  const [aberto, setAberto] = useState(false);
   if (!p) return null;
   return (
     <Card className="p-4">
@@ -166,6 +301,15 @@ export function ParametroCard({ id }: { id: string }) {
         <Linha rotulo="Interpretar" texto={p.comoInterpretar} />
         <Linha rotulo="Se alterado" texto={p.seAlterado} />
       </div>
+      {(p.comoAplicar || p.ficha) && (
+        <button
+          onClick={() => setAberto(true)}
+          className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+        >
+          <BookOpen className="h-4 w-4" /> Como aplicar{p.ficha ? " + ficha para imprimir" : ""}
+        </button>
+      )}
+      {aberto && <ParametroDialog param={p} onClose={() => setAberto(false)} />}
     </Card>
   );
 }

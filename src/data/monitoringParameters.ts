@@ -30,6 +30,14 @@ export interface MonitoringParameter {
   gruposRelevantes: string[];
   /** ids de modalidades em que tende a ser mais útil */
   modalidadesUteis: string[];
+  /** passo a passo prático de aplicação do parâmetro/teste */
+  comoAplicar?: string[];
+  /** escala de referência (quando o parâmetro tem uma) */
+  escala?: { valor: string; rotulo: string }[];
+  /** referência bibliográfica/base do teste (sem substituir a diretriz local) */
+  referencia?: string;
+  /** ficha imprimível disponível: escala de bolso ou ficha semanal de adesão */
+  ficha?: "escala" | "adesao";
 }
 
 export const monitoringParameters: MonitoringParameter[] = [
@@ -49,6 +57,24 @@ export const monitoringParameters: MonitoringParameter[] = [
       "PSE muito alta de forma recorrente sugere reduzir volume/intensidade e reavaliar a progressão.",
     gruposRelevantes: ["obesidade-grave", "hipertensao", "idoso-destreinado", "diabetes-tipo-2"],
     modalidadesUteis: ["m-hidro", "m-natacao", "m-caminhada", "m-musculacao", "m-bike"],
+    comoAplicar: [
+      "Apresente a escala antes da sessão: 0 = repouso total, 10 = esforço máximo.",
+      "Ao fim da série ou do bloco, pergunte: “De 0 a 10, quão intenso foi?”",
+      "Registre o número junto do exercício/bloco e acompanhe a tendência entre sessões.",
+      "Nas fases iniciais, mire esforços percebidos leves a moderados (em geral 3–5).",
+    ],
+    escala: [
+      { valor: "0", rotulo: "Repouso" },
+      { valor: "1", rotulo: "Muito leve" },
+      { valor: "2–3", rotulo: "Leve" },
+      { valor: "4–5", rotulo: "Moderado — faixa comum de trabalho inicial" },
+      { valor: "6–7", rotulo: "Intenso" },
+      { valor: "8–9", rotulo: "Muito intenso" },
+      { valor: "10", rotulo: "Máximo" },
+    ],
+    referencia:
+      "Adaptada da escala de percepção de esforço de Borg (CR10). Borg G., 1982 — Psychophysical bases of perceived exertion. Valide as faixas com a diretriz do seu contexto.",
+    ficha: "escala",
   },
   {
     id: "p-fala",
@@ -64,6 +90,20 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Se o aluno não consegue falar nem frases curtas, tende a ser prudente reduzir o ritmo.",
     gruposRelevantes: ["obesidade-grave", "hipertensao", "idoso-destreinado"],
     modalidadesUteis: ["m-caminhada", "m-bike", "m-hidro", "m-eliptico"],
+    comoAplicar: [
+      "Durante o esforço contínuo, peça uma frase curta (ex.: contar de 1 a 10 em voz alta).",
+      "Classifique: fala confortável em frases completas → intensidade leve.",
+      "Frases curtas com pausas para respirar → moderada (alvo comum nas fases iniciais).",
+      "Palavras soltas ou incapaz de falar → intensidade alta: reduza o ritmo.",
+    ],
+    escala: [
+      { valor: "Fala confortável", rotulo: "Leve — dá para progredir tempo/ritmo" },
+      { valor: "Frases curtas", rotulo: "Moderada — faixa comum de trabalho inicial" },
+      { valor: "Palavras soltas / sem falar", rotulo: "Alta — reduza o ritmo" },
+    ],
+    referencia:
+      "Talk Test — método consagrado na prescrição aeróbia (ex.: Persinger et al., 2004). Valide com a diretriz do seu contexto.",
+    ficha: "escala",
   },
   {
     id: "p-fc",
@@ -81,6 +121,14 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Respostas desproporcionais ao esforço sugerem cautela e podem indicar necessidade de reavaliação.",
     gruposRelevantes: ["hipertensao", "diabetes-tipo-2", "idoso-destreinado"],
     modalidadesUteis: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
+    comoAplicar: [
+      "Meça em repouso, sentado, antes da sessão — é a referência do dia.",
+      "Durante blocos contínuos, use monitor/cinta confiável; anote média e pico.",
+      "Compare a resposta ao MESMO esforço ao longo das semanas (tendência, não número isolado).",
+      "Com betabloqueadores ou no meio aquático a FC é pouco confiável — combine com PSE e teste da fala.",
+    ],
+    referencia:
+      "Uso de tendência de FC conforme diretrizes de prescrição de exercício (ex.: ACSM, edição vigente). Faixas-alvo devem ser validadas com a diretriz do seu contexto.",
   },
   {
     id: "p-pa",
@@ -97,6 +145,13 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Valores muito alterados ou sintomas associados sugerem interromper a sessão e podem indicar necessidade de encaminhamento.",
     gruposRelevantes: ["hipertensao", "diabetes-tipo-2", "obesidade-grave"],
     modalidadesUteis: ["m-musculacao", "m-caminhada", "m-bike"],
+    comoAplicar: [
+      "Quando disponível e indicado: aluno sentado, ~5 min de repouso, braço apoiado na altura do coração.",
+      "Registre antes da sessão como contexto de segurança — não como conduta clínica.",
+      "Valores muito alterados ou sintomas associados → não inicie a sessão e oriente reavaliação.",
+    ],
+    referencia:
+      "Técnica padrão de aferição conforme diretrizes de hipertensão vigentes. Decisões clínicas pertencem ao médico.",
   },
   {
     id: "p-dispneia",
@@ -111,6 +166,23 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Dispneia desproporcional ou persistente sugere interromper e reavaliar; pode indicar necessidade de encaminhamento.",
     gruposRelevantes: ["obesidade-grave", "hipertensao"],
     modalidadesUteis: ["m-hidro", "m-natacao", "m-caminhada"],
+    comoAplicar: [
+      "Apresente a escala: 0 = nenhuma falta de ar, 10 = máxima.",
+      "Pergunte durante e logo após os blocos de esforço.",
+      "Observe se a falta de ar cede com 1–2 minutos de pausa.",
+      "Registre o pico da sessão e compare entre sessões.",
+    ],
+    escala: [
+      { valor: "0", rotulo: "Nenhuma" },
+      { valor: "1–2", rotulo: "Leve — esperada no esforço" },
+      { valor: "3–4", rotulo: "Moderada — observe a recuperação na pausa" },
+      { valor: "5–6", rotulo: "Intensa — reduza o ritmo" },
+      { valor: "7–9", rotulo: "Muito intensa — pausa imediata" },
+      { valor: "10", rotulo: "Máxima — interromper e reavaliar" },
+    ],
+    referencia:
+      "Escala de dispneia adaptada de Borg (CR10 modificada), amplamente usada em reabilitação. Valide com a diretriz do seu contexto.",
+    ficha: "escala",
   },
   {
     id: "p-dor",
@@ -125,6 +197,22 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Dor crescente sugere reduzir amplitude/carga, trocar a modalidade ou reavaliar; dor aguda intensa indica interromper.",
     gruposRelevantes: ["dor-lombar-inespecifica", "osteoartrite-joelho", "obesidade-grave"],
     modalidadesUteis: ["m-hidro", "m-mobilidade", "m-musculacao", "m-bike"],
+    comoAplicar: [
+      "Pergunte antes, durante e depois: “De 0 a 10, quanto dói agora?”",
+      "Registre onde dói e em qual movimento/exercício apareceu.",
+      "Compare com as 24–48h seguintes: dor que aumenta depois da sessão também conta.",
+      "Regra prática prudente: dor leve (≤3) que não piora tende a ser tolerável; dor crescente pede ajuste.",
+    ],
+    escala: [
+      { valor: "0", rotulo: "Sem dor" },
+      { valor: "1–3", rotulo: "Leve — em geral tolerável se não piora" },
+      { valor: "4–6", rotulo: "Moderada — ajuste amplitude/carga" },
+      { valor: "7–9", rotulo: "Intensa — interrompa o exercício que provoca" },
+      { valor: "10", rotulo: "Pior dor imaginável — interromper e reavaliar" },
+    ],
+    referencia:
+      "Escala numérica de dor 0–10 (END/NRS), amplamente usada em reabilitação. Valide com a diretriz do seu contexto.",
+    ficha: "escala",
   },
   {
     id: "p-fadiga",
@@ -139,6 +227,11 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Fadiga persistente entre sessões tende a pedir redução de volume e mais recuperação.",
     gruposRelevantes: ["idoso-destreinado", "obesidade-grave", "diabetes-tipo-2"],
     modalidadesUteis: ["m-musculacao", "m-combinado", "m-caminhada"],
+    comoAplicar: [
+      "Na sessão seguinte, pergunte: “Como ficou o cansaço nas 24–48h depois do treino?”",
+      "Classifique em 3 níveis: recuperado · cansado mas treinável · exausto.",
+      "Fadiga que não se resolve até a próxima sessão sugere reduzir a dose (volume/intensidade).",
+    ],
   },
   {
     id: "p-recuperacao",
@@ -152,6 +245,11 @@ export const monitoringParameters: MonitoringParameter[] = [
     seAlterado: "Recuperação insuficiente recorrente sugere regressão temporária da carga.",
     gruposRelevantes: ["idoso-destreinado", "obesidade-grave"],
     modalidadesUteis: ["m-musculacao", "m-combinado"],
+    comoAplicar: [
+      "No início da sessão, pergunte: “De 0 a 10, quão recuperado você chegou hoje?”",
+      "Cruze com a carga da sessão anterior para decidir: progredir, manter ou regredir.",
+      "Registre — a tendência ao longo das semanas informa a dose ideal.",
+    ],
   },
   {
     id: "p-adesao",
@@ -166,6 +264,15 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Queda de adesão sugere reduzir barreiras (tempo, complexidade, deslocamento) antes de aumentar carga.",
     gruposRelevantes: ["obesidade-grave", "idoso-destreinado", "diabetes-tipo-2", "hipertensao"],
     modalidadesUteis: ["m-caminhada", "m-hidro", "m-musculacao"],
+    comoAplicar: [
+      "Combine com o aluno uma meta semanal realista (ex.: 2–3 sessões).",
+      "Registre TODA sessão realizada na ficha semanal — inclusive as feitas sem supervisão.",
+      "Reveja a cada 2–4 semanas: se a adesão cair, simplifique o plano antes de intensificar.",
+      "Imprima a ficha de registro (botão abaixo) e use como combinado visível com o aluno.",
+    ],
+    referencia:
+      "Na prática, a adesão é um dos preditores mais fortes de resultado e de abandono a longo prazo.",
+    ficha: "adesao",
   },
   {
     id: "p-volume",
@@ -180,6 +287,11 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Sintomas ou fadiga ao subir volume sugerem estabilizar antes de progredir novamente.",
     gruposRelevantes: ["idoso-destreinado", "obesidade-grave", "dor-lombar-inespecifica"],
     modalidadesUteis: ["m-caminhada", "m-bike", "m-musculacao", "m-combinado"],
+    comoAplicar: [
+      "Some os minutos de todas as sessões da semana (a ficha de adesão ajuda).",
+      "Progrida em degraus pequenos (na prática, ~10%/semana) apenas se dor e fadiga permitirem.",
+      "Ao subir volume, segure a intensidade — um degrau de cada vez.",
+    ],
   },
 ];
 
