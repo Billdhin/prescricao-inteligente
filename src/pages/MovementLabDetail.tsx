@@ -17,6 +17,7 @@ import {
 import { Card, Pill, ScoreRing, StatBar, buttonClasses, type PillTone } from "@/components/ui/primitives";
 import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
+import { FaseFigure, faseKind } from "@/components/movement-lab/FaseFigure";
 import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
 import { MuscleMap, activationFromExercise } from "@/components/anatomy/MuscleMap";
 import { BaseCientifica } from "@/components/movement-lab/BaseCientifica";
@@ -336,10 +337,16 @@ function Timeline({ ex }: { ex: Exercise }) {
           );
         })}
       </ol>
-      <p className="mt-3 rounded-xl border border-border bg-surface-soft p-3 text-sm text-ink">
-        <span className="font-semibold">{ex.fases[phase].nome}: </span>
-        {ex.fases[phase].descricao}
-      </p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-[220px_1fr] sm:items-start">
+        <FaseFigure
+          kind={faseKind(ex.fases[phase].nome, phase, ex.fases.length)}
+          musculo={ex.ativacao[0]?.musculo}
+        />
+        <p className="rounded-xl border border-border bg-surface-soft p-3 text-sm text-ink">
+          <span className="font-semibold">{ex.fases[phase].nome}: </span>
+          {ex.fases[phase].descricao}
+        </p>
+      </div>
     </div>
   );
 }

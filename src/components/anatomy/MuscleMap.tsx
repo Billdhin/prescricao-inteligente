@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
 import type { Exercise } from "@/data/types";
 import { cn } from "@/lib/utils";
 
 /**
  * Mapa muscular anatômico — ilustração vetorial própria (frente + costas).
- * Cada região é preenchida por intensidade de ativação (0–100).
+ * Cada região é preenchida por intensidade de ativação (0–100). Figura desenhada
+ * de forma coesa e SIMÉTRICA (metade esquerda + espelho), com leve profundidade.
  * Nada copiado de terceiros.
  */
 
@@ -70,7 +72,7 @@ export function activationFromExercise(ex: Exercise): Activation {
   return map;
 }
 
-const SCALE = ["#E7ECF3", "#CBDDFB", "#93B7F7", "#5B8DEF", "#2E6BEA", "#1D4ED8"];
+const SCALE = ["#EEF2F7", "#CBDDFB", "#93B7F7", "#5B8DEF", "#2E6BEA", "#1D4ED8"];
 function fillFor(v?: number) {
   if (!v || v <= 0) return SCALE[0];
   if (v < 40) return SCALE[1];
@@ -80,67 +82,105 @@ function fillFor(v?: number) {
   return SCALE[5];
 }
 
-const BODY_STROKE = "#CBD5E1";
-const SKIN = "#F1F5F9";
+const MUSCLE_STROKE = "#C4D0DF";
 
+/** Desenha os filhos e o espelho deles em torno de x=100 (simetria perfeita). */
+function Sym({ children }: { children: ReactNode }) {
+  return (
+    <>
+      {children}
+      <g transform="translate(200 0) scale(-1 1)">{children}</g>
+    </>
+  );
+}
+
+/* Contorno do corpo (pele) — coeso e simétrico, com leve gradiente de profundidade. */
 function Silhouette() {
   return (
-    <g fill={SKIN} stroke={BODY_STROKE} strokeWidth="1.5">
-      <circle cx="100" cy="34" r="20" />
-      <rect x="92" y="52" width="16" height="14" rx="5" />
-      <path d="M62 74 Q100 62 138 74 L150 150 Q140 176 130 176 L70 176 Q60 176 50 150 Z" />
-      <path d="M62 78 Q46 92 44 130 L40 196 Q46 202 54 198 L64 140 Q68 104 70 92 Z" />
-      <path d="M138 78 Q154 92 156 130 L160 196 Q154 202 146 198 L136 140 Q132 104 130 92 Z" />
-      <path d="M72 176 Q66 250 74 300 L78 360 Q86 366 92 360 L96 260 Q100 210 100 190 Z" />
-      <path d="M128 176 Q134 250 126 300 L122 360 Q114 366 108 360 L104 260 Q100 210 100 190 Z" />
+    <g>
+      {/* cabeça + pescoço */}
+      <ellipse cx="100" cy="30" rx="15" ry="18" fill="url(#mm-skin)" stroke="#CBD5E1" strokeWidth="1.4" />
+      <path d="M90 45 Q100 41 110 45 L112 60 Q100 67 88 60 Z" fill="url(#mm-skin)" stroke="#CBD5E1" strokeWidth="1.4" />
+      {/* tronco */}
+      <path
+        d="M72 66 C61 69 56 80 59 95 C61 114 66 134 72 153 C75 169 80 183 91 191 C96 196 104 196 109 191 C120 183 125 169 128 153 C134 134 139 114 141 95 C144 80 139 69 128 66 C114 60 86 60 72 66 Z"
+        fill="url(#mm-skin)"
+        stroke="#CBD5E1"
+        strokeWidth="1.4"
+      />
+      {/* quadril */}
+      <path d="M76 184 C74 199 79 214 92 217 L108 217 C121 214 126 199 124 184 Z" fill="url(#mm-skin)" stroke="#CBD5E1" strokeWidth="1.4" />
+      <Sym>
+        {/* braço esquerdo */}
+        <path
+          d="M59 90 C49 101 46 120 46 140 C45 162 46 182 49 198 C51 206 60 206 61 197 C64 179 65 159 68 139 C70 121 72 105 73 94 C69 90 64 89 59 90 Z"
+          fill="url(#mm-skin)"
+          stroke="#CBD5E1"
+          strokeWidth="1.4"
+        />
+        {/* perna esquerda */}
+        <path
+          d="M80 212 C74 242 75 272 80 300 C83 324 86 346 88 362 C94 368 100 365 100 356 L100 220 C99 214 98 211 96 210 C90 208 84 209 80 212 Z"
+          fill="url(#mm-skin)"
+          stroke="#CBD5E1"
+          strokeWidth="1.4"
+        />
+      </Sym>
     </g>
   );
 }
 
 function FrontMuscles({ F }: { F: (k: MuscleKey) => string }) {
   return (
-    <g stroke="#fff" strokeWidth="1">
-      <ellipse cx="64" cy="88" rx="12" ry="14" fill={F("deltoides")} />
-      <ellipse cx="136" cy="88" rx="12" ry="14" fill={F("deltoides")} />
-      <path d="M74 90 Q98 84 98 84 L98 118 Q84 124 72 116 Q70 100 74 90 Z" fill={F("peitoral")} />
-      <path d="M126 90 Q102 84 102 84 L102 118 Q116 124 128 116 Q130 100 126 90 Z" fill={F("peitoral")} />
-      <ellipse cx="52" cy="118" rx="8" ry="18" fill={F("biceps")} />
-      <ellipse cx="148" cy="118" rx="8" ry="18" fill={F("biceps")} />
-      <ellipse cx="46" cy="164" rx="7" ry="20" fill={F("antebracos")} />
-      <ellipse cx="154" cy="164" rx="7" ry="20" fill={F("antebracos")} />
-      <rect x="88" y="122" width="24" height="42" rx="7" fill={F("abdomen")} />
-      <path d="M78 124 Q84 148 86 164 L80 162 Q74 144 74 128 Z" fill={F("obliquos")} />
-      <path d="M122 124 Q116 148 114 164 L120 162 Q126 144 126 128 Z" fill={F("obliquos")} />
-      <path d="M74 182 Q70 232 80 272 L92 268 Q96 220 96 188 Z" fill={F("quadriceps")} />
-      <path d="M126 182 Q130 232 120 272 L108 268 Q104 220 104 188 Z" fill={F("quadriceps")} />
-      <path d="M98 190 L98 250 L92 250 Q92 214 96 190 Z" fill={F("adutores")} />
-      <path d="M102 190 L102 250 L108 250 Q108 214 104 190 Z" fill={F("adutores")} />
-      <ellipse cx="82" cy="312" rx="7" ry="20" fill={F("panturrilhas")} />
-      <ellipse cx="118" cy="312" rx="7" ry="20" fill={F("panturrilhas")} />
+    <g stroke={MUSCLE_STROKE} strokeWidth="1" strokeLinejoin="round">
+      {/* abdômen (central) com segmentação sutil */}
+      <path d="M89 124 Q100 121 111 124 L110 172 Q100 178 90 172 Z" fill={F("abdomen")} />
+      <g stroke="#ffffff" strokeOpacity="0.55" strokeWidth="1">
+        <line x1="100" y1="126" x2="100" y2="172" />
+        <line x1="91" y1="138" x2="109" y2="138" />
+        <line x1="91" y1="152" x2="109" y2="152" />
+      </g>
+      <Sym>
+        <ellipse cx="61" cy="86" rx="13" ry="15" fill={F("deltoides")} />
+        <path d="M74 84 C88 79 96 82 98 84 L98 118 C89 123 78 121 73 110 C71 98 72 90 74 84 Z" fill={F("peitoral")} />
+        <ellipse cx="55" cy="120" rx="8.5" ry="20" fill={F("biceps")} />
+        <ellipse cx="50" cy="166" rx="7" ry="21" fill={F("antebracos")} />
+        <path d="M80 126 C84 148 86 165 84 175 L78 171 C74 152 75 137 77 126 Z" fill={F("obliquos")} />
+        <path d="M83 214 C78 244 80 275 87 298 L98 294 L98 212 C92 210 87 211 83 214 Z" fill={F("quadriceps")} />
+        <path d="M99 214 L99 290 L92 288 C92 256 95 232 97 214 Z" fill={F("adutores")} />
+        <ellipse cx="88" cy="322" rx="8" ry="22" fill={F("panturrilhas")} />
+      </Sym>
     </g>
   );
 }
 
 function BackMuscles({ F }: { F: (k: MuscleKey) => string }) {
   return (
-    <g stroke="#fff" strokeWidth="1">
-      <path d="M84 78 L100 72 L116 78 L110 104 L100 110 L90 104 Z" fill={F("trapezio")} />
-      <ellipse cx="64" cy="88" rx="12" ry="14" fill={F("deltoides")} />
-      <ellipse cx="136" cy="88" rx="12" ry="14" fill={F("deltoides")} />
-      <path d="M76 104 Q70 140 90 158 L96 120 Q92 108 88 104 Z" fill={F("dorsais")} />
-      <path d="M124 104 Q130 140 110 158 L104 120 Q108 108 112 104 Z" fill={F("dorsais")} />
-      <ellipse cx="52" cy="118" rx="8" ry="18" fill={F("triceps")} />
-      <ellipse cx="148" cy="118" rx="8" ry="18" fill={F("triceps")} />
-      <ellipse cx="46" cy="164" rx="7" ry="20" fill={F("antebracos")} />
-      <ellipse cx="154" cy="164" rx="7" ry="20" fill={F("antebracos")} />
-      <rect x="90" y="140" width="20" height="30" rx="6" fill={F("lombar")} />
-      <path d="M76 178 Q72 200 88 208 Q98 204 98 186 Q90 178 82 178 Z" fill={F("gluteos")} />
-      <path d="M124 178 Q128 200 112 208 Q102 204 102 186 Q110 178 118 178 Z" fill={F("gluteos")} />
-      <path d="M76 212 Q72 252 82 280 L92 276 Q94 236 92 210 Z" fill={F("isquiotibiais")} />
-      <path d="M124 212 Q128 252 118 280 L108 276 Q106 236 108 210 Z" fill={F("isquiotibiais")} />
-      <ellipse cx="82" cy="314" rx="8" ry="22" fill={F("panturrilhas")} />
-      <ellipse cx="118" cy="314" rx="8" ry="22" fill={F("panturrilhas")} />
+    <g stroke={MUSCLE_STROKE} strokeWidth="1" strokeLinejoin="round">
+      {/* trapézio (kite central) + lombar (central) */}
+      <path d="M100 68 L119 84 L100 118 L81 84 Z" fill={F("trapezio")} />
+      <path d="M90 138 Q100 135 110 138 L108 172 Q100 177 92 172 Z" fill={F("lombar")} />
+      <Sym>
+        <ellipse cx="61" cy="86" rx="13" ry="15" fill={F("deltoides")} />
+        <path d="M74 106 C65 132 72 158 89 168 L96 122 C92 112 82 106 74 106 Z" fill={F("dorsais")} />
+        <ellipse cx="55" cy="120" rx="8.5" ry="20" fill={F("triceps")} />
+        <ellipse cx="50" cy="166" rx="7" ry="21" fill={F("antebracos")} />
+        <path d="M80 188 C73 191 71 206 80 217 C91 221 99 214 99 199 C97 189 88 186 80 188 Z" fill={F("gluteos")} />
+        <path d="M83 220 C78 250 80 281 87 302 L98 298 L98 218 C92 216 87 217 83 220 Z" fill={F("isquiotibiais")} />
+        <ellipse cx="88" cy="324" rx="8" ry="22" fill={F("panturrilhas")} />
+      </Sym>
     </g>
+  );
+}
+
+function Defs() {
+  return (
+    <defs>
+      <linearGradient id="mm-skin" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#F6F9FD" />
+        <stop offset="1" stopColor="#E7EDF5" />
+      </linearGradient>
+    </defs>
   );
 }
 
@@ -155,6 +195,7 @@ export function MuscleMap({ activation, className }: { activation: Activation; c
       <div className="grid grid-cols-2 gap-2">
         <figure className="rounded-xl bg-surface-soft p-2">
           <svg viewBox="0 0 200 380" className="mx-auto h-64 w-full" role="img" aria-label="Vista frontal dos músculos ativados">
+            <Defs />
             <Silhouette />
             <FrontMuscles F={F} />
           </svg>
@@ -162,6 +203,7 @@ export function MuscleMap({ activation, className }: { activation: Activation; c
         </figure>
         <figure className="rounded-xl bg-surface-soft p-2">
           <svg viewBox="0 0 200 380" className="mx-auto h-64 w-full" role="img" aria-label="Vista posterior dos músculos ativados">
+            <Defs />
             <Silhouette />
             <BackMuscles F={F} />
           </svg>
@@ -211,6 +253,7 @@ export function MuscleThumb({ activation, className }: { activation: Activation;
       role="img"
       aria-label={`Músculos predominantes do exercício (vista ${back ? "posterior" : "frontal"})`}
     >
+      <Defs />
       <Silhouette />
       {back ? <BackMuscles F={F} /> : <FrontMuscles F={F} />}
     </svg>
