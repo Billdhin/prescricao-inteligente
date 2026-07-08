@@ -18,6 +18,7 @@ import { Card, Pill, ScoreRing, StatBar, buttonClasses, type PillTone } from "@/
 import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
 import { FaseFigure, faseKind } from "@/components/movement-lab/FaseFigure";
+import { getFasePose } from "@/data/fase-poses";
 import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
 import { MuscleMap, activationFromExercise } from "@/components/anatomy/MuscleMap";
 import { BaseCientifica } from "@/components/movement-lab/BaseCientifica";
@@ -341,6 +342,7 @@ function Timeline({ ex }: { ex: Exercise }) {
         <FaseFigure
           kind={faseKind(ex.fases[phase].nome, phase, ex.fases.length)}
           musculo={ex.ativacao[0]?.musculo}
+          src={getFasePose(ex.slug, phase)}
         />
         <p className="rounded-xl border border-border bg-surface-soft p-3 text-sm text-ink">
           <span className="font-semibold">{ex.fases[phase].nome}: </span>
