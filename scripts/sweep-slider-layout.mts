@@ -16,6 +16,7 @@ for (const ex of exercises) {
   const ov = analysisOverlays[ex.slug];
   const shapes = regs.flatMap((r) => r.shapes);
   const rot = regs
+    .filter((r) => r.rotularNoCorpo)
     .map((r) => ({
       n: r.musculo,
       s: r.shapes[0],

@@ -225,9 +225,13 @@ export function BiomechanicsComparisonSlider({
     return { vx, vy, v1, v2, n1, n2, deg, arc, label };
   }, [overlay]);
 
-  // No corpo: apenas os 2 principais músculos como linha fina + rótulo.
+  // No corpo: SÓ músculos marcados `rotularNoCorpo` (auditados como visíveis e
+  // corretamente localizados naquela imagem). Sem a flag, nada é fixado sobre o
+  // corpo — nunca se afirma uma posição anatômica falsa; o músculo continua no
+  // card "Contribuição muscular". Máx. 2 rótulos, por ordem de ativação.
   const rotulados = React.useMemo(() => {
     const enriched = regions
+      .filter((r) => r.rotularNoCorpo)
       .map((r) => {
         const a = ativacao.find((x) => x.musculo === r.musculo);
         return a ? { nome: r.musculo, pct: a.percentual, s: r.shapes[0], labelSide: r.labelSide } : null;
