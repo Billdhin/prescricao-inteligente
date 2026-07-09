@@ -62,30 +62,30 @@ function fillFor(v?: number) {
 /* ---- regiões musculares sobre a figura 60×100 (600×1000, 3:5). Pares desenhados em Sym. --- */
 type Shape = { d: string } | { e: [number, number, number, number] };
 const FRONT_PAIR: Partial<Record<MuscleKey, Shape[]>> = {
-  peitoral: [{ d: "M30 24.5 C26 23.5 21.5 25 21.5 29.5 C21.5 33 26 34 30 33 Z" }],
-  deltoides: [{ d: "M21.5 22 C17.5 22.5 16.5 27 19 30 C22 31 24.5 29 24.5 25.5 C24.5 23 23 22 21.5 22 Z" }],
-  biceps: [{ e: [18, 32, 2.3, 4.5] }],
-  antebracos: [{ e: [15.2, 45, 2.3, 5.2] }],
-  obliquos: [{ d: "M26 32 C24 37 24 42 25.5 44.5 L27 42.5 L27 32.5 Z" }],
-  quadriceps: [{ d: "M24 48 C20.5 56 21.5 64.5 26 67.5 L29 65.5 L29 48 C27 47 25.2 47 24 48 Z" }],
-  adutores: [{ d: "M29 48.5 L29 64 L26.5 62 C26.5 55 27.5 50.5 28.3 48.5 Z" }],
-  panturrilhas: [{ e: [26, 79, 2.6, 6.2] }],
+  peitoral: [{ d: "M29.6 24.4 C26 23.2 21.6 24.4 20.8 28 C20.4 30.8 22.4 33.4 26 33.6 C28 33.6 29.4 32.6 29.8 31 Z" }],
+  deltoides: [{ d: "M21.8 22 C17.6 22.2 15.8 26 17.8 29.6 C19.6 31.6 22.6 31 24.4 28.8 C25.4 26.6 24.2 23 21.8 22 Z" }],
+  biceps: [{ d: "M19.6 27.4 C16.8 28.6 16 33 17.4 37 C18.4 39.4 20.6 39 21.4 36.4 C22 32.6 21.8 28.6 19.6 27.4 Z" }],
+  antebracos: [{ d: "M17.2 39.4 C14.4 41 13.6 46.4 14.8 50.4 C15.6 52.6 17.6 52.2 18.2 49.6 C19 45.4 19.4 40.6 17.2 39.4 Z" }],
+  obliquos: [{ d: "M26.6 32.4 C24.4 36.6 24.2 41.4 25.8 44 L27 42.2 L27.2 32.6 Z" }],
+  quadriceps: [{ d: "M23.4 46.6 C19.8 52.8 19.4 61 23.2 66.8 C24.6 68.4 26.6 67.8 27.4 65.6 C28.8 58.4 29 50.6 28.4 46.8 C27 45.6 25 45.6 23.4 46.6 Z" }],
+  adutores: [{ d: "M28.6 47 L28.8 63 C27.4 62 26.6 58 26.8 54 C27 50.4 27.8 48 28.6 47 Z" }],
+  panturrilhas: [{ d: "M24.4 72 C21.8 76 21.6 83 24 87.4 C25 89 26.6 88.4 27 85.8 C27.6 80 27.4 74.4 26.4 72 C25.8 71 24.8 71 24.4 72 Z" }],
 };
 const FRONT_MID: Partial<Record<MuscleKey, Shape[]>> = {
-  abdomen: [{ d: "M26.5 31 L33.5 31 L33 44 Q30 46 27 44 Z" }],
+  abdomen: [{ d: "M26.4 31.4 C26.2 35 26 40 26.6 43.6 C27.4 45.6 32.6 45.6 33.4 43.6 C34 40 33.8 35 33.6 31.4 C31.4 30.8 28.6 30.8 26.4 31.4 Z" }],
 };
 const BACK_PAIR: Partial<Record<MuscleKey, Shape[]>> = {
-  deltoides: [{ d: "M21.5 22 C17.5 22.5 16.5 27 19 30 C22 31 24.5 29 24.5 25.5 C24.5 23 23 22 21.5 22 Z" }],
-  dorsais: [{ d: "M29 29 C23 31 21 38.5 25 42.5 L29 40.5 L29 29 Z" }],
-  triceps: [{ e: [18, 32, 2.3, 4.5] }],
-  antebracos: [{ e: [15.2, 45, 2.3, 5.2] }],
-  gluteos: [{ d: "M25 45 C20.8 46 20 51 25 53.2 C29 54 30.5 51 30.5 47 C29 45 27 44.5 25 45 Z" }],
-  isquiotibiais: [{ d: "M24 54 C20.8 60 21.8 66.5 26 68.5 L29 66.5 L29 54 C27 53 25.2 53 24 54 Z" }],
-  panturrilhas: [{ e: [26, 79, 2.9, 7] }],
+  deltoides: [{ d: "M21.8 22 C17.6 22.2 15.8 26 17.8 29.6 C19.6 31.6 22.6 31 24.4 28.8 C25.4 26.6 24.2 23 21.8 22 Z" }],
+  dorsais: [{ d: "M29.6 29 C22.8 30.6 20 39 24.6 43.4 C26.8 45 29 44 29.6 41.4 C30 37 30 32.6 29.6 29 Z" }],
+  triceps: [{ d: "M19.6 27.4 C16.8 28.6 16 33 17.4 37 C18.4 39.4 20.6 39 21.4 36.4 C22 32.6 21.8 28.6 19.6 27.4 Z" }],
+  antebracos: [{ d: "M17.2 39.4 C14.4 41 13.6 46.4 14.8 50.4 C15.6 52.6 17.6 52.2 18.2 49.6 C19 45.4 19.4 40.6 17.2 39.4 Z" }],
+  gluteos: [{ d: "M25.2 44 C20.4 44.6 18.8 50 23.4 53.8 C27.4 55.4 30.4 52.6 30.6 47.8 C30.4 44.4 28 43.4 25.2 44 Z" }],
+  isquiotibiais: [{ d: "M23 54 C20 60.4 20.4 67.2 24.4 69.6 C25.8 70.4 27.6 69.6 28.2 67 C29 61 29 55.6 28.4 54 C27 53 24.6 53 23 54 Z" }],
+  panturrilhas: [{ d: "M24 71.5 C21.2 76 21 83.6 23.6 88.2 C24.8 90 26.6 89.2 27 86.4 C27.6 80 27.4 74 26.2 71.6 C25.6 70.6 24.6 70.6 24 71.5 Z" }],
 };
 const BACK_MID: Partial<Record<MuscleKey, Shape[]>> = {
-  trapezio: [{ d: "M30 20 L38 27 L30 35 L22 27 Z" }],
-  lombar: [{ d: "M27 36 L33 36 L32.5 44 Q30 45.5 27.5 44 Z" }],
+  trapezio: [{ d: "M30 19.6 C34 21.4 37.4 24.4 38.4 28 C36 30 33 32.6 30 34.6 C27 32.6 24 30 21.6 28 C22.6 24.4 26 21.4 30 19.6 Z" }],
+  lombar: [{ d: "M27 35.8 C26.8 39 27 42.4 28 44.4 C29 45.8 31 45.8 32 44.4 C33 42.4 33.2 39 33 35.8 C31 35.2 29 35.2 27 35.8 Z" }],
 };
 
 function Sym({ children }: { children: ReactNode }) {
@@ -98,9 +98,45 @@ function Sym({ children }: { children: ReactNode }) {
 }
 
 function shapesFor(shape: Shape, fill: string, key: string) {
-  const common = { fill, fillOpacity: 0.9, stroke: "#1E40AF", strokeOpacity: 0.35, strokeWidth: 0.25 };
+  const common = { fill };
   return "d" in shape ? <path key={key} d={shape.d} {...common} /> : (
     <ellipse key={key} cx={shape.e[0]} cy={shape.e[1]} rx={shape.e[2]} ry={shape.e[3]} {...common} />
+  );
+}
+
+/** Overlay dos músculos ativados: blend "multiply" tinge o músculo preservando o
+ *  sombreado/definição da figura (integra, não fica adesivo), com borda levemente suave. */
+function MuscleOverlay({
+  pair, mid, activation,
+}: {
+  pair: Partial<Record<MuscleKey, Shape[]>>;
+  mid: Partial<Record<MuscleKey, Shape[]>>;
+  activation: Activation;
+}) {
+  return (
+    <svg
+      viewBox="0 0 60 100"
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      style={{ mixBlendMode: "multiply" }}
+      aria-hidden
+    >
+      <defs>
+        <filter id="mm-soft" x="-6%" y="-6%" width="112%" height="112%">
+          <feGaussianBlur stdDeviation="0.35" />
+        </filter>
+      </defs>
+      <g filter="url(#mm-soft)">
+        {(Object.keys(mid) as MuscleKey[]).map((k) =>
+          (activation[k] ?? 0) > 0 ? (mid[k] as Shape[]).map((s, i) => shapesFor(s, fillFor(activation[k]), `${k}-${i}`)) : null,
+        )}
+        <Sym>
+          {(Object.keys(pair) as MuscleKey[]).map((k) =>
+            (activation[k] ?? 0) > 0 ? (pair[k] as Shape[]).map((s, i) => shapesFor(s, fillFor(activation[k]), `${k}-${i}`)) : null,
+          )}
+        </Sym>
+      </g>
+    </svg>
   );
 }
 
@@ -117,16 +153,7 @@ function Figure({
     <figure className="rounded-xl bg-surface-soft p-2">
       <div className="relative mx-auto aspect-[3/5] w-full max-w-[180px]">
         <img src={withBase(src)} alt={label ? `Figura muscular — ${label}` : "Figura muscular"} className="h-full w-full object-contain" loading="lazy" />
-        <svg viewBox="0 0 60 100" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-          {(Object.keys(mid) as MuscleKey[]).map((k) =>
-            (activation[k] ?? 0) > 0 ? (mid[k] as Shape[]).map((s, i) => shapesFor(s, fillFor(activation[k]), `${k}-${i}`)) : null,
-          )}
-          <Sym>
-            {(Object.keys(pair) as MuscleKey[]).map((k) =>
-              (activation[k] ?? 0) > 0 ? (pair[k] as Shape[]).map((s, i) => shapesFor(s, fillFor(activation[k]), `${k}-${i}`)) : null,
-            )}
-          </Sym>
-        </svg>
+        <MuscleOverlay pair={pair} mid={mid} activation={activation} />
       </div>
       {label && <figcaption className="mt-0.5 text-center text-[11px] font-medium text-ink-3">{label}</figcaption>}
     </figure>
@@ -218,16 +245,7 @@ export function MuscleThumb({ activation, className }: { activation: Activation;
         className="h-full w-full object-contain"
         loading="lazy"
       />
-      <svg viewBox="0 0 60 100" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-        {(Object.keys(back ? BACK_MID : FRONT_MID) as MuscleKey[]).map((k) =>
-          (activation[k] ?? 0) > 0 ? ((back ? BACK_MID : FRONT_MID)[k] as Shape[]).map((s, i) => shapesFor(s, fillFor(activation[k]), `${k}-${i}`)) : null,
-        )}
-        <Sym>
-          {(Object.keys(back ? BACK_PAIR : FRONT_PAIR) as MuscleKey[]).map((k) =>
-            (activation[k] ?? 0) > 0 ? ((back ? BACK_PAIR : FRONT_PAIR)[k] as Shape[]).map((s, i) => shapesFor(s, fillFor(activation[k]), `${k}-${i}`)) : null,
-          )}
-        </Sym>
-      </svg>
+      <MuscleOverlay pair={back ? BACK_PAIR : FRONT_PAIR} mid={back ? BACK_MID : FRONT_MID} activation={activation} />
     </div>
   );
 }
