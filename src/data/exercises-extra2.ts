@@ -43,6 +43,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Empurrar horizontal com o peso do corpo: em geral a porta de entrada de peitorais em casa, com regressão fácil apoiando os joelhos ou elevando as mãos numa bancada.",
+    imagem: "/exercises/flexao-de-braco.webp",
+    imagemAnalise: "/exercises/flexao-de-braco-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 75, papel: "primário" },
@@ -120,6 +122,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Empurrar horizontal com trajetória livre: tende a acomodar melhor ombros sensíveis que a barra; sem banco, a versão no solo (floor press) limita a amplitude e preserva o ombro.",
+    imagem: "/exercises/supino-halteres.webp",
+    imagemAnalise: "/exercises/supino-halteres-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 85, papel: "primário" },
@@ -197,6 +201,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Empurrar horizontal guiado: em geral a entrada mais segura para peitorais em iniciantes e retorno, com amplitude ajustável ao conforto do ombro.",
+    imagem: "/exercises/supino-maquina.webp",
+    imagemAnalise: "/exercises/supino-maquina-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 80, papel: "primário" },
@@ -272,6 +278,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Isolamento do deltoide médio com carga leve: em geral basta subir até a linha dos ombros, sem impulso de tronco.",
+    imagem: "/exercises/elevacao-lateral-halteres.webp",
+    imagemAnalise: "/exercises/elevacao-lateral-halteres-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide médio", percentual: 78, papel: "primário" },
@@ -348,6 +356,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Empurrar vertical guiado com apoio de tronco: tende a reduzir a exigência de estabilização frente aos halteres, útil para aprender o padrão.",
+    imagem: "/exercises/desenvolvimento-maquina.webp",
+    imagemAnalise: "/exercises/desenvolvimento-maquina-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide anterior", percentual: 78, papel: "primário" },
@@ -425,6 +435,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Puxar horizontal com carga em casa ou na academia: exige dobradiça de quadril estável, o que em geral pede o padrão dominado antes de progredir carga.",
+    imagem: "/exercises/remada-curvada-halteres.webp",
+    imagemAnalise: "/exercises/remada-curvada-halteres-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 78, papel: "primário" },
@@ -502,6 +514,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Puxar horizontal com o tronco apoiado: em geral a opção de costas mais amigável à lombar, boa para iniciantes e retorno.",
+    imagem: "/exercises/remada-maquina.webp",
+    imagemAnalise: "/exercises/remada-maquina-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 80, papel: "primário" },
@@ -578,6 +592,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Extensão de cotovelo acima da cabeça: fecha o trabalho de braços em casa, respeitando a amplitude tolerável do ombro.",
+    imagem: "/exercises/triceps-frances-halter.webp",
+    imagemAnalise: "/exercises/triceps-frances-halter-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Tríceps braquial", percentual: 82, papel: "primário" },
@@ -654,6 +670,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Puxar horizontal com o peso do corpo sob um apoio firme: a carga se ajusta pelo ângulo do tronco, sem nenhum equipamento além de um ponto de pegada.",
+    imagem: "/exercises/remada-invertida.webp",
+    imagemAnalise: "/exercises/remada-invertida-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 75, papel: "primário" },
@@ -731,6 +749,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Empurrar vertical contra a banda presa sob os pés: a resistência cresce no fim do arco, o que em geral perdoa o início do movimento e ensina o padrão.",
+    imagem: "/exercises/desenvolvimento-elastico.webp",
+    imagemAnalise: "/exercises/desenvolvimento-elastico-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide", percentual: 70, papel: "primário" },
@@ -808,6 +828,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Extensão de cotovelo com o peso do corpo apoiado num banco ou cadeira firme: fecha o trabalho de tríceps em casa, com a carga ajustada pela posição dos pés.",
+    imagem: "/exercises/mergulho-no-banco.webp",
+    imagemAnalise: "/exercises/mergulho-no-banco-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Tríceps braquial", percentual: 80, papel: "primário" },
@@ -884,6 +906,8 @@ export const extraExercises2: Exercise[] = [
     premium: false,
     resumoPratico:
       "Trabalho de tronco superior contra a resistência da água: a velocidade do gesto define a carga, complementando a marcha aquática nos perfis que treinam só na piscina.",
+    imagem: "/exercises/empurra-puxa-aquatico.webp",
+    imagemAnalise: "/exercises/empurra-puxa-aquatico-analysis.webp",
     modalidade: "m-hidro",
     ativacao: [
       { musculo: "Deltoide", percentual: 45, papel: "primário" },
