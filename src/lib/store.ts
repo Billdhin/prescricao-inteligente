@@ -249,12 +249,14 @@ export const useAlunos = create<AlunosState>()(
         })),
     }),
     // v2: seed passou a incluir a jornada (grupoEspecial/fase) em alguns alunos.
+    // v3: "Máquina" foi DIVIDIDA — esteira/bicicleta/elíptico viraram equipamentos próprios;
+    //     alunos antigos com "Máquina" ganham as máquinas aeróbicas (o significado antigo as incluía).
     // migrate por MERGE: preserva os dados do usuário (alunos/avaliações/prescrições que
     // ele criou) e apenas faz backfill dos campos novos do seed nos alunos-semente por id.
     // Assim, futuros bumps de versão não apagam o trabalho do profissional.
     {
       name: "pi-alunos",
-      version: 2,
+      version: 3,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -265,6 +267,11 @@ export const useAlunos = create<AlunosState>()(
             prescricoes: seedPrescricoes,
           } as unknown as AlunosState;
         }
+        const MAQUINAS_AEROBICAS = ["Esteira", "Bicicleta ergométrica", "Elíptico"];
+        const expandeMaquina = (eqs: string[] | undefined) =>
+          Array.isArray(eqs) && eqs.includes("Máquina") && !eqs.some((e) => MAQUINAS_AEROBICAS.includes(e))
+            ? [...eqs, ...MAQUINAS_AEROBICAS]
+            : eqs;
         const seedById = new Map(seedAlunos.map((a) => [a.id, a]));
         return {
           ...p,
@@ -272,7 +279,8 @@ export const useAlunos = create<AlunosState>()(
           // (ex.: jornada, adicionados numa versão posterior) são preenchidos.
           alunos: p.alunos.map((a) => {
             const s = seedById.get(a.id);
-            return s ? { ...s, ...a } : a;
+            const merged = s ? { ...s, ...a } : a;
+            return { ...merged, equipamentos: expandeMaquina(merged.equipamentos) ?? [] };
           }),
           avaliacoes: Array.isArray(p.avaliacoes) ? p.avaliacoes : seedAvaliacoes,
           prescricoes: Array.isArray(p.prescricoes) ? p.prescricoes : seedPrescricoes,

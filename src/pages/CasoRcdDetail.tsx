@@ -153,7 +153,7 @@ export function CasoRcdDetail() {
                 <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" />
                 <span className="text-ink-2">
                   <span className="font-semibold text-ink">{d.nome}</span>{" "}
-                  <span className="tabular text-xs text-ink-3">({d.score}%)</span> — {d.motivoPrincipal}
+                  <span className="tabular text-xs text-ink-3">({d.score}/100)</span> — {d.motivoPrincipal}
                 </span>
               </div>
             ))}

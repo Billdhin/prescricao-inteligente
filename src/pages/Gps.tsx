@@ -1096,7 +1096,12 @@ function Results({
                 </Link>
                 <button
                   onClick={() => toggleCompare(best.exercise.slug)}
-                  className={buttonClasses(compare.includes(best.exercise.slug) ? "secondary" : "outline", "sm")}
+                  disabled={!compare.includes(best.exercise.slug) && compare.length >= 3}
+                  aria-pressed={compare.includes(best.exercise.slug)}
+                  className={cn(
+                    buttonClasses(compare.includes(best.exercise.slug) ? "secondary" : "outline", "sm"),
+                    !compare.includes(best.exercise.slug) && compare.length >= 3 && "cursor-not-allowed opacity-50",
+                  )}
                 >
                   {compare.includes(best.exercise.slug) ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                   Comparar
@@ -1158,11 +1163,15 @@ function Results({
                   </button>
                   <button
                     onClick={() => toggleCompare(r.exercise.slug)}
+                    disabled={!inCompare && compare.length >= 3}
+                    aria-pressed={inCompare}
                     className={cn(
                       "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
                       inCompare
                         ? "border-primary bg-primary-tint text-primary"
-                        : "border-border text-ink-2 hover:bg-surface-soft",
+                        : !inCompare && compare.length >= 3
+                          ? "cursor-not-allowed border-border text-ink-3 opacity-50"
+                          : "border-border text-ink-2 hover:bg-surface-soft",
                     )}
                   >
                     {inCompare ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
@@ -1181,7 +1190,8 @@ function Results({
         </div>
       </div>
 
-      <Comparador compare={compare} setCompare={setCompare} candidatos={[best, ...others]} />
+      {/* só os mais recomendados no picker — o pool inteiro viraria um paredão de chips */}
+      <Comparador compare={compare} setCompare={setCompare} candidatos={[best, ...others].slice(0, 6)} />
     </div>
   );
 }
@@ -1238,7 +1248,7 @@ function Comparador({
                         : cur,
                   )
                 }
-                disabled={full}
+                aria-disabled={full}
                 aria-pressed={on}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",

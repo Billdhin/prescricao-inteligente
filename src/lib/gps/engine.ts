@@ -52,7 +52,9 @@ export interface CriterioRacional {
 
 export interface Recommendation {
   exercise: Exercise;
-  score: number; // 0..100
+  score: number; // 0..100 (arredondado, para exibição)
+  /** nota sem arredondar — usada só para ordenar/desempatar */
+  scoreExato: number;
   equipDisponivel: boolean;
   breakdown: CriterioRacional[];
   cautions: string[];
@@ -268,9 +270,10 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
 
   if (!equipOk) score = Math.min(score, 65);
 
-  const clamped = Math.max(0, Math.min(100, Math.round(score)));
+  const raw = Math.max(0, Math.min(100, score));
+  const clamped = Math.round(raw);
 
-  return { exercise: ex, score: clamped, equipDisponivel: equipOk, breakdown, cautions, reasons };
+  return { exercise: ex, score: clamped, scoreExato: raw, equipDisponivel: equipOk, breakdown, cautions, reasons };
 }
 
 export function rankExercises(pool: Exercise[], ans: GpsAnswers, rule?: GroupRuleInput): Recommendation[] {
@@ -278,7 +281,9 @@ export function rankExercises(pool: Exercise[], ans: GpsAnswers, rule?: GroupRul
     .map((ex) => scoreExercise(ex, ans, rule))
     .sort((a, b) => {
       if (a.equipDisponivel !== b.equipDisponivel) return a.equipDisponivel ? -1 : 1;
-      return b.score - a.score;
+      // ordena pela nota NÃO arredondada: o critério "Eficiência (desempate)" (±2.5)
+      // sumia no Math.round e a ordem virava a do array de dados.
+      return b.scoreExato - a.scoreExato;
     });
 }
 

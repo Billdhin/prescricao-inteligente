@@ -135,7 +135,7 @@ export function ProntuarioView({
                     </span>
                     <span className="font-display font-bold text-ink">{e.nome}</span>
                     {e.series && <span className="text-xs text-ink-3">{e.series}</span>}
-                    <span className="tabular ml-auto text-sm font-bold text-success">{e.score}%</span>
+                    <span className="tabular ml-auto text-sm font-bold text-success">adequação {e.score}/100</span>
                   </div>
                   <ul className="mt-2 space-y-1">
                     {e.breakdown.map((b) => (
@@ -172,7 +172,7 @@ export function ProntuarioView({
                 {prontuario.descartados.map((d, i) => (
                   <div key={d.slug} className={cn("flex gap-3 px-3 py-2 text-sm", i % 2 === 0 && "bg-surface-soft")}>
                     <span className="w-40 shrink-0 font-semibold text-ink">{d.nome}</span>
-                    <span className="tabular w-10 shrink-0 text-ink-3">{d.score}%</span>
+                    <span className="tabular w-14 shrink-0 text-ink-3">{d.score}/100</span>
                     <span className="min-w-0 text-xs text-ink-2">{d.motivoPrincipal}</span>
                   </div>
                 ))}

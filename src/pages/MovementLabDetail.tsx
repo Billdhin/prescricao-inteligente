@@ -92,7 +92,7 @@ function TrustDialog({ level, ex, onClose }: { level: TrustLevel; ex?: Exercise;
             <span className={cn("grid h-8 w-8 place-items-center rounded-lg", seguranca ? "bg-[#fef4e2] text-warning" : "bg-primary-tint text-primary")}>
               {seguranca ? <ShieldAlert className="h-4 w-4" /> : <Info className="h-4 w-4" />}
             </span>
-            <h2 className="font-display text-lg font-bold capitalize text-ink">{level}</h2>
+            <h2 className="font-display text-lg font-bold text-ink first-letter:uppercase">{level}</h2>
           </div>
           <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />

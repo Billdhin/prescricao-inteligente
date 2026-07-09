@@ -67,7 +67,7 @@ export function exportProntuarioPDF({
           <span class="ex-num">${i + 1}</span>
           <span class="ex-nome">${esc(e.nome)}</span>
           ${e.series ? `<span class="ex-series">${esc(e.series)}</span>` : ""}
-          <span class="ex-score">${e.score}% match</span>
+          <span class="ex-score">adequação ${e.score}/100</span>
         </div>
         <table class="criterios"><tbody>${criterios}</tbody></table>
         ${cautions}
@@ -78,7 +78,7 @@ export function exportProntuarioPDF({
   const descartadosHtml = prontuario.descartados
     .map(
       (d) =>
-        `<tr><td class="d-nome">${esc(d.nome)}</td><td class="pts">${d.score}%</td><td>${esc(d.motivoPrincipal)}</td></tr>`,
+        `<tr><td class="d-nome">${esc(d.nome)}</td><td class="pts">${d.score}/100</td><td>${esc(d.motivoPrincipal)}</td></tr>`,
     )
     .join("");
 
@@ -206,7 +206,7 @@ export function exportProntuarioPDF({
     ${
       descartadosHtml
         ? `<section class="bloco"><h2>Considerados e descartados — e por quê</h2>
-           <table class="desc"><tr><th>Exercício</th><th>Match</th><th>Critério decisivo</th></tr>${descartadosHtml}</table></section>`
+           <table class="desc"><tr><th>Exercício</th><th>Adequação</th><th>Critério decisivo</th></tr>${descartadosHtml}</table></section>`
         : ""
     }
 

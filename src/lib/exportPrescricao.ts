@@ -39,7 +39,7 @@ export function exportPrescricaoPDF({
         <div class="ex-head">
           <span class="ex-num">${i + 1}</span>
           <span class="ex-nome">${esc(nome)}</span>
-          <span class="ex-score">${it.score}% match</span>
+          <span class="ex-score">adequação ${it.score}/100</span>
         </div>
         ${resumo ? `<p class="ex-resumo">${esc(resumo)}</p>` : ""}
         ${it.series ? `<p class="ex-series">Sugestão: ${esc(it.series)}</p>` : ""}
