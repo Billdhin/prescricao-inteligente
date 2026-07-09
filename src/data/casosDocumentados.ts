@@ -40,7 +40,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       equipamentos: ["Máquina", "Peso corporal", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
-      "Quais estímulos entram na primeira fase — e o que fica explicitamente de fora por causa da resposta pressórica?",
+      "Quais estímulos entram na primeira fase, e o que fica explicitamente de fora por causa da resposta pressórica?",
   },
   {
     slug: "dor-lombar-idoso",
@@ -58,7 +58,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       equipamentos: ["Peso corporal", "Máquina", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
-      "Como treinar SEM provocar a dor — e por que movimento (e não repouso) é o caminho apontado pelas diretrizes?",
+      "Como treinar SEM provocar a dor, e por que movimento (e não repouso) é o caminho apontado pelas diretrizes?",
   },
   {
     slug: "obesidade-grave-joelho",
@@ -77,7 +77,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       equipamentos: ["Máquina", "Piscina", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
-      "Por que a porta de entrada NÃO é a musculação tradicional — e o que o joelho dele decide sobre a modalidade?",
+      "Por que a porta de entrada NÃO é a musculação tradicional, e o que o joelho dele decide sobre a modalidade?",
   },
   {
     slug: "diabetes-tipo-2-iniciante",
@@ -96,7 +96,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       equipamentos: ["Máquina", "Peso corporal", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
-      "Como montar a semana MÍNIMA que move a glicemia — e quais sinais de segurança checar antes de cada sessão?",
+      "Como montar a semana MÍNIMA que move a glicemia, e quais sinais de segurança checar antes de cada sessão?",
   },
   {
     slug: "osteoartrite-joelho-60",
@@ -114,7 +114,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       equipamentos: ["Máquina", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
-      "Quais exercícios de força protegem (e quais irritam) um joelho com OA — e como a dor do dia calibra a sessão?",
+      "Quais exercícios de força protegem (e quais irritam) um joelho com OA, e como a dor do dia calibra a sessão?",
   },
   {
     slug: "idoso-destreinado-forca",
@@ -132,7 +132,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       equipamentos: ["Peso corporal", "Máquina", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
-      "Por que FORÇA (não alongamento) é a prioridade da autonomia — e como progredir sem assustar quem nunca treinou?",
+      "Por que FORÇA (não alongamento) é a prioridade da autonomia, e como progredir sem assustar quem nunca treinou?",
   },
 ];
 

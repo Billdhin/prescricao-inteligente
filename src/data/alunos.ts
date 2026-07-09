@@ -249,7 +249,7 @@ export const seedPrescricoes: Prescricao[] = [
     id: "pr1",
     alunoId: "al1",
     data: dias(-20),
-    titulo: "Membros inferiores — base guiada",
+    titulo: "Membros inferiores: base guiada",
     answers: {
       objetivo: "Hipertrofia",
       grupoMuscular: "Membros inferiores",
@@ -269,7 +269,7 @@ export const seedPrescricoes: Prescricao[] = [
     id: "pr2",
     alunoId: "al2",
     data: dias(-70),
-    titulo: "Retorno de joelho — carga controlada",
+    titulo: "Retorno de joelho: carga controlada",
     answers: {
       objetivo: "Reabilitação/retorno",
       grupoMuscular: "Membros inferiores",
@@ -288,7 +288,7 @@ export const seedPrescricoes: Prescricao[] = [
     id: "pr3",
     alunoId: "al4",
     data: dias(-30),
-    titulo: "Superiores — poupando ombro",
+    titulo: "Superiores: poupando ombro",
     answers: {
       objetivo: "Resistência muscular",
       grupoMuscular: "Braços",

@@ -20,6 +20,8 @@ import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
 import { FaseFigure, faseKind } from "@/components/movement-lab/FaseFigure";
 import { getFasePose } from "@/data/fase-poses";
+import { getErroImagem, getVariacaoImagem } from "@/data/aba-imagens";
+import { getPopulacoesCautela } from "@/data/populacoes-cautela";
 import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
 import { MuscleMap, activationFromExercise } from "@/components/anatomy/MuscleMap";
 import { BaseCientifica } from "@/components/movement-lab/BaseCientifica";
@@ -337,11 +339,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
                       Ênfase relativa entre músculos, sintetizada da literatura de EMG e biomecânica
                       (fontes abaixo) — não é medição do aluno.
                     </p>
-                    <MuscleMap
-                      activation={activationFromExercise(exercise)}
-                      slug={exercise.slug}
-                      poseSrc={exercise.imagemAnalise}
-                    />
+                    <MuscleMap activation={activationFromExercise(exercise)} slug={exercise.slug} />
                   </div>
                   <BaseCientifica slug={exercise.slug} contexto="ativacao" />
                 </div>
@@ -357,9 +355,44 @@ function Detail({ exercise }: { exercise: Exercise }) {
                 </div>
               ),
             },
-            { id: "erros", label: "Erros comuns", content: <Bullets items={exercise.blocos.errosComuns} trust="cuidado de segurança" tone="warning" ex={exercise} /> },
-            { id: "var", label: "Variações", content: <Bullets items={exercise.blocos.variacoes} trust="regra pedagógica" tone="primary" ex={exercise} /> },
-            { id: "pres", label: "Prescrição prática", content: <Concept text={exercise.conteudo.prescricaoPratica} ex={exercise} trust="depende do contexto" /> },
+            {
+              id: "erros",
+              label: "Erros comuns",
+              content: (
+                <Bullets
+                  items={exercise.blocos.errosComuns}
+                  trust="cuidado de segurança"
+                  tone="warning"
+                  ex={exercise}
+                  img={getErroImagem(exercise.slug)}
+                  imgLabel="Como NÃO fazer"
+                />
+              ),
+            },
+            {
+              id: "var",
+              label: "Variações",
+              content: (
+                <Bullets
+                  items={exercise.blocos.variacoes}
+                  trust="regra pedagógica"
+                  tone="primary"
+                  ex={exercise}
+                  img={getVariacaoImagem(exercise.slug)}
+                  imgLabel="Variação em destaque"
+                />
+              ),
+            },
+            {
+              id: "pres",
+              label: "Prescrição prática",
+              content: (
+                <div className="space-y-5">
+                  <Concept text={exercise.conteudo.prescricaoPratica} ex={exercise} trust="depende do contexto" />
+                  <PopulacoesCautelaCard slug={exercise.slug} />
+                </div>
+              ),
+            },
             { id: "comp", label: "Comparar", content: <Comparador exercise={exercise} /> },
           ]}
         />
@@ -570,25 +603,79 @@ function Bullets({
   trust,
   tone,
   ex,
+  img,
+  imgLabel,
 }: {
   items: string[];
   trust: TrustLevel;
   tone: "warning" | "primary";
   ex?: Exercise;
+  /** miniatura ilustrativa (ex.: a pessoa fazendo o movimento ERRADO / a variação) */
+  img?: string;
+  imgLabel?: string;
 }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
         <TrustBadge level={trust} ex={ex} />
       </div>
-      <ul className="grid gap-2 md:grid-cols-2">
-        {items.map((it) => (
-          <li key={it} className="flex gap-2 rounded-xl border border-border bg-surface p-3 text-sm text-ink">
-            <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", tone === "warning" ? "bg-warning" : "bg-primary")} />
-            <span>{it}</span>
+      <div className={cn(img && "flex flex-col gap-4 sm:flex-row sm:items-start")}>
+        {img && (
+          <figure
+            className={cn(
+              "w-40 shrink-0 overflow-hidden rounded-xl border sm:w-44",
+              tone === "warning" ? "border-warning/40" : "border-border",
+            )}
+          >
+            <img src={withBase(img)} alt={imgLabel} className="aspect-[4/3] w-full object-cover" loading="lazy" />
+            <figcaption
+              className={cn(
+                "px-2 py-1 text-center text-[10px] font-semibold uppercase tracking-wider",
+                tone === "warning" ? "bg-[#fef4e2] text-warning" : "bg-primary-tint text-primary",
+              )}
+            >
+              {imgLabel}
+            </figcaption>
+          </figure>
+        )}
+        <ul className="min-w-0 flex-1 grid gap-2 md:grid-cols-2">
+          {items.map((it) => (
+            <li key={it} className="flex gap-2 rounded-xl border border-border bg-surface p-3 text-sm text-ink">
+              <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", tone === "warning" ? "bg-warning" : "bg-primary")} />
+              <span>{it}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/** Perfis clínicos que pedem cautela ou adaptação neste exercício (pedido do prof.):
+ *  conteúdo curado por exercício, linguagem prudente, decisão final do profissional. */
+function PopulacoesCautelaCard({ slug }: { slug: string }) {
+  const perfis = getPopulacoesCautela(slug);
+  if (perfis.length === 0) return null;
+  return (
+    <div className="rounded-xl border border-warning/40 bg-[#fffaf0] p-4 md:p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#fef4e2] text-warning">
+          <ShieldAlert className="h-4 w-4" />
+        </span>
+        <h4 className="font-display font-bold text-ink">Perfis que pedem cautela ou adaptação</h4>
+      </div>
+      <ul className="space-y-2.5">
+        {perfis.map((p) => (
+          <li key={p.perfil} className="rounded-lg border border-border bg-surface p-3">
+            <div className="text-sm font-semibold text-ink">{p.perfil}</div>
+            <p className="mt-0.5 text-sm leading-relaxed text-ink-2">{p.orientacao}</p>
           </li>
         ))}
       </ul>
+      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
+        Orientações educacionais gerais, não substituem avaliação individual. A decisão de liberar,
+        adaptar ou substituir é do profissional habilitado, junto à equipe de saúde quando indicado.
+      </p>
     </div>
   );
 }

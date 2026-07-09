@@ -132,7 +132,7 @@ export const semaforos: ChecklistSemaforo[] = [
       {
         id: "hipoglicemia",
         pergunta: "Apresenta agora tremor, sudorese fria, confusão ou fome súbita?",
-        porque: "São sinais compatíveis com hipoglicemia — exercício agora pode agravar.",
+        porque: "São sinais compatíveis com hipoglicemia: exercício agora pode agravar.",
         opcoes: simNao(
           "vermelho",
           "verde",
@@ -158,7 +158,7 @@ export const semaforos: ChecklistSemaforo[] = [
       {
         id: "pes",
         pergunta: "Os pés estão íntegros (sem bolha, ferida ou dor nova)?",
-        porque: "Lesões nos pés pioram silenciosamente no diabetes — checar antes do volume de passos.",
+        porque: "Lesões nos pés pioram silenciosamente no diabetes: checar antes do volume de passos.",
         opcoes: [
           { valor: "sim", rotulo: "Sim", cor: "verde" },
           {
@@ -196,14 +196,14 @@ export const semaforos: ChecklistSemaforo[] = [
       {
         id: "dispneia-repouso",
         pergunta: "Há falta de ar em repouso ou mal-estar/dor no peito agora?",
-        porque: "Dispneia em repouso não é ponto de partida de sessão — é sinal de investigação.",
+        porque: "Dispneia em repouso não é ponto de partida de sessão: é sinal de investigação.",
         opcoes: simNao("vermelho", "verde", "Não inicie e oriente avaliação médica antes de retomar."),
         refs: ["acsm-getp11"],
       },
       {
         id: "dor-articular",
         pergunta: "Dor articular (joelho/lombar) hoje, de 0 a 10?",
-        porque: "A dor do dia decide o impacto tolerável — a modalidade se adapta ao corpo, não o contrário.",
+        porque: "A dor do dia decide o impacto tolerável: a modalidade se adapta ao corpo, não o contrário.",
         opcoes: [
           { valor: "leve", rotulo: "0–3 (leve)", cor: "verde" },
           {
@@ -224,7 +224,7 @@ export const semaforos: ChecklistSemaforo[] = [
       {
         id: "sono-hidratacao",
         pergunta: "Dormiu razoavelmente e está hidratado hoje?",
-        porque: "Sono ruim + desidratação derrubam a tolerância — dose menor rende mais que insistência.",
+        porque: "Sono ruim + desidratação derrubam a tolerância: dose menor rende mais que insistência.",
         opcoes: [
           { valor: "sim", rotulo: "Sim", cor: "verde" },
           {
@@ -305,7 +305,7 @@ export const semaforos: ChecklistSemaforo[] = [
         pergunta:
           "Há algum sinal de alerta: dor noturna que não alivia com mudança de posição, perda de força/formigamento nas pernas, febre ou perda de peso inexplicada?",
         porque:
-          "São as red flags clássicas — deixam de ser caso de treino e passam a ser caso de investigação médica.",
+          "São as red flags clássicas: deixam de ser caso de treino e passam a ser caso de investigação médica.",
         opcoes: simNao(
           "vermelho",
           "verde",
@@ -316,7 +316,7 @@ export const semaforos: ChecklistSemaforo[] = [
       {
         id: "dor-agora",
         pergunta: "Dor lombar agora, de 0 a 10?",
-        porque: "A dor do dia calibra amplitude e carga — movimento tolerável trata; dor crescente atrapalha.",
+        porque: "A dor do dia calibra amplitude e carga: movimento tolerável trata; dor crescente atrapalha.",
         opcoes: [
           { valor: "leve", rotulo: "0–3 (leve)", cor: "verde" },
           {

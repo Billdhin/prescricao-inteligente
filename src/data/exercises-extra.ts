@@ -23,7 +23,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: false,
     resumoPratico:
-      "Aeróbio acessível e dose-controlável — a inclinação leve aumenta o trabalho de glúteos e panturrilhas sem exigir corrida, preservando as articulações.",
+      "Aeróbio acessível e dose-controlável: a inclinação leve aumenta o trabalho de glúteos e panturrilhas sem exigir corrida, preservando as articulações.",
     imagem: "/exercises/caminhada-esteira.webp",
     imagemAnalise: "/exercises/caminhada-esteira-analysis.webp",
     modalidade: "m-caminhada",
@@ -60,7 +60,7 @@ export const extraExercises: Exercise[] = [
           biomecanica: "A inclinação desloca trabalho para glúteos e panturrilha e reduz o impacto da passada em relação à corrida.",
           fisiologia: "Permite elevar a demanda cardiorrespiratória mantendo intensidade dosável por velocidade e inclinação.",
           evidencia: "Na prática, subir a inclinação antes da velocidade tende a preservar conforto articular.",
-          cuidados: "Evite segurar firme no apoio — isso descarrega o peso e reduz o estímulo real.",
+          cuidados: "Evite segurar firme no apoio: isso descarrega o peso e reduz o estímulo real.",
         },
       },
       {
@@ -84,7 +84,7 @@ export const extraExercises: Exercise[] = [
         "Sessões dose-controláveis por tempo, velocidade e inclinação.",
       ],
       quandoEvitar: [
-        "Dor articular que piora com o passo — considere bicicleta ou meio aquático.",
+        "Dor articular que piora com o passo: considere bicicleta ou meio aquático.",
         "Equilíbrio muito limitado sem supervisão próxima.",
       ],
       errosComuns: [
@@ -93,20 +93,20 @@ export const extraExercises: Exercise[] = [
         "Ignorar o teste da fala e progredir só pela velocidade.",
       ],
       variacoes: [
-        "Caminhada plana — porta de entrada mais suave.",
+        "Caminhada plana: porta de entrada mais suave.",
         "Intervalado leve (2 min inclinado / 2 min plano).",
-        "Caminhada ao ar livre — terreno e adesão diferentes.",
+        "Caminhada ao ar livre: terreno e adesão diferentes.",
       ],
     },
     conteudo: {
       visaoGeral:
         "A caminhada inclinada é uma das formas mais acessíveis de construir base aeróbia: o esforço é fácil de dosar e a barreira técnica é mínima, o que favorece a adesão nas primeiras semanas.",
       biomecanica:
-        "A inclinação aumenta o trabalho de extensores do quadril e flexores plantares sem o impacto da corrida — as forças de reação tendem a permanecer próximas às da caminhada plana.",
+        "A inclinação aumenta o trabalho de extensores do quadril e flexores plantares sem o impacto da corrida. As forças de reação tendem a permanecer próximas às da caminhada plana.",
       fisiologia:
         "Sessões contínuas em intensidade leve a moderada (teste da fala confortável) desenvolvem a capacidade cardiorrespiratória e elevam o gasto energético semanal com baixa demanda de recuperação.",
       prescricaoPratica:
-        "Em geral, comece por tempo (15–30 min) em ritmo confortável; progrida primeiro a duração, depois a inclinação e por último a velocidade — guiado por PSE e teste da fala.",
+        "Em geral, comece por tempo (15–30 min) em ritmo confortável; progrida primeiro a duração, depois a inclinação e por último a velocidade, tudo guiado por PSE e teste da fala.",
     },
     trustLevel: "tendência prática",
     temCena: false,
@@ -125,7 +125,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: false,
     resumoPratico:
-      "Aeróbio de baixíssimo impacto com carga ajustável — em geral a melhor porta de entrada quando a caminhada incomoda joelhos ou lombar.",
+      "Aeróbio de baixíssimo impacto com carga ajustável, em geral a melhor porta de entrada quando a caminhada incomoda joelhos ou lombar.",
     imagem: "/exercises/bicicleta-ergometrica.webp",
     imagemAnalise: "/exercises/bicicleta-ergometrica-analysis.webp",
     modalidade: "m-bike",
@@ -162,7 +162,7 @@ export const extraExercises: Exercise[] = [
           biomecanica: "Banco baixo aumenta a compressão patelofemoral; banco alto força báscula da pelve.",
           fisiologia: "O ajuste correto distribui o trabalho entre quadríceps e glúteos e melhora o conforto.",
           evidencia: "Desconforto anterior de joelho costuma responder à elevação discreta do banco.",
-          cuidados: "Ajuste o banco ANTES de ajustar a carga — é o erro mais comum.",
+          cuidados: "Ajuste o banco ANTES de ajustar a carga: é o erro mais comum.",
         },
       },
       {
@@ -172,7 +172,7 @@ export const extraExercises: Exercise[] = [
         titulo: "Carga e cadência",
         camadas: {
           resumo: "Cadência confortável (60–80 rpm) com carga leve a moderada.",
-          biomecanica: "Carga alta em cadência baixa aproxima o pedal de um exercício de força — nem sempre o objetivo.",
+          biomecanica: "Carga alta em cadência baixa aproxima o pedal de um exercício de força, o que nem sempre é o objetivo.",
           fisiologia: "Cadências moderadas com carga leve favorecem o trabalho aeróbio contínuo.",
           evidencia: "O teste da fala funciona muito bem na bike para calibrar a zona de esforço.",
           cuidados: "Em joelhos sensíveis, aumente o tempo antes da carga.",
@@ -186,7 +186,7 @@ export const extraExercises: Exercise[] = [
         "Base aeróbia segura para iniciantes destreinados.",
       ],
       quandoEvitar: [
-        "Desconforto lombar por postura prolongada — ajuste o equipamento antes de evitar.",
+        "Desconforto lombar por postura prolongada: ajuste o equipamento antes de evitar.",
         "Quando a meta específica é impacto ósseo (prefira exercícios em pé).",
       ],
       errosComuns: [
@@ -195,14 +195,14 @@ export const extraExercises: Exercise[] = [
         "Progredir carga sem consolidar tempo de sessão.",
       ],
       variacoes: [
-        "Bicicleta horizontal (reclinada) — mais apoio de tronco.",
+        "Bicicleta horizontal (reclinada): mais apoio de tronco.",
         "Intervalado leve (1 min mais forte / 2 min leve).",
-        "Bicicleta ao ar livre — coordenação e ambiente diferentes.",
+        "Bicicleta ao ar livre: coordenação e ambiente diferentes.",
       ],
     },
     conteudo: {
       visaoGeral:
-        "A bicicleta ergométrica é a opção clássica de baixo impacto: o peso corporal fica apoiado no banco, o que permite volume aeróbio com mínima sobrecarga articular — ideal para começar.",
+        "A bicicleta ergométrica é a opção clássica de baixo impacto: o peso corporal fica apoiado no banco, o que permite volume aeróbio com mínima sobrecarga articular, ideal para começar.",
       biomecanica:
         "O movimento cíclico de joelho e quadril acontece sem fase aérea nem impacto; a carga externa é ajustável em pequenos incrementos, o que dá controle fino da intensidade.",
       fisiologia:
@@ -227,7 +227,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: true,
     resumoPratico:
-      "Aeróbio de baixo impacto que envolve membros superiores e inferiores — gasto maior que a bicicleta para quem tolera ficar em pé.",
+      "Aeróbio de baixo impacto que envolve membros superiores e inferiores, com gasto maior que a bicicleta para quem tolera ficar em pé.",
     imagem: "/exercises/eliptico.webp",
     imagemAnalise: "/exercises/eliptico-analysis.webp",
     modalidade: "m-eliptico",
@@ -250,7 +250,7 @@ export const extraExercises: Exercise[] = [
     },
     fases: [
       { nome: "Impulso", descricao: "A perna da frente empurra o pedal em arco enquanto o braço oposto puxa." },
-      { nome: "Deslize", descricao: "Os pés permanecem apoiados — não há fase aérea nem impacto." },
+      { nome: "Deslize", descricao: "Os pés permanecem apoiados: não há fase aérea nem impacto." },
       { nome: "Retorno", descricao: "O ciclo inverte com o tronco estável e o olhar à frente." },
     ],
     hotspots: [
@@ -260,11 +260,11 @@ export const extraExercises: Exercise[] = [
         y: 50,
         titulo: "Sem fase aérea",
         camadas: {
-          resumo: "Os pés nunca deixam os pedais — impacto próximo de zero.",
+          resumo: "Os pés nunca deixam os pedais: impacto próximo de zero.",
           biomecanica: "O padrão elíptico simula a corrida sem as forças de aterrissagem.",
           fisiologia: "Envolve corpo todo, elevando o gasto em relação à bike na mesma percepção de esforço.",
           evidencia: "Boa opção intermediária entre bike e caminhada/corrida.",
-          cuidados: "Iniciantes podem estranhar a coordenação nos primeiros minutos — comece devagar.",
+          cuidados: "Iniciantes podem estranhar a coordenação nos primeiros minutos: comece devagar.",
         },
       },
       {
@@ -288,7 +288,7 @@ export const extraExercises: Exercise[] = [
         "Quem tolera ficar em pé mas não tolera correr.",
       ],
       quandoEvitar: [
-        "Equilíbrio muito limitado — prefira bicicleta.",
+        "Equilíbrio muito limitado: prefira bicicleta.",
         "Primeiras sessões de muito destreinados sem supervisão.",
       ],
       errosComuns: [
@@ -297,9 +297,9 @@ export const extraExercises: Exercise[] = [
         "Pedalar só com as pernas, sem usar as alças.",
       ],
       variacoes: [
-        "Sem alças (mãos livres) — mais demanda de equilíbrio.",
+        "Sem alças (mãos livres): mais demanda de equilíbrio.",
         "Intervalado leve por resistência.",
-        "Reverso (pedalar para trás) — ênfase diferente.",
+        "Reverso (pedalar para trás): ênfase diferente.",
       ],
     },
     conteudo: {
@@ -308,7 +308,7 @@ export const extraExercises: Exercise[] = [
       biomecanica:
         "A trajetória elíptica dos pedais elimina a fase aérea; joelho e quadril trabalham em amplitudes moderadas e o tronco estabiliza o conjunto.",
       fisiologia:
-        "Com mais massa muscular ativa que a bike, o custo energético por minuto tende a ser maior na mesma percepção de esforço — útil no emagrecimento.",
+        "Com mais massa muscular ativa que a bike, o custo energético por minuto tende a ser maior na mesma percepção de esforço, o que é útil no emagrecimento.",
       prescricaoPratica:
         "Comece com resistência baixa e 10–20 min; progrida tempo e depois resistência. PSE e teste da fala são os guias práticos.",
     },
@@ -329,7 +329,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: false,
     resumoPratico:
-      "Caminhada dentro da água — o empuxo reduz a carga articular e a resistência da água vira o 'peso'. A porta de entrada clássica para obesidade grave e dor articular.",
+      "Caminhada dentro da água: o empuxo reduz a carga articular e a resistência da água vira o 'peso'. A porta de entrada clássica para obesidade grave e dor articular.",
     imagem: "/exercises/marcha-aquatica.webp",
     imagemAnalise: "/exercises/marcha-aquatica-analysis.webp",
     modalidade: "m-hidro",
@@ -353,7 +353,7 @@ export const extraExercises: Exercise[] = [
     fases: [
       { nome: "Passada", descricao: "Passos amplos contra a resistência da água, com o tronco ereto." },
       { nome: "Braçada", descricao: "Os braços varrem a água em oposição às pernas, aumentando o trabalho." },
-      { nome: "Ritmo", descricao: "A velocidade da marcha define a intensidade — a água responde ao esforço." },
+      { nome: "Ritmo", descricao: "A velocidade da marcha define a intensidade: a água responde ao esforço." },
     ],
     hotspots: [
       {
@@ -375,7 +375,7 @@ export const extraExercises: Exercise[] = [
         y: 30,
         titulo: "Monitorar sem FC",
         camadas: {
-          resumo: "Na água, use PSE, teste da fala e dispneia — não a FC.",
+          resumo: "Na água, use PSE, teste da fala e dispneia, não a FC.",
           biomecanica: "A imersão altera o retorno venoso e a resposta da frequência cardíaca.",
           fisiologia: "A FC subestima o esforço na água; escalas perceptivas são mais fiéis.",
           evidencia: "Guias práticos priorizam PSE/fala no meio aquático.",
@@ -395,18 +395,18 @@ export const extraExercises: Exercise[] = [
       ],
       errosComuns: [
         "Água rasa demais (aumenta o impacto que se queria evitar).",
-        "Andar 'passeando' sem usar braços nem ritmo — estímulo insuficiente.",
+        "Andar 'passeando' sem usar braços nem ritmo: estímulo insuficiente.",
         "Tentar guiar a intensidade pela FC dentro da água.",
       ],
       variacoes: [
-        "Marcha lateral e para trás — estímulos de quadril diferentes.",
-        "Corrida aquática suspensa (deep water) — zero impacto.",
-        "Com halteres aquáticos — mais resistência para braços.",
+        "Marcha lateral e para trás: estímulos de quadril diferentes.",
+        "Corrida aquática suspensa (deep water): zero impacto.",
+        "Com halteres aquáticos: mais resistência para braços.",
       ],
     },
     conteudo: {
       visaoGeral:
-        "A marcha aquática usa a física a favor do aluno: o empuxo tira carga das articulações enquanto a resistência da água transforma cada passo em trabalho — é a porta de entrada clássica quando o solo dói.",
+        "A marcha aquática usa a física a favor do aluno: o empuxo tira carga das articulações enquanto a resistência da água transforma cada passo em trabalho. É a porta de entrada clássica quando o solo dói.",
       biomecanica:
         "Imerso até o peito, o corpo suporta uma fração do peso; a resistência hidrodinâmica cresce com a velocidade, tornando a intensidade autorregulada pelo próprio ritmo.",
       fisiologia:
@@ -431,7 +431,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: false,
     resumoPratico:
-      "O agachamento mais funcional que existe: levantar de uma cadeira. Base do treino de força para idosos e destreinados — dose ajustável pela altura do assento.",
+      "O agachamento mais funcional que existe: levantar de uma cadeira. Base do treino de força para idosos e destreinados, com dose ajustável pela altura do assento.",
     imagem: "/exercises/sentar-levantar.webp",
     imagemAnalise: "/exercises/sentar-levantar-analysis.webp",
     modalidade: "m-funcional",
@@ -455,7 +455,7 @@ export const extraExercises: Exercise[] = [
     fases: [
       { nome: "Preparo", descricao: "Pés firmes atrás dos joelhos, tronco inclina levemente à frente." },
       { nome: "Subida", descricao: "Quadris e joelhos estendem juntos; o peso sai dos pés, não do impulso." },
-      { nome: "Descida", descricao: "Sentar controlado, 'freando' o corpo — a fase que mais ensina." },
+      { nome: "Descida", descricao: "Sentar controlado, 'freando' o corpo: a fase que mais ensina." },
     ],
     hotspots: [
       {
@@ -477,11 +477,11 @@ export const extraExercises: Exercise[] = [
         y: 35,
         titulo: "Tronco à frente, não curvado",
         camadas: {
-          resumo: "Inclinar o tronco à frente é necessário — curvar as costas, não.",
+          resumo: "Inclinar o tronco à frente é necessário. Curvar as costas, não.",
           biomecanica: "A inclinação leva o centro de massa sobre os pés, permitindo a extensão de quadril.",
           fisiologia: "O padrão correto distribui o trabalho entre quadríceps e glúteos.",
           evidencia: "Usar as mãos nos joelhos no início é regressão válida, não erro.",
-          cuidados: "Evite 'despencar' na descida — controle é o objetivo.",
+          cuidados: "Evite 'despencar' na descida: controle é o objetivo.",
         },
       },
     ],
@@ -492,7 +492,7 @@ export const extraExercises: Exercise[] = [
         "Ensinar o padrão de agachamento com uma referência concreta.",
       ],
       quandoEvitar: [
-        "Dor aguda de joelho na amplitude escolhida — eleve o assento antes de excluir.",
+        "Dor aguda de joelho na amplitude escolhida: eleve o assento antes de excluir.",
         "Quando o aluno já domina agachamentos carregados (estímulo insuficiente).",
       ],
       errosComuns: [
@@ -501,9 +501,9 @@ export const extraExercises: Exercise[] = [
         "Descer sem controle, 'caindo' no assento.",
       ],
       variacoes: [
-        "Com apoio das mãos nos joelhos — regressão.",
-        "Com halteres junto ao corpo — progressão de carga.",
-        "Unilateral assistido — progressão avançada.",
+        "Com apoio das mãos nos joelhos: regressão.",
+        "Com halteres junto ao corpo: progressão de carga.",
+        "Unilateral assistido: progressão avançada.",
       ],
     },
     conteudo: {
@@ -512,7 +512,7 @@ export const extraExercises: Exercise[] = [
       biomecanica:
         "É um agachamento com referência tátil: a altura do assento define amplitude e torque exigidos, permitindo progressão precisa sem carga externa.",
       fisiologia:
-        "Trabalha os extensores de joelho e quadril — exatamente a musculatura cuja perda mais compromete a função com a idade.",
+        "Trabalha os extensores de joelho e quadril: exatamente a musculatura cuja perda mais compromete a função com a idade.",
       prescricaoPratica:
         "Séries de 6–12 repetições controladas; progrida abaixando o assento, depois adicionando carga. A fase de descida lenta é onde está metade do valor.",
     },
@@ -533,7 +533,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: false,
     resumoPratico:
-      "Extensão de quadril deitado no solo — ativa glúteos e posteriores com demanda lombar mínima. Amigo número um da dor lombar e a regressão natural do hip thrust.",
+      "Extensão de quadril deitado no solo: ativa glúteos e posteriores com demanda lombar mínima. Amigo número um da dor lombar e a regressão natural do hip thrust.",
     imagem: "/exercises/ponte-gluteos.webp",
     imagemAnalise: "/exercises/ponte-gluteos-analysis.webp",
     modalidade: "m-musculacao",
@@ -566,7 +566,7 @@ export const extraExercises: Exercise[] = [
         y: 45,
         titulo: "Subir com o glúteo, não com a lombar",
         camadas: {
-          resumo: "O movimento termina quando o quadril alinha — arquear mais é lombar, não glúteo.",
+          resumo: "O movimento termina quando o quadril alinha: arquear mais é lombar, não glúteo.",
           biomecanica: "Hiperextender a lombar no topo transfere o trabalho para os eretores e estressa a coluna.",
           fisiologia: "A contração deliberada do glúteo no topo ('apertar') melhora o recrutamento.",
           evidencia: "Sentir a lombar em vez do glúteo é o sinal prático de padrão errado.",
@@ -583,7 +583,7 @@ export const extraExercises: Exercise[] = [
           biomecanica: "A distância dos pés muda o braço de momento entre joelho e quadril.",
           fisiologia: "Ajustar a posição direciona o estímulo sem trocar de exercício.",
           evidencia: "Cãibra nos posteriores costuma indicar pés longe demais.",
-          cuidados: "Calcanhares firmes no chão — empurrar pela ponta do pé muda o padrão.",
+          cuidados: "Calcanhares firmes no chão: empurrar pela ponta do pé muda o padrão.",
         },
       },
     ],
@@ -603,14 +603,14 @@ export const extraExercises: Exercise[] = [
         "Subir e descer rápido, sem pausa no topo.",
       ],
       variacoes: [
-        "Ponte com pausa longa (3–5 s) — mais tempo sob tensão.",
-        "Ponte unilateral — progressão sem carga.",
-        "Hip thrust no banco — progressão com carga.",
+        "Ponte com pausa longa (3–5 s): mais tempo sob tensão.",
+        "Ponte unilateral: progressão sem carga.",
+        "Hip thrust no banco: progressão com carga.",
       ],
     },
     conteudo: {
       visaoGeral:
-        "A ponte de glúteos entrega o essencial da extensão de quadril com o corpo apoiado no chão — simplicidade, segurança e um alvo claro: aprender a usar o glúteo.",
+        "A ponte de glúteos entrega o essencial da extensão de quadril com o corpo apoiado no chão. Simplicidade, segurança e um alvo claro: aprender a usar o glúteo.",
       biomecanica:
         "Com o tronco apoiado, a coluna trabalha em posição neutra e estável; o torque concentra-se no quadril, com demanda mínima de joelho e lombar.",
       fisiologia:
@@ -635,7 +635,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: false,
     resumoPratico:
-      "Isometria de core que ensina o tronco a resistir ao movimento — a base da estabilidade que protege a coluna em todos os outros exercícios.",
+      "Isometria de core que ensina o tronco a resistir ao movimento, a base da estabilidade que protege a coluna em todos os outros exercícios.",
     imagem: "/exercises/prancha-frontal.webp",
     imagemAnalise: "/exercises/prancha-frontal-analysis.webp",
     modalidade: "m-funcional",
@@ -659,7 +659,7 @@ export const extraExercises: Exercise[] = [
     fases: [
       { nome: "Montagem", descricao: "Mãos no chão sob os ombros, braços estendidos, corpo em linha reta." },
       { nome: "Sustentação", descricao: "Abdômen e glúteos contraídos; respiração contínua, sem prender o ar." },
-      { nome: "Saída", descricao: "Joelhos ao chão de forma controlada — terminar antes de perder a linha." },
+      { nome: "Saída", descricao: "Joelhos ao chão de forma controlada, terminando antes de perder a linha." },
     ],
     hotspots: [
       {
@@ -681,9 +681,9 @@ export const extraExercises: Exercise[] = [
         y: 45,
         titulo: "Respirar na isometria",
         camadas: {
-          resumo: "Respiração contínua — prender o ar eleva a pressão arterial.",
+          resumo: "Respiração contínua: prender o ar eleva a pressão arterial.",
           biomecanica: "É possível manter rigidez de tronco expirando com controle.",
-          fisiologia: "A apneia (Valsalva) eleva a resposta pressórica — cautela em hipertensos.",
+          fisiologia: "A apneia (Valsalva) eleva a resposta pressórica: cautela em hipertensos.",
           evidencia: "Conseguir falar uma frase curta durante a prancha é um bom teste.",
           cuidados: "Hipertensos: séries curtas com respiração fluida, nunca no limite.",
         },
@@ -696,8 +696,8 @@ export const extraExercises: Exercise[] = [
         "Aquecimento e educação postural.",
       ],
       quandoEvitar: [
-        "Hipertensos que ainda prendem a respiração — ensine a respirar antes.",
-        "Dor de ombro ou punho no apoio das mãos — use os antebraços ou eleve o apoio.",
+        "Hipertensos que ainda prendem a respiração: ensine a respirar antes.",
+        "Dor de ombro ou punho no apoio das mãos: use os antebraços ou eleve o apoio.",
       ],
       errosComuns: [
         "Quadril caído (lombar em hiperextensão).",
@@ -705,17 +705,17 @@ export const extraExercises: Exercise[] = [
         "Buscar tempo máximo em vez de qualidade de posição.",
       ],
       variacoes: [
-        "Prancha nos antebraços — clássica; menos demanda de punho.",
-        "Prancha inclinada (mãos no banco) — regressão.",
-        "Prancha com joelhos apoiados — regressão.",
-        "Prancha com toque de ombro — progressão dinâmica.",
+        "Prancha nos antebraços: clássica; menos demanda de punho.",
+        "Prancha inclinada (mãos no banco): regressão.",
+        "Prancha com joelhos apoiados: regressão.",
+        "Prancha com toque de ombro: progressão dinâmica.",
       ],
     },
     conteudo: {
       visaoGeral:
         "A prancha ensina o core a fazer seu trabalho real: impedir movimento indesejado da coluna. É pré-requisito silencioso de quase tudo que se faz em pé com carga.",
       biomecanica:
-        "Na isometria, abdômen, oblíquos e glúteos cocontraem para manter a pelve e a coluna neutras contra a gravidade — resistência ao movimento, não produção dele.",
+        "Na isometria, abdômen, oblíquos e glúteos cocontraem para manter a pelve e a coluna neutras contra a gravidade: resistência ao movimento, não produção dele.",
       fisiologia:
         "O estímulo é de resistência muscular local e controle motor; séries curtas e frequentes consolidam o padrão melhor que testes de tempo máximo.",
       prescricaoPratica:
@@ -738,7 +738,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: true,
     resumoPratico:
-      "Braços e pernas se movem enquanto a lombar permanece imóvel no chão — o exercício-professor do controle de core, queridinho da dor lombar.",
+      "Braços e pernas se movem enquanto a lombar permanece imóvel no chão. É o exercício-professor do controle de core, queridinho da dor lombar.",
     imagem: "/exercises/dead-bug.webp",
     imagemAnalise: "/exercises/dead-bug-analysis.webp",
     modalidade: "m-funcional",
@@ -775,7 +775,7 @@ export const extraExercises: Exercise[] = [
           biomecanica: "Estender braço e perna cria um torque de extensão que o abdômen precisa anular.",
           fisiologia: "É controle motor puro: o core aprende a estabilizar enquanto os membros se movem.",
           evidencia: "Colocar a mão sob a lombar dá feedback tátil imediato ao aluno.",
-          cuidados: "Se a lombar descola, reduza a amplitude da extensão — não insista.",
+          cuidados: "Se a lombar descola, reduza a amplitude da extensão. Não insista.",
         },
       },
       {
@@ -784,11 +784,11 @@ export const extraExercises: Exercise[] = [
         y: 35,
         titulo: "Devagar é o nível difícil",
         camadas: {
-          resumo: "A lentidão é a progressão — rápido é mais fácil e ensina menos.",
+          resumo: "A lentidão é a progressão: rápido é mais fácil e ensina menos.",
           biomecanica: "Movimentos lentos exigem estabilização contínua, não impulso.",
           fisiologia: "Mais tempo sob tensão do core por repetição.",
           evidencia: "Alunos que dominam o lento raramente perdem a posição no rápido.",
-          cuidados: "Expire durante a extensão — facilita manter a pelve neutra.",
+          cuidados: "Expire durante a extensão: facilita manter a pelve neutra.",
         },
       },
     ],
@@ -799,8 +799,8 @@ export const extraExercises: Exercise[] = [
         "Ativação em aquecimentos de qualquer nível.",
       ],
       quandoEvitar: [
-        "Quando o padrão já está dominado e o objetivo é força — progrida.",
-        "Desconforto no pescoço — apoie a cabeça e reavalie.",
+        "Quando o padrão já está dominado e o objetivo é força: progrida.",
+        "Desconforto no pescoço: apoie a cabeça e reavalie.",
       ],
       errosComuns: [
         "Deixar a lombar arquear na extensão dos membros.",
@@ -808,18 +808,18 @@ export const extraExercises: Exercise[] = [
         "Fazer rápido demais, com impulso.",
       ],
       variacoes: [
-        "Só pernas (mãos no chão) — regressão.",
-        "Com elástico entre mãos e pés — progressão.",
-        "Isometria contralateral sustentada — variação de tempo.",
+        "Só pernas (mãos no chão): regressão.",
+        "Com elástico entre mãos e pés: progressão.",
+        "Isometria contralateral sustentada: variação de tempo.",
       ],
     },
     conteudo: {
       visaoGeral:
-        "O dead bug inverte a lógica do abdominal tradicional: em vez de dobrar a coluna, o desafio é impedi-la de se mover enquanto braços e pernas trabalham — exatamente o que o core faz na vida real.",
+        "O dead bug inverte a lógica do abdominal tradicional: em vez de dobrar a coluna, o desafio é impedi-la de se mover enquanto braços e pernas trabalham, exatamente o que o core faz na vida real.",
       biomecanica:
         "Cada extensão contralateral cria um torque que tende a arquear a lombar; o abdômen anula esse torque mantendo a pelve em neutro, com carga compressiva mínima.",
       fisiologia:
-        "Treina o timing de ativação do core (controle motor) mais que força bruta — a qualidade que costuma faltar em quadros de dor lombar inespecífica.",
+        "Treina o timing de ativação do core (controle motor) mais que força bruta, a qualidade que costuma faltar em quadros de dor lombar inespecífica.",
       prescricaoPratica:
         "2–3 séries de 6–10 repetições LENTAS por lado, com expiração na extensão. A mão sob a lombar é o melhor professor nas primeiras sessões.",
     },
@@ -840,7 +840,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: false,
     resumoPratico:
-      "Puxada horizontal com banda elástica — costas e postura treinadas em casa, sem academia. A resistência progressiva do elástico perdoa e ensina.",
+      "Puxada horizontal com banda elástica: costas e postura treinadas em casa, sem academia. A resistência progressiva do elástico perdoa e ensina.",
     imagem: "/exercises/remada-elastica.webp",
     imagemAnalise: "/exercises/remada-elastica-analysis.webp",
     modalidade: "m-musculacao",
@@ -864,7 +864,7 @@ export const extraExercises: Exercise[] = [
     fases: [
       { nome: "Alongar", descricao: "Braços à frente, elástico já com leve tensão, ombros longe das orelhas." },
       { nome: "Puxar", descricao: "Cotovelos deslizam para trás rente ao corpo; as escápulas se aproximam." },
-      { nome: "Retornar", descricao: "Devolve devagar, resistindo ao elástico — sem deixar ele 'ganhar'." },
+      { nome: "Retornar", descricao: "Devolve devagar, resistindo ao elástico, sem deixar ele 'ganhar'." },
     ],
     hotspots: [
       {
@@ -888,7 +888,7 @@ export const extraExercises: Exercise[] = [
         camadas: {
           resumo: "Resistir ao elástico no retorno dobra o valor de cada repetição.",
           biomecanica: "A fase excêntrica sob a tração crescente do elástico mantém tensão contínua.",
-          fisiologia: "A resistência elástica cresce com o alongamento — pico no fim da puxada.",
+          fisiologia: "A resistência elástica cresce com o alongamento, com pico no fim da puxada.",
           evidencia: "Retornos 'chicoteados' são o erro mais comum com bandas.",
           cuidados: "Verifique o estado do elástico e a ancoragem antes de cada série.",
         },
@@ -902,7 +902,7 @@ export const extraExercises: Exercise[] = [
       ],
       quandoEvitar: [
         "Quando há acesso a cargas e o elástico ficou leve (progrida).",
-        "Dor de ombro na trajetória — ajuste ângulo e amplitude.",
+        "Dor de ombro na trajetória: ajuste ângulo e amplitude.",
       ],
       errosComuns: [
         "Puxar só com os braços, sem retração escapular.",
@@ -910,16 +910,16 @@ export const extraExercises: Exercise[] = [
         "Tronco balançando para 'ajudar' a puxada.",
       ],
       variacoes: [
-        "Remada unilateral — corrige assimetrias.",
-        "Pegada aberta (puxada alta) — ênfase em trapézio médio.",
-        "Elástico mais forte ou duplo — progressão de carga.",
+        "Remada unilateral: corrige assimetrias.",
+        "Pegada aberta (puxada alta): ênfase em trapézio médio.",
+        "Elástico mais forte ou duplo: progressão de carga.",
       ],
     },
     conteudo: {
       visaoGeral:
-        "A remada elástica democratiza o treino de costas: uma banda e um ponto de ancoragem bastam para trabalhar a musculatura que sustenta a postura — em casa, em viagem, em qualquer lugar.",
+        "A remada elástica democratiza o treino de costas: uma banda e um ponto de ancoragem bastam para trabalhar a musculatura que sustenta a postura: em casa, em viagem, em qualquer lugar.",
       biomecanica:
-        "A tração do elástico cresce ao longo da puxada, com pico exatamente na retração escapular completa — um perfil de resistência que favorece o fim do movimento.",
+        "A tração do elástico cresce ao longo da puxada, com pico exatamente na retração escapular completa, um perfil de resistência que favorece o fim do movimento.",
       fisiologia:
         "Ideal para resistência muscular e reeducação do padrão; a tensão contínua (ida e volta) compensa a carga absoluta menor.",
       prescricaoPratica:
@@ -942,7 +942,7 @@ export const extraExercises: Exercise[] = [
     restricoes: [],
     premium: true,
     resumoPratico:
-      "Flexão plantar em pé — a 'segunda bomba' circulatória do corpo. Simples, sem equipamento e decisiva para caminhada, equilíbrio e saúde vascular de membros inferiores.",
+      "Flexão plantar em pé: a 'segunda bomba' circulatória do corpo. Simples, sem equipamento e decisiva para caminhada, equilíbrio e saúde vascular de membros inferiores.",
     imagem: "/exercises/panturrilha-em-pe.webp",
     imagemAnalise: "/exercises/panturrilha-em-pe-analysis.webp",
     modalidade: "m-musculacao",
@@ -965,7 +965,7 @@ export const extraExercises: Exercise[] = [
     },
     fases: [
       { nome: "Subida", descricao: "Eleva os calcanhares o máximo possível, peso sobre o hálux (dedão)." },
-      { nome: "Pico", descricao: "Pausa de 1–2 s no topo, panturrilha contraída — sem pressa." },
+      { nome: "Pico", descricao: "Pausa de 1–2 s no topo, panturrilha contraída, sem pressa." },
       { nome: "Descida", descricao: "Baixa lentamente até o alongamento completo (no degrau, além da linha)." },
     ],
     hotspots: [
@@ -975,11 +975,11 @@ export const extraExercises: Exercise[] = [
         y: 70,
         titulo: "Amplitude completa",
         camadas: {
-          resumo: "Do alongamento total (no degrau) à ponta máxima — a amplitude é o exercício.",
+          resumo: "Do alongamento total (no degrau) à ponta máxima: a amplitude é o exercício.",
           biomecanica: "Trabalhar só o meio do arco encurta o estímulo e o ganho de mobilidade de tornozelo.",
           fisiologia: "O sóleo e o gastrocnêmio respondem melhor ao arco completo com pausa no topo.",
           evidencia: "A pausa no pico elimina o 'quicar' elástico que rouba trabalho do músculo.",
-          cuidados: "No degrau, segure em um apoio — equilíbrio não é o objetivo aqui.",
+          cuidados: "No degrau, segure em um apoio: equilíbrio não é o objetivo aqui.",
         },
       },
       {
@@ -989,7 +989,7 @@ export const extraExercises: Exercise[] = [
         titulo: "Joelho esticado × dobrado",
         camadas: {
           resumo: "Joelho estendido enfatiza o gastrocnêmio; dobrado, o sóleo.",
-          biomecanica: "O gastrocnêmio cruza o joelho — flexioná-lo o coloca em desvantagem.",
+          biomecanica: "O gastrocnêmio cruza o joelho: flexioná-lo o coloca em desvantagem.",
           fisiologia: "As duas versões se complementam para o volume total da panturrilha.",
           evidencia: "Panturrilhas costumam tolerar (e pedir) mais volume que outros grupos.",
           cuidados: "Em tendinopatias, comece pela versão sentada/dobrada, mais suave.",
@@ -1003,18 +1003,18 @@ export const extraExercises: Exercise[] = [
         "Saúde vascular de membros inferiores (retorno venoso).",
       ],
       quandoEvitar: [
-        "Dor aguda no tendão calcâneo — regrida amplitude e carga.",
+        "Dor aguda no tendão calcâneo: regrida amplitude e carga.",
         "Como único trabalho de membros inferiores (é complemento).",
       ],
       errosComuns: [
         "Quicar no fundo usando o reflexo elástico.",
         "Amplitude parcial, sem alongamento nem pico.",
-        "Pressa — a panturrilha responde a repetições lentas e completas.",
+        "Pressa: a panturrilha responde a repetições lentas e completas.",
       ],
       variacoes: [
-        "No degrau — amplitude ampliada.",
-        "Unilateral — progressão de carga natural.",
-        "Sentada (joelho a 90°) — ênfase no sóleo.",
+        "No degrau: amplitude ampliada.",
+        "Unilateral: progressão de carga natural.",
+        "Sentada (joelho a 90°): ênfase no sóleo.",
       ],
     },
     conteudo: {
@@ -1023,7 +1023,7 @@ export const extraExercises: Exercise[] = [
       biomecanica:
         "A flexão plantar contra o peso corporal move toda a carga sobre a articulação do tornozelo; o degrau amplia a amplitude e o estímulo de mobilidade.",
       fisiologia:
-        "Gastrocnêmio e sóleo têm perfis mistos de fibras e toleram volume alto; a bomba muscular da panturrilha auxilia o retorno venoso — relevância direta em diabetes e sedentarismo.",
+        "Gastrocnêmio e sóleo têm perfis mistos de fibras e toleram volume alto; a bomba muscular da panturrilha auxilia o retorno venoso, com relevância direta em diabetes e sedentarismo.",
       prescricaoPratica:
         "3–4 séries de 12–20 lentas, com pausa no topo e alongamento no fundo. Progrida para unilateral e depois carga externa.",
     },

@@ -69,13 +69,13 @@ export const monitoringParameters: MonitoringParameter[] = [
       { valor: "0", rotulo: "Repouso" },
       { valor: "1", rotulo: "Muito leve" },
       { valor: "2–3", rotulo: "Leve" },
-      { valor: "4–5", rotulo: "Moderado — faixa comum de trabalho inicial" },
+      { valor: "4–5", rotulo: "Moderado: faixa comum de trabalho inicial" },
       { valor: "6–7", rotulo: "Intenso" },
       { valor: "8–9", rotulo: "Muito intenso" },
       { valor: "10", rotulo: "Máximo" },
     ],
     referencia:
-      "Adaptada da escala de percepção de esforço de Borg (CR10). Borg G., 1982 — Psychophysical bases of perceived exertion. Valide as faixas com a diretriz do seu contexto.",
+      "Adaptada da escala de percepção de esforço de Borg (CR10). Borg G., 1982: Psychophysical bases of perceived exertion. Valide as faixas com a diretriz do seu contexto.",
     refIds: ["borg-1982", "foster-2001"],
     ficha: "escala",
   },
@@ -88,7 +88,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Prático em caminhada, bicicleta e meio aquático quando não há como medir a frequência cardíaca.",
     menosConfiavel: "Menos preciso em esforços muito intermitentes ou em ambientes muito ruidosos.",
     comoInterpretar:
-      "Conseguir falar frases curtas costuma indicar intensidade leve a moderada — em geral adequada para começar.",
+      "Conseguir falar frases curtas costuma indicar intensidade leve a moderada, em geral adequada para começar.",
     seAlterado:
       "Se o aluno não consegue falar nem frases curtas, tende a ser prudente reduzir o ritmo.",
     gruposRelevantes: ["obesidade-grave", "hipertensao", "idoso-destreinado"],
@@ -100,12 +100,12 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Palavras soltas ou incapaz de falar → intensidade alta: reduza o ritmo.",
     ],
     escala: [
-      { valor: "Fala confortável", rotulo: "Leve — dá para progredir tempo/ritmo" },
-      { valor: "Frases curtas", rotulo: "Moderada — faixa comum de trabalho inicial" },
-      { valor: "Palavras soltas / sem falar", rotulo: "Alta — reduza o ritmo" },
+      { valor: "Fala confortável", rotulo: "Leve: dá para progredir tempo/ritmo" },
+      { valor: "Frases curtas", rotulo: "Moderada: faixa comum de trabalho inicial" },
+      { valor: "Palavras soltas / sem falar", rotulo: "Alta: reduza o ritmo" },
     ],
     referencia:
-      "Talk Test — método consagrado na prescrição aeróbia (ex.: Persinger et al., 2004). Valide com a diretriz do seu contexto.",
+      "Talk Test: método consagrado na prescrição aeróbia (ex.: Persinger et al., 2004). Valide com a diretriz do seu contexto.",
     refIds: ["persinger-2004"],
     ficha: "escala",
   },
@@ -118,7 +118,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     quandoUsar:
       "Útil quando há monitor confiável e o aluno não usa medicações que alterem a resposta cronotrópica.",
     menosConfiavel:
-      "Pouco prática ou pouco confiável no meio aquático, com certas medicações (ex.: alguns anti-hipertensivos) e sem equipamento — nesses casos, priorize PSE e teste da fala.",
+      "Pouco prática ou pouco confiável no meio aquático, com certas medicações (ex.: alguns anti-hipertensivos) e sem equipamento. Nesses casos, priorize PSE e teste da fala.",
     comoInterpretar:
       "Serve como uma referência de tendência ao longo das sessões, não como número absoluto isolado (validar faixas com diretriz específica).",
     seAlterado:
@@ -126,10 +126,10 @@ export const monitoringParameters: MonitoringParameter[] = [
     gruposRelevantes: ["hipertensao", "diabetes-tipo-2", "idoso-destreinado"],
     modalidadesUteis: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
     comoAplicar: [
-      "Meça em repouso, sentado, antes da sessão — é a referência do dia.",
+      "Meça em repouso, sentado, antes da sessão: é a referência do dia.",
       "Durante blocos contínuos, use monitor/cinta confiável; anote média e pico.",
       "Compare a resposta ao MESMO esforço ao longo das semanas (tendência, não número isolado).",
-      "Com betabloqueadores ou no meio aquático a FC é pouco confiável — combine com PSE e teste da fala.",
+      "Com betabloqueadores ou no meio aquático a FC é pouco confiável: combine com PSE e teste da fala.",
     ],
     referencia:
       "Uso de tendência de FC conforme diretrizes de prescrição de exercício (ex.: ACSM, edição vigente). Faixas-alvo devem ser validadas com a diretriz do seu contexto.",
@@ -152,7 +152,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     modalidadesUteis: ["m-musculacao", "m-caminhada", "m-bike"],
     comoAplicar: [
       "Quando disponível e indicado: aluno sentado, ~5 min de repouso, braço apoiado na altura do coração.",
-      "Registre antes da sessão como contexto de segurança — não como conduta clínica.",
+      "Registre antes da sessão como contexto de segurança, não como conduta clínica.",
       "Valores muito alterados ou sintomas associados → não inicie a sessão e oriente reavaliação.",
     ],
     referencia:
@@ -180,11 +180,11 @@ export const monitoringParameters: MonitoringParameter[] = [
     ],
     escala: [
       { valor: "0", rotulo: "Nenhuma" },
-      { valor: "1–2", rotulo: "Leve — esperada no esforço" },
-      { valor: "3–4", rotulo: "Moderada — observe a recuperação na pausa" },
-      { valor: "5–6", rotulo: "Intensa — reduza o ritmo" },
-      { valor: "7–9", rotulo: "Muito intensa — pausa imediata" },
-      { valor: "10", rotulo: "Máxima — interromper e reavaliar" },
+      { valor: "1–2", rotulo: "Leve: esperada no esforço" },
+      { valor: "3–4", rotulo: "Moderada: observe a recuperação na pausa" },
+      { valor: "5–6", rotulo: "Intensa: reduza o ritmo" },
+      { valor: "7–9", rotulo: "Muito intensa: pausa imediata" },
+      { valor: "10", rotulo: "Máxima: interromper e reavaliar" },
     ],
     referencia:
       "Escala de dispneia adaptada de Borg (CR10 modificada), amplamente usada em reabilitação. Valide com a diretriz do seu contexto.",
@@ -211,10 +211,10 @@ export const monitoringParameters: MonitoringParameter[] = [
     ],
     escala: [
       { valor: "0", rotulo: "Sem dor" },
-      { valor: "1–3", rotulo: "Leve — em geral tolerável se não piora" },
-      { valor: "4–6", rotulo: "Moderada — ajuste amplitude/carga" },
-      { valor: "7–9", rotulo: "Intensa — interrompa o exercício que provoca" },
-      { valor: "10", rotulo: "Pior dor imaginável — interromper e reavaliar" },
+      { valor: "1–3", rotulo: "Leve: em geral tolerável se não piora" },
+      { valor: "4–6", rotulo: "Moderada: ajuste amplitude/carga" },
+      { valor: "7–9", rotulo: "Intensa: interrompa o exercício que provoca" },
+      { valor: "10", rotulo: "Pior dor imaginável: interromper e reavaliar" },
     ],
     referencia:
       "Escala numérica de dor 0–10 (END/NRS), amplamente usada em reabilitação. Valide com a diretriz do seu contexto.",
@@ -254,7 +254,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     comoAplicar: [
       "No início da sessão, pergunte: “De 0 a 10, quão recuperado você chegou hoje?”",
       "Cruze com a carga da sessão anterior para decidir: progredir, manter ou regredir.",
-      "Registre — a tendência ao longo das semanas informa a dose ideal.",
+      "Registre: a tendência ao longo das semanas informa a dose ideal.",
     ],
   },
   {
@@ -262,7 +262,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     nome: "Adesão / frequência semanal",
     categoria: "adesão",
     resumo: "Quantas sessões o aluno de fato realiza por semana.",
-    quandoUsar: "Sempre — é um dos preditores práticos de resultado e de abandono.",
+    quandoUsar: "Sempre: é um dos preditores práticos de resultado e de abandono.",
     menosConfiavel: "Pode ser superestimada no autorrelato.",
     comoInterpretar:
       "Consistência costuma valer mais que intensidade nas fases iniciais; baixa adesão pede simplificar o plano.",
@@ -272,7 +272,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     modalidadesUteis: ["m-caminhada", "m-hidro", "m-musculacao"],
     comoAplicar: [
       "Combine com o aluno uma meta semanal realista (ex.: 2–3 sessões).",
-      "Registre TODA sessão realizada na ficha semanal — inclusive as feitas sem supervisão.",
+      "Registre TODA sessão realizada na ficha semanal, inclusive as feitas sem supervisão.",
       "Reveja a cada 2–4 semanas: se a adesão cair, simplifique o plano antes de intensificar.",
       "Imprima a ficha de registro (botão abaixo) e use como combinado visível com o aluno.",
     ],
@@ -296,7 +296,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     comoAplicar: [
       "Some os minutos de todas as sessões da semana (a ficha de adesão ajuda).",
       "Progrida em degraus pequenos (na prática, ~10%/semana) apenas se dor e fadiga permitirem.",
-      "Ao subir volume, segure a intensidade — um degrau de cada vez.",
+      "Ao subir volume, segure a intensidade: um degrau de cada vez.",
     ],
   },
 ];

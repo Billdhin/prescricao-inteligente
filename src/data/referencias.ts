@@ -31,7 +31,7 @@ export const referencias: Referencia[] = [
   {
     id: "acsm-getp11",
     autores: "American College of Sports Medicine",
-    titulo: "ACSM's Guidelines for Exercise Testing and Prescription — 11ª ed.",
+    titulo: "ACSM's Guidelines for Exercise Testing and Prescription, 11ª ed.",
     fonte: "Filadélfia: Wolters Kluwer",
     ano: 2021,
     nota: "Referência geral de triagem pré-participação e prescrição por população; base do racional de liberação.",
@@ -72,7 +72,7 @@ export const referencias: Referencia[] = [
   {
     id: "sbd-2023",
     autores: "Sociedade Brasileira de Diabetes",
-    titulo: "Diretriz da SBD — Atividade física e exercício no diabetes",
+    titulo: "Diretriz da SBD: Atividade física e exercício no diabetes",
     fonte: "Diretriz da Sociedade Brasileira de Diabetes (ed. vigente)",
     ano: 2023,
     nota: "Referência nacional para os sinais de alerta glicêmicos e a progressão segura no DM2.",
@@ -166,7 +166,7 @@ export const referencias: Referencia[] = [
     titulo: "Código de Ética dos Profissionais de Educação Física (Resolução nº 254/2013)",
     fonte: "CONFEF",
     ano: 2013,
-    nota: "Fundamenta o dever de diligência do profissional habilitado — o RCD documenta, o profissional decide.",
+    nota: "Fundamenta o dever de diligência do profissional habilitado: o RCD documenta, o profissional decide.",
   },
 
   /* ---- EMG / biomecânica: base da contribuição muscular estimada ---- */
@@ -176,7 +176,7 @@ export const referencias: Referencia[] = [
     titulo: "Fitness-Krafttraining: die besten Übungen und Methoden für Sport und Gesundheit (estudos comparativos de EMG)",
     fonte: "Reinbek: Rowohlt",
     ano: 2000,
-    nota: "Atlas de EMG comparado clássico — base das faixas relativas de ativação por exercício de musculação.",
+    nota: "Atlas de EMG comparado clássico: base das faixas relativas de ativação por exercício de musculação.",
   },
   {
     id: "schoenfeld-2010",
@@ -184,7 +184,7 @@ export const referencias: Referencia[] = [
     titulo: "The mechanisms of muscle hypertrophy and their application to resistance training",
     fonte: "Journal of Strength and Conditioning Research",
     ano: 2010,
-    nota: "Tensão mecânica, estresse metabólico e dano — sustenta a leitura fisiológica de volume e ênfase muscular.",
+    nota: "Tensão mecânica, estresse metabólico e dano: sustenta a leitura fisiológica de volume e ênfase muscular.",
   },
   {
     id: "contreras-2015",
@@ -193,7 +193,7 @@ export const referencias: Referencia[] = [
       "A comparison of gluteus maximus, biceps femoris, and vastus lateralis EMG activity in the back squat and barbell hip thrust",
     fonte: "Journal of Applied Biomechanics",
     ano: 2015,
-    nota: "EMG comparado glúteo/isquios/quadríceps no agachamento vs hip thrust — base da ênfase glútea.",
+    nota: "EMG comparado glúteo/isquios/quadríceps no agachamento vs hip thrust: base da ênfase glútea.",
   },
   {
     id: "escamilla-1998",
@@ -218,7 +218,7 @@ export const referencias: Referencia[] = [
     titulo: "A biomechanical comparison of back and front squats in healthy trained individuals",
     fonte: "Journal of Strength and Conditioning Research",
     ano: 2009,
-    nota: "Forças articulares e envolvimento muscular no agachamento — base da leitura biomecânica do padrão.",
+    nota: "Forças articulares e envolvimento muscular no agachamento: base da leitura biomecânica do padrão.",
   },
   {
     id: "andersen-2014",
@@ -226,7 +226,7 @@ export const referencias: Referencia[] = [
     titulo: "Effects of grip width on muscle strength and activation in the lat pull-down",
     fonte: "Journal of Strength and Conditioning Research",
     ano: 2014,
-    nota: "EMG de latíssimo/bíceps na puxada por pegada — base da ênfase dorsal em puxar vertical.",
+    nota: "EMG de latíssimo/bíceps na puxada por pegada: base da ênfase dorsal em puxar vertical.",
   },
   {
     id: "ekstrom-2007",
@@ -235,7 +235,7 @@ export const referencias: Referencia[] = [
       "Electromyographic analysis of core trunk, hip, and thigh muscles during 9 rehabilitation exercises",
     fonte: "Journal of Orthopaedic & Sports Physical Therapy",
     ano: 2007,
-    nota: "EMG de core, quadril e coxa em exercícios de solo — base de ponte, prancha, dead bug e sentar-levantar.",
+    nota: "EMG de core, quadril e coxa em exercícios de solo: base de ponte, prancha, dead bug e sentar-levantar.",
   },
   {
     id: "rodriguez-ridao-2020",
@@ -244,7 +244,7 @@ export const referencias: Referencia[] = [
       "Effect of five bench inclinations on the electromyographic activity of the pectoralis major, anterior deltoid, and triceps brachii",
     fonte: "International Journal of Environmental Research and Public Health",
     ano: 2020,
-    nota: "EMG de peitoral/deltoide/tríceps no supino por inclinação — base da ênfase no empurrar horizontal.",
+    nota: "EMG de peitoral/deltoide/tríceps no supino por inclinação: base da ênfase no empurrar horizontal.",
   },
   {
     id: "mcgill-2010",
@@ -252,7 +252,7 @@ export const referencias: Referencia[] = [
     titulo: "Core training: evidence translating to better performance and injury prevention",
     fonte: "Strength and Conditioning Journal",
     ano: 2010,
-    nota: "Estabilidade de tronco e resistência ao movimento — base da prancha e do dead bug (anti-extensão).",
+    nota: "Estabilidade de tronco e resistência ao movimento: base da prancha e do dead bug (anti-extensão).",
   },
 ];
 

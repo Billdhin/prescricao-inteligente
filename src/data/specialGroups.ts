@@ -73,7 +73,7 @@ export const specialGroups: SpecialGroup[] = [
       "Sobrecarga articular com impacto/volume altos",
       "Dispneia e baixa tolerância inicial",
       "Termorregulação e conforto no ambiente",
-      "Risco cardiovascular associado — exige contexto e cautela",
+      "Risco cardiovascular associado: exige contexto e cautela",
     ],
     sinaisAlerta: [
       "Dor torácica, tontura, palidez ou mal-estar → interromper",
@@ -116,7 +116,7 @@ export const specialGroups: SpecialGroup[] = [
         estruturaSemanal:
           "2–3 sessões curtas de baixo impacto (ex.: hidroginástica ou bike) + mobilidade; blocos leves com pausas.",
         justificativa:
-          "Baixo impacto reduz sobrecarga articular e dispneia, favorecendo adesão — a base de qualquer progressão.",
+          "Baixo impacto reduz sobrecarga articular e dispneia, favorecendo adesão, a base de qualquer progressão.",
       },
       {
         numero: 2,
@@ -270,7 +270,7 @@ export const specialGroups: SpecialGroup[] = [
     ],
     riscosCautelas: [
       "Sintomas de hipoglicemia em alguns contextos (tremor, sudorese, confusão)",
-      "Cuidado com os pés (calçado, atrito) — considerar impacto",
+      "Cuidado com os pés (calçado, atrito): considerar impacto",
       "Adesão como fator crítico",
     ],
     sinaisAlerta: [

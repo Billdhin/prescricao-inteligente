@@ -37,3 +37,38 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
 export function getMuscleMapImages(slug?: string) {
   return slug ? muscleMapImages[slug] : undefined;
 }
+
+/**
+ * Boneco NA POSIÇÃO do exercício (mesma figura cinza com os músculos em azul, reposicionada
+ * via img2img — verificada uma a uma). Quando o slug está na lista, o MuscleMap mostra o boneco
+ * posado no lugar das vistas em pé. Arquivos em public/anatomy/mmp/<slug>.webp
+ */
+const SLUGS_COM_POSE: string[] = [
+  "leg-press-45",
+  "agachamento-livre",
+  "supino-reto-barra",
+  "cadeira-extensora",
+  "mesa-flexora",
+  "levantamento-terra-romeno",
+  "hip-thrust",
+  "afundo-passada",
+  "puxada-alta",
+  "remada-baixa",
+  "desenvolvimento-ombros",
+  "rosca-direta",
+  "triceps-polia",
+  "caminhada-esteira",
+  "bicicleta-ergometrica",
+  "eliptico",
+  "marcha-aquatica",
+  "sentar-levantar",
+  "ponte-gluteos",
+  "prancha-frontal",
+  "dead-bug",
+  "remada-elastica",
+  "panturrilha-em-pe",
+];
+
+export function getMuscleMapPose(slug?: string): string | undefined {
+  return slug && SLUGS_COM_POSE.includes(slug) ? `/anatomy/mmp/${slug}.webp` : undefined;
+}

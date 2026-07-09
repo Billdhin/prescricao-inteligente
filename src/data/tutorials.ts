@@ -43,7 +43,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Faça o Semáforo de Liberação",
         descricao:
-          "Antes da sessão do aluno com condição especial, abra o Semáforo e responda o checklist de ~30 segundos: pressão do dia, sintomas, medicação. O resultado sai na hora — liberado, liberado com ajuste ou não liberado hoje — sempre com o porquê.",
+          "Antes da sessão do aluno com condição especial, abra o Semáforo e responda o checklist de ~30 segundos: pressão do dia, sintomas, medicação. O resultado sai na hora (liberado, liberado com ajuste ou não liberado hoje), sempre com o porquê.",
         scene: "nav",
         navLabel: "Semáforo",
         cta: { label: "Abrir o Semáforo", to: "/semaforo" },
@@ -51,13 +51,13 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Registre a liberação",
         descricao:
-          "Toque em “Registrar liberação”. O resultado entra no histórico do aluno e será anexado automaticamente ao prontuário da prescrição — é o seu rastro de diligência.",
+          "Toque em “Registrar liberação”. O resultado entra no histórico do aluno e será anexado automaticamente ao prontuário da prescrição: é o seu rastro de diligência.",
         scene: "feedback",
       },
       {
         titulo: "Prescreva com o motor",
         descricao:
-          "No Prescrever, o Motor RCD ranqueia os exercícios pelo perfil e pelos cuidados do grupo — e mostra também o que foi DESCARTADO e por quê.",
+          "No Prescrever, o Motor RCD ranqueia os exercícios pelo perfil e pelos cuidados do grupo, e mostra também o que foi DESCARTADO e por quê.",
         scene: "recomendacao",
         cta: { label: "Ir para Prescrever", to: "/gps" },
       },
@@ -70,7 +70,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Exporte e assine",
         descricao:
-          "Salve no aluno e exporte o Prontuário de Decisão em PDF: ele sai com o seu nome, seu CREF, o ID do documento e o bloco de assinatura. O ChatGPT te dá um treino — isto é um registro que você pode assinar.",
+          "Salve no aluno e exporte o Prontuário de Decisão em PDF: ele sai com o seu nome, seu CREF, o ID do documento e o bloco de assinatura. O ChatGPT te dá um treino. Isto é um registro que você pode assinar.",
         scene: "pdf",
       },
     ],
@@ -94,7 +94,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Abra o Prescrever",
         descricao:
-          "No perfil do aluno, use “Prescrever” — ou abra Prescrever no menu e escolha o aluno em “Para quem?”. O perfil já vem pré-preenchido.",
+          "No perfil do aluno, use “Prescrever”, ou abra Prescrever no menu e escolha o aluno em “Para quem?”. O perfil já vem pré-preenchido.",
         scene: "nav",
         navLabel: "Prescrever",
         cta: { label: "Ir para Prescrever", to: "/gps" },
@@ -102,7 +102,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Confirme o perfil (ou pule)",
         descricao:
-          "Ajuste objetivo, músculo-alvo, nível e equipamentos — ou toque em “Pular para as recomendações” e vá direto ao resultado.",
+          "Ajuste objetivo, músculo-alvo, nível e equipamentos, ou toque em “Pular para as recomendações” e vá direto ao resultado.",
         scene: "wizard",
       },
       {
@@ -114,7 +114,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Salve ou exporte em PDF",
         descricao:
-          "Salve a prescrição no perfil do aluno ou exporte um PDF com a sua marca — com os exercícios, séries sugeridas e a justificativa — para entregar ao aluno.",
+          "Salve a prescrição no perfil do aluno ou exporte um PDF com a sua marca (com os exercícios, séries sugeridas e a justificativa) para entregar ao aluno.",
         scene: "pdf",
       },
     ],
@@ -161,7 +161,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Abra Grupos Especiais",
         descricao:
-          "No menu (seção Referência), escolha o grupo que representa o perfil do aluno — cada um traz uma jornada em 4 fases.",
+          "No menu (seção Referência), escolha o grupo que representa o perfil do aluno: cada um traz uma jornada em 4 fases.",
         scene: "nav",
         navLabel: "Grupos",
         cta: { label: "Ver Grupos Especiais", to: "/special-groups" },
@@ -175,7 +175,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Prescreva pela jornada",
         descricao:
-          "Toque em “Prescrever”: o contexto do grupo e da fase vai junto, e você recebe exercícios coerentes com a estratégia — com as cautelas em destaque.",
+          "Toque em “Prescrever”: o contexto do grupo e da fase vai junto, e você recebe exercícios coerentes com a estratégia, com as cautelas em destaque.",
         scene: "recomendacao",
         cta: { label: "Abrir Prescrever", to: "/gps" },
       },
@@ -200,13 +200,13 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Compare execução × análise",
         descricao:
-          "Arraste o divisor para revelar a análise biomecânica sobre a mesma foto — músculo trabalhado, ângulo e linha de força. Funciona por mouse, toque e teclado.",
+          "Arraste o divisor para revelar a análise biomecânica sobre a mesma foto: músculo trabalhado, ângulo e linha de força. Funciona por mouse, toque e teclado.",
         scene: "slider",
       },
       {
         titulo: "Aprofunde nas abas",
         descricao:
-          "Abaixo, as abas trazem biomecânica, fisiologia, erros comuns e prescrição prática — cada conceito em camadas, sob demanda.",
+          "Abaixo, as abas trazem biomecânica, fisiologia, erros comuns e prescrição prática: cada conceito em camadas, sob demanda.",
         scene: "abas",
       },
     ],
@@ -235,7 +235,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Leia o feedback do raciocínio",
         descricao:
-          "Você recebe por que a escolha funciona (ou não), o critério de decisão e o que lembrar — não é só “certo ou errado”.",
+          "Você recebe por que a escolha funciona (ou não), o critério de decisão e o que lembrar. Não é só “certo ou errado”.",
         scene: "feedback",
       },
     ],
@@ -258,7 +258,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "A navegação muda com o modo",
         descricao:
-          "Ao trocar, o menu e o painel se adaptam — mas sua rota atual é preservada quando faz sentido. Você pode alternar quando quiser.",
+          "Ao trocar, o menu e o painel se adaptam, mas sua rota atual é preservada quando faz sentido. Você pode alternar quando quiser.",
         scene: "nav",
         navLabel: "Painel",
       },

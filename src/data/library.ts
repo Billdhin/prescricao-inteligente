@@ -23,7 +23,7 @@ export const biblioteca: LibEntry[] = [
     categoria: "Princípios de decisão",
     resumo: "A meta do aluno é o primeiro filtro de seleção do exercício.",
     detalhe:
-      "Antes de escolher entre variações, defina o objetivo (hipertrofia, força, resistência, retorno, aprendizado). Ele orienta a direção do movimento, a faixa de esforço e o quanto a técnica pesa. Em geral, meio (exercício) deve servir ao fim (objetivo) — não o contrário.",
+      "Antes de escolher entre variações, defina o objetivo (hipertrofia, força, resistência, retorno, aprendizado). Ele orienta a direção do movimento, a faixa de esforço e o quanto a técnica pesa. Em geral, meio (exercício) deve servir ao fim (objetivo), não o contrário.",
   },
   {
     id: "b2",
@@ -39,7 +39,7 @@ export const biblioteca: LibEntry[] = [
     categoria: "Princípios de decisão",
     resumo: "A melhor recomendação precisa ser executável com o que há disponível.",
     detalhe:
-      "De nada adianta a variação 'ideal' se o equipamento não existe na sala. Considere o disponível e escolha a melhor opção viável — às vezes a segunda melhor executável supera a primeira inacessível.",
+      "De nada adianta a variação 'ideal' se o equipamento não existe na sala. Considere o disponível e escolha a melhor opção viável: às vezes a segunda melhor executável supera a primeira inacessível.",
   },
   {
     id: "b4",
@@ -99,7 +99,7 @@ export const biblioteca: LibEntry[] = [
     categoria: "Segurança",
     resumo: "No retorno pós-lesão, a amplitude tolerável guia a progressão.",
     detalhe:
-      "Trabalhar dentro de amplitudes sem dor, progredindo gradualmente e monitorando a resposta, em geral respeita o estágio do retorno. A resposta do tecido guia — não o calendário.",
+      "Trabalhar dentro de amplitudes sem dor, progredindo gradualmente e monitorando a resposta, em geral respeita o estágio do retorno. A resposta do tecido guia, não o calendário.",
   },
   {
     id: "b11",
@@ -107,14 +107,14 @@ export const biblioteca: LibEntry[] = [
     categoria: "Biomecânica",
     resumo: "Resistir ao movimento costuma treinar o core melhor que flexioná-lo.",
     detalhe:
-      "Padrões de estabilização e anti-rotação treinam a função do core de resistir a forças — em geral mais transferível ao esporte do que grandes volumes de flexão repetida de coluna.",
+      "Padrões de estabilização e anti-rotação treinam a função do core de resistir a forças, em geral mais transferível ao esporte do que grandes volumes de flexão repetida de coluna.",
   },
   {
     id: "b12",
     termo: "Linguagem prudente",
     categoria: "Glossário",
-    resumo: "'Tende a', 'em geral', 'depende do contexto' — por quê.",
+    resumo: "'Tende a', 'em geral', 'depende do contexto': por quê.",
     detalhe:
-      "Respostas em ciências do exercício dependem do indivíduo e da execução. A linguagem prudente comunica tendência, não certeza absoluta, e reforça que o conteúdo é educacional — não substitui avaliação profissional individualizada.",
+      "Respostas em ciências do exercício dependem do indivíduo e da execução. A linguagem prudente comunica tendência, não certeza absoluta, e reforça que o conteúdo é educacional: não substitui avaliação profissional individualizada.",
   },
 ];

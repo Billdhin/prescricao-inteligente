@@ -29,10 +29,10 @@ export const cases: PracticeCase[] = [
         texto: "Leg press 45° com amplitude confortável e cadência controlada",
         correta: true,
         analise:
-          "O leg press guia a trajetória e, em geral, reduz a demanda lombar, permitindo aprender o padrão de agachar com menor custo técnico — coerente com o nível e o histórico dela.",
+          "O leg press guia a trajetória e, em geral, reduz a demanda lombar, permitindo aprender o padrão de agachar com menor custo técnico, o que é coerente com o nível e o histórico dela.",
         criterio: "Considera nível iniciante, insegurança e histórico lombar.",
         lembrar:
-          "Começar por uma variação guiada não é 'menos' — é construir base para progredir com segurança.",
+          "Começar por uma variação guiada não é 'menos': é construir base para progredir com segurança.",
       },
       {
         id: "c",
@@ -66,7 +66,7 @@ export const cases: PracticeCase[] = [
         analise:
           "Aumentar carga sobre um desconforto existente tende a agravar o quadro; a barra também fixa a trajetória, limitando o ajuste fino da amplitude.",
         criterio: "Ignora o sinal de desconforto e a liberdade articular necessária.",
-        lembrar: "Dor não é sinal para adicionar carga — é sinal para investigar e ajustar.",
+        lembrar: "Dor não é sinal para adicionar carga: é sinal para investigar e ajustar.",
       },
       {
         id: "b",
@@ -109,7 +109,7 @@ export const cases: PracticeCase[] = [
         analise:
           "Máquinas são úteis e seguras, mas restringir-se a isolados tende a limitar a transferência para tarefas do dia a dia, que envolvem padrões integrados.",
         criterio: "Ignora o objetivo de funcionalidade (transferência para a vida diária).",
-        lembrar: "O objetivo do aluno orienta a seleção — funcionalidade pede padrões integrados.",
+        lembrar: "O objetivo do aluno orienta a seleção: funcionalidade pede padrões integrados.",
       },
       {
         id: "b",
@@ -119,7 +119,7 @@ export const cases: PracticeCase[] = [
         analise:
           "Combinar padrões multiarticulares progressivos com isolados, respeitando a boa tolerância dele, em geral favorece força aplicável ao cotidiano.",
         criterio: "Alinha meio (exercícios) ao fim (funcionalidade) e ao nível dele.",
-        lembrar: "Progressão funcional pode e deve começar simples — o importante é a direção.",
+        lembrar: "Progressão funcional pode e deve começar simples: o importante é a direção.",
       },
       {
         id: "c",
@@ -128,14 +128,14 @@ export const cases: PracticeCase[] = [
         analise:
           "Buscar cargas máximas de imediato tende a ser imprudente para um iniciante nesse contexto; a prioridade costuma ser padrão, controle e consistência.",
         criterio: "Ignora a progressão adequada e o perfil de risco.",
-        lembrar: "Velocidade de progressão deve respeitar o preparo — pressa costuma custar caro.",
+        lembrar: "Velocidade de progressão deve respeitar o preparo: pressa costuma custar caro.",
       },
     ],
   },
   {
     id: "c4",
     slug: "caso-hipertrofia-costas",
-    titulo: "Hipertrofia de costas — puxada vs remada",
+    titulo: "Hipertrofia de costas: puxada vs remada",
     tema: "Progressão de carga",
     dificuldade: "Intermediário",
     premium: true,
@@ -161,7 +161,7 @@ export const cases: PracticeCase[] = [
         analise:
           "Só aumentar carga no mesmo padrão tende a ignorar o princípio da variação de estímulo e a lacuna de espessura que ela quer preencher.",
         criterio: "Ignora a especificidade do objetivo (regiões distintas das costas).",
-        lembrar: "Mais carga nem sempre é mais resultado — a seleção do padrão importa.",
+        lembrar: "Mais carga nem sempre é mais resultado: a seleção do padrão importa.",
       },
       {
         id: "c",
@@ -205,7 +205,7 @@ export const cases: PracticeCase[] = [
         analise:
           "Trabalhar dentro de amplitudes indolores, progredindo gradualmente e observando a resposta do joelho, em geral respeita a orientação médica e o estágio do retorno.",
         criterio: "Considera amplitude tolerável, progressão e monitoramento.",
-        lembrar: "No retorno, a resposta do tecido guia a progressão — não o calendário nem o ego.",
+        lembrar: "No retorno, a resposta do tecido guia a progressão, não o calendário nem o ego.",
       },
       {
         id: "c",
@@ -214,7 +214,7 @@ export const cases: PracticeCase[] = [
         analise:
           "Com liberação médica e ausência de dor, evitar todo estímulo tende a ser conservador demais e pode atrasar a readaptação de força.",
         criterio: "Ignora que o estímulo progressivo faz parte do retorno.",
-        lembrar: "Cautela excessiva também tem custo — o meio-termo progressivo costuma ser melhor.",
+        lembrar: "Cautela excessiva também tem custo: o meio-termo progressivo costuma ser melhor.",
       },
     ],
   },
@@ -325,7 +325,7 @@ export const cases: PracticeCase[] = [
         analise:
           "Evitar a manobra de Valsalva reduz picos de esforço; com FC pouco confiável sob medicação, a PSE tende a ser um guia mais prático de intensidade.",
         criterio: "Considera a apneia como risco e a limitação da FC neste contexto.",
-        lembrar: "Sob certas medicações, a FC perde valor como guia — parâmetros perceptivos ajudam.",
+        lembrar: "Sob certas medicações, a FC perde valor como guia: parâmetros perceptivos ajudam.",
       },
       {
         id: "b",
@@ -334,7 +334,7 @@ export const cases: PracticeCase[] = [
         analise:
           "A resposta de FC pode estar alterada pela medicação, tornando a meta calculada pouco confiável para dosar o esforço.",
         criterio: "Ignora o efeito da medicação sobre a FC.",
-        lembrar: "Fórmulas de FC são estimativas — o contexto do aluno pode invalidá-las.",
+        lembrar: "Fórmulas de FC são estimativas: o contexto do aluno pode invalidá-las.",
       },
       {
         id: "c",
@@ -376,7 +376,7 @@ export const cases: PracticeCase[] = [
         analise:
           "Desafios de equilíbrio sem base e sem apoio tendem a aumentar o risco de queda no início.",
         criterio: "Ignora a progressão segura do equilíbrio.",
-        lembrar: "Equilíbrio também se progride — começa com apoio e evolui gradualmente.",
+        lembrar: "Equilíbrio também se progride: começa com apoio e evolui gradualmente.",
       },
       {
         id: "c",

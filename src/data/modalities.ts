@@ -49,7 +49,7 @@ export const modalities: Modalidade[] = [
     quandoProgressao: "Aumentar tempo/velocidade e adicionar resistência antes de migrar ao solo.",
     quandoEvitar: "Sem acesso seguro à piscina ou contraindicação ao meio aquático.",
     monitorarSemFC:
-      "Na água a FC costuma ser pouco prática — priorize PSE, teste da fala e dispneia percebida.",
+      "Na água a FC costuma ser pouco prática: priorize PSE, teste da fala e dispneia percebida.",
   },
   {
     id: "m-natacao",
@@ -80,7 +80,7 @@ export const modalities: Modalidade[] = [
     parametrosUteis: ["p-fala", "p-rpe", "p-fc", "p-dor", "p-adesao", "p-volume"],
     quandoInicio: "Bom início para quem tolera o impacto; comece por tempo curto e ritmo confortável.",
     quandoProgressao: "Aumentar duração antes da velocidade; depois incluir inclinação.",
-    quandoEvitar: "Dor articular que piora com o passo — considere meio aquático ou bicicleta.",
+    quandoEvitar: "Dor articular que piora com o passo: considere meio aquático ou bicicleta.",
     monitorarSemFC: "Teste da fala é muito prático ao ar livre; combine com PSE.",
   },
   {
@@ -96,7 +96,7 @@ export const modalities: Modalidade[] = [
     parametrosUteis: ["p-rpe", "p-fc", "p-fala", "p-dor", "p-adesao"],
     quandoInicio: "Excelente início quando a caminhada dói; regule a carga para esforço leve.",
     quandoProgressao: "Subir tempo e depois resistência; incluir blocos intervalados leves.",
-    quandoEvitar: "Desconforto lombar por má postura no equipamento — ajuste antes de evitar.",
+    quandoEvitar: "Desconforto lombar por má postura no equipamento: ajuste antes de evitar.",
     monitorarSemFC: "PSE e teste da fala funcionam bem; a carga externa (nível) ajuda a dosar.",
   },
   {
@@ -112,7 +112,7 @@ export const modalities: Modalidade[] = [
     parametrosUteis: ["p-rpe", "p-fc", "p-fala", "p-adesao"],
     quandoInicio: "Alternativa de baixo impacto quando há equilíbrio e coordenação suficientes.",
     quandoProgressao: "Aumentar tempo/resistência gradualmente.",
-    quandoEvitar: "Equilíbrio muito limitado — prefira bicicleta.",
+    quandoEvitar: "Equilíbrio muito limitado: prefira bicicleta.",
     monitorarSemFC: "PSE e teste da fala; observe estabilidade e conforto.",
   },
   {
@@ -128,7 +128,7 @@ export const modalities: Modalidade[] = [
     parametrosUteis: ["p-rpe", "p-dor", "p-fadiga", "p-recuperacao", "p-pa", "p-fc"],
     quandoInicio: "Começar com máquinas guiadas, amplitude confortável e ênfase técnica.",
     quandoProgressao: "Progredir carga só com técnica estável; aumentar séries/exercícios gradualmente.",
-    quandoEvitar: "Não evitar em geral — adaptar amplitude/carga; cuidado com apneia em hipertensos.",
+    quandoEvitar: "Não evitar em geral: adaptar amplitude/carga; cuidado com apneia em hipertensos.",
     monitorarSemFC: "PSE por série (repetições em reserva) e dor articular guiam melhor que a FC.",
   },
   {
@@ -144,7 +144,7 @@ export const modalities: Modalidade[] = [
     parametrosUteis: ["p-rpe", "p-dor", "p-fadiga", "p-adesao"],
     quandoInicio: "Em geral não é o início ideal para muito destreinados; entra como progressão.",
     quandoProgressao: "Introduzir quando houver base de força e controle motor.",
-    quandoEvitar: "Iniciantes frágeis ou com dor não controlada — simplifique antes.",
+    quandoEvitar: "Iniciantes frágeis ou com dor não controlada: simplifique antes.",
     monitorarSemFC: "PSE global da sessão e dor articular; observe qualidade do movimento.",
   },
   {

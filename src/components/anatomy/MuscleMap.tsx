@@ -1,6 +1,6 @@
 import { cn, withBase } from "@/lib/utils";
 import type { Exercise } from "@/data/types";
-import { getMuscleMapImages } from "@/data/muscle-map-images";
+import { getMuscleMapImages, getMuscleMapPose } from "@/data/muscle-map-images";
 
 /**
  * Mapa muscular — imagem anatômica (frente + costas) com os músculos ativados JÁ MARCADOS
@@ -75,17 +75,16 @@ function Figure({ src, label }: { src: string; label?: string }) {
   );
 }
 
-/** Corpo real NA POSIÇÃO do exercício com a musculatura destacada (reusa a imagem de
- *  análise do slider — já verificada). Complementa as vistas padronizadas frente/costas,
- *  que existem para COMPARAR exercícios entre si. */
-function PoseFigure({ src }: { src: string }) {
+/** Boneco anatômico NA POSIÇÃO do exercício (mesma figura cinza + músculos em azul,
+ *  reposicionada). Substitui as vistas em pé quando existe. */
+function PoseBoneco({ src }: { src: string }) {
   return (
     <figure className="col-span-2 rounded-xl bg-surface-soft p-2 lg:col-span-1">
-      <div className="relative mx-auto aspect-[4/3] w-full overflow-hidden rounded-lg lg:aspect-auto lg:h-[calc(100%-18px)] lg:min-h-[230px]">
-      <img
+      <div className="relative mx-auto aspect-square w-full max-w-[250px]">
+        <img
           src={withBase(src)}
-          alt="Músculos destacados na posição do exercício"
-          className="h-full w-full object-cover"
+          alt="Mapa muscular na posição do exercício"
+          className="h-full w-full object-contain"
           loading="lazy"
         />
       </div>
@@ -107,16 +106,14 @@ const NIVEIS = [
 export function MuscleMap({
   activation,
   slug,
-  poseSrc,
   className,
 }: {
   activation: Activation;
   slug?: string;
-  /** imagem do corpo em pose com músculos destacados (ex.: exercise.imagemAnalise) */
-  poseSrc?: string;
   className?: string;
 }) {
   const imgs = getMuscleMapImages(slug);
+  const pose = getMuscleMapPose(slug);
   const ativos = (Object.keys(activation) as MuscleKey[])
     .filter((k) => (activation[k] ?? 0) > 0)
     .sort((a, b) => (activation[b] ?? 0) - (activation[a] ?? 0));
@@ -126,12 +123,18 @@ export function MuscleMap({
       <div
         className={cn(
           "grid grid-cols-2 items-stretch gap-3",
-          poseSrc ? "lg:grid-cols-[1.5fr_0.9fr_0.9fr_1.1fr_1.1fr]" : "lg:grid-cols-4",
+          pose ? "lg:grid-cols-[1.3fr_1fr_1.2fr]" : "lg:grid-cols-4",
         )}
       >
-        {poseSrc && <PoseFigure src={poseSrc} />}
-        <Figure src={imgs?.front ?? FRONT_BASE} label="Frente" />
-        <Figure src={imgs?.back ?? BACK_BASE} label="Costas" />
+        {pose ? (
+          // Boneco NA POSIÇÃO do exercício (pedido do prof.) — substitui as vistas em pé
+          <PoseBoneco src={pose} />
+        ) : (
+          <>
+            <Figure src={imgs?.front ?? FRONT_BASE} label="Frente" />
+            <Figure src={imgs?.back ?? BACK_BASE} label="Costas" />
+          </>
+        )}
 
         <div className="rounded-xl border border-border bg-surface p-3">
           <div className="mb-2 text-xs font-semibold text-ink">Escala de ativação</div>
