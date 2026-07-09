@@ -11,10 +11,10 @@ permissions:
   pages: write
   id-token: write
 
-# Um deploy por vez; não cancela um deploy em andamento
+# Um deploy por vez; um push mais novo supersede um deploy travado na fila do Pages
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
