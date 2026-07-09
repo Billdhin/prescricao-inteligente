@@ -561,7 +561,7 @@ function FocoAgora({
         <Pill tone="primary">Fase {fase} · {faseObj.nome}</Pill>
         <Pill tone={complexidadeTone[grupo.complexidade]}>{grupo.complexidade}</Pill>
         <Link
-          to={`/special-groups/${grupo.slug}`}
+          to={`/special-groups/${grupo.slug}?fase=${fase}${contexto?.alunoId ? `&aluno=${contexto.alunoId}` : ""}`}
           className="ml-auto text-sm font-semibold text-primary hover:underline"
         >
           Ver jornada completa

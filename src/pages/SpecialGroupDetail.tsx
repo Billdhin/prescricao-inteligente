@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Target,
@@ -34,13 +34,23 @@ import { cn } from "@/lib/utils";
 
 export function SpecialGroupDetail() {
   const { slug = "" } = useParams();
+  const [sp] = useSearchParams();
   const navigate = useNavigate();
   const plan = useUser((s) => s.plan);
   const unlocked = isPremiumUnlocked(plan);
   const { alunos, updateAluno } = useAlunos();
   const [aplicar, setAplicar] = React.useState(false);
 
+  // Contexto vindo do fluxo Prescrever: preserva o aluno e a fase já escolhidos,
+  // para não perder o caminho nem pedir de novo o aluno.
+  const alunoCtx = sp.get("aluno");
+  const faseCtx = sp.get("fase");
+  const alunoDoFluxo = alunoCtx ? alunos.find((a) => a.id === alunoCtx) : undefined;
   const g = getSpecialGroup(slug);
+  const voltarPrescricao = alunoDoFluxo
+    ? `/gps?aluno=${alunoDoFluxo.id}&grupo=${slug}${faseCtx ? `&fase=${faseCtx}` : ""}`
+    : null;
+  const primeiroNome = alunoDoFluxo?.nome.split(" ")[0] ?? "";
   if (!g) {
     return (
       <div className="mx-auto max-w-3xl py-16 text-center">
@@ -57,9 +67,29 @@ export function SpecialGroupDetail() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <Link to="/special-groups" className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink">
-        <ArrowLeft className="h-4 w-4" /> Grupos Especiais
+      <Link
+        to={voltarPrescricao ?? "/special-groups"}
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink"
+      >
+        <ArrowLeft className="h-4 w-4" /> {voltarPrescricao ? "Voltar à prescrição" : "Grupos Especiais"}
       </Link>
+
+      {/* Contexto do fluxo Prescrever — não perde o aluno/fase já escolhidos */}
+      {alunoDoFluxo && voltarPrescricao && (
+        <Card className="flex flex-wrap items-center justify-between gap-3 border-l-4 border-l-primary p-4">
+          <div className="flex min-w-0 items-center gap-2 text-sm">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full gradient-brand text-xs font-bold text-white">
+              {alunoDoFluxo.iniciais}
+            </span>
+            <span className="text-ink-2">Consultando a jornada para</span>
+            <span className="font-semibold text-ink">{alunoDoFluxo.nome}</span>
+            {faseCtx && <Pill tone="primary">Fase {faseCtx}</Pill>}
+          </div>
+          <Link to={voltarPrescricao} className={buttonClasses("primary", "sm")}>
+            <ArrowLeft className="h-4 w-4" /> Voltar e continuar a prescrição
+          </Link>
+        </Card>
+      )}
 
       {/* Cabeçalho */}
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -71,11 +101,16 @@ export function SpecialGroupDetail() {
           </div>
           <p className="mt-2 max-w-2xl text-ink-2">{g.descricaoCurta}</p>
         </div>
-        {!locked && (
-          <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
-            <UserPlus className="h-4 w-4" /> Aplicar a um aluno
-          </button>
-        )}
+        {!locked &&
+          (voltarPrescricao ? (
+            <Link to={voltarPrescricao} className={buttonClasses("primary")}>
+              <ArrowLeft className="h-4 w-4" /> Continuar prescrição de {primeiroNome}
+            </Link>
+          ) : (
+            <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
+              <UserPlus className="h-4 w-4" /> Aplicar a um aluno
+            </button>
+          ))}
       </div>
 
       {locked ? (
@@ -204,12 +239,20 @@ export function SpecialGroupDetail() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
-              <UserPlus className="h-4 w-4" /> Aplicar a um aluno
-            </button>
-            <Link to={`/gps?grupo=${g.slug}`} className={buttonClasses("secondary")}>
-              Prescrever <ArrowRight className="h-4 w-4" />
-            </Link>
+            {voltarPrescricao ? (
+              <Link to={voltarPrescricao} className={buttonClasses("primary")}>
+                <ArrowLeft className="h-4 w-4" /> Voltar e continuar a prescrição de {primeiroNome}
+              </Link>
+            ) : (
+              <>
+                <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
+                  <UserPlus className="h-4 w-4" /> Aplicar a um aluno
+                </button>
+                <Link to={`/gps?grupo=${g.slug}`} className={buttonClasses("secondary")}>
+                  Prescrever <ArrowRight className="h-4 w-4" />
+                </Link>
+              </>
+            )}
           </div>
         </>
       )}
