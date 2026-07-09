@@ -8,7 +8,7 @@ import { Card, Pill, ScoreRing, StatBar, SectionHeader, buttonClasses } from "@/
 import { exercises } from "@/data/exercises";
 import type { Exercise } from "@/data/types";
 import {
-  cardioModalidades, type CardioModalidade,
+  cardioModalidades, type CardioModalidade, cardioImagem,
   NIVEL_BAR, IMPACTO_BAR, NIVEL_LABEL, IMPACTO_LABEL,
 } from "@/data/cardio";
 import { cn, withBase } from "@/lib/utils";
@@ -286,22 +286,25 @@ function CardioBloco() {
             {selected.map((m, i) => (
               <Card key={m.id} className="overflow-hidden">
                 <div className={cn("h-1.5 w-full", COL_DOT[i])} />
+                <div className="relative aspect-[4/3] w-full bg-surface-soft">
+                  <img
+                    src={withBase(cardioImagem(m.id))}
+                    alt={`${m.nome} — modalidade aeróbica`}
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                  <button
+                    onClick={() => toggle(m.id)}
+                    aria-label={`Remover ${m.nome}`}
+                    className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-white/85 text-ink-2 shadow-elevated hover:bg-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
                 <div className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-surface-soft text-3xl" aria-hidden>
-                      {m.emoji}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-display font-bold text-ink">{m.nome}</div>
-                      <div className="truncate text-xs text-ink-3">{m.ambiente}</div>
-                    </div>
-                    <button
-                      onClick={() => toggle(m.id)}
-                      aria-label={`Remover ${m.nome}`}
-                      className="shrink-0 rounded-md p-1 text-ink-3 hover:bg-surface-soft"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+                  <div className="min-w-0">
+                    <div className="truncate font-display font-bold text-ink">{m.nome}</div>
+                    <div className="truncate text-xs text-ink-3">{m.ambiente}</div>
                   </div>
                   <div className="mt-3 flex items-end justify-between gap-2">
                     <div>

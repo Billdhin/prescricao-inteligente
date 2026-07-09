@@ -227,6 +227,11 @@ export function getCardio(id: string) {
   return cardioModalidades.find((m) => m.id === id);
 }
 
+/** Foto da modalidade em public/cardio/<slug>.webp (slug = id sem o prefixo "c-"). */
+export function cardioImagem(id: string) {
+  return `/cardio/${id.replace(/^c-/, "")}.webp`;
+}
+
 /** Mapa qualitativo → largura de barra (0..100) para os marcadores de nível. */
 export const NIVEL_BAR: Record<CardioNivel, number> = { baixa: 30, moderada: 60, alta: 92 };
 export const IMPACTO_BAR: Record<CardioImpacto, number> = { baixo: 28, moderado: 60, alto: 92 };
