@@ -286,25 +286,25 @@ function CardioBloco() {
             {selected.map((m, i) => (
               <Card key={m.id} className="overflow-hidden">
                 <div className={cn("h-1.5 w-full", COL_DOT[i])} />
-                <div className="relative aspect-[4/3] w-full bg-surface-soft">
-                  <img
-                    src={withBase(cardioImagem(m.id))}
-                    alt={`${m.nome} — modalidade aeróbica`}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                  <button
-                    onClick={() => toggle(m.id)}
-                    aria-label={`Remover ${m.nome}`}
-                    className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-white/85 text-ink-2 shadow-elevated hover:bg-white"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
                 <div className="p-4">
-                  <div className="min-w-0">
-                    <div className="truncate font-display font-bold text-ink">{m.nome}</div>
-                    <div className="truncate text-xs text-ink-3">{m.ambiente}</div>
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={withBase(cardioImagem(m.id))}
+                      alt=""
+                      className="h-14 w-20 shrink-0 rounded-lg object-cover"
+                      loading="lazy"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-display font-bold text-ink">{m.nome}</div>
+                      <div className="truncate text-xs text-ink-3">{m.ambiente}</div>
+                    </div>
+                    <button
+                      onClick={() => toggle(m.id)}
+                      aria-label={`Remover ${m.nome}`}
+                      className="shrink-0 rounded-md p-1 text-ink-3 hover:bg-surface-soft"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
                   <div className="mt-3 flex items-end justify-between gap-2">
                     <div>

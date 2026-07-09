@@ -50,7 +50,7 @@ export const cardioModalidades: CardioModalidade[] = [
     nome: "Caminhada",
     slug: "caminhada-esteira",
     emoji: "🚶",
-    ambiente: "Solo / esteira",
+    ambiente: "Ar livre / esteira",
     met: 4.3,
     gastoCalorico: 160,
     gruposMusculares: ["Glúteos", "Quadríceps", "Isquiotibiais", "Panturrilhas", "Core"],
