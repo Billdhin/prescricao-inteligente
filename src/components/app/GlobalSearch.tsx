@@ -14,14 +14,22 @@ import {
   CornerDownLeft,
   GraduationCap,
   LifeBuoy,
+  Users,
+  ShieldCheck,
+  HeartPulse,
+  ClipboardList,
+  GitCompare,
+  Gauge,
 } from "lucide-react";
 import { exercises } from "@/data/exercises";
 import { cases } from "@/data/cases";
 import { tracks } from "@/data/tracks";
 import { biblioteca } from "@/data/library";
+import { specialGroups } from "@/data/specialGroups";
+import { useAlunos, useMode, type AppMode } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-type Group = "Exercícios" | "Casos" | "Trilhas" | "Biblioteca" | "Ir para";
+type Group = "Alunos" | "Exercícios" | "Grupos especiais" | "Casos" | "Trilhas" | "Biblioteca" | "Ir para";
 
 interface SearchItem {
   id: string;
@@ -31,6 +39,8 @@ interface SearchItem {
   to: string;
   haystack: string;
   Icon: React.ComponentType<{ className?: string }>;
+  /** se definido, o atalho só aparece nesses modos */
+  modes?: AppMode[];
 }
 
 // remove acentos (combining marks U+0300–U+036F) p/ busca acento-insensível
@@ -40,8 +50,8 @@ const norm = (s: string) =>
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
 
-/** Índice de busca montado uma vez a partir dos dados mock. */
-const INDEX: SearchItem[] = [
+/** Conteúdo estático (exercícios, casos, trilhas, biblioteca) disponível nos dois modos. */
+const BASE_INDEX: SearchItem[] = [
   ...exercises.map((e) => ({
     id: `ex-${e.slug}`,
     label: e.nome,
@@ -78,13 +88,42 @@ const INDEX: SearchItem[] = [
     haystack: norm([b.termo, b.categoria, b.resumo].join(" ")),
     Icon: LibraryIcon,
   })),
+];
+
+/** Atalhos de navegação. `modes` restringe onde aparecem; sem `modes` = ambos. */
+const NAV_ITEMS: SearchItem[] = [
   {
-    id: "nav-dashboard", label: "Dashboard", group: "Ir para", to: "/dashboard",
-    haystack: norm("dashboard inicio visao geral"), Icon: LayoutDashboard,
+    id: "nav-dashboard", label: "Painel", group: "Ir para", to: "/dashboard",
+    haystack: norm("painel dashboard inicio visao geral"), Icon: LayoutDashboard,
   },
   {
     id: "nav-gps", label: "Prescrever", group: "Ir para", to: "/gps",
     haystack: norm("prescrever gps prescricao recomendacao motor decisao rapida"), Icon: Navigation,
+    modes: ["atender"],
+  },
+  {
+    id: "nav-alunos", label: "Alunos", group: "Ir para", to: "/alunos",
+    haystack: norm("alunos cadastro clientes"), Icon: Users, modes: ["atender"],
+  },
+  {
+    id: "nav-avaliacoes", label: "Avaliações", group: "Ir para", to: "/assessments",
+    haystack: norm("avaliacoes reavaliar medidas peso gordura"), Icon: Gauge, modes: ["atender"],
+  },
+  {
+    id: "nav-protocols", label: "Protocolos", group: "Ir para", to: "/protocols",
+    haystack: norm("protocolos modelos treino prontos"), Icon: ClipboardList, modes: ["atender"],
+  },
+  {
+    id: "nav-semaforo", label: "Semáforo de Liberação", group: "Ir para", to: "/semaforo",
+    haystack: norm("semaforo liberacao pre sessao seguranca gate"), Icon: ShieldCheck, modes: ["atender"],
+  },
+  {
+    id: "nav-special-groups", label: "Grupos Especiais", group: "Ir para", to: "/special-groups",
+    haystack: norm("grupos especiais hipertensao diabetes obesidade idoso lombar osteoartrite"), Icon: HeartPulse,
+  },
+  {
+    id: "nav-comparador", label: "Comparador", group: "Ir para", to: "/comparador",
+    haystack: norm("comparador comparar exercicios lado a lado"), Icon: GitCompare,
   },
   {
     id: "nav-lab", label: "Laboratório Visual", group: "Ir para", to: "/movement-lab",
@@ -92,11 +131,11 @@ const INDEX: SearchItem[] = [
   },
   {
     id: "nav-cases", label: "Casos", group: "Ir para", to: "/cases",
-    haystack: norm("casos praticos"), Icon: BookOpen,
+    haystack: norm("casos praticos"), Icon: BookOpen, modes: ["aprender"],
   },
   {
     id: "nav-tracks", label: "Trilhas", group: "Ir para", to: "/tracks",
-    haystack: norm("trilhas licoes"), Icon: RouteIcon,
+    haystack: norm("trilhas licoes"), Icon: RouteIcon, modes: ["aprender"],
   },
   {
     id: "nav-library", label: "Biblioteca", group: "Ir para", to: "/library",
@@ -104,7 +143,7 @@ const INDEX: SearchItem[] = [
   },
   {
     id: "nav-favorites", label: "Favoritos", group: "Ir para", to: "/favorites",
-    haystack: norm("favoritos salvos"), Icon: Star,
+    haystack: norm("favoritos salvos"), Icon: Star, modes: ["aprender"],
   },
   {
     id: "nav-history", label: "Histórico", group: "Ir para", to: "/history",
@@ -112,7 +151,7 @@ const INDEX: SearchItem[] = [
   },
   {
     id: "nav-account", label: "Configurações", group: "Ir para", to: "/account",
-    haystack: norm("configuracoes conta perfil plano"), Icon: Settings,
+    haystack: norm("configuracoes conta perfil plano cref"), Icon: Settings,
   },
   {
     id: "nav-tutorial", label: "Tutoriais", group: "Ir para", to: "/tutorial",
@@ -124,13 +163,13 @@ const INDEX: SearchItem[] = [
   },
 ];
 
-const GROUP_ORDER: Group[] = ["Exercícios", "Casos", "Trilhas", "Biblioteca", "Ir para"];
+const GROUP_ORDER: Group[] = ["Alunos", "Exercícios", "Grupos especiais", "Casos", "Trilhas", "Biblioteca", "Ir para"];
 
-function search(q: string): SearchItem[] {
+function search(q: string, index: SearchItem[]): SearchItem[] {
   const nq = norm(q.trim());
   if (!nq) return [];
   const terms = nq.split(/\s+/);
-  const scored = INDEX.map((it) => {
+  const scored = index.map((it) => {
     const hay = norm(it.label) + " " + it.haystack;
     let ok = true;
     let score = 0;
@@ -151,6 +190,8 @@ function search(q: string): SearchItem[] {
 
 export function GlobalSearch() {
   const navigate = useNavigate();
+  const alunos = useAlunos((s) => s.alunos);
+  const mode = useMode((s) => s.mode);
   const [q, setQ] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(0);
@@ -158,7 +199,34 @@ export function GlobalSearch() {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
 
-  const results = React.useMemo(() => search(q), [q]);
+  // Índice montado por modo: no Atender, os alunos são a entidade mais buscada.
+  const index = React.useMemo<SearchItem[]>(() => {
+    const alunoItems: SearchItem[] =
+      mode === "atender"
+        ? alunos.map((a) => ({
+            id: `aluno-${a.id}`,
+            label: a.nome,
+            sub: `${a.objetivo} · ${a.nivel}`,
+            group: "Alunos" as Group,
+            to: `/alunos/${a.id}`,
+            haystack: norm([a.nome, a.objetivo, a.nivel, ...a.restricoes].join(" ")),
+            Icon: Users,
+          }))
+        : [];
+    const grupoItems: SearchItem[] = specialGroups.map((g) => ({
+      id: `sg-${g.slug}`,
+      label: g.nome,
+      sub: "Grupo especial",
+      group: "Grupos especiais" as Group,
+      to: `/special-groups/${g.slug}`,
+      haystack: norm([g.nome, g.descricaoCurta].join(" ")),
+      Icon: HeartPulse,
+    }));
+    const navItems = NAV_ITEMS.filter((it) => !it.modes || it.modes.includes(mode));
+    return [...alunoItems, ...BASE_INDEX, ...grupoItems, ...navItems];
+  }, [alunos, mode]);
+
+  const results = React.useMemo(() => search(q, index), [q, index]);
 
   // ⌘K / Ctrl+K foca a busca
   React.useEffect(() => {

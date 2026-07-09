@@ -1,15 +1,21 @@
-import { Link } from "react-router-dom";
-import { ClipboardList, Crown, Lock, ArrowRight, FlaskConical, Dumbbell } from "lucide-react";
+import * as React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ClipboardList, Crown, Lock, FlaskConical, Dumbbell, X, AlertTriangle } from "lucide-react";
 import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
-import { useUser, useAlunos, isPremiumUnlocked } from "@/lib/store";
+import { useUser, useAlunos, isPremiumUnlocked, uid } from "@/lib/store";
+import type { GpsObjetivo } from "@/lib/gps/engine";
 import { exercises } from "@/data/exercises";
+import { useDialog } from "@/lib/useDialog";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const nomeEx = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ?? slug;
 const fmtData = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(ts));
 
-const MODELOS: { titulo: string; objetivo: string; tone: "primary" | "analysis" | "cta" | "success"; itens: { slug: string; series: string }[] }[] = [
+type Modelo = { titulo: string; objetivo: GpsObjetivo; tone: "primary" | "analysis" | "cta" | "success"; itens: { slug: string; series: string }[] };
+
+const MODELOS: Modelo[] = [
   {
     titulo: "Hipertrofia de quadríceps",
     objetivo: "Hipertrofia",
@@ -56,7 +62,8 @@ export function Protocolos() {
   const plan = useUser((s) => s.plan);
   const premium = isPremiumUnlocked(plan);
   const { alunos, prescricoes } = useAlunos();
-  const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "–";
+  const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "aluno";
+  const [aplicar, setAplicar] = React.useState<Modelo | null>(null);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -107,9 +114,9 @@ export function Protocolos() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/alunos" className={cn(buttonClasses("secondary", "sm"), "mt-4")}>
+                  <button onClick={() => setAplicar(m)} className={cn(buttonClasses("secondary", "sm"), "mt-4")}>
                     <Dumbbell className="h-4 w-4" /> Aplicar a um aluno
-                  </Link>
+                  </button>
                 </Card>
               ))}
             </div>
@@ -163,6 +170,104 @@ export function Protocolos() {
             </div>
           </div>
         )}
+      </div>
+
+      {aplicar && <AplicarProtocoloModal modelo={aplicar} onClose={() => setAplicar(null)} />}
+    </div>
+  );
+}
+
+/** Aplica um modelo de protocolo a um aluno ativo, criando uma prescrição de verdade. */
+function AplicarProtocoloModal({ modelo, onClose }: { modelo: Modelo; onClose: () => void }) {
+  const navigate = useNavigate();
+  const { alunos, addPrescricao } = useAlunos();
+  const ativos = alunos.filter((a) => a.status === "ativo");
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
+
+  const aplicar = (alunoId: string) => {
+    const aluno = alunos.find((a) => a.id === alunoId);
+    if (!aluno) return;
+    addPrescricao({
+      id: uid(),
+      alunoId,
+      data: Date.now(),
+      titulo: modelo.titulo,
+      answers: {
+        objetivo: modelo.objetivo,
+        grupoMuscular: "Corpo todo",
+        nivel: aluno.nivel,
+        restricao: aluno.restricoes[0] ?? "Nenhuma",
+        equipamentos: aluno.equipamentos,
+      },
+      itens: modelo.itens.map((it) => ({ slug: it.slug, score: 0, series: it.series })),
+      status: "ativa",
+      observacoes: "Aplicado a partir de um modelo de protocolo; ajuste séries e cargas ao contexto do aluno.",
+    });
+    toast(`Protocolo "${modelo.titulo}" aplicado a ${aluno.nome}`);
+    navigate(`/alunos/${alunoId}`, { state: { prescricaoSalva: true } });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Aplicar ${modelo.titulo}`}
+        className="max-h-[85vh] w-full max-w-md overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-1 flex items-start justify-between gap-2">
+          <h2 className="font-display text-lg font-bold text-ink">Aplicar a um aluno</h2>
+          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <p className="mb-4 text-sm text-ink-2">
+          Modelo <span className="font-semibold text-ink">{modelo.titulo}</span> ({modelo.objetivo}). Escolha o
+          aluno; a prescrição entra no perfil dele para você ajustar séries e cargas.
+        </p>
+        {ativos.length === 0 ? (
+          <Card className="p-5 text-center text-sm text-ink-2">
+            Nenhum aluno ativo. Cadastre um aluno primeiro.
+            <Link to="/alunos?novo=1" className={cn(buttonClasses("primary", "sm"), "mt-3")}>
+              Cadastrar aluno
+            </Link>
+          </Card>
+        ) : (
+          <ul className="space-y-2">
+            {ativos.map((a) => {
+              const conflito = a.restricoes.length > 0;
+              return (
+                <li key={a.id}>
+                  <button
+                    onClick={() => aplicar(a.id)}
+                    className="flex w-full items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:border-primary hover:bg-primary-tint"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
+                      {a.iniciais}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-ink">{a.nome}</span>
+                      <span className="block truncate text-xs text-ink-3">
+                        {a.objetivo} · {a.nivel}
+                      </span>
+                    </span>
+                    {conflito && (
+                      <Pill tone="warning" icon={<AlertTriangle className="h-3 w-3" />}>
+                        {a.restricoes[0]}
+                      </Pill>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <p className="mt-4 text-[11px] leading-relaxed text-ink-3">
+          Modelos são ponto de partida. Revise cargas, séries e as restrições do aluno antes de conduzir a sessão.
+        </p>
       </div>
     </div>
   );
