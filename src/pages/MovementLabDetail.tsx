@@ -239,7 +239,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
                       Ênfase relativa entre músculos, sintetizada da literatura de EMG e biomecânica
                       (fontes abaixo) — não é medição do aluno.
                     </p>
-                    <MuscleMap activation={activationFromExercise(exercise)} />
+                    <MuscleMap activation={activationFromExercise(exercise)} slug={exercise.slug} />
                   </div>
                   <BaseCientifica slug={exercise.slug} contexto="ativacao" />
                 </div>

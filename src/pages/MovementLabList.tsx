@@ -77,7 +77,7 @@ export function MovementLabList() {
                   {e.imagem ? (
                     <img src={withBase(e.imagem)} alt={`Execução: ${e.nome}`} className="h-full w-full object-cover" />
                   ) : (
-                    <MuscleThumb activation={activationFromExercise(e)} className="py-2" />
+                    <MuscleThumb activation={activationFromExercise(e)} slug={e.slug} className="py-2" />
                   )}
                   <div className="absolute left-3 top-3">
                     {e.premium ? (
