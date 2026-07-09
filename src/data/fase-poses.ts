@@ -12,6 +12,21 @@ export const fasePoses: Record<string, string[]> = {
     "/fases/agachamento-livre-2.webp",
     "/fases/agachamento-livre-3.webp",
   ],
+  "leg-press-45": [
+    "/fases/leg-press-45-1.webp",
+    "/fases/leg-press-45-2.webp",
+    "/fases/leg-press-45-3.webp",
+  ],
+  "cadeira-extensora": [
+    "/fases/cadeira-extensora-1.webp",
+    "/fases/cadeira-extensora-2.webp",
+    "/fases/cadeira-extensora-3.webp",
+  ],
+  "mesa-flexora": [
+    "/fases/mesa-flexora-1.webp",
+    "/fases/mesa-flexora-2.webp",
+    "/fases/mesa-flexora-3.webp",
+  ],
 };
 
 export function getFasePose(slug: string, faseIndex: number): string | undefined {
