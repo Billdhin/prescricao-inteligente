@@ -16,6 +16,11 @@ const SLUGS_COM_FASES = [
   "levantamento-terra-romeno",
   "hip-thrust",
   "afundo-passada",
+  "puxada-alta",
+  "remada-baixa",
+  "desenvolvimento-ombros",
+  "rosca-direta",
+  "triceps-polia",
 ];
 
 export const fasePoses: Record<string, string[]> = Object.fromEntries(
