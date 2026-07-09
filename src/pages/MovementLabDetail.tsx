@@ -90,7 +90,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-6">
       {/* Header enxuto */}
       <div>
         <Link
@@ -192,20 +192,24 @@ function Detail({ exercise }: { exercise: Exercise }) {
             Índices relativos estimados da literatura de EMG/biomecânica — comparam exercícios, não
             medem o aluno. Fontes na aba <span className="font-semibold text-ink-2">Biomecânica</span>.
           </p>
-          <div className="mt-5 border-t border-border pt-4">
-            <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">Resumo prático</div>
-            <p className="mt-1 text-sm text-ink">{exercise.resumoPratico}</p>
-          </div>
-          <div className="mt-4 flex gap-3 rounded-xl bg-primary-tint p-3">
-            <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <p className="text-sm text-ink">
-              <span className="font-semibold">Dica: </span>
-              priorize a fase excêntrica com cadência controlada — em geral favorece o aprendizado
-              técnico antes de progredir carga.
-            </p>
-          </div>
         </Card>
       </div>
+
+      {/* Resumo + dica em faixa de largura total (evita coluna curta/espaço em branco no herói) */}
+      <Card variant="soft" className="grid gap-4 p-5 md:grid-cols-2 md:items-center md:p-6">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">Resumo prático</div>
+          <p className="mt-1 text-sm text-ink">{exercise.resumoPratico}</p>
+        </div>
+        <div className="flex gap-3 rounded-xl bg-primary-tint p-3">
+          <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <p className="text-sm text-ink">
+            <span className="font-semibold">Dica: </span>
+            priorize a fase excêntrica com cadência controlada — em geral favorece o aprendizado
+            técnico antes de progredir carga.
+          </p>
+        </div>
+      </Card>
 
       {/* Análise do movimento — tudo o mais recolhido em abas (aprofundar sob demanda) */}
       <Card className="p-4 md:p-6">
