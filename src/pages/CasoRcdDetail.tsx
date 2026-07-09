@@ -122,7 +122,7 @@ export function CasoRcdDetail() {
                     {i + 1}
                   </span>
                   <span className="font-display font-bold text-ink">{e.nome}</span>
-                  <span className="tabular ml-auto text-sm font-bold text-success">{e.score}% match</span>
+                  <span className="tabular ml-auto text-sm font-bold text-success">adequação {e.score}/100</span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {e.reasons.map((r) => (

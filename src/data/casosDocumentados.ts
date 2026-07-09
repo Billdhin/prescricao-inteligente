@@ -37,7 +37,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       grupoMuscular: "Corpo todo",
       nivel: "Iniciante",
       restricao: "Nenhuma",
-      equipamentos: ["Máquina", "Peso corporal", "Elástico"],
+      equipamentos: ["Máquina", "Peso corporal", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
       "Quais estímulos entram na primeira fase — e o que fica explicitamente de fora por causa da resposta pressórica?",
@@ -55,7 +55,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       grupoMuscular: "Core (tronco)",
       nivel: "Iniciante",
       restricao: "Dor lombar",
-      equipamentos: ["Peso corporal", "Máquina"],
+      equipamentos: ["Peso corporal", "Máquina", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
       "Como treinar SEM provocar a dor — e por que movimento (e não repouso) é o caminho apontado pelas diretrizes?",
@@ -74,7 +74,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       prioridade: "Condicionamento cardiorrespiratório",
       nivel: "Iniciante",
       restricao: "Dor no joelho",
-      equipamentos: ["Máquina", "Piscina", "Peso corporal"],
+      equipamentos: ["Máquina", "Piscina", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
       "Por que a porta de entrada NÃO é a musculação tradicional — e o que o joelho dele decide sobre a modalidade?",
@@ -93,7 +93,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       prioridade: "Cardio + força (misto)",
       nivel: "Iniciante",
       restricao: "Nenhuma",
-      equipamentos: ["Máquina", "Peso corporal", "Elástico"],
+      equipamentos: ["Máquina", "Peso corporal", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
       "Como montar a semana MÍNIMA que move a glicemia — e quais sinais de segurança checar antes de cada sessão?",
@@ -111,7 +111,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
       restricao: "Dor no joelho",
-      equipamentos: ["Máquina", "Peso corporal"],
+      equipamentos: ["Máquina", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
       "Quais exercícios de força protegem (e quais irritam) um joelho com OA — e como a dor do dia calibra a sessão?",
@@ -129,7 +129,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
       restricao: "Mobilidade limitada",
-      equipamentos: ["Peso corporal", "Máquina", "Elástico"],
+      equipamentos: ["Peso corporal", "Máquina", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
       "Por que FORÇA (não alongamento) é a prioridade da autonomia — e como progredir sem assustar quem nunca treinou?",

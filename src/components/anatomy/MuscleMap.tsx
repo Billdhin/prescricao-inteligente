@@ -75,6 +75,27 @@ function Figure({ src, label }: { src: string; label?: string }) {
   );
 }
 
+/** Corpo real NA POSIÇÃO do exercício com a musculatura destacada (reusa a imagem de
+ *  análise do slider — já verificada). Complementa as vistas padronizadas frente/costas,
+ *  que existem para COMPARAR exercícios entre si. */
+function PoseFigure({ src }: { src: string }) {
+  return (
+    <figure className="col-span-2 rounded-xl bg-surface-soft p-2 lg:col-span-1">
+      <div className="relative mx-auto aspect-[4/3] w-full overflow-hidden rounded-lg lg:aspect-auto lg:h-[calc(100%-18px)] lg:min-h-[230px]">
+      <img
+          src={withBase(src)}
+          alt="Músculos destacados na posição do exercício"
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+      </div>
+      <figcaption className="mt-0.5 text-center text-[11px] font-medium text-ink-3">
+        Na posição do exercício
+      </figcaption>
+    </figure>
+  );
+}
+
 const NIVEIS = [
   { cor: SCALE[5], nome: "Muito alta", faixa: "≥ 80%" },
   { cor: SCALE[4], nome: "Alta", faixa: "60–79%" },
@@ -83,7 +104,18 @@ const NIVEIS = [
   { cor: SCALE[1], nome: "Muito baixa", faixa: "< 20%" },
 ];
 
-export function MuscleMap({ activation, slug, className }: { activation: Activation; slug?: string; className?: string }) {
+export function MuscleMap({
+  activation,
+  slug,
+  poseSrc,
+  className,
+}: {
+  activation: Activation;
+  slug?: string;
+  /** imagem do corpo em pose com músculos destacados (ex.: exercise.imagemAnalise) */
+  poseSrc?: string;
+  className?: string;
+}) {
   const imgs = getMuscleMapImages(slug);
   const ativos = (Object.keys(activation) as MuscleKey[])
     .filter((k) => (activation[k] ?? 0) > 0)
@@ -91,7 +123,13 @@ export function MuscleMap({ activation, slug, className }: { activation: Activat
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-2 items-start gap-3 lg:grid-cols-4">
+      <div
+        className={cn(
+          "grid grid-cols-2 items-stretch gap-3",
+          poseSrc ? "lg:grid-cols-[1.5fr_0.9fr_0.9fr_1.1fr_1.1fr]" : "lg:grid-cols-4",
+        )}
+      >
+        {poseSrc && <PoseFigure src={poseSrc} />}
         <Figure src={imgs?.front ?? FRONT_BASE} label="Frente" />
         <Figure src={imgs?.back ?? BACK_BASE} label="Costas" />
 

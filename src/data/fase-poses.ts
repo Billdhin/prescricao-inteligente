@@ -25,6 +25,12 @@ const SLUGS_COM_FASES = [
   "bicicleta-ergometrica",
   "eliptico",
   "sentar-levantar",
+  "ponte-gluteos",
+  "prancha-frontal",
+  "dead-bug",
+  "remada-elastica",
+  "panturrilha-em-pe",
+  "marcha-aquatica",
 ];
 
 export const fasePoses: Record<string, string[]> = Object.fromEntries(

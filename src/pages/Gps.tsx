@@ -27,6 +27,7 @@ import {
   RESTRICOES,
   EQUIPAMENTOS,
   PRIORIDADES,
+  adequacaoLabel,
   type GpsAnswers,
   type GpsPrioridade,
   type Recommendation,
@@ -1068,8 +1069,10 @@ function Results({
         <div className="p-6">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
             <div className="flex flex-col items-center">
-              <ScoreRing value={best.score} size={112} />
-              <span className="mt-1 text-xs font-semibold text-ink-2">{best.score}% match</span>
+              <ScoreRing value={best.score} size={112} label="de 100" />
+              <span className="mt-1 text-xs font-semibold text-ink-2">
+                Adequação: {adequacaoLabel(best.score)}
+              </span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -1091,6 +1094,13 @@ function Results({
                 <Link to={`/movement-lab/${best.exercise.slug}`} className={buttonClasses("outline", "sm")}>
                   Ver no Laboratório <ArrowRight className="h-4 w-4" />
                 </Link>
+                <button
+                  onClick={() => toggleCompare(best.exercise.slug)}
+                  className={buttonClasses(compare.includes(best.exercise.slug) ? "secondary" : "outline", "sm")}
+                >
+                  {compare.includes(best.exercise.slug) ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                  Comparar
+                </button>
               </div>
               {best.cautions.length > 0 && (
                 <ul className="mt-3 space-y-1">
@@ -1106,6 +1116,14 @@ function Results({
           </div>
         </div>
       </Card>
+
+      {/* O que a nota significa — evita a leitura errada de "% match" */}
+      <p className="text-xs leading-relaxed text-ink-3">
+        A <span className="font-semibold text-ink-2">nota de adequação (0–100)</span> mede o quanto cada
+        opção atende a <span className="font-semibold text-ink-2">este perfil</span> — objetivo, nível,
+        restrição e equipamentos. Notas próximas indicam alternativas igualmente válidas: o desempate
+        está nos critérios da <span className="font-semibold text-ink-2">justificativa</span>.
+      </p>
 
       {/* Outras opções */}
       <div>
@@ -1127,8 +1145,11 @@ function Results({
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="tabular font-display text-xl font-bold text-primary">{r.score}%</div>
-                    <div className="text-[10px] uppercase text-ink-3">match</div>
+                    <div className="tabular font-display text-xl font-bold text-primary">
+                      {r.score}
+                      <span className="text-xs font-semibold text-ink-3">/100</span>
+                    </div>
+                    <div className="text-[10px] uppercase text-ink-3">adequação</div>
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1160,7 +1181,7 @@ function Results({
         </div>
       </div>
 
-      <Comparador compare={compare} setCompare={setCompare} />
+      <Comparador compare={compare} setCompare={setCompare} candidatos={[best, ...others]} />
     </div>
   );
 }
@@ -1168,9 +1189,12 @@ function Results({
 function Comparador({
   compare,
   setCompare,
+  candidatos = [],
 }: {
   compare: string[];
   setCompare: React.Dispatch<React.SetStateAction<string[]>>;
+  /** recomendações da tela — o painel se basta: dá para escolher aqui mesmo */
+  candidatos?: Recommendation[];
 }) {
   const selected = compare
     .map((slug) => exercises.find((e) => e.slug === slug))
@@ -1192,12 +1216,50 @@ function Comparador({
         <h3 className="font-display text-base font-bold text-ink">Comparar lado a lado</h3>
         <span className="text-xs text-ink-3">{selected.length}/3 selecionados</span>
       </div>
-      <p className="mb-4 text-sm text-ink-2">
-        Selecione até 3 exercícios (botão “Comparar”) para ver os trade-offs.
+      <p className="mb-3 text-sm text-ink-2">
+        Escolha até 3 exercícios recomendados para ver os trade-offs lado a lado.
       </p>
+
+      {/* Seleção AQUI MESMO — o painel não depende de botões em outros cards */}
+      {candidatos.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          {candidatos.map((c) => {
+            const on = compare.includes(c.exercise.slug);
+            const full = !on && compare.length >= 3;
+            return (
+              <button
+                key={c.exercise.slug}
+                onClick={() =>
+                  setCompare((cur) =>
+                    cur.includes(c.exercise.slug)
+                      ? cur.filter((x) => x !== c.exercise.slug)
+                      : cur.length < 3
+                        ? [...cur, c.exercise.slug]
+                        : cur,
+                  )
+                }
+                disabled={full}
+                aria-pressed={on}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
+                  on
+                    ? "border-primary bg-primary-tint text-primary"
+                    : full
+                      ? "cursor-not-allowed border-border text-ink-3 opacity-50"
+                      : "border-border text-ink-2 hover:bg-surface-soft",
+                )}
+              >
+                {on ? <X className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+                {c.exercise.nome}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {selected.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-4 text-sm text-ink-3">
-          Nenhum exercício selecionado ainda.
+          Nenhum exercício selecionado ainda — toque numa opção acima para começar.
         </p>
       ) : (
         <>
@@ -1262,7 +1324,8 @@ function JustifyDialog({ rec, onClose }: { rec: Recommendation; onClose: () => v
           </button>
         </div>
         <p className="mb-3 text-sm text-ink-2">
-          Match de {rec.score}%. Como cada critério pesou no ranqueamento:
+          Adequação de {rec.score}/100 a este perfil ({adequacaoLabel(rec.score)}). Como cada
+          critério pesou no ranqueamento:
         </p>
         <ul className="space-y-2">
           {rec.breakdown.map((b) => {

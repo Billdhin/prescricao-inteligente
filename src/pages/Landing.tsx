@@ -539,7 +539,7 @@ function JustifyMock() {
           <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">Justificativa</div>
           <h3 className="font-display text-lg font-bold text-ink">Leg press 45°</h3>
         </div>
-        <Pill tone="success">82% match</Pill>
+        <Pill tone="success">adequação 82/100</Pill>
       </div>
       <p className="mb-3 text-sm text-ink-2">Como cada critério pesou no ranqueamento:</p>
       <ul className="space-y-2">

@@ -315,6 +315,15 @@ export const RESTRICOES: GpsRestricao[] = [
   "Mobilidade limitada",
 ];
 
+/** Rótulo qualitativo da nota de adequação (0–100) — evita o "match" em inglês e
+ *  dá significado ao número: notas próximas = alternativas igualmente válidas. */
+export function adequacaoLabel(score: number): string {
+  if (score >= 90) return "Excelente";
+  if (score >= 80) return "Muito boa";
+  if (score >= 70) return "Boa";
+  return "Parcial";
+}
+
 export const EQUIPAMENTOS = [
   "Máquina",
   "Barra",
@@ -322,5 +331,8 @@ export const EQUIPAMENTOS = [
   "Polia",
   "Peso corporal",
   "Elástico",
+  "Esteira",
+  "Bicicleta ergométrica",
+  "Elíptico",
   "Piscina",
 ] as const;

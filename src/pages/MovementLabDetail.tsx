@@ -13,6 +13,7 @@ import {
   Info,
   Lock,
   ArrowRight,
+  X,
 } from "lucide-react";
 import { Card, Pill, ScoreRing, StatBar, buttonClasses, type PillTone } from "@/components/ui/primitives";
 import { Tabs, Accordion } from "@/components/ui/disclosure";
@@ -28,6 +29,7 @@ import { ExecutionScene, AnalysisScene } from "@/data/scenes";
 import { getExercise, exercises } from "@/data/exercises";
 import type { Exercise, TrustLevel, HotspotCamadas } from "@/data/types";
 import { useUser, useFavorites, useProgress, isPremiumUnlocked } from "@/lib/store";
+import { useDialog } from "@/lib/useDialog";
 import { cn, withBase } from "@/lib/utils";
 
 const trustTone: Record<TrustLevel, PillTone> = {
@@ -38,11 +40,103 @@ const trustTone: Record<TrustLevel, PillTone> = {
   "depende do contexto": "neutral",
 };
 
-function TrustBadge({ level }: { level: TrustLevel }) {
+const TRUST_EXPLICACAO: Record<TrustLevel, string> = {
+  "princípio biomecânico":
+    "Informação sustentada por princípios de biomecânica bem estabelecidos na literatura — vale para a maioria das execuções corretas.",
+  "tendência prática":
+    "Padrão observado com frequência na prática e em estudos, mas que varia com técnica, antropometria e contexto do aluno.",
+  "regra pedagógica":
+    "Orientação de ensino/progressão: ajuda a aprender e organizar o treino, mais do que uma verdade fisiológica absoluta.",
+  "cuidado de segurança":
+    "Este exercício exige atenção a situações específicas. Reveja os cuidados abaixo antes de prescrever — e ajuste sempre ao caso.",
+  "depende do contexto":
+    "Não há resposta única: a decisão muda com objetivo, histórico e resposta individual do aluno.",
+};
+
+/** Selo de confiança CLICÁVEL: explica o nível e, com `ex`, lista os cuidados do exercício. */
+function TrustBadge({ level, ex }: { level: TrustLevel; ex?: Exercise }) {
+  const [open, setOpen] = React.useState(false);
   return (
-    <Pill tone={trustTone[level]} icon={<Info className="h-3 w-3" />}>
-      {level}
-    </Pill>
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        title="Ver detalhes"
+        className={cn("rounded-full transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary")}
+      >
+        <Pill tone={trustTone[level]} icon={<Info className="h-3 w-3" />}>
+          {level}
+        </Pill>
+      </button>
+      {open && <TrustDialog level={level} ex={ex} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+function TrustDialog({ level, ex, onClose }: { level: TrustLevel; ex?: Exercise; onClose: () => void }) {
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
+  const seguranca = level === "cuidado de segurança";
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Detalhes: ${level}`}
+        className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className={cn("grid h-8 w-8 place-items-center rounded-lg", seguranca ? "bg-[#fef4e2] text-warning" : "bg-primary-tint text-primary")}>
+              {seguranca ? <ShieldAlert className="h-4 w-4" /> : <Info className="h-4 w-4" />}
+            </span>
+            <h2 className="font-display text-lg font-bold capitalize text-ink">{level}</h2>
+          </div>
+          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <p className="text-sm leading-relaxed text-ink-2">{TRUST_EXPLICACAO[level]}</p>
+
+        {ex && (
+          <div className="mt-4 space-y-4">
+            <div>
+              <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[color:var(--cta-text)]">
+                <ShieldAlert className="h-3.5 w-3.5" /> Quando evitar — {ex.nome}
+              </div>
+              <ul className="space-y-1.5">
+                {ex.blocos.quandoEvitar.map((c) => (
+                  <li key={c} className="flex gap-2 text-sm text-ink">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cta" />
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-warning">
+                <AlertTriangle className="h-3.5 w-3.5" /> Erros comuns que exigem atenção
+              </div>
+              <ul className="space-y-1.5">
+                {ex.blocos.errosComuns.map((c) => (
+                  <li key={c} className="flex gap-2 text-sm text-ink">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
+                    {c}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <p className="rounded-xl bg-surface-soft p-3 text-xs leading-relaxed text-ink-2">
+              Conteúdo educacional — a decisão final é do profissional habilitado, considerando a
+              avaliação individual do aluno.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -164,7 +258,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
         <Card variant="raised" className="p-6">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-xl font-bold text-ink">Índice de Eficiência</h2>
-            <TrustBadge level={exercise.trustLevel} />
+            <TrustBadge level={exercise.trustLevel} ex={exercise} />
           </div>
           <div className="mt-4 flex items-center gap-5">
             <ScoreRing value={exercise.indiceEficiencia.score} size={112} />
@@ -243,7 +337,11 @@ function Detail({ exercise }: { exercise: Exercise }) {
                       Ênfase relativa entre músculos, sintetizada da literatura de EMG e biomecânica
                       (fontes abaixo) — não é medição do aluno.
                     </p>
-                    <MuscleMap activation={activationFromExercise(exercise)} slug={exercise.slug} />
+                    <MuscleMap
+                      activation={activationFromExercise(exercise)}
+                      slug={exercise.slug}
+                      poseSrc={exercise.imagemAnalise}
+                    />
                   </div>
                   <BaseCientifica slug={exercise.slug} contexto="ativacao" />
                 </div>
@@ -259,8 +357,8 @@ function Detail({ exercise }: { exercise: Exercise }) {
                 </div>
               ),
             },
-            { id: "erros", label: "Erros comuns", content: <Bullets items={exercise.blocos.errosComuns} trust="cuidado de segurança" tone="warning" /> },
-            { id: "var", label: "Variações", content: <Bullets items={exercise.blocos.variacoes} trust="regra pedagógica" tone="primary" /> },
+            { id: "erros", label: "Erros comuns", content: <Bullets items={exercise.blocos.errosComuns} trust="cuidado de segurança" tone="warning" ex={exercise} /> },
+            { id: "var", label: "Variações", content: <Bullets items={exercise.blocos.variacoes} trust="regra pedagógica" tone="primary" ex={exercise} /> },
             { id: "pres", label: "Prescrição prática", content: <Concept text={exercise.conteudo.prescricaoPratica} ex={exercise} trust="depende do contexto" /> },
             { id: "comp", label: "Comparar", content: <Comparador exercise={exercise} /> },
           ]}
@@ -433,7 +531,7 @@ function Concept({
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <p className="max-w-3xl text-ink">{text}</p>
-        <TrustBadge level={trust} />
+        <TrustBadge level={trust} ex={ex} />
       </div>
       {showHotspots && ex.hotspots.length > 0 && (
         <>
@@ -471,15 +569,17 @@ function Bullets({
   items,
   trust,
   tone,
+  ex,
 }: {
   items: string[];
   trust: TrustLevel;
   tone: "warning" | "primary";
+  ex?: Exercise;
 }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <TrustBadge level={trust} />
+        <TrustBadge level={trust} ex={ex} />
       </div>
       <ul className="grid gap-2 md:grid-cols-2">
         {items.map((it) => (
