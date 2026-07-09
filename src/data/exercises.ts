@@ -1,5 +1,6 @@
 import type { Exercise } from "./types";
 import { extraExercises } from "./exercises-extra";
+import { extraExercises2 } from "./exercises-extra2";
 
 export const exercises: Exercise[] = [
   /* ------------------------------- LEG PRESS ------------------------------ */
@@ -323,8 +324,8 @@ export const exercises: Exercise[] = [
     resumoPratico:
       "Isolamento de quadríceps guiado, em geral útil para volume localizado e para retorno progressivo com baixa demanda técnica.",
     ativacao: [
-      { musculo: "Quadríceps", percentual: 94, papel: "primário" },
-      { musculo: "Reto femoral", percentual: 70, papel: "sinergista" },
+      { musculo: "Vastos do quadríceps", percentual: 94, papel: "primário" },
+      { musculo: "Reto femoral", percentual: 62, papel: "sinergista" },
     ],
     indiceEficiencia: {
       score: 70,
@@ -368,7 +369,7 @@ export const exercises: Exercise[] = [
     conteudo: {
       visaoGeral: "Exercício de isolamento do quadríceps em máquina, com trajetória guiada.",
       biomecanica:
-        "Extensão de joelho em cadeia cinética aberta, isolando o quadríceps (incluindo o reto femoral) sem participação relevante do quadril. O braço de resistência é máximo perto da extensão terminal, onde cresce a força femoropatelar. Por isso, a amplitude é ajustada ao conforto articular do aluno.",
+        "Extensão de joelho em cadeia cinética aberta, com os vastos como principais extensores. Na posição sentada, o quadril fica flexionado e encurta o reto femoral (músculo biarticular), reduzindo sua contribuição para a extensão do joelho em relação aos vastos. O braço de resistência é máximo perto da extensão terminal, onde cresce a força femoropatelar; por isso, a amplitude é ajustada ao conforto articular do aluno.",
       fisiologia:
         "Isola o quadríceps para volume localizado e reforço específico (ex.: reabilitação de joelho conduzida), com baixo custo coordenativo. Transfere menos para padrões funcionais que a cadeia fechada, como o leg press (Escamilla et al., 1998).",
       prescricaoPratica: "Em geral, ajuste amplitude ao conforto e controle a fase excêntrica.",
@@ -989,6 +990,7 @@ export const exercises: Exercise[] = [
     temCena: false,
   },
   ...extraExercises,
+  ...extraExercises2,
 ];
 
 export function getExercise(slug: string) {

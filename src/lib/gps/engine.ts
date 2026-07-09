@@ -56,6 +56,8 @@ export interface Recommendation {
   /** nota sem arredondar — usada só para ordenar/desempatar */
   scoreExato: number;
   equipDisponivel: boolean;
+  /** o exercício trabalha o grupo-alvo pedido (ou é de corpo todo que o cobre)? */
+  grupoCompativel: boolean;
   breakdown: CriterioRacional[];
   cautions: string[];
   reasons: string[];
@@ -180,8 +182,8 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
   });
   if (diff === 0 && complexPenalty === 0) reasons.push(`Nível ${ex.nivel}`);
 
-  // 4) Equipamento
-  const equipOk = ans.equipamentos.includes(ex.equipamento);
+  // 4) Equipamento — o próprio corpo está sempre disponível (todo aluno o tem)
+  const equipOk = ex.equipamento === "Peso corporal" || ans.equipamentos.includes(ex.equipamento);
   const equipPts = (equipOk ? 1 : 0) * W_EQUIP;
   breakdown.push({
     criterio: "Equipamento",
@@ -204,17 +206,22 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
       "Mobilidade limitada": { metric: "Requisito de mobilidade", label: "mobilidade" },
     };
     const cfg = map[ans.restricao];
-    const val = metricValue(ex, cfg.metric) ?? 30;
-    if (val >= 60) {
+    const val = metricValue(ex, cfg.metric);
+    if (val === undefined) {
+      // Sem dado declarado: não inventa "30/100" nem elogia. Trata com cautela neutra.
+      restRatio = 0.7;
+      restDetalhe = `Sem dado declarado de ${cfg.label} para este exercício. Avalie a execução caso a caso.`;
+      cautions.push(`Falta dado de ${cfg.label}: confirme a tolerância do aluno antes de progredir.`);
+    } else if (val >= 60) {
       restRatio = 0.15;
-      restDetalhe = `Alta demanda em ${cfg.label} (${val}/100) — penalizado por "${ans.restricao}".`;
-      cautions.push(`Demanda relevante para ${cfg.label} — avalie caso a caso.`);
+      restDetalhe = `Alta demanda em ${cfg.label} (${val}/100), penalizado por "${ans.restricao}".`;
+      cautions.push(`Demanda relevante para ${cfg.label}: avalie caso a caso.`);
     } else if (val >= 40) {
       restRatio = 0.55;
-      restDetalhe = `Demanda moderada em ${cfg.label} (${val}/100) — cautela recomendada.`;
-      cautions.push(`Demanda moderada para ${cfg.label} — progressão gradual.`);
+      restDetalhe = `Demanda moderada em ${cfg.label} (${val}/100), cautela recomendada.`;
+      cautions.push(`Demanda moderada para ${cfg.label}: progressão gradual.`);
     } else {
-      restDetalhe = `Baixa demanda em ${cfg.label} (${val}/100) — favorece "${ans.restricao}".`;
+      restDetalhe = `Baixa demanda em ${cfg.label} (${val}/100), favorece "${ans.restricao}".`;
       reasons.push(`Baixa demanda em ${cfg.label}`);
     }
   }
@@ -269,11 +276,14 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
   });
 
   if (!equipOk) score = Math.min(score, 65);
+  // grupo incompatível (ratio mínimo 0.1): não pode parecer "Boa" adequação para o alvo pedido.
+  const grupoCompativel = grupoRatio >= 0.55;
+  if (!grupoCompativel) score = Math.min(score, 55);
 
   const raw = Math.max(0, Math.min(100, score));
   const clamped = Math.round(raw);
 
-  return { exercise: ex, score: clamped, scoreExato: raw, equipDisponivel: equipOk, breakdown, cautions, reasons };
+  return { exercise: ex, score: clamped, scoreExato: raw, equipDisponivel: equipOk, grupoCompativel, breakdown, cautions, reasons };
 }
 
 export function rankExercises(pool: Exercise[], ans: GpsAnswers, rule?: GroupRuleInput): Recommendation[] {

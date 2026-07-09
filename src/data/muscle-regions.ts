@@ -69,7 +69,7 @@ export const muscleRegions: Record<string, MuscleRegion[]> = {
   // coxa). Reto femoral é parte do quadríceps no mesmo ponto → card (evita 2
   // rótulos sobre o mesmo local).
   "cadeira-extensora": [
-    { musculo: "Quadríceps", rotularNoCorpo: true, shapes: [{ cx: 55, cy: 62, rx: 12, ry: 5.5, rot: -8 }] },
+    { musculo: "Vastos do quadríceps", rotularNoCorpo: true, shapes: [{ cx: 55, cy: 62, rx: 12, ry: 5.5, rot: -8 }] },
     { musculo: "Reto femoral", shapes: [{ cx: 56, cy: 57, rx: 10, ry: 3, rot: -8 }] },
   ],
 

@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
+import { Toasts } from "@/components/app/Toasts";
 import { buttonClasses } from "@/components/ui/primitives";
 import { specialGroups } from "@/data/specialGroups";
 import { OBJETIVOS } from "@/lib/gps/engine";
@@ -153,6 +154,7 @@ export function AppLayout() {
         </div>
       </div>
       {onboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
+      <Toasts />
     </div>
   );
 }

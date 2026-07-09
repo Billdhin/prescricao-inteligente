@@ -61,6 +61,7 @@ import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
 import type { ProntuarioSnapshot } from "@/data/alunos";
 import { marcarAtivacao } from "@/lib/ativacao";
+import { descricaoOpcao } from "@/data/opcoes-wizard";
 import { useDialog } from "@/lib/useDialog";
 import { cn, withBase } from "@/lib/utils";
 import { FileDown, FileText, Lock as LockIcon } from "lucide-react";
@@ -840,6 +841,7 @@ function Choices({
     <div role="radiogroup" aria-label={ariaLabel} onKeyDown={onKeyDown} className="grid gap-3 sm:grid-cols-2">
       {options.map((o, idx) => {
         const selected = o === value;
+        const desc = descricaoOpcao(o);
         return (
           <button
             key={o}
@@ -849,7 +851,7 @@ function Choices({
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(o)}
             className={cn(
-              "flex items-center gap-3 rounded-control border px-4 py-3.5 text-left text-sm font-medium transition-colors",
+              "flex items-start gap-3 rounded-control border px-4 py-3.5 text-left text-sm font-medium transition-colors",
               selected
                 ? "border-primary bg-primary-tint text-primary"
                 : "border-border bg-surface text-ink hover:bg-surface-soft",
@@ -857,13 +859,20 @@ function Choices({
           >
             <span
               className={cn(
-                "grid h-4 w-4 shrink-0 place-items-center rounded-full border-2",
+                "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border-2",
                 selected ? "border-primary bg-primary text-white" : "border-ink-3",
               )}
             >
               {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
             </span>
-            {o}
+            <span className="min-w-0">
+              {o}
+              {desc && (
+                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-primary/80" : "text-ink-3")}>
+                  {desc}
+                </span>
+              )}
+            </span>
           </button>
         );
       })}
@@ -886,13 +895,14 @@ function MultiChoices({
     <div role="group" aria-label={ariaLabel} className="grid gap-3 sm:grid-cols-2">
       {options.map((o) => {
         const selected = values.includes(o);
+        const desc = descricaoOpcao(o);
         return (
           <button
             key={o}
             aria-pressed={selected}
             onClick={() => onToggle(o)}
             className={cn(
-              "flex items-center gap-3 rounded-control border px-4 py-3.5 text-left text-sm font-medium transition-colors",
+              "flex items-start gap-3 rounded-control border px-4 py-3.5 text-left text-sm font-medium transition-colors",
               selected
                 ? "border-primary bg-primary-tint text-primary"
                 : "border-border bg-surface text-ink hover:bg-surface-soft",
@@ -900,13 +910,20 @@ function MultiChoices({
           >
             <span
               className={cn(
-                "grid h-5 w-5 shrink-0 place-items-center rounded-md border-2",
+                "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2",
                 selected ? "border-primary bg-primary text-white" : "border-ink-3",
               )}
             >
               {selected && <Check className="h-3.5 w-3.5" />}
             </span>
-            {o}
+            <span className="min-w-0">
+              {o}
+              {desc && (
+                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-primary/80" : "text-ink-3")}>
+                  {desc}
+                </span>
+              )}
+            </span>
           </button>
         );
       })}

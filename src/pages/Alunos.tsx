@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Users, UserPlus, Search, ArrowRight, X, Crown, Lock } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader } from "@/components/ui/primitives";
 import {
@@ -12,6 +12,7 @@ import {
 import { OBJETIVOS, RESTRICOES, EQUIPAMENTOS, type GpsObjetivo, type GpsRestricao } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
 import { iniciaisDe, type Aluno } from "@/data/alunos";
+import { descricaoOpcao } from "@/data/opcoes-wizard";
 import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ export function Alunos() {
   const { alunos, addAluno, loadExamples } = useAlunos();
   const plan = useUser((s) => s.plan);
   const premium = isPremiumUnlocked(plan);
+  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [q, setQ] = React.useState("");
   const [novo, setNovo] = React.useState(params.get("novo") === "1");
@@ -135,6 +137,8 @@ export function Alunos() {
           onCreate={(a) => {
             addAluno(a);
             setNovo(false);
+            // abre direto o perfil do aluno recém-criado (pedido do Filipe)
+            navigate(`/alunos/${a.id}`, { state: { recemCriado: true } });
           }}
         />
       )}
@@ -310,11 +314,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  const desc = typeof children === "string" ? descricaoOpcao(children) : undefined;
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      title={desc}
       className={cn(
         "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
         active ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-ink-2 hover:bg-surface-soft",

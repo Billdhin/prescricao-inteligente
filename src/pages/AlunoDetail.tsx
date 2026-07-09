@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -44,6 +44,8 @@ export function AlunoDetail() {
   const premium = isPremiumUnlocked(plan);
   const [avaliar, setAvaliar] = React.useState(false);
   const [prontuarioDe, setProntuarioDe] = React.useState<string | null>(null);
+  const location = useLocation();
+  const recemCriado = Boolean((location.state as { recemCriado?: boolean } | null)?.recemCriado);
 
   const aluno = alunos.find((a) => a.id === id);
   if (!aluno) {
@@ -69,6 +71,26 @@ export function AlunoDetail() {
       <Link to="/alunos" className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink">
         <ArrowLeft className="h-4 w-4" /> Alunos
       </Link>
+
+      {recemCriado && (
+        <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-success">
+            <CalendarPlus className="h-4 w-4" />
+          </span>
+          <p className="min-w-0 flex-1 text-sm text-ink">
+            <span className="font-semibold">{aluno.nome} cadastrado(a).</span> Próximo passo: registre a
+            primeira avaliação para acompanhar a evolução, ou já prescreva o treino.
+          </p>
+          <div className="flex gap-2">
+            <button onClick={() => setAvaliar(true)} className={buttonClasses("secondary", "sm")}>
+              Registrar avaliação
+            </button>
+            <Link to={`/gps?aluno=${aluno.id}`} className={buttonClasses("primary", "sm")}>
+              Prescrever agora
+            </Link>
+          </div>
+        </Card>
+      )}
 
       {/* Cabeçalho */}
       <Card className="p-5 md:p-6">
