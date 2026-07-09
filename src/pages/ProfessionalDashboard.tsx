@@ -176,7 +176,7 @@ export function ProfessionalDashboard() {
       <ProTools premium={premium} />
 
       <p className="pt-2 text-xs text-ink-3">
-        Conteúdo educacional e de apoio à decisão — não substitui avaliação profissional
+        Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional
         individualizada nem prescrição clínica.
       </p>
     </div>
@@ -206,7 +206,7 @@ function CelebracaoPrimeiroCaso() {
         <span className="font-semibold text-ink">
           Primeiro caso real resolvido{min ? ` em ${min} min` : ""}.
         </span>{" "}
-        A decisão ficou documentada no prontuário do aluno — é assim que cada caso vira defesa
+        A decisão ficou documentada no prontuário do aluno; é assim que cada caso vira defesa
         técnica sua.
       </p>
       <button onClick={fechar} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">

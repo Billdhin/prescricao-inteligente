@@ -21,7 +21,7 @@ export function Pricing() {
         </Pill>
         <h1 className="font-display text-4xl font-extrabold text-ink">Comece grátis, evolua quando quiser.</h1>
         <p className="mx-auto mt-3 max-w-xl text-ink-2">
-          Teste o Profissional por <strong className="text-ink">14 dias, sem cartão</strong> —
+          Teste o Profissional por <strong className="text-ink">14 dias, sem cartão</strong>:
           resolva um caso real e veja o prontuário pronto antes de decidir.
         </p>
 
@@ -42,7 +42,7 @@ export function Pricing() {
             destaque
             nome="Profissional"
             preco="R$ 59"
-            desc="O Motor RCD completo — decisão documentada e assinável."
+            desc="O Motor RCD completo: decisão documentada e assinável."
             items={[
               "Prontuário de Decisão exportável e assinável (PDF)",
               "Semáforo de Liberação para todos os grupos",
@@ -61,7 +61,7 @@ export function Pricing() {
         </p>
 
         <p className="mt-8 text-xs text-ink-3">
-          Conteúdo educacional de apoio à decisão do profissional habilitado — não substitui
+          Conteúdo educacional de apoio à decisão do profissional habilitado; não substitui
           avaliação profissional individualizada.
         </p>
       </div>

@@ -124,7 +124,7 @@ export function SpecialGroupDetail() {
                 <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
                   <Sparkles className="h-5 w-5" />
                 </span>
-                <h2 className="font-display text-lg font-bold text-ink">Prévia da jornada — Fase 1</h2>
+                <h2 className="font-display text-lg font-bold text-ink">Prévia da jornada: Fase 1</h2>
                 <Pill tone="neutral">amostra grátis</Pill>
               </div>
               <FaseCard fase={g.fases[0]} />
@@ -143,7 +143,7 @@ export function SpecialGroupDetail() {
 
           {/* -------- Modalidades indicadas (visual) -------- */}
           <div>
-            <TituloBloco icon={<Dumbbell className="h-5 w-5" />} texto="Por onde treinar — modalidades indicadas" />
+            <TituloBloco icon={<Dumbbell className="h-5 w-5" />} texto="Por onde treinar: modalidades indicadas" />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {g.modalidadesIndicadas.map((id) => (
                 <VisualModalidadeCard key={id} id={id} />
@@ -163,7 +163,7 @@ export function SpecialGroupDetail() {
                 },
                 {
                   id: "parametros",
-                  title: "Parâmetros — quando usar e como interpretar",
+                  title: "Parâmetros: quando usar e como interpretar",
                   content: (
                     <div className="grid gap-4 md:grid-cols-2">
                       {g.parametros.map((id) => (

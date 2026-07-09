@@ -56,7 +56,7 @@ export function Protocolos() {
   const plan = useUser((s) => s.plan);
   const premium = isPremiumUnlocked(plan);
   const { alunos, prescricoes } = useAlunos();
-  const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "—";
+  const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "–";
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -64,7 +64,7 @@ export function Protocolos() {
         eyebrow="Exclusivo Profissional"
         icon={<Crown className="h-3 w-3" />}
         title="Protocolos"
-        subtitle="Modelos de prescrição por objetivo, prontos para aplicar a um aluno — e o histórico das suas prescrições."
+        subtitle="Modelos de prescrição por objetivo, prontos para aplicar a um aluno, e o histórico das suas prescrições."
         right={
           premium ? (
             <Pill tone="success">Ativo no seu plano</Pill>

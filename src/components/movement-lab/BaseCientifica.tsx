@@ -24,8 +24,8 @@ export function BaseCientifica({
 
   const nota =
     contexto === "indice"
-      ? "O Índice de Eficiência e as barras de demanda são estimativas relativas, sintetizadas da literatura de EMG e biomecânica abaixo para comparar exercícios — não são medições do seu aluno. Ajuste ao caso e à diretriz vigente."
-      : "Os percentuais de contribuição muscular são de ativação relativa ESTIMADA, sintetizada da literatura de EMG e biomecânica abaixo — servem para comparar a ênfase entre exercícios, não são medições do seu aluno.";
+      ? "O Índice de Eficiência e as barras de demanda são estimativas relativas, sintetizadas da literatura de EMG e biomecânica abaixo para comparar exercícios; não são medições do seu aluno. Ajuste ao caso e à diretriz vigente."
+      : "Os percentuais de contribuição muscular são de ativação relativa ESTIMADA, sintetizada da literatura de EMG e biomecânica abaixo; servem para comparar a ênfase entre exercícios, não são medições do seu aluno.";
 
   return (
     <section className={cn("rounded-xl border border-border bg-surface-soft p-4", className)}>

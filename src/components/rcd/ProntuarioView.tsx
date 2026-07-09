@@ -94,7 +94,7 @@ export function ProntuarioView({
           {prontuario.cuidadosGrupo && (
             <section>
               <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-analysis">
-                Cuidados do grupo considerados — {prontuario.cuidadosGrupo.nome}
+                Cuidados do grupo considerados: {prontuario.cuidadosGrupo.nome}
               </h4>
               <ul className="space-y-1 text-sm text-ink-2">
                 {prontuario.cuidadosGrupo.cuidados.map((c) => (
@@ -110,12 +110,12 @@ export function ProntuarioView({
           {prontuario.modalidades && prontuario.modalidades.length > 0 && (
             <section>
               <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-analysis">
-                Base da semana — modalidades
+                Base da semana: modalidades
               </h4>
               <ul className="space-y-1 text-sm text-ink-2">
                 {prontuario.modalidades.map((m) => (
                   <li key={m.id}>
-                    <span className="font-semibold text-ink">{m.nome}</span> — {m.motivo}
+                    <span className="font-semibold text-ink">{m.nome}</span>: {m.motivo}
                   </li>
                 ))}
               </ul>
@@ -124,7 +124,7 @@ export function ProntuarioView({
 
           <section>
             <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-analysis">
-              Escolhidos — com o porquê de cada critério
+              Escolhidos: com o porquê de cada critério
             </h4>
             <div className="space-y-3">
               {prontuario.escolhidos.map((e, i) => (
@@ -166,7 +166,7 @@ export function ProntuarioView({
           {prontuario.descartados.length > 0 && (
             <section>
               <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-analysis">
-                Considerados e descartados — e por quê
+                Considerados e descartados, e por quê
               </h4>
               <div className="overflow-hidden rounded-xl border border-border">
                 {prontuario.descartados.map((d, i) => (
@@ -213,7 +213,7 @@ export function ProntuarioView({
 
           <p className="border-t border-border pt-3 text-xs text-ink-3">
             Registro de apoio à decisão ({prontuario.motorVersao}). O profissional habilitado é o
-            responsável pela decisão — este documento existe para fundamentá-la e protegê-la.
+            responsável pela decisão; este documento existe para fundamentá-la e protegê-la.
           </p>
         </div>
 
@@ -226,7 +226,7 @@ export function ProntuarioView({
               </button>
             ) : (
               <Link to="/pricing" className={buttonClasses("secondary", "sm")}>
-                <Lock className="h-3.5 w-3.5" /> PDF assinável — plano Profissional
+                <Lock className="h-3.5 w-3.5" /> PDF assinável: plano Profissional
               </Link>
             ))}
           <button onClick={onClose} className={buttonClasses("ghost", "sm")}>

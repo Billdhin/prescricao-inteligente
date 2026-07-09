@@ -10,7 +10,7 @@ const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
 
 export function Avaliacoes() {
   const { alunos, avaliacoes } = useAlunos();
-  const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "—";
+  const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "–";
   const iniciais = (id: string) => alunos.find((a) => a.id === id)?.iniciais ?? "?";
 
   const aReavaliar = alunos

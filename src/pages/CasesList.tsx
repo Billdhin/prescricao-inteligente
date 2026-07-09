@@ -34,7 +34,7 @@ export function CasesList() {
           </Pill>
           <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Casos práticos</h1>
           <p className="mt-2 max-w-2xl text-ink-2">
-            Escolha uma alternativa e receba feedback do raciocínio — o que funciona, qual critério
+            Escolha uma alternativa e receba feedback do raciocínio: o que funciona, qual critério
             foi ignorado e o que levar para a próxima situação.
           </p>
         </div>

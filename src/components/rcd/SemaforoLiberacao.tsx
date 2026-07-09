@@ -102,7 +102,7 @@ export function SemaforoLiberacao({
       </div>
       <p className="mb-4 text-sm text-ink-2">
         {grupo.nome}
-        {alunoNome ? ` · ${alunoNome}` : ""} — responda em ~30s e saiba se a sessão de hoje está
+        {alunoNome ? ` · ${alunoNome}` : ""}: responda em ~30s e saiba se a sessão de hoje está
         liberada, e por quê.
       </p>
 
@@ -168,11 +168,11 @@ export function SemaforoLiberacao({
               </div>
               <p className="text-xs text-ink-2">
                 {resultado.cor === "verde" &&
-                  "Nenhum sinal de alerta nos itens verificados — registre e siga para a sessão."}
+                  "Nenhum sinal de alerta nos itens verificados; registre e siga para a sessão."}
                 {resultado.cor === "amarelo" &&
-                  "A sessão pode acontecer COM os ajustes abaixo — registre o racional."}
+                  "A sessão pode acontecer COM os ajustes abaixo; registre o racional."}
                 {resultado.cor === "vermelho" &&
-                  "Hoje não é dia de treinar — os motivos abaixo pedem reavaliação e, se persistirem, encaminhamento."}
+                  "Hoje não é dia de treinar: os motivos abaixo pedem reavaliação e, se persistirem, encaminhamento."}
               </p>
             </div>
           </div>
@@ -193,7 +193,7 @@ export function SemaforoLiberacao({
 
           <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3">
             {registrado ? (
-              <Pill tone="success">Registrado no histórico — entra no prontuário</Pill>
+              <Pill tone="success">Registrado no histórico, entra no prontuário</Pill>
             ) : (
               <button onClick={registrar} className={buttonClasses("primary", "sm")}>
                 <Save className="h-4 w-4" /> Registrar liberação
@@ -214,7 +214,7 @@ export function SemaforoLiberacao({
 
       <p className="mt-4 text-xs text-ink-3">
         {AVISO_SEGURANCA} A decisão de liberar, ajustar ou adiar a sessão é sempre do profissional
-        habilitado — o semáforo documenta o racional dessa decisão.
+        habilitado; o semáforo documenta o racional dessa decisão.
       </p>
     </Card>
   );

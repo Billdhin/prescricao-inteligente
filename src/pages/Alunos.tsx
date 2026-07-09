@@ -151,7 +151,7 @@ function EmptyAlunos({ onNovo, onExemplos }: { onNovo: () => void; onExemplos: (
       <div>
         <h2 className="font-display text-xl font-bold text-ink">Comece pelo seu primeiro aluno</h2>
         <p className="mx-auto mt-1 max-w-md text-ink-2">
-          Cadastre um aluno para avaliar, prescrever com justificativa e acompanhar a evolução — cada
+          Cadastre um aluno para avaliar, prescrever com justificativa e acompanhar a evolução: cada
           decisão com o raciocínio científico por trás.
         </p>
       </div>
@@ -164,7 +164,7 @@ function EmptyAlunos({ onNovo, onExemplos }: { onNovo: () => void; onExemplos: (
         </button>
       </div>
       <p className="text-xs text-ink-3">
-        Os exemplos são dados de demonstração — você pode removê-los depois.
+        Os exemplos são dados de demonstração; você pode removê-los depois.
       </p>
     </Card>
   );

@@ -10,7 +10,7 @@ import { getSpecialGroup } from "@/data/specialGroups";
 /** /casos-rcd — biblioteca pública de casos documentados (prova de mecanismo). */
 export function CasosRcd() {
   React.useEffect(() => {
-    document.title = "Casos documentados pelo Motor RCD — Prescrição Inteligente";
+    document.title = "Casos documentados pelo Motor RCD | Prescrição Inteligente";
   }, []);
 
   return (
@@ -29,14 +29,14 @@ export function CasosRcd() {
       <div className="mx-auto max-w-4xl px-4 py-14 md:px-6">
         <div className="text-center">
           <Pill tone="primary" icon={<FileSearch className="h-3 w-3" />} className="mb-3">
-            Biblioteca pública — sem cadastro
+            Biblioteca pública, sem cadastro
           </Pill>
           <h1 className="font-display text-3xl font-extrabold text-ink md:text-4xl">
             Veja o Motor RCD decidir casos reais
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-ink-2">
             Não são exemplos escritos à mão: cada página abaixo roda o mesmo motor de raciocínio
-            do produto, ao vivo — escolhas, descartes e o porquê de cada um.
+            do produto, ao vivo: escolhas, descartes e o porquê de cada um.
           </p>
           <div className="mt-4 flex justify-center">
             <SeloRCD />
@@ -67,7 +67,7 @@ export function CasosRcd() {
         </div>
 
         <p className="mt-10 text-center text-xs text-ink-3">
-          Conteúdo educacional de apoio à decisão do profissional habilitado (CREF) — casos
+          Conteúdo educacional de apoio à decisão do profissional habilitado (CREF): casos
           ilustrativos; a decisão em cada atendimento real é sempre do profissional.
         </p>
       </div>

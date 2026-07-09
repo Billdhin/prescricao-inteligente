@@ -121,7 +121,7 @@ export function FaseFigure({
       )}
       {musculo && (
         <figcaption className="mt-1.5 text-center text-[11px] text-ink-3">
-          Músculo-alvo: <span className="font-medium text-ink-2">{musculo}</span> — {c.acao}
+          Músculo-alvo: <span className="font-medium text-ink-2">{musculo}</span>, {c.acao}
         </figcaption>
       )}
     </figure>

@@ -306,7 +306,7 @@ export function AlunoDetail() {
                           to="/pricing"
                           className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-3 hover:text-ink"
                         >
-                          <Lock className="h-3.5 w-3.5" /> Exportar PDF para o aluno — plano Profissional
+                          <Lock className="h-3.5 w-3.5" /> Exportar PDF para o aluno: plano Profissional
                         </Link>
                       )}
                     </div>

@@ -301,7 +301,7 @@ export function Gps() {
           </div>
           <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Prescrever</h1>
           <p className="mt-2 max-w-2xl text-ink-2">
-            Diga para quem e receba exercícios ranqueados — cada decisão documentada com o porquê.
+            Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -329,7 +329,7 @@ export function Gps() {
           <p className="min-w-0 flex-1 text-sm text-ink-2">
             <span className="font-semibold text-ink">Seu primeiro caso real.</span> Confirme o
             perfil abaixo (ou pule direto), veja as recomendações documentadas e abra o
-            prontuário da decisão — em menos de 10 minutos.
+            prontuário da decisão, em menos de 10 minutos.
           </p>
         </Card>
       )}
@@ -409,7 +409,7 @@ export function Gps() {
       )}
 
       <p className="pt-2 text-xs text-ink-3">
-        Conteúdo educacional — não substitui avaliação profissional individualizada nem prescrição
+        Conteúdo educacional; não substitui avaliação profissional individualizada nem prescrição
         clínica.
       </p>
     </div>
@@ -492,7 +492,7 @@ function ContextoCard({
         <label className="block">
           <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno</span>
           <select value={alunoId} onChange={(e) => onAluno(e.target.value)} className="input">
-            <option value="">— Prescrição geral (sem aluno) —</option>
+            <option value="">Prescrição geral (sem aluno)</option>
             {alunos.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.nome}
@@ -503,7 +503,7 @@ function ContextoCard({
         <label className="block">
           <span className="mb-1.5 block text-sm font-semibold text-ink">Grupo / condição</span>
           <select value={grupoSlug} onChange={(e) => setGrupoSlug(e.target.value)} className="input">
-            <option value="">— Nenhum (geral) —</option>
+            <option value="">Nenhum (geral)</option>
             {specialGroups.map((g) => (
               <option key={g.slug} value={g.slug}>
                 {g.nome}
@@ -602,7 +602,7 @@ function FocoAgora({
         <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
           <Activity className="h-3.5 w-3.5" /> Monitore principalmente
           <span className="font-normal normal-case tracking-normal text-ink-3">
-            — toque num parâmetro para ver como aplicar
+            toque num parâmetro para ver como aplicar
           </span>
         </div>
         <ParametroPills ids={faseObj.parametros} contexto={contexto} />
@@ -613,7 +613,7 @@ function FocoAgora({
           to={`/semaforo?grupo=${grupo.slug}${contexto?.alunoId ? `&aluno=${contexto.alunoId}` : ""}`}
           className={buttonClasses("secondary", "sm")}
         >
-          <ShieldAlert className="h-4 w-4" /> Semáforo de hoje — libere a sessão em 30s
+          <ShieldAlert className="h-4 w-4" /> Semáforo de hoje: libere a sessão em 30s
         </Link>
       </div>
 
@@ -683,7 +683,7 @@ function Wizard({
       </h2>
       <p className="mt-1 text-sm text-ink-2">
         {aluno
-          ? `Perfil pré-preenchido a partir de ${aluno.nome} — ajuste se precisar.`
+          ? `Perfil pré-preenchido a partir de ${aluno.nome}; ajuste se precisar.`
           : "Escolhas educacionais para treinar sua decisão."}
       </p>
 
@@ -966,7 +966,7 @@ function Results({
             <div className="min-w-0">
               <div className="font-semibold text-ink">Prescrição para {alunoNome}</div>
               <p className="text-sm text-ink-2">
-                Salve no perfil ou entregue ao aluno em PDF com sua marca — com a justificativa.
+                Salve no perfil ou entregue ao aluno em PDF com sua marca, com a justificativa.
               </p>
             </div>
             <div className="ml-auto flex flex-wrap gap-2">
@@ -1023,14 +1023,14 @@ function Results({
         <Card variant="raised" className="overflow-hidden">
           <div className="bg-analysis px-5 py-2 text-xs font-bold uppercase tracking-wider text-white">
             <span className="inline-flex items-center gap-1">
-              <HeartPulse className="h-3.5 w-3.5" /> Base da semana — modalidades
+              <HeartPulse className="h-3.5 w-3.5" /> Base da semana: modalidades
             </span>
           </div>
           <div className="p-5">
             <p className="mb-4 text-sm text-ink-2">
               {grupoNome
-                ? `Neste perfil (${grupoNome}${faseNum ? `, fase ${faseNum}` : ""}), as modalidades abaixo são a base — os exercícios de força entram como complemento.`
-                : "Para emagrecimento, a base da semana é o volume nas modalidades abaixo — os exercícios de força entram como complemento para preservar massa magra."}
+                ? `Neste perfil (${grupoNome}${faseNum ? `, fase ${faseNum}` : ""}), as modalidades abaixo são a base; os exercícios de força entram como complemento.`
+                : "Para emagrecimento, a base da semana é o volume nas modalidades abaixo; os exercícios de força entram como complemento para preservar massa magra."}
               {faseJustificativa ? ` ${faseJustificativa}` : ""}
             </p>
             <div className="grid gap-4 sm:grid-cols-3">
@@ -1063,7 +1063,7 @@ function Results({
         <div className="gradient-brand px-5 py-2 text-xs font-bold uppercase tracking-wider text-white">
           <span className="inline-flex items-center gap-1">
             <Sparkles className="h-3.5 w-3.5" />
-            {composto ? "Força complementar — melhor exercício" : "Melhor recomendação"}
+            {composto ? "Força complementar: melhor exercício" : "Melhor recomendação"}
           </span>
         </div>
         <div className="p-6">
@@ -1125,7 +1125,7 @@ function Results({
       {/* O que a nota significa — evita a leitura errada de "% match" */}
       <p className="text-xs leading-relaxed text-ink-3">
         A <span className="font-semibold text-ink-2">nota de adequação (0–100)</span> mede o quanto cada
-        opção atende a <span className="font-semibold text-ink-2">este perfil</span> — objetivo, nível,
+        opção atende a <span className="font-semibold text-ink-2">este perfil</span>: objetivo, nível,
         restrição e equipamentos. Notas próximas indicam alternativas igualmente válidas: o desempate
         está nos critérios da <span className="font-semibold text-ink-2">justificativa</span>.
       </p>
@@ -1269,7 +1269,7 @@ function Comparador({
 
       {selected.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-4 text-sm text-ink-3">
-          Nenhum exercício selecionado ainda — toque numa opção acima para começar.
+          Nenhum exercício selecionado ainda; toque numa opção acima para começar.
         </p>
       ) : (
         <>

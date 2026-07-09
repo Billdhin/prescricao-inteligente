@@ -26,7 +26,7 @@ export function Library() {
         eyebrow="Consulta rápida"
         icon={<LibraryIcon className="h-3 w-3" />}
         title="Biblioteca"
-        subtitle="Conceitos-chave de decisão, biomecânica, fisiologia e segurança — para consultar em segundos."
+        subtitle="Conceitos-chave de decisão, biomecânica, fisiologia e segurança, para consultar em segundos."
       />
 
       <Card className="p-4">
@@ -88,7 +88,7 @@ export function Library() {
       )}
 
       <p className="pt-2 text-xs text-ink-3">
-        Conteúdo educacional — não substitui avaliação profissional individualizada.
+        Conteúdo educacional; não substitui avaliação profissional individualizada.
       </p>
     </div>
   );

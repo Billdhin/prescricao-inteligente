@@ -262,7 +262,7 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
             <h2 className="font-display text-2xl font-bold text-ink">Resolva seu primeiro caso agora</h2>
             <p className="mx-auto mt-1 max-w-sm text-ink-2">
               Pense num aluno real que você tem hoje. Em menos de 10 minutos você sai com a
-              decisão documentada — não é demonstração, é o caso de verdade.
+              decisão documentada; não é demonstração, é o caso de verdade.
             </p>
 
             <div className="mt-5 space-y-4 text-left">
@@ -313,7 +313,7 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
               Resolver este caso agora →
             </button>
             <button onClick={pularCaso} className="mt-3 text-sm font-medium text-ink-2 hover:text-ink">
-              Pular — quero só conhecer o painel
+              Pular, quero só conhecer o painel
             </button>
           </>
         )}
@@ -457,7 +457,7 @@ function ModeSwitch({
       <div className="px-3 pt-3">
         <button
           onClick={() => onChange(next)}
-          title={`Modo: ${mode === "atender" ? "Atender" : "Aprender"} — clique para trocar`}
+          title={`Modo: ${mode === "atender" ? "Atender" : "Aprender"} · clique para trocar`}
           aria-label="Alternar modo"
           className="grid h-10 w-full place-items-center rounded-xl bg-surface-soft text-primary hover:bg-primary-tint"
         >

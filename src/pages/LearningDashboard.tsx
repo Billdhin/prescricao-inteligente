@@ -196,7 +196,7 @@ export function LearningDashboard() {
             icon={<BookOpen className="h-5 w-5" />}
             tone="cta"
             title="Casos práticos"
-            desc="Decida em cenários reais e receba feedback do raciocínio — não só certo ou errado."
+            desc="Decida em cenários reais e receba feedback do raciocínio, não só certo ou errado."
             cta="Treinar julgamento"
           />
         </div>
@@ -213,7 +213,7 @@ export function LearningDashboard() {
         <div className="min-w-0 flex-1">
           <h3 className="font-display text-lg font-bold text-ink">Grupos Especiais e Modalidades</h3>
           <p className="text-sm text-ink-2">
-            Aprenda a conduzir diferentes perfis — obesidade, hipertensão, idosos, dor — por
+            Aprenda a conduzir diferentes perfis (obesidade, hipertensão, idosos, dor) por
             modalidades, parâmetros e fases de progressão.
           </p>
         </div>
@@ -226,7 +226,7 @@ export function LearningDashboard() {
       <LearnProTools premium={premium} />
 
       <p className="pt-2 text-xs text-ink-3">
-        Conteúdo educacional — não substitui avaliação profissional individualizada nem prescrição
+        Conteúdo educacional; não substitui avaliação profissional individualizada nem prescrição
         clínica.
       </p>
     </div>

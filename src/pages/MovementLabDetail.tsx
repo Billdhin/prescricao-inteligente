@@ -44,13 +44,13 @@ const trustTone: Record<TrustLevel, PillTone> = {
 
 const TRUST_EXPLICACAO: Record<TrustLevel, string> = {
   "princípio biomecânico":
-    "Informação sustentada por princípios de biomecânica bem estabelecidos na literatura — vale para a maioria das execuções corretas.",
+    "Informação sustentada por princípios de biomecânica bem estabelecidos na literatura; vale para a maioria das execuções corretas.",
   "tendência prática":
     "Padrão observado com frequência na prática e em estudos, mas que varia com técnica, antropometria e contexto do aluno.",
   "regra pedagógica":
     "Orientação de ensino/progressão: ajuda a aprender e organizar o treino, mais do que uma verdade fisiológica absoluta.",
   "cuidado de segurança":
-    "Este exercício exige atenção a situações específicas. Reveja os cuidados abaixo antes de prescrever — e ajuste sempre ao caso.",
+    "Este exercício exige atenção a situações específicas. Reveja os cuidados abaixo antes de prescrever e ajuste sempre ao caso.",
   "depende do contexto":
     "Não há resposta única: a decisão muda com objetivo, histórico e resposta individual do aluno.",
 };
@@ -107,7 +107,7 @@ function TrustDialog({ level, ex, onClose }: { level: TrustLevel; ex?: Exercise;
           <div className="mt-4 space-y-4">
             <div>
               <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[color:var(--cta-text)]">
-                <ShieldAlert className="h-3.5 w-3.5" /> Quando evitar — {ex.nome}
+                <ShieldAlert className="h-3.5 w-3.5" /> Quando evitar: {ex.nome}
               </div>
               <ul className="space-y-1.5">
                 {ex.blocos.quandoEvitar.map((c) => (
@@ -132,7 +132,7 @@ function TrustDialog({ level, ex, onClose }: { level: TrustLevel; ex?: Exercise;
               </ul>
             </div>
             <p className="rounded-xl bg-surface-soft p-3 text-xs leading-relaxed text-ink-2">
-              Conteúdo educacional — a decisão final é do profissional habilitado, considerando a
+              Conteúdo educacional: a decisão final é do profissional habilitado, considerando a
               avaliação individual do aluno.
             </p>
           </div>
@@ -206,7 +206,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
           )}
         </div>
         <p className="mt-2 max-w-2xl text-ink-2">
-          Compare a execução real com a análise biomecânica — e aprofunde o que quiser.
+          Compare a execução real com a análise biomecânica e aprofunde o que quiser.
         </p>
         <div className="mt-5 flex flex-wrap gap-2">
           <button
@@ -251,7 +251,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
           </div>
 
           <p className="px-1 text-xs text-ink-3">
-            Arraste o divisor: a análise é revelada sobre a <span className="font-semibold text-ink-2">mesma imagem</span> —
+            Arraste o divisor: a análise é revelada sobre a <span className="font-semibold text-ink-2">mesma imagem</span>:
             músculos em foco, ângulo articular e linha de força.
           </p>
         </div>
@@ -285,7 +285,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
             ))}
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-ink-3">
-            Índices relativos estimados da literatura de EMG/biomecânica — comparam exercícios, não
+            Índices relativos estimados da literatura de EMG/biomecânica: comparam exercícios, não
             medem o aluno. Fontes na aba <span className="font-semibold text-ink-2">Biomecânica</span>.
           </p>
         </Card>
@@ -301,7 +301,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
           <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="text-sm text-ink">
             <span className="font-semibold">Dica: </span>
-            priorize a fase excêntrica com cadência controlada — em geral favorece o aprendizado
+            priorize a fase excêntrica com cadência controlada; em geral favorece o aprendizado
             técnico antes de progredir carga.
           </p>
         </div>
@@ -337,7 +337,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
                     </div>
                     <p className="mb-2 text-xs text-ink-3">
                       Ênfase relativa entre músculos, sintetizada da literatura de EMG e biomecânica
-                      (fontes abaixo) — não é medição do aluno.
+                      (fontes abaixo); não é medição do aluno.
                     </p>
                     <MuscleMap activation={activationFromExercise(exercise)} slug={exercise.slug} />
                   </div>
@@ -366,6 +366,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
                   ex={exercise}
                   img={getErroImagem(exercise.slug)}
                   imgLabel="Como NÃO fazer"
+                  imgAspect="square"
                 />
               ),
             },
@@ -378,8 +379,8 @@ function Detail({ exercise }: { exercise: Exercise }) {
                   trust="regra pedagógica"
                   tone="primary"
                   ex={exercise}
-                  img={getVariacaoImagem(exercise.slug)}
-                  imgLabel="Variação em destaque"
+                  img={getVariacaoImagem(exercise.slug) ?? exercise.imagem}
+                  imgLabel="Movimento base"
                 />
               ),
             },
@@ -399,7 +400,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
       </Card>
 
       <p className="pt-2 text-xs text-ink-3">
-        Conteúdo educacional — não substitui avaliação profissional individualizada nem prescrição
+        Conteúdo educacional; não substitui avaliação profissional individualizada nem prescrição
         clínica.
       </p>
     </div>
@@ -605,6 +606,7 @@ function Bullets({
   ex,
   img,
   imgLabel,
+  imgAspect = "wide",
 }: {
   items: string[];
   trust: TrustLevel;
@@ -613,6 +615,8 @@ function Bullets({
   /** miniatura ilustrativa (ex.: a pessoa fazendo o movimento ERRADO / a variação) */
   img?: string;
   imgLabel?: string;
+  /** "square": boneco quadrado (mostra a figura inteira sem cortar); "wide": foto 4:3 */
+  imgAspect?: "square" | "wide";
 }) {
   return (
     <div className="space-y-4">
@@ -627,7 +631,15 @@ function Bullets({
               tone === "warning" ? "border-warning/40" : "border-border",
             )}
           >
-            <img src={withBase(img)} alt={imgLabel} className="aspect-[4/3] w-full object-cover" loading="lazy" />
+            <img
+              src={withBase(img)}
+              alt={imgLabel}
+              className={cn(
+                "w-full",
+                imgAspect === "square" ? "aspect-square bg-white object-contain" : "aspect-[4/3] object-cover",
+              )}
+              loading="lazy"
+            />
             <figcaption
               className={cn(
                 "px-2 py-1 text-center text-[10px] font-semibold uppercase tracking-wider",
@@ -739,7 +751,7 @@ function Comparador({ exercise }: { exercise: Exercise }) {
         Comparar até 3 no comparador completo <ArrowRight className="h-3.5 w-3.5" />
       </Link>
       <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
-        Valores relativos estimados da literatura de EMG/biomecânica — comparam exercícios, não
+        Valores relativos estimados da literatura de EMG/biomecânica: comparam exercícios, não
         medem o aluno. Fontes na aba Biomecânica de cada exercício.
       </p>
     </div>

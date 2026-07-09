@@ -16,7 +16,7 @@ export function SpecialGroups() {
         eyebrow="Jornadas de Prescrição"
         icon={<HeartPulse className="h-3 w-3" />}
         title="Grupos Especiais"
-        subtitle="Como conduzir diferentes perfis de alunos — por modalidades, parâmetros e fases — de forma segura, progressiva e justificada."
+        subtitle="Como conduzir diferentes perfis de alunos (por modalidades, parâmetros e fases) de forma segura, progressiva e justificada."
       />
 
       <div className="flex items-start gap-2 rounded-xl border border-border bg-surface-soft px-3 py-2 text-xs text-ink-2">

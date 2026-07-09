@@ -73,7 +73,7 @@ export function Account() {
       <Card className="p-6">
         <h3 className="font-display text-lg font-bold text-ink">Plano</h3>
         <p className="mb-4 text-sm text-ink-2">
-          Nesta demonstração não há cobrança — alterne o plano para testar os limites e o gating.
+          Nesta demonstração não há cobrança; alterne o plano para testar os limites e o gating.
         </p>
         <div className="grid gap-3 sm:grid-cols-3">
           {planos.map((p) => {

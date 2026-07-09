@@ -37,7 +37,7 @@ export function Semaforo() {
         <h1 className="font-display text-3xl font-bold text-ink">Semáforo de Liberação</h1>
         <p className="mt-2 max-w-2xl text-ink-2">
           Antes de começar a sessão, saiba em 30 segundos se pode liberar o treino daquele aluno
-          hoje — e por quê. O resultado fica registrado e entra no prontuário.
+          hoje, e por quê. O resultado fica registrado e entra no prontuário.
         </p>
       </div>
 
@@ -59,7 +59,7 @@ export function Semaforo() {
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno (opcional)</span>
             <select value={alunoId} onChange={(e) => setAlunoId(e.target.value)} className="input">
-              <option value="">— Sem aluno vinculado —</option>
+              <option value="">Sem aluno vinculado</option>
               {alunos.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.nome}
@@ -73,7 +73,7 @@ export function Semaforo() {
       {locked ? (
         <PaywallCard
           titulo={`O semáforo de ${grupo?.nome} é do plano Profissional`}
-          descricao="No plano gratuito você usa o Semáforo de Liberação para obesidade grave e hipertensão. Assine para liberar todos os grupos — e o Prontuário de Decisão exportável."
+          descricao="No plano gratuito você usa o Semáforo de Liberação para obesidade grave e hipertensão. Assine para liberar todos os grupos e o Prontuário de Decisão exportável."
         />
       ) : (
         <SemaforoLiberacao grupoSlug={grupoSlug} alunoId={aluno?.id} alunoNome={aluno?.nome} />

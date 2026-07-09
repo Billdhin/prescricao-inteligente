@@ -68,7 +68,7 @@ function Figure({ src, label }: { src: string; label?: string }) {
   return (
     <figure className="rounded-xl bg-surface-soft p-2">
       <div className="relative mx-auto aspect-[3/5] w-full max-w-[180px]">
-        <img src={withBase(src)} alt={label ? `Mapa muscular — ${label}` : "Mapa muscular"} className="h-full w-full object-contain" loading="lazy" />
+        <img src={withBase(src)} alt={label ? `Mapa muscular: ${label}` : "Mapa muscular"} className="h-full w-full object-contain" loading="lazy" />
       </div>
       {label && <figcaption className="mt-0.5 text-center text-[11px] font-medium text-ink-3">{label}</figcaption>}
     </figure>
@@ -167,7 +167,7 @@ export function MuscleMap({
             )}
           </div>
           <div className="rounded-xl bg-primary-tint/50 p-3 text-[11px] leading-relaxed text-ink-2">
-            Os valores representam a <span className="font-semibold text-ink">ativação relativa estimada</span> para este exercício — não são medição do aluno.
+            Os valores representam a <span className="font-semibold text-ink">ativação relativa estimada</span> para este exercício; não são medição do aluno.
           </div>
         </div>
       </div>

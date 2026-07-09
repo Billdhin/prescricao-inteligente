@@ -125,7 +125,7 @@ export function MovementLabList() {
       )}
 
       <p className="pt-2 text-xs text-ink-3">
-        Conteúdo educacional — não substitui avaliação profissional individualizada.
+        Conteúdo educacional; não substitui avaliação profissional individualizada.
       </p>
     </div>
   );

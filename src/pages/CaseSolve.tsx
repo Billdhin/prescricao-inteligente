@@ -204,7 +204,7 @@ function Feedback({
           <div className="text-sm text-ink-2">
             {acertou
               ? "Sua decisão coincide com a alternativa mais prudente para este contexto."
-              : "Não é 'errado' — é uma oportunidade de afinar o critério de decisão."}
+              : "Não é 'errado': é uma oportunidade de afinar o critério de decisão."}
           </div>
         </div>
         <Pill tone={trustTone[caso.trustLevel]} icon={<Info className="h-3 w-3" />} className="ml-auto hidden sm:inline-flex">
@@ -231,7 +231,7 @@ function Feedback({
             tone="success"
             icon={<CheckCircle2 className="h-4 w-4" />}
             title="Escolha mais prudente"
-            text={`${melhor.texto} — ${melhor.analise}`}
+            text={`${melhor.texto}: ${melhor.analise}`}
           />
         )}
         <FeedbackBlock

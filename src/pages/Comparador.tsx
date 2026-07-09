@@ -528,7 +528,7 @@ export function Comparador() {
         eyebrow="Laboratório"
         icon={<GitCompare className="h-3 w-3" />}
         title="Comparador de exercícios"
-        subtitle="Compare até 4 opções lado a lado e decida com critério. Dois blocos: treino de força e modalidades aeróbicas — cada um com os marcadores que realmente importam para aquela escolha."
+        subtitle="Compare até 4 opções lado a lado e decida com critério. Dois blocos: treino de força e modalidades aeróbicas, cada um com os marcadores que realmente importam para aquela escolha."
       />
 
       {/* Seletor de bloco */}
@@ -564,22 +564,22 @@ export function Comparador() {
             Eficiência, ativação e demandas são <span className="font-semibold text-ink">estimativas
             relativas</span> sintetizadas da literatura de EMG e biomecânica (ex.: Boeckh-Behrens &amp;
             Buskies 2000; Escamilla et al. 1998/2001; Contreras et al. 2015; Andersen et al. 2014;
-            Ekstrom et al. 2007). Servem para comparar a ênfase entre exercícios — não são medições do
+            Ekstrom et al. 2007). Servem para comparar a ênfase entre exercícios; não são medições do
             seu aluno. As fontes completas ficam na aba <span className="font-semibold text-ink">Biomecânica</span> do Laboratório.
           </p>
         ) : (
           <p className="text-xs leading-relaxed text-ink-2">
             O gasto calórico é uma <span className="font-semibold text-ink">estimativa</span> para uma pessoa
             de ~70 kg em 30 min de esforço moderado, derivada do valor de MET de cada atividade (Compendium
-            of Physical Activities — Ainsworth et al., 2011; fórmula ACSM). Varia com peso, intensidade e
+            of Physical Activities: Ainsworth et al., 2011; fórmula ACSM). Varia com peso, intensidade e
             aptidão. Impacto, hidratação, técnica e praticidade são leituras qualitativas para apoiar a
-            escolha — não são medições do seu aluno. Ajuste sempre ao caso e à diretriz vigente.
+            escolha; não são medições do seu aluno. Ajuste sempre ao caso e à diretriz vigente.
           </p>
         )}
       </Card>
 
       <p className="pt-2 text-xs text-ink-3">
-        Conteúdo educacional — não substitui avaliação profissional individualizada.
+        Conteúdo educacional; não substitui avaliação profissional individualizada.
       </p>
     </div>
   );

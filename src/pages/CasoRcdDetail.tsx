@@ -25,7 +25,7 @@ export function CasoRcdDetail() {
   const caso = getCasoDocumentado(slug);
 
   React.useEffect(() => {
-    if (caso) document.title = `${caso.titulo} — caso documentado pelo Motor RCD`;
+    if (caso) document.title = `${caso.titulo}: caso documentado pelo Motor RCD`;
   }, [caso]);
 
   const dados = React.useMemo(() => {
@@ -84,16 +84,16 @@ export function CasoRcdDetail() {
 
         <div className="flex items-center gap-2">
           <SeloRCD />
-          <span className="text-xs text-ink-3">— o resultado abaixo é gerado ao vivo pelo motor do produto.</span>
+          <span className="text-xs text-ink-3">o resultado abaixo é gerado ao vivo pelo motor do produto.</span>
         </div>
 
         {/* Base da semana */}
         {modalidades.length > 0 && (
           <Card className="p-5">
-            <h2 className="mb-1 font-display text-lg font-bold text-ink">Base da semana — modalidades</h2>
+            <h2 className="mb-1 font-display text-lg font-bold text-ink">Base da semana: modalidades</h2>
             <p className="mb-3 text-sm text-ink-2">
               {grupo
-                ? `Neste perfil (${grupo.nome}), os exercícios de força entram como complemento — a base é o baixo atrito.`
+                ? `Neste perfil (${grupo.nome}), os exercícios de força entram como complemento; a base é o baixo atrito.`
                 : "A base da semana vem antes dos exercícios isolados."}
             </p>
             <ul className="space-y-1.5 text-sm">
@@ -101,7 +101,7 @@ export function CasoRcdDetail() {
                 <li key={m.modalidade.id} className="flex gap-2">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-analysis" />
                   <span className="text-ink-2">
-                    <span className="font-semibold text-ink">{m.modalidade.nome}</span> — {m.motivo}
+                    <span className="font-semibold text-ink">{m.modalidade.nome}</span>: {m.motivo}
                   </span>
                 </li>
               ))}
@@ -112,7 +112,7 @@ export function CasoRcdDetail() {
         {/* Escolhidos */}
         <Card variant="raised" className="overflow-hidden">
           <div className="gradient-brand px-5 py-2 text-xs font-bold uppercase tracking-wider text-white">
-            O que o motor escolheu — e por quê
+            O que o motor escolheu, e por quê
           </div>
           <div className="space-y-3 p-5">
             {prontuario.escolhidos.map((e, i) => (
@@ -142,7 +142,7 @@ export function CasoRcdDetail() {
         {/* Descartados — o diferencial que ninguém mostra */}
         <Card className="p-5">
           <h2 className="mb-1 font-display text-lg font-bold text-ink">
-            O que foi considerado e descartado — e por quê
+            O que foi considerado e descartado, e por quê
           </h2>
           <p className="mb-3 text-sm text-ink-2">
             É esta metade do raciocínio que um treino genérico esconde de você.
@@ -153,7 +153,7 @@ export function CasoRcdDetail() {
                 <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" />
                 <span className="text-ink-2">
                   <span className="font-semibold text-ink">{d.nome}</span>{" "}
-                  <span className="tabular text-xs text-ink-3">({d.score}/100)</span> — {d.motivoPrincipal}
+                  <span className="tabular text-xs text-ink-3">({d.score}/100)</span>: {d.motivoPrincipal}
                 </span>
               </div>
             ))}
@@ -204,7 +204,7 @@ export function CasoRcdDetail() {
             O seu próximo aluno não é este caso.
           </h2>
           <p className="mx-auto mt-1 max-w-md text-sm text-ink-2">
-            Rode o Motor RCD com o perfil DELE — e saia com a decisão documentada, o semáforo do
+            Rode o Motor RCD com o perfil DELE e saia com a decisão documentada, o semáforo do
             dia e o prontuário pronto para assinar.
           </p>
           <Link to={ctaGps} className={buttonClasses("primary") + " mt-4"}>

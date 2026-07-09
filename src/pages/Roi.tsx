@@ -22,7 +22,7 @@ export function Roi() {
   const [premio, setPremio] = React.useState(20);
 
   React.useEffect(() => {
-    document.title = "Quanto vale sua especialização? — Prescrição Inteligente";
+    document.title = "Quanto vale sua especialização? | Prescrição Inteligente";
   }, []);
 
   // 4,33 semanas/mês em média
@@ -49,7 +49,7 @@ export function Roi() {
       <div className="mx-auto max-w-3xl px-4 py-14 md:px-6">
         <div className="text-center">
           <Pill tone="primary" icon={<Calculator className="h-3 w-3" />} className="mb-3">
-            Calculadora gratuita — sem cadastro
+            Calculadora gratuita, sem cadastro
           </Pill>
           <h1 className="font-display text-3xl font-extrabold text-ink md:text-4xl">
             Quanto vale a sua especialização?
@@ -137,7 +137,7 @@ export function Roi() {
             </div>
             <div>
               <div className="tabular font-display text-3xl font-extrabold text-success">
-                {mesesPagos >= 1 ? `${Math.floor(mesesPagos)}×` : "—"}
+                {mesesPagos >= 1 ? `${Math.floor(mesesPagos)}×` : "–"}
               </div>
               <div className="mt-1 text-sm text-ink-2">
                 {mesesPagos >= 1
@@ -154,7 +154,7 @@ export function Roi() {
           </div>
           <p className="mx-auto max-w-lg text-sm text-ink-2">
             O prêmio de especialista se sustenta em UMA coisa: segurança demonstrável. É
-            exatamente o que o Raciocínio Clínico Documentado entrega — cada decisão justificada,
+            exatamente o que o Raciocínio Clínico Documentado entrega: cada decisão justificada,
             registrada e assinável.
           </p>
           <Link to="/dashboard" className={buttonClasses("primary") + " mt-4"}>

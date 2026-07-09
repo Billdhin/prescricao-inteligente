@@ -103,8 +103,7 @@ export function Landing() {
                     strokeLinecap="round"
                   />
                 </svg>
-              </span>{" "}
-              — com o porquê de cada exercício.
+              </span>, com o porquê de cada exercício.
             </h1>
             <p className="mt-5 max-w-lg text-lg text-ink-2">
               Diga o perfil, receba exercícios ranqueados com justificativa científica e entregue em
@@ -132,7 +131,7 @@ export function Landing() {
             <BiomechanicsComparisonSlider
               baseSrc={withBase("/exercises/leg-press-45.webp")}
               analysisSrc={withBase("/exercises/leg-press-45-analysis.webp")}
-              alt="Leg press 45° — execução real"
+              alt="Leg press 45°, execução real"
               regions={muscleRegions["leg-press-45"] ?? []}
               ativacao={getExercise("leg-press-45")?.ativacao ?? []}
               overlay={analysisOverlays["leg-press-45"]}
@@ -153,7 +152,7 @@ export function Landing() {
               <span className="text-[color:var(--cta-text)]">“por que esse e não aquele?”</span>
             </h2>
             <p className="mt-2 max-w-xl text-ink-2">
-              Planilha decorada não segura a pergunta do aluno. A plataforma pensa junto com você — e
+              Planilha decorada não segura a pergunta do aluno. A plataforma pensa junto com você e
               te dá a resposta com critério, na hora.
             </p>
           </div>
@@ -189,7 +188,7 @@ export function Landing() {
             {
               n: 2,
               t: "Receba com o porquê",
-              d: "Exercícios ranqueados por critérios transparentes — toque em “Ver justificativa” e defenda cada escolha.",
+              d: "Exercícios ranqueados por critérios transparentes: toque em “Ver justificativa” e defenda cada escolha.",
               scene: "recomendacao" as const,
             },
             {
@@ -235,18 +234,18 @@ export function Landing() {
                 <span className="text-primary">Raciocínio Clínico Documentado</span>.
               </h2>
               <p className="mt-3 text-ink-2">
-                O Motor RCD acompanha a decisão inteira — do sinal verde para treinar hoje ao
+                O Motor RCD acompanha a decisão inteira, do sinal verde para treinar hoje ao
                 documento que você pode assinar. Em três atos:
               </p>
               <ol className="mt-5 space-y-3">
                 {[
                   {
                     t: "Semáforo de Liberação",
-                    d: "30 segundos antes da sessão: liberado, liberado com ajuste ou não liberado hoje — com o porquê.",
+                    d: "30 segundos antes da sessão: liberado, liberado com ajuste ou não liberado hoje, com o porquê.",
                   },
                   {
                     t: "Decisão justificada",
-                    d: "Exercícios ranqueados critério a critério — inclusive o que foi DESCARTADO, e por quê.",
+                    d: "Exercícios ranqueados critério a critério, inclusive o que foi DESCARTADO, e por quê.",
                   },
                   {
                     t: "Prontuário assinável",
@@ -280,7 +279,7 @@ export function Landing() {
               <Card variant="soft" className="p-5">
                 <div className="mb-2 text-sm font-bold uppercase tracking-wider text-ink-3">IA genérica</div>
                 <ul className="space-y-2 text-sm text-ink-2">
-                  <li>Entrega um treino — sem rastro do porquê</li>
+                  <li>Entrega um treino, sem rastro do porquê</li>
                   <li>Não checa se o aluno pode treinar HOJE</li>
                   <li>Não cita a base científica de cada escolha</li>
                   <li>Não gera registro que você assine embaixo</li>
@@ -314,10 +313,10 @@ export function Landing() {
       {/* -------------------- Casos documentados + ROI ------------------------ */}
       <Section className="!py-14 text-center">
         <Kicker tone="analysis">Prova, não promessa</Kicker>
-        <h2 className="font-display text-3xl font-bold text-ink">Veja o motor decidir um caso real — agora.</h2>
+        <h2 className="font-display text-3xl font-bold text-ink">Veja o motor decidir um caso real, agora.</h2>
         <p className="mx-auto mt-2 max-w-2xl text-ink-2">
           Sem cadastro: escolha um caso típico (hipertenso, dor lombar em idoso, obesidade grave…)
-          e veja o Motor RCD rodar ao vivo — escolhas, descartes e referências.
+          e veja o Motor RCD rodar ao vivo: escolhas, descartes e referências.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link to="/casos-rcd" className={buttonClasses("primary")}>
@@ -344,7 +343,7 @@ export function Landing() {
             { icon: <Users className="h-5 w-5" />, t: "Alunos e evolução", d: "Avaliações na linha do tempo, gráfico de evolução e reavaliações em dia." },
             { icon: <HeartPulse className="h-5 w-5" />, t: "Grupos especiais", d: "Jornadas em 4 fases para obesidade, hipertensão, idosos, dor e mais." },
             { icon: <FlaskConical className="h-5 w-5" />, t: "Laboratório Visual", d: "Foto real × análise biomecânica no divisor interativo, com hotspots." },
-            { icon: <BookOpen className="h-5 w-5" />, t: "Casos práticos", d: "Cenários reais com feedback do raciocínio — não só certo ou errado." },
+            { icon: <BookOpen className="h-5 w-5" />, t: "Casos práticos", d: "Cenários reais com feedback do raciocínio, não só certo ou errado." },
           ].map((f) => (
             <Card key={f.t} className="p-5 text-left">
               <span className="mb-3 inline-grid h-11 w-11 place-items-center rounded-xl bg-primary-tint text-primary">
@@ -367,17 +366,17 @@ export function Landing() {
               {
                 icon: <GraduationCap className="h-6 w-6" />,
                 t: "Estudante de EF",
-                d: "Treine a decisão com casos e trilhas — chegue no estágio sabendo o porquê.",
+                d: "Treine a decisão com casos e trilhas; chegue no estágio sabendo o porquê.",
               },
               {
                 icon: <UserCheck className="h-6 w-6" />,
                 t: "Personal recém-formado",
-                d: "Prescreva com segurança desde o primeiro aluno — e mostre profissionalismo no PDF.",
+                d: "Prescreva com segurança desde o primeiro aluno e mostre profissionalismo no PDF.",
               },
               {
                 icon: <Dumbbell className="h-6 w-6" />,
                 t: "Professor de musculação",
-                d: "Conduza perfis diferentes — do iniciante ao grupo especial — com critério e progressão.",
+                d: "Conduza perfis diferentes (do iniciante ao grupo especial) com critério e progressão.",
               },
             ].map((p) => (
               <Card key={p.t} className="p-6 text-left">
@@ -397,7 +396,7 @@ export function Landing() {
         <Kicker>Planos</Kicker>
         <h2 className="font-display text-3xl font-bold text-ink">Comece grátis. Assine quando fizer sentido.</h2>
         <p className="mx-auto mt-2 max-w-xl text-ink-2">
-          Teste o Profissional por <span className="font-semibold text-ink">14 dias, sem cartão</span> —
+          Teste o Profissional por <span className="font-semibold text-ink">14 dias, sem cartão</span>:
           resolva um caso real e veja o prontuário pronto antes de decidir.
         </p>
         <div className="mx-auto mt-8 grid max-w-3xl gap-4 md:grid-cols-2">
@@ -417,7 +416,7 @@ export function Landing() {
             destaque
             nome="Profissional"
             preco="R$ 59"
-            desc="O Motor RCD completo — decisão documentada e assinável."
+            desc="O Motor RCD completo: decisão documentada e assinável."
             items={[
               "Prontuário de Decisão exportável e assinável",
               "Semáforo de Liberação para todos os grupos",
@@ -441,7 +440,7 @@ export function Landing() {
               {[
                 {
                   q: "Isso substitui minha avaliação profissional?",
-                  a: "Não — e nem deveria. Todo o conteúdo é educacional e de apoio à decisão. A plataforma organiza o raciocínio; a avaliação individualizada e a decisão final são suas.",
+                  a: "Não, e nem deveria. Todo o conteúdo é educacional e de apoio à decisão. A plataforma organiza o raciocínio; a avaliação individualizada e a decisão final são suas.",
                 },
                 {
                   q: "Preciso de cartão para começar?",
@@ -449,11 +448,11 @@ export function Landing() {
                 },
                 {
                   q: "Funciona no celular?",
-                  a: "Sim. É uma plataforma web responsiva — funciona no celular, no tablet e no computador, sem instalar nada.",
+                  a: "Sim. É uma plataforma web responsiva: funciona no celular, no tablet e no computador, sem instalar nada.",
                 },
                 {
                   q: "O que o meu aluno recebe?",
-                  a: "Um PDF profissional com a sua marca: os exercícios recomendados, as séries sugeridas e a justificativa de cada escolha — algo que nenhuma planilha genérica entrega.",
+                  a: "Um PDF profissional com a sua marca: os exercícios recomendados, as séries sugeridas e a justificativa de cada escolha, algo que nenhuma planilha genérica entrega.",
                 },
               ].map((f) => (
                 <FaqItem key={f.q} q={f.q} a={f.a} />
@@ -481,7 +480,7 @@ export function Landing() {
             Seu primeiro aluno, prescrito em minutos.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-white/85">
-            Três passos, o porquê de cada exercício e um PDF pronto para entregar. Comece agora — é grátis.
+            Três passos, o porquê de cada exercício e um PDF pronto para entregar. Comece agora, é grátis.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
@@ -499,7 +498,7 @@ export function Landing() {
           </div>
           <p className="mt-5 inline-flex items-center gap-2 text-xs text-white/70">
             <ShieldCheck className="h-3.5 w-3.5" />
-            Conteúdo educacional e de apoio à decisão — não substitui avaliação profissional individualizada.
+            Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional individualizada.
           </p>
         </div>
       </Section>

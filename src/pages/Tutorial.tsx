@@ -33,7 +33,7 @@ export function Tutorial() {
           <h2 className="font-display text-xl font-bold text-ink">Comece por aqui</h2>
           <p className="mt-1 text-ink-2">
             Se é seu primeiro contato, o guia <span className="font-semibold text-ink">“Prescreva para um aluno”</span> mostra
-            o fluxo completo — do cadastro à prescrição em PDF — em poucos minutos.
+            o fluxo completo (do cadastro à prescrição em PDF) em poucos minutos.
           </p>
         </div>
         <Link to={`/tutorial/${tutorials[0].slug}`} className={buttonClasses("primary")}>
@@ -80,7 +80,7 @@ export function Tutorial() {
       <Card className="flex flex-wrap items-center gap-3 p-4">
         <LifeBuoy className="h-5 w-5 shrink-0 text-primary" />
         <p className="min-w-0 flex-1 text-sm text-ink-2">
-          Não encontrou o que procurava? Fale com o suporte — respondemos rápido.
+          Não encontrou o que procurava? Fale com o suporte, respondemos rápido.
         </p>
         <Link to="/suporte" className={buttonClasses("secondary", "sm")}>
           Ir para o Suporte <ArrowRight className="h-4 w-4" />

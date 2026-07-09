@@ -102,7 +102,7 @@ export function TutorialDetail() {
       </div>
 
       <p className="pt-2 text-xs text-ink-3">
-        Conteúdo educacional e de apoio à decisão — não substitui avaliação profissional
+        Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional
         individualizada nem prescrição clínica.
       </p>
     </div>
