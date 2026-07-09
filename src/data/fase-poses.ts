@@ -21,6 +21,10 @@ const SLUGS_COM_FASES = [
   "desenvolvimento-ombros",
   "rosca-direta",
   "triceps-polia",
+  "caminhada-esteira",
+  "bicicleta-ergometrica",
+  "eliptico",
+  "sentar-levantar",
 ];
 
 export const fasePoses: Record<string, string[]> = Object.fromEntries(
