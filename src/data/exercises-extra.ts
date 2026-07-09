@@ -948,7 +948,7 @@ export const extraExercises: Exercise[] = [
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Panturrilha", percentual: 88, papel: "primário" },
-      { musculo: "Tibial anterior", percentual: 30, papel: "estabilizador" },
+      { musculo: "Fibulares (estabilizadores do tornozelo)", percentual: 30, papel: "estabilizador" },
       { musculo: "Core", percentual: 25, papel: "estabilizador" },
       { musculo: "Quadríceps", percentual: 20, papel: "estabilizador" },
     ],

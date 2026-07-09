@@ -61,6 +61,7 @@ import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
 import type { ProntuarioSnapshot } from "@/data/alunos";
 import { marcarAtivacao } from "@/lib/ativacao";
+import { toast } from "@/lib/toast";
 import { descricaoOpcao } from "@/data/opcoes-wizard";
 import { useDialog } from "@/lib/useDialog";
 import { cn, withBase } from "@/lib/utils";
@@ -233,7 +234,9 @@ export function Gps() {
       criteriosRegressao: faseObj?.criteriosRegredir,
       raciocinio: faseObj?.justificativa,
     });
-    navigate(`/alunos/${aluno.id}`);
+    addActivity(`Prescrição salva para ${aluno.nome}`);
+    toast(`Prescrição salva no perfil de ${aluno.nome}`);
+    navigate(`/alunos/${aluno.id}`, { state: { prescricaoSalva: true } });
   };
 
   // Exporta o PRONTUÁRIO DE DECISÃO direto da tela de resultados.
@@ -969,10 +972,73 @@ function Results({
   const best = results[0];
   const others = results.slice(1);
   const composto = modRecs.length > 0;
+  const [verTodas, setVerTodas] = React.useState(false);
+  // vínculo equipamento -> exercício visível: separa o que dá para prescrever com o
+  // que o aluno tem, do que exigiria comprar/ir a outro lugar.
+  const disponiveis = others.filter((r) => r.equipDisponivel);
+  const foraEquip = others.filter((r) => !r.equipDisponivel);
+  const alvoEspecifico = answers.grupoMuscular !== "Corpo todo" && answers.objetivo !== "Emagrecimento";
+  const semAlvoDisponivel =
+    alvoEspecifico && !results.some((r) => r.grupoCompativel && r.equipDisponivel);
+  const disponiveisVisiveis = verTodas ? disponiveis : disponiveis.slice(0, 6);
   const toggleCompare = (slug: string) =>
     setCompare((c) =>
       c.includes(slug) ? c.filter((x) => x !== slug) : c.length < 3 ? [...c, slug] : c,
     );
+
+  const renderOption = (r: Recommendation) => {
+    const inCompare = compare.includes(r.exercise.slug);
+    return (
+      <Card key={r.exercise.slug} className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h4 className="font-display font-bold text-ink">{r.exercise.nome}</h4>
+              {r.exercise.premium && <Pill tone="cta">Premium</Pill>}
+            </div>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              <Pill tone="neutral">{r.exercise.grupoMuscular}</Pill>
+              <Pill tone={r.equipDisponivel ? "success" : "warning"}>{r.exercise.equipamento}</Pill>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="tabular font-display text-xl font-bold text-primary">
+              {r.score}
+              <span className="text-xs font-semibold text-ink-3">/100</span>
+            </div>
+            <div className="text-[10px] uppercase text-ink-3">adequação</div>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button onClick={() => onJustify(r)} className="text-sm font-semibold text-primary hover:underline">
+            Justificativa
+          </button>
+          <button
+            onClick={() => toggleCompare(r.exercise.slug)}
+            disabled={!inCompare && compare.length >= 3}
+            aria-pressed={inCompare}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
+              inCompare
+                ? "border-primary bg-primary-tint text-primary"
+                : !inCompare && compare.length >= 3
+                  ? "cursor-not-allowed border-border text-ink-3 opacity-50"
+                  : "border-border text-ink-2 hover:bg-surface-soft",
+            )}
+          >
+            {inCompare ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+            Comparar
+          </button>
+          <Link
+            to={`/movement-lab/${r.exercise.slug}`}
+            className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
+          >
+            Abrir <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -1012,15 +1078,36 @@ function Results({
         </Card>
       )}
 
-      {/* Suas respostas */}
+      {semAlvoDisponivel && (
+        <Card tone="warning" className="flex flex-wrap items-start gap-3 p-4">
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            <span className="font-semibold text-ink">
+              Nenhum exercício de {answers.grupoMuscular} está disponível com os equipamentos marcados.
+            </span>{" "}
+            As opções abaixo trabalham outros grupos ou exigem um equipamento a mais. Marque outro
+            equipamento na etapa 5, ou considere a seção "Exigem equipamento não marcado".
+          </p>
+        </Card>
+      )}
+
+      {/* Suas respostas — o vínculo entre o perfil e o ranking fica explícito */}
       <Card variant="soft" className="flex flex-wrap items-center gap-2 p-4">
         <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">Perfil</span>
+        {alunoNome && <Pill tone="success">Para: {alunoNome}</Pill>}
         <Pill tone="primary">{answers.objetivo}</Pill>
         <Pill tone="primary">
           {answers.objetivo === "Emagrecimento" && answers.prioridade ? answers.prioridade : answers.grupoMuscular}
         </Pill>
         <Pill tone="neutral">{answers.nivel}</Pill>
         <Pill tone={answers.restricao === "Nenhuma" ? "success" : "warning"}>{answers.restricao}</Pill>
+        <Pill tone="neutral">
+          <span title={answers.equipamentos.join(", ")}>
+            {answers.equipamentos.length >= EQUIPAMENTOS.length
+              ? "Todos os equipamentos"
+              : `${answers.equipamentos.length} equipamentos`}
+          </span>
+        </Pill>
         <div className="ml-auto flex flex-wrap items-center gap-3">
           <button
             onClick={onProntuario}
@@ -1098,6 +1185,9 @@ function Results({
               </div>
               <p className="mt-2 text-ink-2">{best.exercise.resumoPratico}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
+                <Pill tone={best.equipDisponivel ? "success" : "warning"} icon={best.equipDisponivel ? <Check className="h-3 w-3" /> : undefined}>
+                  {best.exercise.equipamento}{best.equipDisponivel ? " disponível" : " (não marcado)"}
+                </Pill>
                 {best.reasons.map((r) => (
                   <Pill key={r} tone="primary">
                     {r}
@@ -1147,65 +1237,36 @@ function Results({
         está nos critérios da <span className="font-semibold text-ink-2">justificativa</span>.
       </p>
 
-      {/* Outras opções */}
-      <div>
-        <h3 className="mb-3 font-display text-base font-bold text-ink">Outras opções</h3>
-        <div className="grid gap-4 md:grid-cols-2">
-          {others.map((r) => {
-            const inCompare = compare.includes(r.exercise.slug);
-            return (
-              <Card key={r.exercise.slug} className="p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-display font-bold text-ink">{r.exercise.nome}</h4>
-                      {r.exercise.premium && <Pill tone="cta">Premium</Pill>}
-                    </div>
-                    <div className="mt-1 flex flex-wrap gap-1.5">
-                      <Pill tone="neutral">{r.exercise.grupoMuscular}</Pill>
-                      <Pill tone="neutral">{r.exercise.equipamento}</Pill>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="tabular font-display text-xl font-bold text-primary">
-                      {r.score}
-                      <span className="text-xs font-semibold text-ink-3">/100</span>
-                    </div>
-                    <div className="text-[10px] uppercase text-ink-3">adequação</div>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button onClick={() => onJustify(r)} className="text-sm font-semibold text-primary hover:underline">
-                    Justificativa
-                  </button>
-                  <button
-                    onClick={() => toggleCompare(r.exercise.slug)}
-                    disabled={!inCompare && compare.length >= 3}
-                    aria-pressed={inCompare}
-                    className={cn(
-                      "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
-                      inCompare
-                        ? "border-primary bg-primary-tint text-primary"
-                        : !inCompare && compare.length >= 3
-                          ? "cursor-not-allowed border-border text-ink-3 opacity-50"
-                          : "border-border text-ink-2 hover:bg-surface-soft",
-                    )}
-                  >
-                    {inCompare ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                    Comparar
-                  </button>
-                  <Link
-                    to={`/movement-lab/${r.exercise.slug}`}
-                    className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
-                  >
-                    Abrir <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-              </Card>
-            );
-          })}
+      {/* Outras opções COM o equipamento marcado */}
+      {disponiveis.length > 0 && (
+        <div>
+          <h3 className="font-display text-base font-bold text-ink">Outras opções com o equipamento disponível</h3>
+          <p className="mb-3 text-xs text-ink-3">
+            Tudo aqui pode ser prescrito com o que {alunoNome ?? "o aluno"} já tem.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">{disponiveisVisiveis.map(renderOption)}</div>
+          {disponiveis.length > 6 && (
+            <button
+              onClick={() => setVerTodas((v) => !v)}
+              className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+            >
+              {verTodas ? "Mostrar menos" : `Mostrar mais ${disponiveis.length - 6} opções`}
+            </button>
+          )}
         </div>
-      </div>
+      )}
+
+      {/* Opções que EXIGEM equipamento não marcado (nota limitada a 65) */}
+      {foraEquip.length > 0 && (
+        <div>
+          <h3 className="font-display text-base font-bold text-ink">Exigem equipamento não marcado</h3>
+          <p className="mb-3 text-xs text-ink-3">
+            Estes exercícios pedem algo fora da lista marcada; a nota fica limitada a 65 até o
+            equipamento entrar. Úteis se você puder adaptar o ambiente.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">{foraEquip.slice(0, 4).map(renderOption)}</div>
+        </div>
+      )}
 
       {/* só os mais recomendados no picker — o pool inteiro viraria um paredão de chips */}
       <Comparador compare={compare} setCompare={setCompare} candidatos={[best, ...others].slice(0, 6)} />

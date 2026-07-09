@@ -120,7 +120,7 @@ export const useProgress = create<ProgressState>()(
       activities: [],
       addActivity: (label) =>
         set((s) => ({
-          activities: [{ id: uid(), label, ts: Date.now() }, ...s.activities].slice(0, 8),
+          activities: [{ id: uid(), label, ts: Date.now() }, ...s.activities].slice(0, 50),
         })),
       solveCase: (id) =>
         set((s) =>

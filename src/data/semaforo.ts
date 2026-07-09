@@ -303,20 +303,20 @@ export const semaforos: ChecklistSemaforo[] = [
       {
         id: "red-flags",
         pergunta:
-          "Há algum sinal de alerta: dor noturna que não alivia com mudança de posição, perda de força/formigamento nas pernas, febre ou perda de peso inexplicada?",
+          "Há algum sinal de alerta: dificuldade ou perda de controle para urinar ou evacuar, dormência na região da sela (períneo/entrepernas), perda de força ou dormência nas duas pernas, dor noturna que não alivia com mudança de posição, febre ou perda de peso inexplicada?",
         porque:
-          "São as red flags clássicas: deixam de ser caso de treino e passam a ser caso de investigação médica.",
+          "São as red flags clássicas da NICE, incluindo os sinais de síndrome da cauda equina (alteração para urinar/evacuar e anestesia em sela): deixam de ser caso de treino e passam a ser caso de investigação médica.",
         opcoes: simNao(
           "vermelho",
           "verde",
-          "Não trate como lombalgia comum: oriente avaliação médica antes de qualquer sessão.",
+          "Não trate como lombalgia comum. Diante de alteração para urinar/evacuar ou dormência na sela, oriente procura de atendimento médico com urgência; nos demais sinais, avaliação médica antes de qualquer sessão.",
         ),
         refs: ["nice-ng59"],
       },
       {
         id: "dor-agora",
         pergunta: "Dor lombar agora, de 0 a 10?",
-        porque: "A dor do dia calibra amplitude e carga: movimento tolerável trata; dor crescente atrapalha.",
+        porque: "A dor do dia calibra amplitude e carga: movimento tolerável costuma ajudar na recuperação; dor crescente atrapalha.",
         opcoes: [
           { valor: "leve", rotulo: "0–3 (leve)", cor: "verde" },
           {

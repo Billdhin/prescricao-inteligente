@@ -23,7 +23,7 @@ export const exercises: Exercise[] = [
     ativacao: [
       { musculo: "Quadríceps", percentual: 92, papel: "primário" },
       { musculo: "Glúteo máximo", percentual: 76, papel: "sinergista" },
-      { musculo: "Posteriores de coxa", percentual: 58, papel: "sinergista" },
+      { musculo: "Posteriores de coxa", percentual: 45, papel: "sinergista" },
       { musculo: "Adutores", percentual: 44, papel: "estabilizador" },
     ],
     indiceEficiencia: {
@@ -32,7 +32,7 @@ export const exercises: Exercise[] = [
         { nome: "Quadríceps", valor: 92, tipo: "positivo" },
         { nome: "Glúteos", valor: 76, tipo: "positivo" },
         { nome: "Estabilidade", valor: 78, tipo: "positivo" },
-        { nome: "Demanda de joelho", valor: 72, tipo: "positivo" },
+        { nome: "Demanda de joelho", valor: 55, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 34, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 41, tipo: "cautela" },
       ],
@@ -110,7 +110,7 @@ export const exercises: Exercise[] = [
       biomecanica:
         "Extensão simultânea de joelho e quadril em cadeia cinética fechada: a máquina fixa a trajetória e apoia o tronco, reduzindo a estabilização exigida e a demanda lombar frente ao agachamento livre. A posição dos pés desloca a ênfase: pés altos poupam o joelho e recrutam mais quadril e posteriores; pés baixos ampliam a demanda do joelho (Escamilla et al., 2001).",
       fisiologia:
-        "Mobiliza grande massa muscular (quadríceps e glúteos) com baixo custo técnico, permitindo acumular volume e tensão mecânica (principal estímulo de força e hipertrofia) com menor fadiga coordenativa. Porta de entrada segura para progredir carga antes do agachamento livre.",
+        "Mobiliza grande massa muscular de membros inferiores com trajetória guiada, o que permite gerar tensão mecânica alta com baixa fadiga coordenativa. De forma aguda, o apoio do tronco reduz a estabilização exigida e concentra o esforço em quadríceps e glúteos ao longo da série. De forma crônica, a possibilidade de progredir carga com segurança faz dele um estímulo eficiente de força e hipertrofia de membros inferiores, especialmente em iniciantes (Schoenfeld, 2010). Na prescrição, costuma ser a porta de entrada para acumular volume antes de exigir o padrão livre de agachamento.",
       prescricaoPratica:
         "Em geral, comece pela amplitude confortável que mantém o contato lombar, priorize a cadência excêntrica e progrida carga apenas quando a execução estiver consistente.",
     },
@@ -371,7 +371,7 @@ export const exercises: Exercise[] = [
       biomecanica:
         "Extensão de joelho em cadeia cinética aberta, com os vastos como principais extensores. Na posição sentada, o quadril fica flexionado e encurta o reto femoral (músculo biarticular), reduzindo sua contribuição para a extensão do joelho em relação aos vastos. O braço de resistência é máximo perto da extensão terminal, onde cresce a força femoropatelar; por isso, a amplitude é ajustada ao conforto articular do aluno.",
       fisiologia:
-        "Isola o quadríceps para volume localizado e reforço específico (ex.: reabilitação de joelho conduzida), com baixo custo coordenativo. Transfere menos para padrões funcionais que a cadeia fechada, como o leg press (Escamilla et al., 1998).",
+        "Como exercício monoarticular de cadeia aberta, concentra a tensão nos vastos com pouca fadiga sistêmica, o que permite acumular volume dirigido ao quadríceps mesmo quando padrões multiarticulares ainda geram desconforto. De forma aguda, o esforço localizado recruta o quadríceps de maneira progressiva ao longo da série; de forma crônica, o estímulo repetido de tensão mecânica tende a favorecer hipertrofia e ganho de força do grupo (Schoenfeld, 2010). Por atuar em ângulos e cargas facilmente ajustáveis, é um recurso útil para reforço específico após lesão ou cirurgia de joelho, conduzido pela equipe de reabilitação. Na prescrição, costuma entrar como complemento de volume ao trabalho de cadeia fechada, não como substituto dele (Escamilla et al., 1998).",
       prescricaoPratica: "Em geral, ajuste amplitude ao conforto e controle a fase excêntrica.",
     },
     trustLevel: "regra pedagógica",
@@ -396,7 +396,7 @@ export const exercises: Exercise[] = [
       "Isolamento de posteriores de coxa guiado, que em geral complementa o trabalho de membros inferiores com baixa demanda lombar.",
     ativacao: [
       { musculo: "Isquiotibiais", percentual: 92, papel: "primário" },
-      { musculo: "Panturrilha", percentual: 40, papel: "estabilizador" },
+      { musculo: "Panturrilha", percentual: 40, papel: "sinergista" },
     ],
     indiceEficiencia: {
       score: 68,
@@ -438,7 +438,7 @@ export const exercises: Exercise[] = [
       biomecanica:
         "Flexão de joelho em decúbito ventral, isolando os isquiotibiais como flexores do joelho. Estabilizar a pelve contra o apoio evita compensação lombar e mantém o esforço no alvo; a leve rotação do pé desloca a ênfase entre as porções medial e lateral.",
       fisiologia:
-        "Complementa a dobradiça de quadril ao treinar os isquiotibiais na função de joelho, equilibrando a força entre a frente e o fundo da coxa, o que é relevante para a saúde do joelho e a prevenção de desequilíbrios.",
+        "Treina os isquiotibiais na sua função de flexão do joelho, complementando a dobradiça de quadril, que os solicita sobretudo como extensores do quadril. De forma aguda, a versão deitada gera tensão localizada com baixa demanda de estabilização; de forma crônica, o estímulo dirigido tende a aumentar força e volume da musculatura posterior da coxa (Schoenfeld, 2010). Um bom equilíbrio de força entre a frente e o fundo da coxa costuma ser associado, na literatura, a melhor controle do joelho, embora a relação com prevenção de lesão dependa de muitos fatores. Na prescrição, funciona bem como acessório dos padrões de dobradiça, e a rotação do pé permite deslocar a ênfase entre as porções medial e lateral.",
       prescricaoPratica: "Em geral, controle a cadência e mantenha a pelve estável.",
     },
     trustLevel: "regra pedagógica",
@@ -576,7 +576,7 @@ export const exercises: Exercise[] = [
       biomecanica:
         "Extensão de quadril com o tronco apoiado no banco: o glúteo máximo atua no seu maior braço de momento no topo, onde a linha de carga é vertical. Terminar na extensão neutra do quadril, sem hiperestender a lombar, mantém o foco no glúteo e protege a coluna (Contreras et al., 2015).",
       fisiologia:
-        "Alta ativação glútea com baixa demanda de equilíbrio e mobilidade, permitindo carga e volume focados no glúteo, o que é útil para hipertrofia e reforço do quadril, inclusive em iniciantes e progressões conduzidas.",
+        "O apoio do tronco no banco reduz a demanda de equilíbrio e permite sobrecarregar o glúteo máximo justamente onde ele é mais forte, na extensão final do quadril. De forma aguda, isso produz alta ativação glútea com pico de tensão no encurtamento, um perfil de resistência diferente do agachamento (Contreras et al., 2015). De forma crônica, cargas progressivas nesse padrão tendem a favorecer força e hipertrofia do glúteo com baixo custo técnico e de mobilidade. Por isso é um recurso versátil, do iniciante que ainda não agacha bem ao aluno avançado buscando volume dirigido ao quadril.",
       prescricaoPratica: "Em geral, priorize a posição neutra do tronco no topo.",
     },
     trustLevel: "tendência prática",
@@ -713,7 +713,7 @@ export const exercises: Exercise[] = [
       biomecanica:
         "Puxar vertical: adução e extensão do úmero conduzidas pelo latíssimo do dorso, com bíceps e romboides sinergistas; a polia guia a trajetória e facilita o controle escapular. Iniciar pela depressão e adução da escápula ativa as costas antes dos braços; largura e tipo de pegada modulam a ênfase (Andersen et al., 2014).",
       fisiologia:
-        "Desenvolve a musculatura de puxar em amplitude ampla, base para a força de costas e para a barra fixa. Conduzir o movimento pelas escápulas, e não pelos bíceps, direciona o estímulo ao dorsal.",
+        "Permite treinar o padrão de puxar vertical com carga graduável e trajetória estável, algo difícil de obter na barra fixa para quem ainda não sustenta o próprio peso. De forma aguda, iniciar o movimento pela adução e depressão escapular concentra o esforço no latíssimo e nos adutores da escápula, poupando a dominância dos flexores do cotovelo. De forma crônica, o trabalho progressivo desse padrão tende a aumentar força e secção transversa da musculatura dorsal, base para progredir à barra fixa (Andersen et al., 2014). Na prescrição, é uma porta de entrada de baixo risco para construir a musculatura de puxada antes de exigir o peso corporal completo.",
       prescricaoPratica: "Em geral, inicie o movimento pelas escápulas e controle a volta.",
     },
     trustLevel: "regra pedagógica",
@@ -781,7 +781,7 @@ export const exercises: Exercise[] = [
       biomecanica:
         "Puxar horizontal com retração escapular: dorsais, romboides e trapézio médio aproximam a escápula da coluna, com o bíceps como sinergista. Manter o tronco estável, sem balanço lombar, concentra o esforço nas costas e protege a coluna.",
       fisiologia:
-        "Fortalece a retração escapular, essencial para a postura e para equilibrar os empurradores (peitoral e deltoide). A qualidade da retração, não a carga balançada, define o estímulo.",
+        "Trabalha a musculatura de puxar horizontal com ênfase na retração escapular, equilibrando o volume dos empurradores (peitoral e deltoide) no planejamento semanal. De forma aguda, manter o tronco estável e conduzir pela escápula direciona o esforço a dorsais, romboides e trapézio médio, em vez de transferi-lo ao balanço lombar. De forma crônica, o fortalecimento dessa musculatura tende a melhorar a capacidade de estabilizar a cintura escapular sob carga, o que costuma favorecer o desempenho em outros exercícios de tronco superior. Na prescrição, a qualidade da retração e a amplitude controlada definem o estímulo mais do que a carga absoluta.",
       prescricaoPratica: "Em geral, mantenha o tronco estável e retraia as escápulas.",
     },
     trustLevel: "tendência prática",
@@ -814,7 +814,7 @@ export const exercises: Exercise[] = [
       metrics: [
         { nome: "Deltoides", valor: 88, tipo: "positivo" },
         { nome: "Tríceps", valor: 60, tipo: "positivo" },
-        { nome: "Demanda de ombro", valor: 64, tipo: "cautela" },
+        { nome: "Demanda de ombro", valor: 70, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 52, tipo: "cautela" },
       ],
     },
@@ -849,7 +849,7 @@ export const exercises: Exercise[] = [
       biomecanica:
         "Empurrar vertical acima da cabeça: flexão e abdução do ombro com extensão do cotovelo, tendo o deltoide como motor e trapézio e tríceps como sinergistas. A rotação superior da escápula acompanha o úmero e protege o espaço subacromial; a amplitude sob carga é limitada pela mobilidade do ombro.",
       fisiologia:
-        "Estímulo central de força e hipertrofia do deltoide e da estabilidade do ombro em posições acima da cabeça. Exige boa mobilidade e controle escapular antes de progredir carga.",
+        "O empurrar acima da cabeça solicita o deltoide como motor principal e exige rotação superior da escápula sincronizada, o que torna o padrão sensível à mobilidade e ao controle do ombro. De forma aguda, cargas moderadas geram tensão elevada no deltoide com participação de tríceps e trapézio; a amplitude útil é limitada pela mobilidade individual do ombro. De forma crônica, o estímulo progressivo tende a aumentar força e volume do deltoide e a fortalecer a estabilidade da cintura escapular em posições elevadas, relevante para tarefas do dia a dia acima da cabeça. Na prescrição, consolidar mobilidade e controle escapular antes de progredir carga costuma reduzir desconforto e melhorar a execução.",
       prescricaoPratica: "Em geral, adapte a amplitude ao ombro e evite compensar com a lombar.",
     },
     trustLevel: "cuidado de segurança",
@@ -916,7 +916,7 @@ export const exercises: Exercise[] = [
       biomecanica:
         "Flexão isolada do cotovelo conduzida pelo bíceps braquial (com o braquial), mantendo o ombro fixo. Manter o cotovelo junto ao corpo evita que o ombro assuma parte do trabalho; o pico de tensão ocorre próximo aos 90° de flexão.",
       fisiologia:
-        "Volume localizado de bíceps com baixo custo coordenativo, útil para hipertrofia de braço e reforço específico. Controlar a fase excêntrica aumenta o tempo sob tensão sem exigir carga alta.",
+        "Isola a flexão de cotovelo com baixo custo coordenativo, permitindo dirigir volume ao bíceps braquial e ao braquial sem grande fadiga sistêmica. De forma aguda, o pico de demanda ocorre por volta dos 90 graus de flexão, quando o braço de resistência é maior; controlar a fase excêntrica prolonga o tempo sob tensão sem exigir carga elevada. De forma crônica, esse acúmulo de tensão mecânica tende a favorecer a hipertrofia dos flexores do cotovelo (Schoenfeld, 2010). Na prescrição, entra como acessório de volume, no qual a consistência de execução rende mais que a carga máxima.",
       prescricaoPratica: "Em geral, mantenha o cotovelo fixo e controle a descida.",
     },
     trustLevel: "regra pedagógica",
@@ -983,7 +983,7 @@ export const exercises: Exercise[] = [
       biomecanica:
         "Extensão de cotovelo contra a polia, isolando o tríceps braquial com o cotovelo estável junto ao tronco; a tração do cabo mantém tensão ao longo da amplitude. Abrir os cotovelos recruta o peitoral e desvia o foco do alvo.",
       fisiologia:
-        "Estímulo localizado para o tríceps (maior massa do braço), útil para volume e para complementar os empurradores. A estabilidade do cotovelo direciona a tensão ao músculo-alvo.",
+        "A polia mantém tensão sobre o tríceps ao longo de toda a amplitude, inclusive onde o peso livre alivia, o que favorece o acúmulo de trabalho no músculo-alvo. De forma aguda, estabilizar o cotovelo junto ao tronco concentra o esforço nas três cabeças do tríceps e limita a ajuda do peitoral. De forma crônica, o volume dirigido tende a aumentar força e massa do tríceps, que responde pela maior parte do braço e complementa todos os padrões de empurrar (Schoenfeld, 2010). Na prescrição, é um acessório de baixo risco, útil para equilibrar o volume de tração e empurrar na semana.",
       prescricaoPratica: "Em geral, mantenha os cotovelos fixos e controle a volta.",
     },
     trustLevel: "regra pedagógica",

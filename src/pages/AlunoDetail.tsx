@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -29,6 +29,7 @@ import type { Aluno, Avaliacao } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { useDialog } from "@/lib/useDialog";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
@@ -46,6 +47,17 @@ export function AlunoDetail() {
   const [prontuarioDe, setProntuarioDe] = React.useState<string | null>(null);
   const location = useLocation();
   const recemCriado = Boolean((location.state as { recemCriado?: boolean } | null)?.recemCriado);
+  const [params, setParams] = useSearchParams();
+
+  // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação e limpa o param.
+  React.useEffect(() => {
+    if (params.get("avaliar") === "1") {
+      setAvaliar(true);
+      params.delete("avaliar");
+      setParams(params, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const aluno = alunos.find((a) => a.id === id);
   if (!aluno) {
@@ -346,6 +358,7 @@ export function AlunoDetail() {
           onSave={(av) => {
             addAvaliacao(av);
             setAvaliar(false);
+            toast(`Avaliação registrada para ${aluno.nome}`);
           }}
           alunoId={aluno.id}
         />
