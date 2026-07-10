@@ -8,7 +8,7 @@ import type {
   QuickAnswer,
 } from "./types";
 import {
-  disciplines,
+  disciplines as disciplinesRaw,
   modules,
   lessons,
   learningCases,
@@ -16,6 +16,18 @@ import {
   recommendations,
   quickAnswers,
 } from "./mocks";
+
+/**
+ * Contagens reais de módulos/aulas por disciplina, derivadas do que está de fato
+ * autorado. Sobrepõem os números de catálogo do mock para que o cabeçalho da
+ * disciplina não prometa mais do que existe (Filipe: "6 módulos, mas nada aparece").
+ */
+const disciplines = disciplinesRaw.map((d) => {
+  const mods = modules.filter((m) => m.disciplineId === d.id);
+  if (mods.length === 0) return d;
+  const lessonCount = mods.reduce((n, m) => n + m.lessonSlugs.length, 0);
+  return { ...d, moduleCount: mods.length, lessonCount };
+});
 
 /**
  * Camada de acesso a dados do Aprender. Hoje serve os mocks locais de forma
