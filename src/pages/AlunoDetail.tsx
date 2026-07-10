@@ -9,7 +9,6 @@ import {
   Dumbbell,
   Activity,
   AlertTriangle,
-  X,
   Clock,
   FlaskConical,
   HeartPulse,
@@ -20,7 +19,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
-import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, uid } from "@/lib/store";
+import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
 import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
@@ -29,6 +28,7 @@ import type { Aluno, Avaliacao } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
+import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
 import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,13 @@ const fmtData = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
 const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
 const nomeEx = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ?? slug;
+
+const TIPO_AVAL_LABEL: Record<string, string> = {
+  inicial: "Inicial",
+  reavaliacao: "Reavaliação",
+  pontual: "Pontual",
+  retorno: "Retorno",
+};
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
@@ -187,12 +194,25 @@ export function AlunoDetail() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                         <span className="font-semibold text-ink">{fmtData(av.data)}</span>
+                        {av.tipo && <Pill tone="neutral">{TIPO_AVAL_LABEL[av.tipo]}</Pill>}
                         {av.medidas.peso != null && <Medida label="Peso" value={`${av.medidas.peso} kg`} />}
                         {av.medidas.percentualGordura != null && (
                           <Medida label="% gordura" value={`${av.medidas.percentualGordura}%`} />
                         )}
+                        {av.medidas.cintura != null && <Medida label="Cintura" value={`${av.medidas.cintura} cm`} />}
                         {av.dorEscala != null && <Medida label="Dor" value={`${av.dorEscala}/10`} />}
                       </div>
+                      {(av.testes?.length || av.fotos?.length || av.regioesDor?.length) && (
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {av.testes?.length ? (
+                            <Pill tone="analysis">{av.testes.length} teste{av.testes.length > 1 ? "s" : ""}</Pill>
+                          ) : null}
+                          {av.fotos?.length ? <Pill tone="primary">{av.fotos.length} foto{av.fotos.length > 1 ? "s" : ""}</Pill> : null}
+                          {av.regioesDor?.length ? (
+                            <Pill tone="warning">dor: {av.regioesDor.slice(0, 2).join(", ")}{av.regioesDor.length > 2 ? "..." : ""}</Pill>
+                          ) : null}
+                        </div>
+                      )}
                       {av.observacoes && <p className="mt-1 text-sm text-ink-2">{av.observacoes}</p>}
                     </div>
                   </li>
@@ -412,7 +432,7 @@ export function AlunoDetail() {
       )}
 
       {avaliar && (
-        <NovaAvaliacaoModal
+        <AvaliacaoModal
           onClose={() => setAvaliar(false)}
           onSave={(av) => {
             addAvaliacao(av);
@@ -420,6 +440,7 @@ export function AlunoDetail() {
             toast(`Avaliação registrada para ${aluno.nome}`);
           }}
           alunoId={aluno.id}
+          anterior={avalsDesc[0]}
         />
       )}
 
@@ -631,11 +652,19 @@ function Info({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
+const METRICAS_EVOLUCAO: { key: string; label: string; unit: string }[] = [
+  { key: "peso", label: "Peso", unit: "kg" },
+  { key: "percentualGordura", label: "% gordura", unit: "%" },
+  { key: "cintura", label: "Cintura", unit: "cm" },
+  { key: "quadril", label: "Quadril", unit: "cm" },
+  { key: "massaMuscular", label: "Massa muscular", unit: "kg" },
+  { key: "imc", label: "IMC", unit: "" },
+  { key: "fcRepouso", label: "FC repouso", unit: "bpm" },
+  { key: "pressaoSistolica", label: "PA sistólica", unit: "mmHg" },
+];
+
 function Evolucao({ avals }: { avals: Avaliacao[] }) {
-  const metrics: { key: "peso" | "percentualGordura"; label: string; unit: string }[] = [
-    { key: "peso", label: "Peso", unit: "kg" },
-    { key: "percentualGordura", label: "% gordura", unit: "%" },
-  ];
+  const metrics = METRICAS_EVOLUCAO;
   const disponiveis = metrics.filter((m) => avals.some((a) => a.medidas[m.key] != null));
   const [metric, setMetric] = React.useState(disponiveis[0]?.key ?? "peso");
 
@@ -717,105 +746,5 @@ function MiniLine({ values }: { values: number[] }) {
         return <circle key={i} cx={c.x} cy={c.y} r={3} fill="var(--primary)" vectorEffect="non-scaling-stroke" />;
       })}
     </svg>
-  );
-}
-
-function NovaAvaliacaoModal({
-  onClose,
-  onSave,
-  alunoId,
-}: {
-  onClose: () => void;
-  onSave: (av: Avaliacao) => void;
-  alunoId: string;
-}) {
-  const hoje = new Date().toISOString().slice(0, 10);
-  const [data, setData] = React.useState(hoje);
-  const [peso, setPeso] = React.useState("");
-  const [gordura, setGordura] = React.useState("");
-  const [dor, setDor] = React.useState("");
-  const [obs, setObs] = React.useState("");
-  const dialogRef = useDialog<HTMLDivElement>(onClose);
-
-  const num = (s: string) => (s.trim() === "" ? undefined : Number(s.replace(",", ".")));
-  // registro totalmente vazio não vira avaliação (e reprogramaria a reavaliação à toa)
-  const temConteudo = [peso, gordura, dor, obs].some((v) => v.trim() !== "");
-
-  const save = () => {
-    if (!temConteudo) return;
-    // meio-dia local evita o registro cair no dia anterior por fuso
-    const ts = data ? new Date(`${data}T12:00:00`).getTime() : Date.now();
-    onSave({
-      id: uid(),
-      alunoId,
-      data: Math.min(ts, Date.now()),
-      medidas: { peso: num(peso), percentualGordura: num(gordura) },
-      dorEscala: num(dor),
-      observacoes: obs.trim() || undefined,
-    });
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Nova avaliação"
-        className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold text-ink">Registrar avaliação</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <label className="mb-3 block">
-          <span className="mb-1.5 block text-sm font-semibold text-ink">Data da avaliação</span>
-          <input
-            type="date"
-            value={data}
-            max={hoje}
-            onChange={(e) => setData(e.target.value)}
-            className="input"
-          />
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold text-ink">Peso (kg)</span>
-            <input value={peso} onChange={(e) => setPeso(e.target.value)} inputMode="decimal" placeholder="Ex.: 70" className="input" />
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-semibold text-ink">% de gordura</span>
-            <input value={gordura} onChange={(e) => setGordura(e.target.value)} inputMode="decimal" placeholder="Ex.: 28" className="input" />
-          </label>
-        </div>
-        <label className="mt-3 block">
-          <span className="mb-1.5 block text-sm font-semibold text-ink">Dor percebida (0–10)</span>
-          <input value={dor} onChange={(e) => setDor(e.target.value.replace(/[^\d]/g, "").slice(0, 2))} inputMode="numeric" placeholder="Ex.: 2" className="input" />
-        </label>
-        <label className="mt-3 block">
-          <span className="mb-1.5 block text-sm font-semibold text-ink">Observações</span>
-          <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} placeholder="Evolução, queixas, ajustes..." className="input" />
-        </label>
-        {!temConteudo && (
-          <p className="mt-3 text-xs text-ink-3">Preencha ao menos uma medida ou observação.</p>
-        )}
-        <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onClose} className={buttonClasses("secondary", "sm")}>
-            Cancelar
-          </button>
-          <button
-            onClick={save}
-            disabled={!temConteudo}
-            className={cn(buttonClasses("primary", "sm"), !temConteudo && "cursor-not-allowed opacity-50")}
-          >
-            Salvar avaliação
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }

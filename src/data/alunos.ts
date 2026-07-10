@@ -40,18 +40,81 @@ export interface Aluno {
   criterioProgressao?: string;
 }
 
+export type TipoAvaliacao = "inicial" | "reavaliacao" | "pontual" | "retorno";
+
+/** Perímetro corporal medido (cm). Bilateral usa valor=direito e valorEsq=esquerdo. */
+export interface AvaliacaoPerimetro {
+  regiao: string;
+  lado?: "D" | "E" | "Ambos" | "NA";
+  valor?: number;
+  valorEsq?: number;
+  obs?: string;
+}
+
+/** Teste físico/funcional registrado dinamicamente. */
+export interface AvaliacaoTeste {
+  categoria: string;
+  nome: string;
+  resultado: string;
+  unidade?: string;
+  lado?: "D" | "E" | "Bilateral" | "NA";
+  obs?: string;
+}
+
+/** Foto de evolução (dataURL local, privada por padrão). */
+export interface AvaliacaoFoto {
+  id: string;
+  tipo: string;
+  dataUrl: string;
+  obs?: string;
+}
+
+/** Medida livre criada pelo profissional (protocolos variam). */
+export interface MedidaPersonalizada {
+  nome: string;
+  valor: string;
+  unidade?: string;
+  categoria?: string;
+  obs?: string;
+}
+
 export interface Avaliacao {
   id: string;
   alunoId: string;
   data: number;
+  /**
+   * Medidas numéricas de valor único (uma por chave). Chaves usadas pela UI:
+   * peso, percentualGordura, altura, massaMuscular, cintura, quadril,
+   * fcRepouso, pressaoSistolica, pressaoDiastolica, fadiga, sono. Extensível.
+   */
   medidas: {
     peso?: number;
     percentualGordura?: number;
+    altura?: number;
+    massaMuscular?: number;
+    cintura?: number;
+    quadril?: number;
+    fcRepouso?: number;
+    pressaoSistolica?: number;
+    pressaoDiastolica?: number;
+    fadiga?: number;
+    sono?: number;
     [k: string]: number | undefined;
   };
   /** dor percebida 0–10 (opcional) */
   dorEscala?: number;
   observacoes?: string;
+
+  /* ---- Campos profissionais (todos opcionais; retrocompatível) ---- */
+  tipo?: TipoAvaliacao;
+  /** condição da avaliação: em repouso, antes/após o treino, outro */
+  condicao?: string;
+  /** regiões com dor relatada */
+  regioesDor?: string[];
+  perimetros?: AvaliacaoPerimetro[];
+  testes?: AvaliacaoTeste[];
+  fotos?: AvaliacaoFoto[];
+  personalizadas?: MedidaPersonalizada[];
 }
 
 export interface PrescricaoItem {

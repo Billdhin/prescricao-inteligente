@@ -319,6 +319,8 @@ export const useAlunos = create<AlunosState>()(
     //     alunos antigos com "Máquina" ganham as máquinas aeróbicas (o significado antigo as incluía).
     // v4: "Peso corporal" passa a ser garantido em todo aluno (o próprio corpo está sempre
     //     disponível); alunos antigos sem esse equipamento recebem-no no backfill.
+    // v5: Avaliacao ganhou campos profissionais opcionais (tipo, condição, perímetros, testes,
+    //     fotos, personalizadas, sinais fisiológicos). Aditivo: avaliações antigas seguem válidas.
     // migrate por MERGE: preserva os dados do usuário (alunos/avaliações/prescrições que
     // ele criou) e apenas faz backfill dos campos novos do seed nos alunos-semente por id.
     // Assim, futuros bumps de versão não apagam o trabalho do profissional.

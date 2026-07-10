@@ -6,7 +6,14 @@
 
 export function arquivoParaDataUrl(
   file: File,
-  opts: { maxW: number; maxH: number; modo: "cover-quadrado" | "contain"; qualidade?: number },
+  opts: {
+    maxW: number;
+    maxH: number;
+    modo: "cover-quadrado" | "contain";
+    qualidade?: number;
+    /** força o formato de saída (padrão: JPEG para cover, PNG para contain) */
+    formato?: "jpeg" | "png";
+  },
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) {
@@ -37,9 +44,10 @@ export function arquivoParaDataUrl(
         canvas.height = Math.max(1, Math.round(img.height * escala));
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       }
-      // PNG preserva transparência de logos; foto quadrada vai de JPEG (menor)
-      const mime = opts.modo === "contain" ? "image/png" : "image/jpeg";
-      resolve(canvas.toDataURL(mime, opts.qualidade ?? 0.85));
+      // PNG preserva transparência de logos; foto quadrada vai de JPEG (menor).
+      // `formato` permite forçar (ex.: foto de evolução em "contain" mas JPEG leve).
+      const fmt = opts.formato ?? (opts.modo === "contain" ? "png" : "jpeg");
+      resolve(canvas.toDataURL(`image/${fmt}`, opts.qualidade ?? 0.85));
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
