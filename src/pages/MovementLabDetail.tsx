@@ -20,7 +20,7 @@ import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
 import { FaseFigure, faseKind } from "@/components/movement-lab/FaseFigure";
 import { getFasePose } from "@/data/fase-poses";
-import { getErroImagem, getVariacaoImagem } from "@/data/aba-imagens";
+import { getErroImagem, temVariacaoImagens, getVariacaoImagemPorIndice } from "@/data/aba-imagens";
 import { getPopulacoesCautela } from "@/data/populacoes-cautela";
 import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
 import { MuscleMap, activationFromExercise } from "@/components/anatomy/MuscleMap";
@@ -373,16 +373,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
             {
               id: "var",
               label: "Variações",
-              content: (
-                <Bullets
-                  items={exercise.blocos.variacoes}
-                  trust="regra pedagógica"
-                  tone="primary"
-                  ex={exercise}
-                  img={getVariacaoImagem(exercise.slug) ?? exercise.imagem}
-                  imgLabel="Movimento base"
-                />
-              ),
+              content: <Variacoes exercise={exercise} />,
             },
             {
               id: "pres",
@@ -659,6 +650,59 @@ function Bullets({
           ))}
         </ul>
       </div>
+    </div>
+  );
+}
+
+/** Aba "Variações": quando há fotos por variação, mostra um mosaico com uma foto
+ *  para cada variação indicada; caso contrário, cai no bloco de texto com a foto
+ *  de execução como movimento base (nada quebra nos exercícios ainda sem fotos). */
+function Variacoes({ exercise }: { exercise: Exercise }) {
+  if (!temVariacaoImagens(exercise.slug)) {
+    return (
+      <Bullets
+        items={exercise.blocos.variacoes}
+        trust="regra pedagógica"
+        tone="primary"
+        ex={exercise}
+        img={exercise.imagem}
+        imgLabel="Movimento base"
+      />
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <TrustBadge level="regra pedagógica" ex={exercise} />
+      </div>
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {exercise.blocos.variacoes.map((v, i) => {
+          const img = getVariacaoImagemPorIndice(exercise.slug, i);
+          const partes = v.split(":");
+          const titulo = partes[0].trim();
+          const desc = partes.slice(1).join(":").trim();
+          return (
+            <li key={v} className="overflow-hidden rounded-xl border border-border bg-surface">
+              {img ? (
+                <img
+                  src={withBase(img)}
+                  alt={`Variação: ${titulo}`}
+                  className="aspect-[4/3] w-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="grid aspect-[4/3] w-full place-items-center bg-surface-soft text-xs font-semibold uppercase tracking-wider text-ink-3">
+                  Variação
+                </div>
+              )}
+              <div className="p-3">
+                <div className="font-display text-sm font-bold text-ink">{titulo}</div>
+                {desc && <p className="mt-0.5 text-sm text-ink-2">{desc}</p>}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

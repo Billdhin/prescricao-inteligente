@@ -4,6 +4,7 @@ import { Library as LibraryIcon, Search, ArrowRight } from "lucide-react";
 import { Card, Pill, SectionHeader } from "@/components/ui/primitives";
 import { Accordion } from "@/components/ui/disclosure";
 import { biblioteca, bibliotecaCategorias } from "@/data/library";
+import { ComparadorDefinicoes } from "@/components/library/ComparadorDefinicoes";
 import { cn } from "@/lib/utils";
 
 export function Library() {
@@ -15,7 +16,7 @@ export function Library() {
     (e) =>
       (cat === "Todas" || e.categoria === cat) &&
       (termo === "" ||
-        [e.termo, e.resumo, e.detalhe, e.aplicacao ?? "", e.sinonimos ?? "", e.formula ?? ""]
+        [e.termo, e.definicao, e.resumo, e.detalhe, e.aplicacao ?? "", e.sinonimos ?? "", e.formula ?? ""]
           .join(" ")
           .toLowerCase()
           .includes(termo)),
@@ -59,6 +60,8 @@ export function Library() {
         </div>
       </Card>
 
+      <ComparadorDefinicoes />
+
       {filtered.length === 0 ? (
         <Card className="p-10 text-center text-ink-2">Nenhum resultado para “{q}”.</Card>
       ) : (
@@ -73,7 +76,10 @@ export function Library() {
             ),
             content: (
               <div className="space-y-3">
-                <p className="text-sm text-ink">{e.detalhe}</p>
+                <p className="border-l-2 border-primary/40 bg-primary-tint/30 py-1.5 pl-3 text-[15px] font-semibold leading-snug text-ink">
+                  {e.definicao}
+                </p>
+                <p className="text-sm text-ink-2">{e.detalhe}</p>
                 {e.formula && (
                   <div className="rounded-lg border border-border bg-surface-soft px-3 py-2 text-sm">
                     <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">Fórmula</span>

@@ -11,6 +11,10 @@ import {
   cardioModalidades, type CardioModalidade, cardioImagem,
   NIVEL_BAR, IMPACTO_BAR, NIVEL_LABEL, IMPACTO_LABEL,
 } from "@/data/cardio";
+import {
+  INTENSIDADES, type Intensidade, TEMPOS_MIN, type TempoMin,
+  PESO_PADRAO_KG, kcalModalidade,
+} from "@/data/calorias";
 import { cn, withBase } from "@/lib/utils";
 
 const MAX = 4;
@@ -202,24 +206,32 @@ function ForcaBloco({ base }: { base: string | null }) {
 
 /* =========================== Bloco: Aeróbicos ========================== */
 
+/** kcal e MET já calculados por modalidade (dependem de intensidade/tempo/peso). */
+type CardioCalc = Record<string, { kcal: number; met: number }>;
+
 type MetricaCardio = {
   key: string;
   label: string;
   hint?: string;
   melhor: "maior" | "menor" | null;
-  bar: (m: CardioModalidade) => number;
-  display: (m: CardioModalidade) => string;
-  sort: (m: CardioModalidade) => number;
+  bar: (m: CardioModalidade, c: CardioCalc) => number;
+  display: (m: CardioModalidade, c: CardioCalc) => string;
+  sort: (m: CardioModalidade, c: CardioCalc) => number;
 };
 
 const clamp100 = (n: number) => Math.max(0, Math.min(100, n));
 
 const METRICAS_CARDIO: MetricaCardio[] = [
   {
-    key: "kcal", label: "Gasto calórico", hint: "≈ 30 min · pessoa de ~70 kg", melhor: "maior",
-    bar: (m) => clamp100((m.gastoCalorico / 450) * 100),
-    display: (m) => `≈ ${m.gastoCalorico} kcal`,
-    sort: (m) => m.gastoCalorico,
+    // O gasto é recalculado ao vivo: a barra escala pela maior estimativa da tela.
+    key: "kcal", label: "Gasto calórico", hint: "conforme intensidade e tempo", melhor: "maior",
+    bar: (m, c) => {
+      const vals = Object.values(c).map((x) => x.kcal);
+      const max = Math.max(1, ...vals);
+      return clamp100(((c[m.id]?.kcal ?? 0) / max) * 100);
+    },
+    display: (m, c) => `≈ ${c[m.id]?.kcal ?? 0} kcal`,
+    sort: (m, c) => c[m.id]?.kcal ?? 0,
   },
   {
     key: "grupos", label: "Abrangência muscular", hint: "nº de grupos recrutados", melhor: "maior",
@@ -255,16 +267,26 @@ const METRICAS_CARDIO: MetricaCardio[] = [
 
 function CardioBloco() {
   const [sel, setSel] = React.useState<string[]>(["c-caminhada", "c-corrida"]);
+  const [intensidade, setIntensidade] = React.useState<Intensidade>("moderado");
+  const [minutos, setMinutos] = React.useState<TempoMin>(30);
+  const [pesoKg, setPesoKg] = React.useState<number>(PESO_PADRAO_KG);
   const selected = sel.map((s) => cardioModalidades.find((m) => m.id === s)).filter(Boolean) as CardioModalidade[];
   const toggle = (id: string) =>
     setSel((c) => (c.includes(id) ? c.filter((x) => x !== id) : c.length < MAX ? [...c, id] : c));
+
+  // Gasto calórico recalculado ao vivo conforme intensidade, tempo e peso.
+  const calc = React.useMemo<CardioCalc>(() => {
+    const out: CardioCalc = {};
+    for (const m of selected) out[m.id] = kcalModalidade(m.id, intensidade, pesoKg, minutos, m.met);
+    return out;
+  }, [selected, intensidade, pesoKg, minutos]);
 
   const melhorIdx = (m: MetricaCardio) => {
     if (m.melhor === null || selected.length === 0) return -1;
     let best = 0;
     selected.forEach((mod, i) => {
-      const v = m.sort(mod);
-      const bv = m.sort(selected[best]);
+      const v = m.sort(mod, calc);
+      const bv = m.sort(selected[best], calc);
       if ((m.melhor === "maior" && v > bv) || (m.melhor === "menor" && v < bv)) best = i;
     });
     return best;
@@ -272,6 +294,7 @@ function CardioBloco() {
 
   const insightKcal = selected.length >= 2 ? selected[melhorIdx(METRICAS_CARDIO[0])] : null;
   const insightImpacto = selected.length >= 2 ? selected[melhorIdx(METRICAS_CARDIO[2])] : null;
+  const intensidadeLabel = INTENSIDADES.find((x) => x.id === intensidade)?.label.toLowerCase() ?? "";
 
   return (
     <>
@@ -284,6 +307,16 @@ function CardioBloco() {
 
       {selected.length > 0 && (
         <>
+          {/* Parâmetros do gasto calórico: intensidade + tempo + peso, ao vivo. */}
+          <CardioParametros
+            intensidade={intensidade}
+            onIntensidade={setIntensidade}
+            minutos={minutos}
+            onMinutos={setMinutos}
+            pesoKg={pesoKg}
+            onPeso={setPesoKg}
+          />
+
           {/* Cabeçalhos */}
           <div className={cn("grid gap-4", gridColsFor(selected.length))}>
             {selected.map((m, i) => (
@@ -313,10 +346,14 @@ function CardioBloco() {
                     <div>
                       <div className="flex items-baseline gap-1">
                         <Flame className="h-4 w-4 text-cta" />
-                        <span className="font-display text-2xl font-bold text-ink tabular">{m.gastoCalorico}</span>
-                        <span className="text-xs text-ink-3">kcal/30min</span>
+                        <span className="font-display text-2xl font-bold text-ink tabular">
+                          {calc[m.id]?.kcal ?? 0}
+                        </span>
+                        <span className="text-xs text-ink-3">kcal/{minutos}min</span>
                       </div>
-                      <div className="mt-0.5 text-[11px] text-ink-3">{m.met} MET · esforço moderado</div>
+                      <div className="mt-0.5 text-[11px] text-ink-3">
+                        {calc[m.id]?.met ?? m.met} MET · esforço {intensidadeLabel}
+                      </div>
                     </div>
                     <Pill tone={m.impacto === "alto" ? "warning" : m.impacto === "moderado" ? "neutral" : "success"}>
                       Impacto {IMPACTO_LABEL[m.impacto].toLowerCase()}
@@ -368,8 +405,8 @@ function CardioBloco() {
                         <div key={mod.id} className="flex items-center gap-2">
                           <CardioBar
                             srLabel={mod.nome}
-                            value={m.bar(mod)}
-                            display={m.display(mod)}
+                            value={m.bar(mod, calc)}
+                            display={m.display(mod, calc)}
                             tone={COL_TONES[i]}
                             className="flex-1"
                           />
@@ -463,6 +500,123 @@ function Chips({
         })}
       </div>
       {sel.length === 0 && <p className="mt-4 text-sm text-ink-2">{vazio}</p>}
+    </Card>
+  );
+}
+
+/** Painel de parâmetros do gasto calórico: intensidade (leve/moderado/intenso),
+ *  tempo (15..90 min) e peso corporal opcional. Recalcula o kcal ao vivo. */
+function CardioParametros({
+  intensidade, onIntensidade, minutos, onMinutos, pesoKg, onPeso,
+}: {
+  intensidade: Intensidade;
+  onIntensidade: (v: Intensidade) => void;
+  minutos: TempoMin;
+  onMinutos: (v: TempoMin) => void;
+  pesoKg: number;
+  onPeso: (v: number) => void;
+}) {
+  const descricao = INTENSIDADES.find((x) => x.id === intensidade)?.descricao ?? "";
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#fff1e6] text-[color:var(--cta-text)]">
+          <Flame className="h-4 w-4" />
+        </span>
+        <div>
+          <h3 className="font-display text-sm font-bold text-ink">Parâmetros do gasto calórico</h3>
+          <p className="text-[11px] text-ink-3">Ajuste intensidade e tempo: o gasto recalcula na hora.</p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[1.4fr,1.4fr,1fr]">
+        {/* Intensidade */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-ink-2" id="lbl-intensidade">
+            Intensidade
+          </label>
+          <div role="radiogroup" aria-labelledby="lbl-intensidade" className="flex gap-1.5">
+            {INTENSIDADES.map((it) => {
+              const on = it.id === intensidade;
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => onIntensidade(it.id)}
+                  className={cn(
+                    "flex-1 rounded-control border px-2 py-2 text-sm font-semibold transition-colors",
+                    on
+                      ? "border-cta bg-[#fff1e6] text-[color:var(--cta-text)]"
+                      : "border-border text-ink-2 hover:bg-surface-soft",
+                  )}
+                >
+                  {it.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[11px] leading-snug text-ink-3">{descricao}.</p>
+        </div>
+
+        {/* Tempo */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-ink-2" id="lbl-tempo">
+            Tempo de sessão
+          </label>
+          <div role="radiogroup" aria-labelledby="lbl-tempo" className="flex flex-wrap gap-1.5">
+            {TEMPOS_MIN.map((t) => {
+              const on = t === minutos;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => onMinutos(t)}
+                  className={cn(
+                    "rounded-control border px-3 py-2 text-sm font-semibold tabular transition-colors",
+                    on
+                      ? "border-primary bg-primary-tint text-primary"
+                      : "border-border text-ink-2 hover:bg-surface-soft",
+                  )}
+                >
+                  {t} min
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Peso corporal (opcional) */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-ink-2" htmlFor="peso-corporal">
+            Peso corporal
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              id="peso-corporal"
+              type="number"
+              inputMode="numeric"
+              min={30}
+              max={200}
+              step={1}
+              value={pesoKg}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                if (Number.isFinite(n)) onPeso(Math.max(30, Math.min(200, Math.round(n))));
+              }}
+              className="input w-24 tabular"
+              aria-describedby="peso-hint"
+            />
+            <span className="text-sm text-ink-3">kg</span>
+          </div>
+          <p id="peso-hint" className="mt-1.5 text-[11px] leading-snug text-ink-3">
+            Padrão de referência: {PESO_PADRAO_KG} kg.
+          </p>
+        </div>
+      </div>
     </Card>
   );
 }
@@ -642,11 +796,14 @@ export function Comparador() {
           </p>
         ) : (
           <p className="text-xs leading-relaxed text-ink-2">
-            O gasto calórico é uma <span className="font-semibold text-ink">estimativa</span> para uma pessoa
-            de ~70 kg em 30 min de esforço moderado, derivada do valor de MET de cada atividade (Compendium
-            of Physical Activities: Ainsworth et al., 2011; fórmula ACSM). Varia com peso, intensidade e
-            aptidão. Impacto, hidratação, técnica e praticidade são leituras qualitativas para apoiar a
-            escolha; não são medições do seu aluno. Ajuste sempre ao caso e à diretriz vigente.
+            O gasto calórico é uma <span className="font-semibold text-ink">estimativa</span> recalculada a
+            partir da intensidade, do tempo e do peso que você escolher. Cada atividade tem um valor de MET
+            de referência por intensidade (leve, moderado, intenso), e o cálculo segue a fórmula do ACSM (kcal
+            = MET × 3,5 × peso em kg ÷ 200 × minutos). Os METs vêm do Compendium of Physical Activities
+            (Ainsworth et al., 2011). O resultado varia com aptidão, terreno e economia de movimento, então
+            trate o número como ordem de grandeza. Impacto, hidratação, técnica e praticidade são leituras
+            qualitativas para apoiar a escolha; não são medições do seu aluno. Ajuste sempre ao caso e à
+            diretriz vigente.
           </p>
         )}
       </Card>

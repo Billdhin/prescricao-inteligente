@@ -375,7 +375,7 @@ function ProTools({ premium }: { premium: boolean }) {
   const tools = [
     { icon: GitCompare, label: "Comparador avançado", sub: "Ranqueie variações por eficiência", to: "/comparador" },
     { icon: ClipboardList, label: "Protocolos prontos", sub: "Modelos por objetivo", to: "/protocols" },
-    { icon: TrendingUp, label: "Evolução da carteira", sub: "Visão agregada dos alunos", to: "/assessments" },
+    { icon: TrendingUp, label: "Evolução dos alunos", sub: "Visão agregada da saúde e das medidas", to: "/assessments" },
   ];
 
   if (!premium) {
@@ -387,7 +387,7 @@ function ProTools({ premium }: { premium: boolean }) {
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-base font-bold text-ink">Ferramentas do Profissional</h2>
           <p className="text-sm text-ink-2">
-            Comparador avançado, protocolos prontos e evolução da carteira.
+            Comparador avançado, protocolos prontos e evolução dos alunos.
           </p>
         </div>
         <Link to="/pricing" className={buttonClasses("primary", "sm")}>

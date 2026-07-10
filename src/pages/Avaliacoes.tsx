@@ -136,13 +136,13 @@ export function Avaliacoes() {
         </Card>
       </div>
 
-      {/* Evolução da carteira: a visão agregada prometida no painel */}
+      {/* Evolução dos alunos: a visão agregada prometida no painel */}
       <Card className="p-5 md:p-6">
         <div className="mb-4 flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
             <TrendingDown className="h-4 w-4" />
           </span>
-          <h2 className="font-display text-lg font-bold text-ink">Evolução da carteira</h2>
+          <h2 className="font-display text-lg font-bold text-ink">Evolução dos alunos</h2>
         </div>
         {evolucao.length === 0 ? (
           <p className="py-6 text-center text-sm text-ink-2">

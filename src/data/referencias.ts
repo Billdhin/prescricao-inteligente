@@ -187,6 +187,22 @@ export const referencias: Referencia[] = [
     nota: "Tensão mecânica, estresse metabólico e dano: sustenta a leitura fisiológica de volume e ênfase muscular.",
   },
   {
+    id: "schoenfeld-2017-volume",
+    autores: "Schoenfeld BJ, Ogborn D, Krieger JW",
+    titulo: "Dose-response relationship between weekly resistance training volume and increases in muscle mass: a systematic review and meta-analysis",
+    fonte: "Journal of Sports Sciences",
+    ano: 2017,
+    nota: "Relação dose-resposta entre volume semanal e hipertrofia: sustenta a lógica de volume por grupo muscular nas ênfases regionais.",
+  },
+  {
+    id: "schoenfeld-grgic-adm-2020",
+    autores: "Schoenfeld BJ, Grgic J",
+    titulo: "Effects of range of motion on muscle development during resistance training interventions: a systematic review",
+    fonte: "SAGE Open Medicine",
+    ano: 2020,
+    nota: "Revisão sobre amplitude de movimento e desenvolvimento muscular: em geral, a amplitude completa tende a favorecer a hipertrofia.",
+  },
+  {
     id: "contreras-2015",
     autores: "Contreras B, Vigotsky AD, Schoenfeld BJ, et al.",
     titulo:

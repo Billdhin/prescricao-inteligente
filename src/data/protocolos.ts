@@ -277,7 +277,7 @@ export const protocolos: Protocolo[] = [
     resumo: "Puxadas vertical e horizontal em faixa de hipertrofia, cobrindo latíssimo e sinergistas.",
     indicacao: "Objetivo de volume de dorsais, em aluno com boa técnica de puxada e controle de tronco.",
     base: "A pegada e a direção da puxada modulam o recrutamento de latíssimo e bíceps; combinar puxada vertical e remada horizontal cobre a região das costas com estímulo de hipertrofia.",
-    refIds: ["andersen-2014", "schoenfeld-2010", "garber-2011"],
+    refIds: ["andersen-2014", "boeckh-behrens-2000", "schoenfeld-2010", "garber-2011"],
     frequencia: "2 sessões de superiores por semana",
     estruturaSemanal: "Puxada vertical seguida de remada horizontal e variação; foco em amplitude e conexão.",
     itens: [
@@ -298,8 +298,8 @@ export const protocolos: Protocolo[] = [
     tone: "primary",
     resumo: "Empurrar acima da cabeça e elevações laterais para cobrir as porções do deltoide.",
     indicacao: "Objetivo de volume de ombros, em aluno com boa mobilidade e sem desconforto no empurrar acima da cabeça.",
-    base: "O deltoide tem porções com funções distintas; combinar desenvolvimento (porção anterior e média) e elevação lateral (porção média) distribui o estímulo de hipertrofia sobre o ombro.",
-    refIds: ["rodriguez-ridao-2020", "schoenfeld-2010"],
+    base: "O deltoide tem porções com funções distintas; aplicando os princípios gerais de hipertrofia ao ombro, combinar um padrão de empurrar acima da cabeça (que envolve mais as porções anterior e média) com a elevação lateral (que enfatiza a porção média) tende a distribuir o volume sobre o deltoide.",
+    refIds: ["schoenfeld-2010", "schoenfeld-2017-volume"],
     frequencia: "2 sessões de superiores por semana",
     estruturaSemanal: "Desenvolvimento de maior carga seguido de elevações e variação em máquina.",
     itens: [
@@ -322,7 +322,7 @@ export const protocolos: Protocolo[] = [
     resumo: "Trabalho direto de bíceps e tríceps em faixa de hipertrofia, com controle da execução.",
     indicacao: "Ênfase em braços, complementando o trabalho de empurrar e puxar. Cargas que permitam técnica.",
     base: "Bíceps e tríceps respondem a volume localizado com tensão adequada; alternar flexão de cotovelo e extensões cobre os dois grupos com estímulo de hipertrofia.",
-    refIds: ["schoenfeld-2010", "garber-2011"],
+    refIds: ["schoenfeld-2010", "schoenfeld-2017-volume", "garber-2011"],
     frequencia: "2 sessões por semana (pode acoplar a superiores)",
     estruturaSemanal: "Alternar bíceps e tríceps; controlar a fase excêntrica para aumentar o tempo sob tensão.",
     itens: [
@@ -344,7 +344,7 @@ export const protocolos: Protocolo[] = [
     resumo: "Padrão de quadril dominante para glúteos e isquiotibiais em faixa de hipertrofia.",
     indicacao: "Ênfase em cadeia posterior e glúteos, em aluno com dobradiça de quadril estável.",
     base: "O hip thrust gera alta ativação de glúteo máximo e o levantamento terra romeno recruta fortemente os isquiotibiais; juntos cobrem a cadeia posterior com estímulo de hipertrofia.",
-    refIds: ["contreras-2015", "schoenfeld-2010"],
+    refIds: ["contreras-2015", "boeckh-behrens-2000", "schoenfeld-2010"],
     frequencia: "2 sessões de inferiores por semana",
     estruturaSemanal: "Dobradiça de quadril e ênfase glútea seguidas de isquiotibiais; técnica antes de carga.",
     itens: [
@@ -366,8 +366,8 @@ export const protocolos: Protocolo[] = [
     tone: "primary",
     resumo: "Trabalho de panturrilha em amplitude completa, com boa frequência semanal.",
     indicacao: "Ênfase em panturrilha, região que costuma tolerar e responder a maior frequência e amplitude.",
-    base: "O tríceps sural responde a volume com amplitude completa; controlar a fase de alongamento e a pausa no topo aumenta o estímulo de hipertrofia.",
-    refIds: ["schoenfeld-2010"],
+    base: "Aplicando os princípios gerais de hipertrofia à panturrilha: volume adequado e amplitude completa tendem a favorecer o estímulo; controlar a fase de alongamento e a pausa no topo ajuda a manter o trabalho em toda a amplitude.",
+    refIds: ["schoenfeld-2010", "schoenfeld-grgic-adm-2020", "schoenfeld-2017-volume"],
     frequencia: "2 a 3 sessões por semana",
     estruturaSemanal: "Séries em amplitude completa, variando pé neutro; controle da descida.",
     itens: [
@@ -435,7 +435,7 @@ export const protocolos: Protocolo[] = [
     resumo: "Padrão de quadril dominante para glúteos e isquiotibiais em baixas repetições e maior carga.",
     indicacao: "Ganho de força de cadeia posterior e ênfase glútea, em aluno com boa técnica de dobradiça de quadril.",
     base: "O hip thrust gera alta ativação de glúteo máximo em comparação ao agachamento, e o levantamento terra romeno recruta fortemente os isquiotibiais; juntos cobrem o padrão de quadril em faixa de força.",
-    refIds: ["contreras-2015", "garber-2011"],
+    refIds: ["contreras-2015", "boeckh-behrens-2000", "garber-2011"],
     frequencia: "2 sessões por semana",
     estruturaSemanal: "Exercício principal de força seguido de acessórios de isquiotibiais; foco em técnica antes de carga.",
     itens: [
@@ -480,8 +480,8 @@ export const protocolos: Protocolo[] = [
     tone: "warning",
     resumo: "Trabalho de braços e dorsais em amplitude confortável, evitando estresse do ombro sensível.",
     indicacao: "Aluno com desconforto de ombro em empurrar acima da cabeça ou em amplitude final do supino. Mantém estímulo poupando a articulação.",
-    base: "Priorizar puxadas e trabalho de braços em amplitude tolerada reduz o estresse no ombro sensível, mantendo estímulo de resistência muscular sem provocar dor.",
-    refIds: ["rodriguez-ridao-2020", "garber-2011"],
+    base: "Priorizar puxadas e trabalho de braços em amplitude tolerada tende a manter o estímulo de resistência muscular respeitando o ombro sensível; a progressão gradual e individualizada guia a evolução da amplitude e da carga sem provocar dor.",
+    refIds: ["garber-2011", "acsm-getp11"],
     frequencia: "2 sessões de superiores por semana",
     estruturaSemanal: "Puxadas e exercícios de braços em amplitude confortável; evitar carga que provoque dor no ombro.",
     itens: [
