@@ -29,6 +29,20 @@ import { Semaforo } from "@/pages/Semaforo";
 import { Roi } from "@/pages/Roi";
 import { CasosRcd } from "@/pages/CasosRcd";
 import { CasoRcdDetail } from "@/pages/CasoRcdDetail";
+import {
+  AprenderHome,
+  MapaConhecimento,
+  Disciplinas as AprenderDisciplinas,
+  DisciplinaDetail,
+  ModuloDetail,
+  Conteudo as AprenderConteudo,
+  Casos as AprenderCasos,
+  CasoDetail as AprenderCasoDetail,
+  Biblioteca as AprenderBiblioteca,
+  Consulta as AprenderConsulta,
+  Salvos as AprenderSalvos,
+  Progresso as AprenderProgresso,
+} from "@/features/learning/pages";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -88,6 +102,21 @@ export default function App() {
           <Route path="/tutorial/:slug" element={<TutorialDetail />} />
           <Route path="/suporte" element={<Support />} />
           <Route path="/account" element={<Account />} />
+
+          {/* Aprender: corpo científico do produto */}
+          <Route path="/aprender" element={<AprenderHome />} />
+          <Route path="/aprender/mapa" element={<MapaConhecimento />} />
+          <Route path="/aprender/disciplinas" element={<AprenderDisciplinas />} />
+          <Route path="/aprender/disciplinas/:disciplineSlug" element={<DisciplinaDetail />} />
+          <Route path="/aprender/disciplinas/:disciplineSlug/:moduleSlug" element={<ModuloDetail />} />
+          <Route path="/aprender/conteudos/:lessonSlug" element={<AprenderConteudo />} />
+          <Route path="/aprender/casos" element={<AprenderCasos />} />
+          <Route path="/aprender/casos/:caseSlug" element={<AprenderCasoDetail />} />
+          <Route path="/aprender/biblioteca" element={<AprenderBiblioteca />} />
+          <Route path="/aprender/consulta" element={<AprenderConsulta />} />
+          <Route path="/aprender/salvos" element={<AprenderSalvos />} />
+          <Route path="/aprender/progresso" element={<AprenderProgresso />} />
+          <Route path="/aprender/trilhas" element={<Navigate to="/tracks" replace />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

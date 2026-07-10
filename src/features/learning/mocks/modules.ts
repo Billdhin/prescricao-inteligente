@@ -1,0 +1,97 @@
+import type { Module } from "../types";
+
+/**
+ * Módulos da disciplina "Biomecânica do treinamento" (exemplo completo autorado).
+ * Os quatro primeiros seguem a estrutura da especificação; os demais existem como
+ * metadados para o painel editorial futuro preencher.
+ */
+
+export const modules: Module[] = [
+  {
+    id: "m-bio-1",
+    disciplineId: "d-biomecanica-treinamento",
+    slug: "o-movimento-antes-da-carga",
+    title: "O movimento antes da carga",
+    description: "Antes de somar peso, entenda como o corpo se organiza no espaço.",
+    objective: "Descrever o movimento em planos, eixos e cadeias antes de pensar em resistência.",
+    order: 1,
+    level: "fundamental",
+    estimatedMinutes: 40,
+    lessonCount: 4,
+    progress: 60,
+    status: "em-andamento",
+    lessonSlugs: [
+      "planos-eixos-e-movimentos",
+      "cadeias-cineticas",
+      "graus-de-liberdade",
+      "centro-de-massa-e-base",
+    ],
+    applications: ["Escolher a variação que respeita a mobilidade do aluno"],
+  },
+  {
+    id: "m-bio-2",
+    disciplineId: "d-biomecanica-treinamento",
+    slug: "forcas-e-momentos",
+    title: "Forças e momentos",
+    description: "O que realmente torna um exercício mais ou menos exigente.",
+    objective: "Relacionar força externa, braço de momento e torque à demanda do exercício.",
+    order: 2,
+    level: "intermediario",
+    estimatedMinutes: 45,
+    lessonCount: 4,
+    progress: 25,
+    status: "em-andamento",
+    prerequisites: ["m-bio-1"],
+    lessonSlugs: [
+      "forca-externa-e-interna",
+      "braco-de-momento",
+      "torque-na-pratica",
+      "curvas-de-resistencia",
+    ],
+    applications: ["Explicar por que a mesma carga pesa diferente em cada ângulo"],
+  },
+  {
+    id: "m-bio-3",
+    disciplineId: "d-biomecanica-treinamento",
+    slug: "analise-do-exercicio",
+    title: "Análise do exercício",
+    description: "As variáveis que transformam um exercício em outro.",
+    objective: "Analisar amplitude, posição, equipamento, estabilidade, velocidade e fadiga.",
+    order: 3,
+    level: "intermediario",
+    estimatedMinutes: 50,
+    lessonCount: 4,
+    progress: 0,
+    status: "nao-iniciado",
+    prerequisites: ["m-bio-2"],
+    lessonSlugs: [
+      "por-que-joelho-ultrapassa-o-pe",
+      "amplitude-e-demanda",
+      "posicao-corporal-e-equipamento",
+      "estabilidade-velocidade-e-fadiga",
+    ],
+    applications: ["Adaptar um exercício mantendo o objetivo do estímulo"],
+  },
+  {
+    id: "m-bio-4",
+    disciplineId: "d-biomecanica-treinamento",
+    slug: "aplicacao-aos-padroes",
+    title: "Aplicação aos padrões",
+    description: "Levar a análise para agachar, empurrar, puxar, levantar e avançar.",
+    objective: "Aplicar a análise biomecânica aos padrões fundamentais de movimento.",
+    order: 4,
+    level: "avancado",
+    estimatedMinutes: 55,
+    lessonCount: 4,
+    progress: 0,
+    status: "nao-iniciado",
+    prerequisites: ["m-bio-3"],
+    lessonSlugs: [
+      "padrao-agachar",
+      "padrao-empurrar",
+      "padrao-puxar",
+      "padrao-levantar-e-avancar",
+    ],
+    applications: ["Escolher entre variações de um mesmo padrão com critério"],
+  },
+];

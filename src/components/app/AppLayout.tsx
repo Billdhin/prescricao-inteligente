@@ -7,7 +7,6 @@ import {
   BookOpen,
   Route as RouteIcon,
   Library,
-  Star,
   History,
   ClipboardList,
   BarChart3,
@@ -27,6 +26,10 @@ import {
   LifeBuoy,
   HelpCircle,
   ShieldCheck,
+  Network,
+  Stethoscope,
+  Search,
+  Bookmark,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
@@ -92,9 +95,26 @@ const navByMode: Record<AppMode, NavSection[]> = {
   aprender: [
     {
       items: [
-        { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
+        { to: "/aprender", label: "Início", icon: LayoutDashboard },
+        { to: "/aprender/mapa", label: "Mapa do conhecimento", icon: Network },
+        { to: "/aprender/disciplinas", label: "Disciplinas", icon: Library },
         { to: "/tracks", label: "Trilhas", icon: RouteIcon },
-        { to: "/cases", label: "Casos", icon: BookOpen },
+        { to: "/aprender/casos", label: "Casos de prescrição", icon: Stethoscope },
+      ],
+    },
+    {
+      label: "Conteúdo",
+      items: [
+        { to: "/aprender/biblioteca", label: "Biblioteca científica", icon: BookOpen },
+        { to: "/aprender/consulta", label: "Consulta rápida", icon: Search },
+        { to: "/aprender/salvos", label: "Salvos", icon: Bookmark },
+      ],
+    },
+    {
+      label: "Meu desenvolvimento",
+      items: [
+        { to: "/aprender/progresso", label: "Meu progresso", icon: BarChart3 },
+        { to: "/history", label: "Histórico", icon: History },
       ],
     },
     {
@@ -102,7 +122,6 @@ const navByMode: Record<AppMode, NavSection[]> = {
       items: [
         { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
         { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
-        { to: "/library", label: "Biblioteca", icon: Library },
       ],
     },
     {
@@ -110,13 +129,6 @@ const navByMode: Record<AppMode, NavSection[]> = {
       items: [
         { to: "/tutorial", label: "Tutoriais", icon: GraduationCap },
         { to: "/suporte", label: "Suporte", icon: LifeBuoy },
-      ],
-    },
-    {
-      label: "Sua conta",
-      items: [
-        { to: "/favorites", label: "Favoritos", icon: Star },
-        { to: "/history", label: "Histórico", icon: History },
         { to: "/account", label: "Configurações", icon: Settings },
       ],
     },
@@ -124,9 +136,10 @@ const navByMode: Record<AppMode, NavSection[]> = {
 };
 
 // Rotas exclusivas de cada modo (não compartilhadas). Ao trocar de modo, só
-// redireciona ao Painel se a rota atual pertencer só ao modo que está saindo.
-const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps", "/semaforo"];
-const APRENDER_ONLY = ["/tracks", "/cases", "/favorites", "/history"];
+// redireciona à home do novo modo se a rota atual pertencer só ao modo que sai.
+const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps", "/semaforo", "/dashboard"];
+const APRENDER_ONLY = ["/aprender", "/tracks", "/cases", "/favorites", "/history"];
+const HOME_POR_MODO: Record<AppMode, string> = { atender: "/dashboard", aprender: "/aprender" };
 
 function tempoRelativo(ts: number) {
   const diff = Date.now() - ts;
@@ -140,6 +153,18 @@ function tempoRelativo(ts: number) {
 }
 
 const TITULOS_ROTA: [RegExp, string][] = [
+  [/^\/aprender\/mapa/, "Mapa do conhecimento"],
+  [/^\/aprender\/disciplinas\/[^/]+\/[^/]+/, "Módulo"],
+  [/^\/aprender\/disciplinas\/./, "Disciplina"],
+  [/^\/aprender\/disciplinas/, "Disciplinas"],
+  [/^\/aprender\/conteudos/, "Conteúdo"],
+  [/^\/aprender\/casos\/./, "Caso de prescrição"],
+  [/^\/aprender\/casos/, "Casos de prescrição"],
+  [/^\/aprender\/biblioteca/, "Biblioteca científica"],
+  [/^\/aprender\/consulta/, "Consulta rápida"],
+  [/^\/aprender\/salvos/, "Salvos"],
+  [/^\/aprender\/progresso/, "Meu progresso"],
+  [/^\/aprender/, "Aprender"],
   [/^\/dashboard/, "Painel"],
   [/^\/alunos\/./, "Aluno"],
   [/^\/alunos/, "Alunos"],
@@ -192,12 +217,29 @@ export function AppLayout() {
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar />
           <main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
-            <Outlet />
+            <React.Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </React.Suspense>
           </main>
         </div>
       </div>
       {onboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
       <Toasts />
+    </div>
+  );
+}
+
+/** Fallback de carregamento das páginas lazy (Aprender). */
+function RouteFallback() {
+  return (
+    <div className="mx-auto max-w-6xl animate-pulse space-y-4" aria-busy="true" aria-label="Carregando">
+      <div className="h-8 w-64 rounded-lg bg-surface-soft" />
+      <div className="h-4 w-96 max-w-full rounded bg-surface-soft" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-40 rounded-card bg-surface-soft" />
+        ))}
+      </div>
     </div>
   );
 }
@@ -224,6 +266,7 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
     }
     setMode(m);
     finish();
+    navigate("/aprender");
   };
   const explorar = () => {
     setMode("atender");
@@ -379,10 +422,10 @@ function Sidebar() {
     setMode(m);
     setMobileOpen(false);
     // Preserva a rota atual, exceto quando ela é exclusiva do modo que está saindo
-    // (aí não faz sentido no novo contexto → volta ao Painel).
+    // (aí não faz sentido no novo contexto → vai para a home do novo modo).
     const exclusive = m === "atender" ? APRENDER_ONLY : ATENDER_ONLY;
     if (exclusive.some((prefix) => location.pathname.startsWith(prefix))) {
-      navigate("/dashboard");
+      navigate(HOME_POR_MODO[m]);
     }
   };
 
