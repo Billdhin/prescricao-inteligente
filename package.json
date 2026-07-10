@@ -11,6 +11,7 @@
     "gen:seed": "tsx scripts/gen-seed-sql.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.2",
     "clsx": "^2.1.1",
     "framer-motion": "^11.5.4",
     "lucide-react": "^0.441.0",

@@ -1,15 +1,13 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
 /**
- * Ponto único de configuração do Supabase (Fase 5).
+ * Cliente Supabase (Fase 5 — backend real).
  *
- * Enquanto as variáveis de ambiente não estiverem definidas, `isSupabaseConfigured()`
- * retorna false e o app segue 100% no mock local (ver dataProvider.ts). Assim o
- * código de backend pode ser adicionado sem quebrar o build/execução atual.
- *
- * Na Fase 5:
- *   1. `npm i @supabase/supabase-js`
- *   2. Preencher `.env` a partir de `.env.example`.
- *   3. Descomentar `getSupabase()` abaixo e criar a `supabaseProvider` (mesma
- *      interface de ContentProvider) lendo das tabelas de 0001_init.sql.
+ * O app roda 100% local por padrão. Quando `VITE_SUPABASE_URL` e
+ * `VITE_SUPABASE_ANON_KEY` estão definidas (ver .env.example), `getSupabase()`
+ * passa a devolver um cliente autenticado e as camadas de auth/repo podem ler e
+ * gravar nas tabelas de supabase/migrations. Sem as variáveis, nada quebra: o
+ * app continua no armazenamento local (Zustand + localStorage).
  */
 
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
@@ -20,17 +18,24 @@ export function isSupabaseConfigured(): boolean {
   return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 }
 
-/*
- * Fase 5 — cliente singleton (requer `npm i @supabase/supabase-js`):
- *
- * import { createClient, type SupabaseClient } from "@supabase/supabase-js";
- *
- * let client: SupabaseClient | null = null;
- * export function getSupabase(): SupabaseClient {
- *   if (!isSupabaseConfigured()) {
- *     throw new Error("Supabase não configurado — defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.");
- *   }
- *   if (!client) client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
- *   return client;
- * }
- */
+let client: SupabaseClient | null = null;
+
+/** Cliente singleton. Lança se as credenciais não estiverem definidas. */
+export function getSupabase(): SupabaseClient {
+  if (!isSupabaseConfigured()) {
+    throw new Error(
+      "Supabase não configurado. Defina VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (ver .env.example) e rode as migrations em supabase/migrations.",
+    );
+  }
+  if (!client) {
+    client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
+  }
+  return client;
+}
+
+/** Cliente opcional: devolve null quando não configurado (para checagens seguras). */
+export function tryGetSupabase(): SupabaseClient | null {
+  return isSupabaseConfigured() ? getSupabase() : null;
+}
