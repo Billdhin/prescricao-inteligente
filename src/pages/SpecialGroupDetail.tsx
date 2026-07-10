@@ -14,10 +14,15 @@ import {
   X,
   ArrowRight,
   ChevronsDownUp,
+  BookOpen,
+  Stethoscope,
+  Microscope,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { Accordion } from "@/components/ui/disclosure";
+import { getTeoriaGrupo, type TeoriaGrupo } from "@/data/specialGroups";
+import { bibliografia } from "@/data/referencias";
 import {
   VisualModalidadeCard,
   ParametroCard,
@@ -112,6 +117,9 @@ export function SpecialGroupDetail() {
             </button>
           ))}
       </div>
+
+      {/* -------- CONHECIMENTO CIENTÍFICO da condição (abre a página) -------- */}
+      <TeoriaCard slug={g.slug} nome={g.nome} />
 
       {locked ? (
         <>
@@ -397,6 +405,64 @@ function TituloBloco({ icon, texto }: { icon: React.ReactNode; texto: string }) 
     <div className="mb-3 flex items-center gap-2">
       <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">{icon}</span>
       <h2 className="font-display text-lg font-bold text-ink">{texto}</h2>
+    </div>
+  );
+}
+
+/** Conhecimento científico da condição: o que é, fisiologia aplicada ao
+ *  exercício e evidência, com referências. É a teoria que fundamenta a decisão. */
+function TeoriaCard({ slug, nome }: { slug: string; nome: string }) {
+  const t: TeoriaGrupo | undefined = getTeoriaGrupo(slug);
+  if (!t) return null;
+  const refs = bibliografia(t.refIds);
+  return (
+    <Card className="p-5 md:p-6">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#e0f7f9] text-analysis">
+          <Microscope className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="font-display text-lg font-bold text-ink">Conhecimento científico</h2>
+          <p className="text-sm text-ink-3">A base teórica de {nome} aplicada ao exercício.</p>
+        </div>
+      </div>
+      <div className="space-y-4">
+        <TeoriaBloco titulo="O que é" icon={<BookOpen className="h-3.5 w-3.5" />}>{t.oQueE}</TeoriaBloco>
+        <TeoriaBloco titulo="Fisiologia aplicada ao exercício" icon={<Activity className="h-3.5 w-3.5" />}>
+          {t.fisiologia}
+        </TeoriaBloco>
+        <TeoriaBloco titulo="O que a evidência sugere" icon={<Stethoscope className="h-3.5 w-3.5" />}>
+          {t.evidencia}
+        </TeoriaBloco>
+        {refs.length > 0 && (
+          <div>
+            <Rotulo icon={<BookOpen className="h-3.5 w-3.5" />}>Referências</Rotulo>
+            <ol className="space-y-1.5 text-xs text-ink-2">
+              {refs.map(({ n, ref }) => (
+                <li key={ref.id} className="flex gap-2">
+                  <span className="font-semibold text-ink-3">{n}.</span>
+                  <span>
+                    {ref.autores} ({ref.ano}). <span className="italic">{ref.titulo}</span>. {ref.fonte}.
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </div>
+      <p className="mt-4 text-[11px] leading-relaxed text-ink-3">
+        Conteúdo educacional de apoio à decisão do profissional habilitado; não é conduta médica, diagnóstica ou
+        terapêutica e não substitui avaliação médica.
+      </p>
+    </Card>
+  );
+}
+
+function TeoriaBloco({ titulo, icon, children }: { titulo: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div>
+      <Rotulo icon={icon}>{titulo}</Rotulo>
+      <p className="text-sm leading-relaxed text-ink-2">{children}</p>
     </div>
   );
 }

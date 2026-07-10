@@ -626,3 +626,79 @@ export const complexidadeTone: Record<Complexidade, "success" | "neutral" | "war
 /** Aviso padrão de segurança/escopo, para reuso nas telas do eixo. */
 export const AVISO_SEGURANCA =
   "Conteúdo educacional de apoio à decisão do profissional de Educação Física. Não é conduta médica, diagnóstica ou terapêutica e não substitui avaliação médica. Ajuste sempre ao aluno e ao contexto.";
+
+/* ------------------------- Conhecimento científico ------------------------- */
+// Base teórica da condição aplicada ao exercício (o que é, fisiologia aplicada,
+// evidência). Linguagem prudente: apoia a decisão do profissional habilitado e
+// respeita o escopo (não diagnostica nem trata). Referências em referencias.ts.
+
+export interface TeoriaGrupo {
+  /** o que é a condição, em termos aplicados ao exercício */
+  oQueE: string;
+  /** fisiopatologia/fisiologia relevante para a resposta ao treino */
+  fisiologia: string;
+  /** o que a evidência sugere sobre o exercício nesta condição */
+  evidencia: string;
+  refIds: string[];
+}
+
+export const teoriaGrupo: Record<string, TeoriaGrupo> = {
+  "obesidade-grave": {
+    oQueE:
+      "Excesso de massa corporal que aumenta a sobrecarga mecânica sobre as articulações e a demanda cardiorrespiratória para uma mesma tarefa. O foco do exercício é função, saúde e adesão, não apenas a perda de peso.",
+    fisiologia:
+      "O maior peso eleva o gasto e a percepção de esforço em atividades com sustentação do corpo (caminhar, subir), e aumenta a carga em joelhos e coluna. A termorregulação e a dispneia limitam o volume inicial. Modalidades sem impacto (água, bicicleta) reduzem a carga articular mantendo o estímulo aeróbio.",
+    evidencia:
+      "As diretrizes posicionam o volume aeróbio como eixo do gasto energético, com a força preservando massa magra; a progressão prioriza adesão e tolerância antes de intensidade. A resposta é individual e a conduta segue o profissional habilitado.",
+    refIds: ["donnelly-2009", "oms-2020", "garber-2011"],
+  },
+  hipertensao: {
+    oQueE:
+      "Pressão arterial de repouso persistentemente elevada. O exercício é aliado no controle pressórico, mas a intensidade, a respiração e o monitoramento pedem atenção.",
+    fisiologia:
+      "No esforço, a pressão sistólica sobe com a intensidade; a manobra de Valsalva (prender a respiração) provoca picos pressóricos que convém evitar. Após sessões aeróbias há tendência de queda pressórica (hipotensão pós-exercício). Cargas leves a moderadas com respiração contínua são mais prudentes.",
+    evidencia:
+      "As diretrizes de cardiologia e os consensos de exercício e hipertensão apoiam o treino aeróbio e de força bem conduzidos, com respiração contínua e progressão gradual. A liberação, a medicação e os limites são conduta do profissional de saúde responsável.",
+    refIds: ["sbc-2020", "pescatello-2004", "acsm-getp11"],
+  },
+  "diabetes-tipo-2": {
+    oQueE:
+      "Alteração no controle da glicose ligada à resistência à insulina. O exercício melhora a sensibilidade à insulina e o controle glicêmico, com cuidados quanto a hipoglicemia e aos pés.",
+    fisiologia:
+      "A contração muscular capta glicose por vias independentes de insulina, reduzindo a glicemia durante e após o exercício; por isso há risco de hipoglicemia, sobretudo em quem usa insulina ou secretagogos. A combinação de aeróbio e força potencializa o efeito. Inspeção dos pés e calçado adequado reduzem o risco de lesões despercebidas.",
+    evidencia:
+      "Os posicionamentos de diabetes e exercício recomendam a combinação de aeróbio e força com regularidade, atenção aos sinais de hipoglicemia e alimentação adequada antes da sessão. A conduta clínica e a medicação seguem o profissional de saúde.",
+    refIds: ["colberg-2016", "sbd-2023", "garber-2011"],
+  },
+  "idoso-destreinado": {
+    oQueE:
+      "Pessoa idosa com baixa reserva de força e função, muitas vezes com receio de quedas. O treino de força e equilíbrio é prioridade para autonomia.",
+    fisiologia:
+      "Com o envelhecimento há perda de massa e força muscular (sarcopenia) e queda do controle de equilíbrio, o que compromete marcha, subir escadas e levantar da cadeira. O treino de força reverte parte dessa perda e o trabalho de equilíbrio reduz o risco de quedas; ganhos iniciais vêm bastante da adaptação neural.",
+    evidencia:
+      "Os posicionamentos para idosos priorizam força e função, com progressões pequenas e frequentes e técnica antes de carga. O treino resistido é seguro e eficaz quando bem conduzido e supervisionado.",
+    refIds: ["chodzko-2009", "fragala-2019", "garber-2011"],
+  },
+  "dor-lombar-inespecifica": {
+    oQueE:
+      "Dor na região lombar sem causa estrutural específica identificada. O movimento gradual costuma ser aliado; o repouso prolongado tende a piorar o quadro.",
+    fisiologia:
+      "A dor lombar inespecífica é multifatorial (sensibilização, medo do movimento, descondicionamento) e nem sempre corresponde a dano tecidual. Exposição gradual à carga e ao movimento, respeitando a tolerância, costuma reduzir a sensibilidade e devolver confiança. Sinais de alerta (red flags) pedem encaminhamento.",
+    evidencia:
+      "As diretrizes de lombalgia incentivam manter-se ativo e o exercício como parte central do manejo, evitando repouso excessivo, e alertam para sinais que exigem avaliação de profissional de saúde (dor noturna que não alivia, déficit neurológico, febre).",
+    refIds: ["nice-ng59", "garber-2011"],
+  },
+  "osteoartrite-joelho": {
+    oQueE:
+      "Desgaste articular do joelho com dor e rigidez que variam com a carga e a inflamação. O exercício é tratamento central, modulado pela dor.",
+    fisiologia:
+      "Na osteoartrite, a dor e a inflamação variam ao longo do tempo; o fortalecimento do quadríceps e do quadril melhora a estabilidade e reduz a sobrecarga percebida. A carga controlada estimula a articulação sem necessariamente 'gastar' a cartilagem; períodos de inflamação aguda pedem modulação e baixo impacto.",
+    evidencia:
+      "As diretrizes de osteoartrite posicionam o exercício e o controle de carga como tratamento de primeira linha, com fortalecimento e atividade de baixo impacto; a intensidade é ajustada pela dor e por sinais inflamatórios.",
+    refIds: ["oarsi-2019", "acr-2019", "garber-2011"],
+  },
+};
+
+export function getTeoriaGrupo(slug: string): TeoriaGrupo | undefined {
+  return teoriaGrupo[slug];
+}
