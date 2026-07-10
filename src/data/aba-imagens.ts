@@ -36,25 +36,29 @@ const SLUGS_COM_ERRO_IMG: string[] = [
   "dead-bug",
 ];
 /**
- * Quantas fotos de variação existem por exercício (uma por item de `variacoes`,
- * na ordem do array, de 0 a N-1). Só listar aqui quando os arquivos existirem em
- * public/exercises/variacoes/<slug>-<i>.webp.
+ * Índices de variação (na ordem do array `variacoes` do exercício) que têm foto
+ * DEDICADA em public/exercises/variacoes/<slug>-<i>.webp. Variações puramente de
+ * cadência/tensão (sem pose distinta) ficam de fora e caem na foto do movimento
+ * base, sem gerar imagem quase idêntica.
  */
-const VARIACAO_IMG_COUNT: Record<string, number> = {
-  "agachamento-livre": 3,
+const VARIACAO_IMGS: Record<string, number[]> = {
+  "agachamento-livre": [0, 1, 2],
+  "levantamento-terra-romeno": [0, 1, 2],
+  "hip-thrust": [0, 1, 2],
+  "afundo-passada": [0, 1, 2],
 };
 
 export function getErroImagem(slug?: string): string | undefined {
   return slug && SLUGS_COM_ERRO_IMG.includes(slug) ? `/exercises/erros/${slug}.webp` : undefined;
 }
 
-/** true quando o exercício tem fotos por variação (mostra o mosaico em vez do fallback). */
+/** true quando o exercício tem ao menos uma foto de variação dedicada. */
 export function temVariacaoImagens(slug?: string): boolean {
-  return Boolean(slug && VARIACAO_IMG_COUNT[slug] > 0);
+  return Boolean(slug && VARIACAO_IMGS[slug]?.length);
 }
 
-/** Foto da i-ésima variação (na ordem do array `variacoes`), se existir. */
+/** Foto dedicada da i-ésima variação, se existir (senão o chamador usa o movimento base). */
 export function getVariacaoImagemPorIndice(slug: string | undefined, i: number): string | undefined {
   if (!slug) return undefined;
-  return i < (VARIACAO_IMG_COUNT[slug] ?? 0) ? `/exercises/variacoes/${slug}-${i}.webp` : undefined;
+  return VARIACAO_IMGS[slug]?.includes(i) ? `/exercises/variacoes/${slug}-${i}.webp` : undefined;
 }
