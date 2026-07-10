@@ -65,7 +65,7 @@ export function ProfessionalDashboard() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/alunos?novo=1" className={buttonClasses("secondary")}>
-            <UserPlus className="h-4 w-4" /> Novo aluno
+            <UserPlus className="h-4 w-4" /> Cadastrar aluno
           </Link>
           <Link to="/gps" className={buttonClasses("primary")}>
             <Navigation className="h-4 w-4" /> Prescrever

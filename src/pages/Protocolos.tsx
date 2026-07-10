@@ -127,7 +127,7 @@ export function Protocolos() {
             <h2 className="mb-3 font-display text-lg font-bold text-ink">Suas prescrições</h2>
             {prescricoes.length === 0 ? (
               <Card className="p-6 text-center text-sm text-ink-2">
-                Ainda não há prescrições. Gere uma no GPS e salve no perfil de um aluno.
+                Ainda não há prescrições. Use o Prescrever e salve no perfil de um aluno.
               </Card>
             ) : (
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">

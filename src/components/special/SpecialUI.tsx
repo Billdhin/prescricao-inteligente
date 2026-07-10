@@ -17,6 +17,7 @@ import { getModalidade, impactoTone, modalidadeImagem } from "@/data/modalities"
 import { getParam, paramCategoriaTone, type MonitoringParameter } from "@/data/monitoringParameters";
 import type { JourneyPhase } from "@/data/specialGroups";
 import { printFichaParametro } from "@/lib/printFicha";
+import { useUser } from "@/lib/store";
 import { useDialog } from "@/lib/useDialog";
 import { cn, withBase } from "@/lib/utils";
 
@@ -87,6 +88,8 @@ export function ParametroDialog({
   onClose: () => void;
 }) {
   const dialogRef = useDialog<HTMLDivElement>(onClose);
+  // a ficha impressa vai para a mão do aluno: sai com a identidade do profissional
+  const { name: profNome, cref } = useUser();
   return (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm"
@@ -169,7 +172,7 @@ export function ParametroDialog({
 
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4">
           {p.ficha && (
-            <button onClick={() => printFichaParametro(p, contexto)} className={buttonClasses("primary", "sm")}>
+            <button onClick={() => printFichaParametro(p, contexto, { nome: profNome, cref })} className={buttonClasses("primary", "sm")}>
               <Printer className="h-4 w-4" />
               {p.ficha === "adesao" ? "Imprimir ficha de adesão" : "Imprimir escala (PDF)"}
             </button>

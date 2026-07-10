@@ -16,7 +16,9 @@ export function Account() {
   const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("");
 
   const zerar = () => {
-    ["pi-progress", "pi-favorites", "pi-gps"].forEach((k) => localStorage.removeItem(k));
+    ["pi-progress", "pi-favorites", "pi-gps", "pi-ativacao", "pi-passos-ocultos", "pi-notif-seen"].forEach(
+      (k) => localStorage.removeItem(k),
+    );
     window.location.reload();
   };
 
@@ -118,7 +120,7 @@ export function Account() {
           <h3 className="font-display text-lg font-bold text-ink">Zerar progresso local</h3>
         </div>
         <p className="mb-4 text-sm text-ink-2">
-          Remove XP, favoritos, casos resolvidos e o contador do GPS deste navegador. Não afeta o
+          Remove XP, favoritos, casos resolvidos, o contador do Prescrever e o passo a passo do painel deste navegador. Não afeta o
           plano selecionado.
         </p>
         {confirmReset ? (

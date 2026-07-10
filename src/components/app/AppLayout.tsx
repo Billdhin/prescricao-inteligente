@@ -137,10 +137,40 @@ function tempoRelativo(ts: number) {
   return `há ${d} d`;
 }
 
+const TITULOS_ROTA: [RegExp, string][] = [
+  [/^\/dashboard/, "Painel"],
+  [/^\/alunos\/./, "Aluno"],
+  [/^\/alunos/, "Alunos"],
+  [/^\/gps/, "Prescrever"],
+  [/^\/semaforo/, "Semáforo de Liberação"],
+  [/^\/special-groups/, "Grupos Especiais"],
+  [/^\/movement-lab/, "Laboratório Visual"],
+  [/^\/library/, "Biblioteca"],
+  [/^\/assessments/, "Avaliações"],
+  [/^\/protocols/, "Protocolos"],
+  [/^\/comparador/, "Comparador"],
+  [/^\/cases/, "Casos"],
+  [/^\/tracks/, "Trilhas"],
+  [/^\/favorites/, "Favoritos"],
+  [/^\/history/, "Histórico"],
+  [/^\/account/, "Configurações"],
+  [/^\/tutorial/, "Tutoriais"],
+  [/^\/suporte/, "Suporte"],
+];
+
 export function AppLayout() {
   const [onboarding, setOnboarding] = React.useState(
     () => typeof window !== "undefined" && !localStorage.getItem("pi-onboarded"),
   );
+
+  // Título da aba por rota (as páginas públicas definem o próprio e este efeito
+  // "des-vaza" o título delas ao voltar para o app).
+  const { pathname } = useLocation();
+  React.useEffect(() => {
+    const t = TITULOS_ROTA.find(([re]) => re.test(pathname))?.[1];
+    document.title = t ? `${t} | Prescrição Inteligente` : "Prescrição Inteligente";
+  }, [pathname]);
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-bg">
       {/* Fundo fica inerte enquanto o onboarding está aberto (foco/leitura presos no diálogo) */}

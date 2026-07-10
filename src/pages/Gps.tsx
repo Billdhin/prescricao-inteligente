@@ -97,7 +97,7 @@ export function Gps() {
   const addActivity = useProgress((s) => s.addActivity);
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { alunos, addPrescricao, liberacoes } = useAlunos();
+  const { alunos, addPrescricao, liberacoes, avaliacoes } = useAlunos();
 
   // Passo 0 — contexto editável (para quem / grupo / fase). Absorve a antiga
   // "Decisão rápida": lê ?aluno / ?grupo / ?fase e deixa o usuário ajustar.
@@ -136,6 +136,13 @@ export function Gps() {
   const [compare, setCompare] = React.useState<string[]>([]);
   const [prontuarioAberto, setProntuarioAberto] = React.useState<ProntuarioSnapshot | null>(null);
   const primeiroCaso = params.get("primeiro-caso") === "1";
+
+  // A última avaliação INFORMA a decisão (senão o registro fica solto do prescrever)
+  const ultimaAval = React.useMemo(() => {
+    if (!aluno) return undefined;
+    return [...avaliacoes].filter((a) => a.alunoId === aluno.id).sort((a, b) => b.data - a.data)[0];
+  }, [avaliacoes, aluno]);
+  const reavaliacaoVencida = aluno?.proximaReavaliacaoEm ? aluno.proximaReavaliacaoEm < Date.now() : false;
 
   // Última liberação do Semáforo aplicável (mesmo aluno/grupo, últimas 24h)
   const liberacaoDoDia = React.useMemo(() => {
@@ -376,6 +383,60 @@ export function Gps() {
         setFase={mudarFase}
         unlocked={unlocked}
       />
+
+      {/* Contexto clínico-funcional do aluno: a avaliação registrada alimenta a decisão */}
+      {aluno && ultimaAval && (
+        <Card variant="soft" className="flex flex-wrap items-center gap-x-3 gap-y-1.5 p-3 text-sm">
+          <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">Última avaliação</span>
+          {ultimaAval.medidas.peso != null && <span className="text-ink-2">{ultimaAval.medidas.peso} kg</span>}
+          {ultimaAval.medidas.percentualGordura != null && (
+            <span className="text-ink-2">{ultimaAval.medidas.percentualGordura}% gordura</span>
+          )}
+          {ultimaAval.dorEscala != null && (
+            <span className={cn("font-semibold", ultimaAval.dorEscala >= 4 ? "text-warning" : "text-ink-2")}>
+              dor {ultimaAval.dorEscala}/10
+            </span>
+          )}
+          <span className="text-ink-3">
+            há {Math.max(0, Math.round((Date.now() - ultimaAval.data) / 86_400_000))} dias
+          </span>
+          {reavaliacaoVencida && (
+            <Link to={`/alunos/${aluno.id}?avaliar=1`} className="font-semibold text-warning hover:underline">
+              Reavaliação vencida: registrar agora
+            </Link>
+          )}
+          {ultimaAval.dorEscala != null && ultimaAval.dorEscala >= 4 && (
+            <span className="basis-full text-xs text-ink-2">
+              Dor {ultimaAval.dorEscala}/10 na última avaliação: considere o Semáforo do dia antes de
+              prescrever e ajuste amplitude e carga à tolerância.
+            </span>
+          )}
+        </Card>
+      )}
+      {aluno && !ultimaAval && (
+        <Card variant="soft" className="flex flex-wrap items-center gap-3 p-3 text-sm">
+          <span className="text-ink-2">
+            Sem avaliação registrada para {aluno.nome}: a decisão fica mais forte com medidas de base.
+          </span>
+          <Link to={`/alunos/${aluno.id}?avaliar=1`} className="font-semibold text-primary hover:underline">
+            Registrar avaliação
+          </Link>
+        </Card>
+      )}
+
+      {/* O motor ranqueia por UMA restrição; com várias, o profissional precisa saber
+          o que entrou no cálculo e o que deve conferir manualmente. */}
+      {aluno && aluno.restricoes.length > 1 && (
+        <Card tone="warning" className="flex flex-wrap items-start gap-3 p-3 text-sm">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <p className="min-w-0 flex-1 text-ink-2">
+            {aluno.nome.split(" ")[0]} tem {aluno.restricoes.length} restrições (
+            {aluno.restricoes.join(", ")}). O ranqueamento considera a selecionada na etapa 4 (
+            <span className="font-semibold text-ink">{answers.restricao}</span>); confira as demais na
+            justificativa de cada exercício, ou gere de novo trocando a restrição.
+          </p>
+        </Card>
+      )}
 
       {contextoAlterado && !results && (
         <Card tone="warning" className="flex flex-wrap items-center gap-3 p-4">
@@ -723,7 +784,7 @@ function Wizard({
       <p className="mt-1 text-sm text-ink-2">
         {aluno
           ? `Perfil pré-preenchido a partir de ${aluno.nome}; ajuste se precisar.`
-          : "Escolhas educacionais para treinar sua decisão."}
+          : "Defina o perfil que orienta o ranqueamento."}
       </p>
 
       <div className="mt-6">

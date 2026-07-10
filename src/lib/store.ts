@@ -224,6 +224,7 @@ export const useAlunos = create<AlunosState>()(
           alunos: s.alunos.filter((a) => a.id !== id),
           avaliacoes: s.avaliacoes.filter((a) => a.alunoId !== id),
           prescricoes: s.prescricoes.filter((p) => p.alunoId !== id),
+          liberacoes: s.liberacoes.filter((l) => l.alunoId !== id),
         })),
       addAvaliacao: (av) =>
         set((s) => ({
@@ -239,7 +240,17 @@ export const useAlunos = create<AlunosState>()(
             };
           }),
         })),
-      addPrescricao: (p) => set((s) => ({ prescricoes: [p, ...s.prescricoes] })),
+      // a NOVA prescrição é a vigente: as anteriores "ativa" do mesmo aluno são
+      // arquivadas (senão o aluno acumula 3 prescrições "ativas" e ninguém sabe qual vale)
+      addPrescricao: (p) =>
+        set((s) => ({
+          prescricoes: [
+            p,
+            ...s.prescricoes.map((x) =>
+              x.alunoId === p.alunoId && x.status === "ativa" ? { ...x, status: "arquivada" as const } : x,
+            ),
+          ],
+        })),
       addLiberacao: (l) => set((s) => ({ liberacoes: [l, ...s.liberacoes].slice(0, 200) })),
       archivePrescricao: (id) =>
         set((s) => ({

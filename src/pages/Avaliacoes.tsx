@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom";
-import { BarChart3, CalendarClock, Clock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { BarChart3, CalendarClock, Clock, ArrowRight, CheckCircle2, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos } from "@/lib/store";
+import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
 const fmtData = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
 const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
+const fmtDelta = (n: number, unidade: string) => `${n > 0 ? "+" : ""}${n.toFixed(1)} ${unidade}`;
 
 export function Avaliacoes() {
   const { alunos, avaliacoes } = useAlunos();
@@ -18,6 +20,27 @@ export function Avaliacoes() {
     .sort((a, b) => (a.proximaReavaliacaoEm ?? 0) - (b.proximaReavaliacaoEm ?? 0));
 
   const recentes = [...avaliacoes].sort((a, b) => b.data - a.data).slice(0, 12);
+
+  // Evolução da carteira: delta da primeira à última avaliação, por aluno (2+ registros).
+  const evolucao = alunos
+    .filter((a) => a.status === "ativo")
+    .map((a) => {
+      const avs = avaliacoes.filter((av) => av.alunoId === a.id).sort((x, y) => x.data - y.data);
+      if (avs.length < 2) return null;
+      const primeira = avs[0];
+      const ultima = avs[avs.length - 1];
+      const dPeso =
+        primeira.medidas.peso != null && ultima.medidas.peso != null
+          ? ultima.medidas.peso - primeira.medidas.peso
+          : undefined;
+      const dGord =
+        primeira.medidas.percentualGordura != null && ultima.medidas.percentualGordura != null
+          ? ultima.medidas.percentualGordura - primeira.medidas.percentualGordura
+          : undefined;
+      const dias = Math.max(1, Math.round((ultima.data - primeira.data) / DIA));
+      return { aluno: a, dPeso, dGord, dias, n: avs.length };
+    })
+    .filter(Boolean) as { aluno: (typeof alunos)[number]; dPeso?: number; dGord?: number; dias: number; n: number }[];
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -45,22 +68,27 @@ export function Avaliacoes() {
                 const d = diasAte(a.proximaReavaliacaoEm!);
                 const vencida = d < 0;
                 return (
-                  <Link
+                  <div
                     key={a.id}
-                    to={`/alunos/${a.id}`}
                     className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:bg-surface-soft"
                   >
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-xs font-bold text-white">
-                      {a.iniciais}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-semibold text-ink">{a.nome}</div>
-                      <div className="text-xs text-ink-3">{a.objetivo}</div>
-                    </div>
+                    <Link to={`/alunos/${a.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-xs font-bold text-white">
+                        {a.iniciais}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-semibold text-ink">{a.nome}</div>
+                        <div className="text-xs text-ink-3">{a.objetivo}</div>
+                      </div>
+                    </Link>
                     <Pill tone={vencida ? "warning" : "neutral"}>
                       {vencida ? `vencida ${Math.abs(d)}d` : `em ${d}d`}
                     </Pill>
-                  </Link>
+                    {/* ação direta: registrar sem caçar o botão dentro do perfil */}
+                    <Link to={`/alunos/${a.id}?avaliar=1`} className={buttonClasses("secondary", "sm")}>
+                      Registrar
+                    </Link>
+                  </div>
                 );
               })}
             </div>
@@ -108,13 +136,53 @@ export function Avaliacoes() {
         </Card>
       </div>
 
-      <Card className="flex flex-wrap items-center gap-3 p-4">
-        <p className="text-sm text-ink-2">
-          Para registrar uma avaliação, abra o aluno e use <span className="font-semibold text-ink">Nova avaliação</span>.
+      {/* Evolução da carteira: a visão agregada prometida no painel */}
+      <Card className="p-5 md:p-6">
+        <div className="mb-4 flex items-center gap-2">
+          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+            <TrendingDown className="h-4 w-4" />
+          </span>
+          <h2 className="font-display text-lg font-bold text-ink">Evolução da carteira</h2>
+        </div>
+        {evolucao.length === 0 ? (
+          <p className="py-6 text-center text-sm text-ink-2">
+            A evolução aparece quando um aluno tiver 2 ou mais avaliações registradas.
+          </p>
+        ) : (
+          <div className="space-y-2.5">
+            {evolucao.map(({ aluno: a, dPeso, dGord, dias, n }) => (
+              <Link
+                key={a.id}
+                to={`/alunos/${a.id}`}
+                className="flex flex-wrap items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:bg-surface-soft"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-xs font-bold text-white">
+                  {a.iniciais}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold text-ink">{a.nome}</div>
+                  <div className="text-xs text-ink-3">
+                    {n} avaliações em {dias} dias
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {dPeso != null && (
+                    <Pill tone={dPeso <= 0 ? "success" : "warning"} icon={dPeso <= 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}>
+                      Peso {fmtDelta(dPeso, "kg")}
+                    </Pill>
+                  )}
+                  {dGord != null && (
+                    <Pill tone={dGord <= 0 ? "success" : "warning"}>Gordura {fmtDelta(dGord, "pp")}</Pill>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+        <p className={cn("mt-3 text-xs text-ink-3")}>
+          Delta da primeira à última avaliação registrada. A leitura depende do objetivo: em
+          hipertrofia, ganhar peso pode ser o esperado.
         </p>
-        <Link to="/alunos" className={buttonClasses("secondary", "sm") + " ml-auto"}>
-          Ir para Alunos <ArrowRight className="h-4 w-4" />
-        </Link>
       </Card>
     </div>
   );

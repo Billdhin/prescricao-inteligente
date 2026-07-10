@@ -221,7 +221,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
             <Repeat2 className="h-4 w-4" /> Comparar
           </Link>
           <Link to="/gps" className={buttonClasses("outline")}>
-            <Navigation className="h-4 w-4" /> Usar no GPS
+            <Navigation className="h-4 w-4" /> Usar no Prescrever
           </Link>
         </div>
       </div>

@@ -220,7 +220,7 @@ function SceneAvaliar() {
       <Title w={100} />
       <rect x="0" y="24" width="210" height="126" rx="10" fill="var(--surface)" stroke="var(--border)" />
       <text x="14" y="42" fontSize="9" fontWeight="700" fill="var(--ink)">
-        Nova avaliação
+        Registrar avaliação
       </text>
       {[
         ["Peso", 60],

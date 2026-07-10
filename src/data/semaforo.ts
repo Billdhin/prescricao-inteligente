@@ -405,6 +405,60 @@ export const semaforos: ChecklistSemaforo[] = [
       },
     ],
   },
+
+  /* --------------------------- CHECKLIST GERAL ---------------------------- */
+  // Para aluno SEM grupo especial: o gate pré-sessão vale para qualquer pessoa
+  // (dor nova, mal-estar, recuperação e medicação mudam a sessão do dia).
+  {
+    grupoSlug: "geral",
+    itens: [
+      {
+        id: "mal-estar",
+        pergunta:
+          "Sinais de mal-estar agora: febre, tontura, dor no peito, palpitação ou falta de ar em repouso?",
+        porque:
+          "Sintomas sistêmicos em repouso deixam de ser caso de treino e passam a ser caso de avaliação médica.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Não inicie a sessão hoje. Oriente avaliação médica se os sinais persistirem.",
+        ),
+        refs: ["warburton-2011", "acsm-getp11"],
+      },
+      {
+        id: "dor-nova",
+        pergunta: "Alguma dor nova ou desconforto incomum desde a última sessão?",
+        porque: "Dor nova muda a sessão do dia: melhor adaptar cedo do que insistir no padrão que provoca.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Evite os padrões que provocam a dor, reduza amplitude e carga na região e reavalie ao fim da sessão.",
+        ),
+      },
+      {
+        id: "recuperacao",
+        pergunta: "Noite de sono muito ruim, cansaço fora do comum ou dores musculares intensas da sessão anterior?",
+        porque: "Recuperação incompleta reduz a qualidade do estímulo e aumenta o risco de erro técnico.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Reduza volume e intensidade nesta sessão e priorize técnica e exercícios já dominados.",
+        ),
+        refs: ["foster-2001"],
+      },
+      {
+        id: "medicacao",
+        pergunta: "Começou medicação nova ou mudou dose nos últimos dias?",
+        porque: "Alguns medicamentos alteram frequência cardíaca, pressão e disposição; a resposta ao esforço muda.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Sessão conservadora: monitore PSE e sinais, e alinhe com quem prescreveu a medicação quando houver dúvida.",
+        ),
+        refs: ["acsm-getp11"],
+      },
+    ],
+  },
 ];
 
 export function getSemaforo(grupoSlug: string) {

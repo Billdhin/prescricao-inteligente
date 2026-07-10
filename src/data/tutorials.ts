@@ -70,7 +70,7 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Exporte e assine",
         descricao:
-          "Salve no aluno e exporte o Prontuário de Decisão em PDF: ele sai com o seu nome, seu CREF, o ID do documento e o bloco de assinatura. O ChatGPT te dá um treino. Isto é um registro que você pode assinar.",
+          "Salve no aluno e exporte o Prontuário de Decisão em PDF: ele sai com o seu nome, seu CREF, o ID do documento e o bloco de assinatura. É um registro que você pode assinar e arquivar.",
         scene: "pdf",
       },
     ],

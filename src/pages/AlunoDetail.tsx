@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -28,6 +28,7 @@ import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
+import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -40,7 +41,11 @@ const nomeEx = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ??
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, liberacoes, addAvaliacao, updateAluno } = useAlunos();
+  const { alunos, avaliacoes, prescricoes, liberacoes, addAvaliacao, updateAluno, removeAluno, archivePrescricao } =
+    useAlunos();
+  const navigate = useNavigate();
+  const [editar, setEditar] = React.useState(false);
+  const [confirmarExclusao, setConfirmarExclusao] = React.useState(false);
   const { name: profNome, plan, cref } = useUser();
   const premium = isPremiumUnlocked(plan);
   const [avaliar, setAvaliar] = React.useState(false);
@@ -133,8 +138,11 @@ export function AlunoDetail() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
+            <button onClick={() => setEditar(true)} className={buttonClasses("outline")}>
+              Editar
+            </button>
             <button onClick={() => setAvaliar(true)} className={buttonClasses("secondary")}>
-              <CalendarPlus className="h-4 w-4" /> Nova avaliação
+              <CalendarPlus className="h-4 w-4" /> Registrar avaliação
             </button>
             <Link to={`/gps?aluno=${aluno.id}`} className={buttonClasses("primary")}>
               <Navigation className="h-4 w-4" /> Prescrever
@@ -231,8 +239,8 @@ export function AlunoDetail() {
             )}
           </Card>
 
-          {aluno.grupoEspecial && (
-            <Card className="p-5">
+          {/* Gate pré-sessão vale para TODO aluno: sem grupo especial, usa o checklist geral */}
+          <Card className="p-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="font-display text-lg font-bold text-ink">Semáforo de Liberação</h2>
               </div>
@@ -265,13 +273,12 @@ export function AlunoDetail() {
                 </ul>
               )}
               <Link
-                to={`/semaforo?grupo=${aluno.grupoEspecial}&aluno=${aluno.id}`}
+                to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`}
                 className={buttonClasses("secondary", "sm")}
               >
                 <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
               </Link>
             </Card>
-          )}
 
           <Card className="p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
@@ -343,6 +350,17 @@ export function AlunoDetail() {
                           <Lock className="h-3.5 w-3.5" /> Exportar PDF para o aluno: plano Profissional
                         </Link>
                       )}
+                      {p.status === "ativa" && (
+                        <button
+                          onClick={() => {
+                            archivePrescricao(p.id);
+                            toast("Prescrição arquivada");
+                          }}
+                          className="ml-auto text-sm font-medium text-ink-3 hover:text-ink"
+                        >
+                          Arquivar
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -351,6 +369,46 @@ export function AlunoDetail() {
           </Card>
         </div>
       </div>
+
+      {/* Ações administrativas discretas: o cadastro precisa poder evoluir e sair */}
+      <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4 text-sm">
+        <button
+          onClick={() => {
+            updateAluno(aluno.id, { status: aluno.status === "ativo" ? "inativo" : "ativo" });
+            toast(aluno.status === "ativo" ? `${aluno.nome} arquivado(a)` : `${aluno.nome} reativado(a)`);
+          }}
+          className="font-medium text-ink-2 hover:text-ink"
+        >
+          {aluno.status === "ativo" ? "Arquivar aluno" : "Reativar aluno"}
+        </button>
+        <button onClick={() => setConfirmarExclusao(true)} className="font-medium text-[#b91c1c] hover:underline">
+          Excluir aluno
+        </button>
+      </div>
+
+      {editar && (
+        <AlunoFormModal
+          inicial={aluno}
+          onClose={() => setEditar(false)}
+          onSave={(a) => {
+            updateAluno(aluno.id, a);
+            setEditar(false);
+            toast(`Dados de ${a.nome} atualizados`);
+          }}
+        />
+      )}
+
+      {confirmarExclusao && (
+        <ConfirmarExclusaoModal
+          nome={aluno.nome}
+          onClose={() => setConfirmarExclusao(false)}
+          onConfirm={() => {
+            removeAluno(aluno.id);
+            toast(`${aluno.nome} excluído(a)`);
+            navigate("/alunos");
+          }}
+        />
+      )}
 
       {avaliar && (
         <NovaAvaliacaoModal
@@ -382,6 +440,49 @@ export function AlunoDetail() {
           onClose={() => setProntuarioDe(null)}
         />
       )}
+    </div>
+  );
+}
+
+/** Exclusão é irreversível (apaga avaliações, prescrições e liberações): confirma antes. */
+function ConfirmarExclusaoModal({
+  nome,
+  onClose,
+  onConfirm,
+}: {
+  nome: string;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Excluir ${nome}`}
+        className="w-full max-w-sm rounded-card bg-surface p-6 text-center shadow-elevated outline-none"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="font-display text-lg font-bold text-ink">Excluir {nome}?</h2>
+        <p className="mt-2 text-sm text-ink-2">
+          Isso apaga o aluno com todas as avaliações, prescrições e liberações registradas. Esta ação
+          não pode ser desfeita. Se quiser só tirar da lista ativa, prefira arquivar.
+        </p>
+        <div className="mt-5 flex justify-center gap-2">
+          <button onClick={onClose} className={buttonClasses("secondary", "sm")}>
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="inline-flex h-9 items-center gap-1.5 rounded-control bg-[#b91c1c] px-4 text-sm font-semibold text-white hover:bg-[#991b1b]"
+          >
+            Excluir definitivamente
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -461,7 +562,8 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
                   onClick={() => onFase(n)}
                   aria-label={`Definir fase ${n}`}
                   className={cn(
-                    "h-8 w-8 rounded-full text-sm font-bold transition-colors",
+                    // 44px: acionado com o celular na mão, ao lado do aluno
+                    "h-11 w-11 rounded-full text-sm font-bold transition-colors",
                     n === fase ? "gradient-brand text-white" : "bg-surface-soft text-ink-2 hover:bg-primary-tint",
                   )}
                 >
@@ -625,6 +727,8 @@ function NovaAvaliacaoModal({
   onSave: (av: Avaliacao) => void;
   alunoId: string;
 }) {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const [data, setData] = React.useState(hoje);
   const [peso, setPeso] = React.useState("");
   const [gordura, setGordura] = React.useState("");
   const [dor, setDor] = React.useState("");
@@ -632,12 +736,17 @@ function NovaAvaliacaoModal({
   const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   const num = (s: string) => (s.trim() === "" ? undefined : Number(s.replace(",", ".")));
+  // registro totalmente vazio não vira avaliação (e reprogramaria a reavaliação à toa)
+  const temConteudo = [peso, gordura, dor, obs].some((v) => v.trim() !== "");
 
   const save = () => {
+    if (!temConteudo) return;
+    // meio-dia local evita o registro cair no dia anterior por fuso
+    const ts = data ? new Date(`${data}T12:00:00`).getTime() : Date.now();
     onSave({
       id: uid(),
       alunoId,
-      data: Date.now(),
+      data: Math.min(ts, Date.now()),
       medidas: { peso: num(peso), percentualGordura: num(gordura) },
       dorEscala: num(dor),
       observacoes: obs.trim() || undefined,
@@ -656,11 +765,21 @@ function NovaAvaliacaoModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold text-ink">Nova avaliação</h2>
+          <h2 className="font-display text-lg font-bold text-ink">Registrar avaliação</h2>
           <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>
+        <label className="mb-3 block">
+          <span className="mb-1.5 block text-sm font-semibold text-ink">Data da avaliação</span>
+          <input
+            type="date"
+            value={data}
+            max={hoje}
+            onChange={(e) => setData(e.target.value)}
+            className="input"
+          />
+        </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-ink">Peso (kg)</span>
@@ -679,11 +798,18 @@ function NovaAvaliacaoModal({
           <span className="mb-1.5 block text-sm font-semibold text-ink">Observações</span>
           <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} placeholder="Evolução, queixas, ajustes..." className="input" />
         </label>
+        {!temConteudo && (
+          <p className="mt-3 text-xs text-ink-3">Preencha ao menos uma medida ou observação.</p>
+        )}
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={onClose} className={buttonClasses("secondary", "sm")}>
             Cancelar
           </button>
-          <button onClick={save} className={buttonClasses("primary", "sm")}>
+          <button
+            onClick={save}
+            disabled={!temConteudo}
+            className={cn(buttonClasses("primary", "sm"), !temConteudo && "cursor-not-allowed opacity-50")}
+          >
             Salvar avaliação
           </button>
         </div>

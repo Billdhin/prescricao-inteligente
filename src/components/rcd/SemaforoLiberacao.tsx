@@ -1,5 +1,6 @@
 import * as React from "react";
-import { CheckCircle2, AlertTriangle, XCircle, Printer, RotateCcw, Save } from "lucide-react";
+import { Link } from "react-router-dom";
+import { CheckCircle2, AlertTriangle, XCircle, Printer, RotateCcw, Save, Navigation } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import {
   getSemaforo,
@@ -10,7 +11,7 @@ import {
 } from "@/data/semaforo";
 import { getSpecialGroup, AVISO_SEGURANCA } from "@/data/specialGroups";
 import { refCurta } from "@/data/referencias";
-import { useAlunos, uid } from "@/lib/store";
+import { useAlunos, useUser, uid } from "@/lib/store";
 import { printSemaforo } from "@/lib/printSemaforo";
 import { SeloRCD } from "./SeloRCD";
 import { cn } from "@/lib/utils";
@@ -64,12 +65,16 @@ export function SemaforoLiberacao({
   className?: string;
 }) {
   const checklist = getSemaforo(grupoSlug);
+  // "geral" não é grupo especial: o gate vale para qualquer aluno
   const grupo = getSpecialGroup(grupoSlug);
+  const nomeChecklist = grupo?.nome ?? "Checklist geral do dia";
+  const nomeDocumento = grupo?.rotuloAluno ?? "Checklist geral do dia";
   const addLiberacao = useAlunos((s) => s.addLiberacao);
+  const { name: profNome, cref } = useUser();
   const [respostas, setRespostas] = React.useState<Record<string, string>>({});
   const [registrado, setRegistrado] = React.useState(false);
 
-  if (!checklist || !grupo) return null;
+  if (!checklist) return null;
 
   const completo = checklist.itens.every((i) => respostas[i.id]);
   const resultado = completo ? avaliarSemaforo(checklist, respostas) : null;
@@ -101,7 +106,7 @@ export function SemaforoLiberacao({
         <SeloRCD compacto />
       </div>
       <p className="mb-4 text-sm text-ink-2">
-        {grupo.nome}
+        {nomeChecklist}
         {alunoNome ? ` · ${alunoNome}` : ""}: responda em ~30s e saiba se a sessão de hoje está
         liberada, e por quê.
       </p>
@@ -134,7 +139,8 @@ export function SemaforoLiberacao({
                     }}
                     aria-pressed={ativa}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                      // alvo >= 44px: o checklist é respondido no celular, em pé, na recepção
+                      "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2.5 text-sm font-medium transition-colors",
                       ativa
                         ? cn(COR_UI[op.cor].bg, COR_UI[op.cor].border, COR_UI[op.cor].text, "font-semibold")
                         : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
@@ -201,7 +207,7 @@ export function SemaforoLiberacao({
             )}
             <button
               // impresso pode chegar ao aluno: usa o nome de programa digno, não o rótulo clínico
-              onClick={() => printSemaforo(grupo.rotuloAluno, checklist, respostas, resultado, alunoNome)}
+              onClick={() => printSemaforo(nomeDocumento, checklist, respostas, resultado, alunoNome, profNome, cref)}
               className={buttonClasses("outline", "sm")}
             >
               <Printer className="h-4 w-4" /> Imprimir
@@ -210,6 +216,28 @@ export function SemaforoLiberacao({
               <RotateCcw className="h-4 w-4" /> Refazer
             </button>
           </div>
+
+          {/* Próximo passo: o desfecho natural do gate é prescrever ou voltar ao aluno */}
+          {registrado && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {resultado.cor !== "vermelho" && (
+                <Link
+                  to={`/gps?${new URLSearchParams({
+                    ...(alunoId ? { aluno: alunoId } : {}),
+                    ...(grupo ? { grupo: grupoSlug } : {}),
+                  }).toString()}`}
+                  className={buttonClasses("primary", "sm")}
+                >
+                  <Navigation className="h-4 w-4" /> Prescrever agora
+                </Link>
+              )}
+              {alunoId && (
+                <Link to={`/alunos/${alunoId}`} className={buttonClasses("secondary", "sm")}>
+                  {resultado.cor === "vermelho" ? "Registrar no perfil e reavaliar" : `Voltar ao perfil${alunoNome ? ` de ${alunoNome.split(" ")[0]}` : ""}`}
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       )}
 

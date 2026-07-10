@@ -20,9 +20,17 @@ export function Semaforo() {
 
   const [grupoSlug, setGrupoSlug] = React.useState(() => {
     const g = params.get("grupo");
-    return g && getSemaforo(g) ? g : "hipertensao";
+    return g && getSemaforo(g) ? g : "geral";
   });
   const [alunoId, setAlunoId] = React.useState(() => params.get("aluno") ?? "");
+
+  // Escolher o aluno herda o grupo DELE (checklist certo sem retrabalho);
+  // sem grupo especial, vale o checklist geral.
+  const onAluno = (id: string) => {
+    setAlunoId(id);
+    const a = alunos.find((x) => x.id === id);
+    if (a) setGrupoSlug(a.grupoEspecial && getSemaforo(a.grupoEspecial) ? a.grupoEspecial : "geral");
+  };
 
   const grupo = getSpecialGroup(grupoSlug);
   const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
@@ -46,6 +54,7 @@ export function Semaforo() {
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-ink">Grupo / condição</span>
             <select value={grupoSlug} onChange={(e) => setGrupoSlug(e.target.value)} className="input">
+              <option value="geral">Sem condição especial (checklist geral)</option>
               {specialGroups
                 .filter((g) => getSemaforo(g.slug))
                 .map((g) => (
@@ -58,7 +67,7 @@ export function Semaforo() {
           </label>
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno (opcional)</span>
-            <select value={alunoId} onChange={(e) => setAlunoId(e.target.value)} className="input">
+            <select value={alunoId} onChange={(e) => onAluno(e.target.value)} className="input">
               <option value="">Sem aluno vinculado</option>
               {alunos.map((a) => (
                 <option key={a.id} value={a.id}>

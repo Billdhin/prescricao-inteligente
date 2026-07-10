@@ -49,12 +49,16 @@ function abrir(html: string) {
   w.document.close();
 }
 
-function shell(titulo: string, corpo: string) {
+function shell(titulo: string, corpo: string, ident?: { nome?: string; cref?: string }) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>${esc(titulo)}</title><style>${CSS}</style></head><body>
   <div class="page">
     <div class="brand">
-      <div><div class="prof">Prescrição Inteligente</div><div class="sub">Ficha de apoio ao profissional</div></div>
+      <div>
+        <div class="prof">${esc(ident?.nome || "Prescrição Inteligente")}</div>
+        ${ident?.cref ? `<div class="sub" style="font-weight:700;color:#2563eb">CREF ${esc(ident.cref)}</div>` : ""}
+        <div class="sub">Ficha de apoio ao profissional</div>
+      </div>
       <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date())}</div>
     </div>
     ${corpo}
@@ -64,8 +68,13 @@ function shell(titulo: string, corpo: string) {
   </body></html>`;
 }
 
+export interface IdentProf {
+  nome?: string;
+  cref?: string;
+}
+
 /** Cartão de escala (PSE, dispneia, dor, teste da fala) + como aplicar. */
-export function printEscalaFicha(p: MonitoringParameter) {
+export function printEscalaFicha(p: MonitoringParameter, ident?: IdentProf) {
   const escala = (p.escala ?? [])
     .map((e) => `<tr><td class="v">${esc(e.valor)}</td><td>${esc(e.rotulo)}</td></tr>`)
     .join("");
@@ -83,6 +92,7 @@ export function printEscalaFicha(p: MonitoringParameter) {
       <h2>Se estiver alterado</h2><p style="font-size:13px">${esc(p.seAlterado)}</p>
       ${p.referencia ? `<div class="ref">Referência: ${esc(p.referencia)}</div>` : ""}
       `,
+      ident,
     ),
   );
 }
@@ -91,6 +101,7 @@ export function printEscalaFicha(p: MonitoringParameter) {
 export function printAdesaoFicha(
   p: MonitoringParameter,
   ctx?: { alunoNome?: string; objetivo?: string },
+  ident?: IdentProf,
 ) {
   const dias = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
   const head = `<tr><th>Semana</th>${dias.map((d) => `<th style="width:52px;text-align:center">${d}</th>`).join("")}<th style="width:70px">PSE média</th><th>Observações (dor, sono, disposição…)</th></tr>`;
@@ -114,15 +125,20 @@ export function printAdesaoFicha(
         &nbsp;&nbsp;Período: <span class="campo" style="min-width:160px"></span></div>
       <h2>Registro (4 semanas)</h2>
       <table>${head}${linhas}</table>
-      <p class="legenda">✓ sessão realizada · ◐ sessão parcial ·: não realizada. PSE: esforço percebido de 0 a 10.</p>
+      <p class="legenda">✓ sessão realizada · ◐ sessão parcial · ✗ não realizada. PSE: esforço percebido de 0 a 10.</p>
       ${passos ? `<h2>Como usar</h2><ol>${passos}</ol>` : ""}
       <h2>Leitura prática</h2><p style="font-size:13px">${esc(p.comoInterpretar)} ${esc(p.seAlterado)}</p>
       `,
+      ident,
     ),
   );
 }
 
-export function printFichaParametro(p: MonitoringParameter, ctx?: { alunoNome?: string; objetivo?: string }) {
-  if (p.ficha === "adesao") printAdesaoFicha(p, ctx);
-  else printEscalaFicha(p);
+export function printFichaParametro(
+  p: MonitoringParameter,
+  ctx?: { alunoNome?: string; objetivo?: string },
+  ident?: IdentProf,
+) {
+  if (p.ficha === "adesao") printAdesaoFicha(p, ctx, ident);
+  else printEscalaFicha(p, ident);
 }

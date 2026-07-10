@@ -88,6 +88,13 @@ export function Support() {
     } catch {
       /* ignora falha de storage */
     }
+    // A mensagem precisa CHEGAR a alguém: abre o e-mail do usuário já preenchido
+    // com o protocolo no assunto (o registro local sozinho não é um canal).
+    window.location.href =
+      `mailto:${SUPORTE_EMAIL}?subject=` +
+      encodeURIComponent(`[${protocolo}] ${assunto}: ${nome}`) +
+      `&body=` +
+      encodeURIComponent(`${mensagem}\n\nProtocolo: ${protocolo}\n${nome} (${email})`);
     setEnviado(protocolo);
   };
 
@@ -103,7 +110,7 @@ export function Support() {
         eyebrow="Estamos aqui"
         icon={<LifeBuoy className="h-3 w-3" />}
         title="Suporte"
-        subtitle="Tire dúvidas, relate um problema ou mande uma sugestão. Respondemos por e-mail em até 1 dia útil."
+        subtitle="Tire dúvidas, relate um problema ou mande uma sugestão por e-mail."
       />
 
       {/* Canais rápidos */}
@@ -152,10 +159,11 @@ export function Support() {
               <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-success text-white">
                 <CheckCircle2 className="h-6 w-6" />
               </span>
-              <h3 className="font-display text-lg font-bold text-ink">Mensagem recebida!</h3>
+              <h3 className="font-display text-lg font-bold text-ink">Protocolo {enviado} gerado</h3>
               <p className="mx-auto mt-1 max-w-sm text-sm text-ink-2">
-                Seu protocolo é <span className="font-semibold text-ink">{enviado}</span>. Responderemos no e-mail{" "}
-                <span className="font-semibold text-ink">{email}</span> em até 1 dia útil.
+                Abrimos seu aplicativo de e-mail com a mensagem pronta; é só enviar. Se não abriu,
+                escreva para <span className="font-semibold text-ink">{SUPORTE_EMAIL}</span> citando o
+                protocolo <span className="font-semibold text-ink">{enviado}</span>.
               </p>
               <button
                 onClick={() => {
