@@ -36,6 +36,12 @@ jobs:
         env:
           # base do Vite no site de projeto do Pages: "/<nome-do-repo>/"
           VITE_BASE: /${{ github.event.repository.name }}/
+          # Backend Supabase (opcional): defina estes secrets em
+          # Settings > Secrets and variables > Actions para ligar o login em
+          # nuvem no site publicado. Vazios = o site publicado segue 100% local.
+          # IMPORTANTE: use a chave PUBLICÁVEL (anon/public), NUNCA a secreta.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
       - name: Configurar Pages

@@ -3,6 +3,8 @@ import { Settings, Crown, Check, ShieldAlert, Sparkles, Camera, ImageIcon, Trash
 import { Card, Pill, Button, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { useUser, planLabel, isPremiumUnlocked, type Plan } from "@/lib/store";
 import { hashSenha, novoSalt, abrirSessao, encerrarSessao } from "@/lib/auth";
+import { useCloudAuth } from "@/lib/backend/cloudAuth";
+import { signOut } from "@/lib/backend/supabaseAuth";
 import { arquivoParaDataUrl } from "@/lib/imagem";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -16,6 +18,7 @@ const planos: { value: Plan; label: string; desc: string }[] = [
 export function Account() {
   const user = useUser();
   const { name, plan, cref, email, telefone, empresa, site, fotoDataUrl, logoDataUrl, senhaHash } = user;
+  const cloudConfigured = useCloudAuth((s) => s.configured);
   const [confirmReset, setConfirmReset] = React.useState(false);
 
   const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("");
@@ -216,8 +219,8 @@ export function Account() {
         </div>
       </Card>
 
-      {/* Acesso (senha local) */}
-      <SenhaCard temSenha={Boolean(senhaHash)} />
+      {/* Acesso: conta em nuvem quando o backend está ligado; senão, senha local. */}
+      {cloudConfigured ? <ContaNuvemCard /> : <SenhaCard temSenha={Boolean(senhaHash)} />}
 
       {/* Plano (dev toggle) */}
       <Card className="p-6">
@@ -287,6 +290,44 @@ export function Account() {
         )}
       </Card>
     </div>
+  );
+}
+
+/** Identidade da conta em nuvem (quando o backend Supabase está ligado). */
+function ContaNuvemCard() {
+  const user = useCloudAuth((s) => s.user);
+  const emailConta = user?.email ?? "";
+  const [saindo, setSaindo] = React.useState(false);
+
+  return (
+    <Card className="p-6">
+      <h3 className="font-display text-lg font-bold text-ink">Conta</h3>
+      <p className="mb-4 text-sm text-ink-2">
+        Você está conectado. Seus alunos, avaliações e prescrições ficam salvos na sua conta e
+        aparecem em qualquer aparelho onde você entrar.
+      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-soft p-3">
+        <div className="min-w-0">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">E-mail da conta</div>
+          <div className="truncate text-sm font-semibold text-ink">{emailConta || "conta conectada"}</div>
+        </div>
+        <button
+          onClick={async () => {
+            setSaindo(true);
+            await signOut();
+            window.location.reload();
+          }}
+          disabled={saindo}
+          className={cn(buttonClasses("outline"), saindo && "opacity-60")}
+        >
+          <Lock className="h-4 w-4" /> {saindo ? "Saindo…" : "Sair da conta"}
+        </button>
+      </div>
+      <p className="mt-3 text-xs text-ink-3">
+        Os dados trafegam protegidos e cada profissional só enxerga os próprios (segurança por
+        linha, no banco).
+      </p>
+    </Card>
   );
 }
 

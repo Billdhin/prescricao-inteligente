@@ -2,6 +2,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
+import {
+  cloudSaveAluno,
+  cloudRemoveAluno,
+  cloudSaveAvaliacao,
+  cloudSavePrescricao,
+  cloudSaveLiberacao,
+  cloudSavePerfil,
+} from "@/lib/backend/cloudSync";
 
 /* ----------------------------- Usuário / plano ---------------------------- */
 
@@ -60,10 +68,22 @@ export const useUser = create<UserState>()(
       logoDataUrl: "",
       senhaHash: "",
       senhaSalt: "",
-      setPlan: (plan) => set({ plan }),
-      setName: (name) => set({ name }),
-      setCref: (cref) => set({ cref }),
-      setPerfil: (patch) => set(patch),
+      setPlan: (plan) => {
+        set({ plan });
+        cloudSavePerfil({ plan });
+      },
+      setName: (name) => {
+        set({ name });
+        cloudSavePerfil({ name });
+      },
+      setCref: (cref) => {
+        set({ cref });
+        cloudSavePerfil({ cref });
+      },
+      setPerfil: (patch) => {
+        set(patch);
+        cloudSavePerfil(patch);
+      },
       setSenha: (senhaHash, senhaSalt) => set({ senhaHash, senhaSalt }),
       limparSenha: () => set({ senhaHash: "", senhaSalt: "" }),
     }),
@@ -263,25 +283,39 @@ interface AlunosState {
 
 export const useAlunos = create<AlunosState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Novo usuário começa VAZIO (estado vazio real + "carregar exemplos").
       alunos: [],
       avaliacoes: [],
       prescricoes: [],
       liberacoes: [],
-      loadExamples: () =>
-        set({ alunos: seedAlunos, avaliacoes: seedAvaliacoes, prescricoes: seedPrescricoes }),
-      addAluno: (a) => set((s) => ({ alunos: [a, ...s.alunos] })),
-      updateAluno: (id, patch) =>
-        set((s) => ({ alunos: s.alunos.map((a) => (a.id === id ? { ...a, ...patch } : a)) })),
-      removeAluno: (id) =>
+      loadExamples: () => {
+        set({ alunos: seedAlunos, avaliacoes: seedAvaliacoes, prescricoes: seedPrescricoes });
+        // sobe os exemplos p/ a nuvem quando há sessão (no-op no modo local)
+        seedAlunos.forEach(cloudSaveAluno);
+        seedAvaliacoes.forEach(cloudSaveAvaliacao);
+        seedPrescricoes.forEach(cloudSavePrescricao);
+      },
+      addAluno: (a) => {
+        set((s) => ({ alunos: [a, ...s.alunos] }));
+        cloudSaveAluno(a);
+      },
+      updateAluno: (id, patch) => {
+        set((s) => ({ alunos: s.alunos.map((a) => (a.id === id ? { ...a, ...patch } : a)) }));
+        const atual = get().alunos.find((a) => a.id === id);
+        if (atual) cloudSaveAluno(atual);
+      },
+      removeAluno: (id) => {
         set((s) => ({
           alunos: s.alunos.filter((a) => a.id !== id),
           avaliacoes: s.avaliacoes.filter((a) => a.alunoId !== id),
           prescricoes: s.prescricoes.filter((p) => p.alunoId !== id),
           liberacoes: s.liberacoes.filter((l) => l.alunoId !== id),
-        })),
-      addAvaliacao: (av) =>
+        }));
+        // o repositório apaga em cascata avaliações/prescrições/liberações do aluno
+        cloudRemoveAluno(id);
+      },
+      addAvaliacao: (av) => {
         set((s) => ({
           avaliacoes: [av, ...s.avaliacoes],
           alunos: s.alunos.map((a) => {
@@ -294,10 +328,18 @@ export const useAlunos = create<AlunosState>()(
               proximaReavaliacaoEm: av.data + REAVALIACAO_DIAS * 86_400_000,
             };
           }),
-        })),
+        }));
+        cloudSaveAvaliacao(av);
+        // a reavaliação do aluno pode ter sido reprogramada: espelha o aluno também
+        const aluno = get().alunos.find((a) => a.id === av.alunoId);
+        if (aluno) cloudSaveAluno(aluno);
+      },
       // a NOVA prescrição é a vigente: as anteriores "ativa" do mesmo aluno são
       // arquivadas (senão o aluno acumula 3 prescrições "ativas" e ninguém sabe qual vale)
-      addPrescricao: (p) =>
+      addPrescricao: (p) => {
+        const arquivarIds = get()
+          .prescricoes.filter((x) => x.alunoId === p.alunoId && x.status === "ativa")
+          .map((x) => x.id);
         set((s) => ({
           prescricoes: [
             p,
@@ -305,14 +347,28 @@ export const useAlunos = create<AlunosState>()(
               x.alunoId === p.alunoId && x.status === "ativa" ? { ...x, status: "arquivada" as const } : x,
             ),
           ],
-        })),
-      addLiberacao: (l) => set((s) => ({ liberacoes: [l, ...s.liberacoes].slice(0, 200) })),
-      archivePrescricao: (id) =>
+        }));
+        cloudSavePrescricao(p);
+        // espelha as que passaram a "arquivada"
+        const atuais = get().prescricoes;
+        arquivarIds.forEach((pid) => {
+          const x = atuais.find((y) => y.id === pid);
+          if (x) cloudSavePrescricao(x);
+        });
+      },
+      addLiberacao: (l) => {
+        set((s) => ({ liberacoes: [l, ...s.liberacoes].slice(0, 200) }));
+        cloudSaveLiberacao(l);
+      },
+      archivePrescricao: (id) => {
         set((s) => ({
           prescricoes: s.prescricoes.map((p) =>
             p.id === id ? { ...p, status: "arquivada" as const } : p,
           ),
-        })),
+        }));
+        const x = get().prescricoes.find((p) => p.id === id);
+        if (x) cloudSavePrescricao(x);
+      },
     }),
     // v2: seed passou a incluir a jornada (grupoEspecial/fase) em alguns alunos.
     // v3: "Máquina" foi DIVIDIDA — esteira/bicicleta/elíptico viraram equipamentos próprios;

@@ -34,8 +34,11 @@ import {
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { LoginGate } from "@/components/app/LoginGate";
+import { CloudAuthGate } from "@/components/app/CloudAuthGate";
 import { Toasts } from "@/components/app/Toasts";
 import { sessaoAtiva, encerrarSessao } from "@/lib/auth";
+import { useCloudAuth } from "@/lib/backend/cloudAuth";
+import { signOut } from "@/lib/backend/supabaseAuth";
 import { buttonClasses } from "@/components/ui/primitives";
 import { specialGroups } from "@/data/specialGroups";
 import { OBJETIVOS } from "@/lib/gps/engine";
@@ -196,6 +199,10 @@ export function AppLayout() {
   const senhaHash = useUser((s) => s.senhaHash);
   const [logado, setLogado] = React.useState(() => sessaoAtiva());
 
+  // Acesso em nuvem (Supabase): quando configurado, o login real substitui a
+  // senha local. Sem credenciais no ambiente, `configured` é false e nada muda.
+  const cloud = useCloudAuth();
+
   // Título da aba por rota (as páginas públicas definem o próprio e este efeito
   // "des-vaza" o título delas ao voltar para o app).
   const { pathname } = useLocation();
@@ -205,7 +212,11 @@ export function AppLayout() {
   }, [pathname]);
 
   // depois de TODOS os hooks (regras de hooks): o gate substitui o shell inteiro
-  if (senhaHash && !logado) {
+  if (cloud.configured) {
+    if (cloud.status === "loading") return <SplashCarregando />;
+    if (cloud.status === "signed-out") return <CloudAuthGate />;
+    // sessão ativa: segue para o app (a hidratação roda em segundo plano)
+  } else if (senhaHash && !logado) {
     return <LoginGate onEntrar={() => setLogado(true)} />;
   }
 
@@ -225,6 +236,20 @@ export function AppLayout() {
       </div>
       {onboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
       <Toasts />
+    </div>
+  );
+}
+
+/** Tela cheia enquanto o Supabase confere se há sessão ativa (login em nuvem). */
+function SplashCarregando() {
+  return (
+    <div className="fixed inset-0 grid place-items-center bg-bg">
+      <div className="flex flex-col items-center gap-3">
+        <Logo />
+        <div className="h-1 w-24 overflow-hidden rounded-full bg-surface-soft">
+          <div className="h-full w-1/2 animate-pulse rounded-full gradient-brand" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -737,6 +762,7 @@ function NotificationsMenu() {
 
 function UserMenu() {
   const { name, plan, setPlan, fotoDataUrl, senhaHash } = useUser();
+  const cloudConfigured = useCloudAuth((s) => s.configured);
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -802,7 +828,17 @@ function UserMenu() {
           <Link to="/account" className="block rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-surface-soft">
             Configurações
           </Link>
-          {senhaHash ? (
+          {cloudConfigured ? (
+            <button
+              onClick={async () => {
+                await signOut();
+                window.location.reload();
+              }}
+              className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
+            >
+              Sair da conta
+            </button>
+          ) : senhaHash ? (
             <button
               onClick={() => {
                 encerrarSessao();

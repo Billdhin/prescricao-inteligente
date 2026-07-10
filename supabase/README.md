@@ -45,13 +45,25 @@ O projeto do Filipe já existe:
    **secret** do repositório (Settings > Secrets and variables > Actions) e injete
    `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` no passo de build do workflow.
 
-## Passo 3 (próximo) — sincronizar os stores
+## Passo 3 — login em nuvem (JÁ LIGADO no código)
 
-Hoje as telas leem/gravam nos stores locais (`useAlunos`, `useUser`). O passo final da
-migração é: quando houver sessão Supabase, hidratar esses stores a partir de
-`supabaseRepo.listar*()` e espelhar cada escrita com `supabaseRepo.salvar*()`. A camada
-já expõe exatamente essas funções, com o mesmo formato de dados dos stores, para uma
-troca incremental sem reescrever a UI.
+Com as credenciais no `.env` (ou nos secrets do CI), o app passa a exigir **login real**
+(Supabase Auth) no lugar da senha local, e os stores (`useAlunos`, `useUser`) hidratam da
+nuvem no login e espelham cada escrita. Peças: `src/lib/backend/cloudAuth.ts` (estado da
+sessão + hidratação), `src/components/app/CloudAuthGate.tsx` (entrar/criar conta/esqueci
+senha), `src/lib/backend/cloudSync.ts` (espelhamento). Sem credenciais, nada disso ativa e
+o app segue 100% local com a senha local de sempre.
+
+Notas de operação:
+- **Confirmação de e-mail:** por padrão o Supabase manda um e-mail de confirmação no
+  cadastro (a conta só entra depois de confirmar). Para um cadastro que entra na hora,
+  desligue em **Authentication > Providers > Email > Confirm email**.
+- **Primeiro login:** se a nuvem estiver vazia e houver dados só neste aparelho, eles são
+  enviados para a conta automaticamente; nos próximos logins, a nuvem é a fonte.
+- **Site publicado:** para ligar o login no GitHub Pages, cadastre os secrets
+  `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (a chave **publicável**) em
+  Settings > Secrets and variables > Actions. Enquanto não cadastrar, o site publicado
+  continua 100% local.
 
 ## Decisões
 
