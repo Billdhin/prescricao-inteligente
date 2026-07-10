@@ -24,6 +24,8 @@ export interface Aluno {
   observacoes?: string;
   status: "ativo" | "inativo";
   criadoEm: number;
+  /** desde quando o aluno está no nível atual (para sugerir progressão) */
+  nivelDesde?: number;
   ultimaAvaliacaoEm?: number;
   proximaReavaliacaoEm?: number;
 
@@ -213,6 +215,37 @@ export function iniciaisDe(nome: string) {
     .map((p) => p[0]?.toUpperCase() ?? "")
     .slice(0, 2)
     .join("");
+}
+
+/** Tempo decorrido desde uma data: rola em dias e, a partir de ~1 mês, em meses. */
+export function tempoDesde(ts: number): { dias: number; meses: number; texto: string } {
+  const dias = Math.max(0, Math.floor((Date.now() - ts) / DIA));
+  const meses = Math.floor(dias / 30);
+  let texto: string;
+  if (dias < 1) texto = "hoje";
+  else if (dias < 30) texto = `há ${dias} ${dias === 1 ? "dia" : "dias"}`;
+  else if (meses < 12) texto = `há ${meses} ${meses === 1 ? "mês" : "meses"}`;
+  else {
+    const anos = Math.floor(meses / 12);
+    const resto = meses % 12;
+    texto = `há ${anos} ${anos === 1 ? "ano" : "anos"}${resto ? ` e ${resto} ${resto === 1 ? "mês" : "meses"}` : ""}`;
+  }
+  return { dias, meses, texto };
+}
+
+const NIVEL_ORDEM: import("./types").Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
+/** meses no nível a partir dos quais sugerir avançar (progressão é manual). */
+const LIMIAR_PROGRESSAO: Record<string, number> = { Iniciante: 3, Intermediário: 6 };
+
+/** Sugere avançar de nível quando o aluno já está tempo suficiente no atual. */
+export function sugestaoProgressao(aluno: Aluno): { proximo: import("./types").Nivel; mesesNoNivel: number } | null {
+  const desde = aluno.nivelDesde ?? aluno.criadoEm;
+  const mesesNoNivel = Math.floor((Date.now() - desde) / (30 * DIA));
+  const idx = NIVEL_ORDEM.indexOf(aluno.nivel);
+  if (idx < 0 || idx >= NIVEL_ORDEM.length - 1) return null; // Avançado = topo
+  const limiar = LIMIAR_PROGRESSAO[aluno.nivel] ?? 3;
+  if (mesesNoNivel >= limiar) return { proximo: NIVEL_ORDEM[idx + 1], mesesNoNivel };
+  return null;
 }
 
 export const seedAlunos: Aluno[] = [

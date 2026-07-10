@@ -321,12 +321,14 @@ export const useAlunos = create<AlunosState>()(
     //     disponível); alunos antigos sem esse equipamento recebem-no no backfill.
     // v5: Avaliacao ganhou campos profissionais opcionais (tipo, condição, perímetros, testes,
     //     fotos, personalizadas, sinais fisiológicos). Aditivo: avaliações antigas seguem válidas.
+    // v6: Aluno ganhou `nivelDesde` (para sugerir progressão de nível por tempo). Backfill =
+    //     criadoEm nos alunos que não têm (assume que estão no nível desde o cadastro).
     // migrate por MERGE: preserva os dados do usuário (alunos/avaliações/prescrições que
     // ele criou) e apenas faz backfill dos campos novos do seed nos alunos-semente por id.
     // Assim, futuros bumps de versão não apagam o trabalho do profissional.
     {
       name: "pi-alunos",
-      version: 4,
+      version: 6,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -354,7 +356,12 @@ export const useAlunos = create<AlunosState>()(
           alunos: p.alunos.map((a) => {
             const s = seedById.get(a.id);
             const merged = s ? { ...s, ...a } : a;
-            return { ...merged, equipamentos: normalizaEquip(merged.equipamentos) };
+            return {
+              ...merged,
+              equipamentos: normalizaEquip(merged.equipamentos),
+              // v6: assume que o aluno está no nível desde o cadastro, se não houver registro
+              nivelDesde: merged.nivelDesde ?? merged.criadoEm,
+            };
           }),
           avaliacoes: Array.isArray(p.avaliacoes) ? p.avaliacoes : seedAvaliacoes,
           prescricoes: Array.isArray(p.prescricoes) ? p.prescricoes : seedPrescricoes,

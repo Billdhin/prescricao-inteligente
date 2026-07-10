@@ -10,6 +10,10 @@ import {
   Activity,
   AlertTriangle,
   Clock,
+  CalendarClock,
+  TrendingUp,
+  UserMinus,
+  UserCheck,
   FlaskConical,
   HeartPulse,
   FileDown,
@@ -25,6 +29,7 @@ import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao } from "@/data/alunos";
+import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
@@ -158,6 +163,9 @@ export function AlunoDetail() {
           </div>
         </div>
       </Card>
+
+      {/* Acompanhamento: tempo de cadastro, tempo no nível, status e progressão */}
+      <AcompanhamentoCard aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
 
       {/* Jornada de Prescrição */}
       <JornadaCard aluno={aluno} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
@@ -391,17 +399,8 @@ export function AlunoDetail() {
         </div>
       </div>
 
-      {/* Ações administrativas discretas: o cadastro precisa poder evoluir e sair */}
+      {/* Ação administrativa: excluir (o status ativo/saiu fica em Acompanhamento) */}
       <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4 text-sm">
-        <button
-          onClick={() => {
-            updateAluno(aluno.id, { status: aluno.status === "ativo" ? "inativo" : "ativo" });
-            toast(aluno.status === "ativo" ? `${aluno.nome} arquivado(a)` : `${aluno.nome} reativado(a)`);
-          }}
-          className="font-medium text-ink-2 hover:text-ink"
-        >
-          {aluno.status === "ativo" ? "Arquivar aluno" : "Reativar aluno"}
-        </button>
         <button onClick={() => setConfirmarExclusao(true)} className="font-medium text-[#b91c1c] hover:underline">
           Excluir aluno
         </button>
@@ -631,6 +630,96 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
 
 function RotuloJ({ children }: { children: React.ReactNode }) {
   return <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">{children}</div>;
+}
+
+/** Acompanhamento do vínculo: tempo de cadastro (dias→meses), tempo no nível,
+ *  status ativo/saiu e a SUGESTÃO de avançar de nível (progressão é manual). */
+function AcompanhamentoCard({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Partial<Aluno>) => void }) {
+  const navigate = useNavigate();
+  const cadastro = tempoDesde(aluno.criadoEm);
+  const noNivel = tempoDesde(aluno.nivelDesde ?? aluno.criadoEm);
+  const ativo = aluno.status === "ativo";
+  const sug = ativo ? sugestaoProgressao(aluno) : null;
+
+  const toggleStatus = () => {
+    onUpdate({ status: ativo ? "inativo" : "ativo" });
+    toast(ativo ? `${aluno.nome} marcado(a) como saiu` : `${aluno.nome} reativado(a)`);
+  };
+  const avancar = () => {
+    if (!sug) return;
+    onUpdate({ nivel: sug.proximo, nivelDesde: Date.now() });
+    toast(`${aluno.nome} avançou para ${sug.proximo}. Revise a prescrição.`);
+  };
+
+  return (
+    <Card className="p-5 md:p-6">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+          <CalendarClock className="h-4 w-4" />
+        </span>
+        <h2 className="font-display text-lg font-bold text-ink">Acompanhamento</h2>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <MiniStat icon={<CalendarClock className="h-4 w-4" />} rotulo="Tempo de cadastro" valor={cadastro.texto} />
+        <MiniStat icon={<TrendingUp className="h-4 w-4" />} rotulo={`No nível ${aluno.nivel}`} valor={noNivel.texto} />
+        <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+          <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", ativo ? "bg-[#e7f8ee] text-success" : "bg-surface-soft text-ink-3")}>
+            {ativo ? <UserCheck className="h-4 w-4" /> : <UserMinus className="h-4 w-4" />}
+          </span>
+          <div className="min-w-0">
+            <div className="text-xs text-ink-3">Situação</div>
+            <div className="font-semibold text-ink">{ativo ? "Ativo" : "Saiu / inativo"}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sugestão de progressão de nível (o profissional decide) */}
+      {sug && (
+        <Card tone="primary" className="mt-4 flex flex-wrap items-center justify-between gap-3 p-4">
+          <div className="flex items-start gap-2">
+            <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <p className="text-sm text-ink">
+              <span className="font-semibold">
+                {aluno.nome.split(" ")[0]} está há {sug.mesesNoNivel} {sug.mesesNoNivel === 1 ? "mês" : "meses"} como {aluno.nivel}.
+              </span>{" "}
+              Considere avançar para {sug.proximo} e revisar toda a prescrição. A decisão é sua; avance quando a
+              técnica e a resposta ao treino indicarem.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={avancar} className={buttonClasses("primary", "sm")}>
+              Avançar para {sug.proximo}
+            </button>
+          </div>
+        </Card>
+      )}
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <button onClick={toggleStatus} className={buttonClasses("secondary", "sm")}>
+          {ativo ? <UserMinus className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+          {ativo ? "Marcar que o aluno saiu" : "Reativar aluno"}
+        </button>
+        {sug && (
+          <button onClick={() => navigate(`/gps?aluno=${aluno.id}`)} className={buttonClasses("ghost", "sm")}>
+            <Navigation className="h-4 w-4" /> Revisar prescrição
+          </button>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function MiniStat({ icon, rotulo, valor }: { icon: React.ReactNode; rotulo: string; valor: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-2">{icon}</span>
+      <div className="min-w-0">
+        <div className="text-xs text-ink-3">{rotulo}</div>
+        <div className="font-semibold text-ink">{valor}</div>
+      </div>
+    </div>
+  );
 }
 
 function Medida({ label, value }: { label: string; value: string }) {

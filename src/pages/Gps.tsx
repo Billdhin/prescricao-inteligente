@@ -12,6 +12,7 @@ import {
   Check,
   Plus,
   UserCheck,
+  Users,
   Save,
   HeartPulse,
   ShieldAlert,
@@ -64,6 +65,7 @@ import type { ProntuarioSnapshot } from "@/data/alunos";
 import { marcarAtivacao } from "@/lib/ativacao";
 import { toast } from "@/lib/toast";
 import { descricaoOpcao } from "@/data/opcoes-wizard";
+import { FAIXAS_ETARIAS, getFaixaEtaria } from "@/data/faixasEtarias";
 import { useDialog } from "@/lib/useDialog";
 import { cn, withBase } from "@/lib/utils";
 import { FileDown, FileText, Lock as LockIcon } from "lucide-react";
@@ -111,6 +113,8 @@ export function Gps() {
   const [fase, setFase] = React.useState<number>(
     Math.min(4, Math.max(1, alunoInicial?.faseJornada ?? (Number(params.get("fase")) || 1))),
   );
+  // Faixa etária: só na PRESCRIÇÃO GERAL (sem aluno). Orientação contextual.
+  const [faixaEtaria, setFaixaEtaria] = React.useState<string>("");
 
   const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
   const grupo = grupoSlug ? getSpecialGroup(grupoSlug) : undefined;
@@ -175,6 +179,7 @@ export function Gps() {
   const onAluno = (id: string) => {
     invalidarResultados();
     setAlunoId(id);
+    if (id) setFaixaEtaria(""); // com aluno, a idade dele já é conhecida
     const a = alunos.find((x) => x.id === id);
     if (a?.grupoEspecial) setGrupoSlug(a.grupoEspecial);
     if (a?.faseJornada) setFase(a.faseJornada);
@@ -385,7 +390,12 @@ export function Gps() {
         fase={fase}
         setFase={mudarFase}
         unlocked={unlocked}
+        faixaEtaria={faixaEtaria}
+        setFaixaEtaria={setFaixaEtaria}
       />
+
+      {/* Orientação por faixa etária (só na prescrição geral) */}
+      {!aluno && faixaEtaria && <FaixaEtariaCard id={faixaEtaria} />}
 
       {/* Contexto clínico-funcional do aluno: a avaliação registrada alimenta a decisão */}
       {aluno && ultimaAval && (
@@ -571,6 +581,8 @@ function ContextoCard({
   fase,
   setFase,
   unlocked,
+  faixaEtaria,
+  setFaixaEtaria,
 }: {
   alunos: { id: string; nome: string }[];
   alunoId: string;
@@ -580,8 +592,11 @@ function ContextoCard({
   fase: number;
   setFase: (n: number) => void;
   unlocked: boolean;
+  faixaEtaria: string;
+  setFaixaEtaria: (s: string) => void;
 }) {
   const temGrupo = grupoSlug !== "";
+  const prescricaoGeral = alunoId === "";
   return (
     <Card className="p-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -638,6 +653,57 @@ function ContextoCard({
           </div>
         </div>
       </div>
+
+      {/* Faixa etária: aparece só na prescrição geral (sem aluno). */}
+      {prescricaoGeral && (
+        <label className="mt-4 block">
+          <span className="mb-1.5 block text-sm font-semibold text-ink">Faixa etária</span>
+          <select value={faixaEtaria} onChange={(e) => setFaixaEtaria(e.target.value)} className="input">
+            <option value="">Todas as idades</option>
+            {FAIXAS_ETARIAS.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.label} ({f.faixa})
+              </option>
+            ))}
+          </select>
+          <span className="mt-1 block text-xs text-ink-3">
+            Sem aluno selecionado. A idade ajusta cuidados e ênfases; com aluno, a idade dele já é usada.
+          </span>
+        </label>
+      )}
+    </Card>
+  );
+}
+
+/** Orientação prudente por faixa etária na prescrição geral. */
+function FaixaEtariaCard({ id }: { id: string }) {
+  const f = getFaixaEtaria(id);
+  if (!f) return null;
+  return (
+    <Card tone="primary" className="p-5">
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-primary">
+          <Users className="h-4 w-4" />
+        </span>
+        <h2 className="font-display text-base font-bold text-ink">
+          Faixa etária: {f.label} <span className="font-normal text-ink-3">({f.faixa})</span>
+        </h2>
+      </div>
+      <p className="text-sm text-ink-2">
+        <span className="font-semibold text-ink">Foco. </span>
+        {f.foco}
+      </p>
+      <ul className="mt-2 space-y-1.5">
+        {f.orientacoes.map((o) => (
+          <li key={o} className="flex items-start gap-2 text-sm text-ink-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+            {o}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-xs text-ink-3">
+        Orientação geral por faixa etária; a decisão final considera o contexto individual do aluno.
+      </p>
     </Card>
   );
 }

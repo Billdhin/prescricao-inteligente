@@ -15,9 +15,10 @@ export function Library() {
     (e) =>
       (cat === "Todas" || e.categoria === cat) &&
       (termo === "" ||
-        e.termo.toLowerCase().includes(termo) ||
-        e.resumo.toLowerCase().includes(termo) ||
-        e.detalhe.toLowerCase().includes(termo)),
+        [e.termo, e.resumo, e.detalhe, e.aplicacao ?? "", e.sinonimos ?? "", e.formula ?? ""]
+          .join(" ")
+          .toLowerCase()
+          .includes(termo)),
   );
 
   return (
@@ -26,7 +27,7 @@ export function Library() {
         eyebrow="Consulta rápida"
         icon={<LibraryIcon className="h-3 w-3" />}
         title="Biblioteca"
-        subtitle="Conceitos-chave de decisão, biomecânica, fisiologia e segurança, para consultar em segundos."
+        subtitle="Termos técnicos e conceitos-chave de decisão, biomecânica, fisiologia e segurança. Para o estagiário ou profissional relembrar um termo em segundos."
       />
 
       <Card className="p-4">
@@ -71,12 +72,27 @@ export function Library() {
               </span>
             ),
             content: (
-              <div>
+              <div className="space-y-3">
                 <p className="text-sm text-ink">{e.detalhe}</p>
+                {e.formula && (
+                  <div className="rounded-lg border border-border bg-surface-soft px-3 py-2 text-sm">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">Fórmula</span>
+                    <div className="font-mono text-[13px] text-ink">{e.formula}</div>
+                  </div>
+                )}
+                {e.aplicacao && (
+                  <p className="text-sm text-ink-2">
+                    <span className="font-semibold text-ink">Na prática. </span>
+                    {e.aplicacao}
+                  </p>
+                )}
+                {e.sinonimos && (
+                  <p className="text-xs text-ink-3">Também conhecido como: {e.sinonimos}.</p>
+                )}
                 {e.verExercicio && (
                   <Link
                     to={`/movement-lab/${e.verExercicio}`}
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
                   >
                     Ver no Laboratório Visual <ArrowRight className="h-3.5 w-3.5" />
                   </Link>

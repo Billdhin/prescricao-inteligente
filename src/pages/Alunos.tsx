@@ -4,6 +4,7 @@ import { Users, UserPlus, Search, ArrowRight, Crown, Lock } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, FREE_ALUNOS_LIMIT } from "@/lib/store";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
+import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 
 export function Alunos() {
   const { alunos, addAluno, loadExamples } = useAlunos();
@@ -100,6 +101,10 @@ export function Alunos() {
                 <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
               </div>
               <div className="mt-3 flex flex-wrap gap-1.5">
+                {a.status !== "ativo" && <Pill tone="neutral">Saiu</Pill>}
+                {a.status === "ativo" && sugestaoProgressao(a) && (
+                  <Pill tone="primary">Pode avançar de nível</Pill>
+                )}
                 {a.restricoes.length > 0 ? (
                   a.restricoes.map((r) => (
                     <Pill key={r} tone="warning">
@@ -110,6 +115,7 @@ export function Alunos() {
                   <Pill tone="neutral">Sem restrição</Pill>
                 )}
               </div>
+              <div className="mt-2 text-xs text-ink-3">Cadastro {tempoDesde(a.criadoEm).texto}</div>
                 </Link>
               ))}
             </div>

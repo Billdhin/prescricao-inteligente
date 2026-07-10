@@ -45,13 +45,18 @@ export function AlunoFormModal({
 
   const submit = () => {
     if (!nome.trim()) return;
+    const agora = Date.now();
+    const base = inicial ?? { id: uid(), status: "ativo" as const, criadoEm: agora, nivelDesde: agora };
+    // Ao trocar o nível (progressão manual), reinicia a contagem de tempo no nível.
+    const nivelDesde = inicial && inicial.nivel !== nivel ? agora : base.nivelDesde ?? base.criadoEm;
     onSave({
-      ...(inicial ?? { id: uid(), status: "ativo", criadoEm: Date.now() }),
+      ...base,
       nome: nome.trim(),
       iniciais: iniciaisDe(nome),
       idade: idade ? Number(idade) : undefined,
       objetivo,
       nivel,
+      nivelDesde,
       restricoes,
       equipamentos,
       observacoes: observacoes.trim() || undefined,
