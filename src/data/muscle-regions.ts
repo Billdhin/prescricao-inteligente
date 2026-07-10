@@ -181,25 +181,8 @@ export const muscleRegions: Record<string, MuscleRegion[]> = {
     { musculo: "Romboides", shapes: [{ cx: 51, cy: 50, rx: 5, ry: 4 }] },
   ],
 
-  // De costas; vermelho = dorsais/romboides (meio das costas) + trapézio médio (alto).
-  "remada-baixa": [
-    {
-      musculo: "Dorsais e romboides",
-      rotularNoCorpo: true,
-      shapes: [
-        { cx: 46, cy: 45, rx: 5, ry: 11, rot: 5 },
-        { cx: 56, cy: 45, rx: 5, ry: 11, rot: -5 },
-      ],
-    },
-    { musculo: "Trapézio médio", rotularNoCorpo: true, shapes: [{ cx: 51, cy: 29, rx: 10, ry: 4 }] },
-    {
-      musculo: "Bíceps",
-      shapes: [
-        { cx: 31, cy: 38, rx: 3.5, ry: 3, rot: 20 },
-        { cx: 71, cy: 38, rx: 3.5, ry: 3, rot: -20 },
-      ],
-    },
-  ],
+  // remada-baixa: foto refeita (nova pose); overlay antigo removido para não desalinhar.
+  "remada-baixa": [],
 
   /* -------------------------- Flexão de cotovelo ------------------------ */
 
@@ -294,42 +277,12 @@ export const muscleRegions: Record<string, MuscleRegion[]> = {
     { musculo: "Oblíquos", shapes: [{ cx: 53, cy: 60, rx: 3.5, ry: 5 }] },
   ],
 
-  // Lateral deitada; vermelho = parede abdominal (reto abdominal), visível.
-  "dead-bug": [
-    { musculo: "Core", shapes: [{ cx: 54, cy: 60, rx: 7, ry: 6 }] },
-    { musculo: "Reto abdominal", rotularNoCorpo: true, shapes: [{ cx: 53, cy: 60, rx: 5.5, ry: 5.5 }] },
-    { musculo: "Oblíquos", shapes: [{ cx: 58.5, cy: 60, rx: 3, ry: 5 }] },
-  ],
+  // dead-bug: foto refeita (nova pose); overlay antigo removido para não desalinhar.
+  "dead-bug": [],
 
-  // Vista traseira sentado; vermelho = latíssimo (lâminas) + romboides (centro alto).
-  "remada-elastica": [
-    {
-      musculo: "Latíssimo do dorso",
-      rotularNoCorpo: true,
-      shapes: [
-        { cx: 47.5, cy: 50, rx: 5, ry: 12, rot: -8 },
-        { cx: 61.5, cy: 50, rx: 5, ry: 12, rot: 8 },
-      ],
-    },
-    { musculo: "Romboides", rotularNoCorpo: true, shapes: [{ cx: 54, cy: 39, rx: 5.5, ry: 5 }] },
-    {
-      musculo: "Bíceps",
-      shapes: [
-        { cx: 37.5, cy: 36, rx: 2.5, ry: 5, rot: -25 },
-        { cx: 72, cy: 36, rx: 2.5, ry: 5, rot: 25 },
-      ],
-    },
-  ],
+  // remada-elastica: foto refeita (nova pose); overlay antigo removido para não desalinhar.
+  "remada-elastica": [],
 
-  // Lateral em ponta de pé; vermelho = panturrilhas (visível).
-  "panturrilha-em-pe": [
-    {
-      musculo: "Panturrilha",
-      rotularNoCorpo: true,
-      shapes: [
-        { cx: 47, cy: 64, rx: 2.5, ry: 7, rot: 3 },
-        { cx: 52.5, cy: 52.5, rx: 3, ry: 4, rot: 60 },
-      ],
-    },
-  ],
+  // panturrilha-em-pe: foto refeita (nova pose); overlay antigo removido para não desalinhar.
+  "panturrilha-em-pe": [],
 };
