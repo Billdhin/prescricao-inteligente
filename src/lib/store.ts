@@ -13,14 +13,35 @@ export const planLabel: Record<Plan, string> = {
   admin: "Admin",
 };
 
-interface UserState {
+/** Perfil profissional completo: alimenta a UI e o CABEÇALHO dos documentos
+ *  impressos (prontuário, prescrição, semáforo, fichas). */
+export interface PerfilCampos {
   name: string;
-  plan: Plan;
   /** registro profissional (aparece no cabeçalho/assinatura do Prontuário) */
   cref: string;
+  email: string;
+  telefone: string;
+  /** nome da empresa/estúdio (opcional; entra nos documentos) */
+  empresa: string;
+  /** site ou rede social principal (entra no rodapé dos documentos) */
+  site: string;
+  /** foto do profissional (dataURL redimensionada; avatar da UI) */
+  fotoDataUrl: string;
+  /** logo da marca (dataURL redimensionada; cabeçalho dos documentos) */
+  logoDataUrl: string;
+}
+
+interface UserState extends PerfilCampos {
+  plan: Plan;
+  /** hash SHA-256 (hex) da senha local + salt; vazio = sem senha definida */
+  senhaHash: string;
+  senhaSalt: string;
   setPlan: (p: Plan) => void;
   setName: (n: string) => void;
   setCref: (c: string) => void;
+  setPerfil: (patch: Partial<PerfilCampos>) => void;
+  setSenha: (hash: string, salt: string) => void;
+  limparSenha: () => void;
 }
 
 export const useUser = create<UserState>()(
@@ -31,13 +52,47 @@ export const useUser = create<UserState>()(
       // certo). O dono alterna via UserMenu (dev toggle) para testar.
       plan: "free",
       cref: "",
+      email: "",
+      telefone: "",
+      empresa: "",
+      site: "",
+      fotoDataUrl: "",
+      logoDataUrl: "",
+      senhaHash: "",
+      senhaSalt: "",
       setPlan: (plan) => set({ plan }),
       setName: (name) => set({ name }),
       setCref: (cref) => set({ cref }),
+      setPerfil: (patch) => set(patch),
+      setSenha: (senhaHash, senhaSalt) => set({ senhaHash, senhaSalt }),
+      limparSenha: () => set({ senhaHash: "", senhaSalt: "" }),
     }),
     { name: "pi-user" },
   ),
 );
+
+/** Dados de marca prontos para os geradores de documento. */
+export interface MarcaDocumento {
+  nome: string;
+  cref?: string;
+  empresa?: string;
+  site?: string;
+  email?: string;
+  telefone?: string;
+  logoDataUrl?: string;
+}
+
+export function marcaDoUsuario(u: Pick<UserState, keyof PerfilCampos>): MarcaDocumento {
+  return {
+    nome: u.name,
+    cref: u.cref || undefined,
+    empresa: u.empresa || undefined,
+    site: u.site || undefined,
+    email: u.email || undefined,
+    telefone: u.telefone || undefined,
+    logoDataUrl: u.logoDataUrl || undefined,
+  };
+}
 
 /** true quando o plano libera recursos premium. */
 export function isPremiumUnlocked(plan: Plan) {

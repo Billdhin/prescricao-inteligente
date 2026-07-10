@@ -24,6 +24,7 @@ export function printSemaforo(
   alunoNome?: string,
   profissional?: string,
   cref?: string,
+  logoDataUrl?: string,
 ) {
   const cor = COR[resultado.cor];
 
@@ -73,10 +74,13 @@ export function printSemaforo(
   </style></head><body>
   <div class="page">
     <div class="brand">
-      <div>
-        <div class="prof">${esc(profissional || "Motor RCD · Raciocínio Clínico Documentado")}</div>
-        ${cref ? `<div class="sub" style="font-weight:700;color:#0e7c8a">CREF ${esc(cref)}</div>` : ""}
-        <div class="sub">Semáforo de Liberação: gate pré-sessão${profissional ? " · Motor RCD" : ""}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="" style="height:38px;max-width:130px;object-fit:contain" />` : ""}
+        <div>
+          <div class="prof">${esc(profissional || "Motor RCD · Raciocínio Clínico Documentado")}</div>
+          ${cref ? `<div class="sub" style="font-weight:700;color:#0e7c8a">CREF ${esc(cref)}</div>` : ""}
+          <div class="sub">Semáforo de Liberação: gate pré-sessão${profissional ? " · Motor RCD" : ""}</div>
+        </div>
       </div>
       <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date())}</div>
     </div>

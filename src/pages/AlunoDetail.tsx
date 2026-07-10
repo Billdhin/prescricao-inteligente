@@ -20,7 +20,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
-import { useAlunos, useUser, isPremiumUnlocked, uid } from "@/lib/store";
+import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, uid } from "@/lib/store";
 import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
@@ -46,7 +46,8 @@ export function AlunoDetail() {
   const navigate = useNavigate();
   const [editar, setEditar] = React.useState(false);
   const [confirmarExclusao, setConfirmarExclusao] = React.useState(false);
-  const { name: profNome, plan, cref } = useUser();
+  const usuario = useUser();
+  const { name: profNome, plan, cref } = usuario;
   const premium = isPremiumUnlocked(plan);
   const [avaliar, setAvaliar] = React.useState(false);
   const [prontuarioDe, setProntuarioDe] = React.useState<string | null>(null);
@@ -334,8 +335,8 @@ export function AlunoDetail() {
                         <button
                           onClick={() =>
                             p.prontuario
-                              ? exportProntuarioPDF({ aluno, presc: p, prontuario: p.prontuario, profissional: profNome, cref })
-                              : exportPrescricaoPDF({ aluno, presc: p, profissional: profNome, cref })
+                              ? exportProntuarioPDF({ aluno, presc: p, prontuario: p.prontuario, profissional: profNome, cref, marca: marcaDoUsuario(usuario) })
+                              : exportPrescricaoPDF({ aluno, presc: p, profissional: profNome, cref, marca: marcaDoUsuario(usuario) })
                           }
                           className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
                         >
@@ -434,6 +435,7 @@ export function AlunoDetail() {
               prontuario: prescAberta.prontuario!,
               profissional: profNome,
               cref,
+              marca: marcaDoUsuario(usuario),
             })
           }
           podeExportar={premium}

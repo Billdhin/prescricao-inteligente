@@ -89,7 +89,7 @@ export function ParametroDialog({
 }) {
   const dialogRef = useDialog<HTMLDivElement>(onClose);
   // a ficha impressa vai para a mão do aluno: sai com a identidade do profissional
-  const { name: profNome, cref } = useUser();
+  const { name: profNome, cref, logoDataUrl } = useUser();
   return (
     <div
       className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm"
@@ -172,7 +172,7 @@ export function ParametroDialog({
 
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4">
           {p.ficha && (
-            <button onClick={() => printFichaParametro(p, contexto, { nome: profNome, cref })} className={buttonClasses("primary", "sm")}>
+            <button onClick={() => printFichaParametro(p, contexto, { nome: profNome, cref, logoDataUrl: logoDataUrl || undefined })} className={buttonClasses("primary", "sm")}>
               <Printer className="h-4 w-4" />
               {p.ficha === "adesao" ? "Imprimir ficha de adesão" : "Imprimir escala (PDF)"}
             </button>

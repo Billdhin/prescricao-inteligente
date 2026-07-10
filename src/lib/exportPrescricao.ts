@@ -1,4 +1,5 @@
 import type { Aluno, Prescricao } from "@/data/alunos";
+import type { MarcaDocumento } from "@/lib/store";
 import { exercises } from "@/data/exercises";
 import { getModalidade } from "@/data/modalities";
 import { getParam } from "@/data/monitoringParameters";
@@ -22,11 +23,14 @@ export function exportPrescricaoPDF({
   presc,
   profissional,
   cref,
+  marca,
 }: {
   aluno: Aluno;
   presc: Prescricao;
   profissional: string;
   cref?: string;
+  /** logo, empresa e contato do profissional (Configurações > Sua marca) */
+  marca?: MarcaDocumento;
 }) {
   const grupo = presc.grupoEspecial ? getSpecialGroup(presc.grupoEspecial) : undefined;
   const modPrincipal = presc.modalidadePrincipal ? getModalidade(presc.modalidadePrincipal) : undefined;
@@ -117,10 +121,17 @@ export function exportPrescricaoPDF({
   </style></head><body>
   <div class="page">
     <div class="brand">
-      <div><div class="prof">${esc(profissional)}</div>${
-        cref ? `<div class="sub" style="font-weight:700;color:#2563eb">CREF ${esc(cref)}</div>` : ""
-      }<div class="sub">Prescrição de exercício</div></div>
-      <div class="sub">${fmt(presc.data)}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        ${marca?.logoDataUrl ? `<img src="${marca.logoDataUrl}" alt="" style="height:40px;max-width:140px;object-fit:contain" />` : ""}
+        <div><div class="prof">${esc(profissional)}</div>${
+          cref ? `<div class="sub" style="font-weight:700;color:#2563eb">CREF ${esc(cref)}</div>` : ""
+        }${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}<div class="sub">Prescrição de exercício</div></div>
+      </div>
+      <div class="sub" style="text-align:right">${fmt(presc.data)}${
+        marca && (marca.site || marca.email || marca.telefone)
+          ? `<br>${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}`
+          : ""
+      }</div>
     </div>
 
     <h1>${esc(tituloDoc)}</h1>

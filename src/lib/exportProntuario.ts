@@ -9,6 +9,7 @@
  */
 
 import type { Aluno, Prescricao, ProntuarioSnapshot } from "@/data/alunos";
+import type { MarcaDocumento } from "@/lib/store";
 import { bibliografia } from "@/data/referencias";
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -38,12 +39,15 @@ export function exportProntuarioPDF({
   prontuario,
   profissional,
   cref,
+  marca,
 }: {
   aluno: Aluno;
   presc: Prescricao;
   prontuario: ProntuarioSnapshot;
   profissional: string;
   cref?: string;
+  /** logo, empresa e contato do profissional (Configurações > Sua marca) */
+  marca?: MarcaDocumento;
 }) {
   const docId = idDocumento(presc.id);
   const biblio = bibliografia(prontuario.refIds);
@@ -185,14 +189,23 @@ export function exportProntuarioPDF({
   </style></head><body>
   <div class="page">
     <div class="brand">
-      <div>
-        <div class="prof">${esc(profissional)}</div>
-        ${cref ? `<div class="cref">CREF ${esc(cref)}</div>` : ""}
-        <div class="sub">Prontuário de Decisão Técnica: prescrição de exercício</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        ${marca?.logoDataUrl ? `<img src="${marca.logoDataUrl}" alt="" style="height:40px;max-width:140px;object-fit:contain" />` : ""}
+        <div>
+          <div class="prof">${esc(profissional)}</div>
+          ${cref ? `<div class="cref">CREF ${esc(cref)}</div>` : ""}
+          ${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}
+          <div class="sub">Prontuário de Decisão Técnica: prescrição de exercício</div>
+        </div>
       </div>
       <div class="selo">
         <span class="motor">Motor RCD · Raciocínio Clínico Documentado · ${esc(prontuario.motorVersao)}</span>
         <div class="docid">Documento ${docId} · ${fmt(prontuario.geradoEm)}</div>
+        ${
+          marca && (marca.site || marca.email || marca.telefone)
+            ? `<div class="docid">${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}</div>`
+            : ""
+        }
       </div>
     </div>
 

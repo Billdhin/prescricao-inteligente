@@ -43,6 +43,7 @@ import {
   useProgress,
   useAlunos,
   isPremiumUnlocked,
+  marcaDoUsuario,
   FREE_GPS_LIMIT,
   uid,
 } from "@/lib/store";
@@ -91,7 +92,8 @@ const stepLabels = (emagrecimento: boolean) => [
 ];
 
 export function Gps() {
-  const { name: nome, plan, cref } = useUser();
+  const usuario = useUser();
+  const { name: nome, plan, cref } = usuario;
   const unlocked = isPremiumUnlocked(plan);
   const { consultations, increment, reset } = useGps();
   const addActivity = useProgress((s) => s.addActivity);
@@ -278,6 +280,7 @@ export function Gps() {
       aluno,
       profissional: nome,
       cref,
+      marca: marcaDoUsuario(usuario),
       prontuario,
       presc: {
         id: uid(),

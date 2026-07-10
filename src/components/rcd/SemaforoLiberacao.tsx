@@ -70,7 +70,7 @@ export function SemaforoLiberacao({
   const nomeChecklist = grupo?.nome ?? "Checklist geral do dia";
   const nomeDocumento = grupo?.rotuloAluno ?? "Checklist geral do dia";
   const addLiberacao = useAlunos((s) => s.addLiberacao);
-  const { name: profNome, cref } = useUser();
+  const { name: profNome, cref, logoDataUrl } = useUser();
   const [respostas, setRespostas] = React.useState<Record<string, string>>({});
   const [registrado, setRegistrado] = React.useState(false);
 
@@ -207,7 +207,7 @@ export function SemaforoLiberacao({
             )}
             <button
               // impresso pode chegar ao aluno: usa o nome de programa digno, não o rótulo clínico
-              onClick={() => printSemaforo(nomeDocumento, checklist, respostas, resultado, alunoNome, profNome, cref)}
+              onClick={() => printSemaforo(nomeDocumento, checklist, respostas, resultado, alunoNome, profNome, cref, logoDataUrl || undefined)}
               className={buttonClasses("outline", "sm")}
             >
               <Printer className="h-4 w-4" /> Imprimir

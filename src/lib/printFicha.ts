@@ -49,15 +49,18 @@ function abrir(html: string) {
   w.document.close();
 }
 
-function shell(titulo: string, corpo: string, ident?: { nome?: string; cref?: string }) {
+function shell(titulo: string, corpo: string, ident?: IdentProf) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>${esc(titulo)}</title><style>${CSS}</style></head><body>
   <div class="page">
     <div class="brand">
-      <div>
-        <div class="prof">${esc(ident?.nome || "Prescrição Inteligente")}</div>
-        ${ident?.cref ? `<div class="sub" style="font-weight:700;color:#2563eb">CREF ${esc(ident.cref)}</div>` : ""}
-        <div class="sub">Ficha de apoio ao profissional</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        ${ident?.logoDataUrl ? `<img src="${ident.logoDataUrl}" alt="" style="height:36px;max-width:120px;object-fit:contain" />` : ""}
+        <div>
+          <div class="prof">${esc(ident?.nome || "Prescrição Inteligente")}</div>
+          ${ident?.cref ? `<div class="sub" style="font-weight:700;color:#2563eb">CREF ${esc(ident.cref)}</div>` : ""}
+          <div class="sub">Ficha de apoio ao profissional</div>
+        </div>
       </div>
       <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date())}</div>
     </div>
@@ -71,6 +74,7 @@ function shell(titulo: string, corpo: string, ident?: { nome?: string; cref?: st
 export interface IdentProf {
   nome?: string;
   cref?: string;
+  logoDataUrl?: string;
 }
 
 /** Cartão de escala (PSE, dispneia, dor, teste da fala) + como aplicar. */

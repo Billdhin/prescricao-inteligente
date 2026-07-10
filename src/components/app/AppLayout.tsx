@@ -30,7 +30,9 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
+import { LoginGate } from "@/components/app/LoginGate";
 import { Toasts } from "@/components/app/Toasts";
+import { sessaoAtiva, encerrarSessao } from "@/lib/auth";
 import { buttonClasses } from "@/components/ui/primitives";
 import { specialGroups } from "@/data/specialGroups";
 import { OBJETIVOS } from "@/lib/gps/engine";
@@ -163,6 +165,12 @@ export function AppLayout() {
     () => typeof window !== "undefined" && !localStorage.getItem("pi-onboarded"),
   );
 
+  // Acesso local: com senha definida (Configurações > Acesso), o app pede a
+  // senha uma vez por sessão do navegador. Páginas públicas (landing, /roi,
+  // /casos-rcd) ficam fora deste layout e seguem abertas.
+  const senhaHash = useUser((s) => s.senhaHash);
+  const [logado, setLogado] = React.useState(() => sessaoAtiva());
+
   // Título da aba por rota (as páginas públicas definem o próprio e este efeito
   // "des-vaza" o título delas ao voltar para o app).
   const { pathname } = useLocation();
@@ -170,6 +178,11 @@ export function AppLayout() {
     const t = TITULOS_ROTA.find(([re]) => re.test(pathname))?.[1];
     document.title = t ? `${t} | Prescrição Inteligente` : "Prescrição Inteligente";
   }, [pathname]);
+
+  // depois de TODOS os hooks (regras de hooks): o gate substitui o shell inteiro
+  if (senhaHash && !logado) {
+    return <LoginGate onEntrar={() => setLogado(true)} />;
+  }
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-bg">
@@ -680,7 +693,7 @@ function NotificationsMenu() {
 }
 
 function UserMenu() {
-  const { name, plan, setPlan } = useUser();
+  const { name, plan, setPlan, fotoDataUrl, senhaHash } = useUser();
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -713,9 +726,13 @@ function UserMenu() {
         aria-expanded={open}
         className="ml-1 flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-surface-soft md:pr-3"
       >
-        <span className="grid h-9 w-9 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
-          {initials}
-        </span>
+        {fotoDataUrl ? (
+          <img src={fotoDataUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
+        ) : (
+          <span className="grid h-9 w-9 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
+            {initials}
+          </span>
+        )}
         <span className="hidden text-left leading-tight md:block">
           <span className="block text-sm font-semibold text-ink">{name}</span>
           <span className="block text-xs text-ink-2">{planLabel[plan]}</span>
@@ -742,9 +759,21 @@ function UserMenu() {
           <Link to="/account" className="block rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-surface-soft">
             Configurações
           </Link>
-          <Link to="/" className="block rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-surface-soft">
-            Sair
-          </Link>
+          {senhaHash ? (
+            <button
+              onClick={() => {
+                encerrarSessao();
+                window.location.reload();
+              }}
+              className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
+            >
+              Sair (bloquear acesso)
+            </button>
+          ) : (
+            <Link to="/" className="block rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-surface-soft">
+              Sair
+            </Link>
+          )}
         </div>
       )}
     </div>
