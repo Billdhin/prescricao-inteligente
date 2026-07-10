@@ -3,8 +3,9 @@ import type { Nivel } from "./types";
 
 /**
  * Modelos de protocolo prontos para aplicar a um aluno. Cada modelo carrega o
- * RESPALDO (por que é indicado, com referências reais de referencias.ts), a
- * estrutura da semana, os parâmetros a monitorar e o critério de progressão.
+ * RESPALDO (por que é indicado, com referências reais de referencias.ts), o
+ * PÚBLICO-ALVO, a estrutura da semana, os parâmetros a monitorar e o critério
+ * de progressão.
  *
  * Famílias progressivas (mesmo `familia`) representam uma jornada por tempo de
  * treino: iniciante → intermediário → avançado, com os meses que caracterizam
@@ -38,6 +39,8 @@ export interface Protocolo {
   /** só para emagrecimento: prioridade física da fase */
   prioridade?: GpsPrioridade;
   nivelIndicado: Nivel;
+  /** público-alvo em uma linha (para quem este protocolo é indicado) */
+  publico: string;
   tone: "primary" | "analysis" | "cta" | "success" | "warning";
   /** família progressiva (ex.: "Emagrecimento") para agrupar as fases na UI */
   familia?: string;
@@ -73,6 +76,7 @@ export const protocolos: Protocolo[] = [
     objetivo: "Emagrecimento",
     prioridade: "Cardio + força (misto)",
     nivelIndicado: "Iniciante",
+    publico: "Pessoa destreinada ou retornando, com objetivo de emagrecer, iniciando o acompanhamento.",
     tone: "cta",
     familia: "Emagrecimento",
     fase: "Fase 1 · Iniciante",
@@ -102,6 +106,7 @@ export const protocolos: Protocolo[] = [
     objetivo: "Emagrecimento",
     prioridade: "Cardio + força (misto)",
     nivelIndicado: "Intermediário",
+    publico: "Aluno com base já estabelecida na Fase 1, tolerando bem volume e técnica.",
     tone: "cta",
     familia: "Emagrecimento",
     fase: "Fase 2 · Intermediário",
@@ -132,6 +137,7 @@ export const protocolos: Protocolo[] = [
     objetivo: "Emagrecimento",
     prioridade: "Cardio + força (misto)",
     nivelIndicado: "Avançado",
+    publico: "Aluno condicionado, com boa técnica e recuperação, em processo de emagrecimento.",
     tone: "cta",
     familia: "Emagrecimento",
     fase: "Fase 3 · Avançado",
@@ -164,6 +170,7 @@ export const protocolos: Protocolo[] = [
     objetivo: "Emagrecimento",
     prioridade: "Condicionamento cardiorrespiratório",
     nivelIndicado: "Iniciante",
+    publico: "Quem quer ganhar fôlego e condicionamento, com pouca ou nenhuma base aeróbia.",
     tone: "analysis",
     familia: "Cardiorrespiratório",
     fase: "Fase 1 · Base contínua",
@@ -191,6 +198,7 @@ export const protocolos: Protocolo[] = [
     objetivo: "Emagrecimento",
     prioridade: "Condicionamento cardiorrespiratório",
     nivelIndicado: "Intermediário",
+    publico: "Aluno com base aeróbia estabelecida que quer melhorar a aptidão cardiorrespiratória.",
     tone: "analysis",
     familia: "Cardiorrespiratório",
     fase: "Fase 2 · Intervalado",
@@ -212,13 +220,14 @@ export const protocolos: Protocolo[] = [
     cautelas: ["Aplicar intervalos apenas sobre base aeróbia estabelecida.", "Respeitar a recuperação entre sessões intensas."],
   },
 
-  /* ============================ HIPERTROFIA / FORÇA (com respaldo) ============================ */
+  /* ================================ HIPERTROFIA (por região) ================================ */
   {
     id: "hipertrofia-quadriceps",
     titulo: "Hipertrofia de quadríceps",
     categoria: "Hipertrofia",
     objetivo: "Hipertrofia",
     nivelIndicado: "Intermediário",
+    publico: "Aluno com técnica estável e sem restrição relevante de joelho, buscando volume de coxa.",
     tone: "primary",
     resumo: "Ênfase em quadríceps combinando cadeia fechada e aberta em faixa de repetições de hipertrofia.",
     indicacao: "Objetivo estético ou de volume de coxa, em aluno com técnica estável e sem restrição relevante de joelho.",
@@ -235,11 +244,193 @@ export const protocolos: Protocolo[] = [
     progressao: "Progredir carga quando completar o topo da faixa de repetições com técnica em 2 sessões seguidas.",
   },
   {
+    id: "hipertrofia-peitoral",
+    titulo: "Hipertrofia de peitoral",
+    categoria: "Hipertrofia",
+    objetivo: "Hipertrofia",
+    nivelIndicado: "Intermediário",
+    publico: "Aluno sem desconforto de ombro, buscando volume de peitoral no padrão de empurrar.",
+    tone: "primary",
+    resumo: "Empurrar horizontal com barra e halteres em faixa de hipertrofia, cobrindo peitoral e sinergistas.",
+    indicacao: "Objetivo de volume de peitoral, em aluno com controle escapular e sem dor de ombro na amplitude de trabalho.",
+    base: "A ativação do peitoral maior varia com a inclinação do banco; alternar supino reto e variações permite distribuir o estímulo sobre as porções do peitoral com tensão mecânica adequada.",
+    refIds: ["rodriguez-ridao-2020", "schoenfeld-2010", "garber-2011"],
+    frequencia: "2 sessões de superiores por semana",
+    estruturaSemanal: "Empurrar de maior carga seguido de variação com halteres e finalização; controle escapular como base.",
+    itens: [
+      { slug: "supino-reto-barra", series: "4 x 8 a 12" },
+      { slug: "supino-halteres", series: "3 x 10 a 12" },
+      { slug: "mergulho-no-banco", series: "3 x 10 a 12" },
+    ],
+    parametros: ["p-rpe", "p-volume"],
+    progressao: "Progredir carga mantendo controle escapular e amplitude sem dor no ombro.",
+    cautelas: ["Manter as escápulas estáveis (encaixadas).", "Evitar amplitude final que gere desconforto no ombro."],
+  },
+  {
+    id: "hipertrofia-dorsais",
+    titulo: "Hipertrofia de dorsais (costas)",
+    categoria: "Hipertrofia",
+    objetivo: "Hipertrofia",
+    nivelIndicado: "Intermediário",
+    publico: "Aluno buscando volume e largura de costas no padrão de puxar.",
+    tone: "primary",
+    resumo: "Puxadas vertical e horizontal em faixa de hipertrofia, cobrindo latíssimo e sinergistas.",
+    indicacao: "Objetivo de volume de dorsais, em aluno com boa técnica de puxada e controle de tronco.",
+    base: "A pegada e a direção da puxada modulam o recrutamento de latíssimo e bíceps; combinar puxada vertical e remada horizontal cobre a região das costas com estímulo de hipertrofia.",
+    refIds: ["andersen-2014", "schoenfeld-2010", "garber-2011"],
+    frequencia: "2 sessões de superiores por semana",
+    estruturaSemanal: "Puxada vertical seguida de remada horizontal e variação; foco em amplitude e conexão.",
+    itens: [
+      { slug: "puxada-alta", series: "4 x 10 a 12" },
+      { slug: "remada-baixa", series: "3 x 10 a 12" },
+      { slug: "remada-curvada-halteres", series: "3 x 10" },
+    ],
+    parametros: ["p-rpe", "p-volume"],
+    progressao: "Progredir carga quando as repetições saírem com amplitude completa e sem compensar com o tronco.",
+  },
+  {
+    id: "hipertrofia-ombros",
+    titulo: "Hipertrofia de ombros",
+    categoria: "Hipertrofia",
+    objetivo: "Hipertrofia",
+    nivelIndicado: "Intermediário",
+    publico: "Aluno sem dor de ombro, buscando volume de deltoides no empurrar acima da cabeça.",
+    tone: "primary",
+    resumo: "Empurrar acima da cabeça e elevações laterais para cobrir as porções do deltoide.",
+    indicacao: "Objetivo de volume de ombros, em aluno com boa mobilidade e sem desconforto no empurrar acima da cabeça.",
+    base: "O deltoide tem porções com funções distintas; combinar desenvolvimento (porção anterior e média) e elevação lateral (porção média) distribui o estímulo de hipertrofia sobre o ombro.",
+    refIds: ["rodriguez-ridao-2020", "schoenfeld-2010"],
+    frequencia: "2 sessões de superiores por semana",
+    estruturaSemanal: "Desenvolvimento de maior carga seguido de elevações e variação em máquina.",
+    itens: [
+      { slug: "desenvolvimento-ombros", series: "4 x 8 a 12" },
+      { slug: "elevacao-lateral-halteres", series: "3 x 12 a 15" },
+      { slug: "desenvolvimento-maquina", series: "3 x 10" },
+    ],
+    parametros: ["p-rpe", "p-volume"],
+    progressao: "Progredir carga mantendo controle e sem elevar demais os ombros (trapézio dominando).",
+    cautelas: ["Respeitar a amplitude tolerada acima da cabeça."],
+  },
+  {
+    id: "hipertrofia-bracos",
+    titulo: "Hipertrofia de braços",
+    categoria: "Hipertrofia",
+    objetivo: "Hipertrofia",
+    nivelIndicado: "Intermediário",
+    publico: "Aluno buscando volume de bíceps e tríceps com trabalho localizado.",
+    tone: "primary",
+    resumo: "Trabalho direto de bíceps e tríceps em faixa de hipertrofia, com controle da execução.",
+    indicacao: "Ênfase em braços, complementando o trabalho de empurrar e puxar. Cargas que permitam técnica.",
+    base: "Bíceps e tríceps respondem a volume localizado com tensão adequada; alternar flexão de cotovelo e extensões cobre os dois grupos com estímulo de hipertrofia.",
+    refIds: ["schoenfeld-2010", "garber-2011"],
+    frequencia: "2 sessões por semana (pode acoplar a superiores)",
+    estruturaSemanal: "Alternar bíceps e tríceps; controlar a fase excêntrica para aumentar o tempo sob tensão.",
+    itens: [
+      { slug: "rosca-direta", series: "3 x 10 a 12" },
+      { slug: "triceps-polia", series: "3 x 10 a 12" },
+      { slug: "triceps-frances-halter", series: "3 x 10" },
+    ],
+    parametros: ["p-rpe", "p-volume"],
+    progressao: "Progredir carga quando a execução permanecer controlada em toda a série.",
+  },
+  {
+    id: "hipertrofia-posterior-gluteos",
+    titulo: "Hipertrofia de posteriores e glúteos",
+    categoria: "Hipertrofia",
+    objetivo: "Hipertrofia",
+    nivelIndicado: "Intermediário",
+    publico: "Aluno com boa técnica de dobradiça de quadril, buscando volume de glúteos e isquiotibiais.",
+    tone: "primary",
+    resumo: "Padrão de quadril dominante para glúteos e isquiotibiais em faixa de hipertrofia.",
+    indicacao: "Ênfase em cadeia posterior e glúteos, em aluno com dobradiça de quadril estável.",
+    base: "O hip thrust gera alta ativação de glúteo máximo e o levantamento terra romeno recruta fortemente os isquiotibiais; juntos cobrem a cadeia posterior com estímulo de hipertrofia.",
+    refIds: ["contreras-2015", "schoenfeld-2010"],
+    frequencia: "2 sessões de inferiores por semana",
+    estruturaSemanal: "Dobradiça de quadril e ênfase glútea seguidas de isquiotibiais; técnica antes de carga.",
+    itens: [
+      { slug: "levantamento-terra-romeno", series: "4 x 8 a 10" },
+      { slug: "hip-thrust", series: "3 x 10 a 12" },
+      { slug: "mesa-flexora", series: "3 x 12" },
+    ],
+    parametros: ["p-rpe", "p-volume", "p-dor"],
+    progressao: "Progredir carga sem compensações lombares e sem dor.",
+    cautelas: ["Manter a coluna neutra na dobradiça de quadril."],
+  },
+  {
+    id: "hipertrofia-panturrilha",
+    titulo: "Hipertrofia de panturrilha",
+    categoria: "Hipertrofia",
+    objetivo: "Hipertrofia",
+    nivelIndicado: "Iniciante",
+    publico: "Aluno buscando volume de panturrilha, que costuma responder a frequência e amplitude.",
+    tone: "primary",
+    resumo: "Trabalho de panturrilha em amplitude completa, com boa frequência semanal.",
+    indicacao: "Ênfase em panturrilha, região que costuma tolerar e responder a maior frequência e amplitude.",
+    base: "O tríceps sural responde a volume com amplitude completa; controlar a fase de alongamento e a pausa no topo aumenta o estímulo de hipertrofia.",
+    refIds: ["schoenfeld-2010"],
+    frequencia: "2 a 3 sessões por semana",
+    estruturaSemanal: "Séries em amplitude completa, variando pé neutro; controle da descida.",
+    itens: [
+      { slug: "panturrilha-em-pe", series: "4 x 12 a 15 em amplitude completa" },
+    ],
+    parametros: ["p-rpe", "p-volume"],
+    progressao: "Aumentar carga ou repetições mantendo a amplitude completa e a pausa no topo.",
+  },
+
+  /* ================================ FORÇA (por padrão) ================================ */
+  {
+    id: "forca-agachamento",
+    titulo: "Força de agachamento",
+    categoria: "Força",
+    objetivo: "Força",
+    nivelIndicado: "Intermediário",
+    publico: "Aluno com técnica de agachamento estável, buscando força de membros inferiores.",
+    tone: "success",
+    resumo: "Padrão de agachar em baixas repetições e maior carga, com acessório unilateral.",
+    indicacao: "Ganho de força de membros inferiores em aluno com boa técnica de agachamento e sem restrição relevante.",
+    base: "O agachamento envolve quadril, joelho e tronco de forma coordenada; treinar em faixa de força (baixas repetições, maior carga) desenvolve a força do padrão com boa transferência.",
+    refIds: ["gullett-2009", "escamilla-2001", "garber-2011"],
+    frequencia: "2 sessões de inferiores por semana",
+    estruturaSemanal: "Agachamento principal em baixas repetições seguido de acessório unilateral; foco em técnica.",
+    itens: [
+      { slug: "agachamento-livre", series: "5 x 5" },
+      { slug: "leg-press-45", series: "3 x 8" },
+      { slug: "afundo-passada", series: "3 x 8 por perna" },
+    ],
+    parametros: ["p-rpe", "p-dor"],
+    progressao: "Adicionar carga quando completar as séries com boa técnica e velocidade mantida.",
+    cautelas: ["Priorizar técnica antes de carga.", "Interromper diante de dor articular."],
+  },
+  {
+    id: "forca-supino",
+    titulo: "Força de supino (empurrar)",
+    categoria: "Força",
+    objetivo: "Força",
+    nivelIndicado: "Intermediário",
+    publico: "Aluno com controle escapular e sem dor de ombro, buscando força de empurrar.",
+    tone: "success",
+    resumo: "Padrão de empurrar horizontal em baixas repetições e maior carga.",
+    indicacao: "Ganho de força de empurrar horizontal, em aluno com boa técnica de supino e ombro sem dor.",
+    base: "A força de empurrar depende de peitoral, deltoide e tríceps com boa estabilidade escapular; treinar em faixa de força desenvolve o padrão com transferência para outros empurrares.",
+    refIds: ["rodriguez-ridao-2020", "garber-2011"],
+    frequencia: "2 sessões de superiores por semana",
+    estruturaSemanal: "Supino principal em baixas repetições seguido de acessórios de tríceps.",
+    itens: [
+      { slug: "supino-reto-barra", series: "5 x 5" },
+      { slug: "supino-halteres", series: "3 x 8" },
+      { slug: "triceps-polia", series: "3 x 10" },
+    ],
+    parametros: ["p-rpe", "p-dor"],
+    progressao: "Adicionar carga mantendo a estabilidade escapular e a amplitude sem dor.",
+    cautelas: ["Manter as escápulas estáveis.", "Usar segurança/observador em cargas altas."],
+  },
+  {
     id: "forca-cadeia-posterior",
     titulo: "Força de cadeia posterior",
     categoria: "Força",
     objetivo: "Força",
     nivelIndicado: "Intermediário",
+    publico: "Aluno com boa técnica de dobradiça de quadril, buscando força de glúteos e isquiotibiais.",
     tone: "success",
     resumo: "Padrão de quadril dominante para glúteos e isquiotibiais em baixas repetições e maior carga.",
     indicacao: "Ganho de força de cadeia posterior e ênfase glútea, em aluno com boa técnica de dobradiça de quadril.",
@@ -256,11 +447,36 @@ export const protocolos: Protocolo[] = [
     progressao: "Adicionar carga quando as repetições saírem com boa técnica e sem compensações lombares.",
   },
   {
+    id: "forca-puxada",
+    titulo: "Força de puxada (superiores)",
+    categoria: "Força",
+    objetivo: "Força",
+    nivelIndicado: "Intermediário",
+    publico: "Aluno buscando força de puxar (dorsais e bíceps) com boa técnica de tronco.",
+    tone: "success",
+    resumo: "Padrão de puxar vertical e horizontal em baixas repetições e maior carga.",
+    indicacao: "Ganho de força de puxar, em aluno com controle de tronco e boa técnica de remada e puxada.",
+    base: "A força de puxar depende de latíssimo, romboides e flexores do cotovelo; treinar puxada e remada em faixa de força desenvolve o padrão com estabilidade de tronco.",
+    refIds: ["andersen-2014", "garber-2011"],
+    frequencia: "2 sessões de superiores por semana",
+    estruturaSemanal: "Puxada e remada em baixas repetições seguidas de acessório de bíceps.",
+    itens: [
+      { slug: "puxada-alta", series: "4 x 6" },
+      { slug: "remada-baixa", series: "4 x 6" },
+      { slug: "rosca-direta", series: "3 x 10" },
+    ],
+    parametros: ["p-rpe"],
+    progressao: "Adicionar carga mantendo a amplitude completa e sem compensar com o tronco.",
+  },
+
+  /* ============================ RESISTÊNCIA MUSCULAR ============================ */
+  {
     id: "superiores-poupando-ombro",
     titulo: "Superiores poupando o ombro",
     categoria: "Resistência muscular",
     objetivo: "Resistência muscular",
     nivelIndicado: "Iniciante",
+    publico: "Aluno com desconforto de ombro em empurrar acima da cabeça ou na amplitude final do supino.",
     tone: "warning",
     resumo: "Trabalho de braços e dorsais em amplitude confortável, evitando estresse do ombro sensível.",
     indicacao: "Aluno com desconforto de ombro em empurrar acima da cabeça ou em amplitude final do supino. Mantém estímulo poupando a articulação.",
@@ -277,6 +493,29 @@ export const protocolos: Protocolo[] = [
     progressao: "Ampliar amplitude e carga apenas enquanto o ombro permanecer sem dor durante e após a sessão.",
     cautelas: ["Interromper qualquer exercício que gere dor no ombro.", "Evitar amplitude final que provoque desconforto."],
   },
+  {
+    id: "resistencia-corpo-todo",
+    titulo: "Resistência muscular de corpo todo",
+    categoria: "Resistência muscular",
+    objetivo: "Resistência muscular",
+    nivelIndicado: "Iniciante",
+    publico: "Aluno focado em saúde geral e condicionamento, com pouco tempo por sessão.",
+    tone: "warning",
+    resumo: "Circuito de corpo todo em repetições altas e intervalos curtos, para condicionamento geral.",
+    indicacao: "Foco em saúde, tônus e condicionamento geral, em aluno que prefere sessões objetivas de corpo todo.",
+    base: "Repetições mais altas com intervalos curtos favorecem a resistência muscular local e o condicionamento; um circuito de corpo todo cobre os principais padrões de forma eficiente.",
+    refIds: ["garber-2011", "borg-1982"],
+    frequencia: "2 a 3 sessões por semana",
+    estruturaSemanal: "Circuito com um exercício por padrão (empurrar, puxar, inferiores, core), com intervalos curtos.",
+    itens: [
+      { slug: "leg-press-45", series: "2 a 3 x 15" },
+      { slug: "remada-maquina", series: "2 a 3 x 15" },
+      { slug: "supino-maquina", series: "2 a 3 x 15" },
+      { slug: "prancha-frontal", series: "3 x 20 a 40 s" },
+    ],
+    parametros: ["p-rpe", "p-adesao"],
+    progressao: "Reduzir o intervalo ou adicionar uma volta ao circuito conforme o condicionamento melhora.",
+  },
 
   /* ============================ IDOSO E AUTONOMIA ============================ */
   {
@@ -285,6 +524,7 @@ export const protocolos: Protocolo[] = [
     categoria: "Idoso e autonomia",
     objetivo: "Reabilitação/retorno",
     nivelIndicado: "Iniciante",
+    publico: "Pessoa idosa ou destreinada com foco em autonomia, marcha e prevenção de quedas.",
     tone: "success",
     resumo: "Força de membros inferiores, padrão de levantar e trabalho de tronco para funcionalidade diária.",
     indicacao: "Pessoa idosa ou destreinada com foco em autonomia, marcha e prevenção de quedas. Técnica antes de carga.",
@@ -310,6 +550,7 @@ export const protocolos: Protocolo[] = [
     categoria: "Reabilitação e retorno",
     objetivo: "Reabilitação/retorno",
     nivelIndicado: "Iniciante",
+    publico: "Aluno liberado por profissional de saúde para carga leve após lesão de joelho.",
     tone: "warning",
     resumo: "Carga controlada de quadríceps e isquiotibiais em amplitude tolerada, respeitando a dor.",
     indicacao: "Aluno liberado por profissional de saúde para carga leve após lesão de joelho. Reintroduz carga sem provocar dor ou edema.",
@@ -337,6 +578,17 @@ export const PROTOCOLO_CATEGORIAS: ProtocoloCategoria[] = [
   "Idoso e autonomia",
   "Reabilitação e retorno",
 ];
+
+/** Metadados de cada categoria para a navegação em dois níveis. */
+export const PROTOCOLO_CATEGORIA_META: Record<ProtocoloCategoria, { descricao: string; icon: string; tone: "primary" | "analysis" | "cta" | "success" | "warning" }> = {
+  Emagrecimento: { descricao: "Base aeróbia e força em progressão por tempo de treino.", icon: "Flame", tone: "cta" },
+  Cardiorrespiratório: { descricao: "Fôlego e condicionamento: contínuo e intervalado.", icon: "Wind", tone: "analysis" },
+  Hipertrofia: { descricao: "Volume muscular por região do corpo.", icon: "Dumbbell", tone: "primary" },
+  Força: { descricao: "Força por padrão de movimento, em baixas repetições.", icon: "Zap", tone: "success" },
+  "Resistência muscular": { descricao: "Condicionamento local e trabalho poupando articulações.", icon: "Repeat", tone: "warning" },
+  "Idoso e autonomia": { descricao: "Força, equilíbrio e funcionalidade para a vida diária.", icon: "HeartPulse", tone: "success" },
+  "Reabilitação e retorno": { descricao: "Reintrodução de carga após lesão, liberada por profissional de saúde.", icon: "ShieldCheck", tone: "warning" },
+};
 
 export function getProtocolo(id: string) {
   return protocolos.find((p) => p.id === id);

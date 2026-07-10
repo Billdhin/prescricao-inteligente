@@ -13,7 +13,17 @@ import {
   Gauge,
   ArrowUpRight,
   ShieldAlert,
+  ArrowLeft,
+  ArrowRight,
+  Users,
+  Flame,
+  Wind,
+  Zap,
+  Repeat,
+  HeartPulse,
+  ShieldCheck,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { useUser, useAlunos, isPremiumUnlocked, uid } from "@/lib/store";
 import { exercises } from "@/data/exercises";
@@ -22,11 +32,30 @@ import { bibliografia } from "@/data/referencias";
 import {
   protocolos,
   PROTOCOLO_CATEGORIAS,
+  PROTOCOLO_CATEGORIA_META,
   type Protocolo,
+  type ProtocoloCategoria,
 } from "@/data/protocolos";
 import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+
+const CATEGORIA_ICON: Record<string, LucideIcon> = {
+  Flame,
+  Wind,
+  Dumbbell,
+  Zap,
+  Repeat,
+  HeartPulse,
+  ShieldCheck,
+};
+const catTile: Record<string, string> = {
+  primary: "bg-primary-tint text-primary",
+  analysis: "bg-[#e0f7f9] text-analysis",
+  success: "bg-[#e7f8ee] text-success",
+  cta: "bg-[#fff1e6] text-[color:var(--cta-text)]",
+  warning: "bg-[#fdf3e3] text-[color:var(--cta-text)]",
+};
 
 const nomeEx = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ?? slug;
 const fmtData = (ts: number) =>
@@ -39,6 +68,13 @@ export function Protocolos() {
   const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "aluno";
   const [aplicar, setAplicar] = React.useState<Protocolo | null>(null);
   const [base, setBase] = React.useState<Protocolo | null>(null);
+  // Navegação em dois níveis: escolhe a categoria e vê os protocolos dela.
+  const [categoria, setCategoria] = React.useState<ProtocoloCategoria | null>(null);
+
+  const listaDaCategoria = categoria
+    ? protocolos.filter((p) => p.categoria === categoria).sort((a, b) => (a.ordemFase ?? 0) - (b.ordemFase ?? 0))
+    : [];
+  const emFamilia = listaDaCategoria.length > 1 && listaDaCategoria.every((p) => p.familia);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -46,7 +82,7 @@ export function Protocolos() {
         eyebrow="Exclusivo Profissional"
         icon={<Crown className="h-3 w-3" />}
         title="Protocolos"
-        subtitle="Modelos por objetivo, com o respaldo da literatura e a estrutura da semana, prontos para aplicar a um aluno. Inclui o histórico das suas prescrições."
+        subtitle="Modelos por objetivo, com público-alvo, respaldo da literatura e a estrutura da semana. Escolha uma categoria para ver os protocolos."
         right={
           premium ? (
             <Pill tone="success">Ativo no seu plano</Pill>
@@ -63,35 +99,64 @@ export function Protocolos() {
           className={cn("space-y-7", !premium && "pointer-events-none select-none blur-[5px] saturate-50")}
           aria-hidden={!premium}
         >
-          {/* Modelos por categoria */}
-          {PROTOCOLO_CATEGORIAS.map((cat) => {
-            const lista = protocolos
-              .filter((p) => p.categoria === cat)
-              .sort((a, b) => (a.ordemFase ?? 0) - (b.ordemFase ?? 0));
-            if (lista.length === 0) return null;
-            const emFamilia = lista.length > 1 && lista.every((p) => p.familia);
-            return (
-              <section key={cat}>
-                <div className="mb-3 flex items-baseline justify-between gap-3">
-                  <h2 className="font-display text-lg font-bold text-ink">{cat}</h2>
-                  {emFamilia && (
-                    <span className="text-xs text-ink-3">Jornada em {lista.length} fases por tempo de treino</span>
-                  )}
+          {/* Nível 1: blocos de categoria */}
+          {!categoria ? (
+            <section>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {PROTOCOLO_CATEGORIAS.map((cat) => {
+                  const qtd = protocolos.filter((p) => p.categoria === cat).length;
+                  if (qtd === 0) return null;
+                  const meta = PROTOCOLO_CATEGORIA_META[cat];
+                  const Icon = CATEGORIA_ICON[meta.icon] ?? ClipboardList;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setCategoria(cat)}
+                      className="flex items-start gap-3 rounded-card border border-border bg-surface p-5 text-left shadow-soft transition-colors hover:border-primary hover:bg-primary-tint/40"
+                    >
+                      <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl", catTile[meta.tone])}>
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-display font-bold text-ink">{cat}</div>
+                        <p className="mt-0.5 text-sm text-ink-2">{meta.descricao}</p>
+                        <div className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                          {qtd} protocolo{qtd > 1 ? "s" : ""} <ArrowRight className="h-3.5 w-3.5" />
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : (
+            /* Nível 2: protocolos da categoria escolhida */
+            <section>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <button onClick={() => setCategoria(null)} className="mb-1 inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink">
+                    <ArrowLeft className="h-4 w-4" /> Todas as categorias
+                  </button>
+                  <h2 className="font-display text-xl font-bold text-ink">{categoria}</h2>
+                  <p className="text-sm text-ink-2">{PROTOCOLO_CATEGORIA_META[categoria].descricao}</p>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {lista.map((p, i) => (
-                    <ProtocoloCard
-                      key={p.id}
-                      p={p}
-                      passo={emFamilia ? { atual: i + 1, total: lista.length } : undefined}
-                      onAplicar={() => setAplicar(p)}
-                      onBase={() => setBase(p)}
-                    />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+                {emFamilia && (
+                  <span className="text-xs text-ink-3">Jornada em {listaDaCategoria.length} fases por tempo de treino</span>
+                )}
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {listaDaCategoria.map((p, i) => (
+                  <ProtocoloCard
+                    key={p.id}
+                    p={p}
+                    passo={emFamilia ? { atual: i + 1, total: listaDaCategoria.length } : undefined}
+                    onAplicar={() => setAplicar(p)}
+                    onBase={() => setBase(p)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Suas prescrições */}
           <section>
@@ -196,7 +261,16 @@ function ProtocoloCard({
           <CalendarDays className="h-3.5 w-3.5 text-ink-3" /> {p.tempoTreino}
         </div>
       )}
-      <p className="mb-3 text-sm text-ink-2">{p.resumo}</p>
+      <p className="mb-2 text-sm text-ink-2">{p.resumo}</p>
+
+      {/* Público-alvo: para quem este protocolo é indicado */}
+      <div className="mb-3 flex items-start gap-1.5 rounded-xl bg-surface-soft p-2.5 text-xs text-ink-2">
+        <Users className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-3" />
+        <span>
+          <span className="font-semibold text-ink">Para quem. </span>
+          {p.publico}
+        </span>
+      </div>
 
       <ul className="mb-3 space-y-1.5">
         {p.itens.map((it) => (
@@ -262,6 +336,7 @@ function BaseCientificaModal({ p, onClose }: { p: Protocolo; onClose: () => void
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-auto p-5">
+          <Bloco titulo="Público-alvo" icon={<Users className="h-3.5 w-3.5" />}>{p.publico}</Bloco>
           <Bloco titulo="Para quem é indicado">{p.indicacao}</Bloco>
           <Bloco titulo="Por que este arranjo" icon={<BookOpen className="h-3.5 w-3.5" />}>
             {p.base}

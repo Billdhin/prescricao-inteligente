@@ -4,9 +4,18 @@ import * as React from "react";
  * Acessibilidade de modal (WCAG 2.4.3 / 4.1.2): ao abrir, move o foco para dentro
  * do diálogo; prende o Tab (foco cíclico); fecha no Escape; e ao desmontar, devolve
  * o foco ao elemento que abriu o modal. Retorna um ref para o container do diálogo.
+ *
+ * IMPORTANTE: o efeito roda UMA vez (montar/desmontar). `onClose` fica num ref para
+ * não recriar o efeito a cada render. Sem isso, um `onClose` inline (função nova a
+ * cada render) reexecutava o efeito e roubava o foco de volta para o primeiro
+ * focável (o botão "Fechar") a cada tecla digitada num input.
  */
 export function useDialog<T extends HTMLElement = HTMLDivElement>(onClose: () => void) {
   const ref = React.useRef<T>(null);
+  const onCloseRef = React.useRef(onClose);
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   React.useEffect(() => {
     const previouslyFocused = document.activeElement as HTMLElement | null;
@@ -28,7 +37,7 @@ export function useDialog<T extends HTMLElement = HTMLDivElement>(onClose: () =>
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab") return;
@@ -55,7 +64,9 @@ export function useDialog<T extends HTMLElement = HTMLDivElement>(onClose: () =>
       document.removeEventListener("keydown", onKey, true);
       previouslyFocused?.focus?.();
     };
-  }, [onClose]);
+    // roda só uma vez: onClose vive no ref
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return ref;
 }

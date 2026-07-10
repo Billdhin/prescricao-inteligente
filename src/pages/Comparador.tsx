@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   GitCompare, X, Plus, ArrowRight, Trophy, FlaskConical, BookOpen,
-  Dumbbell, HeartPulse, Flame, Droplets, Info,
+  Dumbbell, HeartPulse, Flame, Droplets, Info, Activity,
 } from "lucide-react";
 import { Card, Pill, ScoreRing, StatBar, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { exercises } from "@/data/exercises";
@@ -134,6 +134,9 @@ function ForcaBloco({ base }: { base: string | null }) {
             ))}
           </div>
 
+          {/* Ativação muscular comparada: o que os profissionais mais buscam. */}
+          <AtivacaoComparada selected={selected} />
+
           {/* Leitura rápida */}
           {selected.length >= 2 && insightEfic && insightLombar && (
             <Card className="flex flex-wrap items-center gap-x-6 gap-y-2 p-4">
@@ -150,9 +153,9 @@ function ForcaBloco({ base }: { base: string | null }) {
             </Card>
           )}
 
-          {/* Métricas */}
+          {/* Outros marcadores de decisão (secundários à ativação) */}
           <Card className="p-5 md:p-6">
-            <h3 className="mb-4 font-display text-lg font-bold text-ink">Métricas lado a lado</h3>
+            <h3 className="mb-4 font-display text-lg font-bold text-ink">Outros marcadores de decisão</h3>
             <div className="space-y-5">
               {METRICAS_FORCA.map((m) => {
                 const win = melhorIdx(m);
@@ -484,6 +487,76 @@ function CardioBar({
       </div>
       <span className="w-24 shrink-0 text-right text-sm font-semibold text-ink tabular">{display}</span>
     </div>
+  );
+}
+
+/** Comparação de ATIVAÇÃO MUSCULAR: qual exercício recruta mais cada músculo.
+ *  É a comparação que os profissionais mais buscam (com respaldo de EMG). */
+function AtivacaoComparada({ selected }: { selected: Exercise[] }) {
+  const musculos = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of selected)
+      for (const a of e.ativacao) map.set(a.musculo, Math.max(map.get(a.musculo) ?? 0, a.percentual));
+    return [...map.entries()].sort((a, b) => b[1] - a[1]).map(([m]) => m);
+  }, [selected]);
+
+  const pctDe = (e: Exercise, m: string) => e.ativacao.find((a) => a.musculo === m)?.percentual ?? null;
+
+  return (
+    <Card className="p-5 md:p-6">
+      <div className="mb-1 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+          <Activity className="h-4 w-4" />
+        </span>
+        <h3 className="font-display text-lg font-bold text-ink">Ativação muscular comparada</h3>
+      </div>
+      <p className="mb-4 text-sm text-ink-2">
+        Qual exercício recruta mais cada músculo. Estimativas relativas da literatura de EMG; em cada linha, a maior
+        ativação recebe o selo.
+      </p>
+      <div className="space-y-4">
+        {musculos.map((m) => {
+          const vals = selected.map((e) => pctDe(e, m));
+          const max = Math.max(...vals.map((v) => v ?? -1));
+          return (
+            <div key={m}>
+              <div className="mb-1.5 text-sm font-semibold text-ink">{m}</div>
+              <div className="space-y-1.5">
+                {selected.map((e, i) => {
+                  const v = vals[i];
+                  const win = v != null && v > 0 && v === max && selected.length >= 2;
+                  return (
+                    <div key={e.slug} className="flex items-center gap-2">
+                      <span className="w-24 shrink-0 truncate text-xs text-ink-2 sm:w-32" title={e.nome}>
+                        {e.nome}
+                      </span>
+                      {v == null ? (
+                        <div className="flex flex-1 items-center gap-2">
+                          <div className="h-2 flex-1 rounded-full bg-surface-soft" />
+                          <span className="w-16 shrink-0 text-right text-xs text-ink-3">baixa</span>
+                        </div>
+                      ) : (
+                        <StatBar srLabel={`${e.nome}: ${m}`} value={v} tone={COL_TONES[i]} className="flex-1" />
+                      )}
+                      {win ? (
+                        <Pill tone="success" className="shrink-0">mais recruta</Pill>
+                      ) : (
+                        <span className="w-[76px] shrink-0" aria-hidden />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-xs leading-relaxed text-ink-3">
+        Base científica: atlas e estudos de EMG comparado (Boeckh-Behrens &amp; Buskies 2000; Contreras et al. 2015;
+        Andersen et al. 2014; Rodríguez-Ridao et al. 2020; Ekstrom et al. 2007). Comparam a ênfase entre exercícios;
+        não medem o seu aluno.
+      </p>
+    </Card>
   );
 }
 
