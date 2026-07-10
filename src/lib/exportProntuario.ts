@@ -11,6 +11,7 @@
 import type { Aluno, Prescricao, ProntuarioSnapshot } from "@/data/alunos";
 import { bibliografia } from "@/data/referencias";
 import { getParam } from "@/data/monitoringParameters";
+import { getSpecialGroup } from "@/data/specialGroups";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -48,6 +49,14 @@ export function exportProntuarioPDF({
   const biblio = bibliografia(prontuario.refIds);
   const refN = (id: string) => biblio.find((b) => b.ref.id === id)?.n;
 
+  // Título voltado ao ALUNO: nome de programa digno, nunca o rótulo clínico do
+  // grupo ("Idoso frágil", "Obesidade mórbida"). Prescrições antigas persistidas
+  // podem ter o rótulo clínico no título; recalcula a partir do grupo.
+  const grupoDoc = presc.grupoEspecial ? getSpecialGroup(presc.grupoEspecial) : undefined;
+  const tituloDoc = grupoDoc
+    ? `${grupoDoc.rotuloAluno}${presc.faseJornada ? ` · Fase ${presc.faseJornada}` : ""}`
+    : presc.titulo;
+
   const escolhidosHtml = prontuario.escolhidos
     .map((e, i) => {
       const criterios = e.breakdown
@@ -83,13 +92,14 @@ export function exportProntuarioPDF({
     .join("");
 
   const modalidadesHtml = prontuario.modalidades?.length
-    ? `<section class="bloco"><h2>Base da semana — modalidades</h2><ul>${prontuario.modalidades
-        .map((m) => `<li><strong>${esc(m.nome)}</strong> — ${esc(m.motivo)}</li>`)
+    ? `<section class="bloco"><h2>Base da semana: modalidades</h2><ul>${prontuario.modalidades
+        .map((m) => `<li><strong>${esc(m.nome)}</strong>: ${esc(m.motivo)}</li>`)
         .join("")}</ul></section>`
     : "";
 
+  // Sem o rótulo clínico do grupo no cabeçalho: o documento vai para o aluno.
   const cuidadosHtml = prontuario.cuidadosGrupo
-    ? `<section class="bloco"><h2>Cuidados do grupo considerados (${esc(prontuario.cuidadosGrupo.nome)})</h2>
+    ? `<section class="bloco"><h2>Cuidados considerados neste perfil</h2>
        <ul>${prontuario.cuidadosGrupo.cuidados
          .map(
            (c) =>
@@ -111,7 +121,7 @@ export function exportProntuarioPDF({
     .filter(Boolean)
     .map(
       (p) =>
-        `<li><strong>${esc(p!.nome)}</strong> — ${esc(p!.comoInterpretar)}${
+        `<li><strong>${esc(p!.nome)}</strong>: ${esc(p!.comoInterpretar)}${
           p!.refIds?.length ? ` <span class="refn">[${p!.refIds.map(refN).filter(Boolean).join(",")}]</span>` : ""
         }</li>`,
     )
@@ -129,7 +139,7 @@ export function exportProntuarioPDF({
   const restr = aluno.restricoes.length ? aluno.restricoes.map(esc).join(", ") : "nenhuma declarada";
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-  <title>Prontuário de Decisão — ${esc(aluno.nome)} — ${docId}</title>
+  <title>Prontuário de Decisão · ${esc(aluno.nome)} · ${docId}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; font-size: 13px; }
@@ -178,7 +188,7 @@ export function exportProntuarioPDF({
       <div>
         <div class="prof">${esc(profissional)}</div>
         ${cref ? `<div class="cref">CREF ${esc(cref)}</div>` : ""}
-        <div class="sub">Prontuário de Decisão Técnica — prescrição de exercício</div>
+        <div class="sub">Prontuário de Decisão Técnica: prescrição de exercício</div>
       </div>
       <div class="selo">
         <span class="motor">Motor RCD · Raciocínio Clínico Documentado · ${esc(prontuario.motorVersao)}</span>
@@ -186,8 +196,8 @@ export function exportProntuarioPDF({
       </div>
     </div>
 
-    <h1>${esc(presc.titulo)}</h1>
-    <div class="meta">Registro do raciocínio de decisão — o que foi escolhido, o que foi descartado e por quê.</div>
+    <h1>${esc(tituloDoc)}</h1>
+    <div class="meta">Registro do raciocínio de decisão: o que foi escolhido, o que foi descartado e por quê.</div>
 
     <div class="aluno">
       <strong>${esc(aluno.nome)}</strong>${aluno.idade ? ` · ${aluno.idade} anos` : ""} ·
@@ -199,13 +209,13 @@ export function exportProntuarioPDF({
     ${modalidadesHtml}
 
     <section class="bloco">
-      <h2>Exercícios escolhidos — com o porquê de cada critério</h2>
+      <h2>Exercícios escolhidos: o porquê de cada critério</h2>
       ${escolhidosHtml}
     </section>
 
     ${
       descartadosHtml
-        ? `<section class="bloco"><h2>Considerados e descartados — e por quê</h2>
+        ? `<section class="bloco"><h2>Considerados e descartados, e por quê</h2>
            <table class="desc"><tr><th>Exercício</th><th>Adequação</th><th>Critério decisivo</th></tr>${descartadosHtml}</table></section>`
         : ""
     }
@@ -218,7 +228,7 @@ export function exportProntuarioPDF({
 
     <div class="assinatura">
       <div class="linha">
-        <div class="quem">${esc(profissional)}${cref ? ` — CREF ${esc(cref)}` : ""}</div>
+        <div class="quem">${esc(profissional)}${cref ? ` · CREF ${esc(cref)}` : ""}</div>
         <div>Assinatura do profissional responsável</div>
       </div>
       <div class="data">${fmt(Date.now())}</div>

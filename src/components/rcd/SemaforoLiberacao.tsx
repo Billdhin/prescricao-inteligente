@@ -200,7 +200,8 @@ export function SemaforoLiberacao({
               </button>
             )}
             <button
-              onClick={() => printSemaforo(grupo.nome, checklist, respostas, resultado, alunoNome)}
+              // impresso pode chegar ao aluno: usa o nome de programa digno, não o rótulo clínico
+              onClick={() => printSemaforo(grupo.rotuloAluno, checklist, respostas, resultado, alunoNome)}
               className={buttonClasses("outline", "sm")}
             >
               <Printer className="h-4 w-4" /> Imprimir

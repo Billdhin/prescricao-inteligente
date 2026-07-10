@@ -328,7 +328,7 @@ export function AlunoDetail() {
                           onClick={() =>
                             p.prontuario
                               ? exportProntuarioPDF({ aluno, presc: p, prontuario: p.prontuario, profissional: profNome, cref })
-                              : exportPrescricaoPDF({ aluno, presc: p, profissional: profNome })
+                              : exportPrescricaoPDF({ aluno, presc: p, profissional: profNome, cref })
                           }
                           className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
                         >

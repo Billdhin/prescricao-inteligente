@@ -19,15 +19,15 @@ export interface ModalidadeRec {
 // Motivos no contexto de emagrecimento (linguagem prudente, sem promessa clínica).
 const MOTIVO_EMAGRECIMENTO: Record<string, string> = {
   "m-caminhada":
-    "Aeróbio acessível e fácil de progredir — bom volume semanal com boa adesão.",
+    "Aeróbio acessível e fácil de progredir: bom volume semanal com boa adesão.",
   "m-bike":
-    "Baixo impacto articular com intensidade fácil de dosar — permite volume sem dor.",
-  "m-eliptico": "Baixo impacto envolvendo o corpo todo — gasto maior que a bicicleta.",
+    "Baixo impacto articular com intensidade fácil de dosar: permite volume sem dor.",
+  "m-eliptico": "Baixo impacto envolvendo o corpo todo: gasto maior que a bicicleta.",
   "m-hidro": "Baixo impacto com boa adesão quando o solo incomoda as articulações.",
   "m-musculacao":
-    "Preserva e desenvolve massa magra — sustenta o metabolismo ao longo do processo.",
-  "m-combinado": "Une força e aeróbio na semana — eficiência de tempo quando já há base.",
-  "m-mobilidade": "Suporte de conforto e amplitude — ajuda a manter a consistência.",
+    "Preserva e desenvolve massa magra: sustenta o metabolismo ao longo do processo.",
+  "m-combinado": "Une força e aeróbio na semana: eficiência de tempo quando já há base.",
+  "m-mobilidade": "Suporte de conforto e amplitude: ajuda a manter a consistência.",
 };
 
 const rec = (id: string, principal: boolean, motivo?: string): ModalidadeRec | null => {
@@ -53,7 +53,8 @@ export function recommendModalidades({
         return m
           ? {
               modalidade: m,
-              motivo: `Prioritária na fase ${faseObj.numero} (${grupo.nome}). ${m.quandoInicio}`,
+              // sem o rótulo clínico do grupo: este motivo chega ao documento do aluno
+              motivo: `Prioritária na fase ${faseObj.numero} do programa. ${m.quandoInicio}`,
               principal: i === 0,
             }
           : null;

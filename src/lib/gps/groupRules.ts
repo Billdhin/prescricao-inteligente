@@ -24,7 +24,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     slug: "obesidade-grave",
     nome: "Obesidade grave / mórbida",
     cuidados: [
-      "Impacto e volume altos tendem a sobrecarregar joelhos e lombar — a base da semana são modalidades de baixo impacto; a musculação entra como complemento guiado.",
+      "Impacto e volume altos tendem a sobrecarregar joelhos e lombar: a base da semana são modalidades de baixo impacto; a musculação entra como complemento guiado.",
       "Dispneia e baixa tolerância inicial: sessões curtas, esforço leve, guiado por PSE e teste da fala.",
       "Nas primeiras semanas, a adesão é a principal métrica de sucesso.",
     ],
@@ -32,12 +32,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       {
         metrica: "Demanda de joelho",
         limite: 60,
-        motivo: "Alta demanda de joelho — em obesidade grave tende a gerar desconforto articular.",
+        motivo: "Alta demanda de joelho: em obesidade grave tende a gerar desconforto articular.",
       },
       {
         metrica: "Demanda lombar",
         limite: 60,
-        motivo: "Alta demanda lombar — cautela com sobrecarga axial neste perfil.",
+        motivo: "Alta demanda lombar: cautela com sobrecarga axial neste perfil.",
       },
     ],
     complexidadeMax: 55,
@@ -48,15 +48,15 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     slug: "hipertensao",
     nome: "Hipertensão arterial",
     cuidados: [
-      "Evitar apneia (manobra de Valsalva) e isometrias pesadas — respiração contínua em todas as séries.",
+      "Evitar apneia (manobra de Valsalva) e isometrias pesadas: respiração contínua em todas as séries.",
       "Preferir cargas leves a moderadas com progressão gradual; evitar esforços máximos.",
-      "Alguns anti-hipertensivos alteram a resposta da FC — PSE e teste da fala tendem a ser guias mais confiáveis.",
+      "Alguns anti-hipertensivos alteram a resposta da FC: PSE e teste da fala tendem a ser guias mais confiáveis.",
     ],
     penalidades: [
       {
         metrica: "Demanda lombar",
         limite: 65,
-        motivo: "Carga axial elevada favorece apneia/Valsalva — cautela em hipertensão.",
+        motivo: "Carga axial elevada favorece apneia/Valsalva: cautela em hipertensão.",
       },
       {
         metrica: "Complexidade técnica",
@@ -71,7 +71,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     slug: "diabetes-tipo-2",
     nome: "Diabetes tipo 2",
     cuidados: [
-      "Atenção a sinais compatíveis com hipoglicemia (tontura, sudorese fria, confusão) — pausar e reavaliar.",
+      "Atenção a sinais compatíveis com hipoglicemia (tontura, sudorese fria, confusão): pausar e reavaliar.",
       "Cuidado com os pés: calçado adequado e inspeção regular, especialmente com volume de caminhada.",
       "Consistência semanal tende a valer mais que picos de intensidade.",
     ],
@@ -90,7 +90,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       {
         metrica: "Requisito de mobilidade",
         limite: 60,
-        motivo: "Alto requisito de mobilidade — adapte a amplitude para este perfil.",
+        motivo: "Alto requisito de mobilidade: adapte a amplitude para este perfil.",
       },
     ],
     complexidadeMax: 50,
@@ -102,7 +102,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     nome: "Dor lombar inespecífica",
     restricaoSugerida: "Dor lombar",
     cuidados: [
-      "A restrição “Dor lombar” foi pré-selecionada — exercícios com alta demanda lombar são penalizados no ranking.",
+      "A restrição “Dor lombar” foi pré-selecionada: exercícios com alta demanda lombar são penalizados no ranking.",
       "Dor leve que não piora ao longo da sessão costuma ser tolerável; dor crescente pede ajuste de amplitude/carga.",
     ],
     // a penalização vem da restrição pré-selecionada (evita punir duas vezes)
@@ -115,7 +115,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     nome: "Osteoartrite de joelho",
     restricaoSugerida: "Dor no joelho",
     cuidados: [
-      "A restrição “Dor no joelho” foi pré-selecionada — alta demanda de joelho é penalizada no ranking.",
+      "A restrição “Dor no joelho” foi pré-selecionada: alta demanda de joelho é penalizada no ranking.",
       "Amplitude confortável; progrida guiado pela resposta de dor nas 24–48h seguintes.",
     ],
     penalidades: [],

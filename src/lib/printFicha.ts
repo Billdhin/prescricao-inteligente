@@ -12,7 +12,7 @@ const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 const AVISO =
-  "Conteúdo educacional de apoio à decisão do profissional de Educação Física — não é conduta médica e não substitui avaliação profissional individualizada. Gerado por Prescrição Inteligente.";
+  "Conteúdo educacional de apoio à decisão do profissional de Educação Física: não é conduta médica e não substitui avaliação profissional individualizada. Gerado por Prescrição Inteligente.";
 
 const CSS = `
   * { box-sizing: border-box; }
@@ -73,7 +73,7 @@ export function printEscalaFicha(p: MonitoringParameter) {
 
   abrir(
     shell(
-      `Escala — ${p.nome}`,
+      `Escala: ${p.nome}`,
       `
       <h1>${esc(p.nome)}${p.sigla ? ` (${esc(p.sigla)})` : ""}</h1>
       <div class="meta">${esc(p.resumo)}</div>
@@ -104,17 +104,17 @@ export function printAdesaoFicha(
 
   abrir(
     shell(
-      `Ficha de adesão${ctx?.alunoNome ? ` — ${ctx.alunoNome}` : ""}`,
+      `Ficha de adesão${ctx?.alunoNome ? `: ${ctx.alunoNome}` : ""}`,
       `
       <h1>Ficha semanal de adesão</h1>
-      <div class="meta">Registro combinado entre profissional e aluno — marque ✓ em cada sessão realizada.</div>
+      <div class="meta">Registro combinado entre profissional e aluno: marque ✓ em cada sessão realizada.</div>
       <div class="linha-campos">Aluno(a): <span class="campo">${esc(ctx?.alunoNome ?? "")}</span>
         &nbsp;&nbsp;Objetivo: <span class="campo">${esc(ctx?.objetivo ?? "")}</span></div>
       <div class="linha-campos">Meta semanal combinada: <span class="campo" style="min-width:120px"></span> sessões
         &nbsp;&nbsp;Período: <span class="campo" style="min-width:160px"></span></div>
       <h2>Registro (4 semanas)</h2>
       <table>${head}${linhas}</table>
-      <p class="legenda">✓ sessão realizada · ◐ sessão parcial · — não realizada. PSE: esforço percebido de 0 a 10.</p>
+      <p class="legenda">✓ sessão realizada · ◐ sessão parcial ·: não realizada. PSE: esforço percebido de 0 a 10.</p>
       ${passos ? `<h2>Como usar</h2><ol>${passos}</ol>` : ""}
       <h2>Leitura prática</h2><p style="font-size:13px">${esc(p.comoInterpretar)} ${esc(p.seAlterado)}</p>
       `,

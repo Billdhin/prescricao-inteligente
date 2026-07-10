@@ -148,12 +148,35 @@ export function Gps() {
     );
   }, [liberacoes, aluno, grupoSlug]);
 
+  // O ranking exibido vale para UM contexto. Se aluno/grupo/fase mudam com
+  // resultados abertos, o ranking congelado seria de OUTRO perfil e poderia ser
+  // salvo assim no prontuário (incoerência grave num produto de decisão
+  // documentada). Invalida e pede para gerar de novo.
+  const [contextoAlterado, setContextoAlterado] = React.useState(false);
+  const invalidarResultados = () => {
+    if (results) {
+      setResults(null);
+      setCompare([]);
+      setStep(0);
+      setContextoAlterado(true);
+    }
+  };
+
   // Ao escolher um aluno, herda o grupo/fase dele (se tiver) e pré-preenche o perfil.
   const onAluno = (id: string) => {
+    invalidarResultados();
     setAlunoId(id);
     const a = alunos.find((x) => x.id === id);
     if (a?.grupoEspecial) setGrupoSlug(a.grupoEspecial);
     if (a?.faseJornada) setFase(a.faseJornada);
+  };
+  const mudarGrupo = (s: string) => {
+    invalidarResultados();
+    setGrupoSlug(s);
+  };
+  const mudarFase = (n: number) => {
+    invalidarResultados();
+    setFase(n);
   };
 
   React.useEffect(() => {
@@ -214,7 +237,7 @@ export function Gps() {
       id: uid(),
       alunoId: aluno.id,
       data: Date.now(),
-      titulo: grupo ? `${grupo.nome} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
+      titulo: grupo ? `${grupo.rotuloAluno} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
       answers,
       prontuario: gerarProntuario() ?? undefined,
       itens: results.slice(0, 3).map((r) => ({
@@ -253,7 +276,7 @@ export function Gps() {
         id: uid(),
         alunoId: aluno.id,
         data: Date.now(),
-        titulo: grupo ? `${grupo.nome} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
+        titulo: grupo ? `${grupo.rotuloAluno} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
         answers,
         itens: results.slice(0, 3).map((r) => ({
           slug: r.exercise.slug,
@@ -284,6 +307,7 @@ export function Gps() {
     if (!rank.length) return;
     setResults(rank);
     setCompare([rank[0].exercise.slug]);
+    setContextoAlterado(false);
     marcarAtivacao("primeiroResultado");
   };
 
@@ -347,11 +371,22 @@ export function Gps() {
         alunoId={alunoId}
         onAluno={onAluno}
         grupoSlug={grupoSlug}
-        setGrupoSlug={setGrupoSlug}
+        setGrupoSlug={mudarGrupo}
         fase={fase}
-        setFase={setFase}
+        setFase={mudarFase}
         unlocked={unlocked}
       />
+
+      {contextoAlterado && !results && (
+        <Card tone="warning" className="flex flex-wrap items-center gap-3 p-4">
+          <Info className="h-5 w-5 shrink-0 text-warning" />
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            <span className="font-semibold text-ink">Contexto alterado.</span> As recomendações
+            anteriores valiam para outro perfil e foram descartadas. Revise as etapas abaixo e gere
+            novamente para este contexto.
+          </p>
+        </Card>
+      )}
 
       {/* Foco agora — a decisão rápida, inline (quando há grupo em contexto) */}
       {grupo && faseObj && !grupoLocked && (

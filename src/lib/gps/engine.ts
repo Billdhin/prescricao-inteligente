@@ -119,10 +119,10 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
     pontosPossiveis: +(W_GRUPO * COMPRESS).toFixed(1),
     detalhe: corpoTodo
       ? grupoOk
-        ? `${ex.grupoMuscular}: grande massa muscular — maior custo energético por série.`
-        : `${ex.grupoMuscular}: massa muscular menor — contribui menos para o gasto global.`
+        ? `${ex.grupoMuscular}: grande massa muscular, maior custo energético por série.`
+        : `${ex.grupoMuscular}: massa muscular menor, contribui menos para o gasto global.`
       : exCorpoTodo
-        ? `Exercício de corpo todo — cobre parcialmente o alvo (${ans.grupoMuscular}).`
+        ? `Exercício de corpo todo: cobre parcialmente o alvo (${ans.grupoMuscular}).`
         : grupoOk
           ? `Trabalha diretamente ${ex.grupoMuscular}.`
           : `Grupo do exercício (${ex.grupoMuscular}) difere do alvo (${ans.grupoMuscular}).`,
@@ -148,18 +148,18 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
   let nivelMsg: string;
   if (diff === 0) {
     nivelRatio = 1;
-    nivelMsg = `Nível ${ex.nivel} bate com o seu.`;
+    nivelMsg = `Nível ${ex.nivel}, compatível com o informado.`;
   } else if (diff < 0) {
     nivelRatio = 0.85;
-    nivelMsg = `Mais simples (${ex.nivel}) — seguro, porém pouco desafiador para você.`;
+    nivelMsg = `Mais simples (${ex.nivel}): seguro, porém abaixo do nível informado.`;
   } else if (diff === 1) {
     nivelRatio = 0.4;
-    nivelMsg = `Um nível acima (${ex.nivel}) — exige progressão assistida.`;
+    nivelMsg = `Um nível acima (${ex.nivel}): exige progressão assistida.`;
     cautions.push(`Classificado como ${ex.nivel}, um nível acima do informado.`);
   } else {
     nivelRatio = 0.05;
-    nivelMsg = `Dois níveis acima (${ex.nivel}) — não recomendado sem base técnica.`;
-    cautions.push(`${ex.nivel} está muito acima do nível informado — técnica antes de carga.`);
+    nivelMsg = `Dois níveis acima (${ex.nivel}): não recomendado sem base técnica.`;
+    cautions.push(`${ex.nivel} está muito acima do nível informado: técnica antes de carga.`);
   }
   const complexidade = metricValue(ex, "Complexidade técnica") ?? 30;
   let complexPenalty = 0;
@@ -248,11 +248,12 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
     if (rule.complexidadeMax !== undefined && complexidade > rule.complexidadeMax) {
       grupoCondPen -= 3;
       motivos.push(`Complexidade técnica ${complexidade}/100 acima do recomendado para este perfil.`);
-      cautions.push("Técnica exigente para este perfil — simplifique ou supervisione de perto.");
+      cautions.push("Técnica exigente para este perfil: simplifique ou supervisione de perto.");
     }
     grupoCondPen = Math.max(grupoCondPen, -12);
     breakdown.push({
-      criterio: `Cuidados do grupo (${rule.nome})`,
+      // sem o rótulo clínico: este texto chega ao documento entregue ao aluno
+      criterio: "Cuidados do perfil",
       peso: +grupoCondPen.toFixed(1),
       pontosPossiveis: 0,
       detalhe: motivos.length

@@ -21,13 +21,19 @@ export function exportPrescricaoPDF({
   aluno,
   presc,
   profissional,
+  cref,
 }: {
   aluno: Aluno;
   presc: Prescricao;
   profissional: string;
+  cref?: string;
 }) {
   const grupo = presc.grupoEspecial ? getSpecialGroup(presc.grupoEspecial) : undefined;
   const modPrincipal = presc.modalidadePrincipal ? getModalidade(presc.modalidadePrincipal) : undefined;
+  // Documento entregue ao aluno: nome de PROGRAMA digno, nunca o rótulo clínico.
+  const tituloDoc = grupo
+    ? `${grupo.rotuloAluno}${presc.faseJornada ? ` · Fase ${presc.faseJornada}` : ""}`
+    : presc.titulo;
 
   const itensHtml = presc.itens
     .map((it, i) => {
@@ -61,7 +67,7 @@ export function exportPrescricaoPDF({
     ? `
     <section class="bloco">
       <h2>Estratégia de progressão</h2>
-      <p><strong>${esc(grupo.nome)}</strong>${presc.faseJornada ? ` · Fase ${presc.faseJornada}` : ""}${
+      <p><strong>${esc(grupo.rotuloAluno)}</strong>${presc.faseJornada ? ` · Fase ${presc.faseJornada}` : ""}${
         modPrincipal ? ` · Modalidade principal: ${esc(modPrincipal.nome)}` : ""
       }</p>
       ${params ? `<p class="rot">Parâmetros a monitorar</p><div class="tags">${params}</div>` : ""}
@@ -80,7 +86,7 @@ export function exportPrescricaoPDF({
   const restr = aluno.restricoes.length ? aluno.restricoes.map(esc).join(", ") : "nenhuma";
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-  <title>Prescrição — ${esc(aluno.nome)}</title>
+  <title>Prescrição · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
@@ -111,11 +117,13 @@ export function exportPrescricaoPDF({
   </style></head><body>
   <div class="page">
     <div class="brand">
-      <div><div class="prof">${esc(profissional)}</div><div class="sub">Prescrição de exercício</div></div>
+      <div><div class="prof">${esc(profissional)}</div>${
+        cref ? `<div class="sub" style="font-weight:700;color:#2563eb">CREF ${esc(cref)}</div>` : ""
+      }<div class="sub">Prescrição de exercício</div></div>
       <div class="sub">${fmt(presc.data)}</div>
     </div>
 
-    <h1>${esc(presc.titulo)}</h1>
+    <h1>${esc(tituloDoc)}</h1>
     <div class="meta">Prescrição individualizada · gerada com raciocínio</div>
 
     <div class="aluno">
@@ -134,7 +142,7 @@ export function exportPrescricaoPDF({
     ${obsHtml}
 
     <div class="foot">
-      Conteúdo educacional e de apoio à decisão — não substitui avaliação profissional
+      Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional
       individualizada nem prescrição clínica. Gerado por Prescrição Inteligente.
     </div>
   </div>

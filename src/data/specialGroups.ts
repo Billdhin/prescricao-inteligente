@@ -25,6 +25,10 @@ export interface JourneyPhase {
 export interface SpecialGroup {
   slug: string;
   nome: string;
+  /** Nome do PROGRAMA como aparece nos documentos entregues ao aluno.
+   *  O rótulo clínico ("Idoso frágil", "Obesidade mórbida") serve ao profissional,
+   *  mas constrange o aluno num PDF assinado; aqui vai um nome digno e descritivo. */
+  rotuloAluno: string;
   descricaoCurta: string;
   perfil: string;
   objetivos: string[];
@@ -60,6 +64,7 @@ export const specialGroups: SpecialGroup[] = [
   {
     slug: "obesidade-grave",
     nome: "Obesidade grave / mórbida",
+    rotuloAluno: "Recondicionamento de baixo impacto",
     descricaoCurta: "Baixa tolerância a impacto e a volume; prioridade em adesão e segurança.",
     perfil:
       "Pessoa com obesidade grave, em geral destreinada, que costuma cansar rápido, tolera pouco tempo de caminhada e pode ter desconforto articular. Autoconfiança e adesão são pontos sensíveis.",
@@ -174,6 +179,7 @@ export const specialGroups: SpecialGroup[] = [
   {
     slug: "hipertensao",
     nome: "Hipertensão",
+    rotuloAluno: "Condicionamento com monitoramento da pressão",
     descricaoCurta: "Aeróbio + força bem conduzidos; atenção à apneia e a sintomas.",
     perfil:
       "Pessoa com hipertensão (frequentemente também sedentária), que se beneficia de exercício regular bem dosado. Muitas vezes usa medicação que altera a resposta de frequência cardíaca.",
@@ -260,6 +266,7 @@ export const specialGroups: SpecialGroup[] = [
   {
     slug: "diabetes-tipo-2",
     nome: "Diabetes tipo 2 / risco metabólico",
+    rotuloAluno: "Condicionamento com controle metabólico",
     descricaoCurta: "Regularidade e combinação força + aeróbio; atenção a sintomas e adesão.",
     perfil:
       "Pessoa com diabetes tipo 2 ou risco metabólico, que se beneficia de regularidade e da combinação de força e aeróbio. Sensações de hipoglicemia podem aparecer em alguns contextos.",
@@ -346,6 +353,7 @@ export const specialGroups: SpecialGroup[] = [
   {
     slug: "idoso-destreinado",
     nome: "Idoso frágil / destreinado",
+    rotuloAluno: "Força, equilíbrio e autonomia",
     descricaoCurta: "Força e função primeiro; equilíbrio e prevenção de quedas.",
     perfil:
       "Pessoa idosa destreinada ou frágil, com risco de perda de força, equilíbrio e autonomia. Prioridade em segurança, função e prevenção de quedas.",
@@ -432,6 +440,7 @@ export const specialGroups: SpecialGroup[] = [
   {
     slug: "dor-lombar-inespecifica",
     nome: "Dor lombar inespecífica",
+    rotuloAluno: "Fortalecimento com cuidado lombar",
     descricaoCurta: "Movimento gradual e tolerância à dor; evitar repouso excessivo.",
     perfil:
       "Pessoa com dor lombar inespecífica (sem sinal de gravidade), muitas vezes com medo de se mover. Costuma responder bem a exercício gradual e controle da dor percebida.",
@@ -518,6 +527,7 @@ export const specialGroups: SpecialGroup[] = [
   {
     slug: "osteoartrite-joelho",
     nome: "Osteoartrite / dor no joelho",
+    rotuloAluno: "Fortalecimento com proteção do joelho",
     descricaoCurta: "Baixo impacto e força de membros inferiores; amplitude tolerável.",
     perfil:
       "Pessoa com osteoartrite ou dor no joelho, que costuma tolerar mal o impacto mas responde bem a força de membros inferiores em amplitude confortável.",

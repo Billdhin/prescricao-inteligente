@@ -46,7 +46,7 @@ export function printSemaforo(
     .join("");
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-  <title>Semáforo de Liberação — ${esc(grupoNome)}</title>
+  <title>Semáforo de Liberação · ${esc(grupoNome)}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
@@ -71,11 +71,11 @@ export function printSemaforo(
   </style></head><body>
   <div class="page">
     <div class="brand">
-      <div><div class="prof">Motor RCD · Raciocínio Clínico Documentado</div><div class="sub">Semáforo de Liberação — gate pré-sessão</div></div>
+      <div><div class="prof">Motor RCD · Raciocínio Clínico Documentado</div><div class="sub">Semáforo de Liberação: gate pré-sessão</div></div>
       <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date())}</div>
     </div>
 
-    <h1>${esc(grupoNome)}${alunoNome ? ` — ${esc(alunoNome)}` : ""}</h1>
+    <h1>${esc(grupoNome)}${alunoNome ? `: ${esc(alunoNome)}` : ""}</h1>
     <div class="meta">Checklist de segurança pré-sessão respondido pelo profissional.</div>
 
     <div class="resultado"><div class="titulo">${cor.nome}</div></div>
@@ -87,7 +87,7 @@ export function printSemaforo(
     ${refs ? `<h2>Base consultada</h2><ul class="refs">${refs}</ul>` : ""}
 
     <div class="foot">
-      Conteúdo educacional de apoio à decisão do profissional de Educação Física — não é conduta
+      Conteúdo educacional de apoio à decisão do profissional de Educação Física; não é conduta
       médica e não substitui avaliação profissional individualizada. A decisão de liberar, ajustar ou
       adiar a sessão é do profissional habilitado. Gerado por Prescrição Inteligente (Motor RCD).
     </div>
