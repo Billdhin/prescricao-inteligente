@@ -50,10 +50,16 @@ export function SpecialGroupDetail() {
   // para não perder o caminho nem pedir de novo o aluno.
   const alunoCtx = sp.get("aluno");
   const faseCtx = sp.get("fase");
+  const origem = sp.get("origem");
   const alunoDoFluxo = alunoCtx ? alunos.find((a) => a.id === alunoCtx) : undefined;
+  // Se cheguei aqui a partir do PERFIL do aluno, o "voltar" leva de volta ao perfil,
+  // não ao wizard (senão o profissional perde o lugar de onde saiu).
+  const voltandoParaAluno = origem === "aluno" && !!alunoDoFluxo;
   const g = getSpecialGroup(slug);
   const voltarPrescricao = alunoDoFluxo
-    ? `/gps?aluno=${alunoDoFluxo.id}&grupo=${slug}${faseCtx ? `&fase=${faseCtx}` : ""}`
+    ? voltandoParaAluno
+      ? `/alunos/${alunoDoFluxo.id}`
+      : `/gps?aluno=${alunoDoFluxo.id}&grupo=${slug}${faseCtx ? `&fase=${faseCtx}` : ""}`
     : null;
   const primeiroNome = alunoDoFluxo?.nome.split(" ")[0] ?? "";
   if (!g) {
@@ -76,7 +82,8 @@ export function SpecialGroupDetail() {
         to={voltarPrescricao ?? "/special-groups"}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink"
       >
-        <ArrowLeft className="h-4 w-4" /> {voltarPrescricao ? "Voltar à prescrição" : "Grupos Especiais"}
+        <ArrowLeft className="h-4 w-4" />{" "}
+        {voltarPrescricao ? (voltandoParaAluno ? "Voltar ao perfil" : "Voltar à prescrição") : "Grupos Especiais"}
       </Link>
 
       {/* Contexto do fluxo Prescrever — não perde o aluno/fase já escolhidos */}
@@ -91,7 +98,8 @@ export function SpecialGroupDetail() {
             {faseCtx && <Pill tone="primary">Fase {faseCtx}</Pill>}
           </div>
           <Link to={voltarPrescricao} className={buttonClasses("primary", "sm")}>
-            <ArrowLeft className="h-4 w-4" /> Voltar e continuar a prescrição
+            <ArrowLeft className="h-4 w-4" />{" "}
+            {voltandoParaAluno ? `Voltar ao perfil de ${primeiroNome}` : "Voltar e continuar a prescrição"}
           </Link>
         </Card>
       )}
@@ -109,7 +117,8 @@ export function SpecialGroupDetail() {
         {!locked &&
           (voltarPrescricao ? (
             <Link to={voltarPrescricao} className={buttonClasses("primary")}>
-              <ArrowLeft className="h-4 w-4" /> Continuar prescrição de {primeiroNome}
+              <ArrowLeft className="h-4 w-4" />{" "}
+              {voltandoParaAluno ? `Voltar ao perfil de ${primeiroNome}` : `Continuar prescrição de ${primeiroNome}`}
             </Link>
           ) : (
             <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
@@ -118,13 +127,13 @@ export function SpecialGroupDetail() {
           ))}
       </div>
 
-      {/* -------- CONHECIMENTO CIENTÍFICO da condição (abre a página) -------- */}
-      <TeoriaCard slug={g.slug} nome={g.nome} />
-
       {locked ? (
         <>
           {/* Prévia (teaser): resumo + Fase 1 abertos, resto atrás do paywall */}
           <ResumoDecisao g={g} locked />
+
+          {/* No teaser a ciência ajuda a decidir pela assinatura; fica visível */}
+          <TeoriaCard slug={g.slug} nome={g.nome} />
 
           {g.fases[0] && (
             <div>
@@ -242,26 +251,25 @@ export function SpecialGroupDetail() {
                       },
                     ]
                   : []),
+                {
+                  id: "teoria",
+                  title: "Conhecimento científico da condição",
+                  content: <TeoriaCard slug={g.slug} nome={g.nome} bare />,
+                },
               ]}
             />
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {voltarPrescricao ? (
+          {voltarPrescricao && (
+            <div className="flex flex-wrap gap-2">
               <Link to={voltarPrescricao} className={buttonClasses("primary")}>
-                <ArrowLeft className="h-4 w-4" /> Voltar e continuar a prescrição de {primeiroNome}
+                <ArrowLeft className="h-4 w-4" />{" "}
+                {voltandoParaAluno
+                  ? `Voltar ao perfil de ${primeiroNome}`
+                  : `Voltar e continuar a prescrição de ${primeiroNome}`}
               </Link>
-            ) : (
-              <>
-                <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
-                  <UserPlus className="h-4 w-4" /> Aplicar a um aluno
-                </button>
-                <Link to={`/gps?grupo=${g.slug}`} className={buttonClasses("secondary")}>
-                  Prescrever <ArrowRight className="h-4 w-4" />
-                </Link>
-              </>
-            )}
-          </div>
+            </div>
+          )}
         </>
       )}
 
@@ -411,21 +419,12 @@ function TituloBloco({ icon, texto }: { icon: React.ReactNode; texto: string }) 
 
 /** Conhecimento científico da condição: o que é, fisiologia aplicada ao
  *  exercício e evidência, com referências. É a teoria que fundamenta a decisão. */
-function TeoriaCard({ slug, nome }: { slug: string; nome: string }) {
+function TeoriaCard({ slug, nome, bare }: { slug: string; nome: string; bare?: boolean }) {
   const t: TeoriaGrupo | undefined = getTeoriaGrupo(slug);
   if (!t) return null;
   const refs = bibliografia(t.refIds);
-  return (
-    <Card className="p-5 md:p-6">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#e0f7f9] text-analysis">
-          <Microscope className="h-5 w-5" />
-        </span>
-        <div>
-          <h2 className="font-display text-lg font-bold text-ink">Conhecimento científico</h2>
-          <p className="text-sm text-ink-3">A base teórica de {nome} aplicada ao exercício.</p>
-        </div>
-      </div>
+  const corpo = (
+    <>
       <div className="space-y-4">
         <TeoriaBloco titulo="O que é" icon={<BookOpen className="h-3.5 w-3.5" />}>{t.oQueE}</TeoriaBloco>
         <TeoriaBloco titulo="Fisiologia aplicada ao exercício" icon={<Activity className="h-3.5 w-3.5" />}>
@@ -454,6 +453,21 @@ function TeoriaCard({ slug, nome }: { slug: string; nome: string }) {
         Conteúdo educacional de apoio à decisão do profissional habilitado; não é conduta médica, diagnóstica ou
         terapêutica e não substitui avaliação médica.
       </p>
+    </>
+  );
+  if (bare) return corpo;
+  return (
+    <Card className="p-5 md:p-6">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#e0f7f9] text-analysis">
+          <Microscope className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="font-display text-lg font-bold text-ink">Conhecimento científico</h2>
+          <p className="text-sm text-ink-3">A base teórica de {nome} aplicada ao exercício.</p>
+        </div>
+      </div>
+      {corpo}
     </Card>
   );
 }

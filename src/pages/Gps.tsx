@@ -16,9 +16,11 @@ import {
   Save,
   HeartPulse,
   ShieldAlert,
+  ShieldCheck,
   Target,
   CheckCircle2,
   Activity,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Card, Pill, ScoreRing, StatBar, buttonClasses, Progress } from "@/components/ui/primitives";
 import {
@@ -468,6 +470,7 @@ export function Gps() {
           grupo={grupo}
           faseObj={faseObj}
           fase={fase}
+          liberacao={liberacaoDoDia}
           contexto={{ alunoNome: aluno?.nome, alunoId: aluno?.id, objetivo: answers.objetivo }}
         />
       )}
@@ -597,6 +600,14 @@ function ContextoCard({
 }) {
   const temGrupo = grupoSlug !== "";
   const prescricaoGeral = alunoId === "";
+  const grupoNome = specialGroups.find((g) => g.slug === grupoSlug)?.nome;
+  // O que já está definido aparece no resumo, sem precisar abrir os ajustes.
+  const contextoResumo = [
+    grupoNome ? `${grupoNome}, Fase ${fase}` : null,
+    prescricaoGeral && faixaEtaria ? getFaixaEtaria(faixaEtaria)?.label : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <Card className="p-5">
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -604,73 +615,86 @@ function ContextoCard({
           <UserCheck className="h-4 w-4" />
         </span>
         <h2 className="font-display text-base font-bold text-ink">Para quem?</h2>
-        <span className="text-xs text-ink-3">Opcional. Deixe em branco para uma prescrição geral.</span>
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno</span>
-          <select value={alunoId} onChange={(e) => onAluno(e.target.value)} className="input">
-            <option value="">Prescrição geral (sem aluno)</option>
-            {alunos.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block text-sm font-semibold text-ink">Grupo / condição</span>
-          <select value={grupoSlug} onChange={(e) => setGrupoSlug(e.target.value)} className="input">
-            <option value="">Nenhum (geral)</option>
-            {specialGroups.map((g) => (
-              <option key={g.slug} value={g.slug}>
-                {g.nome}
-                {g.premium && !unlocked ? " (Premium)" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div>
-          <span className="mb-1.5 block text-sm font-semibold text-ink">Fase da jornada</span>
-          <div role="group" aria-label="Fase da jornada" className="flex gap-1.5">
-            {[1, 2, 3, 4].map((n) => (
-              <button
-                key={n}
-                onClick={() => temGrupo && setFase(n)}
-                aria-label={`Fase ${n}`}
-                aria-pressed={n === fase}
-                disabled={!temGrupo}
-                className={cn(
-                  "h-11 flex-1 rounded-control text-sm font-bold transition-colors disabled:opacity-40",
-                  n === fase && temGrupo
-                    ? "gradient-brand text-white"
-                    : "bg-surface-soft text-ink-2 hover:bg-primary-tint disabled:hover:bg-surface-soft",
-                )}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
+        <span className="text-xs text-ink-3">Escolha o aluno. Sem aluno, é uma prescrição geral.</span>
       </div>
 
-      {/* Faixa etária: aparece só na prescrição geral (sem aluno). */}
-      {prescricaoGeral && (
-        <label className="mt-4 block">
-          <span className="mb-1.5 block text-sm font-semibold text-ink">Faixa etária</span>
-          <select value={faixaEtaria} onChange={(e) => setFaixaEtaria(e.target.value)} className="input">
-            <option value="">Todas as idades</option>
-            {FAIXAS_ETARIAS.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.label} ({f.faixa})
-              </option>
-            ))}
-          </select>
-          <span className="mt-1 block text-xs text-ink-3">
-            Sem aluno selecionado. A idade ajusta cuidados e ênfases; com aluno, a idade dele já é usada.
-          </span>
-        </label>
-      )}
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno</span>
+        <select value={alunoId} onChange={(e) => onAluno(e.target.value)} className="input">
+          <option value="">Prescrição geral (sem aluno)</option>
+          {alunos.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.nome}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {/* Grupo, fase e idade são herdados do aluno; ficam num ajuste opcional para
+          não competir com a única escolha que importa aqui (o aluno). */}
+      <details className="mt-4 rounded-control border border-border bg-surface-soft/60">
+        <summary className="flex cursor-pointer select-none items-center gap-2 p-3 text-sm font-semibold text-ink-2">
+          <SlidersHorizontal className="h-4 w-4 text-ink-3" />
+          Ajustar contexto (opcional)
+          {contextoResumo && <span className="ml-1 font-normal text-ink-3">· {contextoResumo}</span>}
+        </summary>
+        <div className="border-t border-border p-3">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-semibold text-ink">Grupo / condição</span>
+              <select value={grupoSlug} onChange={(e) => setGrupoSlug(e.target.value)} className="input">
+                <option value="">Nenhum (geral)</option>
+                {specialGroups.map((g) => (
+                  <option key={g.slug} value={g.slug}>
+                    {g.nome}
+                    {g.premium && !unlocked ? " (Premium)" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div>
+              <span className="mb-1.5 block text-sm font-semibold text-ink">Fase da jornada</span>
+              <div role="group" aria-label="Fase da jornada" className="flex gap-1.5">
+                {[1, 2, 3, 4].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => temGrupo && setFase(n)}
+                    aria-label={`Fase ${n}`}
+                    aria-pressed={n === fase}
+                    disabled={!temGrupo}
+                    className={cn(
+                      "h-11 flex-1 rounded-control text-sm font-bold transition-colors disabled:opacity-40",
+                      n === fase && temGrupo
+                        ? "gradient-brand text-white"
+                        : "bg-surface-soft text-ink-2 hover:bg-primary-tint disabled:hover:bg-surface-soft",
+                    )}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Faixa etária: só na prescrição geral (sem aluno). */}
+          {prescricaoGeral && (
+            <label className="mt-4 block">
+              <span className="mb-1.5 block text-sm font-semibold text-ink">Faixa etária</span>
+              <select value={faixaEtaria} onChange={(e) => setFaixaEtaria(e.target.value)} className="input">
+                <option value="">Todas as idades</option>
+                {FAIXAS_ETARIAS.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.label} ({f.faixa})
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs text-ink-3">
+                Sem aluno selecionado. A idade ajusta cuidados e ênfases; com aluno, a idade dele já é usada.
+              </span>
+            </label>
+          )}
+        </div>
+      </details>
     </Card>
   );
 }
@@ -714,13 +738,19 @@ function FocoAgora({
   grupo,
   faseObj,
   fase,
+  liberacao,
   contexto,
 }: {
   grupo: SpecialGroup;
   faseObj: JourneyPhase;
   fase: number;
+  /** liberação do Semáforo registrada hoje (para não repetir o CTA e dar o fecho) */
+  liberacao?: { resultado: string };
   contexto?: { alunoNome?: string; alunoId?: string; objetivo?: string };
 }) {
+  const semaforoHref = `/semaforo?grupo=${grupo.slug}&fase=${fase}${
+    contexto?.alunoId ? `&aluno=${contexto.alunoId}` : ""
+  }`;
   return (
     <Card className="border-l-4 border-l-primary p-5 md:p-6">
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -778,12 +808,25 @@ function FocoAgora({
       </div>
 
       <div className="mt-4">
-        <Link
-          to={`/semaforo?grupo=${grupo.slug}${contexto?.alunoId ? `&aluno=${contexto.alunoId}` : ""}`}
-          className={buttonClasses("secondary", "sm")}
-        >
-          <ShieldAlert className="h-4 w-4" /> Semáforo de hoje: libere a sessão em 30s
-        </Link>
+        {liberacao ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Pill tone={liberacao.resultado === "vermelho" ? "warning" : "success"} icon={<ShieldCheck className="h-3 w-3" />}>
+              Semáforo de hoje:{" "}
+              {liberacao.resultado === "verde"
+                ? "liberado"
+                : liberacao.resultado === "amarelo"
+                  ? "liberado com ajuste"
+                  : "não liberado"}
+            </Pill>
+            <Link to={semaforoHref} className="text-sm font-semibold text-primary hover:underline">
+              Refazer o semáforo
+            </Link>
+          </div>
+        ) : (
+          <Link to={semaforoHref} className={buttonClasses("secondary", "sm")}>
+            <ShieldAlert className="h-4 w-4" /> Semáforo de hoje: libere a sessão em 30s
+          </Link>
+        )}
       </div>
 
       <p className="mt-3 text-xs text-ink-3">{AVISO_SEGURANCA}</p>
@@ -973,7 +1016,7 @@ function Wizard({
         <button
           onClick={onFinish}
           disabled={answers.equipamentos.length === 0}
-          className="mt-3 w-full text-center text-sm font-medium text-ink-2 hover:text-ink"
+          className="mt-3 block w-full text-right text-xs font-medium text-ink-3 hover:text-ink-2 disabled:opacity-50"
         >
           Pular para as recomendações →
         </button>

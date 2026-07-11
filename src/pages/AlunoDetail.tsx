@@ -21,6 +21,7 @@ import {
   Lock,
   Route as RouteIcon,
   ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
@@ -65,6 +66,8 @@ export function AlunoDetail() {
   const [prontuarioDe, setProntuarioDe] = React.useState<string | null>(null);
   const location = useLocation();
   const recemCriado = Boolean((location.state as { recemCriado?: boolean } | null)?.recemCriado);
+  // "Salvei, e agora?": o retorno do Prescrever traz este sinal para dar o fecho do fluxo.
+  const prescricaoSalva = Boolean((location.state as { prescricaoSalva?: boolean } | null)?.prescricaoSalva);
   const [params, setParams] = useSearchParams();
 
   // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação e limpa o param.
@@ -119,6 +122,21 @@ export function AlunoDetail() {
               Prescrever agora
             </Link>
           </div>
+        </Card>
+      )}
+
+      {prescricaoSalva && (
+        <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-success">
+            <CheckCircle2 className="h-4 w-4" />
+          </span>
+          <p className="min-w-0 flex-1 text-sm text-ink">
+            <span className="font-semibold">Prescrição salva no perfil de {aluno.nome.split(" ")[0]}.</span> Ela
+            já está no histórico abaixo, com o raciocínio registrado para o prontuário.
+          </p>
+          <a href="#prescricoes-card" className={buttonClasses("secondary", "sm")}>
+            Ver prescrição
+          </a>
         </Card>
       )}
 
@@ -309,7 +327,7 @@ export function AlunoDetail() {
               </Link>
             </Card>
 
-          <Card className="p-5 md:p-6">
+          <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold text-ink">Prescrições</h2>
               <Link to={`/gps?aluno=${aluno.id}`} className="text-sm font-semibold text-primary hover:underline">
@@ -564,7 +582,10 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
           </span>
           <h2 className="font-display text-lg font-bold text-ink">Jornada de Prescrição</h2>
         </div>
-        <Link to={`/special-groups/${grupo.slug}`} className="text-sm font-semibold text-primary hover:underline">
+        <Link
+          to={`/special-groups/${grupo.slug}?aluno=${aluno.id}&fase=${fase}&origem=aluno`}
+          className="text-sm font-semibold text-primary hover:underline"
+        >
           Ver jornada completa
         </Link>
       </div>
@@ -619,7 +640,10 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
               ))}
             </ul>
           </div>
-          <Link to={`/gps?aluno=${aluno.id}`} className={cn(buttonClasses("primary"), "w-full")}>
+          <Link
+            to={`/gps?aluno=${aluno.id}&grupo=${grupo.slug}&fase=${fase}`}
+            className={cn(buttonClasses("primary"), "w-full")}
+          >
             <Navigation className="h-4 w-4" /> Prescrever para esta fase
           </Link>
         </div>
@@ -700,11 +724,6 @@ function AcompanhamentoCard({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patc
           {ativo ? <UserMinus className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
           {ativo ? "Marcar que o aluno saiu" : "Reativar aluno"}
         </button>
-        {sug && (
-          <button onClick={() => navigate(`/gps?aluno=${aluno.id}`)} className={buttonClasses("ghost", "sm")}>
-            <Navigation className="h-4 w-4" /> Revisar prescrição
-          </button>
-        )}
       </div>
     </Card>
   );

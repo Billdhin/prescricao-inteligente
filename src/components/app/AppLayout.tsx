@@ -64,11 +64,19 @@ type NavSection = { label?: string; items: NavItem[] };
 const navByMode: Record<AppMode, NavSection[]> = {
   atender: [
     {
+      // 3 pontos de partida do dia a dia: onde estou, meus alunos, e prescrever
       items: [
         { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
         { to: "/alunos", label: "Alunos", icon: Users },
         { to: "/gps", label: "Prescrever", icon: Navigation },
+      ],
+    },
+    {
+      label: "Ferramentas da sessão",
+      items: [
         { to: "/semaforo", label: "Semáforo", icon: ShieldCheck },
+        { to: "/assessments", label: "Avaliações", icon: BarChart3 },
+        { to: "/protocols", label: "Protocolos", icon: ClipboardList },
       ],
     },
     {
@@ -77,13 +85,6 @@ const navByMode: Record<AppMode, NavSection[]> = {
         { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
         { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
         { to: "/library", label: "Biblioteca", icon: Library },
-      ],
-    },
-    {
-      label: "Avançado",
-      items: [
-        { to: "/assessments", label: "Avaliações", icon: BarChart3 },
-        { to: "/protocols", label: "Protocolos", icon: ClipboardList },
       ],
     },
     {

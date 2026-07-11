@@ -54,12 +54,15 @@ export function SemaforoLiberacao({
   grupoSlug,
   alunoId,
   alunoNome,
+  fase,
   onRegistrado,
   className,
 }: {
   grupoSlug: string;
   alunoId?: string;
   alunoNome?: string;
+  /** fase da jornada, propagada para o "Prescrever agora" não perder o contexto */
+  fase?: number;
   /** chamado após salvar a liberação no histórico */
   onRegistrado?: (resultado: ResultadoSemaforo) => void;
   className?: string;
@@ -197,45 +200,54 @@ export function SemaforoLiberacao({
             </ul>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3">
-            {registrado ? (
-              <Pill tone="success">Registrado no histórico, entra no prontuário</Pill>
-            ) : (
+          {!registrado ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3">
               <button onClick={registrar} className={buttonClasses("primary", "sm")}>
                 <Save className="h-4 w-4" /> Registrar liberação
               </button>
-            )}
-            <button
-              // impresso pode chegar ao aluno: usa o nome de programa digno, não o rótulo clínico
-              onClick={() => printSemaforo(nomeDocumento, checklist, respostas, resultado, alunoNome, profNome, cref, logoDataUrl || undefined)}
-              className={buttonClasses("outline", "sm")}
-            >
-              <Printer className="h-4 w-4" /> Imprimir
-            </button>
-            <button onClick={reset} className={buttonClasses("ghost", "sm")}>
-              <RotateCcw className="h-4 w-4" /> Refazer
-            </button>
-          </div>
-
-          {/* Próximo passo: o desfecho natural do gate é prescrever ou voltar ao aluno */}
-          {registrado && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              {resultado.cor !== "vermelho" && (
-                <Link
-                  to={`/gps?${new URLSearchParams({
-                    ...(alunoId ? { aluno: alunoId } : {}),
-                    ...(grupo ? { grupo: grupoSlug } : {}),
-                  }).toString()}`}
-                  className={buttonClasses("primary", "sm")}
+              <span className="text-xs text-ink-3">Registre para guardar no histórico e seguir.</span>
+            </div>
+          ) : (
+            <div className="mt-3 space-y-3 border-t border-black/5 pt-3">
+              {/* Próximo passo: prescrever ou voltar, sempre com um caminho de saída (nunca beco sem saída) */}
+              <div className="flex flex-wrap items-center gap-2">
+                {resultado.cor !== "vermelho" && (
+                  <Link
+                    to={`/gps?${new URLSearchParams({
+                      ...(alunoId ? { aluno: alunoId } : {}),
+                      ...(grupo ? { grupo: grupoSlug } : {}),
+                      ...(fase ? { fase: String(fase) } : {}),
+                    }).toString()}`}
+                    className={buttonClasses("primary", "sm")}
+                  >
+                    <Navigation className="h-4 w-4" /> Prescrever agora
+                  </Link>
+                )}
+                {alunoId ? (
+                  <Link to={`/alunos/${alunoId}`} className={buttonClasses("secondary", "sm")}>
+                    {resultado.cor === "vermelho" ? "Registrar no perfil e reavaliar" : `Voltar ao perfil${alunoNome ? ` de ${alunoNome.split(" ")[0]}` : ""}`}
+                  </Link>
+                ) : (
+                  resultado.cor === "vermelho" && (
+                    <Link to="/dashboard" className={buttonClasses("secondary", "sm")}>
+                      Voltar ao início
+                    </Link>
+                  )
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Pill tone="success">Registrado no histórico, entra no prontuário</Pill>
+                <button
+                  // impresso pode chegar ao aluno: usa o nome de programa digno, não o rótulo clínico
+                  onClick={() => printSemaforo(nomeDocumento, checklist, respostas, resultado, alunoNome, profNome, cref, logoDataUrl || undefined)}
+                  className={buttonClasses("outline", "sm")}
                 >
-                  <Navigation className="h-4 w-4" /> Prescrever agora
-                </Link>
-              )}
-              {alunoId && (
-                <Link to={`/alunos/${alunoId}`} className={buttonClasses("secondary", "sm")}>
-                  {resultado.cor === "vermelho" ? "Registrar no perfil e reavaliar" : `Voltar ao perfil${alunoNome ? ` de ${alunoNome.split(" ")[0]}` : ""}`}
-                </Link>
-              )}
+                  <Printer className="h-4 w-4" /> Imprimir
+                </button>
+                <button onClick={reset} className={buttonClasses("ghost", "sm")}>
+                  <RotateCcw className="h-4 w-4" /> Refazer
+                </button>
+              </div>
             </div>
           )}
         </div>

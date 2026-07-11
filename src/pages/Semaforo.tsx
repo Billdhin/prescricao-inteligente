@@ -23,6 +23,7 @@ export function Semaforo() {
     return g && getSemaforo(g) ? g : "geral";
   });
   const [alunoId, setAlunoId] = React.useState(() => params.get("aluno") ?? "");
+  const fase = Number(params.get("fase")) || undefined;
 
   // Escolher o aluno herda o grupo DELE (checklist certo sem retrabalho);
   // sem grupo especial, vale o checklist geral.
@@ -85,7 +86,7 @@ export function Semaforo() {
           descricao="No plano gratuito você usa o Semáforo de Liberação para obesidade grave e hipertensão. Assine para liberar todos os grupos e o Prontuário de Decisão exportável."
         />
       ) : (
-        <SemaforoLiberacao grupoSlug={grupoSlug} alunoId={aluno?.id} alunoNome={aluno?.nome} />
+        <SemaforoLiberacao grupoSlug={grupoSlug} alunoId={aluno?.id} alunoNome={aluno?.nome} fase={fase} />
       )}
     </div>
   );
