@@ -233,38 +233,8 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
       ],
     },
   ],
-  "treinamento-de-forca": [
-    {
-      slug: "variaveis",
-      title: "Variáveis do treino",
-      objective: "Manipular intensidade, volume e frequência por objetivo.",
-      level: "fundamental",
-      lessons: [
-        { slug: "intensidade-volume", title: "Intensidade e volume", type: "conceito", term: "Volume e intensidade", definition: "Volume é o total de trabalho; intensidade é a carga relativa (% de 1RM).", apply: "Objetivos diferentes pedem combinações diferentes dessas variáveis." },
-        { slug: "frequencia", title: "Frequência", type: "conceito", term: "Frequência semanal", definition: "Número de sessões por grupo muscular na semana.", apply: "Distribuir o volume em mais dias pode melhorar a qualidade das séries." },
-      ],
-    },
-    {
-      slug: "progressao",
-      title: "Progressão de carga",
-      objective: "Progredir de forma sustentável.",
-      level: "intermediario",
-      lessons: [
-        { slug: "sobrecarga-progressiva", title: "Sobrecarga progressiva", type: "conceito", term: "Sobrecarga progressiva", definition: "Aumento gradual da exigência ao longo do tempo, com recuperação.", apply: "Progredir uma variável por vez e observar a resposta." },
-        { slug: "reserva-repeticoes", title: "Reserva de repetições", type: "mecanismo", term: "Repetições em reserva (RIR)", definition: "Quantas repetições ainda seriam possíveis ao encerrar a série.", apply: "Ajuda a calibrar o esforço sem sempre ir à falha." },
-      ],
-    },
-    {
-      slug: "metodos",
-      title: "Métodos e organização",
-      objective: "Escolher métodos conforme o objetivo.",
-      level: "intermediario",
-      lessons: [
-        { slug: "ordem-exercicios", title: "Ordem dos exercícios", type: "conceito", term: "Ordem do treino", definition: "Sequência que costuma priorizar multiarticulares e maior carga no início.", apply: "Preserva a qualidade dos exercícios mais exigentes." },
-        { slug: "descanso", title: "Intervalos", type: "conceito", term: "Intervalo entre séries", definition: "Tempo de recuperação que preserva o desempenho da série seguinte.", apply: "Intervalos adequados sustentam o volume com carga." },
-      ],
-    },
-  ],
+  // treinamento-de-forca tem AUTORIA DEDICADA em forca.ts (padrão livro-texto),
+  // por isso NÃO entra no currículo curado (evita duplicar módulos/aulas).
   "treinamento-cardiorrespiratorio": [
     {
       slug: "metodos-cardio",
