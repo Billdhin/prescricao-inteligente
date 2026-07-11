@@ -269,19 +269,19 @@ export const specialGroups: SpecialGroup[] = [
     rotuloAluno: "Condicionamento com controle metabólico",
     descricaoCurta: "Regularidade e combinação força + aeróbio; atenção a sintomas e adesão.",
     perfil:
-      "Pessoa com diabetes tipo 2 ou risco metabólico, que se beneficia de regularidade e da combinação de força e aeróbio. Sensações de hipoglicemia podem aparecer em alguns contextos.",
+      "Pessoa com diabetes tipo 2 ou risco metabólico, que se beneficia de regularidade e da combinação de força e aeróbio. Sensações de hipoglicemia podem aparecer sobretudo em quem usa insulina ou secretagogos; com metformina isolada ou só dieta, o risco costuma ser baixo.",
     objetivos: [
       "Aumentar gasto e sensibilidade ao esforço com regularidade",
       "Combinar força e aeróbio",
       "Melhorar composição corporal e função",
     ],
     riscosCautelas: [
-      "Sintomas de hipoglicemia em alguns contextos (tremor, sudorese, confusão)",
+      "Sintomas de hipoglicemia, sobretudo em quem usa insulina ou secretagogos (tremor, sudorese, confusão)",
       "Cuidado com os pés (calçado, atrito): considerar impacto",
       "Adesão como fator crítico",
     ],
     sinaisAlerta: [
-      "Sinais de hipoglicemia → interromper e observar; pode indicar necessidade de reavaliação",
+      "Sinais de hipoglicemia (tremor, sudorese, confusão) → interromper e, se o aluno estiver consciente, oferecer o carboidrato de ação rápida que ele carrega; observar a recuperação e acionar ajuda se não melhorar. Episódios recorrentes pedem reavaliação com a equipe de saúde",
       "Feridas/lesões nos pés → ajustar modalidade e encaminhar quando necessário",
       "Mal-estar desproporcional → interromper",
     ],
@@ -690,7 +690,7 @@ export const teoriaGrupo: Record<string, TeoriaGrupo> = {
   },
   "osteoartrite-joelho": {
     oQueE:
-      "Desgaste articular do joelho com dor e rigidez que variam com a carga e a inflamação. O exercício é tratamento central, modulado pela dor.",
+      "Desgaste articular do joelho com dor e rigidez que variam com a carga e a inflamação. As diretrizes posicionam o exercício como intervenção de primeira linha no manejo, com a intensidade modulada pela dor.",
     fisiologia:
       "Na osteoartrite, a dor e a inflamação variam ao longo do tempo; o fortalecimento do quadríceps e do quadril melhora a estabilidade e reduz a sobrecarga percebida. A carga controlada estimula a articulação sem necessariamente 'gastar' a cartilagem; períodos de inflamação aguda pedem modulação e baixo impacto.",
     evidencia:

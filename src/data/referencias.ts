@@ -163,9 +163,9 @@ export const referencias: Referencia[] = [
   {
     id: "confef-254",
     autores: "Conselho Federal de Educação Física (CONFEF)",
-    titulo: "Código de Ética dos Profissionais de Educação Física (Resolução nº 254/2013)",
+    titulo: "Código de Ética dos Profissionais de Educação Física (Resolução CONFEF nº 307/2015)",
     fonte: "CONFEF",
-    ano: 2013,
+    ano: 2015,
     nota: "Fundamenta o dever de diligência do profissional habilitado: o RCD documenta, o profissional decide.",
   },
 

@@ -136,7 +136,7 @@ export const biblioteca: LibEntry[] = [
     id: "t-potencia",
     termo: "Potência",
     categoria: "Termos técnicos",
-    definicao: "A quantidade de trabalho realizado por unidade de tempo (ou força aplicada por velocidade).",
+    definicao: "A quantidade de trabalho realizado por unidade de tempo (ou a força multiplicada pela velocidade).",
     resumo: "Força aplicada com velocidade: trabalho realizado por unidade de tempo.",
     detalhe:
       "Potência combina força e velocidade. Não basta ser forte: é preciso aplicar a força rapidamente. É relevante em saltos, arranques e em tarefas do dia a dia como reagir para não cair.",
@@ -822,7 +822,7 @@ export const biblioteca: LibEntry[] = [
     id: "bm-contracao",
     termo: "Contração muscular",
     categoria: "Biomecânica",
-    definicao: "O processo pelo qual o músculo gera tensão ativa a partir do encurtamento das pontes cruzadas entre actina e miosina.",
+    definicao: "O processo pelo qual o músculo gera tensão ativa a partir da formação e ciclagem das pontes cruzadas entre actina e miosina, que deslizam os filamentos; a tensão pode ocorrer com ou sem encurtamento do músculo.",
     resumo: "O músculo produzindo tensão, mudando ou não de comprimento.",
     detalhe:
       "Apesar do nome, uma contração nem sempre encurta o músculo: a tensão pode ocorrer com encurtamento (concêntrica), alongamento (excêntrica) ou comprimento constante (isométrica). O termo se refere à ativação, não necessariamente ao encurtamento.",

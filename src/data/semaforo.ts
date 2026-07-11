@@ -219,7 +219,7 @@ export const semaforos: ChecklistSemaforo[] = [
             acao: "Não carregue essa articulação hoje; considere sessão só de mobilidade/aquático e reavaliação.",
           },
         ],
-        refs: ["donnelly-2009"],
+        refs: ["oarsi-2019", "acr-2019"],
       },
       {
         id: "sono-hidratacao",
