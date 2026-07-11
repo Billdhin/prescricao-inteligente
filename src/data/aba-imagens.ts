@@ -68,6 +68,10 @@ const VARIACAO_IMGS: Record<string, number[]> = {
   "dead-bug": [0, 1, 2],
   "remada-elastica": [0, 1, 2],
   "panturrilha-em-pe": [0, 1, 2],
+  "remada-invertida": [1, 2],
+  "triceps-frances-halter": [0, 1, 2],
+  "elevacao-lateral-halteres": [0, 1, 2],
+  "remada-curvada-halteres": [0, 1, 2],
 };
 
 export function getErroImagem(slug?: string): string | undefined {
