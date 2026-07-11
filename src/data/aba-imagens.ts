@@ -72,6 +72,15 @@ const VARIACAO_IMGS: Record<string, number[]> = {
   "triceps-frances-halter": [0, 1, 2],
   "elevacao-lateral-halteres": [0, 1, 2],
   "remada-curvada-halteres": [0, 1, 2],
+  // máquinas e demais: índices ausentes (ex.: cadência/excêntrica) caem na foto do
+  // movimento base — só entram fotos de poses visualmente distintas.
+  "cadeira-extensora": [0],
+  "mesa-flexora": [0],
+  "supino-maquina": [0, 1, 2],
+  "desenvolvimento-maquina": [0, 1, 2],
+  "remada-maquina": [0, 1, 2],
+  "desenvolvimento-elastico": [0, 1, 2],
+  "empurra-puxa-aquatico": [0, 1, 2],
 };
 
 export function getErroImagem(slug?: string): string | undefined {
