@@ -60,6 +60,14 @@ const VARIACAO_IMGS: Record<string, number[]> = {
   "prancha-frontal": [0, 1],
   "mergulho-no-banco": [0, 1, 2],
   "sentar-levantar": [0, 1],
+  "caminhada-esteira": [0, 1, 2],
+  "bicicleta-ergometrica": [0, 1, 2],
+  "eliptico": [0, 1, 2],
+  "marcha-aquatica": [1, 2],
+  "ponte-gluteos": [0, 1, 2],
+  "dead-bug": [0, 1, 2],
+  "remada-elastica": [0, 1, 2],
+  "panturrilha-em-pe": [0, 1, 2],
 };
 
 export function getErroImagem(slug?: string): string | undefined {
