@@ -46,6 +46,16 @@ const VARIACAO_IMGS: Record<string, number[]> = {
   "levantamento-terra-romeno": [0, 1, 2],
   "hip-thrust": [0, 1, 2],
   "afundo-passada": [0, 1, 2],
+  // variações com foto DEDICADA; índices ausentes caem na foto do movimento base
+  // (nuances de pegada quase idênticas ficam de fora, em vez de foto errada).
+  "puxada-alta": [1, 2],
+  "remada-baixa": [2],
+  "desenvolvimento-ombros": [0, 1],
+  "rosca-direta": [0, 1, 2],
+  "triceps-polia": [0, 1, 2],
+  "leg-press-45": [0, 1, 2],
+  "supino-reto-barra": [0],
+  "supino-halteres": [0, 1, 2],
 };
 
 export function getErroImagem(slug?: string): string | undefined {

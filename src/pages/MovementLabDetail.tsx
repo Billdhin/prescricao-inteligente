@@ -683,18 +683,13 @@ function Variacoes({ exercise }: { exercise: Exercise }) {
           const desc = partes.slice(1).join(":").trim();
           return (
             <li key={v} className="overflow-hidden rounded-xl border border-border bg-surface">
-              {img ? (
-                <img
-                  src={withBase(img)}
-                  alt={`Variação: ${titulo}`}
-                  className="aspect-[4/3] w-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="grid aspect-[4/3] w-full place-items-center bg-surface-soft text-xs font-semibold uppercase tracking-wider text-ink-3">
-                  Variação
-                </div>
-              )}
+              {/* foto dedicada da variação; se não houver, usa a foto do movimento base */}
+              <img
+                src={withBase(img ?? exercise.imagem ?? "")}
+                alt={img ? `Variação: ${titulo}` : `${exercise.nome} (movimento base)`}
+                className="aspect-[4/3] w-full object-cover"
+                loading="lazy"
+              />
               <div className="p-3">
                 <div className="font-display text-sm font-bold text-ink">{titulo}</div>
                 {desc && <p className="mt-0.5 text-sm text-ink-2">{desc}</p>}
