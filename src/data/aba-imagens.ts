@@ -56,6 +56,10 @@ const VARIACAO_IMGS: Record<string, number[]> = {
   "leg-press-45": [0, 1, 2],
   "supino-reto-barra": [0],
   "supino-halteres": [0, 1, 2],
+  "flexao-de-braco": [1, 2],
+  "prancha-frontal": [0, 1],
+  "mergulho-no-banco": [0, 1, 2],
+  "sentar-levantar": [0, 1],
 };
 
 export function getErroImagem(slug?: string): string | undefined {
