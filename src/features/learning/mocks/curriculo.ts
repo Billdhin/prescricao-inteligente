@@ -231,28 +231,7 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
   // controle-de-carga-e-recuperacao tem AUTORIA DEDICADA em controle-carga.ts.
   // planejamento-e-periodizacao tem AUTORIA DEDICADA em periodizacao.ts.
   // raciocinio-de-prescricao tem AUTORIA DEDICADA em raciocinio.ts.
-  "prescricao-para-grupos-especiais": [
-    {
-      slug: "principios-grupos",
-      title: "Princípios gerais",
-      objective: "Adaptar cuidados sem esvaziar o estímulo.",
-      level: "intermediario",
-      lessons: [
-        { slug: "triagem", title: "Triagem pré-participação", type: "conceito", term: "Triagem", definition: "Levantamento de sinais e condições antes de iniciar o esforço.", apply: "Base do Semáforo de Liberação antes das sessões." },
-        { slug: "adaptar-sem-esvaziar", title: "Adaptar sem esvaziar", type: "conceito", term: "Adaptação", definition: "Ajustar carga, amplitude e modalidade preservando o objetivo.", apply: "Adaptar é diferente de retirar o estímulo." },
-      ],
-    },
-    {
-      slug: "condicoes",
-      title: "Condições frequentes",
-      objective: "Reconhecer cuidados por condição.",
-      level: "avancado",
-      lessons: [
-        { slug: "cardiometabolico", title: "Cardiometabólico", type: "conceito", term: "Risco cardiometabólico", definition: "Hipertensão, diabetes e obesidade pedem cuidados de intensidade e monitoramento.", apply: "A conduta clínica segue o profissional de saúde." },
-        { slug: "musculoesqueletico", title: "Musculoesquelético", type: "conceito", term: "Cuidado articular", definition: "Dor lombar e osteoartrite pedem carga controlada e modulação pela dor.", apply: "Movimento gradual costuma ser aliado." },
-      ],
-    },
-  ],
+  // prescricao-para-grupos-especiais tem AUTORIA DEDICADA em grupos-especiais.ts.
   "dor-limitacoes-e-adaptacao": [
     {
       slug: "entender-dor",

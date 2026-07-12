@@ -7,6 +7,7 @@ import { avaliacaoModules, avaliacaoLessons } from "./avaliacao";
 import { controleCargaModules, controleCargaLessons } from "./controle-carga";
 import { periodizacaoModules, periodizacaoLessons } from "./periodizacao";
 import { raciocinioModules, raciocinioLessons } from "./raciocinio";
+import { gruposEspeciaisModules, gruposEspeciaisLessons } from "./grupos-especiais";
 import { curriculoModules, curriculoLessons } from "./curriculo";
 
 /** Módulos e aulas combinados: disciplinas de AUTORIA DEDICADA (padrão livro-texto)
@@ -16,10 +17,12 @@ const autoradas = {
   modules: [
     ...modulesBio, ...forcaModules, ...fisiologiaExercicioModules, ...cardioModules,
     ...avaliacaoModules, ...controleCargaModules, ...periodizacaoModules, ...raciocinioModules,
+    ...gruposEspeciaisModules,
   ],
   lessons: [
     ...lessonsBio, ...forcaLessons, ...fisiologiaExercicioLessons, ...cardioLessons,
     ...avaliacaoLessons, ...controleCargaLessons, ...periodizacaoLessons, ...raciocinioLessons,
+    ...gruposEspeciaisLessons,
   ],
 };
 export const modules = [...autoradas.modules, ...curriculoModules];
