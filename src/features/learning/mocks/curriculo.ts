@@ -179,54 +179,12 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
       ],
     },
   ],
-  "neurofisiologia-do-movimento": [
-    {
-      slug: "controle-motor",
-      title: "Controle motor",
-      objective: "Entender como o sistema nervoso comanda o movimento.",
-      level: "fundamental",
-      lessons: [
-        { slug: "unidade-motora", title: "Unidade motora", type: "conceito", term: "Unidade motora", definition: "Um neurônio motor e as fibras que ele inerva.", apply: "Base do recrutamento e da adaptação neural inicial à força." },
-        { slug: "recrutamento", title: "Recrutamento", type: "mecanismo", term: "Princípio do tamanho", definition: "Unidades menores são recrutadas antes das maiores conforme a demanda cresce.", apply: "Explica por que cargas maiores recrutam mais unidades motoras." },
-      ],
-    },
-    {
-      slug: "aprendizagem-motora",
-      title: "Aprendizagem motora",
-      objective: "Aplicar princípios de aprendizagem ao ensino de exercícios.",
-      level: "intermediario",
-      lessons: [
-        { slug: "fases-aprendizagem", title: "Fases da aprendizagem", type: "conceito", term: "Aprendizagem motora", definition: "Processo de tornar um movimento mais eficiente e automático com a prática.", apply: "Orienta a dose de instrução e a progressão de complexidade." },
-        { slug: "feedback", title: "Feedback", type: "conceito", term: "Feedback", definition: "Informação sobre a execução que guia o ajuste do movimento.", apply: "Menos e melhor feedback costuma favorecer a autonomia do aluno." },
-      ],
-    },
-  ],
+  // neurofisiologia-do-movimento tem AUTORIA DEDICADA em neurofisiologia.ts.
   // fisiologia-do-exercicio tem AUTORIA DEDICADA em fisiologia-exercicio.ts.
   // treinamento-de-forca tem AUTORIA DEDICADA em forca.ts (padrão livro-texto),
   // por isso NÃO entra no currículo curado (evita duplicar módulos/aulas).
   // treinamento-cardiorrespiratorio tem AUTORIA DEDICADA em cardio.ts.
-  "mobilidade-e-flexibilidade": [
-    {
-      slug: "conceitos-mobilidade",
-      title: "Conceitos de mobilidade",
-      objective: "Diferenciar flexibilidade, mobilidade e amplitude útil.",
-      level: "fundamental",
-      lessons: [
-        { slug: "flexibilidade-vs-mobilidade", title: "Flexibilidade e mobilidade", type: "conceito", term: "Mobilidade", definition: "Amplitude ativa e controlada de uma articulação; flexibilidade é a passiva.", apply: "Priorizar amplitude que a pessoa controla, não só a que alcança." },
-        { slug: "amplitude-util", title: "Amplitude útil", type: "conceito", term: "Amplitude útil", definition: "Faixa que entrega o estímulo desejado com tolerância adequada.", apply: "Reduzir amplitude pode ser adaptação legítima." },
-      ],
-    },
-    {
-      slug: "metodos-mobilidade",
-      title: "Métodos de trabalho",
-      objective: "Escolher a estratégia conforme o objetivo.",
-      level: "intermediario",
-      lessons: [
-        { slug: "alongamento", title: "Alongamento", type: "conceito", term: "Alongamento", definition: "Estímulo para aumentar tolerância ao estiramento e amplitude.", apply: "Efeitos dependem de dose, tipo e contexto." },
-        { slug: "mobilidade-articular", title: "Mobilidade articular", type: "mecanismo", term: "Trabalho de mobilidade", definition: "Exercícios ativos que ampliam o movimento controlado da articulação.", apply: "Integrar ao aquecimento e ao próprio treino." },
-      ],
-    },
-  ],
+  // mobilidade-e-flexibilidade tem AUTORIA DEDICADA em mobilidade.ts.
   // avaliacao-fisica-e-funcional tem AUTORIA DEDICADA em avaliacao.ts.
   // controle-de-carga-e-recuperacao tem AUTORIA DEDICADA em controle-carga.ts.
   // planejamento-e-periodizacao tem AUTORIA DEDICADA em periodizacao.ts.

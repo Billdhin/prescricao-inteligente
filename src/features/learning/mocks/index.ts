@@ -12,6 +12,8 @@ import { comunicacaoModules, comunicacaoLessons } from "./comunicacao";
 import { segurancaModules, segurancaLessons } from "./seguranca";
 import { dorModules, dorLessons } from "./dor";
 import { evidenciasModules, evidenciasLessons } from "./evidencias";
+import { mobilidadeModules, mobilidadeLessons } from "./mobilidade";
+import { neurofisiologiaModules, neurofisiologiaLessons } from "./neurofisiologia";
 import { curriculoModules, curriculoLessons } from "./curriculo";
 
 /** Módulos e aulas combinados: disciplinas de AUTORIA DEDICADA (padrão livro-texto)
@@ -22,11 +24,13 @@ const autoradas = {
     ...modulesBio, ...forcaModules, ...fisiologiaExercicioModules, ...cardioModules,
     ...avaliacaoModules, ...controleCargaModules, ...periodizacaoModules, ...raciocinioModules,
     ...gruposEspeciaisModules, ...comunicacaoModules, ...segurancaModules, ...dorModules, ...evidenciasModules,
+    ...mobilidadeModules, ...neurofisiologiaModules,
   ],
   lessons: [
     ...lessonsBio, ...forcaLessons, ...fisiologiaExercicioLessons, ...cardioLessons,
     ...avaliacaoLessons, ...controleCargaLessons, ...periodizacaoLessons, ...raciocinioLessons,
     ...gruposEspeciaisLessons, ...comunicacaoLessons, ...segurancaLessons, ...dorLessons, ...evidenciasLessons,
+    ...mobilidadeLessons, ...neurofisiologiaLessons,
   ],
 };
 export const modules = [...autoradas.modules, ...curriculoModules];
