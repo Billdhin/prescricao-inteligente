@@ -229,50 +229,8 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
   ],
   // avaliacao-fisica-e-funcional tem AUTORIA DEDICADA em avaliacao.ts.
   // controle-de-carga-e-recuperacao tem AUTORIA DEDICADA em controle-carga.ts.
-  "planejamento-e-periodizacao": [
-    {
-      slug: "principios",
-      title: "Princípios do planejamento",
-      objective: "Organizar estímulos no tempo em direção a um objetivo.",
-      level: "intermediario",
-      lessons: [
-        { slug: "especificidade", title: "Especificidade", type: "conceito", term: "Especificidade", definition: "As adaptações refletem o tipo de estímulo aplicado.", apply: "Alinhar o treino ao objetivo do aluno." },
-        { slug: "variacao", title: "Variação", type: "conceito", term: "Variação", definition: "Alternar estímulos para sustentar o progresso e a adesão.", apply: "Variar sem perder a especificidade do objetivo." },
-      ],
-    },
-    {
-      slug: "modelos",
-      title: "Modelos de periodização",
-      objective: "Escolher a organização conforme o contexto.",
-      level: "avancado",
-      lessons: [
-        { slug: "linear-ondulatoria", title: "Linear e ondulatória", type: "comparacao", term: "Periodização", definition: "Formas de distribuir volume e intensidade ao longo do tempo.", apply: "Modelos são referências; a resposta individual guia os ajustes." },
-        { slug: "mesociclo", title: "Mesociclo", type: "conceito", term: "Mesociclo", definition: "Bloco de semanas com um foco de treino definido.", apply: "Organizar progressões e semanas de menor carga." },
-      ],
-    },
-  ],
-  "raciocinio-de-prescricao": [
-    {
-      slug: "decisao",
-      title: "Como decidir",
-      objective: "Transformar avaliação e contexto em decisão.",
-      level: "intermediario",
-      lessons: [
-        { slug: "criterios-decisao", title: "Critérios de decisão", type: "mecanismo", term: "Critérios", definition: "Objetivo, nível, restrição, equipamento e tolerância orientam a escolha.", apply: "Tornar explícitos os critérios que pesaram na decisão." },
-        { slug: "descartar-opcoes", title: "Descartar opções", type: "conceito", term: "Descartes justificados", definition: "Registrar por que uma opção não foi escolhida é parte do raciocínio.", apply: "O porquê do descarte fortalece a justificativa." },
-      ],
-    },
-    {
-      slug: "justificar",
-      title: "Justificar a decisão",
-      objective: "Documentar a decisão de forma defensável.",
-      level: "avancado",
-      lessons: [
-        { slug: "documentar", title: "Documentar", type: "aplicacao", term: "Prontuário de decisão", definition: "Registro do raciocínio que embasou a prescrição.", apply: "Um registro assinável dá segurança e sustenta a conduta." },
-        { slug: "comunicar-decisao", title: "Comunicar a decisão", type: "conceito", term: "Comunicação da decisão", definition: "Explicar ao aluno o porquê das escolhas em linguagem clara.", apply: "Entender o porquê aumenta a adesão." },
-      ],
-    },
-  ],
+  // planejamento-e-periodizacao tem AUTORIA DEDICADA em periodizacao.ts.
+  // raciocinio-de-prescricao tem AUTORIA DEDICADA em raciocinio.ts.
   "prescricao-para-grupos-especiais": [
     {
       slug: "principios-grupos",
