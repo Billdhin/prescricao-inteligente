@@ -14,6 +14,8 @@ import { dorModules, dorLessons } from "./dor";
 import { evidenciasModules, evidenciasLessons } from "./evidencias";
 import { mobilidadeModules, mobilidadeLessons } from "./mobilidade";
 import { neurofisiologiaModules, neurofisiologiaLessons } from "./neurofisiologia";
+import { cinesiologiaModules, cinesiologiaLessons } from "./cinesiologia";
+import { biomecanicaBasicaModules, biomecanicaBasicaLessons } from "./biomecanica-basica";
 import { curriculoModules, curriculoLessons } from "./curriculo";
 
 /** Módulos e aulas combinados: disciplinas de AUTORIA DEDICADA (padrão livro-texto)
@@ -24,13 +26,13 @@ const autoradas = {
     ...modulesBio, ...forcaModules, ...fisiologiaExercicioModules, ...cardioModules,
     ...avaliacaoModules, ...controleCargaModules, ...periodizacaoModules, ...raciocinioModules,
     ...gruposEspeciaisModules, ...comunicacaoModules, ...segurancaModules, ...dorModules, ...evidenciasModules,
-    ...mobilidadeModules, ...neurofisiologiaModules,
+    ...mobilidadeModules, ...neurofisiologiaModules, ...cinesiologiaModules, ...biomecanicaBasicaModules,
   ],
   lessons: [
     ...lessonsBio, ...forcaLessons, ...fisiologiaExercicioLessons, ...cardioLessons,
     ...avaliacaoLessons, ...controleCargaLessons, ...periodizacaoLessons, ...raciocinioLessons,
     ...gruposEspeciaisLessons, ...comunicacaoLessons, ...segurancaLessons, ...dorLessons, ...evidenciasLessons,
-    ...mobilidadeLessons, ...neurofisiologiaLessons,
+    ...mobilidadeLessons, ...neurofisiologiaLessons, ...cinesiologiaLessons, ...biomecanicaBasicaLessons,
   ],
 };
 export const modules = [...autoradas.modules, ...curriculoModules];

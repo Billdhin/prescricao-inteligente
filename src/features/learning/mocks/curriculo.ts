@@ -135,50 +135,8 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
       ],
     },
   ],
-  cinesiologia: [
-    {
-      slug: "planos-e-eixos",
-      title: "Planos, eixos e ações",
-      objective: "Descrever movimentos com precisão.",
-      level: "fundamental",
-      lessons: [
-        { slug: "planos-movimento", title: "Planos de movimento", type: "conceito", term: "Plano de movimento", definition: "Superfície que organiza a direção do movimento: sagital, frontal, transverso.", apply: "Compor um programa equilibrado entre os planos." },
-        { slug: "acoes-articulares", title: "Ações articulares", type: "conceito", term: "Ação articular", definition: "Movimento específico de uma articulação (flexão, extensão, rotação).", apply: "Nomear a ação ajuda a escolher o exercício certo para o alvo." },
-      ],
-    },
-    {
-      slug: "alavancas",
-      title: "Alavancas do corpo",
-      objective: "Aplicar o conceito de alavanca ao movimento humano.",
-      level: "intermediario",
-      lessons: [
-        { slug: "tipos-alavanca", title: "Tipos de alavanca", type: "conceito", term: "Alavanca", definition: "Sistema de força, resistência e eixo; o corpo usa os três tipos.", apply: "Explica vantagens mecânicas em diferentes articulações." },
-        { slug: "vantagem-mecanica", title: "Vantagem mecânica", type: "mecanismo", term: "Vantagem mecânica", definition: "Relação entre os braços de força e de resistência.", apply: "Fundamenta por que certos ângulos são mais fortes." },
-      ],
-    },
-  ],
-  "biomecanica-basica": [
-    {
-      slug: "forcas",
-      title: "Forças e equilíbrio",
-      objective: "Entender as forças que agem no corpo.",
-      level: "fundamental",
-      lessons: [
-        { slug: "forca-peso-atrito", title: "Peso, normal e atrito", type: "conceito", term: "Força externa", definition: "Forças que agem sobre o corpo, como peso, reação do solo e atrito.", apply: "Base para analisar a resistência de um exercício." },
-        { slug: "equilibrio", title: "Equilíbrio e base", type: "conceito", term: "Base de suporte", definition: "Área de contato que sustenta o corpo em relação ao centro de massa.", apply: "Ajustar a base muda a exigência de equilíbrio." },
-      ],
-    },
-    {
-      slug: "momentos",
-      title: "Momentos e torque",
-      objective: "Aplicar torque à análise de exercícios.",
-      level: "intermediario",
-      lessons: [
-        { slug: "torque-basico", title: "Torque", type: "mecanismo", term: "Torque", definition: "Efeito rotacional de uma força; força vezes braço de momento.", apply: "Explica por que a mesma carga pesa diferente em cada ângulo." },
-        { slug: "centro-de-gravidade", title: "Centro de gravidade", type: "conceito", term: "Centro de massa", definition: "Ponto onde se concentra o peso do corpo.", apply: "Sua posição relativa ao apoio define estabilidade e demanda." },
-      ],
-    },
-  ],
+  // cinesiologia tem AUTORIA DEDICADA em cinesiologia.ts.
+  // biomecanica-basica tem AUTORIA DEDICADA em biomecanica-basica.ts.
   // neurofisiologia-do-movimento tem AUTORIA DEDICADA em neurofisiologia.ts.
   // fisiologia-do-exercicio tem AUTORIA DEDICADA em fisiologia-exercicio.ts.
   // treinamento-de-forca tem AUTORIA DEDICADA em forca.ts (padrão livro-texto),
