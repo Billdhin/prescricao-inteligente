@@ -136,7 +136,7 @@ export const competencies: Competency[] = [
 /* --------------------------- Estudar por objetivo --------------------------- */
 
 export const studyObjectives: StudyObjective[] = [
-  { id: "obj-mecanismo", label: "Entender um mecanismo", icon: "Workflow", description: "Como e por que algo acontece no corpo.", count: 18, href: "/aprender/disciplinas?tipo=mecanismo" },
+  { id: "obj-mecanismo", label: "Entender um mecanismo", icon: "Workflow", description: "Como e por que algo acontece no corpo.", count: 18, href: "/aprender/disciplinas/biomecanica-do-treinamento" },
   { id: "obj-comparar", label: "Comparar exercícios", icon: "GitCompare", description: "Ver o que muda entre opções parecidas.", count: 12, href: "/comparador" },
   { id: "obj-avaliar", label: "Avaliar um aluno", icon: "ClipboardCheck", description: "Escolher e interpretar testes e medidas.", count: 9, href: "/aprender/disciplinas/avaliacao-fisica-e-funcional" },
   { id: "obj-adaptar", label: "Adaptar para uma condição", icon: "HeartPulse", description: "Ajustar cuidados por perfil e condição.", count: 14, href: "/special-groups" },

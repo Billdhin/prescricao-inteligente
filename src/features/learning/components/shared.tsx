@@ -17,6 +17,16 @@ export const tokenTile: Record<string, string> = {
   cta: "bg-[#fff1e6] text-[color:var(--cta-text)]",
 };
 
+/** Duração da disciplina a partir da duração real derivada (minutos), com
+ *  fallback para as horas de catálogo. Mostra minutos abaixo de 1 h. */
+export function disciplineDurationLabel(d: { estimatedMinutes?: number; estimatedHours: number }): string {
+  const min = d.estimatedMinutes ?? d.estimatedHours * 60;
+  if (min <= 0) return "";
+  if (min < 60) return `${Math.max(1, Math.round(min))} min`;
+  const h = min / 60;
+  return `${h % 1 === 0 ? h : h.toFixed(1)} h`;
+}
+
 export function StatusPill({ status }: { status: ProgressoStatus }) {
   if (status === "concluido")
     return <Pill tone="success" icon={<CheckCircle2 className="h-3 w-3" />}>Concluído</Pill>;
@@ -142,8 +152,12 @@ export function DisciplineCard({
       <p className="mb-3 text-sm text-ink-2">{disc.description}</p>
       <div className="mb-3 flex flex-wrap gap-x-3 gap-y-1">
         <MetaItem icon={<Layers className="h-3.5 w-3.5" />}>{disc.moduleCount} módulos</MetaItem>
-        <MetaItem icon={<Clock className="h-3.5 w-3.5" />}>{disc.estimatedHours} h</MetaItem>
-        <MetaItem icon={<Stethoscope className="h-3.5 w-3.5" />}>{disc.caseCount} casos</MetaItem>
+        {disciplineDurationLabel(disc) && (
+          <MetaItem icon={<Clock className="h-3.5 w-3.5" />}>{disciplineDurationLabel(disc)}</MetaItem>
+        )}
+        {disc.caseCount > 0 && (
+          <MetaItem icon={<Stethoscope className="h-3.5 w-3.5" />}>{disc.caseCount} casos</MetaItem>
+        )}
       </div>
       <div className="mt-auto space-y-3">
         {progress > 0 && (
@@ -190,7 +204,7 @@ export function ModuleCard({
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1">
         <NivelPill nivel={mod.level} />
         <MetaItem icon={<Clock className="h-3.5 w-3.5" />}>{mod.estimatedMinutes} min</MetaItem>
-        <MetaItem icon={<Layers className="h-3.5 w-3.5" />}>{mod.lessonCount} aulas</MetaItem>
+        <MetaItem icon={<Layers className="h-3.5 w-3.5" />}>{mod.lessonCount} conteúdos</MetaItem>
       </div>
       {progress > 0 && (
         <div className="mb-3 flex items-center gap-2">

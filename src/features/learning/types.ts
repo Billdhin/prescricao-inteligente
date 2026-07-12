@@ -41,6 +41,8 @@ export interface Discipline {
   colorToken: "primary" | "analysis" | "cta" | "success";
   level: string;
   estimatedHours: number;
+  /** duração real derivada (soma dos minutos das aulas autoradas); repository preenche */
+  estimatedMinutes?: number;
   moduleCount: number;
   lessonCount: number;
   caseCount: number;

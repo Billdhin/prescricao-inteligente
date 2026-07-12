@@ -47,7 +47,7 @@ export function Progresso() {
         eyebrow="Aprender"
         icon={<TrendingUp className="h-3 w-3" />}
         title="Meu progresso"
-        subtitle="Seu desenvolvimento profissional: o que você já consegue fazer, não apenas quantas aulas concluiu."
+        subtitle="Seu desenvolvimento profissional: o que você já consegue fazer, não apenas quantos conteúdos concluiu."
       />
 
       {/* Métricas */}

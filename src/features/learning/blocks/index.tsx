@@ -17,6 +17,7 @@ import {
   Layers,
   Calculator as CalcIcon,
   Unlock,
+  ChevronDown,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
@@ -30,13 +31,121 @@ const repo = getLearningRepository();
 
 /* ------------------------------- Renderer ------------------------------- */
 
+/* ----------------------------- Seções da aula ---------------------------- */
+// Para dar ritmo e não virar uma parede de cartões, os blocos são agrupados em
+// fases nomeadas (Entenda, Aplique, Pratique, Aprofunde) por MARCADORES de início,
+// sem reordenar o conteúdo. A varredura é monotônica: a fase só avança, nunca volta.
+
+type SectionId = "entenda" | "aplique" | "pratique" | "aprofunde";
+
+const SECTION_TITLE: Record<SectionId, string> = {
+  entenda: "Entenda",
+  aplique: "Aplique na prescrição",
+  pratique: "Pratique",
+  aprofunde: "Aprofunde",
+};
+const SECTION_ORDER: SectionId[] = ["entenda", "aplique", "pratique", "aprofunde"];
+const SECTION_RANK: Record<SectionId, number> = { entenda: 0, aplique: 1, pratique: 2, aprofunde: 3 };
+const APROFUNDE_TYPES = new Set<LessonBlock["type"]>([
+  "scientific_uncertainty",
+  "related_content",
+  "references",
+]);
+
+function groupIntoSections(blocks: LessonBlock[]) {
+  const ordered = [...blocks].sort((a, b) => a.order - b.order);
+  const sections: Record<SectionId, LessonBlock[]> = { entenda: [], aplique: [], pratique: [], aprofunde: [] };
+  let closing: LessonBlock | null = null;
+  let current: SectionId = "entenda";
+  const advance = (to: SectionId) => {
+    if (SECTION_RANK[current] < SECTION_RANK[to]) current = to;
+  };
+  for (const blk of ordered) {
+    if (blk.type === "apply_to_prescription") {
+      closing = blk; // fecha a aula como faixa de ação, fora das seções
+      continue;
+    }
+    if (blk.type === "practical_application") advance("aplique");
+    else if (blk.type === "professional_case") advance("pratique");
+    else if (APROFUNDE_TYPES.has(blk.type)) advance("aprofunde");
+    sections[current].push(blk);
+  }
+  return { sections, closing };
+}
+
 export function LessonRenderer({ lesson, onApply }: { lesson: Lesson; onApply: (summary: string) => void }) {
-  const blocks = [...lesson.blocks].sort((a, b) => a.order - b.order);
+  const { sections, closing } = React.useMemo(() => groupIntoSections(lesson.blocks), [lesson]);
+  const [openAprofunde, setOpenAprofunde] = React.useState(false);
+
+  const visible = SECTION_ORDER.filter((id) => sections[id].length > 0);
+  const numberOf = new Map<SectionId, number>();
+  visible.forEach((id, i) => numberOf.set(id, i + 1));
+
+  const goto = (id: SectionId) => {
+    if (id === "aprofunde") setOpenAprofunde(true);
+    requestAnimationFrame(() => {
+      document.getElementById(`sec-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  const renderBlocks = (list: LessonBlock[]) =>
+    list.map((blk) => <BlockSwitch key={blk.id} block={blk} lesson={lesson} onApply={onApply} />);
+
   return (
-    <div className="space-y-5">
-      {blocks.map((blk) => (
-        <BlockSwitch key={blk.id} block={blk} lesson={lesson} onApply={onApply} />
-      ))}
+    <div className="space-y-8">
+      {visible.length > 1 && (
+        <nav aria-label="Seções da aula" className="flex flex-wrap gap-1.5">
+          {visible.map((id) => (
+            <button
+              key={id}
+              onClick={() => goto(id)}
+              className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-semibold text-ink-2 transition-colors hover:border-primary hover:bg-primary-tint hover:text-primary"
+            >
+              {numberOf.get(id)}. {SECTION_TITLE[id]}
+            </button>
+          ))}
+        </nav>
+      )}
+
+      {visible.map((id) => {
+        if (id === "aprofunde") {
+          return (
+            <details
+              key={id}
+              id="sec-aprofunde"
+              open={openAprofunde}
+              onToggle={(e) => setOpenAprofunde((e.currentTarget as HTMLDetailsElement).open)}
+              className="group scroll-mt-24 rounded-card border border-border bg-surface-soft"
+            >
+              <summary className="flex cursor-pointer list-none items-center gap-2 rounded-card px-4 py-3 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                <BookOpen className="h-4 w-4 shrink-0 text-ink-3" />
+                Aprofundar: o que ainda é incerto, revisões e referências
+                <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-ink-3 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="space-y-5 px-4 pb-4">{renderBlocks(sections[id])}</div>
+            </details>
+          );
+        }
+        return (
+          <section key={id} id={`sec-${id}`} className="scroll-mt-24 space-y-5">
+            <SectionHeading n={numberOf.get(id)!} title={SECTION_TITLE[id]} />
+            {renderBlocks(sections[id])}
+          </section>
+        );
+      })}
+
+      {closing && renderBlocks([closing])}
+    </div>
+  );
+}
+
+function SectionHeading({ n, title }: { n: number; title: string }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">
+        {n}
+      </span>
+      <h2 className="font-display text-xl font-bold text-ink">{title}</h2>
     </div>
   );
 }
@@ -92,7 +201,7 @@ function BlockSwitch({ block, lesson, onApply }: { block: LessonBlock; lesson: L
 }
 
 function BlockTitle({ children }: { children: React.ReactNode }) {
-  return <h2 className="mb-3 font-display text-xl font-bold text-ink">{children}</h2>;
+  return <h3 className="mb-3 font-display text-lg font-bold text-ink">{children}</h3>;
 }
 
 /* -------------------------------- Blocos -------------------------------- */
@@ -108,7 +217,7 @@ function HeroBlock({ kicker, text }: { kicker?: string; text: string }) {
 
 function PrescriptionQuestion({ question, cta }: { question: string; cta?: string }) {
   return (
-    <Card tone="primary" className="p-5">
+    <Card variant="soft" className="p-5">
       <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
         <HelpCircle className="h-3.5 w-3.5" /> Pergunta de prescrição
       </div>
@@ -643,33 +752,29 @@ function ScientificUncertainty({ title, text }: { title?: string; text: string }
 }
 
 function ReferencesBlock({ title, ids }: { title?: string; ids: string[] }) {
-  const refs = ids.map((id) => repo.getReference(id)).filter(Boolean);
+  // Só referências reais da base RCD; placeholders "a-validar" não aparecem no
+  // corpo da aula (evita carimbo de "inacabado" em conteúdo já polido).
+  const refs = ids
+    .map((id) => repo.getReference(id))
+    .filter((r): r is NonNullable<typeof r> => Boolean(r) && r!.validationStatus !== "a-validar");
+  if (refs.length === 0) return null;
   return (
     <section>
       {title && <BlockTitle>{title}</BlockTitle>}
       <ol className="space-y-2">
-        {refs.map((r, i) =>
-          !r ? null : (
-            <li key={r.id} className="rounded-xl border border-border bg-surface p-3">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs font-semibold text-ink-3">{i + 1}.</span>
-                <Pill tone="neutral">{referenceSourceLabel[r.sourceType]}</Pill>
-                {r.openAccess && <Pill tone="success" icon={<Unlock className="h-3 w-3" />}>Acesso aberto</Pill>}
-                {r.validationStatus === "a-validar" && <Pill tone="warning">A validar (editorial)</Pill>}
-              </div>
-              <div className="mt-1 text-sm text-ink">
-                {r.validationStatus === "a-validar" ? (
-                  <span className="italic text-ink-2">Referência a ser validada pela equipe editorial.</span>
-                ) : (
-                  <>
-                    {r.authors} ({r.year}). <span className="italic">{r.title}</span>. {r.journalOrPublisher}.
-                  </>
-                )}
-              </div>
-              <p className="mt-0.5 text-xs text-ink-3">{r.abstractSummary}</p>
-            </li>
-          ),
-        )}
+        {refs.map((r, i) => (
+          <li key={r.id} className="rounded-xl border border-border bg-surface p-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-semibold text-ink-3">{i + 1}.</span>
+              <Pill tone="neutral">{referenceSourceLabel[r.sourceType]}</Pill>
+              {r.openAccess && <Pill tone="success" icon={<Unlock className="h-3 w-3" />}>Acesso aberto</Pill>}
+            </div>
+            <div className="mt-1 text-sm text-ink">
+              {r.authors} ({r.year}). <span className="italic">{r.title}</span>. {r.journalOrPublisher}.
+            </div>
+            <p className="mt-0.5 text-xs text-ink-3">{r.abstractSummary}</p>
+          </li>
+        ))}
       </ol>
     </section>
   );
@@ -703,9 +808,9 @@ function RelatedContent({ title, items }: { title?: string; items: { title: stri
 
 function ApplyToPrescription({ title, summary, onApply }: { title?: string; summary: string; onApply: (s: string) => void }) {
   return (
-    <section>
+    <section id="sec-aplicar" className="scroll-mt-24">
       {title && <BlockTitle>{title}</BlockTitle>}
-      <Card tone="primary" className="p-5">
+      <Card variant="soft" className="border-l-4 border-primary p-5">
         <p className="text-sm text-ink">{summary}</p>
         <button onClick={() => onApply(summary)} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
           <Target className="h-4 w-4" /> Aplicar no atendimento

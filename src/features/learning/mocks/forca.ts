@@ -57,7 +57,6 @@ const intensidadeVolume: Lesson = {
     bIV("prescription_question", {
       question:
         "Dois alunos com o mesmo objetivo de hipertrofia treinam peito. Um faz 3 séries de 5 repetições pesadas; outro, 3 séries de 12 repetições moderadas. Qual tende a hipertrofiar mais, e o que realmente decide isso?",
-      cta: "Construir a resposta",
     }),
     bIV(
       "key_concept",
@@ -322,7 +321,6 @@ const frequencia: Lesson = {
     bFR("prescription_question", {
       question:
         "Um aluno consegue 16 séries semanais de peito. Faz diferença fazer tudo numa sessão ou dividir em duas de 8? E se ele só puder treinar duas vezes na semana?",
-      cta: "Entender o que muda",
     }),
     bFR(
       "key_concept",
@@ -551,7 +549,6 @@ const sobrecargaProgressiva: Lesson = {
     bSP("prescription_question", {
       question:
         "Seu aluno faz 3 séries de 10 no supino com 40 kg há dois meses, com folga. O que exatamente você progride primeiro: carga, repetições, séries ou outra coisa?",
-      cta: "Ver o mecanismo",
     }),
     bSP(
       "key_concept",
@@ -768,7 +765,6 @@ const repeticoesEmReserva: Lesson = {
     bRIR("prescription_question", {
       question:
         "Você prescreveu 3 séries de 10 a 70% de 1RM. No dia, o aluno dormiu mal e a segunda série já vem muito pesada. Como decidir se mantém, reduz ou encerra, sem chutar?",
-      cta: "Conhecer a ferramenta",
     }),
     bRIR(
       "key_concept",

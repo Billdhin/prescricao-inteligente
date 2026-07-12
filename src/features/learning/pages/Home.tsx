@@ -5,8 +5,6 @@ import {
   Search,
   Stethoscope,
   PlayCircle,
-  Compass,
-  BrainCircuit,
   ArrowRight,
   CheckCircle2,
   XCircle,
@@ -18,13 +16,12 @@ import { useUser } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
 import { useAprender } from "../store";
-import { competencies, studyObjectives } from "../mocks";
+import { studyObjectives } from "../mocks";
 import { KnowledgeMap } from "../components/KnowledgeMap";
 import {
   DisciplineCard,
   RecommendationCard,
   StudyObjectiveCard,
-  CompetencyBars,
 } from "../components/shared";
 import { useDisciplineStat } from "../progress";
 
@@ -54,13 +51,6 @@ export function AprenderHome() {
   // Indicadores compactos (progresso profissional, não gamificação)
   const mecanismos = Object.values(lessonsState).filter((v) => v.status === "concluido").length;
   const casos = Object.values(casesState).filter((c) => c.status === "concluido").length;
-  const tocadas = new Set<string>();
-  for (const l of repo.getDisciplines()) {
-    const mods = repo.getModulesOf(l.id);
-    const hit = mods.some((m) => repo.getLessonsOfModule(m.id).some((ls) => (lessonsState[ls.id]?.progress ?? 0) > 0));
-    if (hit || l.progress > 0) tocadas.add(l.slug);
-  }
-  const disciplinasExploradas = tocadas.size;
 
   const continuar = useContinuar();
 
@@ -147,25 +137,6 @@ export function AprenderHome() {
           {featured.map((d) => (
             <FeaturedDisciplineCard key={d.id} slug={d.slug} />
           ))}
-        </div>
-      </section>
-
-      {/* 7.8 Progresso por competências */}
-      <section>
-        <SectionTitle
-          title="Seu desenvolvimento por competências"
-          subtitle="Além de aulas concluídas: o que você já consegue fazer."
-          action={{ label: "Ver progresso completo", href: "/aprender/progresso" }}
-        />
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Card className="p-5 lg:col-span-2">
-            <CompetencyBars items={competencies.slice(0, 6)} />
-          </Card>
-          <Card className="flex flex-col gap-3 p-5">
-            <Metric label="Mecanismos compreendidos" value={mecanismos} icon={<BrainCircuit className="h-4 w-4" />} />
-            <Metric label="Casos resolvidos" value={casos} icon={<Stethoscope className="h-4 w-4" />} />
-            <Metric label="Disciplinas exploradas" value={disciplinasExploradas} icon={<Compass className="h-4 w-4" />} />
-          </Card>
         </div>
       </section>
     </div>
@@ -287,13 +258,18 @@ function ContextualSearch({ mode, onMode }: { mode: "estudar" | "consultar"; onM
 
 function ContinuarCard({ continuar }: { continuar?: { title: string; href: string } }) {
   const alvo = continuar ?? { title: "Por que o joelho ultrapassar a ponta do pé não é um erro?", href: "/aprender/conteudos/por-que-joelho-ultrapassa-o-pe" };
+  // Subtítulo = disciplina real da aula retomada (antes ficava fixo em Biomecânica).
+  const slug = alvo.href.split("/").pop() || "";
+  const lessonRef = repo.getLesson(slug);
+  const disc = lessonRef ? repo.getDiscipline(lessonRef.disciplineSlug) : undefined;
+  const sub = disc?.shortTitle ?? disc?.title ?? "Conteúdo do Aprender";
   return (
     <Card className="flex flex-col p-5">
       <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
         <PlayCircle className="h-3.5 w-3.5" /> Continuar estudando
       </div>
       <div className="font-display font-bold text-ink">{alvo.title}</div>
-      <div className="mt-1 text-sm text-ink-2">Biomecânica do treinamento</div>
+      <div className="mt-1 text-sm text-ink-2">{sub}</div>
       <Link to={alvo.href} className={cn(buttonClasses("secondary", "sm"), "mt-3 self-start")}>
         Continuar <ArrowRight className="h-4 w-4" />
       </Link>
@@ -352,14 +328,3 @@ function FeaturedDisciplineCard({ slug }: { slug: string }) {
   return <DisciplineCard disc={disc} progress={stat.progress} status={stat.status} />;
 }
 
-function Metric({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-tint text-primary">{icon}</span>
-      <div>
-        <div className="tabular font-display text-xl font-bold text-ink">{value}</div>
-        <div className="text-xs text-ink-3">{label}</div>
-      </div>
-    </div>
-  );
-}

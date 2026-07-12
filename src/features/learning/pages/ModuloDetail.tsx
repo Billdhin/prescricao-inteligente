@@ -56,7 +56,7 @@ export function ModuloDetail() {
 
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-ink-2">
           <span className="inline-flex items-center gap-1.5"><Clock className="h-4 w-4 text-ink-3" /> {mod.estimatedMinutes} min</span>
-          <span className="inline-flex items-center gap-1.5"><Layers className="h-4 w-4 text-ink-3" /> {mod.lessonCount} aulas</span>
+          <span className="inline-flex items-center gap-1.5"><Layers className="h-4 w-4 text-ink-3" /> {mod.lessonCount} conteúdos</span>
           <span className="inline-flex items-center gap-1.5"><Stethoscope className="h-4 w-4 text-ink-3" /> {nivelLabel[mod.level]}</span>
         </div>
 

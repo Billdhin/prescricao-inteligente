@@ -24,9 +24,16 @@ import {
  */
 const disciplines = disciplinesRaw.map((d) => {
   const mods = modules.filter((m) => m.disciplineId === d.id);
-  if (mods.length === 0) return d;
+  // Casos vinculados: casa pelo TÍTULO da disciplina (mesma regra da aba Casos em
+  // DisciplinaDetail). Atenção: LearningCase.disciplines guarda TÍTULOS, não slugs.
+  // Se um dia migrar para slugs, ajuste aqui e no filtro da aba Casos em conjunto.
+  const caseCount = learningCases.filter((c) => c.disciplines.includes(d.title)).length;
+  if (mods.length === 0) return { ...d, caseCount };
   const lessonCount = mods.reduce((n, m) => n + m.lessonSlugs.length, 0);
-  return { ...d, moduleCount: mods.length, lessonCount };
+  // Duração real = soma dos minutos das aulas autoradas (evita prometer horas que
+  // não existem). Os componentes formatam min/h a partir deste total.
+  const estimatedMinutes = mods.reduce((n, m) => n + (m.estimatedMinutes || 0), 0);
+  return { ...d, moduleCount: mods.length, lessonCount, caseCount, estimatedMinutes };
 });
 
 /**

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
 import { macroareaLabel } from "../constants";
 import { iconByName } from "../icons";
-import { tokenTile, BookmarkButton, ModuleCard, StatusPill } from "../components/shared";
+import { tokenTile, BookmarkButton, ModuleCard, StatusPill, disciplineDurationLabel } from "../components/shared";
 import { useAprender } from "../store";
 import { disciplineStatFrom, moduleStatFrom } from "../progress";
 
@@ -42,11 +42,6 @@ export function DisciplinaDetail() {
 
   const abas = [
     {
-      id: "visao",
-      label: "Visão geral",
-      content: <VisaoGeral disc={disc} />,
-    },
-    {
       id: "modulos",
       label: "Módulos",
       content:
@@ -62,6 +57,11 @@ export function DisciplinaDetail() {
         ),
     },
     {
+      id: "visao",
+      label: "Visão geral",
+      content: <VisaoGeral disc={disc} />,
+    },
+    {
       id: "aplicacoes",
       label: "Aplicações",
       content: <Aplicacoes disc={disc} />,
@@ -74,7 +74,7 @@ export function DisciplinaDetail() {
     {
       id: "refs",
       label: "Referências",
-      content: <ReferenciasDaDisciplina />,
+      content: <ReferenciasDaDisciplina disc={disc} />,
     },
   ];
 
@@ -101,8 +101,10 @@ export function DisciplinaDetail() {
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
           <Meta icon={<Layers className="h-4 w-4" />}>{disc.moduleCount} módulos</Meta>
           <Meta icon={<PlayCircle className="h-4 w-4" />}>{disc.lessonCount} conteúdos</Meta>
-          <Meta icon={<Stethoscope className="h-4 w-4" />}>{disc.caseCount} casos</Meta>
-          <Meta icon={<Clock className="h-4 w-4" />}>{disc.estimatedHours} h</Meta>
+          {disc.caseCount > 0 && <Meta icon={<Stethoscope className="h-4 w-4" />}>{disc.caseCount} casos</Meta>}
+          {disciplineDurationLabel(disc) && (
+            <Meta icon={<Clock className="h-4 w-4" />}>{disciplineDurationLabel(disc)}</Meta>
+          )}
           <Meta icon={<Network className="h-4 w-4" />}>{disc.level}</Meta>
           {disc.reviewedAt && (
             <Meta icon={<CalendarCheck className="h-4 w-4" />}>
@@ -207,19 +209,42 @@ function CasosRelacionados({ disciplinaTitle }: { disciplinaTitle: string }) {
   );
 }
 
-function ReferenciasDaDisciplina() {
-  const refs = repo.getReferences().slice(0, 4);
+function ReferenciasDaDisciplina({ disc }: { disc: ReturnType<typeof repo.getDiscipline> }) {
+  if (!disc) return null;
+  // Referências efetivamente citadas pelas aulas desta disciplina (não a lista
+  // global). Sem duplicatas e sem placeholders "a-validar".
+  const ids = new Set<string>();
+  for (const m of repo.getModulesOf(disc.id)) {
+    for (const l of repo.getLessonsOfModule(m.id)) {
+      for (const b of l.blocks) {
+        if (b.type === "references") {
+          for (const id of (b.content as { ids?: string[] }).ids ?? []) ids.add(id);
+        }
+      }
+    }
+  }
+  const refs = [...ids]
+    .map((id) => repo.getReference(id))
+    .filter((r): r is NonNullable<typeof r> => Boolean(r) && r!.validationStatus !== "a-validar")
+    .slice(0, 8);
+
+  if (refs.length === 0) {
+    return (
+      <Card className="p-6 text-center text-sm text-ink-2">
+        As referências desta disciplina aparecem dentro de cada conteúdo.{" "}
+        <Link to="/aprender/biblioteca" className="font-semibold text-primary hover:underline">
+          Abrir biblioteca científica
+        </Link>
+      </Card>
+    );
+  }
   return (
     <div className="space-y-2">
       {refs.map((r) => (
         <Card key={r.id} className="p-4 text-sm">
-          {r.validationStatus === "a-validar" ? (
-            <span className="italic text-ink-2">Referência a ser validada pela equipe editorial.</span>
-          ) : (
-            <span className="text-ink">
-              {r.authors} ({r.year}). <span className="italic">{r.title}</span>. {r.journalOrPublisher}.
-            </span>
-          )}
+          <span className="text-ink">
+            {r.authors} ({r.year}). <span className="italic">{r.title}</span>. {r.journalOrPublisher}.
+          </span>
           <div className="mt-1 text-xs text-ink-3">{r.abstractSummary}</div>
         </Card>
       ))}

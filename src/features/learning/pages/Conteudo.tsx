@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, ChevronRight, CheckCircle2, Share2, Target, ThumbsUp, ThumbsDown } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronRight, CheckCircle2, Share2, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -69,7 +69,14 @@ export function Conteudo() {
               <ChevronRight className="h-3 w-3" />
             </>
           )}
-          {mod && <span className="truncate text-ink-2">{mod.title}</span>}
+          {mod &&
+            (disc ? (
+              <Link to={`/aprender/disciplinas/${disc.slug}/${mod.slug}`} className="truncate text-ink-2 hover:text-ink">
+                {mod.title}
+              </Link>
+            ) : (
+              <span className="truncate text-ink-2">{mod.title}</span>
+            ))}
         </nav>
         <div className="flex items-center gap-1">
           <BookmarkButton type="conteudo" targetId={lesson.slug} title={lesson.title} href={`/aprender/conteudos/${lesson.slug}`} />
@@ -87,12 +94,10 @@ export function Conteudo() {
       <header>
         {lesson.subtitle && <div className="text-xs font-semibold uppercase tracking-wider text-primary">{lesson.subtitle}</div>}
         <h1 className="font-display text-2xl font-bold text-ink md:text-3xl">{lesson.title}</h1>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        <p className="mt-2 max-w-2xl text-ink-2">{lesson.description}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <Pill tone="neutral">{lesson.estimatedMinutes} min</Pill>
           <Pill tone="analysis">{nivelLabel[lesson.level]}</Pill>
-          <button onClick={() => setApply(lesson.description)} className={buttonClasses("secondary", "sm")}>
-            <Target className="h-4 w-4" /> Aplicar no atendimento
-          </button>
         </div>
       </header>
 

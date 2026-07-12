@@ -71,7 +71,7 @@ export function deepLesson(s: DeepLessonSpec): Lesson {
   };
 
   push("hero", { kicker: s.kicker, text: s.hero });
-  if (s.question) push("prescription_question", { question: s.question, cta: "Construir a resposta" });
+  if (s.question) push("prescription_question", { question: s.question });
   s.concepts.forEach((c, i) =>
     push(
       "key_concept",
