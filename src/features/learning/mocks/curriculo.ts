@@ -228,28 +228,7 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
     },
   ],
   // avaliacao-fisica-e-funcional tem AUTORIA DEDICADA em avaliacao.ts.
-  "controle-de-carga-e-recuperacao": [
-    {
-      slug: "carga-interna",
-      title: "Carga interna e externa",
-      objective: "Monitorar a dose real do treino.",
-      level: "intermediario",
-      lessons: [
-        { slug: "srpe", title: "sRPE", type: "conceito", term: "sRPE", definition: "Carga interna estimada por percepção de esforço vezes a duração da sessão.", apply: "Ferramenta simples para acompanhar o volume semanal." },
-        { slug: "carga-externa", title: "Carga externa", type: "conceito", term: "Carga externa", definition: "Trabalho prescrito (séries, repetições, distância, tempo).", apply: "Comparar com a resposta interna do aluno." },
-      ],
-    },
-    {
-      slug: "recuperacao",
-      title: "Recuperação",
-      objective: "Equilibrar estímulo e recuperação.",
-      level: "intermediario",
-      lessons: [
-        { slug: "sono-estresse", title: "Sono e estresse", type: "conceito", term: "Recuperação", definition: "Sono, nutrição e estresse influenciam a resposta ao treino.", apply: "Considerar esses fatores ao ler estagnação ou fadiga." },
-        { slug: "sinais-fadiga", title: "Sinais de fadiga", type: "mecanismo", term: "Fadiga acumulada", definition: "Queda de desempenho e disposição por recuperação insuficiente.", apply: "Ajustar volume e intensidade diante dos sinais." },
-      ],
-    },
-  ],
+  // controle-de-carga-e-recuperacao tem AUTORIA DEDICADA em controle-carga.ts.
   "planejamento-e-periodizacao": [
     {
       slug: "principios",
