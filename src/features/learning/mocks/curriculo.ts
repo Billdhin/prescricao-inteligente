@@ -232,94 +232,10 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
   // planejamento-e-periodizacao tem AUTORIA DEDICADA em periodizacao.ts.
   // raciocinio-de-prescricao tem AUTORIA DEDICADA em raciocinio.ts.
   // prescricao-para-grupos-especiais tem AUTORIA DEDICADA em grupos-especiais.ts.
-  "dor-limitacoes-e-adaptacao": [
-    {
-      slug: "entender-dor",
-      title: "Entender a dor",
-      objective: "Ler a dor no contexto, sem diagnosticar.",
-      level: "intermediario",
-      lessons: [
-        { slug: "dor-nao-e-dano", title: "Dor e dano", type: "conceito", term: "Dor", definition: "Experiência multifatorial que nem sempre corresponde a dano tecidual.", apply: "Evitar alarmar; observar tolerância e comportamento da dor." },
-        { slug: "red-flags", title: "Sinais de alerta", type: "conceito", term: "Red flags", definition: "Sinais que sugerem avaliação de profissional de saúde.", apply: "Encaminhar diante de sinais de alerta." },
-      ],
-    },
-    {
-      slug: "adaptar-dor",
-      title: "Adaptar com dor",
-      objective: "Manter estímulo dentro da tolerância.",
-      level: "intermediario",
-      lessons: [
-        { slug: "amplitude-tolerada", title: "Amplitude tolerada", type: "mecanismo", term: "Exposição gradual", definition: "Aumentar carga e amplitude conforme a tolerância melhora.", apply: "Progredir sem provocar dor crescente." },
-        { slug: "monitorar-resposta", title: "Monitorar a resposta", type: "conceito", term: "Resposta à carga", definition: "Acompanhar a dor durante, após e no dia seguinte.", apply: "A resposta guia a progressão, não o calendário." },
-      ],
-    },
-  ],
-  "leitura-critica-de-evidencias": [
-    {
-      slug: "niveis-evidencia",
-      title: "Níveis de evidência",
-      objective: "Situar um estudo na hierarquia da evidência.",
-      level: "intermediario",
-      lessons: [
-        { slug: "hierarquia", title: "Hierarquia", type: "conceito", term: "Níveis de evidência", definition: "Ordem que vai de opinião a revisões sistemáticas e diretrizes.", apply: "Ponderar a força da recomendação pela qualidade da evidência." },
-        { slug: "vieses", title: "Vieses", type: "conceito", term: "Viés", definition: "Fatores que distorcem os resultados de um estudo.", apply: "Ler com senso crítico antes de generalizar." },
-      ],
-    },
-    {
-      slug: "aplicar-evidencia",
-      title: "Aplicar a evidência",
-      objective: "Levar a evidência ao caso individual.",
-      level: "avancado",
-      lessons: [
-        { slug: "individualizar", title: "Individualizar", type: "mecanismo", term: "Aplicação individual", definition: "A média de um estudo nem sempre descreve o aluno à frente.", apply: "Usar a evidência como ponto de partida, ajustando ao contexto." },
-        { slug: "incerteza", title: "Incerteza", type: "conceito", term: "Incerteza científica", definition: "Reconhecer o que ainda não está estabelecido.", apply: "Comunicar tendência, não certeza absoluta." },
-      ],
-    },
-  ],
-  "comunicacao-e-adesao": [
-    {
-      slug: "comunicar",
-      title: "Comunicação clara",
-      objective: "Explicar decisões de forma acessível.",
-      level: "fundamental",
-      lessons: [
-        { slug: "linguagem", title: "Linguagem", type: "conceito", term: "Linguagem acessível", definition: "Explicar sem jargão, conectando ao objetivo do aluno.", apply: "Clareza aumenta a confiança e a adesão." },
-        { slug: "expectativa", title: "Expectativa", type: "conceito", term: "Alinhamento de expectativa", definition: "Combinar metas realistas e o tempo esperado de resultado.", apply: "Expectativa alinhada reduz frustração e abandono." },
-      ],
-    },
-    {
-      slug: "adesao",
-      title: "Sustentar a adesão",
-      objective: "Manter o aluno engajado ao longo do tempo.",
-      level: "intermediario",
-      lessons: [
-        { slug: "barreiras", title: "Barreiras", type: "conceito", term: "Barreiras à prática", definition: "Fatores que dificultam a constância (tempo, dor, motivação).", apply: "Identificar e reduzir barreiras aumenta a frequência." },
-        { slug: "habito", title: "Hábito", type: "mecanismo", term: "Construção de hábito", definition: "Repetição consistente que torna a prática parte da rotina.", apply: "Sessões viáveis e prazerosas sustentam o hábito." },
-      ],
-    },
-  ],
-  "seguranca-e-limites-de-atuacao": [
-    {
-      slug: "seguranca",
-      title: "Segurança na sessão",
-      objective: "Reconhecer sinais que pedem cautela.",
-      level: "fundamental",
-      lessons: [
-        { slug: "sinais-alerta", title: "Sinais de alerta", type: "conceito", term: "Sinais de alerta", definition: "Dor no peito, tontura, falta de ar desproporcional pedem interromper.", apply: "Interromper e reavaliar diante desses sinais." },
-        { slug: "triagem-parq", title: "Triagem (PAR-Q)", type: "conceito", term: "Prontidão para atividade", definition: "Perguntas simples antes de liberar o esforço.", apply: "Base do gate pré-sessão do Semáforo." },
-      ],
-    },
-    {
-      slug: "escopo",
-      title: "Escopo profissional",
-      objective: "Atuar dentro do escopo e encaminhar quando preciso.",
-      level: "intermediario",
-      lessons: [
-        { slug: "escopo-atuacao", title: "Escopo de atuação", type: "conceito", term: "Escopo profissional", definition: "O que compete ao profissional de Educação Física e o que compete à saúde.", apply: "A ferramenta apoia a decisão; a conduta clínica é do profissional de saúde." },
-        { slug: "encaminhamento", title: "Encaminhamento", type: "conceito", term: "Encaminhamento", definition: "Direcionar o aluno a outro profissional diante de sinais de alerta.", apply: "Encaminhar é parte da conduta segura." },
-      ],
-    },
-  ],
+  // dor-limitacoes-e-adaptacao tem AUTORIA DEDICADA em dor.ts.
+  // leitura-critica-de-evidencias tem AUTORIA DEDICADA em evidencias.ts.
+  // comunicacao-e-adesao tem AUTORIA DEDICADA em comunicacao.ts.
+  // seguranca-e-limites-de-atuacao tem AUTORIA DEDICADA em seguranca.ts.
 };
 
 function lessonFromSpec(spec: LessonSpec, discSlug: string, modId: string, modSlug: string): Lesson {
