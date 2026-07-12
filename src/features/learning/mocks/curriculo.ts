@@ -204,28 +204,7 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
   // fisiologia-do-exercicio tem AUTORIA DEDICADA em fisiologia-exercicio.ts.
   // treinamento-de-forca tem AUTORIA DEDICADA em forca.ts (padrão livro-texto),
   // por isso NÃO entra no currículo curado (evita duplicar módulos/aulas).
-  "treinamento-cardiorrespiratorio": [
-    {
-      slug: "metodos-cardio",
-      title: "Métodos aeróbios",
-      objective: "Diferenciar contínuo e intervalado.",
-      level: "fundamental",
-      lessons: [
-        { slug: "continuo", title: "Contínuo", type: "conceito", term: "Treino contínuo", definition: "Esforço sustentado em intensidade estável por um período.", apply: "Constrói a base aeróbia com segurança no início." },
-        { slug: "intervalado", title: "Intervalado", type: "conceito", term: "Treino intervalado", definition: "Alternância entre esforços intensos e recuperação.", apply: "Estímulo eficiente para aptidão sobre base já estabelecida." },
-      ],
-    },
-    {
-      slug: "zonas",
-      title: "Zonas e monitoramento",
-      objective: "Guiar a intensidade com ferramentas práticas.",
-      level: "intermediario",
-      lessons: [
-        { slug: "zonas-fc", title: "Zonas de FC", type: "conceito", term: "Zona-alvo", definition: "Faixa de frequência cardíaca correspondente à intensidade pretendida.", apply: "Útil quando a FC é confiável; alternar com o teste da fala." },
-        { slug: "fc-recuperacao", title: "FC de recuperação", type: "mecanismo", term: "FC de recuperação", definition: "Queda da FC logo após o esforço; pista de condicionamento.", apply: "Acompanhar essa queda mostra evolução ao longo das semanas." },
-      ],
-    },
-  ],
+  // treinamento-cardiorrespiratorio tem AUTORIA DEDICADA em cardio.ts.
   "mobilidade-e-flexibilidade": [
     {
       slug: "conceitos-mobilidade",
