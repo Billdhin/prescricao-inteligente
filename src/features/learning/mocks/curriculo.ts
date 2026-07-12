@@ -49,92 +49,9 @@ const REF_POR_DISCIPLINA: Record<string, string[]> = {
 
 /** Especificação do currículo por disciplina (3 módulos, 2 aulas cada). */
 const CURRICULO: Record<string, ModuleSpec[]> = {
-  "anatomia-funcional": [
-    {
-      slug: "sistema-muscular",
-      title: "Sistema muscular na prática",
-      objective: "Reconhecer músculos por sua função no movimento, não só pelo nome.",
-      level: "fundamental",
-      lessons: [
-        { slug: "musculos-por-funcao", title: "Músculos por função", type: "conceito", term: "Ação muscular", definition: "O papel que um músculo desempenha em um movimento (agonista, antagonista, sinergista, estabilizador).", apply: "Classificar o papel do músculo ajuda a entender o que o exercício realmente treina." },
-        { slug: "biarticulares", title: "Músculos biarticulares", type: "conceito", term: "Músculo biarticular", definition: "Músculo que cruza duas articulações e cujo comprimento depende da posição de ambas.", apply: "Explica insuficiências ativa e passiva e por que a posição de uma articulação muda a força na outra." },
-      ],
-    },
-    {
-      slug: "articulacoes",
-      title: "Articulações e amplitude",
-      objective: "Relacionar o tipo de articulação com a amplitude e a estabilidade.",
-      level: "fundamental",
-      lessons: [
-        { slug: "tipos-de-articulacao", title: "Tipos de articulação", type: "conceito", term: "Articulação sinovial", definition: "Articulação móvel cuja forma define os movimentos possíveis (ex.: esférica, gínglimo).", apply: "A forma articular orienta quais movimentos treinar e onde a amplitude é naturalmente limitada." },
-        { slug: "estabilidade-vs-mobilidade", title: "Estabilidade e mobilidade", type: "conceito", term: "Trade-off mobilidade e estabilidade", definition: "Regiões do corpo tendem a priorizar mais mobilidade ou mais estabilidade em cadeia.", apply: "Ajuda a decidir onde buscar amplitude e onde reforçar controle." },
-      ],
-    },
-    {
-      slug: "cadeia-muscular",
-      title: "Trabalho em cadeia",
-      objective: "Entender como os segmentos cooperam em um padrão de movimento.",
-      level: "intermediario",
-      lessons: [
-        { slug: "cadeia-posterior", title: "Cadeia posterior", type: "mecanismo", term: "Cadeia posterior", definition: "Conjunto de músculos do dorso, glúteos e isquiotibiais que atuam juntos em padrões de quadril.", apply: "Fundamenta a escolha e a ênfase em terra, hip thrust e remadas." },
-        { slug: "core-funcional", title: "Core funcional", type: "mecanismo", term: "Core", definition: "Musculatura do tronco que estabiliza a coluna e transfere força entre membros.", apply: "Prioriza padrões de anti-movimento (prancha, dead bug) na maioria dos objetivos." },
-      ],
-    },
-  ],
-  "fisiologia-humana": [
-    {
-      slug: "sistema-cardiovascular",
-      title: "Sistema cardiovascular",
-      objective: "Compreender a resposta cardiovascular ao esforço.",
-      level: "fundamental",
-      lessons: [
-        { slug: "debito-cardiaco", title: "Débito cardíaco", type: "conceito", term: "Débito cardíaco", definition: "Volume de sangue bombeado por minuto (frequência cardíaca x volume sistólico).", apply: "Explica por que a frequência cardíaca sobe com a intensidade e como o treino melhora a eficiência." },
-        { slug: "pressao-no-exercicio", title: "Pressão no exercício", type: "conceito", term: "Resposta pressórica", definition: "Comportamento da pressão arterial durante e após o esforço.", apply: "Orienta cuidados com respiração e intensidade, sobretudo na hipertensão." },
-      ],
-    },
-    {
-      slug: "sistema-respiratorio",
-      title: "Sistema respiratório",
-      objective: "Relacionar ventilação, esforço e percepção.",
-      level: "fundamental",
-      lessons: [
-        { slug: "ventilacao", title: "Ventilação e esforço", type: "conceito", term: "Limiar ventilatório", definition: "Ponto em que a ventilação sobe de forma desproporcional à intensidade.", apply: "Sustenta o teste da fala como guia prático de intensidade." },
-        { slug: "consumo-oxigenio", title: "Consumo de oxigênio", type: "mecanismo", term: "VO2", definition: "Quantidade de oxigênio consumida; reflete a demanda metabólica da tarefa.", apply: "Base para entender aptidão aeróbia e progressão de volume." },
-      ],
-    },
-    {
-      slug: "adaptacoes",
-      title: "Adaptações ao treino",
-      objective: "Distinguir respostas agudas de adaptações crônicas.",
-      level: "intermediario",
-      lessons: [
-        { slug: "aguda-vs-cronica", title: "Aguda e crônica", type: "conceito", term: "Adaptação crônica", definition: "Mudança estrutural ou funcional que se consolida com o treino repetido.", apply: "Diferencia o cansaço de hoje do resultado que se constrói ao longo de semanas." },
-        { slug: "homeostase", title: "Homeostase e estímulo", type: "mecanismo", term: "Sobrecarga e recuperação", definition: "O corpo se adapta quando o estímulo desafia a homeostase e há recuperação suficiente.", apply: "Fundamenta a progressão gradual e a importância do descanso." },
-      ],
-    },
-  ],
-  "bioquimica-metabolismo": [
-    {
-      slug: "vias-energeticas",
-      title: "Vias energéticas",
-      objective: "Relacionar duração e intensidade com o sistema energético predominante.",
-      level: "fundamental",
-      lessons: [
-        { slug: "sistemas-energeticos", title: "Sistemas energéticos", type: "conceito", term: "Sistemas de energia", definition: "Vias que ressintetizam ATP: fosfagênio, glicolítico e oxidativo.", apply: "Explica por que esforços curtos e longos usam combustíveis diferentes." },
-        { slug: "substratos", title: "Substratos", type: "conceito", term: "Substrato energético", definition: "Fonte usada para gerar energia (fosfocreatina, glicose, gordura).", apply: "Orienta a leitura de esforços intensos versus contínuos." },
-      ],
-    },
-    {
-      slug: "metabolismo-treino",
-      title: "Metabolismo e treino",
-      objective: "Entender o gasto e a recuperação metabólica.",
-      level: "intermediario",
-      lessons: [
-        { slug: "gasto-energetico", title: "Gasto energético", type: "conceito", term: "Gasto energético", definition: "Energia total gasta em repouso e em atividade.", apply: "Base do papel do volume aeróbio no emagrecimento." },
-        { slug: "epoc", title: "EPOC", type: "mecanismo", term: "EPOC", definition: "Consumo de oxigênio elevado após o exercício, para restaurar o equilíbrio.", apply: "Ajuda a ler o efeito de sessões intensas sem superestimá-lo." },
-      ],
-    },
-  ],
+  // anatomia-funcional tem AUTORIA DEDICADA em anatomia.ts.
+  // fisiologia-humana tem AUTORIA DEDICADA em fisiologia-humana.ts.
+  // bioquimica-metabolismo tem AUTORIA DEDICADA em bioquimica.ts.
   // cinesiologia tem AUTORIA DEDICADA em cinesiologia.ts.
   // biomecanica-basica tem AUTORIA DEDICADA em biomecanica-basica.ts.
   // neurofisiologia-do-movimento tem AUTORIA DEDICADA em neurofisiologia.ts.

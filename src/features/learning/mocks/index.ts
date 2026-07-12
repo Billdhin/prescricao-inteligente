@@ -16,6 +16,9 @@ import { mobilidadeModules, mobilidadeLessons } from "./mobilidade";
 import { neurofisiologiaModules, neurofisiologiaLessons } from "./neurofisiologia";
 import { cinesiologiaModules, cinesiologiaLessons } from "./cinesiologia";
 import { biomecanicaBasicaModules, biomecanicaBasicaLessons } from "./biomecanica-basica";
+import { bioquimicaModules, bioquimicaLessons } from "./bioquimica";
+import { anatomiaModules, anatomiaLessons } from "./anatomia";
+import { fisiologiaHumanaModules, fisiologiaHumanaLessons } from "./fisiologia-humana";
 import { curriculoModules, curriculoLessons } from "./curriculo";
 
 /** Módulos e aulas combinados: disciplinas de AUTORIA DEDICADA (padrão livro-texto)
@@ -27,12 +30,14 @@ const autoradas = {
     ...avaliacaoModules, ...controleCargaModules, ...periodizacaoModules, ...raciocinioModules,
     ...gruposEspeciaisModules, ...comunicacaoModules, ...segurancaModules, ...dorModules, ...evidenciasModules,
     ...mobilidadeModules, ...neurofisiologiaModules, ...cinesiologiaModules, ...biomecanicaBasicaModules,
+    ...bioquimicaModules, ...anatomiaModules, ...fisiologiaHumanaModules,
   ],
   lessons: [
     ...lessonsBio, ...forcaLessons, ...fisiologiaExercicioLessons, ...cardioLessons,
     ...avaliacaoLessons, ...controleCargaLessons, ...periodizacaoLessons, ...raciocinioLessons,
     ...gruposEspeciaisLessons, ...comunicacaoLessons, ...segurancaLessons, ...dorLessons, ...evidenciasLessons,
     ...mobilidadeLessons, ...neurofisiologiaLessons, ...cinesiologiaLessons, ...biomecanicaBasicaLessons,
+    ...bioquimicaLessons, ...anatomiaLessons, ...fisiologiaHumanaLessons,
   ],
 };
 export const modules = [...autoradas.modules, ...curriculoModules];
