@@ -227,28 +227,7 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
       ],
     },
   ],
-  "avaliacao-fisica-e-funcional": [
-    {
-      slug: "medidas",
-      title: "Medidas e interpretação",
-      objective: "Escolher e interpretar medidas com propósito.",
-      level: "fundamental",
-      lessons: [
-        { slug: "composicao-corporal", title: "Composição corporal", type: "conceito", term: "Composição corporal", definition: "Estimativa das frações de massa (gordura, magra) por diferentes métodos.", apply: "Cada método tem erro; comparar sempre pelo mesmo protocolo." },
-        { slug: "perimetria", title: "Perimetria", type: "conceito", term: "Perímetros", definition: "Medidas de circunferência que acompanham mudanças ao longo do tempo.", apply: "Padronizar ponto e postura reduz o erro entre avaliações." },
-      ],
-    },
-    {
-      slug: "testes-funcionais",
-      title: "Testes funcionais",
-      objective: "Responder a perguntas com o teste certo.",
-      level: "intermediario",
-      lessons: [
-        { slug: "escolher-teste", title: "Escolher o teste", type: "conceito", term: "Validade do teste", definition: "O teste responde de fato à pergunta que se quer investigar.", apply: "Definir a pergunta antes de escolher o teste." },
-        { slug: "interpretar-resultado", title: "Interpretar o resultado", type: "mecanismo", term: "Interpretação", definition: "Ler o resultado no contexto do aluno e da variação esperada.", apply: "Comparar com a própria linha de base, não só com tabelas." },
-      ],
-    },
-  ],
+  // avaliacao-fisica-e-funcional tem AUTORIA DEDICADA em avaliacao.ts.
   "controle-de-carga-e-recuperacao": [
     {
       slug: "carga-interna",
