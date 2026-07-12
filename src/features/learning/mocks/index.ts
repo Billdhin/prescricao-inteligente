@@ -1,13 +1,18 @@
 import { modules as modulesBio } from "./modules";
 import { lessons as lessonsBio } from "./lessons";
 import { forcaModules, forcaLessons } from "./forca";
+import { fisiologiaExercicioModules, fisiologiaExercicioLessons } from "./fisiologia-exercicio";
 import { curriculoModules, curriculoLessons } from "./curriculo";
 
-/** Módulos e aulas combinados: Biomecânica e Treinamento de força (autoria dedicada,
- *  padrão livro-texto) + demais disciplinas (currículo curado). Assim nenhuma
- *  disciplina abre vazia e as disciplinas-carro-chefe têm profundidade real. */
-export const modules = [...modulesBio, ...forcaModules, ...curriculoModules];
-export const lessons = [...lessonsBio, ...forcaLessons, ...curriculoLessons];
+/** Módulos e aulas combinados: disciplinas de AUTORIA DEDICADA (padrão livro-texto)
+ *  + demais disciplinas (currículo curado). Conforme cada disciplina é autorada em
+ *  profundidade, ela sai do currículo curado e entra aqui. */
+const autoradas = {
+  modules: [...modulesBio, ...forcaModules, ...fisiologiaExercicioModules],
+  lessons: [...lessonsBio, ...forcaLessons, ...fisiologiaExercicioLessons],
+};
+export const modules = [...autoradas.modules, ...curriculoModules];
+export const lessons = [...autoradas.lessons, ...curriculoLessons];
 
 export { disciplines } from "./disciplines";
 export { demoLessonSlug } from "./lessons";

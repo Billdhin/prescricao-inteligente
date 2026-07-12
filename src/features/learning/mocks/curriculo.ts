@@ -201,38 +201,7 @@ const CURRICULO: Record<string, ModuleSpec[]> = {
       ],
     },
   ],
-  "fisiologia-do-exercicio": [
-    {
-      slug: "aptidao-aerobia",
-      title: "Aptidão aeróbia",
-      objective: "Entender e treinar a capacidade cardiorrespiratória.",
-      level: "fundamental",
-      lessons: [
-        { slug: "vo2max-limitantes", title: "O que limita o VO2máx", type: "mecanismo", term: "VO2máx", definition: "Consumo máximo de oxigênio; limitado sobretudo pela entrega central de oxigênio.", apply: "Melhora com treino contínuo e intervalado bem dosados." },
-        { slug: "limiares", title: "Limiares", type: "conceito", term: "Limiar", definition: "Intensidade em que o metabolismo muda de padrão (ventilatório, de lactato).", apply: "Ajuda a definir zonas e a progressão do condicionamento." },
-      ],
-    },
-    {
-      slug: "respostas-forca",
-      title: "Respostas ao treino de força",
-      objective: "Distinguir adaptações neurais e estruturais.",
-      level: "intermediario",
-      lessons: [
-        { slug: "adaptacao-neural", title: "Adaptação neural", type: "conceito", term: "Adaptação neural", definition: "Ganho de força inicial por melhor recrutamento e coordenação, antes da hipertrofia.", apply: "Explica ganhos rápidos de força em iniciantes." },
-        { slug: "hipertrofia-mecanismos", title: "Mecanismos de hipertrofia", type: "mecanismo", term: "Tensão mecânica", definition: "Estímulo central da hipertrofia, somado a volume e recuperação.", apply: "Prioriza volume com boa carga e progressão." },
-      ],
-    },
-    {
-      slug: "fadiga-recuperacao",
-      title: "Fadiga e recuperação",
-      objective: "Ler a fadiga para dosar o treino.",
-      level: "intermediario",
-      lessons: [
-        { slug: "fadiga-central-periferica", title: "Fadiga central e periférica", type: "conceito", term: "Fadiga", definition: "Queda de desempenho de origem central (sistema nervoso) ou periférica (músculo).", apply: "Orienta a distribuição de volume e a recuperação." },
-        { slug: "supercompensacao", title: "Supercompensação", type: "mecanismo", term: "Supercompensação", definition: "Melhora acima do nível inicial após estímulo e recuperação adequados.", apply: "Fundamenta o equilíbrio entre carga e descanso." },
-      ],
-    },
-  ],
+  // fisiologia-do-exercicio tem AUTORIA DEDICADA em fisiologia-exercicio.ts.
   // treinamento-de-forca tem AUTORIA DEDICADA em forca.ts (padrão livro-texto),
   // por isso NÃO entra no currículo curado (evita duplicar módulos/aulas).
   "treinamento-cardiorrespiratorio": [
