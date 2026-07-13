@@ -18,6 +18,7 @@ const sistemas = deepLesson({
     { term: "Sistemas de energia", definition: "Vias que ressintetizam ATP: fosfagênio (rápido, curtíssima duração), glicolítico (rápido, curta duração, com acúmulo de metabólitos) e oxidativo (mais lento, sustentável por muito tempo)." },
     { term: "ATP", definition: "Moeda de energia da célula. É gasto e reposto continuamente; o sistema que repõe muda com a intensidade e a duração do esforço." },
   ],
+  figure: { id: "vias-energeticas" },
   chart: {
     title: "Sistema predominante por duração do esforço (ilustrativo)",
     points: [

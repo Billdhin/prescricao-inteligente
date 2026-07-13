@@ -32,6 +32,7 @@ const vo2max = deepLesson({
     { term: "VO2máx", definition: "Maior taxa de consumo de oxigênio que o organismo alcança em esforço máximo. Depende de entregar oxigênio aos músculos (débito cardíaco e transporte) e de extraí-lo (diferença arteriovenosa)." },
     { term: "Débito cardíaco", definition: "Volume de sangue bombeado por minuto, produto da frequência cardíaca pelo volume sistólico. É o principal determinante da entrega de oxigênio." },
   ],
+  figure: { id: "dissociacao-o2" },
   mechanism: {
     title: "Da respiração ao músculo",
     steps: [
