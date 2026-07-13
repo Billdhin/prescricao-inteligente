@@ -559,6 +559,7 @@ const sobrecargaProgressiva: Lesson = {
       },
       { title: "Conceito-chave" },
     ),
+    bSP("figure", { figureId: "supercompensacao" }),
     bSP(
       "mechanism_flow",
       {

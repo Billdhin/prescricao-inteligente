@@ -792,6 +792,377 @@ function FigEixoEndocrino() {
   );
 }
 
+/* ==================== 15. ALAVANCAS ================================== */
+
+function FigAlavancas() {
+  const rows = [
+    { key: "l1", y: 72, label: "1ª classe (interfixa)", ex: "Apoio entre força e resistência. Ex.: extensão de cotovelo.", ful: 220, fx: 100, rx: 340 },
+    { key: "l2", y: 186, label: "2ª classe (inter-resistente)", ex: "Resistência no meio. Ex.: elevação de panturrilha.", ful: 80, fx: 360, rx: 220 },
+    { key: "l3", y: 300, label: "3ª classe (interpotente)", ex: "Força no meio, entre apoio e carga. Ex.: flexão de cotovelo.", ful: 80, fx: 180, rx: 360 },
+  ];
+  return (
+    <svg viewBox="0 0 720 360" {...svgProps("Três classes de alavanca do corpo conforme a posição do apoio, da força e da resistência")}>
+      <defs>
+        <Arrowhead id="ah-alav-f" color={C.primary} />
+        <Arrowhead id="ah-alav-r" color={C.cta} />
+      </defs>
+      {rows.map((r) => (
+        <g key={r.key}>
+          <line x1={60} y1={r.y} x2={380} y2={r.y} stroke={C.ink2} strokeWidth={5} strokeLinecap="round" />
+          <path d={`M${r.ful - 13},${r.y + 24} L${r.ful + 13},${r.y + 24} L${r.ful},${r.y + 3} Z`} fill={C.ink3} />
+          <line x1={r.fx} y1={r.y - 3} x2={r.fx} y2={r.y - 40} stroke={C.primary} strokeWidth={3} markerEnd="url(#ah-alav-f)" />
+          <text x={r.fx} y={r.y - 46} textAnchor="middle" fontSize={12} fontWeight={700} fill={C.primary}>F</text>
+          <line x1={r.rx} y1={r.y + 3} x2={r.rx} y2={r.y + 40} stroke={C.cta} strokeWidth={3} markerEnd="url(#ah-alav-r)" />
+          <text x={r.rx} y={r.y + 52} textAnchor="middle" fontSize={12} fontWeight={700} fill="var(--cta-text)">R</text>
+          <text x={408} y={r.y - 4} fontSize={13} fontWeight={700} fill={C.ink}>{r.label}</text>
+          <text x={408} y={r.y + 15} fontSize={10.5} fill={C.ink3}>{r.ex}</text>
+        </g>
+      ))}
+      <text x={60} y={350} fontSize={11} fontWeight={600} fill={C.ink3}>F força (músculo) · R resistência (carga) · triângulo = apoio (articulação)</text>
+    </svg>
+  );
+}
+
+/* ==================== 16. CURVA DE RESISTÊNCIA ======================= */
+
+function FigCurvaResistencia() {
+  const x0 = 70, x1 = 690, y0 = 280, yTop = 40;
+  const toX = (v: number) => x0 + (v / 100) * (x1 - x0);
+  const toY = (v: number) => y0 - (v / 100) * (y0 - yTop);
+  const asc = (a: number) => 22 + a * 0.68;
+  const desc = (a: number) => 90 - a * 0.68;
+  const bell = (a: number) => 95 - Math.abs(a - 50) * Math.abs(a - 50) * 0.03;
+  const build = (fn: (a: number) => number) => {
+    let d = "";
+    for (let a = 0; a <= 100; a += 2) d += `${a === 0 ? "M" : "L"} ${toX(a).toFixed(1)} ${toY(fn(a)).toFixed(1)} `;
+    return d;
+  };
+  return (
+    <svg viewBox="0 0 720 340" {...svgProps("Curvas de resistência: como a dificuldade de um exercício varia ao longo da amplitude")}>
+      <line x1={x0} y1={yTop} x2={x0} y2={y0} stroke={C.ink2} strokeWidth={1.5} />
+      <line x1={x0} y1={y0} x2={x1} y2={y0} stroke={C.ink2} strokeWidth={1.5} />
+      <text x={26} y={170} fontSize={12} fill={C.ink2} transform="rotate(-90 26 170)">Resistência percebida</text>
+      <text x={385} y={315} textAnchor="middle" fontSize={12} fill={C.ink2}>Amplitude do movimento (início → fim)</text>
+      <path d={build(asc)} fill="none" stroke={C.primary} strokeWidth={2.6} />
+      <path d={build(desc)} fill="none" stroke={C.cta} strokeWidth={2.6} />
+      <path d={build(bell)} fill="none" stroke={C.analysis} strokeWidth={2.6} />
+      <g fontSize={11.5} fontWeight={600}>
+        <line x1={430} y1={62} x2={455} y2={62} stroke={C.primary} strokeWidth={3} /><text x={460} y={66} fill={C.ink2}>Crescente (mais difícil no fim)</text>
+        <line x1={430} y1={84} x2={455} y2={84} stroke={C.cta} strokeWidth={3} /><text x={460} y={88} fill={C.ink2}>Decrescente (mais difícil no início)</text>
+        <line x1={430} y1={106} x2={455} y2={106} stroke={C.analysis} strokeWidth={3} /><text x={460} y={110} fill={C.ink2}>Em sino (mais difícil no meio)</text>
+      </g>
+    </svg>
+  );
+}
+
+/* ==================== 17. TORQUE E BRAÇO DE MOMENTO ================== */
+
+function FigTorque() {
+  const px = 130, py = 250, ex = 430, ey = 120, armY = py + 70;
+  return (
+    <svg viewBox="0 0 720 320" {...svgProps("Torque é a força vezes o braço de momento; o braço muda com o ângulo da articulação")}>
+      <defs><Arrowhead id="ah-tq" color={C.primary} /></defs>
+      <circle cx={px} cy={py} r={9} fill="none" stroke={C.ink} strokeWidth={2} />
+      <circle cx={px} cy={py} r={3} fill={C.ink} />
+      <text x={px} y={py + 28} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.ink}>articulação (eixo)</text>
+      <line x1={px} y1={py} x2={ex} y2={ey} stroke={C.ink2} strokeWidth={6} strokeLinecap="round" />
+      <text x={255} y={172} fontSize={11} fill={C.ink3} transform="rotate(-24 255 172)">segmento (osso)</text>
+      <circle cx={ex} cy={ey} r={12} fill={C.cta} />
+      <line x1={ex} y1={ey + 12} x2={ex} y2={ey + 96} stroke={C.cta} strokeWidth={3} />
+      <text x={ex + 12} y={ey + 64} fontSize={12} fontWeight={700} fill="var(--cta-text)">Força (peso)</text>
+      <line x1={px} y1={armY} x2={ex} y2={armY} stroke={C.primary} strokeWidth={2} strokeDasharray="6 4" markerEnd="url(#ah-tq)" />
+      <line x1={px} y1={py} x2={px} y2={armY} stroke={C.border} strokeWidth={1} />
+      <line x1={ex} y1={ey} x2={ex} y2={armY} stroke={C.border} strokeWidth={1} strokeDasharray="2 3" />
+      <text x={(px + ex) / 2} y={armY - 8} textAnchor="middle" fontSize={12} fontWeight={700} fill={C.primary}>braço de momento</text>
+      <rect x={420} y={215} width={280} height={68} rx={12} fill={C.soft} stroke={C.border} strokeWidth={1.4} />
+      <text x={560} y={243} textAnchor="middle" fontSize={14} fontWeight={800} fill={C.ink}>Torque = Força × braço de momento</text>
+      <text x={560} y={266} textAnchor="middle" fontSize={11} fill={C.ink3}>Máximo quando o segmento fica horizontal.</text>
+    </svg>
+  );
+}
+
+/* ==================== 18. CENTRO DE GRAVIDADE ======================= */
+
+function FigCentroGravidade() {
+  return (
+    <svg viewBox="0 0 720 340" {...svgProps("Centro de gravidade e base de suporte: o equilíbrio depende da linha de gravidade cair dentro da base")}>
+      <text x={360} y={34} textAnchor="middle" fontSize={12} fill={C.ink3}>Base mais larga e centro de gravidade mais baixo aumentam a estabilidade.</text>
+      {/* estável */}
+      <circle cx={190} cy={78} r={18} fill={C.tint} stroke={C.primary} strokeWidth={2} />
+      <line x1={190} y1={96} x2={190} y2={195} stroke={C.ink2} strokeWidth={8} strokeLinecap="round" />
+      <line x1={190} y1={195} x2={160} y2={272} stroke={C.ink2} strokeWidth={7} strokeLinecap="round" />
+      <line x1={190} y1={195} x2={220} y2={272} stroke={C.ink2} strokeWidth={7} strokeLinecap="round" />
+      <circle cx={190} cy={165} r={7} fill={C.cta} />
+      <text x={205} y={162} fontSize={11} fontWeight={700} fill="var(--cta-text)">CG</text>
+      <line x1={190} y1={165} x2={190} y2={286} stroke={C.cta} strokeWidth={1.6} strokeDasharray="5 4" />
+      <rect x={148} y={284} width={84} height={8} rx={3} fill={C.success} opacity={0.6} />
+      <text x={190} y={312} textAnchor="middle" fontSize={12} fontWeight={700} fill={C.success}>Estável</text>
+      <text x={190} y={328} textAnchor="middle" fontSize={10.5} fill={C.ink3}>linha dentro da base</text>
+      {/* no limite */}
+      <circle cx={510} cy={78} r={18} fill={C.tint} stroke={C.primary} strokeWidth={2} />
+      <line x1={510} y1={96} x2={560} y2={190} stroke={C.ink2} strokeWidth={8} strokeLinecap="round" />
+      <line x1={560} y1={190} x2={548} y2={272} stroke={C.ink2} strokeWidth={7} strokeLinecap="round" />
+      <line x1={560} y1={190} x2={600} y2={272} stroke={C.ink2} strokeWidth={7} strokeLinecap="round" />
+      <circle cx={548} cy={155} r={7} fill={C.cta} />
+      <text x={532} y={152} textAnchor="end" fontSize={11} fontWeight={700} fill="var(--cta-text)">CG</text>
+      <line x1={548} y1={155} x2={548} y2={286} stroke={C.cta} strokeWidth={1.6} strokeDasharray="5 4" />
+      <rect x={548} y={284} width={70} height={8} rx={3} fill={C.warning} opacity={0.5} />
+      <text x={583} y={312} textAnchor="middle" fontSize={12} fontWeight={700} fill="var(--warning)">No limite</text>
+      <text x={583} y={328} textAnchor="middle" fontSize={10.5} fill={C.ink3}>linha na borda da base</text>
+    </svg>
+  );
+}
+
+/* ==================== 19. SUPERCOMPENSAÇÃO ========================== */
+
+function FigSupercompensacao() {
+  const x0 = 60, x1 = 690, y0 = 250, base = 178;
+  const toX = (t: number) => x0 + (t / 100) * (x1 - x0);
+  const pts: [number, number][] = [
+    [0, 178], [12, 178], [18, 176], [24, 222], [30, 232], [40, 212], [52, 150], [60, 135], [70, 141], [82, 165], [92, 176], [100, 178],
+  ];
+  const path = pts.map(([t, y], i) => `${i === 0 ? "M" : "L"} ${toX(t).toFixed(1)} ${y}`).join(" ");
+  return (
+    <svg viewBox="0 0 720 300" {...svgProps("Curva de supercompensação: o treino gera fadiga e a recuperação eleva a capacidade acima do ponto inicial")}>
+      <defs><Arrowhead id="ah-sc" color={C.cta} /></defs>
+      <line x1={x0} y1={base} x2={x1} y2={base} stroke={C.border} strokeWidth={1.4} strokeDasharray="4 4" />
+      <text x={x1} y={base - 6} textAnchor="end" fontSize={11} fill={C.ink3}>nível inicial</text>
+      <line x1={x0} y1={30} x2={x0} y2={y0} stroke={C.ink2} strokeWidth={1.5} />
+      <line x1={x0} y1={y0} x2={x1} y2={y0} stroke={C.ink2} strokeWidth={1.5} />
+      <text x={26} y={150} fontSize={12} fill={C.ink2} transform="rotate(-90 26 150)">Capacidade</text>
+      <text x={375} y={288} textAnchor="middle" fontSize={12} fill={C.ink2}>Tempo após a sessão</text>
+      <line x1={toX(15)} y1={98} x2={toX(15)} y2={170} stroke={C.cta} strokeWidth={2.5} markerEnd="url(#ah-sc)" />
+      <text x={toX(15)} y={90} textAnchor="middle" fontSize={11} fontWeight={700} fill="var(--cta-text)">estímulo</text>
+      <path d={path} fill="none" stroke={C.primary} strokeWidth={3} />
+      <text x={toX(30)} y={250} textAnchor="middle" fontSize={10.5} fill={C.ink3}>fadiga</text>
+      <circle cx={toX(60)} cy={135} r={4} fill={C.success} />
+      <text x={toX(60)} y={122} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.success}>supercompensação</text>
+      <text x={toX(88)} y={200} textAnchor="middle" fontSize={10} fill={C.ink3}>volta ao início sem novo estímulo</text>
+    </svg>
+  );
+}
+
+/* ==================== 20. CARGA INTERNA x EXTERNA =================== */
+
+function FigCargaInterna() {
+  return (
+    <svg viewBox="0 0 720 300" {...svgProps("Carga externa é o que se prescreve; passa pelo indivíduo e gera a carga interna, a resposta do organismo")}>
+      <defs><Arrowhead id="ah-carga" color={C.ink3} /></defs>
+      <NodeBox x={20} y={64} w={190} h={116} fill={C.soft} stroke={C.primary}>
+        <text x={115} y={92} textAnchor="middle" fontSize={13} fontWeight={700} fill={C.primary}>Carga externa</text>
+        <text x={115} y={113} textAnchor="middle" fontSize={11} fill={C.ink3}>o que é prescrito</text>
+        <text x={115} y={135} textAnchor="middle" fontSize={10.5} fill={C.ink2}>séries, repetições, carga,</text>
+        <text x={115} y={150} textAnchor="middle" fontSize={10.5} fill={C.ink2}>distância, velocidade</text>
+      </NodeBox>
+      <NodeBox x={265} y={80} w={190} h={84} fill={C.tint} stroke={C.analysis}>
+        <text x={360} y={106} textAnchor="middle" fontSize={13} fontWeight={700} fill={C.analysis}>Indivíduo</text>
+        <text x={360} y={128} textAnchor="middle" fontSize={10.5} fill={C.ink2}>aptidão, sono, estresse,</text>
+        <text x={360} y={143} textAnchor="middle" fontSize={10.5} fill={C.ink2}>nutrição, experiência</text>
+      </NodeBox>
+      <NodeBox x={510} y={64} w={190} h={116} fill={C.soft} stroke={C.cta}>
+        <text x={605} y={92} textAnchor="middle" fontSize={13} fontWeight={700} fill="var(--cta-text)">Carga interna</text>
+        <text x={605} y={113} textAnchor="middle" fontSize={11} fill={C.ink3}>a resposta do corpo</text>
+        <text x={605} y={135} textAnchor="middle" fontSize={10.5} fill={C.ink2}>percepção de esforço,</text>
+        <text x={605} y={150} textAnchor="middle" fontSize={10.5} fill={C.ink2}>frequência cardíaca</text>
+      </NodeBox>
+      <line x1={210} y1={122} x2={263} y2={122} stroke={C.ink3} strokeWidth={2.5} markerEnd="url(#ah-carga)" />
+      <line x1={455} y1={122} x2={508} y2={122} stroke={C.ink3} strokeWidth={2.5} markerEnd="url(#ah-carga)" />
+      <rect x={175} y={222} width={370} height={44} rx={10} fill={C.ink} />
+      <text x={360} y={249} textAnchor="middle" fontSize={13} fontWeight={700} fill="#fff">sRPE = percepção de esforço × duração (min)</text>
+    </svg>
+  );
+}
+
+/* ==================== 21. COMPOSIÇÃO CORPORAL ====================== */
+
+function FigComposicao() {
+  const x0 = 90, w = 540, y = 96, h = 62;
+  const seg: [string, number, string][] = [
+    ["Água", 0.4, C.analysis],
+    ["Músculo", 0.25, C.primary],
+    ["Osso e órgãos", 0.12, C.ink3],
+    ["Gordura", 0.23, C.cta],
+  ];
+  let acc = 0;
+  return (
+    <svg viewBox="0 0 720 300" {...svgProps("Composição corporal: a balança mostra o peso total; a composição divide massa magra e massa gorda")}>
+      <text x={x0} y={y - 14} fontSize={12} fontWeight={700} fill={C.ink}>Massa corporal total (exemplo ilustrativo)</text>
+      {seg.map(([label, frac, col]) => {
+        const bx = x0 + acc * w;
+        const bw = frac * w;
+        acc += frac;
+        return (
+          <g key={label}>
+            <rect x={bx} y={y} width={bw} height={h} fill={col} opacity={0.85} stroke="#fff" strokeWidth={1.5} />
+            <text x={bx + bw / 2} y={y + h + 18} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.ink}>{label}</text>
+            <text x={bx + bw / 2} y={y + h + 33} textAnchor="middle" fontSize={10.5} fill={C.ink3}>{Math.round(frac * 100)}%</text>
+          </g>
+        );
+      })}
+      <line x1={x0} y1={y + h + 46} x2={x0 + 0.77 * w} y2={y + h + 46} stroke={C.primary} strokeWidth={2} />
+      <text x={x0 + 0.385 * w} y={y + h + 62} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.primary}>Massa magra</text>
+      <line x1={x0 + 0.77 * w} y1={y + h + 46} x2={x0 + w} y2={y + h + 46} stroke={C.cta} strokeWidth={2} />
+      <text x={x0 + 0.885 * w} y={y + h + 62} textAnchor="middle" fontSize={11} fontWeight={700} fill="var(--cta-text)">Gorda</text>
+      <text x={360} y={40} textAnchor="middle" fontSize={11} fill={C.ink3}>A balança mostra só o total. A composição mostra a divisão, que muda com o treino.</text>
+    </svg>
+  );
+}
+
+/* ==================== 22. PIRÂMIDE DE EVIDÊNCIAS =================== */
+
+function FigPiramideEvidencias() {
+  const apexX = 360, apexY = 44, baseY = 278, halfBase = 210;
+  const widthAt = (yy: number) => halfBase * ((yy - apexY) / (baseY - apexY));
+  const levels: [string, number, string][] = [
+    ["Revisões sistemáticas e meta-análises", 78, C.primary],
+    ["Ensaios clínicos randomizados", 132, C.analysis],
+    ["Estudos observacionais", 190, C.success],
+    ["Relatos e opinião de especialista", 250, C.ink3],
+  ];
+  return (
+    <svg viewBox="0 0 720 320" {...svgProps("Pirâmide de níveis de evidência, do menor ao maior grau de confiança")}>
+      <defs><Arrowhead id="ah-pir" color={C.cta} /></defs>
+      <polygon points={`${apexX},${apexY} ${apexX + halfBase},${baseY} ${apexX - halfBase},${baseY}`} fill={C.soft} stroke={C.border} strokeWidth={1.5} />
+      {[108, 162, 220].map((yy) => (
+        <line key={yy} x1={apexX - widthAt(yy)} y1={yy} x2={apexX + widthAt(yy)} y2={yy} stroke={C.border} strokeWidth={1.2} />
+      ))}
+      {levels.map(([t, yy, col]) => (
+        <text key={t} x={apexX} y={yy} textAnchor="middle" fontSize={11.5} fontWeight={700} fill={col}>{t}</text>
+      ))}
+      <line x1={612} y1={274} x2={612} y2={58} stroke={C.cta} strokeWidth={2.5} markerEnd="url(#ah-pir)" />
+      <text x={628} y={166} fontSize={11} fontWeight={700} fill="var(--cta-text)" transform="rotate(90 628 166)">maior confiança, menos viés</text>
+      <text x={40} y={306} fontSize={10.5} fill={C.ink3}>O topo tende a ser mais forte, mas a qualidade e o contexto do estudo também importam.</text>
+    </svg>
+  );
+}
+
+/* ==================== 23. FLUXO DE DECISÃO ========================= */
+
+function FigFluxoDecisao() {
+  const steps: [string, string][] = [
+    ["Triagem", "segurança e contexto"],
+    ["Critérios", "objetivo, restrição, nível"],
+    ["Escolher", "e descartar com o porquê"],
+    ["Documentar", "o registro da decisão"],
+    ["Comunicar", "ao aluno, sem jargão"],
+  ];
+  const bw = 124, gap = 13;
+  return (
+    <svg viewBox="0 0 720 200" {...svgProps("Fluxo do raciocínio de prescrição: triagem, critérios, escolha, documentação e comunicação")}>
+      <defs><Arrowhead id="ah-fd" color={C.ink3} /></defs>
+      <text x={360} y={40} textAnchor="middle" fontSize={13} fontWeight={700} fill={C.ink}>Do dado à conduta registrada</text>
+      {steps.map(([t, s], i) => {
+        const bx = 14 + i * (bw + gap);
+        return (
+          <g key={t}>
+            <NodeBox x={bx} y={70} w={bw} h={64} fill={i === 2 ? C.tint : C.soft} stroke={i === 2 ? C.primary : C.border}>
+              <text x={bx + bw / 2} y={98} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={C.ink}>{t}</text>
+              <text x={bx + bw / 2} y={116} textAnchor="middle" fontSize={9} fill={C.ink3}>{s}</text>
+            </NodeBox>
+            {i < steps.length - 1 && <line x1={bx + bw} y1={102} x2={bx + bw + gap} y2={102} stroke={C.ink3} strokeWidth={2} markerEnd="url(#ah-fd)" />}
+          </g>
+        );
+      })}
+      <text x={360} y={166} textAnchor="middle" fontSize={11} fill={C.ink3}>Cada passo deixa um rastro: a decisão fica justificada e auditável.</text>
+    </svg>
+  );
+}
+
+/* ==================== 24. DOR NÃO É DANO =========================== */
+
+function FigDorNaoDano() {
+  const inputs: [string, string][] = [
+    ["Nocicepção", "sinal do tecido"],
+    ["Contexto", "ambiente e tarefa"],
+    ["Emoção", "medo, ansiedade"],
+    ["Experiências", "memória de dor"],
+    ["Expectativa", "crenças, sono"],
+  ];
+  return (
+    <svg viewBox="0 0 720 320" {...svgProps("A dor é uma interpretação do sistema nervoso a partir de vários sinais, não a medida direta do dano")}>
+      <defs>
+        <Arrowhead id="ah-dor" color={C.border} />
+        <Arrowhead id="ah-dor2" color={C.cta} />
+      </defs>
+      {inputs.map(([t, s], i) => {
+        const by = 24 + i * 54;
+        return (
+          <g key={t}>
+            <NodeBox x={20} y={by} w={178} h={42} fill={C.surface} stroke={C.analysis}>
+              <text x={38} y={by + 19} fontSize={12} fontWeight={700} fill={C.ink}>{t}</text>
+              <text x={38} y={by + 34} fontSize={10} fill={C.ink3}>{s}</text>
+            </NodeBox>
+            <line x1={200} y1={by + 21} x2={330} y2={160} stroke={C.border} strokeWidth={1.4} markerEnd="url(#ah-dor)" />
+          </g>
+        );
+      })}
+      <circle cx={400} cy={160} r={62} fill={C.tint} stroke={C.primary} strokeWidth={2} />
+      <CenterText cx={400} cy={152} lines={["Sistema", "nervoso"]} color={C.primary} size={13} />
+      <text x={400} y={186} textAnchor="middle" fontSize={10.5} fill={C.ink2}>interpreta e pondera</text>
+      <line x1={462} y1={160} x2={540} y2={160} stroke={C.cta} strokeWidth={3} markerEnd="url(#ah-dor2)" />
+      <NodeBox x={545} y={132} w={150} h={56} fill={C.soft} stroke={C.cta}>
+        <text x={620} y={158} textAnchor="middle" fontSize={15} fontWeight={800} fill="var(--cta-text)">Dor</text>
+        <text x={620} y={176} textAnchor="middle" fontSize={10} fill={C.ink3}>experiência protetora</text>
+      </NodeBox>
+      <text x={360} y={304} textAnchor="middle" fontSize={11} fill={C.ink3}>Dor pode existir sem dano proporcional; é sinal de proteção, não medida da lesão.</text>
+    </svg>
+  );
+}
+
+/* ==================== 25. CICLO DA ADESÃO ========================= */
+
+function FigAdesao() {
+  const P: [number, number][] = [[360, 52], [560, 150], [480, 268], [240, 268], [160, 150]];
+  const labels = ["Comunicação clara", "Metas realistas e tempo", "Reduzir barreiras", "Hábito e reforço", "Confiança e autonomia"];
+  const cols = [C.primary, C.analysis, C.success, C.cta, "#7c3aed"];
+  return (
+    <svg viewBox="0 0 720 320" {...svgProps("Ciclo da adesão: comunicação, metas, redução de barreiras, hábito e confiança se reforçam")}>
+      <defs><Arrowhead id="ah-ad" color={C.ink3} /></defs>
+      {P.map((p, i) => {
+        const qp = P[(i + 1) % P.length];
+        return <line key={i} x1={p[0]} y1={p[1]} x2={qp[0]} y2={qp[1]} stroke={C.border} strokeWidth={2} markerEnd="url(#ah-ad)" />;
+      })}
+      <circle cx={360} cy={160} r={48} fill={C.tint} stroke={C.primary} strokeWidth={2} />
+      <text x={360} y={165} textAnchor="middle" fontSize={15} fontWeight={800} fill={C.primary}>Adesão</text>
+      {P.map((p, i) => (
+        <g key={"n" + i}>
+          <circle cx={p[0]} cy={p[1]} r={9} fill={cols[i]} />
+          <text x={p[0]} y={p[1] < 160 ? p[1] - 16 : p[1] + 26} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.ink}>{labels[i]}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* ==================== 26. SINAIS DE ALERTA (triagem) ============== */
+
+function FigSinaisAlerta() {
+  const cards: { key: string; c: string; t: string; s: string[]; x: number }[] = [
+    { key: "verde", c: C.success, t: "Seguir", s: ["Sem sinais de alerta,", "esforço bem tolerado."], x: 24 },
+    { key: "amarelo", c: "var(--warning)", t: "Ajustar e observar", s: ["Fadiga alta, desconforto leve.", "Reduza e monitore de perto."], x: 255 },
+    { key: "vermelho", c: "#dc2626", t: "Interromper", s: ["Dor no peito, tontura, falta de ar", "desproporcional, sinal neurológico."], x: 486 },
+  ];
+  return (
+    <svg viewBox="0 0 720 300" {...svgProps("Triagem de sinais durante a sessão: seguir, ajustar e observar, ou interromper e encaminhar")}>
+      <defs><Arrowhead id="ah-sa" color={C.ink3} /></defs>
+      <rect x={228} y={20} width={264} height={40} rx={10} fill={C.ink} />
+      <text x={360} y={45} textAnchor="middle" fontSize={13} fontWeight={700} fill="#fff">Durante a sessão, observe</text>
+      {cards.map((cd) => (
+        <g key={cd.key}>
+          <line x1={360} y1={60} x2={cd.x + 105} y2={108} stroke={C.border} strokeWidth={1.5} markerEnd="url(#ah-sa)" />
+          <rect x={cd.x} y={110} width={210} height={120} rx={12} fill={C.surface} stroke={cd.c} strokeWidth={2} />
+          <circle cx={cd.x + 24} cy={140} r={9} fill={cd.c} />
+          <text x={cd.x + 42} y={145} fontSize={13} fontWeight={700} fill={C.ink}>{cd.t}</text>
+          {cd.s.map((line, j) => (
+            <text key={j} x={cd.x + 18} y={172 + j * 18} fontSize={10.5} fill={C.ink2}>{line}</text>
+          ))}
+        </g>
+      ))}
+      <text x={360} y={270} textAnchor="middle" fontSize={11} fill={C.ink3}>A conduta clínica é do profissional de saúde; na dúvida, interrompa e encaminhe.</text>
+    </svg>
+  );
+}
+
 /* ============================ registro ================================= */
 
 export type FigureLegendItem = { color: string; label: string };
@@ -873,6 +1244,66 @@ export const FIGURES: Record<string, FigureDef> = {
     title: "Eixo endócrino e feedback",
     subtitle: "Hipotálamo, hipófise e glândula-alvo com retroalimentação negativa.",
     Comp: FigEixoEndocrino,
+  },
+  alavancas: {
+    title: "Classes de alavanca do corpo",
+    subtitle: "A posição do apoio, da força e da resistência define a classe.",
+    Comp: FigAlavancas,
+  },
+  "curva-resistencia": {
+    title: "Curvas de resistência",
+    subtitle: "Onde o exercício é mais difícil ao longo da amplitude.",
+    Comp: FigCurvaResistencia,
+  },
+  "torque-momento": {
+    title: "Torque e braço de momento",
+    subtitle: "A mesma carga exige mais força conforme o ângulo articular.",
+    Comp: FigTorque,
+  },
+  "centro-gravidade": {
+    title: "Centro de gravidade e base de suporte",
+    subtitle: "O equilíbrio depende da linha de gravidade cair dentro da base.",
+    Comp: FigCentroGravidade,
+  },
+  supercompensacao: {
+    title: "Supercompensação",
+    subtitle: "Estímulo, fadiga, recuperação e ganho acima do ponto inicial.",
+    Comp: FigSupercompensacao,
+  },
+  "carga-interna-externa": {
+    title: "Carga externa e carga interna",
+    subtitle: "O que se prescreve passa pelo indivíduo e vira resposta do corpo.",
+    Comp: FigCargaInterna,
+  },
+  "composicao-corporal": {
+    title: "Composição corporal",
+    subtitle: "A balança mostra o total; a composição divide magra e gorda.",
+    Comp: FigComposicao,
+  },
+  "piramide-evidencias": {
+    title: "Níveis de evidência",
+    subtitle: "Da opinião às revisões sistemáticas, com mais e menos viés.",
+    Comp: FigPiramideEvidencias,
+  },
+  "fluxo-decisao": {
+    title: "Fluxo do raciocínio de prescrição",
+    subtitle: "Do dado à conduta registrada, passo a passo.",
+    Comp: FigFluxoDecisao,
+  },
+  "dor-nao-e-dano": {
+    title: "Dor não é a medida do dano",
+    subtitle: "A dor emerge da interpretação de vários sinais pelo sistema nervoso.",
+    Comp: FigDorNaoDano,
+  },
+  adesao: {
+    title: "Ciclo da adesão",
+    subtitle: "Comunicação, metas, barreiras, hábito e confiança se reforçam.",
+    Comp: FigAdesao,
+  },
+  "sinais-alerta": {
+    title: "Triagem de sinais na sessão",
+    subtitle: "Seguir, ajustar e observar, ou interromper e encaminhar.",
+    Comp: FigSinaisAlerta,
   },
 };
 

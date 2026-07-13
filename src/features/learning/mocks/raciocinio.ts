@@ -12,6 +12,7 @@ const criterios = deepLesson({
   moduleId: `m-${DISC}-decisao`,
   moduleSlug: "decisao",
   slug: `${DISC}--criterios-decisao`,
+  figure: { id: "fluxo-decisao" },
   title: "Critérios de decisão: transformar dados em escolha",
   subtitle: "Como decidir",
   description: "Objetivo, nível, restrição, equipamento e tolerância são os critérios que convertem a avaliação em uma prescrição defensável.",

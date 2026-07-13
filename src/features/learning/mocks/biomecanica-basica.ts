@@ -58,6 +58,7 @@ const forcas = deepLesson({
 const equilibrio = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-forcas`, moduleSlug: "forcas",
   slug: `${DISC}--equilibrio`, title: "Equilíbrio e base de suporte",
+  figure: { id: "centro-gravidade" },
   subtitle: "Forças e equilíbrio", description: "A relação entre o centro de massa e a base de suporte define a estabilidade e a exigência de equilíbrio.",
   level: "fundamental", minutes: 9, type: "conceito", kicker: K, tags: ["equilíbrio", "base de suporte", "estabilidade"],
   hero: "Estabilidade não é sorte: é a relação entre onde o peso do corpo se concentra e a área que o sustenta. Ajustar essa relação muda a exigência de equilíbrio sem mudar o objetivo do exercício.",
@@ -106,6 +107,7 @@ const equilibrio = deepLesson({
 const torqueBasico = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-momentos`, moduleSlug: "momentos",
   slug: `${DISC}--torque-basico`, title: "Torque: por que a mesma carga pesa diferente em cada ângulo",
+  figure: { id: "torque-momento" },
   subtitle: "Momentos e torque", description: "Torque é o efeito rotacional de uma força: depende da força e do braço de momento, e explica onde o exercício mais exige.",
   level: "intermediario", minutes: 10, type: "mecanismo", kicker: K, tags: ["torque", "braço de momento", "ângulo"],
   hero: "A mesma carga pode ser leve num ângulo e brutal em outro. A chave é o torque: o efeito rotacional de uma força, que depende não só do peso, mas da distância dele ao eixo articular.",

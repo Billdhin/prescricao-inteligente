@@ -106,6 +106,7 @@ const expectativa = deepLesson({
 const barreiras = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-adesao`, moduleSlug: "adesao",
   slug: `${DISC}--barreiras`, title: "Barreiras à prática: identificar e reduzir",
+  figure: { id: "adesao" },
   subtitle: "Sustentar a adesão", description: "Tempo, dor, cansaço e motivação são barreiras comuns; reconhecê-las permite ajustar o plano para a vida real.",
   level: "intermediario", minutes: 9, type: "conceito", kicker: K, tags: ["barreiras", "adesão", "frequência"],
   hero: "A frequência é o que faz o treino funcionar, e ela esbarra em barreiras reais: falta de tempo, cansaço, dor, desânimo. O plano que ignora essas barreiras não é seguido.",

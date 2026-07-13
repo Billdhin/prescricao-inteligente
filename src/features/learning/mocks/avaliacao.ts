@@ -12,6 +12,7 @@ const composicao = deepLesson({
   moduleId: `m-${DISC}-medidas`,
   moduleSlug: "medidas",
   slug: `${DISC}--composicao-corporal`,
+  figure: { id: "composicao-corporal" },
   title: "Composição corporal: medir com propósito",
   subtitle: "Medidas e interpretação",
   description: "Estimar frações de massa é útil, mas cada método tem erro. Saber o que a medida responde evita conclusões falsas.",

@@ -13,6 +13,7 @@ const K = "Dor, limitações e adaptação";
 const dorNaoEDano = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-entender-dor`, moduleSlug: "entender-dor",
   slug: `${DISC}--dor-nao-e-dano`, title: "Dor nem sempre é dano",
+  figure: { id: "dor-nao-e-dano" },
   subtitle: "Entender a dor", description: "A dor é uma experiência multifatorial que nem sempre corresponde a lesão tecidual. Ler isso no contexto muda a conduta.",
   level: "intermediario", minutes: 11, type: "conceito", kicker: K, tags: ["dor", "dano", "tolerância"],
   hero: "Dor e dano não são a mesma coisa. A dor é uma resposta complexa, influenciada por sono, estresse, medo e contexto, e nem sempre indica lesão. Entender isso evita alarmar e afastar o aluno sem necessidade.",

@@ -10,6 +10,7 @@ const K = "Leitura crítica de evidências";
 const hierarquia = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-niveis-evidencia`, moduleSlug: "niveis-evidencia",
   slug: `${DISC}--hierarquia`, title: "Níveis de evidência: pesar a força da recomendação",
+  figure: { id: "piramide-evidencias" },
   subtitle: "Níveis de evidência", description: "Situar um estudo na hierarquia da evidência ajuda a ponderar quanta confiança dar a uma recomendação.",
   level: "intermediario", minutes: 11, type: "conceito", kicker: K, tags: ["níveis de evidência", "hierarquia", "diretrizes"],
   hero: "Nem toda afirmação tem o mesmo peso. Um relato isolado e uma revisão sistemática de vários estudos não merecem a mesma confiança. Situar a fonte na hierarquia orienta quanto acreditar.",

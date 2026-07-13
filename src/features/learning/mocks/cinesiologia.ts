@@ -104,6 +104,7 @@ const acoes = deepLesson({
 const alavancas = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-alavancas`, moduleSlug: "alavancas",
   slug: `${DISC}--tipos-alavanca`, title: "Alavancas do corpo",
+  figure: { id: "alavancas" },
   subtitle: "Alavancas do corpo", description: "Força, resistência e eixo formam alavancas; o corpo usa os três tipos, o que explica vantagens mecânicas.",
   level: "intermediario", minutes: 10, type: "conceito", kicker: K, tags: ["alavanca", "eixo", "vantagem mecânica"],
   hero: "O corpo é uma máquina de alavancas. Ossos, articulações e músculos formam sistemas de força, resistência e eixo. Entender o tipo de alavanca explica por que certos movimentos são mais fortes que outros.",
@@ -152,6 +153,7 @@ const alavancas = deepLesson({
 const vantagem = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-alavancas`, moduleSlug: "alavancas",
   slug: `${DISC}--vantagem-mecanica`, title: "Vantagem mecânica: por que certos ângulos são mais fortes",
+  figure: { id: "curva-resistencia" },
   subtitle: "Alavancas do corpo", description: "A relação entre os braços de força e de resistência explica por que a força varia ao longo do movimento.",
   level: "intermediario", minutes: 9, type: "mecanismo", kicker: K, tags: ["vantagem mecânica", "ângulo", "curva de força"],
   hero: "Ninguém é igualmente forte em todos os ângulos de um exercício. A vantagem mecânica muda ao longo do movimento, criando pontos mais fortes e mais fracos. Isso orienta onde o exercício mais exige.",

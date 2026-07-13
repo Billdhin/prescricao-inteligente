@@ -10,6 +10,7 @@ const K = "Segurança e limites de atuação";
 const sinaisAlerta = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-seguranca`, moduleSlug: "seguranca",
   slug: `${DISC}--sinais-alerta`, title: "Sinais de alerta: quando interromper",
+  figure: { id: "sinais-alerta" },
   subtitle: "Segurança na sessão", description: "Reconhecer sinais que pedem interromper o esforço e reavaliar é parte central da conduta segura.",
   level: "fundamental", minutes: 9, type: "conceito", kicker: K, tags: ["sinais de alerta", "segurança", "interromper"],
   hero: "A maior parte das sessões é segura, mas alguns sinais pedem parar na hora. Reconhecê-los e agir rápido é uma responsabilidade básica de quem conduz o treino.",
