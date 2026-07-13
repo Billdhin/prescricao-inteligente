@@ -160,52 +160,52 @@ function FigHomeostase() {
 /* ======================= 2. SISTEMAS INTEGRADOS ======================== */
 
 function FigSistemas() {
-  const left = [
+  // Onze sistemas orgânicos clássicos (Tortora, OpenStax).
+  const left: [string, string, string][] = [
     ["Nervoso", "controle rápido", C.primary],
     ["Endócrino", "controle lento", "#db2777"],
     ["Cardiovascular", "transporte", "#dc2626"],
     ["Respiratório", "troca gasosa", C.primary],
-    ["Musculoesquelético", "movimento", C.cta],
+    ["Esquelético", "suporte e alavancas", C.ink2],
+    ["Muscular", "movimento", C.cta],
   ];
-  const right = [
+  const right: [string, string, string][] = [
     ["Digestório", "nutrientes", C.warning],
     ["Renal/urinário", "meio interno", C.analysis],
     ["Imune/linfático", "defesa", C.success],
-    ["Tegumentar", "barreira e calor", C.ink2],
+    ["Tegumentar", "barreira e calor", C.ink3],
     ["Reprodutor", "continuidade", "#7c3aed"],
   ];
-  const rowY = (i: number) => 60 + i * 62;
+  const yL = (i: number) => 44 + i * 54;
+  const yR = (i: number) => 71 + i * 54;
   return (
     <svg viewBox="0 0 720 400" {...svgProps("Onze sistemas orgânicos conectados pela homeostase, organizados como rede de controle, transporte, troca, proteção e movimento")}>
-      <defs>
-        <Arrowhead id="ah-sis" color={C.ink3} />
-      </defs>
       {/* núcleo homeostase */}
-      <circle cx={360} cy={180} r={62} fill={C.tint} stroke={C.primary} strokeWidth={2} />
-      <CenterText cx={360} cy={172} lines={["Homeostase"]} color={C.primary} size={15} />
-      <text x={360} y={196} textAnchor="middle" fontSize={11} fill={C.ink2}>eixo integrador</text>
+      <circle cx={360} cy={200} r={60} fill={C.tint} stroke={C.primary} strokeWidth={2} />
+      <CenterText cx={360} cy={192} lines={["Homeostase"]} color={C.primary} size={15} />
+      <text x={360} y={216} textAnchor="middle" fontSize={11} fill={C.ink2}>eixo integrador</text>
       {left.map(([t, s, col], i) => (
         <g key={t}>
-          <NodeBox x={20} y={rowY(i) - 22} w={190} h={46} fill={C.surface} stroke={col as string}>
-            <circle cx={44} cy={rowY(i)} r={8} fill={col as string} />
-            <text x={62} y={rowY(i) - 2} fontSize={13} fontWeight={700} fill={C.ink}>{t}</text>
-            <text x={62} y={rowY(i) + 13} fontSize={10.5} fill={C.ink3}>{s}</text>
+          <line x1={210} y1={yL(i)} x2={302} y2={200} stroke={C.border} strokeWidth={1.5} />
+          <NodeBox x={20} y={yL(i) - 21} w={190} h={44} fill={C.surface} stroke={col}>
+            <circle cx={44} cy={yL(i)} r={8} fill={col} />
+            <text x={62} y={yL(i) - 2} fontSize={12.5} fontWeight={700} fill={C.ink}>{t}</text>
+            <text x={62} y={yL(i) + 12} fontSize={10} fill={C.ink3}>{s}</text>
           </NodeBox>
-          <line x1={210} y1={rowY(i)} x2={300} y2={180} stroke={C.border} strokeWidth={1.5} />
         </g>
       ))}
       {right.map(([t, s, col], i) => (
         <g key={t}>
-          <NodeBox x={510} y={rowY(i) - 22} w={190} h={46} fill={C.surface} stroke={col as string}>
-            <circle cx={534} cy={rowY(i)} r={8} fill={col as string} />
-            <text x={552} y={rowY(i) - 2} fontSize={13} fontWeight={700} fill={C.ink}>{t}</text>
-            <text x={552} y={rowY(i) + 13} fontSize={10.5} fill={C.ink3}>{s}</text>
+          <line x1={510} y1={yR(i)} x2={418} y2={200} stroke={C.border} strokeWidth={1.5} />
+          <NodeBox x={510} y={yR(i) - 21} w={190} h={44} fill={C.surface} stroke={col}>
+            <circle cx={534} cy={yR(i)} r={8} fill={col} />
+            <text x={552} y={yR(i) - 2} fontSize={12.5} fontWeight={700} fill={C.ink}>{t}</text>
+            <text x={552} y={yR(i) + 12} fontSize={10} fill={C.ink3}>{s}</text>
           </NodeBox>
-          <line x1={510} y1={rowY(i)} x2={420} y2={180} stroke={C.border} strokeWidth={1.5} />
         </g>
       ))}
-      <rect x={150} y={356} width={420} height={34} rx={10} fill={C.ink} />
-      <text x={360} y={378} textAnchor="middle" fontSize={12.5} fontWeight={600} fill="#fff">
+      <rect x={150} y={366} width={420} height={30} rx={10} fill={C.ink} />
+      <text x={360} y={386} textAnchor="middle" fontSize={12} fontWeight={600} fill="#fff">
         Integração dinâmica, não compartimentos isolados
       </text>
     </svg>
@@ -426,18 +426,7 @@ function FigDebito() {
         <text x={550} y={176} textAnchor="middle" fontSize={13} fontWeight={700} fill={C.primary}>Volume sistólico</text>
         <text x={550} y={195} textAnchor="middle" fontSize={11} fill={C.ink3}>volume ejetado por batimento</text>
       </NodeBox>
-      {/* determinantes do VS */}
-      {[
-        ["Pré-carga", "enchimento / retorno venoso", 420],
-        ["Contratilidade", "força intrínseca", 500],
-        ["Pós-carga", "pressão contra a ejeção", 580],
-      ].map(([t, s, cx], i) => (
-        <g key={t as string}>
-          <line x1={550} y1={208} x2={(cx as number) + 30} y2={238} stroke={C.border} strokeWidth={1.3} />
-          <rect x={(cx as number) - 58} y={238} width={176} height={46} rx={9} fill={C.soft} stroke={C.border} strokeWidth={1.2} transform={`translate(${i * 0} 0)`} />
-        </g>
-      ))}
-      {/* simpler: three boxes in a row */}
+      {/* determinantes do volume sistólico */}
       <g>
         {[
           ["Pré-carga", "retorno venoso"],
@@ -447,6 +436,7 @@ function FigDebito() {
           const bx = 360 + (i - 1) * 190;
           return (
             <g key={t as string}>
+              <line x1={550} y1={208} x2={bx} y2={238} stroke={C.border} strokeWidth={1.3} />
               <rect x={bx - 88} y={238} width={176} height={48} rx={9} fill={C.soft} stroke={C.border} strokeWidth={1.3} />
               <text x={bx} y={259} textAnchor="middle" fontSize={12} fontWeight={700} fill={C.ink}>{t}</text>
               <text x={bx} y={275} textAnchor="middle" fontSize={10.5} fill={C.ink3}>{s}</text>
