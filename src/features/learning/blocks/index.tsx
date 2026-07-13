@@ -25,6 +25,7 @@ import { getLearningRepository } from "../repository";
 import { referenceSourceLabel, lessonTypeMeta } from "../constants";
 import { iconByName } from "../icons";
 import { useAprender } from "../store";
+import { FIGURES } from "../figures/scientific";
 import type { Lesson, LessonBlock, QuizQuestion } from "../types";
 
 const repo = getLearningRepository();
@@ -165,6 +166,8 @@ function BlockSwitch({ block, lesson, onApply }: { block: LessonBlock; lesson: L
       return <InteractiveFigure title={block.title} content={c} />;
     case "image_hotspots":
       return <ImageHotspots title={block.title} content={c} />;
+    case "figure":
+      return <ScientificFigureBlock title={block.title} figureId={c.figureId} caption={c.caption} />;
     case "mechanism_flow":
       return <MechanismFlow title={block.title} steps={c.steps} />;
     case "comparison":
@@ -388,6 +391,28 @@ function ImageHotspots({ title, content }: { title?: string; content: { caption:
           </div>
         )}
         <p className="mt-3 text-xs text-ink-3">{content.caption}</p>
+      </Card>
+    </section>
+  );
+}
+
+/** Figura científica (esquema SVG original) da biblioteca de figuras do Aprender. */
+function ScientificFigureBlock({ title, figureId, caption }: { title?: string; figureId: string; caption?: string }) {
+  const fig = FIGURES[figureId];
+  if (!fig) {
+    return <Card className="p-4 text-sm text-ink-3">Figura não encontrada ({figureId}).</Card>;
+  }
+  const { Comp, title: figTitle, subtitle } = fig;
+  return (
+    <section>
+      {title && <BlockTitle>{title}</BlockTitle>}
+      <Card variant="raised" className="overflow-hidden p-4 md:p-5">
+        <div className="mb-1 font-display text-base font-bold text-ink">{figTitle}</div>
+        {subtitle && <p className="mb-3 text-sm text-ink-2">{subtitle}</p>}
+        <div className="rounded-xl border border-border bg-surface p-2">
+          <Comp />
+        </div>
+        <p className="mt-2 text-xs text-ink-3">{caption ?? "Esquema didático original. Proporções não anatômicas; prioriza a clareza do mecanismo."}</p>
       </Card>
     </section>
   );

@@ -35,6 +35,8 @@ export type DeepLessonSpec = {
   question?: string;
   /** 1 ou 2 conceitos-chave */
   concepts: { term: string; definition: string; title?: string }[];
+  /** figura científica (esquema SVG da biblioteca figures/scientific) */
+  figure?: { id: string; caption?: string; title?: string };
   /** um recurso visual/explicativo principal (escolha o que melhor serve ao tema) */
   mechanism?: { title?: string; steps: { label: string; detail: string }[] };
   comparison?: { title?: string; leftTitle: string; rightTitle: string; leftItems: string[]; rightItems: string[]; note?: string };
@@ -79,6 +81,7 @@ export function deepLesson(s: DeepLessonSpec): Lesson {
       { title: c.title ?? (s.concepts.length > 1 ? `Conceito ${i + 1}` : "Conceito-chave") },
     ),
   );
+  if (s.figure) push("figure", { figureId: s.figure.id, caption: s.figure.caption }, { title: s.figure.title });
   if (s.mechanism) push("mechanism_flow", { steps: s.mechanism.steps }, { title: s.mechanism.title ?? "Entenda o mecanismo" });
   if (s.chart)
     push(

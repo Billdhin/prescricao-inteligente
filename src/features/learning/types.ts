@@ -90,6 +90,7 @@ export type LessonBlockType =
   | "key_concept"
   | "interactive_figure"
   | "image_hotspots"
+  | "figure"
   | "mechanism_flow"
   | "comparison"
   | "timeline"

@@ -18,6 +18,7 @@ const unidadeMotora = deepLesson({
     { term: "Unidade motora", definition: "Um neurônio motor e todas as fibras musculares que ele inerva. É a menor unidade funcional de produção de força; ativá-la ativa todas as suas fibras." },
     { term: "Modulação da força", definition: "O sistema nervoso ajusta a força de duas formas: recrutando mais unidades motoras e aumentando a frequência de disparo delas." },
   ],
+  figure: { id: "unidade-motora" },
   apply: "Entenda a força como resultado de quantas unidades motoras são recrutadas e com que frequência disparam. O treino melhora essa capacidade, sobretudo no início. Responder à abertura: o iniciante fica forte cedo porque aprende a recrutar mais unidades motoras e a coordená-las, antes da hipertrofia.",
   special: [
     "Iniciantes: grande parte do ganho inicial de força é melhor uso das unidades motoras existentes.",
