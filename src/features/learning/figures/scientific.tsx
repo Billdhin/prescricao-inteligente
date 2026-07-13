@@ -978,10 +978,10 @@ function FigCargaInterna() {
 function FigComposicao() {
   const x0 = 90, w = 540, y = 96, h = 62;
   const seg: [string, number, string][] = [
-    ["Água", 0.4, C.analysis],
+    ["Água", 0.5, C.analysis],
     ["Músculo", 0.25, C.primary],
     ["Osso e órgãos", 0.12, C.ink3],
-    ["Gordura", 0.23, C.cta],
+    ["Gordura", 0.13, C.cta],
   ];
   let acc = 0;
   return (
@@ -999,10 +999,10 @@ function FigComposicao() {
           </g>
         );
       })}
-      <line x1={x0} y1={y + h + 46} x2={x0 + 0.77 * w} y2={y + h + 46} stroke={C.primary} strokeWidth={2} />
-      <text x={x0 + 0.385 * w} y={y + h + 62} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.primary}>Massa magra</text>
-      <line x1={x0 + 0.77 * w} y1={y + h + 46} x2={x0 + w} y2={y + h + 46} stroke={C.cta} strokeWidth={2} />
-      <text x={x0 + 0.885 * w} y={y + h + 62} textAnchor="middle" fontSize={11} fontWeight={700} fill="var(--cta-text)">Gorda</text>
+      <line x1={x0} y1={y + h + 46} x2={x0 + 0.87 * w} y2={y + h + 46} stroke={C.primary} strokeWidth={2} />
+      <text x={x0 + 0.435 * w} y={y + h + 62} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.primary}>Massa magra</text>
+      <line x1={x0 + 0.87 * w} y1={y + h + 46} x2={x0 + w} y2={y + h + 46} stroke={C.cta} strokeWidth={2} />
+      <text x={x0 + 0.935 * w} y={y + h + 62} textAnchor="middle" fontSize={11} fontWeight={700} fill="var(--cta-text)">Gorda</text>
       <text x={360} y={40} textAnchor="middle" fontSize={11} fill={C.ink3}>A balança mostra só o total. A composição mostra a divisão, que muda com o treino.</text>
     </svg>
   );
