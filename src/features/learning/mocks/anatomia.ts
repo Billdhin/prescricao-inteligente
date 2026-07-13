@@ -18,6 +18,7 @@ const musculosPorFuncao = deepLesson({
     { term: "Ação muscular", definition: "O papel que um músculo desempenha em um movimento: agonista (produz a ação), antagonista (opõe-se), sinergista (auxilia) ou estabilizador (mantém a postura)." },
     { term: "Papel dependente da tarefa", definition: "Um mesmo músculo pode ser agonista em um exercício e estabilizador em outro. O papel é definido pela ação exigida, não fixo pelo músculo." },
   ],
+  figure: { id: "sarcomero-pontes" },
   apply: "Ao analisar um exercício, pergunte qual o papel de cada músculo naquela ação, não só o nome. Isso liga o exercício ao que ele treina. Responder à abertura: no agachamento, o glúteo máximo atua como agonista na extensão de quadril, sobretudo na subida; classificar pelo papel esclarece o que o exercício desenvolve.",
   special: [
     "Hipertrofia dirigida: escolher pela função garante treinar o músculo pretendido no papel de agonista.",

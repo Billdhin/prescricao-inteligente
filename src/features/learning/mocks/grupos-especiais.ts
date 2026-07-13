@@ -169,6 +169,7 @@ const cardiometabolico = deepLesson({
     { term: "Risco cardiometabólico", definition: "Conjunto de condições (hipertensão, diabetes, obesidade, síndrome metabólica) que pedem cuidados de intensidade, respiração e monitoramento, com benefício consistente do exercício regular." },
     { term: "Manobra de Valsalva", definition: "Prender a respiração e fazer força contra a glote, o que eleva a pressão de forma aguda. Deve ser evitada, sobretudo na hipertensão, preferindo respiração contínua." },
   ],
+  figure: { id: "eixo-endocrino" },
   apply: "Para o perfil cardiometabólico, comece com predominância aeróbia de intensidade moderada e força com cargas moderadas, evite apneia, não leve toda série à falha e monitore sinais e, quando indicado, a pressão. Combine com boa progressão e triagem por sessão. Responder à abertura: hipertensão e sobrepeso pedem começar moderado, sem apneia, com monitoramento e progressão gradual, dentro dos cuidados do grupo.",
   special: [
     "Hipertensão: predominância aeróbia moderada; evitar apneia e cargas máximas; monitorar a resposta (Pescatello et al., 2004).",

@@ -157,6 +157,7 @@ const zonasFc = deepLesson({
     { term: "Zona-alvo", definition: "Faixa de frequência cardíaca correspondente à intensidade pretendida. Serve como guia objetivo quando a frequência é medida de forma confiável." },
     { term: "Limites da estimativa", definition: "A frequência cardíaca máxima estimada por fórmula tem erro grande entre pessoas, e fatores como cafeína, calor, sono e medicação alteram a resposta do dia." },
   ],
+  figure: { id: "debito-cardiaco" },
   apply: "Use a zona de frequência cardíaca como um dos guias, não o único. Confie mais nela quando a máxima foi medida ou quando o aluno já conhece sua resposta; nos demais casos, cruze com a percepção de esforço e o teste da fala. Responder à abertura: a frequência é útil de apoio, mas a percepção manda quando a estimativa é frágil ou o dia está atípico.",
   special: [
     "Uso de betabloqueadores e algumas cardiopatias: a frequência cardíaca pode não refletir a intensidade; priorize percepção de esforço, com conduta do profissional de saúde.",

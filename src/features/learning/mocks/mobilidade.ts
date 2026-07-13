@@ -66,6 +66,7 @@ const amplitudeUtil = deepLesson({
     { term: "Amplitude útil", definition: "Faixa de movimento que entrega o estímulo pretendido com tolerância adequada. Depende do objetivo, da anatomia e da condição do aluno." },
     { term: "Amplitude como variável", definition: "A amplitude é uma variável ajustável, como carga e volume. Reduzi-la de forma intencional é uma adaptação a serviço do objetivo e do conforto." },
   ],
+  figure: { id: "comprimento-tensao" },
   apply: "Escolha a amplitude que serve ao objetivo com boa tolerância, não a máxima por princípio. Reduzir amplitude para respeitar uma condição é adaptação, desde que preserve o estímulo. Responder à abertura: para o ombro sensível, ajustar a amplitude do supino ao conforto mantém o estímulo com segurança; não é fazer errado.",
   special: [
     "Ombro e joelho sensíveis: ajustar amplitude ao conforto mantém o treino sem provocar.",

@@ -26,6 +26,7 @@ const especificidade = deepLesson({
     { term: "Especificidade", definition: "As adaptações refletem o tipo de estímulo aplicado: treinar força pesada desenvolve força; treinar resistência desenvolve resistência. O plano precisa apontar para o objetivo." },
     { term: "Transferência", definition: "O quanto uma adaptação treinada se converte no resultado desejado. Estímulos mais parecidos com a meta costumam transferir melhor." },
   ],
+  figure: { id: "homeostase-circuito" },
   apply: "Antes de escolher métodos, defina o objetivo e garanta que a maior parte do estímulo aponte para ele. Responder à abertura: para ficar forte no agachamento, o treino precisa incluir agachar com carga progressiva e boas margens, não apenas circuitos leves. Variedade é útil, mas não pode diluir o estímulo específico do objetivo.",
   special: [
     "Idosos: se o objetivo é autonomia, priorize força e padrões do cotidiano (sentar e levantar, subir escada).",

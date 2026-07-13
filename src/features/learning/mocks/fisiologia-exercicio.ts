@@ -99,6 +99,7 @@ const limiares = deepLesson({
     { term: "Limiar (transição metabólica)", definition: "Intensidade em que a resposta do corpo muda de forma marcada. O primeiro limiar separa o esforço leve do moderado; o segundo separa o que é sustentável por muito tempo do que fadiga rápido." },
     { term: "Zonas de intensidade", definition: "Faixas de esforço delimitadas pelos limiares. Treinar em zonas diferentes gera adaptações diferentes; a maior parte do volume costuma ficar abaixo do segundo limiar." },
   ],
+  figure: { id: "ventilacao-troca" },
   chart: {
     title: "Sustentabilidade do esforço por zona (ilustrativo)",
     points: [
