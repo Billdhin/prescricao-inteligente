@@ -83,19 +83,36 @@ function mkCondicao(s: {
   errosComuns: string[];
   complexidade: Complexidade;
   premium?: boolean;
+  /** condições em que a orientação prudente é MANTER intensidade moderada e
+   *  estável (ex.: gestação), sem buscar progressão de intensidade nas fases. */
+  manterIntensidade?: boolean;
 }): SpecialGroup {
-  const objetivoFase = [
-    "Tolerar o exercício, criar o hábito e completar as sessões com segurança e conforto.",
-    "Aumentar o volume de forma gradual e introduzir força básica guiada, controlando o esforço.",
-    "Diversificar modalidades e progredir a intensidade com mais autonomia, mantendo o controle de sinais.",
-    "Manter os resultados, individualizar a rotina e prevenir o abandono.",
-  ];
-  const estrutura = [
-    "2 a 3 sessões curtas das modalidades indicadas, mais mobilidade; esforço leve guiado por PSE e teste da fala.",
-    "2 a 3 sessões aeróbias de tempo crescente, 1 a 2 sessões de força guiada e mobilidade.",
-    "Combinar força e aeróbio; introduzir modalidades adicionais toleradas; blocos um pouco mais intensos e controlados.",
-    "Rotina combinada individualizada, com variação para manter o engajamento e prevenir lesões.",
-  ];
+  const objetivoFase = s.manterIntensidade
+    ? [
+        "Tolerar o exercício, criar o hábito e completar as sessões com segurança e conforto.",
+        "Manter a aptidão e a força em intensidade moderada, controlando o esforço.",
+        "Sustentar a rotina em intensidade moderada, ajustando ao contexto e aos sinais.",
+        "Manter os resultados e a autonomia, prevenindo o abandono.",
+      ]
+    : [
+        "Tolerar o exercício, criar o hábito e completar as sessões com segurança e conforto.",
+        "Aumentar o volume de forma gradual e introduzir força básica guiada, controlando o esforço.",
+        "Diversificar modalidades e progredir a intensidade com mais autonomia, mantendo o controle de sinais.",
+        "Manter os resultados, individualizar a rotina e prevenir o abandono.",
+      ];
+  const estrutura = s.manterIntensidade
+    ? [
+        "2 a 3 sessões curtas das modalidades indicadas, mais mobilidade; esforço leve a moderado guiado por PSE e teste da fala.",
+        "2 a 3 sessões aeróbias moderadas e estáveis, 1 a 2 sessões de força guiada e mobilidade.",
+        "Rotina combinada moderada e estável, guiada pelo teste da fala, sem buscar picos de intensidade.",
+        "Rotina moderada individualizada, com variação para manter o engajamento.",
+      ]
+    : [
+        "2 a 3 sessões curtas das modalidades indicadas, mais mobilidade; esforço leve guiado por PSE e teste da fala.",
+        "2 a 3 sessões aeróbias de tempo crescente, 1 a 2 sessões de força guiada e mobilidade.",
+        "Combinar força e aeróbio; introduzir modalidades adicionais toleradas; blocos um pouco mais intensos e controlados.",
+        "Rotina combinada individualizada, com variação para manter o engajamento e prevenir lesões.",
+      ];
   const avancar = [
     ["Completa as sessões sem piora de sintomas", "Esforço percebido sob controle e teste da fala confortável", "Boa adesão por algumas semanas"],
     ["Aumenta o tempo total sem piora dos sintomas", "Executa a força com técnica estável", "Recuperação adequada entre as sessões"],
@@ -739,7 +756,7 @@ const condicoesAdicionais: SpecialGroup[] = [
     descricaoCurta: "Aeróbio e força regulares para melhorar a sensibilidade à insulina.",
     perfil:
       "Pessoa com glicemia acima do normal, ainda sem diagnóstico de diabetes, com frequência sobrepeso e sedentária. O exercício regular é um dos pilares da prevenção.",
-    objetivos: ["Melhorar a sensibilidade à insulina com regularidade", "Combinar aeróbio e força", "Apoiar o controle de peso e da composição"],
+    objetivos: ["Apoiar a sensibilidade à insulina com regularidade", "Combinar aeróbio e força", "Apoiar o controle de peso e da composição"],
     riscosCautelas: ["Risco cardiometabólico associado pede contexto e progressão", "A consistência semanal importa mais que picos de intensidade", "Cautela com apneia em cargas altas quando há pressão elevada"],
     sinaisAlerta: ["Tontura, sudorese fria ou confusão, pausar e reavaliar", "Dor torácica ou mal-estar, interromper", "Sinais que fogem do esperado, encaminhar"],
     modIndicadas: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
@@ -792,8 +809,8 @@ const condicoesAdicionais: SpecialGroup[] = [
     rotuloAluno: "Condicionamento metabólico com controle de peso",
     descricaoCurta: "Aeróbio, força e controle de peso para reduzir a gordura hepática.",
     perfil:
-      "Acúmulo de gordura no fígado associado a fatores metabólicos. Exercício regular e perda de peso gradual reduzem a gordura hepática.",
-    objetivos: ["Reduzir a gordura hepática com aeróbio e força regulares", "Apoiar a perda de peso gradual", "Melhorar a aptidão e o metabolismo"],
+      "Acúmulo de gordura no fígado associado a fatores metabólicos. Exercício regular e perda de peso gradual tendem a reduzir a gordura hepática.",
+    objetivos: ["Apoiar a redução da gordura hepática com aeróbio e força regulares", "Apoiar a perda de peso gradual", "Melhorar a aptidão e o metabolismo"],
     riscosCautelas: ["Sobrepeso e risco cardiometabólico associados", "Perda de peso agressiva não é o alvo do treino (encaminhar nutrição)", "Progressão gradual"],
     sinaisAlerta: ["Dor torácica ou mal-estar, interromper", "Tontura ou sinais de hipoglicemia, pausar", "Sinais que fogem do esperado, encaminhar"],
     modIndicadas: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
@@ -859,6 +876,7 @@ const condicoesAdicionais: SpecialGroup[] = [
     errosComuns: ["Prescrever sem liberação obstétrica", "Manter intensidade alta ou esforço máximo", "Ignorar sinais de alerta"],
     complexidade: "Alta",
     premium: true,
+    manterIntensidade: true,
   }),
   mkCondicao({
     slug: "pos-parto",
@@ -911,7 +929,7 @@ const condicoesAdicionais: SpecialGroup[] = [
     modCautela: ["m-funcional", "m-combinado"],
     parametros: ["p-rpe", "p-fala", "p-fc", "p-adesao"],
     comoComecar:
-      "Combine aeróbio moderado frequente com força, ajustando horário e intensidade à sonolência do dia. A perda de peso costuma reduzir a gravidade; mantenha o acompanhamento médico.",
+      "Combine aeróbio moderado frequente com força, ajustando horário e intensidade à sonolência do dia. A perda de peso costuma reduzir a gravidade. Diante do risco cardiometabólico associado, considere a liberação do profissional de saúde antes de progredir a intensidade e mantenha o acompanhamento médico.",
     errosComuns: ["Ignorar a sonolência na segurança", "Programa sem componente de perda de peso", "Substituir o tratamento médico pelo treino"],
     complexidade: "Moderada",
     premium: true,
@@ -940,7 +958,7 @@ const condicoesAdicionais: SpecialGroup[] = [
     rotuloAluno: "Movimento para bem-estar e disposição",
     descricaoCurta: "Rotina regular e realista de exercício como apoio ao humor.",
     perfil:
-      "Pessoa com sintomas de ansiedade ou depressão, em acompanhamento de saúde. O exercício regular tem efeito positivo no humor; a adesão é o principal desafio.",
+      "Pessoa com sintomas de ansiedade ou depressão, em acompanhamento de saúde. O exercício regular tende a ter efeito positivo no humor; a adesão é o principal desafio.",
     objetivos: ["Usar o exercício regular como apoio ao humor", "Construir uma rotina realista e sustentável", "Melhorar a aptidão e o sono"],
     riscosCautelas: ["Baixa energia e motivação afetam a adesão", "Metas irreais frustram: comece pequeno", "O treino apoia, não substitui o acompanhamento de saúde"],
     sinaisAlerta: ["Piora importante do humor ou risco à segurança, encaminhar ao profissional de saúde", "Fadiga desproporcional", "Sinais fora do esperado, reavaliar"],
