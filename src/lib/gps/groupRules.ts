@@ -285,3 +285,42 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 export function getGroupRule(slug?: string) {
   return slug ? groupGpsRules[slug] : undefined;
 }
+
+/**
+ * Combina os cuidados/adaptações de VÁRIAS condições numa regra só. Assim uma
+ * prescrição para, por exemplo, idoso + diabetes + osteoporose aplica ao mesmo
+ * tempo as cautelas e penalizações das três, em vez de escolher uma categoria.
+ * Para a mesma métrica, mantém a penalização mais estrita (menor limite);
+ * complexidadeMax = a mais baixa; cuidados e refs sem duplicar.
+ */
+export function combineRules(slugs: string[]): GroupGpsRule | undefined {
+  const rules = slugs.map((s) => groupGpsRules[s]).filter((r): r is GroupGpsRule => Boolean(r));
+  if (rules.length === 0) return undefined;
+  if (rules.length === 1) return rules[0];
+
+  const cuidados: string[] = [];
+  for (const r of rules) for (const c of r.cuidados) if (!cuidados.includes(c)) cuidados.push(c);
+
+  // por métrica, mantém a penalidade de MENOR limite (mais rigorosa)
+  const penMap = new Map<string, { metrica: string; limite: number; motivo: string }>();
+  for (const r of rules) {
+    for (const p of r.penalidades) {
+      const cur = penMap.get(p.metrica);
+      if (!cur || p.limite < cur.limite) penMap.set(p.metrica, p);
+    }
+  }
+
+  const maxes = rules.map((r) => r.complexidadeMax).filter((n): n is number => typeof n === "number");
+  const refs: string[] = [];
+  for (const r of rules) for (const ref of r.refs ?? []) if (!refs.includes(ref)) refs.push(ref);
+
+  return {
+    slug: rules.map((r) => r.slug).join("+"),
+    nome: rules.map((r) => r.nome).join(" + "),
+    cuidados,
+    penalidades: [...penMap.values()],
+    complexidadeMax: maxes.length ? Math.min(...maxes) : undefined,
+    restricaoSugerida: rules.find((r) => r.restricaoSugerida)?.restricaoSugerida,
+    refs,
+  };
+}

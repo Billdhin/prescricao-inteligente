@@ -35,7 +35,7 @@ import {
   type GpsPrioridade,
   type Recommendation,
 } from "@/lib/gps/engine";
-import { getGroupRule, type GroupGpsRule } from "@/lib/gps/groupRules";
+import { combineRules, type GroupGpsRule } from "@/lib/gps/groupRules";
 import { recommendModalidades, type ModalidadeRec } from "@/lib/gps/modalidadeRules";
 import { modalidadeImagem, impactoTone } from "@/data/modalities";
 import { exercises } from "@/data/exercises";
@@ -117,13 +117,28 @@ export function Gps() {
   );
   // Faixa etária: só na PRESCRIÇÃO GERAL (sem aluno). Orientação contextual.
   const [faixaEtaria, setFaixaEtaria] = React.useState<string>("");
+  // Condições associadas: além da condição principal (que dirige a jornada), o
+  // profissional pode somar outras condições e os cuidados de todas se combinam.
+  const [condicoesExtras, setCondicoesExtras] = React.useState<string[]>([]);
 
   const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
   const grupo = grupoSlug ? getSpecialGroup(grupoSlug) : undefined;
   const faseObj = grupo ? grupo.fases[fase - 1] ?? grupo.fases[0] : undefined;
   const grupoLocked = !!grupo && grupo.premium && !unlocked;
-  // Cuidados do grupo interligados ao ranqueamento (etapa 4 + motor)
-  const rule = grupo && !grupoLocked ? getGroupRule(grupo.slug) : undefined;
+  // Condições cujos cuidados/adaptações valem para esta prescrição: a principal
+  // (se não estiver bloqueada) + as associadas liberadas. O motor combina todas.
+  const condicoesAtivas = React.useMemo(() => {
+    const lista: string[] = [];
+    if (grupo && !grupoLocked) lista.push(grupo.slug);
+    for (const s of condicoesExtras) {
+      if (!s || s === grupoSlug || lista.includes(s)) continue;
+      const g = getSpecialGroup(s);
+      if (g && (!g.premium || unlocked)) lista.push(s);
+    }
+    return lista;
+  }, [grupo, grupoLocked, condicoesExtras, grupoSlug, unlocked]);
+  // Cuidados combinados interligados ao ranqueamento (etapa 4 + motor)
+  const rule = React.useMemo(() => combineRules(condicoesAtivas), [condicoesAtivas]);
 
   const [step, setStep] = React.useState(0);
   const [answers, setAnswers] = React.useState<GpsAnswers>(() => {
@@ -189,6 +204,12 @@ export function Gps() {
   const mudarGrupo = (s: string) => {
     invalidarResultados();
     setGrupoSlug(s);
+    setCondicoesExtras((prev) => prev.filter((x) => x !== s)); // a principal sai das associadas
+  };
+  const alternarCondicaoExtra = (slug: string) => {
+    invalidarResultados();
+    // updater funcional: dois cliques seguidos nunca perdem uma seleção
+    setCondicoesExtras((prev) => (prev.includes(slug) ? prev.filter((x) => x !== slug) : [...prev, slug]));
   };
   const mudarFase = (n: number) => {
     invalidarResultados();
@@ -389,6 +410,8 @@ export function Gps() {
         onAluno={onAluno}
         grupoSlug={grupoSlug}
         setGrupoSlug={mudarGrupo}
+        condicoesExtras={condicoesExtras}
+        toggleCondicaoExtra={alternarCondicaoExtra}
         fase={fase}
         setFase={mudarFase}
         unlocked={unlocked}
@@ -581,6 +604,8 @@ function ContextoCard({
   onAluno,
   grupoSlug,
   setGrupoSlug,
+  condicoesExtras,
+  toggleCondicaoExtra,
   fase,
   setFase,
   unlocked,
@@ -592,6 +617,8 @@ function ContextoCard({
   onAluno: (id: string) => void;
   grupoSlug: string;
   setGrupoSlug: (s: string) => void;
+  condicoesExtras: string[];
+  toggleCondicaoExtra: (slug: string) => void;
   fase: number;
   setFase: (n: number) => void;
   unlocked: boolean;
@@ -675,6 +702,40 @@ function ContextoCard({
               </div>
             </div>
           </div>
+
+          {/* Condições associadas: some cuidados de várias condições numa prescrição. */}
+          {temGrupo && (
+            <div className="mt-4">
+              <span className="mb-1 block text-sm font-semibold text-ink">Condições associadas (opcional)</span>
+              <p className="mb-2 text-xs text-ink-3">
+                Some outras condições do aluno. Os cuidados de todas se combinam na prescrição; a condição principal continua guiando a jornada.
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {specialGroups
+                  .filter((g) => g.slug !== grupoSlug)
+                  .map((g) => {
+                    const on = condicoesExtras.includes(g.slug);
+                    const lock = g.premium && !unlocked;
+                    return (
+                      <button
+                        key={g.slug}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => toggleCondicaoExtra(g.slug)}
+                        className={cn(
+                          "rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
+                          on ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
+                        )}
+                      >
+                        {on ? "✓ " : "+ "}
+                        {g.nome}
+                        {lock ? " (Premium)" : ""}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
 
           {/* Faixa etária: só na prescrição geral (sem aluno). */}
           {prescricaoGeral && (
