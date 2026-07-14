@@ -667,7 +667,7 @@ function AcompanhamentoCard({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patc
 
   const toggleStatus = () => {
     onUpdate({ status: ativo ? "inativo" : "ativo" });
-    toast(ativo ? `${aluno.nome} marcado(a) como saiu` : `${aluno.nome} reativado(a)`);
+    toast(ativo ? `${aluno.nome} marcado(a) como inativo(a)` : `${aluno.nome} reativado(a)`);
   };
   const avancar = () => {
     if (!sug) return;
@@ -693,8 +693,16 @@ function AcompanhamentoCard({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patc
           </span>
           <div className="min-w-0">
             <div className="text-xs text-ink-3">Situação</div>
-            <div className="font-semibold text-ink">{ativo ? "Ativo" : "Saiu / inativo"}</div>
+            <div className="font-semibold text-ink">{ativo ? "Ativo" : "Inativo"}</div>
           </div>
+          <button
+            onClick={toggleStatus}
+            className={cn(buttonClasses("secondary", "sm"), "shrink-0")}
+            aria-label={ativo ? "Inativar aluno" : "Reativar aluno"}
+          >
+            {ativo ? <UserMinus className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+            {ativo ? "Inativar" : "Reativar"}
+          </button>
         </div>
       </div>
 

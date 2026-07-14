@@ -67,7 +67,8 @@ export function SemaforoLiberacao({
   onRegistrado?: (resultado: ResultadoSemaforo) => void;
   className?: string;
 }) {
-  const checklist = getSemaforo(grupoSlug);
+  // Condições sem checklist próprio (as adicionais) usam o checklist geral do dia.
+  const checklist = getSemaforo(grupoSlug) ?? (grupoSlug ? getSemaforo("geral") : undefined);
   // "geral" não é grupo especial: o gate vale para qualquer aluno
   const grupo = getSpecialGroup(grupoSlug);
   const nomeChecklist = grupo?.nome ?? "Checklist geral do dia";

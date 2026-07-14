@@ -60,7 +60,88 @@ const FOCO_FASE = [
   "Manutenção dos resultados, progressão individualizada, prevenção de abandono, melhora compatível com o perfil.",
 ] as const;
 
-export const specialGroups: SpecialGroup[] = [
+/**
+ * Constrói uma condição adicional com jornada de 4 fases a partir de uma
+ * especificação compacta. A jornada usa uma progressão base (entrada, construção,
+ * desenvolvimento, manutenção) adaptada às modalidades e parâmetros da condição.
+ * Conteúdo educacional e prudente, NÃO diagnóstico: apoia a decisão do profissional
+ * habilitado (CREF) e, quando indicado, a liberação do profissional de saúde.
+ */
+function mkCondicao(s: {
+  slug: string;
+  nome: string;
+  rotuloAluno: string;
+  descricaoCurta: string;
+  perfil: string;
+  objetivos: string[];
+  riscosCautelas: string[];
+  sinaisAlerta: string[];
+  modIndicadas: string[];
+  modCautela: string[];
+  parametros: string[];
+  comoComecar: string;
+  errosComuns: string[];
+  complexidade: Complexidade;
+  premium?: boolean;
+}): SpecialGroup {
+  const objetivoFase = [
+    "Tolerar o exercício, criar o hábito e completar as sessões com segurança e conforto.",
+    "Aumentar o volume de forma gradual e introduzir força básica guiada, controlando o esforço.",
+    "Diversificar modalidades e progredir a intensidade com mais autonomia, mantendo o controle de sinais.",
+    "Manter os resultados, individualizar a rotina e prevenir o abandono.",
+  ];
+  const estrutura = [
+    "2 a 3 sessões curtas das modalidades indicadas, mais mobilidade; esforço leve guiado por PSE e teste da fala.",
+    "2 a 3 sessões aeróbias de tempo crescente, 1 a 2 sessões de força guiada e mobilidade.",
+    "Combinar força e aeróbio; introduzir modalidades adicionais toleradas; blocos um pouco mais intensos e controlados.",
+    "Rotina combinada individualizada, com variação para manter o engajamento e prevenir lesões.",
+  ];
+  const avancar = [
+    ["Completa as sessões sem piora de sintomas", "Esforço percebido sob controle e teste da fala confortável", "Boa adesão por algumas semanas"],
+    ["Aumenta o tempo total sem piora dos sintomas", "Executa a força com técnica estável", "Recuperação adequada entre as sessões"],
+    ["Tolera as novas modalidades sem sintomas relevantes", "Progride a carga com boa técnica", "Boa recuperação com mais volume"],
+    ["Autonomia para conduzir parte do treino", "Metas de longo prazo estáveis"],
+  ];
+  const regredir = [
+    ["Sintomas ou dor aumentando entre as sessões", "Fadiga ou dispneia desproporcionais", "Adesão caindo pela dificuldade"],
+    ["Fadiga acumulada", "Piora de sintomas ao subir o volume", "Recuperação insuficiente"],
+    ["Retorno de sintomas com as novas modalidades", "Queda de recuperação ou de adesão"],
+    ["Sinais de sobrecarga", "Perda de adesão"],
+  ];
+  const fases: JourneyPhase[] = [0, 1, 2, 3].map((i) => ({
+    numero: (i + 1) as 1 | 2 | 3 | 4,
+    nome: NOMES_FASE[i],
+    foco: FOCO_FASE[i],
+    objetivo: objetivoFase[i],
+    modalidades: i === 0 ? Array.from(new Set([...s.modIndicadas.slice(0, 2), "m-mobilidade"])) : s.modIndicadas,
+    parametros: s.parametros,
+    criteriosAvancar: avancar[i],
+    criteriosRegredir: regredir[i],
+    estruturaSemanal: estrutura[i],
+    justificativa: "Progressão gradual respeitando a tolerância e os sinais, com a adesão como base de qualquer avanço.",
+  }));
+  return {
+    slug: s.slug,
+    nome: s.nome,
+    rotuloAluno: s.rotuloAluno,
+    descricaoCurta: s.descricaoCurta,
+    perfil: s.perfil,
+    objetivos: s.objetivos,
+    riscosCautelas: s.riscosCautelas,
+    sinaisAlerta: s.sinaisAlerta,
+    modalidadesIndicadas: s.modIndicadas,
+    modalidadesCautela: s.modCautela,
+    parametros: s.parametros,
+    comoComecar: s.comoComecar,
+    errosComuns: s.errosComuns,
+    casosRelacionados: [],
+    complexidade: s.complexidade,
+    premium: s.premium ?? false,
+    fases,
+  };
+}
+
+const specialGroupsBase: SpecialGroup[] = [
   {
     slug: "obesidade-grave",
     nome: "Obesidade grave / mórbida",
@@ -611,6 +692,283 @@ export const specialGroups: SpecialGroup[] = [
     ],
   },
 ];
+
+/* --------- Condições adicionais (jornada base + cuidados; ver mkCondicao) --------- */
+
+const condicoesAdicionais: SpecialGroup[] = [
+  mkCondicao({
+    slug: "iniciante-sedentario",
+    nome: "Iniciante / sedentário",
+    rotuloAluno: "Início guiado do condicionamento",
+    descricaoCurta: "Base de adesão e técnica com progressão suave para quem está começando.",
+    perfil:
+      "Pessoa saudável começando a se exercitar, com baixa aptidão inicial. O principal risco é excesso de volume e intensidade cedo demais, que gera dor tardia e abandono.",
+    objetivos: ["Criar o hábito e a tolerância ao exercício (adesão)", "Aprender a técnica dos movimentos básicos", "Melhorar a aptidão geral com progressão suave"],
+    riscosCautelas: ["Volume e intensidade altos cedo demais geram dor e desânimo", "Expectativa de resultado rápido pode frustrar", "A técnica ainda está em construção"],
+    sinaisAlerta: ["Dor articular aguda e crescente, ajustar", "Fadiga que não recupera entre as sessões", "Sinais que fogem do esperado, reavaliar"],
+    modIndicadas: ["m-caminhada", "m-musculacao", "m-bike", "m-mobilidade"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-fala", "p-adesao", "p-recuperacao", "p-dor"],
+    comoComecar:
+      "Poucos exercícios simples, esforço leve a moderado guiado por PSE, foco em completar as sessões e criar rotina. Progrida uma variável por vez.",
+    errosComuns: ["Começar com volume e intensidade de treinado", "Cobrar resultado rápido em vez de adesão", "Ignorar a técnica"],
+    complexidade: "Baixa",
+  }),
+  mkCondicao({
+    slug: "retorno-inatividade",
+    nome: "Retorno após inatividade",
+    rotuloAluno: "Retomada gradual do treino",
+    descricaoCurta: "Retomada gradual para quem ficou parado, evitando lesão pela pressa.",
+    perfil:
+      "Pessoa que já treinou mas ficou parada por semanas ou meses. Costuma superestimar a capacidade inicial e tentar voltar onde parou.",
+    objetivos: ["Retomar de forma gradual, evitando lesão pela pressa", "Reconstruir a base aeróbia e de força", "Recuperar a consistência"],
+    riscosCautelas: ["Voltar no volume ou carga anterior gera dor e lesão", "Dor muscular tardia intensa nas primeiras semanas", "Frustração com a perda de condicionamento"],
+    sinaisAlerta: ["Dor articular ou muscular aguda e crescente", "Fadiga desproporcional", "Sinais que fogem do esperado, reavaliar"],
+    modIndicadas: ["m-caminhada", "m-musculacao", "m-bike", "m-mobilidade"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-fala", "p-recuperacao", "p-dor", "p-adesao"],
+    comoComecar:
+      "Recomece com cerca de metade do volume e da carga que fazia antes e progrida ao longo de poucas semanas. A dor tardia inicial é esperada; a lesão pela pressa não.",
+    errosComuns: ["Voltar direto no ponto onde parou", "Ignorar a recuperação", "Aumentar tudo de uma vez"],
+    complexidade: "Baixa",
+  }),
+  mkCondicao({
+    slug: "pre-diabetes",
+    nome: "Pré-diabetes",
+    rotuloAluno: "Condicionamento metabólico preventivo",
+    descricaoCurta: "Aeróbio e força regulares para melhorar a sensibilidade à insulina.",
+    perfil:
+      "Pessoa com glicemia acima do normal, ainda sem diagnóstico de diabetes, com frequência sobrepeso e sedentária. O exercício regular é um dos pilares da prevenção.",
+    objetivos: ["Melhorar a sensibilidade à insulina com regularidade", "Combinar aeróbio e força", "Apoiar o controle de peso e da composição"],
+    riscosCautelas: ["Risco cardiometabólico associado pede contexto e progressão", "A consistência semanal importa mais que picos de intensidade", "Cautela com apneia em cargas altas quando há pressão elevada"],
+    sinaisAlerta: ["Tontura, sudorese fria ou confusão, pausar e reavaliar", "Dor torácica ou mal-estar, interromper", "Sinais que fogem do esperado, encaminhar"],
+    modIndicadas: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-fala", "p-fc", "p-adesao", "p-recuperacao"],
+    comoComecar:
+      "Combine aeróbio quase diário de intensidade moderada com força 2 a 3 vezes por semana. A regularidade é o que mais melhora a sensibilidade à insulina.",
+    errosComuns: ["Focar só no aeróbio e esquecer a força", "Buscar intensidade alta sem base", "Ignorar o cuidado cardiometabólico"],
+    complexidade: "Moderada",
+  }),
+  mkCondicao({
+    slug: "sindrome-metabolica",
+    nome: "Síndrome metabólica",
+    rotuloAluno: "Condicionamento cardiometabólico",
+    descricaoCurta: "Aeróbio e força atuando sobre vários fatores de risco ao mesmo tempo.",
+    perfil:
+      "Conjunto de fatores de risco somados (gordura abdominal, pressão, glicemia e lipídios alterados). O exercício atua sobre vários deles simultaneamente.",
+    objetivos: ["Reduzir o risco cardiometabólico com aeróbio e força", "Melhorar a composição corporal", "Sustentar a adesão de longo prazo"],
+    riscosCautelas: ["Vários fatores de risco somados pedem progressão e monitoramento", "Evitar apneia em cargas altas (pressão)", "Atenção a sinais de hipoglicemia quando há alteração glicêmica"],
+    sinaisAlerta: ["Dor torácica, tontura ou mal-estar, interromper", "Sinais de hipoglicemia, pausar", "Dispneia desproporcional, reavaliar"],
+    modIndicadas: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-fala", "p-fc", "p-pa", "p-adesao"],
+    comoComecar:
+      "Priorize a regularidade: aeróbio moderado na maioria dos dias e força 2 a 3 vezes por semana, com respiração contínua e progressão gradual.",
+    errosComuns: ["Intensidade alta sem base", "Ignorar a pressão e a apneia", "Programa sem força"],
+    complexidade: "Moderada",
+  }),
+  mkCondicao({
+    slug: "dislipidemia",
+    nome: "Dislipidemia",
+    rotuloAluno: "Condicionamento para saúde cardiovascular",
+    descricaoCurta: "Aeróbio regular e força para apoiar o perfil lipídico.",
+    perfil:
+      "Alteração de colesterol ou triglicerídeos. O exercício regular, sobretudo aeróbio, contribui para o perfil lipídico junto de dieta e conduta médica.",
+    objetivos: ["Melhorar o perfil com aeróbio regular", "Somar força para composição e metabolismo", "Adesão de longo prazo"],
+    riscosCautelas: ["O benefício depende de regularidade e volume, não de picos", "Risco cardiovascular associado quando presente", "A conduta medicamentosa é do profissional de saúde"],
+    sinaisAlerta: ["Dor torácica ou mal-estar, interromper", "Dispneia desproporcional, reavaliar", "Sinais que fogem do esperado, encaminhar"],
+    modIndicadas: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-fala", "p-fc", "p-adesao", "p-recuperacao"],
+    comoComecar:
+      "Volume aeróbio moderado consistente (na maior parte dos dias) mais força 2 a 3 vezes por semana. O efeito vem da regularidade ao longo das semanas.",
+    errosComuns: ["Esperar efeito de poucas sessões", "Só aeróbio de baixo volume", "Ignorar dieta e conduta médica (encaminhar)"],
+    complexidade: "Moderada",
+  }),
+  mkCondicao({
+    slug: "esteatose-hepatica",
+    nome: "Esteatose hepática metabólica",
+    rotuloAluno: "Condicionamento metabólico com controle de peso",
+    descricaoCurta: "Aeróbio, força e controle de peso para reduzir a gordura hepática.",
+    perfil:
+      "Acúmulo de gordura no fígado associado a fatores metabólicos. Exercício regular e perda de peso gradual reduzem a gordura hepática.",
+    objetivos: ["Reduzir a gordura hepática com aeróbio e força regulares", "Apoiar a perda de peso gradual", "Melhorar a aptidão e o metabolismo"],
+    riscosCautelas: ["Sobrepeso e risco cardiometabólico associados", "Perda de peso agressiva não é o alvo do treino (encaminhar nutrição)", "Progressão gradual"],
+    sinaisAlerta: ["Dor torácica ou mal-estar, interromper", "Tontura ou sinais de hipoglicemia, pausar", "Sinais que fogem do esperado, encaminhar"],
+    modIndicadas: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-fala", "p-adesao", "p-recuperacao"],
+    comoComecar:
+      "Combine aeróbio moderado frequente com força 2 a 3 vezes por semana. A redução da gordura hepática acompanha a regularidade e a perda de peso ao longo do tempo.",
+    errosComuns: ["Buscar emagrecimento rápido", "Programa sem força", "Ignorar o acompanhamento nutricional e médico"],
+    complexidade: "Moderada",
+  }),
+  mkCondicao({
+    slug: "sarcopenia",
+    nome: "Sarcopenia / baixa força muscular",
+    rotuloAluno: "Fortalecimento e função muscular",
+    descricaoCurta: "Força progressiva para recuperar massa, força e função.",
+    perfil:
+      "Perda de massa e força muscular, comum com o envelhecimento ou o desuso. A força é o principal estímulo para reverter o quadro; a nutrição proteica é coadjuvante (encaminhar).",
+    objetivos: ["Ganhar força e massa com treino de força progressivo", "Melhorar a função e a autonomia", "Reduzir o risco de quedas"],
+    riscosCautelas: ["Baixa força inicial pede progressão cuidadosa", "Técnica antes de carga", "A recuperação pode ser mais lenta"],
+    sinaisAlerta: ["Dor articular aguda, ajustar", "Fadiga desproporcional", "Instabilidade ou risco de queda, priorizar apoio"],
+    modIndicadas: ["m-musculacao", "m-funcional", "m-caminhada", "m-mobilidade"],
+    modCautela: ["m-combinado"],
+    parametros: ["p-rpe", "p-carga", "p-recuperacao", "p-dor", "p-adesao"],
+    comoComecar:
+      "Priorize a força em máquinas guiadas 2 a 3 vezes por semana, com progressão pequena e frequente, mais caminhada e mobilidade. Encaminhe para avaliação nutricional.",
+    errosComuns: ["Focar só no aeróbio", "Carga alta sem técnica", "Ignorar a ingestão proteica (encaminhar)"],
+    complexidade: "Moderada",
+  }),
+  mkCondicao({
+    slug: "osteoporose",
+    nome: "Osteopenia / osteoporose",
+    rotuloAluno: "Fortalecimento com estímulo ósseo",
+    descricaoCurta: "Força e impacto controlado para estimular o osso, com liberação de saúde.",
+    perfil:
+      "Redução da densidade óssea, com maior risco de fratura. A força e o impacto controlado estimulam o osso; flexão brusca da coluna e alto risco de queda pedem cautela. Requer liberação e acompanhamento do profissional de saúde.",
+    objetivos: ["Estimular o osso com força e impacto controlado", "Melhorar o equilíbrio e reduzir o risco de quedas", "Ganhar força funcional"],
+    riscosCautelas: ["Flexão brusca ou carga axial mal controlada da coluna: cautela", "Alto risco de queda: priorizar equilíbrio e apoio", "Liberação médica recomendada antes de progredir o impacto"],
+    sinaisAlerta: ["Dor óssea ou nas costas nova ou persistente, interromper e encaminhar", "Instabilidade ou risco de queda", "Sinais que fogem do esperado, reavaliar"],
+    modIndicadas: ["m-musculacao", "m-caminhada", "m-funcional", "m-mobilidade"],
+    modCautela: ["m-combinado", "m-hidro"],
+    parametros: ["p-rpe", "p-carga", "p-dor", "p-adesao", "p-recuperacao"],
+    comoComecar:
+      "Comece com força guiada e caminhada, evitando flexão brusca da coluna e movimentos de alto risco de queda. Progrida o impacto de forma gradual, com liberação e acompanhamento do profissional de saúde.",
+    errosComuns: ["Evitar toda carga por medo (o osso precisa de estímulo)", "Impacto alto sem progressão", "Ignorar o risco de queda"],
+    complexidade: "Alta",
+    premium: true,
+  }),
+  mkCondicao({
+    slug: "gestante",
+    nome: "Gestante sem contraindicação",
+    rotuloAluno: "Condicionamento na gestação",
+    descricaoCurta: "Cuidados específicos por trimestre, com liberação obstétrica.",
+    perfil:
+      "Gestação sem contraindicação e com liberação obstétrica. O exercício é benéfico, mas exige cuidados específicos por trimestre. A liberação e as contraindicações são do médico obstetra.",
+    objetivos: ["Manter a aptidão e a força com segurança", "Reduzir desconfortos e apoiar a saúde na gestação", "Preparar para o pós-parto"],
+    riscosCautelas: ["Decúbito dorsal prolongado após o 1º trimestre: cautela", "Evitar superaquecimento, desidratação e esforço máximo", "Risco de queda em atividades de equilíbrio; liberação obstétrica obrigatória"],
+    sinaisAlerta: ["Sangramento, dor abdominal, contrações, perda de líquido, tontura ou falta de ar desproporcional: interromper e encaminhar imediatamente", "Qualquer sinal fora do esperado, encaminhar", "As orientações do obstetra prevalecem"],
+    modIndicadas: ["m-caminhada", "m-musculacao", "m-hidro", "m-mobilidade"],
+    modCautela: ["m-funcional", "m-combinado", "m-bike"],
+    parametros: ["p-rpe", "p-fala", "p-fc", "p-adesao", "p-recuperacao"],
+    comoComecar:
+      "Com liberação obstétrica, priorize intensidade moderada guiada pelo teste da fala, força guiada e mobilidade, evitando esforço máximo, superaquecimento e posições de risco. Ajuste por trimestre.",
+    errosComuns: ["Prescrever sem liberação obstétrica", "Manter intensidade alta ou esforço máximo", "Ignorar sinais de alerta"],
+    complexidade: "Alta",
+    premium: true,
+  }),
+  mkCondicao({
+    slug: "pos-parto",
+    nome: "Pós-parto com liberação",
+    rotuloAluno: "Retomada pós-parto",
+    descricaoCurta: "Retomada gradual com atenção ao assoalho pélvico, com liberação.",
+    perfil:
+      "Retorno ao exercício após o parto, com liberação do profissional de saúde. A retomada é gradual e considera o assoalho pélvico e o tipo de parto.",
+    objetivos: ["Retomar força e aptidão de forma progressiva", "Cuidar do assoalho pélvico e do core", "Sustentar a adesão com rotina realista"],
+    riscosCautelas: ["Retomar cedo demais ou com carga alta: cautela", "Sinais de disfunção do assoalho pélvico (perdas, sensação de peso): encaminhar", "Liberação do profissional de saúde antes de progredir"],
+    sinaisAlerta: ["Sangramento aumentado, dor pélvica, perdas urinárias ou sensação de peso: ajustar e encaminhar", "Fadiga desproporcional (sono fragmentado)", "Sinais fora do esperado, reavaliar"],
+    modIndicadas: ["m-caminhada", "m-musculacao", "m-mobilidade", "m-hidro"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-adesao", "p-recuperacao", "p-dor"],
+    comoComecar:
+      "Com liberação, retome de forma gradual: mobilidade, respiração e assoalho pélvico, caminhada e força guiada leve, progredindo conforme a recuperação e a rotina de sono.",
+    errosComuns: ["Retomar no ritmo pré-gestacional", "Ignorar o assoalho pélvico", "Cobrar resultado rápido"],
+    complexidade: "Alta",
+    premium: true,
+  }),
+  mkCondicao({
+    slug: "climaterio",
+    nome: "Climatério / menopausa",
+    rotuloAluno: "Condicionamento na transição hormonal",
+    descricaoCurta: "Força e aeróbio para músculo, osso, humor e sono na transição hormonal.",
+    perfil:
+      "Fase de transição hormonal (perimenopausa ou menopausa), com mudanças na composição corporal, no osso e no sono. Força e aeróbio ajudam em vários desses aspectos.",
+    objetivos: ["Preservar massa muscular e óssea com força", "Apoiar a composição corporal e o humor", "Melhorar a aptidão e o sono"],
+    riscosCautelas: ["Tendência à perda de massa e osso: a força é prioridade", "Fogachos e sono podem afetar a sessão", "O risco cardiometabólico aumenta na transição"],
+    sinaisAlerta: ["Tontura, palpitações ou mal-estar, pausar", "Dor articular nova ou persistente, ajustar", "Sinais fora do esperado, encaminhar"],
+    modIndicadas: ["m-musculacao", "m-caminhada", "m-bike", "m-mobilidade"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-carga", "p-adesao", "p-recuperacao"],
+    comoComecar:
+      "Priorize a força 2 a 3 vezes por semana (preserva músculo e osso) mais aeróbio moderado, ajustando ao sono e aos sintomas do dia.",
+    errosComuns: ["Só aeróbio, sem força", "Ignorar a saúde óssea", "Não ajustar ao sono e aos sintomas"],
+    complexidade: "Moderada",
+  }),
+  mkCondicao({
+    slug: "apneia-sono",
+    nome: "Apneia obstrutiva do sono",
+    rotuloAluno: "Condicionamento e controle de peso",
+    descricaoCurta: "Aeróbio, força e perda de peso, com acompanhamento do tratamento.",
+    perfil:
+      "Apneia obstrutiva do sono, com frequência associada a sobrepeso e sonolência diurna. Exercício e perda de peso podem reduzir a gravidade; o tratamento é conduzido pelo profissional de saúde.",
+    objetivos: ["Apoiar a perda de peso e a aptidão com aeróbio e força", "Melhorar a disposição e reduzir a sonolência", "Sustentar a adesão apesar da fadiga"],
+    riscosCautelas: ["Sonolência e fadiga diurna afetam a sessão e a segurança", "Risco cardiometabólico associado", "O tratamento (por exemplo, CPAP) é do profissional de saúde"],
+    sinaisAlerta: ["Sonolência excessiva ou risco de dormir em equipamento, interromper", "Dor torácica ou mal-estar, interromper", "Sinais fora do esperado, encaminhar"],
+    modIndicadas: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-fala", "p-fc", "p-adesao"],
+    comoComecar:
+      "Combine aeróbio moderado frequente com força, ajustando horário e intensidade à sonolência do dia. A perda de peso costuma reduzir a gravidade; mantenha o acompanhamento médico.",
+    errosComuns: ["Ignorar a sonolência na segurança", "Programa sem componente de perda de peso", "Substituir o tratamento médico pelo treino"],
+    complexidade: "Moderada",
+    premium: true,
+  }),
+  mkCondicao({
+    slug: "asma-controlada",
+    nome: "Asma controlada",
+    rotuloAluno: "Condicionamento respiratório seguro",
+    descricaoCurta: "Aquecimento e progressão que reduzem sintomas respiratórios.",
+    perfil:
+      "Asma bem controlada, sem crises frequentes. O exercício é recomendado; aquecimento e ambiente adequados reduzem o broncoespasmo induzido pelo esforço.",
+    objetivos: ["Melhorar a aptidão sem desencadear sintomas", "Aumentar a tolerância ao esforço", "Sustentar a adesão"],
+    riscosCautelas: ["Ar frio ou seco e esforço abrupto podem desencadear broncoespasmo", "Ter a medicação de resgate disponível (conforme o médico)", "O aquecimento gradual é protetor"],
+    sinaisAlerta: ["Chiado, tosse, aperto no peito ou falta de ar que não cede com a pausa, interromper e seguir a conduta médica", "Sintomas desproporcionais, reavaliar", "Sinais fora do esperado, encaminhar"],
+    modIndicadas: ["m-caminhada", "m-bike", "m-musculacao", "m-natacao"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-fala", "p-dispneia", "p-adesao"],
+    comoComecar:
+      "Faça aquecimento gradual, prefira ambientes sem ar muito frio ou seco e progrida a intensidade aos poucos, com a medicação de resgate disponível conforme a orientação médica.",
+    errosComuns: ["Pular o aquecimento", "Intensidade abrupta em ar frio", "Treinar sem a medicação de resgate quando indicada"],
+    complexidade: "Moderada",
+  }),
+  mkCondicao({
+    slug: "ansiedade-depressao",
+    nome: "Ansiedade / sintomas depressivos",
+    rotuloAluno: "Movimento para bem-estar e disposição",
+    descricaoCurta: "Rotina regular e realista de exercício como apoio ao humor.",
+    perfil:
+      "Pessoa com sintomas de ansiedade ou depressão, em acompanhamento de saúde. O exercício regular tem efeito positivo no humor; a adesão é o principal desafio.",
+    objetivos: ["Usar o exercício regular como apoio ao humor", "Construir uma rotina realista e sustentável", "Melhorar a aptidão e o sono"],
+    riscosCautelas: ["Baixa energia e motivação afetam a adesão", "Metas irreais frustram: comece pequeno", "O treino apoia, não substitui o acompanhamento de saúde"],
+    sinaisAlerta: ["Piora importante do humor ou risco à segurança, encaminhar ao profissional de saúde", "Fadiga desproporcional", "Sinais fora do esperado, reavaliar"],
+    modIndicadas: ["m-caminhada", "m-musculacao", "m-bike", "m-mobilidade"],
+    modCautela: ["m-funcional", "m-combinado"],
+    parametros: ["p-rpe", "p-adesao", "p-recuperacao"],
+    comoComecar:
+      "Comece com metas pequenas e alcançáveis (caminhada regular e força leve), priorizando a constância sobre a intensidade. Combine com o acompanhamento de saúde do aluno.",
+    errosComuns: ["Metas grandes demais no início", "Focar em intensidade em vez de constância", "Tratar o treino como substituto do cuidado de saúde"],
+    complexidade: "Moderada",
+  }),
+];
+
+/** Ordem de apresentação no seletor de prescrição (aproxima a lista sugerida). */
+const ORDEM_CONDICOES = [
+  "iniciante-sedentario", "retorno-inatividade", "obesidade-grave", "hipertensao",
+  "pre-diabetes", "diabetes-tipo-2", "sindrome-metabolica", "dislipidemia", "esteatose-hepatica",
+  "idoso-destreinado", "sarcopenia", "osteoporose", "osteoartrite-joelho", "dor-lombar-inespecifica",
+  "gestante", "pos-parto", "climaterio", "apneia-sono", "asma-controlada", "ansiedade-depressao",
+];
+
+export const specialGroups: SpecialGroup[] = [...specialGroupsBase, ...condicoesAdicionais].sort(
+  (a, b) => {
+    const ia = ORDEM_CONDICOES.indexOf(a.slug);
+    const ib = ORDEM_CONDICOES.indexOf(b.slug);
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+  },
+);
 
 export function getSpecialGroup(slug: string) {
   return specialGroups.find((g) => g.slug === slug);

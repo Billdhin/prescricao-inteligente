@@ -121,6 +121,165 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     penalidades: [],
     refs: ["oarsi-2019", "acr-2019"],
   },
+
+  /* --------- Condições adicionais (cuidados + adaptações do motor) --------- */
+
+  "iniciante-sedentario": {
+    slug: "iniciante-sedentario",
+    nome: "Iniciante / sedentário",
+    cuidados: [
+      "Poucos exercícios simples e esforço leve a moderado: a adesão e a técnica vêm antes da carga.",
+      "Progrida uma variável por vez; a dor tardia inicial é esperada, a lesão pela pressa não.",
+    ],
+    penalidades: [
+      { metrica: "Complexidade técnica", limite: 65, motivo: "Exercícios muito técnicos cedo demais atrapalham a técnica e a adesão do iniciante." },
+    ],
+    complexidadeMax: 55,
+    refs: ["acsm-getp11", "oms-2020"],
+  },
+  "retorno-inatividade": {
+    slug: "retorno-inatividade",
+    nome: "Retorno após inatividade",
+    cuidados: [
+      "Recomece com cerca de metade do volume e da carga anteriores e progrida ao longo de poucas semanas.",
+      "Respeite a recuperação: a dor muscular tardia inicial é esperada.",
+    ],
+    penalidades: [],
+    complexidadeMax: 60,
+    refs: ["acsm-getp11", "oms-2020"],
+  },
+  "pre-diabetes": {
+    slug: "pre-diabetes",
+    nome: "Pré-diabetes",
+    cuidados: [
+      "A regularidade semanal (aeróbio quase diário + força 2 a 3x) melhora a sensibilidade à insulina mais que picos de intensidade.",
+      "Atenção a sinais compatíveis com hipoglicemia (tontura, sudorese fria, confusão): pausar e reavaliar.",
+    ],
+    penalidades: [],
+    refs: ["colberg-2016", "acsm-getp11"],
+  },
+  "sindrome-metabolica": {
+    slug: "sindrome-metabolica",
+    nome: "Síndrome metabólica",
+    cuidados: [
+      "Vários fatores de risco somados pedem respiração contínua (evitar apneia), progressão gradual e monitoramento.",
+      "Combine aeróbio moderado frequente com força; atenção à pressão e a sinais de hipoglicemia.",
+    ],
+    penalidades: [
+      { metrica: "Demanda lombar", limite: 65, motivo: "Carga axial elevada favorece apneia/Valsalva: cautela no perfil cardiometabólico." },
+    ],
+    refs: ["colberg-2016", "pescatello-2004", "acsm-getp11"],
+  },
+  dislipidemia: {
+    slug: "dislipidemia",
+    nome: "Dislipidemia",
+    cuidados: [
+      "O efeito no perfil lipídico vem do volume aeróbio regular ao longo das semanas, não de poucas sessões.",
+      "Some força para composição e metabolismo; a conduta medicamentosa é do profissional de saúde.",
+    ],
+    penalidades: [],
+    refs: ["acsm-getp11", "oms-2020"],
+  },
+  "esteatose-hepatica": {
+    slug: "esteatose-hepatica",
+    nome: "Esteatose hepática metabólica",
+    cuidados: [
+      "Aeróbio regular + força reduzem a gordura hepática junto da perda de peso gradual (encaminhar nutrição).",
+      "Perda de peso agressiva não é o alvo do treino; priorize a consistência.",
+    ],
+    penalidades: [],
+    refs: ["donnelly-2009", "acsm-getp11"],
+  },
+  sarcopenia: {
+    slug: "sarcopenia",
+    nome: "Sarcopenia / baixa força muscular",
+    cuidados: [
+      "A força é o principal estímulo: máquinas guiadas 2 a 3x/semana com progressão pequena e frequente.",
+      "Técnica antes de carga; recuperação pode ser mais lenta. Encaminhe para avaliação nutricional (proteína).",
+    ],
+    penalidades: [
+      { metrica: "Requisito de mobilidade", limite: 60, motivo: "Alto requisito de mobilidade: adapte a amplitude para o perfil de baixa força." },
+    ],
+    complexidadeMax: 55,
+    refs: ["fragala-2019", "chodzko-2009"],
+  },
+  osteoporose: {
+    slug: "osteoporose",
+    nome: "Osteopenia / osteoporose",
+    cuidados: [
+      "Força e impacto controlado estimulam o osso; evite flexão brusca da coluna e movimentos de alto risco de queda.",
+      "Priorize equilíbrio e apoio; liberação médica recomendada antes de progredir o impacto.",
+    ],
+    penalidades: [
+      { metrica: "Demanda lombar", limite: 60, motivo: "Alta demanda lombar sugere flexão/carga axial da coluna: cautela na osteoporose." },
+    ],
+    complexidadeMax: 55,
+    refs: ["chodzko-2009", "acsm-getp11"],
+  },
+  gestante: {
+    slug: "gestante",
+    nome: "Gestante sem contraindicação",
+    cuidados: [
+      "Com liberação obstétrica: intensidade moderada pelo teste da fala, evitar esforço máximo, superaquecimento e decúbito dorsal prolongado após o 1º trimestre.",
+      "Reduza atividades com risco de queda; sinais de alerta obstétricos pedem interrupção e encaminhamento imediato.",
+    ],
+    penalidades: [
+      { metrica: "Complexidade técnica", limite: 65, motivo: "Exercícios de alta exigência técnica/equilíbrio aumentam o risco de queda na gestação." },
+    ],
+    complexidadeMax: 55,
+    refs: ["acsm-getp11"],
+  },
+  "pos-parto": {
+    slug: "pos-parto",
+    nome: "Pós-parto com liberação",
+    cuidados: [
+      "Com liberação: retomada gradual com atenção ao assoalho pélvico e ao core; sinais de perdas ou peso pedem encaminhamento.",
+      "Ajuste à recuperação e ao sono fragmentado; evite carga alta cedo demais.",
+    ],
+    penalidades: [],
+    complexidadeMax: 60,
+    refs: ["acsm-getp11"],
+  },
+  climaterio: {
+    slug: "climaterio",
+    nome: "Climatério / menopausa",
+    cuidados: [
+      "A força 2 a 3x/semana é prioridade (preserva músculo e osso); some aeróbio moderado.",
+      "Ajuste ao sono e aos sintomas do dia; atenção ao risco cardiometabólico da transição.",
+    ],
+    penalidades: [],
+    refs: ["chodzko-2009", "acsm-getp11"],
+  },
+  "apneia-sono": {
+    slug: "apneia-sono",
+    nome: "Apneia obstrutiva do sono",
+    cuidados: [
+      "Sonolência e fadiga diurna afetam a segurança: ajuste horário e intensidade ao dia.",
+      "Aeróbio + força apoiam a perda de peso, que reduz a gravidade; o tratamento é do profissional de saúde.",
+    ],
+    penalidades: [],
+    refs: ["donnelly-2009", "acsm-getp11"],
+  },
+  "asma-controlada": {
+    slug: "asma-controlada",
+    nome: "Asma controlada",
+    cuidados: [
+      "Aquecimento gradual e ambientes sem ar muito frio ou seco reduzem o broncoespasmo induzido pelo esforço.",
+      "Medicação de resgate disponível conforme o médico; sintomas que não cedem com a pausa pedem interrupção.",
+    ],
+    penalidades: [],
+    refs: ["acsm-getp11", "oms-2020"],
+  },
+  "ansiedade-depressao": {
+    slug: "ansiedade-depressao",
+    nome: "Ansiedade / sintomas depressivos",
+    cuidados: [
+      "A constância vale mais que a intensidade: metas pequenas e alcançáveis sustentam a adesão.",
+      "O treino apoia o humor, mas não substitui o acompanhamento de saúde do aluno.",
+    ],
+    penalidades: [],
+    refs: ["oms-2020", "acsm-getp11"],
+  },
 };
 
 export function getGroupRule(slug?: string) {
