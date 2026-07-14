@@ -57,7 +57,9 @@ import {
 import { cn } from "@/lib/utils";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
-type NavSection = { label?: string; items: NavItem[] };
+// collapsible: entra no grupo recolhível "Mais recursos" (descoberta progressiva:
+// o 1º acesso vê só o caminho do aha; o resto abre quando o usuário quiser).
+type NavSection = { label?: string; items: NavItem[]; collapsible?: boolean };
 
 // Navegação enxuta e agrupada: poucos destinos no topo (o trabalho do dia) e o
 // resto em "Referência" / "Avançado" / "Sua conta".
@@ -73,6 +75,7 @@ const navByMode: Record<AppMode, NavSection[]> = {
     },
     {
       label: "Ferramentas da sessão",
+      collapsible: true,
       items: [
         { to: "/semaforo", label: "Semáforo", icon: ShieldCheck },
         { to: "/assessments", label: "Avaliações", icon: BarChart3 },
@@ -81,6 +84,7 @@ const navByMode: Record<AppMode, NavSection[]> = {
     },
     {
       label: "Referência",
+      collapsible: true,
       items: [
         { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
         { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
@@ -278,27 +282,14 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
   const loadExamples = useAlunos((s) => s.loadExamples);
   const navigate = useNavigate();
   const dialogRef = useDialog<HTMLDivElement>(() => {});
-  const [passo, setPasso] = React.useState<1 | 2>(1);
-  const [caso, setCaso] = React.useState({ grupo: "", objetivo: "Emagrecimento", nivel: "Iniciante" });
+  // Onboarding caso-primeiro: o gatilho de uso é situacional (o aluno com condição
+  // chegou HOJE). Uma condição já vem escolhida para o primeiro caso cair direto no
+  // fluxo que mostra o valor. A prescrição vem antes; o Semáforo aparece no resultado.
+  const [caso, setCaso] = React.useState({ grupo: "hipertensao", objetivo: "Emagrecimento", nivel: "Iniciante" });
 
   const finish = () => {
     localStorage.setItem("pi-onboarded", "1");
     onDone();
-  };
-  const choose = (m: AppMode) => {
-    if (m === "atender") {
-      setPasso(2);
-      return;
-    }
-    setMode(m);
-    finish();
-    navigate("/aprender");
-  };
-  const explorar = () => {
-    setMode("atender");
-    loadExamples();
-    finish();
-    navigate("/dashboard");
   };
   const resolverCaso = () => {
     setMode("atender");
@@ -308,20 +299,17 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
     if (caso.grupo) q.set("grupo", caso.grupo);
     navigate(`/gps?${q.toString()}`);
   };
-  const pularCaso = () => {
+  const explorar = () => {
     setMode("atender");
+    loadExamples();
     finish();
+    navigate("/dashboard");
   };
-
-  const opcoes: {
-    mode: AppMode;
-    icon: React.ComponentType<{ className?: string }>;
-    title: string;
-    desc: string;
-  }[] = [
-    { mode: "atender", icon: Briefcase, title: "Já atendo alunos", desc: "Gerencie alunos, avalie e prescreva com justificativa." },
-    { mode: "aprender", icon: GraduationCap, title: "Estou estudando", desc: "Trilhas, casos e o raciocínio da prescrição." },
-  ];
+  const irAprender = () => {
+    setMode("aprender");
+    finish();
+    navigate("/aprender");
+  };
 
   const chip = (ativo: boolean) =>
     cn(
@@ -343,94 +331,68 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
           <Logo />
         </div>
 
-        {passo === 1 ? (
-          <>
-            <h2 className="font-display text-2xl font-bold text-ink">Bem-vindo!</h2>
-            <p className="mx-auto mt-1 max-w-sm text-ink-2">
-              Como você vai usar a plataforma agora? Você pode alternar quando quiser lá no topo.
-            </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {opcoes.map((o) => {
-                const Icon = o.icon;
-                return (
-                  <button
-                    key={o.mode}
-                    onClick={() => choose(o.mode)}
-                    className="flex flex-col items-center gap-2 rounded-card border border-border bg-surface p-5 text-center transition-colors hover:border-primary hover:bg-primary-tint"
-                  >
-                    <span className="grid h-12 w-12 place-items-center rounded-xl bg-primary-tint text-primary">
-                      <Icon className="h-6 w-6" />
-                    </span>
-                    <span className="font-display font-bold text-ink">{o.title}</span>
-                    <span className="text-sm text-ink-2">{o.desc}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <button onClick={explorar} className="mt-4 text-sm font-semibold text-primary hover:underline">
-              Só quero explorar (com dados de exemplo)
-            </button>
-          </>
-        ) : (
-          <>
-            <h2 className="font-display text-2xl font-bold text-ink">Resolva seu primeiro caso agora</h2>
-            <p className="mx-auto mt-1 max-w-sm text-ink-2">
-              Pense num aluno real que você tem hoje. Em menos de 10 minutos você sai com a
-              decisão documentada; não é demonstração, é o caso de verdade.
-            </p>
+        <h2 className="font-display text-2xl font-bold text-ink">Vamos resolver um caso de verdade</h2>
+        <p className="mx-auto mt-1 max-w-sm text-ink-2">
+          Pense num aluno que você tem agora. Em poucos minutos você sai com a decisão documentada;
+          não é demonstração, é o caso de verdade.
+        </p>
 
-            <div className="mt-5 space-y-4 text-left">
-              <fieldset>
-                <legend className="mb-1.5 text-sm font-semibold text-ink">Ele tem alguma condição?</legend>
-                <div className="flex flex-wrap gap-1.5">
-                  <button type="button" onClick={() => setCaso((c) => ({ ...c, grupo: "" }))} className={chip(caso.grupo === "")} aria-pressed={caso.grupo === ""}>
-                    Sem condição especial
-                  </button>
-                  {specialGroups.map((g) => (
-                    <button
-                      key={g.slug}
-                      type="button"
-                      onClick={() => setCaso((c) => ({ ...c, grupo: g.slug }))}
-                      className={chip(caso.grupo === g.slug)}
-                      aria-pressed={caso.grupo === g.slug}
-                    >
-                      {g.nome}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-semibold text-ink">Objetivo</span>
-                  <select value={caso.objetivo} onChange={(e) => setCaso((c) => ({ ...c, objetivo: e.target.value }))} className="input">
-                    {OBJETIVOS.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-semibold text-ink">Nível</span>
-                  <select value={caso.nivel} onChange={(e) => setCaso((c) => ({ ...c, nivel: e.target.value }))} className="input">
-                    {["Iniciante", "Intermediário", "Avançado"].map((n) => (
-                      <option key={n} value={n}>
-                        {n}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+        <div className="mt-5 space-y-4 text-left">
+          <fieldset>
+            <legend className="mb-1.5 text-sm font-semibold text-ink">Qual condição o seu aluno tem?</legend>
+            <div className="flex flex-wrap gap-1.5">
+              <button type="button" onClick={() => setCaso((c) => ({ ...c, grupo: "" }))} className={chip(caso.grupo === "")} aria-pressed={caso.grupo === ""}>
+                Sem condição especial
+              </button>
+              {specialGroups.map((g) => (
+                <button
+                  key={g.slug}
+                  type="button"
+                  onClick={() => setCaso((c) => ({ ...c, grupo: g.slug }))}
+                  className={chip(caso.grupo === g.slug)}
+                  aria-pressed={caso.grupo === g.slug}
+                >
+                  {g.nome}
+                </button>
+              ))}
             </div>
+          </fieldset>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-semibold text-ink">Objetivo</span>
+              <select value={caso.objetivo} onChange={(e) => setCaso((c) => ({ ...c, objetivo: e.target.value }))} className="input">
+                {OBJETIVOS.map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-semibold text-ink">Nível</span>
+              <select value={caso.nivel} onChange={(e) => setCaso((c) => ({ ...c, nivel: e.target.value }))} className="input">
+                {["Iniciante", "Intermediário", "Avançado"].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
 
-            <button onClick={resolverCaso} className={cn(buttonClasses("primary"), "mt-5 w-full")}>
-              Resolver este caso agora →
-            </button>
-            <button onClick={pularCaso} className="mt-3 text-sm font-medium text-ink-2 hover:text-ink">
-              Pular, quero só conhecer o painel
-            </button>
-          </>
-        )}
+        <button onClick={resolverCaso} className={cn(buttonClasses("primary"), "mt-5 w-full")}>
+          Ver a decisão deste caso →
+        </button>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
+          <button onClick={explorar} className="font-medium text-ink-2 hover:text-ink">
+            Não tenho um caso agora? Use um exemplo
+          </button>
+          <span aria-hidden className="text-ink-3">·</span>
+          <button onClick={irAprender} className="font-medium text-ink-2 hover:text-ink">
+            Na verdade, só quero estudar
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -443,6 +405,17 @@ function Sidebar() {
   const location = useLocation();
   const asideRef = React.useRef<HTMLElement>(null);
   const nav = navByMode[mode];
+  // "Mais recursos" recolhido por padrão (fica só o caminho do aha à vista); a
+  // preferência do usuário persiste depois que ele abre uma vez.
+  const [maisAberto, setMaisAberto] = React.useState(
+    () => typeof window !== "undefined" && localStorage.getItem("pi-nav-mais") === "1",
+  );
+  const toggleMais = () =>
+    setMaisAberto((v) => {
+      const next = !v;
+      localStorage.setItem("pi-nav-mais", next ? "1" : "0");
+      return next;
+    });
 
   const changeMode = (m: AppMode) => {
     setMode(m);
@@ -516,17 +489,30 @@ function Sidebar() {
 
         <nav aria-label="Menu principal" className="flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-2">
           {nav.map((section, i) => {
-            const showLabel = !!section.label && (!collapsed || mobileOpen);
+            const iconOnly = collapsed && !mobileOpen;
+            // No modo icon-only não há rótulos: mostra tudo (é só uma tira de ícones).
+            // Fora dele, seções "collapsible" ficam sob o toggle "Mais recursos".
+            const dentroDoMais = !!section.collapsible && !iconOnly;
+            if (dentroDoMais && !maisAberto) {
+              // Renderiza o toggle uma única vez, antes da primeira seção recolhível.
+              const primeiraColl = !nav.slice(0, i).some((s) => s.collapsible);
+              return primeiraColl ? <MaisRecursosToggle key="mais-toggle" aberto={maisAberto} onToggle={toggleMais} /> : null;
+            }
+            const showLabel = !!section.label && !iconOnly;
             const labelId = showLabel ? `navsec-${i}` : undefined;
+            const primeiraColl = dentroDoMais && !nav.slice(0, i).some((s) => s.collapsible);
             return (
-              <div key={section.label ?? `sec-${i}`} role={labelId ? "group" : undefined} aria-labelledby={labelId}>
-                {showLabel && (
-                  <div id={labelId} className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-                    {section.label}
-                  </div>
-                )}
-                <NavGroup items={section.items} collapsed={collapsed && !mobileOpen} />
-              </div>
+              <React.Fragment key={section.label ?? `sec-${i}`}>
+                {primeiraColl && <MaisRecursosToggle aberto={maisAberto} onToggle={toggleMais} />}
+                <div role={labelId ? "group" : undefined} aria-labelledby={labelId}>
+                  {showLabel && (
+                    <div id={labelId} className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+                      {section.label}
+                    </div>
+                  )}
+                  <NavGroup items={section.items} collapsed={iconOnly} />
+                </div>
+              </React.Fragment>
             );
           })}
         </nav>
@@ -611,6 +597,20 @@ function ModeSwitch({
         })}
       </div>
     </div>
+  );
+}
+
+function MaisRecursosToggle({ aberto, onToggle }: { aberto: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={aberto}
+      className="flex w-full items-center justify-between rounded-control px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3 transition-colors hover:bg-surface-soft hover:text-ink-2"
+    >
+      <span>Mais recursos</span>
+      <ChevronDown className={cn("h-4 w-4 transition-transform", aberto && "rotate-180")} />
+    </button>
   );
 }
 

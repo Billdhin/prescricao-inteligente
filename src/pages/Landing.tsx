@@ -5,6 +5,7 @@ import {
   Check,
   CheckCircle2,
   ShieldCheck,
+  AlertTriangle,
   GraduationCap,
   Dumbbell,
   UserCheck,
@@ -84,11 +85,11 @@ export function Landing() {
       <Section className="!pb-10 !pt-10 md:!pt-16">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div>
-            <Kicker tone="analysis">Para estudantes e profissionais de Educação Física</Kicker>
-            <h1 className="font-display text-4xl font-extrabold leading-[1.05] text-ink md:text-[3.4rem]">
-              A prescrição do seu aluno em{" "}
+            <Kicker tone="analysis">Para profissionais de Educação Física</Kicker>
+            <h1 className="font-display text-4xl font-extrabold leading-[1.08] text-ink md:text-[3.05rem]">
+              Aluno com hipertensão, diabetes ou dor lombar? Monte um treino{" "}
               <span className="relative inline-block whitespace-nowrap text-primary">
-                3 passos
+                seguro,
                 <svg
                   aria-hidden
                   className="absolute -bottom-2 left-0 h-2.5 w-full"
@@ -103,19 +104,21 @@ export function Landing() {
                     strokeLinecap="round"
                   />
                 </svg>
-              </span>, com o porquê de cada exercício.
+              </span>{" "}
+              com o porquê documentado.
             </h1>
             <p className="mt-5 max-w-lg text-lg text-ink-2">
-              Diga o perfil, receba exercícios ranqueados com justificativa científica e entregue em
-              PDF com a sua marca. Simples de usar, sério no raciocínio.
+              Para alunos com hipertensão, diabetes, obesidade, dor lombar ou idade avançada: veja o
+              treino recomendado, o porquê de cada exercício e as cautelas de segurança no mesmo
+              lugar. A decisão é sempre sua; a plataforma organiza e documenta o raciocínio.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/dashboard" className={buttonClasses("primary")}>
-                Começar gratuitamente <ArrowRight className="h-4 w-4" />
+                Resolver meu primeiro caso <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="#como-funciona" className={buttonClasses("secondary")}>
-                Ver os 3 passos <ArrowDown className="h-4 w-4" />
-              </a>
+              <Link to="/casos-rcd" className={buttonClasses("secondary")}>
+                Ver um caso decidido <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
             <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink-2">
               {["Grátis para começar", "Sem cartão", "Feito por doutor em Educação Física"].map((t) => (
@@ -126,20 +129,8 @@ export function Landing() {
             </ul>
           </div>
 
-          {/* Demo real e interativa: análise revelada sobre a MESMA imagem */}
-          <Card variant="raised" className="p-3">
-            <BiomechanicsComparisonSlider
-              baseSrc={withBase("/exercises/leg-press-45.webp")}
-              analysisSrc={withBase("/exercises/leg-press-45-analysis.webp")}
-              alt="Leg press 45°, execução real"
-              regions={muscleRegions["leg-press-45"] ?? []}
-              ativacao={getExercise("leg-press-45")?.ativacao ?? []}
-              overlay={analysisOverlays["leg-press-45"]}
-            />
-            <p className="px-2 py-2 text-center text-xs text-ink-3">
-              Experimente: arraste o divisor e revele a análise biomecânica sobre a mesma imagem.
-            </p>
-          </Card>
+          {/* O fosso à vista: a decisão documentada (não a commodity biomecânica) */}
+          <DecisaoDemoCard />
         </div>
       </Section>
 
@@ -148,16 +139,16 @@ export function Landing() {
         <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 md:grid-cols-[1.2fr_1fr] md:items-center md:px-6">
           <div>
             <h2 className="font-display text-2xl font-bold text-ink">
-              Você sabe o nome dos exercícios. O difícil é responder{" "}
-              <span className="text-[color:var(--cta-text)]">“por que esse e não aquele?”</span>
+              Treino para aluno saudável, todo mundo monta. A conta aperta quando ele chega com{" "}
+              <span className="text-[color:var(--cta-text)]">pressão alta, diabetes, uma hérnia ou 68 anos</span>.
             </h2>
             <p className="mt-2 max-w-xl text-ink-2">
-              Planilha decorada não segura a pergunta do aluno. A plataforma pensa junto com você e
-              te dá a resposta com critério, na hora.
+              Aí a decisão é sua, e precisa ser segura e defensável. A plataforma pensa junto e deixa
+              o porquê documentado, do jeito que você pode mostrar e guardar.
             </p>
           </div>
           <div className="space-y-2">
-            {["“Isso pega mais reto ou vasto lateral?”", "“Posso trocar por leg press?”", "“É seguro pra quem tem dor lombar?”"].map((q) => (
+            {["“Pode treinar pesado com a pressão descontrolada?”", "“Esse exercício é seguro para a hérnia dele?”", "“Se acontecer algo, como eu me explico?”"].map((q) => (
               <div key={q} className="flex items-center gap-3 rounded-xl border border-border bg-bg px-4 py-2.5 text-sm text-ink">
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-tint text-xs font-bold text-primary">?</span>
                 {q}
@@ -181,20 +172,20 @@ export function Landing() {
           {[
             {
               n: 1,
-              t: "Diga para quem",
-              d: "Escolha o aluno (ou um perfil): objetivo, nível, restrições e equipamentos. Leva menos de um minuto.",
+              t: "Diga a condição do aluno",
+              d: "Escolha a condição (hipertensão, diabetes, dor lombar e mais), o objetivo e o nível. Leva menos de um minuto.",
               scene: "wizard" as const,
             },
             {
               n: 2,
-              t: "Receba com o porquê",
-              d: "Exercícios ranqueados por critérios transparentes: toque em “Ver justificativa” e defenda cada escolha.",
+              t: "Receba o treino, com o porquê",
+              d: "Exercícios ranqueados por critério, com as cautelas de segurança da condição já embutidas. Toque em “Ver justificativa” e entenda cada escolha.",
               scene: "recomendacao" as const,
             },
             {
               n: 3,
-              t: "Entregue com a sua marca",
-              d: "Exporte a prescrição em PDF profissional: exercícios, séries sugeridas e o raciocínio, prontos para o aluno.",
+              t: "Documente a decisão",
+              d: "O raciocínio vira um registro com referências, o seu nome e o seu CREF. No Profissional, você ainda exporta em PDF com a sua marca.",
               scene: "pdf" as const,
             },
           ].map((s) => (
@@ -273,7 +264,10 @@ export function Landing() {
               “Mas eu já uso o ChatGPT pra montar treino…”
             </h3>
             <p className="mx-auto mt-1 max-w-xl text-center text-sm text-ink-2">
-              Ótimo pra rascunhar. Mas quando o aluno chega com laudo, a diferença aparece:
+              Ótimo para rascunhar. Mas quando o aluno chega com uma condição de saúde, a diferença aparece:
+            </p>
+            <p className="mx-auto mt-3 max-w-xl text-center font-display text-xl font-bold text-ink">
+              O ChatGPT não assina embaixo. Você sim.
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <Card variant="soft" className="p-5">
@@ -353,6 +347,31 @@ export function Landing() {
               <p className="mt-1 text-sm text-ink-2">{f.d}</p>
             </Card>
           ))}
+        </div>
+      </Section>
+
+      {/* --------------------- Bônus: entenda o movimento -------------------- */}
+      <Section className="!pt-2 text-center">
+        <Kicker tone="analysis">Bônus para aprofundar</Kicker>
+        <h2 className="font-display text-3xl font-bold text-ink">E, quando quiser, entenda o movimento por dentro.</h2>
+        <p className="mx-auto mt-2 max-w-2xl text-ink-2">
+          Arraste o divisor e revele a análise biomecânica sobre a foto real de execução: músculos
+          ativados, ângulos e linha de força. Para estudar a fundo, não só decidir.
+        </p>
+        <div className="mx-auto mt-8 max-w-md">
+          <Card variant="raised" className="p-3">
+            <BiomechanicsComparisonSlider
+              baseSrc={withBase("/exercises/leg-press-45.webp")}
+              analysisSrc={withBase("/exercises/leg-press-45-analysis.webp")}
+              alt="Leg press 45°, execução real"
+              regions={muscleRegions["leg-press-45"] ?? []}
+              ativacao={getExercise("leg-press-45")?.ativacao ?? []}
+              overlay={analysisOverlays["leg-press-45"]}
+            />
+            <p className="px-2 py-2 text-center text-xs text-ink-3">
+              Leg press 45°: execução e análise na mesma imagem.
+            </p>
+          </Card>
         </div>
       </Section>
 
@@ -519,6 +538,69 @@ export function Landing() {
         </div>
       </footer>
     </div>
+  );
+}
+
+/* ------ cartão-herói: a decisão documentada (o fosso), estático e prudente ---- */
+
+function DecisaoDemoCard() {
+  return (
+    <Card variant="raised" className="overflow-hidden p-0">
+      <div className="flex items-center justify-between border-b border-border bg-surface-soft px-4 py-2.5">
+        <SeloRCD compacto />
+        <span className="rounded-full bg-ink/5 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-ink-3">
+          Exemplo
+        </span>
+      </div>
+      <div className="space-y-3 p-4">
+        <div>
+          <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-ink-3">Condição do aluno</div>
+          <div className="flex flex-wrap gap-1.5">
+            <span className="rounded-full border border-primary bg-primary-tint px-2.5 py-1 text-xs font-semibold text-primary">
+              Hipertensão
+            </span>
+            {["Diabetes", "Dor lombar", "Idoso"].map((c) => (
+              <span key={c} className="rounded-full border border-border px-2.5 py-1 text-xs font-medium text-ink-3">
+                {c}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 rounded-xl border border-warning/40 bg-[#fef7e8] px-3 py-2.5">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-warning/15">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+          </span>
+          <div>
+            <div className="text-sm font-bold text-[#b45309]">Pode treinar hoje, com ajuste</div>
+            <div className="text-xs text-ink-2">Checklist de segurança da condição, respondido antes da sessão.</div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border p-3">
+          <div className="flex items-center justify-between">
+            <span className="font-display text-sm font-bold text-ink">Leg press 45°</span>
+            <span className="rounded-full bg-success/12 px-2 py-0.5 text-[11px] font-bold text-success">Recomendado</span>
+          </div>
+          <p className="mt-1 text-xs text-ink-2">
+            Tronco apoiado e cadeia fechada: a pressão sobe menos que no agachamento livre. Evitar
+            apneia (Valsalva); respiração contínua nas séries.
+          </p>
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] text-ink-3">
+            <span className="rounded bg-ink/5 px-1.5 py-0.5 font-bold text-ink-2">1</span>
+            <span className="rounded bg-ink/5 px-1.5 py-0.5 font-bold text-ink-2">2</span>
+            <span>referências citadas na decisão</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 rounded-xl bg-surface-soft px-3 py-2.5">
+          <FileDown className="h-4 w-4 shrink-0 text-analysis" />
+          <span className="text-xs text-ink-2">
+            Vira um registro com o seu nome e CREF, para guardar e assinar. A decisão é sempre sua.
+          </span>
+        </div>
+      </div>
+    </Card>
   );
 }
 

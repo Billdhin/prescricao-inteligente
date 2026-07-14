@@ -302,20 +302,23 @@ function EmptyPro({ onExemplos }: { onExemplos: () => void }) {
   return (
     <Card variant="raised" className="flex flex-col items-center gap-4 p-8 text-center md:p-12">
       <span className="grid h-16 w-16 place-items-center rounded-2xl bg-primary-tint text-primary">
-        <UserPlus className="h-8 w-8" />
+        <Navigation className="h-8 w-8" />
       </span>
       <div>
-        <h2 className="font-display text-xl font-bold text-ink">Bem-vindo! Comece cadastrando um aluno</h2>
+        <h2 className="font-display text-xl font-bold text-ink">Comece resolvendo um caso de verdade</h2>
         <p className="mx-auto mt-1 max-w-md text-ink-2">
-          O painel se organiza em torno dos seus alunos: quem precisa de reavaliação, quem está sem
-          prescrição e o que priorizar. Cadastre o primeiro para começar.
+          Pense num aluno que você tem agora, com hipertensão, diabetes, dor lombar ou idade
+          avançada. Em poucos minutos você sai com a decisão documentada e o porquê de cada escolha.
         </p>
       </div>
       <div className="flex flex-wrap justify-center gap-2">
-        <Link to="/alunos?novo=1" className={buttonClasses("primary")}>
-          <UserPlus className="h-4 w-4" /> Cadastrar aluno
+        <Link to="/gps?primeiro-caso=1" className={buttonClasses("primary")}>
+          <Navigation className="h-4 w-4" /> Resolver um caso agora
         </Link>
-        <button onClick={onExemplos} className={buttonClasses("secondary")}>
+        <Link to="/alunos?novo=1" className={buttonClasses("secondary")}>
+          <UserPlus className="h-4 w-4" /> Cadastrar um aluno
+        </Link>
+        <button onClick={onExemplos} className={buttonClasses("ghost")}>
           Carregar exemplos
         </button>
       </div>
