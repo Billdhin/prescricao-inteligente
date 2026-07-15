@@ -83,6 +83,34 @@ const VARIACAO_IMGS: Record<string, number[]> = {
   "empurra-puxa-aquatico": [0, 1, 2],
 };
 
+/**
+ * Índices de erro (na ordem do array `errosComuns` do exercício) que já têm imagem
+ * DEDICADA em public/exercises/erros/<slug>-<i>.webp.
+ *
+ * Por que existe: até aqui havia UMA imagem por exercício (`erros/<slug>.webp`)
+ * servindo para os 2 a 4 erros daquele exercício. Uma figura não consegue mostrar
+ * "joelho valgo" e "lombar em flexão" ao mesmo tempo, então ela não remetia a erro
+ * nenhum. As variações acertaram justamente por terem uma foto por variação; os
+ * erros seguem agora o mesmo padrão. Enquanto o índice não estiver aqui, a aba
+ * mostra o texto do erro sem imagem, em vez de uma figura que não corresponde.
+ */
+const ERRO_IMGS: Record<string, number[]> = {};
+
+/** Imagem dedicada do i-ésimo erro comum, se existir. */
+export function getErroImagemPorIndice(slug: string | undefined, i: number): string | undefined {
+  if (!slug) return undefined;
+  return ERRO_IMGS[slug]?.includes(i) ? `/exercises/erros/${slug}-${i}.webp` : undefined;
+}
+
+/** true quando o exercício tem ao menos uma imagem de erro dedicada. */
+export function temErroImagens(slug?: string): boolean {
+  return Boolean(slug && ERRO_IMGS[slug]?.length);
+}
+
+/**
+ * Imagem única e genérica por exercício (legado). Mantida só para não deixar a aba
+ * vazia enquanto as imagens por erro não chegam; não representa um erro específico.
+ */
 export function getErroImagem(slug?: string): string | undefined {
   return slug && SLUGS_COM_ERRO_IMG.includes(slug) ? `/exercises/erros/${slug}.webp` : undefined;
 }
