@@ -51,6 +51,10 @@ export type TempoMin = (typeof TEMPOS_MIN)[number];
 /** Peso corporal de referência quando o usuário não informa outro (kg). */
 export const PESO_PADRAO_KG = 70;
 
+/** Faixa aceita para o peso informado (kg). Fora dela o cálculo de MET perde sentido prático. */
+export const PESO_MIN_KG = 30;
+export const PESO_MAX_KG = 250;
+
 /**
  * Tabela de MET por modalidade e por intensidade.
  * A chave é o `id` da modalidade em src/data/cardio.ts (ex.: "c-caminhada"),

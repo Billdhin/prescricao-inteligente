@@ -13,7 +13,7 @@ import {
 } from "@/data/cardio";
 import {
   INTENSIDADES, type Intensidade, TEMPOS_MIN, type TempoMin,
-  PESO_PADRAO_KG, kcalModalidade,
+  PESO_PADRAO_KG, PESO_MIN_KG, PESO_MAX_KG, kcalModalidade,
 } from "@/data/calorias";
 import { cn, withBase } from "@/lib/utils";
 
@@ -517,6 +517,18 @@ function CardioParametros({
   onPeso: (v: number) => void;
 }) {
   const descricao = INTENSIDADES.find((x) => x.id === intensidade)?.descricao ?? "";
+  // O campo guarda TEXTO enquanto o profissional digita. Corrigir o valor a cada
+  // tecla travava o input: com 70 no campo, digitar "8" virava 708 e o limite
+  // jogava para 200 (e apagar o campo caía para 30). Só ajusta ao sair do campo.
+  const [pesoTexto, setPesoTexto] = React.useState(String(pesoKg));
+  React.useEffect(() => setPesoTexto(String(pesoKg)), [pesoKg]);
+  const confirmarPeso = () => {
+    const n = Number(pesoTexto);
+    const valido = pesoTexto.trim() !== "" && Number.isFinite(n);
+    const final = valido ? Math.max(PESO_MIN_KG, Math.min(PESO_MAX_KG, Math.round(n))) : pesoKg;
+    setPesoTexto(String(final));
+    onPeso(final);
+  };
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center gap-2">
@@ -599,13 +611,22 @@ function CardioParametros({
               id="peso-corporal"
               type="number"
               inputMode="numeric"
-              min={30}
-              max={200}
+              min={PESO_MIN_KG}
+              max={PESO_MAX_KG}
               step={1}
-              value={pesoKg}
+              value={pesoTexto}
               onChange={(e) => {
-                const n = Number(e.target.value);
-                if (Number.isFinite(n)) onPeso(Math.max(30, Math.min(200, Math.round(n))));
+                const txt = e.target.value;
+                setPesoTexto(txt);
+                // recalcula ao vivo só enquanto o que foi digitado já é um peso plausível
+                const n = Number(txt);
+                if (txt.trim() !== "" && Number.isFinite(n) && n >= PESO_MIN_KG && n <= PESO_MAX_KG) {
+                  onPeso(Math.round(n));
+                }
+              }}
+              onBlur={confirmarPeso}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
               }}
               className="input w-24 tabular"
               aria-describedby="peso-hint"
@@ -613,7 +634,7 @@ function CardioParametros({
             <span className="text-sm text-ink-3">kg</span>
           </div>
           <p id="peso-hint" className="mt-1.5 text-[11px] leading-snug text-ink-3">
-            Padrão de referência: {PESO_PADRAO_KG} kg.
+            De {PESO_MIN_KG} a {PESO_MAX_KG} kg. Padrão de referência: {PESO_PADRAO_KG} kg.
           </p>
         </div>
       </div>

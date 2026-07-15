@@ -627,6 +627,9 @@ function ContextoCard({
 }) {
   const temGrupo = grupoSlug !== "";
   const prescricaoGeral = alunoId === "";
+  // Nome e foco de cada fase vêm da própria condição: o seletor deixa de ser "1,2,3,4" sem sentido.
+  const fasesDoGrupo = (temGrupo ? getSpecialGroup(grupoSlug)?.fases : undefined) ?? [];
+  const faseAtualObj = fasesDoGrupo[fase - 1];
   const grupoNome = specialGroups.find((g) => g.slug === grupoSlug)?.nome;
   // O que já está definido aparece no resumo, sem precisar abrir os ajustes.
   const contextoResumo = [
@@ -686,7 +689,8 @@ function ContextoCard({
                   <button
                     key={n}
                     onClick={() => temGrupo && setFase(n)}
-                    aria-label={`Fase ${n}`}
+                    title={fasesDoGrupo[n - 1]?.nome}
+                    aria-label={fasesDoGrupo[n - 1] ? `Fase ${n}: ${fasesDoGrupo[n - 1].nome}` : `Fase ${n}`}
                     aria-pressed={n === fase}
                     disabled={!temGrupo}
                     className={cn(
@@ -700,6 +704,18 @@ function ContextoCard({
                   </button>
                 ))}
               </div>
+              {/* O número sozinho não diz nada: mostra o que a fase escolhida significa. */}
+              {temGrupo && faseAtualObj ? (
+                <p className="mt-1.5 text-xs leading-snug text-ink-2">
+                  <span className="font-semibold text-ink">
+                    Fase {fase}, {faseAtualObj.nome}.
+                  </span>{" "}
+                  {faseAtualObj.foco}{" "}
+                  <span className="text-ink-3">A fase avança por critério atingido, não por tempo de treino.</span>
+                </p>
+              ) : (
+                <p className="mt-1.5 text-xs text-ink-3">Escolha uma condição para habilitar a jornada.</p>
+              )}
             </div>
           </div>
 

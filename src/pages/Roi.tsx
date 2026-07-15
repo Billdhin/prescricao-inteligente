@@ -10,6 +10,55 @@ const fmtBRL = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 
 /**
+ * Campo numérico que aceita digitação livre. Corrigir o valor a cada tecla
+ * prendia o campo no limite: com 3 em "sessões/semana", digitar 5 virava 35 e
+ * caía para 7. Aqui o valor só é aplicado enquanto o que foi digitado é válido,
+ * e o limite é ajustado quando o campo perde o foco.
+ */
+function CampoNumero({
+  valor,
+  onValor,
+  min,
+  max,
+  className,
+}: {
+  valor: number;
+  onValor: (n: number) => void;
+  min: number;
+  max: number;
+  className: string;
+}) {
+  const [texto, setTexto] = React.useState(String(valor));
+  React.useEffect(() => setTexto(String(valor)), [valor]);
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      min={min}
+      max={max}
+      value={texto}
+      onChange={(e) => {
+        const txt = e.target.value;
+        setTexto(txt);
+        const n = Number(txt);
+        if (txt.trim() !== "" && Number.isFinite(n) && n >= min && n <= max) onValor(Math.round(n));
+      }}
+      onBlur={() => {
+        const n = Number(texto);
+        const final =
+          texto.trim() !== "" && Number.isFinite(n) ? Math.max(min, Math.min(max, Math.round(n))) : valor;
+        setTexto(String(final));
+        onValor(final);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") e.currentTarget.blur();
+      }}
+      className={className}
+    />
+  );
+}
+
+/**
  * /roi — Calculadora de ROI da Especialização (pública, sem cadastro).
  * Transforma um dado de mercado (especialistas em públicos especiais cobram
  * 15–30% a mais por sessão) em argumento pessoal e concreto: quanto o
@@ -67,36 +116,15 @@ export function Roi() {
               <span className="mb-1.5 block text-sm font-semibold text-ink">
                 Alunos com condição especial
               </span>
-              <input
-                type="number"
-                min={0}
-                max={99}
-                value={alunos}
-                onChange={(e) => setAlunos(Math.max(0, Number(e.target.value) || 0))}
-                className={num}
-              />
+              <CampoNumero valor={alunos} onValor={setAlunos} min={0} max={99} className={num} />
             </label>
             <label className="block text-center">
               <span className="mb-1.5 block text-sm font-semibold text-ink">Valor da sessão (R$)</span>
-              <input
-                type="number"
-                min={0}
-                max={2000}
-                value={valorSessao}
-                onChange={(e) => setValorSessao(Math.max(0, Number(e.target.value) || 0))}
-                className={num}
-              />
+              <CampoNumero valor={valorSessao} onValor={setValorSessao} min={0} max={2000} className={num} />
             </label>
             <label className="block text-center">
               <span className="mb-1.5 block text-sm font-semibold text-ink">Sessões/semana por aluno</span>
-              <input
-                type="number"
-                min={1}
-                max={7}
-                value={sessoesSemana}
-                onChange={(e) => setSessoesSemana(Math.min(7, Math.max(1, Number(e.target.value) || 1)))}
-                className={num}
-              />
+              <CampoNumero valor={sessoesSemana} onValor={setSessoesSemana} min={1} max={7} className={num} />
             </label>
           </div>
 
