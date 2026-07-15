@@ -61,6 +61,23 @@ Confira sempre `erros/agachamento-livre.webp` antes de escrever o prompt. O esti
 6. **Verifique cada imagem com os próprios olhos** (copie para o scratchpad com extensão `.jpg` e use a tool Read). O Read não abre caminho do `/tmp` do Git Bash; use o scratchpad com caminho Windows.
 7. Só depois de aprovada uma a uma: converter para webp, copiar para `public/exercises/...` e registrar o índice (`ERRO_IMGS` / `VARIACAO_IMGS` em `src/data/aba-imagens.ts`).
 
+## O que o img2img consegue e o que não consegue
+
+Medido em 15/07/2026, com verificação visual imagem a imagem:
+
+**Consegue bem** (aprovadas de primeira): erros de **flexão/extensão no plano sagital**. Lombar arredondando (butt wink), hiperextensão lombar, tronco inclinando à frente, joelho travado. São mudanças grandes de silhueta, vistas de perfil.
+
+**NÃO consegue: valgo dinâmico de joelho.** Três tentativas, três falhas:
+1. text-to-image: joelhos para FORA (invertido)
+2. img2img: joelhos neutros
+3. img2img com "formando um X, quase se tocando, pés afastados": joelhos neutros de novo
+
+O modelo entende "joelho em vermelho" e ignora a rotação medial. É limite do modelo, não do prompt. Vale provavelmente para todo erro que seja **rotação sutil no plano frontal/transverso** (valgo, varo, rotação de quadril, báscula escapular).
+
+**Para esses casos, não insista no img2img.** Use o padrão que o projeto já tem para marcação precisa: overlay SVG autorado sobre a imagem (como `analysis-overlays.ts` faz com setas e regiões em coordenadas normalizadas). É determinístico e mostra a direção do desvio com seta, que é o que o gerador não faz.
+
+Regra prática: classifique cada erro antes de gerar. Sagital grande = img2img. Rotação sutil = overlay autorado.
+
 ## Verificação é obrigatória
 
 O agente do Lovable **avisa sozinho** quando erra ("a imagem 0 saiu parecendo uma máquina de cabos"). Leia a resposta dele. Mas não confie só nisso: olhe as imagens. Nunca salve lote sem inspecionar item a item.
