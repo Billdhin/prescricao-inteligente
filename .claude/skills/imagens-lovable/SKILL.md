@@ -61,6 +61,26 @@ Confira sempre `erros/agachamento-livre.webp` antes de escrever o prompt. O esti
 6. **Verifique cada imagem com os próprios olhos** (copie para o scratchpad com extensão `.jpg` e use a tool Read). O Read não abre caminho do `/tmp` do Git Bash; use o scratchpad com caminho Windows.
 7. Só depois de aprovada uma a uma: converter para webp, copiar para `public/exercises/...` e registrar o índice (`ERRO_IMGS` / `VARIACAO_IMGS` em `src/data/aba-imagens.ts`).
 
+## Formato obrigatório das imagens de erro: comparação lado a lado
+
+**Uma figura sozinha NÃO comunica um erro.** Erro é desvio em relação ao correto. Sem a
+referência, o profissional vê "um sujeito com a lombar vermelha" e não sabe se aquilo é o erro
+ou só qual músculo trabalha. O vermelho vira "aqui dói", não "isto está errado". Foi exatamente
+a crítica do fundador em 15/07/2026, depois que as imagens de figura única já estavam saindo
+com estilo perfeito. Estilo certo e mensagem ausente.
+
+Formato que resolveu, validado com ele:
+
+- **Uma imagem, duas figuras** lado a lado, mesma escala, mesmo ângulo, linha cinza fina dividindo.
+- **Esquerda: execução CORRETA**, sem nenhum vermelho, com a estrutura interna visível em cinza claro.
+- **Direita: o MESMO exercício com o erro**, exagerado, estrutura interna da região sobrecarregada em vermelho.
+- **Seta curva vermelha** na figura da direita apontando a DIREÇÃO do desvio. É a seta que diz o que está errado.
+- **V verde** no canto superior esquerdo, **X vermelho** no canto superior direito. Únicas marcas gráficas.
+- Sem palavra, letra ou número. A legenda do erro já vive no app.
+
+Ou seja: a regra "nunca mostre a execução correta", que eu mesmo tinha escrito nos prompts, estava
+errada. É a comparação que torna o erro legível.
+
 ## O que o img2img consegue e o que não consegue
 
 Medido em 15/07/2026, com verificação visual imagem a imagem:
