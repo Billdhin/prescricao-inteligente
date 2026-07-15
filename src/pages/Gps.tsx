@@ -68,6 +68,7 @@ import type { ProntuarioSnapshot } from "@/data/alunos";
 import { marcarAtivacao } from "@/lib/ativacao";
 import { toast } from "@/lib/toast";
 import { descricaoOpcao } from "@/data/opcoes-wizard";
+import { MetricaInfo } from "@/components/metrica/MetricaInfo";
 import { FAIXAS_ETARIAS, getFaixaEtaria } from "@/data/faixasEtarias";
 import { useDialog } from "@/lib/useDialog";
 import { cn, withBase } from "@/lib/utils";
@@ -1581,14 +1582,17 @@ function Comparador({
   const selected = compare
     .map((slug) => exercises.find((e) => e.slug === slug))
     .filter(Boolean) as (typeof exercises)[number][];
-  const metric = (ex: (typeof exercises)[number], nome: string, fb = 0) =>
-    ex.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor ?? fb;
+  // Sem fallback inventado: dado ausente vira `undefined` e a tela diz que falta,
+  // igual o motor já fazia. Preencher com 20 ou 30 fazia esta tabela contradizer
+  // a justificativa do próprio exercício na tela ao lado.
+  const metric = (ex: (typeof exercises)[number], nome: string) =>
+    ex.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor;
 
-  const rows = [
-    { label: "Ativação primária", get: (e: (typeof exercises)[number]) => e.ativacao[0]?.percentual ?? 0 },
-    { label: "Índice de eficiência", get: (e: (typeof exercises)[number]) => e.indiceEficiencia.score },
-    { label: "Demanda lombar", get: (e: (typeof exercises)[number]) => metric(e, "Demanda lombar", 20) },
-    { label: "Complexidade técnica", get: (e: (typeof exercises)[number]) => metric(e, "Complexidade técnica", 30) },
+  const rows: { label: string; get: (e: (typeof exercises)[number]) => number | undefined }[] = [
+    { label: "Ativação relativa", get: (e) => e.ativacao[0]?.percentual },
+    { label: "Índice de eficiência", get: (e) => e.indiceEficiencia.score },
+    { label: "Demanda lombar", get: (e) => metric(e, "Demanda lombar") },
+    { label: "Complexidade técnica", get: (e) => metric(e, "Complexidade técnica") },
   ];
   const tones = ["primary", "analysis", "cta"] as const;
 
@@ -1664,12 +1668,24 @@ function Comparador({
           <div className="space-y-5">
             {rows.map((r) => (
               <div key={r.label}>
-                <div className="mb-1 text-xs font-semibold text-ink-2">{r.label}</div>
+                {/* Clicável: abre o que é, a escala, relativo a quê e o que o valor
+                    significa na prática. O rótulo sozinho não dizia nada. */}
+                <MetricaInfo nome={r.label} valor={r.get(selected[0])} className="mb-1 text-xs font-semibold text-ink-2" />
                 <div className="space-y-1.5">
-                  {selected.map((e, i) => (
+                  {selected.map((e, i) => {
+                    const v = r.get(e);
                     // sem repetir o nome: as pills coloridas acima já mapeiam cor → exercício
-                    <StatBar key={e.slug} srLabel={e.nome} value={r.get(e)} tone={tones[i]} />
-                  ))}
+                    return v === undefined ? (
+                      <div
+                        key={e.slug}
+                        className="rounded-control border border-dashed border-border px-2.5 py-1 text-[11px] text-ink-3"
+                      >
+                        {e.nome}: sem dado medido
+                      </div>
+                    ) : (
+                      <StatBar key={e.slug} srLabel={e.nome} value={v} tone={tones[i]} />
+                    );
+                  })}
                 </div>
               </div>
             ))}

@@ -10,17 +10,29 @@ export type TrustLevel =
 
 export interface MuscleActivation {
   musculo: string;
+  /**
+   * Ativação RELATIVA AO PRÓPRIO MÚSCULO, de 0 a 100. Estimativa a partir de
+   * literatura de EMG comparada (%MVIC).
+   *
+   * ATENÇÃO: não é distribuição. Os percentuais dos músculos de um exercício NÃO
+   * somam 100 (na base atual somam de 132 a 300). "Quadríceps 78" quer dizer que o
+   * quadríceps trabalha perto de 78% da capacidade dele, e não que 78% do esforço
+   * vai para o quadríceps. Ver `metricasGlossario.ts` (id "ativacao").
+   */
   percentual: number;
   papel: Papel;
 }
 
 export interface EficMetric {
+  /** Rótulo da métrica. Cada um deve ter definição em `metricasGlossario.ts`. */
   nome: string;
+  /** 0 a 100, COMPARATIVO entre os exercícios desta base (não é medida absoluta nem do aluno). */
   valor: number;
   tipo: "positivo" | "cautela";
 }
 
 export interface IndiceEficiencia {
+  /** 0 a 100, comparativo entre exercícios. Ver `metricasGlossario.ts` (id "eficiencia"). */
   score: number;
   metrics: EficMetric[];
 }

@@ -5,6 +5,7 @@ import {
   Dumbbell, HeartPulse, Flame, Droplets, Info, Activity,
 } from "lucide-react";
 import { Card, Pill, ScoreRing, StatBar, SectionHeader, buttonClasses } from "@/components/ui/primitives";
+import { MetricaInfo } from "@/components/metrica/MetricaInfo";
 import { exercises } from "@/data/exercises";
 import type { Exercise } from "@/data/types";
 import {
@@ -31,24 +32,31 @@ function gridColsFor(n: number) {
 
 /* ============================ Bloco: Força ============================= */
 
-const metricVal = (e: Exercise, nome: string, fb: number) =>
-  e.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor ?? fb;
+/**
+ * Sem fallback: dado ausente é `undefined`, não um número inventado.
+ *
+ * Antes, "Demanda lombar" ausente virava 20 e o exercício era COROADO como o de
+ * menor demanda lombar com um número que não existia. Enquanto isso o motor
+ * (engine.ts) se recusava a chutar e avisava "falta dado". Duas telas afirmavam
+ * coisas opostas sobre o mesmo exercício.
+ */
+const metricVal = (e: Exercise, nome: string) => e.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor;
 
 type MetricaForca = {
   key: string;
   label: string;
-  get: (e: Exercise) => number;
+  get: (e: Exercise) => number | undefined;
   melhor: "maior" | "menor";
   hint?: string;
 };
 
 const METRICAS_FORCA: MetricaForca[] = [
   { key: "efic", label: "Índice de eficiência", get: (e) => e.indiceEficiencia.score, melhor: "maior" },
-  { key: "ativ", label: "Ativação do músculo-alvo", get: (e) => e.ativacao[0]?.percentual ?? 0, melhor: "maior" },
-  { key: "estab", label: "Estabilidade", get: (e) => metricVal(e, "Estabilidade", 50), melhor: "maior" },
-  { key: "lombar", label: "Demanda lombar", get: (e) => metricVal(e, "Demanda lombar", 20), melhor: "menor", hint: "menor é melhor" },
-  { key: "joelho", label: "Demanda de joelho", get: (e) => metricVal(e, "Demanda de joelho", 20), melhor: "menor", hint: "menor é melhor" },
-  { key: "complex", label: "Complexidade técnica", get: (e) => metricVal(e, "Complexidade técnica", 30), melhor: "menor", hint: "menor é melhor" },
+  { key: "ativ", label: "Ativação relativa", get: (e) => e.ativacao[0]?.percentual, melhor: "maior" },
+  { key: "estab", label: "Estabilidade", get: (e) => metricVal(e, "Estabilidade"), melhor: "maior" },
+  { key: "lombar", label: "Demanda lombar", get: (e) => metricVal(e, "Demanda lombar"), melhor: "menor", hint: "menor é melhor" },
+  { key: "joelho", label: "Demanda de joelho", get: (e) => metricVal(e, "Demanda de joelho"), melhor: "menor", hint: "menor é melhor" },
+  { key: "complex", label: "Complexidade técnica", get: (e) => metricVal(e, "Complexidade técnica"), melhor: "menor", hint: "menor é melhor" },
 ];
 
 // exercícios puramente aeróbicos vivem no bloco Aeróbicos — fora da comparação de força
@@ -72,15 +80,14 @@ function ForcaBloco({ base }: { base: string | null }) {
   const toggle = (slug: string) =>
     setSel((c) => (c.includes(slug) ? c.filter((x) => x !== slug) : c.length < MAX ? [...c, slug] : c));
 
+  // Só existe campeão quando há dado nos dois lados. Com um lado sem dado,
+  // apontar vencedor seria comparar um número com um chute.
   const melhorIdx = (m: MetricaForca) => {
-    if (selected.length === 0) return -1;
-    let best = 0;
-    selected.forEach((e, i) => {
-      const v = m.get(e);
-      const bv = m.get(selected[best]);
-      if ((m.melhor === "maior" && v > bv) || (m.melhor === "menor" && v < bv)) best = i;
-    });
-    return best;
+    const comDado = selected
+      .map((e, i) => ({ i, v: m.get(e) }))
+      .filter((x): x is { i: number; v: number } => x.v !== undefined);
+    if (comDado.length < 2) return -1;
+    return comDado.reduce((best, x) => ((m.melhor === "maior" ? x.v > best.v : x.v < best.v) ? x : best), comDado[0]).i;
   };
 
   const insightEfic = selected.length >= 2 ? selected[melhorIdx(METRICAS_FORCA[0])] : null;
@@ -165,19 +172,29 @@ function ForcaBloco({ base }: { base: string | null }) {
                 const win = melhorIdx(m);
                 return (
                   <div key={m.key}>
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <span className="text-sm font-semibold text-ink">{m.label}</span>
-                      {m.hint && <span className="text-[11px] text-ink-3">{m.hint}</span>}
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      {/* O rótulo explica a si mesmo: escala, referencial e o que o valor
+                          quer dizer na prática. Sem isso, "Complexidade 12" não defende ninguém. */}
+                      <MetricaInfo nome={m.label} valor={m.get(selected[0])} className="text-sm font-semibold text-ink" />
+                      {m.hint && <span className="shrink-0 text-[11px] text-ink-3">{m.hint}</span>}
                     </div>
                     <div className="space-y-1.5">
-                      {selected.map((e, i) => (
-                        <div key={e.slug} className="flex items-center gap-2">
-                          <StatBar srLabel={e.nome} value={m.get(e)} tone={COL_TONES[i]} className="flex-1" />
-                          {selected.length >= 2 && i === win && (
-                            <Pill tone="success" className="shrink-0">melhor</Pill>
-                          )}
-                        </div>
-                      ))}
+                      {selected.map((e, i) => {
+                        const v = m.get(e);
+                        return (
+                          <div key={e.slug} className="flex items-center gap-2">
+                            {v === undefined ? (
+                              // Dado ausente é dito, não preenchido com chute.
+                              <span className="flex-1 rounded-control border border-dashed border-border px-2.5 py-1 text-xs text-ink-3">
+                                {e.nome}: sem dado medido para esta métrica
+                              </span>
+                            ) : (
+                              <StatBar srLabel={e.nome} value={v} tone={COL_TONES[i]} className="flex-1" />
+                            )}
+                            {i === win && <Pill tone="success" className="shrink-0">melhor</Pill>}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );

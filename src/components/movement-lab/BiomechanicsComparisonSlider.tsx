@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  *   base → overlay escuro navy + vignette → músculos revelados por MÁSCARA
  *   suave (a imagem de análise img2img, alinhada à base, aparece só nas
  *   regiões musculares autoradas) → poucas anotações finas → card de
- *   contribuição muscular em glass.
+ *   ativação relativa em glass.
  * Alinhamento perfeito por construção; foco visual = o músculo.
  */
 
@@ -125,7 +125,7 @@ function useMuscleMasks(srcUrl: string, regions: MuscleRegion[]) {
   return masks;
 }
 
-// Cores por ordem de contribuição (1º quente → 3º ciano), conforme spec.
+// Cores por ordem de ativação (1º quente → 3º ciano), conforme spec.
 const BAR_COLORS = [
   "linear-gradient(90deg,#ef4444,#f97316)",
   "linear-gradient(90deg,#f59e0b,#fbbf24)",
@@ -228,7 +228,7 @@ export function BiomechanicsComparisonSlider({
   // No corpo: SÓ músculos marcados `rotularNoCorpo` (auditados como visíveis e
   // corretamente localizados naquela imagem). Sem a flag, nada é fixado sobre o
   // corpo — nunca se afirma uma posição anatômica falsa; o músculo continua no
-  // card "Contribuição muscular". Máx. 2 rótulos, por ordem de ativação.
+  // card "Ativação relativa". Máx. 2 rótulos, por ordem de ativação.
   const rotulados = React.useMemo(() => {
     const enriched = regions
       .filter((r) => r.rotularNoCorpo)
@@ -346,7 +346,7 @@ export function BiomechanicsComparisonSlider({
     );
   }, [rotulados, overlay, angleGeom, layout]);
 
-  // Card: contribuição muscular (dados reais do seed), até 4 linhas.
+  // Card: ativação relativa (dados reais do seed), até 4 linhas.
   const contribuicoes = React.useMemo(
     () => [...ativacao].sort((a, b) => b.percentual - a.percentual).slice(0, 4),
     [ativacao],
@@ -543,7 +543,7 @@ export function BiomechanicsComparisonSlider({
           );
         })}
 
-        {/* Card: contribuição muscular (glass) — CANTO ADAPTATIVO por exercício */}
+        {/* Card: ativação relativa (glass) — CANTO ADAPTATIVO por exercício */}
         {/* Mobile: faixa compacta; sobe ao topo quando a base da imagem tem anatomia */}
         <div
           className={cn(
@@ -582,7 +582,7 @@ export function BiomechanicsComparisonSlider({
             layout.card === "tr" && "right-3 top-12",
           )}
         >
-          <div className="mb-2 text-[11px] font-semibold tracking-wide text-white/85">Contribuição muscular</div>
+          <div className="mb-2 text-[11px] font-semibold tracking-wide text-white/85">Ativação relativa</div>
           <div className="space-y-0.5">
             {contribuicoes.map((m, i) => (
               <button
