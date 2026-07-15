@@ -70,6 +70,12 @@ export function printSemaforo(
     ul li { margin-bottom: 4px; }
     .refs li { font-size: 11px; color: #64748b; }
     .foot { margin-top: 20px; border-top: 1px solid #e7ecf3; padding-top: 10px; font-size: 10.5px; color: #94a3b8; }
+    .ciencia { margin-top: 26px; padding: 10px 12px; background: #f8fafc; border-left: 3px solid #14b8c4; font-size: 11.5px; color: #475569; page-break-inside: avoid; }
+    .assinatura { margin-top: 34px; page-break-inside: avoid; display: flex; justify-content: space-between; gap: 24px; }
+    .assinatura .linha { border-top: 1.5px solid #1e293b; flex: 1; padding-top: 6px; }
+    .assinatura .quem { font-weight: 800; font-size: 12px; }
+    .assinatura .papel { font-size: 10.5px; color: #475569; }
+    .dataassin { margin-top: 16px; font-size: 11.5px; color: #475569; page-break-inside: avoid; }
     @media print { .page { padding: 0; } @page { margin: 14mm; } }
   </style></head><body>
   <div class="page">
@@ -95,6 +101,23 @@ export function printSemaforo(
 
     ${acoes ? `<h2>Ações registradas</h2><ul>${acoes}</ul>` : ""}
     ${refs ? `<h2>Base consultada</h2><ul class="refs">${refs}</ul>` : ""}
+
+    <div class="ciencia">
+      Ao assinar, profissional e aluno registram que a conduta do dia foi conversada e
+      compreendida: o resultado acima, os ajustes indicados e, se for o caso, a orientação de
+      adiar a sessão ou procurar avaliação de saúde.
+    </div>
+    <div class="assinatura">
+      <div class="linha">
+        <div class="quem">${esc(profissional || "Profissional responsável")}</div>
+        <div class="papel">Profissional de Educação Física${cref ? ` · CREF ${esc(cref)}` : ""}</div>
+      </div>
+      <div class="linha">
+        <div class="quem">${esc(alunoNome || "Aluno")}</div>
+        <div class="papel">Ciente da conduta do dia</div>
+      </div>
+    </div>
+    <div class="dataassin">Data: ____ / ____ / ________</div>
 
     <div class="foot">
       Conteúdo educacional de apoio à decisão do profissional de Educação Física; não é conduta

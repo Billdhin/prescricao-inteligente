@@ -20,7 +20,9 @@ export function Semaforo() {
 
   const [grupoSlug, setGrupoSlug] = React.useState(() => {
     const g = params.get("grupo");
-    return g && getSemaforo(g) ? g : "geral";
+    // Aceita qualquer condição existente, não só as que têm checklist próprio:
+    // sem gate específico o componente aplica o geral e avisa.
+    return g && getSpecialGroup(g) ? g : "geral";
   });
   const [alunoId, setAlunoId] = React.useState(() => params.get("aluno") ?? "");
   const fase = Number(params.get("fase")) || undefined;
@@ -30,7 +32,7 @@ export function Semaforo() {
   const onAluno = (id: string) => {
     setAlunoId(id);
     const a = alunos.find((x) => x.id === id);
-    if (a) setGrupoSlug(a.grupoEspecial && getSemaforo(a.grupoEspecial) ? a.grupoEspecial : "geral");
+    if (a) setGrupoSlug(a.grupoEspecial && getSpecialGroup(a.grupoEspecial) ? a.grupoEspecial : "geral");
   };
 
   const grupo = getSpecialGroup(grupoSlug);
@@ -56,14 +58,16 @@ export function Semaforo() {
             <span className="mb-1.5 block text-sm font-semibold text-ink">Grupo / condição</span>
             <select value={grupoSlug} onChange={(e) => setGrupoSlug(e.target.value)} className="input">
               <option value="geral">Sem condição especial (checklist geral)</option>
-              {specialGroups
-                .filter((g) => getSemaforo(g.slug))
-                .map((g) => (
-                  <option key={g.slug} value={g.slug}>
-                    {g.nome}
-                    {g.premium && !unlocked ? " (Premium)" : ""}
-                  </option>
-                ))}
+              {/* Todas as condições aparecem. Antes, as que não tinham checklist próprio
+                  eram filtradas fora e não havia caminho para fazer o semáforo de uma
+                  gestante. As sem gate próprio caem no checklist geral, e o card diz isso. */}
+              {specialGroups.map((g) => (
+                <option key={g.slug} value={g.slug}>
+                  {g.nome}
+                  {g.premium && !unlocked ? " (Premium)" : ""}
+                  {getSemaforo(g.slug) ? "" : " (checklist geral)"}
+                </option>
+              ))}
             </select>
           </label>
           <label className="block">

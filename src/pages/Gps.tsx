@@ -171,14 +171,15 @@ export function Gps() {
   }, [avaliacoes, aluno]);
   const reavaliacaoVencida = aluno?.proximaReavaliacaoEm ? aluno.proximaReavaliacaoEm < Date.now() : false;
 
-  // Última liberação do Semáforo aplicável (mesmo aluno/grupo, últimas 24h)
+  // Última liberação do Semáforo aplicável (últimas 24h).
+  // Com aluno, a pergunta é "ESTE aluno foi liberado hoje?": exigir também que o
+  // slug do checklist batesse fazia o semáforo nunca chegar ao prontuário nas
+  // condições que usam o checklist geral (a liberação era gravada com outro slug).
   const liberacaoDoDia = React.useMemo(() => {
     const corte = Date.now() - 24 * 3_600_000;
     return liberacoes.find(
       (l) =>
-        l.data >= corte &&
-        (aluno ? l.alunoId === aluno.id : l.grupoSlug === grupoSlug && !l.alunoId) &&
-        (!grupoSlug || l.grupoSlug === grupoSlug),
+        l.data >= corte && (aluno ? l.alunoId === aluno.id : !l.alunoId && l.grupoSlug === grupoSlug),
     );
   }, [liberacoes, aluno, grupoSlug]);
 

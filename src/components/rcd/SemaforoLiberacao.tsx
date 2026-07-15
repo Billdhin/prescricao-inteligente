@@ -67,11 +67,18 @@ export function SemaforoLiberacao({
   onRegistrado?: (resultado: ResultadoSemaforo) => void;
   className?: string;
 }) {
-  // Condições sem checklist próprio (as adicionais) usam o checklist geral do dia.
-  const checklist = getSemaforo(grupoSlug) ?? (grupoSlug ? getSemaforo("geral") : undefined);
+  // Condições sem checklist próprio usam o checklist geral do dia. Isso PRECISA
+  // estar dito na cara do profissional: antes, o card anunciava o nome da condição
+  // ("Gestante sem contraindicação") e servia os itens do geral, dando a entender
+  // que existia um gate específico que não existe.
+  const proprio = getSemaforo(grupoSlug);
+  const checklist = proprio ?? (grupoSlug ? getSemaforo("geral") : undefined);
+  const usaChecklistGeral = !proprio && !!grupoSlug;
   // "geral" não é grupo especial: o gate vale para qualquer aluno
   const grupo = getSpecialGroup(grupoSlug);
-  const nomeChecklist = grupo?.nome ?? "Checklist geral do dia";
+  const nomeChecklist = usaChecklistGeral
+    ? `${grupo?.nome ?? "Condição"}: checklist geral do dia`
+    : grupo?.nome ?? "Checklist geral do dia";
   const nomeDocumento = grupo?.rotuloAluno ?? "Checklist geral do dia";
   const addLiberacao = useAlunos((s) => s.addLiberacao);
   const { name: profNome, cref, logoDataUrl } = useUser();
@@ -111,9 +118,35 @@ export function SemaforoLiberacao({
       </div>
       <p className="mb-4 text-sm text-ink-2">
         {nomeChecklist}
-        {alunoNome ? ` · ${alunoNome}` : ""}: responda em ~30s e saiba se a sessão de hoje está
-        liberada, e por quê.
+        {alunoNome ? ` · ${alunoNome}` : ""}: responda e saiba se a sessão de hoje está liberada, e
+        por quê.
       </p>
+
+      {/* Sem esse aviso, o card anunciava a condição e servia o checklist geral, dando
+          a entender que havia um gate específico. Os sinais de alerta da própria
+          condição vêm junto: eram o único conteúdo de segurança que existia e ficavam
+          presos na tela de estudo. */}
+      {usaChecklistGeral && grupo && (
+        <div className="mb-4 rounded-xl border border-warning/40 bg-[#fef7e8] p-3.5">
+          <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#b45309]">
+            <AlertTriangle className="h-3.5 w-3.5" /> Sem checklist específico para {grupo.nome}
+          </div>
+          <p className="text-xs text-ink-2">
+            Os itens abaixo são o checklist geral do dia, não um gate próprio desta condição. Use o
+            seu julgamento clínico e confira os sinais de alerta específicos:
+          </p>
+          {grupo.sinaisAlerta?.length ? (
+            <ul className="mt-2 space-y-1">
+              {grupo.sinaisAlerta.map((s) => (
+                <li key={s} className="flex gap-2 text-xs text-ink">
+                  <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
+                  {s}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      )}
 
       <div className="space-y-4">
         {checklist.itens.map((item, idx) => (
