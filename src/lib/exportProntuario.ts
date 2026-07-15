@@ -140,7 +140,16 @@ export function exportProntuarioPDF({
         .join("")}</ol></section>`
     : "";
 
-  const restr = aluno.restricoes.length ? aluno.restricoes.map(esc).join(", ") : "nenhuma declarada";
+  // O documento é assinável: ele só pode afirmar o que o motor de fato considerou.
+  // Por isso a fonte é presc.answers.restricoes (o que entrou no cálculo), não o
+  // cadastro do aluno. Se o profissional declarou algo no perfil e não marcou no
+  // wizard, isso aparece separado como "declarada, não aplicada ao ranqueamento".
+  const usadas = presc.answers.restricoes ?? [];
+  const naoAplicadas = aluno.restricoes.filter((r) => !usadas.includes(r));
+  const restr = usadas.length ? usadas.map(esc).join(", ") : "nenhuma aplicada";
+  const restrNota = naoAplicadas.length
+    ? ` (declaradas no cadastro e não aplicadas ao ranqueamento: ${naoAplicadas.map(esc).join(", ")})`
+    : "";
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Prontuário de Decisão · ${esc(aluno.nome)} · ${docId}</title>
@@ -214,7 +223,7 @@ export function exportProntuarioPDF({
 
     <div class="aluno">
       <strong>${esc(aluno.nome)}</strong>${aluno.idade ? ` · ${aluno.idade} anos` : ""} ·
-      Objetivo: ${esc(aluno.objetivo)} · Nível: ${esc(aluno.nivel)} · Restrições: ${esc(restr)}
+      Objetivo: ${esc(aluno.objetivo)} · Nível: ${esc(aluno.nivel)} · Restrições consideradas: ${restr}${restrNota}
     </div>
 
     ${semaforoHtml}

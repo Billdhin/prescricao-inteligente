@@ -36,7 +36,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       objetivo: "Resistência muscular",
       grupoMuscular: "Corpo todo",
       nivel: "Iniciante",
-      restricao: "Nenhuma",
+      restricoes: [],
       equipamentos: ["Máquina", "Peso corporal", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
@@ -54,7 +54,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       objetivo: "Reabilitação/retorno",
       grupoMuscular: "Core (tronco)",
       nivel: "Iniciante",
-      restricao: "Dor lombar",
+      restricoes: ["Dor lombar"],
       equipamentos: ["Peso corporal", "Máquina", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
@@ -73,7 +73,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       grupoMuscular: "Corpo todo",
       prioridade: "Condicionamento cardiorrespiratório",
       nivel: "Iniciante",
-      restricao: "Dor no joelho",
+      restricoes: ["Dor no joelho"],
       equipamentos: ["Máquina", "Piscina", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
@@ -92,7 +92,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       grupoMuscular: "Corpo todo",
       prioridade: "Cardio + força (misto)",
       nivel: "Iniciante",
-      restricao: "Nenhuma",
+      restricoes: [],
       equipamentos: ["Máquina", "Peso corporal", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
@@ -110,7 +110,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       objetivo: "Força",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
-      restricao: "Dor no joelho",
+      restricoes: ["Dor no joelho"],
       equipamentos: ["Máquina", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
@@ -128,7 +128,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       objetivo: "Reabilitação/retorno",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
-      restricao: "Mobilidade limitada",
+      restricoes: ["Mobilidade limitada"],
       equipamentos: ["Peso corporal", "Máquina", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:

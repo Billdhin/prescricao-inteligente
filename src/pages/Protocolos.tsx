@@ -442,7 +442,7 @@ function AplicarProtocoloModal({ modelo, onClose }: { modelo: Protocolo; onClose
         grupoMuscular: "Corpo todo",
         prioridade: modelo.prioridade,
         nivel: aluno.nivel,
-        restricao: aluno.restricoes[0] ?? "Nenhuma",
+        restricoes: aluno.restricoes,
         equipamentos: aluno.equipamentos,
       },
       itens: modelo.itens.map((it) => ({ slug: it.slug, score: 0, series: it.series })),

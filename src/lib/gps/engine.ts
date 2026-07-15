@@ -30,7 +30,8 @@ export interface GpsAnswers {
   /** só quando objetivo = Emagrecimento */
   prioridade?: GpsPrioridade;
   nivel: Nivel;
-  restricao: GpsRestricao;
+  /** Todas as restrições declaradas. O ranqueamento aplica a mais estrita por exercício. */
+  restricoes: GpsRestricao[];
   equipamentos: string[];
 }
 
@@ -195,35 +196,46 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
   });
   if (!equipOk) cautions.push(`Requer ${ex.equipamento}, fora dos equipamentos disponíveis.`);
 
-  // 5) Restrição
+  // 5) Restrições: TODAS as declaradas entram. Por exercício vale a mais estrita,
+  //    do mesmo jeito que combineRules faz com as condições de saúde. O documento
+  //    assinável precisa poder afirmar que cada restrição declarada foi considerada.
   let restRatio = 1;
   let restDetalhe = "Sem restrição declarada.";
-  if (ans.restricao !== "Nenhuma") {
+  const restricoesAtivas = (ans.restricoes ?? []).filter(
+    (r): r is Exclude<GpsRestricao, "Nenhuma"> => r !== "Nenhuma",
+  );
+  if (restricoesAtivas.length > 0) {
     const map: Record<Exclude<GpsRestricao, "Nenhuma">, { metric: string; label: string }> = {
       "Dor lombar": { metric: "Demanda lombar", label: "coluna lombar" },
       "Dor no joelho": { metric: "Demanda de joelho", label: "joelho" },
       "Ombro sensível": { metric: "Demanda de ombro", label: "ombro" },
       "Mobilidade limitada": { metric: "Requisito de mobilidade", label: "mobilidade" },
     };
-    const cfg = map[ans.restricao];
-    const val = metricValue(ex, cfg.metric);
-    if (val === undefined) {
-      // Sem dado declarado: não inventa "30/100" nem elogia. Trata com cautela neutra.
-      restRatio = 0.7;
-      restDetalhe = `Sem dado declarado de ${cfg.label} para este exercício. Avalie a execução caso a caso.`;
-      cautions.push(`Falta dado de ${cfg.label}: confirme a tolerância do aluno antes de progredir.`);
-    } else if (val >= 60) {
-      restRatio = 0.15;
-      restDetalhe = `Alta demanda em ${cfg.label} (${val}/100), penalizado por "${ans.restricao}".`;
-      cautions.push(`Demanda relevante para ${cfg.label}: avalie caso a caso.`);
-    } else if (val >= 40) {
-      restRatio = 0.55;
-      restDetalhe = `Demanda moderada em ${cfg.label} (${val}/100), cautela recomendada.`;
-      cautions.push(`Demanda moderada para ${cfg.label}: progressão gradual.`);
-    } else {
-      restDetalhe = `Baixa demanda em ${cfg.label} (${val}/100), favorece "${ans.restricao}".`;
-      reasons.push(`Baixa demanda em ${cfg.label}`);
+    const partes: string[] = [];
+    for (const restricao of restricoesAtivas) {
+      const cfg = map[restricao];
+      const val = metricValue(ex, cfg.metric);
+      let ratio = 1;
+      if (val === undefined) {
+        // Sem dado declarado: não inventa "30/100" nem elogia. Trata com cautela neutra.
+        ratio = 0.7;
+        partes.push(`sem dado declarado de ${cfg.label}`);
+        cautions.push(`Falta dado de ${cfg.label}: confirme a tolerância do aluno antes de progredir.`);
+      } else if (val >= 60) {
+        ratio = 0.15;
+        partes.push(`alta demanda em ${cfg.label} (${val}/100)`);
+        cautions.push(`Demanda relevante para ${cfg.label}: avalie caso a caso.`);
+      } else if (val >= 40) {
+        ratio = 0.55;
+        partes.push(`demanda moderada em ${cfg.label} (${val}/100)`);
+        cautions.push(`Demanda moderada para ${cfg.label}: progressão gradual.`);
+      } else {
+        partes.push(`baixa demanda em ${cfg.label} (${val}/100)`);
+        reasons.push(`Baixa demanda em ${cfg.label}`);
+      }
+      restRatio = Math.min(restRatio, ratio); // a restrição mais estrita manda
     }
+    restDetalhe = `Considerando ${restricoesAtivas.join(" e ")}: ${partes.join("; ")}.`;
   }
   const restPts = restRatio * W_RESTRICAO;
   breakdown.push({

@@ -28,6 +28,7 @@ import {
   OBJETIVOS,
   GRUPOS_MUSCULARES,
   RESTRICOES,
+  type GpsRestricao,
   EQUIPAMENTOS,
   PRIORIDADES,
   adequacaoLabel,
@@ -73,6 +74,9 @@ import { cn, withBase } from "@/lib/utils";
 import { FileDown, FileText, Lock as LockIcon } from "lucide-react";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
+
+// "Nenhuma" deixa de ser opção: a ausência de restrição é a lista vazia.
+const RESTRICOES_REAIS = RESTRICOES.filter((r) => r !== "Nenhuma");
 
 // Faixa de séries/reps sugerida por objetivo (educacional — ponto de partida, ajuste ao contexto).
 const SERIES_POR_OBJETIVO: Record<string, string> = {
@@ -150,7 +154,7 @@ export function Gps() {
       grupoMuscular: obj === "Emagrecimento" ? "Corpo todo" : "Membros inferiores",
       prioridade: obj === "Emagrecimento" ? "Cardio + força (misto)" : undefined,
       nivel: niv === "Intermediário" || niv === "Avançado" ? (niv as Nivel) : "Iniciante",
-      restricao: "Nenhuma",
+      restricoes: [],
       equipamentos: [...EQUIPAMENTOS],
     };
   });
@@ -232,7 +236,9 @@ export function Gps() {
   // "Dor lombar" pré-selecionada). O usuário pode trocar na etapa 4.
   React.useEffect(() => {
     if (!rule?.restricaoSugerida) return;
-    setAnswers((a) => (a.restricao === "Nenhuma" ? { ...a, restricao: rule.restricaoSugerida! } : a));
+    setAnswers((a) =>
+      a.restricoes.length === 0 ? { ...a, restricoes: [rule.restricaoSugerida!] } : a,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rule?.slug]);
 
@@ -459,20 +465,6 @@ export function Gps() {
           <Link to={`/alunos/${aluno.id}?avaliar=1`} className="font-semibold text-primary hover:underline">
             Registrar avaliação
           </Link>
-        </Card>
-      )}
-
-      {/* O motor ranqueia por UMA restrição; com várias, o profissional precisa saber
-          o que entrou no cálculo e o que deve conferir manualmente. */}
-      {aluno && aluno.restricoes.length > 1 && (
-        <Card tone="warning" className="flex flex-wrap items-start gap-3 p-3 text-sm">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          <p className="min-w-0 flex-1 text-ink-2">
-            {aluno.nome.split(" ")[0]} tem {aluno.restricoes.length} restrições (
-            {aluno.restricoes.join(", ")}). O ranqueamento considera a selecionada na etapa 4 (
-            <span className="font-semibold text-ink">{answers.restricao}</span>); confira as demais na
-            justificativa de cada exercício, ou gere de novo trocando a restrição.
-          </p>
         </Card>
       )}
 
@@ -1041,12 +1033,26 @@ function Wizard({
                 </p>
               </div>
             )}
-            <Choices
+            {/* Multisseleção: o aluno com joelho E ombro tem os dois considerados.
+                Por exercício vale a restrição mais estrita. */}
+            <MultiChoices
               ariaLabel={STEP_LABELS[3]}
-              options={RESTRICOES}
-              value={answers.restricao}
-              onChange={(v) => setAnswers((a) => ({ ...a, restricao: v as GpsAnswers["restricao"] }))}
+              options={RESTRICOES_REAIS}
+              values={answers.restricoes}
+              onToggle={(v) =>
+                setAnswers((a) => ({
+                  ...a,
+                  restricoes: a.restricoes.includes(v as GpsRestricao)
+                    ? a.restricoes.filter((x) => x !== v)
+                    : [...a.restricoes, v as GpsRestricao],
+                }))
+              }
             />
+            <p className="mt-2 text-xs text-ink-3">
+              {answers.restricoes.length === 0
+                ? "Nenhuma restrição marcada."
+                : "Todas as marcadas entram no ranqueamento; em cada exercício vale a mais estrita."}
+            </p>
           </div>
         )}
         {step === 4 && (
@@ -1385,7 +1391,9 @@ function Results({
           {answers.objetivo === "Emagrecimento" && answers.prioridade ? answers.prioridade : answers.grupoMuscular}
         </Pill>
         <Pill tone="neutral">{answers.nivel}</Pill>
-        <Pill tone={answers.restricao === "Nenhuma" ? "success" : "warning"}>{answers.restricao}</Pill>
+        <Pill tone={answers.restricoes.length === 0 ? "success" : "warning"}>
+          {answers.restricoes.length === 0 ? "Sem restrição" : answers.restricoes.join(" · ")}
+        </Pill>
         <Pill tone="neutral">
           <span title={answers.equipamentos.join(", ")}>
             {answers.equipamentos.length >= EQUIPAMENTOS.length

@@ -350,7 +350,7 @@ export const seedPrescricoes: Prescricao[] = [
       objetivo: "Hipertrofia",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
-      restricao: "Dor lombar",
+      restricoes: ["Dor lombar"],
       equipamentos: ["Máquina", "Polia", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     itens: [
@@ -370,7 +370,7 @@ export const seedPrescricoes: Prescricao[] = [
       objetivo: "Reabilitação/retorno",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
-      restricao: "Dor no joelho",
+      restricoes: ["Dor no joelho"],
       equipamentos: ["Máquina", "Halter", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     itens: [
@@ -389,7 +389,7 @@ export const seedPrescricoes: Prescricao[] = [
       objetivo: "Resistência muscular",
       grupoMuscular: "Braços",
       nivel: "Iniciante",
-      restricao: "Ombro sensível",
+      restricoes: ["Ombro sensível"],
       equipamentos: ["Halter", "Polia", "Peso corporal"],
     },
     itens: [
