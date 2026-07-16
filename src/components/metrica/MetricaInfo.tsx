@@ -40,7 +40,9 @@ export function MetricaInfo({
         aria-label={`${nome}: o que este número significa`}
       >
         {nome}
-        <HelpCircle aria-hidden className="h-3.5 w-3.5 shrink-0 text-ink-3" />
+        {/* opacity em vez de cor fixa: o mesmo rótulo aparece sobre card claro e
+            sobre a imagem escura do slider, e precisa funcionar nos dois */}
+        <HelpCircle aria-hidden className="h-3.5 w-3.5 shrink-0 opacity-60" />
       </button>
       {aberto && <MetricaDialog def={def} valor={valor} onClose={() => setAberto(false)} />}
     </>

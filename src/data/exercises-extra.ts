@@ -31,7 +31,7 @@ export const extraExercises: Exercise[] = [
       { musculo: "Glúteo máximo", percentual: 68, papel: "primário" },
       { musculo: "Panturrilha", percentual: 62, papel: "sinergista" },
       { musculo: "Quadríceps", percentual: 55, papel: "sinergista" },
-      { musculo: "Posteriores de coxa", percentual: 48, papel: "estabilizador" },
+      { musculo: "Isquiotibiais", percentual: 48, papel: "estabilizador" },
     ],
     indiceEficiencia: {
       score: 78,
@@ -132,7 +132,7 @@ export const extraExercises: Exercise[] = [
     ativacao: [
       { musculo: "Quadríceps", percentual: 78, papel: "primário" },
       { musculo: "Glúteo máximo", percentual: 52, papel: "sinergista" },
-      { musculo: "Posteriores de coxa", percentual: 45, papel: "sinergista" },
+      { musculo: "Isquiotibiais", percentual: 45, papel: "sinergista" },
       { musculo: "Panturrilha", percentual: 40, papel: "estabilizador" },
     ],
     indiceEficiencia: {
@@ -234,14 +234,14 @@ export const extraExercises: Exercise[] = [
     ativacao: [
       { musculo: "Quadríceps", percentual: 65, papel: "primário" },
       { musculo: "Glúteo máximo", percentual: 58, papel: "sinergista" },
-      { musculo: "Posteriores de coxa", percentual: 45, papel: "sinergista" },
+      { musculo: "Isquiotibiais", percentual: 45, papel: "sinergista" },
       { musculo: "Deltoide", percentual: 35, papel: "estabilizador" },
     ],
     indiceEficiencia: {
       score: 76,
       metrics: [
         { nome: "Gasto energético", valor: 80, tipo: "positivo" },
-        { nome: "Corpo todo", valor: 72, tipo: "positivo" },
+        { nome: "Massa muscular envolvida", valor: 72, tipo: "positivo" },
         { nome: "Estabilidade", valor: 65, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 32, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 24, tipo: "cautela" },
@@ -336,13 +336,15 @@ export const extraExercises: Exercise[] = [
     ativacao: [
       { musculo: "Quadríceps", percentual: 55, papel: "primário" },
       { musculo: "Glúteo máximo", percentual: 50, papel: "sinergista" },
-      { musculo: "Posteriores de coxa", percentual: 45, papel: "sinergista" },
+      { musculo: "Isquiotibiais", percentual: 45, papel: "sinergista" },
       { musculo: "Core", percentual: 42, papel: "estabilizador" },
     ],
     indiceEficiencia: {
       score: 75,
       metrics: [
-        { nome: "Conforto articular", valor: 95, tipo: "positivo" },
+        // "Conforto articular 95" saiu: era demanda articular dita ao contrário, e
+        // este card já traz "Demanda de joelho 15" e "Demanda lombar 12", que dizem a
+        // mesma coisa na escala definida e na direção que o resto do sistema usa.
         { nome: "Gasto energético", valor: 60, tipo: "positivo" },
         { nome: "Estabilidade", valor: 70, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 15, tipo: "cautela" },
@@ -438,7 +440,7 @@ export const extraExercises: Exercise[] = [
     ativacao: [
       { musculo: "Quadríceps", percentual: 72, papel: "primário" },
       { musculo: "Glúteo máximo", percentual: 65, papel: "sinergista" },
-      { musculo: "Posteriores de coxa", percentual: 40, papel: "sinergista" },
+      { musculo: "Isquiotibiais", percentual: 40, papel: "sinergista" },
       { musculo: "Core", percentual: 38, papel: "estabilizador" },
     ],
     indiceEficiencia: {
@@ -539,15 +541,18 @@ export const extraExercises: Exercise[] = [
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Glúteo máximo", percentual: 80, papel: "primário" },
-      { musculo: "Posteriores de coxa", percentual: 60, papel: "sinergista" },
+      { musculo: "Isquiotibiais", percentual: 60, papel: "sinergista" },
       { musculo: "Eretores da espinha", percentual: 35, papel: "estabilizador" },
       { musculo: "Core", percentual: 32, papel: "estabilizador" },
     ],
     indiceEficiencia: {
       score: 79,
       metrics: [
+        // "Segurança lombar 90" saiu daqui: era a mesma coisa que "Demanda lombar 20"
+        // dita ao contrário, e as duas barras apareciam juntas neste card, uma azul
+        // subindo e outra laranja descendo sobre a mesma região. Demanda lombar fica,
+        // porque é a métrica definida no glossário e a que o motor consulta.
         { nome: "Glúteos", valor: 80, tipo: "positivo" },
-        { nome: "Segurança lombar", valor: 90, tipo: "positivo" },
         { nome: "Estabilidade", valor: 85, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 18, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 20, tipo: "cautela" },
@@ -650,7 +655,6 @@ export const extraExercises: Exercise[] = [
       metrics: [
         { nome: "Estabilidade de tronco", valor: 88, tipo: "positivo" },
         { nome: "Core", valor: 75, tipo: "positivo" },
-        { nome: "Segurança lombar", valor: 82, tipo: "positivo" },
         { nome: "Demanda de ombro", valor: 35, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 22, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 25, tipo: "cautela" },
@@ -753,7 +757,6 @@ export const extraExercises: Exercise[] = [
       metrics: [
         { nome: "Controle motor", valor: 92, tipo: "positivo" },
         { nome: "Core", valor: 72, tipo: "positivo" },
-        { nome: "Segurança lombar", valor: 94, tipo: "positivo" },
         { nome: "Demanda de ombro", valor: 15, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 10, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 35, tipo: "cautela" },
@@ -847,7 +850,7 @@ export const extraExercises: Exercise[] = [
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 65, papel: "primário" },
       { musculo: "Romboides", percentual: 62, papel: "primário" },
-      { musculo: "Bíceps", percentual: 45, papel: "sinergista" },
+      { musculo: "Bíceps braquial", percentual: 45, papel: "sinergista" },
       { musculo: "Deltoide", percentual: 35, papel: "estabilizador" },
     ],
     indiceEficiencia: {

@@ -48,7 +48,7 @@ export const extraExercises2: Exercise[] = [
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 75, papel: "primário" },
-      { musculo: "Tríceps", percentual: 62, papel: "sinergista" },
+      { musculo: "Tríceps braquial", percentual: 62, papel: "sinergista" },
       { musculo: "Deltoide anterior", percentual: 52, papel: "sinergista" },
       { musculo: "Transverso do abdome", percentual: 38, papel: "estabilizador" },
     ],
@@ -128,7 +128,7 @@ export const extraExercises2: Exercise[] = [
     ativacao: [
       { musculo: "Peitoral maior", percentual: 85, papel: "primário" },
       { musculo: "Deltoide anterior", percentual: 60, papel: "sinergista" },
-      { musculo: "Tríceps", percentual: 58, papel: "sinergista" },
+      { musculo: "Tríceps braquial", percentual: 58, papel: "sinergista" },
       { musculo: "Serrátil anterior", percentual: 42, papel: "estabilizador" },
     ],
     indiceEficiencia: { score: 80, metrics: m(85, 52, 25, 8, 55, 35) },
@@ -206,7 +206,7 @@ export const extraExercises2: Exercise[] = [
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 80, papel: "primário" },
-      { musculo: "Tríceps", percentual: 60, papel: "sinergista" },
+      { musculo: "Tríceps braquial", percentual: 60, papel: "sinergista" },
       { musculo: "Deltoide anterior", percentual: 55, papel: "sinergista" },
     ],
     indiceEficiencia: { score: 76, metrics: m(80, 24, 15, 5, 42, 20) },
@@ -362,7 +362,7 @@ export const extraExercises2: Exercise[] = [
     ativacao: [
       { musculo: "Deltoide anterior", percentual: 78, papel: "primário" },
       { musculo: "Deltoide médio", percentual: 62, papel: "sinergista" },
-      { musculo: "Tríceps", percentual: 55, papel: "sinergista" },
+      { musculo: "Tríceps braquial", percentual: 55, papel: "sinergista" },
       { musculo: "Trapézio superior", percentual: 40, papel: "estabilizador" },
     ],
     indiceEficiencia: { score: 74, metrics: m(78, 28, 20, 5, 58, 40) },
@@ -442,7 +442,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Latíssimo do dorso", percentual: 78, papel: "primário" },
       { musculo: "Romboides", percentual: 65, papel: "sinergista" },
       { musculo: "Eretores da espinha", percentual: 55, papel: "estabilizador" },
-      { musculo: "Bíceps", percentual: 50, papel: "sinergista" },
+      { musculo: "Bíceps braquial", percentual: 50, papel: "sinergista" },
     ],
     indiceEficiencia: { score: 80, metrics: m(78, 62, 62, 15, 38, 45) },
     fases: [
@@ -521,7 +521,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Latíssimo do dorso", percentual: 80, papel: "primário" },
       { musculo: "Romboides", percentual: 68, papel: "sinergista" },
       { musculo: "Trapézio médio", percentual: 60, papel: "sinergista" },
-      { musculo: "Bíceps", percentual: 48, papel: "sinergista" },
+      { musculo: "Bíceps braquial", percentual: 48, papel: "sinergista" },
     ],
     indiceEficiencia: { score: 76, metrics: m(80, 26, 18, 5, 32, 22) },
     fases: [
@@ -676,7 +676,7 @@ export const extraExercises2: Exercise[] = [
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 75, papel: "primário" },
       { musculo: "Romboides", percentual: 70, papel: "sinergista" },
-      { musculo: "Bíceps", percentual: 55, papel: "sinergista" },
+      { musculo: "Bíceps braquial", percentual: 55, papel: "sinergista" },
       { musculo: "Transverso do abdome", percentual: 45, papel: "estabilizador" },
     ],
     indiceEficiencia: { score: 77, metrics: m(75, 55, 35, 10, 45, 30) },
@@ -754,7 +754,7 @@ export const extraExercises2: Exercise[] = [
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide", percentual: 70, papel: "primário" },
-      { musculo: "Tríceps", percentual: 52, papel: "sinergista" },
+      { musculo: "Tríceps braquial", percentual: 52, papel: "sinergista" },
       { musculo: "Trapézio superior", percentual: 38, papel: "estabilizador" },
       { musculo: "Transverso do abdome", percentual: 30, papel: "estabilizador" },
     ],

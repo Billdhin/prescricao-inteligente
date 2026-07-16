@@ -107,30 +107,70 @@ export function Pill({
 
 /* -------------------------------- StatBar -------------------------------- */
 
+export type BarTone = "primary" | "cta" | "analysis" | "success";
+
+const BAR_FILL: Record<BarTone, string> = {
+  primary: "bg-primary",
+  cta: "bg-cta",
+  analysis: "bg-analysis",
+  success: "bg-success",
+};
+
+/**
+ * Trilho + preenchimento, sem número. Base do StatBar e do MetricaBar.
+ * Existe separado para que quem já imprime o valor por fora não imprima de novo
+ * dentro da barra (era o que fazia o mesmo número aparecer três vezes na aba Comparar).
+ */
+export function BarTrack({
+  value,
+  tone = "primary",
+  className,
+  srLabel,
+}: {
+  value: number;
+  tone?: BarTone;
+  className?: string;
+  srLabel?: string;
+}) {
+  const v = Math.max(0, Math.min(100, value));
+  return (
+    <div
+      className={cn("h-2 min-w-0 overflow-hidden rounded-full bg-surface-soft", className)}
+      role={srLabel ? "img" : undefined}
+      aria-label={srLabel}
+    >
+      <div
+        className={cn("h-full rounded-full transition-[width] duration-500", BAR_FILL[tone])}
+        style={{ width: `${v}%` }}
+      />
+    </div>
+  );
+}
+
 export function StatBar({
   label,
   value,
   tone = "primary",
-  suffix = "%",
+  suffix = "/100",
   className,
   srLabel,
 }: {
   /** Rótulo à esquerda da barra. Vazio/omitido = coluna some (a barra ocupa a largura toda). */
   label?: string;
   value: number;
-  tone?: "primary" | "cta" | "analysis" | "success";
+  tone?: BarTone;
+  /**
+   * Sufixo da escala. O padrão é "/100" porque NENHUM número desta base é
+   * porcentagem de um todo: são notas de 0 a 100 comparativas entre os exercícios
+   * (ver `metricasGlossario.ts`). O padrão antigo era "%", e imprimia coisas como
+   * "Gasto energético 70%", que não responde "70% de quê?".
+   */
   suffix?: string;
   className?: string;
   /** Nome acessível da barra quando não há rótulo visível (leitor de tela). */
   srLabel?: string;
 }) {
   const v = Math.max(0, Math.min(100, value));
-  const fill: Record<string, string> = {
-    primary: "bg-primary",
-    cta: "bg-cta",
-    analysis: "bg-analysis",
-    success: "bg-success",
-  };
   return (
     <div className={cn("flex items-center gap-3", className)} aria-label={!label ? srLabel : undefined}>
       {label ? (
@@ -138,15 +178,10 @@ export function StatBar({
           {label}
         </span>
       ) : null}
-      <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-soft">
-        <div
-          className={cn("h-full rounded-full transition-[width] duration-500", fill[tone])}
-          style={{ width: `${v}%` }}
-        />
-      </div>
-      <span className="tabular w-12 shrink-0 text-right text-sm font-semibold text-ink">
+      <BarTrack value={v} tone={tone} className="flex-1" />
+      <span className="tabular w-14 shrink-0 text-right text-sm font-semibold text-ink">
         {v}
-        {suffix}
+        {suffix ? <span className="text-xs font-medium text-ink-3">{suffix}</span> : null}
       </span>
     </div>
   );

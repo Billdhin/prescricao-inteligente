@@ -23,7 +23,7 @@ export const exercises: Exercise[] = [
     ativacao: [
       { musculo: "Quadríceps", percentual: 92, papel: "primário" },
       { musculo: "Glúteo máximo", percentual: 76, papel: "sinergista" },
-      { musculo: "Posteriores de coxa", percentual: 45, papel: "sinergista" },
+      { musculo: "Isquiotibiais", percentual: 45, papel: "sinergista" },
       { musculo: "Adutores", percentual: 44, papel: "estabilizador" },
     ],
     indiceEficiencia: {
@@ -139,14 +139,14 @@ export const exercises: Exercise[] = [
       { musculo: "Quadríceps", percentual: 88, papel: "primário" },
       { musculo: "Glúteo máximo", percentual: 82, papel: "primário" },
       { musculo: "Eretores da espinha", percentual: 70, papel: "estabilizador" },
-      { musculo: "Posteriores de coxa", percentual: 60, papel: "sinergista" },
+      { musculo: "Isquiotibiais", percentual: 60, papel: "sinergista" },
     ],
     indiceEficiencia: {
       score: 88,
       metrics: [
         { nome: "Quadríceps", valor: 88, tipo: "positivo" },
         { nome: "Glúteos", valor: 82, tipo: "positivo" },
-        { nome: "Padrão funcional", valor: 90, tipo: "positivo" },
+        { nome: "Transferência funcional", valor: 90, tipo: "positivo" },
         { nome: "Demanda lombar", valor: 62, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 74, tipo: "cautela" },
         { nome: "Requisito de mobilidade", valor: 68, tipo: "cautela" },
@@ -239,7 +239,7 @@ export const exercises: Exercise[] = [
     anguloArticular: "80°",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 90, papel: "primário" },
-      { musculo: "Tríceps", percentual: 68, papel: "sinergista" },
+      { musculo: "Tríceps braquial", percentual: 68, papel: "sinergista" },
       { musculo: "Deltoide anterior", percentual: 62, papel: "sinergista" },
       { musculo: "Serrátil anterior", percentual: 40, papel: "estabilizador" },
     ],
@@ -324,7 +324,7 @@ export const exercises: Exercise[] = [
     resumoPratico:
       "Isolamento de quadríceps guiado, em geral útil para volume localizado e para retorno progressivo com baixa demanda técnica.",
     ativacao: [
-      { musculo: "Vastos do quadríceps", percentual: 94, papel: "primário" },
+      { musculo: "Quadríceps", percentual: 94, papel: "primário" },
       { musculo: "Reto femoral", percentual: 62, papel: "sinergista" },
     ],
     indiceEficiencia: {
@@ -538,8 +538,9 @@ export const exercises: Exercise[] = [
     indiceEficiencia: {
       score: 80,
       metrics: [
+        // "Extensão de quadril 90" saiu: é um padrão de movimento, não uma métrica com
+        // escala, e dizia a mesma coisa que "Glúteos 95" logo acima.
         { nome: "Glúteos", valor: 95, tipo: "positivo" },
-        { nome: "Extensão de quadril", valor: 90, tipo: "positivo" },
         { nome: "Demanda lombar", valor: 42, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 46, tipo: "cautela" },
         { nome: "Requisito de mobilidade", valor: 25, tipo: "positivo" },
@@ -670,7 +671,7 @@ export const exercises: Exercise[] = [
       "Puxar vertical guiado, em geral porta de entrada para o trabalho de dorsais antes da barra fixa.",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 88, papel: "primário" },
-      { musculo: "Bíceps", percentual: 60, papel: "sinergista" },
+      { musculo: "Bíceps braquial", percentual: 60, papel: "sinergista" },
       { musculo: "Romboides", percentual: 55, papel: "sinergista" },
     ],
     indiceEficiencia: {
@@ -737,9 +738,9 @@ export const exercises: Exercise[] = [
     resumoPratico:
       "Puxar horizontal sentado. Em geral desenvolve espessura de costas, exigindo tronco estável.",
     ativacao: [
-      { musculo: "Dorsais e romboides", percentual: 86, papel: "primário" },
+      { musculo: "Latíssimo do dorso", percentual: 86, papel: "primário" },
       { musculo: "Trapézio médio", percentual: 66, papel: "sinergista" },
-      { musculo: "Bíceps", percentual: 55, papel: "sinergista" },
+      { musculo: "Bíceps braquial", percentual: 55, papel: "sinergista" },
     ],
     indiceEficiencia: {
       score: 78,
@@ -806,7 +807,7 @@ export const exercises: Exercise[] = [
       "Empurrar vertical. Em geral desenvolve deltoides, exigindo controle escapular e amplitude tolerável ao ombro.",
     ativacao: [
       { musculo: "Deltoide", percentual: 88, papel: "primário" },
-      { musculo: "Tríceps", percentual: 60, papel: "sinergista" },
+      { musculo: "Tríceps braquial", percentual: 60, papel: "sinergista" },
       { musculo: "Trapézio superior", percentual: 45, papel: "estabilizador" },
     ],
     indiceEficiencia: {

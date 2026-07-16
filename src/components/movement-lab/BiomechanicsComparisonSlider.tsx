@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { MuscleActivation } from "@/data/types";
 import type { MuscleRegion } from "@/data/muscle-regions";
 import type { AnalysisOverlayData } from "@/data/analysis-overlays";
+import { MetricaInfo } from "@/components/metrica/MetricaInfo";
 import { cn } from "@/lib/utils";
 
 /**
@@ -569,7 +570,12 @@ export function BiomechanicsComparisonSlider({
             >
               <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: DOT_COLORS[i] }} />
               <span className="text-[10px] font-medium text-white/85">{m.musculo}</span>
-              <span className="tabular text-[10px] font-bold text-white">{m.percentual}%</span>
+              {/* "/100" e não "%": a escala é relativa ao próprio músculo, e "95%"
+                  sozinho puxa a leitura errada de "95% do esforço vai para o glúteo" */}
+              <span className="tabular text-[10px] font-bold text-white">
+                {m.percentual}
+                <span className="font-medium text-white/60">/100</span>
+              </span>
             </button>
           ))}
         </div>
@@ -582,7 +588,12 @@ export function BiomechanicsComparisonSlider({
             layout.card === "tr" && "right-3 top-12",
           )}
         >
-          <div className="mb-2 text-[11px] font-semibold tracking-wide text-white/85">Ativação relativa</div>
+          {/* clicável: abre a escala e o referencial. Era a pergunta do Filipe diante
+              deste painel, "78% de quadríceps é referente a quê?" */}
+          <MetricaInfo
+            nome="Ativação relativa"
+            className="mb-2 text-[11px] font-semibold tracking-wide text-white/85 decoration-white/40 hover:text-white hover:decoration-white/70"
+          />
           <div className="space-y-0.5">
             {contribuicoes.map((m, i) => (
               <button
@@ -605,8 +616,9 @@ export function BiomechanicsComparisonSlider({
                 <span className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-white/12 sm:w-16">
                   <span className="block h-full rounded-full" style={{ width: `${m.percentual}%`, background: BAR_COLORS[i] }} />
                 </span>
-                <span className="tabular w-8 shrink-0 text-right text-[11px] font-bold leading-tight text-white">
-                  {m.percentual}%
+                <span className="tabular w-12 shrink-0 text-right text-[11px] font-bold leading-tight text-white">
+                  {m.percentual}
+                  <span className="font-medium text-white/60">/100</span>
                 </span>
               </button>
             ))}

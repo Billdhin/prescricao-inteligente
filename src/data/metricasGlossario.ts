@@ -140,6 +140,90 @@ export const METRICAS: DefinicaoMetrica[] = [
     ],
   },
   {
+    id: "isolamento",
+    nome: "Isolamento",
+    oQueE: "O quanto o exercício concentra o esforço em um músculo só, em vez de distribuir entre vários.",
+    escala: "0 a 100, comparativo entre os exercícios desta base.",
+    referencial:
+      "Relativo aos demais exercícios da base. Valor alto não quer dizer exercício melhor, quer dizer foco estreito: rende para corrigir um elo fraco específico e rende pouco como base do treino de quem tem pouco tempo.",
+    melhor: "depende",
+    faixas: [
+      { ate: 39, rotulo: "Multiarticular", significado: "Distribui o esforço entre vários músculos: rende mais por série, mas não corrige um elo fraco específico." },
+      { ate: 69, rotulo: "Misto", significado: "Tem um alvo claro, com ajuda de outros músculos." },
+      { ate: 100, rotulo: "Isolado", significado: "Concentra em um músculo: útil em elo fraco, retorno controlado ou quando o multiarticular não é opção." },
+    ],
+  },
+  {
+    id: "acessibilidade",
+    nome: "Acessibilidade",
+    oQueE: "O quanto o exercício é fácil de montar: equipamento simples, pouco espaço, pouca dependência de estrutura de academia.",
+    escala: "0 a 100, comparativo entre os exercícios desta base.",
+    referencial:
+      "Relativo aos demais exercícios da base. Alto quer dizer que dá para executar em casa, ao ar livre ou em academia pequena, sem depender de máquina específica.",
+    melhor: "maior",
+    faixas: [
+      { ate: 39, rotulo: "Depende de estrutura", significado: "Precisa de máquina ou espaço específico: some do treino quando o aluno viaja ou troca de academia." },
+      { ate: 69, rotulo: "Média", significado: "Pede algum equipamento, mas com alternativas fáceis." },
+      { ate: 100, rotulo: "Alta", significado: "Executa em quase qualquer lugar: sustenta a continuidade de quem treina em casa." },
+    ],
+  },
+  {
+    id: "transferencia-funcional",
+    nome: "Transferência funcional",
+    oQueE: "O quanto o padrão de movimento se parece com tarefas do dia a dia, como levantar da cadeira, subir escada ou pegar peso do chão.",
+    escala: "0 a 100, comparativo entre os exercícios desta base.",
+    referencial:
+      "Relativo aos demais exercícios da base, e é semelhança de padrão motor, não promessa de resultado. O ganho em autonomia depende de carga, progressão e da prática da própria tarefa.",
+    melhor: "maior",
+    faixas: [
+      { ate: 39, rotulo: "Baixa", significado: "Padrão distante do dia a dia: treina o músculo, não a tarefa." },
+      { ate: 69, rotulo: "Média", significado: "Tem elementos do padrão cotidiano." },
+      { ate: 100, rotulo: "Alta", significado: "Repete um padrão que o aluno usa fora da academia: costuma render em autonomia, sobretudo no idoso." },
+    ],
+  },
+  {
+    id: "massa-envolvida",
+    nome: "Massa muscular envolvida",
+    oQueE: "Quanto do corpo participa do movimento, de um músculo só até pernas, tronco e braços ao mesmo tempo.",
+    escala: "0 a 100, comparativo entre os exercícios desta base.",
+    referencial:
+      "Relativo aos demais exercícios da base. Envolver mais massa costuma elevar o gasto e a demanda cardiovascular. Não é sinônimo de melhor.",
+    melhor: "depende",
+    faixas: [
+      { ate: 39, rotulo: "Localizada", significado: "Uma região só: pouca repercussão cardiovascular." },
+      { ate: 69, rotulo: "Regional", significado: "Envolve um segmento inteiro." },
+      { ate: 100, rotulo: "Global", significado: "Envolve grande parte do corpo: pesa no gasto da sessão e na resposta cardiovascular. Observe quem controla pressão." },
+    ],
+  },
+  {
+    id: "controle-motor",
+    nome: "Controle motor",
+    oQueE: "O quanto o exercício depende de coordenação fina e de sustentar uma posição sob controle, em vez de apenas mover carga.",
+    escala: "0 a 100, comparativo entre os exercícios desta base.",
+    referencial:
+      "Relativo aos demais exercícios da base. Alto quer dizer que o controle é o próprio estímulo: é o que o exercício treina e, ao mesmo tempo, o que ele cobra. Não confunda com Complexidade técnica, que mede o quanto é difícil aprender a execução.",
+    melhor: "depende",
+    faixas: [
+      { ate: 39, rotulo: "Pouco", significado: "O movimento se sustenta sozinho: dá para carregar sem pensar na posição." },
+      { ate: 69, rotulo: "Médio", significado: "Pede atenção à posição durante a série." },
+      { ate: 100, rotulo: "Muito", significado: "O controle é o estímulo principal: rende em consciência corporal e frustra quem só quer carga." },
+    ],
+  },
+  {
+    id: "tensao-constante",
+    nome: "Tensão constante",
+    oQueE: "O quanto a resistência se mantém ao longo de toda a amplitude, em vez de sumir em parte do movimento.",
+    escala: "0 a 100, comparativo entre os exercícios desta base.",
+    referencial:
+      "Relativo aos demais exercícios da base, e depende do tipo de resistência: polia e elástico mantêm tensão em quase toda a amplitude; peso livre perde tensão onde a alavanca fica favorável.",
+    melhor: "depende",
+    faixas: [
+      { ate: 39, rotulo: "Varia muito", significado: "A carga alivia em parte do movimento: sobra descanso dentro da própria repetição." },
+      { ate: 69, rotulo: "Parcial", significado: "Mantém tensão na maior parte da amplitude." },
+      { ate: 100, rotulo: "Constante", significado: "Tensão do início ao fim: mais tempo sob tensão pela mesma série." },
+    ],
+  },
+  {
     id: "gasto-energetico",
     nome: "Gasto energético",
     oQueE: "O quanto o exercício tende a gastar energia, comparado com os outros exercícios da base.",
@@ -160,14 +244,42 @@ for (const m of METRICAS) {
   PORNOME.set(m.nome.toLowerCase(), m);
   PORNOME.set(m.id, m);
 }
+/**
+ * Métricas cujo rótulo é o NOME DE UM MÚSCULO ("Glúteos 80", "Quadríceps 92").
+ * Auditadas uma a uma contra o array `ativacao` do mesmo exercício: batem todas,
+ * são a mesma ativação relativa dita com outro rótulo. Ficam como apelido para que
+ * o rótulo continue nomeando o músculo (que é a informação útil) e o clique
+ * explique a escala: relativa ao próprio músculo, não fatia de um todo.
+ */
+const MUSCULOS_COMO_ATIVACAO = [
+  "quadríceps",
+  "glúteos",
+  "posteriores",
+  "panturrilha",
+  "peitoral",
+  "dorsais",
+  "costas",
+  "costas (espessura)",
+  "trapézio médio",
+  "deltoides",
+  "bíceps",
+  "tríceps",
+  "core",
+];
+
 // Nomes usados nos dados dos exercícios que apontam para a mesma definição.
 const APELIDOS: Record<string, string> = {
   "ativação do músculo-alvo": "ativacao",
   "ativação primária": "ativacao",
   "contribuição muscular": "ativacao",
+  ...Object.fromEntries(MUSCULOS_COMO_ATIVACAO.map((m) => [m, "ativacao"])),
   "estabilidade de tronco": "estabilidade",
   "estabilidade escapular": "estabilidade",
   "estabilidade unilateral": "estabilidade",
+  // "controle escapular" e "equilíbrio" são o mesmo conceito de controle fino,
+  // ditos com o nome da região onde ele aparece.
+  "controle escapular": "controle-motor",
+  equilíbrio: "controle-motor",
 };
 
 /** Definição de uma métrica pelo rótulo exibido (ou por um apelido usado nos dados). */

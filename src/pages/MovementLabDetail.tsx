@@ -15,7 +15,10 @@ import {
   ArrowRight,
   X,
 } from "lucide-react";
-import { Card, Pill, ScoreRing, StatBar, buttonClasses, type PillTone } from "@/components/ui/primitives";
+import { Card, Pill, ScoreRing, buttonClasses, type PillTone } from "@/components/ui/primitives";
+import { MetricaInfo } from "@/components/metrica/MetricaInfo";
+import { MetricaBar } from "@/components/metrica/MetricaBar";
+import { getMetrica, faixaDe } from "@/data/metricasGlossario";
 import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
 import { FaseFigure, faseKind } from "@/components/movement-lab/FaseFigure";
@@ -142,11 +145,14 @@ function TrustDialog({ level, ex, onClose }: { level: TrustLevel; ex?: Exercise;
   );
 }
 
+/**
+ * Uma régua só. Esta função tinha faixas próprias (>=85 "Muito bom", >=70 "Bom") que
+ * discordavam do glossário: um índice 80 aparecia como "Bom" no herói e como
+ * "Muito bom" na aba Comparar, na mesma tela. Agora as duas leem `metricasGlossario`.
+ */
 function qualitativo(score: number) {
-  if (score >= 85) return "Muito bom";
-  if (score >= 70) return "Bom";
-  if (score >= 50) return "Regular";
-  return "Baixo";
+  const def = getMetrica("eficiencia");
+  return (def && faixaDe(def, score)?.rotulo) ?? "";
 }
 
 export function MovementLabDetail() {
@@ -265,7 +271,13 @@ function Detail({ exercise }: { exercise: Exercise }) {
           <div className="mt-4 flex items-center gap-5">
             <ScoreRing value={exercise.indiceEficiencia.score} size={112} />
             <div>
-              <div className="text-xs uppercase tracking-wider text-ink-3">Avaliação geral</div>
+              {/* O rótulo abre a definição: o que é, escala, relativo a quê e o que a nota
+                  quer dizer na prática. Antes o anel dava um número sem referencial nenhum. */}
+              <MetricaInfo
+                nome="Índice de eficiência"
+                valor={exercise.indiceEficiencia.score}
+                className="text-xs uppercase tracking-wider text-ink-3"
+              />
               <div className="font-display text-xl font-bold text-ink">
                 {qualitativo(exercise.indiceEficiencia.score)}
               </div>
@@ -274,19 +286,21 @@ function Detail({ exercise }: { exercise: Exercise }) {
               </div>
             </div>
           </div>
-          <div className="mt-5 space-y-2.5">
+          <div className="mt-5 space-y-3">
             {exercise.indiceEficiencia.metrics.map((m) => (
-              <StatBar
+              <MetricaBar
                 key={m.nome}
-                label={m.nome}
-                value={m.valor}
+                nome={m.nome}
+                valor={m.valor}
                 tone={m.tipo === "positivo" ? "primary" : "cta"}
               />
             ))}
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-ink-3">
-            Índices relativos estimados da literatura de EMG/biomecânica: comparam exercícios, não
-            medem o aluno. Fontes na aba <span className="font-semibold text-ink-2">Biomecânica</span>.
+          <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
+            Notas de 0 a 100 que comparam os exercícios desta base entre si, estimadas da literatura
+            de EMG/biomecânica. Não medem o seu aluno. Clique no nome de cada uma para ver a escala e
+            o que o valor quer dizer. Fontes na aba{" "}
+            <span className="font-semibold text-ink-2">Biomecânica</span>.
           </p>
         </Card>
       </div>
@@ -817,14 +831,29 @@ function Comparador({ exercise }: { exercise: Exercise }) {
     candidatos.find((e) => e.grupoMuscular === exercise.grupoMuscular) ?? candidatos[0];
   const [otherSlug, setOtherSlug] = React.useState(inicial.slug);
   const other = exercises.find((e) => e.slug === otherSlug) ?? inicial;
-  const metricPair = (nome: string, fallback = 50) => ({
-    a: exercise.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor ?? fallback,
-    b: other.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor ?? fallback,
-  });
-  const rows = [
-    { label: "Ativação primária", ...({ a: exercise.ativacao[0]?.percentual ?? 0, b: other.ativacao[0]?.percentual ?? 0 }) },
-    { label: "Índice de eficiência", a: exercise.indiceEficiencia.score, b: other.indiceEficiencia.score },
-    { label: "Complexidade técnica", ...metricPair("Complexidade técnica") },
+  // Sem fallback: métrica ausente vira `undefined` e a linha diz que não há dado medido.
+  // Chutar 50 aqui era o mesmo bug já removido do Comparador (comparar em cima do chute).
+  const metricaDe = (e: Exercise, nome: string) =>
+    e.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor;
+
+  const rows: { nome: string; a?: number; b?: number; musculoA?: string; musculoB?: string }[] = [
+    {
+      nome: "Ativação relativa",
+      a: exercise.ativacao[0]?.percentual,
+      b: other.ativacao[0]?.percentual,
+      musculoA: exercise.ativacao[0]?.musculo,
+      musculoB: other.ativacao[0]?.musculo,
+    },
+    {
+      nome: "Índice de eficiência",
+      a: exercise.indiceEficiencia.score,
+      b: other.indiceEficiencia.score,
+    },
+    {
+      nome: "Complexidade técnica",
+      a: metricaDe(exercise, "Complexidade técnica"),
+      b: metricaDe(other, "Complexidade técnica"),
+    },
   ];
   return (
     <div>
@@ -846,22 +875,37 @@ function Comparador({ exercise }: { exercise: Exercise }) {
           </select>
         </label>
       </div>
-      <div className="space-y-4">
-        {rows.map((r) => (
-          <div key={r.label}>
-            <div className="mb-1 flex justify-between text-xs text-ink-2">
-              <span>{r.label}</span>
-              <span className="tabular font-semibold text-ink">
-                {r.a} · {r.b}
-              </span>
+      <div className="space-y-5">
+        {rows.map((r) => {
+          // Ativação relativa é do PRÓPRIO músculo: se o alvo de cada exercício for
+          // diferente, os dois números não medem a mesma coisa e isso precisa ser dito.
+          const alvosDiferentes = Boolean(r.musculoA && r.musculoB && r.musculoA !== r.musculoB);
+          return (
+            <div key={r.nome}>
+              <MetricaInfo nome={r.nome} valor={r.a} className="text-sm font-semibold text-ink" />
+              {alvosDiferentes && (
+                <p className="mt-1 text-[11px] leading-relaxed text-ink-3">
+                  Alvo principal diferente em cada exercício. Cada número é relativo ao próprio
+                  músculo, então aqui eles não se comparam entre si.
+                </p>
+              )}
+              <div className="mt-2 space-y-2.5">
+                <MetricaBar
+                  nome={r.nome}
+                  valor={r.a}
+                  tone="primary"
+                  rotuloTexto={r.musculoA ? `${exercise.nome} · ${r.musculoA}` : exercise.nome}
+                />
+                <MetricaBar
+                  nome={r.nome}
+                  valor={r.b}
+                  tone="analysis"
+                  rotuloTexto={r.musculoB ? `${other.nome} · ${r.musculoB}` : other.nome}
+                />
+              </div>
             </div>
-            {/* sem repetir os nomes por linha: o cabeçalho já mapeia cor → exercício
-                (azul = exercício atual, ciano = comparado) */}
-            <StatBar srLabel={exercise.nome} value={r.a} tone="primary" />
-            <div className="h-1" />
-            <StatBar srLabel={other.nome} value={r.b} tone="analysis" />
-          </div>
-        ))}
+          );
+        })}
       </div>
       <Link
         to={`/comparador?base=${exercise.slug}`}

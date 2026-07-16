@@ -22,7 +22,7 @@ import {
   Activity,
   SlidersHorizontal,
 } from "lucide-react";
-import { Card, Pill, ScoreRing, StatBar, buttonClasses, Progress } from "@/components/ui/primitives";
+import { Card, Pill, ScoreRing, buttonClasses, Progress } from "@/components/ui/primitives";
 import {
   rankExercises,
   OBJETIVOS,
@@ -69,6 +69,7 @@ import { marcarAtivacao } from "@/lib/ativacao";
 import { toast } from "@/lib/toast";
 import { descricaoOpcao } from "@/data/opcoes-wizard";
 import { MetricaInfo } from "@/components/metrica/MetricaInfo";
+import { MetricaBar } from "@/components/metrica/MetricaBar";
 import { FAIXAS_ETARIAS, getFaixaEtaria } from "@/data/faixasEtarias";
 import { useDialog } from "@/lib/useDialog";
 import { cn, withBase } from "@/lib/utils";
@@ -1671,21 +1672,16 @@ function Comparador({
                 {/* Clicável: abre o que é, a escala, relativo a quê e o que o valor
                     significa na prática. O rótulo sozinho não dizia nada. */}
                 <MetricaInfo nome={r.label} valor={r.get(selected[0])} className="mb-1 text-xs font-semibold text-ink-2" />
-                <div className="space-y-1.5">
-                  {selected.map((e, i) => {
-                    const v = r.get(e);
-                    // sem repetir o nome: as pills coloridas acima já mapeiam cor → exercício
-                    return v === undefined ? (
-                      <div
-                        key={e.slug}
-                        className="rounded-control border border-dashed border-border px-2.5 py-1 text-[11px] text-ink-3"
-                      >
-                        {e.nome}: sem dado medido
-                      </div>
-                    ) : (
-                      <StatBar key={e.slug} srLabel={e.nome} value={v} tone={tones[i]} />
-                    );
-                  })}
+                <div className="space-y-2">
+                  {selected.map((e, i) => (
+                    <MetricaBar
+                      key={e.slug}
+                      nome={r.label}
+                      valor={r.get(e)}
+                      tone={tones[i]}
+                      rotuloTexto={e.nome}
+                    />
+                  ))}
                 </div>
               </div>
             ))}

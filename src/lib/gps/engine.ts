@@ -162,9 +162,16 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
     nivelMsg = `Dois níveis acima (${ex.nivel}): não recomendado sem base técnica.`;
     cautions.push(`${ex.nivel} está muito acima do nível informado: técnica antes de carga.`);
   }
-  const complexidade = metricValue(ex, "Complexidade técnica") ?? 30;
+  // Sem chute: o antigo `?? 30` assumia "exercício simples" quando o dado faltava,
+  // e 30 passa longe de qualquer penalidade. Um exercício exigente sem o dado
+  // declarado seria liberado para iniciante como se fosse fácil.
+  const complexidade = metricValue(ex, "Complexidade técnica");
   let complexPenalty = 0;
-  if (ans.nivel === "Iniciante" && complexidade > 40) {
+  if (complexidade === undefined) {
+    cautions.push(
+      "Falta o dado de complexidade técnica deste exercício: confirme a execução antes de liberar sem supervisão.",
+    );
+  } else if (ans.nivel === "Iniciante" && complexidade > 40) {
     complexPenalty = Math.min(0.5, (complexidade - 40) / 100);
   } else if (ans.nivel === "Intermediário" && complexidade > 70) {
     complexPenalty = Math.min(0.25, (complexidade - 70) / 120);
@@ -257,7 +264,13 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
         cautions.push(p.motivo);
       }
     }
-    if (rule.complexidadeMax !== undefined && complexidade > rule.complexidadeMax) {
+    // Sem o dado, não afirma que passou nem que reprovou no teto de complexidade do
+    // perfil: a falta já virou cautela declarada lá em cima.
+    if (
+      complexidade !== undefined &&
+      rule.complexidadeMax !== undefined &&
+      complexidade > rule.complexidadeMax
+    ) {
       grupoCondPen -= 3;
       motivos.push(`Complexidade técnica ${complexidade}/100 acima do recomendado para este perfil.`);
       cautions.push("Técnica exigente para este perfil: simplifique ou supervisione de perto.");

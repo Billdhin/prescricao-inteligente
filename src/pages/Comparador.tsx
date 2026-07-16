@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Card, Pill, ScoreRing, StatBar, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { MetricaInfo } from "@/components/metrica/MetricaInfo";
+import { MetricaBar } from "@/components/metrica/MetricaBar";
 import { exercises } from "@/data/exercises";
 import type { Exercise } from "@/data/types";
 import {
@@ -179,22 +180,22 @@ function ForcaBloco({ base }: { base: string | null }) {
                       {m.hint && <span className="shrink-0 text-[11px] text-ink-3">{m.hint}</span>}
                     </div>
                     <div className="space-y-1.5">
-                      {selected.map((e, i) => {
-                        const v = m.get(e);
-                        return (
-                          <div key={e.slug} className="flex items-center gap-2">
-                            {v === undefined ? (
-                              // Dado ausente é dito, não preenchido com chute.
-                              <span className="flex-1 rounded-control border border-dashed border-border px-2.5 py-1 text-xs text-ink-3">
-                                {e.nome}: sem dado medido para esta métrica
-                              </span>
-                            ) : (
-                              <StatBar srLabel={e.nome} value={v} tone={COL_TONES[i]} className="flex-1" />
-                            )}
-                            {i === win && <Pill tone="success" className="shrink-0">melhor</Pill>}
-                          </div>
-                        );
-                      })}
+                      {selected.map((e, i) => (
+                        // Dado ausente é dito, não preenchido com chute (a MetricaBar
+                        // resolve os dois casos). O nome do exercício fica escrito em
+                        // cada linha: ler a cor da barra para descobrir de quem é o
+                        // número é trabalho que o leitor não deveria ter.
+                        <div key={e.slug} className="flex items-center gap-2">
+                          <MetricaBar
+                            nome={m.label}
+                            valor={m.get(e)}
+                            tone={COL_TONES[i]}
+                            rotuloTexto={e.nome}
+                            className="flex-1"
+                          />
+                          {i === win && <Pill tone="success" className="shrink-0">melhor</Pill>}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
@@ -703,8 +704,10 @@ function AtivacaoComparada({ selected }: { selected: Exercise[] }) {
         <h3 className="font-display text-lg font-bold text-ink">Ativação muscular comparada</h3>
       </div>
       <p className="mb-4 text-sm text-ink-2">
-        Qual exercício recruta mais cada músculo. Estimativas relativas da literatura de EMG; em cada linha, a maior
-        ativação recebe o selo.
+        Qual exercício recruta mais cada músculo. Cada valor vai de 0 a 100 e é relativo ao próprio músculo, não uma
+        fatia do esforço total: os números de uma coluna não somam 100. Em cada linha, a maior ativação recebe o selo.{" "}
+        <span className="font-semibold text-ink">Não listado</span> quer dizer que o músculo não está entre os alvos
+        declarados daquele exercício, e não que a ativação seja zero.
       </p>
       <div className="space-y-4">
         {musculos.map((m) => {
@@ -723,9 +726,11 @@ function AtivacaoComparada({ selected }: { selected: Exercise[] }) {
                         {e.nome}
                       </span>
                       {v == null ? (
+                        // Dizia "baixa", que é uma afirmação que o dado não sustenta: o
+                        // exercício apenas não lista este músculo entre os alvos dele.
                         <div className="flex flex-1 items-center gap-2">
-                          <div className="h-2 flex-1 rounded-full bg-surface-soft" />
-                          <span className="w-16 shrink-0 text-right text-xs text-ink-3">baixa</span>
+                          <div className="h-2 flex-1 rounded-full border border-dashed border-border" />
+                          <span className="w-20 shrink-0 text-right text-xs text-ink-3">não listado</span>
                         </div>
                       ) : (
                         <StatBar srLabel={`${e.nome}: ${m}`} value={v} tone={COL_TONES[i]} className="flex-1" />

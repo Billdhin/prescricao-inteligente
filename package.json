@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "gen:seed": "tsx scripts/gen-seed-sql.ts",
-    "check:supabase": "node scripts/check-supabase.mjs"
+    "check:supabase": "node scripts/check-supabase.mjs",
+    "check:metricas": "tsx scripts/check-metricas.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
