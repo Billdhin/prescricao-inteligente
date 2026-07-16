@@ -137,7 +137,12 @@ export function exportProntuarioPDF({
 
   const biblioHtml = biblio.length
     ? `<section class="bloco"><h2>Referências</h2><ol class="refs">${biblio
-        .map((b) => `<li>${esc(b.ref.autores)}. ${esc(b.ref.titulo)}. ${esc(b.ref.fonte)}, ${b.ref.ano}.</li>`)
+        .map(
+          (b) =>
+            `<li>${esc(b.ref.autores)}. ${esc(b.ref.titulo)}. ${esc(b.ref.fonte)}, ${b.ref.ano}.${
+              b.ref.doi ? ` <a href="https://doi.org/${esc(b.ref.doi)}">doi:${esc(b.ref.doi)}</a>` : ""
+            }</li>`,
+        )
         .join("")}</ol></section>`
     : "";
 

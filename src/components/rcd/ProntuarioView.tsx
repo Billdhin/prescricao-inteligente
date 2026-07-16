@@ -205,6 +205,19 @@ export function ProntuarioView({
                 {biblio.map((b) => (
                   <li key={b.ref.id}>
                     {b.ref.autores}. {b.ref.titulo}. {b.ref.fonte}, {b.ref.ano}.
+                    {b.ref.doi && (
+                      <>
+                        {" "}
+                        <a
+                          href={`https://doi.org/${b.ref.doi}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-primary hover:underline"
+                        >
+                          doi:{b.ref.doi}
+                        </a>
+                      </>
+                    )}
                   </li>
                 ))}
               </ol>
