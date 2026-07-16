@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Users, UserPlus, Search, ArrowRight, Crown, Lock } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, FREE_ALUNOS_LIMIT } from "@/lib/store";
+import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 
@@ -27,7 +28,10 @@ export function Alunos() {
   }, []);
 
   const filtrados = alunos.filter((a) =>
-    [a.nome, a.objetivo, a.nivel, ...a.restricoes].join(" ").toLowerCase().includes(q.toLowerCase()),
+    [a.nome, a.objetivo, a.nivel, ...a.restricoes.map((r) => rotuloRestricao(r.tag))]
+      .join(" ")
+      .toLowerCase()
+      .includes(q.toLowerCase()),
   );
 
   return (
@@ -107,8 +111,8 @@ export function Alunos() {
                 )}
                 {a.restricoes.length > 0 ? (
                   a.restricoes.map((r) => (
-                    <Pill key={r} tone="warning">
-                      {r}
+                    <Pill key={r.tag} tone="warning">
+                      {rotuloRestricao(r.tag)}
                     </Pill>
                   ))
                 ) : (

@@ -1,6 +1,7 @@
 import { getSupabase } from "./supabaseClient";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PerfilCampos, Plan } from "@/lib/store";
+import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 
 /**
  * Repositório Supabase dos dados do profissional e do perfil (Fase 5).
@@ -109,7 +110,8 @@ function rowToAluno(r: Record<string, any>): Aluno {
     objetivo: r.objetivo,
     nivel: r.nivel,
     nivelDesde: ms(r.nivel_desde),
-    restricoes: r.restricoes ?? [],
+    // linhas antigas na nuvem podem trazer restricoes string[]: normaliza no modelo novo
+    restricoes: migrarRestricoesLegado(r.restricoes),
     equipamentos: r.equipamentos ?? [],
     observacoes: r.observacoes ?? undefined,
     status: r.status,
@@ -229,7 +231,7 @@ export async function listarPrescricoes(): Promise<Prescricao[]> {
       alunoId: r.aluno_id,
       data: ms(r.data) ?? Date.now(),
       titulo: r.titulo,
-      answers: r.answers ?? {},
+      answers: { ...(r.answers ?? {}), restricoes: migrarRestricoesLegado(r.answers?.restricoes) },
       itens: r.itens ?? [],
       observacoes: r.observacoes ?? undefined,
       status: r.status,

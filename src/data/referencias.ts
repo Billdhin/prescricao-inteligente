@@ -270,6 +270,30 @@ export const referencias: Referencia[] = [
     ano: 2010,
     nota: "Estabilidade de tronco e resistência ao movimento: base da prancha e do dead bug (anti-extensão).",
   },
+  {
+    id: "boyer-2014",
+    autores: "Boyer ER, Rooney BD, Derrick TR",
+    titulo: "Rearfoot and midfoot or forefoot impacts in habitually shod runners",
+    fonte: "Medicine & Science in Sports & Exercise, 46(7):1384-91 (doi:10.1249/MSS.0000000000000234)",
+    ano: 2014,
+    nota: "Forças de reação e taxa de carga no impacto da corrida: base para classificar impacto alto (corrida/salto) x baixo (caminhada, bike, água) na etapa de restrições.",
+  },
+  {
+    id: "wallace-2002",
+    autores: "Wallace DA, Salem GJ, Salinas R, Powers CM",
+    titulo: "Patellofemoral joint kinetics while squatting with and without an external load",
+    fonte: "Journal of Orthopaedic & Sports Physical Therapy, 32(4):141-8 (doi:10.2519/jospt.2002.32.4.141)",
+    ano: 2002,
+    nota: "O estresse femoropatelar cresce com o ângulo de flexão do joelho e com a carga: base do cuidado com profundidade e carga na queixa de joelho.",
+  },
+  {
+    id: "dossantos-2021",
+    autores: "Dos Santos JJ, Nagy RO, Souza MA, Intelangelo L, Barbosa MA, Silveira-Nunes G, Barbosa AC",
+    titulo: "Scapular retraction under adduction load: an alternative to overhead exercises",
+    fonte: "International Journal of Environmental Research and Public Health, 18(17):9251 (doi:10.3390/ijerph18179251)",
+    ano: 2021,
+    nota: "Exercícios acima da cabeça geram forças compressivas no espaço subacromial: base para reduzir movimento overhead na queixa de ombro e preferir alternativas.",
+  },
 ];
 
 export function getReferencia(id: string) {

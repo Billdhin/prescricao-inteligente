@@ -1,4 +1,5 @@
 import type { GpsAnswers } from "@/lib/gps/engine";
+import { criarRestricao } from "@/lib/gps/restricoes";
 
 /**
  * BIBLIOTECA DE CASOS DOCUMENTADOS — páginas públicas que rodam o MOTOR REAL
@@ -54,7 +55,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       objetivo: "Reabilitação/retorno",
       grupoMuscular: "Core (tronco)",
       nivel: "Iniciante",
-      restricoes: ["Dor lombar"],
+      restricoes: [criarRestricao("lombar_sensivel")],
       equipamentos: ["Peso corporal", "Máquina", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
@@ -73,7 +74,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       grupoMuscular: "Corpo todo",
       prioridade: "Condicionamento cardiorrespiratório",
       nivel: "Iniciante",
-      restricoes: ["Dor no joelho"],
+      restricoes: [criarRestricao("joelho_dor")],
       equipamentos: ["Máquina", "Piscina", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
@@ -110,7 +111,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       objetivo: "Força",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
-      restricoes: ["Dor no joelho"],
+      restricoes: [criarRestricao("joelho_dor")],
       equipamentos: ["Máquina", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:
@@ -128,7 +129,7 @@ export const casosDocumentados: CasoDocumentado[] = [
       objetivo: "Reabilitação/retorno",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
-      restricoes: ["Mobilidade limitada"],
+      restricoes: [criarRestricao("mobilidade_limitada")],
       equipamentos: ["Peso corporal", "Máquina", "Elástico", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     decisao:

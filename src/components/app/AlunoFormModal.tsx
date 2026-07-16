@@ -2,7 +2,9 @@ import * as React from "react";
 import { X } from "lucide-react";
 import { buttonClasses } from "@/components/ui/primitives";
 import { uid } from "@/lib/store";
-import { OBJETIVOS, RESTRICOES, EQUIPAMENTOS, type GpsObjetivo, type GpsRestricao } from "@/lib/gps/engine";
+import { OBJETIVOS, EQUIPAMENTOS, type GpsObjetivo } from "@/lib/gps/engine";
+import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
+import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
 import type { Nivel } from "@/data/types";
 import { iniciaisDe, type Aluno } from "@/data/alunos";
 import { descricaoOpcao } from "@/data/opcoes-wizard";
@@ -10,7 +12,6 @@ import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
-const RESTRICOES_REAIS = RESTRICOES.filter((r) => r !== "Nenhuma") as Exclude<GpsRestricao, "Nenhuma">[];
 
 /** Kit típico de academia: ponto de partida honesto (o cadastro antigo marcava
  *  os 10, inclusive Piscina, e o perfil nascia dizendo o que o aluno não tem). */
@@ -33,9 +34,7 @@ export function AlunoFormModal({
   const [idade, setIdade] = React.useState(inicial?.idade ? String(inicial.idade) : "");
   const [objetivo, setObjetivo] = React.useState<GpsObjetivo>((inicial?.objetivo as GpsObjetivo) ?? "Hipertrofia");
   const [nivel, setNivel] = React.useState<Nivel>(inicial?.nivel ?? "Iniciante");
-  const [restricoes, setRestricoes] = React.useState<Exclude<GpsRestricao, "Nenhuma">[]>(
-    (inicial?.restricoes as Exclude<GpsRestricao, "Nenhuma">[]) ?? [],
-  );
+  const [restricoes, setRestricoes] = React.useState<RestricaoSelecionada[]>(inicial?.restricoes ?? []);
   const [equipamentos, setEquipamentos] = React.useState<string[]>(inicial?.equipamentos ?? KIT_PADRAO);
   const [observacoes, setObservacoes] = React.useState(inicial?.observacoes ?? "");
   const dialogRef = useDialog<HTMLDivElement>(onClose);
@@ -119,14 +118,8 @@ export function AlunoFormModal({
             </select>
           </Field>
 
-          <Field label="Restrições / lesões">
-            <div className="flex flex-wrap gap-2">
-              {RESTRICOES_REAIS.map((r) => (
-                <Chip key={r} active={restricoes.includes(r)} onClick={() => toggle(restricoes, r, setRestricoes)}>
-                  {r}
-                </Chip>
-              ))}
-            </div>
+          <Field label="Restrições físicas">
+            <RestricoesSelector value={restricoes} onChange={setRestricoes} idBase="aluno-restr" />
           </Field>
 
           <Field label="Equipamentos disponíveis">

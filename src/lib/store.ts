@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
+import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 import {
   cloudSaveAluno,
   cloudRemoveAluno,
@@ -382,9 +383,13 @@ export const useAlunos = create<AlunosState>()(
     // migrate por MERGE: preserva os dados do usuário (alunos/avaliações/prescrições que
     // ele criou) e apenas faz backfill dos campos novos do seed nos alunos-semente por id.
     // Assim, futuros bumps de versão não apagam o trabalho do profissional.
+    // v7: restrições deixaram de ser string[] ("Dor lombar"...) e viraram o modelo
+    //     estruturado RestricaoSelecionada[] (30 restrições, gatilhos, lado, gravidade,
+    //     liberação, dispositivo). migrarRestricoesLegado converte o formato antigo por
+    //     merge e é idempotente (mantém o que já vier estruturado).
     {
       name: "pi-alunos",
-      version: 6,
+      version: 7,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -417,10 +422,16 @@ export const useAlunos = create<AlunosState>()(
               equipamentos: normalizaEquip(merged.equipamentos),
               // v6: assume que o aluno está no nível desde o cadastro, se não houver registro
               nivelDesde: merged.nivelDesde ?? merged.criadoEm,
+              // v7: restrições string[] legadas → modelo estruturado
+              restricoes: migrarRestricoesLegado(merged.restricoes),
             };
           }),
           avaliacoes: Array.isArray(p.avaliacoes) ? p.avaliacoes : seedAvaliacoes,
-          prescricoes: Array.isArray(p.prescricoes) ? p.prescricoes : seedPrescricoes,
+          // v7: as answers salvas guardavam restricoes string[]: migra o rastro do cálculo
+          prescricoes: (Array.isArray(p.prescricoes) ? p.prescricoes : seedPrescricoes).map((pr) => ({
+            ...pr,
+            answers: { ...pr.answers, restricoes: migrarRestricoesLegado(pr.answers?.restricoes) },
+          })),
           liberacoes: Array.isArray(p.liberacoes) ? p.liberacoes : [],
         } as unknown as AlunosState;
       },

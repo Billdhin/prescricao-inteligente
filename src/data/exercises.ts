@@ -1,8 +1,9 @@
 import type { Exercise } from "./types";
 import { extraExercises } from "./exercises-extra";
 import { extraExercises2 } from "./exercises-extra2";
+import { RESTRICAO_PERFIS } from "./restricao-perfis";
 
-export const exercises: Exercise[] = [
+const exercisesRaw: Exercise[] = [
   /* ------------------------------- LEG PRESS ------------------------------ */
   {
     id: "e1",
@@ -993,6 +994,13 @@ export const exercises: Exercise[] = [
   ...extraExercises,
   ...extraExercises2,
 ];
+
+// Anexa o perfil de restrição (fatos estruturais autorados por inspeção) por slug,
+// sem poluir cada objeto de exercício. Ver src/data/restricao-perfis.ts.
+export const exercises: Exercise[] = exercisesRaw.map((e) => ({
+  ...e,
+  restricaoPerfil: e.restricaoPerfil ?? RESTRICAO_PERFIS[e.slug],
+}));
 
 export function getExercise(slug: string) {
   return exercises.find((e) => e.slug === slug);

@@ -72,6 +72,39 @@ export interface Conteudo {
   prescricaoPratica: string;
 }
 
+/**
+ * Perfil do exercício frente às restrições físicas do aluno (etapa 4 do Prescrever).
+ *
+ * São FATOS estruturais do movimento, autorados por inspeção (posição do corpo, se
+ * exige ajoelhar, se leva o peso às mãos, se há apoio de equipamento). Não são notas
+ * biomecânicas inventadas: onde a decisão precisa de carga articular fina, o motor
+ * usa as demandas já medidas (Demanda lombar/joelho/ombro) em vez de um número novo.
+ *
+ * O `impacto` é a única classificação de julgamento e segue a literatura de forças de
+ * reação do solo (corrida/salto = alto; caminhada/bike/água = baixo). Ver
+ * `referencias.ts` (boyer-2014, wallace-2002, dossantos-2021).
+ */
+export interface RestricaoPerfilExercicio {
+  /** posição predominante do corpo durante a execução */
+  posicao: "em pé" | "sentado" | "deitado" | "ajoelhado" | "quatro apoios";
+  /** força de impacto/aterrissagem: corrida e saltos = alto; caminhada/bike/água = baixo */
+  impacto: "baixo" | "moderado" | "alto";
+  /** o movimento leva os braços acima da linha da cabeça sob carga */
+  movimentoAcimaCabeca: boolean;
+  /** a execução exige apoiar-se sobre os joelhos */
+  exigeAjoelhar: boolean;
+  /** a execução começa/termina no solo (deitar, levantar do chão, quatro apoios) */
+  exigeIrAoChao: boolean;
+  /** trabalha um lado do corpo por vez (afundo, unilateral) */
+  unilateral: boolean;
+  /** o peso do corpo recai sobre punhos/mãos (flexão, prancha alta) */
+  apoioNasMaos: boolean;
+  /** dá para ajustar facilmente a amplitude (máquina, banco, altura regulável) */
+  amplitudeAjustavel: boolean;
+  /** oferece apoio externo estável (encosto, banco, máquina, corrimão) */
+  possuiApoio: boolean;
+}
+
 export interface Exercise {
   id: string;
   slug: string;
@@ -100,6 +133,8 @@ export interface Exercise {
   trustLevel: TrustLevel;
   /** true = tem cena/silhueta dedicada; false = usa ilustração genérica */
   temCena: boolean;
+  /** perfil frente às restrições físicas do aluno (ver RestricaoPerfilExercicio) */
+  restricaoPerfil?: RestricaoPerfilExercicio;
 }
 
 export interface CaseOption {

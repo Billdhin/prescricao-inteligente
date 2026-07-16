@@ -66,8 +66,8 @@ export function recommendModalidades({
   // 2) Sem grupo: só compomos modalidades quando o objetivo é Emagrecimento.
   if (answers.objetivo !== "Emagrecimento") return [];
 
-  const joelho = answers.restricoes.includes("Dor no joelho");
-  const lombar = answers.restricoes.includes("Dor lombar");
+  const joelho = answers.restricoes.some((r) => r.tag === "joelho_dor");
+  const lombar = answers.restricoes.some((r) => r.tag === "lombar_sensivel");
   const iniciante = answers.nivel === "Iniciante";
   // aeróbio de entrada respeitando a restrição articular
   const aerobio = joelho ? "m-bike" : lombar ? "m-caminhada" : "m-caminhada";

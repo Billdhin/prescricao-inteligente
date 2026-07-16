@@ -27,6 +27,7 @@ import { tracks } from "@/data/tracks";
 import { biblioteca } from "@/data/library";
 import { specialGroups } from "@/data/specialGroups";
 import { useAlunos, useMode, type AppMode } from "@/lib/store";
+import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { cn } from "@/lib/utils";
 
 type Group = "Alunos" | "Exercícios" | "Grupos especiais" | "Casos" | "Trilhas" | "Biblioteca" | "Ir para";
@@ -209,7 +210,7 @@ export function GlobalSearch() {
             sub: `${a.objetivo} · ${a.nivel}`,
             group: "Alunos" as Group,
             to: `/alunos/${a.id}`,
-            haystack: norm([a.nome, a.objetivo, a.nivel, ...a.restricoes].join(" ")),
+            haystack: norm([a.nome, a.objetivo, a.nivel, ...a.restricoes.map((r) => rotuloRestricao(r.tag))].join(" ")),
             Icon: Users,
           }))
         : [];

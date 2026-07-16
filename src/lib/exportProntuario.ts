@@ -11,6 +11,7 @@
 import type { Aluno, Prescricao, ProntuarioSnapshot } from "@/data/alunos";
 import type { MarcaDocumento } from "@/lib/store";
 import { bibliografia } from "@/data/referencias";
+import { rotuloRestricao, GATILHOS_OPCOES, LADO_OPCOES, LIBERACAO_OPCOES } from "@/lib/gps/restricoes";
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
 
@@ -145,10 +146,25 @@ export function exportProntuarioPDF({
   // cadastro do aluno. Se o profissional declarou algo no perfil e não marcou no
   // wizard, isso aparece separado como "declarada, não aplicada ao ranqueamento".
   const usadas = presc.answers.restricoes ?? [];
-  const naoAplicadas = aluno.restricoes.filter((r) => !usadas.includes(r));
-  const restr = usadas.length ? usadas.map(esc).join(", ") : "nenhuma aplicada";
+  const usadasTags = new Set(usadas.map((r) => r.tag));
+  const naoAplicadas = aluno.restricoes.filter((r) => !usadasTags.has(r.tag));
+  // Detalha cada restrição considerada (rótulo + gatilhos/lado/gravidade/liberação),
+  // porque o documento precisa dizer O QUE foi levado em conta, não só que "havia algo".
+  const detalheRestricao = (r: (typeof usadas)[number]): string => {
+    const partes: string[] = [];
+    if (r.gatilhos?.length) partes.push(`aparece ${r.gatilhos.map((g) => (GATILHOS_OPCOES[g] ?? g).toLowerCase()).join(", ")}`);
+    if (r.lado) partes.push(`lado ${(LADO_OPCOES.find((l) => l.id === r.lado)?.rotulo ?? r.lado).toLowerCase()}`);
+    if (r.regiao) partes.push(`região ${r.regiao.toLowerCase()}`);
+    if (r.gravidade) partes.push(`dor ${r.gravidade}`);
+    if (r.liberacaoMedica) partes.push(`liberação: ${LIBERACAO_OPCOES.find((l) => l.id === r.liberacaoMedica)?.rotulo.toLowerCase() ?? r.liberacaoMedica}`);
+    if (r.dispositivo) partes.push(`dispositivo: ${r.dispositivo.toLowerCase()}`);
+    if (r.texto?.trim()) partes.push(`obs.: ${r.texto.trim()}`);
+    const rot = esc(rotuloRestricao(r.tag));
+    return partes.length ? `${rot} (${esc(partes.join("; "))})` : rot;
+  };
+  const restr = usadas.length ? usadas.map(detalheRestricao).join("; ") : "nenhuma aplicada";
   const restrNota = naoAplicadas.length
-    ? ` (declaradas no cadastro e não aplicadas ao ranqueamento: ${naoAplicadas.map(esc).join(", ")})`
+    ? ` (declaradas no cadastro e não aplicadas ao ranqueamento: ${naoAplicadas.map((r) => esc(rotuloRestricao(r.tag))).join(", ")})`
     : "";
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">

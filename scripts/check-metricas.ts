@@ -77,11 +77,17 @@ for (const e of exercises) {
   }
 }
 
+// 4. todo exercício tem perfil de restrição (etapa 4 do Prescrever depende dele para
+//    ajustar o ranking; sem ele os avaliadores estruturais ficam neutros em silêncio).
+for (const e of exercises) {
+  if (!e.restricaoPerfil) erro(`SEM restricaoPerfil: ${e.slug} (ver src/data/restricao-perfis.ts).`);
+}
+
 if (falhas) {
   console.error(`\n${falhas} problema(s) de clareza de dados.\n`);
   process.exit(1);
 }
 console.log(
-  `ok: ${exercises.length} exercícios. Toda métrica exibida tem definição, o vocabulário de músculos é único ` +
-    `e os rótulos de ativação batem com ativacao[].`,
+  `ok: ${exercises.length} exercícios. Toda métrica exibida tem definição, o vocabulário de músculos é único, ` +
+    `os rótulos de ativação batem com ativacao[] e todos têm perfil de restrição.`,
 );

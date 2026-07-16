@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
+import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { getAtivacao, marcarCelebrado, minutosPrimeiroCaso } from "@/lib/ativacao";
 import type { Aluno } from "@/data/alunos";
 import { cn } from "@/lib/utils";
@@ -362,7 +363,12 @@ function AlunoCard({ aluno, temPrescricao }: { aluno: Aluno; temPrescricao: bool
       </div>
       <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
         {!temPrescricao && <Pill tone="cta">Sem prescrição</Pill>}
-        {restr.length > 0 && <Pill tone="warning">{restr[0]}{restr.length > 1 ? ` +${restr.length - 1}` : ""}</Pill>}
+        {restr.length > 0 && (
+          <Pill tone="warning">
+            {rotuloRestricao(restr[0].tag)}
+            {restr.length > 1 ? ` +${restr.length - 1}` : ""}
+          </Pill>
+        )}
         {aluno.ultimaAvaliacaoEm && (
           <span className="ml-auto text-xs text-ink-3">
             aval. {fmtData(aluno.ultimaAvaliacaoEm)}

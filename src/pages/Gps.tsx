@@ -27,8 +27,6 @@ import {
   rankExercises,
   OBJETIVOS,
   GRUPOS_MUSCULARES,
-  RESTRICOES,
-  type GpsRestricao,
   EQUIPAMENTOS,
   PRIORIDADES,
   adequacaoLabel,
@@ -36,6 +34,8 @@ import {
   type GpsPrioridade,
   type Recommendation,
 } from "@/lib/gps/engine";
+import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
+import { criarRestricao, condicionaisPendentes, avaliarSeguranca, rotuloRestricao } from "@/lib/gps/restricoes";
 import { combineRules, type GroupGpsRule } from "@/lib/gps/groupRules";
 import { recommendModalidades, type ModalidadeRec } from "@/lib/gps/modalidadeRules";
 import { modalidadeImagem, impactoTone } from "@/data/modalities";
@@ -76,9 +76,6 @@ import { cn, withBase } from "@/lib/utils";
 import { FileDown, FileText, Lock as LockIcon } from "lucide-react";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
-
-// "Nenhuma" deixa de ser opção: a ausência de restrição é a lista vazia.
-const RESTRICOES_REAIS = RESTRICOES.filter((r) => r !== "Nenhuma");
 
 // Faixa de séries/reps sugerida por objetivo (educacional — ponto de partida, ajuste ao contexto).
 const SERIES_POR_OBJETIVO: Record<string, string> = {
@@ -229,7 +226,7 @@ export function Gps() {
       ...a,
       objetivo: aluno.objetivo,
       nivel: aluno.nivel,
-      restricao: aluno.restricoes[0] ?? "Nenhuma",
+      restricoes: aluno.restricoes,
       equipamentos: aluno.equipamentos.length ? aluno.equipamentos : a.equipamentos,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -240,7 +237,7 @@ export function Gps() {
   React.useEffect(() => {
     if (!rule?.restricaoSugerida) return;
     setAnswers((a) =>
-      a.restricoes.length === 0 ? { ...a, restricoes: [rule.restricaoSugerida!] } : a,
+      a.restricoes.length === 0 ? { ...a, restricoes: [criarRestricao(rule.restricaoSugerida!)] } : a,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rule?.slug]);
@@ -944,6 +941,13 @@ function Wizard({
   const STEP_LABELS = stepLabels(emagrecimento);
   const pct = Math.round(((step + 1) / 5) * 100);
   const last = step === 4;
+  // Gating de segurança das restrições (etapa 4): cirurgia sem liberação ou lesão com
+  // dor importante bloqueiam a geração automática. E o botão só avança da etapa de
+  // restrições com ao menos uma seleção e os campos condicionais obrigatórios preenchidos.
+  const seguranca = avaliarSeguranca(answers.restricoes);
+  const restricaoStepOk =
+    answers.restricoes.length > 0 && !condicionaisPendentes(answers.restricoes) && !seguranca.bloqueado;
+  const geracaoBloqueada = answers.equipamentos.length === 0 || seguranca.bloqueado;
   const headingRef = React.useRef<HTMLHeadingElement>(null);
   const first = React.useRef(true);
   React.useEffect(() => {
@@ -1036,26 +1040,15 @@ function Wizard({
                 </p>
               </div>
             )}
-            {/* Multisseleção: o aluno com joelho E ombro tem os dois considerados.
-                Por exercício vale a restrição mais estrita. */}
-            <MultiChoices
-              ariaLabel={STEP_LABELS[3]}
-              options={RESTRICOES_REAIS}
-              values={answers.restricoes}
-              onToggle={(v) =>
-                setAnswers((a) => ({
-                  ...a,
-                  restricoes: a.restricoes.includes(v as GpsRestricao)
-                    ? a.restricoes.filter((x) => x !== v)
-                    : [...a.restricoes, v as GpsRestricao],
-                }))
-              }
+            {/* Seleção estruturada: 30 restrições em 4 grupos, com perguntas condicionais.
+                O aluno com joelho E ombro tem os dois considerados; por exercício vale a
+                restrição mais estrita, e a incompatibilidade clara exclui do ranking. */}
+            <RestricoesSelector
+              value={answers.restricoes}
+              onChange={(next) => setAnswers((a) => ({ ...a, restricoes: next }))}
+              observacao={answers.observacaoRestricoes}
+              onObservacao={(v) => setAnswers((a) => ({ ...a, observacaoRestricoes: v }))}
             />
-            <p className="mt-2 text-xs text-ink-3">
-              {answers.restricoes.length === 0
-                ? "Nenhuma restrição marcada."
-                : "Todas as marcadas entram no ranqueamento; em cada exercício vale a mais estrita."}
-            </p>
           </div>
         )}
         {step === 4 && (
@@ -1084,15 +1077,15 @@ function Wizard({
           <ArrowLeft className="h-4 w-4" /> Voltar
         </button>
         {last ? (
-          <button
-            onClick={onFinish}
-            disabled={answers.equipamentos.length === 0}
-            className={buttonClasses("primary")}
-          >
+          <button onClick={onFinish} disabled={geracaoBloqueada} className={buttonClasses("primary")}>
             <Sparkles className="h-4 w-4" /> Ver exercícios recomendados
           </button>
         ) : (
-          <button onClick={() => setStep(step + 1)} className={buttonClasses("primary")}>
+          <button
+            onClick={() => setStep(step + 1)}
+            disabled={step === 3 && !restricaoStepOk}
+            className={buttonClasses("primary")}
+          >
             Próximo <ArrowRight className="h-4 w-4" />
           </button>
         )}
@@ -1101,7 +1094,7 @@ function Wizard({
       {!last && (
         <button
           onClick={onFinish}
-          disabled={answers.equipamentos.length === 0}
+          disabled={geracaoBloqueada}
           className="mt-3 block w-full text-right text-xs font-medium text-ink-3 hover:text-ink-2 disabled:opacity-50"
         >
           Pular para as recomendações →
@@ -1395,7 +1388,9 @@ function Results({
         </Pill>
         <Pill tone="neutral">{answers.nivel}</Pill>
         <Pill tone={answers.restricoes.length === 0 ? "success" : "warning"}>
-          {answers.restricoes.length === 0 ? "Sem restrição" : answers.restricoes.join(" · ")}
+          {answers.restricoes.length === 0
+            ? "Sem restrição"
+            : answers.restricoes.map((r) => rotuloRestricao(r.tag)).join(" · ")}
         </Pill>
         <Pill tone="neutral">
           <span title={answers.equipamentos.join(", ")}>

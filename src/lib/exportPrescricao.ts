@@ -2,6 +2,7 @@ import type { Aluno, Prescricao } from "@/data/alunos";
 import type { MarcaDocumento } from "@/lib/store";
 import { exercises } from "@/data/exercises";
 import { getModalidade } from "@/data/modalities";
+import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
 
@@ -87,7 +88,9 @@ export function exportPrescricaoPDF({
     ? `<section class="bloco"><h2>Observações</h2><p>${esc(presc.observacoes)}</p></section>`
     : "";
 
-  const restr = aluno.restricoes.length ? aluno.restricoes.map(esc).join(", ") : "nenhuma";
+  const restr = aluno.restricoes.length
+    ? aluno.restricoes.map((r) => esc(rotuloRestricao(r.tag))).join(", ")
+    : "nenhuma";
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Prescrição · ${esc(aluno.nome)}</title>

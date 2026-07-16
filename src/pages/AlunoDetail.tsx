@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
+import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
@@ -159,8 +160,8 @@ export function AlunoDetail() {
             <div className="mt-3 flex flex-wrap gap-1.5">
               {aluno.restricoes.length > 0 ? (
                 aluno.restricoes.map((r) => (
-                  <Pill key={r} tone="warning" icon={<AlertTriangle className="h-3 w-3" />}>
-                    {r}
+                  <Pill key={r.tag} tone="warning" icon={<AlertTriangle className="h-3 w-3" />}>
+                    {rotuloRestricao(r.tag)}
                   </Pill>
                 ))
               ) : (

@@ -26,6 +26,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { useUser, useAlunos, isPremiumUnlocked, uid } from "@/lib/store";
+import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { exercises } from "@/data/exercises";
 import { getParam } from "@/data/monitoringParameters";
 import { bibliografia } from "@/data/referencias";
@@ -505,9 +506,9 @@ function AplicarProtocoloModal({ modelo, onClose }: { modelo: Protocolo; onClose
                         {a.objetivo} · {a.nivel}
                       </span>
                     </span>
-                    {conflito && (
+                    {conflito && a.restricoes[0] && (
                       <Pill tone="warning" icon={<AlertTriangle className="h-3 w-3" />}>
-                        {a.restricoes[0]}
+                        {rotuloRestricao(a.restricoes[0].tag)}
                       </Pill>
                     )}
                   </button>

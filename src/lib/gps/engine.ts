@@ -2,6 +2,13 @@
 // Ranqueamento ponderado com decomposição transparente por critério.
 
 import type { Exercise, Nivel } from "@/data/types";
+import {
+  EFEITO_POR_TAG,
+  restricoesAtivas,
+  rotuloRestricao,
+  type AcaoRestricao,
+  type RestricaoSelecionada,
+} from "./restricoes";
 
 export type GpsObjetivo =
   | "Emagrecimento"
@@ -17,21 +24,17 @@ export type GpsPrioridade =
   | "Força geral (corpo todo)"
   | "Cardio + força (misto)";
 
-export type GpsRestricao =
-  | "Nenhuma"
-  | "Dor lombar"
-  | "Dor no joelho"
-  | "Ombro sensível"
-  | "Mobilidade limitada";
-
 export interface GpsAnswers {
   objetivo: GpsObjetivo;
   grupoMuscular: string;
   /** só quando objetivo = Emagrecimento */
   prioridade?: GpsPrioridade;
   nivel: Nivel;
-  /** Todas as restrições declaradas. O ranqueamento aplica a mais estrita por exercício. */
-  restricoes: GpsRestricao[];
+  /** Todas as restrições declaradas (modelo estruturado). Ver src/lib/gps/restricoes.ts.
+   *  Por exercício vale a mais estrita; incompatibilidade clara exclui do ranking. */
+  restricoes: RestricaoSelecionada[];
+  /** observação livre do profissional sobre as restrições (opcional) */
+  observacaoRestricoes?: string;
   equipamentos: string[];
 }
 
@@ -62,6 +65,10 @@ export interface Recommendation {
   breakdown: CriterioRacional[];
   cautions: string[];
   reasons: string[];
+  /** restrição declarada torna o exercício claramente incompatível: sai da lista */
+  excluido: boolean;
+  /** por que foi retirado (para a seção "evitados" e a justificativa) */
+  motivoExclusao?: string;
 }
 
 const W_GRUPO = 25;
@@ -206,43 +213,42 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
   // 5) Restrições: TODAS as declaradas entram. Por exercício vale a mais estrita,
   //    do mesmo jeito que combineRules faz com as condições de saúde. O documento
   //    assinável precisa poder afirmar que cada restrição declarada foi considerada.
+  //    Cada tag tem um avaliador (src/lib/gps/restricoes.ts) que devolve a ação; o
+  //    exercício claramente incompatível é EXCLUÍDO do ranking, com motivo.
+  const RATIO_ACAO: Record<AcaoRestricao, number> = {
+    preferir: 1,
+    adaptar: 0.9,
+    penalizar_moderado: 0.55,
+    penalizar_forte: 0.15,
+    excluir: 0,
+  };
   let restRatio = 1;
   let restDetalhe = "Sem restrição declarada.";
-  const restricoesAtivas = (ans.restricoes ?? []).filter(
-    (r): r is Exclude<GpsRestricao, "Nenhuma"> => r !== "Nenhuma",
-  );
-  if (restricoesAtivas.length > 0) {
-    const map: Record<Exclude<GpsRestricao, "Nenhuma">, { metric: string; label: string }> = {
-      "Dor lombar": { metric: "Demanda lombar", label: "coluna lombar" },
-      "Dor no joelho": { metric: "Demanda de joelho", label: "joelho" },
-      "Ombro sensível": { metric: "Demanda de ombro", label: "ombro" },
-      "Mobilidade limitada": { metric: "Requisito de mobilidade", label: "mobilidade" },
-    };
+  let excluido = false;
+  let motivoExclusao: string | undefined;
+  const ativas = restricoesAtivas(ans.restricoes ?? []);
+  if (ativas.length > 0) {
     const partes: string[] = [];
-    for (const restricao of restricoesAtivas) {
-      const cfg = map[restricao];
-      const val = metricValue(ex, cfg.metric);
-      let ratio = 1;
-      if (val === undefined) {
-        // Sem dado declarado: não inventa "30/100" nem elogia. Trata com cautela neutra.
-        ratio = 0.7;
-        partes.push(`sem dado declarado de ${cfg.label}`);
-        cautions.push(`Falta dado de ${cfg.label}: confirme a tolerância do aluno antes de progredir.`);
-      } else if (val >= 60) {
-        ratio = 0.15;
-        partes.push(`alta demanda em ${cfg.label} (${val}/100)`);
-        cautions.push(`Demanda relevante para ${cfg.label}: avalie caso a caso.`);
-      } else if (val >= 40) {
-        ratio = 0.55;
-        partes.push(`demanda moderada em ${cfg.label} (${val}/100)`);
-        cautions.push(`Demanda moderada para ${cfg.label}: progressão gradual.`);
-      } else {
-        partes.push(`baixa demanda em ${cfg.label} (${val}/100)`);
-        reasons.push(`Baixa demanda em ${cfg.label}`);
+    for (const sel of ativas) {
+      const avaliar = EFEITO_POR_TAG[sel.tag];
+      if (!avaliar) continue; // sem efeito no ranking (ex.: nenhuma/outra)
+      const efeito = avaliar(ex, sel);
+      const rotulo = rotuloRestricao(sel.tag);
+      if (efeito.acao === "excluir") {
+        excluido = true;
+        motivoExclusao = `${rotulo}: ${efeito.motivo}`;
+        cautions.push(efeito.motivo);
+      } else if (efeito.dadoAusente) {
+        cautions.push(efeito.motivo);
+      } else if (efeito.acao === "preferir" && efeito.motivo) {
+        reasons.push(efeito.motivo);
+      } else if (efeito.motivo) {
+        cautions.push(efeito.motivo);
       }
-      restRatio = Math.min(restRatio, ratio); // a restrição mais estrita manda
+      if (efeito.motivo) partes.push(`${rotulo}: ${efeito.motivo}`);
+      restRatio = Math.min(restRatio, RATIO_ACAO[efeito.acao]); // a mais estrita manda
     }
-    restDetalhe = `Considerando ${restricoesAtivas.join(" e ")}: ${partes.join("; ")}.`;
+    restDetalhe = partes.length ? partes.join(" ") : "Restrições declaradas sem conflito com este exercício.";
   }
   const restPts = restRatio * W_RESTRICAO;
   breakdown.push({
@@ -308,17 +314,36 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
   // grupo incompatível (ratio mínimo 0.1): não pode parecer "Boa" adequação para o alvo pedido.
   const grupoCompativel = grupoRatio >= 0.55;
   if (!grupoCompativel) score = Math.min(score, 55);
+  // incompatível por restrição declarada: não pode parecer opção viável.
+  if (excluido) score = Math.min(score, 12);
 
   const raw = Math.max(0, Math.min(100, score));
   const clamped = Math.round(raw);
 
-  return { exercise: ex, score: clamped, scoreExato: raw, equipDisponivel: equipOk, grupoCompativel, breakdown, cautions, reasons };
+  return {
+    exercise: ex,
+    score: clamped,
+    scoreExato: raw,
+    equipDisponivel: equipOk,
+    grupoCompativel,
+    breakdown,
+    cautions,
+    reasons,
+    excluido,
+    motivoExclusao,
+  };
 }
 
+/**
+ * Ranqueamento. Exercícios excluídos por restrição (incompatibilidade clara) vão para
+ * o fim, para que a lista principal (top N) não os ofereça; ficam disponíveis para uma
+ * seção "retirados, e por quê". `excluirIncompatíveis` remove-os por completo.
+ */
 export function rankExercises(pool: Exercise[], ans: GpsAnswers, rule?: GroupRuleInput): Recommendation[] {
   return pool
     .map((ex) => scoreExercise(ex, ans, rule))
     .sort((a, b) => {
+      if (a.excluido !== b.excluido) return a.excluido ? 1 : -1;
       if (a.equipDisponivel !== b.equipDisponivel) return a.equipDisponivel ? -1 : 1;
       // ordena pela nota NÃO arredondada: o critério "Eficiência (desempate)" (±2.5)
       // sumia no Math.round e a ordem virava a do array de dados.
@@ -349,14 +374,6 @@ export const PRIORIDADES: GpsPrioridade[] = [
   "Condicionamento cardiorrespiratório",
   "Força geral (corpo todo)",
   "Cardio + força (misto)",
-];
-
-export const RESTRICOES: GpsRestricao[] = [
-  "Nenhuma",
-  "Dor lombar",
-  "Dor no joelho",
-  "Ombro sensível",
-  "Mobilidade limitada",
 ];
 
 /** Rótulo qualitativo da nota de adequação (0–100) — evita o "match" em inglês e

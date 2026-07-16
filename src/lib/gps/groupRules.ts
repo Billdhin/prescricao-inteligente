@@ -7,12 +7,13 @@
  * conduta clínica.
  */
 
-import type { GpsRestricao, GroupRuleInput } from "./engine";
+import type { GroupRuleInput } from "./engine";
+import type { RestricaoTag } from "./restricoes";
 
 export interface GroupGpsRule extends GroupRuleInput {
   slug: string;
   /** pré-seleciona a etapa "Alguma restrição?" (o usuário pode trocar) */
-  restricaoSugerida?: GpsRestricao;
+  restricaoSugerida?: RestricaoTag;
   /** cuidados exibidos como "já considerados pelo grupo" */
   cuidados: string[];
   /** ids de referencias.ts que fundamentam as regras deste grupo (bibliografia do Prontuário) */
@@ -100,7 +101,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   "dor-lombar-inespecifica": {
     slug: "dor-lombar-inespecifica",
     nome: "Dor lombar inespecífica",
-    restricaoSugerida: "Dor lombar",
+    restricaoSugerida: "lombar_sensivel",
     cuidados: [
       "A restrição “Dor lombar” foi pré-selecionada: exercícios com alta demanda lombar são penalizados no ranking.",
       "Dor leve que não piora ao longo da sessão costuma ser tolerável; dor crescente pede ajuste de amplitude/carga.",
@@ -113,7 +114,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   "osteoartrite-joelho": {
     slug: "osteoartrite-joelho",
     nome: "Osteoartrite de joelho",
-    restricaoSugerida: "Dor no joelho",
+    restricaoSugerida: "joelho_dor",
     cuidados: [
       "A restrição “Dor no joelho” foi pré-selecionada: alta demanda de joelho é penalizada no ranking.",
       "Amplitude confortável; progrida guiado pela resposta de dor nas 24–48h seguintes.",

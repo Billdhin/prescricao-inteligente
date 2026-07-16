@@ -1,5 +1,6 @@
 import type { Nivel } from "./types";
-import type { GpsAnswers, GpsObjetivo, GpsRestricao } from "@/lib/gps/engine";
+import type { GpsAnswers, GpsObjetivo } from "@/lib/gps/engine";
+import { criarRestricao, type RestricaoSelecionada } from "@/lib/gps/restricoes";
 
 /**
  * Domínio de trabalho do profissional: seus ALUNOS (clientes), com perfil que alimenta o
@@ -17,8 +18,8 @@ export interface Aluno {
   sexo?: Sexo;
   objetivo: GpsObjetivo;
   nivel: Nivel;
-  /** lesões/limitações relevantes (vazio = sem restrição) */
-  restricoes: Exclude<GpsRestricao, "Nenhuma">[];
+  /** restrições físicas do aluno (modelo estruturado; vazio = sem restrição) */
+  restricoes: RestricaoSelecionada[];
   /** equipamentos disponíveis no local de treino */
   equipamentos: string[];
   observacoes?: string;
@@ -257,7 +258,7 @@ export const seedAlunos: Aluno[] = [
     sexo: "F",
     objetivo: "Hipertrofia",
     nivel: "Iniciante",
-    restricoes: ["Dor lombar"],
+    restricoes: [criarRestricao("lombar_sensivel")],
     equipamentos: ["Máquina", "Polia", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     observacoes: "Sedentária há 2 anos. Refere insegurança com agachamento livre.",
     status: "ativo",
@@ -278,7 +279,7 @@ export const seedAlunos: Aluno[] = [
     sexo: "M",
     objetivo: "Reabilitação/retorno",
     nivel: "Iniciante",
-    restricoes: ["Dor no joelho"],
+    restricoes: [criarRestricao("joelho_dor")],
     equipamentos: ["Máquina", "Halter", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     observacoes: "Retorno após entorse de joelho. Liberado pelo fisioterapeuta para carga leve.",
     status: "ativo",
@@ -316,7 +317,7 @@ export const seedAlunos: Aluno[] = [
     sexo: "M",
     objetivo: "Resistência muscular",
     nivel: "Iniciante",
-    restricoes: ["Ombro sensível"],
+    restricoes: [criarRestricao("ombro_sensivel")],
     equipamentos: ["Halter", "Polia", "Peso corporal"],
     observacoes: "Foco em saúde geral e condicionamento. Desconforto em ombro no supino.",
     status: "ativo",
@@ -350,7 +351,7 @@ export const seedPrescricoes: Prescricao[] = [
       objetivo: "Hipertrofia",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
-      restricoes: ["Dor lombar"],
+      restricoes: [criarRestricao("lombar_sensivel")],
       equipamentos: ["Máquina", "Polia", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     itens: [
@@ -370,7 +371,7 @@ export const seedPrescricoes: Prescricao[] = [
       objetivo: "Reabilitação/retorno",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
-      restricoes: ["Dor no joelho"],
+      restricoes: [criarRestricao("joelho_dor")],
       equipamentos: ["Máquina", "Halter", "Esteira", "Bicicleta ergométrica", "Elíptico"],
     },
     itens: [
@@ -389,7 +390,7 @@ export const seedPrescricoes: Prescricao[] = [
       objetivo: "Resistência muscular",
       grupoMuscular: "Braços",
       nivel: "Iniciante",
-      restricoes: ["Ombro sensível"],
+      restricoes: [criarRestricao("ombro_sensivel")],
       equipamentos: ["Halter", "Polia", "Peso corporal"],
     },
     itens: [
