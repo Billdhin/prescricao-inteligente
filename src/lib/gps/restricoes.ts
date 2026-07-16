@@ -17,6 +17,7 @@
  */
 
 import type { Exercise } from "@/data/types";
+import { exercises } from "@/data/exercises";
 
 /* ------------------------------- Tags ------------------------------------ */
 
@@ -453,20 +454,49 @@ const NEUTRO: EfeitoResultado = { acao: "adaptar", motivo: "" };
 const metric = (ex: Exercise, nome: string): number | undefined =>
   ex.indiceEficiencia.metrics.find((m) => m.nome.toLowerCase() === nome.toLowerCase())?.valor;
 
-/** Restrição de demanda articular: lê a métrica JÁ MEDIDA e mapeia para ação. */
-const porDemanda = (nome: string, label: string): AvaliadorEfeito => (ex) => {
-  const v = metric(ex, nome);
-  if (v === undefined)
-    return { acao: "adaptar", motivo: `Sem dado medido de ${label}: confirme a tolerância do aluno antes de progredir.`, dadoAusente: true };
-  if (v >= 60) return { acao: "penalizar_forte", motivo: `Alta demanda de ${label} (${v}/100) para quem tem essa queixa.` };
-  if (v >= 40) return { acao: "penalizar_moderado", motivo: `Demanda moderada de ${label} (${v}/100): progressão gradual.` };
-  return { acao: "preferir", motivo: `Baixa demanda de ${label} (${v}/100).` };
+/**
+ * Maior valor que cada demanda de fato atinge nesta base. As demandas são escala
+ * COMPARATIVA (ver metricasGlossario), e nem todas usam o topo 0-100: a Demanda de
+ * joelho vai só até 58. Com um corte fixo de 60, a restrição de joelho nunca chegava
+ * a "alta" e o exercício mais exigente de joelho (leg extension, afundo) só recebia
+ * penalidade moderada. "Alta" passa a ser o teto que a região realmente tem na base.
+ */
+const maxDemanda = (nome: string): number => {
+  let m = 0;
+  for (const e of exercises) {
+    const v = metric(e, nome);
+    if (v !== undefined && v > m) m = v;
+  }
+  return m || 60;
 };
 
-/** Combina dois avaliadores pela ação mais estrita. */
+/** Restrição de demanda articular: lê a métrica JÁ MEDIDA e mapeia para ação. */
+const porDemanda = (nome: string, label: string): AvaliadorEfeito => {
+  // "alta" relativa ao teto real da região (limitada a 60): quem já usa a faixa 0-100
+  // cheia (lombar/ombro/mobilidade, teto 68-70) segue com corte 60; joelho (teto 58)
+  // passa a marcar como alta o que está no seu próprio topo.
+  const alta = Math.min(60, maxDemanda(nome));
+  return (ex) => {
+    const v = metric(ex, nome);
+    if (v === undefined)
+      return { acao: "adaptar", motivo: `Sem dado medido de ${label}: confirme a tolerância do aluno antes de progredir.`, dadoAusente: true };
+    if (v >= alta) return { acao: "penalizar_forte", motivo: `Alta demanda de ${label} (${v}/100) para quem tem essa queixa.` };
+    if (v >= 40) return { acao: "penalizar_moderado", motivo: `Demanda moderada de ${label} (${v}/100): progressão gradual.` };
+    return { acao: "preferir", motivo: `Baixa demanda de ${label} (${v}/100).` };
+  };
+};
+
+/**
+ * Combina avaliadores pela ação mais estrita, ignorando os que NÃO têm opinião
+ * (adaptar com motivo vazio). Sem isso, um check neutro (ex.: "não é alto impacto")
+ * engolia um "preferir" de outro check (ex.: "baixa demanda de joelho") e a bicicleta
+ * virava "adaptar" em vez de "preferir".
+ */
 const ORDEM_ACAO: AcaoRestricao[] = ["preferir", "adaptar", "penalizar_moderado", "penalizar_forte", "excluir"];
+const semOpiniao = (r: EfeitoResultado) => r.acao === "adaptar" && !r.motivo && !r.dadoAusente;
 const maisEstrita = (...avs: AvaliadorEfeito[]): AvaliadorEfeito => (ex, sel) => {
-  const res = avs.map((a) => a(ex, sel));
+  const res = avs.map((a) => a(ex, sel)).filter((r) => !semOpiniao(r));
+  if (res.length === 0) return NEUTRO;
   return res.reduce((pior, r) => (ORDEM_ACAO.indexOf(r.acao) > ORDEM_ACAO.indexOf(pior.acao) ? r : pior), res[0]);
 };
 
@@ -512,10 +542,19 @@ export const EFEITO_POR_TAG: Partial<Record<RestricaoTag, AvaliadorEfeito>> = {
     seEstrutural((ex) => p(ex).possuiApoio || p(ex).posicao === "sentado", "preferir", "Apoiado e de baixo impacto."),
   ),
 
-  mobilidade_limitada: maisEstrita(
-    porDemanda("Requisito de mobilidade", "amplitude"),
-    seEstrutural((ex) => p(ex).amplitudeAjustavel, "preferir", "Amplitude ajustável: dá para trabalhar dentro do confortável."),
-  ),
+  // Só 15 dos 35 exercícios têm "Requisito de mobilidade" medido. Onde existe, manda
+  // ele; onde falta, NÃO fica em silêncio: usa o fato estrutural (amplitude ajustável
+  // ou apoio deixam trabalhar dentro do confortável). Assim a restrição de mobilidade
+  // opera na base inteira sem inventar um número de amplitude.
+  mobilidade_limitada: (ex) => {
+    const efeitoMetrica = porDemanda("Requisito de mobilidade", "amplitude")(ex, {} as RestricaoSelecionada);
+    if (!efeitoMetrica.dadoAusente) return efeitoMetrica;
+    if (!ex.restricaoPerfil)
+      return { acao: "adaptar", motivo: "Sem dado de amplitude: ajuste o setup ao que o aluno alcança com conforto." };
+    if (p(ex).amplitudeAjustavel || p(ex).possuiApoio)
+      return { acao: "preferir", motivo: "Amplitude ajustável ou apoiado: dá para trabalhar dentro do confortável." };
+    return { acao: "adaptar", motivo: "Ajuste a amplitude ao que o aluno alcança com conforto." };
+  },
   dificuldade_agachar: maisEstrita(
     porDemanda("Demanda de joelho", "joelho"),
     seEstrutural((ex) => p(ex).amplitudeAjustavel || p(ex).possuiApoio, "preferir", "Permite reduzir a profundidade com apoio."),
