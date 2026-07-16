@@ -659,6 +659,7 @@ function Bullets({
  * erro aparece só como texto, em vez de uma figura que não corresponde.
  */
 function ErrosComuns({ exercise }: { exercise: Exercise }) {
+  const [ampliado, setAmpliado] = React.useState<{ src: string; erro: string } | null>(null);
   if (!temErroImagens(exercise.slug)) {
     return (
       <Bullets
@@ -673,29 +674,65 @@ function ErrosComuns({ exercise }: { exercise: Exercise }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-ink-2">
-          Em cada imagem: à esquerda a execução correta, à direita o erro, com a região
-          sobrecarregada em vermelho e a seta mostrando o desvio.
+          Em cada imagem: à esquerda o certo, à direita o erro em vermelho com a seta do desvio.
+          Toque para ampliar.
         </p>
         <TrustBadge level="cuidado de segurança" ex={exercise} />
       </div>
-      <ul className="space-y-4">
+      {/* Mesmo grid das variações. object-contain (não cover) porque cortar as
+          laterais cortaria fora uma das duas figuras e mataria a comparação. */}
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {exercise.blocos.errosComuns.map((e, i) => {
           const img = getErroImagemPorIndice(exercise.slug, i);
           return (
             <li key={e} className="overflow-hidden rounded-xl border border-border bg-surface">
               {img && (
-                <img
-                  src={withBase(img)}
-                  alt={`Certo e errado: ${e}`}
-                  className="w-full bg-white object-contain"
-                  loading="lazy"
-                />
+                <button
+                  type="button"
+                  onClick={() => setAmpliado({ src: withBase(img), erro: e })}
+                  className="block w-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                  aria-label={`Ampliar: ${e}`}
+                >
+                  <img
+                    src={withBase(img)}
+                    alt={`Certo e errado: ${e}`}
+                    className="aspect-[3/2] w-full bg-white object-contain transition-opacity hover:opacity-90"
+                    loading="lazy"
+                  />
+                </button>
               )}
               <p className="border-t border-border p-3 text-sm text-ink">{e}</p>
             </li>
           );
         })}
       </ul>
+      {ampliado && <ErroAmpliado {...ampliado} onClose={() => setAmpliado(null)} />}
+    </div>
+  );
+}
+
+/** Miniatura de comparação é pequena por design; aqui o profissional inspeciona. */
+function ErroAmpliado({ src, erro, onClose }: { src: string; erro: string; onClose: () => void }) {
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Certo e errado: ${erro}`}
+        className="w-full max-w-4xl overflow-hidden rounded-card bg-surface shadow-elevated outline-none"
+        onClick={(ev) => ev.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border p-3">
+          <p className="text-sm font-semibold text-ink">{erro}</p>
+          <button onClick={onClose} aria-label="Fechar" className="shrink-0 rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <img src={src} alt={`Certo e errado: ${erro}`} className="w-full bg-white object-contain" />
+      </div>
     </div>
   );
 }
