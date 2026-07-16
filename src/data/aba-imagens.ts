@@ -10,31 +10,6 @@
  *
  * Arquivos em public/exercises/erros/<slug>.webp e public/exercises/variacoes/<slug>-<i>.webp
  */
-const SLUGS_COM_ERRO_IMG: string[] = [
-  "agachamento-livre",
-  "levantamento-terra-romeno",
-  "supino-reto-barra",
-  "afundo-passada",
-  "desenvolvimento-ombros",
-  "hip-thrust",
-  "cadeira-extensora",
-  "mesa-flexora",
-  "puxada-alta",
-  "remada-baixa",
-  "rosca-direta",
-  "sentar-levantar",
-  "ponte-gluteos",
-  "prancha-frontal",
-  "remada-elastica",
-  "panturrilha-em-pe",
-  "caminhada-esteira",
-  "bicicleta-ergometrica",
-  "eliptico",
-  "marcha-aquatica",
-  "leg-press-45",
-  "triceps-polia",
-  "dead-bug",
-];
 /**
  * Índices de variação (na ordem do array `variacoes` do exercício) que têm foto
  * DEDICADA em public/exercises/variacoes/<slug>-<i>.webp. Variações puramente de
@@ -94,7 +69,31 @@ const VARIACAO_IMGS: Record<string, number[]> = {
  * erros seguem agora o mesmo padrão. Enquanto o índice não estiver aqui, a aba
  * mostra o texto do erro sem imagem, em vez de uma figura que não corresponde.
  */
-const ERRO_IMGS: Record<string, number[]> = {};
+const ERRO_IMGS: Record<string, number[]> = {
+  "leg-press-45": [0, 1, 2],
+  "agachamento-livre": [0, 1, 2],
+  "supino-reto-barra": [0, 1, 2],
+  "cadeira-extensora": [0, 1],
+  "mesa-flexora": [0, 1],
+  "levantamento-terra-romeno": [0, 1],
+  "hip-thrust": [0, 1],
+  "afundo-passada": [0, 1, 2],
+  "puxada-alta": [0, 1, 2],
+  "remada-baixa": [0, 1, 2],
+  "desenvolvimento-ombros": [0, 1],
+  "rosca-direta": [0, 1],
+  "triceps-polia": [0, 1],
+  "caminhada-esteira": [0, 1, 2],
+  "bicicleta-ergometrica": [0, 1, 2],
+  "eliptico": [0, 1, 2],
+  "marcha-aquatica": [0, 1, 2],
+  "sentar-levantar": [0, 1, 2],
+  "ponte-gluteos": [0, 1, 2],
+  "prancha-frontal": [0, 1, 2],
+  "dead-bug": [0, 1, 2],
+  "remada-elastica": [0, 1, 2],
+  "panturrilha-em-pe": [0, 1, 2],
+};
 
 /** Imagem dedicada do i-ésimo erro comum, se existir. */
 export function getErroImagemPorIndice(slug: string | undefined, i: number): string | undefined {
@@ -107,13 +106,6 @@ export function temErroImagens(slug?: string): boolean {
   return Boolean(slug && ERRO_IMGS[slug]?.length);
 }
 
-/**
- * Imagem única e genérica por exercício (legado). Mantida só para não deixar a aba
- * vazia enquanto as imagens por erro não chegam; não representa um erro específico.
- */
-export function getErroImagem(slug?: string): string | undefined {
-  return slug && SLUGS_COM_ERRO_IMG.includes(slug) ? `/exercises/erros/${slug}.webp` : undefined;
-}
 
 /** true quando o exercício tem ao menos uma foto de variação dedicada. */
 export function temVariacaoImagens(slug?: string): boolean {

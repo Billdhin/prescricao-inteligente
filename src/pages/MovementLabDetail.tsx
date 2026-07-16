@@ -20,7 +20,7 @@ import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
 import { FaseFigure, faseKind } from "@/components/movement-lab/FaseFigure";
 import { getFasePose } from "@/data/fase-poses";
-import { getErroImagem, temVariacaoImagens, getVariacaoImagemPorIndice } from "@/data/aba-imagens";
+import { temErroImagens, getErroImagemPorIndice, temVariacaoImagens, getVariacaoImagemPorIndice } from "@/data/aba-imagens";
 import { getPopulacoesCautela } from "@/data/populacoes-cautela";
 import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
 import { MuscleMap, activationFromExercise } from "@/components/anatomy/MuscleMap";
@@ -359,15 +359,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
               id: "erros",
               label: "Erros comuns",
               content: (
-                <Bullets
-                  items={exercise.blocos.errosComuns}
-                  trust="cuidado de segurança"
-                  tone="warning"
-                  ex={exercise}
-                  img={getErroImagem(exercise.slug)}
-                  imgLabel="Como NÃO fazer"
-                  imgAspect="square"
-                />
+                <ErrosComuns exercise={exercise} />
               ),
             },
             {
@@ -657,6 +649,57 @@ function Bullets({
 /** Aba "Variações": quando há fotos por variação, mostra um mosaico com uma foto
  *  para cada variação indicada; caso contrário, cai no bloco de texto com a foto
  *  de execução como movimento base (nada quebra nos exercícios ainda sem fotos). */
+/**
+ * Erros comuns: UMA imagem por erro, no formato comparativo (certo à esquerda,
+ * errado à direita com a região em vermelho e a seta do desvio).
+ *
+ * Antes havia uma única imagem genérica por exercício servindo aos 2 a 4 erros
+ * daquele exercício, e ela não remetia a erro nenhum: uma figura não mostra
+ * "joelho valgo" e "lombar em flexão" ao mesmo tempo. Sem imagem dedicada, o
+ * erro aparece só como texto, em vez de uma figura que não corresponde.
+ */
+function ErrosComuns({ exercise }: { exercise: Exercise }) {
+  if (!temErroImagens(exercise.slug)) {
+    return (
+      <Bullets
+        items={exercise.blocos.errosComuns}
+        trust="cuidado de segurança"
+        tone="warning"
+        ex={exercise}
+      />
+    );
+  }
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-ink-2">
+          Em cada imagem: à esquerda a execução correta, à direita o erro, com a região
+          sobrecarregada em vermelho e a seta mostrando o desvio.
+        </p>
+        <TrustBadge level="cuidado de segurança" ex={exercise} />
+      </div>
+      <ul className="space-y-4">
+        {exercise.blocos.errosComuns.map((e, i) => {
+          const img = getErroImagemPorIndice(exercise.slug, i);
+          return (
+            <li key={e} className="overflow-hidden rounded-xl border border-border bg-surface">
+              {img && (
+                <img
+                  src={withBase(img)}
+                  alt={`Certo e errado: ${e}`}
+                  className="w-full bg-white object-contain"
+                  loading="lazy"
+                />
+              )}
+              <p className="border-t border-border p-3 text-sm text-ink">{e}</p>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function Variacoes({ exercise }: { exercise: Exercise }) {
   if (!temVariacaoImagens(exercise.slug)) {
     return (
