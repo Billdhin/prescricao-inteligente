@@ -47,14 +47,26 @@ type MetricaForca = {
   key: string;
   label: string;
   get: (e: Exercise) => number | undefined;
-  melhor: "maior" | "menor";
+  /** "depende" não elege campeão: não existe melhor sem saber o objetivo do aluno. */
+  melhor: "maior" | "menor" | "depende";
   hint?: string;
 };
 
 const METRICAS_FORCA: MetricaForca[] = [
   { key: "efic", label: "Índice de eficiência", get: (e) => e.indiceEficiencia.score, melhor: "maior" },
-  { key: "ativ", label: "Ativação relativa", get: (e) => e.ativacao[0]?.percentual, melhor: "maior" },
-  { key: "estab", label: "Estabilidade", get: (e) => metricVal(e, "Estabilidade"), melhor: "maior" },
+  // A linha "Ativação relativa" saiu daqui: ela pegava `ativacao[0]` de cada exercício,
+  // que é o alvo principal de CADA UM, e coroava "melhor" comparando 95 de glúteo do
+  // hip thrust com 92 de quadríceps do leg press. São músculos diferentes, e cada valor
+  // é relativo ao próprio músculo: não há o que comparar. A seção "Ativação muscular
+  // comparada", abaixo, faz isso do jeito certo, uma linha por músculo.
+  {
+    key: "estab",
+    label: "Apoio do equipamento",
+    get: (e) => metricVal(e, "Apoio do equipamento"),
+    melhor: "maior",
+    hint: "apoio que a máquina dá",
+  },
+  { key: "controle", label: "Controle motor", get: (e) => metricVal(e, "Controle motor"), melhor: "depende" },
   { key: "lombar", label: "Demanda lombar", get: (e) => metricVal(e, "Demanda lombar"), melhor: "menor", hint: "menor é melhor" },
   { key: "joelho", label: "Demanda de joelho", get: (e) => metricVal(e, "Demanda de joelho"), melhor: "menor", hint: "menor é melhor" },
   { key: "complex", label: "Complexidade técnica", get: (e) => metricVal(e, "Complexidade técnica"), melhor: "menor", hint: "menor é melhor" },
@@ -87,12 +99,15 @@ function ForcaBloco({ base }: { base: string | null }) {
     const comDado = selected
       .map((e, i) => ({ i, v: m.get(e) }))
       .filter((x): x is { i: number; v: number } => x.v !== undefined);
-    if (comDado.length < 2) return -1;
+    if (comDado.length < 2 || m.melhor === "depende") return -1;
     return comDado.reduce((best, x) => ((m.melhor === "maior" ? x.v > best.v : x.v < best.v) ? x : best), comDado[0]).i;
   };
 
-  const insightEfic = selected.length >= 2 ? selected[melhorIdx(METRICAS_FORCA[0])] : null;
-  const insightLombar = selected.length >= 2 ? selected[melhorIdx(METRICAS_FORCA[3])] : null;
+  // Busca por chave, não por posição: `METRICAS_FORCA[3]` fazia o insight de lombar
+  // apontar para outra métrica assim que alguém inserisse uma linha no meio do array.
+  const porChave = (k: string) => METRICAS_FORCA.find((m) => m.key === k)!;
+  const insightEfic = selected.length >= 2 ? selected[melhorIdx(porChave("efic"))] : null;
+  const insightLombar = selected.length >= 2 ? selected[melhorIdx(porChave("lombar"))] : null;
 
   return (
     <>
@@ -128,11 +143,19 @@ function ForcaBloco({ base }: { base: string | null }) {
                     </button>
                   </div>
                   <div className="mt-3 flex items-center gap-3">
-                    <ScoreRing value={e.indiceEficiencia.score} size={64} tone={RING_TONES[i]} />
-                    <div className="flex flex-wrap gap-1.5">
-                      <Pill tone="neutral">{e.equipamento}</Pill>
-                      <Pill tone="neutral">{e.nivel}</Pill>
-                      {e.premium ? <Pill tone="cta">Premium</Pill> : <Pill tone="success">Gratuito</Pill>}
+                    {/* o anel mostrava só "82", sem escala e sem o que 82 quer dizer */}
+                    <ScoreRing value={e.indiceEficiencia.score} size={64} tone={RING_TONES[i]} label="de 100" />
+                    <div className="min-w-0">
+                      <MetricaInfo
+                        nome="Índice de eficiência"
+                        valor={e.indiceEficiencia.score}
+                        className="text-xs font-semibold text-ink-2"
+                      />
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        <Pill tone="neutral">{e.equipamento}</Pill>
+                        <Pill tone="neutral">{e.nivel}</Pill>
+                        {e.premium ? <Pill tone="cta">Premium</Pill> : <Pill tone="success">Gratuito</Pill>}
+                      </div>
                     </div>
                   </div>
                   <Link
@@ -248,7 +271,9 @@ const METRICAS_CARDIO: MetricaCardio[] = [
       const max = Math.max(1, ...vals);
       return clamp100(((c[m.id]?.kcal ?? 0) / max) * 100);
     },
-    display: (m, c) => `≈ ${c[m.id]?.kcal ?? 0} kcal`,
+    // "≈ 0 kcal" dava a entender que a modalidade não gasta nada, quando na verdade
+    // é a estimativa que não existe para ela.
+    display: (m, c) => (c[m.id]?.kcal === undefined ? "sem estimativa" : `≈ ${c[m.id].kcal} kcal`),
     sort: (m, c) => c[m.id]?.kcal ?? 0,
   },
   {

@@ -1,6 +1,7 @@
 import { cn, withBase } from "@/lib/utils";
 import type { Exercise } from "@/data/types";
 import { getMuscleMapImages, getMuscleMapPose } from "@/data/muscle-map-images";
+import { getMetrica, faixaDe } from "@/data/metricasGlossario";
 
 /**
  * Mapa muscular — imagem anatômica (frente + costas) com os músculos ativados JÁ MARCADOS
@@ -21,13 +22,21 @@ export const MUSCLE_LABEL: Record<MuscleKey, string> = {
   isquiotibiais: "Isquiotibiais", adutores: "Adutores", panturrilhas: "Panturrilhas",
 };
 
+/**
+ * A ORDEM IMPORTA e é frágil de propósito conhecido: "tríceps braquial" contém
+ * "braquial", que também é o nome do músculo braquial (sinergista do bíceps). Testar
+ * tríceps ANTES de bíceps é o que mantém "Tríceps braquial" caindo em `triceps`.
+ * Não reordene sem checar isso.
+ */
 function nomeParaChave(nome: string): MuscleKey | null {
   const n = nome.toLowerCase();
   if (n.includes("quadríceps") || n.includes("reto femoral")) return "quadriceps";
   if (n.includes("glúteo") || n.includes("gluteo") || n.includes("estabilizadores do quadril")) return "gluteos";
   if (n.includes("isquiotibiais") || n.includes("posteriores")) return "isquiotibiais";
   if (n.includes("adutores")) return "adutores";
-  if (n.includes("panturrilha")) return "panturrilhas";
+  // "fibulares" são estabilizadores do tornozelo: sem chave própria na figura, entram
+  // com a panturrilha em vez de sumir do mapa sem o profissional perceber.
+  if (n.includes("panturrilha") || n.includes("fibulares")) return "panturrilhas";
   if (n.includes("peitoral") || n.includes("serrátil")) return "peitoral";
   if (n.includes("deltoide")) return "deltoides";
   if (n.includes("tríceps") || n.includes("triceps") || n.includes("ancôneo")) return "triceps";
@@ -51,14 +60,26 @@ export function activationFromExercise(ex: Exercise): Activation {
   return map;
 }
 
-const SCALE = ["#DBE7FB", "#A9C7F9", "#6EA0F2", "#3B82F6", "#2563EB", "#1D4ED8"];
+/**
+ * Uma régua só, a do glossário.
+ *
+ * Este mapa tinha faixas próprias (>=80 "Muito alta", 60-79 "Alta", 40-59 "Moderada",
+ * 20-39 "Baixa", <20 "Muito baixa") que discordavam de `metricasGlossario` em 48 dos
+ * 122 valores da base. Como o detalhe do exercício mostra o mapa, o slider e o card
+ * de eficiência na MESMA tela, "Isquiotibiais 62" saía como "Alta" aqui e "Moderada"
+ * ali. Agora as faixas e os rótulos vêm de `faixaDe(getMetrica("ativacao"))`.
+ */
+const SCALE = ["#DBE7FB", "#A9C7F9", "#3B82F6", "#1D4ED8"];
+const FAIXAS_ATIVACAO = getMetrica("ativacao")?.faixas ?? [];
+const CORES_POR_FAIXA: Record<string, string> = { Baixa: SCALE[1], Moderada: SCALE[2], Alta: SCALE[3] };
+
+function faixaLabel(v?: number) {
+  const def = getMetrica("ativacao");
+  return v === undefined || !def ? undefined : faixaDe(def, v)?.rotulo;
+}
 function fillFor(v?: number) {
   if (!v || v <= 0) return SCALE[0];
-  if (v < 20) return SCALE[1];
-  if (v < 40) return SCALE[2];
-  if (v < 60) return SCALE[3];
-  if (v < 80) return SCALE[4];
-  return SCALE[5];
+  return CORES_POR_FAIXA[faixaLabel(v) ?? ""] ?? SCALE[0];
 }
 
 const FRONT_BASE = "/anatomy/muscle-front.webp";
@@ -95,13 +116,13 @@ function PoseBoneco({ src }: { src: string }) {
   );
 }
 
-const NIVEIS = [
-  { cor: SCALE[5], nome: "Muito alta", faixa: "≥ 80%" },
-  { cor: SCALE[4], nome: "Alta", faixa: "60–79%" },
-  { cor: SCALE[3], nome: "Moderada", faixa: "40–59%" },
-  { cor: SCALE[2], nome: "Baixa", faixa: "20–39%" },
-  { cor: SCALE[1], nome: "Muito baixa", faixa: "< 20%" },
-];
+// Legenda derivada do glossário: se as faixas mudarem lá, mudam aqui junto.
+const NIVEIS = [...FAIXAS_ATIVACAO]
+  .reverse()
+  .map((f, i, arr) => {
+    const de = i === arr.length - 1 ? 0 : arr[i + 1].ate + 1;
+    return { cor: CORES_POR_FAIXA[f.rotulo] ?? SCALE[0], nome: f.rotulo, faixa: `${de} a ${f.ate}` };
+  });
 
 export function MuscleMap({
   activation,
@@ -158,7 +179,13 @@ export function MuscleMap({
                   <li key={k} className="flex items-center gap-2 text-sm">
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: fillFor(activation[k]) }} />
                     <span className="min-w-0 flex-1 truncate text-ink-2">{MUSCLE_LABEL[k]}</span>
-                    <span className="tabular-nums font-semibold text-ink">{activation[k]}%</span>
+                    <span className="tabular-nums shrink-0 font-semibold text-ink">
+                      {activation[k]}
+                      <span className="text-xs font-medium text-ink-3">/100</span>
+                      {faixaLabel(activation[k]) ? (
+                        <span className="ml-1 text-xs font-semibold text-ink-2">{faixaLabel(activation[k])}</span>
+                      ) : null}
+                    </span>
                   </li>
                 ))}
               </ul>

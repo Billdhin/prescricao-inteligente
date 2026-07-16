@@ -30,8 +30,8 @@ export const exercises: Exercise[] = [
       score: 82,
       metrics: [
         { nome: "Quadríceps", valor: 92, tipo: "positivo" },
-        { nome: "Glúteos", valor: 76, tipo: "positivo" },
-        { nome: "Estabilidade", valor: 78, tipo: "positivo" },
+        { nome: "Glúteo máximo", valor: 76, tipo: "positivo" },
+        { nome: "Apoio do equipamento", valor: 78, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 55, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 34, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 41, tipo: "cautela" },
@@ -145,7 +145,7 @@ export const exercises: Exercise[] = [
       score: 88,
       metrics: [
         { nome: "Quadríceps", valor: 88, tipo: "positivo" },
-        { nome: "Glúteos", valor: 82, tipo: "positivo" },
+        { nome: "Glúteo máximo", valor: 82, tipo: "positivo" },
         { nome: "Transferência funcional", valor: 90, tipo: "positivo" },
         { nome: "Demanda lombar", valor: 62, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 74, tipo: "cautela" },
@@ -246,9 +246,9 @@ export const exercises: Exercise[] = [
     indiceEficiencia: {
       score: 80,
       metrics: [
-        { nome: "Peitoral", valor: 90, tipo: "positivo" },
-        { nome: "Tríceps", valor: 68, tipo: "positivo" },
-        { nome: "Estabilidade escapular", valor: 64, tipo: "positivo" },
+        { nome: "Peitoral maior", valor: 90, tipo: "positivo" },
+        { nome: "Tríceps braquial", valor: 68, tipo: "positivo" },
+        { nome: "Controle motor", valor: 64, tipo: "positivo" },
         { nome: "Demanda de ombro", valor: 66, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 58, tipo: "cautela" },
       ],
@@ -401,7 +401,7 @@ export const exercises: Exercise[] = [
     indiceEficiencia: {
       score: 68,
       metrics: [
-        { nome: "Posteriores", valor: 92, tipo: "positivo" },
+        { nome: "Isquiotibiais", valor: 92, tipo: "positivo" },
         { nome: "Isolamento", valor: 86, tipo: "positivo" },
         { nome: "Demanda lombar", valor: 18, tipo: "positivo" },
         { nome: "Complexidade técnica", valor: 24, tipo: "positivo" },
@@ -469,8 +469,8 @@ export const exercises: Exercise[] = [
     indiceEficiencia: {
       score: 82,
       metrics: [
-        { nome: "Posteriores", valor: 90, tipo: "positivo" },
-        { nome: "Glúteos", valor: 80, tipo: "positivo" },
+        { nome: "Isquiotibiais", valor: 90, tipo: "positivo" },
+        { nome: "Glúteo máximo", valor: 80, tipo: "positivo" },
         { nome: "Demanda lombar", valor: 70, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 76, tipo: "cautela" },
         { nome: "Requisito de mobilidade", valor: 55, tipo: "cautela" },
@@ -540,7 +540,7 @@ export const exercises: Exercise[] = [
       metrics: [
         // "Extensão de quadril 90" saiu: é um padrão de movimento, não uma métrica com
         // escala, e dizia a mesma coisa que "Glúteos 95" logo acima.
-        { nome: "Glúteos", valor: 95, tipo: "positivo" },
+        { nome: "Glúteo máximo", valor: 95, tipo: "positivo" },
         { nome: "Demanda lombar", valor: 42, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 46, tipo: "cautela" },
         { nome: "Requisito de mobilidade", valor: 25, tipo: "positivo" },
@@ -609,8 +609,8 @@ export const exercises: Exercise[] = [
       score: 76,
       metrics: [
         { nome: "Quadríceps", valor: 84, tipo: "positivo" },
-        { nome: "Glúteos", valor: 78, tipo: "positivo" },
-        { nome: "Estabilidade unilateral", valor: 80, tipo: "positivo" },
+        { nome: "Glúteo máximo", valor: 78, tipo: "positivo" },
+        { nome: "Controle motor", valor: 80, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 58, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 62, tipo: "cautela" },
       ],
@@ -677,7 +677,7 @@ export const exercises: Exercise[] = [
     indiceEficiencia: {
       score: 74,
       metrics: [
-        { nome: "Dorsais", valor: 88, tipo: "positivo" },
+        { nome: "Latíssimo do dorso", valor: 88, tipo: "positivo" },
         { nome: "Controle escapular", valor: 70, tipo: "positivo" },
         { nome: "Demanda de ombro", valor: 38, tipo: "positivo" },
         { nome: "Complexidade técnica", valor: 34, tipo: "positivo" },
@@ -745,7 +745,7 @@ export const exercises: Exercise[] = [
     indiceEficiencia: {
       score: 78,
       metrics: [
-        { nome: "Costas (espessura)", valor: 86, tipo: "positivo" },
+        { nome: "Latíssimo do dorso", valor: 86, tipo: "positivo" },
         { nome: "Trapézio médio", valor: 66, tipo: "positivo" },
         { nome: "Demanda lombar", valor: 44, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 40, tipo: "cautela" },
@@ -813,8 +813,8 @@ export const exercises: Exercise[] = [
     indiceEficiencia: {
       score: 76,
       metrics: [
-        { nome: "Deltoides", valor: 88, tipo: "positivo" },
-        { nome: "Tríceps", valor: 60, tipo: "positivo" },
+        { nome: "Deltoide", valor: 88, tipo: "positivo" },
+        { nome: "Tríceps braquial", valor: 60, tipo: "positivo" },
         { nome: "Demanda de ombro", valor: 70, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 52, tipo: "cautela" },
       ],
@@ -880,7 +880,7 @@ export const exercises: Exercise[] = [
     indiceEficiencia: {
       score: 66,
       metrics: [
-        { nome: "Bíceps", valor: 90, tipo: "positivo" },
+        { nome: "Bíceps braquial", valor: 90, tipo: "positivo" },
         { nome: "Isolamento", valor: 82, tipo: "positivo" },
         { nome: "Demanda lombar", valor: 14, tipo: "positivo" },
         { nome: "Complexidade técnica", valor: 20, tipo: "positivo" },
@@ -947,7 +947,7 @@ export const exercises: Exercise[] = [
     indiceEficiencia: {
       score: 66,
       metrics: [
-        { nome: "Tríceps", valor: 90, tipo: "positivo" },
+        { nome: "Tríceps braquial", valor: 90, tipo: "positivo" },
         { nome: "Tensão constante", valor: 80, tipo: "positivo" },
         { nome: "Demanda de ombro", valor: 22, tipo: "positivo" },
         { nome: "Complexidade técnica", valor: 22, tipo: "positivo" },

@@ -37,8 +37,8 @@ export const extraExercises: Exercise[] = [
       score: 78,
       metrics: [
         { nome: "Gasto energético", valor: 74, tipo: "positivo" },
-        { nome: "Glúteos", valor: 68, tipo: "positivo" },
-        { nome: "Estabilidade", valor: 82, tipo: "positivo" },
+        { nome: "Glúteo máximo", valor: 68, tipo: "positivo" },
+        { nome: "Apoio do equipamento", valor: 82, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 38, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 22, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 15, tipo: "cautela" },
@@ -140,7 +140,7 @@ export const extraExercises: Exercise[] = [
       metrics: [
         { nome: "Gasto energético", valor: 70, tipo: "positivo" },
         { nome: "Quadríceps", valor: 78, tipo: "positivo" },
-        { nome: "Estabilidade", valor: 90, tipo: "positivo" },
+        { nome: "Apoio do equipamento", valor: 90, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 30, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 18, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 12, tipo: "cautela" },
@@ -242,7 +242,7 @@ export const extraExercises: Exercise[] = [
       metrics: [
         { nome: "Gasto energético", valor: 80, tipo: "positivo" },
         { nome: "Massa muscular envolvida", valor: 72, tipo: "positivo" },
-        { nome: "Estabilidade", valor: 65, tipo: "positivo" },
+        { nome: "Apoio do equipamento", valor: 65, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 32, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 24, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 28, tipo: "cautela" },
@@ -346,7 +346,7 @@ export const extraExercises: Exercise[] = [
         // este card já traz "Demanda de joelho 15" e "Demanda lombar 12", que dizem a
         // mesma coisa na escala definida e na direção que o resto do sistema usa.
         { nome: "Gasto energético", valor: 60, tipo: "positivo" },
-        { nome: "Estabilidade", valor: 70, tipo: "positivo" },
+        { nome: "Apoio do equipamento", valor: 70, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 15, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 12, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 18, tipo: "cautela" },
@@ -448,7 +448,7 @@ export const extraExercises: Exercise[] = [
       metrics: [
         { nome: "Transferência funcional", valor: 95, tipo: "positivo" },
         { nome: "Quadríceps", valor: 72, tipo: "positivo" },
-        { nome: "Glúteos", valor: 65, tipo: "positivo" },
+        { nome: "Glúteo máximo", valor: 65, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 40, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 25, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 20, tipo: "cautela" },
@@ -552,8 +552,8 @@ export const extraExercises: Exercise[] = [
         // dita ao contrário, e as duas barras apareciam juntas neste card, uma azul
         // subindo e outra laranja descendo sobre a mesma região. Demanda lombar fica,
         // porque é a métrica definida no glossário e a que o motor consulta.
-        { nome: "Glúteos", valor: 80, tipo: "positivo" },
-        { nome: "Estabilidade", valor: 85, tipo: "positivo" },
+        { nome: "Glúteo máximo", valor: 80, tipo: "positivo" },
+        { nome: "Apoio do equipamento", valor: 85, tipo: "positivo" },
         { nome: "Demanda de joelho", valor: 18, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 20, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 16, tipo: "cautela" },
@@ -653,7 +653,7 @@ export const extraExercises: Exercise[] = [
     indiceEficiencia: {
       score: 77,
       metrics: [
-        { nome: "Estabilidade de tronco", valor: 88, tipo: "positivo" },
+        { nome: "Controle motor", valor: 88, tipo: "positivo" },
         { nome: "Core", valor: 75, tipo: "positivo" },
         { nome: "Demanda de ombro", valor: 35, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 22, tipo: "cautela" },
@@ -856,9 +856,9 @@ export const extraExercises: Exercise[] = [
     indiceEficiencia: {
       score: 74,
       metrics: [
-        { nome: "Costas", valor: 65, tipo: "positivo" },
+        { nome: "Latíssimo do dorso", valor: 65, tipo: "positivo" },
         { nome: "Acessibilidade", valor: 95, tipo: "positivo" },
-        { nome: "Estabilidade", valor: 70, tipo: "positivo" },
+        { nome: "Apoio do equipamento", valor: 70, tipo: "positivo" },
         { nome: "Demanda de ombro", valor: 30, tipo: "cautela" },
         { nome: "Demanda lombar", valor: 20, tipo: "cautela" },
         { nome: "Complexidade técnica", valor: 22, tipo: "cautela" },

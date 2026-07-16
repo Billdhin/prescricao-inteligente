@@ -11,8 +11,17 @@ import type { Exercise, EficMetric } from "./types";
  * Mesma linguagem prudente e conteúdo em camadas dos demais.
  */
 
-/** Métricas nos eixos que o motor lê, sempre presentes. */
+/**
+ * Métricas nos eixos que o motor lê, sempre presentes.
+ *
+ * `musculo` é o nome do alvo principal e precisa ser EXATAMENTE o mesmo string do
+ * `ativacao[].musculo` primário do exercício. Antes o rótulo era o genérico
+ * "Ativação primária", e o card mostrava "Ativação primária 78" enquanto o mapa e o
+ * slider, ao lado, mostravam "Deltoide médio 78". Mesmo número, dois nomes.
+ * `npm run check:metricas` trava se os dois campos divergirem.
+ */
 const m = (
+  musculo: string,
   ativ: number,
   complex: number,
   lombar: number,
@@ -20,7 +29,7 @@ const m = (
   ombro: number,
   mobil: number,
 ): EficMetric[] => [
-  { nome: "Ativação primária", valor: ativ, tipo: "positivo" },
+  { nome: musculo, valor: ativ, tipo: "positivo" },
   { nome: "Complexidade técnica", valor: complex, tipo: "cautela" },
   { nome: "Demanda lombar", valor: lombar, tipo: "cautela" },
   { nome: "Demanda de joelho", valor: joelho, tipo: "cautela" },
@@ -52,7 +61,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Deltoide anterior", percentual: 52, papel: "sinergista" },
       { musculo: "Transverso do abdome", percentual: 38, papel: "estabilizador" },
     ],
-    indiceEficiencia: { score: 78, metrics: m(75, 38, 32, 10, 45, 25) },
+    indiceEficiencia: { score: 78, metrics: m("Peitoral maior", 75, 38, 32, 10, 45, 25) },
     fases: [
       { nome: "Prancha", descricao: "Corpo em linha reta, mãos na largura dos ombros, abdômen firme." },
       { nome: "Descida", descricao: "Cotovelos a cerca de 45 graus do tronco enquanto o peito desce ao chão." },
@@ -131,7 +140,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Tríceps braquial", percentual: 58, papel: "sinergista" },
       { musculo: "Serrátil anterior", percentual: 42, papel: "estabilizador" },
     ],
-    indiceEficiencia: { score: 80, metrics: m(85, 52, 25, 8, 55, 35) },
+    indiceEficiencia: { score: 80, metrics: m("Peitoral maior", 85, 52, 25, 8, 55, 35) },
     fases: [
       { nome: "Preparação", descricao: "Deitado, halteres na linha do peito, escápulas retraídas no banco." },
       { nome: "Descida", descricao: "Desce os halteres controlando, cotovelos a cerca de 45 graus do tronco." },
@@ -209,7 +218,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Tríceps braquial", percentual: 60, papel: "sinergista" },
       { musculo: "Deltoide anterior", percentual: 55, papel: "sinergista" },
     ],
-    indiceEficiencia: { score: 76, metrics: m(80, 24, 15, 5, 42, 20) },
+    indiceEficiencia: { score: 76, metrics: m("Peitoral maior", 80, 24, 15, 5, 42, 20) },
     fases: [
       { nome: "Ajuste", descricao: "Banco na altura em que as manoplas ficam na linha do peito." },
       { nome: "Empurrada", descricao: "Empurra as manoplas à frente sem travar os cotovelos." },
@@ -286,7 +295,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Trapézio superior", percentual: 45, papel: "sinergista" },
       { musculo: "Deltoide anterior", percentual: 40, papel: "sinergista" },
     ],
-    indiceEficiencia: { score: 72, metrics: m(78, 30, 18, 5, 52, 20) },
+    indiceEficiencia: { score: 72, metrics: m("Deltoide médio", 78, 30, 18, 5, 52, 20) },
     fases: [
       { nome: "Posição", descricao: "Em pé, halteres ao lado do corpo, cotovelos levemente flexionados." },
       { nome: "Elevação", descricao: "Sobe os braços pelos lados até a linha dos ombros, conduzindo pelos cotovelos." },
@@ -365,7 +374,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Tríceps braquial", percentual: 55, papel: "sinergista" },
       { musculo: "Trapézio superior", percentual: 40, papel: "estabilizador" },
     ],
-    indiceEficiencia: { score: 74, metrics: m(78, 28, 20, 5, 58, 40) },
+    indiceEficiencia: { score: 74, metrics: m("Deltoide anterior", 78, 28, 20, 5, 58, 40) },
     fases: [
       { nome: "Ajuste", descricao: "Banco na altura em que as manoplas ficam próximas dos ombros." },
       { nome: "Empurrada", descricao: "Empurra para cima sem travar os cotovelos nem elevar os ombros." },
@@ -444,7 +453,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Eretores da espinha", percentual: 55, papel: "estabilizador" },
       { musculo: "Bíceps braquial", percentual: 50, papel: "sinergista" },
     ],
-    indiceEficiencia: { score: 80, metrics: m(78, 62, 62, 15, 38, 45) },
+    indiceEficiencia: { score: 80, metrics: m("Latíssimo do dorso", 78, 62, 62, 15, 38, 45) },
     fases: [
       { nome: "Dobradiça", descricao: "Quadril para trás, tronco inclinado, coluna neutra e joelhos leves." },
       { nome: "Puxada", descricao: "Conduz os cotovelos para trás, aproximando as escápulas." },
@@ -523,7 +532,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Trapézio médio", percentual: 60, papel: "sinergista" },
       { musculo: "Bíceps braquial", percentual: 48, papel: "sinergista" },
     ],
-    indiceEficiencia: { score: 76, metrics: m(80, 26, 18, 5, 32, 22) },
+    indiceEficiencia: { score: 76, metrics: m("Latíssimo do dorso", 80, 26, 18, 5, 32, 22) },
     fases: [
       { nome: "Ajuste", descricao: "Peito apoiado na almofada, manoplas ao alcance dos braços estendidos." },
       { nome: "Puxada", descricao: "Puxa conduzindo os cotovelos para trás e aproximando as escápulas." },
@@ -600,7 +609,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Ancôneo", percentual: 40, papel: "sinergista" },
       { musculo: "Transverso do abdome", percentual: 25, papel: "estabilizador" },
     ],
-    indiceEficiencia: { score: 68, metrics: m(82, 34, 15, 5, 48, 45) },
+    indiceEficiencia: { score: 68, metrics: m("Tríceps braquial", 82, 34, 15, 5, 48, 45) },
     fases: [
       { nome: "Posição", descricao: "Sentado ou em pé, halter atrás da cabeça, cotovelos apontados para cima." },
       { nome: "Extensão", descricao: "Estende os cotovelos levando o halter para cima, braços fixos." },
@@ -679,7 +688,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Bíceps braquial", percentual: 55, papel: "sinergista" },
       { musculo: "Transverso do abdome", percentual: 45, papel: "estabilizador" },
     ],
-    indiceEficiencia: { score: 77, metrics: m(75, 55, 35, 10, 45, 30) },
+    indiceEficiencia: { score: 77, metrics: m("Latíssimo do dorso", 75, 55, 35, 10, 45, 30) },
     fases: [
       { nome: "Posição", descricao: "Suspenso sob a barra, corpo em linha reta, calcanhares no chão." },
       { nome: "Puxada", descricao: "Puxa o peito em direção à barra, aproximando as escápulas." },
@@ -758,7 +767,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Trapézio superior", percentual: 38, papel: "estabilizador" },
       { musculo: "Transverso do abdome", percentual: 30, papel: "estabilizador" },
     ],
-    indiceEficiencia: { score: 70, metrics: m(70, 30, 22, 8, 50, 38) },
+    indiceEficiencia: { score: 70, metrics: m("Deltoide", 70, 30, 22, 8, 50, 38) },
     fases: [
       { nome: "Ancoragem", descricao: "Banda sob os pés, mãos na linha dos ombros, cotovelos à frente." },
       { nome: "Empurrada", descricao: "Empurra as mãos para cima contra a resistência crescente da banda." },
@@ -836,7 +845,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Peitoral maior", percentual: 45, papel: "sinergista" },
       { musculo: "Deltoide anterior", percentual: 42, papel: "sinergista" },
     ],
-    indiceEficiencia: { score: 72, metrics: m(80, 40, 18, 8, 58, 40) },
+    indiceEficiencia: { score: 72, metrics: m("Tríceps braquial", 80, 40, 18, 8, 58, 40) },
     fases: [
       { nome: "Apoio", descricao: "Mãos na borda do banco, quadril à frente, cotovelos apontados para trás." },
       { nome: "Descida", descricao: "Dobra os cotovelos descendo o quadril, sem afundar os ombros." },
@@ -915,7 +924,7 @@ export const extraExercises2: Exercise[] = [
       { musculo: "Peitoral maior", percentual: 42, papel: "sinergista" },
       { musculo: "Latíssimo do dorso", percentual: 40, papel: "sinergista" },
     ],
-    indiceEficiencia: { score: 72, metrics: m(45, 18, 12, 10, 30, 18) },
+    indiceEficiencia: { score: 72, metrics: m("Deltoide", 45, 18, 12, 10, 30, 18) },
     fases: [
       { nome: "Base", descricao: "Em pé na água na altura do peito, joelhos leves, tronco firme." },
       { nome: "Empurrar", descricao: "Empurra os halteres de espuma para frente e para baixo contra a água." },

@@ -78,7 +78,7 @@ export const METRICAS: DefinicaoMetrica[] = [
     oQueE: "O quanto o exercício exige da coluna lombar (carga axial, alavanca do tronco, tendência a compensar).",
     escala: "0 a 100, comparativo entre os exercícios desta base.",
     referencial:
-      "É relativo aos outros exercícios da base, não a um limite fisiológico absoluto. 20 é dos mais poupadores que temos; 80 é dos mais exigentes que temos.",
+      "É relativo aos outros exercícios da base, não a um limite fisiológico absoluto: diz qual exercício pesa mais na coluna que outro, e não quanta carga a coluna do seu aluno aguenta.",
     melhor: "menor",
     faixas: FAIXAS_DEMANDA,
   },
@@ -115,15 +115,23 @@ export const METRICAS: DefinicaoMetrica[] = [
   },
   {
     id: "estabilidade",
-    nome: "Estabilidade",
+    /**
+     * Chamava-se "Estabilidade", e a palavra sozinha era ambígua ao ponto de inverter
+     * o sentido: o dado usava "Estabilidade 90" para a bicicleta (apoio que a máquina
+     * OFERECE) e "Estabilidade de tronco 88" para a prancha (controle que o exercício
+     * EXIGE). Duas coisas opostas com a mesma palavra e a mesma cor de barra. O que o
+     * equipamento oferece agora se chama pelo que é; o que o exercício exige do aluno
+     * é "Controle motor".
+     */
+    nome: "Apoio do equipamento",
     oQueE: "Quanto o exercício oferece de apoio externo (banco, encosto, máquina) em vez de exigir equilíbrio do aluno.",
     escala: "0 a 100, comparativo entre os exercícios desta base.",
     referencial: "Relativo aos demais exercícios da base. Valor alto significa mais apoio, não mais dificuldade.",
     melhor: "maior",
     faixas: [
-      { ate: 39, rotulo: "Baixa", significado: "Muito livre: exige equilíbrio e controle do próprio aluno." },
-      { ate: 69, rotulo: "Média", significado: "Apoio parcial; atenção ao cansaço no fim da série." },
-      { ate: 100, rotulo: "Alta", significado: "Bem apoiado: sobra atenção para a musculatura-alvo." },
+      { ate: 39, rotulo: "Pouco", significado: "Muito livre: exige equilíbrio e controle do próprio aluno." },
+      { ate: 69, rotulo: "Parcial", significado: "Apoio parcial; atenção ao cansaço no fim da série." },
+      { ate: 100, rotulo: "Bastante", significado: "Bem apoiado: sobra atenção para a musculatura-alvo." },
     ],
   },
   {
@@ -178,7 +186,7 @@ export const METRICAS: DefinicaoMetrica[] = [
     faixas: [
       { ate: 39, rotulo: "Baixa", significado: "Padrão distante do dia a dia: treina o músculo, não a tarefa." },
       { ate: 69, rotulo: "Média", significado: "Tem elementos do padrão cotidiano." },
-      { ate: 100, rotulo: "Alta", significado: "Repete um padrão que o aluno usa fora da academia: costuma render em autonomia, sobretudo no idoso." },
+      { ate: 100, rotulo: "Alta", significado: "Repete um padrão que o aluno usa fora da academia. A semelhança é do movimento; o ganho em autonomia depende da progressão que você conduzir." },
     ],
   },
   {
@@ -253,18 +261,31 @@ for (const m of METRICAS) {
  */
 const MUSCULOS_COMO_ATIVACAO = [
   "quadríceps",
-  "glúteos",
-  "posteriores",
+  "glúteo máximo",
+  "isquiotibiais",
   "panturrilha",
-  "peitoral",
-  "dorsais",
-  "costas",
-  "costas (espessura)",
+  "adutores",
+  "peitoral maior",
+  "latíssimo do dorso",
+  "romboides",
   "trapézio médio",
-  "deltoides",
-  "bíceps",
-  "tríceps",
+  "trapézio superior",
+  "deltoide",
+  "deltoide anterior",
+  "deltoide médio",
+  "bíceps braquial",
+  "braquial",
+  "tríceps braquial",
+  "ancôneo",
   "core",
+  "reto abdominal",
+  "oblíquos",
+  "transverso do abdome",
+  "eretores da espinha",
+  "reto femoral",
+  "serrátil anterior",
+  "estabilizadores do quadril",
+  "fibulares (estabilizadores do tornozelo)",
 ];
 
 // Nomes usados nos dados dos exercícios que apontam para a mesma definição.
@@ -273,13 +294,15 @@ const APELIDOS: Record<string, string> = {
   "ativação primária": "ativacao",
   "contribuição muscular": "ativacao",
   ...Object.fromEntries(MUSCULOS_COMO_ATIVACAO.map((m) => [m, "ativacao"])),
-  "estabilidade de tronco": "estabilidade",
-  "estabilidade escapular": "estabilidade",
-  "estabilidade unilateral": "estabilidade",
   // "controle escapular" e "equilíbrio" são o mesmo conceito de controle fino,
   // ditos com o nome da região onde ele aparece.
   "controle escapular": "controle-motor",
   equilíbrio: "controle-motor",
+  // NÃO aponte "estabilidade de tronco" nem "estabilidade unilateral" para
+  // "estabilidade": aquilo mede o apoio que o EQUIPAMENTO oferece, e isto é o
+  // controle que o EXERCÍCIO exige do aluno. Apontar um para o outro fazia a
+  // prancha aparecer como "88/100, bem apoiado". Esses rótulos saíram da base e
+  // agora são "Controle motor".
 };
 
 /** Definição de uma métrica pelo rótulo exibido (ou por um apelido usado nos dados). */

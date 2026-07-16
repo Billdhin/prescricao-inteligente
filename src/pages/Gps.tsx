@@ -1589,8 +1589,20 @@ function Comparador({
   const metric = (ex: (typeof exercises)[number], nome: string) =>
     ex.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor;
 
-  const rows: { label: string; get: (e: (typeof exercises)[number]) => number | undefined }[] = [
-    { label: "Ativação relativa", get: (e) => e.ativacao[0]?.percentual },
+  const rows: {
+    label: string;
+    get: (e: (typeof exercises)[number]) => number | undefined;
+    /** nome do músculo daquela linha, quando o valor é relativo a um músculo específico */
+    alvo?: (e: (typeof exercises)[number]) => string | undefined;
+  }[] = [
+    {
+      label: "Ativação relativa",
+      get: (e) => e.ativacao[0]?.percentual,
+      // Cada exercício tem o SEU alvo principal, e o valor é relativo ao próprio
+      // músculo. Sem dizer qual é, a linha parecia comparar 95 com 92 quando um é
+      // glúteo e o outro é quadríceps.
+      alvo: (e) => e.ativacao[0]?.musculo,
+    },
     { label: "Índice de eficiência", get: (e) => e.indiceEficiencia.score },
     { label: "Demanda lombar", get: (e) => metric(e, "Demanda lombar") },
     { label: "Complexidade técnica", get: (e) => metric(e, "Complexidade técnica") },
@@ -1673,15 +1685,18 @@ function Comparador({
                     significa na prática. O rótulo sozinho não dizia nada. */}
                 <MetricaInfo nome={r.label} valor={r.get(selected[0])} className="mb-1 text-xs font-semibold text-ink-2" />
                 <div className="space-y-2">
-                  {selected.map((e, i) => (
-                    <MetricaBar
-                      key={e.slug}
-                      nome={r.label}
-                      valor={r.get(e)}
-                      tone={tones[i]}
-                      rotuloTexto={e.nome}
-                    />
-                  ))}
+                  {selected.map((e, i) => {
+                    const alvo = r.alvo?.(e);
+                    return (
+                      <MetricaBar
+                        key={e.slug}
+                        nome={r.label}
+                        valor={r.get(e)}
+                        tone={tones[i]}
+                        rotuloTexto={alvo ? `${e.nome} · ${alvo}` : e.nome}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             ))}

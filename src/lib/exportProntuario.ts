@@ -168,6 +168,9 @@ export function exportProntuarioPDF({
     .meta { font-size: 12px; color: #64748b; margin-bottom: 14px; }
     .aluno { background: #f4f6fb; border-radius: 10px; padding: 11px 14px; margin-bottom: 14px; }
     .bloco { margin: 14px 0; }
+    /* O PDF circula sozinho e leva a assinatura: a escala precisa estar definida
+       DENTRO dele, e não só na tela de onde ele saiu. */
+    .escala-nota { font-size: 10px; line-height: 1.5; color: #475569; margin: 0 0 10px; }
     h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #0e7c8a; margin: 0 0 6px; }
     .ex { border: 1px solid #e7ecf3; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; page-break-inside: avoid; }
     .ex-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
@@ -232,6 +235,13 @@ export function exportProntuarioPDF({
 
     <section class="bloco">
       <h2>Exercícios escolhidos: o porquê de cada critério</h2>
+      <p class="escala-nota">
+        A adequação vai de 0 a 100 e mede o quanto cada exercício combina com o contexto
+        declarado acima (objetivo, nível, equipamento disponível, restrições e cuidados da
+        condição). Não é nota do exercício em si nem medida do aluno: o mesmo exercício
+        recebe adequação diferente para outro contexto. Os critérios que compõem a nota
+        estão abertos exercício a exercício abaixo.
+      </p>
       ${escolhidosHtml}
     </section>
 

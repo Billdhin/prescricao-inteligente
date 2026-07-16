@@ -291,7 +291,10 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
   const soma = grupoPts + objPts + nivelPts + equipPts + restPts;
   let score = soma * COMPRESS + grupoCondPen;
 
-  const efic = ex.indiceEficiencia.score ?? 60;
+  // Sem `?? 60`: o tipo já garante o score, e o fallback fazia o breakdown afirmar
+  // "índice de eficiência declarado: 60/100" para um valor que ninguém declarou.
+  // Esse texto vai para o prontuário que o profissional assina.
+  const efic = ex.indiceEficiencia.score;
   const tiebreak = ((efic - 50) / 50) * 2.5;
   score += tiebreak;
   breakdown.push({
