@@ -375,8 +375,18 @@ const transporteMembrana = deepLesson({
   concepts: [
     { term: "Gradiente eletroquímico", definition: "Diferença de concentração e de carga de um íon entre os dois lados da membrana. Ele sustenta volume celular, transporte acoplado e sinalização elétrica." },
     { term: "Transporte ativo", definition: "Movimento de solutos contra o gradiente, com gasto de energia. A bomba Na⁺/K⁺-ATPase mantém sódio baixo e potássio alto dentro da célula, base do potencial de repouso." },
+    { term: "Quantidade, fluxo e capacidade", title: "Conceito 3: as três leituras de qualquer transporte", definition: "Quantidade é massa ou conteúdo total, e pode ficar estável enquanto a concentração muda por alteração de volume. Fluxo é quantidade transferida por unidade de tempo, e depende de gradiente, resistência e capacidade. Capacidade é um limite observado em um protocolo específico, não uma propriedade absoluta fora do teste. Confundir as três é a origem de boa parte das interpretações erradas." },
   ],
   figure: { id: "transporte-membrana" },
+  mechanism: {
+    title: "O mecanismo em sequência causal",
+    steps: [
+      { label: "Existe um gradiente a ser explorado ou vencido", detail: "A distribuição desigual de íons e a permeabilidade seletiva criam a força eletroquímica. É ela que define se o soluto tende a entrar ou sair, antes de qualquer proteína entrar em cena." },
+      { label: "A barreira decide quem passa", detail: "Bicamada, canais e carreadores impõem seletividade. O fluxo depende de gradiente, resistência e capacidade: mais gradiente com o caminho fechado não move nada." },
+      { label: "A bomba paga a conta continuamente", detail: "A Na+/K+-ATPase repõe o que vaza pelos canais. Por isso o gasto existe mesmo em repouso: manter gradiente é trabalho contínuo, não um evento." },
+      { label: "A água acompanha o soluto efetivo", detail: "A osmose segue a osmolaridade efetiva e a permeabilidade da barreira. Daí saem volume celular, hidratação e a leitura correta de sódio, que reflete a relação entre soluto e água, não o estoque total." },
+    ],
+  },
   comparison: {
     title: "A favor do gradiente ou contra o gradiente",
     leftTitle: "A favor do gradiente (passivo)",
@@ -434,10 +444,29 @@ const bioeletricidade = deepLesson({
     { term: "Potencial de ação", definition: "Evento regenerativo tudo-ou-nada: ao atingir o limiar, canais de sódio abrem (despolarização); depois inativam e o potássio sai (repolarização). Períodos refratários garantem direção e limitam a frequência." },
   ],
   figure: { id: "potencial-de-acao" },
+  mechanism: {
+    title: "O mecanismo em sequência causal (núcleo 1 do capítulo 01)",
+    steps: [
+      { label: "Gradientes de Na+, K+, Cl- e Ca2+", detail: "A voltagem de membrana resulta da distribuição desigual de íons e da permeabilidade seletiva. A Na+/K+-ATPase mantém os gradientes; canais de vazamento definem o repouso. A força que move cada íon é eletroquímica: força = Vm menos o potencial de equilíbrio do íon." },
+      { label: "Abertura sequencial de canais", detail: "Canais dependentes de voltagem determinam a resposta instantânea. Ao atingir o limiar, o sódio abre e a despolarização se autoalimenta; é o ponto sem volta do evento tudo-ou-nada." },
+      { label: "Despolarização, repolarização e refratariedade", detail: "O sódio inativa e o potássio sai, repolarizando. Os períodos refratários garantem direção da propagação e impõem um teto à frequência de disparo, que é justamente onde a informação é codificada." },
+      { label: "Propagação regenerativa pelo axônio", detail: "O potencial se regenera ao longo do axônio, chegando ao terminal com a mesma amplitude. Por isso a intensidade nunca é codificada pelo tamanho do sinal, e sim pela frequência e pelo número de fibras recrutadas." },
+    ],
+  },
+  timeline: {
+    title: "Em que tempo cada coisa acontece",
+    items: [
+      { time: "Milissegundos", title: "O evento", detail: "Despolarização, repolarização e refratariedade acontecem em milissegundos, fibra a fibra." },
+      { time: "Segundos", title: "A força", detail: "Recrutamento e frequência de disparo somam-se e produzem a força que se vê no movimento." },
+      { time: "Minutos", title: "O contexto", detail: "Temperatura, eletrólitos, perfusão e fármacos alteram a excitabilidade e o tempo de reação durante o exercício." },
+      { time: "Semanas", title: "A adaptação", detail: "A prática modifica a eficiência das redes motoras: economia neural e melhor coordenação, sem que a fibra mude a amplitude do seu potencial." },
+    ],
+  },
   apply: "Use o conceito para interpretar comando motor e fadiga sem antecipar toda a fisiologia do exercício: a força é graduada por quantos neurônios disparam e com que frequência, não por potenciais 'maiores'. Responder à abertura: o potencial de ação é tudo-ou-nada; um estímulo mais forte, acima do limiar, aumenta a frequência de disparos, não a amplitude de cada um.",
   special: [
+    "Como medir: potencial de membrana, limiar, velocidade de condução e frequência de disparo exigem protocolo e contexto; fora disso, não significam muito.",
     "Limiar, recrutamento e frequência de disparo são pré-requisitos para entender controle motor e eletromiografia.",
-    "A força de uma contração depende de quantas unidades motoras disparam e com que frequência.",
+    "Temperatura, eletrólitos, perfusão e fármacos podem alterar a excitabilidade e o tempo de reação durante o exercício.",
     "A comunicação entre células pode ser sináptica, endócrina, parácrina ou elétrica, com alcances e velocidades diferentes.",
   ],
   mistake: {
