@@ -77,7 +77,7 @@ const composicao = deepLesson({
     { title: "Interpretar um resultado", href: `/aprender/conteudos/${DISC}--interpretar-resultado`, type: "mecanismo" },
     { title: "Níveis de evidência e viés", href: "/aprender/conteudos/leitura-critica-de-evidencias--hierarquia", type: "conceito" },
   ],
-  refs: ["ref-acsm-getp11", "ref-a-validar-antropometria"],
+  refs: ["ref-acsm-getp11"],
   applyRx: "Padronize um método e protocolo de composição corporal e acompanhe a tendência com o aluno, comunicando o erro de medida e combinando com peso, perímetros e desempenho.",
 });
 
@@ -134,7 +134,7 @@ const perimetria = deepLesson({
     { title: "Interpretar um resultado", href: `/aprender/conteudos/${DISC}--interpretar-resultado`, type: "mecanismo" },
     { title: "Comunicação e adesão", href: "/aprender/conteudos/comunicacao-e-adesao--linguagem", type: "conceito" },
   ],
-  refs: ["ref-acsm-getp11", "ref-a-validar-antropometria"],
+  refs: ["ref-acsm-getp11"],
   applyRx: "Padronize pontos, postura e lado da perimetria e acompanhe a tendência, combinando com composição, peso e desempenho para evidenciar progresso quando a balança não conta a história toda.",
 });
 

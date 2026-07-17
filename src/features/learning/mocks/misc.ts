@@ -198,7 +198,7 @@ export const quickAnswers: QuickAnswer[] = [
     application: "Comece com amplitude e carga confortáveis; progrida conforme a resposta, sem retirar o padrão por padrão.",
     limits: "A leitura da dor é individual; este conteúdo não substitui avaliação de profissional de saúde.",
     relatedLessons: ["amplitude-e-demanda"],
-    references: ["ref-a-validar-dor"],
+    references: ["ref-nice-ng59", "ref-acsm-getp11"],
   },
   {
     id: "qa-intervalo",

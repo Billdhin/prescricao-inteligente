@@ -146,7 +146,7 @@ const adaptar = deepLesson({
     { title: "Amplitude tolerada", href: "/aprender/conteudos/dor-limitacoes-e-adaptacao--amplitude-tolerada", type: "mecanismo" },
     { title: "Cuidado musculoesquelético", href: `/aprender/conteudos/${DISC}--musculoesqueletico`, type: "conceito" },
   ],
-  refs: ["ref-acsm-getp11", "ref-a-validar-dor", "ref-diretriz-forca"],
+  refs: ["ref-acsm-getp11", "ref-diretriz-forca"],
   applyRx: "Diante de uma restrição, adapte antes de remover: ajuste amplitude, carga, velocidade e modalidade, escolhendo variações toleradas que mantenham o objetivo, e progrida pela resposta. A conduta clínica é do profissional de saúde.",
 });
 
@@ -261,7 +261,7 @@ const musculoesqueletico = deepLesson({
     { title: "Dor e dano", href: "/aprender/conteudos/dor-limitacoes-e-adaptacao--dor-nao-e-dano", type: "conceito" },
     { title: "Monitorar a resposta à carga", href: "/aprender/conteudos/dor-limitacoes-e-adaptacao--monitorar-resposta", type: "conceito" },
   ],
-  refs: ["ref-acsm-getp11", "ref-a-validar-dor", "ref-diretriz-forca"],
+  refs: ["ref-acsm-getp11", "ref-diretriz-forca"],
   applyRx: "Em dor lombar e osteoartrite, mantenha o movimento com carga controlada e amplitude tolerada, progredindo pela resposta da dor, com variações de impacto ajustadas. Encaminhe diante de sinais de alerta; a conduta clínica é do profissional de saúde.",
 });
 

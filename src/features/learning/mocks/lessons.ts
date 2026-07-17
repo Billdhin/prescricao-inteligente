@@ -169,7 +169,7 @@ const demoBlocks: LessonBlock[] = [
   ),
   b(
     "references",
-    { ids: ["ref-escamilla-agachamento", "ref-diretriz-forca", "ref-a-validar-antropometria"] },
+    { ids: ["ref-escamilla-agachamento", "ref-diretriz-forca"] },
     { title: "Referências", isOptional: true },
   ),
   b(
@@ -271,7 +271,7 @@ function leveLesson(spec: LeveSpec): Lesson {
       { id: `b-${spec.slug}-concept`, type: "key_concept", order: 2, title: "Conceito-chave", content: spec.concept },
       { id: `b-${spec.slug}-apply`, type: "practical_application", order: 3, title: "Aplicação prática", content: { text: spec.apply } },
       { id: `b-${spec.slug}-unc`, type: "scientific_uncertainty", order: 4, title: "Nota de prudência", content: { text: "Conteúdo de síntese em construção editorial; trate as tendências como pontos de partida, sempre no contexto do aluno." }, isOptional: true },
-      { id: `b-${spec.slug}-ref`, type: "references", order: 5, title: "Referências", content: { ids: ["ref-diretriz-forca", "ref-a-validar-antropometria"] }, isOptional: true },
+      { id: `b-${spec.slug}-ref`, type: "references", order: 5, title: "Referências", content: { ids: ["ref-diretriz-forca"] }, isOptional: true },
       { id: `b-${spec.slug}-apply2`, type: "apply_to_prescription", order: 6, title: "Aplicar no atendimento", content: { summary: spec.apply } },
     ],
     references: ["ref-diretriz-forca"],

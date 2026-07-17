@@ -55,7 +55,7 @@ const dorNaoEDano = deepLesson({
     { title: "Amplitude tolerada", href: `/aprender/conteudos/${DISC}--amplitude-tolerada`, type: "mecanismo" },
     { title: "Cuidado musculoesquelético", href: "/aprender/conteudos/prescricao-para-grupos-especiais--musculoesqueletico", type: "conceito" },
   ],
-  refs: ["ref-a-validar-dor", "ref-acsm-getp11"],
+  refs: ["ref-acsm-getp11"],
   applyRx: "Leia a dor no contexto e observe seu comportamento; sem sinais de alerta, mantenha o aluno em movimento com carga e amplitude toleradas, evitando alarmar. Encaminhe diante de sinais de alerta.",
 });
 
@@ -103,7 +103,7 @@ const redFlags = deepLesson({
     { title: "Encaminhamento", href: "/aprender/conteudos/seguranca-e-limites-de-atuacao--encaminhamento", type: "conceito" },
     { title: "Monitorar a resposta à carga", href: `/aprender/conteudos/${DISC}--monitorar-resposta`, type: "conceito" },
   ],
-  refs: ["ref-a-validar-dor", "ref-acsm-getp11", "ref-parq-2011"],
+  refs: ["ref-acsm-getp11", "ref-parq-2011"],
   applyRx: "Fique atento aos sinais de alerta associados à dor (noturna que não alivia, déficit neurológico, febre, perda de peso, trauma) e encaminhe diante deles, seguindo apoiando o aluno no que é do treino.",
 });
 
@@ -160,7 +160,7 @@ const amplitudeTolerada = deepLesson({
     { title: "Amplitude e demanda", href: "/aprender/conteudos/amplitude-e-demanda", type: "mecanismo" },
     { title: "Adaptar sem esvaziar", href: "/aprender/conteudos/prescricao-para-grupos-especiais--adaptar-sem-esvaziar", type: "conceito" },
   ],
-  refs: ["ref-a-validar-dor", "ref-acsm-getp11", "ref-diretriz-forca"],
+  refs: ["ref-acsm-getp11", "ref-diretriz-forca"],
   applyRx: "Encontre a entrada tolerada (dor leve e estável), mantenha o estímulo ali e progrida conforme a tolerância melhora, recuando se a dor crescer. Nem evitar, nem forçar: exponha de forma gradual.",
 });
 
@@ -208,7 +208,7 @@ const monitorar = deepLesson({
     { title: "Sinais de fadiga", href: "/aprender/conteudos/controle-de-carga-e-recuperacao--sinais-fadiga", type: "mecanismo" },
     { title: "Interpretar um resultado", href: "/aprender/conteudos/avaliacao-fisica-e-funcional--interpretar-resultado", type: "mecanismo" },
   ],
-  refs: ["ref-a-validar-dor", "ref-foster-srpe-2001", "ref-acsm-getp11"],
+  refs: ["ref-foster-srpe-2001", "ref-acsm-getp11"],
   applyRx: "Deixe a resposta da dor guiar a progressão: avance com dor leve e estável e sem piora no dia seguinte, recue se ela cresce, e olhe a tendência, não um dia isolado. Registre para enxergar o padrão.",
 });
 

@@ -721,7 +721,7 @@ const sobrecargaProgressiva: Lesson = {
     ),
     bSP(
       "references",
-      { ids: ["ref-acsm-progressao-2009", "ref-diretriz-forca", "ref-a-validar-antropometria"] },
+      { ids: ["ref-acsm-progressao-2009", "ref-diretriz-forca"] },
       { title: "Referências", isOptional: true },
     ),
     bSP(

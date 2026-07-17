@@ -58,31 +58,6 @@ export const references: ScientificReference[] = [
     topics: ["percepção de esforço", "controle de carga"],
     validationStatus: "validada",
   },
-  {
-    id: "ref-a-validar-antropometria",
-    title: "Referência a ser validada pela equipe editorial",
-    authors: "A definir",
-    year: 0,
-    sourceType: "revisao-sistematica",
-    journalOrPublisher: "Aguardando curadoria",
-    openAccess: false,
-    abstractSummary: "Placeholder de demonstração sobre antropometria e escolha de variação de exercício.",
-    topics: ["antropometria", "individualização"],
-    validationStatus: "a-validar",
-  },
-  {
-    id: "ref-a-validar-dor",
-    title: "Referência a ser validada pela equipe editorial",
-    authors: "A definir",
-    year: 0,
-    sourceType: "consenso",
-    journalOrPublisher: "Aguardando curadoria",
-    openAccess: false,
-    abstractSummary: "Placeholder de demonstração sobre interpretação da dor durante o exercício.",
-    topics: ["dor", "tolerância", "adaptação"],
-    validationStatus: "a-validar",
-  },
-
   /* --------- Base científica do treinamento de força (autoria dedicada) --------- */
   {
     id: "ref-schoenfeld-hipertrofia-2010",
@@ -533,6 +508,20 @@ export const references: ScientificReference[] = [
     abstractSummary:
       "Documento institucional de referência para balanço de água e eletrólitos, base para hidratação e equilíbrio hidroeletrolítico.",
     topics: ["água", "eletrólitos", "hidratação"],
+    validationStatus: "validada",
+  },
+
+  {
+    id: "ref-nice-ng59",
+    title: "Low back pain and sciatica in over 16s: assessment and management (NG59)",
+    authors: "National Institute for Health and Care Excellence (NICE)",
+    year: 2020,
+    sourceType: "diretriz",
+    journalOrPublisher: "NICE, Londres (2016, atualização 2020)",
+    openAccess: true,
+    abstractSummary:
+      "Diretriz de dor lombar e ciática: base das red flags que pedem encaminhamento e do incentivo ao exercício na lombalgia inespecífica.",
+    topics: ["dor lombar", "red flags", "exercício"],
     validationStatus: "validada",
   },
 

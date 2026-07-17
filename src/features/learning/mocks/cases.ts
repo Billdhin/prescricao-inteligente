@@ -22,7 +22,7 @@ export const learningCases: LearningCase[] = [
     complexity: "media",
     region: "Coluna lombar",
     status: "nao-iniciado",
-    references: ["ref-a-validar-dor", "ref-diretriz-forca"],
+    references: ["ref-diretriz-forca"],
     steps: [
       {
         id: "s1",
