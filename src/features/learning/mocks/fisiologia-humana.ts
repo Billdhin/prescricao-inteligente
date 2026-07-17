@@ -1572,12 +1572,36 @@ const capSistemaEndocrino = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Princípios de sinalização hormonal", detail: "Peptídeos agem em receptores de membrana; esteroides e tireoidianos modulam a expressão gênica. Afinidade, ocupação, eficácia e amplificação são conceitos distintos, e proteínas transportadoras mudam a fração livre." },
-      { label: "Hipotálamo, hipófise e feedback", detail: "Saída do eixo = drive central menos feedback periférico. O hipotálamo integra sinais neurais, luz, sono, estresse e energia; horário de coleta e exercício recente podem mudar hormônios sem indicar doença." },
-      { label: "Insulina, glucagon e controle da glicose", detail: "A contração muscular aumenta a captação de glicose por vias parcialmente independentes de insulina. O exercício melhora a sensibilidade à insulina por horas e, com repetição, aumenta a capacidade de transporte e oxidação." },
-      { label: "Tireoide e taxa metabólica", detail: "O eixo tireoidiano responde lentamente. Déficit energético prolongado pode reduzir T3 como adaptação; sintomas e contexto são essenciais antes de atribuir fadiga à tireoide, e 'metabolismo lento' não se infere só da dificuldade de perder peso." },
-      { label: "Adrenais, catecolaminas e cortisol", detail: "Carga hormonal = magnitude × duração × frequência. A elevação aguda de cortisol é parte da resposta adaptativa; excesso crônico com pouca recuperação é diferente de um pico após o treino. Cortisol não é 'hormônio ruim' isolado." },
-      { label: "Tecido adiposo, mioquinas e integração", detail: "Fenótipo metabólico = energia + tecido + sinalização + comportamento. Leptina informa a disponibilidade energética ao cérebro; o treino melhora a comunicação metabólica mesmo antes de grandes mudanças de peso." },
+      {
+        label: "Princípios de sinalização hormonal",
+        detail:
+          "Hormônios peptídicos atuam principalmente em receptores de membrana e segundos mensageiros; esteroides e hormônios tireoidianos atravessam membranas e modulam a expressão gênica. Afinidade, ocupação, eficácia e amplificação são conceitos distintos. Proteínas transportadoras alteram meia-vida e fração livre. Sequência: (1) síntese e secreção; (2) transporte livre ou ligado; (3) ligação ao receptor; (4) terminação e dessensibilização. Relação: resposta = exposição × sensibilidade do tecido. Aplicação ao exercício: uma mesma concentração hormonal produz efeitos diferentes conforme receptor, tecido, estado energético e treinamento. Como medir: hormônio total e livre, ritmo, resposta do tecido e biomarcadores downstream. Erro frequente: supor que mais hormônio significa mais efeito quando receptores ou vias já estão saturados.",
+      },
+      {
+        label: "Hipotálamo, hipófise e feedback",
+        detail:
+          "O hipotálamo integra sinais neurais, luz, sono, estresse e estado energético. Hormônios liberadores controlam a adeno-hipófise; a neuro-hipófise libera ADH e ocitocina sintetizados no hipotálamo. Os eixos apresentam pulsos, ritmos circadianos e feedback negativo. Sequência: (1) sinal hipotalâmico; (2) secreção hipofisária; (3) ação na glândula-alvo; (4) feedback ao eixo. Relação: saída do eixo = drive central menos feedback periférico. Aplicação ao exercício: horário de coleta, sono e exercício recente podem mudar hormônios sem indicar doença. Como medir: ACTH, cortisol, TSH, T4, LH, FSH, GH e ritmos temporais. Erro frequente: tirar conclusão de uma medida isolada, que pode perder o pulso ou o ritmo e não representar a atividade do eixo.",
+      },
+      {
+        label: "Insulina, glucagon e controle da glicose",
+        detail:
+          "A insulina favorece captação e armazenamento de nutrientes, especialmente após refeições. O glucagon sustenta a produção hepática de glicose no jejum. Durante o exercício, a contração muscular aumenta a translocação de GLUT4 por vias parcialmente independentes de insulina, enquanto catecolaminas e glucagon ajudam a manter a glicemia. Sequência: (1) detecção pancreática de glicose; (2) secreção de insulina e glucagon; (3) captação muscular e produção hepática; (4) restauração pós-exercício. Relação: glicemia = entrada intestinal + produção hepática menos captação. Aplicação ao exercício: o exercício melhora a sensibilidade à insulina por horas e, com repetição, aumenta a capacidade de transporte e oxidação. Como medir: glicemia, insulina, HbA1c, HOMA-IR e resposta a refeição e exercício. Erro frequente: achar que a queda de insulina durante o exercício significa menor captação muscular de glicose.",
+      },
+      {
+        label: "Tireoide e taxa metabólica",
+        detail:
+          "O TSH estimula a produção de T4 e T3; desiodases ajustam a conversão nos tecidos. Hormônios tireoidianos aumentam a expressão de proteínas relacionadas a metabolismo, coração e termogênese. O eixo responde lentamente e é modulado por disponibilidade energética, doença e ambiente. Sequência: (1) TRH e TSH; (2) síntese de T4 e T3; (3) conversão periférica; (4) efeitos nucleares e feedback. Relação: a taxa metabólica depende de massa ativa × controle hormonal × ambiente. Aplicação ao exercício: déficit energético prolongado pode reduzir T3 como adaptação; sintomas e contexto são essenciais antes de atribuir fadiga à tireoide. Como medir: TSH, T4 livre, T3, FC, temperatura e sintomas. Erro frequente: inferir 'metabolismo lento' apenas da dificuldade para perder peso.",
+      },
+      {
+        label: "Adrenais, catecolaminas e cortisol",
+        detail:
+          "A medula adrenal libera adrenalina e noradrenalina rapidamente. O córtex produz cortisol, aldosterona e andrógenos. O cortisol mobiliza substratos e modula a imunidade; sua elevação aguda é parte da resposta adaptativa. Excesso crônico e recuperação insuficiente têm significado diferente de um pico após o treino. Sequência: (1) ativação simpática imediata; (2) eixo HPA em minutos; (3) mobilização de glicose e lipídios; (4) feedback e recuperação. Relação: carga hormonal = magnitude × duração × frequência. Aplicação ao exercício: interpretar cortisol exige horário, sono, alimentação, estresse psicológico e carga de treinamento. Como medir: catecolaminas, cortisol, PA, glicemia, sono e percepção de recuperação. Erro frequente: tratar o cortisol como 'hormônio ruim' ou como marcador isolado de overtraining.",
+      },
+      {
+        label: "Tecido adiposo, mioquinas e integração do exercício",
+        detail:
+          "O tecido adiposo secreta leptina, adiponectina e mediadores inflamatórios; o músculo ativo libera mioquinas e metabólitos com efeitos locais e sistêmicos. A leptina informa a disponibilidade energética ao cérebro, enquanto a adiponectina associa-se a maior sensibilidade metabólica. O balanço entre sinais depende de composição corporal, sono e atividade. Sequência: (1) sinalização do estoque energético; (2) comunicação músculo-adiposo; (3) efeitos sobre fígado e cérebro; (4) adaptação ao treinamento. Relação: fenótipo metabólico = energia + tecido + sinalização + comportamento. Aplicação ao exercício: o treino regular melhora a comunicação metabólica mesmo antes de grandes mudanças de peso. Como medir: leptina, adiponectina, composição corporal, sensibilidade à insulina e aptidão. Erro frequente: isolar adipocinas e mioquinas; os resultados dependem de redes e contexto.",
+      },
     ],
   },
   timeline: {
@@ -1590,10 +1614,15 @@ const capSistemaEndocrino = deepLesson({
     ],
   },
   apply: "Interprete hormônios com horário, sono, alimentação, estresse e carga de treino, nunca por um valor isolado. Use o exercício como potente modulador da sensibilidade à insulina. Responder à abertura: um cortisol elevado com pouco sono e déficit energético tem várias explicações (ritmo circadiano, restrição, carga); um único resultado não define 'falha adrenal' nem overtraining.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Hipertrofia não depende de picos transitórios isolados de hormônios após o treino.",
-    "Baixa disponibilidade energética prolongada pode reduzir T3, GnRH e leptina; peso estável não a exclui.",
-    "Conduta hormonal, diagnóstico e medicação são do profissional de saúde; o papel aqui é reconhecer mecanismos e sinais.",
+    "Hormônio total ou livre representa a concentração circulante. Limite: a ligação a proteínas altera a interpretação.",
+    "Glicemia representa a glicose no compartimento sanguíneo. Limite: momento e refeição importam.",
+    "HbA1c representa a exposição glicêmica média. Limite: não descreve a variabilidade aguda.",
+    "TSH e T4 livre representam o estado do eixo tireoidiano. Limite: requerem correlação clínica.",
+    "Cortisol representa a saída do eixo HPA. Limite: tem forte ritmo circadiano, então o horário muda tudo.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Tratar cortisol elevado após um treino como prova de overtraining, ou creditar o ganho muscular a picos hormonais agudos.",
@@ -1615,6 +1644,17 @@ const capSistemaEndocrino = deepLesson({
       { id: "a", label: "Integrar horário, sono, alimentação e carga antes de qualquer conclusão." },
       { id: "b", label: "Diagnosticar overtraining a partir desse único valor." },
     ], "a", "Cortisol tem forte ritmo circadiano; um valor isolado não define overtraining nem falha adrenal."),
+    q("q3", "variavel", "Como o exercício aumenta a captação de glicose usando MENOS insulina?", [
+      { id: "a", label: "A contração muscular transloca GLUT4 por vias parcialmente independentes de insulina." },
+      { id: "b", label: "O pâncreas secreta mais insulina durante o esforço." },
+    ], "a", "Por isso a insulina cai no exercício e a captação muscular continua: a contração é um estímulo próprio."),
+    q("q4", "conduta", "Num déficit energético prolongado, um T3 mais baixo sugere primeiro:", [
+      { id: "a", label: "Adaptação à baixa disponibilidade energética, a ser lida com sintomas e contexto." },
+      { id: "b", label: "Doença da tireoide, já definida pelo exame." },
+    ], "a", "O eixo responde à energia disponível; atribuir a fadiga à tireoide sem contexto é precipitado."),
+    q("q5", "verdadeiro-falso", "Uma medida hormonal isolada representa bem a atividade de um eixo endócrino.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Os eixos têm pulsos e ritmos: uma coleta única pode perder o pulso e não representar o eixo."),
   ],
   uncertainty: "Hormônios total e livre, glicemia e HbA1c têm limites de interpretação (ligação a proteínas, momento, variabilidade). Diagnóstico e conduta hormonal são do profissional de saúde.",
   related: [
@@ -1640,12 +1680,36 @@ const capSistemaDigestorio = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Motilidade e sistema nervoso entérico", detail: "Fluxo luminal = propulsão menos resistência segmentar. Exercício leve pode favorecer o trânsito, enquanto alta intensidade e estresse podem retardar o esvaziamento ou aumentar a urgência." },
-      { label: "Secreções e digestão química", detail: "Saliva, ácido gástrico, enzimas pancreáticas e bile preparam os nutrientes. A bile não é enzima e não 'quebra' gordura: ela dispersa e permite a formação de micelas." },
-      { label: "Absorção e transporte epitelial", detail: "Fluxo absorvido = área × permeabilidade × gradiente. A absorção não é ilimitada; transportadores, esvaziamento e perfusão podem limitar. Treinar a estratégia de ingestão aumenta a tolerância a carboidratos no endurance." },
-      { label: "Barreira intestinal, microbiota e imunidade", detail: "Barreira = integridade epitelial + muco + imunidade + perfusão. Calor, hipoperfusão e exercício prolongado podem aumentar transitoriamente a permeabilidade; uma única análise de microbiota não define saúde." },
-      { label: "Fígado e integração metabólica", detail: "Produção hepática de glicose = glicogenólise + gliconeogênese. Durante o exercício, o fígado sustenta a glicemia conforme duração e intensidade. Enzimas hepáticas elevadas após treino podem incluir contribuição muscular." },
-      { label: "Pâncreas, balanço energético e exercício", detail: "Sinais como GLP-1 e GIP antecipam a resposta pós-prandial; saciedade depende de distensão, nutrientes, hormônios e cérebro. Nenhum hormônio isolado controla saciedade e gasto." },
+      {
+        label: "Motilidade e sistema nervoso entérico",
+        detail:
+          "Plexos mioentérico e submucoso coordenam peristaltismo, segmentação, secreção e fluxo local, modulados por parassimpático, simpático e hormônios. Células intersticiais de Cajal geram ritmos elétricos. Esfíncteres organizam o trânsito e evitam refluxo entre segmentos. Sequência: (1) a distensão ativa circuitos locais; (2) contração atrás do conteúdo; (3) relaxamento à frente; (4) ajuste central e hormonal. Relação: fluxo luminal = propulsão menos resistência segmentar. Aplicação ao exercício: o exercício leve pode favorecer o trânsito, enquanto a alta intensidade e o estresse podem retardar o esvaziamento ou aumentar a urgência. Como medir: tempo de trânsito, esvaziamento gástrico, sintomas, frequência e consistência fecal. Erro frequente: reduzir motilidade a 'movimento do intestino'; ela inclui padrões segmentares e controle de esfíncteres.",
+      },
+      {
+        label: "Secreções e digestão química",
+        detail:
+          "A saliva inicia o processamento e facilita a deglutição. O ácido gástrico desnatura proteínas e ativa a pepsina; muco e bicarbonato protegem a mucosa. O pâncreas fornece bicarbonato e enzimas para carboidratos, proteínas e lipídios. A bile emulsifica gorduras e permite a formação de micelas. Sequência: (1) preparação oral; (2) digestão gástrica; (3) neutralização e enzimas pancreáticas; (4) bile e micelas no intestino. Relação: digestão efetiva = enzimas + superfície + tempo de contato. Aplicação ao exercício: composição e volume da refeição alteram o esvaziamento; gordura, fibra e alta osmolaridade podem reduzir a velocidade de entrega durante o exercício. Como medir: pH, esvaziamento, enzimas, sintomas e tolerância alimentar. Erro frequente: dizer que a bile 'quebra' gordura; ela não é enzima, e sim facilita a dispersão e a absorção.",
+      },
+      {
+        label: "Absorção e transporte epitelial",
+        detail:
+          "Vilosidades e microvilosidades ampliam a área. Glicose e galactose usam cotransporte com Na+; a frutose usa transporte facilitado; aminoácidos usam diversos carreadores; lipídios entram em micelas, são reesterificados e exportados em quilomícrons. A água acompanha gradientes osmóticos. Sequência: (1) digestão até unidades transportáveis; (2) entrada apical por canais e carreadores; (3) processamento intracelular; (4) saída para sangue ou linfa. Relação: fluxo absorvido = área × permeabilidade × gradiente. Aplicação ao exercício: treinar a estratégia de ingestão pode aumentar a tolerância e a capacidade de absorver carboidratos durante o endurance. Como medir: taxa de ingestão, sintomas, glicemia, hidratação e composição da refeição. Erro frequente: supor que a absorção é ilimitada; transportadores, esvaziamento e perfusão podem limitar.",
+      },
+      {
+        label: "Barreira intestinal, microbiota e imunidade",
+        detail:
+          "Epitélio, muco, junções, microbiota e células imunes formam uma barreira dinâmica. Metabólitos microbianos, como ácidos graxos de cadeia curta, influenciam células locais e sistêmicas. Calor, hipoperfusão e exercício prolongado podem aumentar a permeabilidade transitória e os sintomas. Sequência: (1) o muco separa conteúdo e epitélio; (2) as junções controlam a passagem paracelular; (3) a microbiota metaboliza substratos; (4) a imunidade contém e tolera. Relação: barreira = integridade epitelial + muco + imunidade + perfusão. Aplicação ao exercício: progressão de volume, hidratação e prática nutricional reduzem o risco gastrointestinal em provas longas. Como medir: sintomas, marcadores de permeabilidade, microbiota e ingestão de fibra. Erro frequente: usar uma única análise de microbiota para definir saúde, diagnóstico ou resposta individual ao treino.",
+      },
+      {
+        label: "Fígado e integração metabólica",
+        detail:
+          "O fígado recebe sangue portal rico em nutrientes e sangue arterial. Armazena glicogênio, produz glicose, sintetiza lipídios e proteínas plasmáticas, converte amônia em ureia, processa fármacos e secreta bile. Os fluxos mudam entre estado alimentado, jejum e exercício. Sequência: (1) captação portal; (2) armazenamento ou oxidação; (3) conversão entre substratos; (4) exportação e detoxificação. Relação: produção hepática de glicose = glicogenólise + gliconeogênese. Aplicação ao exercício: durante o exercício, a glicogenólise e a gliconeogênese hepáticas sustentam a glicemia conforme duração e intensidade. Como medir: glicemia, enzimas hepáticas, bilirrubina, ureia, triglicerídeos e glicogênio. Erro frequente: ler elevação de enzimas após treino como fígado; pode incluir contribuição muscular e precisa de contexto.",
+      },
+      {
+        label: "Pâncreas, balanço energético e exercício",
+        detail:
+          "O pâncreas exócrino fornece enzimas; o endócrino regula nutrientes. Sinais intestinais, como GLP-1 e GIP, antecipam e amplificam a resposta pós-prandial. A saciedade depende de distensão, nutrientes, hormônios e cérebro. Disponibilidade energética cronicamente baixa pode alterar eixos endócrinos, osso, imunidade e desempenho. Sequência: (1) detecção do alimento; (2) sinais incretínicos; (3) secreção pancreática; (4) integração com cérebro e fígado. Relação: disponibilidade energética = (ingestão menos gasto do exercício) relativa à massa livre de gordura. Aplicação ao exercício: a prescrição deve considerar horário, tamanho das refeições, tolerância e objetivo, sem transformar sintomas persistentes em simples 'falta de adaptação'. Como medir: ingestão, energia disponível, glicemia, sintomas e desempenho. Erro frequente: atribuir saciedade e gasto energético ao controle de um único hormônio.",
+      },
     ],
   },
   timeline: {
@@ -1658,10 +1722,15 @@ const capSistemaDigestorio = deepLesson({
     ],
   },
   apply: "Ajuste a estratégia nutricional ao objetivo, ao horário e à tolerância; treine a ingestão em provas longas em vez de improvisar no dia. Responder à abertura: um gel muito concentrado com pouca água eleva a osmolaridade luminal, atrasa o esvaziamento e supera a capacidade de transporte, gerando os sintomas; diluir e treinar a estratégia ajuda.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Sintomas gastrointestinais têm escala e timing que importam; não tratar sintomas persistentes como simples 'falta de adaptação'.",
-    "Progressão de volume, hidratação e prática nutricional reduz o risco gastrointestinal em provas longas.",
-    "Disponibilidade energética cronicamente baixa afeta eixos endócrinos, osso e desempenho, mesmo com peso estável.",
+    "Sintomas gastrointestinais representam dor, náusea, refluxo e urgência. Limite: escala e timing importam para significar algo.",
+    "Glicemia representa a disponibilidade sistêmica de glicose. Limite: não descreve toda a absorção.",
+    "Esvaziamento representa a velocidade de saída gástrica. Limite: depende de volume e composição da refeição.",
+    "Enzimas hepáticas representam marcadores celulares. Limite: músculo e exercício podem interferir no valor.",
+    "Energia disponível representa a energia restante para as funções corporais. Limite: exige estimativas cuidadosas.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Dizer que a bile 'quebra' a gordura, ou tratar sintomas gastrointestinais persistentes no exercício como só 'falta de adaptação'.",
@@ -1683,6 +1752,17 @@ const capSistemaDigestorio = deepLesson({
       { id: "a", label: "Excesso de osmolaridade luminal e limite de transporte; treinar e diluir a estratégia." },
       { id: "b", label: "Que a pessoa nunca deve ingerir carboidrato em exercício." },
     ], "a", "A absorção não é ilimitada; a estratégia de ingestão é treinável e a diluição reduz sintomas."),
+    q("q3", "variavel", "Como o fígado mantém a glicemia durante o exercício prolongado?", [
+      { id: "a", label: "Por glicogenólise e gliconeogênese, conforme duração e intensidade." },
+      { id: "b", label: "Absorvendo glicose direto do intestino para o músculo." },
+    ], "a", "Produção hepática de glicose = glicogenólise + gliconeogênese; o fígado é o tampão da glicemia no esforço."),
+    q("q4", "conduta", "Enzimas hepáticas elevadas logo após um treino intenso sugerem primeiro:", [
+      { id: "a", label: "Possível contribuição muscular; precisa de contexto antes de atribuir ao fígado." },
+      { id: "b", label: "Lesão hepática confirmada." },
+    ], "a", "Marcadores 'hepáticos' também sobem por origem muscular; contexto e repetição orientam."),
+    q("q5", "verdadeiro-falso", "Peso corporal estável garante que a disponibilidade energética está adequada.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Disponibilidade energética é a energia que sobra após o exercício, relativa à massa livre de gordura; pode estar baixa com peso estável."),
   ],
   uncertainty: "Glicemia não descreve toda a absorção, e enzimas hepáticas podem refletir contribuição muscular após o treino. Disponibilidade energética exige estimativas cuidadosas; sintomas persistentes pedem avaliação.",
   related: [
@@ -1708,12 +1788,36 @@ const capSistemaEsqueletico = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Estrutura óssea e propriedades mecânicas", detail: "Osso cortical dá rigidez; trabecular distribui cargas. Geometria e distribuição do material importam tanto quanto a densidade: densidade mineral isolada não descreve toda a resistência do osso." },
-      { label: "Remodelamento, cálcio e hormônios", detail: "Balanço ósseo = formação menos reabsorção. O corpo prioriza o cálcio sérico, então alterações ósseas ocorrem sem grande mudança no sangue. Baixa disponibilidade energética e alterações menstruais reduzem a formação óssea." },
-      { label: "Articulações, cartilagem e líquido sinovial", detail: "A cartilagem é avascular; compressão e movimento contribuem para a nutrição. 'Desgaste' descreve mal um tecido vivo com capacidade de adaptação e reparo limitado; carga moderada e movimento são necessários." },
-      { label: "Tendões e transmissão de energia", detail: "Rigidez = Δforça/Δcomprimento. Complacência permite armazenar energia; a resposta depende de tensão, taxa e tempo. Isometrias, excêntricos e cargas pesadas progressivas são úteis, respeitando dor e recuperação." },
-      { label: "Ligamentos, fáscia e estabilidade", detail: "Estabilidade = estrutura + controle + contexto. Ligamentos limitam extremos e informam; a estabilidade não se atribui a um único ligamento nem à 'fáscia presa'. Treino evolui de controle previsível para perturbações específicas." },
-      { label: "Mecanotransdução e adaptação ao treinamento", detail: "Magnitude, taxa, duração, frequência e recuperação formam a assinatura mecânica. A sinalização ocorre com deformação fisiológica, sem exigir microlesão relevante; progrida considerando o tecido limitante." },
+      {
+        label: "Estrutura óssea e propriedades mecânicas",
+        detail:
+          "O osso cortical oferece rigidez e resistência; o osso trabecular distribui cargas em múltiplas direções. O colágeno fornece tenacidade e o mineral aumenta a rigidez. Geometria e distribuição do material são tão importantes quanto a densidade. Periósteo, medula e vascularização participam da adaptação e do reparo. Sequência: (1) a carga deforma a matriz; (2) o fluido canalicular estimula os osteócitos; (3) a sinalização regula osteoblastos e osteoclastos; (4) a geometria é remodelada. Relação: tensão = força dividida por área; deformação = ΔL dividido por L. Aplicação ao exercício: impacto, tração muscular e variedade de direções podem oferecer estímulos osteogênicos distintos de exercícios sem carga. Como medir: densidade mineral, geometria, marcadores de remodelamento e histórico de carga. Erro frequente: tratar densidade mineral isolada como descrição de toda a resistência do osso.",
+      },
+      {
+        label: "Remodelamento, cálcio e hormônios",
+        detail:
+          "Osteoclastos reabsorvem e osteoblastos formam osso em unidades de remodelamento. PTH, vitamina D, calcitonina, hormônios sexuais e carga mecânica regulam cálcio e tecido. O organismo prioriza a estabilidade do Ca2+ sérico, e alterações ósseas podem ocorrer sem grande mudança na concentração sanguínea. Sequência: (1) ativação de osteoclastos; (2) reabsorção; (3) formação osteoblástica; (4) mineralização. Relação: balanço ósseo = formação menos reabsorção. Aplicação ao exercício: baixa disponibilidade energética e alterações menstruais podem reduzir a formação óssea, aumentando o risco mesmo em pessoas ativas. Como medir: cálcio, vitamina D, PTH, densitometria e marcadores de formação e reabsorção. Erro frequente: concluir que cálcio sérico normal garante estoque ósseo adequado.",
+      },
+      {
+        label: "Articulações, cartilagem e líquido sinovial",
+        detail:
+          "A cartilagem articular é avascular e combina colágeno com proteoglicanos que retêm água. A compressão expulsa fluido e o reingresso contribui para a nutrição. O líquido sinovial reduz o atrito, enquanto cápsula, ligamentos e músculos guiam a estabilidade. Carga moderada e movimento são necessários para a homeostase. Sequência: (1) a compressão redistribui fluido; (2) a matriz suporta carga; (3) o movimento favorece a nutrição; (4) os músculos controlam a trajetória articular. Relação: pressão articular = carga dividida por área de contato. Aplicação ao exercício: a progressão deve combinar amplitude, velocidade, volume e tolerância; dor persistente ou derrame mudam a decisão. Como medir: dor, amplitude, edema, força, função e imagem quando indicada. Erro frequente: usar 'desgaste' para descrever um tecido vivo, capaz de adaptação e de reparo limitado.",
+      },
+      {
+        label: "Tendões e transmissão de energia",
+        detail:
+          "Tendões organizam colágeno em fascículos alinhados e transmitem força entre músculo e osso. A complacência permite armazenar energia; a rigidez adequada melhora a transmissão e a taxa de força. A resposta depende de tensão, taxa e tempo de exposição. A adaptação de matriz é mais lenta que a adaptação neural. Sequência: (1) estiramento do colágeno; (2) alinhamento e crimp; (3) sinalização dos tenócitos; (4) síntese e reorganização de matriz. Relação: rigidez = Δforça dividido por Δcomprimento. Aplicação ao exercício: isometrias, excêntricos e cargas pesadas podem ser usados de forma progressiva, mas a dose deve respeitar dor e recuperação. Como medir: rigidez, deformação, dor, função e ultrassom. Erro frequente: concluir que a ausência de dor em uma sessão prova que o tecido tolerou toda a carga acumulada.",
+      },
+      {
+        label: "Ligamentos, fáscia e estabilidade",
+        detail:
+          "Ligamentos limitam movimentos extremos e fornecem informação sensorial. A fáscia conecta regiões e distribui carga, mas não substitui a função específica de músculos e articulações. A estabilidade emerge de geometria, tecidos passivos, controle neuromuscular e tarefa. Sequência: (1) restrição passiva; (2) a deformação ativa mecanorreceptores; (3) o controle muscular estabiliza; (4) a adaptação depende da direção da carga. Relação: estabilidade = estrutura + controle + contexto. Aplicação ao exercício: o treino de estabilidade deve evoluir de controle previsível para perturbações específicas, sem usar instabilidade como fim em si. Como medir: laxidez, amplitude, controle, força e testes funcionais. Erro frequente: atribuir a estabilidade de uma articulação a um único ligamento ou à 'fáscia presa'.",
+      },
+      {
+        label: "Mecanotransdução e adaptação ao treinamento",
+        detail:
+          "Integrinas, canais mecanossensíveis, citoesqueleto e matriz convertem deformação em sinalização. Magnitude, taxa, duração, frequência e recuperação formam a assinatura mecânica. Estímulos muito baixos não ultrapassam o limiar; excesso sem recuperação aumenta o dano e reduz a qualidade da adaptação. Sequência: (1) a carga deforma o tecido; (2) os sensores mudam de conformação; (3) quinases e genes são ativados; (4) a matriz se reorganiza. Relação: adaptação ≈ estímulo específico menos custo de recuperação. Aplicação ao exercício: a progressão deve considerar o tecido limitante, porque a capacidade muscular pode aumentar antes da tolerância de tendão, cartilagem ou osso. Como medir: carga externa, taxa, impacto, dor, função e exposição semanal. Erro frequente: achar que a mecanotransdução exige microlesão relevante; a sinalização ocorre com deformação fisiológica.",
+      },
     ],
   },
   timeline: {
@@ -1726,10 +1830,15 @@ const capSistemaEsqueletico = deepLesson({
     ],
   },
   apply: "Progrida a carga considerando o tecido mais lento, não só a força muscular: combine amplitude, velocidade, volume e tolerância, com progressão gradual. Responder à abertura: a força muscular subiu mais rápido que a tolerância do tendão; a dor sinaliza que a assinatura mecânica (volume e velocidade) avançou além da capacidade atual do tendão, que adapta mais devagar.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Impacto, tração muscular e variedade de direções oferecem estímulos osteogênicos distintos de exercícios sem carga.",
-    "Ausência de dor em uma sessão não prova que o tecido tolerou toda a carga acumulada na semana.",
-    "Dor persistente, derrame articular ou sinais de fratura por estresse mudam a decisão e podem exigir encaminhamento.",
+    "DXA representa a densidade mineral areal. Limite: não mede toda a geometria nem a qualidade do osso.",
+    "Ultrassom representa espessura e estrutura do tendão. Limite: operador e posição importam.",
+    "Dor representa experiência e sinal de tolerância. Limite: não é medida direta de dano.",
+    "Salto e força representam capacidade funcional. Limite: integram múltiplos tecidos, então não isolam o limitante.",
+    "Carga semanal representa a exposição mecânica acumulada. Limite: precisa de volume e intensidade juntos para significar algo.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Progredir volume e velocidade só pela força muscular, ou tratar a dor tendínea como simples 'fraqueza' a ser vencida com mais carga.",
@@ -1751,6 +1860,17 @@ const capSistemaEsqueletico = deepLesson({
       { id: "a", label: "Progredir a carga respeitando o tecido mais lento, ajustando volume, velocidade e recuperação." },
       { id: "b", label: "Progredir só pela força muscular, ignorando o tendão." },
     ], "a", "Tendão, cartilagem e osso adaptam mais devagar; a progressão deve considerar o tecido limitante."),
+    q("q3", "variavel", "Por que a cartilagem precisa de movimento?", [
+      { id: "a", label: "Porque é avascular: a compressão expulsa fluido e o reingresso contribui para a nutrição." },
+      { id: "b", label: "Porque o movimento aumenta o fluxo sanguíneo dentro da cartilagem." },
+    ], "a", "A cartilagem não tem vasos; carga moderada e movimento são necessários para a homeostase."),
+    q("q4", "verdadeiro-falso", "A mecanotransdução exige microlesão relevante para disparar a adaptação.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "A sinalização ocorre com deformação fisiológica; excesso sem recuperação aumenta dano e piora a adaptação."),
+    q("q5", "conduta", "Uma atleta ativa com baixa disponibilidade energética e ciclos irregulares tem risco ósseo porque:", [
+      { id: "a", label: "O déficit energético reduz a formação óssea, mesmo com cálcio sérico normal." },
+      { id: "b", label: "O cálcio sérico cai primeiro e avisa o problema." },
+    ], "a", "O corpo prioriza o Ca2+ sérico: o osso muda sem que o sangue mude, por isso o exame normal não tranquiliza."),
   ],
   uncertainty: "DXA não mede toda a geometria e qualidade; ultrassom depende de operador; dor é experiência e sinal de tolerância, não medida direta de dano. Fraturas por estresse e derrames pedem avaliação.",
   related: [
@@ -1776,12 +1896,36 @@ const capSistemaReprodutor = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Eixo hipotálamo-hipófise-gônadas", detail: "Saída gonadal = drive pulsátil menos feedback. GnRH pulsátil controla LH e FSH; a frequência e a amplitude dos pulsos mudam com energia, sono, estresse e idade. Energia disponível e recuperação preservam a função." },
-      { label: "Sistema reprodutor masculino", detail: "LH estimula testosterona; FSH e testosterona sustentam a espermatogênese. A testosterona circula ligada a proteínas, com pequena fração livre; uma medida hormonal pós-treino não explica o ganho muscular de longo prazo." },
-      { label: "Ciclo ovariano e menstrual", detail: "Fase folicular com estradiol crescente leva ao pico de LH e à ovulação; o corpo lúteo produz progesterona na fase lútea. O desempenho médio varia pouco entre fases, mas sintomas individuais podem justificar ajustes." },
-      { label: "Gestação e exercício", detail: "A gestação aumenta volume plasmático, débito, ventilação e demanda energética, e muda o centro de massa. Sem contraindicações, o exercício adaptado pode ser benéfico; sinais de alerta e a orientação obstétrica têm prioridade." },
-      { label: "Menopausa, envelhecimento e composição corporal", detail: "A queda de estradiol altera termorregulação e acelera a perda óssea; com a idade, massa muscular e aptidão tendem a cair. Treino de força e endurance preserva função: envelhecer não elimina a capacidade de adaptação." },
-      { label: "Disponibilidade energética e função reprodutiva", detail: "Déficit energético persistente suprime eixos e pode coexistir com alterações menstruais, pior saúde óssea e desempenho. Ocorre em qualquer sexo, e peso estável não exclui baixa disponibilidade energética." },
+      {
+        label: "Eixo hipotálamo-hipófise-gônadas",
+        detail:
+          "O GnRH é liberado em pulsos e controla LH e FSH. As gônadas produzem gametas, esteroides sexuais e inibinas, que exercem feedback. A frequência e a amplitude dos pulsos mudam ao longo do ciclo e com energia, sono, estresse e idade. Sequência: (1) pulsos de GnRH; (2) secreção de LH e FSH; (3) produção gonadal; (4) feedback ao eixo. Relação: saída gonadal = drive pulsátil menos feedback. Aplicação ao exercício: o treino não deve ser interpretado isoladamente; energia disponível e recuperação são determinantes para preservar a função reprodutiva. Como medir: LH, FSH, estradiol, progesterona, testosterona, ciclos e sintomas. Erro frequente: concluir a partir de uma coleta única; hormônios sexuais variam no tempo e uma amostra pode ser insuficiente.",
+      },
+      {
+        label: "Sistema reprodutor masculino",
+        detail:
+          "O LH estimula as células de Leydig a produzir testosterona; FSH e testosterona sustentam as células de Sertoli e a espermatogênese. Temperatura testicular, saúde sistêmica, medicamentos e energia afetam a produção. A testosterona circula ligada a SHBG e albumina, com pequena fração livre. Sequência: (1) estímulo de Leydig; (2) suporte de Sertoli; (3) maturação espermática; (4) feedback por testosterona e inibina. Relação: a testosterona livre depende da produção e das proteínas ligantes. Aplicação ao exercício: o treino de força pode produzir alterações agudas, mas a hipertrofia não depende de picos transitórios isolados de testosterona. Como medir: testosterona total e livre, SHBG, espermograma, sintomas e função. Erro frequente: usar uma medida hormonal pós-treino para explicar o ganho muscular de longo prazo.",
+      },
+      {
+        label: "Ciclo ovariano e menstrual",
+        detail:
+          "Na fase folicular, o FSH apoia o crescimento folicular e o estradiol aumenta. Estradiol alto e sustentado favorece o pico de LH e a ovulação. O corpo lúteo produz progesterona na fase lútea, e sua regressão precede a menstruação. A temperatura basal sobe discretamente após a ovulação. Sequência: (1) recrutamento folicular; (2) produção de estradiol; (3) pico de LH e ovulação; (4) fase lútea e queda hormonal. Relação: ciclo = dinâmica folicular + ovulação + função lútea. Aplicação ao exercício: o desempenho médio varia pouco entre fases, mas sintomas individuais podem justificar ajustes de carga, hidratação e estratégia. Como medir: datas, sintomas, temperatura, ovulação, estradiol e progesterona. Erro frequente: usar o calendário como garantia de ovulação ou de fase hormonal exata em todos os ciclos.",
+      },
+      {
+        label: "Gestação e exercício",
+        detail:
+          "A gestação aumenta volume plasmático, débito cardíaco, ventilação, demanda energética e a laxidade de alguns tecidos. O útero cresce e altera o centro de massa. Em gestação sem contraindicações, o exercício adaptado pode ser benéfico, mas sinais de alerta e a orientação obstétrica têm prioridade. Sequência: (1) expansão circulatória; (2) adaptação respiratória; (3) mudança musculoesquelética; (4) crescimento fetal e placentário. Relação: demanda = metabolismo materno + placenta + feto. Aplicação ao exercício: modalidade, impacto, posição, temperatura e intensidade devem ser ajustados ao trimestre, à experiência e à avaliação. Como medir: sintomas, RPE, PA, glicemia quando indicada e acompanhamento pré-natal. Erro frequente: substituir percepção, sintomas e orientação individual por uma FC-alvo rígida.",
+      },
+      {
+        label: "Menopausa, envelhecimento e composição corporal",
+        detail:
+          "A redução da função ovariana diminui o estradiol, altera a termorregulação e acelera a perda óssea. Com a idade, massa muscular e capacidade aeróbia também tendem a cair, mas o treinamento de força e de endurance preserva função. Em homens, as mudanças androgênicas são geralmente mais graduais e heterogêneas. Sequência: (1) transição hormonal; (2) mudança de osso e músculo; (3) alteração vascular e metabólica; (4) a adaptação ao treinamento permanece possível. Relação: função = reserva biológica + treinamento menos carga de doença. Aplicação ao exercício: força, impacto apropriado, proteína, sono e manejo de sintomas são pilares para a saúde funcional no envelhecimento. Como medir: ciclos, sintomas vasomotores, densidade óssea, força e composição corporal. Erro frequente: usar o envelhecimento para justificar baixa dose crônica de exercício; ele não elimina a capacidade de adaptação.",
+      },
+      {
+        label: "Disponibilidade energética e função reprodutiva",
+        detail:
+          "Quando a energia restante após o exercício é insuficiente para as funções corporais, o organismo pode reduzir sinais como leptina, T3 e os pulsos de GnRH. Alterações menstruais, baixa libido, pior saúde óssea e queda de desempenho podem coexistir. O fenômeno pode ocorrer em qualquer sexo e em diferentes corpos. Sequência: (1) déficit energético persistente; (2) sinalização central de escassez; (3) supressão de eixos; (4) consequências ósseas e metabólicas. Relação: EA = (ingestão menos gasto do exercício) dividido pela massa livre de gordura. Aplicação ao exercício: a solução exige revisar ingestão, carga, recuperação e encaminhamento quando necessário, e não apenas 'treinar menos' sem avaliação. Como medir: energia disponível, ciclos, libido, lesões, osso, sono e desempenho. Erro frequente: usar peso estável para excluir baixa disponibilidade energética.",
+      },
     ],
   },
   timeline: {
@@ -1794,10 +1938,15 @@ const capSistemaReprodutor = deepLesson({
     ],
   },
   apply: "Trate energia, sono e recuperação como determinantes da saúde reprodutiva, não detalhes. Ajuste modalidade, impacto, posição e intensidade ao trimestre na gestação, com orientação obstétrica. Responder à abertura: os achados conectam-se por baixa disponibilidade energética, que suprime o eixo gonadal e prejudica o osso; peso estável não exclui o problema, e a solução revisa ingestão, carga e recuperação, com encaminhamento.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Na gestação sem contraindicações, exercício adaptado pode ser benéfico; FC-alvo rígida não substitui percepção, sintomas e orientação.",
-    "No envelhecimento, força, impacto apropriado, proteína e sono são pilares de saúde funcional.",
-    "Baixa disponibilidade energética pede revisar ingestão, carga e recuperação, e encaminhamento quando necessário, não apenas 'treinar menos' sem avaliação.",
+    "Calendário menstrual representa o registro de sangramento e sintomas. Limite: não confirma ovulação sozinho.",
+    "Hormônios representam concentrações em um momento específico. Limite: fase e horário importam.",
+    "Energia disponível representa a energia para as funções fisiológicas. Limite: a estimativa tem incerteza.",
+    "Densidade óssea representa um componente da saúde esquelética. Limite: interpretar com idade e histórico.",
+    "Sintomas representam sinais funcionais do eixo. Limite: requerem escuta e encaminhamento, não só número.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Concluir que, com peso estável, não há baixa disponibilidade energética, ou creditar hipertrofia a picos de testosterona pós-treino.",
@@ -1819,6 +1968,17 @@ const capSistemaReprodutor = deepLesson({
       { id: "a", label: "Usar percepção, sintomas e orientação obstétrica, não uma FC-alvo rígida." },
       { id: "b", label: "Seguir uma FC-alvo fixa, ignorando sintomas." },
     ], "a", "FC-alvo rígida não substitui percepção, sintomas e acompanhamento pré-natal."),
+    q("q3", "variavel", "O que define as fases do ciclo ovariano?", [
+      { id: "a", label: "Dinâmica folicular com estradiol crescente, pico de LH e ovulação, e função lútea com progesterona." },
+      { id: "b", label: "Apenas a data do último sangramento." },
+    ], "a", "Ciclo = dinâmica folicular + ovulação + função lútea; o calendário sozinho não confirma ovulação."),
+    q("q4", "conduta", "A hipertrofia depende de picos de testosterona logo após o treino?", [
+      { id: "a", label: "Não: ela acompanha tensão mecânica e recuperação ao longo de semanas." },
+      { id: "b", label: "Sim: o pico pós-treino é o principal determinante." },
+    ], "a", "Alterações agudas existem, mas não explicam o ganho muscular de longo prazo."),
+    q("q5", "verdadeiro-falso", "Envelhecer elimina a capacidade de adaptação ao treinamento.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "A adaptação permanece possível; força, impacto apropriado, proteína e sono preservam função."),
   ],
   uncertainty: "Calendário menstrual não confirma ovulação sozinho, e hormônios dependem de fase e horário. Diagnóstico, gestação e conduta clínica são do profissional de saúde; o papel aqui é reconhecer mecanismos e sinais.",
   related: [
@@ -1844,12 +2004,36 @@ const capSistemaTegumentar = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Pele como barreira e órgão fisiológico", detail: "Epiderme reduz perda de água; derme tem vasos, nervos e glândulas. A pele participa de circulação, imunidade e percepção; atrito, umidade e equipamento podem causar lesões que alteram tolerância e técnica." },
-      { label: "Balanço térmico e produção de calor", detail: "Armazenamento de calor = produção menos trabalho menos perdas. A troca ocorre por radiação, convecção, condução e evaporação; intensidade, roupa e ambiente são parte da dose de exercício." },
-      { label: "Fluxo sanguíneo cutâneo e controle neural", detail: "O hipotálamo aumenta a vasodilatação cutânea para transferir calor, mas isso compete com o retorno venoso e a pressão, sobretudo com desidratação. A aclimatação melhora a distribuição cardiovascular." },
-      { label: "Sudorese, sódio e individualidade", detail: "Taxa de suor alta reduz o tempo de reabsorção e eleva o sal perdido. Genética, aclimatação, intensidade e ambiente geram grande variabilidade; manchas de sal não quantificam com precisão a reposição." },
-      { label: "Hidratação, osmolaridade e desempenho", detail: "A perda de água reduz o volume plasmático e aumenta a osmolaridade, estimulando sede e ADH. Excesso de água pode diluir o sódio; a reposição considera água, sódio e carboidrato conforme a tarefa." },
-      { label: "Aclimatação, frio e ambientes extremos", detail: "Risco ambiental = estresse externo × carga interna / capacidade. A aclimatação ao calor expande o plasma e antecipa o suor, mas regride sem exposição e não torna ninguém imune a ambientes extremos." },
+      {
+        label: "Pele como barreira e órgão fisiológico",
+        detail:
+          "A epiderme reduz a perda de água e a entrada de agentes; a derme contém vasos, nervos, glândulas e matriz; o tecido subcutâneo armazena energia e isola. Queratinócitos, melanócitos e células imunes participam da proteção. A pele também produz vitamina D sob radiação adequada e comunica o estado térmico ao sistema nervoso. Sequência: (1) renovação epidérmica; (2) barreira lipídica; (3) perfusão dérmica; (4) sensação e defesa local. Relação: a perda transepidérmica depende da barreira × gradiente de vapor. Aplicação ao exercício: atrito, umidade, roupa e equipamento podem causar lesões cutâneas que alteram a tolerância e a técnica. Como medir: temperatura cutânea, integridade, hidratação da pele, sintomas e exposição solar. Erro frequente: tratar a pele como revestimento passivo; ela participa de circulação, imunidade e percepção.",
+      },
+      {
+        label: "Balanço térmico e produção de calor",
+        detail:
+          "A energia química não convertida em trabalho aparece como calor. A temperatura central depende da produção metabólica e das trocas por radiação, convecção, condução e evaporação. Em ambiente quente, os gradientes secos diminuem e a evaporação torna-se a via principal. Sequência: (1) produção metabólica; (2) transporte do calor para a pele; (3) troca com o ambiente; (4) armazenamento quando a perda é insuficiente. Relação: armazenamento de calor = produção menos trabalho menos perdas. Aplicação ao exercício: intensidade, roupa, equipamento e ambiente devem ser tratados como partes da dose de exercício. Como medir: temperatura central e cutânea, carga, ambiente, vento e umidade. Erro frequente: confundir suor produzido com suor evaporado; gotas que escorrem pouco resfriam.",
+      },
+      {
+        label: "Fluxo sanguíneo cutâneo e controle neural",
+        detail:
+          "O hipotálamo integra a temperatura central e a periférica e aumenta a vasodilatação cutânea. Isso transfere calor, mas compete com a manutenção do retorno venoso e da pressão, especialmente com desidratação. A aclimatação melhora a distribuição cardiovascular e reduz o custo relativo. Sequência: (1) detecção térmica; (2) comando simpático cutâneo; (3) vasodilatação e transferência de calor; (4) ajuste circulatório integrado. Relação: a transferência interna de calor é proporcional ao fluxo cutâneo × gradiente núcleo-pele. Aplicação ao exercício: pausas, resfriamento e redução de intensidade podem preservar a segurança quando a demanda cutânea ameaça a pressão e o desempenho. Como medir: fluxo cutâneo, FC, PA, temperatura e percepção térmica. Erro frequente: explicar o fluxo cutâneo apenas por 'vasodilatação local'; controle neural e estado circulatório são decisivos.",
+      },
+      {
+        label: "Sudorese, sódio e individualidade",
+        detail:
+          "Glândulas écrinas secretam um fluido inicialmente semelhante ao plasma; o ducto reabsorve Na+ e Cl-. Uma taxa alta de suor reduz o tempo de reabsorção e eleva a concentração de sal. Genética, aclimatação, intensidade, tamanho corporal e ambiente produzem grande variabilidade individual. Sequência: (1) secreção glandular; (2) reabsorção ductal de eletrólitos; (3) evaporação na superfície; (4) reposição de água e sódio. Relação: taxa de suor ≈ perda de massa + ingestão menos urina. Aplicação ao exercício: planos de hidratação devem partir de experiência, sede, taxa de suor e duração, evitando tanto o déficit excessivo quanto o ganho de massa por excesso. Como medir: taxa de suor, variação de massa, sódio no suor e ingestão. Erro frequente: usar manchas de sal para quantificar com precisão a necessidade de reposição.",
+      },
+      {
+        label: "Hidratação, osmolaridade e desempenho",
+        detail:
+          "A perda de água reduz o volume plasmático e aumenta a osmolaridade, estimulando sede e ADH. O impacto sobre o desempenho depende de calor, duração, intensidade e tolerância. O excesso de água pode diluir o sódio, especialmente quando a excreção está limitada. A reposição deve considerar água, sódio e carboidrato conforme a tarefa. Sequência: (1) perda de suor; (2) redução de volume e aumento de osmolaridade; (3) sede e conservação renal; (4) reposição e recuperação. Relação: perda de massa em porcentagem = (pré menos pós + ingestão menos urina) dividido pelo pré, vezes 100. Aplicação ao exercício: pesar antes e depois estima o balanço, mas não deve virar meta rígida de repor 100% durante toda a atividade. Como medir: massa corporal, sede, urina, sódio, sintomas e taxa de ingestão. Erro frequente: esquecer que desidratação e hiponatremia podem coexistir com sintomas inespecíficos; confusão exige atendimento.",
+      },
+      {
+        label: "Aclimatação, frio e ambientes extremos",
+        detail:
+          "Exposições repetidas ao calor aumentam o volume plasmático, iniciam o suor mais cedo e reduzem a concentração de sal. No frio, vasoconstrição e tremor preservam a temperatura, mas vento e água elevam a perda. A altitude acrescenta hipóxia e modifica ventilação e circulação. A adaptação é específica e regride com a ausência de exposição. Sequência: (1) repetição do estresse ambiental; (2) ajustes circulatórios e sudoríparos; (3) mudança perceptiva e comportamental; (4) perda parcial com destreinamento. Relação: risco ambiental = estresse externo × carga interna dividido pela capacidade. Aplicação ao exercício: a progressão deve reduzir a carga inicial, aumentar a exposição gradualmente e monitorar sinais de doença pelo calor ou pelo frio. Como medir: índice térmico, WBGT, temperatura, FC, percepção e sintomas. Erro frequente: tratar a aclimatação como imunidade; ela reduz o risco, mas não elimina o perigo em ambientes extremos.",
+      },
     ],
   },
   timeline: {
@@ -1862,10 +2046,15 @@ const capSistemaTegumentar = deepLesson({
     ],
   },
   apply: "Trate o ambiente térmico como parte da dose: reduza a carga inicial em calor, aumente a exposição gradualmente e monitore sinais. Guie a hidratação por experiência, sede, taxa de suor e duração. Responder à abertura: pele muito quente com piora de coordenação e confusão sugere falha de dissipação de calor; a prioridade é interromper, resfriar e buscar atendimento.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Pesagem antes e depois estima o balanço hídrico, mas não deve virar meta rígida de repor 100% durante toda a atividade.",
-    "Confusão, náusea e sintomas inespecíficos em ambiente quente exigem interrupção e atendimento; desidratação e hiponatremia podem coexistir.",
-    "A aclimatação reduz o risco, mas não elimina o perigo em ambientes extremos.",
+    "WBGT e índices de ambiente representam a carga térmica externa. Limite: não substituem o monitoramento individual.",
+    "Temperatura central representa o estado térmico interno. Limite: o método determina a validade.",
+    "Taxa de suor representa a perda líquida por tempo. Limite: varia com ambiente e intensidade.",
+    "Variação de massa representa uma estimativa de água perdida ou ganha. Limite: inclui ingestão, urina e substratos.",
+    "Percepção térmica representa a experiência subjetiva de calor ou frio. Limite: é útil com escala padronizada.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Tratar suor visível como sinônimo de resfriamento, ou confiar que a aclimatação torna o aluno imune ao calor.",
@@ -1887,6 +2076,17 @@ const capSistemaTegumentar = deepLesson({
       { id: "a", label: "Interrupção, resfriamento e atendimento." },
       { id: "b", label: "Apenas reduzir a intensidade e continuar." },
     ], "a", "Confusão em ambiente quente é sinal de alerta e exige interromper, resfriar e avaliar."),
+    q("q3", "variavel", "Por que o fluxo cutâneo compete com o retorno venoso?", [
+      { id: "a", label: "Porque a vasodilatação cutânea desloca volume para a pele, ameaçando pressão e enchimento." },
+      { id: "b", label: "Porque a pele consome o oxigênio que iria para o músculo." },
+    ], "a", "Transferir calor exige fluxo para a pele; com desidratação, isso compete com pressão e desempenho."),
+    q("q4", "conduta", "Em ambiente quente e úmido, por que fica mais difícil dissipar calor?", [
+      { id: "a", label: "Os gradientes secos diminuem e a evaporação, que vira a via principal, fica prejudicada pela umidade." },
+      { id: "b", label: "O corpo para de produzir suor." },
+    ], "a", "Radiação, convecção e condução perdem eficácia; sobra a evaporação, que a umidade limita."),
+    q("q5", "verdadeiro-falso", "Quem está aclimatado ao calor está protegido e pode ignorar o monitoramento em ambiente extremo.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "A aclimatação reduz o risco, mas não torna ninguém imune; ela também regride sem exposição."),
   ],
   uncertainty: "WBGT e temperatura têm limites de método e não substituem o monitoramento individual. Variação de massa inclui ingestão, urina e substratos; a conduta em doença pelo calor é de urgência.",
   related: [
