@@ -132,7 +132,13 @@ export function CasoDetail() {
       </Card>
 
       {apply != null && (
-        <ApplyDrawer lessonId={caso.id} lessonTitle={caso.title} defaultSummary={apply} onClose={() => setApply(null)} />
+        <ApplyDrawer
+          lessonId={caso.id}
+          lessonSlug={caso.slug}
+          lessonTitle={caso.title}
+          defaultSummary={apply}
+          onClose={() => setApply(null)}
+        />
       )}
     </div>
   );

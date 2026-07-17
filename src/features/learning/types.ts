@@ -151,6 +151,9 @@ export type ReferenceSourceType =
   | "diretriz"
   | "consenso"
   | "position-stand"
+  // Revisão narrativa: existe porque rotular uma revisão narrativa de "sistemática"
+  // para caber no enum seria dizer ao profissional que o método foi outro.
+  | "revisao"
   | "revisao-sistematica"
   | "meta-analise"
   | "ensaio-clinico"

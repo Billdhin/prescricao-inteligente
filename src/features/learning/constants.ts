@@ -63,6 +63,7 @@ export const referenceSourceLabel: Record<ReferenceSourceType, string> = {
   diretriz: "Diretriz",
   consenso: "Consenso",
   "position-stand": "Position stand",
+  revisao: "Revisão narrativa",
   "revisao-sistematica": "Revisão sistemática",
   "meta-analise": "Meta-análise",
   "ensaio-clinico": "Ensaio clínico",

@@ -260,6 +260,213 @@ const mesociclo = deepLesson({
   applyRx: "Organize o treino em blocos de algumas semanas com foco claro, progredindo a carga e reservando descargas ao final ou diante de fadiga, para equilibrar estímulo e recuperação no longo prazo.",
 });
 
+const blocos = deepLesson({
+  disciplineSlug: DISC,
+  moduleId: `m-${DISC}-modelos`,
+  moduleSlug: "modelos",
+  slug: `${DISC}--blocos`,
+  title: "Periodização em blocos",
+  subtitle: "Modelos de periodização",
+  description: "Concentrar o estímulo em poucas qualidades por vez, e o que isso cobra em troca.",
+  level: "avancado",
+  minutes: 12,
+  type: "conceito",
+  kicker: K,
+  tags: ["periodização", "blocos", "acúmulo"],
+  hero: "A periodização em blocos nasceu de uma queixa concreta do alto rendimento: treinar muitas qualidades ao mesmo tempo gera respostas fisiológicas que competem entre si, e o estímulo de cada uma acaba diluído. A resposta foi concentrar.",
+  question: "Se treinar tudo ao mesmo tempo dilui o estímulo, por que não concentrar cada qualidade em um bloco? E por que isso não é a resposta automática para o seu aluno da academia?",
+  concepts: [
+    { term: "Bloco (mesociclo concentrado)", definition: "Um período de algumas semanas com carga concentrada em um número mínimo de qualidades compatíveis entre si, em vez do desenvolvimento simultâneo de muitas." },
+    { term: "Acúmulo, transformação, realização", definition: "A sequência clássica dos blocos: primeiro construir capacidade e volume, depois converter em força ou potência, depois afinar para o desempenho. Cada bloco prepara o seguinte." },
+    { term: "Efeito residual", definition: "O que sobra de uma qualidade depois que ela deixa de ser o foco. É o que permite abandonar temporariamente uma qualidade sem perdê-la, e o que define quanto tempo um bloco pode durar." },
+  ],
+  comparison: {
+    title: "Concentrar ou distribuir",
+    leftTitle: "Blocos (concentrado)",
+    rightTitle: "Tradicional (simultâneo)",
+    leftItems: [
+      "Poucas qualidades por vez, com carga alta em cada uma.",
+      "Fadiga gerida entre blocos, não dentro de todos eles.",
+      "Permite organizar picos em datas definidas.",
+    ],
+    rightItems: [
+      "Muitas qualidades ao mesmo tempo, com carga média em cada.",
+      "Estímulo mais diluído por qualidade.",
+      "Mais simples de montar e de comunicar.",
+    ],
+    note: "Responder à abertura: concentrar realmente entrega mais estímulo por qualidade, e é por isso que o modelo existe. O preço é que a qualidade fora de foco depende do efeito residual para não cair, e o modelo pede um calendário e um nível de base que o aluno comum da academia raramente tem.",
+  },
+  apply: "Use blocos quando existir uma data e uma qualidade a priorizar: um avançado preparando uma competição, um aluno com um objetivo específico e prazo. Para a maioria, o ganho de concentrar não paga a complexidade. Se usar, garanta a manutenção mínima do que saiu de foco.",
+  special: [
+    "Iniciantes: não faz sentido; quase tudo melhora ao mesmo tempo, e concentrar não acrescenta.",
+    "Grupos especiais e retorno: a previsibilidade vale mais que a concentração; a progressão linear serve melhor.",
+    "Idosos: força e equilíbrio precisam de estímulo contínuo; abandonar uma delas por semanas cobra caro.",
+  ],
+  mistake: {
+    mistake: "Montar blocos longos e esquecer a qualidade que saiu de foco, chegando ao bloco seguinte com ela já derrubada.",
+    instead: "Mantenha um estímulo mínimo do que não está em foco. O modelo prevê a manutenção, não o abandono; sem ela, cada bloco reconstrói o que o anterior perdeu.",
+  },
+  professionalCase: {
+    prompt: "Aluno intermediário de academia, sem competição, quer hipertrofia. Vale montar blocos concentrados?",
+    choices: [
+      { id: "c1", label: "Não; um modelo mais simples entrega o mesmo com menos complexidade.", tone: "recomendada", feedback: "Coerente com a evidência disponível: com volume equiparado, os modelos empatam para hipertrofia. A complexidade extra não compra resultado aqui." },
+      { id: "c2", label: "Sim, porque é o modelo mais avançado e ele já é intermediário.", tone: "cautela", feedback: "Mais complexo não significa melhor. A base de blocos vem de atletas com calendário; sem data-alvo, o modelo resolve um problema que este aluno não tem." },
+      { id: "c3", label: "Talvez, se ele tiver um objetivo com data e aceitar a estrutura.", tone: "aceitavel", feedback: "Defensável se houver data e adesão. Ainda assim, confira se o ganho justifica a complexidade de comunicar e acompanhar." },
+    ],
+  },
+  quiz: [
+    q("q1", "variavel", "A sequência clássica dos blocos é:", [
+      { id: "a", label: "Acúmulo, transformação, realização." },
+      { id: "b", label: "Realização, acúmulo, transformação." },
+    ], "a", "Primeiro se constrói capacidade (acúmulo), depois se converte em força ou potência (transformação), depois se afina para o desempenho (realização)."),
+    q("q2", "verdadeiro-falso", "A periodização em blocos tem evidência estabelecida de superioridade para o aluno de academia.", [
+      { id: "v", label: "Verdadeiro" },
+      { id: "f", label: "Falso" },
+    ], "f", "A base do modelo vem de atletas. Nos estudos com volume equiparado, os modelos empatam para hipertrofia; transportar o achado para a academia é uma extrapolação, não um resultado."),
+  ],
+  uncertainty: "A revisão de Issurin encontrou vantagem do modelo em blocos multi-alvo em 28 estudos, mas em atletas de endurance, esportes coletivos e força/potência. O modelo unidirecional concentrado melhorou componentes de aptidão sem melhorar o desempenho específico. Nada disso foi testado no aluno comum de academia, e a meta-análise de volume equiparado não mostra diferença entre modelos para hipertrofia.",
+  related: [
+    { title: "Periodização linear e ondulatória", href: `/aprender/conteudos/${DISC}--linear-ondulatoria`, type: "comparacao" },
+    { title: "Mesociclo", href: `/aprender/conteudos/${DISC}--mesociclo`, type: "conceito" },
+    { title: "Especificidade", href: `/aprender/conteudos/${DISC}--especificidade`, type: "conceito" },
+  ],
+  refs: ["ref-issurin-blocos-2016", "ref-issurin-periodizacao-2010", "ref-acsm-progressao-2009"],
+  applyRx: "Reserve os blocos para quem tem base e uma data a atingir. Se usar, sequencie acúmulo, transformação e realização, e garanta a manutenção mínima da qualidade que saiu de foco.",
+});
+
+const flexivel = deepLesson({
+  disciplineSlug: DISC,
+  moduleId: `m-${DISC}-modelos`,
+  moduleSlug: "modelos",
+  slug: `${DISC}--flexivel`,
+  title: "Periodização flexível",
+  subtitle: "Modelos de periodização",
+  description: "Manter a estrutura quando a agenda do aluno não colabora, sem virar treino por impulso.",
+  level: "intermediario",
+  minutes: 10,
+  type: "conceito",
+  kicker: K,
+  tags: ["periodização", "flexível", "adesão"],
+  hero: "O plano perfeito que o aluno não cumpre perde para o plano razoável que ele cumpre. A periodização flexível trata a agenda real como uma variável do plano, e não como um defeito do aluno.",
+  question: "O aluno faltou na terça, que era o dia pesado, e aparece na quinta. Você faz o treino pesado atrasado, pula ele, ou deixa o aluno escolher?",
+  concepts: [
+    { term: "Periodização flexível", definition: "As ênfases da semana ficam definidas, mas qual delas entra em cada dia se decide perto da sessão, conforme a disponibilidade e o estado do aluno. É a ondulatória com a ordem solta." },
+    { term: "Estímulo mínimo da semana", definition: "O que precisa acontecer para a semana ter valido: cada qualidade prioritária recebendo pelo menos uma sessão. É o que separa flexibilidade de improviso." },
+  ],
+  timeline: {
+    title: "A semana que não saiu como o planejado",
+    items: [
+      { time: "Segunda", title: "Sessão pesada", detail: "Acontece conforme o previsto." },
+      { time: "Terça", title: "O aluno falta", detail: "Na ordem fixa, a sessão moderada simplesmente se perde, e é sempre a mesma que se perde." },
+      { time: "Quinta", title: "Ele aparece", detail: "Na flexível, você escolhe a ênfase que ainda não aconteceu e que mais protege o objetivo." },
+      { time: "Sábado", title: "A semana fecha", detail: "As ênfases prioritárias foram cumpridas, mesmo fora da ordem original." },
+    ],
+  },
+  apply: "Defina as ênfases da semana e o estímulo mínimo de cada uma. Quando um dia cair, escolha na hora a ênfase que ainda falta e que mais protege o objetivo, em vez de repetir a sessão do dia ou de perder a semana.",
+  special: [
+    "Rotinas imprevisíveis: é onde o modelo rende, porque a falta de um dia deixa de derrubar a semana.",
+    "Iniciantes: combina bem, desde que as ênfases estejam escritas; sem elas, flexível vira aleatório.",
+    "Grupos especiais: a flexibilidade cabe na ordem das sessões, nunca nos cuidados de segurança, que não são negociáveis pela agenda.",
+  ],
+  mistake: {
+    mistake: "Chamar de flexível o treino decidido no impulso do dia, sem ênfases escritas nem estímulo mínimo definido.",
+    instead: "Flexível é escolher entre opções planejadas, não escolher do zero. Escreva as ênfases da semana e o mínimo de cada uma; a liberdade é de ordem, não de conteúdo.",
+  },
+  professionalCase: {
+    prompt: "Aluno com agenda instável falta um treino por semana, em média, e o resultado estagnou. O que muda primeiro?",
+    choices: [
+      { id: "c1", label: "Deixar as ênfases da semana definidas e escolher a do dia conforme quem aparece.", tone: "recomendada", feedback: "Ataca a causa: com ordem fixa, a falta sempre derruba a mesma sessão, e aquela qualidade nunca recebe estímulo." },
+      { id: "c2", label: "Aumentar o volume dos dias em que ele aparece para compensar.", tone: "cautela", feedback: "Compensar volume num dia só concentra fadiga e não resolve a qualidade que ficou sem estímulo. O problema é de distribuição, não de dose." },
+      { id: "c3", label: "Reduzir o plano para dois dias fixos que ele consiga cumprir.", tone: "aceitavel", feedback: "Defensável e honesto. Menos dias cumpridos podem render mais que três planejados e dois cumpridos." },
+    ],
+  },
+  quiz: [
+    q("q1", "verdadeiro-falso", "Periodização flexível significa deixar o aluno treinar o que quiser no dia.", [
+      { id: "v", label: "Verdadeiro" },
+      { id: "f", label: "Falso" },
+    ], "f", "A flexibilidade é na ordem das ênfases planejadas. Sem ênfases escritas e sem estímulo mínimo, deixa de ser um modelo e vira improviso."),
+    q("q2", "variavel", "O que a flexibilidade protege quando o aluno falta um dia?", [
+      { id: "a", label: "O estímulo das qualidades prioritárias da semana." },
+      { id: "b", label: "A carga máxima do exercício principal." },
+    ], "a", "Escolhendo a ênfase que ainda falta, a semana fecha com as qualidades prioritárias estimuladas, mesmo fora da ordem original."),
+  ],
+  uncertainty: "A evidência específica é pequena. O ensaio que sustenta o modelo randomizou 16 iniciantes por 12 semanas com volume equiparado: deixar o aluno escolher o dia melhorou mais o leg press, sem diferença no supino nem no salto. Isso sustenta a plausibilidade da flexibilidade, não uma superioridade estabelecida. O argumento mais forte do modelo continua sendo a adesão.",
+  related: [
+    { title: "Periodização linear e ondulatória", href: `/aprender/conteudos/${DISC}--linear-ondulatoria`, type: "comparacao" },
+    { title: "Periodização autorregulada", href: `/aprender/conteudos/${DISC}--autorregulada`, type: "conceito" },
+    { title: "Variação", href: `/aprender/conteudos/${DISC}--variacao`, type: "conceito" },
+  ],
+  refs: ["ref-mcnamara-flexivel-2010", "ref-acsm-progressao-2009"],
+  applyRx: "Escreva as ênfases da semana e o estímulo mínimo de cada uma; deixe a ordem livre. Quando um dia cair, escolha a ênfase que falta em vez de perder a semana.",
+});
+
+const autorregulada = deepLesson({
+  disciplineSlug: DISC,
+  moduleId: `m-${DISC}-modelos`,
+  moduleSlug: "modelos",
+  slug: `${DISC}--autorregulada`,
+  title: "Periodização autorregulada",
+  subtitle: "Modelos de periodização",
+  description: "Ajustar a carga do dia ao estado do aluno, com um instrumento que ele saiba usar.",
+  level: "avancado",
+  minutes: 12,
+  type: "conceito",
+  kicker: K,
+  tags: ["periodização", "autorregulação", "repetições de reserva"],
+  hero: "A carga que estava certa no papel na segunda-feira pode estar errada na quinta, depois de uma noite ruim. A autorregulação aceita isso e transforma o estado do dia em uma variável do plano, em vez de fingir que ele não existe.",
+  question: "Se o plano diz 80% de 1RM e hoje o aluno dormiu quatro horas, você mantém a carga, reduz no olho, ou tem um jeito melhor de decidir?",
+  concepts: [
+    { term: "Autorregulação", definition: "Ajustar o treino com base na medida do desempenho do dia ou na capacidade percebida pelo aluno, dentro dos limites que o plano definiu." },
+    { term: "Repetições de reserva", definition: "Quantas repetições ainda dariam para fazer ao fim da série. É o instrumento que traduz esforço em número: PSE 10 significa nenhuma de reserva, PSE 9 significa uma, e assim por diante." },
+    { term: "Teto de esforço", definition: "O limite que o plano fixa (por exemplo, não passar de 2 repetições de reserva). A carga varia, o teto não; é ele que impede a autorregulação de virar treinar até a falha todo dia." },
+  ],
+  mechanism: {
+    title: "Como a carga do dia é decidida",
+    steps: [
+      { label: "O plano fixa a faixa e o teto", detail: "Não é o aluno que decide o que treinar: o plano define a faixa de repetições e com quantas repetições de reserva a série deve terminar." },
+      { label: "A série informa o estado", detail: "O aluno executa e relata quantas repetições ainda daria. Nos dados de Zourdos, essa percepção acompanha a velocidade da barra: quanto mais lenta a repetição, maior o esforço relatado." },
+      { label: "A carga se ajusta", detail: "Se a série terminou com mais reserva que o previsto, a carga sobe; com menos, desce. O estímulo pretendido é mantido apesar do dia." },
+      { label: "O teto protege", detail: "Como o limite de esforço é fixo, um dia ruim vira menos carga, e não uma série até a falha com uma carga que o aluno não tem hoje." },
+    ],
+  },
+  apply: "Autorregule quando o aluno souber usar a escala. Calibre antes: peça a estimativa de reserva e confira com o que ele de fato consegue fazer. Sem calibração, o número relatado é um chute com aparência de medida.",
+  special: [
+    "Iniciantes: a percepção ainda é imprecisa; a autorregulação chega depois que a técnica e a leitura de esforço se consolidam.",
+    "Grupos especiais: útil para respeitar o dia, mas o teto de esforço vem dos cuidados da condição, não da vontade do aluno.",
+    "Fases de sono ou estresse variáveis: é onde o modelo mais protege, porque a carga acompanha o estado sem exigir carga fixa.",
+  ],
+  mistake: {
+    mistake: "Confundir autorregular com treinar sempre até a falha, ou pedir a percepção de esforço sem nunca ter calibrado a escala com o aluno.",
+    instead: "Autorregular é manter o esforço pretendido variando a carga. Ensine a escala, confira a estimativa contra o desempenho real e fixe um teto de reserva antes de usar o número para decidir.",
+  },
+  professionalCase: {
+    prompt: "Aluno avançado, plano com 3 séries a 2 repetições de reserva. Hoje ele relata reserva 4 na carga prevista. O que fazer?",
+    choices: [
+      { id: "c1", label: "Subir a carga até a série terminar com cerca de 2 de reserva.", tone: "recomendada", feedback: "É exatamente o que o modelo propõe: a carga serve ao esforço pretendido, não o contrário. Hoje ele está bem e a carga do papel ficou leve." },
+      { id: "c2", label: "Manter a carga do papel, porque o plano é o plano.", tone: "aceitavel", feedback: "Não é errado, mas desperdiça o dia bom. Se a intenção era 2 de reserva, o estímulo de hoje ficou abaixo do planejado." },
+      { id: "c3", label: "Fazer até a falha, já que ele está bem.", tone: "cautela", feedback: "Isso rompe o teto que o plano definiu e troca autorregulação por fadiga extra, que é o erro mais comum do modelo." },
+    ],
+  },
+  quiz: [
+    q("q1", "variavel", "Numa série que termina com PSE 9 na escala de repetições de reserva, o aluno:", [
+      { id: "a", label: "Ainda conseguiria fazer 1 repetição." },
+      { id: "b", label: "Chegou à falha e não faria nenhuma." },
+    ], "a", "A escala ancora o esforço no que sobra: PSE 10 é nenhuma repetição de reserva, PSE 9 é uma, PSE 8 são duas."),
+    q("q2", "verdadeiro-falso", "A autorregulação tem evidência ampla e consolidada de superioridade sobre a carga fixa.", [
+      { id: "v", label: "Verdadeiro" },
+      { id: "f", label: "Falso" },
+    ], "f", "A revisão de Greig aponta o contrário: apesar de existir como estrutura desde os anos 1940, a pesquisa sistemática sobre a utilidade ampla ainda é limitada, e até a terminologia é inconsistente entre estudos."),
+  ],
+  uncertainty: "A autorregulação é mais um bom princípio que um resultado fechado. A revisão de Greig mostra que os estudos usam definições diferentes de prontidão, fadiga e resposta, o que impede somar os achados. O que está bem apoiado é o instrumento: a escala de repetições de reserva se relaciona de forma inversa e forte com a velocidade da barra, o que a torna utilizável na sala.",
+  related: [
+    { title: "Periodização flexível", href: `/aprender/conteudos/${DISC}--flexivel`, type: "conceito" },
+    { title: "Periodização linear e ondulatória", href: `/aprender/conteudos/${DISC}--linear-ondulatoria`, type: "comparacao" },
+    { title: "Mesociclo", href: `/aprender/conteudos/${DISC}--mesociclo`, type: "conceito" },
+  ],
+  refs: ["ref-greig-autorregulacao-2020", "ref-zourdos-rir-2016", "ref-helms-rir-2016"],
+  applyRx: "Fixe a faixa e o teto de repetições de reserva no plano e deixe a carga do dia acompanhar o estado do aluno. Calibre a escala antes de usá-la para decidir.",
+});
+
 export const periodizacaoModules: Module[] = [
   deepModule({
     id: `m-${DISC}-principios`,
@@ -281,9 +488,29 @@ export const periodizacaoModules: Module[] = [
     order: 2,
     level: "avancado",
     prerequisites: [`m-${DISC}-principios`],
-    lessons: [linearOndulatoria, mesociclo],
+    lessons: [linearOndulatoria, blocos, mesociclo],
     applications: ["Escolher e ajustar o modelo pela resposta e pela adesão"],
+  }),
+  deepModule({
+    id: `m-${DISC}-ajuste`,
+    disciplineId: DISC_ID,
+    slug: "ajuste-a-realidade",
+    title: "Ajuste à realidade do aluno",
+    objective: "Manter o plano de pé quando a agenda e o dia do aluno não colaboram.",
+    order: 3,
+    level: "avancado",
+    prerequisites: [`m-${DISC}-modelos`],
+    lessons: [flexivel, autorregulada],
+    applications: ["Proteger o estímulo quando falta um dia", "Ajustar a carga ao estado do dia com um instrumento calibrado"],
   }),
 ];
 
-export const periodizacaoLessons: Lesson[] = [especificidade, variacao, linearOndulatoria, mesociclo];
+export const periodizacaoLessons: Lesson[] = [
+  especificidade,
+  variacao,
+  linearOndulatoria,
+  blocos,
+  mesociclo,
+  flexivel,
+  autorregulada,
+];

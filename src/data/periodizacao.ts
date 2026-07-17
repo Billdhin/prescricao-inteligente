@@ -261,8 +261,8 @@ export const MODELOS_PERIODIZACAO: ModeloPeriodizacao[] = [
       "Blocos longos demais, que deixam cair as outras qualidades",
       "Ignorar a manutenção mínima do que não está sendo enfatizado",
     ],
-    refIds: ["acsm-progressao-2009", "moesgaard-periodizacao-2022"],
-    aprenderHref: "/aprender/conteudos/planejamento-e-periodizacao--mesociclo",
+    refIds: ["issurin-blocos-2016", "issurin-periodizacao-2010", "moesgaard-periodizacao-2022"],
+    aprenderHref: "/aprender/conteudos/planejamento-e-periodizacao--blocos",
   },
   {
     id: "flexivel",
@@ -291,8 +291,8 @@ export const MODELOS_PERIODIZACAO: ModeloPeriodizacao[] = [
       "Virar 'treinar por impulso' e perder a estrutura",
       "Não garantir o estímulo mínimo de cada qualidade na semana",
     ],
-    refIds: ["acsm-progressao-2009"],
-    aprenderHref: "/aprender/conteudos/planejamento-e-periodizacao--linear-ondulatoria",
+    refIds: ["mcnamara-flexivel-2010", "acsm-progressao-2009"],
+    aprenderHref: "/aprender/conteudos/planejamento-e-periodizacao--flexivel",
   },
   {
     id: "autorregulada",
@@ -321,8 +321,8 @@ export const MODELOS_PERIODIZACAO: ModeloPeriodizacao[] = [
       "Usar percepção de esforço sem calibrar com o aluno",
       "Confundir autorregulação com treinar sempre até a falha",
     ],
-    refIds: ["acsm-progressao-2009"],
-    aprenderHref: "/aprender/conteudos/planejamento-e-periodizacao--linear-ondulatoria",
+    refIds: ["greig-autorregulacao-2020", "zourdos-rir-2016", "acsm-progressao-2009"],
+    aprenderHref: "/aprender/conteudos/planejamento-e-periodizacao--autorregulada",
   },
 ];
 

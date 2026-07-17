@@ -1,12 +1,13 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { X, GraduationCap, CheckCircle2 } from "lucide-react";
+import { X, GraduationCap, CheckCircle2, CalendarRange } from "lucide-react";
 import { buttonClasses, Card } from "@/components/ui/primitives";
 import { useDialog } from "@/lib/useDialog";
 import { useAlunos } from "@/lib/store";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useAprender } from "../store";
+import { MODELOS_PERIODIZACAO } from "@/data/periodizacao";
 
 /**
  * Ponte Aprender → Atender: aplicar um conhecimento como justificativa em uma
@@ -15,11 +16,13 @@ import { useAprender } from "../store";
  */
 export function ApplyDrawer({
   lessonId,
+  lessonSlug,
   lessonTitle,
   defaultSummary,
   onClose,
 }: {
   lessonId: string;
+  lessonSlug: string;
   lessonTitle: string;
   defaultSummary: string;
   onClose: () => void;
@@ -36,6 +39,11 @@ export function ApplyDrawer({
 
   const prescsDoAluno = prescricoes.filter((p) => p.alunoId === alunoId);
   const aluno = alunos.find((a) => a.id === alunoId);
+
+  // A ponte de volta ao Atender existe pelo próprio link que o modelo declara para a aula,
+  // e não por uma segunda lista de slugs que sairia do ar em silêncio. É o SLUG que casa
+  // com o href; `lesson.id` vem prefixado com "l-" e nunca casaria.
+  const modeloDaAula = MODELOS_PERIODIZACAO.find((m) => m.aprenderHref?.endsWith(`/${lessonSlug}`));
 
   const confirmar = () => {
     if (!justification.trim()) return;
@@ -83,12 +91,23 @@ export function ApplyDrawer({
               integração completa estiver ativa.
             </p>
             <div className="mt-2 flex flex-wrap justify-center gap-2">
+              {/* Aula de um modelo de periodização: o caminho natural depois de estudar o
+                  modelo é montar um plano com ele. O motor aceita a escolha e mostra, no
+                  raciocínio, o que ele sugeriria para o caso. */}
+              {modeloDaAula && aluno && (
+                <Link
+                  to={`/prescrever-treino?aluno=${aluno.id}&modelo=${modeloDaAula.id}`}
+                  className={buttonClasses("primary", "sm")}
+                >
+                  <CalendarRange className="h-4 w-4" /> Montar plano com {modeloDaAula.nome.toLowerCase()}
+                </Link>
+              )}
               {aluno && (
                 <Link to={`/alunos/${aluno.id}`} className={buttonClasses("secondary", "sm")}>
                   Abrir perfil do aluno
                 </Link>
               )}
-              <button onClick={onClose} className={buttonClasses("primary", "sm")}>
+              <button onClick={onClose} className={buttonClasses(modeloDaAula && aluno ? "ghost" : "primary", "sm")}>
                 Concluir
               </button>
             </div>

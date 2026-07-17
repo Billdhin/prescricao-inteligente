@@ -35,6 +35,12 @@ export interface GerarPlanoInput {
   frequencia: number;
   grupoEspecial?: string;
   disponibilidade?: string;
+  /**
+   * Modelo escolhido pelo profissional (por exemplo, vindo de uma aula do Aprender).
+   * A escolha vale, porque quem decide é ele; mas o que o motor escolheria continua
+   * visível como alternativa e é dito no raciocínio, para a decisão ser informada.
+   */
+  modeloPreferido?: ModeloPeriodizacaoId;
 }
 
 export interface PlanoGerado {
@@ -58,7 +64,20 @@ const nid = (p: string) => `${p}-${Date.now().toString(36)}-${(_seq++).toString(
 function escolherModelos(input: GerarPlanoInput): {
   principal: ModeloPeriodizacaoId;
   alternativa?: ModeloPeriodizacaoId;
+  /** o que o motor escolheria sozinho, quando o profissional escolheu outro */
+  sugeridoPeloMotor?: ModeloPeriodizacaoId;
 } {
+  // O profissional escolheu: a escolha dele manda, e a do motor vira a alternativa.
+  // Trocar a escolha dele em silêncio seria decidir por ele; escondê-la seria pior.
+  if (input.modeloPreferido) {
+    const { principal: doMotor } = escolherModelos({ ...input, modeloPreferido: undefined });
+    return {
+      principal: input.modeloPreferido,
+      alternativa: doMotor !== input.modeloPreferido ? doMotor : undefined,
+      sugeridoPeloMotor: doMotor,
+    };
+  }
+
   const { objetivo, nivel, grupoEspecial } = input;
   const treinado = NIVEL_ORDEM[nivel] >= 1;
 
@@ -293,7 +312,7 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
 /* ----------------------------------- Entrada pública ----------------------------------- */
 
 export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
-  const { principal, alternativa } = escolherModelos(input);
+  const { principal, alternativa, sugeridoPeloMotor } = escolherModelos(input);
 
   const macroPrincipal =
     montarMacrocicloGrupo(input, principal) ?? montarMacrocicloGenerico(input, principal);
@@ -309,6 +328,11 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
 
   const raciocinio = [
     `Modelo principal: ${modP.nome}. ${modP.resumo}`,
+    // Quando a escolha foi do profissional e difere da do motor, o plano diz as duas.
+    // Silenciar a divergência transformaria a ferramenta em carimbo da escolha dele.
+    sugeridoPeloMotor && sugeridoPeloMotor !== principal
+      ? `Este modelo foi escolhido por você. Pelo objetivo, nível e condição, o ponto de partida do sistema seria ${getModelo(sugeridoPeloMotor).nome}, que fica como alternativa para comparar.`
+      : "",
     grupo
       ? // O raciocínio também é impresso para o aluno, então ele nomeia o programa, não a
         // condição. A condição segue à vista do profissional no selo do plano e no perfil.

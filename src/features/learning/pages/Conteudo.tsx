@@ -155,7 +155,13 @@ export function Conteudo() {
       </div>
 
       {apply != null && (
-        <ApplyDrawer lessonId={lesson.id} lessonTitle={lesson.title} defaultSummary={apply} onClose={() => setApply(null)} />
+        <ApplyDrawer
+          lessonId={lesson.id}
+          lessonSlug={lesson.slug}
+          lessonTitle={lesson.title}
+          defaultSummary={apply}
+          onClose={() => setApply(null)}
+        />
       )}
     </div>
   );

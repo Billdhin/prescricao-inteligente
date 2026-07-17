@@ -20,7 +20,7 @@ import { GraficoProgressao, MesocicloCard, ModeloExplicacao, type ContextoFaixa 
 import { cn } from "@/lib/utils";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { gerarPlano } from "@/lib/gps/periodizacao";
-import { getModelo, type Macrociclo, type Mesociclo, type PlanoTreino } from "@/data/periodizacao";
+import { getModelo, MODELOS_PERIODIZACAO, type Macrociclo, type Mesociclo, type PlanoTreino } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { bibliografia } from "@/data/referencias";
@@ -64,6 +64,10 @@ export function PrescreverTreino() {
   const [plano, setPlano] = React.useState<PlanoTreino | null>(planoPre ?? null);
   const [salvo, setSalvo] = React.useState(Boolean(planoPre));
 
+  // `?modelo=` chega das aulas do Aprender ("aplicar no atendimento"): o profissional
+  // acabou de estudar um modelo e quer montar um plano com ele.
+  const modeloPreferido = MODELOS_PERIODIZACAO.find((m) => m.id === params.get("modelo"))?.id;
+
   const montar = (ctx: {
     objetivo: GpsObjetivo;
     nivel: Nivel;
@@ -73,7 +77,7 @@ export function PrescreverTreino() {
     disponibilidade?: string;
     alunoId?: string;
   }): PlanoTreino => {
-    const g = gerarPlano(ctx);
+    const g = gerarPlano({ ...ctx, modeloPreferido });
     return {
       // `uid()` e não o relógio: dois planos gerados no mesmo milissegundo receberiam o
       // mesmo id, e salvar o segundo sobrescreveria o primeiro em vez de arquivá-lo.
