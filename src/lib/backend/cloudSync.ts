@@ -1,4 +1,5 @@
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
+import type { PlanoTreino } from "@/data/periodizacao";
 import type { PerfilRemoto } from "./supabaseRepo";
 import * as repo from "./supabaseRepo";
 import { toast } from "@/lib/toast";
@@ -49,6 +50,12 @@ export function cloudSaveAvaliacao(av: Avaliacao) {
 }
 export function cloudSavePrescricao(p: Prescricao) {
   if (cloudOn) mirror(repo.salvarPrescricao(p), "a prescrição");
+}
+export function cloudSavePlano(p: PlanoTreino) {
+  if (cloudOn) mirror(repo.salvarPlano(p), "o plano de treino");
+}
+export function cloudRemovePlano(id: string) {
+  if (cloudOn) mirror(repo.removerPlano(id), "a remoção do plano");
 }
 export function cloudSaveLiberacao(l: Liberacao) {
   if (cloudOn) mirror(repo.salvarLiberacao(l), "a liberação");

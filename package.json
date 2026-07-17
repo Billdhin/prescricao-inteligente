@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "gen:seed": "tsx scripts/gen-seed-sql.ts",
     "check:supabase": "node scripts/check-supabase.mjs",
-    "check:metricas": "tsx scripts/check-metricas.ts"
+    "check:metricas": "tsx scripts/check-metricas.ts",
+    "check:faixas": "tsx scripts/check-faixas.ts",
+    "check:documentos": "tsx scripts/check-documentos.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
+import type { PlanoTreino } from "@/data/periodizacao";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 import {
@@ -8,6 +9,8 @@ import {
   cloudRemoveAluno,
   cloudSaveAvaliacao,
   cloudSavePrescricao,
+  cloudSavePlano,
+  cloudRemovePlano,
   cloudSaveLiberacao,
   cloudSavePerfil,
 } from "@/lib/backend/cloudSync";
@@ -269,6 +272,8 @@ interface AlunosState {
   alunos: Aluno[];
   avaliacoes: Avaliacao[];
   prescricoes: Prescricao[];
+  /** planos de treino (periodização longitudinal do "Prescrever treino") */
+  planos: PlanoTreino[];
   /** liberações do Semáforo (gate pré-sessão do Motor RCD) */
   liberacoes: Liberacao[];
   addAluno: (a: Aluno) => void;
@@ -277,6 +282,9 @@ interface AlunosState {
   addAvaliacao: (av: Avaliacao) => void;
   addPrescricao: (p: Prescricao) => void;
   archivePrescricao: (id: string) => void;
+  addPlano: (p: PlanoTreino) => void;
+  updatePlano: (id: string, patch: Partial<PlanoTreino>) => void;
+  removePlano: (id: string) => void;
   addLiberacao: (l: Liberacao) => void;
   /** carrega os alunos de demonstração (para experimentar sem cadastrar) */
   loadExamples: () => void;
@@ -289,6 +297,7 @@ export const useAlunos = create<AlunosState>()(
       alunos: [],
       avaliacoes: [],
       prescricoes: [],
+      planos: [],
       liberacoes: [],
       loadExamples: () => {
         set({ alunos: seedAlunos, avaliacoes: seedAvaliacoes, prescricoes: seedPrescricoes });
@@ -311,6 +320,7 @@ export const useAlunos = create<AlunosState>()(
           alunos: s.alunos.filter((a) => a.id !== id),
           avaliacoes: s.avaliacoes.filter((a) => a.alunoId !== id),
           prescricoes: s.prescricoes.filter((p) => p.alunoId !== id),
+          planos: s.planos.filter((p) => p.alunoId !== id),
           liberacoes: s.liberacoes.filter((l) => l.alunoId !== id),
         }));
         // o repositório apaga em cascata avaliações/prescrições/liberações do aluno
@@ -357,6 +367,37 @@ export const useAlunos = create<AlunosState>()(
           if (x) cloudSavePrescricao(x);
         });
       },
+      // O NOVO plano é o vigente: os anteriores "ativo" do mesmo aluno são arquivados
+      // (mesma regra da prescrição: o aluno não pode ter dois planos "ativos" e ninguém
+      // saber qual vale).
+      addPlano: (p) => {
+        const arquivarIds = get()
+          .planos.filter((x) => x.alunoId === p.alunoId && x.status === "ativo")
+          .map((x) => x.id);
+        set((s) => ({
+          planos: [
+            p,
+            ...s.planos.map((x) =>
+              x.alunoId === p.alunoId && x.status === "ativo" ? { ...x, status: "arquivado" as const } : x,
+            ),
+          ],
+        }));
+        cloudSavePlano(p);
+        const atuais = get().planos;
+        arquivarIds.forEach((pid) => {
+          const x = atuais.find((y) => y.id === pid);
+          if (x) cloudSavePlano(x);
+        });
+      },
+      updatePlano: (id, patch) => {
+        set((s) => ({ planos: s.planos.map((p) => (p.id === id ? { ...p, ...patch } : p)) }));
+        const atual = get().planos.find((p) => p.id === id);
+        if (atual) cloudSavePlano(atual);
+      },
+      removePlano: (id) => {
+        set((s) => ({ planos: s.planos.filter((p) => p.id !== id) }));
+        cloudRemovePlano(id);
+      },
       addLiberacao: (l) => {
         set((s) => ({ liberacoes: [l, ...s.liberacoes].slice(0, 200) }));
         cloudSaveLiberacao(l);
@@ -387,9 +428,12 @@ export const useAlunos = create<AlunosState>()(
     //     estruturado RestricaoSelecionada[] (30 restrições, gatilhos, lado, gravidade,
     //     liberação, dispositivo). migrarRestricoesLegado converte o formato antigo por
     //     merge e é idempotente (mantém o que já vier estruturado).
+    // v8: nasce a coleção `planos` (periodização do "Prescrever treino"). Aditivo: o
+    //     backfill só garante o array vazio em quem vem de uma versão anterior; nada do
+    //     que o profissional já criou é tocado.
     {
       name: "pi-alunos",
-      version: 7,
+      version: 8,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -433,6 +477,8 @@ export const useAlunos = create<AlunosState>()(
             answers: { ...pr.answers, restricoes: migrarRestricoesLegado(pr.answers?.restricoes) },
           })),
           liberacoes: Array.isArray(p.liberacoes) ? p.liberacoes : [],
+          // v8: coleção nova; quem vem de versão anterior começa sem planos.
+          planos: Array.isArray(p.planos) ? p.planos : [],
         } as unknown as AlunosState;
       },
     },

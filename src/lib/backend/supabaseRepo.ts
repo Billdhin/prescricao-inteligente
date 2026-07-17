@@ -1,5 +1,6 @@
 import { getSupabase } from "./supabaseClient";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
+import type { PlanoTreino } from "@/data/periodizacao";
 import type { PerfilCampos, Plan } from "@/lib/store";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 
@@ -219,6 +220,60 @@ export async function salvarPrescricao(p: Prescricao): Promise<void> {
     prontuario: p.prontuario ?? null,
   });
   if (error) throw error;
+}
+
+/** Plano de treino (periodização). O macrociclo vai como documento jsonb. */
+export async function salvarPlano(p: PlanoTreino): Promise<void> {
+  const { error } = await getSupabase().from("planos").upsert({
+    id: p.id,
+    user_id: await uid(),
+    aluno_id: p.alunoId,
+    data: new Date(p.data).toISOString(),
+    titulo: p.titulo,
+    objetivo: p.objetivo,
+    nivel: p.nivel,
+    semanas: p.semanas,
+    frequencia: p.frequenciaSemanal,
+    disponibilidade: p.disponibilidade ?? null,
+    modelo_id: p.modeloId,
+    modelo_alt_id: p.modeloAltId ?? null,
+    grupo_especial: p.grupoEspecial ?? null,
+    macrociclo: p.macrociclo,
+    alternativa: p.alternativa ?? null,
+    raciocinio: p.raciocinio,
+    ref_ids: p.refIds,
+    status: p.status,
+  });
+  if (error) throw error;
+}
+
+export async function removerPlano(id: string): Promise<void> {
+  const { error } = await getSupabase().from("planos").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function listarPlanos(): Promise<PlanoTreino[]> {
+  const { data, error } = await getSupabase().from("planos").select("*").order("data", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((r: Record<string, any>) => ({
+    id: r.id,
+    alunoId: r.aluno_id,
+    data: new Date(r.data).getTime(),
+    titulo: r.titulo ?? "",
+    objetivo: r.objetivo,
+    nivel: r.nivel,
+    semanas: r.semanas ?? 0,
+    frequenciaSemanal: r.frequencia ?? 0,
+    disponibilidade: r.disponibilidade ?? undefined,
+    modeloId: r.modelo_id,
+    modeloAltId: r.modelo_alt_id ?? undefined,
+    grupoEspecial: r.grupo_especial ?? undefined,
+    macrociclo: r.macrociclo,
+    alternativa: r.alternativa ?? undefined,
+    raciocinio: r.raciocinio ?? "",
+    refIds: r.ref_ids ?? [],
+    status: r.status,
+  })) as PlanoTreino[];
 }
 
 export async function listarPrescricoes(): Promise<Prescricao[]> {

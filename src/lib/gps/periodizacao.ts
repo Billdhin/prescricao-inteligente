@@ -14,6 +14,7 @@ import type { Nivel } from "@/data/types";
 import {
   getFaixa,
   getModelo,
+  valorFaixa,
   type Macrociclo,
   type Mesociclo,
   type Microciclo,
@@ -41,6 +42,8 @@ export interface PlanoGerado {
   alternativa?: Macrociclo;
   modeloId: ModeloPeriodizacaoId;
   modeloAltId?: ModeloPeriodizacaoId;
+  /** título padrão do plano, já com linguagem de documento (o profissional pode reescrever) */
+  titulo: string;
   raciocinio: string;
   refIds: string[];
 }
@@ -90,13 +93,6 @@ function selecionarExercicios(objetivo: GpsObjetivo, nivel: Nivel, n: number) {
 
 /* --------------------------------- Sessões da semana --------------------------------- */
 
-// Ênfases da ondulatória: cada sessão da semana usa uma variação de repetições e intensidade.
-const ENFASES_ONDULATORIA = [
-  { rotulo: "pesado", reps: "3 a 6", intensidade: "alta, com técnica e margem" },
-  { rotulo: "moderado", reps: "8 a 12", intensidade: "moderada, 1 a 3 repetições de reserva" },
-  { rotulo: "controlado", reps: "12 a 15", intensidade: "leve a moderada, com controle" },
-];
-
 function montarSessoes(
   objetivo: GpsObjetivo,
   nivel: Nivel,
@@ -107,15 +103,20 @@ function montarSessoes(
   const escolhidos = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2));
   const sessoes: Sessao[] = [];
 
+  // A variação diária só entra quando o modelo pede E o objetivo tem ênfases autoradas
+  // dentro da própria faixa. Emagrecimento e reabilitação não herdam repetições de força.
+  const ondula = modelo === "ondulatoria" || modelo === "flexivel";
+  const enfases = ondula ? faixa.enfases : undefined;
+
   for (let i = 0; i < frequencia; i++) {
-    const enfase = ENFASES_ONDULATORIA[i % ENFASES_ONDULATORIA.length];
-    const usaEnfase = modelo === "ondulatoria" || modelo === "flexivel";
+    const enfase = enfases?.[i % enfases.length];
     const blocos: BlocoSessao[] = [];
 
     // Aeróbio entra quando o objetivo é emagrecimento (força de corpo todo + cardio).
     if (objetivo === "Emagrecimento") {
       blocos.push({
         id: nid("blk"),
+        tipo: "aerobio",
         modalidade: "caminhada",
         nome: "Aeróbio (contínuo ou intervalado)",
         series: "1",
@@ -131,19 +132,20 @@ function montarSessoes(
       const ex = escolhidos[(i * porSessao + j) % escolhidos.length];
       blocos.push({
         id: nid("blk"),
+        tipo: "forca",
         exercicioSlug: ex.slug,
         nome: ex.nome,
-        series: faixa.series,
-        reps: usaEnfase ? enfase.reps : faixa.reps,
-        intensidade: usaEnfase ? enfase.intensidade : faixa.intensidade,
-        intervalo: faixa.intervalo,
+        series: faixa.series.valor,
+        reps: enfase?.reps ?? valorFaixa(faixa.reps, nivel),
+        intensidade: enfase?.intensidade ?? faixa.intensidade.valor,
+        intervalo: faixa.intervalo.valor,
       });
     }
 
     sessoes.push({
       id: nid("ses"),
-      nome: usaEnfase ? `Sessão ${i + 1} (${enfase.rotulo})` : `Sessão ${i + 1}`,
-      foco: usaEnfase ? `Ênfase ${enfase.rotulo}` : faixa.capacidades[0],
+      nome: enfase ? `Sessão ${i + 1} (${enfase.rotulo})` : `Sessão ${i + 1}`,
+      foco: enfase ? `Ênfase ${enfase.rotulo}` : faixa.capacidades[0],
       blocos,
     });
   }
@@ -283,7 +285,9 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
     });
   });
 
-  return { objetivoGeral: `${objetivo} (${nivel}) - ${grupo.nome}`, semanas, mesociclos };
+  // `rotuloAluno` e não `nome`: o macrociclo vai impresso no documento que chega ao aluno,
+  // e ali ele é um programa ("Fortalecimento com cuidado lombar"), não um diagnóstico.
+  return { objetivoGeral: `${objetivo} (${nivel}): ${grupo.rotuloAluno}`, semanas, mesociclos };
 }
 
 /* ----------------------------------- Entrada pública ----------------------------------- */
@@ -306,7 +310,9 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
   const raciocinio = [
     `Modelo principal: ${modP.nome}. ${modP.resumo}`,
     grupo
-      ? `Como o aluno tem um grupo especial (${grupo.nome}), a jornada de fases já validada é o esqueleto do macrociclo, e os cuidados e parâmetros do grupo são sobrepostos.`
+      ? // O raciocínio também é impresso para o aluno, então ele nomeia o programa, não a
+        // condição. A condição segue à vista do profissional no selo do plano e no perfil.
+        `A jornada de fases do programa ${grupo.rotuloAluno} é o esqueleto do macrociclo, e os cuidados e parâmetros dessa jornada são sobrepostos.`
       : `Escolha por objetivo (${input.objetivo}) e nível (${input.nivel}).`,
     `As faixas de séries, repetições, intensidade e intervalo seguem as diretrizes citadas, sempre como faixa e sob o seu critério. ${faixa.ressalva}`,
     alternativa
@@ -321,6 +327,11 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
     alternativa: macroAlt,
     modeloId: principal,
     modeloAltId: alternativa,
+    // O título vive aqui, junto do resto do texto que vai impresso, para que a regra de
+    // linguagem do documento (programa, nunca diagnóstico) seja verificável num lugar só.
+    titulo: grupo
+      ? `${grupo.rotuloAluno}: ${input.semanas} semanas`
+      : `${input.objetivo}: ${input.semanas} semanas`,
     raciocinio,
     refIds,
   };

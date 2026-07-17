@@ -42,11 +42,12 @@ async function hydrate(userId: string) {
   hydratedFor = userId;
   useCloudAuth.setState({ hydrating: true });
   try {
-    const [perfil, alunos, avaliacoes, prescricoes, liberacoes] = await Promise.all([
+    const [perfil, alunos, avaliacoes, prescricoes, planos, liberacoes] = await Promise.all([
       repo.carregarPerfil(),
       repo.listarAlunos(),
       repo.listarAvaliacoes(),
       repo.listarPrescricoes(),
+      repo.listarPlanos(),
       repo.listarLiberacoes(),
     ]);
 
@@ -58,11 +59,12 @@ async function hydrate(userId: string) {
       for (const a of local.alunos) await repo.salvarAluno(a).catch(() => {});
       for (const av of local.avaliacoes) await repo.salvarAvaliacao(av).catch(() => {});
       for (const p of local.prescricoes) await repo.salvarPrescricao(p).catch(() => {});
+      for (const p of local.planos) await repo.salvarPlano(p).catch(() => {});
       for (const l of local.liberacoes) await repo.salvarLiberacao(l).catch(() => {});
       // mantém o store local como está (já é a fonte que acabou de subir)
     } else {
       // A nuvem manda: substitui o store local pelos dados do usuário.
-      useAlunos.setState({ alunos, avaliacoes, prescricoes, liberacoes });
+      useAlunos.setState({ alunos, avaliacoes, prescricoes, planos, liberacoes });
     }
 
     // Perfil: se a nuvem tem perfil preenchido, usa; senão, sobe o local.

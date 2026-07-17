@@ -5,32 +5,28 @@ import {
   Users,
   UserCheck,
   Sparkles,
-  ChevronDown,
-  Target,
-  TrendingUp,
   ShieldCheck,
   BookOpen,
-  Repeat,
-  Info,
+  Pencil,
+  Eye,
+  Save,
+  FileDown,
+  Check,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
+import { GraficoProgressao, MesocicloCard, ModeloExplicacao, type ContextoFaixa } from "@/components/treino/PlanoEditor";
 import { cn } from "@/lib/utils";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
-import { gerarPlano, type PlanoGerado } from "@/lib/gps/periodizacao";
-import {
-  getModelo,
-  type Macrociclo,
-  type Mesociclo,
-  type Microciclo,
-  type Tendencia,
-} from "@/data/periodizacao";
+import { gerarPlano } from "@/lib/gps/periodizacao";
+import { getModelo, type Macrociclo, type Mesociclo, type PlanoTreino } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
-import { getParam } from "@/data/monitoringParameters";
 import { bibliografia } from "@/data/referencias";
-import { useAlunos, useUser, isPremiumUnlocked } from "@/lib/store";
+import { exportPlanoPDF } from "@/lib/exportPlano";
+import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, uid } from "@/lib/store";
+import { toast } from "@/lib/toast";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
 const DURACOES = [8, 12, 16, 24];
@@ -41,8 +37,11 @@ const FREQUENCIAS = [2, 3, 4, 5, 6];
 export function PrescreverTreino() {
   const [params] = useSearchParams();
   const alunos = useAlunos((s) => s.alunos);
-  const plan = useUser((s) => s.plan);
-  const premium = isPremiumUnlocked(plan);
+  const addPlano = useAlunos((s) => s.addPlano);
+  const updatePlano = useAlunos((s) => s.updatePlano);
+  const planosSalvos = useAlunos((s) => s.planos);
+  const user = useUser();
+  const premium = isPremiumUnlocked(user.plan);
 
   const alunoPre = params.get("aluno");
   const alunoInicial = alunos.find((a) => a.id === alunoPre);
@@ -56,7 +55,47 @@ export function PrescreverTreino() {
   const [frequencia, setFrequencia] = React.useState(3);
   const [semanas, setSemanas] = React.useState(12);
   const [disponibilidade, setDisponibilidade] = React.useState("");
-  const [plano, setPlano] = React.useState<PlanoGerado | null>(null);
+
+  // O rascunho já nasce como o plano que vai ser salvo: editar, salvar e exportar
+  // trabalham no mesmo objeto, então o PDF nunca mostra uma versão anterior da edição.
+  const [plano, setPlano] = React.useState<PlanoTreino | null>(null);
+  const [salvo, setSalvo] = React.useState(false);
+
+  const montar = (ctx: {
+    objetivo: GpsObjetivo;
+    nivel: Nivel;
+    semanas: number;
+    frequencia: number;
+    grupoEspecial?: string;
+    disponibilidade?: string;
+    alunoId?: string;
+  }): PlanoTreino => {
+    const g = gerarPlano(ctx);
+    return {
+      // `uid()` e não o relógio: dois planos gerados no mesmo milissegundo receberiam o
+      // mesmo id, e salvar o segundo sobrescreveria o primeiro em vez de arquivá-lo.
+      id: `plano-${uid()}`,
+      alunoId: ctx.alunoId ?? "",
+      data: Date.now(),
+      titulo: g.titulo,
+      objetivo: ctx.objetivo,
+      nivel: ctx.nivel,
+      semanas: ctx.semanas,
+      frequenciaSemanal: ctx.frequencia,
+      disponibilidade: ctx.disponibilidade || undefined,
+      modeloId: g.modeloId,
+      modeloAltId: g.modeloAltId,
+      grupoEspecial: ctx.grupoEspecial,
+      macrociclo: g.principal,
+      alternativa: g.alternativa,
+      raciocinio: g.raciocinio,
+      refIds: g.refIds,
+      status: "ativo",
+    };
+  };
+
+  const irParaResultado = () =>
+    requestAnimationFrame(() => document.getElementById("resultado-treino")?.scrollIntoView({ behavior: "smooth", block: "start" }));
 
   // Ao escolher um aluno, herda o perfil (defaults inteligentes).
   const escolherAluno = (id: string | undefined) => {
@@ -68,11 +107,13 @@ export function PrescreverTreino() {
       setGrupo(a.grupoEspecial ?? "");
     }
     setPlano(null);
+    setSalvo(false);
   };
 
   const gerar = () => {
-    setPlano(gerarPlano({ objetivo, nivel, semanas, frequencia, grupoEspecial: grupo || undefined, disponibilidade }));
-    requestAnimationFrame(() => document.getElementById("resultado-treino")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    setPlano(montar({ objetivo, nivel, semanas, frequencia, grupoEspecial: grupo || undefined, disponibilidade, alunoId }));
+    setSalvo(false);
+    irParaResultado();
   };
 
   const carregarExemplo = () => {
@@ -83,8 +124,29 @@ export function PrescreverTreino() {
     setFrequencia(4);
     setSemanas(12);
     setDisponibilidade("Seg, qua, sex e sáb, cerca de 60 min");
-    setPlano(gerarPlano({ objetivo: "Hipertrofia", nivel: "Intermediário", semanas: 12, frequencia: 4 }));
-    requestAnimationFrame(() => document.getElementById("resultado-treino")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    setPlano(montar({ objetivo: "Hipertrofia", nivel: "Intermediário", semanas: 12, frequencia: 4 }));
+    setSalvo(false);
+    irParaResultado();
+  };
+
+  const salvar = () => {
+    if (!plano || !aluno) return;
+    const jaExiste = planosSalvos.some((p) => p.id === plano.id);
+    if (jaExiste) updatePlano(plano.id, plano);
+    else addPlano({ ...plano, alunoId: aluno.id });
+    setSalvo(true);
+    toast(jaExiste ? "Plano atualizado no perfil do aluno." : `Plano salvo no perfil de ${aluno.nome}.`);
+  };
+
+  const exportar = () => {
+    if (!plano || !aluno) return;
+    exportPlanoPDF({
+      aluno,
+      plano,
+      profissional: user.name,
+      cref: user.cref,
+      marca: marcaDoUsuario(user),
+    });
   };
 
   return (
@@ -113,7 +175,6 @@ export function PrescreverTreino() {
       <Card variant="raised" className="p-5">
         <SectionHeader eyebrow="Passo 1" title="Contexto do aluno" />
 
-        {/* Aluno */}
         <div className="mt-4">
           <label className="mb-1.5 block text-sm font-semibold text-ink">Aluno</label>
           {alunos.length === 0 ? (
@@ -157,7 +218,6 @@ export function PrescreverTreino() {
           )}
         </div>
 
-        {/* Objetivo + nível */}
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Campo label="Objetivo">
             <Opcoes valor={objetivo} opcoes={OBJETIVOS} onSelect={(v) => setObjetivo(v as GpsObjetivo)} />
@@ -167,16 +227,11 @@ export function PrescreverTreino() {
           </Campo>
         </div>
 
-        {/* Grupo especial */}
         <div className="mt-4">
-          <label className="mb-1.5 block text-sm font-semibold text-ink">
+          <label htmlFor="grupo-especial" className="mb-1.5 block text-sm font-semibold text-ink">
             Condição / grupo especial <span className="font-normal text-ink-3">(opcional)</span>
           </label>
-          <select
-            value={grupo}
-            onChange={(e) => setGrupo(e.target.value)}
-            className="input w-full"
-          >
+          <select id="grupo-especial" value={grupo} onChange={(e) => setGrupo(e.target.value)} className="input w-full">
             <option value="">Sem condição especial</option>
             {specialGroups.map((g) => (
               <option key={g.slug} value={g.slug}>
@@ -192,7 +247,6 @@ export function PrescreverTreino() {
           )}
         </div>
 
-        {/* Frequência + duração + disponibilidade */}
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Campo label="Frequência semanal">
             <Opcoes valor={String(frequencia)} opcoes={FREQUENCIAS.map((f) => `${f}`)} onSelect={(v) => setFrequencia(Number(v))} sufixo="x" />
@@ -202,10 +256,11 @@ export function PrescreverTreino() {
           </Campo>
         </div>
         <div className="mt-4">
-          <label className="mb-1.5 block text-sm font-semibold text-ink">
+          <label htmlFor="disponibilidade" className="mb-1.5 block text-sm font-semibold text-ink">
             Disponibilidade e observações <span className="font-normal text-ink-3">(opcional)</span>
           </label>
           <input
+            id="disponibilidade"
             value={disponibilidade}
             onChange={(e) => setDisponibilidade(e.target.value)}
             placeholder="Ex.: seg/qua/sex à noite, 60 min, academia completa"
@@ -226,7 +281,19 @@ export function PrescreverTreino() {
       {/* Resultado */}
       {plano && (
         <div id="resultado-treino" className="scroll-mt-24">
-          <ResultadoPlano plano={plano} premium={premium} objetivo={objetivo} nivel={nivel} semanas={semanas} grupo={grupo} />
+          <ResultadoPlano
+            plano={plano}
+            onChange={(p) => {
+              setPlano(p);
+              setSalvo(false);
+            }}
+            premium={premium}
+            aluno={aluno?.nome}
+            podeSalvar={Boolean(aluno)}
+            salvo={salvo}
+            onSalvar={salvar}
+            onExportar={exportar}
+          />
         </div>
       )}
     </div>
@@ -237,24 +304,50 @@ export function PrescreverTreino() {
 
 function ResultadoPlano({
   plano,
+  onChange,
   premium,
-  objetivo,
-  nivel,
-  semanas,
-  grupo,
+  aluno,
+  podeSalvar,
+  salvo,
+  onSalvar,
+  onExportar,
 }: {
-  plano: PlanoGerado;
+  plano: PlanoTreino;
+  onChange: (p: PlanoTreino) => void;
   premium: boolean;
-  objetivo: GpsObjetivo;
-  nivel: Nivel;
-  semanas: number;
-  grupo: string;
+  aluno?: string;
+  podeSalvar: boolean;
+  salvo: boolean;
+  onSalvar: () => void;
+  onExportar: () => void;
 }) {
   const [aba, setAba] = React.useState<"principal" | "alternativa">("principal");
-  const macro = aba === "alternativa" && plano.alternativa ? plano.alternativa : plano.principal;
-  const modelo = getModelo(aba === "alternativa" && plano.modeloAltId ? plano.modeloAltId : plano.modeloId);
-  const grupoObj = grupo ? getSpecialGroup(grupo) : undefined;
+  const [editando, setEditando] = React.useState(false);
+
+  const naAlternativa = aba === "alternativa" && Boolean(plano.alternativa);
+  const macro = naAlternativa ? plano.alternativa! : plano.macrociclo;
+  const modelo = getModelo(naAlternativa && plano.modeloAltId ? plano.modeloAltId : plano.modeloId);
+  const grupoObj = plano.grupoEspecial ? getSpecialGroup(plano.grupoEspecial) : undefined;
   const biblio = bibliografia(plano.refIds);
+  const ctx: ContextoFaixa = { objetivo: plano.objetivo, nivel: plano.nivel };
+
+  const trocarMacro = (m: Macrociclo) => onChange(naAlternativa ? { ...plano, alternativa: m } : { ...plano, macrociclo: m });
+  const trocarMeso = (meso: Mesociclo) =>
+    trocarMacro({ ...macro, mesociclos: macro.mesociclos.map((x) => (x.id === meso.id ? meso : x)) });
+
+  // Editar a alternativa e depois salvar guardaria o macrociclo principal, que não é o que
+  // está na tela. Promover primeiro deixa claro qual plano é o plano.
+  const promoverAlternativa = () => {
+    if (!plano.alternativa || !plano.modeloAltId) return;
+    onChange({
+      ...plano,
+      macrociclo: plano.alternativa,
+      alternativa: plano.macrociclo,
+      modeloId: plano.modeloAltId,
+      modeloAltId: plano.modeloId,
+    });
+    setAba("principal");
+  };
 
   return (
     <div className="space-y-5">
@@ -264,32 +357,87 @@ function ResultadoPlano({
       <Card variant="raised" className="border-l-4 border-primary p-5">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Pill tone="primary">{modelo.nome}</Pill>
-          <span className="text-sm text-ink-2">{objetivo} · {nivel} · {semanas} semanas</span>
+          <span className="text-sm text-ink-2">
+            {plano.objetivo} · {plano.nivel} · {plano.semanas} semanas
+          </span>
           {grupoObj && <Pill tone="analysis">{grupoObj.nome}</Pill>}
         </div>
+        {editando ? (
+          <input
+            value={plano.titulo}
+            onChange={(e) => onChange({ ...plano, titulo: e.target.value })}
+            aria-label="Título do plano"
+            className="input mb-2 w-full text-sm font-semibold"
+          />
+        ) : (
+          <p className="mb-1 font-display font-bold text-ink">{plano.titulo}</p>
+        )}
         <p className="text-sm text-ink">{plano.raciocinio}</p>
       </Card>
 
+      {/* Ações: editar, salvar, PDF (plano Profissional) */}
+      {premium && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => setEditando((v) => !v)} className={buttonClasses(editando ? "primary" : "secondary", "sm")}>
+            {editando ? (
+              <>
+                <Eye className="h-4 w-4" /> Ver como fica
+              </>
+            ) : (
+              <>
+                <Pencil className="h-4 w-4" /> Editar o plano
+              </>
+            )}
+          </button>
+          <button onClick={onSalvar} disabled={!podeSalvar} className={cn(buttonClasses("secondary", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}>
+            {salvo ? <Check className="h-4 w-4 text-success" /> : <Save className="h-4 w-4" />}
+            {salvo ? "Salvo" : "Salvar no perfil"}
+          </button>
+          <button onClick={onExportar} disabled={!podeSalvar} className={cn(buttonClasses("ghost", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}>
+            <FileDown className="h-4 w-4" /> Exportar PDF
+          </button>
+          {!podeSalvar && (
+            <span className="text-xs text-ink-3">Selecione um aluno no passo 1 para salvar no perfil e exportar com a sua marca.</span>
+          )}
+          {podeSalvar && editando && <span className="text-xs text-ink-3">Editando o plano de {aluno}. As alterações entram ao salvar.</span>}
+        </div>
+      )}
+
+      {editando && (
+        <p className="rounded-xl border border-dashed border-border bg-surface-soft p-3 text-xs text-ink-2">
+          Tudo abaixo é seu: séries, repetições, intensidade, intervalo, exercícios, sessões da semana,
+          onde cai a descarga e onde entra a reavaliação. As faixas da diretriz aparecem em cada semana
+          como referência, e o aviso de fora da faixa não trava nada.
+        </p>
+      )}
+
       {/* Opção principal x alternativa (a alternativa faz parte do plano Profissional) */}
       {plano.alternativa && premium && (
-        <div role="tablist" aria-label="Opções de periodização" className="flex gap-1.5">
-          {(["principal", "alternativa"] as const).map((k) => {
-            const m = k === "alternativa" ? getModelo(plano.modeloAltId!) : getModelo(plano.modeloId);
-            return (
-              <button
-                key={k}
-                role="tab"
-                aria-selected={aba === k}
-                onClick={() => setAba(k)}
-                className={cn(
-                  "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
-                  aba === k ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
-                )}
-              >
-                {k === "principal" ? "Opção principal" : "Alternativa"}: {m.nome}
-              </button>
-            );
-          })}
+        <div className="flex flex-wrap items-center gap-2">
+          <div role="tablist" aria-label="Opções de periodização" className="flex gap-1.5">
+            {(["principal", "alternativa"] as const).map((k) => {
+              const m = k === "alternativa" ? getModelo(plano.modeloAltId!) : getModelo(plano.modeloId);
+              return (
+                <button
+                  key={k}
+                  role="tab"
+                  aria-selected={aba === k}
+                  onClick={() => setAba(k)}
+                  className={cn(
+                    "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
+                    aba === k ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
+                  )}
+                >
+                  {k === "principal" ? "Opção principal" : "Alternativa"}: {m.nome}
+                </button>
+              );
+            })}
+          </div>
+          {naAlternativa && (
+            <button onClick={promoverAlternativa} className={buttonClasses("ghost", "sm")}>
+              Usar esta como principal
+            </button>
+          )}
         </div>
       )}
 
@@ -309,7 +457,7 @@ function ResultadoPlano({
               />
             ) : null
           ) : (
-            <MesocicloCard key={m.id} meso={m} indice={i} />
+            <MesocicloCard key={m.id} meso={m} indice={i} ctx={ctx} editavel={premium && editando} onChange={trocarMeso} />
           );
         })}
       </div>
@@ -350,218 +498,6 @@ function ResultadoPlano({
   );
 }
 
-/* ------------------------------- Gráfico ------------------------------- */
-
-const NIVEL_TENDENCIA: Record<Tendencia, number> = { reduz: -0.6, estavel: 0, sobe: 0.6, varia: 0 };
-
-function serieSemanal(macro: Macrociclo) {
-  const pontos: { semana: number; vol: number; int: number; cpx: number; deload: boolean }[] = [];
-  macro.mesociclos.forEach((m, mi) => {
-    m.microciclos.forEach((w, wi) => {
-      let vol = 2 + mi * 0.35 + NIVEL_TENDENCIA[m.tendenciaVolume];
-      let int = 1.6 + mi * 0.5 + NIVEL_TENDENCIA[m.tendenciaIntensidade];
-      let cpx = 1.6 + mi * 0.4 + NIVEL_TENDENCIA[m.tendenciaComplexidade];
-      if (m.tendenciaVolume === "varia") vol += wi % 2 === 0 ? 0.4 : -0.4;
-      if (m.tendenciaIntensidade === "varia") int += wi % 2 === 0 ? -0.4 : 0.5;
-      if (w.tipo === "deload") {
-        vol *= 0.6;
-        int *= 0.7;
-      }
-      const clamp = (n: number) => Math.max(0.5, Math.min(4, n));
-      pontos.push({ semana: w.semana, vol: clamp(vol), int: clamp(int), cpx: clamp(cpx), deload: w.tipo !== "carga" });
-    });
-  });
-  return pontos;
-}
-
-function GraficoProgressao({ macro }: { macro: Macrociclo }) {
-  const pts = serieSemanal(macro);
-  const W = 640;
-  const H = 180;
-  const padX = 28;
-  const padY = 18;
-  const n = pts.length;
-  const x = (i: number) => padX + (i * (W - padX * 2)) / Math.max(1, n - 1);
-  const y = (v: number) => padY + (H - padY * 2) * (1 - (v - 0.5) / 3.5);
-  const linha = (sel: (p: (typeof pts)[number]) => number) => pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(sel(p)).toFixed(1)}`).join(" ");
-
-  const series = [
-    { nome: "Volume", cor: "var(--primary)", sel: (p: (typeof pts)[number]) => p.vol },
-    { nome: "Intensidade", cor: "var(--cta)", sel: (p: (typeof pts)[number]) => p.int },
-    { nome: "Complexidade", cor: "var(--analysis)", sel: (p: (typeof pts)[number]) => p.cpx },
-  ];
-
-  return (
-    <Card className="p-4">
-      <div className="mb-1 flex items-center gap-2">
-        <TrendingUp className="h-4 w-4 text-ink-3" />
-        <h3 className="font-display text-base font-bold text-ink">Progressão ao longo das semanas</h3>
-      </div>
-      <p className="mb-3 text-xs text-ink-3">Tendência qualitativa por semana. Barras claras marcam semanas de descarga.</p>
-      <div className="overflow-x-auto">
-        <svg viewBox={`0 0 ${W} ${H}`} className="h-44 w-full min-w-[520px]" role="img" aria-label="Gráfico de progressão de volume, intensidade e complexidade por semana">
-          {pts.map((p, i) =>
-            p.deload ? <rect key={i} x={x(i) - 6} y={padY} width={12} height={H - padY * 2} fill="var(--surface-soft)" rx={2} /> : null,
-          )}
-          {series.map((s) => (
-            <path key={s.nome} d={linha(s.sel)} fill="none" stroke={s.cor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-          ))}
-          {pts.map((p, i) => (
-            <text key={i} x={x(i)} y={H - 2} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 8 }}>
-              {p.semana}
-            </text>
-          ))}
-        </svg>
-      </div>
-      <div className="mt-2 flex flex-wrap gap-3">
-        {series.map((s) => (
-          <span key={s.nome} className="flex items-center gap-1.5 text-xs text-ink-2">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.cor }} /> {s.nome}
-          </span>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-/* ------------------------------- Mesociclo ------------------------------- */
-
-const TEND_LABEL: Record<Tendencia, string> = { sobe: "sobe", reduz: "reduz", estavel: "estável", varia: "varia" };
-
-function MesocicloCard({ meso, indice }: { meso: Mesociclo; indice: number }) {
-  const [aberto, setAberto] = React.useState(indice === 0);
-  return (
-    <Card className="overflow-hidden">
-      <button
-        onClick={() => setAberto((v) => !v)}
-        aria-expanded={aberto}
-        className="flex w-full items-start gap-3 p-4 text-left hover:bg-surface-soft"
-      >
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary text-sm font-bold text-white">{indice + 1}</span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-display font-bold text-ink">{meso.nome}</span>
-            <span className="text-xs text-ink-3">semanas {meso.semanaInicio} a {meso.semanaFim}</span>
-            {meso.deload && <Pill tone="neutral">com descarga</Pill>}
-            {meso.reavaliacao && <Pill tone="analysis">reavaliar ao fim</Pill>}
-          </div>
-          <p className="mt-0.5 text-sm text-ink-2">{meso.foco}</p>
-        </div>
-        <ChevronDown className={cn("mt-1 h-4 w-4 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
-      </button>
-
-      {aberto && (
-        <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
-          {/* tendências + capacidades */}
-          <div className="flex flex-wrap gap-2 text-xs">
-            <Pill tone="neutral">Volume {TEND_LABEL[meso.tendenciaVolume]}</Pill>
-            <Pill tone="neutral">Intensidade {TEND_LABEL[meso.tendenciaIntensidade]}</Pill>
-            <Pill tone="neutral">Complexidade {TEND_LABEL[meso.tendenciaComplexidade]}</Pill>
-          </div>
-          <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
-          <ListaChips titulo="Tipos de exercício" itens={meso.tiposExercicio} />
-
-          {/* parâmetros */}
-          {meso.parametros.length > 0 && (
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">Acompanhar</p>
-              <div className="flex flex-wrap gap-1.5">
-                {meso.parametros.map((id) => {
-                  const p = getParam(id);
-                  return p ? <Pill key={id} tone="neutral">{p.sigla ?? p.nome}</Pill> : null;
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* critérios */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <CriterioLista titulo="Progredir quando" itens={meso.criteriosProgressao} tone="success" />
-            <CriterioLista titulo="Regredir ou revisar se" itens={meso.criteriosRegressao} tone="warning" />
-          </div>
-
-          {/* microciclos (semanas) */}
-          <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">Semanas</p>
-            <div className="space-y-2">
-              {meso.microciclos.map((w) => (
-                <MicrocicloRow key={w.id} micro={w} />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </Card>
-  );
-}
-
-function MicrocicloRow({ micro }: { micro: Microciclo }) {
-  const [aberto, setAberto] = React.useState(false);
-  return (
-    <div className="rounded-xl border border-border">
-      <button onClick={() => setAberto((v) => !v)} aria-expanded={aberto} className="flex w-full items-center gap-2 p-2.5 text-left text-sm hover:bg-surface-soft">
-        <Pill tone={micro.tipo === "deload" ? "warning" : micro.tipo === "teste" ? "analysis" : "neutral"}>Semana {micro.semana}</Pill>
-        <span className="text-ink-2">{micro.frequencia}x na semana</span>
-        {micro.tipo === "deload" && <span className="text-xs text-ink-3">{micro.nota}</span>}
-        <ChevronDown className={cn("ml-auto h-4 w-4 text-ink-3 transition-transform", aberto && "rotate-180")} />
-      </button>
-      {aberto && (
-        <div className="space-y-2 border-t border-border p-2.5">
-          {micro.sessoes.map((s) => (
-            <div key={s.id} className="rounded-lg bg-surface-soft p-2.5">
-              <div className="mb-1 flex items-center gap-1.5">
-                <Repeat className="h-3.5 w-3.5 text-primary" />
-                <span className="text-sm font-semibold text-ink">{s.nome}</span>
-              </div>
-              <ul className="space-y-1">
-                {s.blocos.map((b) => (
-                  <li key={b.id} className="flex flex-wrap items-baseline gap-x-2 text-xs text-ink-2">
-                    <span className="font-semibold text-ink">{b.nome}</span>
-                    {b.series && <span>{b.series} séries</span>}
-                    {b.reps && <span>· {b.reps} reps</span>}
-                    {b.intensidade && <span>· {b.intensidade}</span>}
-                    {b.intervalo && b.intervalo !== "-" && <span>· intervalo {b.intervalo}</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ------------------------------- Modelo (explicação) ------------------------------- */
-
-function ModeloExplicacao({ modelo }: { modelo: ReturnType<typeof getModelo> }) {
-  return (
-    <details className="group rounded-card border border-border bg-surface-soft">
-      <summary className="flex cursor-pointer list-none items-center gap-2 rounded-card px-4 py-3 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
-        <Info className="h-4 w-4 shrink-0 text-ink-3" />
-        Entenda o modelo: {modelo.nome}
-        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-ink-3 transition-transform group-open:rotate-180" />
-      </summary>
-      <div className="space-y-4 px-4 pb-4">
-        <Bloco titulo="Como funciona" texto={modelo.comoFunciona} />
-        <Bloco titulo="Racional científico" texto={modelo.racionalCientifico} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <ListaChips titulo="Indicado para" itens={modelo.perfisIndicados} />
-          <ListaChips titulo="Variáveis a controlar" itens={modelo.variaveisControladas} />
-          <CriterioLista titulo="Pontos fortes" itens={modelo.pontosFortes} tone="success" />
-          <CriterioLista titulo="Limitações" itens={modelo.limitacoes} tone="warning" />
-        </div>
-        <CriterioLista titulo="Erros comuns" itens={modelo.errosComuns} tone="warning" />
-        {modelo.aprenderHref && (
-          <Link to={modelo.aprenderHref} className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline">
-            <BookOpen className="h-4 w-4" /> Aprofundar no Aprender
-          </Link>
-        )}
-      </div>
-    </details>
-  );
-}
-
 /* ------------------------------- Peças ------------------------------- */
 
 function Campo({ label, children }: { label: string; children: React.ReactNode }) {
@@ -590,49 +526,6 @@ function Opcoes({ valor, opcoes, onSelect, sufixo }: { valor: string; opcoes: re
           {sufixo}
         </button>
       ))}
-    </div>
-  );
-}
-
-function ListaChips({ titulo, itens }: { titulo: string; itens: string[] }) {
-  if (!itens.length) return null;
-  return (
-    <div>
-      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{titulo}</p>
-      <div className="flex flex-wrap gap-1.5">
-        {itens.map((it, i) => (
-          <span key={i} className="rounded-lg bg-surface px-2 py-1 text-xs text-ink-2">{it}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CriterioLista({ titulo, itens, tone }: { titulo: string; itens: string[]; tone: "success" | "warning" }) {
-  if (!itens.length) return null;
-  const dot = tone === "success" ? "bg-success" : "bg-warning";
-  return (
-    <div>
-      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{titulo}</p>
-      <ul className="space-y-1">
-        {itens.map((it, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-ink-2">
-            <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", dot)} />
-            {it}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function Bloco({ titulo, texto }: { titulo: string; texto: string }) {
-  return (
-    <div>
-      <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-analysis">
-        <Target className="h-3.5 w-3.5" /> {titulo}
-      </p>
-      <p className="text-sm text-ink-2">{texto}</p>
     </div>
   );
 }

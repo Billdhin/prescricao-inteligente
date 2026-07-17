@@ -18,6 +18,12 @@ import type { Nivel } from "@/data/types";
 /** Um exercício ou modalidade dentro de uma sessão, com os parâmetros editáveis. */
 export interface BlocoSessao {
   id: string;
+  /**
+   * Que tipo de trabalho o bloco carrega. Existe porque as faixas da diretriz falam de
+   * séries e repetições de força: num bloco aeróbio, `reps` guarda minutos, e comparar
+   * "20 a 40 min" com "10 a 15 repetições" acusaria um erro que não existe.
+   */
+  tipo?: "forca" | "aerobio";
   /** slug de exercício (src/data/exercises) OU id de modalidade (src/data/modalities) */
   exercicioSlug?: string;
   modalidade?: string;
@@ -293,17 +299,46 @@ export function getModelo(id: ModeloPeriodizacaoId): ModeloPeriodizacao {
 
 /* ===================== Faixas de treino por objetivo (ACSM 2009 + Garber 2011) ===================== */
 
+/**
+ * Uma variável da diretriz (séries, repetições, intensidade, intervalo).
+ *
+ * `valor` é curto porque ele nasce dentro do campo editável do plano: o profissional
+ * precisa enxergar "3 a 4" no campo, não um parágrafo. O que a diretriz diz além do
+ * número vive em `nota`, que aparece ao lado como referência e não vira prescrição.
+ */
+export interface FaixaVar {
+  /** faixa curta e editável, nunca um número solto (ex.: "3 a 4") */
+  valor: string;
+  /** quando a diretriz separa por nível (ex.: repetições na Força) */
+  porNivel?: Record<Nivel, string>;
+  /** complemento da diretriz que não cabe no campo */
+  nota?: string;
+}
+
+/** Variação de repetições/intensidade entre as sessões da semana (ondulatória). */
+export interface EnfaseSessao {
+  rotulo: string;
+  reps: string;
+  intensidade: string;
+}
+
 /** Faixas por objetivo, expressas como TEXTO (nunca um número solto inventado). */
 export interface FaixaObjetivo {
   objetivo: GpsObjetivo;
   capacidades: string[];
   tiposExercicio: string[];
-  series: string;
-  reps: string;
-  intensidade: string;
-  intervalo: string;
+  series: FaixaVar;
+  reps: FaixaVar;
+  intensidade: FaixaVar;
+  intervalo: FaixaVar;
   /** frequência semanal sugerida por nível (faixa textual) */
   frequencia: Record<Nivel, string>;
+  /**
+   * Ênfases da semana ondulatória, dentro da faixa do PRÓPRIO objetivo. Só existem onde
+   * a variação diária faz sentido (força e hipertrofia em quem já treina). Sem isto, um
+   * plano de emagrecimento herdaria repetições de força, que não é o que a diretriz diz.
+   */
+  enfases?: EnfaseSessao[];
   /** parâmetros de monitoringParameters a acompanhar */
   parametros: string[];
   refIds: string[];
@@ -311,16 +346,26 @@ export interface FaixaObjetivo {
   ressalva: string;
 }
 
+/** O valor que vale para este nível (a diretriz às vezes separa iniciante do resto). */
+export function valorFaixa(v: FaixaVar, nivel: Nivel): string {
+  return v.porNivel?.[nivel] ?? v.valor;
+}
+
 export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
   Hipertrofia: {
     objetivo: "Hipertrofia",
     capacidades: ["Hipertrofia", "Força de base", "Tolerância ao volume"],
     tiposExercicio: ["Multiarticulares primeiro", "Uniarticulares como complemento"],
-    series: "3 a 4 por exercício (volume maior tende a favorecer, dentro da tolerância)",
-    reps: "6 a 12 (ênfase), tolerando 6 a 20 conforme a série",
-    intensidade: "moderada a alta, próxima da falha por 1 a 3 repetições de reserva",
-    intervalo: "1 a 2 min",
+    series: { valor: "3 a 4", nota: "por exercício; volume maior tende a favorecer, dentro da tolerância" },
+    reps: { valor: "6 a 12", nota: "a faixa útil vai de 6 a 20 quando o esforço é parecido" },
+    intensidade: { valor: "moderada a alta", nota: "próxima da falha, por 1 a 3 repetições de reserva" },
+    intervalo: { valor: "1 a 2 min" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3 a 4x/sem", Avançado: "4 a 5x/sem" },
+    enfases: [
+      { rotulo: "pesado", reps: "6 a 8", intensidade: "alta, 1 a 2 repetições de reserva" },
+      { rotulo: "moderado", reps: "8 a 12", intensidade: "moderada a alta, 1 a 3 repetições de reserva" },
+      { rotulo: "controlado", reps: "12 a 15", intensidade: "moderada, com controle" },
+    ],
     parametros: ["p-rpe", "p-volume"],
     refIds: ["acsm-progressao-2009", "schoenfeld-2017-volume", "schoenfeld-2010"],
     ressalva:
@@ -330,11 +375,20 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     objetivo: "Força",
     capacidades: ["Força máxima", "Coordenação intermuscular"],
     tiposExercicio: ["Multiarticulares principais", "Cargas mais altas com técnica"],
-    series: "3 a 5 nas séries principais",
-    reps: "iniciante 8 a 12; intermediário e avançado 1 a 6 com ênfase em carga alta",
-    intensidade: "alta, com boa técnica e margem de segurança",
-    intervalo: "3 a 5 min nas séries principais",
+    series: { valor: "3 a 5", nota: "nas séries principais" },
+    reps: {
+      valor: "1 a 6",
+      porNivel: { Iniciante: "8 a 12", Intermediário: "1 a 6", Avançado: "1 a 6" },
+      nota: "quem está começando fica em 8 a 12; carga alta vem depois da técnica consolidada",
+    },
+    intensidade: { valor: "alta", nota: "com boa técnica e margem de segurança" },
+    intervalo: { valor: "3 a 5 min", nota: "nas séries principais" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3 a 4x/sem", Avançado: "4 a 5x/sem" },
+    enfases: [
+      { rotulo: "pesado", reps: "3 a 5", intensidade: "alta, com técnica e margem" },
+      { rotulo: "moderado", reps: "5 a 8", intensidade: "moderada a alta" },
+      { rotulo: "controlado", reps: "8 a 12", intensidade: "moderada, foco na execução" },
+    ],
     parametros: ["p-rpe", "p-fadiga"],
     refIds: ["acsm-progressao-2009", "moesgaard-periodizacao-2022"],
     ressalva:
@@ -344,10 +398,10 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     objetivo: "Resistência muscular",
     capacidades: ["Resistência muscular localizada", "Controle técnico em fadiga"],
     tiposExercicio: ["Multiarticulares e uniarticulares", "Circuitos quando fizer sentido"],
-    series: "2 a 3",
-    reps: "acima de 15",
-    intensidade: "leve a moderada (cerca de 40 a 60% de 1RM)",
-    intervalo: "curto, até cerca de 90 s",
+    series: { valor: "2 a 3" },
+    reps: { valor: "acima de 15" },
+    intensidade: { valor: "leve a moderada", nota: "cerca de 40 a 60% de 1RM" },
+    intervalo: { valor: "até 90 s", nota: "intervalo curto sustenta a densidade da sessão" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3x/sem", Avançado: "3 a 4x/sem" },
     parametros: ["p-rpe"],
     refIds: ["acsm-progressao-2009"],
@@ -357,10 +411,10 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     objetivo: "Emagrecimento",
     capacidades: ["Condicionamento aeróbio", "Força geral", "Gasto energético sustentável"],
     tiposExercicio: ["Aeróbio contínuo ou intervalado", "Força de corpo todo"],
-    series: "2 a 3 na força de corpo todo",
-    reps: "10 a 15 na força",
-    intensidade: "moderada; no aeróbio, guie pela conversa e percepção de esforço",
-    intervalo: "curto a moderado (30 a 90 s) para manter densidade",
+    series: { valor: "2 a 3", nota: "na força de corpo todo" },
+    reps: { valor: "10 a 15", nota: "na força; o aeróbio é contado em minutos, não em repetições" },
+    intensidade: { valor: "moderada", nota: "no aeróbio, guie pela conversa e pela percepção de esforço" },
+    intervalo: { valor: "30 a 90 s", nota: "curto a moderado, para manter a densidade" },
     frequencia: { Iniciante: "3x/sem", Intermediário: "3 a 5x/sem", Avançado: "4 a 5x/sem" },
     parametros: ["p-fc", "p-rpe", "p-adesao"],
     refIds: ["garber-2011", "oms-2020", "acsm-progressao-2009"],
@@ -371,10 +425,10 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     objetivo: "Reabilitação/retorno",
     capacidades: ["Tolerância à carga", "Amplitude confortável", "Controle e confiança"],
     tiposExercicio: ["Movimentos controlados e progressivos", "Baixo impacto no início"],
-    series: "2 a 3, conforme tolerância",
-    reps: "10 a 15 em amplitude confortável",
-    intensidade: "leve a moderada, guiada por dor e função",
-    intervalo: "confortável, sem pressa",
+    series: { valor: "2 a 3", nota: "conforme tolerância" },
+    reps: { valor: "10 a 15", nota: "em amplitude confortável" },
+    intensidade: { valor: "leve a moderada", nota: "guiada por dor e função" },
+    intervalo: { valor: "confortável", nota: "sem pressa entre as séries" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3x/sem", Avançado: "3 a 4x/sem" },
     parametros: ["p-rpe"],
     refIds: ["acsm-progressao-2009", "acsm-getp11"],
@@ -385,10 +439,10 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     objetivo: "Aprendizado técnico",
     capacidades: ["Qualidade de movimento", "Coordenação", "Consistência técnica"],
     tiposExercicio: ["Padrões fundamentais", "Carga leve com foco na execução"],
-    series: "2 a 4 de prática, com qualidade acima da carga",
-    reps: "5 a 10 com boa execução",
-    intensidade: "leve a moderada; a técnica manda, não a carga",
-    intervalo: "suficiente para manter a qualidade",
+    series: { valor: "2 a 4", nota: "de prática, com qualidade acima da carga" },
+    reps: { valor: "5 a 10", nota: "com boa execução" },
+    intensidade: { valor: "leve a moderada", nota: "a técnica manda, não a carga" },
+    intervalo: { valor: "suficiente para manter a qualidade" },
     frequencia: { Iniciante: "2 a 4x/sem", Intermediário: "3 a 4x/sem", Avançado: "3 a 4x/sem" },
     parametros: ["p-rpe"],
     refIds: ["acsm-progressao-2009"],
