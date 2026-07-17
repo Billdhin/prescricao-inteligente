@@ -1,7 +1,7 @@
 import * as React from "react";
 import { HelpCircle, X } from "lucide-react";
 import { getMetrica, faixaDe, type DefinicaoMetrica } from "@/data/metricasGlossario";
-import { refCurta } from "@/data/referencias";
+import { bibliografia } from "@/data/referencias";
 import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
@@ -136,7 +136,31 @@ function MetricaDialog({
         </div>
 
         {def.refs?.length ? (
-          <p className="mt-3 text-[11px] text-ink-3">Base: {def.refs.map(refCurta).join("; ")}.</p>
+          <div className="mt-4 border-t border-border pt-3">
+            <div className="mb-1.5 text-xs font-bold uppercase tracking-wider text-ink-3">Base científica</div>
+            <ol className="list-decimal space-y-1 pl-4 text-[11px] leading-snug text-ink-3">
+              {bibliografia(def.refs).map((b) => (
+                <li key={b.ref.id}>
+                  {/* autores como "... et al." já terminam em ponto; não dobrar */}
+                  {b.ref.autores}
+                  {b.ref.autores.endsWith(".") ? "" : "."} {b.ref.titulo}. {b.ref.fonte}, {b.ref.ano}.
+                  {b.ref.doi && (
+                    <>
+                      {" "}
+                      <a
+                        href={`https://doi.org/${b.ref.doi}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        doi:{b.ref.doi}
+                      </a>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </div>
         ) : null}
         <p className="mt-3 border-t border-border pt-3 text-[11px] text-ink-3">
           Valor estimado para comparar exercícios entre si. Não é medição do seu aluno; a leitura
