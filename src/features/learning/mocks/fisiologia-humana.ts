@@ -914,6 +914,7 @@ const REF_BASE = ["ref-ribeiro-fisiologia-2026", "ref-guyton-2025", "ref-silvert
 const capSistemaNervoso = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-nervoso`, moduleSlug: "sistema-nervoso",
   slug: `${DISC}--mapa-sistema-nervoso`, title: "Sistema nervoso: da excitabilidade ao controle do movimento",
+  figure: { id: "unidade-motora" },
   subtitle: "Capítulo 01 do manual", description: "O sistema nervoso converte energia física e química em sinais elétricos, seleciona informações, constrói percepções e organiza respostas motoras e autonômicas.",
   level: "intermediario", minutes: 14, type: "mecanismo", kicker: K, tags: ["sistema nervoso", "unidade motora", "controle motor", "fadiga central"],
   hero: "O sistema nervoso explica por que técnica, atenção, motivação, dor, fadiga e aprendizagem mudam o desempenho mesmo quando a capacidade do músculo não mudou. Ele transforma sinais em percepção e comando.",
@@ -1022,6 +1023,7 @@ const capSistemaNervoso = deepLesson({
 const capSistemaMuscular = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-tecidos-movimento`, moduleSlug: "tecidos-do-movimento",
   slug: `${DISC}--mapa-sistema-muscular`, title: "Sistema muscular: arquitetura, força, potência e fadiga",
+  figure: { id: "sarcomero-pontes" },
   subtitle: "Capítulo 02 do manual", description: "O músculo transforma energia química em força, mas a função não se reduz ao sarcômero: arquitetura, tendão, inervação, metabolismo e alavancas determinam a tensão produzida e convertida em desempenho.",
   level: "intermediario", minutes: 14, type: "mecanismo", kicker: K, tags: ["força", "hipertrofia", "unidades motoras", "torque"],
   hero: "A força que aparece no exercício não vem só do tamanho do músculo. Arquitetura, tendão, tipo de fibra, comprimento e alavanca articular decidem quanta tensão é gerada, transmitida e transformada em movimento.",
@@ -1130,6 +1132,7 @@ const capSistemaMuscular = deepLesson({
 const capSistemaCardiovascular = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-cardiovascular`, moduleSlug: "sistema-cardiovascular",
   slug: `${DISC}--mapa-sistema-cardiovascular`, title: "Sistema cardiovascular: ritmo, bomba, vasos e pressão",
+  figure: { id: "debito-cardiaco" },
   subtitle: "Capítulo 03 do manual", description: "Coração, sangue e vasos formam um circuito que ajusta o fluxo regional de segundo a segundo. Nenhuma variável isolada representa a capacidade circulatória.",
   level: "intermediario", minutes: 14, type: "mecanismo", kicker: K, tags: ["débito cardíaco", "pressão arterial", "endotélio", "deriva cardiovascular"],
   hero: "Frequência cardíaca, volume sistólico, resistência vascular, retorno venoso e conteúdo de oxigênio interagem o tempo todo. Por isso a leitura cardiovascular precisa integrar mecânica cardíaca, endotélio e controle autonômico.",
@@ -1237,6 +1240,7 @@ const capSistemaCardiovascular = deepLesson({
 const capSistemaRespiratorio = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-respiratorio`, moduleSlug: "sistema-respiratorio",
   slug: `${DISC}--mapa-sistema-respiratorio`, title: "Sistema respiratório: ventilação, difusão e controle",
+  figure: { id: "ventilacao-troca" },
   subtitle: "Capítulo 04 do manual", description: "A respiração conecta ventilação, difusão, perfusão e transporte sanguíneo. A ventilação aumenta antes de grandes mudanças nos gases, por comando central e feedback muscular.",
   level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["ventilação", "limiar ventilatório", "trocas gasosas", "teste da fala"],
   hero: "A ventilação sobe no exercício antes mesmo de os gases arteriais mudarem muito, graças ao comando central. Entender o sistema respiratório sustenta guias práticos como o teste da fala.",
@@ -1345,6 +1349,7 @@ const capSistemaRespiratorio = deepLesson({
 const capSistemaHematologico = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-hematologico`, moduleSlug: "sistema-hematologico",
   slug: `${DISC}--mapa-sistema-hematologico`, title: "Sangue, linfa e imunidade: transporte, defesa e recuperação",
+  figure: { id: "dissociacao-o2" },
   subtitle: "Capítulo 05 do manual", description: "Sangue e linfa transportam e conectam tecidos, enquanto hemostasia e imunidade preservam integridade. A interpretação deve separar concentração, redistribuição e mudança real de massa.",
   level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["volume plasmático", "hemoglobina", "ferro", "inflamação"],
   hero: "O exercício muda volume plasmático, distribuição de células, mediadores inflamatórios e demanda de ferro. Ler o sangue exige separar o que é concentração, o que é redistribuição e o que é mudança real de massa.",
@@ -1453,6 +1458,7 @@ const capSistemaHematologico = deepLesson({
 const capSistemaRenal = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-renal`, moduleSlug: "sistema-renal",
   slug: `${DISC}--mapa-sistema-renal`, title: "Rins: filtração, água, eletrólitos e equilíbrio ácido-base",
+  figure: { id: "nefron" },
   subtitle: "Capítulo 06 do manual", description: "Os rins estabilizam volume, osmolaridade, eletrólitos, pH e pressão ao filtrar o plasma e ajustar reabsorção e secreção. No exercício, mudam a interpretação de urina e biomarcadores.",
   level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["rim", "hidratação", "sódio", "ácido-base"],
   hero: "O rim é o grande ajustador do meio interno: filtra litros de plasma e decide, segmento por segmento, o que recupera e o que elimina, ligando hidratação, sódio, pH e pressão arterial.",
@@ -1561,6 +1567,7 @@ const capSistemaRenal = deepLesson({
 const capSistemaEndocrino = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-controle-endocrino`, moduleSlug: "controle-endocrino",
   slug: `${DISC}--mapa-sistema-endocrino`, title: "Sistema endócrino: sinalização, eixos e integração metabólica",
+  figure: { id: "eixo-endocrino" },
   subtitle: "Capítulo 07 do manual", description: "Hormônios coordenam respostas de segundos a semanas. O efeito depende de concentração livre, pulsos, ritmos, receptores e estado do tecido-alvo, não só da concentração no sangue.",
   level: "avancado", minutes: 13, type: "mecanismo", kicker: K, tags: ["hormônios", "cortisol", "insulina", "eixos"],
   hero: "No exercício, sinais neurais, mecânicos e metabólicos convergem com catecolaminas, insulina, glucagon, cortisol, hormônios tireoidianos e mioquinas. O efeito depende de muito mais que a concentração no sangue.",
@@ -1669,6 +1676,7 @@ const capSistemaEndocrino = deepLesson({
 const capSistemaDigestorio = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-digestorio`, moduleSlug: "sistema-digestorio",
   slug: `${DISC}--mapa-sistema-digestorio`, title: "Sistema digestório e hepatobiliar: da refeição ao substrato",
+  figure: { id: "vias-energeticas" },
   subtitle: "Capítulo 08 do manual", description: "O digestório transforma alimentos em moléculas absorvíveis e regula o ritmo de entrega ao organismo. O fígado recebe nutrientes pela veia porta e decide entre oxidar, armazenar, converter e exportar.",
   level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["digestão", "absorção", "fígado", "disponibilidade energética"],
   hero: "Comer é só o começo: motilidade, secreção, absorção e fígado decidem o ritmo com que a energia chega ao corpo. O exercício muda fluxo esplâncnico, esvaziamento e tolerância gastrointestinal.",

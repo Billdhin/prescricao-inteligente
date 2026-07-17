@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import {
-  Eye,
   ArrowRight,
   ArrowDown,
   Lightbulb,
@@ -18,6 +17,9 @@ import {
   Calculator as CalcIcon,
   Unlock,
   ChevronDown,
+  Info,
+  KeyRound,
+  Gauge,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
@@ -26,6 +28,7 @@ import { referenceSourceLabel, lessonTypeMeta } from "../constants";
 import { iconByName } from "../icons";
 import { useAprender } from "../store";
 import { FIGURES } from "../figures/scientific";
+import { siglasDaLesson } from "../siglas";
 import type { Lesson, LessonBlock, QuizQuestion } from "../types";
 
 const repo = getLearningRepository();
@@ -130,6 +133,9 @@ export function LessonRenderer({ lesson, onApply }: { lesson: Lesson; onApply: (
         return (
           <section key={id} id={`sec-${id}`} className="scroll-mt-24 space-y-5">
             <SectionHeading n={numberOf.get(id)!} title={SECTION_TITLE[id]} />
+            {/* As siglas da própria aula abrem o Entenda: quem lê "VO₂" ou "EMG" logo
+                adiante já sabe o que é, em vez de tropeçar. */}
+            {id === "entenda" && <SiglasDaAula lesson={lesson} />}
             {renderBlocks(sections[id])}
           </section>
         );
@@ -234,6 +240,90 @@ function PrescriptionQuestion({ question, cta }: { question: string; cta?: strin
   );
 }
 
+/** Siglas que aparecem nesta aula, expandidas. Some quando a aula não usa nenhuma. */
+function SiglasDaAula({ lesson }: { lesson: Lesson }) {
+  const siglas = React.useMemo(() => siglasDaLesson(lesson), [lesson]);
+  if (siglas.length === 0) return null;
+  return (
+    <Card variant="soft" className="p-4">
+      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-analysis">
+        <Info className="h-3.5 w-3.5" /> Siglas e termos desta aula
+      </div>
+      <dl className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
+        {siglas.map((s) => (
+          <div key={s.sigla} className="flex gap-2">
+            <dt className="shrink-0 font-mono text-sm font-bold text-ink">{s.sigla}</dt>
+            <dd className="text-sm text-ink-2">{s.significado}</dd>
+          </div>
+        ))}
+      </dl>
+    </Card>
+  );
+}
+
+/**
+ * A seção "Medida e interpretação" chega como frases estruturadas ("X representa Y.
+ * Limite: Z"). Antes virava texto corrido com um olho decorativo que parecia clicável
+ * e não era. Aqui cada variável vira um cartão que separa o que ela informa de onde ela
+ * cala, e as duas linhas especiais (regra de ouro, sinal de segurança) viram avisos.
+ */
+const RE_MEDIDA = /^(.+?)\s+(?:representa|representam)\s+(.+?)\.\s*Limite:\s*(.+)$/i;
+
+function MedidaInterpretacao({ title, items }: { title?: string; items: string[] }) {
+  const variaveis = items
+    .map((it) => RE_MEDIDA.exec(it))
+    .filter((m): m is RegExpExecArray => m !== null)
+    .map((m) => ({ variavel: m[1].trim(), informa: m[2].trim(), limite: m[3].trim() }));
+  const regra = items.find((it) => /^regra de ouro/i.test(it));
+  const seguranca = items.find((it) => /^sinal de segurança/i.test(it));
+  // Qualquer item que não casou com os padrões acima ainda precisa aparecer.
+  const soltos = items.filter((it) => !RE_MEDIDA.test(it) && !/^regra de ouro/i.test(it) && !/^sinal de segurança/i.test(it));
+
+  return (
+    <section>
+      {title && <BlockTitle>{title}</BlockTitle>}
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        {variaveis.map((v) => (
+          <div key={v.variavel} className="rounded-xl border border-border bg-surface p-3">
+            <div className="mb-1 flex items-center gap-1.5">
+              <Gauge className="h-3.5 w-3.5 shrink-0 text-analysis" />
+              <span className="font-semibold text-ink">{v.variavel}</span>
+            </div>
+            <p className="text-sm text-ink-2">{v.informa}</p>
+            <p className="mt-1.5 text-xs text-ink-3">
+              <span className="font-semibold uppercase tracking-wide">Onde cala:</span> {v.limite}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {soltos.length > 0 && (
+        <ul className="mt-2.5 space-y-1.5">
+          {soltos.map((it, i) => (
+            <li key={i} className="flex items-start gap-2 text-sm text-ink-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-analysis" />
+              {it}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {regra && (
+        <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary-tint p-3">
+          <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <p className="text-sm text-ink">{regra}</p>
+        </div>
+      )}
+      {seguranca && (
+        <div className="mt-2.5 flex items-start gap-2.5 rounded-xl border border-warning/40 bg-[#fef7e8] p-3">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <p className="text-sm text-ink">{seguranca}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ShortText({
   title,
   variant,
@@ -245,21 +335,40 @@ function ShortText({
   text?: string;
   items?: string[];
 }) {
+  if (!items) {
+    return (
+      <section>
+        {title && <BlockTitle>{title}</BlockTitle>}
+        <p className="text-ink-2">{text}</p>
+      </section>
+    );
+  }
+  // A seção de medida e interpretação tem estrutura própria; o resto é lista de aplicações.
+  if ((title ?? "").toLowerCase().startsWith("medida e interpreta")) {
+    return <MedidaInterpretacao title={title} items={items} />;
+  }
+  // Aplicações a populações especiais: rótulo destacado quando o item vem como "Grupo: texto".
   return (
     <section>
       {title && <BlockTitle>{title}</BlockTitle>}
-      {items ? (
-        <ul className="space-y-2">
-          {items.map((it, i) => (
+      <ul className="space-y-1.5">
+        {items.map((it, i) => {
+          const m = /^([^:]{3,42}):\s+(.+)$/.exec(it);
+          return (
             <li key={i} className="flex items-start gap-2.5 rounded-xl border border-border bg-surface p-3 text-sm text-ink-2">
-              <Eye className="mt-0.5 h-4 w-4 shrink-0 text-analysis" />
-              {it}
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-analysis" aria-hidden />
+              {m ? (
+                <span>
+                  <span className="font-semibold text-ink">{m[1]}: </span>
+                  {m[2]}
+                </span>
+              ) : (
+                it
+              )}
             </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-ink-2">{text}</p>
-      )}
+          );
+        })}
+      </ul>
     </section>
   );
 }
