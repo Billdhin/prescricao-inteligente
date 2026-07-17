@@ -5,6 +5,7 @@ import { Landing } from "@/pages/Landing";
 import { Pricing } from "@/pages/Pricing";
 import { Dashboard } from "@/pages/Dashboard";
 import { Gps } from "@/pages/Gps";
+import { PrescreverTreino } from "@/pages/PrescreverTreino";
 import { MovementLabList } from "@/pages/MovementLabList";
 import { MovementLabDetail } from "@/pages/MovementLabDetail";
 import { CasesList } from "@/pages/CasesList";
@@ -80,6 +81,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/gps" element={<Gps />} />
+          <Route path="/prescrever-treino" element={<PrescreverTreino />} />
           <Route path="/movement-lab" element={<MovementLabList />} />
           <Route path="/movement-lab/:slug" element={<MovementLabDetail />} />
           <Route path="/comparador" element={<Comparador />} />

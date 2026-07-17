@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-do
 import {
   LayoutDashboard,
   Navigation,
+  CalendarRange,
   FlaskConical,
   BookOpen,
   Route as RouteIcon,
@@ -70,7 +71,8 @@ const navByMode: Record<AppMode, NavSection[]> = {
       items: [
         { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
         { to: "/alunos", label: "Alunos", icon: Users },
-        { to: "/gps", label: "Prescrever", icon: Navigation },
+        { to: "/gps", label: "Prescrever exercício", icon: Navigation },
+        { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange },
       ],
     },
     {
@@ -145,7 +147,7 @@ const navByMode: Record<AppMode, NavSection[]> = {
 
 // Rotas exclusivas de cada modo (não compartilhadas). Ao trocar de modo, só
 // redireciona à home do novo modo se a rota atual pertencer só ao modo que sai.
-const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps", "/semaforo", "/dashboard"];
+const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps", "/prescrever-treino", "/semaforo", "/dashboard"];
 const APRENDER_ONLY = ["/aprender", "/tracks", "/cases", "/favorites", "/history"];
 const HOME_POR_MODO: Record<AppMode, string> = { atender: "/dashboard", aprender: "/aprender" };
 
@@ -176,7 +178,8 @@ const TITULOS_ROTA: [RegExp, string][] = [
   [/^\/dashboard/, "Painel"],
   [/^\/alunos\/./, "Aluno"],
   [/^\/alunos/, "Alunos"],
-  [/^\/gps/, "Prescrever"],
+  [/^\/prescrever-treino/, "Prescrever treino"],
+  [/^\/gps/, "Prescrever exercício"],
   [/^\/semaforo/, "Semáforo de Liberação"],
   [/^\/special-groups/, "Grupos Especiais"],
   [/^\/movement-lab/, "Laboratório Visual"],
