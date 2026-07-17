@@ -214,6 +214,24 @@ export const referencias: Referencia[] = [
     nota: "Revisão sobre amplitude de movimento e desenvolvimento muscular: para membros inferiores, a amplitude completa tende a favorecer a hipertrofia (evidência limitada e conflitante em membros superiores).",
   },
   {
+    id: "acsm-progressao-2009",
+    autores: "American College of Sports Medicine (Ratamess NA et al.)",
+    titulo: "Progression models in resistance training for healthy adults (Position Stand)",
+    fonte: "Medicine & Science in Sports & Exercise, 41(3):687-708",
+    ano: 2009,
+    doi: "10.1249/MSS.0b013e3181915670",
+    nota: "Position stand com as faixas de carga, repetições, frequência e intervalo por status de treino e por objetivo (iniciante 8-12 RM, 2-3x/sem; intermediário/avançado 1-12 RM periodizado; hipertrofia ênfase 6-12 RM; resistência 40-60% de 1RM com mais de 15 reps; potência 30-60%). Base das faixas sugeridas na periodização, sempre como faixa e sob critério do profissional.",
+  },
+  {
+    id: "moesgaard-periodizacao-2022",
+    autores: "Moesgaard L, Beck MM, Christiansen L, Aagaard P, Lundbye-Jensen J",
+    titulo: "Effects of periodization on strength and muscle hypertrophy in volume-equated resistance training programs: a systematic review and meta-analysis",
+    fonte: "Sports Medicine, 52(7):1647-1666",
+    ano: 2022,
+    doi: "10.1007/s40279-021-01636-1",
+    nota: "Meta-análise: treino periodizado supera o não periodizado em força (1RM); a ondulatória supera a linear em força em treinados (não em iniciantes); para hipertrofia, com volume equiparado, não há diferença entre os modelos. Sustenta a lógica de opção principal x alternativa e a honestidade de que as diferenças costumam ser pequenas.",
+  },
+  {
     id: "contreras-2015",
     autores: "Contreras B, Vigotsky AD, Schoenfeld BJ, et al.",
     titulo:
