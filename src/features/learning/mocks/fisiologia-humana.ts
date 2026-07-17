@@ -317,9 +317,9 @@ const homeostase = deepLesson({
 /* =============== Aprofundamentos: fundamentos da regulação =============== */
 
 const homeostaseControle = deepLesson({
-  disciplineSlug: DISC, moduleId: `m-${DISC}-fundamentos`, moduleSlug: "fundamentos",
+  disciplineSlug: DISC, moduleId: `m-${DISC}-adaptacoes`, moduleSlug: "adaptacoes",
   slug: `${DISC}--homeostase-e-controle`, title: "Homeostase e controle fisiológico",
-  subtitle: "Fundamentos", description: "A variável regulada é mantida dentro de uma faixa funcional por sensores, um centro integrador, efetores e feedback, não em um valor rígido.",
+  subtitle: "Integração e adaptação", description: "A variável regulada é mantida dentro de uma faixa funcional por sensores, um centro integrador, efetores e feedback, não em um valor rígido.",
   level: "fundamental", minutes: 11, type: "mecanismo", kicker: K, tags: ["homeostase", "feedback", "set point"],
   hero: "Frequência cardíaca, glicemia, temperatura e pressão oscilam o tempo todo. Homeostase não é imobilidade: é a capacidade de detectar desvios e mobilizar respostas que mantêm a variável dentro de uma faixa compatível com a função.",
   question: "Se a temperatura, a pressão e a glicemia variam o tempo todo, o que significa dizer que o corpo está em equilíbrio?",
@@ -366,9 +366,9 @@ const homeostaseControle = deepLesson({
 });
 
 const transporteMembrana = deepLesson({
-  disciplineSlug: DISC, moduleId: `m-${DISC}-fundamentos`, moduleSlug: "fundamentos",
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-nervoso`, moduleSlug: "sistema-nervoso",
   slug: `${DISC}--transporte-membrana`, title: "Transporte pela membrana: como a célula troca com o meio",
-  subtitle: "Fundamentos", description: "Difusão, osmose, carreadores e bombas determinam seletividade e direção do transporte; base para hidratação, volume e excitabilidade.",
+  subtitle: "Sistema nervoso", description: "Difusão, osmose, carreadores e bombas determinam seletividade e direção do transporte; base para hidratação, volume e excitabilidade.",
   level: "fundamental", minutes: 10, type: "conceito", kicker: K, tags: ["membrana", "difusão", "bomba de sódio e potássio"],
   hero: "A membrana separa a célula do meio e escolhe o que entra e o que sai. Difusão, osmose, carreadores e bombas explicam desde a hidratação até a excitabilidade que permite a contração muscular.",
   question: "Por que a bomba de sódio e potássio precisa gastar energia o tempo todo, mesmo com a célula em repouso?",
@@ -423,9 +423,9 @@ const transporteMembrana = deepLesson({
 });
 
 const bioeletricidade = deepLesson({
-  disciplineSlug: DISC, moduleId: `m-${DISC}-fundamentos`, moduleSlug: "fundamentos",
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-nervoso`, moduleSlug: "sistema-nervoso",
   slug: `${DISC}--bioeletricidade`, title: "Bioeletricidade: o potencial de ação",
-  subtitle: "Fundamentos", description: "Gradientes iônicos viram sinais rápidos: o potencial de ação é um evento tudo-ou-nada que inicia o comando motor.",
+  subtitle: "Sistema nervoso", description: "Gradientes iônicos viram sinais rápidos: o potencial de ação é um evento tudo-ou-nada que inicia o comando motor.",
   level: "intermediario", minutes: 10, type: "mecanismo", kicker: K, tags: ["potencial de ação", "limiar", "excitabilidade"],
   hero: "Toda contração voluntária começa como eletricidade. O potencial de ação converte gradientes iônicos em um sinal rápido e organizado, base para entender comando motor, recrutamento e fadiga.",
   question: "Por que um estímulo um pouco mais forte não gera um potencial de ação 'maior', e sim mais potenciais?",
@@ -1635,24 +1635,22 @@ const capSistemaTegumentar = deepLesson({
  * integração) e seguido pelos aprofundamentos já autorados.
  */
 export const fisiologiaHumanaModules: Module[] = [
-  deepModule({ id: `m-${DISC}-fundamentos`, disciplineId: DISC_ID, slug: "fundamentos", title: "Fundamentos da regulação", objective: "Explicar homeostase, transporte de membrana e bioeletricidade como base de todos os sistemas.", order: 1, level: "fundamental", lessons: [homeostaseControle, transporteMembrana, bioeletricidade], applications: ["Ler variáveis fisiológicas como faixas reguladas e entender excitabilidade"] }),
-  deepModule({ id: `m-${DISC}-sistema-nervoso`, disciplineId: DISC_ID, slug: "sistema-nervoso", title: "Sistema nervoso", objective: "Relacionar excitabilidade, comando motor, controle autonômico e fadiga central à decisão de exercício.", order: 2, level: "intermediario", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaNervoso], applications: ["Tratar técnica, atenção e ambiente como parte da dose neural"] }),
-  deepModule({ id: `m-${DISC}-tecidos-movimento`, disciplineId: DISC_ID, slug: "tecidos-do-movimento", title: "Sistema muscular", objective: "Explicar como a força emerge de arquitetura, pontes cruzadas, unidades motoras e alavancas, e como fadiga e hipertrofia se organizam.", order: 3, level: "intermediario", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaMuscular, musculo, relacaoForca], applications: ["Explicar força além do tamanho e escolher amplitude pelo pico de tensão"] }),
-  deepModule({ id: `m-${DISC}-sistema-cardiovascular`, disciplineId: DISC_ID, slug: "sistema-cardiovascular", title: "Sistema cardiovascular", objective: "Compreender ritmo, bomba, vasos, pressão e distribuição do fluxo no esforço.", order: 4, level: "fundamental", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaCardiovascular, debito, cicloCardiaco, pressao], applications: ["Interpretar FC e pressão como resposta e cuidar da hipertensão"] }),
-  deepModule({ id: `m-${DISC}-sistema-respiratorio`, disciplineId: DISC_ID, slug: "sistema-respiratorio", title: "Sistema respiratório", objective: "Relacionar mecânica ventilatória, difusão, V/Q, transporte de gases e controle da ventilação.", order: 5, level: "fundamental", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [capSistemaRespiratorio, ventilacao, transporteGases, consumo], applications: ["Guiar intensidade pela fala e explicar a entrega de O2"] }),
-  deepModule({ id: `m-${DISC}-sistema-hematologico`, disciplineId: DISC_ID, slug: "sistema-hematologico", title: "Sistema hematológico, linfático e imunológico", objective: "Separar concentração, redistribuição e mudança real de massa ao ler sangue, imunidade e edema.", order: 6, level: "intermediario", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [capSistemaHematologico], applications: ["Padronizar exames e não confundir hemoconcentração com produção"] }),
-  deepModule({ id: `m-${DISC}-sistema-renal`, disciplineId: DISC_ID, slug: "sistema-renal", title: "Sistema renal e urinário", objective: "Explicar filtração, transporte tubular, água, sódio, potássio e equilíbrio ácido-base aplicados ao exercício.", order: 7, level: "intermediario", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaRenal, renal], applications: ["Ligar rim à hidratação e à pressão e reconhecer hiponatremia"] }),
-  deepModule({ id: `m-${DISC}-controle-endocrino`, disciplineId: DISC_ID, slug: "controle-endocrino", title: "Sistema endócrino", objective: "Interpretar hormônios como rede de eixos, pulsos, ritmos e sensibilidade do tecido.", order: 8, level: "avancado", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaEndocrino, endocrino], applications: ["Evitar explicações de um hormônio só e encaminhar conduta hormonal"] }),
-  deepModule({ id: `m-${DISC}-sistema-digestorio`, disciplineId: DISC_ID, slug: "sistema-digestorio", title: "Sistema digestório e hepatobiliar", objective: "Relacionar motilidade, secreção, absorção, fígado e disponibilidade energética ao exercício.", order: 9, level: "intermediario", prerequisites: [`m-${DISC}-controle-endocrino`], lessons: [capSistemaDigestorio, viasEnergeticas], applications: ["Treinar a estratégia de ingestão e progredir sem zonas mágicas"] }),
-  deepModule({ id: `m-${DISC}-sistema-esqueletico`, disciplineId: DISC_ID, slug: "sistema-esqueletico", title: "Sistema esquelético, articular e tecido conjuntivo", objective: "Aplicar mecanotransdução e tempos de adaptação de osso, cartilagem e tendão à progressão de carga.", order: 10, level: "intermediario", prerequisites: [`m-${DISC}-tecidos-movimento`], lessons: [capSistemaEsqueletico], applications: ["Progredir pelo tecido limitante, não só pela força muscular"] }),
-  deepModule({ id: `m-${DISC}-sistema-reprodutor`, disciplineId: DISC_ID, slug: "sistema-reprodutor", title: "Sistema reprodutor", objective: "Integrar eixo gonadal, ciclo, gestação, envelhecimento e disponibilidade energética à prática.", order: 11, level: "avancado", prerequisites: [`m-${DISC}-controle-endocrino`], lessons: [capSistemaReprodutor], applications: ["Reconhecer baixa disponibilidade energética e ajustar na gestação"] }),
-  deepModule({ id: `m-${DISC}-sistema-tegumentar`, disciplineId: DISC_ID, slug: "sistema-tegumentar", title: "Sistema tegumentar e termorregulação", objective: "Explicar balanço térmico, fluxo cutâneo, sudorese, hidratação e aclimatação com segurança ambiental.", order: 12, level: "intermediario", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [capSistemaTegumentar], applications: ["Tratar calor e hidratação como parte da dose e reconhecer sinais de alerta"] }),
-  deepModule({ id: `m-${DISC}-adaptacoes`, disciplineId: DISC_ID, slug: "adaptacoes", title: "Integração e adaptação", objective: "Integrar os sistemas no movimento e distinguir resposta de adaptação.", order: 13, level: "intermediario", prerequisites: [`m-${DISC}-sistema-digestorio`], lessons: [integracao, agudaCronica, homeostase], applications: ["Ler a carga de forma integrada e progredir o estímulo"] }),
+  deepModule({ id: `m-${DISC}-sistema-nervoso`, disciplineId: DISC_ID, slug: "sistema-nervoso", title: "Sistema nervoso", objective: "Relacionar excitabilidade, comando motor, controle autonômico e fadiga central à decisão de exercício.", order: 1, level: "intermediario", lessons: [capSistemaNervoso, bioeletricidade, transporteMembrana], applications: ["Tratar técnica, atenção e ambiente como parte da dose neural"] }),
+  deepModule({ id: `m-${DISC}-tecidos-movimento`, disciplineId: DISC_ID, slug: "tecidos-do-movimento", title: "Sistema muscular", objective: "Explicar como a força emerge de arquitetura, pontes cruzadas, unidades motoras e alavancas, e como fadiga e hipertrofia se organizam.", order: 2, level: "intermediario", prerequisites: [`m-${DISC}-sistema-nervoso`], lessons: [capSistemaMuscular, musculo, relacaoForca], applications: ["Explicar força além do tamanho e escolher amplitude pelo pico de tensão"] }),
+  deepModule({ id: `m-${DISC}-sistema-cardiovascular`, disciplineId: DISC_ID, slug: "sistema-cardiovascular", title: "Sistema cardiovascular", objective: "Compreender ritmo, bomba, vasos, pressão e distribuição do fluxo no esforço.", order: 3, level: "fundamental", lessons: [capSistemaCardiovascular, debito, cicloCardiaco, pressao], applications: ["Interpretar FC e pressão como resposta e cuidar da hipertensão"] }),
+  deepModule({ id: `m-${DISC}-sistema-respiratorio`, disciplineId: DISC_ID, slug: "sistema-respiratorio", title: "Sistema respiratório", objective: "Relacionar mecânica ventilatória, difusão, V/Q, transporte de gases e controle da ventilação.", order: 4, level: "fundamental", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [capSistemaRespiratorio, ventilacao, transporteGases, consumo], applications: ["Guiar intensidade pela fala e explicar a entrega de O2"] }),
+  deepModule({ id: `m-${DISC}-sistema-hematologico`, disciplineId: DISC_ID, slug: "sistema-hematologico", title: "Sistema hematológico, linfático e imunológico", objective: "Separar concentração, redistribuição e mudança real de massa ao ler sangue, imunidade e edema.", order: 5, level: "intermediario", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [capSistemaHematologico], applications: ["Padronizar exames e não confundir hemoconcentração com produção"] }),
+  deepModule({ id: `m-${DISC}-sistema-renal`, disciplineId: DISC_ID, slug: "sistema-renal", title: "Sistema renal e urinário", objective: "Explicar filtração, transporte tubular, água, sódio, potássio e equilíbrio ácido-base aplicados ao exercício.", order: 6, level: "intermediario", lessons: [capSistemaRenal, renal], applications: ["Ligar rim à hidratação e à pressão e reconhecer hiponatremia"] }),
+  deepModule({ id: `m-${DISC}-controle-endocrino`, disciplineId: DISC_ID, slug: "controle-endocrino", title: "Sistema endócrino", objective: "Interpretar hormônios como rede de eixos, pulsos, ritmos e sensibilidade do tecido.", order: 7, level: "avancado", lessons: [capSistemaEndocrino, endocrino], applications: ["Evitar explicações de um hormônio só e encaminhar conduta hormonal"] }),
+  deepModule({ id: `m-${DISC}-sistema-digestorio`, disciplineId: DISC_ID, slug: "sistema-digestorio", title: "Sistema digestório e hepatobiliar", objective: "Relacionar motilidade, secreção, absorção, fígado e disponibilidade energética ao exercício.", order: 8, level: "intermediario", prerequisites: [`m-${DISC}-controle-endocrino`], lessons: [capSistemaDigestorio, viasEnergeticas], applications: ["Treinar a estratégia de ingestão e progredir sem zonas mágicas"] }),
+  deepModule({ id: `m-${DISC}-sistema-esqueletico`, disciplineId: DISC_ID, slug: "sistema-esqueletico", title: "Sistema esquelético, articular e tecido conjuntivo", objective: "Aplicar mecanotransdução e tempos de adaptação de osso, cartilagem e tendão à progressão de carga.", order: 9, level: "intermediario", prerequisites: [`m-${DISC}-tecidos-movimento`], lessons: [capSistemaEsqueletico], applications: ["Progredir pelo tecido limitante, não só pela força muscular"] }),
+  deepModule({ id: `m-${DISC}-sistema-reprodutor`, disciplineId: DISC_ID, slug: "sistema-reprodutor", title: "Sistema reprodutor", objective: "Integrar eixo gonadal, ciclo, gestação, envelhecimento e disponibilidade energética à prática.", order: 10, level: "avancado", prerequisites: [`m-${DISC}-controle-endocrino`], lessons: [capSistemaReprodutor], applications: ["Reconhecer baixa disponibilidade energética e ajustar na gestação"] }),
+  deepModule({ id: `m-${DISC}-sistema-tegumentar`, disciplineId: DISC_ID, slug: "sistema-tegumentar", title: "Sistema tegumentar e termorregulação", objective: "Explicar balanço térmico, fluxo cutâneo, sudorese, hidratação e aclimatação com segurança ambiental.", order: 11, level: "intermediario", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [capSistemaTegumentar], applications: ["Tratar calor e hidratação como parte da dose e reconhecer sinais de alerta"] }),
+  deepModule({ id: `m-${DISC}-adaptacoes`, disciplineId: DISC_ID, slug: "adaptacoes", title: "Integração e adaptação", objective: "Integrar os sistemas no movimento, distinguir resposta de adaptação e ler cada variável como faixa regulada.", order: 12, level: "intermediario", prerequisites: [`m-${DISC}-sistema-digestorio`], lessons: [integracao, homeostaseControle, agudaCronica, homeostase], applications: ["Ler a carga de forma integrada e progredir o estímulo"] }),
 ];
 
 export const fisiologiaHumanaLessons: Lesson[] = [
-  homeostaseControle, transporteMembrana, bioeletricidade,
-  capSistemaNervoso,
+  capSistemaNervoso, bioeletricidade, transporteMembrana,
   capSistemaMuscular, musculo, relacaoForca,
   capSistemaCardiovascular, debito, cicloCardiaco, pressao,
   capSistemaRespiratorio, ventilacao, transporteGases, consumo,
@@ -1663,5 +1661,5 @@ export const fisiologiaHumanaLessons: Lesson[] = [
   capSistemaEsqueletico,
   capSistemaReprodutor,
   capSistemaTegumentar,
-  integracao, agudaCronica, homeostase,
+  integracao, homeostaseControle, agudaCronica, homeostase,
 ];

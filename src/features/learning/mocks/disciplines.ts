@@ -46,7 +46,7 @@ export const disciplines: Discipline[] = [
     colorToken: "analysis",
     level: "Fundamental",
     estimatedHours: 5,
-    moduleCount: 13,
+    moduleCount: 12,
     lessonCount: 28,
     caseCount: 11,
     progress: 0,
