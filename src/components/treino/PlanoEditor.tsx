@@ -60,7 +60,7 @@ export interface ContextoFaixa {
 
 export function GraficoProgressao({ macro }: { macro: Macrociclo }) {
   const g = desenharProgressao(macro);
-  const padY = 18;
+  const gid = React.useId().replace(/:/g, "");
 
   return (
     <Card className="p-4">
@@ -68,22 +68,65 @@ export function GraficoProgressao({ macro }: { macro: Macrociclo }) {
         <TrendingUp className="h-4 w-4 text-ink-3" />
         <h3 className="font-display text-base font-bold text-ink">Progressão ao longo das semanas</h3>
       </div>
-      <p className="mb-3 text-xs text-ink-3">Tendência qualitativa por semana. Barras claras marcam semanas de descarga.</p>
+      <p className="mb-3 text-xs text-ink-3">
+        Tendência qualitativa das cargas por semana. As faixas ao pé mostram cada fase e quantas semanas ela dura.
+      </p>
       <div className="overflow-x-auto">
         <svg
           viewBox={`0 0 ${g.largura} ${g.altura}`}
-          className="h-44 w-full min-w-[520px]"
+          className="h-56 w-full min-w-[560px]"
           role="img"
-          aria-label="Gráfico de progressão de volume, intensidade e complexidade por semana"
+          aria-label="Gráfico de progressão de volume, intensidade e complexidade por semana, com as fases do plano"
         >
-          {g.alivios.map((x, i) => (
-            <rect key={i} x={x - 6} y={padY} width={12} height={g.altura - padY * 2} fill="var(--surface-soft)" rx={2} />
+          <defs>
+            <linearGradient id={`vol-${gid}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* faixas de fase: fundo alternado atrás da curva + rótulo ao pé */}
+          {g.fases.map((f) => (
+            <g key={f.indice}>
+              <rect
+                x={f.x0}
+                y={g.plot.top}
+                width={f.x1 - f.x0}
+                height={g.faixaBottom - g.plot.top}
+                fill={f.indice % 2 === 0 ? "var(--surface-soft)" : "transparent"}
+                opacity={0.5}
+              />
+              {f.indice > 0 && (
+                <line x1={f.x0} y1={g.plot.top} x2={f.x0} y2={g.faixaBottom} stroke="var(--border)" strokeWidth={1} strokeDasharray="3 3" />
+              )}
+              <text x={f.cx} y={g.faixaTop + 12} textAnchor="middle" className="fill-ink" style={{ fontSize: 11, fontWeight: 700 }}>
+                {f.nome}
+              </text>
+              <text x={f.cx} y={g.faixaTop + 26} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 10 }}>
+                {f.spanSemanas}
+                {f.temDescarga ? " · descarga" : ""}
+              </text>
+            </g>
           ))}
+
+          {/* semanas de descarga */}
+          {g.alivios.map((a, i) => (
+            <rect key={i} x={a.x - a.w / 2} y={g.plot.top} width={a.w} height={g.plot.bottom - g.plot.top} fill="var(--warning)" opacity={0.07} rx={2} />
+          ))}
+
+          {/* eixo qualitativo */}
+          <text x={g.eixo.x} y={g.eixo.maiorY} textAnchor="end" className="fill-ink-3" style={{ fontSize: 9 }}>maior</text>
+          <text x={g.eixo.x} y={g.eixo.menorY} textAnchor="end" className="fill-ink-3" style={{ fontSize: 9 }}>menor</text>
+
+          {/* área sob o volume + curvas suaves */}
+          <path d={g.areaVolume} fill={`url(#vol-${gid})`} stroke="none" />
           {g.series.map((s) => (
             <path key={s.nome} d={s.d} fill="none" stroke={s.cor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
           ))}
+
+          {/* semanas */}
           {g.rotulos.map((r, i) => (
-            <text key={i} x={r.x} y={g.altura - 2} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 8 }}>
+            <text key={i} x={r.x} y={g.weekLabelY} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 9 }}>
               {r.semana}
             </text>
           ))}

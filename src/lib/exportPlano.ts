@@ -111,22 +111,37 @@ function mesoHtml(m: Mesociclo, i: number) {
 }
 
 function graficoHtml(macro: Macrociclo) {
-  const g = desenharProgressao(macro, 660, 170);
+  const g = desenharProgressao(macro, 700, 250);
   if (g.vazio) return "";
-  const padY = 18;
   // O PDF não tem as variáveis CSS do app; as cores entram literais.
-  const cores: Record<string, string> = { Volume: "#2563eb", Intensidade: "#c2410c", Complexidade: "#0e7490" };
+  const cor: Record<string, string> = { Volume: "#2563eb", Intensidade: "#c2410c", Complexidade: "#0e7490", area: "#2563eb" };
+  const fases = g.fases
+    .map(
+      (f) => `
+      ${f.indice % 2 === 0 ? `<rect x="${f.x0.toFixed(1)}" y="${g.plot.top}" width="${(f.x1 - f.x0).toFixed(1)}" height="${(g.faixaBottom - g.plot.top).toFixed(1)}" fill="#f4f6fb" opacity="0.6" />` : ""}
+      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.plot.top}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="#e7ecf3" stroke-width="1" stroke-dasharray="3 3" />` : ""}
+      <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="#1e293b" font-size="11" font-weight="700">${esc(f.nome)}</text>
+      <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 26).toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`,
+    )
+    .join("");
   return `
   <section class="bloco">
     <h2>Progressão ao longo das semanas</h2>
-    <p class="legenda-nota">Tendência qualitativa por semana. As faixas claras marcam semanas de descarga.</p>
-    <svg viewBox="0 0 ${g.largura} ${g.altura}" width="100%" height="170">
-      ${g.alivios.map((x) => `<rect x="${(x - 6).toFixed(1)}" y="${padY}" width="12" height="${g.altura - padY * 2}" fill="#f1f5f9" rx="2" />`).join("")}
-      ${g.series.map((s) => `<path d="${s.d}" fill="none" stroke="${cores[s.nome]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`).join("")}
-      ${g.rotulos.map((r) => `<text x="${r.x.toFixed(1)}" y="${g.altura - 2}" text-anchor="middle" fill="#94a3b8" font-size="8">${r.semana}</text>`).join("")}
+    <p class="legenda-nota">Tendência qualitativa das cargas. As faixas ao pé mostram cada fase e quantas semanas ela dura.</p>
+    <svg viewBox="0 0 ${g.largura} ${g.altura}" width="100%" height="230">
+      <defs><linearGradient id="volpdf" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${cor.area}" stop-opacity="0.16" /><stop offset="100%" stop-color="${cor.area}" stop-opacity="0" />
+      </linearGradient></defs>
+      ${fases}
+      ${g.alivios.map((a) => `<rect x="${(a.x - a.w / 2).toFixed(1)}" y="${g.plot.top}" width="${a.w.toFixed(1)}" height="${(g.plot.bottom - g.plot.top).toFixed(1)}" fill="#f59e0b" opacity="0.09" rx="2" />`).join("")}
+      <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.maiorY.toFixed(1)}" text-anchor="end" fill="#94a3b8" font-size="9">maior</text>
+      <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.menorY.toFixed(1)}" text-anchor="end" fill="#94a3b8" font-size="9">menor</text>
+      <path d="${g.areaVolume}" fill="url(#volpdf)" stroke="none" />
+      ${g.series.map((s) => `<path d="${s.d}" fill="none" stroke="${cor[s.nome]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`).join("")}
+      ${g.rotulos.map((r) => `<text x="${r.x.toFixed(1)}" y="${g.weekLabelY.toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="9">${r.semana}</text>`).join("")}
     </svg>
     <div class="legenda">
-      ${g.series.map((s) => `<span><i style="background:${cores[s.nome]}"></i>${s.nome}</span>`).join("")}
+      ${g.series.map((s) => `<span><i style="background:${cor[s.nome]}"></i>${s.nome}</span>`).join("")}
     </div>
   </section>`;
 }
