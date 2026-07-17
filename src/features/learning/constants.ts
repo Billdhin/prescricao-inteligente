@@ -73,4 +73,8 @@ export const referenceSourceLabel: Record<ReferenceSourceType, string> = {
 
 /** Chave de persistência e versão do estado do Aprender. */
 export const APRENDER_STORE_KEY = "pi-aprender";
-export const APRENDER_STORE_VERSION = 1;
+// v2: as respostas de quiz passaram a ser gravadas por aula ("<lessonId>:<qId>").
+// Antes a chave era só o id da pergunta ("q1"), que se repete em ~100 aulas, então
+// responder numa aula marcava a mesma pergunta em todas as outras. A migração
+// descarta as respostas antigas (sem ":"), que não têm como ser atribuídas a uma aula.
+export const APRENDER_STORE_VERSION = 2;

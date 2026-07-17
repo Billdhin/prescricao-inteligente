@@ -183,7 +183,7 @@ function BlockSwitch({ block, lesson, onApply }: { block: LessonBlock; lesson: L
     case "professional_case":
       return <ProfessionalCase title={block.title} lessonId={lesson.id} content={c} />;
     case "quiz":
-      return <QuizBlock title={block.title} questions={c.questions} />;
+      return <QuizBlock title={block.title} lessonId={lesson.id} questions={c.questions} />;
     case "practical_application":
       return <PracticalApplication title={block.title} text={c.text} />;
     case "common_mistake":
@@ -660,7 +660,7 @@ function ProfessionalCase({
   );
 }
 
-function QuizBlock({ title, questions }: { title?: string; questions: QuizQuestion[] }) {
+function QuizBlock({ title, lessonId, questions }: { title?: string; lessonId: string; questions: QuizQuestion[] }) {
   const answer = useAprender((s) => s.answerQuiz);
   return (
     <section>
@@ -671,22 +671,33 @@ function QuizBlock({ title, questions }: { title?: string; questions: QuizQuesti
       )}
       <div className="space-y-3">
         {questions.map((q) => (
-          <QuizItem key={q.id} q={q} onAnswer={answer} />
+          // A chave do store precisa incluir a aula: os ids de pergunta ("q1", "q2")
+          // se repetem em ~100 aulas, então uma chave só com o id fazia a resposta de
+          // uma aula aparecer já marcada em todas as outras. Mesmo padrão do mini caso.
+          <QuizItem key={q.id} q={q} storeKey={`${lessonId}:${q.id}`} onAnswer={answer} />
         ))}
       </div>
     </section>
   );
 }
 
-function QuizItem({ q, onAnswer }: { q: QuizQuestion; onAnswer: (id: string, a: string, ok: boolean) => void }) {
-  const stored = useAprender((s) => s.quizAnswers[q.id]);
+function QuizItem({
+  q,
+  storeKey,
+  onAnswer,
+}: {
+  q: QuizQuestion;
+  storeKey: string;
+  onAnswer: (id: string, a: string, ok: boolean) => void;
+}) {
+  const stored = useAprender((s) => s.quizAnswers[storeKey]);
   const [pick, setPick] = React.useState<string | undefined>(stored?.answer);
   const answered = pick != null;
   const correct = pick === q.correctAnswer;
   const choose = (id: string) => {
     if (answered) return;
     setPick(id);
-    onAnswer(q.id, id, id === q.correctAnswer);
+    onAnswer(storeKey, id, id === q.correctAnswer);
   };
   return (
     <Card className="p-4">

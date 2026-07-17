@@ -183,6 +183,22 @@ export const useAprender = create<AprenderState>()(
           lastLessonSlug: undefined,
         }),
     }),
-    { name: APRENDER_STORE_KEY, version: APRENDER_STORE_VERSION },
+    {
+      name: APRENDER_STORE_KEY,
+      version: APRENDER_STORE_VERSION,
+      // Preserva tudo que o usuário construiu e só limpa as respostas de quiz
+      // legadas (chave sem ":"), que vazavam entre aulas por usarem só o id da
+      // pergunta. O resto do estado passa intacto.
+      migrate: (persisted, from) => {
+        const s = persisted as AprenderState;
+        if (!s) return s;
+        if (from < 2 && s.quizAnswers) {
+          s.quizAnswers = Object.fromEntries(
+            Object.entries(s.quizAnswers).filter(([k]) => k.includes(":")),
+          );
+        }
+        return s;
+      },
+    },
   ),
 );
