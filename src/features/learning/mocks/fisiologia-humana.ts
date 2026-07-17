@@ -1033,12 +1033,36 @@ const capSistemaMuscular = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Arquitetura muscular e transmissão de força", detail: "Comprimento fascicular favorece velocidade; área de secção favorece força; penação acomoda mais fibras em paralelo. Parte da força é transmitida lateralmente pela matriz, e o tendão armazena energia." },
-      { label: "Acoplamento excitação-contração", detail: "O potencial nos túbulos T ativa DHPR-RyR1 e libera Ca2+; a força ativada depende de Ca2+ e da sensibilidade miofibrilar. A perda de força em séries pode vir de menos Ca2+ antes de qualquer depleção de ATP." },
-      { label: "Ciclo das pontes cruzadas e custo energético", detail: "A força macroscópica depende do número de pontes ligadas e do tempo de ligação. Ações excêntricas toleram forças altas com menor custo metabólico, mas mais estresse mecânico em quem não está adaptado." },
-      { label: "Unidades motoras e tipos de fibra", detail: "Força neural = recrutamento + frequência + coordenação. Fibras I, IIa e IIx diferem em velocidade e fadiga, com plasticidade; intenção explosiva pode recrutar unidades de alto limiar sem carga máxima." },
-      { label: "Comprimento-tensão, força-velocidade e potência", detail: "A força ativa varia com a sobreposição dos filamentos; a passiva cresce com o alongamento de titina e tendão. A escolha de amplitude muda a região de maior tensão mesmo com carga e repetições iguais." },
-      { label: "Fadiga, dano e hipertrofia", detail: "Balanço proteico = síntese menos degradação. Dano estrutural não é requisito para hipertrofia: tensão mecânica e trabalho próximo da capacidade recrutam sinalização, modulada por proteína, energia e sono." },
+      {
+        label: "Arquitetura muscular e transmissão de força",
+        detail:
+          "Fibras formam fascículos e se conectam a uma rede contínua de endomísio, perimísio, epimísio e tendão. Comprimento fascicular favorece excursão e velocidade; área fisiológica de secção favorece força; penação permite acomodar mais fibras em paralelo. Parte da força é transmitida lateralmente pela matriz, e o braço de momento converte força muscular em torque articular. Sequência: (1) sarcômeros geram tensão; (2) miofibrilas somam em paralelo; (3) a matriz distribui a carga; (4) o tendão transmite e armazena energia. Relação: torque = força × braço de momento. Aplicação ao exercício: hipertrofia, arquitetura e coordenação podem alterar o desempenho de maneiras diferentes, mesmo com perímetro semelhante. Como medir: ultrassom, área de secção, comprimento fascicular, ângulo de penação e rigidez tendínea. Erro frequente: tratar tamanho muscular como equivalente a força específica ou a torque em todas as amplitudes.",
+      },
+      {
+        label: "Acoplamento excitação-contração",
+        detail:
+          "O potencial de ação percorre o sarcolema e os túbulos T. O sensor de voltagem DHPR altera a conformação do RyR1 no retículo sarcoplasmático, liberando Ca2+. O Ca2+ liga-se à troponina C e desloca a tropomiosina, permitindo a interação actina-miosina. O relaxamento exige dissociação do Ca2+ e recaptação ativa pela SERCA. Sequência: (1) potencial nos túbulos T; (2) ativação DHPR-RyR1; (3) transiente de Ca2+; (4) recaptação por SERCA. Relação: a força ativada depende de Ca2+ × sensibilidade miofibrilar. Aplicação ao exercício: a perda de força em séries repetidas pode ocorrer por menor liberação de Ca2+ e menor sensibilidade miofibrilar, antes de qualquer depleção total de ATP. Como medir: transiente de Ca2+, taxa de relaxamento, potencial muscular e força evocada. Erro frequente: achar que o ATP serve apenas para produzir força; ele também separa pontes e sustenta bombas iônicas, por isso relaxar custa energia.",
+      },
+      {
+        label: "Ciclo das pontes cruzadas e custo energético",
+        detail:
+          "A cabeça de miosina liga-se à actina, libera fosfato, realiza o golpe de força, desliga-se quando o ATP se liga e é recarregada após a hidrólise. A força macroscópica depende do número de pontes ligadas, do tempo de ligação e da deformação elástica. A economia varia entre tipos de fibra e modos de ação. Sequência: (1) exposição do sítio na actina; (2) formação da ponte; (3) golpe de força; (4) desligamento e recarga com ATP. Relação: potência = força × velocidade. Aplicação ao exercício: ações excêntricas toleram forças elevadas com menor custo metabólico relativo, mas podem produzir maior estresse mecânico em quem não está adaptado. Como medir: força, rigidez, consumo de O2, taxa de desenvolvimento de força e tempo sob tensão. Erro frequente: supor que a quantidade de ATP consumida se traduz linearmente em força produzida.",
+      },
+      {
+        label: "Unidades motoras e tipos de fibra",
+        detail:
+          "Uma unidade motora inclui um motoneurônio e todas as fibras que ele inerva. Em muitas tarefas, unidades de menor limiar são recrutadas antes das de maior limiar, enquanto o aumento da frequência eleva a soma temporal da força. Fibras tipo I, IIa e IIx diferem em miosina, velocidade, metabolismo e resistência à fadiga, mas exibem plasticidade. Sequência: (1) recrutamento por limiar; (2) aumento da frequência de disparo; (3) coordenação entre unidades; (4) mudança fenotípica com o treinamento. Relação: força neural = recrutamento + frequência + coordenação. Aplicação ao exercício: a intenção explosiva pode recrutar unidades de alto limiar mais cedo, sem exigir que todas as séries usem cargas máximas. Como medir: EMG, interpolação de twitch, histologia, velocidade de contração e resistência à fadiga. Erro frequente: imaginar que as fibras rápidas só entram após falha completa das fibras lentas.",
+      },
+      {
+        label: "Comprimento-tensão, força-velocidade e potência",
+        detail:
+          "A força ativa varia com a sobreposição dos filamentos e com a geometria do músculo; a força passiva cresce com o alongamento de titina, fáscia e tendão. Em ações concêntricas, maior velocidade reduz o tempo de formação de pontes; em ações excêntricas, a força pode superar a isométrica. A potência máxima costuma ocorrer em combinações intermediárias de força e velocidade. Sequência: (1) o comprimento define a sobreposição; (2) a velocidade altera o tempo de ligação; (3) o modo de ação muda força e custo; (4) as alavancas articulares modulam o torque. Relação: impulso = integral da força no tempo. Aplicação ao exercício: a escolha de amplitude e de exercício muda a região de maior tensão, mesmo quando carga externa e repetições são iguais. Como medir: comprimento fascicular, torque angular, velocidade, potência, impulso e perda de velocidade. Erro frequente: aplicar curvas musculares isoladas diretamente ao exercício sem considerar braço de momento e técnica.",
+      },
+      {
+        label: "Fadiga, dano e hipertrofia",
+        detail:
+          "Fadiga é a redução da capacidade de produzir força ou potência e pode envolver comando neural, excitabilidade, Ca2+, fosfato inorgânico, pH, substratos e temperatura. Dano estrutural não é requisito para hipertrofia: tensão mecânica e trabalho próximos da capacidade recrutam sinalização por integrinas, FAK, mTORC1, ribossomos e células satélites, modulada por proteína, energia e sono. Sequência: (1) perturbação aguda e fadiga; (2) recuperação de íons e substratos; (3) síntese proteica e remodelamento; (4) adaptação específica à carga. Relação: balanço proteico = síntese menos degradação. Aplicação ao exercício: a progressão deve manipular volume, intensidade, amplitude, proximidade da falha e recuperação, não apenas 'sentir dor'. Como medir: perda de velocidade, força isométrica, dor, CK, espessura muscular e área de secção. Erro frequente: tratar lactato e dor tardia como causa única ou como medida suficiente da qualidade do estímulo.",
+      },
     ],
   },
   timeline: {
@@ -1051,10 +1075,15 @@ const capSistemaMuscular = deepLesson({
     ],
   },
   apply: "Manipule amplitude, intensidade, proximidade da falha e recuperação, não apenas 'sentir dor'. A escolha do exercício e da amplitude muda a região de maior tensão. Responder à abertura: o exercício com pico na posição alongada combina maior força passiva, braço de momento e comprimento de fibra diferentes, mudando a exigência mesmo com carga igual.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Progressão deve manipular volume, intensidade, amplitude e proximidade da falha, com recuperação suficiente.",
-    "Ações excêntricas e cargas pesadas são úteis, mas em não adaptados exigem introdução gradual pelo maior estresse mecânico.",
-    "Lactato e dor tardia não medem a qualidade do estímulo nem devem guiar sozinhos a progressão.",
+    "1RM e 5RM representam a carga máxima para um número de repetições. Limite: dependem de técnica e familiarização, então mudam sem que a capacidade tenha mudado.",
+    "Velocidade representa a velocidade concêntrica da carga. Limite: é útil para estimar esforço e fadiga, não para afirmar hipertrofia.",
+    "Torque representa o momento de força articular. Limite: exige conhecer o braço de momento; sem isso, a carga externa engana.",
+    "EMG representa atividade elétrica superficial ou intramuscular. Limite: não mede força diretamente.",
+    "Ultrassom representa espessura e arquitetura. Limite: é sensível a posição, hidratação e técnica do operador.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Tratar tamanho muscular como sinônimo de força em todas as amplitudes, ou usar dor tardia como medida da qualidade do treino.",
@@ -1076,6 +1105,17 @@ const capSistemaMuscular = deepLesson({
       { id: "a", label: "Em combinações intermediárias de força e velocidade." },
       { id: "b", label: "Exatamente na força máxima (1RM)." },
     ], "a", "Potência = força × velocidade; o pico aparece em combinações intermediárias, não no 1RM."),
+    q("q3", "variavel", "Por que o ATP é necessário para o músculo RELAXAR?", [
+      { id: "a", label: "Porque ele separa as pontes cruzadas e sustenta as bombas que recaptam o Ca2+." },
+      { id: "b", label: "Porque o relaxamento é totalmente passivo e não consome energia." },
+    ], "a", "O ATP desliga a ponte e alimenta a SERCA; sem ele, a fibra não solta e não recapta o Ca2+."),
+    q("q4", "conduta", "A perda de força ao longo de séries repetidas pode começar por:", [
+      { id: "a", label: "Menor liberação de Ca2+ e menor sensibilidade miofibrilar, antes de qualquer depleção total de ATP." },
+      { id: "b", label: "Depleção total de ATP já na primeira série." },
+    ], "a", "O acoplamento excitação-contração falha antes: a força cai por Ca2+ e sensibilidade, não por ATP zerado."),
+    q("q5", "verdadeiro-falso", "Duas pessoas com o mesmo perímetro de braço necessariamente produzem o mesmo torque.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Torque = força × braço de momento; arquitetura, penação, alavanca e coordenação mudam o resultado com o mesmo perímetro."),
   ],
   uncertainty: "Curvas musculares isoladas não se aplicam ao exercício sem considerar braço de momento e técnica. EMG não mede força diretamente, e ultrassom é sensível a posição, hidratação e técnica.",
   related: [
@@ -1101,12 +1141,36 @@ const capSistemaCardiovascular = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Automatismo, condução e ECG", detail: "O nó sinoatrial domina o ritmo; o nó AV atrasa; His-Purkinje sincroniza os ventrículos. O ECG registra direção e tempo da despolarização, não força mecânica: o tamanho do QRS não mede contração." },
-      { label: "Ciclo cardíaco, válvulas e pressões", detail: "Volume sistólico = volume diastólico final menos volume sistólico final. Frequências muito altas reduzem o tempo de enchimento; condicionamento e retorno venoso ajudam a preservar o volume sistólico." },
-      { label: "Débito, retorno venoso e Frank-Starling", detail: "A força se ajusta ao enchimento dentro da faixa fisiológica. Calor e desidratação reduzem o volume central e produzem deriva cardiovascular: a FC sobe para sustentar o débito enquanto o volume sistólico cai." },
-      { label: "Vasos, resistência e função endotelial", detail: "O endotélio detecta o cisalhamento e libera NO e outros mediadores, modulando tônus e inflamação. A vasodilatação do músculo ativo vem de metabólitos e sinais locais, não de simples 'desligamento simpático'." },
-      { label: "Microcirculação e troca capilar", detail: "VO2 = débito × diferença arteriovenosa de O2. Capilares oferecem grande área e baixa velocidade para a troca; o recrutamento capilar melhora a difusão e a distribuição do fluxo." },
-      { label: "Pressão arterial, reflexos e adaptações", detail: "Barorreflexo, rim e controle local sustentam a pressão. No exercício dinâmico o débito sobe e a resistência total cai; no resistido, compressão e apneia podem elevar a pressão de forma transitória." },
+      {
+        label: "Automatismo, condução e ECG",
+        detail:
+          "Células marca-passo despolarizam espontaneamente por correntes dependentes de tempo e Ca2+. O nó sinoatrial normalmente domina; o nó AV produz atraso; o sistema His-Purkinje sincroniza os ventrículos. O ECG registra diferenças de potencial na superfície corporal, refletindo direção e tempo da despolarização e da repolarização, não força mecânica. Sequência: (1) despolarização diastólica; (2) condução atrial e atraso AV; (3) ativação ventricular rápida; (4) repolarização e refratariedade. Relação: FC = 60 dividido pelo intervalo RR em segundos. Aplicação ao exercício: monitores ópticos estimam pulso; irregularidade, sintomas ou respostas inesperadas não equivalem a diagnóstico por ECG. Como medir: FC, ritmo, PR, QRS, QTc e recuperação da FC. Erro frequente: achar que o tamanho do QRS mede a força de contração ou que a onda T é o 'relaxamento mecânico'.",
+      },
+      {
+        label: "Ciclo cardíaco, válvulas e pressões",
+        detail:
+          "Válvulas abrem e fecham conforme gradientes de pressão. O ciclo inclui enchimento, contração isovolumétrica, ejeção e relaxamento isovolumétrico. Volume diastólico final, volume sistólico final e complacência determinam o volume sistólico. Os sons cardíacos relacionam-se principalmente ao fechamento valvar e a vibrações do sistema. Sequência: (1) enchimento ventricular; (2) elevação isovolumétrica da pressão; (3) ejeção pelas semilunares; (4) relaxamento e reabertura AV. Relação: volume sistólico = VDF menos VSF. Aplicação ao exercício: frequências muito altas reduzem o tempo diastólico; condicionamento e retorno venoso ajudam a preservar o volume sistólico em esforços submáximos. Como medir: volumes ventriculares, fração de ejeção, pressões e tempo diastólico. Erro frequente: tratar fração de ejeção normal como prova de função cardiovascular global normal.",
+      },
+      {
+        label: "Débito cardíaco, retorno venoso e Frank-Starling",
+        detail:
+          "O débito é a frequência cardíaca vezes o volume sistólico. O mecanismo de Frank-Starling ajusta a força ao enchimento dentro da faixa fisiológica; a contratilidade modifica o desempenho para um mesmo comprimento inicial. O retorno venoso depende do volume sanguíneo estressado, do tônus venoso, da bomba muscular, da respiração e da postura. Sequência: (1) bomba muscular e respiratória; (2) aumento do enchimento; (3) ejeção proporcional ao retorno; (4) ajuste simpático da contratilidade. Relação: DC = FC × VS. Aplicação ao exercício: calor e desidratação reduzem o volume central e podem produzir deriva cardiovascular, com a FC subindo para sustentar o débito enquanto o volume sistólico cai. Como medir: FC, volume sistólico, débito, pré-carga, contratilidade e recuperação. Erro frequente: confundir pré-carga com o volume total do corpo, e pós-carga com apenas a pressão sistólica.",
+      },
+      {
+        label: "Vasos, resistência e função endotelial",
+        detail:
+          "O fluxo depende do gradiente de pressão e da resistência. Pequenas mudanças no raio arteriolar produzem grande efeito sobre a resistência. O endotélio detecta cisalhamento e libera NO, prostanoides e fatores constritores, modulando tônus, inflamação e hemostasia. Artérias elásticas amortecem pulsos; veias armazenam volume e influenciam o retorno. Sequência: (1) o gradiente impulsiona o fluxo; (2) as arteríolas ajustam a resistência; (3) o endotélio responde ao cisalhamento; (4) as veias controlam a capacitância. Relação: fluxo = ΔP dividido por R. Aplicação ao exercício: a vasodilatação ativa do músculo resulta de metabólitos, K+, adenosina, NO e sinais neurais, e não de simples 'desligamento simpático'. Como medir: pressão, fluxo, condutância, diâmetro, velocidade de onda de pulso e dilatação mediada por fluxo. Erro frequente: supor que pressão alta implica fluxo alto; se a resistência também subiu, o fluxo pode não ter aumentado.",
+      },
+      {
+        label: "Microcirculação e troca capilar",
+        detail:
+          "Capilares oferecem grande área e baixa velocidade para as trocas. O movimento de água depende de pressões hidrostáticas, osmóticas e da permeabilidade, enquanto solutos atravessam por difusão, transporte e convecção. O sistema linfático devolve proteínas e líquido ao sangue, e o recrutamento capilar melhora a distância de difusão e a distribuição do fluxo. Sequência: (1) perfusão arteriolar; (2) difusão entre sangue e tecido; (3) filtração e reabsorção dinâmica; (4) drenagem linfática. Relação: VO2 = DC × (CaO2 menos CvO2). Aplicação ao exercício: edema, temperatura e congestão devem ser avaliados em conjunto; mudanças agudas de volume plasmático alteram a concentração de vários marcadores. Como medir: fluxo regional, extração de O2, volume plasmático, edema e pressão capilar. Erro frequente: usar a formulação clássica de 'filtração arterial e reabsorção venosa' como se fosse completa; o glicocálix e a drenagem linfática são centrais.",
+      },
+      {
+        label: "Pressão arterial, reflexos e adaptações ao treino",
+        detail:
+          "Barorreceptores, quimiorreceptores, rim, hormônios e controle local sustentam a pressão. Durante o exercício dinâmico, o débito sobe e a resistência total costuma cair; no exercício resistido, compressão vascular e manobra de Valsalva podem elevar a pressão transitoriamente. O treinamento modifica volume plasmático, função endotelial, autonomia e remodelamento cardíaco. Sequência: (1) o barorreflexo redefine o ponto operacional; (2) o rim ajusta volume em longo prazo; (3) o exercício altera débito e resistência; (4) o treino remodela coração e vasos. Relação: PAM ≈ PAD + 1/3 (PAS menos PAD). Aplicação ao exercício: história, sintomas e trajetória são mais informativos que um valor isolado para diferenciar adaptação fisiológica de condição clínica. Como medir: PA padronizada, resposta ao esforço, FC de repouso, ecocardiografia e VO2. Erro frequente: rotular automaticamente como benigno todo aumento de espessura ventricular em atleta.",
+      },
     ],
   },
   timeline: {
@@ -1119,10 +1183,15 @@ const capSistemaCardiovascular = deepLesson({
     ],
   },
   apply: "Leia a FC como uma variável de resposta, junto de percepção de esforço, ventilação e contexto. No treino de força com hipertensos, oriente respiração contínua e intensidade moderada, evitando apneia. Responder à abertura: no calor, a deriva cardiovascular eleva a FC para a mesma tarefa; isso não indica piora do condicionamento.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Calor e desidratação reduzem o volume central; ajuste a intensidade pela percepção de esforço e pela fala, não só pela FC.",
-    "História, sintomas e trajetória informam mais que um valor isolado ao diferenciar adaptação fisiológica de condição clínica.",
-    "Dor torácica, síncope ou dispneia desproporcional exigem interrupção e avaliação apropriada.",
+    "Pressão arterial representa a força exercida sobre a parede arterial. Limite: técnica, manguito e postura alteram o valor.",
+    "Frequência cardíaca representa eventos por minuto. Limite: a mesma FC pode representar débitos diferentes.",
+    "Débito cardíaco representa volume por minuto. Limite: o método determina a precisão.",
+    "Fração de ejeção representa a proporção ejetada do VDF. Limite: não descreve toda a função cardíaca.",
+    "VO2 representa a captação sistêmica de oxigênio. Limite: integra circulação, pulmão e músculo, então não isola nenhum deles.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Concluir que o condicionamento piorou porque a FC subiu no calor, ou tratar fração de ejeção normal como prova de função cardiovascular global normal.",
@@ -1143,6 +1212,17 @@ const capSistemaCardiovascular = deepLesson({
     q("q2", "verdadeiro-falso", "No calor, uma FC mais alta na mesma tarefa costuma indicar piora do condicionamento.", [
       { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
     ], "f", "É deriva cardiovascular: com menos volume central, a FC sobe para manter o débito."),
+    q("q3", "variavel", "O que o ECG mede, de fato?", [
+      { id: "a", label: "Direção e tempo da despolarização e repolarização na superfície do corpo." },
+      { id: "b", label: "A força de contração do ventrículo." },
+    ], "a", "O ECG é elétrico, não mecânico: o tamanho do QRS não mede força, e a onda T não é relaxamento mecânico."),
+    q("q4", "conduta", "Por que o raio das arteríolas é tão decisivo para o fluxo?", [
+      { id: "a", label: "Porque pequenas mudanças de raio produzem grande efeito sobre a resistência (fluxo = ΔP / R)." },
+      { id: "b", label: "Porque as arteríolas armazenam a maior parte do volume sanguíneo." },
+    ], "a", "As arteríolas ajustam a resistência; as veias é que controlam capacitância e armazenam volume."),
+    q("q5", "verdadeiro-falso", "Pressão alta implica necessariamente fluxo alto no tecido.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Se a resistência subiu junto, o fluxo pode não aumentar: fluxo depende do gradiente dividido pela resistência."),
   ],
   uncertainty: "Pressão e FC dependem de técnica, manguito, postura, medicação e condição individual; a conduta clínica é do profissional de saúde. Uma mesma FC pode representar débitos diferentes.",
   related: [
@@ -1168,12 +1248,36 @@ const capSistemaRespiratorio = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Mecânica ventilatória e pressões", detail: "A inspiração torna a pressão pleural mais negativa; a expiração tranquila é passiva. Complacência = ΔV/ΔP. O ar se move por gradientes de pressão, não porque a gente 'puxa oxigênio'." },
-      { label: "Volumes, ventilação minuto e espaço morto", detail: "Ventilação minuto é frequência × volume corrente, mas o espaço morto torna a ventilação alveolar menor que a total. Ventilação alta não garante oxigenação se perfusão ou difusão falham." },
-      { label: "Difusão e relação ventilação-perfusão", detail: "O fluxo pela membrana depende de área, espessura e gradiente. Unidades com V/Q baixo recebem sangue com pouca ventilação; o pulmão saudável reduz desigualdades por recrutamento e vasoconstrição hipóxica." },
-      { label: "Transporte de O2 e CO2", detail: "A curva sigmoide permite alta saturação nos pulmões e liberação nos tecidos. O exercício desloca a curva para a direita nos tecidos, favorecendo a entrega de O2 sem impedir a saturação pulmonar." },
-      { label: "Controle neural e químico da ventilação", detail: "Centros bulbares integram quimiorreceptores, mecanorreceptores e comando central. No início do exercício a ventilação sobe por antecipação; quimiorreceptores respondem a CO2 e pH, não medem 'falta de ar'." },
-      { label: "Limiar ventilatório, economia e adaptação", detail: "O tamponamento de H+ aumenta o CO2 e acelera a ventilação de forma não linear. O limiar é uma estimativa de transição, não um ponto único; o treino melhora economia e capacidade oxidativa." },
+      {
+        label: "Mecânica ventilatória e pressões",
+        detail:
+          "A inspiração em repouso ocorre quando o diafragma e os músculos inspiratórios tornam a pressão pleural mais negativa, expandindo o pulmão e reduzindo a pressão alveolar. A expiração tranquila é majoritariamente passiva. Complacência descreve mudança de volume por pressão; a resistência depende fortemente do calibre das vias aéreas e do regime de fluxo. Sequência: (1) contração inspiratória; (2) queda da pressão alveolar; (3) entrada de ar; (4) recuo elástico expiratório. Relação: complacência = ΔV dividido por ΔP. Aplicação ao exercício: músculos acessórios e expiratórios ativos são recrutados, e a hiperinsuflação dinâmica pode aumentar o trabalho respiratório em indivíduos suscetíveis. Como medir: volumes pulmonares, pressão, fluxo, complacência e resistência. Erro frequente: explicar a ventilação como 'puxar oxigênio'; o ar se move por gradientes de pressão.",
+      },
+      {
+        label: "Volumes, ventilação minuto e espaço morto",
+        detail:
+          "Ventilação minuto é a frequência respiratória vezes o volume corrente, mas apenas a fração que alcança alvéolos perfundidos participa das trocas. O espaço morto anatômico e o fisiológico tornam a ventilação alveolar inferior à ventilação total. Aumentar o volume corrente costuma ser mais eficiente do que elevar apenas a frequência, até os limites mecânicos. Sequência: (1) definição do volume corrente; (2) subtração do espaço morto; (3) distribuição regional; (4) ajuste de frequência e profundidade. Relação: VA = (VT menos VD) × f. Aplicação ao exercício: no exercício progressivo o volume corrente aumenta primeiro; em intensidades altas, a frequência assume maior contribuição. Como medir: VE, VT, frequência respiratória, ventilação alveolar e equivalente ventilatório. Erro frequente: supor que ventilação alta significa oxigenação adequada, mesmo com perfusão ou difusão comprometidas.",
+      },
+      {
+        label: "Difusão e relação ventilação-perfusão",
+        detail:
+          "O fluxo de gases pela membrana alveolocapilar depende da área, da espessura, do gradiente de pressão e do coeficiente de difusão. Unidades com V/Q baixo recebem sangue com pouca ventilação; V/Q alto desperdiça ventilação em relação à perfusão. O pulmão saudável reduz desigualdades por recrutamento vascular e vasoconstrição hipóxica regional. Sequência: (1) a ventilação leva gás ao alvéolo; (2) a perfusão traz sangue venoso; (3) a difusão equilibra pressões; (4) o V/Q determina a eficiência regional. Relação: fluxo difusivo proporcional a área × gradiente dividido pela espessura. Aplicação ao exercício: maior débito recruta capilares e aumenta a capacidade de difusão; em atletas de elite, um tempo capilar muito curto pode contribuir para dessaturação em condições específicas. Como medir: SpO2, gases arteriais, DLCO, V/Q e gradiente alvéolo-arterial. Erro frequente: concluir que SpO2 normal exclui grande trabalho ventilatório; e SpO2 baixa em sensor óptico pode ser artefato.",
+      },
+      {
+        label: "Transporte de oxigênio e dióxido de carbono",
+        detail:
+          "A maior parte do O2 é transportada ligada à hemoglobina; a parcela dissolvida determina a pressão parcial. A curva sigmoide permite alta saturação nos pulmões e liberação nos tecidos. O CO2 circula dissolvido, ligado a proteínas e principalmente como bicarbonato. Temperatura, pH e 2,3-BPG modulam a afinidade da hemoglobina. Sequência: (1) ligação do O2 à Hb; (2) transporte convectivo pelo débito; (3) extração tecidual; (4) conversão CO2-bicarbonato. Relação: CaO2 ≈ 1,34 × Hb × SaO2 + 0,003 × PaO2. Aplicação ao exercício: o exercício desloca a curva para a direita nos tecidos, favorecendo a liberação de O2 sem impedir saturação pulmonar adequada. Como medir: Hb, saturação, conteúdo arterial, diferença arteriovenosa e produção de CO2. Erro frequente: confundir saturação com conteúdo; a anemia pode manter SpO2 normal com menor transporte total de O2.",
+      },
+      {
+        label: "Controle neural e químico da ventilação",
+        detail:
+          "Centros bulbares geram o ritmo e integram quimiorreceptores centrais e periféricos, mecanorreceptores, comando central e aferências musculares. CO2 e pH são fortes reguladores em repouso, mas no início do exercício a ventilação aumenta por mecanismos antecipatórios. A percepção de dispneia resulta do balanço entre o comando respiratório e a resposta mecânica. Sequência: (1) ritmo respiratório central; (2) sinal antecipatório do exercício; (3) feedback químico e mecânico; (4) ajuste fino da ventilação. Relação: PaCO2 proporcional à produção de CO2 dividida pela ventilação alveolar. Aplicação ao exercício: respirar voluntariamente devagar pode mudar a sensação e a ventilação, mas não substitui a resposta necessária à produção de CO2 em intensidades altas. Como medir: PaCO2, pH, VE, frequência, pressão inspiratória e dispneia. Erro frequente: dizer que quimiorreceptores 'medem falta de ar'; eles respondem a variáveis químicas específicas.",
+      },
+      {
+        label: "Limiar ventilatório, economia e adaptação",
+        detail:
+          "À medida que a intensidade aumenta, a maior produção de CO2 pelo tamponamento de H+ acelera a ventilação de forma não linear. O limiar ventilatório é uma estimativa de transições metabólicas, não um ponto único e universal. O treinamento melhora economia, capacidade oxidativa e tolerância, enquanto o pulmão estrutural geralmente apresenta menor plasticidade que coração e músculo. Sequência: (1) aumento proporcional inicial; (2) excesso de CO2 pelo tamponamento; (3) hiperventilação compensatória; (4) a adaptação periférica reduz a demanda relativa. Relação: equivalente ventilatório = VE dividido por VO2. Aplicação ao exercício: zonas de treino podem usar fala, RPE, limiares ou teste cardiopulmonar, conforme objetivo e recursos. Como medir: VE/VO2, VE/VCO2, RER, limiares, VO2 e economia. Erro frequente: dizer que o lactato 'entra no pulmão'; a ventilação responde ao CO2, ao H+ e à integração neural.",
+      },
     ],
   },
   timeline: {
@@ -1186,10 +1290,15 @@ const capSistemaRespiratorio = deepLesson({
     ],
   },
   apply: "Use a respiração e a fala como guia de intensidade sem equipamento: fala confortável indica esforço leve a moderado; falar só palavras soltas indica proximidade de um limiar mais alto. Responder à abertura: quando o aluno deixa de conseguir falar frases confortavelmente, cruzou para uma intensidade mais exigente.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Zonas de treino podem usar fala, percepção de esforço, limiares ou teste cardiopulmonar, conforme objetivo e recursos.",
-    "Respiração voluntariamente lenta muda a sensação, mas não substitui a resposta necessária ao CO2 em intensidades altas.",
-    "Manter a maior parte do treino em intensidade conversável é prudente em hipertensos e cardiopatas.",
+    "Espirometria representa volumes e fluxos forçados. Limite: depende de esforço e técnica, então um valor ruim pode ser execução, não pulmão.",
+    "Ventilação minuto representa o volume total ventilado por minuto. Limite: inclui espaço morto, então não é o que chegou ao alvéolo.",
+    "SpO2 representa uma estimativa periférica da saturação. Limite: é sensível a movimento e perfusão, e saturação não é conteúdo.",
+    "VO2 e VCO2 representam as trocas gasosas sistêmicas. Limite: exigem calibração e protocolo.",
+    "Dispneia representa a percepção respiratória. Limite: escala e contexto precisam ser padronizados.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Dizer que respiramos para 'puxar oxigênio', ou tratar SpO2 normal como prova de que não há grande trabalho ventilatório.",
@@ -1211,6 +1320,17 @@ const capSistemaRespiratorio = deepLesson({
     q("q2", "verdadeiro-falso", "Saturação (SpO2) normal significa necessariamente conteúdo de oxigênio adequado no sangue.", [
       { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
     ], "f", "Saturação não é conteúdo: anemia pode manter SpO2 normal com menor transporte total de O2."),
+    q("q3", "variavel", "Qual a diferença entre ventilação minuto (VE) e ventilação alveolar (VA)?", [
+      { id: "a", label: "A VA desconta o espaço morto: só a fração que chega a alvéolos perfundidos troca gás." },
+      { id: "b", label: "São sinônimos, medidos em unidades diferentes." },
+    ], "a", "VA = (VT − VD) × f. Por isso ventilação alta não garante oxigenação adequada."),
+    q("q4", "conduta", "No início do exercício, a ventilação aumenta principalmente por:", [
+      { id: "a", label: "Comando central antecipatório, antes de grandes mudanças químicas." },
+      { id: "b", label: "Queda imediata e acentuada da SpO2." },
+    ], "a", "A ventilação sobe por antecipação; o feedback químico de CO2 e H+ estabiliza a resposta depois."),
+    q("q5", "verdadeiro-falso", "O lactato chega ao pulmão e é isso que faz a ventilação subir de forma desproporcional.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "O lactato não 'entra no pulmão': a ventilação responde ao CO2 gerado no tamponamento de H+ e à integração neural."),
   ],
   uncertainty: "Espirometria e trocas gasosas dependem de esforço, técnica e calibração. Dispneia é percepção e precisa de escala e contexto padronizados; a conduta clínica pulmonar é do profissional de saúde.",
   related: [
@@ -1236,12 +1356,36 @@ const capSistemaHematologico = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Plasma, volume sanguíneo e concentração", detail: "Água, eletrólitos, proteínas e mediadores compõem o plasma. Maior concentração pós-exercício não significa produção imediata do componente; costuma ser hemoconcentração." },
-      { label: "Eritrócitos, hemoglobina e ferro", detail: "A eritropoetina renal estimula a medula; ferro, folato, B12 e proteína são necessários. Ferritina sobe na inflamação, então um valor isolado não descreve todo o estado de ferro." },
-      { label: "Plaquetas, coagulação e fibrinólise", detail: "Hemostasia = formação controlada menos remoção do coágulo. O exercício agudo altera transitoriamente a atividade hemostática; o risco depende de condição clínica, intensidade, imobilização e hidratação." },
-      { label: "Imunidade inata e inflamação", detail: "Resposta = intensidade × duração × contexto. Inflamação organiza contenção e reparo; suprimi-la de forma indiscriminada pode atrapalhar o reparo. A resolução é um programa ativo." },
-      { label: "Imunidade adaptativa e memória", detail: "Linfócitos B e T reconhecem antígenos e formam memória. A queda de algumas células no sangue após exercício pode ser redistribuição para os tecidos, e não imunossupressão global." },
-      { label: "Sistema linfático, edema e exercício", detail: "Balanço intersticial = filtração menos drenagem linfática. Contração muscular e movimento favorecem o fluxo linfático; edema persistente, assimétrico ou doloroso requer avaliação." },
+      {
+        label: "Plasma, volume sanguíneo e concentração",
+        detail:
+          "O sangue combina células com plasma, que contém água, eletrólitos, proteínas, nutrientes e mediadores. Postura, suor, ingestão e trocas capilares podem alterar o volume plasmático em minutos. Assim, hematócrito, hemoglobina e proteínas podem aumentar por hemoconcentração, sem aumento de massa total. Sequência: (1) distribuição de água; (2) pressões capilares; (3) retenção por proteínas; (4) ajuste renal e hormonal. Relação: concentração = quantidade dividida por volume. Aplicação ao exercício: padronizar horário, postura, hidratação e intervalo após o exercício melhora a comparação de exames. Como medir: volume plasmático, hematócrito, albumina, osmolaridade e massa corporal. Erro frequente: interpretar maior concentração pós-exercício como produção imediata do componente.",
+      },
+      {
+        label: "Eritrócitos, hemoglobina e ferro",
+        detail:
+          "Eritrócitos transportam hemoglobina e são produzidos na medula sob influência da eritropoetina renal. Ferro, folato, B12, proteína e ausência de inflamação limitante são necessários. A massa de hemoglobina determina grande parte do transporte de O2; a concentração depende também do volume plasmático. Sequência: (1) a hipóxia estimula a EPO; (2) a medula expande precursores; (3) o ferro é incorporado à Hb; (4) hemácias envelhecidas são removidas. Relação: o conteúdo de O2 depende de Hb × saturação. Aplicação ao exercício: o treinamento de endurance pode expandir o plasma e reduzir a concentração de Hb sem anemia verdadeira; sintomas e marcadores de ferro devem ser integrados. Como medir: Hb, hematócrito, ferritina, saturação de transferrina, reticulócitos e massa de Hb. Erro frequente: ler ferritina isolada, que sobe na inflamação e não descreve todo o estado de ferro.",
+      },
+      {
+        label: "Plaquetas, coagulação e fibrinólise",
+        detail:
+          "A hemostasia envolve vasoconstrição, adesão e ativação plaquetária, geração de trombina, formação de fibrina e posterior fibrinólise. Endotélio, fluxo e anticoagulantes naturais restringem o processo ao local da lesão. O sistema busca estancar o sangramento sem ocluir vasos íntegros. Sequência: (1) exposição de matriz e fator tecidual; (2) adesão e agregação plaquetária; (3) trombina e fibrina; (4) fibrinólise e reparo. Relação: hemostasia = formação controlada menos remoção do coágulo. Aplicação ao exercício: o exercício agudo altera transitoriamente a atividade hemostática; o risco depende de condição clínica, intensidade, imobilização, hidratação e medicamentos. Como medir: plaquetas, TP/INR, TTPa, fibrinogênio e marcadores fibrinolíticos. Erro frequente: tratar a coagulação como uma cascata isolada do endotélio, das células e do fluxo.",
+      },
+      {
+        label: "Imunidade inata e inflamação",
+        detail:
+          "Barreiras, neutrófilos, monócitos, macrófagos, células NK e complemento respondem rapidamente a dano ou microrganismos. A inflamação organiza contenção, remoção e reparo. A resolução é um programa ativo, não o simples desaparecimento dos mediadores. Citocinas podem agir localmente e no organismo. Sequência: (1) reconhecimento de padrões; (2) recrutamento celular; (3) remoção de agentes e detritos; (4) resolução e reparo. Relação: resposta = intensidade × duração × contexto. Aplicação ao exercício: sessões exigentes geram alterações transitórias; o treinamento regular tende a melhorar a regulação metabólica e inflamatória. Como medir: leucócitos, diferencial, PCR, citocinas, temperatura e sinais clínicos. Erro frequente: tratar a inflamação como sempre inimiga; suprimi-la indiscriminadamente pode interferir no reparo.",
+      },
+      {
+        label: "Imunidade adaptativa e memória",
+        detail:
+          "Linfócitos B e T reconhecem antígenos específicos, expandem clones e formam memória. Anticorpos neutralizam ou marcam alvos; células T coordenam e eliminam células infectadas. Após o exercício, a queda de algumas células no sangue pode refletir redistribuição para os tecidos, e não imunossupressão global. Sequência: (1) apresentação de antígeno; (2) expansão clonal; (3) fase efetora; (4) contração e memória. Relação: memória = expansão específica + persistência de clones. Aplicação ao exercício: carga elevada combinada com pouco sono, déficit energético e exposição a patógenos pode aumentar o risco de sintomas respiratórios. Como medir: subpopulações linfocitárias, anticorpos, vacinação, sintomas e carga de treino. Erro frequente: ler a contagem sanguínea como retrato do sistema imune inteiro; ela é a fotografia de um compartimento.",
+      },
+      {
+        label: "Sistema linfático, edema e exercício",
+        detail:
+          "Capilares linfáticos recolhem líquido, proteínas e células do interstício, transportando-os por vasos com válvulas e linfonodos até a circulação venosa. Contração muscular, respiração e movimento favorecem o fluxo linfático. Obstrução ou sobrecarga pode produzir edema e alterar mobilidade e tolerância ao esforço. Sequência: (1) entrada de líquido nos capilares; (2) propulsão por válvulas e músculos; (3) filtragem nos linfonodos; (4) retorno ao sistema venoso. Relação: balanço intersticial = filtração menos drenagem linfática. Aplicação ao exercício: a atividade física pode favorecer o retorno linfático, mas edema persistente, assimétrico ou doloroso requer avaliação. Como medir: perimetria, volume segmentar, sinal de cacifo, sintomas e evolução temporal. Erro frequente: interpretar edema apenas como 'retenção de líquido'; causa e distribuição importam.",
+      },
     ],
   },
   timeline: {
@@ -1254,10 +1398,15 @@ const capSistemaHematologico = deepLesson({
     ],
   },
   apply: "Padronize horário, postura, hidratação e intervalo após o exercício antes de comparar exames. Integre sintomas e marcadores de ferro em vez de reagir a um valor isolado. Responder à abertura: o hematócrito subiu por hemoconcentração (perda de água pelo suor); não houve produção imediata de mais sangue.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Carga alta com pouco sono, déficit energético e exposição a patógenos pode aumentar o risco de sintomas respiratórios.",
-    "A contagem sanguínea é uma fotografia de um compartimento, não do sistema imune inteiro.",
-    "Ferritina isolada não descreve todo o estado de ferro, pois sobe na inflamação; integre com sintomas e outros marcadores.",
+    "Hematócrito representa a fração do volume ocupada por eritrócitos. Limite: muda com o volume plasmático, sem que a massa tenha mudado.",
+    "Hemoglobina representa a concentração de Hb. Limite: não é igual à massa total de Hb, que é o que sustenta o transporte de O2.",
+    "Ferritina representa estoque e proteína de fase aguda. Limite: precisa ser interpretada junto da inflamação.",
+    "PCR representa um marcador sistêmico de inflamação. Limite: é pouco específica.",
+    "Leucograma representa as células circulantes. Limite: a redistribuição altera as contagens sem mudar a competência imune.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Concluir que o aluno 'produziu mais sangue' porque o hematócrito subiu após treino em calor, ou tratar edema como simples 'retenção de líquido'.",
@@ -1279,6 +1428,17 @@ const capSistemaHematologico = deepLesson({
       { id: "a", label: "Possível redistribuição das células para os tecidos, não imunossupressão global." },
       { id: "b", label: "Falência imune que contraindica todo exercício." },
     ], "a", "A contagem é uma fotografia de um compartimento; a redistribuição é comum e transitória."),
+    q("q3", "variavel", "Um atleta de endurance com Hb no limite inferior, sem sintomas, sugere primeiro:", [
+      { id: "a", label: "Expansão do volume plasmático diluindo a concentração, não anemia verdadeira." },
+      { id: "b", label: "Anemia confirmada, que exige parar o treino." },
+    ], "a", "O treino expande o plasma: a concentração cai sem que a massa de Hb tenha caído. Integre sintomas e ferro."),
+    q("q4", "conduta", "Por que a ferritina isolada não descreve o estado de ferro?", [
+      { id: "a", label: "Porque também é proteína de fase aguda e sobe na inflamação." },
+      { id: "b", label: "Porque não tem relação alguma com os estoques de ferro." },
+    ], "a", "Ela reflete estoque E inflamação; por isso precisa ser lida com o contexto e outros marcadores."),
+    q("q5", "verdadeiro-falso", "A resolução da inflamação é o simples desaparecimento passivo dos mediadores.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "A resolução é um programa ativo; suprimir a inflamação de forma indiscriminada pode atrapalhar o reparo."),
   ],
   uncertainty: "Ferritina, PCR e leucograma são pouco específicos e mudam com volume e redistribuição. Alterações persistentes ou sintomas exigem avaliação clínica; o papel do profissional é reconhecer mecanismos e sinais de alerta.",
   related: [
@@ -1304,12 +1464,36 @@ const capSistemaRenal = deepLesson({
   mechanism: {
     title: "Os seis núcleos mecanísticos",
     steps: [
-      { label: "Fluxo renal e filtração glomerular", detail: "TFG = Kf × pressão líquida de filtração. Autorregulação e feedback túbulo-glomerular estabilizam o fluxo. Desidratação e calor podem reduzir o fluxo renal sem representar lesão, mas sintomas e persistência importam." },
-      { label: "Transporte tubular e depuração", detail: "O túbulo proximal reabsorve grande parte de água, Na+, glicose e bicarbonato; segmentos seguintes refinam. Glicosúria ou proteinúria transitória após esforço intenso precisa de contexto e repetição." },
-      { label: "Osmolaridade, concentração urinária e ADH", detail: "O gradiente medular e o ADH permitem concentrar a urina. Durante exercício prolongado, água em excesso sem sódio e sem respeitar a sede pode favorecer hiponatremia, sobretudo com ADH elevado." },
-      { label: "Sódio, RAAS e pressão arterial", detail: "O conteúdo de Na+ regula o volume extracelular. O RAAS não é só um mecanismo de hipertensão: é essencial para defender volume e perfusão. A resposta ao sal e ao exercício varia entre pessoas." },
-      { label: "Potássio, cálcio e outros eletrólitos", detail: "K+ é majoritariamente intracelular e influencia a excitabilidade. O exercício libera K+ do músculo, mas bombas e perfusão restauram o gradiente na recuperação. Concentração sérica não representa o estoque total." },
-      { label: "Equilíbrio ácido-base e exercício", detail: "pH depende da relação HCO3-/CO2: os pulmões ajustam CO2 em minutos; os rins reabsorvem bicarbonato e excretam ácido em horas. O treino melhora o transporte e o uso de lactato e a capacidade tampão." },
+      {
+        label: "Fluxo renal e filtração glomerular",
+        detail:
+          "O rim recebe grande fluxo sanguíneo para regular o meio interno. A taxa de filtração depende da pressão líquida de filtração e do coeficiente de filtração da barreira glomerular. Autorregulação miogênica e feedback túbulo-glomerular estabilizam fluxo e TFG em uma faixa de pressão. Sequência: (1) perfusão da arteríola aferente; (2) filtração pela barreira; (3) resistências aferente e eferente; (4) autorregulação do néfron. Relação: TFG = Kf × pressão líquida de filtração. Aplicação ao exercício: desidratação, calor e exercício intenso podem reduzir o fluxo renal sem representar necessariamente lesão, mas sintomas e persistência importam. Como medir: creatinina, TFG estimada, fluxo renal, pressão e albuminúria. Erro frequente: ler creatinina isolada, que varia com massa muscular, dieta e exercício.",
+      },
+      {
+        label: "Transporte tubular e depuração",
+        detail:
+          "O túbulo proximal reabsorve grande parte de água, Na+, glicose, aminoácidos e bicarbonato. Alça de Henle, túbulo distal e ducto coletor refinam a composição. A secreção adiciona substâncias ao fluido tubular. A depuração expressa o volume virtual de plasma removido de uma substância por unidade de tempo. Sequência: (1) carga filtrada; (2) reabsorção segmentar; (3) secreção tubular; (4) excreção urinária. Relação: excreção = filtração menos reabsorção mais secreção. Aplicação ao exercício: glicosúria ou proteinúria transitória após esforço intenso precisa ser interpretada com contexto, repetição e avaliação apropriada. Como medir: fluxo urinário, concentração, depuração, fração excretada e carga filtrada. Erro frequente: concluir mecanismo a partir da excreção baixa, que pode vir de menor filtração ou de maior reabsorção.",
+      },
+      {
+        label: "Osmolaridade, concentração urinária e ADH",
+        detail:
+          "O gradiente osmótico medular é criado pelo multiplicador de contracorrente da alça e mantido pelos vasos retos. O ADH aumenta aquaporinas no ducto coletor, permitindo a reabsorção de água. A sede e a liberação de ADH respondem à osmolaridade e ao volume circulante efetivo. Sequência: (1) formação do gradiente medular; (2) reciclagem de ureia; (3) inserção de aquaporinas; (4) ajuste do volume urinário. Relação: osmolaridade ≈ partículas osmoticamente ativas dividido por água. Aplicação ao exercício: durante exercício prolongado, água em excesso sem sódio e sem respeitar a sede pode favorecer hiponatremia, especialmente quando o ADH permanece elevado. Como medir: osmolaridade sérica e urinária, densidade urinária, sódio e variação de massa corporal. Erro frequente: usar urina escura para quantificar desidratação; dieta, horário e solutos interferem.",
+      },
+      {
+        label: "Sódio, RAAS e pressão arterial",
+        detail:
+          "O sódio determina grande parte do volume extracelular. Baixa perfusão renal e sinal simpático estimulam a renina, gerando angiotensina II e aldosterona. O sistema aumenta a reabsorção de Na+, o tônus vascular e a sede. Peptídeos natriuréticos e a pressão de perfusão promovem excreção quando o volume aumenta. Sequência: (1) liberação de renina; (2) formação de angiotensina II; (3) a aldosterona aumenta Na+ distal; (4) a natriurese limita a expansão. Relação: o conteúdo de Na+ corporal regula o volume extracelular. Aplicação ao exercício: a resposta ao sal e ao exercício varia entre pessoas; pressão, medicamentos e doença renal exigem individualização. Como medir: sódio, PA, renina, aldosterona, peso e edema. Erro frequente: tratar o RAAS apenas como mecanismo de hipertensão; ele é essencial para defender volume e perfusão.",
+      },
+      {
+        label: "Potássio, cálcio e outros eletrólitos",
+        detail:
+          "O potássio é majoritariamente intracelular e influencia a excitabilidade. Insulina e catecolaminas deslocam K+ para as células; a aldosterona aumenta a secreção distal. Os rins também regulam Ca2+, fosfato e Mg2+ em integração com PTH, vitamina D e osso. Pequenas alterações séricas podem ter efeitos elétricos importantes. Sequência: (1) redistribuição transcelular; (2) filtração e reabsorção; (3) secreção distal de K+; (4) controle hormonal mineral. Relação: balanço = entrada menos saída, mais ou menos redistribuição. Aplicação ao exercício: o exercício libera K+ do músculo ativo, mas bombas e perfusão normalmente restauram o gradiente durante a recuperação. Como medir: K+, Na+, Ca2+, Mg2+, ECG e sintomas neuromusculares. Erro frequente: supor que a concentração sérica representa diretamente o estoque corporal total.",
+      },
+      {
+        label: "Equilíbrio ácido-base e exercício",
+        detail:
+          "O organismo regula o pH com tampões, ventilação e rins. Bicarbonato e CO2 formam um sistema aberto: os pulmões ajustam o CO2 em minutos; os rins reabsorvem bicarbonato e excretam ácido como NH4+ e ácidos tituláveis em horas a dias. No exercício intenso a produção de H+ aumenta, mas o lactato é um metabólito útil e não a única causa de acidose. Sequência: (1) tamponamento químico imediato; (2) ajuste ventilatório de CO2; (3) reabsorção de HCO3-; (4) excreção renal de ácido. Relação: pH proporcional a HCO3- dividido por CO2. Aplicação ao exercício: o treinamento melhora o transporte e o uso de lactato, a capacidade tampão e a tolerância, sem 'eliminar ácido lático' de forma simplista. Como medir: pH, HCO3-, PaCO2, ânion gap, lactato e ventilação. Erro frequente: diagnosticar distúrbios simples e compensações por uma medida isolada fora do contexto clínico.",
+      },
     ],
   },
   timeline: {
@@ -1322,10 +1506,15 @@ const capSistemaRenal = deepLesson({
     ],
   },
   apply: "Ligue o rim à hidratação e à pressão: planos de hidratação devem partir de experiência, sede, taxa de suor e duração, evitando tanto o déficit excessivo quanto o ganho de massa por excesso de água. Responder à abertura: beber água em excesso pode diluir o sódio (hiponatremia), sobretudo com ADH alto; cefaleia e confusão são sinais que exigem interrupção e atendimento.",
+  specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
-    "Peso agudo após o treino reflete sobretudo água, não gordura; o rim ajusta volume e eletrólitos.",
-    "Urina escura não quantifica sozinha a desidratação; dieta, horário e solutos interferem.",
-    "Cefaleia, confusão, edema, creatinina alterada ou proteinúria persistente exigem avaliação clínica.",
+    "Creatinina representa um marcador endógeno usado para estimar a TFG. Limite: sofre influência de massa muscular e dieta.",
+    "Densidade urinária representa a concentração relativa da urina. Limite: não é medida direta de osmolaridade.",
+    "Sódio sérico representa a concentração relativa à água. Limite: não mede o estoque total de Na+ do corpo.",
+    "Albuminúria representa a perda urinária de albumina. Limite: pode ser transitória após esforço.",
+    "Variação de massa representa mudança aguda de água e conteúdo. Limite: não equivale a gordura.",
+    "Regra de ouro do manual: uma medida não revela automaticamente o mecanismo. Ela restringe hipóteses quando método, unidade, condição basal, tempo, ambiente e tendência individual são conhecidos.",
+    "Sinal de segurança: dor torácica, síncope, confusão, déficit neurológico, dispneia desproporcional, sangramento relevante ou piora rápida exigem interrupção e avaliação apropriada.",
   ],
   mistake: {
     mistake: "Tratar variação aguda de peso como mudança de gordura, ou incentivar beber muita água 'preventivamente' em provas longas sem considerar sódio.",
@@ -1347,6 +1536,17 @@ const capSistemaRenal = deepLesson({
     q("q2", "verdadeiro-falso", "Beber muita água pura em prova longa é sempre seguro e nunca causa problema.", [
       { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
     ], "f", "Excesso de água sem sódio pode diluir o sódio plasmático (hiponatremia), sobretudo com ADH elevado."),
+    q("q3", "conduta", "Como pulmão e rim cooperam para regular o pH?", [
+      { id: "a", label: "O pulmão ajusta o CO2 em minutos e o rim reabsorve bicarbonato e excreta ácido em horas a dias." },
+      { id: "b", label: "Apenas o rim regula o pH; o pulmão não participa." },
+    ], "a", "pH depende da relação HCO3-/CO2: é um sistema aberto, com um componente rápido e outro lento."),
+    q("q4", "variavel", "Uma creatinina levemente alterada num praticante de força sugere primeiro:", [
+      { id: "a", label: "Influência de massa muscular, dieta e exercício recente, a ser interpretada com contexto." },
+      { id: "b", label: "Doença renal confirmada." },
+    ], "a", "Creatinina isolada varia com músculo, dieta e exercício; a conduta clínica é do profissional de saúde."),
+    q("q5", "verdadeiro-falso", "O sódio sérico mede o estoque total de sódio do corpo.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Ele reflete a relação entre soluto e água. É por isso que excesso de água derruba o sódio sem que o corpo tenha perdido sal."),
   ],
   uncertainty: "Creatinina varia com massa muscular, dieta e exercício; densidade e sódio urinários têm limites de interpretação. Sinais renais (creatinina, edema, proteinúria, pressão) são de avaliação clínica.",
   related: [
