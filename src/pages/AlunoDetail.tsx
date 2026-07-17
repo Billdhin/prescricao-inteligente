@@ -22,6 +22,8 @@ import {
   Route as RouteIcon,
   ShieldCheck,
   CheckCircle2,
+  CalendarRange,
+  CalendarCheck,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
@@ -33,6 +35,7 @@ import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
+import { getModelo, semanaAtual, mesocicloAtual, proximaReavaliacao, type PlanoTreino } from "@/data/periodizacao";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
@@ -55,7 +58,7 @@ const TIPO_AVAL_LABEL: Record<string, string> = {
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, liberacoes, addAvaliacao, updateAluno, removeAluno, archivePrescricao } =
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, addAvaliacao, updateAluno, removeAluno, archivePrescricao } =
     useAlunos();
   const navigate = useNavigate();
   const [editar, setEditar] = React.useState(false);
@@ -96,6 +99,7 @@ export function AlunoDetail() {
   const avals = avaliacoes.filter((a) => a.alunoId === id).sort((a, b) => a.data - b.data);
   const avalsDesc = [...avals].reverse();
   const prescs = prescricoes.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
+  const planosDoAluno = planos.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
   const reavaliacaoVencida = aluno.proximaReavaliacaoEm ? aluno.proximaReavaliacaoEm < Date.now() : false;
   const libsDoAluno = liberacoes.filter((l) => l.alunoId === id).slice(0, 3);
   const prescAberta = prontuarioDe ? prescs.find((p) => p.id === prontuarioDe) : undefined;
@@ -327,6 +331,8 @@ export function AlunoDetail() {
                 <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
               </Link>
             </Card>
+
+          <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
 
           <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
@@ -649,6 +655,147 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
           </Link>
         </div>
       </div>
+    </Card>
+  );
+}
+
+/**
+ * O plano de treino do aluno, do jeito que o profissional pergunta: em que fase ele está
+ * hoje e quando é a próxima reavaliação.
+ *
+ * A semana é contada pelo calendário, desde a data em que o plano foi montado, e o texto
+ * diz isso. O sistema não registra presença, então afirmar "o aluno está na semana 6"
+ * como fato seria inventar o que não foi medido.
+ */
+function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTreino[]; onAvaliar: () => void }) {
+  const ativo = planos.find((p) => p.status === "ativo");
+  const arquivados = planos.filter((p) => p.status === "arquivado");
+
+  if (!ativo) {
+    return (
+      <Card className="p-5 md:p-6">
+        <h2 className="mb-3 font-display text-lg font-bold text-ink">Plano de treino</h2>
+        <div className="rounded-xl border border-dashed border-border p-4 text-center">
+          <p className="text-sm text-ink-2">
+            Sem periodização montada. O plano organiza os meses de {aluno.nome.split(" ")[0]} em macrociclo,
+            mesociclos e semanas, com a progressão justificada.
+          </p>
+          <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
+            <CalendarRange className="h-4 w-4" /> Montar periodização
+          </Link>
+        </div>
+        {arquivados.length > 0 && (
+          <p className="mt-3 text-xs text-ink-3">
+            {arquivados.length} plano(s) arquivado(s) no histórico.
+          </p>
+        )}
+      </Card>
+    );
+  }
+
+  const semana = semanaAtual(ativo);
+  const meso = mesocicloAtual(ativo);
+  const reav = proximaReavaliacao(ativo);
+  const chegou = reav ? reav.em <= Date.now() + 7 * 86_400_000 : false;
+  const modelo = getModelo(ativo.modeloId);
+  const pct = Math.round((semana / ativo.semanas) * 100);
+
+  return (
+    <Card className="p-5 md:p-6">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-display text-lg font-bold text-ink">Plano de treino</h2>
+        <Link to={`/prescrever-treino?aluno=${aluno.id}`} className="text-sm font-semibold text-primary hover:underline">
+          Novo
+        </Link>
+      </div>
+
+      <div className="rounded-xl border border-border p-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="truncate font-semibold text-ink">{ativo.titulo}</span>
+          <Pill tone="success">ativo</Pill>
+          <Pill tone="neutral">{modelo.nome}</Pill>
+        </div>
+        <p className="tabular mt-0.5 text-xs text-ink-3">
+          Montado em {fmtData(ativo.data)} · {ativo.frequenciaSemanal}x por semana
+        </p>
+
+        {/* Onde o plano está, contando do calendário */}
+        <div className="mt-3">
+          <div className="mb-1 flex items-baseline justify-between text-sm">
+            <span className="font-semibold text-ink">
+              Semana {semana} de {ativo.semanas}
+            </span>
+            <span className="text-xs text-ink-3">contando desde {fmtData(ativo.data)}</span>
+          </div>
+          <div
+            className="h-2 w-full overflow-hidden rounded-full bg-surface-soft"
+            role="progressbar"
+            aria-valuenow={semana}
+            aria-valuemin={1}
+            aria-valuemax={ativo.semanas}
+            aria-label={`Semana ${semana} de ${ativo.semanas} do plano`}
+          >
+            <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+
+        {meso && (
+          <div className="mt-3 rounded-lg bg-surface-soft p-2.5">
+            <p className="text-sm font-semibold text-ink">{meso.nome}</p>
+            <p className="text-xs text-ink-2">{meso.foco}</p>
+            {meso.capacidades.length > 0 && (
+              <p className="mt-1 text-xs text-ink-3">Capacidades: {meso.capacidades.join(", ")}.</p>
+            )}
+          </div>
+        )}
+
+        {/* A reavaliação é o ponto em que o plano pede uma decisão: progredir, manter ou
+            regredir. Quando ela chega, o caminho para registrar a avaliação fica aqui. */}
+        {reav && (
+          <div
+            className={cn(
+              "mt-3 flex flex-wrap items-center gap-2 rounded-lg p-2.5 text-sm",
+              chegou ? "border border-analysis/40 bg-primary-tint" : "",
+            )}
+          >
+            <CalendarCheck className="h-4 w-4 shrink-0 text-analysis" />
+            <span className="min-w-0 flex-1 text-ink-2">
+              {chegou ? (
+                <>
+                  <span className="font-semibold text-ink">Reavaliação da semana {reav.semana} chegou.</span> Registre
+                  as medidas para decidir entre progredir, manter ou ajustar.
+                </>
+              ) : (
+                <>Próxima reavaliação prevista na semana {reav.semana}, por volta de {fmtData(reav.em)}.</>
+              )}
+            </span>
+            {chegou && (
+              <button onClick={onAvaliar} className={buttonClasses("secondary", "sm")}>
+                <Activity className="h-4 w-4" /> Registrar avaliação
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-2.5">
+          <Link
+            to={`/prescrever-treino?plano=${ativo.id}`}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+          >
+            <CalendarRange className="h-4 w-4" /> Abrir e editar o plano
+          </Link>
+          <Link
+            to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink"
+          >
+            <ShieldCheck className="h-4 w-4" /> Semáforo antes da sessão
+          </Link>
+        </div>
+      </div>
+
+      {arquivados.length > 0 && (
+        <p className="mt-3 text-xs text-ink-3">{arquivados.length} plano(s) anterior(es) arquivado(s).</p>
+      )}
     </Card>
   );
 }

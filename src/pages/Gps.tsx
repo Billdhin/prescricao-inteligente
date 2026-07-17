@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   Activity,
   SlidersHorizontal,
+  CalendarRange,
 } from "lucide-react";
 import { Card, Pill, ScoreRing, buttonClasses, Progress } from "@/components/ui/primitives";
 import {
@@ -106,7 +107,7 @@ export function Gps() {
   const addActivity = useProgress((s) => s.addActivity);
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { alunos, addPrescricao, liberacoes, avaliacoes } = useAlunos();
+  const { alunos, addPrescricao, liberacoes, avaliacoes, planos } = useAlunos();
 
   // Passo 0 — contexto editável (para quem / grupo / fase). Absorve a antiga
   // "Decisão rápida": lê ?aluno / ?grupo / ?fase e deixa o usuário ajustar.
@@ -512,6 +513,8 @@ export function Gps() {
           compare={compare}
           setCompare={setCompare}
           alunoNome={aluno?.nome}
+          alunoId={aluno?.id}
+          planoAtivoId={aluno ? planos.find((p) => p.alunoId === aluno.id && p.status === "ativo")?.id : undefined}
           onSalvar={aluno ? salvarPrescricao : undefined}
           onExportar={aluno ? exportarPDF : undefined}
           podeExportar={unlocked}
@@ -1231,6 +1234,8 @@ function Results({
   compare,
   setCompare,
   alunoNome,
+  alunoId,
+  planoAtivoId,
   onSalvar,
   onExportar,
   podeExportar,
@@ -1247,6 +1252,9 @@ function Results({
   compare: string[];
   setCompare: React.Dispatch<React.SetStateAction<string[]>>;
   alunoNome?: string;
+  alunoId?: string;
+  /** plano de treino já ativo do aluno, quando houver */
+  planoAtivoId?: string;
   onSalvar?: () => void;
   onExportar?: () => void;
   podeExportar?: boolean;
@@ -1354,6 +1362,28 @@ function Results({
               )}
             </div>
           </div>
+          {/* Esta tela resolve a sessão. O que vem depois dela (os meses) é o plano, e
+              quem acabou de escolher os exercícios é justamente quem precisa disso. */}
+          {alunoId && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-sm">
+              <CalendarRange className="h-4 w-4 shrink-0 text-primary" />
+              {planoAtivoId ? (
+                <>
+                  <span className="text-ink-2">{alunoNome} já tem uma periodização ativa.</span>
+                  <Link to={`/prescrever-treino?plano=${planoAtivoId}`} className="font-semibold text-primary hover:underline">
+                    Abrir o plano de treino
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <span className="text-ink-2">Estes exercícios são a sessão. Para organizar os próximos meses:</span>
+                  <Link to={`/prescrever-treino?aluno=${alunoId}`} className="font-semibold text-primary hover:underline">
+                    Montar a periodização
+                  </Link>
+                </>
+              )}
+            </div>
+          )}
         </Card>
       ) : (
         <Card tone="primary" className="flex flex-wrap items-center gap-3 p-4">

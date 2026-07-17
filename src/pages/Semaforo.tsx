@@ -1,12 +1,13 @@
 import * as React from "react";
-import { useSearchParams } from "react-router-dom";
-import { TrafficCone } from "lucide-react";
-import { Card, Pill } from "@/components/ui/primitives";
+import { Link, useSearchParams } from "react-router-dom";
+import { TrafficCone, CalendarRange } from "lucide-react";
+import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { getSemaforo } from "@/data/semaforo";
 import { useAlunos, useUser, isPremiumUnlocked } from "@/lib/store";
+import { semanaAtual, mesocicloAtual } from "@/data/periodizacao";
 
 /**
  * /semaforo — gate de segurança pré-sessão (Motor RCD), acessível direto:
@@ -17,6 +18,7 @@ export function Semaforo() {
   const { plan } = useUser();
   const unlocked = isPremiumUnlocked(plan);
   const alunos = useAlunos((s) => s.alunos);
+  const planos = useAlunos((s) => s.planos);
 
   const [grupoSlug, setGrupoSlug] = React.useState(() => {
     const g = params.get("grupo");
@@ -38,6 +40,8 @@ export function Semaforo() {
   const grupo = getSpecialGroup(grupoSlug);
   const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
   const locked = !!grupo?.premium && !unlocked;
+  const planoAtivo = aluno ? planos.find((p) => p.alunoId === aluno.id && p.status === "ativo") : undefined;
+  const mesoHoje = planoAtivo ? mesocicloAtual(planoAtivo) : undefined;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -83,6 +87,29 @@ export function Semaforo() {
           </label>
         </div>
       </Card>
+
+      {/* O semáforo decide a sessão de HOJE. Quando o aluno tem plano, a sessão de hoje
+          tem um lugar no plano, e decidir sem ver esse lugar é decidir no escuro. */}
+      {planoAtivo && (
+        <Card variant="soft" className="flex flex-wrap items-center gap-3 p-4">
+          <CalendarRange className="h-5 w-5 shrink-0 text-primary" />
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            <span className="font-semibold text-ink">
+              {aluno?.nome.split(" ")[0]} está na semana {semanaAtual(planoAtivo)} de {planoAtivo.semanas} do plano
+            </span>
+            {mesoHoje && (
+              <>
+                {" "}
+                ({mesoHoje.nome}: {mesoHoje.foco.toLowerCase().replace(/\.$/, "")})
+              </>
+            )}
+            . Se o semáforo pedir ajuste hoje, ajuste a sessão e mantenha o plano.
+          </p>
+          <Link to={`/prescrever-treino?plano=${planoAtivo.id}`} className={buttonClasses("secondary", "sm")}>
+            Abrir o plano
+          </Link>
+        </Card>
+      )}
 
       {locked ? (
         <PaywallCard

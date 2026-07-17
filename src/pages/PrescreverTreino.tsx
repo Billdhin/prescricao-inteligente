@@ -43,23 +43,26 @@ export function PrescreverTreino() {
   const user = useUser();
   const premium = isPremiumUnlocked(user.plan);
 
-  const alunoPre = params.get("aluno");
-  const alunoInicial = alunos.find((a) => a.id === alunoPre);
+  // `?plano=` abre um plano salvo para continuar de onde parou; `?aluno=` começa um novo
+  // já com o perfil dele. Sem retomar, "abrir plano" no perfil do aluno geraria um plano
+  // novo por cima do que o profissional já ajustou.
+  const planoPre = planosSalvos.find((p) => p.id === params.get("plano"));
+  const alunoInicial = alunos.find((a) => a.id === (planoPre?.alunoId ?? params.get("aluno")));
 
   const [alunoId, setAlunoId] = React.useState<string | undefined>(alunoInicial?.id);
   const aluno = alunos.find((a) => a.id === alunoId);
 
-  const [objetivo, setObjetivo] = React.useState<GpsObjetivo>(alunoInicial?.objetivo ?? "Hipertrofia");
-  const [nivel, setNivel] = React.useState<Nivel>(alunoInicial?.nivel ?? "Iniciante");
-  const [grupo, setGrupo] = React.useState<string>(alunoInicial?.grupoEspecial ?? "");
-  const [frequencia, setFrequencia] = React.useState(3);
-  const [semanas, setSemanas] = React.useState(12);
-  const [disponibilidade, setDisponibilidade] = React.useState("");
+  const [objetivo, setObjetivo] = React.useState<GpsObjetivo>(planoPre?.objetivo ?? alunoInicial?.objetivo ?? "Hipertrofia");
+  const [nivel, setNivel] = React.useState<Nivel>(planoPre?.nivel ?? alunoInicial?.nivel ?? "Iniciante");
+  const [grupo, setGrupo] = React.useState<string>(planoPre?.grupoEspecial ?? alunoInicial?.grupoEspecial ?? "");
+  const [frequencia, setFrequencia] = React.useState(planoPre?.frequenciaSemanal ?? 3);
+  const [semanas, setSemanas] = React.useState(planoPre?.semanas ?? 12);
+  const [disponibilidade, setDisponibilidade] = React.useState(planoPre?.disponibilidade ?? "");
 
   // O rascunho já nasce como o plano que vai ser salvo: editar, salvar e exportar
   // trabalham no mesmo objeto, então o PDF nunca mostra uma versão anterior da edição.
-  const [plano, setPlano] = React.useState<PlanoTreino | null>(null);
-  const [salvo, setSalvo] = React.useState(false);
+  const [plano, setPlano] = React.useState<PlanoTreino | null>(planoPre ?? null);
+  const [salvo, setSalvo] = React.useState(Boolean(planoPre));
 
   const montar = (ctx: {
     objetivo: GpsObjetivo;

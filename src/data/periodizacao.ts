@@ -113,6 +113,39 @@ export interface PlanoTreino {
   status: "ativo" | "arquivado";
 }
 
+/* ========================= Onde o plano está hoje (derivado) ========================= */
+
+const SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Em que semana o plano está, contando desde a data em que ele foi montado.
+ *
+ * É uma contagem de calendário, não um registro de presença: o sistema não sabe se o
+ * aluno treinou. Por isso a tela sempre diz "desde tal data", em vez de afirmar que o
+ * aluno cumpriu N semanas.
+ */
+export function semanaAtual(plano: PlanoTreino, agora = Date.now()): number {
+  const passadas = Math.floor((agora - plano.data) / SEMANA_MS);
+  return Math.min(plano.semanas, Math.max(1, passadas + 1));
+}
+
+/** O mesociclo que cobre a semana de hoje. */
+export function mesocicloAtual(plano: PlanoTreino, agora = Date.now()): Mesociclo | undefined {
+  const s = semanaAtual(plano, agora);
+  return plano.macrociclo.mesociclos.find((m) => s >= m.semanaInicio && s <= m.semanaFim);
+}
+
+/** A próxima reavaliação marcada no plano que ainda não passou. */
+export function proximaReavaliacao(
+  plano: PlanoTreino,
+  agora = Date.now(),
+): { semana: number; em: number } | undefined {
+  const s = semanaAtual(plano, agora);
+  const meso = plano.macrociclo.mesociclos.find((m) => m.reavaliacao && m.semanaFim >= s);
+  if (!meso) return undefined;
+  return { semana: meso.semanaFim, em: plano.data + meso.semanaFim * SEMANA_MS };
+}
+
 /* ============================== Biblioteca de modelos ============================== */
 
 export type ModeloPeriodizacaoId =

@@ -14,11 +14,13 @@ import {
   Dumbbell,
   ClipboardList,
   PartyPopper,
+  CalendarRange,
   X,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
+import { proximaReavaliacao } from "@/data/periodizacao";
 import { getAtivacao, marcarCelebrado, minutosPrimeiroCaso } from "@/lib/ativacao";
 import type { Aluno } from "@/data/alunos";
 import { cn } from "@/lib/utils";
@@ -30,23 +32,32 @@ const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
 
 export function ProfessionalDashboard() {
   const { name, plan } = useUser();
-  const { alunos, avaliacoes, prescricoes, loadExamples } = useAlunos();
+  const { alunos, avaliacoes, prescricoes, planos, loadExamples } = useAlunos();
   const premium = isPremiumUnlocked(plan);
   const firstName = name.split(" ")[0];
 
   const ativos = alunos.filter((a) => a.status === "ativo");
   const avaliacoesMes = avaliacoes.filter((a) => Date.now() - a.data <= 30 * DIA).length;
   const prescricoesAtivas = prescricoes.filter((p) => p.status === "ativa");
+  const planosAtivos = planos.filter((p) => p.status === "ativo");
   const temPrescricaoAtiva = (id: string) =>
     prescricoes.some((p) => p.alunoId === id && p.status === "ativa");
 
   const atencao = ativos
     .map((a) => {
-      const motivos: { label: string; tone: "warning" | "cta" }[] = [];
+      const motivos: { label: string; tone: "warning" | "cta" | "analysis" }[] = [];
       if (a.proximaReavaliacaoEm && a.proximaReavaliacaoEm < Date.now())
         motivos.push({ label: "Reavaliação vencida", tone: "warning" });
       if (!temPrescricaoAtiva(a.id))
         motivos.push({ label: "Sem prescrição ativa", tone: "cta" });
+
+      // O plano marca onde reavaliar. Uma reavaliação que chegou é o momento em que o
+      // plano pede uma decisão (progredir, manter ou regredir), então ela aparece aqui.
+      const plano = planosAtivos.find((p) => p.alunoId === a.id);
+      const reav = plano ? proximaReavaliacao(plano) : undefined;
+      if (reav && reav.em - Date.now() <= 7 * DIA)
+        motivos.push({ label: `Reavaliação do plano: semana ${reav.semana}`, tone: "analysis" });
+
       return { aluno: a, motivos };
     })
     .filter((x) => x.motivos.length > 0);
@@ -94,6 +105,7 @@ export function ProfessionalDashboard() {
         <StatInline icon={<Users className="h-4 w-4 text-primary" />} value={ativos.length} label="alunos ativos" to="/alunos" />
         <StatInline icon={<Activity className="h-4 w-4 text-analysis" />} value={avaliacoesMes} label="avaliações (30d)" to="/assessments" />
         <StatInline icon={<Dumbbell className="h-4 w-4 text-ink-3" />} value={prescricoesAtivas.length} label="prescrições ativas" to="/protocols" />
+        <StatInline icon={<CalendarRange className="h-4 w-4 text-ink-3" />} value={planosAtivos.length} label="planos de treino" to="/prescrever-treino" />
       </Card>
 
       {/* ÂNCORA: Precisam de atenção */}
@@ -136,7 +148,7 @@ export function ProfessionalDashboard() {
           <CheckCircle2 className="h-6 w-6 shrink-0 text-success" />
           <p className="text-sm text-ink-2">
             <span className="font-semibold text-ink">Tudo em dia.</span> Nenhum aluno com reavaliação
-            vencida ou sem prescrição ativa.
+            vencida, sem prescrição ativa ou com reavaliação de plano chegando.
           </p>
         </Card>
       )}
