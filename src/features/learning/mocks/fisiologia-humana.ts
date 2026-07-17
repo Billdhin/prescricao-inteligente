@@ -314,7 +314,7 @@ const homeostase = deepLesson({
   applyRx: "Para continuar adaptando, progrida o estímulo de forma gradual e garanta recuperação; um treino que nunca muda deixa de desafiar a homeostase e a adaptação estagna.",
 });
 
-/* =============== Módulo 1 — Fundamentos da regulação =============== */
+/* =============== Aprofundamentos: fundamentos da regulação =============== */
 
 const homeostaseControle = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-fundamentos`, moduleSlug: "fundamentos",
@@ -470,7 +470,7 @@ const bioeletricidade = deepLesson({
   applyRx: "Explique a graduação da força por recrutamento e frequência de disparo, não por potenciais maiores; use limiar e excitabilidade como base para técnica e fadiga.",
 });
 
-/* =============== Módulo 2 — Controle endócrino =============== */
+/* =============== Aprofundamentos: controle endócrino =============== */
 
 const endocrino = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-controle-endocrino`, moduleSlug: "controle-endocrino",
@@ -521,7 +521,7 @@ const endocrino = deepLesson({
   applyRx: "Interprete hormônios como rede regulada por feedback; oriente treino, sono e alimentação, e encaminhe qualquer conduta hormonal ao profissional de saúde.",
 });
 
-/* =============== Módulo 3 — Cardiorrespiratório (novas aulas) =============== */
+/* =============== Aprofundamentos: cardiorrespiratório =============== */
 
 const cicloCardiaco = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-cardiovascular`, moduleSlug: "sistema-cardiovascular",
@@ -621,7 +621,7 @@ const transporteGases = deepLesson({
   applyRx: "Explique a entrega de O₂ pelo efeito Bohr e lembre que, em saudáveis, a saturação não é medida de intensidade; guie a intensidade pela fala e pela percepção de esforço.",
 });
 
-/* =============== Módulo 4 — Tecidos do movimento =============== */
+/* =============== Aprofundamentos: tecidos do movimento =============== */
 
 const musculo = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-tecidos-movimento`, moduleSlug: "tecidos-do-movimento",
@@ -721,12 +721,12 @@ const relacaoForca = deepLesson({
   applyRx: "Explique variações de força ao longo da amplitude pela relação comprimento-tensão e força-velocidade; escolha a amplitude por objetivo e tolerância, não por regra fixa.",
 });
 
-/* =============== Módulo 5 — Metabolismo e excreção =============== */
+/* =============== Aprofundamentos: metabolismo e excreção =============== */
 
 const viasEnergeticas = deepLesson({
-  disciplineSlug: DISC, moduleId: `m-${DISC}-metabolismo`, moduleSlug: "metabolismo-e-excrecao",
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-digestorio`, moduleSlug: "sistema-digestorio",
   slug: `${DISC}--vias-energeticas`, title: "Vias energéticas: como o corpo faz ATP",
-  subtitle: "Metabolismo e excreção", description: "Carboidratos, gorduras e proteínas convergem para a produção de ATP; aeróbio e anaeróbio descrevem processos que operam juntos, não exercícios opostos.",
+  subtitle: "Sistema digestório e hepatobiliar", description: "Carboidratos, gorduras e proteínas convergem para a produção de ATP; aeróbio e anaeróbio descrevem processos que operam juntos, não exercícios opostos.",
   level: "intermediario", minutes: 11, type: "conceito", kicker: K, tags: ["ATP", "glicólise", "fosforilação oxidativa"],
   hero: "Toda contração gasta ATP. Glicólise, beta-oxidação, ciclo de Krebs e fosforilação oxidativa convergem para repor essa energia. Entender isso derruba o mito de que 'aeróbio' e 'anaeróbio' são exercícios opostos.",
   question: "Por que dizer que um exercício é 'só aeróbio' ou 'só anaeróbio' é uma simplificação enganosa?",
@@ -773,9 +773,9 @@ const viasEnergeticas = deepLesson({
 });
 
 const renal = deepLesson({
-  disciplineSlug: DISC, moduleId: `m-${DISC}-metabolismo`, moduleSlug: "metabolismo-e-excrecao",
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-renal`, moduleSlug: "sistema-renal",
   slug: `${DISC}--sistema-renal`, title: "Rim e néfron: ajustando o meio interno",
-  subtitle: "Metabolismo e excreção", description: "O rim filtra o plasma e ajusta seletivamente água, eletrólitos, ácido-base e resíduos; central para hidratação e pressão arterial.",
+  subtitle: "Sistema renal e urinário", description: "O rim filtra o plasma e ajusta seletivamente água, eletrólitos, ácido-base e resíduos; central para hidratação e pressão arterial.",
   level: "intermediario", minutes: 10, type: "mecanismo", kicker: K, tags: ["rim", "néfron", "hidratação"],
   hero: "O rim é o grande ajustador do meio interno. Ele filtra o plasma e depois decide, segmento por segmento, o que recupera e o que elimina, ligando hidratação, sódio e pressão arterial.",
   question: "Se o glomérulo filtra litros de plasma por hora, por que não urinamos litros por hora?",
@@ -821,7 +821,7 @@ const renal = deepLesson({
   applyRx: "Ligue o rim à hidratação e à pressão; explique que peso agudo reflete água, não gordura, e encaminhe sinais renais de alerta ao profissional de saúde.",
 });
 
-/* =============== Módulo 6 — Integração e adaptação =============== */
+/* =============== Aprofundamentos: integração e adaptação =============== */
 
 const integracao = deepLesson({
   disciplineSlug: DISC, moduleId: `m-${DISC}-adaptacoes`, moduleSlug: "adaptacoes",
@@ -872,22 +872,796 @@ const integracao = deepLesson({
   applyRx: "Leia a carga de forma integrada (percepção de esforço, fala, FC e contexto como calor e sono); distinga resposta aguda, recuperação e adaptação ao avaliar o treino.",
 });
 
+/* ===================================================================== *
+ * AULAS-CAPÍTULO: edição fiel do "Manual de Fisiologia Humana Aplicada   *
+ * à Educação Física" (Ribeiro, 2026). Uma aula por sistema, com os 6     *
+ * núcleos mecanísticos, escalas de tempo, medida e interpretação, caso   *
+ * de integração e leituras-base reais. Linguagem prudente e não          *
+ * diagnóstica; a ferramenta apoia a decisão do profissional habilitado.  *
+ * ===================================================================== */
+
+const REF_BASE = ["ref-ribeiro-fisiologia-2026", "ref-guyton-2025", "ref-silverthorn-2026"];
+
+const capSistemaNervoso = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-nervoso`, moduleSlug: "sistema-nervoso",
+  slug: `${DISC}--mapa-sistema-nervoso`, title: "Sistema nervoso: da excitabilidade ao controle do movimento",
+  subtitle: "Capítulo 01 do manual", description: "O sistema nervoso converte energia física e química em sinais elétricos, seleciona informações, constrói percepções e organiza respostas motoras e autonômicas.",
+  level: "intermediario", minutes: 14, type: "mecanismo", kicker: K, tags: ["sistema nervoso", "unidade motora", "controle motor", "fadiga central"],
+  hero: "O sistema nervoso explica por que técnica, atenção, motivação, dor, fadiga e aprendizagem mudam o desempenho mesmo quando a capacidade do músculo não mudou. Ele transforma sinais em percepção e comando.",
+  question: "Um aluno perde estabilidade no agachamento ao fechar os olhos e melhora após seis semanas de prática. O que mudou, se a força de perna é a mesma?",
+  concepts: [
+    { term: "Potencial de ação: tudo ou nada", definition: "Na mesma fibra, um estímulo mais forte não gera um potencial maior. A informação é codificada pela frequência de disparo e pelo número de fibras recrutadas, não pelo tamanho do impulso." },
+    { term: "Unidade motora e recrutamento", definition: "Um motoneurônio e todas as fibras que ele inerva. A força depende de recrutamento (quantas unidades), frequência de disparo e coordenação, não só do tamanho do músculo." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Membrana, potencial de repouso e excitabilidade", detail: "A bomba Na+/K+ mantém os gradientes; canais de vazamento e dependentes de voltagem definem a resposta. Temperatura, eletrólitos, perfusão e fármacos alteram excitabilidade e tempo de reação." },
+      { label: "Sinapses, neurotransmissores e plasticidade", detail: "A saída neural é a soma de entradas excitatórias menos inibitórias. A prática deliberada muda o peso das entradas sensoriais e a eficiência das redes, base da memória motora." },
+      { label: "Sensação, propriocepção e controle postural", detail: "Estabilidade emerge de previsão mais feedback sensorial mais estratégia mecânica. Sem visão, o equilíbrio passa a depender mais dos sinais vestibular e somatossensorial." },
+      { label: "Planejamento, comando motor e unidades motoras", detail: "Áreas associativas definem o objetivo; córtex motor e vias descendentes comandam; cerebelo compara previsão e consequência. A intenção de mover rápido eleva a taxa de desenvolvimento de força." },
+      { label: "Sistema nervoso autônomo e exercício", detail: "No início há retirada vagal, seguida de maior atividade simpática. O objetivo não é só elevar a frequência cardíaca, mas redistribuir fluxo, sustentar pressão e mobilizar substratos." },
+      { label: "Fadiga central, dor e aprendizagem motora", detail: "Desempenho = capacidade periférica × comando voluntário × estratégia. Fadiga central é redução do comando motor, não cansaço subjetivo; dor pode mudar a estratégia sem indicar dano proporcional." },
+    ],
+  },
+  timeline: {
+    title: "Da resposta aguda à adaptação",
+    items: [
+      { time: "Segundos", title: "Ativação imediata", detail: "Retirada vagal, comando central e recrutamento motor iniciam a resposta." },
+      { time: "Minutos", title: "Ajuste", detail: "Reponderação sensorial, barorreflexo e aumento simpático estabilizam o esforço." },
+      { time: "Horas", title: "Fadiga e consolidação", detail: "Fadiga neural transitória e consolidação inicial da habilidade." },
+      { time: "Semanas", title: "Adaptação", detail: "Economia neural, melhor coordenação e refinamento dos modelos internos." },
+    ],
+  },
+  apply: "Trate técnica, atenção e ambiente como parte da dose. Ao treinar equilíbrio, manipule superfície, visão, velocidade e fadiga sem confundir instabilidade com especificidade esportiva. Responder à abertura: a melhora vem da reponderação sensorial e de ajustes antecipatórios aprendidos (plasticidade e cerebelo), não de mais força de perna.",
+  special: [
+    "A recuperação da frequência cardíaca depende de postura, ambiente, hidratação, medicamentos e condicionamento; não a leia isolada.",
+    "Variabilidade dosada e feedback relevante favorecem transferência; repetição sem objetivo pode consolidar compensações.",
+    "Sinais de alerta como dor torácica, síncope, confusão ou déficit neurológico exigem interrupção e avaliação apropriada.",
+  ],
+  mistake: {
+    mistake: "Achar que um estímulo mais forte gera um potencial de ação maior na mesma fibra, ou usar lactato, dor e esforço isolados para localizar a origem da fadiga.",
+    instead: "Na mesma fibra, mais estímulo aumenta a frequência ou o recrutamento, não a amplitude. E distinga fadiga central de periférica combinando ativação voluntária, técnica, RPE e recuperação.",
+  },
+  professionalCase: {
+    prompt: "Aquele aluno que perde estabilidade no agachamento de olhos fechados e melhora em seis semanas pergunta se 'ficou mais forte'. Como explicar em termos fisiológicos?",
+    choices: [
+      { id: "c1", label: "Explicar que o sistema nervoso reaprendeu a estimar posição sem a visão, ajustando previsão e feedback; a força pode nem ter mudado.", tone: "recomendada", feedback: "Coerente. É reponderação sensorial e aprendizagem motora (cerebelo e ajustes antecipatórios), não necessariamente ganho de força." },
+      { id: "c2", label: "Afirmar que a força de perna aumentou porque o equilíbrio melhorou.", tone: "cautela", feedback: "Equilíbrio melhor não prova mais força; a mudança é sobretudo neural e sensorial." },
+      { id: "c3", label: "Concluir que o aluno tinha um problema neurológico que se resolveu sozinho.", tone: "cautela", feedback: "Perder equilíbrio sem visão é esperado; melhora com prática é aprendizagem, não cura de doença." },
+    ],
+  },
+  quiz: [
+    q("q1", "verdadeiro-falso", "Na mesma fibra, um estímulo mais forte produz um potencial de ação de maior amplitude.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "O potencial de ação é tudo ou nada; mais estímulo aumenta frequência de disparo ou recrutamento, não a amplitude."),
+    q("q2", "conduta", "A força produzida por um músculo depende principalmente de:", [
+      { id: "a", label: "Recrutamento de unidades motoras, frequência de disparo e coordenação." },
+      { id: "b", label: "Apenas do tamanho (perímetro) do músculo." },
+    ], "a", "A saída de força neural combina recrutamento, frequência e coordenação; tamanho não é sinônimo de força específica."),
+  ],
+  uncertainty: "O conhecimento fisiológico organiza a observação e a decisão de exercício; não substitui diagnóstico, investigação de doença ou atendimento de urgência. Medidas neurais (EMG, tempo de reação, variabilidade da FC) restringem hipóteses apenas com método, condição basal e contexto conhecidos.",
+  related: [
+    { title: "Bioeletricidade da célula", href: `/aprender/conteudos/${DISC}--bioeletricidade`, type: "conceito" },
+    { title: "Sistema muscular", href: `/aprender/conteudos/${DISC}--mapa-sistema-muscular`, type: "mecanismo" },
+    { title: "Integração fisiológica do movimento", href: `/aprender/conteudos/${DISC}--integracao-movimento`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-kandel-neural-2021", "ref-latash-motor-2012", "ref-vander-2023"],
+  applyRx: "Leia técnica, atenção, sono e ambiente como parte da carga neural. Progrida equilíbrio e habilidade com variabilidade dosada e feedback claro, e interprete a FC de recuperação no contexto do aluno.",
+});
+
+const capSistemaMuscular = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-tecidos-movimento`, moduleSlug: "tecidos-do-movimento",
+  slug: `${DISC}--mapa-sistema-muscular`, title: "Sistema muscular: arquitetura, força, potência e fadiga",
+  subtitle: "Capítulo 02 do manual", description: "O músculo transforma energia química em força, mas a função não se reduz ao sarcômero: arquitetura, tendão, inervação, metabolismo e alavancas determinam a tensão produzida e convertida em desempenho.",
+  level: "intermediario", minutes: 14, type: "mecanismo", kicker: K, tags: ["força", "hipertrofia", "unidades motoras", "torque"],
+  hero: "A força que aparece no exercício não vem só do tamanho do músculo. Arquitetura, tendão, tipo de fibra, comprimento e alavanca articular decidem quanta tensão é gerada, transmitida e transformada em movimento.",
+  question: "Dois exercícios usam a mesma carga e as mesmas repetições, mas um gera muito mais esforço na posição alongada. Por quê?",
+  concepts: [
+    { term: "Torque = força × braço de momento", definition: "O que a articulação sente não é só a força do músculo, mas a força multiplicada pela alavanca. A mesma carga externa muda de exigência conforme o ângulo e o braço de momento." },
+    { term: "Potência = força × velocidade", definition: "A potência máxima costuma ocorrer em combinações intermediárias de força e velocidade, não na força máxima. Por isso potência não é sinônimo de 1RM." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Arquitetura muscular e transmissão de força", detail: "Comprimento fascicular favorece velocidade; área de secção favorece força; penação acomoda mais fibras em paralelo. Parte da força é transmitida lateralmente pela matriz, e o tendão armazena energia." },
+      { label: "Acoplamento excitação-contração", detail: "O potencial nos túbulos T ativa DHPR-RyR1 e libera Ca2+; a força ativada depende de Ca2+ e da sensibilidade miofibrilar. A perda de força em séries pode vir de menos Ca2+ antes de qualquer depleção de ATP." },
+      { label: "Ciclo das pontes cruzadas e custo energético", detail: "A força macroscópica depende do número de pontes ligadas e do tempo de ligação. Ações excêntricas toleram forças altas com menor custo metabólico, mas mais estresse mecânico em quem não está adaptado." },
+      { label: "Unidades motoras e tipos de fibra", detail: "Força neural = recrutamento + frequência + coordenação. Fibras I, IIa e IIx diferem em velocidade e fadiga, com plasticidade; intenção explosiva pode recrutar unidades de alto limiar sem carga máxima." },
+      { label: "Comprimento-tensão, força-velocidade e potência", detail: "A força ativa varia com a sobreposição dos filamentos; a passiva cresce com o alongamento de titina e tendão. A escolha de amplitude muda a região de maior tensão mesmo com carga e repetições iguais." },
+      { label: "Fadiga, dano e hipertrofia", detail: "Balanço proteico = síntese menos degradação. Dano estrutural não é requisito para hipertrofia: tensão mecânica e trabalho próximo da capacidade recrutam sinalização, modulada por proteína, energia e sono." },
+    ],
+  },
+  timeline: {
+    title: "Da repetição à adaptação",
+    items: [
+      { time: "Repetição", title: "Produção de torque", detail: "Ativação, Ca2+ e pontes cruzadas geram força a cada movimento." },
+      { time: "Série", title: "Acúmulo de fadiga", detail: "Redução de velocidade e mudança de recrutamento ao longo das repetições." },
+      { time: "Horas", title: "Reposição e sinalização", detail: "Reposição de fosfocreatina e glicogênio e sinalização anabólica." },
+      { time: "Semanas", title: "Remodelamento", detail: "Adaptações neurais, hipertrofia, mudança de arquitetura e rigidez tendínea." },
+    ],
+  },
+  apply: "Manipule amplitude, intensidade, proximidade da falha e recuperação, não apenas 'sentir dor'. A escolha do exercício e da amplitude muda a região de maior tensão. Responder à abertura: o exercício com pico na posição alongada combina maior força passiva, braço de momento e comprimento de fibra diferentes, mudando a exigência mesmo com carga igual.",
+  special: [
+    "Progressão deve manipular volume, intensidade, amplitude e proximidade da falha, com recuperação suficiente.",
+    "Ações excêntricas e cargas pesadas são úteis, mas em não adaptados exigem introdução gradual pelo maior estresse mecânico.",
+    "Lactato e dor tardia não medem a qualidade do estímulo nem devem guiar sozinhos a progressão.",
+  ],
+  mistake: {
+    mistake: "Tratar tamanho muscular como sinônimo de força em todas as amplitudes, ou usar dor tardia como medida da qualidade do treino.",
+    instead: "Force específica e torque dependem de arquitetura, alavanca e técnica. Avalie o estímulo por carga, velocidade, proximidade da falha e recuperação, não pela dor.",
+  },
+  professionalCase: {
+    prompt: "Um aluno diz que só progride quando 'sente muita dor no dia seguinte' e quer aumentar a dor a cada treino. Qual conduta é mais coerente?",
+    choices: [
+      { id: "c1", label: "Explicar que hipertrofia depende de tensão mecânica e trabalho próximo da capacidade, não de dano; progredir por volume, carga e proximidade da falha, com recuperação.", tone: "recomendada", feedback: "Coerente. Dano não é requisito de hipertrofia; a dor tardia não mede a qualidade do estímulo." },
+      { id: "c2", label: "Aumentar a dor a cada sessão para 'garantir' o estímulo.", tone: "cautela", feedback: "Buscar dano crescente atrapalha recuperação e não melhora a adaptação; a sinalização ocorre sem microlesão relevante." },
+      { id: "c3", label: "Manter volume e intensidade fixos por meses para evitar qualquer dor.", tone: "aceitavel", feedback: "Evitar dor é razoável, mas sem progressão de estímulo a adaptação estagna; progrida de forma controlada." },
+    ],
+  },
+  quiz: [
+    q("q1", "verdadeiro-falso", "Dano muscular (dor tardia) é requisito necessário para haver hipertrofia.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Tensão mecânica e trabalho próximo da capacidade recrutam a sinalização anabólica sem exigir microlesão relevante."),
+    q("q2", "variavel", "A potência máxima costuma ocorrer:", [
+      { id: "a", label: "Em combinações intermediárias de força e velocidade." },
+      { id: "b", label: "Exatamente na força máxima (1RM)." },
+    ], "a", "Potência = força × velocidade; o pico aparece em combinações intermediárias, não no 1RM."),
+  ],
+  uncertainty: "Curvas musculares isoladas não se aplicam ao exercício sem considerar braço de momento e técnica. EMG não mede força diretamente, e ultrassom é sensível a posição, hidratação e técnica.",
+  related: [
+    { title: "Músculo esquelético", href: `/aprender/conteudos/${DISC}--musculo-esqueletico`, type: "conceito" },
+    { title: "Relação força-comprimento", href: `/aprender/conteudos/${DISC}--relacao-forca`, type: "mecanismo" },
+    { title: "Sistema esquelético e tecido conjuntivo", href: `/aprender/conteudos/${DISC}--mapa-sistema-esqueletico`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-lieber-musculo-2010", "ref-zatsiorsky-biomecanica-2012", "ref-costanzo-2026"],
+  applyRx: "Escolha exercício e amplitude pensando onde fica o pico de tensão. Progrida por volume, carga, proximidade da falha e recuperação, e não use a dor tardia como medida do estímulo.",
+});
+
+const capSistemaCardiovascular = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-cardiovascular`, moduleSlug: "sistema-cardiovascular",
+  slug: `${DISC}--mapa-sistema-cardiovascular`, title: "Sistema cardiovascular: ritmo, bomba, vasos e pressão",
+  subtitle: "Capítulo 03 do manual", description: "Coração, sangue e vasos formam um circuito que ajusta o fluxo regional de segundo a segundo. Nenhuma variável isolada representa a capacidade circulatória.",
+  level: "intermediario", minutes: 14, type: "mecanismo", kicker: K, tags: ["débito cardíaco", "pressão arterial", "endotélio", "deriva cardiovascular"],
+  hero: "Frequência cardíaca, volume sistólico, resistência vascular, retorno venoso e conteúdo de oxigênio interagem o tempo todo. Por isso a leitura cardiovascular precisa integrar mecânica cardíaca, endotélio e controle autonômico.",
+  question: "Numa corrida em calor, a frequência cardíaca sobe mesmo com a velocidade constante. O condicionamento piorou?",
+  concepts: [
+    { term: "Débito cardíaco = FC × volume sistólico", definition: "O débito é o principal determinante da entrega de oxigênio. O treino aumenta o volume sistólico, então o coração entrega o mesmo sangue com menos batimentos." },
+    { term: "Fluxo = ΔP / R", definition: "O fluxo depende do gradiente de pressão e da resistência. Pequenas mudanças no raio das arteríolas produzem grande efeito sobre a resistência e a distribuição do fluxo." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Automatismo, condução e ECG", detail: "O nó sinoatrial domina o ritmo; o nó AV atrasa; His-Purkinje sincroniza os ventrículos. O ECG registra direção e tempo da despolarização, não força mecânica: o tamanho do QRS não mede contração." },
+      { label: "Ciclo cardíaco, válvulas e pressões", detail: "Volume sistólico = volume diastólico final menos volume sistólico final. Frequências muito altas reduzem o tempo de enchimento; condicionamento e retorno venoso ajudam a preservar o volume sistólico." },
+      { label: "Débito, retorno venoso e Frank-Starling", detail: "A força se ajusta ao enchimento dentro da faixa fisiológica. Calor e desidratação reduzem o volume central e produzem deriva cardiovascular: a FC sobe para sustentar o débito enquanto o volume sistólico cai." },
+      { label: "Vasos, resistência e função endotelial", detail: "O endotélio detecta o cisalhamento e libera NO e outros mediadores, modulando tônus e inflamação. A vasodilatação do músculo ativo vem de metabólitos e sinais locais, não de simples 'desligamento simpático'." },
+      { label: "Microcirculação e troca capilar", detail: "VO2 = débito × diferença arteriovenosa de O2. Capilares oferecem grande área e baixa velocidade para a troca; o recrutamento capilar melhora a difusão e a distribuição do fluxo." },
+      { label: "Pressão arterial, reflexos e adaptações", detail: "Barorreflexo, rim e controle local sustentam a pressão. No exercício dinâmico o débito sobe e a resistência total cai; no resistido, compressão e apneia podem elevar a pressão de forma transitória." },
+    ],
+  },
+  timeline: {
+    title: "Da resposta aguda à adaptação",
+    items: [
+      { time: "Início", title: "Ativação", detail: "Retirada vagal, aumento de FC e vasodilatação muscular." },
+      { time: "Estável", title: "Ajuste à demanda", detail: "Débito e extração de O2 acompanham a intensidade." },
+      { time: "Calor/prolongado", title: "Deriva", detail: "Deriva cardiovascular e redistribuição cutânea do fluxo." },
+      { time: "Treinamento", title: "Adaptação", detail: "Maior volume sistólico, melhor função endotelial e economia cardíaca." },
+    ],
+  },
+  apply: "Leia a FC como uma variável de resposta, junto de percepção de esforço, ventilação e contexto. No treino de força com hipertensos, oriente respiração contínua e intensidade moderada, evitando apneia. Responder à abertura: no calor, a deriva cardiovascular eleva a FC para a mesma tarefa; isso não indica piora do condicionamento.",
+  special: [
+    "Calor e desidratação reduzem o volume central; ajuste a intensidade pela percepção de esforço e pela fala, não só pela FC.",
+    "História, sintomas e trajetória informam mais que um valor isolado ao diferenciar adaptação fisiológica de condição clínica.",
+    "Dor torácica, síncope ou dispneia desproporcional exigem interrupção e avaliação apropriada.",
+  ],
+  mistake: {
+    mistake: "Concluir que o condicionamento piorou porque a FC subiu no calor, ou tratar fração de ejeção normal como prova de função cardiovascular global normal.",
+    instead: "A FC mais alta no calor é deriva cardiovascular, uma resposta ao contexto. E nenhum índice isolado descreve toda a função; integre história, sintomas e trajetória.",
+  },
+  professionalCase: {
+    prompt: "No mesmo percurso leve, num dia quente, a FC do aluno está mais alta que o habitual. Como interpretar e conduzir?",
+    choices: [
+      { id: "c1", label: "Considerar deriva cardiovascular por calor e hidratação; ajustar a intensidade pela percepção de esforço e pela fala, e reforçar hidratação.", tone: "recomendada", feedback: "Coerente. A FC é resposta ao contexto; a leitura integrada orienta melhor a intensidade." },
+      { id: "c2", label: "Concluir que o condicionamento regrediu porque a FC subiu.", tone: "cautela", feedback: "FC mais alta no calor não indica perda de condicionamento; é resposta térmica e hídrica." },
+      { id: "c3", label: "Manter a intensidade planejada rigidamente, ignorando o calor.", tone: "cautela", feedback: "Ignorar o contexto térmico aumenta o risco; ajuste pela resposta do dia." },
+    ],
+  },
+  quiz: [
+    q("q1", "variavel", "O débito cardíaco é o produto da frequência cardíaca pelo:", [
+      { id: "a", label: "Volume sistólico." }, { id: "b", label: "Consumo de oxigênio." },
+    ], "a", "Débito = FC × volume sistólico, o principal determinante da entrega de oxigênio."),
+    q("q2", "verdadeiro-falso", "No calor, uma FC mais alta na mesma tarefa costuma indicar piora do condicionamento.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "É deriva cardiovascular: com menos volume central, a FC sobe para manter o débito."),
+  ],
+  uncertainty: "Pressão e FC dependem de técnica, manguito, postura, medicação e condição individual; a conduta clínica é do profissional de saúde. Uma mesma FC pode representar débitos diferentes.",
+  related: [
+    { title: "Débito cardíaco", href: `/aprender/conteudos/${DISC}--debito-cardiaco`, type: "conceito" },
+    { title: "Pressão arterial no exercício", href: `/aprender/conteudos/${DISC}--pressao-no-exercicio`, type: "conceito" },
+    { title: "Sistema respiratório", href: `/aprender/conteudos/${DISC}--mapa-sistema-respiratorio`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-klabunde-cardio-2021", "ref-kenney-2024", "ref-pescatello-hipertensao-2004"],
+  applyRx: "Leia a FC como resposta, junto de percepção de esforço, fala e contexto (calor, sono, hidratação). Em hipertensos, priorize aeróbio moderado e respiração contínua, evitando apneia e cargas máximas.",
+});
+
+const capSistemaRespiratorio = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-respiratorio`, moduleSlug: "sistema-respiratorio",
+  slug: `${DISC}--mapa-sistema-respiratorio`, title: "Sistema respiratório: ventilação, difusão e controle",
+  subtitle: "Capítulo 04 do manual", description: "A respiração conecta ventilação, difusão, perfusão e transporte sanguíneo. A ventilação aumenta antes de grandes mudanças nos gases, por comando central e feedback muscular.",
+  level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["ventilação", "limiar ventilatório", "trocas gasosas", "teste da fala"],
+  hero: "A ventilação sobe no exercício antes mesmo de os gases arteriais mudarem muito, graças ao comando central. Entender o sistema respiratório sustenta guias práticos como o teste da fala.",
+  question: "Como saber, sem aparelhos, se um aluno passou de uma intensidade leve para uma mais exigente?",
+  concepts: [
+    { term: "Ventilação alveolar: VA = (VT − VD) × f", definition: "Só a fração do ar que chega a alvéolos perfundidos participa da troca. Aumentar o volume corrente costuma ser mais eficiente que só elevar a frequência, até limites mecânicos." },
+    { term: "Saturação não é conteúdo", definition: "A maior parte do O2 é transportada ligada à hemoglobina. Anemia pode manter a SpO2 normal com menor transporte total de O2; saturação e conteúdo são coisas diferentes." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Mecânica ventilatória e pressões", detail: "A inspiração torna a pressão pleural mais negativa; a expiração tranquila é passiva. Complacência = ΔV/ΔP. O ar se move por gradientes de pressão, não porque a gente 'puxa oxigênio'." },
+      { label: "Volumes, ventilação minuto e espaço morto", detail: "Ventilação minuto é frequência × volume corrente, mas o espaço morto torna a ventilação alveolar menor que a total. Ventilação alta não garante oxigenação se perfusão ou difusão falham." },
+      { label: "Difusão e relação ventilação-perfusão", detail: "O fluxo pela membrana depende de área, espessura e gradiente. Unidades com V/Q baixo recebem sangue com pouca ventilação; o pulmão saudável reduz desigualdades por recrutamento e vasoconstrição hipóxica." },
+      { label: "Transporte de O2 e CO2", detail: "A curva sigmoide permite alta saturação nos pulmões e liberação nos tecidos. O exercício desloca a curva para a direita nos tecidos, favorecendo a entrega de O2 sem impedir a saturação pulmonar." },
+      { label: "Controle neural e químico da ventilação", detail: "Centros bulbares integram quimiorreceptores, mecanorreceptores e comando central. No início do exercício a ventilação sobe por antecipação; quimiorreceptores respondem a CO2 e pH, não medem 'falta de ar'." },
+      { label: "Limiar ventilatório, economia e adaptação", detail: "O tamponamento de H+ aumenta o CO2 e acelera a ventilação de forma não linear. O limiar é uma estimativa de transição, não um ponto único; o treino melhora economia e capacidade oxidativa." },
+    ],
+  },
+  timeline: {
+    title: "Da resposta aguda à adaptação",
+    items: [
+      { time: "Primeiros segundos", title: "Antecipação", detail: "O comando central eleva a ventilação antes de grande alteração química." },
+      { time: "Minutos", title: "Estabilização", detail: "Feedback de CO2, H+, temperatura e músculos ajusta a resposta." },
+      { time: "Alta intensidade", title: "Hiperventilação", detail: "Elevação desproporcional da ventilação e maior trabalho respiratório." },
+      { time: "Treinamento", title: "Economia", detail: "Menor ventilação para a mesma carga e maior capacidade máxima." },
+    ],
+  },
+  apply: "Use a respiração e a fala como guia de intensidade sem equipamento: fala confortável indica esforço leve a moderado; falar só palavras soltas indica proximidade de um limiar mais alto. Responder à abertura: quando o aluno deixa de conseguir falar frases confortavelmente, cruzou para uma intensidade mais exigente.",
+  special: [
+    "Zonas de treino podem usar fala, percepção de esforço, limiares ou teste cardiopulmonar, conforme objetivo e recursos.",
+    "Respiração voluntariamente lenta muda a sensação, mas não substitui a resposta necessária ao CO2 em intensidades altas.",
+    "Manter a maior parte do treino em intensidade conversável é prudente em hipertensos e cardiopatas.",
+  ],
+  mistake: {
+    mistake: "Dizer que respiramos para 'puxar oxigênio', ou tratar SpO2 normal como prova de que não há grande trabalho ventilatório.",
+    instead: "O ar se move por gradientes de pressão. E SpO2 normal não exclui alto trabalho respiratório; em sensor óptico, valores baixos podem ser artefato de movimento.",
+  },
+  professionalCase: {
+    prompt: "Um aluno quer saber, sem relógio nem aparelho, se está treinando 'leve' ou 'forte' na caminhada. Como orientar?",
+    choices: [
+      { id: "c1", label: "Ensinar o teste da fala: conseguir falar frases confortáveis indica leve a moderado; só palavras soltas indica intensidade maior.", tone: "recomendada", feedback: "Coerente. A ventilação e a fala refletem a intensidade e servem como guia prático." },
+      { id: "c2", label: "Mandar respirar bem devagar para 'baixar' a intensidade percebida.", tone: "cautela", feedback: "Respiração lenta muda a sensação, mas não substitui a resposta ao CO2 em intensidades altas." },
+      { id: "c3", label: "Dizer que sem aparelho é impossível estimar a intensidade.", tone: "aceitavel", feedback: "Aparelhos ajudam, mas fala e percepção de esforço são guias válidos e acessíveis." },
+    ],
+  },
+  quiz: [
+    q("q1", "conduta", "O teste da fala indica proximidade de um limiar mais alto quando a pessoa:", [
+      { id: "a", label: "Consegue falar apenas palavras soltas, não frases confortáveis." },
+      { id: "b", label: "Consegue cantar sem esforço." },
+    ], "a", "Falar só palavras soltas sinaliza que a ventilação subiu de forma desproporcional, perto de um limiar mais alto."),
+    q("q2", "verdadeiro-falso", "Saturação (SpO2) normal significa necessariamente conteúdo de oxigênio adequado no sangue.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Saturação não é conteúdo: anemia pode manter SpO2 normal com menor transporte total de O2."),
+  ],
+  uncertainty: "Espirometria e trocas gasosas dependem de esforço, técnica e calibração. Dispneia é percepção e precisa de escala e contexto padronizados; a conduta clínica pulmonar é do profissional de saúde.",
+  related: [
+    { title: "Ventilação e esforço", href: `/aprender/conteudos/${DISC}--ventilacao`, type: "conceito" },
+    { title: "Transporte de gases", href: `/aprender/conteudos/${DISC}--transporte-gases`, type: "mecanismo" },
+    { title: "Consumo de oxigênio", href: `/aprender/conteudos/${DISC}--consumo-oxigenio`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-west-respiratoria-2021", "ref-powers-howley-2024", "ref-kenney-2024"],
+  applyRx: "Guie a intensidade pela fala e pela percepção de esforço quando não houver equipamento, e explique que SpO2 e ventilação isoladas não descrevem toda a oxigenação.",
+});
+
+const capSistemaHematologico = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-hematologico`, moduleSlug: "sistema-hematologico",
+  slug: `${DISC}--mapa-sistema-hematologico`, title: "Sangue, linfa e imunidade: transporte, defesa e recuperação",
+  subtitle: "Capítulo 05 do manual", description: "Sangue e linfa transportam e conectam tecidos, enquanto hemostasia e imunidade preservam integridade. A interpretação deve separar concentração, redistribuição e mudança real de massa.",
+  level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["volume plasmático", "hemoglobina", "ferro", "inflamação"],
+  hero: "O exercício muda volume plasmático, distribuição de células, mediadores inflamatórios e demanda de ferro. Ler o sangue exige separar o que é concentração, o que é redistribuição e o que é mudança real de massa.",
+  question: "Após treino intenso em calor, o hematócrito aumenta e o peso cai. O aluno 'produziu mais sangue'?",
+  concepts: [
+    { term: "Concentração = quantidade / volume", definition: "Postura, suor e trocas capilares mudam o volume plasmático em minutos. Hematócrito e hemoglobina podem subir por hemoconcentração, sem aumento de massa total." },
+    { term: "Conteúdo de O2 depende de Hb × saturação", definition: "A massa de hemoglobina determina grande parte do transporte de O2; a concentração depende também do volume plasmático. Endurance pode expandir o plasma e reduzir a concentração de Hb sem anemia verdadeira." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Plasma, volume sanguíneo e concentração", detail: "Água, eletrólitos, proteínas e mediadores compõem o plasma. Maior concentração pós-exercício não significa produção imediata do componente; costuma ser hemoconcentração." },
+      { label: "Eritrócitos, hemoglobina e ferro", detail: "A eritropoetina renal estimula a medula; ferro, folato, B12 e proteína são necessários. Ferritina sobe na inflamação, então um valor isolado não descreve todo o estado de ferro." },
+      { label: "Plaquetas, coagulação e fibrinólise", detail: "Hemostasia = formação controlada menos remoção do coágulo. O exercício agudo altera transitoriamente a atividade hemostática; o risco depende de condição clínica, intensidade, imobilização e hidratação." },
+      { label: "Imunidade inata e inflamação", detail: "Resposta = intensidade × duração × contexto. Inflamação organiza contenção e reparo; suprimi-la de forma indiscriminada pode atrapalhar o reparo. A resolução é um programa ativo." },
+      { label: "Imunidade adaptativa e memória", detail: "Linfócitos B e T reconhecem antígenos e formam memória. A queda de algumas células no sangue após exercício pode ser redistribuição para os tecidos, e não imunossupressão global." },
+      { label: "Sistema linfático, edema e exercício", detail: "Balanço intersticial = filtração menos drenagem linfática. Contração muscular e movimento favorecem o fluxo linfático; edema persistente, assimétrico ou doloroso requer avaliação." },
+    ],
+  },
+  timeline: {
+    title: "Da resposta aguda à adaptação",
+    items: [
+      { time: "Minutos", title: "Hemoconcentração", detail: "Redução de volume plasmático e mobilização de leucócitos e plaquetas." },
+      { time: "Horas", title: "Redistribuição", detail: "Redistribuição imune e mediadores de reparo entram em cena." },
+      { time: "Dias", title: "Resolução", detail: "Resolução inflamatória e restauração do volume plasmático." },
+      { time: "Treinamento", title: "Adaptação", detail: "Expansão plasmática e melhor regulação imune e metabólica." },
+    ],
+  },
+  apply: "Padronize horário, postura, hidratação e intervalo após o exercício antes de comparar exames. Integre sintomas e marcadores de ferro em vez de reagir a um valor isolado. Responder à abertura: o hematócrito subiu por hemoconcentração (perda de água pelo suor); não houve produção imediata de mais sangue.",
+  special: [
+    "Carga alta com pouco sono, déficit energético e exposição a patógenos pode aumentar o risco de sintomas respiratórios.",
+    "A contagem sanguínea é uma fotografia de um compartimento, não do sistema imune inteiro.",
+    "Ferritina isolada não descreve todo o estado de ferro, pois sobe na inflamação; integre com sintomas e outros marcadores.",
+  ],
+  mistake: {
+    mistake: "Concluir que o aluno 'produziu mais sangue' porque o hematócrito subiu após treino em calor, ou tratar edema como simples 'retenção de líquido'.",
+    instead: "Maior concentração após exercício costuma ser hemoconcentração, não produção. E no edema, causa e distribuição importam mais que o rótulo 'retenção'.",
+  },
+  professionalCase: {
+    prompt: "Um aluno comemora que o exame pós-treino em calor mostrou 'hemoglobina mais alta' e conclui que ficou mais saudável. Como orientar?",
+    choices: [
+      { id: "c1", label: "Explicar que a perda de água pelo suor concentrou o sangue; repetir o exame padronizando horário, hidratação e repouso antes de concluir algo.", tone: "recomendada", feedback: "Coerente. Hemoconcentração eleva a concentração sem mudar a massa; padronizar a coleta é essencial." },
+      { id: "c2", label: "Confirmar que a massa de hemoglobina aumentou de imediato com um treino.", tone: "cautela", feedback: "Produzir hemoglobina leva tempo; a variação aguda reflete volume plasmático." },
+      { id: "c3", label: "Recomendar evitar hidratação para 'manter' os valores altos.", tone: "cautela", feedback: "Restringir água por estética laboratorial é arriscado; a reidratação é necessária." },
+    ],
+  },
+  quiz: [
+    q("q1", "verdadeiro-falso", "Um aumento de hematócrito logo após treino intenso em calor prova aumento da massa de hemácias.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "É hemoconcentração: a perda de água reduz o volume plasmático e eleva a concentração sem mudar a massa."),
+    q("q2", "conduta", "Uma queda de linfócitos no sangue logo após exercício intenso indica principalmente:", [
+      { id: "a", label: "Possível redistribuição das células para os tecidos, não imunossupressão global." },
+      { id: "b", label: "Falência imune que contraindica todo exercício." },
+    ], "a", "A contagem é uma fotografia de um compartimento; a redistribuição é comum e transitória."),
+  ],
+  uncertainty: "Ferritina, PCR e leucograma são pouco específicos e mudam com volume e redistribuição. Alterações persistentes ou sintomas exigem avaliação clínica; o papel do profissional é reconhecer mecanismos e sinais de alerta.",
+  related: [
+    { title: "Sistema cardiovascular", href: `/aprender/conteudos/${DISC}--mapa-sistema-cardiovascular`, type: "mecanismo" },
+    { title: "Sistema renal e urinário", href: `/aprender/conteudos/${DISC}--mapa-sistema-renal`, type: "mecanismo" },
+    { title: "Sistema tegumentar e termorregulação", href: `/aprender/conteudos/${DISC}--mapa-sistema-tegumentar`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-hoffbrand-hematologia-2019", "ref-janeway-imuno-2022", "ref-vander-2023"],
+  applyRx: "Padronize a coleta de exames e leia concentração, redistribuição e massa como coisas diferentes. Trate carga, sono e energia como fatores de recuperação imune, e encaminhe sinais de alerta.",
+});
+
+const capSistemaRenal = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-renal`, moduleSlug: "sistema-renal",
+  slug: `${DISC}--mapa-sistema-renal`, title: "Rins: filtração, água, eletrólitos e equilíbrio ácido-base",
+  subtitle: "Capítulo 06 do manual", description: "Os rins estabilizam volume, osmolaridade, eletrólitos, pH e pressão ao filtrar o plasma e ajustar reabsorção e secreção. No exercício, mudam a interpretação de urina e biomarcadores.",
+  level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["rim", "hidratação", "sódio", "ácido-base"],
+  hero: "O rim é o grande ajustador do meio interno: filtra litros de plasma e decide, segmento por segmento, o que recupera e o que elimina, ligando hidratação, sódio, pH e pressão arterial.",
+  question: "Numa prova longa em calor, um atleta bebe água em excesso e desenvolve cefaleia e confusão. O que está acontecendo?",
+  concepts: [
+    { term: "Excreção = filtração − reabsorção + secreção", definition: "O glomérulo filtra água e solutos pequenos; o túbulo reabsorve o que é útil e secreta o que precisa sair. A maior parte do filtrado é reabsorvida, por isso não urinamos litros por hora." },
+    { term: "Osmolaridade, ADH e sódio", definition: "O ADH ajusta a reabsorção de água conforme a osmolaridade; o eixo renina-angiotensina-aldosterona ajusta sódio e volume conforme a perfusão. Sódio plasmático reflete a relação entre soluto e água, não o estoque total." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Fluxo renal e filtração glomerular", detail: "TFG = Kf × pressão líquida de filtração. Autorregulação e feedback túbulo-glomerular estabilizam o fluxo. Desidratação e calor podem reduzir o fluxo renal sem representar lesão, mas sintomas e persistência importam." },
+      { label: "Transporte tubular e depuração", detail: "O túbulo proximal reabsorve grande parte de água, Na+, glicose e bicarbonato; segmentos seguintes refinam. Glicosúria ou proteinúria transitória após esforço intenso precisa de contexto e repetição." },
+      { label: "Osmolaridade, concentração urinária e ADH", detail: "O gradiente medular e o ADH permitem concentrar a urina. Durante exercício prolongado, água em excesso sem sódio e sem respeitar a sede pode favorecer hiponatremia, sobretudo com ADH elevado." },
+      { label: "Sódio, RAAS e pressão arterial", detail: "O conteúdo de Na+ regula o volume extracelular. O RAAS não é só um mecanismo de hipertensão: é essencial para defender volume e perfusão. A resposta ao sal e ao exercício varia entre pessoas." },
+      { label: "Potássio, cálcio e outros eletrólitos", detail: "K+ é majoritariamente intracelular e influencia a excitabilidade. O exercício libera K+ do músculo, mas bombas e perfusão restauram o gradiente na recuperação. Concentração sérica não representa o estoque total." },
+      { label: "Equilíbrio ácido-base e exercício", detail: "pH depende da relação HCO3-/CO2: os pulmões ajustam CO2 em minutos; os rins reabsorvem bicarbonato e excretam ácido em horas. O treino melhora o transporte e o uso de lactato e a capacidade tampão." },
+    ],
+  },
+  timeline: {
+    title: "Da resposta aguda à adaptação",
+    items: [
+      { time: "Início", title: "Redistribuição", detail: "Ativação simpática e redução relativa do fluxo renal." },
+      { time: "Prolongado", title: "Conservação", detail: "ADH e RAAS conservam água e sódio." },
+      { time: "Alta intensidade", title: "Carga ácido-base", detail: "Aumento da carga ácida e redistribuição de K+." },
+      { time: "Recuperação", title: "Restauração", detail: "Restauração de volume, eletrólitos e excreção de metabólitos." },
+    ],
+  },
+  apply: "Ligue o rim à hidratação e à pressão: planos de hidratação devem partir de experiência, sede, taxa de suor e duração, evitando tanto o déficit excessivo quanto o ganho de massa por excesso de água. Responder à abertura: beber água em excesso pode diluir o sódio (hiponatremia), sobretudo com ADH alto; cefaleia e confusão são sinais que exigem interrupção e atendimento.",
+  special: [
+    "Peso agudo após o treino reflete sobretudo água, não gordura; o rim ajusta volume e eletrólitos.",
+    "Urina escura não quantifica sozinha a desidratação; dieta, horário e solutos interferem.",
+    "Cefaleia, confusão, edema, creatinina alterada ou proteinúria persistente exigem avaliação clínica.",
+  ],
+  mistake: {
+    mistake: "Tratar variação aguda de peso como mudança de gordura, ou incentivar beber muita água 'preventivamente' em provas longas sem considerar sódio.",
+    instead: "A variação aguda é sobretudo água. E excesso de água sem sódio pode causar hiponatremia; a reposição considera água, sódio e duração, guiada pela sede.",
+  },
+  professionalCase: {
+    prompt: "Numa prova longa e quente, um aluno bebe água a cada posto 'para não desidratar', ganha peso e reclama de cefaleia e enjoo. Qual conduta é mais coerente?",
+    choices: [
+      { id: "c1", label: "Interromper, buscar atendimento e, na prevenção futura, orientar reposição guiada pela sede com água e sódio, evitando ganho de massa.", tone: "recomendada", feedback: "Coerente. Ganho de peso com cefaleia e enjoo sugere diluição de sódio; confusão exige atendimento." },
+      { id: "c2", label: "Recomendar beber ainda mais água para 'compensar o calor'.", tone: "cautela", feedback: "Mais água sem sódio agrava a diluição; o quadro pode piorar." },
+      { id: "c3", label: "Ignorar os sintomas e mandar continuar a prova.", tone: "cautela", feedback: "Confusão é sinal de alerta; a prioridade é interromper e avaliar." },
+    ],
+  },
+  quiz: [
+    q("q1", "variavel", "A relação que resume a excreção renal de uma substância é:", [
+      { id: "a", label: "Filtração menos reabsorção mais secreção." },
+      { id: "b", label: "Filtração mais reabsorção menos secreção." },
+    ], "a", "Excreção = filtração − reabsorção + secreção."),
+    q("q2", "verdadeiro-falso", "Beber muita água pura em prova longa é sempre seguro e nunca causa problema.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Excesso de água sem sódio pode diluir o sódio plasmático (hiponatremia), sobretudo com ADH elevado."),
+  ],
+  uncertainty: "Creatinina varia com massa muscular, dieta e exercício; densidade e sódio urinários têm limites de interpretação. Sinais renais (creatinina, edema, proteinúria, pressão) são de avaliação clínica.",
+  related: [
+    { title: "Rim e néfron (aprofundamento)", href: `/aprender/conteudos/${DISC}--sistema-renal`, type: "mecanismo" },
+    { title: "Sistema tegumentar e termorregulação", href: `/aprender/conteudos/${DISC}--mapa-sistema-tegumentar`, type: "mecanismo" },
+    { title: "Transporte pela membrana", href: `/aprender/conteudos/${DISC}--transporte-membrana`, type: "conceito" },
+  ],
+  refs: [...REF_BASE, "ref-eaton-renal-2018", "ref-costanzo-2026", "ref-nas-dri-agua-2005"],
+  applyRx: "Oriente hidratação guiada pela sede, taxa de suor e duração (água e sódio), explique que peso agudo é água e encaminhe sinais renais e neurológicos de alerta.",
+});
+
+const capSistemaEndocrino = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-controle-endocrino`, moduleSlug: "controle-endocrino",
+  slug: `${DISC}--mapa-sistema-endocrino`, title: "Sistema endócrino: sinalização, eixos e integração metabólica",
+  subtitle: "Capítulo 07 do manual", description: "Hormônios coordenam respostas de segundos a semanas. O efeito depende de concentração livre, pulsos, ritmos, receptores e estado do tecido-alvo, não só da concentração no sangue.",
+  level: "avancado", minutes: 13, type: "mecanismo", kicker: K, tags: ["hormônios", "cortisol", "insulina", "eixos"],
+  hero: "No exercício, sinais neurais, mecânicos e metabólicos convergem com catecolaminas, insulina, glucagon, cortisol, hormônios tireoidianos e mioquinas. O efeito depende de muito mais que a concentração no sangue.",
+  question: "Um praticante com pouco sono e dieta hipocalórica vê o cortisol elevado após o treino. É 'falha adrenal' ou overtraining?",
+  concepts: [
+    { term: "Resposta = exposição × sensibilidade do tecido", definition: "Uma mesma concentração hormonal produz efeitos diferentes conforme receptor, tecido, estado energético e treinamento. Mais hormônio não é mais efeito quando receptores ou vias estão saturados." },
+    { term: "Ritmos e pulsos importam", definition: "Eixos hormonais têm pulsos e ritmos circadianos. Uma coleta única pode perder o pulso ou o ritmo e não representar a atividade do eixo; horário, sono e exercício recente mudam o valor." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Princípios de sinalização hormonal", detail: "Peptídeos agem em receptores de membrana; esteroides e tireoidianos modulam a expressão gênica. Afinidade, ocupação, eficácia e amplificação são conceitos distintos, e proteínas transportadoras mudam a fração livre." },
+      { label: "Hipotálamo, hipófise e feedback", detail: "Saída do eixo = drive central menos feedback periférico. O hipotálamo integra sinais neurais, luz, sono, estresse e energia; horário de coleta e exercício recente podem mudar hormônios sem indicar doença." },
+      { label: "Insulina, glucagon e controle da glicose", detail: "A contração muscular aumenta a captação de glicose por vias parcialmente independentes de insulina. O exercício melhora a sensibilidade à insulina por horas e, com repetição, aumenta a capacidade de transporte e oxidação." },
+      { label: "Tireoide e taxa metabólica", detail: "O eixo tireoidiano responde lentamente. Déficit energético prolongado pode reduzir T3 como adaptação; sintomas e contexto são essenciais antes de atribuir fadiga à tireoide, e 'metabolismo lento' não se infere só da dificuldade de perder peso." },
+      { label: "Adrenais, catecolaminas e cortisol", detail: "Carga hormonal = magnitude × duração × frequência. A elevação aguda de cortisol é parte da resposta adaptativa; excesso crônico com pouca recuperação é diferente de um pico após o treino. Cortisol não é 'hormônio ruim' isolado." },
+      { label: "Tecido adiposo, mioquinas e integração", detail: "Fenótipo metabólico = energia + tecido + sinalização + comportamento. Leptina informa a disponibilidade energética ao cérebro; o treino melhora a comunicação metabólica mesmo antes de grandes mudanças de peso." },
+    ],
+  },
+  timeline: {
+    title: "Da resposta aguda à adaptação",
+    items: [
+      { time: "Segundos", title: "Catecolaminas", detail: "Ajuste rápido de substratos pela ativação simpática." },
+      { time: "Minutos", title: "Glicose", detail: "Insulina cai enquanto glucagon e cortisol ajustam a produção hepática." },
+      { time: "Horas", title: "Sensibilidade", detail: "Melhora da sensibilidade à insulina e sinalização de recuperação." },
+      { time: "Semanas", title: "Adaptação", detail: "Mudanças de receptores, enzimas, adipocinas e composição corporal." },
+    ],
+  },
+  apply: "Interprete hormônios com horário, sono, alimentação, estresse e carga de treino, nunca por um valor isolado. Use o exercício como potente modulador da sensibilidade à insulina. Responder à abertura: um cortisol elevado com pouco sono e déficit energético tem várias explicações (ritmo circadiano, restrição, carga); um único resultado não define 'falha adrenal' nem overtraining.",
+  special: [
+    "Hipertrofia não depende de picos transitórios isolados de hormônios após o treino.",
+    "Baixa disponibilidade energética prolongada pode reduzir T3, GnRH e leptina; peso estável não a exclui.",
+    "Conduta hormonal, diagnóstico e medicação são do profissional de saúde; o papel aqui é reconhecer mecanismos e sinais.",
+  ],
+  mistake: {
+    mistake: "Tratar cortisol elevado após um treino como prova de overtraining, ou creditar o ganho muscular a picos hormonais agudos.",
+    instead: "Cortisol agudo é parte da resposta adaptativa e depende de horário, sono e carga. A hipertrofia acompanha tensão mecânica e recuperação ao longo de semanas, não picos isolados.",
+  },
+  professionalCase: {
+    prompt: "Um aluno dormindo mal e em dieta muito restrita mede cortisol alto pós-treino e quer 'parar tudo por causa das adrenais'. Qual conduta é mais coerente?",
+    choices: [
+      { id: "c1", label: "Explicar que sono, restrição e horário elevam o cortisol; revisar energia, sono e carga antes de concluir qualquer coisa, e encaminhar se necessário.", tone: "recomendada", feedback: "Coerente. Um resultado isolado não define falha adrenal; contexto e recuperação orientam a decisão." },
+      { id: "c2", label: "Confirmar que as adrenais 'falharam' e proibir exercício.", tone: "cautela", feedback: "Cortisol elevado agudo não define falha adrenal; a conduta clínica é do profissional de saúde." },
+      { id: "c3", label: "Ignorar sono e dieta e apenas aumentar a carga de treino.", tone: "cautela", feedback: "Ignorar déficit energético e sono tende a piorar a recuperação; ajuste esses fatores primeiro." },
+    ],
+  },
+  quiz: [
+    q("q1", "verdadeiro-falso", "Uma concentração hormonal maior sempre produz um efeito biológico maior.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "O efeito depende de exposição × sensibilidade do tecido; com receptores ou vias saturados, mais hormônio não gera mais efeito."),
+    q("q2", "conduta", "Diante de um cortisol elevado após um treino, a leitura mais prudente é:", [
+      { id: "a", label: "Integrar horário, sono, alimentação e carga antes de qualquer conclusão." },
+      { id: "b", label: "Diagnosticar overtraining a partir desse único valor." },
+    ], "a", "Cortisol tem forte ritmo circadiano; um valor isolado não define overtraining nem falha adrenal."),
+  ],
+  uncertainty: "Hormônios total e livre, glicemia e HbA1c têm limites de interpretação (ligação a proteínas, momento, variabilidade). Diagnóstico e conduta hormonal são do profissional de saúde.",
+  related: [
+    { title: "Sistema endócrino (aprofundamento)", href: `/aprender/conteudos/${DISC}--sistema-endocrino`, type: "conceito" },
+    { title: "Vias energéticas", href: `/aprender/conteudos/${DISC}--vias-energeticas`, type: "mecanismo" },
+    { title: "Sistema reprodutor", href: `/aprender/conteudos/${DISC}--mapa-sistema-reprodutor`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-melmed-williams-2024", "ref-endotext-stress-2020", "ref-colberg-diabetes-2016"],
+  applyRx: "Leia hormônios com horário, sono, alimentação e carga; use o exercício como modulador da glicose e da sensibilidade à insulina, e encaminhe conduta hormonal ao profissional de saúde.",
+});
+
+const capSistemaDigestorio = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-digestorio`, moduleSlug: "sistema-digestorio",
+  slug: `${DISC}--mapa-sistema-digestorio`, title: "Sistema digestório e hepatobiliar: da refeição ao substrato",
+  subtitle: "Capítulo 08 do manual", description: "O digestório transforma alimentos em moléculas absorvíveis e regula o ritmo de entrega ao organismo. O fígado recebe nutrientes pela veia porta e decide entre oxidar, armazenar, converter e exportar.",
+  level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["digestão", "absorção", "fígado", "disponibilidade energética"],
+  hero: "Comer é só o começo: motilidade, secreção, absorção e fígado decidem o ritmo com que a energia chega ao corpo. O exercício muda fluxo esplâncnico, esvaziamento e tolerância gastrointestinal.",
+  question: "Numa corrida longa, uma pessoa toma um gel concentrado com pouca água e tem náusea, distensão e diarreia. Por quê?",
+  concepts: [
+    { term: "Digestão efetiva = enzimas + superfície + tempo de contato", definition: "Composição e volume da refeição alteram o esvaziamento. Gordura, fibra e alta osmolaridade reduzem a velocidade de entrega durante o exercício, mudando a tolerância." },
+    { term: "Disponibilidade energética", definition: "É a energia que sobra para as funções corporais após o gasto do exercício, relativa à massa livre de gordura. Cronicamente baixa, pode alterar eixos endócrinos, osso, imunidade e desempenho." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Motilidade e sistema nervoso entérico", detail: "Fluxo luminal = propulsão menos resistência segmentar. Exercício leve pode favorecer o trânsito, enquanto alta intensidade e estresse podem retardar o esvaziamento ou aumentar a urgência." },
+      { label: "Secreções e digestão química", detail: "Saliva, ácido gástrico, enzimas pancreáticas e bile preparam os nutrientes. A bile não é enzima e não 'quebra' gordura: ela dispersa e permite a formação de micelas." },
+      { label: "Absorção e transporte epitelial", detail: "Fluxo absorvido = área × permeabilidade × gradiente. A absorção não é ilimitada; transportadores, esvaziamento e perfusão podem limitar. Treinar a estratégia de ingestão aumenta a tolerância a carboidratos no endurance." },
+      { label: "Barreira intestinal, microbiota e imunidade", detail: "Barreira = integridade epitelial + muco + imunidade + perfusão. Calor, hipoperfusão e exercício prolongado podem aumentar transitoriamente a permeabilidade; uma única análise de microbiota não define saúde." },
+      { label: "Fígado e integração metabólica", detail: "Produção hepática de glicose = glicogenólise + gliconeogênese. Durante o exercício, o fígado sustenta a glicemia conforme duração e intensidade. Enzimas hepáticas elevadas após treino podem incluir contribuição muscular." },
+      { label: "Pâncreas, balanço energético e exercício", detail: "Sinais como GLP-1 e GIP antecipam a resposta pós-prandial; saciedade depende de distensão, nutrientes, hormônios e cérebro. Nenhum hormônio isolado controla saciedade e gasto." },
+    ],
+  },
+  timeline: {
+    title: "Da resposta aguda à adaptação",
+    items: [
+      { time: "Pré-exercício", title: "Preparo", detail: "Esvaziamento e distribuição do conteúdo alimentar." },
+      { time: "Durante", title: "Redistribuição", detail: "Redução do fluxo esplâncnico em alta intensidade e absorção de água e substratos." },
+      { time: "Pós", title: "Processamento", detail: "Reposição, resposta incretínica e processamento hepático." },
+      { time: "Treinamento", title: "Tolerância", detail: "Maior tolerância gastrointestinal e melhor flexibilidade metabólica." },
+    ],
+  },
+  apply: "Ajuste a estratégia nutricional ao objetivo, ao horário e à tolerância; treine a ingestão em provas longas em vez de improvisar no dia. Responder à abertura: um gel muito concentrado com pouca água eleva a osmolaridade luminal, atrasa o esvaziamento e supera a capacidade de transporte, gerando os sintomas; diluir e treinar a estratégia ajuda.",
+  special: [
+    "Sintomas gastrointestinais têm escala e timing que importam; não tratar sintomas persistentes como simples 'falta de adaptação'.",
+    "Progressão de volume, hidratação e prática nutricional reduz o risco gastrointestinal em provas longas.",
+    "Disponibilidade energética cronicamente baixa afeta eixos endócrinos, osso e desempenho, mesmo com peso estável.",
+  ],
+  mistake: {
+    mistake: "Dizer que a bile 'quebra' a gordura, ou tratar sintomas gastrointestinais persistentes no exercício como só 'falta de adaptação'.",
+    instead: "A bile dispersa a gordura e forma micelas, sem ser enzima. E sintomas persistentes pedem revisão de estratégia, hidratação e, quando indicado, avaliação.",
+  },
+  professionalCase: {
+    prompt: "Um corredor tem náusea e diarreia sempre que usa géis concentrados sem água em provas longas. Qual conduta é mais coerente?",
+    choices: [
+      { id: "c1", label: "Treinar a estratégia de ingestão, diluir o carboidrato com água e progredir a dose ao longo das semanas, monitorando sintomas.", tone: "recomendada", feedback: "Coerente. Osmolaridade, esvaziamento e capacidade de transporte explicam o quadro; a estratégia é treinável." },
+      { id: "c2", label: "Manter o gel concentrado sem água e 'aguentar' os sintomas.", tone: "cautela", feedback: "Ignorar a osmolaridade luminal tende a manter náusea e diarreia; diluir e treinar a ingestão ajuda." },
+      { id: "c3", label: "Cortar todo carboidrato durante a prova para evitar sintomas.", tone: "aceitavel", feedback: "Reduzir ajuda a curto prazo, mas em provas longas o carboidrato tem papel; treine a tolerância em vez de eliminar." },
+    ],
+  },
+  quiz: [
+    q("q1", "verdadeiro-falso", "A bile é uma enzima que quebra quimicamente a gordura.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "A bile não é enzima: ela emulsifica a gordura e permite a formação de micelas para a absorção."),
+    q("q2", "conduta", "Sintomas gastrointestinais recorrentes com géis concentrados em provas longas sugerem:", [
+      { id: "a", label: "Excesso de osmolaridade luminal e limite de transporte; treinar e diluir a estratégia." },
+      { id: "b", label: "Que a pessoa nunca deve ingerir carboidrato em exercício." },
+    ], "a", "A absorção não é ilimitada; a estratégia de ingestão é treinável e a diluição reduz sintomas."),
+  ],
+  uncertainty: "Glicemia não descreve toda a absorção, e enzimas hepáticas podem refletir contribuição muscular após o treino. Disponibilidade energética exige estimativas cuidadosas; sintomas persistentes pedem avaliação.",
+  related: [
+    { title: "Vias energéticas", href: `/aprender/conteudos/${DISC}--vias-energeticas`, type: "mecanismo" },
+    { title: "Sistema endócrino", href: `/aprender/conteudos/${DISC}--mapa-sistema-endocrino`, type: "mecanismo" },
+    { title: "Sistema esquelético e tecido conjuntivo", href: `/aprender/conteudos/${DISC}--mapa-sistema-esqueletico`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-barrett-gi-2014", "ref-vander-2023", "ref-kenney-2024"],
+  applyRx: "Trate a estratégia nutricional como algo treinável: ajuste composição, volume e concentração ao objetivo e à tolerância, e leve baixa disponibilidade energética a sério mesmo com peso estável.",
+});
+
+const capSistemaEsqueletico = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-esqueletico`, moduleSlug: "sistema-esqueletico",
+  slug: `${DISC}--mapa-sistema-esqueletico`, title: "Osso, cartilagem e tendão: carga, remodelamento e adaptação",
+  subtitle: "Capítulo 09 do manual", description: "Osso, cartilagem, tendão, ligamento e fáscia formam um sistema mecânico vivo. As células sentem a carga e ajustam síntese e degradação, com tempos de adaptação diferentes por tecido.",
+  level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["osso", "tendão", "mecanotransdução", "progressão de carga"],
+  hero: "Osso, tendão e cartilagem não são estruturas inertes: são tecidos vivos que leem magnitude, taxa, direção e frequência da carga e se remodelam. E cada um adapta em um tempo diferente do músculo.",
+  question: "Uma pessoa ganha força muscular rápido, mas passa a sentir dor no tendão ao aumentar volume e velocidade de corrida. Por quê?",
+  concepts: [
+    { term: "Adaptação específica ao tecido limitante", definition: "A capacidade muscular pode aumentar antes da tolerância de tendão, cartilagem ou osso. Músculo adapta em dias a semanas; tendão, cartilagem e osso exigem progressões e tempos maiores." },
+    { term: "Mecanotransdução", definition: "Integrinas, canais mecanossensíveis e citoesqueleto convertem deformação em sinalização. Adaptação ≈ estímulo específico menos custo de recuperação; estímulos muito baixos não passam do limiar, e excesso sem recuperação aumenta dano." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Estrutura óssea e propriedades mecânicas", detail: "Osso cortical dá rigidez; trabecular distribui cargas. Geometria e distribuição do material importam tanto quanto a densidade: densidade mineral isolada não descreve toda a resistência do osso." },
+      { label: "Remodelamento, cálcio e hormônios", detail: "Balanço ósseo = formação menos reabsorção. O corpo prioriza o cálcio sérico, então alterações ósseas ocorrem sem grande mudança no sangue. Baixa disponibilidade energética e alterações menstruais reduzem a formação óssea." },
+      { label: "Articulações, cartilagem e líquido sinovial", detail: "A cartilagem é avascular; compressão e movimento contribuem para a nutrição. 'Desgaste' descreve mal um tecido vivo com capacidade de adaptação e reparo limitado; carga moderada e movimento são necessários." },
+      { label: "Tendões e transmissão de energia", detail: "Rigidez = Δforça/Δcomprimento. Complacência permite armazenar energia; a resposta depende de tensão, taxa e tempo. Isometrias, excêntricos e cargas pesadas progressivas são úteis, respeitando dor e recuperação." },
+      { label: "Ligamentos, fáscia e estabilidade", detail: "Estabilidade = estrutura + controle + contexto. Ligamentos limitam extremos e informam; a estabilidade não se atribui a um único ligamento nem à 'fáscia presa'. Treino evolui de controle previsível para perturbações específicas." },
+      { label: "Mecanotransdução e adaptação ao treinamento", detail: "Magnitude, taxa, duração, frequência e recuperação formam a assinatura mecânica. A sinalização ocorre com deformação fisiológica, sem exigir microlesão relevante; progrida considerando o tecido limitante." },
+    ],
+  },
+  timeline: {
+    title: "Da carga única à adaptação",
+    items: [
+      { time: "Carga única", title: "Sinalização", detail: "Deformação, movimento de fluido e sinalização celular." },
+      { time: "Horas", title: "Matriz", detail: "Mudança de síntese e degradação da matriz." },
+      { time: "Semanas", title: "Rigidez", detail: "Ajustes de rigidez, conteúdo mineral e organização." },
+      { time: "Meses", title: "Remodelamento", detail: "Remodelamento estrutural e maior tolerância específica." },
+    ],
+  },
+  apply: "Progrida a carga considerando o tecido mais lento, não só a força muscular: combine amplitude, velocidade, volume e tolerância, com progressão gradual. Responder à abertura: a força muscular subiu mais rápido que a tolerância do tendão; a dor sinaliza que a assinatura mecânica (volume e velocidade) avançou além da capacidade atual do tendão, que adapta mais devagar.",
+  special: [
+    "Impacto, tração muscular e variedade de direções oferecem estímulos osteogênicos distintos de exercícios sem carga.",
+    "Ausência de dor em uma sessão não prova que o tecido tolerou toda a carga acumulada na semana.",
+    "Dor persistente, derrame articular ou sinais de fratura por estresse mudam a decisão e podem exigir encaminhamento.",
+  ],
+  mistake: {
+    mistake: "Progredir volume e velocidade só pela força muscular, ou tratar a dor tendínea como simples 'fraqueza' a ser vencida com mais carga.",
+    instead: "Respeite o tecido limitante: tendão e osso adaptam mais devagar. Ajuste a assinatura mecânica (volume, taxa, impacto) e a recuperação, sem tratar dor tendínea como fraqueza.",
+  },
+  professionalCase: {
+    prompt: "Um aluno que ganhou força rápido aumentou muito o volume de corrida e agora tem dor no tendão de Aquiles. Ele quer 'fortalecer mais' para resolver. Qual conduta é mais coerente?",
+    choices: [
+      { id: "c1", label: "Ajustar a assinatura mecânica (reduzir volume e velocidade), introduzir carga progressiva ao tendão respeitando dor e recuperação, e monitorar.", tone: "recomendada", feedback: "Coerente. O tendão adapta mais devagar; progressão específica e recuperação orientam o retorno." },
+      { id: "c2", label: "Aumentar ainda mais a carga e o volume para 'fortalecer o tendão rápido'.", tone: "cautela", feedback: "Acelerar sem respeitar o tempo de adaptação do tendão tende a agravar a dor." },
+      { id: "c3", label: "Parar completamente qualquer atividade por tempo indefinido.", tone: "aceitavel", feedback: "Repouso total costuma ser desnecessário; carga progressiva controlada favorece a adaptação do tendão." },
+    ],
+  },
+  quiz: [
+    q("q1", "verdadeiro-falso", "Densidade mineral óssea isolada descreve toda a resistência do osso.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Geometria e distribuição do material importam tanto quanto a densidade; a resistência não se resume à DMO."),
+    q("q2", "conduta", "Ao ganhar força muscular muito mais rápido que a tolerância do tendão, o mais prudente é:", [
+      { id: "a", label: "Progredir a carga respeitando o tecido mais lento, ajustando volume, velocidade e recuperação." },
+      { id: "b", label: "Progredir só pela força muscular, ignorando o tendão." },
+    ], "a", "Tendão, cartilagem e osso adaptam mais devagar; a progressão deve considerar o tecido limitante."),
+  ],
+  uncertainty: "DXA não mede toda a geometria e qualidade; ultrassom depende de operador; dor é experiência e sinal de tolerância, não medida direta de dano. Fraturas por estresse e derrames pedem avaliação.",
+  related: [
+    { title: "Sistema muscular", href: `/aprender/conteudos/${DISC}--mapa-sistema-muscular`, type: "mecanismo" },
+    { title: "Relação força-comprimento", href: `/aprender/conteudos/${DISC}--relacao-forca`, type: "mecanismo" },
+    { title: "Sistema reprodutor", href: `/aprender/conteudos/${DISC}--mapa-sistema-reprodutor`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-boron-2016", "ref-costanzo-2026", "ref-vander-2023"],
+  applyRx: "Progrida a carga pensando no tecido mais lento (tendão, cartilagem, osso), varie a assinatura mecânica e trate dor persistente como sinal de ajuste, não de mais carga.",
+});
+
+const capSistemaReprodutor = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-reprodutor`, moduleSlug: "sistema-reprodutor",
+  slug: `${DISC}--mapa-sistema-reprodutor`, title: "Sistema reprodutor: eixos, ciclo, gestação e energia",
+  subtitle: "Capítulo 10 do manual", description: "A fisiologia reprodutiva integra hipotálamo, hipófise, gônadas e tecidos-alvo. Exercício geralmente beneficia a saúde reprodutiva, mas carga alta com baixa disponibilidade energética pode suprimir o eixo.",
+  level: "avancado", minutes: 12, type: "mecanismo", kicker: K, tags: ["eixo gonadal", "ciclo menstrual", "gestação", "disponibilidade energética"],
+  hero: "Pulsos de GnRH, feedback dos hormônios sexuais e estado energético regulam o eixo reprodutivo. Entender isso ajuda a apoiar a prática com segurança em diferentes fases da vida.",
+  question: "Uma atleta aumenta o volume de treino, mantém o peso estável, mas passa a ter ciclos irregulares, piora do sono e uma fratura por estresse. O que conecta esses achados?",
+  concepts: [
+    { term: "Disponibilidade energética (EA)", definition: "EA = (ingestão − gasto do exercício) / massa livre de gordura. Quando a energia restante é insuficiente, o corpo reduz sinais como leptina, T3 e pulsos de GnRH, com consequências ósseas e metabólicas." },
+    { term: "Uma coleta hormonal é uma fotografia", definition: "Hormônios sexuais variam ao longo do ciclo e do dia; uma única coleta pode ser insuficiente. Uma medida pós-treino não explica diretamente o ganho muscular de longo prazo." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Eixo hipotálamo-hipófise-gônadas", detail: "Saída gonadal = drive pulsátil menos feedback. GnRH pulsátil controla LH e FSH; a frequência e a amplitude dos pulsos mudam com energia, sono, estresse e idade. Energia disponível e recuperação preservam a função." },
+      { label: "Sistema reprodutor masculino", detail: "LH estimula testosterona; FSH e testosterona sustentam a espermatogênese. A testosterona circula ligada a proteínas, com pequena fração livre; uma medida hormonal pós-treino não explica o ganho muscular de longo prazo." },
+      { label: "Ciclo ovariano e menstrual", detail: "Fase folicular com estradiol crescente leva ao pico de LH e à ovulação; o corpo lúteo produz progesterona na fase lútea. O desempenho médio varia pouco entre fases, mas sintomas individuais podem justificar ajustes." },
+      { label: "Gestação e exercício", detail: "A gestação aumenta volume plasmático, débito, ventilação e demanda energética, e muda o centro de massa. Sem contraindicações, o exercício adaptado pode ser benéfico; sinais de alerta e a orientação obstétrica têm prioridade." },
+      { label: "Menopausa, envelhecimento e composição corporal", detail: "A queda de estradiol altera termorregulação e acelera a perda óssea; com a idade, massa muscular e aptidão tendem a cair. Treino de força e endurance preserva função: envelhecer não elimina a capacidade de adaptação." },
+      { label: "Disponibilidade energética e função reprodutiva", detail: "Déficit energético persistente suprime eixos e pode coexistir com alterações menstruais, pior saúde óssea e desempenho. Ocorre em qualquer sexo, e peso estável não exclui baixa disponibilidade energética." },
+    ],
+  },
+  timeline: {
+    title: "Da sessão ao ciclo de vida",
+    items: [
+      { time: "Sessão", title: "Transitório", detail: "Mudanças passageiras de catecolaminas e hormônios sexuais." },
+      { time: "Dias", title: "Variação normal", detail: "Variação ao longo do ciclo e da recuperação." },
+      { time: "Meses", title: "Adaptação do eixo", detail: "Adaptação do eixo à energia, ao sono e à carga." },
+      { time: "Ciclo de vida", title: "Fases", detail: "Puberdade, gestação, menopausa e envelhecimento." },
+    ],
+  },
+  apply: "Trate energia, sono e recuperação como determinantes da saúde reprodutiva, não detalhes. Ajuste modalidade, impacto, posição e intensidade ao trimestre na gestação, com orientação obstétrica. Responder à abertura: os achados conectam-se por baixa disponibilidade energética, que suprime o eixo gonadal e prejudica o osso; peso estável não exclui o problema, e a solução revisa ingestão, carga e recuperação, com encaminhamento.",
+  special: [
+    "Na gestação sem contraindicações, exercício adaptado pode ser benéfico; FC-alvo rígida não substitui percepção, sintomas e orientação.",
+    "No envelhecimento, força, impacto apropriado, proteína e sono são pilares de saúde funcional.",
+    "Baixa disponibilidade energética pede revisar ingestão, carga e recuperação, e encaminhamento quando necessário, não apenas 'treinar menos' sem avaliação.",
+  ],
+  mistake: {
+    mistake: "Concluir que, com peso estável, não há baixa disponibilidade energética, ou creditar hipertrofia a picos de testosterona pós-treino.",
+    instead: "Peso estável não exclui déficit energético; ciclos, sono, osso e desempenho contam. E a hipertrofia acompanha tensão mecânica e recuperação, não picos hormonais agudos.",
+  },
+  professionalCase: {
+    prompt: "Uma corredora com peso estável relata ciclos irregulares, sono pior e uma fratura por estresse após aumentar muito o volume. Qual conduta é mais coerente?",
+    choices: [
+      { id: "c1", label: "Considerar baixa disponibilidade energética, revisar ingestão, carga e recuperação e encaminhar para avaliação de saúde e nutrição.", tone: "recomendada", feedback: "Coerente. Os achados conectam-se por déficit energético que suprime o eixo e afeta o osso; peso estável não exclui isso." },
+      { id: "c2", label: "Atribuir tudo ao acaso e manter o volume alto.", tone: "cautela", feedback: "Ciclos irregulares com fratura por estresse são sinais de alerta; manter a carga tende a agravar." },
+      { id: "c3", label: "Apenas mandar 'treinar menos' sem avaliar ingestão nem encaminhar.", tone: "aceitavel", feedback: "Reduzir carga ajuda, mas sem revisar energia e sem avaliação de saúde a causa pode persistir." },
+    ],
+  },
+  quiz: [
+    q("q1", "verdadeiro-falso", "Peso corporal estável exclui a possibilidade de baixa disponibilidade energética.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "A disponibilidade energética depende da energia que sobra após o exercício; pode estar baixa mesmo com peso estável."),
+    q("q2", "conduta", "Na gestação sem contraindicações, a orientação de intensidade deve:", [
+      { id: "a", label: "Usar percepção, sintomas e orientação obstétrica, não uma FC-alvo rígida." },
+      { id: "b", label: "Seguir uma FC-alvo fixa, ignorando sintomas." },
+    ], "a", "FC-alvo rígida não substitui percepção, sintomas e acompanhamento pré-natal."),
+  ],
+  uncertainty: "Calendário menstrual não confirma ovulação sozinho, e hormônios dependem de fase e horário. Diagnóstico, gestação e conduta clínica são do profissional de saúde; o papel aqui é reconhecer mecanismos e sinais.",
+  related: [
+    { title: "Sistema endócrino", href: `/aprender/conteudos/${DISC}--mapa-sistema-endocrino`, type: "mecanismo" },
+    { title: "Osso, cartilagem e tendão", href: `/aprender/conteudos/${DISC}--mapa-sistema-esqueletico`, type: "mecanismo" },
+    { title: "Sistema digestório e hepatobiliar", href: `/aprender/conteudos/${DISC}--mapa-sistema-digestorio`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-yen-jaffe-repro-2019", "ref-acog-gestacao-2020", "ref-melmed-williams-2024"],
+  applyRx: "Trate energia, sono e recuperação como pilares reprodutivos; na gestação, ajuste ao trimestre com orientação obstétrica, e leve a sério baixa disponibilidade energética mesmo com peso estável.",
+});
+
+const capSistemaTegumentar = deepLesson({
+  disciplineSlug: DISC, moduleId: `m-${DISC}-sistema-tegumentar`, moduleSlug: "sistema-tegumentar",
+  slug: `${DISC}--mapa-sistema-tegumentar`, title: "Pele e termorregulação: calor, suor, hidratação e aclimatação",
+  subtitle: "Capítulo 11 do manual", description: "A pele é barreira, órgão sensorial, imune, vascular e termorregulatório. No exercício, o calor precisa ir do núcleo à pele e ao ambiente; a aclimatação amplia a tolerância, mas não elimina riscos.",
+  level: "intermediario", minutes: 13, type: "mecanismo", kicker: K, tags: ["termorregulação", "suor", "hidratação", "aclimatação"],
+  hero: "Toda a energia que não vira trabalho aparece como calor. Transferir esse calor do núcleo para a pele e para o ambiente decide a segurança e o desempenho, e depende de temperatura, umidade, vento, roupa e água.",
+  question: "Numa sessão quente e úmida, o aluno tem FC crescente, pele muito quente, piora de coordenação e confusão. O que priorizar?",
+  concepts: [
+    { term: "Suor produzido não é suor evaporado", definition: "Só a evaporação resfria de fato; gotas que escorrem pouco resfriam. Em ambiente quente e úmido, os gradientes secos diminuem e a evaporação vira a via principal, ficando mais difícil dissipar calor." },
+    { term: "% perda de massa", definition: "% perda de massa = (pré − pós + ingestão − urina) / pré × 100. É uma estimativa de balanço hídrico útil, mas não deve virar meta rígida de repor 100% durante toda a atividade." },
+  ],
+  mechanism: {
+    title: "Os seis núcleos mecanísticos",
+    steps: [
+      { label: "Pele como barreira e órgão fisiológico", detail: "Epiderme reduz perda de água; derme tem vasos, nervos e glândulas. A pele participa de circulação, imunidade e percepção; atrito, umidade e equipamento podem causar lesões que alteram tolerância e técnica." },
+      { label: "Balanço térmico e produção de calor", detail: "Armazenamento de calor = produção menos trabalho menos perdas. A troca ocorre por radiação, convecção, condução e evaporação; intensidade, roupa e ambiente são parte da dose de exercício." },
+      { label: "Fluxo sanguíneo cutâneo e controle neural", detail: "O hipotálamo aumenta a vasodilatação cutânea para transferir calor, mas isso compete com o retorno venoso e a pressão, sobretudo com desidratação. A aclimatação melhora a distribuição cardiovascular." },
+      { label: "Sudorese, sódio e individualidade", detail: "Taxa de suor alta reduz o tempo de reabsorção e eleva o sal perdido. Genética, aclimatação, intensidade e ambiente geram grande variabilidade; manchas de sal não quantificam com precisão a reposição." },
+      { label: "Hidratação, osmolaridade e desempenho", detail: "A perda de água reduz o volume plasmático e aumenta a osmolaridade, estimulando sede e ADH. Excesso de água pode diluir o sódio; a reposição considera água, sódio e carboidrato conforme a tarefa." },
+      { label: "Aclimatação, frio e ambientes extremos", detail: "Risco ambiental = estresse externo × carga interna / capacidade. A aclimatação ao calor expande o plasma e antecipa o suor, mas regride sem exposição e não torna ninguém imune a ambientes extremos." },
+    ],
+  },
+  timeline: {
+    title: "Da resposta aguda à aclimatação",
+    items: [
+      { time: "Minutos", title: "Início do suor", detail: "Vasodilatação cutânea e começo da sudorese." },
+      { time: "Prolongado", title: "Deriva térmica", detail: "Perda de água e sódio, deriva cardiovascular e aumento de temperatura." },
+      { time: "Recuperação", title: "Restauração", detail: "Reposição de volume, resfriamento e restauração eletrolítica." },
+      { time: "Aclimatação", title: "Adaptação", detail: "Maior volume plasmático, suor mais eficiente e menor custo cardiovascular." },
+    ],
+  },
+  apply: "Trate o ambiente térmico como parte da dose: reduza a carga inicial em calor, aumente a exposição gradualmente e monitore sinais. Guie a hidratação por experiência, sede, taxa de suor e duração. Responder à abertura: pele muito quente com piora de coordenação e confusão sugere falha de dissipação de calor; a prioridade é interromper, resfriar e buscar atendimento.",
+  special: [
+    "Pesagem antes e depois estima o balanço hídrico, mas não deve virar meta rígida de repor 100% durante toda a atividade.",
+    "Confusão, náusea e sintomas inespecíficos em ambiente quente exigem interrupção e atendimento; desidratação e hiponatremia podem coexistir.",
+    "A aclimatação reduz o risco, mas não elimina o perigo em ambientes extremos.",
+  ],
+  mistake: {
+    mistake: "Tratar suor visível como sinônimo de resfriamento, ou confiar que a aclimatação torna o aluno imune ao calor.",
+    instead: "Só a evaporação resfria; gotas que escorrem pouco ajudam. E a aclimatação reduz, mas não elimina o risco: mantenha monitoramento individual em ambientes extremos.",
+  },
+  professionalCase: {
+    prompt: "Em treino externo quente e úmido, um aluno fica com pele muito quente, confuso e com piora de coordenação. Qual conduta é prioritária?",
+    choices: [
+      { id: "c1", label: "Interromper imediatamente, iniciar resfriamento e buscar atendimento; confusão em ambiente quente é sinal de alerta.", tone: "recomendada", feedback: "Coerente. O quadro sugere falha de dissipação de calor; a prioridade é interromper, resfriar e avaliar." },
+      { id: "c2", label: "Reduzir só um pouco a intensidade e seguir o treino.", tone: "cautela", feedback: "Com confusão e pele muito quente, continuar aumenta o risco; a conduta é interromper e resfriar." },
+      { id: "c3", label: "Oferecer bastante água pura rapidamente e continuar.", tone: "cautela", feedback: "Água pura em excesso pode diluir o sódio; o essencial é interromper, resfriar e buscar atendimento." },
+    ],
+  },
+  quiz: [
+    q("q1", "verdadeiro-falso", "Suar bastante, com gotas escorrendo, é sinal de resfriamento eficiente.", [
+      { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
+    ], "f", "Só a evaporação resfria; suor que escorre pouco contribui para dissipar calor."),
+    q("q2", "conduta", "Pele muito quente com confusão e piora de coordenação em ambiente quente pede:", [
+      { id: "a", label: "Interrupção, resfriamento e atendimento." },
+      { id: "b", label: "Apenas reduzir a intensidade e continuar." },
+    ], "a", "Confusão em ambiente quente é sinal de alerta e exige interromper, resfriar e avaliar."),
+  ],
+  uncertainty: "WBGT e temperatura têm limites de método e não substituem o monitoramento individual. Variação de massa inclui ingestão, urina e substratos; a conduta em doença pelo calor é de urgência.",
+  related: [
+    { title: "Rins: filtração e equilíbrio", href: `/aprender/conteudos/${DISC}--mapa-sistema-renal`, type: "mecanismo" },
+    { title: "Sistema cardiovascular", href: `/aprender/conteudos/${DISC}--mapa-sistema-cardiovascular`, type: "mecanismo" },
+    { title: "Sangue, linfa e imunidade", href: `/aprender/conteudos/${DISC}--mapa-sistema-hematologico`, type: "mecanismo" },
+  ],
+  refs: [...REF_BASE, "ref-nas-dri-agua-2005", "ref-kenney-2024", "ref-costanzo-2026"],
+  applyRx: "Trate calor, umidade, roupa e água como parte da dose; aclimate de forma gradual, guie a hidratação pela sede e taxa de suor, e interrompa diante de sinais de doença pelo calor.",
+});
+
+/**
+ * Módulos na ordem dos capítulos do manual (Ribeiro, 2026): um módulo por
+ * sistema, aberto pela aula-capítulo (visão completa, 6 núcleos, caso de
+ * integração) e seguido pelos aprofundamentos já autorados.
+ */
 export const fisiologiaHumanaModules: Module[] = [
   deepModule({ id: `m-${DISC}-fundamentos`, disciplineId: DISC_ID, slug: "fundamentos", title: "Fundamentos da regulação", objective: "Explicar homeostase, transporte de membrana e bioeletricidade como base de todos os sistemas.", order: 1, level: "fundamental", lessons: [homeostaseControle, transporteMembrana, bioeletricidade], applications: ["Ler variáveis fisiológicas como faixas reguladas e entender excitabilidade"] }),
-  deepModule({ id: `m-${DISC}-controle-endocrino`, disciplineId: DISC_ID, slug: "controle-endocrino", title: "Controle endócrino", objective: "Interpretar o sistema endócrino como rede de eixos e feedback.", order: 2, level: "intermediario", prerequisites: [`m-${DISC}-fundamentos`], lessons: [endocrino], applications: ["Evitar explicações de um hormônio só e encaminhar conduta hormonal"] }),
-  deepModule({ id: `m-${DISC}-sistema-cardiovascular`, disciplineId: DISC_ID, slug: "sistema-cardiovascular", title: "Sistema cardiovascular", objective: "Compreender débito, ciclo cardíaco e pressão no esforço.", order: 3, level: "fundamental", prerequisites: [`m-${DISC}-fundamentos`], lessons: [debito, cicloCardiaco, pressao], applications: ["Interpretar FC, pressão e válvulas e cuidados na hipertensão"] }),
-  deepModule({ id: `m-${DISC}-sistema-respiratorio`, disciplineId: DISC_ID, slug: "sistema-respiratorio", title: "Sistema respiratório", objective: "Relacionar ventilação, troca gasosa e demanda de oxigênio.", order: 4, level: "fundamental", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [ventilacao, transporteGases, consumo], applications: ["Guiar intensidade pela fala e explicar a entrega de O2"] }),
-  deepModule({ id: `m-${DISC}-tecidos-movimento`, disciplineId: DISC_ID, slug: "tecidos-do-movimento", title: "Tecidos do movimento", objective: "Explicar como a força emerge do sarcômero, do comprimento e da ativação neural.", order: 5, level: "intermediario", prerequisites: [`m-${DISC}-fundamentos`], lessons: [musculo, relacaoForca], applications: ["Explicar força além do tamanho, ganhos neurais e variação ao longo da amplitude"] }),
-  deepModule({ id: `m-${DISC}-metabolismo`, disciplineId: DISC_ID, slug: "metabolismo-e-excrecao", title: "Metabolismo e excreção", objective: "Relacionar vias energéticas e função renal ao meio interno.", order: 6, level: "intermediario", prerequisites: [`m-${DISC}-sistema-respiratorio`], lessons: [viasEnergeticas, renal], applications: ["Progredir sem zonas mágicas e ligar rim à hidratação"] }),
-  deepModule({ id: `m-${DISC}-adaptacoes`, disciplineId: DISC_ID, slug: "adaptacoes", title: "Integração e adaptação", objective: "Integrar os sistemas no movimento e distinguir resposta de adaptação.", order: 7, level: "intermediario", prerequisites: [`m-${DISC}-metabolismo`], lessons: [integracao, agudaCronica, homeostase], applications: ["Ler a carga de forma integrada e progredir o estímulo"] }),
+  deepModule({ id: `m-${DISC}-sistema-nervoso`, disciplineId: DISC_ID, slug: "sistema-nervoso", title: "Sistema nervoso", objective: "Relacionar excitabilidade, comando motor, controle autonômico e fadiga central à decisão de exercício.", order: 2, level: "intermediario", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaNervoso], applications: ["Tratar técnica, atenção e ambiente como parte da dose neural"] }),
+  deepModule({ id: `m-${DISC}-tecidos-movimento`, disciplineId: DISC_ID, slug: "tecidos-do-movimento", title: "Sistema muscular", objective: "Explicar como a força emerge de arquitetura, pontes cruzadas, unidades motoras e alavancas, e como fadiga e hipertrofia se organizam.", order: 3, level: "intermediario", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaMuscular, musculo, relacaoForca], applications: ["Explicar força além do tamanho e escolher amplitude pelo pico de tensão"] }),
+  deepModule({ id: `m-${DISC}-sistema-cardiovascular`, disciplineId: DISC_ID, slug: "sistema-cardiovascular", title: "Sistema cardiovascular", objective: "Compreender ritmo, bomba, vasos, pressão e distribuição do fluxo no esforço.", order: 4, level: "fundamental", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaCardiovascular, debito, cicloCardiaco, pressao], applications: ["Interpretar FC e pressão como resposta e cuidar da hipertensão"] }),
+  deepModule({ id: `m-${DISC}-sistema-respiratorio`, disciplineId: DISC_ID, slug: "sistema-respiratorio", title: "Sistema respiratório", objective: "Relacionar mecânica ventilatória, difusão, V/Q, transporte de gases e controle da ventilação.", order: 5, level: "fundamental", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [capSistemaRespiratorio, ventilacao, transporteGases, consumo], applications: ["Guiar intensidade pela fala e explicar a entrega de O2"] }),
+  deepModule({ id: `m-${DISC}-sistema-hematologico`, disciplineId: DISC_ID, slug: "sistema-hematologico", title: "Sistema hematológico, linfático e imunológico", objective: "Separar concentração, redistribuição e mudança real de massa ao ler sangue, imunidade e edema.", order: 6, level: "intermediario", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [capSistemaHematologico], applications: ["Padronizar exames e não confundir hemoconcentração com produção"] }),
+  deepModule({ id: `m-${DISC}-sistema-renal`, disciplineId: DISC_ID, slug: "sistema-renal", title: "Sistema renal e urinário", objective: "Explicar filtração, transporte tubular, água, sódio, potássio e equilíbrio ácido-base aplicados ao exercício.", order: 7, level: "intermediario", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaRenal, renal], applications: ["Ligar rim à hidratação e à pressão e reconhecer hiponatremia"] }),
+  deepModule({ id: `m-${DISC}-controle-endocrino`, disciplineId: DISC_ID, slug: "controle-endocrino", title: "Sistema endócrino", objective: "Interpretar hormônios como rede de eixos, pulsos, ritmos e sensibilidade do tecido.", order: 8, level: "avancado", prerequisites: [`m-${DISC}-fundamentos`], lessons: [capSistemaEndocrino, endocrino], applications: ["Evitar explicações de um hormônio só e encaminhar conduta hormonal"] }),
+  deepModule({ id: `m-${DISC}-sistema-digestorio`, disciplineId: DISC_ID, slug: "sistema-digestorio", title: "Sistema digestório e hepatobiliar", objective: "Relacionar motilidade, secreção, absorção, fígado e disponibilidade energética ao exercício.", order: 9, level: "intermediario", prerequisites: [`m-${DISC}-controle-endocrino`], lessons: [capSistemaDigestorio, viasEnergeticas], applications: ["Treinar a estratégia de ingestão e progredir sem zonas mágicas"] }),
+  deepModule({ id: `m-${DISC}-sistema-esqueletico`, disciplineId: DISC_ID, slug: "sistema-esqueletico", title: "Sistema esquelético, articular e tecido conjuntivo", objective: "Aplicar mecanotransdução e tempos de adaptação de osso, cartilagem e tendão à progressão de carga.", order: 10, level: "intermediario", prerequisites: [`m-${DISC}-tecidos-movimento`], lessons: [capSistemaEsqueletico], applications: ["Progredir pelo tecido limitante, não só pela força muscular"] }),
+  deepModule({ id: `m-${DISC}-sistema-reprodutor`, disciplineId: DISC_ID, slug: "sistema-reprodutor", title: "Sistema reprodutor", objective: "Integrar eixo gonadal, ciclo, gestação, envelhecimento e disponibilidade energética à prática.", order: 11, level: "avancado", prerequisites: [`m-${DISC}-controle-endocrino`], lessons: [capSistemaReprodutor], applications: ["Reconhecer baixa disponibilidade energética e ajustar na gestação"] }),
+  deepModule({ id: `m-${DISC}-sistema-tegumentar`, disciplineId: DISC_ID, slug: "sistema-tegumentar", title: "Sistema tegumentar e termorregulação", objective: "Explicar balanço térmico, fluxo cutâneo, sudorese, hidratação e aclimatação com segurança ambiental.", order: 12, level: "intermediario", prerequisites: [`m-${DISC}-sistema-cardiovascular`], lessons: [capSistemaTegumentar], applications: ["Tratar calor e hidratação como parte da dose e reconhecer sinais de alerta"] }),
+  deepModule({ id: `m-${DISC}-adaptacoes`, disciplineId: DISC_ID, slug: "adaptacoes", title: "Integração e adaptação", objective: "Integrar os sistemas no movimento e distinguir resposta de adaptação.", order: 13, level: "intermediario", prerequisites: [`m-${DISC}-sistema-digestorio`], lessons: [integracao, agudaCronica, homeostase], applications: ["Ler a carga de forma integrada e progredir o estímulo"] }),
 ];
 
 export const fisiologiaHumanaLessons: Lesson[] = [
   homeostaseControle, transporteMembrana, bioeletricidade,
-  endocrino,
-  debito, cicloCardiaco, pressao,
-  ventilacao, transporteGases, consumo,
-  musculo, relacaoForca,
-  viasEnergeticas, renal,
+  capSistemaNervoso,
+  capSistemaMuscular, musculo, relacaoForca,
+  capSistemaCardiovascular, debito, cicloCardiaco, pressao,
+  capSistemaRespiratorio, ventilacao, transporteGases, consumo,
+  capSistemaHematologico,
+  capSistemaRenal, renal,
+  capSistemaEndocrino, endocrino,
+  capSistemaDigestorio, viasEnergeticas,
+  capSistemaEsqueletico,
+  capSistemaReprodutor,
+  capSistemaTegumentar,
   integracao, agudaCronica, homeostase,
 ];
