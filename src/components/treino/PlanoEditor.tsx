@@ -11,6 +11,8 @@ import {
   Trash2,
   AlertTriangle,
   CalendarCheck,
+  Dumbbell,
+  HeartPulse,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
@@ -399,12 +401,120 @@ function FaixaReferencia({ ctx }: { ctx: ContextoFaixa }) {
 
 /* ================================ Sessão ================================ */
 
-const CAMPOS: { chave: CampoFaixa | "intensidade"; rotulo: string }[] = [
-  { chave: "series", rotulo: "Séries" },
-  { chave: "reps", rotulo: "Repetições" },
+// Força e aeróbio se editam por variáveis diferentes. `confere` liga o aviso de fora da
+// faixa só nos campos de força que a diretriz cobre (séries, repetições, intervalo).
+type CampoBloco = {
+  chave: "series" | "reps" | "intensidade" | "intervalo" | "formato" | "duracao" | "recuperacao";
+  rotulo: string;
+  confere?: CampoFaixa;
+};
+const CAMPOS_FORCA: CampoBloco[] = [
+  { chave: "series", rotulo: "Séries", confere: "series" },
+  { chave: "reps", rotulo: "Repetições", confere: "reps" },
   { chave: "intensidade", rotulo: "Intensidade" },
-  { chave: "intervalo", rotulo: "Intervalo" },
+  { chave: "intervalo", rotulo: "Intervalo", confere: "intervalo" },
 ];
+const CAMPOS_AEROBIO: CampoBloco[] = [
+  { chave: "formato", rotulo: "Formato" },
+  { chave: "duracao", rotulo: "Duração" },
+  { chave: "intensidade", rotulo: "Intensidade" },
+  { chave: "recuperacao", rotulo: "Recuperação" },
+];
+const camposDoBloco = (b: BlocoSessao): CampoBloco[] => (b.tipo === "aerobio" ? CAMPOS_AEROBIO : CAMPOS_FORCA);
+
+/* ============================ Quadro da sessão (leitura) ============================ */
+
+/**
+ * A sessão vira um quadro glanceável: musculação e cardio em blocos separados, cada
+ * informação em sua linha. O profissional (ou o aluno) bate o olho e sabe o que fazer,
+ * sem ler linhas corridas. Força vai em tabela; cardio vai em ficha com rótulos empilhados,
+ * porque as variáveis são outras (formato, duração e intensidade, não séries e carga).
+ */
+function QuadroForca({ blocos }: { blocos: BlocoSessao[] }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="flex items-center gap-1.5 border-b border-border bg-surface-soft px-2.5 py-1.5">
+        <Dumbbell className="h-3.5 w-3.5 text-primary" aria-hidden />
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">Musculação</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr className="text-[10px] uppercase tracking-wide text-ink-3">
+              <th className="px-2.5 py-1 font-semibold">Exercício</th>
+              <th className="px-1.5 py-1 font-semibold">Séries</th>
+              <th className="px-1.5 py-1 font-semibold">Reps</th>
+              <th className="px-1.5 py-1 font-semibold">Intensidade</th>
+              <th className="px-1.5 py-1 font-semibold">Intervalo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {blocos.map((b) => (
+              <tr key={b.id} className="border-t border-border/60 align-top">
+                <td className="px-2.5 py-1.5 font-semibold text-ink">{b.nome}</td>
+                <td className="px-1.5 py-1.5 text-ink-2">{b.series}</td>
+                <td className="px-1.5 py-1.5 text-ink-2">{b.reps}</td>
+                <td className="px-1.5 py-1.5 text-ink-2">{b.intensidade}</td>
+                <td className="px-1.5 py-1.5 text-ink-2">{b.intervalo && b.intervalo !== "-" ? b.intervalo : ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function QuadroCardio({ blocos }: { blocos: BlocoSessao[] }) {
+  return (
+    <div className="overflow-hidden rounded-lg border border-border bg-surface">
+      <div className="flex items-center gap-1.5 border-b border-border bg-surface-soft px-2.5 py-1.5">
+        <HeartPulse className="h-3.5 w-3.5 text-analysis" aria-hidden />
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">Cardio</span>
+      </div>
+      <div className="divide-y divide-border/60">
+        {blocos.map((b) => {
+          const atividade = b.modalidade ? getModalidade(b.modalidade)?.nome : undefined;
+          const linhas: [string, string | undefined][] = [
+            ["Formato", b.formato],
+            ["Duração", b.duracao],
+            ["Intensidade", b.intensidade],
+            ["Recuperação", b.recuperacao && b.recuperacao !== "-" ? b.recuperacao : undefined],
+          ];
+          return (
+            <div key={b.id} className="px-2.5 py-2">
+              <p className="mb-1 text-xs font-semibold text-ink">{atividade ?? b.nome ?? "Aeróbio"}</p>
+              <dl className="space-y-0.5">
+                {linhas
+                  .filter(([, v]) => v)
+                  .map(([rot, v]) => (
+                    <div key={rot} className="flex gap-2 text-xs">
+                      <dt className="w-24 shrink-0 text-ink-3">{rot}</dt>
+                      <dd className="flex-1 font-medium text-ink-2">{v}</dd>
+                    </div>
+                  ))}
+              </dl>
+              {b.observacao && <p className="mt-1 text-[11px] leading-snug text-ink-3">{b.observacao}</p>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SessaoQuadro({ sessao }: { sessao: Sessao }) {
+  if (sessao.blocos.length === 0) return <p className="px-1 py-2 text-xs text-ink-3">Sessão sem exercícios definidos.</p>;
+  const forca = sessao.blocos.filter((b) => b.tipo !== "aerobio");
+  const cardio = sessao.blocos.filter((b) => b.tipo === "aerobio");
+  const duasColunas = forca.length > 0 && cardio.length > 0;
+  return (
+    <div className={cn("grid gap-2", duasColunas && "md:grid-cols-2")}>
+      {forca.length > 0 && <QuadroForca blocos={forca} />}
+      {cardio.length > 0 && <QuadroCardio blocos={cardio} />}
+    </div>
+  );
+}
 
 function SessaoBloco({
   sessao,
@@ -442,6 +552,25 @@ function SessaoBloco({
     });
   };
 
+  const addCardio = () => {
+    onChange({
+      ...sessao,
+      blocos: [
+        ...sessao.blocos,
+        {
+          id: nid("blk"),
+          tipo: "aerobio",
+          modalidade: "caminhada",
+          nome: "Aeróbio",
+          formato: "Contínuo",
+          duracao: "20 a 30 min",
+          intensidade: "Moderada (teste da conversa; RPE 4 a 6)",
+          recuperacao: "-",
+        },
+      ],
+    });
+  };
+
   return (
     <div className="rounded-lg bg-surface-soft p-2.5">
       <div className="mb-1.5 flex items-center gap-1.5">
@@ -463,46 +592,56 @@ function SessaoBloco({
         )}
       </div>
 
-      {sessao.blocos.length === 0 && <p className="px-1 py-2 text-xs text-ink-3">Sessão sem exercícios. Adicione abaixo.</p>}
+      {!editavel ? (
+        <SessaoQuadro sessao={sessao} />
+      ) : (
+        <>
+          {sessao.blocos.length === 0 && <p className="px-1 py-2 text-xs text-ink-3">Sessão sem exercícios. Adicione abaixo.</p>}
 
-      <ul className="space-y-1.5">
-        {sessao.blocos.map((b) => (
-          <li key={b.id}>
-            <BlocoRow
-              bloco={b}
-              ctx={ctx}
-              editavel={editavel}
-              onChange={(nb) => onChange({ ...sessao, blocos: sessao.blocos.map((x) => (x.id === b.id ? nb : x)) })}
-              onRemover={() => onChange({ ...sessao, blocos: sessao.blocos.filter((x) => x.id !== b.id) })}
-            />
-          </li>
-        ))}
-      </ul>
+          <ul className="space-y-1.5">
+            {sessao.blocos.map((b) => (
+              <li key={b.id}>
+                <BlocoRow
+                  bloco={b}
+                  ctx={ctx}
+                  onChange={(nb) => onChange({ ...sessao, blocos: sessao.blocos.map((x) => (x.id === b.id ? nb : x)) })}
+                  onRemover={() => onChange({ ...sessao, blocos: sessao.blocos.filter((x) => x.id !== b.id) })}
+                />
+              </li>
+            ))}
+          </ul>
 
-      {editavel && (
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <label className="text-xs text-ink-3" htmlFor={`add-${sessao.id}`}>
-            Adicionar exercício
-          </label>
-          <select
-            id={`add-${sessao.id}`}
-            value=""
-            onChange={(e) => {
-              addBloco(e.target.value);
-              e.target.value = "";
-            }}
-            className="input h-8 max-w-[220px] py-0 text-xs"
-          >
-            <option value="">Escolher do acervo</option>
-            {[...exercises]
-              .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
-              .map((e) => (
-                <option key={e.slug} value={e.slug}>
-                  {e.nome}
-                </option>
-              ))}
-          </select>
-        </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <label className="text-xs text-ink-3" htmlFor={`add-${sessao.id}`}>
+              Adicionar exercício
+            </label>
+            <select
+              id={`add-${sessao.id}`}
+              value=""
+              onChange={(e) => {
+                addBloco(e.target.value);
+                e.target.value = "";
+              }}
+              className="input h-8 max-w-[220px] py-0 text-xs"
+            >
+              <option value="">Escolher do acervo</option>
+              {[...exercises]
+                .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
+                .map((e) => (
+                  <option key={e.slug} value={e.slug}>
+                    {e.nome}
+                  </option>
+                ))}
+            </select>
+            <button
+              type="button"
+              onClick={addCardio}
+              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-semibold text-ink-2 hover:bg-surface"
+            >
+              <HeartPulse className="h-3.5 w-3.5 text-analysis" /> Adicionar cardio
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
@@ -513,39 +652,29 @@ function SessaoBloco({
 function BlocoRow({
   bloco,
   ctx,
-  editavel,
   onChange,
   onRemover,
 }: {
   bloco: BlocoSessao;
   ctx: ContextoFaixa;
-  editavel: boolean;
   onChange: (b: BlocoSessao) => void;
   onRemover: () => void;
 }) {
   const faixa = getFaixa(ctx.objetivo);
-  // O bloco aeróbio conta minutos, não repetições: a faixa de força não se aplica a ele.
-  const confere = bloco.tipo !== "aerobio";
-
-  if (!editavel) {
-    return (
-      <div className="flex flex-wrap items-baseline gap-x-2 text-xs text-ink-2">
-        <span className="font-semibold text-ink">{bloco.nome}</span>
-        {bloco.series && <span>{bloco.series} séries</span>}
-        {bloco.reps && <span>· {bloco.reps} reps</span>}
-        {bloco.intensidade && <span>· {bloco.intensidade}</span>}
-        {bloco.intervalo && bloco.intervalo !== "-" && <span>· intervalo {bloco.intervalo}</span>}
-      </div>
-    );
-  }
+  const aerobio = bloco.tipo === "aerobio";
 
   return (
     <div className="rounded-lg border border-border bg-surface p-2">
       <div className="mb-1.5 flex items-center gap-1.5">
+        {aerobio && (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-analysis/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-analysis">
+            <HeartPulse className="h-3 w-3" aria-hidden /> Cardio
+          </span>
+        )}
         <input
           value={bloco.nome ?? ""}
           onChange={(e) => onChange({ ...bloco, nome: e.target.value })}
-          aria-label="Nome do exercício"
+          aria-label={aerobio ? "Nome do bloco de cardio" : "Nome do exercício"}
           className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-xs font-semibold text-ink hover:border-border focus:border-primary focus:outline-none"
         />
         {bloco.exercicioSlug && (
@@ -562,9 +691,9 @@ function BlocoRow({
         </button>
       </div>
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-        {CAMPOS.map(({ chave, rotulo }) => {
-          const valor = bloco[chave] ?? "";
-          const aviso = confere && chave !== "intensidade" ? conferirFaixa(chave, valor, faixa, ctx.nivel) : null;
+        {camposDoBloco(bloco).map(({ chave, rotulo, confere }) => {
+          const valor = (bloco[chave] as string | undefined) ?? "";
+          const aviso = confere ? conferirFaixa(confere, valor, faixa, ctx.nivel) : null;
           return (
             <CampoInline
               key={chave}

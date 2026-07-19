@@ -132,16 +132,20 @@ function montarSessoes(
     const blocos: BlocoSessao[] = [];
 
     // Aeróbio entra quando o objetivo é emagrecimento (força de corpo todo + cardio).
+    // Cardio se prescreve por formato, duração e intensidade, não por séries e carga.
+    // Zona moderada e teste da conversa seguem a diretriz do ACSM (garber-2011, acsm-getp11).
     if (objetivo === "Emagrecimento") {
       blocos.push({
         id: nid("blk"),
         tipo: "aerobio",
         modalidade: "caminhada",
-        nome: "Aeróbio (contínuo ou intervalado)",
-        series: "1",
-        reps: "20 a 40 min",
-        intensidade: "guie pela conversa e percepção de esforço",
-        intervalo: "-",
+        nome: "Aeróbio",
+        formato: "Contínuo",
+        duracao: "20 a 40 min",
+        intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 4 a 6 de 10)",
+        recuperacao: "-",
+        observacao:
+          "Ajuste a intensidade pelo recurso do equipamento: FCmáx na esteira, watts na bike ou pace na corrida. Alternativa intervalada: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total.",
       });
     }
 

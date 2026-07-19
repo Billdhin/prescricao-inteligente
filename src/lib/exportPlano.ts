@@ -2,6 +2,7 @@ import type { Aluno } from "@/data/alunos";
 import type { MarcaDocumento } from "@/lib/store";
 import type { Macrociclo, Mesociclo, Microciclo, PlanoTreino, Sessao } from "@/data/periodizacao";
 import { getModelo } from "@/data/periodizacao";
+import { getModalidade } from "@/data/modalities";
 import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { bibliografia } from "@/data/referencias";
@@ -28,7 +29,7 @@ function agruparSemanas(microciclos: Microciclo[]) {
       tipo: m.tipo,
       sessoes: m.sessoes.map((s) => ({
         nome: s.nome,
-        blocos: s.blocos.map((b) => [b.nome, b.series, b.reps, b.intensidade, b.intervalo]),
+        blocos: s.blocos.map((b) => [b.nome, b.series, b.reps, b.intensidade, b.intervalo, b.formato, b.duracao, b.recuperacao]),
       })),
     });
 
@@ -44,31 +45,65 @@ function agruparSemanas(microciclos: Microciclo[]) {
 const rotuloSemanas = (semanas: number[]) =>
   semanas.length === 1 ? `Semana ${semanas[0]}` : `Semanas ${semanas[0]} a ${semanas[semanas.length - 1]}`;
 
+/**
+ * A sessão sai como quadro: musculação em tabela e cardio em ficha à parte, cada
+ * variável na sua linha. Cardio se lê por formato, duração e intensidade (percentual da
+ * FCmáx, watts ou pace), não por séries e carga, então não cabe na mesma tabela da força.
+ */
 function sessaoHtml(s: Sessao) {
-  const linhas = s.blocos
-    .map(
-      (b) => `
-      <tr>
-        <td class="ex">${esc(b.nome ?? "")}</td>
-        <td>${esc(b.series ?? "")}</td>
-        <td>${esc(b.reps ?? "")}</td>
-        <td>${esc(b.intensidade ?? "")}</td>
-        <td>${esc(b.intervalo && b.intervalo !== "-" ? b.intervalo : "")}</td>
-      </tr>`,
-    )
-    .join("");
+  const forca = s.blocos.filter((b) => b.tipo !== "aerobio");
+  const cardio = s.blocos.filter((b) => b.tipo === "aerobio");
+
+  const tabelaForca = forca.length
+    ? `<div class="quadro">
+        <p class="quadro-tit">Musculação</p>
+        <table class="blocos">
+          <thead><tr><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Intensidade</th><th>Intervalo</th></tr></thead>
+          <tbody>${forca
+            .map(
+              (b) => `
+            <tr>
+              <td class="ex">${esc(b.nome ?? "")}</td>
+              <td>${esc(b.series ?? "")}</td>
+              <td>${esc(b.reps ?? "")}</td>
+              <td>${esc(b.intensidade ?? "")}</td>
+              <td>${esc(b.intervalo && b.intervalo !== "-" ? b.intervalo : "")}</td>
+            </tr>`,
+            )
+            .join("")}</tbody>
+        </table>
+      </div>`
+    : "";
+
+  const fichaCardio = cardio.length
+    ? `<div class="quadro">
+        <p class="quadro-tit">Cardio</p>
+        ${cardio
+          .map((b) => {
+            const atividade = b.modalidade ? getModalidade(b.modalidade)?.nome : undefined;
+            const linhas: [string, string | undefined][] = [
+              ["Formato", b.formato],
+              ["Duração", b.duracao],
+              ["Intensidade", b.intensidade],
+              ["Recuperação", b.recuperacao && b.recuperacao !== "-" ? b.recuperacao : undefined],
+            ];
+            return `<div class="cardio">
+              <p class="cardio-nome">${esc(atividade ?? b.nome ?? "Aeróbio")}</p>
+              ${linhas
+                .filter(([, v]) => v)
+                .map(([rot, v]) => `<p class="cardio-linha"><span class="cardio-rot">${rot}</span> ${esc(v as string)}</p>`)
+                .join("")}
+              ${b.observacao ? `<p class="cardio-obs">${esc(b.observacao)}</p>` : ""}
+            </div>`;
+          })
+          .join("")}
+      </div>`
+    : "";
 
   return `
     <div class="sessao">
       <p class="sessao-nome">${esc(s.nome)}${s.foco ? ` <span class="foco">${esc(s.foco)}</span>` : ""}</p>
-      ${
-        s.blocos.length
-          ? `<table class="blocos">
-              <thead><tr><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Intensidade</th><th>Intervalo</th></tr></thead>
-              <tbody>${linhas}</tbody>
-            </table>`
-          : `<p class="vazio">Sessão sem exercícios definidos.</p>`
-      }
+      ${s.blocos.length ? `<div class="quadros">${tabelaForca}${fichaCardio}</div>` : `<p class="vazio">Sessão sem exercícios definidos.</p>`}
     </div>`;
 }
 
@@ -225,6 +260,17 @@ export function exportPlanoPDF({
     table.blocos th { text-align: left; color: #94a3b8; font-weight: 600; border-bottom: 1px solid #e7ecf3; padding: 3px 4px; }
     table.blocos td { padding: 3px 4px; border-bottom: 1px solid #f1f5f9; color: #475569; vertical-align: top; }
     table.blocos td.ex { color: #1e293b; font-weight: 600; }
+    .quadros { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+    .quadro { flex: 1 1 260px; min-width: 240px; border: 1px solid #e7ecf3; border-radius: 6px; overflow: hidden; }
+    .quadro-tit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #475569; background: #f6f8fb; margin: 0; padding: 4px 8px; border-bottom: 1px solid #e7ecf3; }
+    .quadro table.blocos { padding: 2px 6px 4px; }
+    .quadro table.blocos th, .quadro table.blocos td { padding: 3px 6px; }
+    .cardio { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+    .cardio:last-child { border-bottom: 0; }
+    .cardio-nome { font-size: 11px; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
+    .cardio-linha { font-size: 11px; color: #475569; margin: 1px 0; }
+    .cardio-rot { display: inline-block; min-width: 68px; color: #94a3b8; }
+    .cardio-obs { font-size: 10px; color: #94a3b8; margin: 3px 0 0; }
     .vazio { font-size: 11px; color: #94a3b8; }
     .foot { margin-top: 24px; border-top: 1px solid #e7ecf3; padding-top: 12px; font-size: 11px; color: #94a3b8; }
     ol.refs { font-size: 11px; color: #475569; padding-left: 18px; margin: 4px 0; }

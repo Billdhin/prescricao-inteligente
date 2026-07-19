@@ -19,9 +19,10 @@ import type { Nivel } from "@/data/types";
 export interface BlocoSessao {
   id: string;
   /**
-   * Que tipo de trabalho o bloco carrega. Existe porque as faixas da diretriz falam de
-   * séries e repetições de força: num bloco aeróbio, `reps` guarda minutos, e comparar
-   * "20 a 40 min" com "10 a 15 repetições" acusaria um erro que não existe.
+   * Que tipo de trabalho o bloco carrega. Força e aeróbio se prescrevem por variáveis
+   * DIFERENTES: força por séries × repetições × carga × intervalo; aeróbio por formato,
+   * duração e intensidade (percentual da FCmáx, watts ou pace). Por isso cada tipo usa o
+   * seu conjunto de campos abaixo, e não os da musculação para tudo.
    */
   tipo?: "forca" | "aerobio";
   /** slug de exercício (src/data/exercises) OU id de modalidade (src/data/modalities) */
@@ -29,11 +30,18 @@ export interface BlocoSessao {
   modalidade?: string;
   /** rótulo livre quando não vem de um exercício catalogado (ex.: "Mobilidade de quadril") */
   nome?: string;
-  /** faixas como texto ("3 a 4", "8 a 12", "60 a 75% 1RM ou RPE 7-8", "60 a 90 s") */
+  // --- Força (tipo "forca"): faixas como texto ("3 a 4", "8 a 12", "60 a 75% 1RM ou RPE 7-8", "60 a 90 s") ---
   series?: string;
   reps?: string;
   intensidade?: string;
   intervalo?: string;
+  // --- Aeróbio (tipo "aerobio"): a intensidade acima é reaproveitada (percentual da FCmáx, RPE ou zona) ---
+  /** "Contínuo" ou "Intervalado" */
+  formato?: string;
+  /** tempo total do trabalho ("20 a 40 min") */
+  duracao?: string;
+  /** recuperação entre tiros no intervalado ("2 min em ritmo leve"); "-" no contínuo */
+  recuperacao?: string;
   observacao?: string;
 }
 
