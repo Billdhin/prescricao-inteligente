@@ -1163,6 +1163,148 @@ function FigSinaisAlerta() {
   );
 }
 
+/* ==================== 27. BALANÇO TÉRMICO ========================== */
+
+function FigBalancoTermico() {
+  // núcleo → pele → ambiente; as quatro vias de troca com o ambiente.
+  const routes: { t: string; s: string; y: number; strong?: boolean }[] = [
+    { t: "Radiação", s: "calor infravermelho para o ambiente", y: 120 },
+    { t: "Convecção", s: "o ar e o vento levam o calor", y: 180 },
+    { t: "Condução", s: "contato direto com água ou superfície", y: 240 },
+    { t: "Evaporação (suor)", s: "principal via no calor e no exercício", y: 300, strong: true },
+  ];
+  return (
+    <svg viewBox="0 0 720 400" {...svgProps("Balanço térmico: o núcleo corporal produz calor, o sangue leva o calor à pele pela vasodilatação e a pele troca calor com o ambiente por radiação, convecção, condução e evaporação do suor, a via dominante no calor e no exercício")}>
+      <defs>
+        <Arrowhead id="ah-bt-red" color="#dc2626" />
+        <Arrowhead id="ah-bt-ana" color={C.analysis} />
+        <Arrowhead id="ah-bt-grey" color={C.ink3} />
+        <Arrowhead id="ah-bt-blue" color={C.primary} />
+      </defs>
+      {/* núcleo corporal (fonte de calor) */}
+      <text x={78} y={62} textAnchor="middle" fontSize={11} fill={C.ink3}>produção de calor</text>
+      <text x={78} y={77} textAnchor="middle" fontSize={10.5} fill={C.ink3}>metabolismo + exercício</text>
+      <line x1={78} y1={90} x2={78} y2={140} stroke="#dc2626" strokeWidth={2} markerEnd="url(#ah-bt-red)" />
+      <circle cx={78} cy={205} r={60} fill={C.tint} stroke="#dc2626" strokeWidth={2} />
+      <CenterText cx={78} cy={198} lines={["Núcleo", "corporal"]} color="#dc2626" size={15} />
+      <text x={78} y={228} textAnchor="middle" fontSize={11.5} fill={C.ink2}>~37 °C</text>
+      {/* sangue: vasodilatação leva calor à pele, vasoconstrição retém */}
+      <text x={220} y={210} textAnchor="middle" fontSize={10} fill={C.ink3}>pelo fluxo de sangue</text>
+      <line x1={144} y1={165} x2={296} y2={165} stroke="#dc2626" strokeWidth={3} markerEnd="url(#ah-bt-red)" />
+      <text x={220} y={157} textAnchor="middle" fontSize={11} fontWeight={700} fill="#dc2626">vasodilatação: leva calor</text>
+      <line x1={296} y1={252} x2={144} y2={252} stroke={C.analysis} strokeWidth={3} markerEnd="url(#ah-bt-ana)" />
+      <text x={220} y={268} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.analysis}>vasoconstrição: retém</text>
+      {/* pele (superfície de troca) */}
+      <text x={332} y={92} textAnchor="middle" fontSize={13} fontWeight={700} fill={C.ink}>Pele</text>
+      <rect x={300} y={100} width={64} height={220} rx={14} fill={C.soft} stroke={C.warning} strokeWidth={2} />
+      <text x={332} y={214} textAnchor="middle" fontSize={11} fill={C.ink3} transform="rotate(90 332 214)">superfície de troca</text>
+      {/* ambiente */}
+      <rect x={636} y={100} width={60} height={220} rx={14} fill="#eaf1fe" stroke={C.primary} strokeWidth={2} />
+      <text x={666} y={210} textAnchor="middle" fontSize={13} fontWeight={700} fill={C.primary} transform="rotate(90 666 210)">Ambiente</text>
+      {/* quatro vias de troca */}
+      {routes.map((r) => (
+        <g key={r.t}>
+          <line
+            x1={366}
+            y1={r.y}
+            x2={632}
+            y2={r.y}
+            stroke={r.strong ? C.primary : C.ink3}
+            strokeWidth={r.strong ? 3.5 : 2}
+            markerEnd={r.strong ? "url(#ah-bt-blue)" : "url(#ah-bt-grey)"}
+          />
+          <text x={499} y={r.y - 8} textAnchor="middle" fontSize={12} fontWeight={700} fill={r.strong ? C.primary : C.ink}>{r.t}</text>
+          <text x={499} y={r.y + 15} textAnchor="middle" fontSize={10} fontWeight={r.strong ? 600 : 400} fill={r.strong ? C.primary : C.ink3}>{r.s}</text>
+        </g>
+      ))}
+      {/* umidade e balanço */}
+      <text x={499} y={338} textAnchor="middle" fontSize={10.5} fontWeight={600} fill={C.warning}>Umidade alta reduz a evaporação: o suor pinga sem resfriar.</text>
+      <rect x={110} y={358} width={500} height={32} rx={10} fill={C.ink} />
+      <text x={360} y={378} textAnchor="middle" fontSize={12.5} fontWeight={600} fill="#fff">Equilíbrio: calor produzido = calor perdido → temperatura estável</text>
+    </svg>
+  );
+}
+
+/* ============== 28. TEMPOS DE ADAPTAÇÃO POR TECIDO ================= */
+
+function FigTemposAdaptacao() {
+  // Escala qualitativa (dias/semanas/meses), não valores exatos.
+  const x0 = 150;
+  const ticks: { t: string; x: number }[] = [
+    { t: "dias", x: 210 },
+    { t: "semanas", x: 330 },
+    { t: "meses", x: 500 },
+    { t: "muitos meses", x: 650 },
+  ];
+  const tissues: {
+    name: string;
+    sub: string;
+    xEnd: number;
+    color: string;
+    scale: string;
+    y: number;
+    cont?: number;
+    slow?: boolean;
+  }[] = [
+    { name: "Músculo", sub: "força e tamanho", xEnd: 330, color: C.primary, scale: "semanas", y: 98 },
+    { name: "Tendão", sub: "colágeno, rigidez", xEnd: 500, color: C.cta, scale: "meses", y: 152, cont: 545 },
+    { name: "Osso", sub: "densidade, remodelação", xEnd: 515, color: C.analysis, scale: "meses", y: 206, cont: 560 },
+    { name: "Cartilagem", sub: "pouco vascularizada", xEnd: 650, color: C.ink3, scale: "muito lenta", y: 260, slow: true },
+  ];
+  return (
+    <svg viewBox="0 0 720 400" {...svgProps("Tempos de adaptação ao treino por tecido: o músculo ganha força em semanas, o tendão e o osso adaptam em meses e a cartilagem é a mais lenta por ser pouco vascularizada, então subir carga rápido demais sobrecarrega o tecido mais lento")}>
+      <defs>
+        <Arrowhead id="ah-ta-cont" color={C.ink3} />
+      </defs>
+      {/* cabeçalho */}
+      <text x={x0} y={42} fontSize={12.5} fontWeight={700} fill={C.ink}>Tempo típico de adaptação ao treino</text>
+      <text x={690} y={42} textAnchor="end" fontSize={10} fill={C.ink3}>escala qualitativa, não exata</text>
+      {/* grade de tempo */}
+      {ticks.map((k) => (
+        <g key={k.t}>
+          <line x1={k.x} y1={78} x2={k.x} y2={288} stroke={C.border} strokeWidth={1} strokeDasharray="3 3" />
+          <text x={k.x} y={70} textAnchor="middle" fontSize={11} fill={C.ink3}>{k.t}</text>
+        </g>
+      ))}
+      <line x1={x0} y1={288} x2={694} y2={288} stroke={C.ink2} strokeWidth={1.2} />
+      {/* barras por tecido */}
+      {tissues.map((ti) => (
+        <g key={ti.name}>
+          <text x={138} y={ti.y - 2} textAnchor="end" fontSize={13} fontWeight={700} fill={C.ink}>{ti.name}</text>
+          <text x={138} y={ti.y + 13} textAnchor="end" fontSize={10} fill={C.ink3}>{ti.sub}</text>
+          {ti.slow ? (
+            <>
+              <rect x={x0} y={ti.y - 15} width={ti.xEnd - x0} height={30} rx={8} fill={C.soft} stroke={C.ink3} strokeWidth={1.5} strokeDasharray="6 4" />
+              <text x={x0 + 12} y={ti.y + 4} fontSize={11} fontWeight={700} fill={C.ink2}>{ti.scale}</text>
+              <text x={ti.xEnd + 8} y={ti.y + 5} fontSize={14} fontWeight={700} fill={C.ink3}>?</text>
+            </>
+          ) : (
+            <>
+              <rect x={x0} y={ti.y - 15} width={ti.xEnd - x0} height={30} rx={8} fill={ti.color} opacity={0.9} />
+              <text x={ti.xEnd - 10} y={ti.y + 4} textAnchor="end" fontSize={11} fontWeight={700} fill="#fff">{ti.scale}</text>
+              {ti.cont != null && (
+                <line x1={ti.xEnd + 2} y1={ti.y} x2={ti.cont} y2={ti.y} stroke={C.ink3} strokeWidth={2} strokeDasharray="5 4" markerEnd="url(#ah-ta-cont)" />
+              )}
+            </>
+          )}
+        </g>
+      ))}
+      {/* ênfase: a força já subiu enquanto o tecido conjuntivo ainda se adapta */}
+      <line x1={330} y1={80} x2={330} y2={286} stroke={C.primary} strokeWidth={1.5} strokeDasharray="5 4" />
+      <text x={344} y={94} fontSize={11} fontWeight={700} fill={C.primary}>a força já subiu</text>
+      <text x={344} y={108} fontSize={10} fill={C.ink3}>(neural + músculo)</text>
+      <line x1={330} y1={300} x2={688} y2={300} stroke={C.ink2} strokeWidth={1.4} />
+      <line x1={330} y1={300} x2={330} y2={306} stroke={C.ink2} strokeWidth={1.4} />
+      <line x1={688} y1={300} x2={688} y2={306} stroke={C.ink2} strokeWidth={1.4} />
+      <text x={509} y={316} textAnchor="middle" fontSize={11} fill={C.ink2}>enquanto isso, tendão, osso e cartilagem ainda se adaptam</text>
+      {/* mensagem de prescrição */}
+      <rect x={40} y={330} width={648} height={58} rx={12} fill={C.soft} stroke={C.cta} strokeWidth={1.5} />
+      <text x={58} y={354} fontSize={12.5} fontWeight={700} fill={C.ink}>A força sobe em semanas; tendão e osso adaptam em meses.</text>
+      <text x={58} y={375} fontSize={11.5} fill={C.ink2}>Subir carga rápido demais sobrecarrega o tecido lento, e aparece a dor no tendão.</text>
+    </svg>
+  );
+}
+
 /* ============================ registro ================================= */
 
 export type FigureLegendItem = { color: string; label: string };
@@ -1395,6 +1537,16 @@ export const FIGURES: Record<string, FigureDef> = {
     title: "Triagem de sinais na sessão",
     subtitle: "Seguir, ajustar e observar, ou interromper e encaminhar.",
     Comp: FigSinaisAlerta,
+  },
+  "balanco-termico": {
+    title: "Balanço térmico: do núcleo à pele ao ambiente",
+    subtitle: "A pele é o órgão que regula a perda de calor do corpo.",
+    Comp: FigBalancoTermico,
+  },
+  "tempos-adaptacao-tecido": {
+    title: "Cada tecido se adapta no seu tempo",
+    subtitle: "Músculo em semanas; tendão e osso em meses; cartilagem, a mais lenta.",
+    Comp: FigTemposAdaptacao,
   },
 };
 

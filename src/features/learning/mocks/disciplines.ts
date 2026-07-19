@@ -51,7 +51,7 @@ export const disciplines: Discipline[] = [
     caseCount: 11,
     progress: 0,
     status: "nao-iniciado",
-    reviewedAt: "2026-07-16",
+    reviewedAt: "2026-07-18",
     reviewedBy: "Prof. Dr. Filipe Moura Ribeiro",
     tags: ["sistemas", "adaptação", "homeostase", "mecanismos"],
     helpsAnswer: [

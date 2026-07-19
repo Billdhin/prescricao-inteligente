@@ -11,7 +11,7 @@ começo) · **stub** (só metadados/arquivo esqueleto).
 
 | Disciplina | slug / arquivo | Estado | Alvo de diferenciação |
 |---|---|---|---|
-| Fisiologia humana | `fisiologia-humana` | **padrão-ouro** | 11 sistemas por núcleos mecanísticos; "o que a medida informa e onde ela cala". É o teto de qualidade. |
+| Fisiologia humana | `fisiologia-humana` | **no teto (auditada 18/07/2026)** | 11 sistemas por núcleos mecanísticos; "o que a medida informa e onde ela cala". Elevada ao teto da rubrica: 0 paredes, negrito no que decide, 11 capítulos com figura. |
 | Anatomia funcional | `anatomia-funcional` | parcial | Função sobre memorização; ligar cada estrutura ao papel que muda com a posição, integrado ao mapa muscular do Lab. |
 | Bioquímica e metabolismo | `bioquimica-metabolismo` | stub | Vias energéticas como decisão de dose e recuperação, não como quadro-negro; ligar substrato à intensidade e ao tempo. |
 | Cinesiologia | `cinesiologia` | stub | Planos, eixos, alavancas e ações lidos dentro de exercícios reais do acervo, não em abstrato. |
