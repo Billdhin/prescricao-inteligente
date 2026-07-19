@@ -1474,6 +1474,20 @@ export const FIGURES: Record<string, FigureDef> = {
     title: "Sinapse química e somação",
     subtitle: "O cálcio dispara a liberação do transmissor; o alvo soma entradas excitatórias e inibitórias.",
     Comp: FigSinapseQuimica,
+    img: {
+      src: "/figuras/sinapse-quimica.webp",
+      alt: "Ilustração 3D de uma sinapse química: em azul, o terminal axônico pré-sináptico com vesículas douradas, uma delas fundindo na membrana e liberando neurotransmissor na fenda; embaixo, a membrana pós-sináptica em verde com receptores onde o neurotransmissor se liga.",
+      markers: [
+        { n: 1, x: 28, y: 20, label: "Terminal pré-sináptico" },
+        { n: 2, x: 42, y: 33, label: "Vesículas com neurotransmissor" },
+        { n: 3, x: 57, y: 48, label: "Vesícula fundindo e liberando na fenda" },
+        { n: 4, x: 50, y: 61, label: "Neurotransmissor na fenda sináptica" },
+        { n: 5, x: 33, y: 73, label: "Receptores pós-sinápticos" },
+        { n: 6, x: 79, y: 86, label: "Membrana pós-sináptica" },
+      ],
+      caption:
+        "O potencial de ação abre canais de cálcio no terminal; o cálcio dispara a fusão das vesículas e a liberação do neurotransmissor, que atravessa a fenda e liga nos receptores. A resposta do alvo é a soma de entradas excitatórias e inibitórias.",
+    },
   },
   "integracao-sensorial": {
     title: "Integração sensorial do controle postural",
