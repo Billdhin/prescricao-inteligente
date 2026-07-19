@@ -22,12 +22,12 @@ import {
   Gauge,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
-import { cn } from "@/lib/utils";
+import { cn, withBase } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
 import { referenceSourceLabel, lessonTypeMeta } from "../constants";
 import { iconByName } from "../icons";
 import { useAprender } from "../store";
-import { FIGURES } from "../figures/scientific";
+import { FIGURES, type FigureImageDef } from "../figures/scientific";
 import { siglasDaLesson } from "../siglas";
 import type { Lesson, LessonBlock, QuizQuestion } from "../types";
 
@@ -506,23 +506,67 @@ function ImageHotspots({ title, content }: { title?: string; content: { caption:
   );
 }
 
-/** Figura científica (esquema SVG original) da biblioteca de figuras do Aprender. */
+/**
+ * Prancha de imagem anatômica: render 3D (sem texto embutido) + marcadores
+ * numerados posicionados em % + legenda numerada abaixo. Mesmo padrão da camada
+ * de hotspots do mapa muscular, para rótulo exato sobre ilustração realista.
+ */
+function FigureImagePlate({ img }: { img: FigureImageDef }) {
+  const markers = img.markers ?? [];
+  return (
+    <div>
+      <div className="relative overflow-hidden rounded-xl border border-border bg-white">
+        <img src={withBase(img.src)} alt={img.alt} className="block h-auto w-full" loading="lazy" />
+        {markers.length > 0 && (
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            {markers.map((m) => (
+              <span
+                key={m.n}
+                className="absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-ink text-[11px] font-bold text-white shadow-md ring-2 ring-white"
+                style={{ left: `${m.x}%`, top: `${m.y}%` }}
+              >
+                {m.n}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      {markers.length > 0 && (
+        <ol className="mt-3 grid grid-cols-1 gap-x-5 gap-y-1.5 sm:grid-cols-2">
+          {markers.map((m) => (
+            <li key={m.n} className="flex items-start gap-2 text-sm text-ink-2">
+              <span className="mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-[10px] font-bold text-white">{m.n}</span>
+              <span>{m.label}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+/** Figura científica do Aprender: prancha de imagem anatômica ou esquema SVG original. */
 function ScientificFigureBlock({ title, figureId, caption }: { title?: string; figureId: string; caption?: string }) {
   const fig = FIGURES[figureId];
   if (!fig) {
     return <Card className="p-4 text-sm text-ink-3">Figura não encontrada ({figureId}).</Card>;
   }
-  const { Comp, title: figTitle, subtitle } = fig;
+  const { Comp, title: figTitle, subtitle, img } = fig;
+  const legenda = caption ?? img?.caption ?? "Esquema didático original. Proporções não anatômicas; prioriza a clareza do mecanismo.";
   return (
     <section>
       {title && <BlockTitle>{title}</BlockTitle>}
       <Card variant="raised" className="overflow-hidden p-4 md:p-5">
         <div className="mb-1 font-display text-base font-bold text-ink">{figTitle}</div>
         {subtitle && <p className="mb-3 text-sm text-ink-2">{subtitle}</p>}
-        <div className="rounded-xl border border-border bg-surface p-2">
-          <Comp />
-        </div>
-        <p className="mt-2 text-xs text-ink-3">{caption ?? "Esquema didático original. Proporções não anatômicas; prioriza a clareza do mecanismo."}</p>
+        {img ? (
+          <FigureImagePlate img={img} />
+        ) : (
+          <div className="rounded-xl border border-border bg-surface p-2">
+            <Comp />
+          </div>
+        )}
+        <p className="mt-2 text-xs text-ink-3">{legenda}</p>
       </Card>
     </section>
   );

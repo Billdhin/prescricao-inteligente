@@ -1167,11 +1167,30 @@ function FigSinaisAlerta() {
 
 export type FigureLegendItem = { color: string; label: string };
 
+/** Marcador numerado sobre uma figura em imagem (rótulo exato posicionado em % do quadro). */
+export type FigureMarker = { n: number; x: number; y: number; label: string };
+
+/**
+ * Figura em IMAGEM (render 3D anatômico gerado no Lovable, sem texto embutido).
+ * Os rótulos exatos ficam AQUI, sobrepostos no app como marcadores numerados +
+ * legenda, no mesmo padrão da camada de hotspots do mapa muscular. Assim a
+ * ilustração é bonita e realista, e nenhum rótulo é inventado nem embaralhado.
+ */
+export type FigureImageDef = {
+  src: string; // caminho em public/, ex.: "/figuras/unidade-motora.webp"
+  alt: string;
+  markers?: FigureMarker[];
+  caption?: string;
+};
+
 export type FigureDef = {
   title: string;
   subtitle?: string;
+  /** Esquema SVG. Mantido como fallback mesmo quando há `img`. */
   Comp: React.ComponentType;
   legend?: FigureLegendItem[];
+  /** Quando presente, a figura é renderizada como prancha de imagem anatômica. */
+  img?: FigureImageDef;
 };
 
 export const FIGURES: Record<string, FigureDef> = {
@@ -1194,11 +1213,35 @@ export const FIGURES: Record<string, FigureDef> = {
     title: "Transporte através da membrana",
     subtitle: "Seletividade e direção dependem de canais, carreadores e bombas.",
     Comp: FigTransporte,
+    img: {
+      src: "/figuras/transporte-membrana.webp",
+      alt: "Bicamada fosfolipídica em corte, com quatro mecanismos de transporte da esquerda para a direita: difusão simples pela membrana, proteína-canal, proteína carreadora e bomba.",
+      markers: [
+        { n: 1, x: 15, y: 40, label: "Difusão simples (direto pela bicamada)" },
+        { n: 2, x: 35, y: 40, label: "Proteína-canal (poro seletivo)" },
+        { n: 3, x: 56, y: 40, label: "Carreador que muda de forma (ex.: GLUT)" },
+        { n: 4, x: 80, y: 40, label: "Bomba com gasto de ATP (ex.: Na⁺/K⁺-ATPase)" },
+      ],
+      caption:
+        "A bicamada fosfolipídica é a base. Canais e carreadores movem a favor do gradiente; a bomba gasta ATP para mover contra ele.",
+    },
   },
   "unidade-motora": {
     title: "Unidade motora e graduação da força",
     subtitle: "Recrutamento (princípio do tamanho) e frequência de disparo.",
     Comp: FigUnidadeMotora,
+    img: {
+      src: "/figuras/unidade-motora.webp",
+      alt: "Um motoneurônio com corpo celular e dendritos à esquerda, o axônio que segue à direita e se ramifica em terminais, cada um tocando uma fibra muscular esquelética.",
+      markers: [
+        { n: 1, x: 12, y: 46, label: "Corpo celular do motoneurônio α" },
+        { n: 2, x: 42, y: 42, label: "Axônio" },
+        { n: 3, x: 66, y: 42, label: "Terminais axônicos (junção neuromuscular)" },
+        { n: 4, x: 88, y: 16, label: "Fibras musculares inervadas" },
+      ],
+      caption:
+        "Um motoneurônio e todas as fibras que ele inerva formam uma unidade motora. A força cresce por recrutamento e por frequência de disparo.",
+    },
   },
   "ciclo-cardiaco": {
     title: "Ciclo cardíaco: pressões",
@@ -1224,6 +1267,18 @@ export const FIGURES: Record<string, FigureDef> = {
     title: "Sarcômero e ciclo de pontes cruzadas",
     subtitle: "Cálcio libera a actina; a miosina puxa; o ATP desliga a ponte.",
     Comp: FigSarcomero,
+    img: {
+      src: "/figuras/sarcomero-pontes.webp",
+      alt: "Sarcômero em vista lateral: duas linhas Z escuras nas extremidades, filamentos finos de actina em prata partindo delas e um filamento grosso de miosina central com as cabeças projetadas para os lados.",
+      markers: [
+        { n: 1, x: 6, y: 50, label: "Linha Z (ancora os filamentos)" },
+        { n: 2, x: 24, y: 33, label: "Filamento fino de actina" },
+        { n: 3, x: 50, y: 54, label: "Filamento grosso de miosina" },
+        { n: 4, x: 64, y: 40, label: "Pontes cruzadas (cabeças de miosina)" },
+      ],
+      caption:
+        "As cabeças de miosina puxam a actina em direção ao centro. Perto das linhas Z há só actina; no meio, os dois filamentos se sobrepõem.",
+    },
   },
   "comprimento-tensao": {
     title: "Relação comprimento-tensão",
@@ -1234,16 +1289,52 @@ export const FIGURES: Record<string, FigureDef> = {
     title: "Processamento no néfron",
     subtitle: "Filtração, reabsorção, secreção e excreção ajustam o meio interno.",
     Comp: FigNefron,
+    img: {
+      src: "/figuras/nefron.webp",
+      alt: "Néfron: glomérulo dentro da cápsula de Bowman no alto à esquerda, túbulos contorcidos proximal e distal, alça de Henle em U descendo, rede de capilares peritubulares e o ducto coletor à direita.",
+      markers: [
+        { n: 1, x: 26, y: 19, label: "Glomérulo na cápsula de Bowman" },
+        { n: 2, x: 40, y: 36, label: "Túbulo contorcido proximal" },
+        { n: 3, x: 66, y: 30, label: "Túbulo contorcido distal" },
+        { n: 4, x: 52, y: 74, label: "Alça de Henle" },
+        { n: 5, x: 82, y: 42, label: "Ducto coletor" },
+      ],
+      caption:
+        "O glomérulo filtra o plasma; ao longo do túbulo o corpo reabsorve o que interessa e secreta o que sobra; o resto segue pelo ducto coletor.",
+    },
   },
   "ventilacao-troca": {
     title: "Ventilação e troca gasosa",
     subtitle: "Ventilação conduz ar; difusão troca O₂ e CO₂ com o sangue.",
     Comp: FigVentilacao,
+    img: {
+      src: "/figuras/ventilacao-troca.webp",
+      alt: "Cacho de alvéolos com um deles em corte revelando a cavidade de ar, envolvido por um capilar pulmonar onde se veem hemácias em fila.",
+      markers: [
+        { n: 1, x: 16, y: 52, label: "Alvéolos (sacos de ar)" },
+        { n: 2, x: 58, y: 40, label: "Cavidade alveolar (ar)" },
+        { n: 3, x: 44, y: 66, label: "Barreira alvéolo-capilar (parede fina)" },
+        { n: 4, x: 76, y: 74, label: "Capilar com hemácias" },
+      ],
+      caption:
+        "O oxigênio passa do ar alveolar para o sangue e o gás carbônico faz o inverso, movidos pela diferença de pressão parcial através da barreira fina.",
+    },
   },
   "eixo-endocrino": {
     title: "Eixo endócrino e feedback",
     subtitle: "Hipotálamo, hipófise e glândula-alvo com retroalimentação negativa.",
     Comp: FigEixoEndocrino,
+    img: {
+      src: "/figuras/eixo-endocrino.webp",
+      alt: "Corte sagital da base do cérebro com o hipotálamo e a hipófise pendurada pelo infundíbulo, e vasos que descem até uma glândula-alvo lobulada mais abaixo.",
+      markers: [
+        { n: 1, x: 47, y: 22, label: "Hipotálamo" },
+        { n: 2, x: 40, y: 41, label: "Hipófise (pituitária)" },
+        { n: 3, x: 48, y: 78, label: "Glândula-alvo" },
+      ],
+      caption:
+        "O hipotálamo comanda a hipófise, que estimula a glândula-alvo. O hormônio final reduz o próprio estímulo lá em cima: é o feedback negativo.",
+    },
   },
   alavancas: {
     title: "Classes de alavanca do corpo",
