@@ -579,14 +579,17 @@ function ScientificFigureBlock({ title, figureId, caption }: { title?: string; f
   );
 }
 
-function MechanismFlow({ title, steps }: { title?: string; steps: { label: string; detail: string }[] }) {
+/** Um passo do mecanismo; pode carregar a figura representativa do núcleo (`figureId`). */
+type NucleoStep = { label: string; detail: string; figureId?: string };
+
+function MechanismFlow({ title, steps }: { title?: string; steps: NucleoStep[] }) {
   // Quando os passos seguem a estrutura de núcleo do manual (descrição, sequência,
   // relação, aplicação, como medir, erro), renderiza como prancha de atlas.
   if (ehBlocoDeNucleos(steps)) return <NucleosAtlas title={title} steps={steps} />;
   return <MechanismAccordion title={title} steps={steps} />;
 }
 
-function MechanismAccordion({ title, steps }: { title?: string; steps: { label: string; detail: string }[] }) {
+function MechanismAccordion({ title, steps }: { title?: string; steps: NucleoStep[] }) {
   const [open, setOpen] = React.useState<number | null>(0);
   return (
     <section>
@@ -635,7 +638,7 @@ function AtlasCell({ icon: Icon, label, text, tone = "neutral" }: { icon: Lucide
  * tabela aplicação / como medir / erro frequente. Estrutura fiel ao manual; o
  * conteúdo é o mesmo que já existia, só reorganizado (ver features/learning/nucleos).
  */
-function NucleosAtlas({ title, steps }: { title?: string; steps: { label: string; detail: string }[] }) {
+function NucleosAtlas({ title, steps }: { title?: string; steps: NucleoStep[] }) {
   return (
     <section>
       {title && <BlockTitle>{title}</BlockTitle>}
@@ -650,6 +653,16 @@ function NucleosAtlas({ title, steps }: { title?: string; steps: { label: string
                 <h4 className="pt-0.5 font-display text-base font-bold text-ink">{s.label}</h4>
               </div>
               <p className="mt-2 text-sm leading-relaxed text-ink-2"><RichInline text={n.descricao} /></p>
+
+              {s.figureId && FIGURES[s.figureId] && (
+                <figure className="mt-3 overflow-hidden rounded-lg border border-border bg-surface p-2">
+                  {(() => {
+                    const F = FIGURES[s.figureId!];
+                    return F.img ? <FigureImagePlate img={F.img} /> : <F.Comp />;
+                  })()}
+                  <figcaption className="mt-1.5 px-1 text-[11px] text-ink-3">{FIGURES[s.figureId].title}</figcaption>
+                </figure>
+              )}
 
               <div className="mt-4">
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Sequência</div>

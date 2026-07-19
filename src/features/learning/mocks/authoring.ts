@@ -37,8 +37,12 @@ export type DeepLessonSpec = {
   concepts: { term: string; definition: string; title?: string }[];
   /** figura científica (esquema SVG da biblioteca figures/scientific) */
   figure?: { id: string; caption?: string; title?: string };
-  /** um recurso visual/explicativo principal (escolha o que melhor serve ao tema) */
-  mechanism?: { title?: string; steps: { label: string; detail: string }[] };
+  /**
+   * Um recurso visual/explicativo principal. Cada núcleo (step) pode carregar a sua
+   * própria figura (`figureId` da biblioteca figures/scientific), renderizada dentro
+   * da prancha de atlas para deixar o mecanismo mais visual.
+   */
+  mechanism?: { title?: string; steps: { label: string; detail: string; figureId?: string }[] };
   comparison?: { title?: string; leftTitle: string; rightTitle: string; leftItems: string[]; rightItems: string[]; note?: string };
   chart?: { blockTitle?: string; title: string; points: { label: string; value: number }[]; explanation: string };
   timeline?: { title?: string; items: { time: string; title: string; detail: string }[] };

@@ -49,7 +49,7 @@ mão. Campos (ordem de leitura na tela):
 | `question` | a pergunta de prescrição que a aula responde | forte recomendação |
 | `concepts[]` | 1 ou 2 conceitos-chave (termo + definição) | sim |
 | `figure` | id de uma figura da biblioteca (SVG ou webp) | quando ajuda o mecanismo |
-| `mechanism` | passos do mecanismo. **Se seguir o padrão de núcleo do manual** (descrição, `Sequência: (1)…(4)`, `Relação:`, `Aplicação ao exercício:`, `Como medir:`, `Erro frequente:`) vira prancha de atlas automática (`nucleos.ts`) | 1 recurso visual principal |
+| `mechanism` | passos do mecanismo. **Se seguir o padrão de núcleo do manual** (descrição, `Sequência: (1)…(4)`, `Relação:`, `Aplicação ao exercício:`, `Como medir:`, `Erro frequente:`) vira prancha de atlas automática (`nucleos.ts`). **Cada passo/núcleo leva a sua figura** em `figureId` (id da biblioteca), renderizada dentro da prancha; meta 100% dos núcleos com figura | 1 recurso visual principal + 1 figura por núcleo |
 | `comparison` / `chart` / `timeline` / `decisionTree` | recursos alternativos ao mechanism | escolher o que serve |
 | `apply` | aplicação à prescrição | sim |
 | `special[]` + `specialTitle` | "Medida e interpretação" ou "Em populações especiais" | quando cabe |
@@ -151,6 +151,8 @@ Uma disciplina só é "pronta" quando:
 - [ ] Toda afirmação forte tem referência real; **0 referência `a-validar`** numa disciplina
       declarada pronta; DOIs conferidos.
 - [ ] Toda figura referenciada existe (SVG registrada ou webp integrada e conferida a olho).
+- [ ] **Cada núcleo mecanístico tem a sua figura** (`figureId`); `check:nucleos` reporta a
+      cobertura e a meta é 100%.
 - [ ] `disciplines.ts` reflete as contagens reais (`moduleCount`, `lessonCount`, `caseCount`,
       `status`, `reviewedAt`, `reviewedBy`).
 - [ ] **Legibilidade no teto** (dimensão 4 da rubrica): nada de parede de texto; negrito no

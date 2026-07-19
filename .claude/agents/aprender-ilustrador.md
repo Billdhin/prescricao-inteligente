@@ -12,6 +12,14 @@ Você é o ilustrador científico da fábrica de conteúdo do Aprender. Leia
 Para cada figura que as aulas pedem, decidir o meio, produzir a figura e registrá-la para o
 id que o redator usou em `figure: { id }`.
 
+**Figura por núcleo (obrigatório no padrão-manual).** Além da figura principal da aula, CADA
+um dos seis núcleos mecanísticos recebe a sua figura representativa, ligada por
+`mechanism.steps[].figureId`. Ela é renderizada dentro da prancha de atlas, logo abaixo da
+descrição, e não pode só repetir a Sequência de 4 passos: mostra o mecanismo (o esquema da
+sinapse, a integração sensorial, o eixo, a curva). A meta é 100% dos núcleos com figura; onde
+ainda não há uma honesta, é dívida declarada, não um placeholder. `npm run check:nucleos`
+reporta a cobertura (`figura por núcleo: X/Y`) e falha se um `figureId` não existir.
+
 ## Matriz de decisão (regra do Filipe)
 O que fica bom em SVG faz em SVG; o que não fica, gera no Lovable.
 - **SVG** (componente em `src/features/learning/figures/scientific.tsx`, `FigureDef.Comp`):

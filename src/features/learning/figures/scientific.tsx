@@ -1305,6 +1305,140 @@ function FigTemposAdaptacao() {
   );
 }
 
+/* ===================== SINAPSE QUÍMICA (núcleo nervoso) ================= */
+
+function FigSinapseQuimica() {
+  return (
+    <svg viewBox="0 0 720 280" {...svgProps("Sinapse química: o potencial de ação abre canais de cálcio no terminal, o cálcio dispara a liberação do neurotransmissor na fenda, e o receptor pós-sináptico soma efeitos excitatórios e inibitórios")}>
+      <defs>
+        <Arrowhead id="ah-sinq" color={C.primary} />
+        <Arrowhead id="ah-sinq-ca" color={C.cta} />
+        <Arrowhead id="ah-sinq-nt" color={C.analysis} />
+      </defs>
+      {/* terminal pré-sináptico */}
+      <rect x={60} y={30} width={300} height={110} rx={26} fill={C.tint} stroke={C.primary} strokeWidth={2} />
+      <text x={210} y={54} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={C.primary}>Terminal pré-sináptico</text>
+      {[[150, 104], [200, 114], [250, 104]].map(([cx, cy], i) => (
+        <circle key={i} cx={cx} cy={cy} r={11} fill="none" stroke={C.analysis} strokeWidth={2} />
+      ))}
+      <text x={200} y={134} textAnchor="middle" fontSize={10} fill={C.ink3}>vesículas</text>
+      {/* PA chega */}
+      <line x1={18} y1={80} x2={56} y2={80} stroke={C.primary} strokeWidth={2.5} markerEnd="url(#ah-sinq)" />
+      <text x={18} y={70} fontSize={10.5} fill={C.ink3}>potencial de ação</text>
+      {/* canal de Ca2+ */}
+      <rect x={318} y={130} width={26} height={16} rx={4} fill={C.surface} stroke={C.cta} strokeWidth={2} />
+      <line x1={331} y1={116} x2={331} y2={158} stroke={C.cta} strokeWidth={2.5} markerEnd="url(#ah-sinq-ca)" />
+      <text x={331} y={110} textAnchor="middle" fontSize={10.5} fontWeight={700} fill={C.cta}>Ca²⁺</text>
+      {/* fenda + neurotransmissor */}
+      <text x={210} y={166} textAnchor="middle" fontSize={10} fill={C.ink3}>fenda sináptica</text>
+      {[150, 185, 220, 255].map((cx) => (
+        <circle key={cx} cx={cx} cy={176} r={3.5} fill={C.analysis} />
+      ))}
+      <line x1={200} y1={150} x2={200} y2={172} stroke={C.analysis} strokeWidth={2} markerEnd="url(#ah-sinq-nt)" />
+      {/* membrana pós-sináptica + receptores */}
+      <rect x={60} y={196} width={300} height={58} rx={16} fill={C.soft} stroke={C.success} strokeWidth={2} />
+      <text x={210} y={230} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={C.success}>Membrana pós-sináptica</text>
+      {[168, 252].map((cx) => (
+        <rect key={cx} x={cx - 8} y={188} width={16} height={14} rx={3} fill={C.surface} stroke={C.success} strokeWidth={2} />
+      ))}
+      {/* soma no alvo */}
+      <rect x={430} y={44} width={260} height={196} rx={16} fill={C.surface} stroke={C.border} strokeWidth={1.5} />
+      <text x={560} y={70} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={C.ink}>Soma no neurônio-alvo</text>
+      <line x1={452} y1={112} x2={556} y2={96} stroke={C.success} strokeWidth={3} />
+      <text x={452} y={132} fontSize={11.5} fontWeight={700} fill={C.success}>Excitatório (+)</text>
+      <line x1={452} y1={168} x2={556} y2={184} stroke="#dc2626" strokeWidth={3} />
+      <text x={452} y={158} fontSize={11.5} fontWeight={700} fill="#dc2626">Inibitório (−)</text>
+      <text x={560} y={216} textAnchor="middle" fontSize={11} fill={C.ink3}>dispara se passar do limiar</text>
+      <line x1={362} y1={222} x2={428} y2={150} stroke={C.ink3} strokeWidth={1.6} strokeDasharray="4 3" />
+    </svg>
+  );
+}
+
+/* ================= INTEGRAÇÃO SENSORIAL (núcleo nervoso) ================ */
+
+function FigIntegracaoSensorial() {
+  const inputs: [string, string, string][] = [
+    ["Visão", "referência externa", C.primary],
+    ["Vestibular", "cabeça no espaço", C.analysis],
+    ["Somatossensorial", "fusos, pele, articulação", C.success],
+  ];
+  return (
+    <svg viewBox="0 0 720 300" {...svgProps("Controle postural: visão, sistema vestibular e informação somatossensorial convergem para o sistema nervoso, que pondera as entradas e comanda o ajuste; sem visão, o peso das outras aumenta")}>
+      <defs><Arrowhead id="ah-sens" color={C.border} /><Arrowhead id="ah-sens2" color={C.cta} /></defs>
+      {inputs.map(([t, s, col], i) => {
+        const y = 40 + i * 78;
+        return (
+          <g key={t}>
+            <rect x={20} y={y} width={210} height={56} rx={12} fill={C.surface} stroke={col} strokeWidth={1.8} />
+            <circle cx={46} cy={y + 28} r={8} fill={col} />
+            <text x={66} y={y + 24} fontSize={12.5} fontWeight={700} fill={C.ink}>{t}</text>
+            <text x={66} y={y + 40} fontSize={10.5} fill={C.ink3}>{s}</text>
+            <line x1={230} y1={y + 28} x2={320} y2={150} stroke={C.border} strokeWidth={1.6} markerEnd="url(#ah-sens)" />
+          </g>
+        );
+      })}
+      <circle cx={400} cy={150} r={64} fill={C.tint} stroke={C.primary} strokeWidth={2} />
+      <CenterText cx={400} cy={142} lines={["Sistema", "nervoso"]} color={C.primary} size={14} />
+      <text x={400} y={176} textAnchor="middle" fontSize={10.5} fill={C.ink2}>funde e pondera</text>
+      <line x1={464} y1={150} x2={540} y2={150} stroke={C.cta} strokeWidth={3} markerEnd="url(#ah-sens2)" />
+      <rect x={545} y={120} width={155} height={60} rx={12} fill={C.soft} stroke={C.cta} strokeWidth={1.8} />
+      <text x={622} y={146} textAnchor="middle" fontSize={12.5} fontWeight={700} fill="var(--cta-text)">Ajuste postural</text>
+      <text x={622} y={164} textAnchor="middle" fontSize={10} fill={C.ink3}>antecipatório e reflexo</text>
+      <rect x={150} y={262} width={420} height={30} rx={10} fill={C.ink} />
+      <text x={360} y={282} textAnchor="middle" fontSize={11.5} fontWeight={600} fill="#fff">Sem visão, aumenta o peso do vestibular e do somatossensorial</text>
+    </svg>
+  );
+}
+
+/* ============== EQUILÍBRIO AUTONÔMICO NO EXERCÍCIO (nervoso) ============ */
+
+function FigEquilibrioAutonomico() {
+  const fases: [string, string, string, string][] = [
+    ["Repouso", "predomínio vagal", "FC baixa e estável", C.primary],
+    ["Início do exercício", "retirada vagal e aumento simpático", "FC e PA sobem, fluxo é redistribuído", C.cta],
+    ["Recuperação", "reativação vagal", "FC cai; a queda depende do contexto", C.success],
+  ];
+  return (
+    <svg viewBox="0 0 720 300" {...svgProps("Equilíbrio autonômico ao longo do exercício: do predomínio vagal em repouso para a retirada vagal e ativação simpática no esforço, e a reativação vagal na recuperação")}>
+      <defs><Arrowhead id="ah-auto" color={C.ink3} /></defs>
+      <text x={360} y={26} textAnchor="middle" fontSize={12} fill={C.ink3}>O controle é regional e dinâmico, não um interruptor único.</text>
+      {fases.map(([t, s, d, col], i) => {
+        const x = 24 + i * 232;
+        return (
+          <g key={t}>
+            <rect x={x} y={48} width={200} height={150} rx={14} fill={C.soft} stroke={col} strokeWidth={2} />
+            <text x={x + 100} y={78} textAnchor="middle" fontSize={13} fontWeight={700} fill={col}>{t}</text>
+            <line x1={x + 20} y1={92} x2={x + 180} y2={92} stroke={C.border} strokeWidth={1} />
+            <text x={x + 100} y={116} textAnchor="middle" fontSize={11} fontWeight={600} fill={C.ink}>{s}</text>
+            <CenterText cx={x + 100} cy={158} lines={quebra(d)} color={C.ink2} size={10.5} weight={400} />
+            {i < 2 && <line x1={x + 200} y1={123} x2={x + 224} y2={123} stroke={C.ink3} strokeWidth={2} markerEnd="url(#ah-auto)" />}
+          </g>
+        );
+      })}
+      <rect x={150} y={244} width={420} height={44} rx={10} fill={C.tint} stroke={C.primary} strokeWidth={1.4} />
+      <text x={360} y={264} textAnchor="middle" fontSize={11.5} fontWeight={700} fill={C.primary}>PAM ≈ débito cardíaco × resistência vascular</text>
+      <text x={360} y={280} textAnchor="middle" fontSize={10} fill={C.ink3}>a FC de recuperação se lê com postura, ambiente, hidratação e condicionamento</text>
+    </svg>
+  );
+}
+
+/** Quebra um texto curto em até três linhas para caber na caixa da figura. */
+function quebra(s: string): string[] {
+  const palavras = s.split(" ");
+  const linhas: string[] = [];
+  let atual = "";
+  for (const p of palavras) {
+    if ((atual + " " + p).trim().length > 26) {
+      linhas.push(atual.trim());
+      atual = p;
+    } else {
+      atual = (atual + " " + p).trim();
+    }
+  }
+  if (atual) linhas.push(atual);
+  return linhas.slice(0, 3);
+}
+
 /* ============================ registro ================================= */
 
 export type FigureLegendItem = { color: string; label: string };
@@ -1336,6 +1470,21 @@ export type FigureDef = {
 };
 
 export const FIGURES: Record<string, FigureDef> = {
+  "sinapse-quimica": {
+    title: "Sinapse química e somação",
+    subtitle: "O cálcio dispara a liberação do transmissor; o alvo soma entradas excitatórias e inibitórias.",
+    Comp: FigSinapseQuimica,
+  },
+  "integracao-sensorial": {
+    title: "Integração sensorial do controle postural",
+    subtitle: "Visão, vestibular e somatossensorial são fundidos e ponderados pelo sistema nervoso.",
+    Comp: FigIntegracaoSensorial,
+  },
+  "equilibrio-autonomico": {
+    title: "Equilíbrio autonômico no exercício",
+    subtitle: "Do predomínio vagal em repouso à ativação simpática no esforço e à reativação vagal na recuperação.",
+    Comp: FigEquilibrioAutonomico,
+  },
   "homeostase-circuito": {
     title: "Circuito de controle homeostático",
     subtitle: "A variável regulada é mantida dentro de uma faixa funcional, não em um valor fixo.",

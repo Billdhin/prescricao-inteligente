@@ -23,8 +23,10 @@ treino, não em enciclopédia.
 - **Aplicação, medida, erro, caso, quiz, incerteza, conexões, refs, applyRx:** todos os campos
   obrigatórios da seção 2 do playbook. O `professionalCase` usa um aluno real e 3 condutas com
   tom recomendada/aceitável/cautela. O quiz comenta, não só corrige.
-- **Figuras:** referencie por `figure: { id }` os ids que o ilustrador vai prover; se a figura
-  ainda não existe, alinhe o id com ele e siga.
+- **Figuras:** referencie por `figure: { id }` a figura principal da aula. Além dela, **cada
+  núcleo do mechanism leva a sua figura** em `steps[].figureId` (meta 100%); alinhe os ids com o
+  ilustrador. Se uma figura ainda não existe, combine o id com ele e siga; `check:nucleos`
+  reporta a cobertura de figura por núcleo.
 
 ## Voz da casa
 Prudente e não diagnóstica: a ferramenta **apoia a decisão do profissional (CREF)**, não manda

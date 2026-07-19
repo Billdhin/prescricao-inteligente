@@ -928,31 +928,37 @@ const capSistemaNervoso = deepLesson({
     steps: [
       {
         label: "Membrana, potencial de repouso e excitabilidade",
+        figureId: "potencial-de-acao",
         detail:
           "A voltagem de membrana resulta da distribuição desigual de íons e da permeabilidade seletiva. A Na+/K+-ATPase mantém os gradientes, enquanto canais de vazamento e canais dependentes de voltagem determinam a resposta instantânea. O potencial de ação é tudo ou nada, mas a intensidade da informação é codificada pela **frequência de disparo e pelo número de fibras recrutadas**. Sequência: (1) gradientes de Na+, K+, Cl- e Ca2+; (2) abertura sequencial de canais; (3) despolarização, repolarização e refratariedade; (4) propagação regenerativa pelo axônio. Relação: força eletroquímica = Vm menos Eíon. Aplicação ao exercício: temperatura, eletrólitos, perfusão e fármacos podem alterar excitabilidade e tempo de reação. Como medir: potencial de membrana, limiar, velocidade de condução e frequência de disparo, sempre com protocolo e contexto. Erro frequente: achar que um estímulo mais forte produz um potencial maior na mesma fibra; ele aumenta a frequência ou o recrutamento.",
       },
       {
         label: "Sinapses, neurotransmissores e plasticidade",
+        figureId: "sinapse-quimica",
         detail:
           "Na sinapse química, a entrada de Ca2+ no terminal pré-sináptico acopla o potencial de ação à exocitose vesicular. A resposta pós-sináptica depende do receptor, da condutância ativada e do estado elétrico da célula; potenciais excitatórios e inibitórios **somam-se no espaço e no tempo**. Mudanças duradouras na eficácia sináptica sustentam memória motora e aprendizagem. Sequência: (1) chegada do potencial ao terminal; (2) abertura de canais de Ca2+; (3) liberação e ligação do transmissor; (4) remoção, recaptação e modulação. Relação: saída neural = soma de entradas excitatórias menos inibitórias. Aplicação ao exercício: a prática deliberada modifica o peso das entradas sensoriais e a eficiência das redes motoras. Como medir: latência, amplitude pós-sináptica, probabilidade de liberação e retenção da habilidade. Erro frequente: tratar inibição apenas como hiperpolarização; o shunt reduz o efeito de entradas excitatórias sem hiperpolarizar.",
       },
       {
         label: "Sensação, propriocepção e controle postural",
+        figureId: "integracao-sensorial",
         detail:
           "Receptores cutâneos, vestibulares, articulares, fusos musculares e órgãos tendinosos transduzem diferentes formas de energia. O sistema nervoso estima posição e movimento combinando sinais que têm ruído, atraso e pesos variáveis. Quando a visão é retirada, a estabilidade passa a depender mais da **informação vestibular e somatossensorial**. Sequência: (1) transdução periférica; (2) vias ascendentes e mapas centrais; (3) fusão multissensorial; (4) ajustes reflexos e antecipatórios. Relação: estabilidade = previsão + feedback sensorial + estratégia mecânica. Aplicação ao exercício: superfície, visão, velocidade e fadiga podem ser manipuladas para treinar equilíbrio, sem confundir instabilidade com especificidade esportiva. Como medir: oscilação postural, tempo de reação, erro de posição, latência reflexa e base de suporte. Erro frequente: explicar controle postural por um único reflexo ou por um único músculo.",
       },
       {
         label: "Planejamento, comando motor e unidades motoras",
+        figureId: "unidade-motora",
         detail:
           "Áreas associativas definem o objetivo; córtex pré-motor e suplementar organizam sequências; córtex motor e vias descendentes modulam interneurônios e motoneurônios. Gânglios da base participam da **seleção e do vigor da ação**, e o cerebelo compara previsão e consequência sensorial. A força final depende do recrutamento e da frequência das unidades motoras. Sequência: (1) definição do objetivo; (2) seleção do programa motor; (3) comando descendente; (4) correção por erro sensorial. Relação: comando motor = previsão + seleção + feedback. Aplicação ao exercício: a intenção de mover rapidamente pode aumentar a taxa inicial de desenvolvimento de força mesmo com carga submáxima. Como medir: EMG, tempo de reação, precisão, variabilidade e taxa de desenvolvimento de força. Erro frequente: procurar um movimento complexo em um ponto isolado do córtex; ele emerge de redes distribuídas.",
       },
       {
         label: "Sistema nervoso autônomo e exercício",
+        figureId: "equilibrio-autonomico",
         detail:
           "O controle autonômico é regional e dinâmico. No início do exercício ocorre **retirada vagal**, seguida por maior atividade simpática, liberação de catecolaminas e redefinição do barorreflexo. O objetivo não é apenas elevar a frequência cardíaca, e sim redistribuir fluxo, sustentar pressão arterial, mobilizar substratos e regular temperatura. Sequência: (1) comando central antecipatório; (2) feedback de músculos e quimiorreceptores; (3) ajuste cardíaco e vascular; (4) reativação vagal na recuperação. Relação: PAM ≈ débito cardíaco × resistência vascular. Aplicação ao exercício: a recuperação da frequência cardíaca deve ser interpretada com postura, ambiente, hidratação, medicamentos e condicionamento. Como medir: FC, PA, variabilidade da FC, recuperação em 1 a 2 min e sintomas. Erro frequente: tratar simpático e parassimpático como dois interruptores globais e sempre opostos.",
       },
       {
         label: "Fadiga central, dor e aprendizagem motora",
+        figureId: "dor-nao-e-dano",
         detail:
           "O desempenho voluntário depende da integração entre esforço percebido, motivação, ameaça, feedback aferente e capacidade periférica. **Fadiga central** descreve redução do comando motor voluntário, não cansaço subjetivo isolado. Dor é uma experiência construída pelo sistema nervoso e pode alterar a estratégia motora sem indicar dano proporcional. Sequência: (1) aferências informam o estado periférico; (2) centros superiores ajustam o esforço; (3) estratégias motoras mudam com ameaça; (4) repetição consolida modelos internos. Relação: desempenho = capacidade periférica × comando voluntário × estratégia. Aplicação ao exercício: variabilidade dosada e feedback relevante favorecem transferência; repetição sem objetivo pode consolidar compensações. Como medir: RPE, ativação voluntária, erro, retenção, transferência e qualidade técnica. Erro frequente: usar lactato, dor ou sensação de esforço isoladamente para localizar a origem da fadiga.",
       },

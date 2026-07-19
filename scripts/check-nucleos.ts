@@ -11,11 +11,13 @@
  */
 import { fisiologiaHumanaLessons } from "../src/features/learning/mocks/fisiologia-humana";
 import { parseNucleo, ehBlocoDeNucleos } from "../src/features/learning/nucleos";
+import { hasFigure } from "../src/features/learning/figures/scientific";
 
-type Step = { label: string; detail: string };
+type Step = { label: string; detail: string; figureId?: string };
 const erros: string[] = [];
 let blocosAtlas = 0;
 let nucleos = 0;
+let nucleosComFigura = 0;
 
 for (const lesson of fisiologiaHumanaLessons) {
   for (const b of lesson.blocks) {
@@ -36,6 +38,14 @@ for (const lesson of fisiologiaHumanaLessons) {
         return;
       }
       nucleos += 1;
+      // Figura por núcleo (padrão da fábrica): opcional, mas se declarada tem que existir.
+      if (s.figureId) {
+        if (!hasFigure(s.figureId)) {
+          erros.push(`${lesson.slug} / núcleo ${i + 1} (${s.label}): figureId "${s.figureId}" não existe na biblioteca de figuras.`);
+        } else {
+          nucleosComFigura += 1;
+        }
+      }
       if (n.passos.length !== 4) {
         erros.push(`${lesson.slug} / núcleo ${i + 1} (${s.label}): ${n.passos.length} passos na Sequência, o manual usa 4.`);
       }
@@ -62,4 +72,6 @@ if (erros.length > 0) {
   for (const e of erros) console.error("  - " + e);
   process.exit(1);
 }
+const pct = nucleos > 0 ? Math.round((nucleosComFigura / nucleos) * 100) : 0;
 console.log(`[check:nucleos] ok: ${blocosAtlas} pranchas de atlas, ${nucleos} núcleos, todos com 4 passos e as 6 partes do manual.`);
+console.log(`[check:nucleos] figura por núcleo: ${nucleosComFigura}/${nucleos} (${pct}%). Meta da fábrica: 100%.`);

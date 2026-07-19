@@ -41,8 +41,10 @@ const aula1 = deepLesson({
   // exercício: .... Como medir: .... Erro frequente: ...."
   mechanism: {
     title: "Entenda o mecanismo",
+    // Cada núcleo leva a sua figura em `figureId` (id da biblioteca figures/scientific),
+    // renderizada dentro da prancha de atlas. Meta: 100% dos núcleos com figura.
     steps: [
-      { label: "Núcleo 1", detail: "..." },
+      { label: "Núcleo 1", figureId: "id-da-figura", detail: "descrição. Sequência: (1)…(4). Relação: … Aplicação ao exercício: … Como medir: … Erro frequente: …" },
     ],
   },
   apply: "O que muda na prescrição por causa disto.",
