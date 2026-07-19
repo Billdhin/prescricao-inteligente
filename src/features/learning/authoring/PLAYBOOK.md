@@ -6,9 +6,12 @@ todos leem este arquivo antes de trabalhar. O objetivo do Filipe: conteúdo **pr
 cientificamente correto, completo e diferente do mercado** — não um resumo de curso, e sim
 o copiloto de estudo que sustenta a decisão do profissional de Educação Física.
 
-A referência de qualidade ("padrão-ouro") é a disciplina **Fisiologia humana**
-(`mocks/fisiologia-humana.ts`), digitalização do manual do Filipe. Todo o resto sobe até
-esse nível, autorado a partir da **literatura** (não só do material que ele já tem).
+O teto de qualidade é a **[RUBRICA de excelência](./RUBRICA.md)**, não uma disciplina
+específica. Nenhum conteúdo é bom por já existir: tudo, **inclusive a Fisiologia humana**, é
+auditado contra a rubrica e só sobe quando atinge o nível "Excepcional" nas seis dimensões
+(rigor, aplicação, pedagogia, **legibilidade**, imagem, voz). A Fisiologia é um bom ponto de
+partida a ser superado, não o padrão intocável. Todo o conteúdo é autorado/revisado a partir
+da **literatura**, não só do material que o Filipe já tem.
 
 ---
 
@@ -123,10 +126,14 @@ Para cada disciplina (ou módulo, ou aula) que o Filipe pedir:
    `mocks/<slug>.ts`, na voz da casa, aplicando a ciência à prescrição.
 4. **Ilustração** — `aprender-ilustrador` decide SVG vs Lovable por figura, autora as SVG e
    gera/integra as webp, garante rótulo honesto.
-5. **Revisão crítica** — `aprender-revisor` confere cada afirmação contra a referência,
-   linguagem, pedagogia e guardrails; devolve lista de correções; volta ao passo pertinente
-   até zerar.
-6. **Integração + validação** — `aprender-integrador` registra em `index.ts` e ajusta as
+5. **Design de leitura** — `aprender-designer-leitura` transforma prosa em texto fácil de
+   ler e absorver: negrito no que decide, quebras de parágrafo, blocos estruturados no lugar
+   de listas em prosa, figura onde ajuda. Usa a camada `richtext` e o guardrail
+   `check:legibilidade`. É a dimensão 4 da rubrica.
+6. **Revisão crítica** — `aprender-revisor` confere cada afirmação contra a referência,
+   linguagem, pedagogia, **legibilidade** e guardrails; devolve lista de correções; volta ao
+   passo pertinente até zerar.
+7. **Integração + validação** — `aprender-integrador` registra em `index.ts` e ajusta as
    contagens em `disciplines.ts`, roda `tsc`, `npm run build`, `check:metricas`,
    `check:nucleos`, `check:aprender`, e faz o QA no navegador. Publica por onda.
 
@@ -146,13 +153,16 @@ Uma disciplina só é "pronta" quando:
 - [ ] Toda figura referenciada existe (SVG registrada ou webp integrada e conferida a olho).
 - [ ] `disciplines.ts` reflete as contagens reais (`moduleCount`, `lessonCount`, `caseCount`,
       `status`, `reviewedAt`, `reviewedBy`).
-- [ ] `npx tsc --noEmit`, `npm run build`, `check:metricas`, `check:nucleos` e
-      `check:aprender` verdes.
+- [ ] **Legibilidade no teto** (dimensão 4 da rubrica): nada de parede de texto; negrito no
+      que decide, quebras, blocos estruturados. `check:legibilidade` sem parede extrema e com
+      o backlog de paredes advisórias tratado na disciplina entregue.
+- [ ] `npx tsc --noEmit`, `npm run build`, `check:metricas`, `check:nucleos`,
+      `check:aprender` e `check:legibilidade` verdes.
 - [ ] Navegador (1440 e 390): abre, sem erro de console, sem overflow, teclado e foco ok.
 - [ ] Sem travessão em texto visível. Linguagem prudente e aplicada.
 
-`npm run check:aprender` automatiza os itens verificáveis (travessão, figura/ref inexistente,
-placeholder). O julgamento científico e pedagógico é do revisor.
+`check:aprender` automatiza travessão, figura/ref inexistente e placeholder; `check:legibilidade`
+mede as paredes de texto. O julgamento científico e pedagógico é do revisor.
 
 ---
 

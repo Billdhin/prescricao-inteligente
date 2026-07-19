@@ -14,7 +14,8 @@
     "check:faixas": "tsx scripts/check-faixas.ts",
     "check:documentos": "tsx scripts/check-documentos.ts",
     "check:nucleos": "tsx scripts/check-nucleos.ts",
-    "check:aprender": "tsx scripts/check-aprender.ts"
+    "check:aprender": "tsx scripts/check-aprender.ts",
+    "check:legibilidade": "tsx scripts/check-legibilidade.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

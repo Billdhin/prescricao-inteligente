@@ -917,11 +917,11 @@ const capSistemaNervoso = deepLesson({
   figure: { id: "unidade-motora" },
   subtitle: "Capítulo 01 do manual", description: "O sistema nervoso converte energia física e química em sinais elétricos, seleciona informações, constrói percepções e organiza respostas motoras e autonômicas.",
   level: "intermediario", minutes: 14, type: "mecanismo", kicker: K, tags: ["sistema nervoso", "unidade motora", "controle motor", "fadiga central"],
-  hero: "O sistema nervoso explica por que técnica, atenção, motivação, dor, fadiga e aprendizagem mudam o desempenho mesmo quando a capacidade do músculo não mudou. Ele transforma sinais em percepção e comando.",
+  hero: "O sistema nervoso explica por que **técnica, atenção, motivação, dor, fadiga e aprendizagem** mudam o desempenho mesmo quando a capacidade do músculo não mudou. Ele transforma sinais em percepção e comando.",
   question: "Um aluno perde estabilidade no agachamento ao fechar os olhos e melhora após seis semanas de prática. O que mudou, se a força de perna é a mesma?",
   concepts: [
-    { term: "Potencial de ação: tudo ou nada", definition: "Na mesma fibra, um estímulo mais forte não gera um potencial maior. A informação é codificada pela frequência de disparo e pelo número de fibras recrutadas, não pelo tamanho do impulso." },
-    { term: "Unidade motora e recrutamento", definition: "Um motoneurônio e todas as fibras que ele inerva. A força depende de recrutamento (quantas unidades), frequência de disparo e coordenação, não só do tamanho do músculo." },
+    { term: "Potencial de ação: tudo ou nada", definition: "Na mesma fibra, um estímulo mais forte **não gera um potencial maior**. A informação é codificada pela **frequência de disparo** e pelo **número de fibras recrutadas**, não pelo tamanho do impulso." },
+    { term: "Unidade motora e recrutamento", definition: "Um motoneurônio e **todas as fibras que ele inerva**. A força depende de **recrutamento** (quantas unidades), **frequência de disparo** e **coordenação**, não só do tamanho do músculo." },
   ],
   mechanism: {
     title: "Os seis núcleos mecanísticos",
@@ -967,7 +967,7 @@ const capSistemaNervoso = deepLesson({
       { time: "Semanas", title: "Adaptação", detail: "Economia neural, melhor coordenação e refinamento dos modelos internos." },
     ],
   },
-  apply: "Trate técnica, atenção e ambiente como parte da dose. Ao treinar equilíbrio, manipule superfície, visão, velocidade e fadiga sem confundir instabilidade com especificidade esportiva. Responder à abertura: a melhora vem da reponderação sensorial e de ajustes antecipatórios aprendidos (plasticidade e cerebelo), não de mais força de perna.",
+  apply: "Trate **técnica, atenção e ambiente como parte da dose**. Ao treinar equilíbrio, manipule superfície, visão, velocidade e fadiga, sem confundir instabilidade com especificidade esportiva.\n\n**Respondendo à abertura:** a melhora vem da reponderação sensorial e de ajustes antecipatórios aprendidos (plasticidade e cerebelo), não de mais força de perna.",
   specialTitle: "Medida e interpretação: o que cada variável informa e onde ela cala",
   special: [
     "Potencial, ECG e EMG representam sinal elétrico e dependem de eletrodos, filtros e posição. Limite: não equivalem diretamente à força.",
@@ -1010,14 +1010,14 @@ const capSistemaNervoso = deepLesson({
       { id: "v", label: "Verdadeiro" }, { id: "f", label: "Falso" },
     ], "f", "O controle autonômico é regional e dinâmico; a resposta ao exercício redistribui fluxo e sustenta pressão, não apenas eleva a FC."),
   ],
-  uncertainty: "O conhecimento fisiológico organiza a observação e a decisão de exercício; não substitui diagnóstico, investigação de doença ou atendimento de urgência. Medidas neurais (EMG, tempo de reação, variabilidade da FC) restringem hipóteses apenas com método, condição basal e contexto conhecidos.",
+  uncertainty: "O conhecimento fisiológico organiza a observação e a decisão de exercício; **não substitui diagnóstico, investigação de doença ou atendimento de urgência**.\n\nMedidas neurais (EMG, tempo de reação, variabilidade da FC) restringem hipóteses apenas com método, condição basal e contexto conhecidos.",
   related: [
     { title: "Bioeletricidade da célula", href: `/aprender/conteudos/${DISC}--bioeletricidade`, type: "conceito" },
     { title: "Sistema muscular", href: `/aprender/conteudos/${DISC}--mapa-sistema-muscular`, type: "mecanismo" },
     { title: "Integração fisiológica do movimento", href: `/aprender/conteudos/${DISC}--integracao-movimento`, type: "mecanismo" },
   ],
   refs: [...REF_BASE, "ref-kandel-neural-2021", "ref-latash-motor-2012", "ref-vander-2023"],
-  applyRx: "Leia técnica, atenção, sono e ambiente como parte da carga neural. Progrida equilíbrio e habilidade com variabilidade dosada e feedback claro, e interprete a FC de recuperação no contexto do aluno.",
+  applyRx: "Leia **técnica, atenção, sono e ambiente como carga neural**. Progrida equilíbrio e habilidade com variabilidade dosada e feedback claro, e interprete a **FC de recuperação no contexto do aluno**.",
 });
 
 const capSistemaMuscular = deepLesson({

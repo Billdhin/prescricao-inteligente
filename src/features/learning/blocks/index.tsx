@@ -31,6 +31,7 @@ import { useAprender } from "../store";
 import { FIGURES, type FigureImageDef } from "../figures/scientific";
 import { siglasDaLesson } from "../siglas";
 import { parseNucleo, ehBlocoDeNucleos } from "../nucleos";
+import { RichText, RichInline } from "../richtext";
 import type { Lesson, LessonBlock, QuizQuestion } from "../types";
 
 const repo = getLearningRepository();
@@ -221,7 +222,7 @@ function HeroBlock({ kicker, text }: { kicker?: string; text: string }) {
   return (
     <Card variant="raised" className="border-l-4 border-primary p-5 md:p-6">
       {kicker && <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">{kicker}</div>}
-      <p className="font-display text-lg leading-relaxed text-ink md:text-xl">{text}</p>
+      <RichText text={text} className="font-display text-lg leading-relaxed text-ink md:text-xl" />
     </Card>
   );
 }
@@ -342,7 +343,7 @@ function ShortText({
     return (
       <section>
         {title && <BlockTitle>{title}</BlockTitle>}
-        <p className="text-ink-2">{text}</p>
+        <RichText text={text ?? ""} className="leading-relaxed text-ink-2" />
       </section>
     );
   }
@@ -386,7 +387,7 @@ function KeyConcept({ title, term, definition }: { title?: string; term: string;
         </span>
         <div>
           <div className="font-display font-bold text-ink">{term}</div>
-          <p className="text-sm text-ink-2">{definition}</p>
+          <RichText text={definition} className="text-sm leading-relaxed text-ink-2" />
         </div>
       </Card>
     </section>
@@ -600,7 +601,7 @@ function MechanismAccordion({ title, steps }: { title?: string; steps: { label: 
               <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-white">{i + 1}</span>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold text-ink">{s.label}</div>
-                {open === i && <div className="mt-0.5 text-sm text-ink-2">{s.detail}</div>}
+                {open === i && <div className="mt-0.5 text-sm leading-relaxed text-ink-2"><RichInline text={s.detail} /></div>}
               </div>
             </button>
             {i < steps.length - 1 && <ArrowDown className="mx-auto h-4 w-4 text-ink-3" aria-hidden />}
@@ -619,7 +620,7 @@ function AtlasCell({ icon: Icon, label, text, tone = "neutral" }: { icon: Lucide
         <Icon className="h-3.5 w-3.5" aria-hidden />
         {label}
       </div>
-      <p className="text-[13px] leading-snug text-ink-2">{text}</p>
+      <p className="text-[13px] leading-snug text-ink-2"><RichInline text={text} /></p>
     </div>
   );
 }
@@ -644,7 +645,7 @@ function NucleosAtlas({ title, steps }: { title?: string; steps: { label: string
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-white">{i + 1}</span>
                 <h4 className="pt-0.5 font-display text-base font-bold text-ink">{s.label}</h4>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-ink-2">{n.descricao}</p>
+              <p className="mt-2 text-sm leading-relaxed text-ink-2"><RichInline text={n.descricao} /></p>
 
               <div className="mt-4">
                 <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Sequência</div>
@@ -978,7 +979,9 @@ function PracticalApplication({ title, text }: { title?: string; text: string })
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-success">
           <Target className="h-5 w-5" />
         </span>
-        <p className="text-sm text-ink">{text}</p>
+        <div className="min-w-0 flex-1">
+          <RichText text={text} className="text-sm leading-relaxed text-ink" />
+        </div>
       </Card>
     </section>
   );
@@ -992,8 +995,8 @@ function CommonMistake({ title, mistake, instead }: { title?: string; mistake: s
         <div className="flex gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <div className="text-sm">
-            <div className="text-ink"><span className="font-semibold">Comum: </span>{mistake}</div>
-            <div className="mt-1 text-ink-2"><span className="font-semibold text-ink">Em vez disso: </span>{instead}</div>
+            <div className="text-ink"><span className="font-semibold">Comum: </span><RichInline text={mistake} /></div>
+            <div className="mt-1 text-ink-2"><span className="font-semibold text-ink">Em vez disso: </span><RichInline text={instead} /></div>
           </div>
         </div>
       </Card>
@@ -1008,7 +1011,9 @@ function ScientificUncertainty({ title, text }: { title?: string; text: string }
       <Card className="border-dashed p-4">
         <div className="flex gap-2 text-sm text-ink-2">
           <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" />
-          <span>{text}</span>
+          <div className="min-w-0 flex-1">
+            <RichText text={text} className="leading-relaxed text-ink-2" />
+          </div>
         </div>
       </Card>
     </section>
@@ -1075,7 +1080,7 @@ function ApplyToPrescription({ title, summary, onApply }: { title?: string; summ
     <section id="sec-aplicar" className="scroll-mt-24">
       {title && <BlockTitle>{title}</BlockTitle>}
       <Card variant="soft" className="border-l-4 border-primary p-5">
-        <p className="text-sm text-ink">{summary}</p>
+        <RichText text={summary} className="text-sm leading-relaxed text-ink" />
         <button onClick={() => onApply(summary)} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
           <Target className="h-4 w-4" /> Aplicar no atendimento
         </button>

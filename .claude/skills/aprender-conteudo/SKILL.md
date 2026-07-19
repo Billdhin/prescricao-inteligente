@@ -11,10 +11,12 @@ módulo Y do Aprender" ou "reescreva a aula Z no padrão". O objetivo dele: cont
 qualidade da disciplina Fisiologia humana.
 
 ## Antes de tudo, leia
-1. `src/features/learning/authoring/PLAYBOOK.md` — o padrão único (voz, molde da aula, rigor
-   científico, matriz de imagem, definição de pronto). **Manda em tudo.**
-2. `src/features/learning/authoring/curriculo.md` — o backlog: estado e alvo das 20 disciplinas.
-3. `src/features/learning/authoring/TEMPLATE-disciplina.md` — o molde de um arquivo de disciplina.
+1. `src/features/learning/authoring/RUBRICA.md` — **o teto de qualidade** (seis dimensões,
+   nível Excepcional). O padrão NÃO é a Fisiologia; é a rubrica. Tudo é auditado contra ela.
+2. `src/features/learning/authoring/PLAYBOOK.md` — o padrão operacional (voz, molde da aula,
+   rigor científico, matriz de imagem, padrão de leitura, definição de pronto). **Manda em tudo.**
+3. `src/features/learning/authoring/curriculo.md` — o backlog: estado e alvo das 20 disciplinas.
+4. `src/features/learning/authoring/TEMPLATE-disciplina.md` — o molde de um arquivo de disciplina.
 
 ## Como decidir o escopo
 - Se o Filipe nomeou uma **disciplina**, rode o pipeline inteiro para ela.
@@ -34,11 +36,14 @@ o anterior produziu.
    aplicadas à prescrição. Só usa o que o cientista verificou.
 4. **`aprender-ilustrador`** → figuras: SVG para o que fica bom em SVG, Lovable (img2img, skill
    `imagens-lovable`) para anatomia realista; rótulo exato por cima, nunca dentro da imagem.
-5. **`aprender-revisor`** → revisão adversarial (ciência × referência, linguagem, pedagogia,
-   guardrails). Devolve correções e **bloqueia** até zerar; volte ao agente pertinente e repita.
-6. **`aprender-integrador`** → registra em `index.ts`/`disciplines.ts`, roda `tsc` + `build` +
-   `check:aprender`/`check:nucleos`/`check:metricas`, faz o QA no navegador (mover `.env` de
-   lado e restaurar) e publica por onda.
+5. **`aprender-designer-leitura`** → transforma prosa em texto fácil de ler: negrito no que
+   decide, quebras de parágrafo, blocos estruturados no lugar de listas em prosa (camada
+   `richtext` + `check:legibilidade`). Zera as paredes de texto.
+6. **`aprender-revisor`** → revisão adversarial (ciência × referência, linguagem, pedagogia,
+   legibilidade, guardrails). Devolve correções e **bloqueia** até zerar; volte e repita.
+7. **`aprender-integrador`** → registra em `index.ts`/`disciplines.ts`, roda `tsc` + `build` +
+   `check:aprender`/`check:nucleos`/`check:metricas`/`check:legibilidade`, faz o QA no navegador
+   (mover `.env` de lado e restaurar) e publica por onda.
 
 Paralelize onde não há dependência (ex.: redação e ilustração de aulas diferentes; leituras do
 arquiteto e do cientista). Não pule o revisor: ele é o portão de qualidade.
