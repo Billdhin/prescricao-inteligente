@@ -21,6 +21,7 @@ import {
   KeyRound,
   Gauge,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
@@ -29,6 +30,7 @@ import { iconByName } from "../icons";
 import { useAprender } from "../store";
 import { FIGURES, type FigureImageDef } from "../figures/scientific";
 import { siglasDaLesson } from "../siglas";
+import { parseNucleo, ehBlocoDeNucleos } from "../nucleos";
 import type { Lesson, LessonBlock, QuizQuestion } from "../types";
 
 const repo = getLearningRepository();
@@ -573,6 +575,13 @@ function ScientificFigureBlock({ title, figureId, caption }: { title?: string; f
 }
 
 function MechanismFlow({ title, steps }: { title?: string; steps: { label: string; detail: string }[] }) {
+  // Quando os passos seguem a estrutura de núcleo do manual (descrição, sequência,
+  // relação, aplicação, como medir, erro), renderiza como prancha de atlas.
+  if (ehBlocoDeNucleos(steps)) return <NucleosAtlas title={title} steps={steps} />;
+  return <MechanismAccordion title={title} steps={steps} />;
+}
+
+function MechanismAccordion({ title, steps }: { title?: string; steps: { label: string; detail: string }[] }) {
   const [open, setOpen] = React.useState<number | null>(0);
   return (
     <section>
@@ -597,6 +606,71 @@ function MechanismFlow({ title, steps }: { title?: string; steps: { label: strin
             {i < steps.length - 1 && <ArrowDown className="mx-auto h-4 w-4 text-ink-3" aria-hidden />}
           </React.Fragment>
         ))}
+      </div>
+    </section>
+  );
+}
+
+/** Célula rotulada da tabela do núcleo (aplicação, como medir, erro frequente). */
+function AtlasCell({ icon: Icon, label, text, tone = "neutral" }: { icon: LucideIcon; label: string; text: string; tone?: "neutral" | "warning" }) {
+  return (
+    <div className={cn("rounded-lg border p-3", tone === "warning" ? "border-warning/40 bg-warning/5" : "border-border bg-surface")}>
+      <div className={cn("mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide", tone === "warning" ? "text-warning" : "text-ink-3")}>
+        <Icon className="h-3.5 w-3.5" aria-hidden />
+        {label}
+      </div>
+      <p className="text-[13px] leading-snug text-ink-2">{text}</p>
+    </div>
+  );
+}
+
+/**
+ * Prancha de atlas dos núcleos mecanísticos: cada núcleo vira um cartão com
+ * descrição, a sequência de 4 passos como esquema, a relação em destaque e a
+ * tabela aplicação / como medir / erro frequente. Estrutura fiel ao manual; o
+ * conteúdo é o mesmo que já existia, só reorganizado (ver features/learning/nucleos).
+ */
+function NucleosAtlas({ title, steps }: { title?: string; steps: { label: string; detail: string }[] }) {
+  return (
+    <section>
+      {title && <BlockTitle>{title}</BlockTitle>}
+      <div className="flex flex-col gap-4">
+        {steps.map((s, i) => {
+          const n = parseNucleo(s.detail);
+          if (!n) return null;
+          return (
+            <Card key={i} variant="raised" className="p-4 md:p-5">
+              <div className="flex items-start gap-3">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-white">{i + 1}</span>
+                <h4 className="pt-0.5 font-display text-base font-bold text-ink">{s.label}</h4>
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-ink-2">{n.descricao}</p>
+
+              <div className="mt-4">
+                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Sequência</div>
+                <ol className="grid gap-2 sm:grid-cols-2">
+                  {n.passos.map((p, j) => (
+                    <li key={j} className="flex gap-2 rounded-lg border border-border bg-surface-soft p-2.5">
+                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink/10 text-[11px] font-bold text-ink">{j + 1}</span>
+                      <span className="text-[13px] leading-snug text-ink-2">{p}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg border border-primary/30 bg-primary-tint/50 px-3 py-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Relação</span>
+                <span className="text-sm font-semibold text-ink">{n.relacao}</span>
+              </div>
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <AtlasCell icon={Target} label="Aplicação ao exercício" text={n.aplicacao} />
+                <AtlasCell icon={Gauge} label="Como medir" text={n.comoMedir} />
+                <AtlasCell icon={AlertTriangle} label="Erro frequente" text={n.erroFrequente} tone="warning" />
+              </div>
+            </Card>
+          );
+        })}
       </div>
     </section>
   );

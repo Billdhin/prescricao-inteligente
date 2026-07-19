@@ -12,7 +12,8 @@
     "check:supabase": "node scripts/check-supabase.mjs",
     "check:metricas": "tsx scripts/check-metricas.ts",
     "check:faixas": "tsx scripts/check-faixas.ts",
-    "check:documentos": "tsx scripts/check-documentos.ts"
+    "check:documentos": "tsx scripts/check-documentos.ts",
+    "check:nucleos": "tsx scripts/check-nucleos.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
