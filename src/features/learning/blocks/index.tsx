@@ -291,7 +291,8 @@ function MedidaInterpretacao({ title, items }: { title?: string; items: string[]
             </div>
             <p className="text-sm text-ink-2">{v.informa}</p>
             <p className="mt-1.5 text-xs text-ink-3">
-              <span className="font-semibold uppercase tracking-wide">Onde cala:</span> {v.limite}
+              <span className="font-semibold text-ink-2">O que não mostra: </span>
+              {v.limite}
             </p>
           </div>
         ))}
