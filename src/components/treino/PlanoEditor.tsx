@@ -61,8 +61,8 @@ export interface ContextoFaixa {
 
 /* ================================ Gráfico ================================ */
 
-export function GraficoProgressao({ macro }: { macro: Macrociclo }) {
-  const g = desenharProgressao(macro);
+export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?: Nivel }) {
+  const g = desenharProgressao(macro, undefined, undefined, nivel);
   const gid = React.useId().replace(/:/g, "");
 
   return (
@@ -206,33 +206,38 @@ export function MesocicloCard({
 
       {aberto && (
         <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
-          <div className="flex flex-wrap gap-2 text-xs">
-            <Pill tone="neutral">Volume {TEND_LABEL[meso.tendenciaVolume]}</Pill>
-            <Pill tone="neutral">Intensidade {TEND_LABEL[meso.tendenciaIntensidade]}</Pill>
-            <Pill tone="neutral">Complexidade {TEND_LABEL[meso.tendenciaComplexidade]}</Pill>
-          </div>
-          <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
-          <ListaChips titulo="Tipos de exercício" itens={meso.tiposExercicio} />
-          <ListaChips
-            titulo="Modalidades em foco"
-            itens={(meso.modalidades ?? []).map((id) => getModalidade(id)?.nome ?? id)}
-          />
-
-          {meso.parametros.length > 0 && (
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">Acompanhar</p>
-              <div className="flex flex-wrap gap-1.5">
-                {meso.parametros.map((id) => {
-                  const p = getParam(id);
-                  return p ? (
-                    <Pill key={id} tone="neutral">
-                      {p.sigla ?? p.nome}
-                    </Pill>
-                  ) : null;
-                })}
-              </div>
+          {/* Dinâmica e foco da fase, agrupados num cartão só para não virar uma pilha de rótulos. */}
+          <div className="rounded-xl border border-border bg-surface-soft/50 p-3">
+            <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs">
+              <span className="mr-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Dinâmica</span>
+              <Pill tone={meso.tendenciaVolume === "sobe" ? "analysis" : "neutral"}>Volume {TEND_LABEL[meso.tendenciaVolume]}</Pill>
+              <Pill tone={meso.tendenciaIntensidade === "sobe" ? "analysis" : "neutral"}>Intensidade {TEND_LABEL[meso.tendenciaIntensidade]}</Pill>
+              <Pill tone={meso.tendenciaComplexidade === "sobe" ? "analysis" : "neutral"}>Complexidade {TEND_LABEL[meso.tendenciaComplexidade]}</Pill>
             </div>
-          )}
+            <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
+              <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
+              <ListaChips titulo="Tipos de exercício" itens={meso.tiposExercicio} />
+              <ListaChips
+                titulo="Modalidades em foco"
+                itens={(meso.modalidades ?? []).map((id) => getModalidade(id)?.nome ?? id)}
+              />
+              {meso.parametros.length > 0 && (
+                <div>
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Acompanhar</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {meso.parametros.map((id) => {
+                      const p = getParam(id);
+                      return p ? (
+                        <Pill key={id} tone="neutral">
+                          {p.sigla ?? p.nome}
+                        </Pill>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
 
           {editavel && (
             <label className="flex items-center gap-2 rounded-xl bg-surface-soft p-2.5 text-sm text-ink-2">

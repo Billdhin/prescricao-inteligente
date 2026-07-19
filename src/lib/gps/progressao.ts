@@ -12,8 +12,7 @@
  */
 
 import type { Macrociclo, Tendencia } from "@/data/periodizacao";
-
-const NIVEL_TENDENCIA: Record<Tendencia, number> = { reduz: -0.6, estavel: 0, sobe: 0.6, varia: 0 };
+import type { Nivel } from "@/data/types";
 
 export interface PontoSemana {
   semana: number;
@@ -24,20 +23,52 @@ export interface PontoSemana {
   aliviada: boolean;
 }
 
-export function serieSemanal(macro: Macrociclo): PontoSemana[] {
+// O nível desloca a linha de base e a inclinação da progressão: um avançado treina em
+// intensidade relativa mais alta e progride mais rápido que um iniciante. Por isso trocar
+// o nível muda o gráfico de forma visível, e não só o texto.
+const NIVEL_ESCALA: Record<Nivel, { vol: number; int: number; passo: number }> = {
+  Iniciante: { vol: -0.25, int: -0.55, passo: 0.75 },
+  Intermediário: { vol: 0, int: 0, passo: 1 },
+  Avançado: { vol: 0.3, int: 0.55, passo: 1.3 },
+};
+
+/**
+ * A curva reflete o MODELO e o NÍVEL, não uma forma genérica.
+ *
+ * A base de cada capacidade caminha de mesociclo a mesociclo pela TENDÊNCIA da fase (sobe,
+ * reduz, mantém), então um plano linear traça um trend limpo. Quando a tendência é "varia"
+ * (ondulatória, flexível, autorregulada), a carga oscila semana a semana, e o gráfico vira
+ * uma onda, visivelmente diferente do linear. A descarga puxa a semana para baixo.
+ */
+export function serieSemanal(macro: Macrociclo, nivel?: Nivel): PontoSemana[] {
+  const esc = NIVEL_ESCALA[nivel ?? "Intermediário"];
+  const passo: Record<Tendencia, number> = {
+    sobe: 0.5 * esc.passo,
+    reduz: -0.5 * esc.passo,
+    estavel: 0,
+    varia: 0,
+  };
   const pontos: PontoSemana[] = [];
-  macro.mesociclos.forEach((m, mi) => {
+  let volBase = 2.4 + esc.vol;
+  let intBase = 1.6 + esc.int;
+  let cpxBase = 1.7;
+  const clamp = (n: number) => Math.max(0.5, Math.min(4, n));
+  macro.mesociclos.forEach((m) => {
+    // A fase desloca a base; é o que dá o trend do modelo (linear sobe, blocos degraus).
+    volBase += passo[m.tendenciaVolume];
+    intBase += passo[m.tendenciaIntensidade];
+    cpxBase += m.tendenciaComplexidade === "sobe" ? 0.4 : m.tendenciaComplexidade === "reduz" ? -0.4 : 0;
     m.microciclos.forEach((w, wi) => {
-      let vol = 2 + mi * 0.35 + NIVEL_TENDENCIA[m.tendenciaVolume];
-      let int = 1.6 + mi * 0.5 + NIVEL_TENDENCIA[m.tendenciaIntensidade];
-      const cpx = 1.6 + mi * 0.4 + NIVEL_TENDENCIA[m.tendenciaComplexidade];
-      if (m.tendenciaVolume === "varia") vol += wi % 2 === 0 ? 0.4 : -0.4;
-      if (m.tendenciaIntensidade === "varia") int += wi % 2 === 0 ? -0.4 : 0.5;
+      let vol = volBase;
+      let int = intBase;
+      const cpx = cpxBase;
+      // Modelo ondulatório: a carga sobe e desce semana a semana em torno da base.
+      if (m.tendenciaVolume === "varia") vol += wi % 2 === 0 ? 0.75 : -0.55;
+      if (m.tendenciaIntensidade === "varia") int += wi % 2 === 0 ? -0.55 : 0.75;
       if (w.tipo === "deload") {
-        vol *= 0.6;
-        int *= 0.7;
+        vol *= 0.55;
+        int *= 0.65;
       }
-      const clamp = (n: number) => Math.max(0.5, Math.min(4, n));
       pontos.push({ semana: w.semana, vol: clamp(vol), int: clamp(int), cpx: clamp(cpx), aliviada: w.tipo !== "carga" });
     });
   });
@@ -202,8 +233,8 @@ export interface DesenhoProgressao {
 }
 
 /** Traduz o macrociclo em geometria de gráfico. Serve tanto para o React quanto para o PDF. */
-export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 250): DesenhoProgressao {
-  const pts = serieSemanal(macro);
+export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 250, nivel?: Nivel): DesenhoProgressao {
+  const pts = serieSemanal(macro, nivel);
   const padX = 38;
   // Uma faixa no topo (bandTop..top) fica reservada para os ícones de modalidade da fase,
   // acima das curvas, para eles não colidirem com as linhas.

@@ -1,6 +1,7 @@
 import type { Aluno } from "@/data/alunos";
 import type { MarcaDocumento } from "@/lib/store";
 import type { Macrociclo, Mesociclo, Microciclo, PlanoTreino, Sessao } from "@/data/periodizacao";
+import type { Nivel } from "@/data/types";
 import { getModelo } from "@/data/periodizacao";
 import { getModalidade } from "@/data/modalities";
 import { getParam } from "@/data/monitoringParameters";
@@ -145,8 +146,8 @@ function mesoHtml(m: Mesociclo, i: number) {
   </section>`;
 }
 
-function graficoHtml(macro: Macrociclo) {
-  const g = desenharProgressao(macro, 700, 250);
+function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
+  const g = desenharProgressao(macro, 700, 250, nivel);
   if (g.vazio) return "";
   // O PDF não tem as variáveis CSS do app; as cores entram literais.
   const cor: Record<string, string> = { Volume: "#2563eb", Intensidade: "#c2410c", Complexidade: "#0e7490", area: "#2563eb" };
@@ -300,7 +301,7 @@ export function exportPlanoPDF({
       ${plano.disponibilidade ? `<br>Disponibilidade: ${esc(plano.disponibilidade)}` : ""}
     </div>
 
-    ${graficoHtml(plano.macrociclo)}
+    ${graficoHtml(plano.macrociclo, plano.nivel)}
 
     <section class="bloco">
       <h2>Por que este plano</h2>

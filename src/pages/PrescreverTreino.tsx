@@ -275,13 +275,19 @@ export function PrescreverTreino() {
           />
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <button onClick={gerar} className={buttonClasses("primary")}>
             <Sparkles className="h-4 w-4" /> Gerar periodização
           </button>
-          <button onClick={carregarExemplo} className={buttonClasses("ghost", "sm")}>
-            Carregar exemplo
-          </button>
+          {!plano && (
+            <button
+              onClick={carregarExemplo}
+              className="text-sm text-ink-3 underline decoration-dotted underline-offset-4 hover:text-primary"
+              title="Preenche o formulário com um caso de demonstração (hipertrofia, intermediário, 12 semanas) e gera o plano."
+            >
+              Não sabe por onde começar? Ver um exemplo pronto
+            </button>
+          )}
         </div>
       </Card>
 
@@ -449,7 +455,7 @@ function ResultadoPlano({
       )}
 
       {/* Gráfico de progressão */}
-      <GraficoProgressao macro={macro} />
+      <GraficoProgressao macro={macro} nivel={plano.nivel} />
 
       {/* Timeline macro -> meso -> micro */}
       <div className="space-y-3">

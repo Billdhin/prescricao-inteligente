@@ -270,17 +270,21 @@ function SiglasDaAula({ lesson }: { lesson: Lesson }) {
  * e não era. Aqui cada variável vira um cartão que separa o que ela informa de onde ela
  * cala, e as duas linhas especiais (regra de ouro, sinal de segurança) viram avisos.
  */
-const RE_MEDIDA = /^(.+?)\s+(?:representa|representam)\s+(.+?)\.\s*Limite:\s*(.+)$/i;
+// Tolerante ao negrito (**) da camada de leitura: os marcadores em volta da variável e de
+// "Limite:" não podem quebrar o parse nem os rótulos "Regra de ouro" / "Sinal de segurança".
+const RE_MEDIDA = /^\*{0,2}(.+?)\*{0,2}\s+(?:representa|representam)\s+(.+?)\.\s*\*{0,2}Limite:\*{0,2}\s*(.+)$/i;
+const RE_REGRA = /^\*{0,2}regra de ouro/i;
+const RE_SEGURANCA = /^\*{0,2}sinal de segurança/i;
 
 function MedidaInterpretacao({ title, items }: { title?: string; items: string[] }) {
   const variaveis = items
     .map((it) => RE_MEDIDA.exec(it))
     .filter((m): m is RegExpExecArray => m !== null)
     .map((m) => ({ variavel: m[1].trim(), informa: m[2].trim(), limite: m[3].trim() }));
-  const regra = items.find((it) => /^regra de ouro/i.test(it));
-  const seguranca = items.find((it) => /^sinal de segurança/i.test(it));
+  const regra = items.find((it) => RE_REGRA.test(it));
+  const seguranca = items.find((it) => RE_SEGURANCA.test(it));
   // Qualquer item que não casou com os padrões acima ainda precisa aparecer.
-  const soltos = items.filter((it) => !RE_MEDIDA.test(it) && !/^regra de ouro/i.test(it) && !/^sinal de segurança/i.test(it));
+  const soltos = items.filter((it) => !RE_MEDIDA.test(it) && !RE_REGRA.test(it) && !RE_SEGURANCA.test(it));
 
   return (
     <section>
@@ -292,10 +296,10 @@ function MedidaInterpretacao({ title, items }: { title?: string; items: string[]
               <Gauge className="h-3.5 w-3.5 shrink-0 text-analysis" />
               <span className="font-semibold text-ink">{v.variavel}</span>
             </div>
-            <p className="text-sm text-ink-2">{v.informa}</p>
+            <p className="text-sm text-ink-2"><RichInline text={v.informa} /></p>
             <p className="mt-1.5 text-xs text-ink-3">
               <span className="font-semibold text-ink-2">O que não mostra: </span>
-              {v.limite}
+              <RichInline text={v.limite} />
             </p>
           </div>
         ))}
@@ -306,7 +310,7 @@ function MedidaInterpretacao({ title, items }: { title?: string; items: string[]
           {soltos.map((it, i) => (
             <li key={i} className="flex items-start gap-2 text-sm text-ink-2">
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-analysis" />
-              {it}
+              <span><RichInline text={it} /></span>
             </li>
           ))}
         </ul>
@@ -315,13 +319,13 @@ function MedidaInterpretacao({ title, items }: { title?: string; items: string[]
       {regra && (
         <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary-tint p-3">
           <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <p className="text-sm text-ink">{regra}</p>
+          <p className="text-sm text-ink"><RichInline text={regra} /></p>
         </div>
       )}
       {seguranca && (
         <div className="mt-2.5 flex items-start gap-2.5 rounded-xl border border-warning/40 bg-[#fef7e8] p-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          <p className="text-sm text-ink">{seguranca}</p>
+          <p className="text-sm text-ink"><RichInline text={seguranca} /></p>
         </div>
       )}
     </section>
