@@ -69,6 +69,94 @@ function caminhoSuave(pontos: { x: number; y: number }[]): string {
 
 const truncar = (s: string, max: number) => (s.length <= max ? s : `${s.slice(0, Math.max(1, max - 1)).trimEnd()}…`);
 
+/* ---------------------- Ícones de modalidade em foco por fase ---------------------- */
+
+/**
+ * Glifos das modalidades, em SVG puro (paths e círculos, viewBox 24), para desenharem
+ * igual na tela e no PDF. Vêm da biblioteca de ícones do projeto (lucide, ISC), copiados
+ * como dados porque o PDF é uma string de SVG e não roda React.
+ */
+export interface Glifo {
+  paths: string[];
+  circles?: { cx: number; cy: number; r: number }[];
+}
+
+const GLIFOS: Record<string, Glifo> = {
+  forca: {
+    paths: [
+      "M14.4 14.4 9.6 9.6",
+      "M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z",
+      "m21.5 21.5-1.4-1.4",
+      "M3.9 3.9 2.5 2.5",
+      "M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z",
+    ],
+  },
+  caminhada: {
+    paths: [
+      "M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z",
+      "M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z",
+      "M16 17h4",
+      "M4 13h4",
+    ],
+  },
+  bike: {
+    paths: ["M12 17.5V14l-3-3 4-3 2 3h2"],
+    circles: [
+      { cx: 18.5, cy: 17.5, r: 3.5 },
+      { cx: 5.5, cy: 17.5, r: 3.5 },
+      { cx: 15, cy: 5, r: 1 },
+    ],
+  },
+  agua: {
+    paths: [
+      "M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1",
+      "M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1",
+      "M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1",
+    ],
+  },
+  mobilidade: {
+    paths: ["m9 20 3-6 3 6", "m6 8 6 2 6-2", "M12 10v4"],
+    circles: [{ cx: 12, cy: 5, r: 1 }],
+  },
+};
+
+// Cada modalidade aponta para um glifo (categoria) e mantém o próprio rótulo curto.
+const MODALIDADE_FOCO: Record<string, { glifo: keyof typeof GLIFOS; label: string }> = {
+  "m-musculacao": { glifo: "forca", label: "Musculação" },
+  "m-funcional": { glifo: "forca", label: "Funcional" },
+  "m-combinado": { glifo: "forca", label: "Combinado" },
+  "m-caminhada": { glifo: "caminhada", label: "Caminhada" },
+  "m-bike": { glifo: "bike", label: "Bicicleta" },
+  "m-eliptico": { glifo: "bike", label: "Elíptico" },
+  "m-hidro": { glifo: "agua", label: "Hidroginástica" },
+  "m-natacao": { glifo: "agua", label: "Natação" },
+  "m-mobilidade": { glifo: "mobilidade", label: "Mobilidade" },
+};
+
+export interface FocoDesenhado {
+  glifo: Glifo;
+  /** rótulo(s) da(s) modalidade(s) que compartilham este glifo, para o tooltip */
+  label: string;
+}
+
+/**
+ * Os focos de treino de uma fase, prontos para desenhar. Modalidades que compartilham
+ * o mesmo glifo (bicicleta e elíptico, por exemplo) viram um ícone só, com os dois nomes
+ * no rótulo, para não repetir o mesmo desenho lado a lado. No máximo 3, para caber.
+ */
+function focosDaFase(modalidades: string[] | undefined): FocoDesenhado[] {
+  if (!modalidades?.length) return [];
+  const porGlifo = new Map<keyof typeof GLIFOS, string[]>();
+  for (const id of modalidades) {
+    const f = MODALIDADE_FOCO[id];
+    if (!f) continue;
+    const atual = porGlifo.get(f.glifo) ?? [];
+    if (!atual.includes(f.label)) atual.push(f.label);
+    porGlifo.set(f.glifo, atual);
+  }
+  return [...porGlifo.entries()].slice(0, 3).map(([g, labels]) => ({ glifo: GLIFOS[g], label: labels.join(", ") }));
+}
+
 export interface SerieDesenhada {
   nome: string;
   cor: string;
@@ -86,6 +174,8 @@ export interface FaseDesenhada {
   spanSemanas: string;
   /** true quando a fase tem alguma semana de descarga */
   temDescarga: boolean;
+  /** ícones das modalidades em foco na fase (o que se treina mais aqui) */
+  focos: FocoDesenhado[];
 }
 
 export interface DesenhoProgressao {
@@ -101,6 +191,10 @@ export interface DesenhoProgressao {
   rotulos: { x: number; semana: number }[];
   /** y do eixo qualitativo (rótulos "maior" e "menor") e x da coluna */
   eixo: { x: number; maiorY: number; menorY: number };
+  /** topo da faixa de fase (inclui a fileira de ícones, acima das curvas) */
+  bandTop: number;
+  /** y central da fileira de ícones de modalidade */
+  iconRowY: number;
   faixaTop: number;
   faixaBottom: number;
   weekLabelY: number;
@@ -111,7 +205,11 @@ export interface DesenhoProgressao {
 export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 250): DesenhoProgressao {
   const pts = serieSemanal(macro);
   const padX = 38;
-  const top = 18;
+  // Uma faixa no topo (bandTop..top) fica reservada para os ícones de modalidade da fase,
+  // acima das curvas, para eles não colidirem com as linhas.
+  const bandTop = 14;
+  const iconRowY = 26;
+  const top = 46;
   const bottom = 168;
   const left = padX;
   const right = largura - padX;
@@ -151,6 +249,7 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
       nome: truncar(nomeBase, Math.max(6, Math.floor(largFaixa / 6))),
       spanSemanas: m.semanaInicio === m.semanaFim ? `sem ${m.semanaInicio}` : `sem ${m.semanaInicio}–${m.semanaFim}`,
       temDescarga: m.microciclos.some((w) => w.tipo !== "carga"),
+      focos: focosDaFase(m.modalidades),
     };
   });
 
@@ -168,9 +267,29 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
     alivios: pts.map((p, i) => (p.aliviada ? { x: x(i), w: Math.min(18, meio * 1.4) } : null)).filter((v): v is { x: number; w: number } => v !== null),
     rotulos: pts.map((p, i) => ({ x: x(i), semana: p.semana })),
     eixo: { x: left - 8, maiorY: top + 6, menorY: bottom - 2 },
+    bandTop,
+    iconRowY,
     faixaTop,
     faixaBottom,
     weekLabelY,
     vazio: n === 0,
   };
+}
+
+/**
+ * Posições dos ícones de foco de uma fase: uma fileira centrada em `cx`, na faixa do topo.
+ * Cada ícone é desenhado num viewBox 24; o `transform` já leva escala e posição prontas.
+ */
+export function posicoesFocos(fase: FaseDesenhada, iconRowY: number, tam = 15, gap = 6) {
+  const n = fase.focos.length;
+  if (n === 0) return [];
+  const total = n * tam + (n - 1) * gap;
+  const x0 = fase.cx - total / 2;
+  return fase.focos.map((f, i) => ({
+    foco: f,
+    x: x0 + i * (tam + gap),
+    y: iconRowY - tam / 2,
+    tam,
+    transform: `translate(${(x0 + i * (tam + gap)).toFixed(1)}, ${(iconRowY - tam / 2).toFixed(1)}) scale(${(tam / 24).toFixed(3)})`,
+  }));
 }

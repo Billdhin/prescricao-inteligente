@@ -209,6 +209,12 @@ const FOCO_BLOCO_LINEAR = [
   { nome: "Consolidação", foco: "Sustentar os ganhos e preparar a próxima etapa.", tv: "estavel" as Tendencia, ti: "estavel" as Tendencia },
 ];
 
+// As modalidades em foco do plano genérico refletem o que `montarSessoes` de fato monta:
+// musculação em todo plano; caminhada entra quando o objetivo é emagrecimento (força + cardio).
+function modalidadesDoObjetivo(objetivo: GpsObjetivo): string[] {
+  return objetivo === "Emagrecimento" ? ["m-musculacao", "m-caminhada"] : ["m-musculacao"];
+}
+
 function montarMacrocicloGenerico(
   input: GerarPlanoInput,
   modelo: ModeloPeriodizacaoId,
@@ -240,6 +246,7 @@ function montarMacrocicloGenerico(
       semanaFim: fim,
       capacidades: faixa.capacidades,
       tiposExercicio: faixa.tiposExercicio,
+      modalidades: modalidadesDoObjetivo(objetivo),
       tendenciaVolume: ondul ? "varia" : foco.tv,
       tendenciaIntensidade: ondul ? "varia" : foco.ti,
       tendenciaComplexidade: m === 0 ? "estavel" : "sobe",
@@ -292,6 +299,8 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       semanaFim: fim,
       capacidades: [fase.objetivo, ...faixa.capacidades].slice(0, 4),
       tiposExercicio: faixa.tiposExercicio,
+      // As modalidades em foco vêm da jornada já autorada do grupo, que varia por fase.
+      modalidades: fase.modalidades,
       tendenciaVolume: m === 0 ? "estavel" : "sobe",
       tendenciaIntensidade: m === 0 ? "estavel" : "sobe",
       tendenciaComplexidade: m === 0 ? "estavel" : "sobe",

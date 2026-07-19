@@ -68,6 +68,8 @@ export interface Mesociclo {
   semanaFim: number;
   capacidades: string[];
   tiposExercicio: string[];
+  /** ids de modalidades (src/data/modalities) em foco na fase; alimenta os ícones do gráfico */
+  modalidades?: string[];
   tendenciaVolume: Tendencia;
   tendenciaIntensidade: Tendencia;
   tendenciaComplexidade: Tendencia;

@@ -27,10 +27,11 @@ import {
   type TipoMicrociclo,
 } from "@/data/periodizacao";
 import { conferirFaixa, faixaSugerida, type CampoFaixa } from "@/lib/gps/faixas";
-import { desenharProgressao } from "@/lib/gps/progressao";
+import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
 import { getParam } from "@/data/monitoringParameters";
+import { getModalidade } from "@/data/modalities";
 import { refCurta } from "@/data/referencias";
 import { exercises } from "@/data/exercises";
 import { uid } from "@/lib/store";
@@ -85,20 +86,32 @@ export function GraficoProgressao({ macro }: { macro: Macrociclo }) {
             </linearGradient>
           </defs>
 
-          {/* faixas de fase: fundo alternado atrás da curva + rótulo ao pé */}
+          {/* faixas de fase: fundo alternado (inclui a fileira de ícones no topo) + rótulo ao pé */}
           {g.fases.map((f) => (
             <g key={f.indice}>
               <rect
                 x={f.x0}
-                y={g.plot.top}
+                y={g.bandTop}
                 width={f.x1 - f.x0}
-                height={g.faixaBottom - g.plot.top}
+                height={g.faixaBottom - g.bandTop}
                 fill={f.indice % 2 === 0 ? "var(--surface-soft)" : "transparent"}
                 opacity={0.5}
               />
               {f.indice > 0 && (
-                <line x1={f.x0} y1={g.plot.top} x2={f.x0} y2={g.faixaBottom} stroke="var(--border)" strokeWidth={1} strokeDasharray="3 3" />
+                <line x1={f.x0} y1={g.bandTop} x2={f.x0} y2={g.faixaBottom} stroke="var(--border)" strokeWidth={1} strokeDasharray="3 3" />
               )}
+              {/* ícones do que se treina mais na fase, no topo */}
+              {posicoesFocos(f, g.iconRowY).map((p, i) => (
+                <g key={i} transform={p.transform} stroke="var(--ink-2)" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round">
+                  <title>{p.foco.label}</title>
+                  {p.foco.glifo.paths.map((d, j) => (
+                    <path key={j} d={d} />
+                  ))}
+                  {p.foco.glifo.circles?.map((c, j) => (
+                    <circle key={`c${j}`} cx={c.cx} cy={c.cy} r={c.r} />
+                  ))}
+                </g>
+              ))}
               <text x={f.cx} y={g.faixaTop + 12} textAnchor="middle" className="fill-ink" style={{ fontSize: 11, fontWeight: 700 }}>
                 {f.nome}
               </text>
@@ -198,6 +211,10 @@ export function MesocicloCard({
           </div>
           <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
           <ListaChips titulo="Tipos de exercício" itens={meso.tiposExercicio} />
+          <ListaChips
+            titulo="Modalidades em foco"
+            itens={(meso.modalidades ?? []).map((id) => getModalidade(id)?.nome ?? id)}
+          />
 
           {meso.parametros.length > 0 && (
             <div>

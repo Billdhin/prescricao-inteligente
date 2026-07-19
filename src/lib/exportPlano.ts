@@ -5,7 +5,7 @@ import { getModelo } from "@/data/periodizacao";
 import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { bibliografia } from "@/data/referencias";
-import { desenharProgressao } from "@/lib/gps/progressao";
+import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -115,11 +115,22 @@ function graficoHtml(macro: Macrociclo) {
   if (g.vazio) return "";
   // O PDF não tem as variáveis CSS do app; as cores entram literais.
   const cor: Record<string, string> = { Volume: "#2563eb", Intensidade: "#c2410c", Complexidade: "#0e7490", area: "#2563eb" };
+  const iconesFase = (f: (typeof g.fases)[number]) =>
+    posicoesFocos(f, g.iconRowY)
+      .map(
+        (p) =>
+          `<g transform="${p.transform}" stroke="#475569" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
+          p.foco.glifo.paths.map((d) => `<path d="${d}" />`).join("") +
+          (p.foco.glifo.circles ?? []).map((c) => `<circle cx="${c.cx}" cy="${c.cy}" r="${c.r}" />`).join("") +
+          `</g>`,
+      )
+      .join("");
   const fases = g.fases
     .map(
       (f) => `
-      ${f.indice % 2 === 0 ? `<rect x="${f.x0.toFixed(1)}" y="${g.plot.top}" width="${(f.x1 - f.x0).toFixed(1)}" height="${(g.faixaBottom - g.plot.top).toFixed(1)}" fill="#f4f6fb" opacity="0.6" />` : ""}
-      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.plot.top}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="#e7ecf3" stroke-width="1" stroke-dasharray="3 3" />` : ""}
+      ${f.indice % 2 === 0 ? `<rect x="${f.x0.toFixed(1)}" y="${g.bandTop}" width="${(f.x1 - f.x0).toFixed(1)}" height="${(g.faixaBottom - g.bandTop).toFixed(1)}" fill="#f4f6fb" opacity="0.6" />` : ""}
+      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.bandTop}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="#e7ecf3" stroke-width="1" stroke-dasharray="3 3" />` : ""}
+      ${iconesFase(f)}
       <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="#1e293b" font-size="11" font-weight="700">${esc(f.nome)}</text>
       <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 26).toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`,
     )
