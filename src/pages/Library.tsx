@@ -25,9 +25,9 @@ export function Library() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <SectionHeader
-        eyebrow="Consulta rápida"
+        eyebrow="Referência"
         icon={<LibraryIcon className="h-3 w-3" />}
-        title="Biblioteca"
+        title="Glossário"
         subtitle="Termos técnicos e conceitos-chave de decisão, biomecânica, fisiologia e segurança. Para o estagiário ou profissional relembrar um termo em segundos."
       />
 

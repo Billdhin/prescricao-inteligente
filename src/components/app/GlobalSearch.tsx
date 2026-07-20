@@ -30,7 +30,7 @@ import { useAlunos, useMode, type AppMode } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { cn } from "@/lib/utils";
 
-type Group = "Alunos" | "Exercícios" | "Grupos especiais" | "Casos" | "Trilhas" | "Biblioteca" | "Ir para";
+type Group = "Alunos" | "Exercícios" | "Grupos especiais" | "Casos" | "Trilhas" | "Glossário" | "Ir para";
 
 interface SearchItem {
   id: string;
@@ -84,7 +84,7 @@ const BASE_INDEX: SearchItem[] = [
     id: `lib-${b.id}`,
     label: b.termo,
     sub: b.categoria,
-    group: "Biblioteca" as Group,
+    group: "Glossário" as Group,
     to: b.verExercicio ? `/movement-lab/${b.verExercicio}` : "/library",
     haystack: norm([b.termo, b.categoria, b.resumo].join(" ")),
     Icon: LibraryIcon,
@@ -139,7 +139,7 @@ const NAV_ITEMS: SearchItem[] = [
     haystack: norm("trilhas licoes"), Icon: RouteIcon, modes: ["aprender"],
   },
   {
-    id: "nav-library", label: "Biblioteca", group: "Ir para", to: "/library",
+    id: "nav-library", label: "Glossário", group: "Ir para", to: "/library",
     haystack: norm("biblioteca glossario conceitos"), Icon: LibraryIcon,
   },
   {
@@ -164,7 +164,7 @@ const NAV_ITEMS: SearchItem[] = [
   },
 ];
 
-const GROUP_ORDER: Group[] = ["Alunos", "Exercícios", "Grupos especiais", "Casos", "Trilhas", "Biblioteca", "Ir para"];
+const GROUP_ORDER: Group[] = ["Alunos", "Exercícios", "Grupos especiais", "Casos", "Trilhas", "Glossário", "Ir para"];
 
 function search(q: string, index: SearchItem[]): SearchItem[] {
   const nq = norm(q.trim());

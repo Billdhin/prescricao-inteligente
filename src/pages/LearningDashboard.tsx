@@ -179,9 +179,9 @@ export function LearningDashboard() {
             to="/gps"
             icon={<Navigation className="h-5 w-5" />}
             tone="primary"
-            title="GPS da Prescrição"
+            title="Prescrever exercício"
             desc="Responda ao perfil e receba variações ranqueadas, com justificativa por critério."
-            cta="Abrir GPS"
+            cta="Abrir Prescrever exercício"
           />
           <ModuleCard
             to="/movement-lab"

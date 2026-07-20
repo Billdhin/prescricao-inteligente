@@ -98,7 +98,7 @@ const navByMode: Record<AppMode, NavSection[]> = {
       items: [
         { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
         { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
-        { to: "/library", label: "Biblioteca", icon: Library },
+        { to: "/library", label: "Glossário", icon: Library },
       ],
     },
     {
@@ -196,7 +196,7 @@ const TITULOS_ROTA: [RegExp, string][] = [
   [/^\/semaforo/, "Semáforo de Liberação"],
   [/^\/special-groups/, "Grupos Especiais"],
   [/^\/movement-lab/, "Laboratório Visual"],
-  [/^\/library/, "Biblioteca"],
+  [/^\/library/, "Glossário"],
   [/^\/assessments/, "Avaliações"],
   [/^\/protocols/, "Protocolos"],
   [/^\/comparador/, "Comparador"],

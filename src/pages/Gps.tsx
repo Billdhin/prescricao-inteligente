@@ -372,7 +372,7 @@ export function Gps() {
             </Pill>
             <SeloRCD compacto />
           </div>
-          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Prescrever</h1>
+          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Prescrever exercício</h1>
           <p className="mt-2 max-w-2xl text-ink-2">
             Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê.
           </p>
