@@ -518,11 +518,13 @@ function ImageHotspots({ title, content }: { title?: string; content: { caption:
  * numerados posicionados em % + legenda numerada abaixo. Mesmo padrão da camada
  * de hotspots do mapa muscular, para rótulo exato sobre ilustração realista.
  */
-function FigureImagePlate({ img }: { img: FigureImageDef }) {
+function FigureImagePlate({ img, compact }: { img: FigureImageDef; compact?: boolean }) {
   const markers = img.markers ?? [];
   return (
     <div>
-      <div className="relative overflow-hidden rounded-xl border border-border bg-white">
+      {/* A imagem é centralizada e limitada: um quadrado 1:1 em largura total tomava a tela
+          inteira. Os marcadores continuam alinhados por serem % sobre este mesmo contêiner. */}
+      <div className={cn("relative mx-auto overflow-hidden rounded-xl border border-border bg-white", compact ? "max-w-[280px]" : "max-w-[380px]")}>
         <img src={withBase(img.src)} alt={img.alt} className="block h-auto w-full" loading="lazy" />
         {markers.length > 0 && (
           <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -658,9 +660,9 @@ function NucleosAtlas({ title, steps }: { title?: string; steps: NucleoStep[] })
                 <figure className="mt-3 overflow-hidden rounded-lg border border-border bg-surface p-2">
                   {(() => {
                     const F = FIGURES[s.figureId!];
-                    return F.img ? <FigureImagePlate img={F.img} /> : <F.Comp />;
+                    return F.img ? <FigureImagePlate img={F.img} compact /> : <div className="mx-auto max-w-[440px]"><F.Comp /></div>;
                   })()}
-                  <figcaption className="mt-1.5 px-1 text-[11px] text-ink-3">{FIGURES[s.figureId].title}</figcaption>
+                  <figcaption className="mt-1.5 px-1 text-center text-[11px] text-ink-3">{FIGURES[s.figureId].title}</figcaption>
                 </figure>
               )}
 
