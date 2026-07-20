@@ -10,7 +10,6 @@ import { MovementLabList } from "@/pages/MovementLabList";
 import { MovementLabDetail } from "@/pages/MovementLabDetail";
 import { CasesList } from "@/pages/CasesList";
 import { CaseSolve } from "@/pages/CaseSolve";
-import { Favorites } from "@/pages/Favorites";
 import { TracksList } from "@/pages/TracksList";
 import { TrackDetail } from "@/pages/TrackDetail";
 import { Library } from "@/pages/Library";
@@ -92,7 +91,8 @@ export default function App() {
           <Route path="/special-groups" element={<SpecialGroups />} />
           <Route path="/special-groups/:slug" element={<SpecialGroupDetail />} />
           <Route path="/decisao" element={<DecisaoRedirect />} />
-          <Route path="/favorites" element={<Favorites />} />
+          {/* Favoritos de exercício foram fundidos no "Salvos" do Aprender. */}
+          <Route path="/favorites" element={<Navigate to="/aprender/salvos" replace />} />
           <Route path="/tracks" element={<TracksList />} />
           <Route path="/tracks/:slug" element={<TrackDetail />} />
           <Route path="/library" element={<Library />} />

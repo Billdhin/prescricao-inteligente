@@ -143,8 +143,8 @@ const NAV_ITEMS: SearchItem[] = [
     haystack: norm("biblioteca glossario conceitos"), Icon: LibraryIcon,
   },
   {
-    id: "nav-favorites", label: "Favoritos", group: "Ir para", to: "/favorites",
-    haystack: norm("favoritos salvos"), Icon: Star, modes: ["aprender"],
+    id: "nav-salvos", label: "Salvos", group: "Ir para", to: "/aprender/salvos",
+    haystack: norm("salvos favoritos guardados exercicios"), Icon: Star, modes: ["aprender"],
   },
   {
     id: "nav-history", label: "Histórico", group: "Ir para", to: "/history",

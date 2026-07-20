@@ -1,9 +1,14 @@
+import { Navigate } from "react-router-dom";
 import { useMode } from "@/lib/store";
 import { ProfessionalDashboard } from "@/pages/ProfessionalDashboard";
-import { LearningDashboard } from "@/pages/LearningDashboard";
 
-/** Painel único: modo "atender" → profissional; modo "aprender" → estudo/gamificação. */
+/**
+ * Painel. No modo atender é o painel profissional. No modo aprender existe uma
+ * home única (/aprender), então aqui redirecionamos para ela em vez de manter
+ * uma segunda tela inicial de estudo.
+ */
 export function Dashboard() {
   const mode = useMode((s) => s.mode);
-  return mode === "atender" ? <ProfessionalDashboard /> : <LearningDashboard />;
+  if (mode === "aprender") return <Navigate to="/aprender" replace />;
+  return <ProfessionalDashboard />;
 }
