@@ -22,7 +22,7 @@ import {
   Gauge,
 } from "lucide-react";
 import { exercises } from "@/data/exercises";
-import { cases } from "@/data/cases";
+import { getLearningRepository } from "@/features/learning/repository";
 import { tracks } from "@/data/tracks";
 import { biblioteca } from "@/data/library";
 import { specialGroups } from "@/data/specialGroups";
@@ -62,13 +62,13 @@ const BASE_INDEX: SearchItem[] = [
     haystack: norm([e.nome, e.grupoMuscular, e.equipamento, ...(e.objetivo || [])].join(" ")),
     Icon: FlaskConical,
   })),
-  ...cases.map((c) => ({
+  ...getLearningRepository().getCases().map((c) => ({
     id: `case-${c.slug}`,
-    label: c.titulo,
-    sub: c.tema,
+    label: c.title,
+    sub: c.profile,
     group: "Casos" as Group,
-    to: `/cases/${c.slug}`,
-    haystack: norm([c.titulo, c.tema, c.dificuldade].join(" ")),
+    to: `/aprender/casos/${c.slug}`,
+    haystack: norm([c.title, c.description, c.profile, c.conditions.join(" ")].join(" ")),
     Icon: BookOpen,
   })),
   ...tracks.map((t) => ({
@@ -131,8 +131,8 @@ const NAV_ITEMS: SearchItem[] = [
     haystack: norm("laboratorio visual movimento exercicios"), Icon: FlaskConical,
   },
   {
-    id: "nav-cases", label: "Casos", group: "Ir para", to: "/cases",
-    haystack: norm("casos praticos"), Icon: BookOpen, modes: ["aprender"],
+    id: "nav-cases", label: "Casos de prescrição", group: "Ir para", to: "/aprender/casos",
+    haystack: norm("casos praticos prescricao decisao"), Icon: BookOpen, modes: ["aprender"],
   },
   {
     id: "nav-tracks", label: "Trilhas", group: "Ir para", to: "/tracks",
@@ -147,8 +147,8 @@ const NAV_ITEMS: SearchItem[] = [
     haystack: norm("salvos favoritos guardados exercicios"), Icon: Star, modes: ["aprender"],
   },
   {
-    id: "nav-history", label: "Histórico", group: "Ir para", to: "/history",
-    haystack: norm("historico atividades"), Icon: HistoryIcon,
+    id: "nav-progresso", label: "Meu progresso", group: "Ir para", to: "/aprender/progresso",
+    haystack: norm("progresso historico atividades xp nivel sequencia"), Icon: HistoryIcon, modes: ["aprender"],
   },
   {
     id: "nav-account", label: "Configurações", group: "Ir para", to: "/account",

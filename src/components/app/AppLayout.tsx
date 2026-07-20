@@ -135,7 +135,6 @@ const navByMode: Record<AppMode, NavSection[]> = {
       items: [
         { to: "/aprender/biblioteca", label: "Biblioteca científica", icon: BookOpen },
         { to: "/aprender/salvos", label: "Salvos", icon: Bookmark },
-        { to: "/history", label: "Histórico", icon: History },
       ],
     },
     {
@@ -161,7 +160,7 @@ const navByMode: Record<AppMode, NavSection[]> = {
 // Rotas exclusivas de cada modo (não compartilhadas). Ao trocar de modo, só
 // redireciona à home do novo modo se a rota atual pertencer só ao modo que sai.
 const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps", "/prescrever-treino", "/semaforo", "/dashboard"];
-const APRENDER_ONLY = ["/aprender", "/tracks", "/cases", "/favorites", "/history"];
+const APRENDER_ONLY = ["/aprender", "/tracks"];
 const HOME_POR_MODO: Record<AppMode, string> = { atender: "/dashboard", aprender: "/aprender" };
 
 function tempoRelativo(ts: number) {

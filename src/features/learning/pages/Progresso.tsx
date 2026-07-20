@@ -1,11 +1,12 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, BrainCircuit, Stethoscope, Compass, BookOpen, Clock, Target } from "lucide-react";
+import { TrendingUp, BrainCircuit, Stethoscope, Compass, BookOpen, Clock, Target, Trophy, Flame } from "lucide-react";
 import { Card, SectionHeader } from "@/components/ui/primitives";
 import { getLearningRepository } from "../repository";
 import { competencies } from "../mocks";
 import { CompetencyBars, EmptyState } from "../components/shared";
 import { useAprender } from "../store";
+import { useProgress, nivelDoXp } from "@/lib/store";
 import { disciplineStatFrom } from "../progress";
 
 const repo = getLearningRepository();
@@ -24,6 +25,9 @@ export function Progresso() {
   const casesState = useAprender((s) => s.cases);
   const applications = useAprender((s) => s.applications);
   const history = useAprender((s) => s.history);
+  // Gamificacao (antes vivia na tela "Historico", agora consolidada aqui).
+  const { xp, streak } = useProgress();
+  const nivel = nivelDoXp(xp);
 
   const disciplines = repo.getDisciplines();
   const iniciadas = disciplines.filter((d) => disciplineStatFrom(d, lessons).status !== "nao-iniciado" || d.progress > 0);
@@ -49,6 +53,28 @@ export function Progresso() {
         title="Meu progresso"
         subtitle="Seu desenvolvimento profissional: o que você já consegue fazer, não apenas quantos conteúdos concluiu."
       />
+
+      {/* Nível e sequência (gamificação) */}
+      <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+        <Card className="flex items-center gap-3 p-4">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-tint text-primary">
+            <Trophy className="h-4 w-4" />
+          </span>
+          <div>
+            <div className="tabular font-display text-xl font-bold text-ink">Nível {nivel}</div>
+            <div className="text-xs text-ink-3">{xp} XP acumulados</div>
+          </div>
+        </Card>
+        <Card className="flex items-center gap-3 p-4">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface-soft text-cta">
+            <Flame className="h-4 w-4" />
+          </span>
+          <div>
+            <div className="tabular font-display text-xl font-bold text-ink">{streak}</div>
+            <div className="text-xs text-ink-3">dias seguidos</div>
+          </div>
+        </Card>
+      </div>
 
       {/* Métricas */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

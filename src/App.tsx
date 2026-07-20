@@ -8,12 +8,9 @@ import { Gps } from "@/pages/Gps";
 import { PrescreverTreino } from "@/pages/PrescreverTreino";
 import { MovementLabList } from "@/pages/MovementLabList";
 import { MovementLabDetail } from "@/pages/MovementLabDetail";
-import { CasesList } from "@/pages/CasesList";
-import { CaseSolve } from "@/pages/CaseSolve";
 import { TracksList } from "@/pages/TracksList";
 import { TrackDetail } from "@/pages/TrackDetail";
 import { Library } from "@/pages/Library";
-import { History } from "@/pages/History";
 import { Account } from "@/pages/Account";
 import { Alunos } from "@/pages/Alunos";
 import { AlunoDetail } from "@/pages/AlunoDetail";
@@ -84,8 +81,9 @@ export default function App() {
           <Route path="/movement-lab" element={<MovementLabList />} />
           <Route path="/movement-lab/:slug" element={<MovementLabDetail />} />
           <Route path="/comparador" element={<Comparador />} />
-          <Route path="/cases" element={<CasesList />} />
-          <Route path="/cases/:slug" element={<CaseSolve />} />
+          {/* Casos foram consolidados no acervo unico do Aprender. */}
+          <Route path="/cases" element={<Navigate to="/aprender/casos" replace />} />
+          <Route path="/cases/:slug" element={<Navigate to="/aprender/casos" replace />} />
           <Route path="/alunos" element={<Alunos />} />
           <Route path="/alunos/:id" element={<AlunoDetail />} />
           <Route path="/special-groups" element={<SpecialGroups />} />
@@ -96,7 +94,8 @@ export default function App() {
           <Route path="/tracks" element={<TracksList />} />
           <Route path="/tracks/:slug" element={<TrackDetail />} />
           <Route path="/library" element={<Library />} />
-          <Route path="/history" element={<History />} />
+          {/* Historico foi fundido em "Meu progresso". */}
+          <Route path="/history" element={<Navigate to="/aprender/progresso" replace />} />
           <Route path="/protocols" element={<Protocolos />} />
           <Route path="/assessments" element={<Avaliacoes />} />
           <Route path="/semaforo" element={<Semaforo />} />
