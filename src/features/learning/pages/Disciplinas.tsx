@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
 import { MACROAREAS } from "../constants";
 import { DisciplineCard, EmptyState } from "../components/shared";
+import { EstudarTabs } from "../components/EstudarTabs";
 import { disciplineStatFrom } from "../progress";
 import { useAprender } from "../store";
 import type { Discipline, Macroarea, ProgressoStatus } from "../types";
@@ -33,11 +34,12 @@ export function Disciplinas() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <SectionHeader
-        eyebrow="Aprender"
+        eyebrow="Estudar"
         icon={<Library className="h-3 w-3" />}
         title="Disciplinas"
         subtitle="Construa a base científica que sustenta suas decisões de treinamento."
       />
+      <EstudarTabs active="disciplinas" />
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />

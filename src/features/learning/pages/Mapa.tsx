@@ -7,6 +7,7 @@ import { getLearningRepository } from "../repository";
 import { MACROAREAS } from "../constants";
 import { KnowledgeMap } from "../components/KnowledgeMap";
 import { DisciplineCard } from "../components/shared";
+import { EstudarTabs } from "../components/EstudarTabs";
 import { disciplineStatFrom } from "../progress";
 import { useAprender } from "../store";
 import type { Macroarea, ProgressoStatus } from "../types";
@@ -26,11 +27,12 @@ export function MapaConhecimento() {
   return (
     <div className="mx-auto max-w-6xl space-y-7">
       <SectionHeader
-        eyebrow="Aprender"
+        eyebrow="Estudar"
         icon={<Network className="h-3 w-3" />}
         title="Mapa do conhecimento"
         subtitle="Explore como as ciências se conectam a uma decisão de prescrição e encontre por onde começar."
       />
+      <EstudarTabs active="mapa" />
 
       <KnowledgeMap />
 

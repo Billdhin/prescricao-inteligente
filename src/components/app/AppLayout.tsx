@@ -6,7 +6,6 @@ import {
   CalendarRange,
   FlaskConical,
   BookOpen,
-  Route as RouteIcon,
   Library,
   History,
   ClipboardList,
@@ -27,7 +26,6 @@ import {
   LifeBuoy,
   HelpCircle,
   ShieldCheck,
-  Network,
   Stethoscope,
   Search,
   Bookmark,
@@ -57,7 +55,16 @@ import {
 } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  // Prefixos extra que também acendem este item (ex.: "Estudar" acende nas
+  // rotas irmãs de trilhas e mapa, que são abas da mesma porta).
+  match?: string[];
+  // Rótulo curto para a barra inferior do mobile (onde o espaço é apertado).
+  short?: string;
+};
 // collapsible: entra no grupo recolhível "Mais recursos" (descoberta progressiva:
 // o 1º acesso vê só o caminho do aha; o resto abre quando o usuário quiser).
 type NavSection = { label?: string; items: NavItem[]; collapsible?: boolean };
@@ -67,19 +74,20 @@ type NavSection = { label?: string; items: NavItem[]; collapsible?: boolean };
 const navByMode: Record<AppMode, NavSection[]> = {
   atender: [
     {
-      // 3 pontos de partida do dia a dia: onde estou, meus alunos, e prescrever
+      // Os 5 destinos do dia a dia: onde estou, meus alunos, os dois níveis de
+      // prescrição e o cuidado de segurança. O resto mora em "Mais".
       items: [
-        { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
-        { to: "/alunos", label: "Alunos", icon: Users },
-        { to: "/gps", label: "Prescrever exercício", icon: Navigation },
-        { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange },
+        { to: "/dashboard", label: "Painel", icon: LayoutDashboard, short: "Painel" },
+        { to: "/alunos", label: "Alunos", icon: Users, short: "Alunos" },
+        { to: "/gps", label: "Prescrever exercício", icon: Navigation, short: "Exercício" },
+        { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange, short: "Treino" },
+        { to: "/semaforo", label: "Semáforo", icon: ShieldCheck, short: "Semáforo" },
       ],
     },
     {
       label: "Ferramentas da sessão",
       collapsible: true,
       items: [
-        { to: "/semaforo", label: "Semáforo", icon: ShieldCheck },
         { to: "/assessments", label: "Avaliações", icon: BarChart3 },
         { to: "/protocols", label: "Protocolos", icon: ClipboardList },
       ],
@@ -95,6 +103,7 @@ const navByMode: Record<AppMode, NavSection[]> = {
     },
     {
       label: "Ajuda",
+      collapsible: true,
       items: [
         { to: "/tutorial", label: "Tutoriais", icon: GraduationCap },
         { to: "/suporte", label: "Suporte", icon: LifeBuoy },
@@ -104,31 +113,34 @@ const navByMode: Record<AppMode, NavSection[]> = {
   ],
   aprender: [
     {
+      // 5 destinos: início, a porta única "Estudar" (disciplinas/trilhas/mapa em
+      // abas), aplicar em casos, consultar e acompanhar o progresso.
       items: [
-        { to: "/aprender", label: "Início", icon: LayoutDashboard },
-        { to: "/aprender/mapa", label: "Mapa do conhecimento", icon: Network },
-        { to: "/aprender/disciplinas", label: "Disciplinas", icon: Library },
-        { to: "/tracks", label: "Trilhas", icon: RouteIcon },
-        { to: "/aprender/casos", label: "Casos de prescrição", icon: Stethoscope },
+        { to: "/aprender", label: "Início", icon: LayoutDashboard, short: "Início" },
+        {
+          to: "/aprender/disciplinas",
+          label: "Estudar",
+          icon: Library,
+          match: ["/tracks", "/aprender/mapa"],
+          short: "Estudar",
+        },
+        { to: "/aprender/casos", label: "Casos de prescrição", icon: Stethoscope, short: "Casos" },
+        { to: "/aprender/consulta", label: "Consulta rápida", icon: Search, short: "Consulta" },
+        { to: "/aprender/progresso", label: "Meu progresso", icon: BarChart3, short: "Progresso" },
       ],
     },
     {
       label: "Conteúdo",
+      collapsible: true,
       items: [
         { to: "/aprender/biblioteca", label: "Biblioteca científica", icon: BookOpen },
-        { to: "/aprender/consulta", label: "Consulta rápida", icon: Search },
         { to: "/aprender/salvos", label: "Salvos", icon: Bookmark },
-      ],
-    },
-    {
-      label: "Meu desenvolvimento",
-      items: [
-        { to: "/aprender/progresso", label: "Meu progresso", icon: BarChart3 },
         { to: "/history", label: "Histórico", icon: History },
       ],
     },
     {
       label: "Referência",
+      collapsible: true,
       items: [
         { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
         { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
@@ -136,12 +148,13 @@ const navByMode: Record<AppMode, NavSection[]> = {
     },
     {
       label: "Ajuda",
+      collapsible: true,
       items: [
         { to: "/tutorial", label: "Tutoriais", icon: GraduationCap },
         { to: "/suporte", label: "Suporte", icon: LifeBuoy },
-        { to: "/account", label: "Configurações", icon: Settings },
       ],
     },
+    { label: "Sua conta", items: [{ to: "/account", label: "Configurações", icon: Settings }] },
   ],
 };
 
@@ -235,13 +248,14 @@ export function AppLayout() {
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar />
-          <main className="min-w-0 flex-1 p-4 md:p-6 lg:p-8">
+          <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-8">
             <React.Suspense fallback={<RouteFallback />}>
               <Outlet />
             </React.Suspense>
           </main>
         </div>
       </div>
+      <BottomBar />
       {onboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
       <Toasts />
     </div>
@@ -617,17 +631,13 @@ function MaisRecursosToggle({ aberto, onToggle }: { aberto: boolean; onToggle: (
   );
 }
 
-function NavGroup({
-  items,
-  collapsed,
-}: {
-  items: { to: string; label: string; icon: React.ComponentType<{ className?: string }> }[];
-  collapsed: boolean;
-}) {
+function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }) {
+  const { pathname } = useLocation();
   return (
     <ul className="space-y-1">
       {items.map((item) => {
         const Icon = item.icon;
+        const forcado = item.match?.some((p) => pathname.startsWith(p)) ?? false;
         return (
           <li key={item.to}>
             <NavLink
@@ -636,7 +646,7 @@ function NavGroup({
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
+                  isActive || forcado
                     ? "bg-primary-tint text-primary"
                     : "text-ink-2 hover:bg-surface-soft hover:text-ink",
                 )
@@ -649,6 +659,45 @@ function NavGroup({
         );
       })}
     </ul>
+  );
+}
+
+/**
+ * Barra inferior do mobile: os mesmos ~5 destinos primários do modo, sempre à
+ * mão com o polegar. Some no desktop (lg+), onde a barra lateral cumpre o papel.
+ * São links de rota com aria-current; o "Estudar" acende também nas rotas irmãs.
+ */
+function BottomBar() {
+  const { mode } = useMode();
+  const { pathname } = useLocation();
+  const itens = navByMode[mode][0].items;
+  return (
+    <nav
+      aria-label="Navegação principal"
+      className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+    >
+      {itens.map((item) => {
+        const Icon = item.icon;
+        const forcado = item.match?.some((p) => pathname.startsWith(p)) ?? false;
+        return (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            aria-current={forcado ? "page" : undefined}
+            className={({ isActive }) =>
+              cn(
+                "flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium leading-none transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+                isActive || forcado ? "text-primary" : "text-ink-3 hover:text-ink-2",
+              )
+            }
+          >
+            <Icon className="h-5 w-5 shrink-0" aria-hidden />
+            <span className="max-w-full truncate">{item.short ?? item.label}</span>
+          </NavLink>
+        );
+      })}
+    </nav>
   );
 }
 

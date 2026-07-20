@@ -2,16 +2,18 @@ import { Link } from "react-router-dom";
 import { Route as RouteIcon, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Card, Pill, Progress, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { tracks } from "@/data/tracks";
+import { EstudarTabs } from "@/features/learning/components/EstudarTabs";
 
 export function TracksList() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <SectionHeader
-        eyebrow="Evolução"
+        eyebrow="Estudar"
         icon={<RouteIcon className="h-3 w-3" />}
         title="Trilhas"
         subtitle="Sequências guiadas que conectam conceitos, análises no Laboratório e casos práticos."
       />
+      <EstudarTabs active="trilhas" />
 
       <div className="grid gap-4 md:grid-cols-2">
         {tracks.map((t) => {
