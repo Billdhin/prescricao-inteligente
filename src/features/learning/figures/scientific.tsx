@@ -1539,10 +1539,10 @@ export const FIGURES: Record<string, FigureDef> = {
       src: "/figuras/unidade-motora.webp",
       alt: "Um motoneurônio com corpo celular e dendritos à esquerda, o axônio que segue à direita e se ramifica em terminais, cada um tocando uma fibra muscular esquelética.",
       markers: [
-        { n: 1, x: 12, y: 46, label: "Corpo celular do motoneurônio α" },
-        { n: 2, x: 42, y: 42, label: "Axônio" },
-        { n: 3, x: 66, y: 42, label: "Terminais axônicos (junção neuromuscular)" },
-        { n: 4, x: 88, y: 16, label: "Fibras musculares inervadas" },
+        { n: 1, x: 17, y: 51, label: "Corpo celular do motoneurônio α" },
+        { n: 2, x: 45, y: 49, label: "Axônio" },
+        { n: 3, x: 68, y: 46, label: "Terminais axônicos (junção neuromuscular)" },
+        { n: 4, x: 80, y: 20, label: "Fibras musculares inervadas" },
       ],
       caption:
         "Um motoneurônio e todas as fibras que ele inerva formam uma unidade motora. A força cresce por recrutamento e por frequência de disparo.",
