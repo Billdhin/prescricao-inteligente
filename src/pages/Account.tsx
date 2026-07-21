@@ -17,7 +17,9 @@ const planos: { value: Plan; label: string; desc: string }[] = [
 
 export function Account() {
   const user = useUser();
-  const { name, plan, cref, email, telefone, empresa, site, fotoDataUrl, logoDataUrl, senhaHash } = user;
+  const { name, plan, cref, email, telefone, empresa, site, fotoDataUrl, logoDataUrl, corPrimaria, senhaHash } = user;
+  // Cor efetiva da prévia: a cor da marca quando definida, senão a do produto.
+  const corMarca = corPrimaria || "var(--primary)";
   const cloudConfigured = useCloudAuth((s) => s.configured);
   const [confirmReset, setConfirmReset] = React.useState(false);
 
@@ -198,17 +200,45 @@ export function Account() {
           </label>
         </div>
 
+        {/* Cor da marca */}
+        <div className="mt-4">
+          <span className="mb-1.5 block text-sm font-semibold text-ink">Cor da marca</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="color"
+              aria-label="Escolher cor da marca"
+              value={corPrimaria || "#2563EB"}
+              onChange={(e) => user.setPerfil({ corPrimaria: e.target.value })}
+              className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-white p-1"
+            />
+            <span className="tabular text-sm text-ink-2">
+              {corPrimaria ? corPrimaria.toUpperCase() : "Cor do produto"}
+            </span>
+            {corPrimaria && (
+              <button onClick={() => user.setPerfil({ corPrimaria: "" })} className={buttonClasses("ghost", "sm")}>
+                Usar a cor do produto
+              </button>
+            )}
+          </div>
+          <p className="mt-1.5 text-xs text-ink-3">
+            Tinge o cabeçalho dos documentos. No portal do aluno, vai colorir o app inteiro.
+          </p>
+        </div>
+
         {/* Prévia do cabeçalho do documento */}
         <div className="mt-5 rounded-xl border border-border bg-white p-4">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
             Prévia do cabeçalho dos documentos
           </div>
-          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b-2 border-primary pb-3">
+          <div
+            className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b-2 pb-3"
+            style={{ borderColor: corMarca }}
+          >
             <div className="flex min-w-0 items-center gap-3">
               {logoDataUrl && <img src={logoDataUrl} alt="" className="h-10 max-w-[140px] object-contain" />}
               <div className="min-w-0">
-                <div className="font-display text-base font-extrabold text-primary">{name || "Seu nome"}</div>
-                {cref && <div className="text-xs font-bold text-primary">CREF {cref}</div>}
+                <div className="font-display text-base font-extrabold" style={{ color: corMarca }}>{name || "Seu nome"}</div>
+                {cref && <div className="text-xs font-bold" style={{ color: corMarca }}>CREF {cref}</div>}
                 {empresa && <div className="text-xs text-ink-2">{empresa}</div>}
               </div>
             </div>

@@ -222,30 +222,33 @@ export function exportPlanoPDF({
   const biblio = bibliografia(plano.refIds);
   const reavaliacoes = plano.macrociclo.mesociclos.filter((m) => m.reavaliacao).map((m) => m.semanaFim);
 
+    // Acento do documento: a cor da marca do profissional, senão a do produto.
+  const corMarca = marca?.corPrimaria || "#2563eb";
+
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Plano de treino · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 12px; }
-    .brand .prof { font-size: 20px; font-weight: 800; color: #2563eb; }
+    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid ${corMarca}; padding-bottom: 12px; }
+    .brand .prof { font-size: 20px; font-weight: 800; color: ${corMarca}; }
     .brand .sub { font-size: 12px; color: #64748b; }
     h1 { font-size: 22px; margin: 20px 0 2px; }
     .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
     .aluno { background: #f4f6fb; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
     .bloco { margin: 16px 0; }
-    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: #2563eb; margin: 0 0 8px; }
+    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: ${corMarca}; margin: 0 0 8px; }
     .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; margin: 10px 0 4px; }
     .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { background: #eaf1fe; color: #2563eb; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+    .tag { background: #eaf1fe; color: ${corMarca}; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
     ul.crit { margin: 4px 0; padding-left: 18px; font-size: 13px; }
     .legenda { display: flex; gap: 14px; font-size: 11px; color: #475569; margin-top: 4px; }
     .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
     .legenda-nota { font-size: 11px; color: #94a3b8; margin: 0 0 4px; }
     .meso { margin: 18px 0; padding-top: 12px; border-top: 1px solid #e7ecf3; page-break-inside: avoid; }
     .meso-tit { font-size: 15px; margin: 0 0 2px; color: #1e293b; text-transform: none; letter-spacing: 0; }
-    .meso-tit .num { display: inline-flex; width: 20px; height: 20px; border-radius: 6px; background: #2563eb; color: #fff; font-size: 12px; align-items: center; justify-content: center; margin-right: 6px; }
+    .meso-tit .num { display: inline-flex; width: 20px; height: 20px; border-radius: 6px; background: ${corMarca}; color: #fff; font-size: 12px; align-items: center; justify-content: center; margin-right: 6px; }
     .meso-tit .range { font-size: 12px; font-weight: 400; color: #94a3b8; margin-left: 6px; }
     .meso-foco { font-size: 13px; color: #475569; margin: 2px 0 6px; }
     .tend { font-size: 12px; color: #64748b; margin: 0 0 6px; }
@@ -282,7 +285,7 @@ export function exportPlanoPDF({
       <div style="display:flex;align-items:center;gap:12px">
         ${marca?.logoDataUrl ? `<img src="${marca.logoDataUrl}" alt="" style="height:40px;max-width:140px;object-fit:contain" />` : ""}
         <div><div class="prof">${esc(profissional)}</div>${
-          cref ? `<div class="sub" style="font-weight:700;color:#2563eb">CREF ${esc(cref)}</div>` : ""
+          cref ? `<div class="sub" style="font-weight:700;color:${corMarca}">CREF ${esc(cref)}</div>` : ""
         }${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}<div class="sub">Plano de treino</div></div>
       </div>
       <div class="sub" style="text-align:right">${fmt(plano.data)}${

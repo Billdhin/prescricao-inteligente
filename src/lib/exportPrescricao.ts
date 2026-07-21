@@ -92,32 +92,35 @@ export function exportPrescricaoPDF({
     ? aluno.restricoes.map((r) => esc(rotuloRestricao(r.tag))).join(", ")
     : "nenhuma";
 
+  // Cor de acento do documento: a cor da marca do profissional, senão a do produto.
+  const cor = marca?.corPrimaria || "#2563eb";
+
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Prescrição · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 12px; }
-    .brand .prof { font-size: 20px; font-weight: 800; color: #2563eb; }
+    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid ${cor}; padding-bottom: 12px; }
+    .brand .prof { font-size: 20px; font-weight: 800; color: ${cor}; }
     .brand .sub { font-size: 12px; color: #64748b; }
     h1 { font-size: 22px; margin: 20px 0 2px; }
     .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
     .aluno { background: #f4f6fb; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
     .aluno strong { color: #1e293b; }
     .bloco { margin: 16px 0; }
-    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: #2563eb; margin: 0 0 8px; }
+    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: ${cor}; margin: 0 0 8px; }
     ul.exs { list-style: none; padding: 0; margin: 0; }
     .ex { border: 1px solid #e7ecf3; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
     .ex-head { display: flex; align-items: center; gap: 8px; }
-    .ex-num { width: 22px; height: 22px; border-radius: 50%; background: #2563eb; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+    .ex-num { width: 22px; height: 22px; border-radius: 50%; background: ${cor}; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
     .ex-nome { font-weight: 700; flex: 1; }
     .ex-score { font-size: 12px; font-weight: 700; color: #16a34a; }
     .ex-resumo { font-size: 13px; color: #475569; margin: 6px 0 0; }
     .ex-series { font-size: 12px; color: #64748b; margin: 4px 0 0; }
     .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; margin: 10px 0 4px; }
     .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { background: #eaf1fe; color: #2563eb; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+    .tag { background: #eaf1fe; color: ${cor}; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
     ul.crit { margin: 4px 0; padding-left: 18px; font-size: 13px; }
     .foot { margin-top: 24px; border-top: 1px solid #e7ecf3; padding-top: 12px; font-size: 11px; color: #94a3b8; }
     @media print { .page { padding: 0; } @page { margin: 16mm; } }
@@ -127,7 +130,7 @@ export function exportPrescricaoPDF({
       <div style="display:flex;align-items:center;gap:12px">
         ${marca?.logoDataUrl ? `<img src="${marca.logoDataUrl}" alt="" style="height:40px;max-width:140px;object-fit:contain" />` : ""}
         <div><div class="prof">${esc(profissional)}</div>${
-          cref ? `<div class="sub" style="font-weight:700;color:#2563eb">CREF ${esc(cref)}</div>` : ""
+          cref ? `<div class="sub" style="font-weight:700;color:${cor}">CREF ${esc(cref)}</div>` : ""
         }${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}<div class="sub">Prescrição de exercício</div></div>
       </div>
       <div class="sub" style="text-align:right">${fmt(presc.data)}${

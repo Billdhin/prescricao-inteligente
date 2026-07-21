@@ -44,6 +44,7 @@ export async function carregarPerfil(): Promise<Partial<PerfilRemoto> | null> {
     site: data.site ?? "",
     fotoDataUrl: data.foto_url ?? "",
     logoDataUrl: data.logo_url ?? "",
+    corPrimaria: data.cor_primaria ?? "",
     plan: (data.plan ?? "free") as Plan,
     mode: (data.mode ?? "atender") as "atender" | "aprender",
   };
@@ -60,6 +61,7 @@ export async function salvarPerfil(patch: Partial<PerfilRemoto>): Promise<void> 
   if (patch.site !== undefined) row.site = patch.site;
   if (patch.fotoDataUrl !== undefined) row.foto_url = patch.fotoDataUrl;
   if (patch.logoDataUrl !== undefined) row.logo_url = patch.logoDataUrl;
+  if (patch.corPrimaria !== undefined) row.cor_primaria = patch.corPrimaria;
   if (patch.plan !== undefined) row.plan = patch.plan;
   if (patch.mode !== undefined) row.mode = patch.mode;
   const { error } = await getSupabase().from("profiles").upsert(row);

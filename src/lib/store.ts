@@ -41,6 +41,9 @@ export interface PerfilCampos {
   fotoDataUrl: string;
   /** logo da marca (dataURL redimensionada; cabeçalho dos documentos) */
   logoDataUrl: string;
+  /** cor principal da marca (hex, ex.: "#2563EB"); vazio usa a cor do produto.
+   *  Tinge o cabeçalho dos documentos e, no portal do aluno, o app inteiro. */
+  corPrimaria: string;
 }
 
 interface UserState extends PerfilCampos {
@@ -70,6 +73,7 @@ export const useUser = create<UserState>()(
       site: "",
       fotoDataUrl: "",
       logoDataUrl: "",
+      corPrimaria: "",
       senhaHash: "",
       senhaSalt: "",
       setPlan: (plan) => {
@@ -104,6 +108,7 @@ export interface MarcaDocumento {
   email?: string;
   telefone?: string;
   logoDataUrl?: string;
+  corPrimaria?: string;
 }
 
 export function marcaDoUsuario(u: Pick<UserState, keyof PerfilCampos>): MarcaDocumento {
@@ -115,6 +120,7 @@ export function marcaDoUsuario(u: Pick<UserState, keyof PerfilCampos>): MarcaDoc
     email: u.email || undefined,
     telefone: u.telefone || undefined,
     logoDataUrl: u.logoDataUrl || undefined,
+    corPrimaria: u.corPrimaria || undefined,
   };
 }
 
