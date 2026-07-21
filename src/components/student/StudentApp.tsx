@@ -13,6 +13,7 @@ import {
   type BlocoSessao,
   semanaAtual,
   mesocicloAtual,
+  getMetodo,
 } from "@/data/periodizacao";
 
 const nomeDoBloco = (b: BlocoSessao): string => {
@@ -180,6 +181,8 @@ function BlocoRow({ bloco, cor }: { bloco: BlocoSessao; cor: string }) {
     ? [bloco.formato, bloco.duracao, bloco.intensidade, bloco.recuperacao && bloco.recuperacao !== "-" ? `Recuperação: ${bloco.recuperacao}` : ""]
     : [bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : bloco.series || bloco.reps, bloco.intensidade, bloco.intervalo ? `Intervalo: ${bloco.intervalo}` : ""];
   const detalhe = linhas.filter(Boolean).join(" · ");
+  const metodo = getMetodo(bloco.metodo);
+  const metodoVisivel = metodo && metodo.id !== "tradicional" ? metodo : undefined;
   return (
     <div className="rounded-xl border border-border bg-surface-soft p-3">
       <div className="flex items-center gap-2">
@@ -187,8 +190,17 @@ function BlocoRow({ bloco, cor }: { bloco: BlocoSessao; cor: string }) {
           {aerobio ? <HeartPulse className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
         </span>
         <span className="min-w-0 flex-1 font-semibold text-ink">{nomeDoBloco(bloco)}</span>
+        {metodoVisivel && (
+          <span
+            className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
+            style={{ background: cor }}
+          >
+            {metodoVisivel.nome}
+          </span>
+        )}
       </div>
       {detalhe && <p className="mt-1.5 text-sm text-ink-2">{detalhe}</p>}
+      {metodoVisivel && <p className="mt-1 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
       {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
     </div>
   );

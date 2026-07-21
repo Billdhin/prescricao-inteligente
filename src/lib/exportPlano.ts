@@ -2,7 +2,7 @@ import type { Aluno } from "@/data/alunos";
 import type { MarcaDocumento } from "@/lib/store";
 import type { Macrociclo, Mesociclo, Microciclo, PlanoTreino, Sessao } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
-import { getModelo } from "@/data/periodizacao";
+import { getModelo, getMetodo } from "@/data/periodizacao";
 import { getModalidade } from "@/data/modalities";
 import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -64,7 +64,9 @@ function sessaoHtml(s: Sessao) {
             .map(
               (b) => `
             <tr>
-              <td class="ex">${esc(b.nome ?? "")}</td>
+              <td class="ex">${esc(b.nome ?? "")}${
+                b.metodo && b.metodo !== "tradicional" ? ` <b>(${esc(getMetodo(b.metodo)?.nome ?? "")})</b>` : ""
+              }</td>
               <td>${esc(b.series ?? "")}</td>
               <td>${esc(b.reps ?? "")}</td>
               <td>${esc(b.intensidade ?? "")}</td>

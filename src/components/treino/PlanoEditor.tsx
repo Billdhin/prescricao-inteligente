@@ -27,6 +27,9 @@ import {
   type BlocoSessao,
   type Tendencia,
   type TipoMicrociclo,
+  type MetodoSerie,
+  METODOS_SERIE,
+  getMetodo,
 } from "@/data/periodizacao";
 import { conferirFaixa, faixaSugerida, type CampoFaixa } from "@/lib/gps/faixas";
 import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
@@ -456,7 +459,14 @@ function QuadroForca({ blocos }: { blocos: BlocoSessao[] }) {
           <tbody>
             {blocos.map((b) => (
               <tr key={b.id} className="border-t border-border/60 align-top">
-                <td className="px-2.5 py-1.5 font-semibold text-ink">{b.nome}</td>
+                <td className="px-2.5 py-1.5 font-semibold text-ink">
+                  {b.nome}
+                  {b.metodo && b.metodo !== "tradicional" && (
+                    <span className="ml-1.5 rounded-full bg-primary-tint px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                      {getMetodo(b.metodo)?.nome}
+                    </span>
+                  )}
+                </td>
                 <td className="px-1.5 py-1.5 text-ink-2">{b.series}</td>
                 <td className="px-1.5 py-1.5 text-ink-2">{b.reps}</td>
                 <td className="px-1.5 py-1.5 text-ink-2">{b.intensidade}</td>
@@ -710,6 +720,31 @@ function BlocoRow({
           );
         })}
       </div>
+      {!aerobio && (
+        <div className="mt-1.5">
+          <label className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-ink-3">Método de série</label>
+          <select
+            value={bloco.metodo ?? "tradicional"}
+            onChange={(e) =>
+              onChange({
+                ...bloco,
+                metodo: e.target.value === "tradicional" ? undefined : (e.target.value as MetodoSerie),
+              })
+            }
+            aria-label="Método de série"
+            className="input h-8 max-w-[220px] py-0 text-xs"
+          >
+            {METODOS_SERIE.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.nome}
+              </option>
+            ))}
+          </select>
+          {bloco.metodo && bloco.metodo !== "tradicional" && (
+            <p className="mt-0.5 text-[10px] leading-tight text-ink-3">{getMetodo(bloco.metodo)?.descricao}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -16,8 +16,52 @@ import type { Nivel } from "@/data/types";
 /* ============================ Árvore do plano (persistida) ============================ */
 
 /** Um exercício ou modalidade dentro de uma sessão, com os parâmetros editáveis. */
+/**
+ * Método de série (técnica de intensidade). São definições consagradas de
+ * treinamento; a descrição diz apenas COMO executar, sem inventar número. O
+ * profissional escolhe o método por bloco; o aluno vê a instrução no portal.
+ */
+export type MetodoSerie =
+  | "tradicional"
+  | "bi-set"
+  | "tri-set"
+  | "super-set"
+  | "drop-set"
+  | "rest-pause"
+  | "piramide"
+  | "myo-reps"
+  | "cluster"
+  | "pre-exaustao";
+
+export interface MetodoInfo {
+  id: MetodoSerie;
+  nome: string;
+  /** instrução curta de execução (sem número inventado) */
+  descricao: string;
+}
+
+export const METODOS_SERIE: MetodoInfo[] = [
+  { id: "tradicional", nome: "Tradicional", descricao: "Séries com descanso completo entre elas." },
+  { id: "bi-set", nome: "Bi-set", descricao: "Dois exercícios em sequência, sem descanso entre eles; descanso só ao fim do par." },
+  { id: "tri-set", nome: "Tri-set", descricao: "Três exercícios em sequência, sem descanso entre eles." },
+  { id: "super-set", nome: "Super-set", descricao: "Dois exercícios de músculos antagonistas em sequência, sem descanso entre eles." },
+  { id: "drop-set", nome: "Drop-set", descricao: "Ao chegar à falha, reduz a carga e continua sem descanso, por um ou mais estágios." },
+  { id: "rest-pause", nome: "Rest-pause", descricao: "Leva a série próximo da falha, faz pausas curtas e retoma, acumulando repetições." },
+  { id: "piramide", nome: "Pirâmide", descricao: "A carga sobe (ou desce) a cada série, ajustando as repetições na direção oposta." },
+  { id: "myo-reps", nome: "Myo-reps", descricao: "Uma série de ativação até perto da falha, seguida de mini-séries com pausas curtas." },
+  { id: "cluster", nome: "Cluster", descricao: "Divide a série em blocos curtos com pausas intra-série, mantendo a qualidade das repetições." },
+  { id: "pre-exaustao", nome: "Pré-exaustão", descricao: "Um exercício de isolamento antes do composto, para fatigar o músculo-alvo primeiro." },
+];
+
+export const getMetodo = (id?: MetodoSerie): MetodoInfo | undefined =>
+  id ? METODOS_SERIE.find((m) => m.id === id) : undefined;
+
 export interface BlocoSessao {
   id: string;
+  /** técnica de série do bloco (bi-set, drop-set...); ausente = tradicional */
+  metodo?: MetodoSerie;
+  /** agrupa blocos que se executam juntos (bi-set/super-set/tri-set) */
+  grupoMetodo?: string;
   /**
    * Que tipo de trabalho o bloco carrega. Força e aeróbio se prescrevem por variáveis
    * DIFERENTES: força por séries × repetições × carga × intervalo; aeróbio por formato,
