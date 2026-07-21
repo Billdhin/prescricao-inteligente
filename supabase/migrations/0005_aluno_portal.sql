@@ -78,11 +78,22 @@ create policy avaliacoes_aluno_read on public.avaliacoes
                             where a.id = avaliacoes.aluno_id and a.user_id = avaliacoes.user_id
                               and a.auth_user_id = auth.uid()));
 
--- o aluno le o profile do profissional dele (para logo/nome/cor da marca)
+-- o aluno le o profile do profissional dele (para logo/nome/cor da marca).
+-- Consultar `profiles` DENTRO de uma policy de `profiles` causa recursao infinita
+-- ("infinite recursion detected in policy"). Resolve com uma funcao SECURITY
+-- DEFINER que le o vinculo sem disparar a RLS.
+create or replace function public.meu_professional_id()
+returns uuid
+language sql
+stable
+security definer
+set search_path = public
+as $$ select professional_id from public.profiles where id = auth.uid() $$;
+grant execute on function public.meu_professional_id() to authenticated;
+
 drop policy if exists profiles_aluno_read_prof on public.profiles;
 create policy profiles_aluno_read_prof on public.profiles
-  for select using (exists (select 1 from public.profiles me
-                            where me.id = auth.uid() and me.professional_id = profiles.id));
+  for select using (profiles.id = public.meu_professional_id());
 
 -- 5) RPC de reivindicacao do convite (security definer) --------------------
 -- O aluno recem-cadastrado chama claim_convite(token): vincula a conta ao
@@ -100,6 +111,12 @@ begin
    where token = p_token and usado_em is null and expira_em > now();
   if not found then
     raise exception 'Convite invalido ou expirado';
+  end if;
+  -- N6: nao converte em aluno uma conta que ja atua como profissional (tem alunos
+  -- proprios). Assim, um profissional que apenas ABRE o link de convite nao tem o
+  -- proprio perfil sequestrado para 'aluno'.
+  if exists (select 1 from public.alunos where user_id = auth.uid()) then
+    raise exception 'Esta conta ja atua como profissional. Use uma conta nova para o acesso do aluno.';
   end if;
   update public.alunos
      set auth_user_id = auth.uid()

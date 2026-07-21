@@ -5,6 +5,42 @@ import { onAuthChange, getSession } from "./supabaseAuth";
 import * as repo from "./supabaseRepo";
 import { setCloudOn } from "./cloudSync";
 import { useAlunos, useUser } from "@/lib/store";
+import { toast } from "@/lib/toast";
+
+// Marcador de "dono" dos stores locais: a conta a que os dados neste navegador
+// pertencem. Impede que a base de um profissional suba para a conta de outro que
+// logue no mesmo aparelho (N2).
+const CHAVE_DONO = "pi-cloud-owner";
+const donoLocal = () => {
+  try {
+    return localStorage.getItem(CHAVE_DONO);
+  } catch {
+    return null;
+  }
+};
+const setDonoLocal = (id: string | null) => {
+  try {
+    if (id) localStorage.setItem(CHAVE_DONO, id);
+    else localStorage.removeItem(CHAVE_DONO);
+  } catch {
+    /* ignore */
+  }
+};
+
+/** Zera os stores locais (na troca/saida de conta), para o proximo usuario nao
+ *  ver os dados do anterior. */
+function limparStoresLocais() {
+  useAlunos.setState({ alunos: [], avaliacoes: [], prescricoes: [], planos: [], liberacoes: [], execucoes: [], posturais: [] });
+  useUser.setState({ name: "", cref: "", email: "", telefone: "", empresa: "", site: "", fotoDataUrl: "", logoDataUrl: "", corPrimaria: "" });
+}
+
+/** Une por id: a nuvem e a base, e os registros que so existem no local (ex.: os
+ *  que falharam de subir) sao preservados em vez de sumir. */
+function unirPorId<T extends { id: string }>(nuvem: T[], local: T[]): { merged: T[]; soLocais: T[] } {
+  const ids = new Set(nuvem.map((x) => x.id));
+  const soLocais = local.filter((x) => !ids.has(x.id));
+  return { merged: [...nuvem, ...soLocais], soLocais };
+}
 
 /**
  * Estado de autenticação em nuvem (Fase 5 — login real).
@@ -59,7 +95,7 @@ async function hydrateAluno(professionalId: string | null) {
   const marca = professionalId
     ? await repo.carregarMarcaProfissional(professionalId).catch(() => null)
     : null;
-  useAlunos.setState({ alunos, planos, avaliacoes, execucoes, prescricoes: [], liberacoes: [] });
+  useAlunos.setState({ alunos, planos, avaliacoes, execucoes, prescricoes: [], liberacoes: [], posturais: [] });
   useCloudAuth.setState({ role: "aluno", alunoId: alunos[0]?.id ?? null, professionalId, marca });
 }
 
@@ -74,6 +110,7 @@ async function hydrate(userId: string) {
 
     if (perfil?.role === "aluno") {
       await hydrateAluno(perfil.professionalId ?? null);
+      setDonoLocal(userId);
       return;
     }
     useCloudAuth.setState({ role: "profissional", alunoId: null, professionalId: null, marca: null });
@@ -89,19 +126,57 @@ async function hydrate(userId: string) {
 
     const nuvemVazia = alunos.length === 0;
     const local = useAlunos.getState();
+    const dono = donoLocal();
+    // O local só "pertence" a esta conta quando o marcador é dela ou está vazio
+    // (primeira vez). Se for de OUTRO usuário, não subimos nada dele (N2).
+    const localEhDesteUsuario = dono === userId || dono === null;
 
-    if (nuvemVazia && local.alunos.length > 0) {
+    if (nuvemVazia && localEhDesteUsuario && local.alunos.length > 0) {
       // Primeiro login com dados só neste aparelho: sobe o que existe (uma vez).
-      for (const a of local.alunos) await repo.salvarAluno(a).catch(() => {});
-      for (const av of local.avaliacoes) await repo.salvarAvaliacao(av).catch(() => {});
-      for (const p of local.prescricoes) await repo.salvarPrescricao(p).catch(() => {});
-      for (const p of local.planos) await repo.salvarPlano(p).catch(() => {});
-      for (const l of local.liberacoes) await repo.salvarLiberacao(l).catch(() => {});
+      // Sem catch silencioso: conta as falhas e avisa; o local segue como fonte (N3).
+      let falhas = 0;
+      const subir = async (fn: () => Promise<unknown>) => {
+        try {
+          await fn();
+        } catch {
+          falhas++;
+        }
+      };
+      for (const a of local.alunos) await subir(() => repo.salvarAluno(a));
+      for (const av of local.avaliacoes) await subir(() => repo.salvarAvaliacao(av));
+      for (const p of local.prescricoes) await subir(() => repo.salvarPrescricao(p));
+      for (const p of local.planos) await subir(() => repo.salvarPlano(p));
+      for (const l of local.liberacoes) await subir(() => repo.salvarLiberacao(l));
+      if (falhas > 0) {
+        toast(`${falhas} registro(s) não subiram para a nuvem; seguem salvos neste aparelho e tentaremos de novo.`);
+      }
       // mantém o store local como está (já é a fonte que acabou de subir)
-    } else {
-      // A nuvem manda: substitui o store local pelos dados do usuário.
+    } else if (!localEhDesteUsuario) {
+      // O local é de OUTRA conta neste aparelho: não sobe nada; usa só a nuvem.
       useAlunos.setState({ alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes });
+    } else {
+      // A nuvem manda, mas RECONCILIA: preserva o que só existe no local (ex.: o
+      // que falhou de subir antes) e re-sobe esses registros, em vez de apagá-los.
+      const ma = unirPorId(alunos, local.alunos);
+      const mav = unirPorId(avaliacoes, local.avaliacoes);
+      const mp = unirPorId(prescricoes, local.prescricoes);
+      const mpl = unirPorId(planos, local.planos);
+      const ml = unirPorId(liberacoes, local.liberacoes);
+      useAlunos.setState({
+        alunos: ma.merged,
+        avaliacoes: mav.merged,
+        prescricoes: mp.merged,
+        planos: mpl.merged,
+        liberacoes: ml.merged,
+        execucoes,
+      });
+      for (const a of ma.soLocais) await repo.salvarAluno(a).catch(() => {});
+      for (const av of mav.soLocais) await repo.salvarAvaliacao(av).catch(() => {});
+      for (const p of mp.soLocais) await repo.salvarPrescricao(p).catch(() => {});
+      for (const p of mpl.soLocais) await repo.salvarPlano(p).catch(() => {});
+      for (const l of ml.soLocais) await repo.salvarLiberacao(l).catch(() => {});
     }
+    setDonoLocal(userId);
 
     // Perfil: se a nuvem tem perfil preenchido, usa; senão, sobe o local.
     const u = useUser.getState();
@@ -156,6 +231,10 @@ function aplicarSessao(session: Session | null) {
   } else {
     setCloudOn(false);
     hydratedFor = null;
+    // Ao sair, zera os stores e o marcador de dono, para o proximo login neste
+    // aparelho comecar limpo (nao ver os dados do usuario anterior) (N2).
+    limparStoresLocais();
+    setDonoLocal(null);
     useCloudAuth.setState({ status: "signed-out", session: null, user: null, role: null, alunoId: null, professionalId: null, marca: null });
   }
 }

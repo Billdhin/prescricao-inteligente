@@ -587,12 +587,21 @@ function PersonalizadaRow({ p, onChange, onRemove }: { p: MedidaPersonalizada; o
   );
 }
 
+const MAX_FOTOS = 6;
+
 function FotosBloco({ fotos, setFotos }: { fotos: AvaliacaoFoto[]; setFotos: React.Dispatch<React.SetStateAction<AvaliacaoFoto[]>> }) {
   const [tipoFoto, setTipoFoto] = React.useState(TIPOS_FOTO[0]);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const escolher = async (file?: File) => {
     if (!file) return;
+    // Teto de fotos por avaliação: as imagens ficam no armazenamento local (data
+    // URL) e sem limite estouram a cota, com perda silenciosa (N7).
+    if (fotos.length >= MAX_FOTOS) {
+      toast(`Máximo de ${MAX_FOTOS} fotos por avaliação.`);
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
     try {
       const dataUrl = await arquivoParaDataUrl(file, { maxW: 900, maxH: 1200, modo: "contain", qualidade: 0.7, formato: "jpeg" });
       setFotos((f) => [...f, { id: uid(), tipo: tipoFoto, dataUrl }]);

@@ -157,9 +157,13 @@ export async function salvarAluno(a: Aluno): Promise<void> {
 export async function removerAluno(id: string): Promise<void> {
   const sb = getSupabase();
   const u = await uid();
+  // Cascata explicita: apaga TODOS os dados do aluno (inclui planos e execucoes,
+  // que antes ficavam orfaos), respeitando retencao/LGPD (N5).
   await sb.from("avaliacoes").delete().eq("user_id", u).eq("aluno_id", id);
   await sb.from("prescricoes").delete().eq("user_id", u).eq("aluno_id", id);
   await sb.from("liberacoes").delete().eq("user_id", u).eq("aluno_id", id);
+  await sb.from("planos").delete().eq("user_id", u).eq("aluno_id", id);
+  await sb.from("execucoes").delete().eq("professional_id", u).eq("aluno_id", id);
   const { error } = await sb.from("alunos").delete().eq("user_id", u).eq("id", id);
   if (error) throw error;
 }

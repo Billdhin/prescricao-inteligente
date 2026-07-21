@@ -175,7 +175,7 @@ export const useFavorites = create<FavState>()(
             : [...s.slugs, slug],
         })),
     }),
-    { name: "pi-favorites" },
+    { name: "pi-favorites", version: 1, migrate: (s) => s as FavState },
   ),
 );
 
@@ -231,7 +231,7 @@ export const useProgress = create<ProgressState>()(
               },
         ),
     }),
-    { name: "pi-progress" },
+    { name: "pi-progress", version: 1, migrate: (s) => s as ProgressState },
   ),
 );
 
@@ -274,7 +274,7 @@ export const useMode = create<ModeState>()(
       mode: "atender",
       setMode: (mode) => set({ mode }),
     }),
-    { name: "pi-mode" },
+    { name: "pi-mode", version: 1, migrate: (s) => s as ModeState },
   ),
 );
 
