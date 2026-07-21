@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { AppLayout } from "@/components/app/AppLayout";
 import { Landing } from "@/pages/Landing";
 import { Pricing } from "@/pages/Pricing";
@@ -58,6 +58,12 @@ function DecisaoRedirect() {
   return <Navigate to={`/gps${search}`} replace />;
 }
 
+// Casos foram para o acervo do Aprender; preserva o slug para não cair na lista.
+function CasoSlugRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={slug ? `/aprender/casos/${slug}` : "/aprender/casos"} replace />;
+}
+
 export default function App() {
   return (
     <BrowserRouter
@@ -90,7 +96,7 @@ export default function App() {
           <Route path="/comparador" element={<Comparador />} />
           {/* Casos foram consolidados no acervo unico do Aprender. */}
           <Route path="/cases" element={<Navigate to="/aprender/casos" replace />} />
-          <Route path="/cases/:slug" element={<Navigate to="/aprender/casos" replace />} />
+          <Route path="/cases/:slug" element={<CasoSlugRedirect />} />
           <Route path="/alunos" element={<Alunos />} />
           <Route path="/alunos/:id" element={<AlunoDetail />} />
           <Route path="/special-groups" element={<SpecialGroups />} />

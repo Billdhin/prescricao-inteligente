@@ -252,7 +252,7 @@ function ProximosPassos({
 
   const passos = [
     { done: temAluno, label: "Cadastre um aluno", to: "/alunos?novo=1" },
-    { done: temAvaliacao, label: "Registre uma avaliação", to: primeiroAlunoId ? `/alunos/${primeiroAlunoId}` : "/alunos" },
+    { done: temAvaliacao, label: "Registre uma avaliação", to: primeiroAlunoId ? `/alunos/${primeiroAlunoId}?avaliar=1` : "/alunos" },
     { done: temPrescricao, label: "Prescreva com justificativa", to: primeiroAlunoId ? `/gps?aluno=${primeiroAlunoId}` : "/gps" },
     { done: temEvolucao, label: "Acompanhe a evolução", to: "/assessments" },
   ];

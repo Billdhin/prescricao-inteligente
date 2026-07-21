@@ -16,6 +16,9 @@ O projeto do Filipe já existe:
 |---|---|
 | `migrations/0001_init.sql` | Perfis + conteúdo público (13 exercícios, overlays, casos, trilhas, verbetes) + favoritos/progresso legado. RLS. Trigger que cria o `profile` no cadastro. |
 | `migrations/0002_domains.sql` | Perfil completo (CREF, contato, marca, modo) + **alunos / avaliações / prescrições / liberações** + **progresso do módulo Aprender** (aulas, casos, quizzes, salvos, histórico, aplicações). RLS por usuário em tudo. |
+| `migrations/0003_planos.sql` | Planos de treino (periodização) do "Prescrever treino". |
+| `migrations/0004_marca_cor.sql` | Coluna `cor_primaria` na marca do profissional. |
+| `migrations/0005_aluno_portal.sql` | Papel `aluno`, vínculo `alunos.auth_user_id`, `convites`, `execucoes` e as políticas RLS do portal do aluno. |
 | `seed.sql` | Seed do **conteúdo** (gerado de `src/data/*`). Idempotente. |
 | `../scripts/gen-seed-sql.ts` | Regenera o `seed.sql` (`npm run gen:seed`). |
 | `../src/lib/backend/supabaseClient.ts` | Cliente singleton real (`getSupabase()`), guardado por `isSupabaseConfigured()`. |
@@ -26,8 +29,9 @@ O projeto do Filipe já existe:
 ## Passo 1 — criar as tabelas (no painel Supabase)
 
 1. Abra o **SQL Editor** em https://supabase.com/dashboard/project/asbaydbxujgsnowmfmbe
-2. Rode, na ordem: `migrations/0001_init.sql`, depois `migrations/0002_domains.sql`.
-   (Ou, com a CLI: `supabase db push`.)
+2. Rode **na ordem completa**: `0001_init.sql`, `0002_domains.sql`, `0003_planos.sql`,
+   `0004_marca_cor.sql`, `0005_aluno_portal.sql`. Pular alguma quebra planos, marca ou o
+   portal do aluno em runtime. (Ou, com a CLI: `supabase db push`.)
 3. Opcional (conteúdo): rode `seed.sql` para popular exercícios/casos/trilhas.
 4. Em **Authentication > Providers**, confirme que **Email** está habilitado.
 

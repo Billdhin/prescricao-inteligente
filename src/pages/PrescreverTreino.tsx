@@ -220,7 +220,7 @@ export function PrescreverTreino() {
           {aluno && (
             <p className="mt-2 text-xs text-ink-3">
               Objetivo, nível e grupo especial vieram do cadastro de {aluno.nome}. Ajuste se quiser.
-              {aluno.restricoes.length > 0 && ` ${aluno.restricoes.length} restrição(ões) registradas no perfil serão consideradas.`}
+              {aluno.restricoes.length > 0 && ` ${aluno.restricoes.length} restrição(ões) no perfil: revise os exercícios de cada sessão à luz delas (a periodização organiza volume e intensidade; a seleção segura por restrição fica no Prescrever exercício).`}
             </p>
           )}
         </div>

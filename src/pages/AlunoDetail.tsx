@@ -953,12 +953,6 @@ function AcompanhamentoCard({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patc
         </Card>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <button onClick={toggleStatus} className={buttonClasses("secondary", "sm")}>
-          {ativo ? <UserMinus className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-          {ativo ? "Marcar que o aluno saiu" : "Reativar aluno"}
-        </button>
-      </div>
     </Card>
   );
 }
