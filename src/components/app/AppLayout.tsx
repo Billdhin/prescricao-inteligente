@@ -835,11 +835,6 @@ function UserMenu() {
   }, [open]);
 
   const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("");
-  const options: { value: Plan; label: string }[] = [
-    { value: "free", label: "Free" },
-    { value: "assinante", label: "Assinante" },
-    { value: "admin", label: "Admin" },
-  ];
 
   return (
     <div className="relative" ref={ref}>
@@ -865,20 +860,6 @@ function UserMenu() {
 
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-56 rounded-card border border-border bg-surface p-1.5 shadow-elevated">
-          <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-            Plano (dev toggle)
-          </div>
-          {options.map((o) => (
-            <button
-              key={o.value}
-              onClick={() => setPlan(o.value)}
-              className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-surface-soft"
-            >
-              {o.label}
-              {plan === o.value && <Check className="h-4 w-4 text-primary" />}
-            </button>
-          ))}
-          <div className="my-1 border-t border-border" />
           <Link to="/account" className="block rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-surface-soft">
             Configurações
           </Link>

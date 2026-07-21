@@ -75,7 +75,7 @@ export function Landing() {
               Entrar
             </Link>
             <Link to="/dashboard" className={buttonClasses("primary", "sm")}>
-              Começar grátis
+              Começar agora
             </Link>
           </div>
         </div>
@@ -121,7 +121,7 @@ export function Landing() {
               </Link>
             </div>
             <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink-2">
-              {["Grátis para começar", "Sem cartão", "Feito por doutor em Educação Física"].map((t) => (
+              {["Acesso completo", "Sem versão limitada", "Feito por doutor em Educação Física"].map((t) => (
                 <li key={t} className="inline-flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 text-success" /> {t}
                 </li>
@@ -412,25 +412,12 @@ export function Landing() {
 
       {/* ------------------------------- Planos ------------------------------ */}
       <Section id="planos" className="text-center">
-        <Kicker>Planos</Kicker>
-        <h2 className="font-display text-3xl font-bold text-ink">Comece grátis. Assine quando fizer sentido.</h2>
+        <Kicker>Plano</Kicker>
+        <h2 className="font-display text-3xl font-bold text-ink">Um plano, tudo liberado.</h2>
         <p className="mx-auto mt-2 max-w-xl text-ink-2">
-          Teste o Profissional por <span className="font-semibold text-ink">14 dias, sem cartão</span>:
-          resolva um caso real e veja o prontuário pronto antes de decidir.
+          O Motor RCD completo, sem versão limitada: todos os grupos, casos e ferramentas em um só lugar.
         </p>
-        <div className="mx-auto mt-8 grid max-w-3xl gap-4 md:grid-cols-2">
-          <PlanCard
-            nome="Grátis"
-            preco="R$ 0"
-            desc="Para sentir o raciocínio na prática."
-            items={[
-              "3 prescrições com justificativa",
-              "Semáforo de Liberação (obesidade e hipertensão)",
-              "Até 3 alunos com avaliações",
-              "2 casos práticos com feedback",
-            ]}
-            cta="Criar conta gratuita"
-          />
+        <div className="mx-auto mt-8 max-w-md">
           <PlanCard
             destaque
             nome="Profissional"
@@ -441,8 +428,9 @@ export function Landing() {
               "Semáforo de Liberação para todos os grupos",
               "Prescrições e alunos ilimitados",
               "Laboratório, casos, comparador e trilhas completos",
+              "Portal do aluno com a sua marca, avaliação postural e gamificação",
             ]}
-            cta="Testar 14 dias sem cartão"
+            cta="Começar agora"
           />
         </div>
       </Section>
@@ -462,8 +450,8 @@ export function Landing() {
                   a: "Não, e nem deveria. Todo o conteúdo é educacional e de apoio à decisão. A plataforma organiza o raciocínio; a avaliação individualizada e a decisão final são suas.",
                 },
                 {
-                  q: "Preciso de cartão para começar?",
-                  a: "Não. Você cria a conta, usa o plano gratuito e só assina o Profissional se (e quando) fizer sentido para a sua rotina.",
+                  q: "Como funciona o acesso?",
+                  a: "É um plano único, com tudo liberado: você cria a conta e usa o Motor RCD completo, sem versão limitada e sem recurso escondido atrás de upgrade.",
                 },
                 {
                   q: "Funciona no celular?",
@@ -499,14 +487,14 @@ export function Landing() {
             Seu primeiro aluno, prescrito em minutos.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-white/85">
-            Três passos, o porquê de cada exercício e um PDF pronto para entregar. Comece agora, é grátis.
+            Três passos, o porquê de cada exercício e um PDF pronto para entregar. Comece agora.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               to="/dashboard"
               className="inline-flex items-center gap-2 rounded-control bg-white px-6 py-3 font-semibold text-primary hover:bg-white/90"
             >
-              Começar gratuitamente <ArrowRight className="h-4 w-4" />
+              Começar agora <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/tutorial"

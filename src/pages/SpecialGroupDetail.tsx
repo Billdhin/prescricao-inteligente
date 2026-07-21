@@ -110,7 +110,6 @@ export function SpecialGroupDetail() {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{g.nome}</h1>
             <Pill tone={complexidadeTone[g.complexidade]}>Complexidade {g.complexidade}</Pill>
-            {g.premium ? <Pill tone="cta" icon={<Crown className="h-3 w-3" />}>Premium</Pill> : <Pill tone="success">Gratuito</Pill>}
           </div>
           <p className="mt-2 max-w-2xl text-ink-2">{g.descricaoCurta}</p>
         </div>

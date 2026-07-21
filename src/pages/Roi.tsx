@@ -98,7 +98,7 @@ export function Roi() {
       <div className="mx-auto max-w-3xl px-4 py-14 md:px-6">
         <div className="text-center">
           <Pill tone="primary" icon={<Calculator className="h-3 w-3" />} className="mb-3">
-            Calculadora gratuita, sem cadastro
+            Calculadora aberta, sem cadastro
           </Pill>
           <h1 className="font-display text-3xl font-extrabold text-ink md:text-4xl">
             Quanto vale a sua especialização?
@@ -186,7 +186,7 @@ export function Roi() {
             registrada e assinável.
           </p>
           <Link to="/dashboard" className={buttonClasses("primary") + " mt-4"}>
-            Testar 14 dias sem cartão <ArrowRight className="h-4 w-4" />
+            Começar agora <ArrowRight className="h-4 w-4" />
           </Link>
           <p className="mt-6 text-xs text-ink-3">
             Estimativa educacional baseada na sua carteira e no padrão de mercado (15–30% de

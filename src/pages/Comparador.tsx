@@ -154,7 +154,6 @@ function ForcaBloco({ base }: { base: string | null }) {
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         <Pill tone="neutral">{e.equipamento}</Pill>
                         <Pill tone="neutral">{e.nivel}</Pill>
-                        {e.premium ? <Pill tone="cta">Premium</Pill> : <Pill tone="success">Gratuito</Pill>}
                       </div>
                     </div>
                   </div>

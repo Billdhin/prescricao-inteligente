@@ -31,13 +31,6 @@ export function SpecialGroups() {
             <Card key={g.slug} className="flex flex-col p-5">
               <div className="mb-2 flex items-start justify-between gap-2">
                 <h3 className="font-display text-lg font-bold text-ink">{g.nome}</h3>
-                {g.premium ? (
-                  <Pill tone="cta" icon={<Crown className="h-3 w-3" />}>
-                    Premium
-                  </Pill>
-                ) : (
-                  <Pill tone="success">Gratuito</Pill>
-                )}
               </div>
               <p className="text-sm text-ink-2">{g.descricaoCurta}</p>
 

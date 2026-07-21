@@ -32,8 +32,8 @@ const FAQ = [
   },
   {
     id: "pagar",
-    q: "Preciso pagar para usar?",
-    a: "Não. O plano gratuito já libera o essencial: Prescrever com justificativa, parte do Laboratório Visual e casos práticos. O plano Profissional abre o uso ilimitado, o comparador, os grupos especiais completos e a exportação de prescrições em PDF.",
+    q: "Como funciona o acesso?",
+    a: "É um plano único, o Profissional, com tudo liberado: Prescrever com justificativa, Laboratório Visual completo, casos práticos, comparador, grupos especiais, portal do aluno e exportação de prescrições em PDF. Sem versão limitada.",
   },
   {
     id: "dados",

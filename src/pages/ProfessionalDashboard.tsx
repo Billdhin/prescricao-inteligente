@@ -190,7 +190,7 @@ export function ProfessionalDashboard() {
       )}
 
       {/* Ferramentas do Profissional (compacto, fora do fluxo principal) */}
-      <ProTools premium={premium} />
+      <ProTools />
 
       <p className="pt-2 text-xs text-ink-3">
         Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional
@@ -396,31 +396,12 @@ function AlunoCard({ aluno, temPrescricao }: { aluno: Aluno; temPrescricao: bool
   );
 }
 
-function ProTools({ premium }: { premium: boolean }) {
+function ProTools() {
   const tools = [
     { icon: GitCompare, label: "Comparador avançado", sub: "Ranqueie variações por eficiência", to: "/comparador" },
     { icon: ClipboardList, label: "Protocolos prontos", sub: "Modelos por objetivo", to: "/protocols" },
     { icon: TrendingUp, label: "Evolução dos alunos", sub: "Visão agregada da saúde e das medidas", to: "/assessments" },
   ];
-
-  if (!premium) {
-    return (
-      <Card className="flex flex-wrap items-center gap-4 p-5">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary-tint text-primary">
-          <Crown className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-display text-base font-bold text-ink">Ferramentas do Profissional</h2>
-          <p className="text-sm text-ink-2">
-            Comparador avançado, protocolos prontos e evolução dos alunos.
-          </p>
-        </div>
-        <Link to="/pricing" className={buttonClasses("primary", "sm")}>
-          <Crown className="h-4 w-4" /> Assinar
-        </Link>
-      </Card>
-    );
-  }
 
   return (
     <section>

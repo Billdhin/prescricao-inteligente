@@ -111,14 +111,7 @@ export function Semaforo() {
         </Card>
       )}
 
-      {locked ? (
-        <PaywallCard
-          titulo={`O semáforo de ${grupo?.nome} é do plano Profissional`}
-          descricao="No plano gratuito você usa o Semáforo de Liberação para obesidade grave e hipertensão. Assine para liberar todos os grupos e o Prontuário de Decisão exportável."
-        />
-      ) : (
-        <SemaforoLiberacao grupoSlug={grupoSlug} alunoId={aluno?.id} alunoNome={aluno?.nome} fase={fase} />
-      )}
+      <SemaforoLiberacao grupoSlug={grupoSlug} alunoId={aluno?.id} alunoNome={aluno?.nome} fase={fase} />
     </div>
   );
 }

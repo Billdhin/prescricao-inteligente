@@ -203,13 +203,6 @@ function Detail({ exercise }: { exercise: Exercise }) {
         </Link>
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{exercise.nome}</h1>
-          {exercise.premium ? (
-            <Pill tone="cta" icon={<Sparkles className="h-3 w-3" />}>
-              Premium
-            </Pill>
-          ) : (
-            <Pill tone="success">Gratuito</Pill>
-          )}
         </div>
         <p className="mt-2 max-w-2xl text-ink-2">
           Compare a execução real com a análise biomecânica e aprofunde o que quiser.

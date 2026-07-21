@@ -341,12 +341,7 @@ export function Gps() {
     });
   };
 
-  const restantes = Math.max(0, FREE_GPS_LIMIT - consultations);
-  const bloqueado = !unlocked && restantes <= 0;
-
   const gerar = () => {
-    if (bloqueado) return;
-    if (!unlocked) increment();
     addActivity(`Prescrição: ${answers.grupoMuscular}`);
     const rank = rankExercises(exercises, answers, rule);
     if (!rank.length) return;
@@ -376,22 +371,6 @@ export function Gps() {
           <p className="mt-2 max-w-2xl text-ink-2">
             Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê.
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {unlocked ? (
-            <Pill tone="success" icon={<Crown className="h-3 w-3" />}>
-              Análises ilimitadas
-            </Pill>
-          ) : (
-            <Pill tone={restantes > 0 ? "primary" : "warning"}>
-              {restantes} de {FREE_GPS_LIMIT} análises gratuitas
-            </Pill>
-          )}
-          {plan === "admin" && (
-            <button onClick={reset} className="text-sm font-medium text-ink-2 hover:text-ink">
-              Zerar contador
-            </button>
-          )}
         </div>
       </div>
 
@@ -492,9 +471,7 @@ export function Gps() {
       )}
       {grupo && grupoLocked && <JornadaLockedNote grupo={grupo} />}
 
-      {bloqueado ? (
-        <Paywall />
-      ) : !results ? (
+      {!results ? (
         <Wizard
           step={step}
           setStep={setStep}
@@ -1289,7 +1266,6 @@ function Results({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h4 className="font-display font-bold text-ink">{r.exercise.nome}</h4>
-              {r.exercise.premium && <Pill tone="cta">Premium</Pill>}
             </div>
             <div className="mt-1 flex flex-wrap gap-1.5">
               <Pill tone="neutral">{r.exercise.grupoMuscular}</Pill>
@@ -1502,7 +1478,6 @@ function Results({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-display text-2xl font-bold text-ink">{best.exercise.nome}</h3>
-                {best.exercise.premium ? <Pill tone="cta">Premium</Pill> : <Pill tone="success">Gratuito</Pill>}
               </div>
               <p className="mt-2 text-ink-2">{best.exercise.resumoPratico}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
@@ -1785,27 +1760,3 @@ function JustifyDialog({ rec, onClose }: { rec: Recommendation; onClose: () => v
   );
 }
 
-/* --------------------------------- Paywall ------------------------------- */
-
-function Paywall() {
-  return (
-    <Card className="overflow-hidden">
-      <div className="gradient-brand p-8 text-center text-white">
-        <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-white/15">
-          <Lock className="h-6 w-6" />
-        </span>
-        <h2 className="font-display text-2xl font-bold">Você usou suas 3 análises gratuitas</h2>
-        <p className="mx-auto mt-2 max-w-md text-white/85">
-          Assine o plano Profissional para prescrições ilimitadas, comparador e todos os casos e
-          exercícios.
-        </p>
-        <Link
-          to="/pricing"
-          className="mt-5 inline-flex rounded-control bg-white px-5 py-2.5 font-semibold text-primary hover:bg-white/90"
-        >
-          Assinar Profissional
-        </Link>
-      </div>
-    </Card>
-  );
-}

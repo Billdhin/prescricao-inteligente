@@ -9,12 +9,6 @@ import { arquivoParaDataUrl } from "@/lib/imagem";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
-const planos: { value: Plan; label: string; desc: string }[] = [
-  { value: "free", label: "Free", desc: "Acesso parcial, com limites." },
-  { value: "assinante", label: "Profissional", desc: "Acesso completo à plataforma." },
-  { value: "admin", label: "Admin", desc: "Acesso total (uso interno)." },
-];
-
 export function Account() {
   const user = useUser();
   const { name, plan, cref, email, telefone, empresa, site, fotoDataUrl, logoDataUrl, corPrimaria, senhaHash } = user;
@@ -26,7 +20,7 @@ export function Account() {
   const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("");
 
   const zerar = () => {
-    ["pi-progress", "pi-favorites", "pi-gps", "pi-ativacao", "pi-passos-ocultos", "pi-notif-seen"].forEach(
+    ["pi-progress", "pi-favorites", "pi-ativacao", "pi-passos-ocultos", "pi-notif-seen"].forEach(
       (k) => localStorage.removeItem(k),
     );
     window.location.reload();
@@ -252,35 +246,6 @@ export function Account() {
       {/* Acesso: conta em nuvem quando o backend está ligado; senão, senha local. */}
       {cloudConfigured ? <ContaNuvemCard /> : <SenhaCard temSenha={Boolean(senhaHash)} />}
 
-      {/* Plano (dev toggle) */}
-      <Card className="p-6">
-        <h3 className="font-display text-lg font-bold text-ink">Plano</h3>
-        <p className="mb-4 text-sm text-ink-2">
-          Nesta demonstração não há cobrança; alterne o plano para testar os limites e o gating.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {planos.map((p) => {
-            const active = plan === p.value;
-            return (
-              <button
-                key={p.value}
-                onClick={() => user.setPlan(p.value)}
-                className={cn(
-                  "rounded-card border p-4 text-left transition-colors",
-                  active ? "border-primary bg-primary-tint" : "border-border bg-surface hover:bg-surface-soft",
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-ink">{p.label}</span>
-                  {active && <Check className="h-4 w-4 text-primary" />}
-                </div>
-                <p className="mt-1 text-xs text-ink-2">{p.desc}</p>
-              </button>
-            );
-          })}
-        </div>
-      </Card>
-
       {/* Preferências */}
       <Card className="p-6">
         <h3 className="font-display text-lg font-bold text-ink">Preferências</h3>
@@ -301,7 +266,7 @@ export function Account() {
           <h3 className="font-display text-lg font-bold text-ink">Zerar progresso local</h3>
         </div>
         <p className="mb-4 text-sm text-ink-2">
-          Remove XP, favoritos, casos resolvidos, o contador do Prescrever e o passo a passo do painel deste navegador. Não afeta o
+          Remove XP, favoritos, casos resolvidos e o passo a passo do painel deste navegador. Não afeta o
           plano selecionado nem seus alunos.
         </p>
         {confirmReset ? (

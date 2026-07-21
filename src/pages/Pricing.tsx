@@ -15,29 +15,17 @@ export function Pricing() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-3xl px-4 py-14 text-center md:px-6">
+      <div className="mx-auto max-w-2xl px-4 py-14 text-center md:px-6">
         <Pill tone="primary" icon={<Crown className="h-3 w-3" />} className="mb-3">
-          Planos
+          Plano
         </Pill>
-        <h1 className="font-display text-4xl font-extrabold text-ink">Comece grátis, evolua quando quiser.</h1>
+        <h1 className="font-display text-4xl font-extrabold text-ink">Um plano, tudo liberado.</h1>
         <p className="mx-auto mt-3 max-w-xl text-ink-2">
-          Teste o Profissional por <strong className="text-ink">14 dias, sem cartão</strong>:
-          resolva um caso real e veja o prontuário pronto antes de decidir.
+          O Motor RCD completo, do semáforo ao prontuário assinável, com todos os grupos, casos e
+          ferramentas. Sem versão limitada.
         </p>
 
-        <div className="mt-10 grid gap-4 text-left md:grid-cols-2">
-          <Plan
-            nome="Grátis"
-            preco="R$ 0"
-            desc="Para começar a explorar."
-            items={[
-              "3 análises no Prescrever",
-              "Semáforo de Liberação (obesidade e hipertensão)",
-              "Laboratório Visual (parcial)",
-              "2 casos práticos + biblioteca essencial",
-            ]}
-            cta="Continuar grátis"
-          />
+        <div className="mt-10 text-left">
           <Plan
             destaque
             nome="Profissional"
@@ -48,13 +36,14 @@ export function Pricing() {
               "Semáforo de Liberação para todos os grupos",
               "Prescrições ilimitadas + comparador + protocolos",
               "Laboratório completo, todos os casos e trilhas",
+              "Portal do aluno com a sua marca, avaliação postural e gamificação",
             ]}
-            cta="Testar 14 dias sem cartão"
+            cta="Começar agora"
           />
         </div>
 
         <p className="mt-6 text-sm text-ink-2">
-          Não sabe se vale?{" "}
+          Quer dimensionar o retorno?{" "}
           <Link to="/roi" className="font-semibold text-primary hover:underline">
             Calcule quanto sua especialização pode pagar →
           </Link>

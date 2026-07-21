@@ -1,22 +1,18 @@
 import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Users, UserPlus, Search, ArrowRight, Crown, Lock } from "lucide-react";
+import { Users, UserPlus, Search, ArrowRight } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader } from "@/components/ui/primitives";
-import { useAlunos, useUser, isPremiumUnlocked, FREE_ALUNOS_LIMIT } from "@/lib/store";
+import { useAlunos } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 
 export function Alunos() {
   const { alunos, addAluno, loadExamples } = useAlunos();
-  const plan = useUser((s) => s.plan);
-  const premium = isPremiumUnlocked(plan);
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [q, setQ] = React.useState("");
   const [novo, setNovo] = React.useState(params.get("novo") === "1");
-
-  const canAdd = premium || alunos.length < FREE_ALUNOS_LIMIT;
 
   React.useEffect(() => {
     if (params.get("novo") === "1") {
@@ -42,15 +38,9 @@ export function Alunos() {
         title="Alunos"
         subtitle="Cadastre seus alunos, prescreva com justificativa e acompanhe a evolução."
         right={
-          canAdd ? (
-            <button onClick={() => setNovo(true)} className={buttonClasses("primary")}>
-              <UserPlus className="h-4 w-4" /> Cadastrar aluno
-            </button>
-          ) : (
-            <Link to="/pricing" className={buttonClasses("primary")}>
-              <Crown className="h-4 w-4" /> Assinar p/ mais alunos
-            </Link>
-          )
+          <button onClick={() => setNovo(true)} className={buttonClasses("primary")}>
+            <UserPlus className="h-4 w-4" /> Cadastrar aluno
+          </button>
         }
       />
 
@@ -58,16 +48,6 @@ export function Alunos() {
         <EmptyAlunos onNovo={() => setNovo(true)} onExemplos={loadExamples} />
       ) : (
         <>
-          {!premium && (
-            <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-ink-2">
-              <Lock className="h-4 w-4 text-ink-3" />
-              Plano free: até {FREE_ALUNOS_LIMIT} alunos ({alunos.length}/{FREE_ALUNOS_LIMIT} usados).
-              <Link to="/pricing" className="font-semibold text-primary hover:underline">
-                Assinar Profissional
-              </Link>
-            </div>
-          )}
-
           <div className="relative max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
             <input

@@ -79,15 +79,6 @@ export function MovementLabList() {
                   ) : (
                     <MuscleThumb activation={activationFromExercise(e)} slug={e.slug} className="py-2" />
                   )}
-                  <div className="absolute left-3 top-3">
-                    {e.premium ? (
-                      <Pill tone="cta" icon={<Sparkles className="h-3 w-3" />}>
-                        Premium
-                      </Pill>
-                    ) : (
-                      <Pill tone="success">Gratuito</Pill>
-                    )}
-                  </div>
                   <div className="absolute right-3 top-3">
                     <Pill tone="neutral" className="bg-white/85">
                       {e.nivel}

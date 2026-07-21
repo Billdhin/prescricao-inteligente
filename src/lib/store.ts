@@ -19,10 +19,10 @@ import {
 
 /* ----------------------------- Usuário / plano ---------------------------- */
 
-export type Plan = "free" | "assinante" | "admin";
+// O produto é pago para todos. Não existe mais plano gratuito.
+export type Plan = "assinante" | "admin";
 
 export const planLabel: Record<Plan, string> = {
-  free: "Plano Free",
   assinante: "Profissional",
   admin: "Admin",
 };
@@ -65,9 +65,8 @@ export const useUser = create<UserState>()(
   persist(
     (set) => ({
       name: "Rafael Trainer",
-      // Novo usuário começa no plano free (vê o valor + os paywalls no momento
-      // certo). O dono alterna via UserMenu (dev toggle) para testar.
-      plan: "free",
+      // Produto pago para todos: todo usuário nasce Profissional, sem tier grátis.
+      plan: "assinante",
       cref: "",
       email: "",
       telefone: "",
@@ -97,7 +96,16 @@ export const useUser = create<UserState>()(
       setSenha: (senhaHash, senhaSalt) => set({ senhaHash, senhaSalt }),
       limparSenha: () => set({ senhaHash: "", senhaSalt: "" }),
     }),
-    { name: "pi-user" },
+    {
+      name: "pi-user",
+      version: 1,
+      // v1: fim do tier grátis. Quem estava em "free" vira "assinante".
+      migrate: (persisted) => {
+        const p = (persisted ?? {}) as Partial<UserState>;
+        if (!p.plan || (p.plan as string) === "free") p.plan = "assinante";
+        return p as UserState;
+      },
+    },
   ),
 );
 
@@ -126,9 +134,9 @@ export function marcaDoUsuario(u: Pick<UserState, keyof PerfilCampos>): MarcaDoc
   };
 }
 
-/** true quando o plano libera recursos premium. */
-export function isPremiumUnlocked(plan: Plan) {
-  return plan === "assinante" || plan === "admin";
+/** Produto pago para todos: não há mais recurso bloqueado por plano. */
+export function isPremiumUnlocked(_plan?: Plan) {
+  return true;
 }
 
 /* ------------------------------- UI (shell) ------------------------------- */

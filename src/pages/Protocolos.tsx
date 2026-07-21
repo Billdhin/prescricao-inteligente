@@ -63,8 +63,6 @@ const fmtData = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(ts));
 
 export function Protocolos() {
-  const plan = useUser((s) => s.plan);
-  const premium = isPremiumUnlocked(plan);
   const { alunos, prescricoes } = useAlunos();
   const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "aluno";
   const [aplicar, setAplicar] = React.useState<Protocolo | null>(null);
@@ -80,26 +78,14 @@ export function Protocolos() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <SectionHeader
-        eyebrow="Exclusivo Profissional"
-        icon={<Crown className="h-3 w-3" />}
+        eyebrow="Atendimento"
+        icon={<ClipboardList className="h-3 w-3" />}
         title="Protocolos"
         subtitle="Modelos por objetivo, com público-alvo, respaldo da literatura e a estrutura da semana. Escolha uma categoria para ver os protocolos."
-        right={
-          premium ? (
-            <Pill tone="success">Ativo no seu plano</Pill>
-          ) : (
-            <Link to="/pricing" className={buttonClasses("primary", "sm")}>
-              <Crown className="h-4 w-4" /> Assinar Profissional
-            </Link>
-          )
-        }
       />
 
       <div className="relative">
-        <div
-          className={cn("space-y-7", !premium && "pointer-events-none select-none blur-[5px] saturate-50")}
-          aria-hidden={!premium}
-        >
+        <div className="space-y-7">
           {/* Nível 1: blocos de categoria */}
           {!categoria ? (
             <section>
@@ -190,23 +176,6 @@ export function Protocolos() {
             )}
           </section>
         </div>
-
-        {!premium && (
-          <div className="absolute inset-0 z-10 grid place-items-center p-4">
-            <div className="max-w-sm rounded-card border border-border bg-surface/95 p-6 text-center shadow-elevated backdrop-blur">
-              <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-full gradient-cta text-white">
-                <Lock className="h-5 w-5" />
-              </span>
-              <h3 className="font-display text-lg font-bold text-ink">Protocolos é do plano Profissional</h3>
-              <p className="mt-1 text-sm text-ink-2">
-                Modelos por objetivo com respaldo da literatura e o histórico das suas prescrições liberam ao assinar.
-              </p>
-              <Link to="/pricing" className={cn(buttonClasses("primary"), "mt-4")}>
-                <Crown className="h-4 w-4" /> Assinar Profissional
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
 
       {base && <BaseCientificaModal p={base} onClose={() => setBase(null)} />}
