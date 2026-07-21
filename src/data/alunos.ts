@@ -1,6 +1,7 @@
 import type { Nivel } from "./types";
 import type { GpsAnswers, GpsObjetivo } from "@/lib/gps/engine";
 import { criarRestricao, type RestricaoSelecionada } from "@/lib/gps/restricoes";
+import type { CobrancaAluno } from "./cobranca";
 
 /**
  * Domínio de trabalho do profissional: seus ALUNOS (clientes), com perfil que alimenta o
@@ -23,6 +24,10 @@ export interface Aluno {
   /** equipamentos disponíveis no local de treino */
   equipamentos: string[];
   observacoes?: string;
+  /** telefone/WhatsApp (livre; usado para gerar o link de contato de retenção) */
+  telefone?: string;
+  /** mensalidade do aluno (gestão financeira; ausente = sem cobrança configurada) */
+  cobranca?: CobrancaAluno;
   status: "ativo" | "inativo";
   criadoEm: number;
   /** desde quando o aluno está no nível atual (para sugerir progressão) */

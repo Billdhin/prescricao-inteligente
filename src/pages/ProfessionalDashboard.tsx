@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { RetencaoPanel } from "@/components/treino/RetencaoPanel";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { proximaReavaliacao } from "@/data/periodizacao";
@@ -32,7 +33,7 @@ const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
 
 export function ProfessionalDashboard() {
   const { name, plan } = useUser();
-  const { alunos, avaliacoes, prescricoes, planos, loadExamples } = useAlunos();
+  const { alunos, avaliacoes, prescricoes, planos, execucoes, loadExamples } = useAlunos();
   const premium = isPremiumUnlocked(plan);
   const firstName = name.split(" ")[0];
 
@@ -152,6 +153,9 @@ export function ProfessionalDashboard() {
           </p>
         </Card>
       )}
+
+      {/* Reativar alunos: retenção a partir da execução real (só aparece se houver quem reativar) */}
+      <RetencaoPanel alunos={alunos} execucoes={execucoes} nomeProfissional={name || undefined} />
 
       {/* Seus alunos (apoio) */}
       <section>

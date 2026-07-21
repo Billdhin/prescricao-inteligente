@@ -103,6 +103,9 @@ function alunoToRow(a: Aluno, userId: string) {
       modalidadesEvitadas: a.modalidadesEvitadas,
       parametrosPrioritarios: a.parametrosPrioritarios,
       criterioProgressao: a.criterioProgressao,
+      // telefone e cobrança não têm coluna própria; vão no blob livre (sem migração).
+      telefone: a.telefone,
+      cobranca: a.cobranca,
     },
   };
 }
@@ -135,6 +138,8 @@ function rowToAluno(r: Record<string, any>): Aluno {
     modalidadesEvitadas: j.modalidadesEvitadas,
     parametrosPrioritarios: j.parametrosPrioritarios,
     criterioProgressao: j.criterioProgressao,
+    telefone: j.telefone ?? undefined,
+    cobranca: j.cobranca ?? undefined,
   };
 }
 

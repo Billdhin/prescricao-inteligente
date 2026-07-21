@@ -29,6 +29,8 @@ import {
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
 import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
+import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
+import { PosturalCard } from "@/components/treino/PosturalCard";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { criarConvite } from "@/lib/backend/supabaseRepo";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -343,6 +345,10 @@ export function AlunoDetail() {
           <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
 
           <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
+
+          <PosturalCard aluno={aluno} />
+
+          <FinanceiroCard aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
 
           <ConvidarAlunoCard alunoId={aluno.id} alunoNome={aluno.nome} />
 

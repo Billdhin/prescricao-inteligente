@@ -1,12 +1,14 @@
 import * as React from "react";
-import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse, CheckCircle2 } from "lucide-react";
+import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse, CheckCircle2, Wallet } from "lucide-react";
 import { Card, Pill } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
 import { Logo } from "@/components/brand/Logo";
+import { GamificacaoView } from "@/components/student/GamificacaoView";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import type { Execucao } from "@/data/execucao";
+import { formatBRL, statusEfetivo, ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import {
   type PlanoTreino,
   type Microciclo,
@@ -95,8 +97,10 @@ export function StudentApp({
           {aba === "hoje" && (
             <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} onRegistrar={onRegistrar} />
           )}
-          {aba === "plano" && <AbaPlano plano={plano} cor={cor} />}
-          {aba === "evolucao" && <AbaEvolucao aluno={aluno} avaliacoes={avaliacoes} />}
+          {aba === "plano" && <AbaPlano plano={plano} cor={cor} aluno={aluno} />}
+          {aba === "evolucao" && (
+            <AbaEvolucao aluno={aluno} avaliacoes={avaliacoes} execucoes={execucoes} cor={cor} />
+          )}
         </main>
 
         {/* Barra inferior */}
@@ -355,11 +359,19 @@ function CampoNum({ label, value, onChange }: { label: string; value: string; on
 
 /* ------------------------------- Aba: Plano ------------------------------- */
 
-function AbaPlano({ plano, cor }: { plano?: PlanoTreino; cor: string }) {
-  if (!plano) return <SemPlano />;
-  const semana = semanaAtual(plano);
+function AbaPlano({ plano, cor, aluno }: { plano?: PlanoTreino; cor: string; aluno: Aluno }) {
+  const semana = plano ? semanaAtual(plano) : 0;
+  if (!plano) {
+    return (
+      <div className="space-y-3">
+        <MensalidadeCard aluno={aluno} cor={cor} />
+        <SemPlano />
+      </div>
+    );
+  }
   return (
     <div className="space-y-3">
+      <MensalidadeCard aluno={aluno} cor={cor} />
       <Card className="p-4">
         <div className="font-display font-bold text-ink">{plano.titulo}</div>
         <p className="mt-1 text-sm text-ink-2">{plano.semanas} semanas · {plano.frequenciaSemanal}x por semana</p>
@@ -381,32 +393,115 @@ function AbaPlano({ plano, cor }: { plano?: PlanoTreino; cor: string }) {
   );
 }
 
+function MensalidadeCard({ aluno, cor }: { aluno: Aluno; cor: string }) {
+  const c = aluno.cobranca;
+  if (!c) return null;
+  const efetivo = statusEfetivo(c);
+  const tone: Record<string, "success" | "warning" | "neutral"> = { pago: "success", pendente: "warning", isento: "neutral" };
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white" style={{ background: cor }}>
+          <Wallet className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-display font-bold text-ink">Mensalidade {formatBRL(c.valorCentavos)}</div>
+          <div className="text-xs text-ink-3">Vence dia {c.diaVencimento}</div>
+        </div>
+        <Pill tone={tone[efetivo]}>{ROTULO_STATUS_COBRANCA[efetivo]}</Pill>
+      </div>
+      {efetivo !== "pago" && efetivo !== "isento" && (
+        <div className="mt-3">
+          {c.linkPagamento ? (
+            /^https?:\/\//i.test(c.linkPagamento) ? (
+              <a
+                href={c.linkPagamento}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full rounded-lg py-2 text-center text-sm font-bold text-white"
+                style={{ background: cor }}
+              >
+                Pagar mensalidade
+              </a>
+            ) : (
+              <PixCopia chave={c.linkPagamento} cor={cor} />
+            )
+          ) : (
+            <p className="text-xs text-ink-3">Combine o pagamento com o seu profissional.</p>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function PixCopia({ chave, cor }: { chave: string; cor: string }) {
+  const [copiado, setCopiado] = React.useState(false);
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(chave);
+      setCopiado(true);
+      window.setTimeout(() => setCopiado(false), 1800);
+    } catch {
+      /* sem clipboard: a chave segue visível abaixo */
+    }
+  };
+  return (
+    <div>
+      <button
+        onClick={copiar}
+        className="block w-full rounded-lg py-2 text-center text-sm font-bold text-white"
+        style={{ background: cor }}
+      >
+        {copiado ? "Chave PIX copiada" : "Copiar chave PIX"}
+      </button>
+      <p className="mt-1.5 break-all text-center text-[11px] text-ink-3">{chave}</p>
+    </div>
+  );
+}
+
 /* ------------------------------ Aba: Evolução ----------------------------- */
 
-function AbaEvolucao({ aluno, avaliacoes }: { aluno: Aluno; avaliacoes: Avaliacao[] }) {
+function AbaEvolucao({
+  aluno,
+  avaliacoes,
+  execucoes,
+  cor,
+}: {
+  aluno: Aluno;
+  avaliacoes: Avaliacao[];
+  execucoes: Execucao[];
+  cor: string;
+}) {
   const doAluno = avaliacoes.filter((a) => a.alunoId === aluno.id).sort((a, b) => b.data - a.data);
   const fmt = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
-  if (doAluno.length === 0) {
-    return (
-      <Card className="p-6 text-center">
-        <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-surface-soft text-ink-3">
-          <Clock className="h-5 w-5" />
-        </span>
-        <p className="text-sm text-ink-2">Suas avaliações vão aparecer aqui conforme o seu profissional registrar.</p>
-      </Card>
-    );
-  }
   return (
-    <div className="space-y-2">
-      {doAluno.map((a) => (
-        <Card key={a.id} className="p-4">
-          <div className="flex items-center justify-between gap-2">
-            <div className="font-display font-bold text-ink">{fmt(a.data)}</div>
-            {a.medidas.peso != null && <Pill tone="neutral">{a.medidas.peso} kg</Pill>}
-          </div>
-          {a.observacoes && <p className="mt-1.5 text-sm text-ink-2">{a.observacoes}</p>}
-        </Card>
-      ))}
+    <div className="space-y-4">
+      {/* Liga, conquistas e feed a partir dos treinos registrados */}
+      <GamificacaoView alunoId={aluno.id} execucoes={execucoes} cor={cor} />
+
+      {/* Avaliações registradas pelo profissional */}
+      <section className="space-y-2">
+        <h2 className="font-display text-base font-bold text-ink">Avaliações</h2>
+        {doAluno.length === 0 ? (
+          <Card className="p-6 text-center">
+            <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-surface-soft text-ink-3">
+              <Clock className="h-5 w-5" />
+            </span>
+            <p className="text-sm text-ink-2">Suas avaliações vão aparecer aqui conforme o seu profissional registrar.</p>
+          </Card>
+        ) : (
+          doAluno.map((a) => (
+            <Card key={a.id} className="p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="font-display font-bold text-ink">{fmt(a.data)}</div>
+                {a.medidas.peso != null && <Pill tone="neutral">{a.medidas.peso} kg</Pill>}
+              </div>
+              {a.observacoes && <p className="mt-1.5 text-sm text-ink-2">{a.observacoes}</p>}
+            </Card>
+          ))
+        )}
+      </section>
     </div>
   );
 }

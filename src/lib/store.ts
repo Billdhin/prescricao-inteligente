@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
 import type { Execucao } from "@/data/execucao";
+import type { AvaliacaoPostural } from "@/data/postural";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 import {
@@ -285,6 +286,8 @@ interface AlunosState {
   liberacoes: Liberacao[];
   /** o que o aluno executou de fato (carga/reps/RPE), base da autorregulação */
   execucoes: Execucao[];
+  /** rastreios posturais (fotos + observações + laudo); ficam locais (dado sensível) */
+  posturais: AvaliacaoPostural[];
   addAluno: (a: Aluno) => void;
   updateAluno: (id: string, patch: Partial<Aluno>) => void;
   removeAluno: (id: string) => void;
@@ -297,6 +300,10 @@ interface AlunosState {
   addLiberacao: (l: Liberacao) => void;
   /** registra uma execução do aluno (uma série concluída de um bloco) */
   addExecucao: (e: Execucao) => void;
+  /** salva um rastreio postural (dado local, não vai para a nuvem) */
+  addPostural: (a: AvaliacaoPostural) => void;
+  /** remove um rastreio postural pelo id */
+  removePostural: (id: string) => void;
   /** carrega os alunos de demonstração (para experimentar sem cadastrar) */
   loadExamples: () => void;
 }
@@ -311,6 +318,7 @@ export const useAlunos = create<AlunosState>()(
       planos: [],
       liberacoes: [],
       execucoes: [],
+      posturais: [],
       loadExamples: () => {
         set({ alunos: seedAlunos, avaliacoes: seedAvaliacoes, prescricoes: seedPrescricoes });
         // sobe os exemplos p/ a nuvem quando há sessão (no-op no modo local)
@@ -335,6 +343,7 @@ export const useAlunos = create<AlunosState>()(
           planos: s.planos.filter((p) => p.alunoId !== id),
           liberacoes: s.liberacoes.filter((l) => l.alunoId !== id),
           execucoes: s.execucoes.filter((e) => e.alunoId !== id),
+          posturais: s.posturais.filter((pp) => pp.alunoId !== id),
         }));
         // o repositório apaga em cascata avaliações/prescrições/liberações do aluno
         cloudRemoveAluno(id);
@@ -420,6 +429,14 @@ export const useAlunos = create<AlunosState>()(
       addExecucao: (e) => {
         set((s) => ({ execucoes: [e, ...s.execucoes].slice(0, 2000) }));
       },
+      // Rastreio postural: contém fotos (data URL, sensível e pesado). Fica LOCAL,
+      // sem espelho na nuvem, para respeitar a privacidade e não inchar o Supabase.
+      addPostural: (a) => {
+        set((s) => ({ posturais: [a, ...s.posturais].slice(0, 200) }));
+      },
+      removePostural: (id) => {
+        set((s) => ({ posturais: s.posturais.filter((p) => p.id !== id) }));
+      },
       archivePrescricao: (id) => {
         set((s) => ({
           prescricoes: s.prescricoes.map((p) =>
@@ -451,7 +468,7 @@ export const useAlunos = create<AlunosState>()(
     //     que o profissional já criou é tocado.
     {
       name: "pi-alunos",
-      version: 9,
+      version: 10,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -499,6 +516,8 @@ export const useAlunos = create<AlunosState>()(
           planos: Array.isArray(p.planos) ? p.planos : [],
           // v9: execuções do aluno (base da autorregulação). Aditivo.
           execucoes: Array.isArray(p.execucoes) ? p.execucoes : [],
+          // v10: rastreios posturais (locais). Aditivo.
+          posturais: Array.isArray(p.posturais) ? p.posturais : [],
         } as unknown as AlunosState;
       },
     },

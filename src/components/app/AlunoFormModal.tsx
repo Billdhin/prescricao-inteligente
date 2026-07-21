@@ -37,6 +37,7 @@ export function AlunoFormModal({
   const [restricoes, setRestricoes] = React.useState<RestricaoSelecionada[]>(inicial?.restricoes ?? []);
   const [equipamentos, setEquipamentos] = React.useState<string[]>(inicial?.equipamentos ?? KIT_PADRAO);
   const [observacoes, setObservacoes] = React.useState(inicial?.observacoes ?? "");
+  const [telefone, setTelefone] = React.useState(inicial?.telefone ?? "");
   const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   const toggle = <T,>(arr: T[], v: T, set: (x: T[]) => void) =>
@@ -59,6 +60,7 @@ export function AlunoFormModal({
       restricoes,
       equipamentos,
       observacoes: observacoes.trim() || undefined,
+      telefone: telefone.trim() || undefined,
     });
   };
 
@@ -110,13 +112,24 @@ export function AlunoFormModal({
             </Field>
           </div>
 
-          <Field label="Objetivo">
-            <select value={objetivo} onChange={(e) => setObjetivo(e.target.value as GpsObjetivo)} className="input">
-              {OBJETIVOS.map((o) => (
-                <option key={o}>{o}</option>
-              ))}
-            </select>
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Objetivo">
+              <select value={objetivo} onChange={(e) => setObjetivo(e.target.value as GpsObjetivo)} className="input">
+                {OBJETIVOS.map((o) => (
+                  <option key={o}>{o}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="WhatsApp">
+              <input
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
+                inputMode="tel"
+                placeholder="Ex.: (11) 99999-0000"
+                className="input"
+              />
+            </Field>
+          </div>
 
           <Field label="Restrições físicas">
             <RestricoesSelector value={restricoes} onChange={setRestricoes} idBase="aluno-restr" />
