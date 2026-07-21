@@ -6,6 +6,8 @@ import type { ProntuarioSnapshot } from "@/data/alunos";
 import { bibliografia } from "@/data/referencias";
 import { getParam } from "@/data/monitoringParameters";
 import { useDialog } from "@/lib/useDialog";
+import { useUser } from "@/lib/store";
+import { crefValido } from "@/lib/cref";
 import { SeloRCD } from "./SeloRCD";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +33,8 @@ export function ProntuarioView({
 }) {
   const dialogRef = useDialog<HTMLDivElement>(onClose);
   const biblio = bibliografia(prontuario.refIds);
+  const { name: profNome, cref, empresa } = useUser();
+  const crefOk = crefValido(cref);
 
   const SEM_ICON = {
     verde: <CheckCircle2 className="h-4 w-4 text-success" />,
@@ -63,6 +67,24 @@ export function ProntuarioView({
             </div>
             <h3 className="font-display text-lg font-bold text-ink">Prontuário de Decisão Técnica</h3>
             <p className="text-sm text-ink-2">{titulo}</p>
+            {/* Assinatura do responsável: nome + CREF (a proposta central do documento). */}
+            <p className="mt-1.5 text-sm text-ink">
+              <span className="font-semibold">{profNome || "Profissional não identificado"}</span>
+              {cref && (
+                <span className={cn("ml-2", crefOk ? "text-ink-2" : "text-warning")}>CREF {cref}</span>
+              )}
+              {empresa && <span className="ml-2 text-ink-3">· {empresa}</span>}
+            </p>
+            {!cref && (
+              <Link to="/account" className="text-xs font-semibold text-primary hover:underline">
+                Adicione o seu CREF na Conta para assinar o documento →
+              </Link>
+            )}
+            {cref && !crefOk && (
+              <Link to="/account" className="text-xs font-semibold text-warning hover:underline">
+                O CREF parece fora do formato (000000-G/UF). Ajuste na Conta →
+              </Link>
+            )}
           </div>
           <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
@@ -232,16 +254,11 @@ export function ProntuarioView({
 
         {/* Rodapé */}
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border p-4">
-          {onExportar &&
-            (podeExportar ? (
-              <button onClick={onExportar} className={buttonClasses("primary", "sm")}>
-                <FileDown className="h-4 w-4" /> Exportar PDF assinável
-              </button>
-            ) : (
-              <Link to="/pricing" className={buttonClasses("secondary", "sm")}>
-                <Lock className="h-3.5 w-3.5" /> PDF assinável: plano Profissional
-              </Link>
-            ))}
+          {onExportar && (
+            <button onClick={onExportar} className={buttonClasses("primary", "sm")}>
+              <FileDown className="h-4 w-4" /> Exportar PDF assinável
+            </button>
+          )}
           <button onClick={onClose} className={buttonClasses("ghost", "sm")}>
             Fechar
           </button>

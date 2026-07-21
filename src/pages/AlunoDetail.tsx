@@ -994,16 +994,27 @@ function Info({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
-const METRICAS_EVOLUCAO: { key: string; label: string; unit: string }[] = [
-  { key: "peso", label: "Peso", unit: "kg" },
-  { key: "percentualGordura", label: "% gordura", unit: "%" },
-  { key: "cintura", label: "Cintura", unit: "cm" },
-  { key: "quadril", label: "Quadril", unit: "cm" },
-  { key: "massaMuscular", label: "Massa muscular", unit: "kg" },
-  { key: "imc", label: "IMC", unit: "" },
-  { key: "fcRepouso", label: "FC repouso", unit: "bpm" },
-  { key: "pressaoSistolica", label: "PA sistólica", unit: "mmHg" },
+// `dir` = direção desejável da métrica: "menor" (cair é bom), "maior" (subir é
+// bom), "neutro" (sem juízo de valor). Colore o delta pela direção certa, então
+// ganhar massa muscular aparece como positivo, não como alerta.
+type DirMetrica = "menor" | "maior" | "neutro";
+const METRICAS_EVOLUCAO: { key: string; label: string; unit: string; dir: DirMetrica }[] = [
+  { key: "peso", label: "Peso", unit: "kg", dir: "neutro" },
+  { key: "percentualGordura", label: "% gordura", unit: "%", dir: "menor" },
+  { key: "cintura", label: "Cintura", unit: "cm", dir: "menor" },
+  { key: "quadril", label: "Quadril", unit: "cm", dir: "neutro" },
+  { key: "massaMuscular", label: "Massa muscular", unit: "kg", dir: "maior" },
+  { key: "imc", label: "IMC", unit: "", dir: "neutro" },
+  { key: "fcRepouso", label: "FC repouso", unit: "bpm", dir: "menor" },
+  { key: "pressaoSistolica", label: "PA sistólica", unit: "mmHg", dir: "menor" },
 ];
+
+/** Classe de cor do delta segundo a direção desejável da métrica. */
+function corDelta(dir: DirMetrica, delta: number): string {
+  if (dir === "neutro" || delta === 0) return "text-ink-2";
+  const bom = dir === "menor" ? delta < 0 : delta > 0;
+  return bom ? "text-success" : "text-[color:var(--cta-text)]";
+}
 
 function Evolucao({ avals }: { avals: Avaliacao[] }) {
   const metrics = METRICAS_EVOLUCAO;
@@ -1041,7 +1052,7 @@ function Evolucao({ avals }: { avals: Avaliacao[] }) {
           <span className="text-sm text-ink-2">
             {cfg.label}: {ultimo}
             {cfg.unit} ·{" "}
-            <span className={cn("font-semibold", delta <= 0 ? "text-success" : "text-[color:var(--cta-text)]")}>
+            <span className={cn("font-semibold", corDelta(cfg.dir, delta))}>
               {delta > 0 ? "+" : ""}
               {delta}
               {cfg.unit}

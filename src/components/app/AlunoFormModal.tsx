@@ -43,8 +43,11 @@ export function AlunoFormModal({
   const toggle = <T,>(arr: T[], v: T, set: (x: T[]) => void) =>
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
+  const idadeNum = idade ? Number(idade) : undefined;
+  const idadeForaDaFaixa = idadeNum != null && (idadeNum < 12 || idadeNum > 100);
+
   const submit = () => {
-    if (!nome.trim()) return;
+    if (!nome.trim() || idadeForaDaFaixa) return;
     const agora = Date.now();
     const base = inicial ?? { id: uid(), status: "ativo" as const, criadoEm: agora, nivelDesde: agora };
     // Ao trocar o nível (progressão manual), reinicia a contagem de tempo no nível.
@@ -100,8 +103,12 @@ export function AlunoFormModal({
                 onChange={(e) => setIdade(e.target.value.replace(/\D/g, "").slice(0, 3))}
                 inputMode="numeric"
                 placeholder="Ex.: 34"
+                aria-invalid={idadeForaDaFaixa}
                 className="input"
               />
+              {idadeForaDaFaixa && (
+                <span className="mt-1 block text-xs text-warning">Idade fora da faixa esperada (12 a 100).</span>
+              )}
             </Field>
             <Field label="Nível">
               <select value={nivel} onChange={(e) => setNivel(e.target.value as Nivel)} className="input">
@@ -168,7 +175,7 @@ export function AlunoFormModal({
           <button onClick={onClose} className={buttonClasses("secondary", "sm")}>
             Cancelar
           </button>
-          <button onClick={submit} disabled={!nome.trim()} className={buttonClasses("primary", "sm")}>
+          <button onClick={submit} disabled={!nome.trim() || idadeForaDaFaixa} className={buttonClasses("primary", "sm")}>
             {editando ? "Salvar alterações" : "Cadastrar aluno"}
           </button>
         </div>

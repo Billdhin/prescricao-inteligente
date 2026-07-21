@@ -63,10 +63,17 @@ export function ajustarCarga(
     return { delta: 0, acao: "sem-dado", motivo: "Ainda sem registro de execução para este exercício." };
   }
 
-  const cargaBase = comCarga[comCarga.length - 1].cargaFeita as number;
-  const cumpriuTopo = comCarga.every((e) => (e.repsFeitas ?? 0) >= faixa.max);
-  const rpeAlto = comCarga.some((e) => (e.rpe ?? 0) > rpeAlvoMax + 1);
-  const abaixoDaBase = comCarga.some((e) => (e.repsFeitas ?? 0) < faixa.min);
+  // Avalia SÓ o microciclo corrente (a última semana registrada). Um set ruim de
+  // semanas atrás não pode prender a sugestão para sempre; a dupla progressão
+  // decide sobre o desempenho recente, não sobre o histórico inteiro.
+  const ultimaSemana = Math.max(...comCarga.map((e) => e.semana ?? 0));
+  const doMicro = comCarga.filter((e) => (e.semana ?? 0) === ultimaSemana);
+
+  const cargaBase = doMicro[doMicro.length - 1].cargaFeita as number;
+  const cumpriuTopo = doMicro.every((e) => (e.repsFeitas ?? 0) >= faixa.max);
+  // RPE alvo é o teto: acima dele (não "acima+1") já é esforço alto demais.
+  const rpeAlto = doMicro.some((e) => (e.rpe ?? 0) > rpeAlvoMax);
+  const abaixoDaBase = doMicro.some((e) => (e.repsFeitas ?? 0) < faixa.min);
 
   if (cumpriuTopo && !rpeAlto) {
     return {
