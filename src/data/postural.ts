@@ -58,6 +58,29 @@ export interface ObservacaoPostural {
   nota?: string;
 }
 
+/** Um marco do corpo detectado (posição normalizada 0..1 + confiança). */
+export interface MarcoSalvo {
+  nome: string;
+  x: number;
+  y: number;
+  score: number;
+}
+
+/** Uma medida geométrica calculada e salva (para reabrir e para o laudo). */
+export interface MedidaSalva {
+  checkpointId: string;
+  rotulo: string;
+  valor: string;
+  classificacao: string | null;
+  confianca: number;
+}
+
+/** Análise por visão computacional de uma vista: marcos ajustados + medidas. */
+export interface AnalisePosturalVista {
+  marcos: MarcoSalvo[];
+  medidas: MedidaSalva[];
+}
+
 export interface AvaliacaoPostural {
   id: string;
   alunoId: string;
@@ -65,6 +88,8 @@ export interface AvaliacaoPostural {
   /** fotos por vista, em data URL (opcional; ficam locais, não vão para a nuvem) */
   fotos?: Partial<Record<VistaPostural, string>>;
   observacoes: ObservacaoPostural[];
+  /** análise automática (marcos + medidas) por vista, quando houve detecção */
+  analises?: Partial<Record<VistaPostural, AnalisePosturalVista>>;
   /** laudo em texto: gerado a partir dos achados e editável pelo profissional */
   resumo?: string;
 }
@@ -105,6 +130,25 @@ export function montarLaudo(av: AvaliacaoPostural, nomeAluno: string): string {
     linhas.push("");
     linhas.push(
       "Achados de rastreio visual, sem medição instrumental. Servem para orientar a observação e a conduta do profissional; não constituem diagnóstico.",
+    );
+  }
+
+  // Medidas estimadas por visão computacional, quando houve análise.
+  const vistasComAnalise = (["anterior", "lateral", "posterior"] as VistaPostural[]).filter(
+    (v) => av.analises?.[v]?.medidas?.length,
+  );
+  if (vistasComAnalise.length) {
+    linhas.push("");
+    linhas.push("Medidas estimadas (visão computacional, 2D sem calibração):");
+    for (const v of vistasComAnalise) {
+      for (const med of av.analises![v]!.medidas) {
+        const cls = med.classificacao ?? "inconclusivo, ajustar manualmente";
+        linhas.push(`- ${med.rotulo}: ${med.valor} (${cls}).`);
+      }
+    }
+    linhas.push("");
+    linhas.push(
+      "As medidas vêm de detecção automática de marcos numa foto única, sem calibração nem plano de referência. São estimativas de triagem, revisadas pelo profissional, e não medição clínica.",
     );
   }
   return linhas.join("\n");

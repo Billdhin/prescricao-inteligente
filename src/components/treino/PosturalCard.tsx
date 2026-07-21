@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ScanLine, Plus, Trash2, FileDown, X, Camera } from "lucide-react";
+import { ScanLine, Plus, Trash2, FileDown, X, Camera, Sparkles, Loader2 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, marcaDoUsuario, uid } from "@/lib/store";
 import { useDialog } from "@/lib/useDialog";
@@ -8,12 +8,16 @@ import {
   type AvaliacaoPostural,
   type ObservacaoPostural,
   type VistaPostural,
+  type AnalisePosturalVista,
   CHECKPOINTS_POSTURAIS,
   ROTULO_VISTA,
   ehReferencia,
   montarLaudo,
 } from "@/data/postural";
 import { exportPosturalPDF } from "@/lib/exportPostural";
+import type { Marco } from "@/lib/postura/vision";
+import type { MedidaPostural } from "@/lib/postura/metrics";
+import { PosturalAnalyzer } from "@/components/treino/PosturalAnalyzer";
 
 const fmt = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
 const VISTAS: VistaPostural[] = ["anterior", "lateral", "posterior"];
@@ -33,7 +37,7 @@ function lerFotoReduzida(file: File): Promise<string> {
         const ctx = canvas.getContext("2d");
         if (!ctx) return reject(new Error("canvas"));
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.7));
+        resolve(canvas.toDataURL("image/jpeg", 0.75));
       };
       img.onerror = reject;
       img.src = reader.result as string;
@@ -45,7 +49,7 @@ function lerFotoReduzida(file: File): Promise<string> {
 
 /**
  * Rastreio postural (lado do profissional): lista os rastreios do aluno e abre o
- * roteiro de captura. É rastreio VISUAL assistido, não medição por imagem.
+ * fluxo inteligente (detecção de pose no navegador + ajuste manual + laudo).
  */
 export function PosturalCard({ aluno }: { aluno: Aluno }) {
   const posturais = useAlunos((s) => s.posturais);
@@ -66,20 +70,21 @@ export function PosturalCard({ aluno }: { aluno: Aluno }) {
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary-tint text-primary">
             <ScanLine className="h-5 w-5" />
           </span>
-          <h2 className="font-display text-lg font-bold text-ink">Rastreio postural</h2>
+          <h2 className="font-display text-lg font-bold text-ink">Avaliação postural</h2>
         </div>
         <button onClick={() => setNovo(true)} className={buttonClasses("secondary", "sm")}>
-          <Plus className="h-4 w-4" /> Novo rastreio
+          <Plus className="h-4 w-4" /> Nova avaliação
         </button>
       </div>
 
       <p className="mb-3 text-sm text-ink-2">
-        Roteiro visual por vista, com laudo pronto para a sua marca. É apoio ao seu olhar clínico, sem medir ângulos
-        por foto nem diagnosticar.
+        A foto é analisada por visão computacional no seu próprio dispositivo: o modelo acha os pontos do corpo, mede
+        os ângulos e você ajusta o que quiser. A foto não sai daqui. É apoio ao seu olhar, não diagnóstico nem medição
+        clínica de precisão.
       </p>
 
       {doAluno.length === 0 ? (
-        <p className="text-sm text-ink-3">Nenhum rastreio ainda. Faça o primeiro para registrar a evolução postural.</p>
+        <p className="text-sm text-ink-3">Nenhuma avaliação ainda. Faça a primeira para registrar a evolução postural.</p>
       ) : (
         <div className="space-y-2">
           {doAluno.map((av) => {
@@ -87,20 +92,22 @@ export function PosturalCard({ aluno }: { aluno: Aluno }) {
               const cp = CHECKPOINTS_POSTURAIS.find((c) => c.id === o.checkpointId);
               return cp && !ehReferencia(cp, o.achado);
             }).length;
+            const comIA = av.analises && Object.keys(av.analises).length > 0;
             return (
               <div key={av.id} className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3">
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-ink">{fmt(av.data)}</div>
-                  <div className="mt-0.5">
+                  <div className="mt-0.5 flex flex-wrap gap-1">
                     <Pill tone={desvios > 0 ? "warning" : "success"}>
                       {desvios > 0 ? `${desvios} achado${desvios > 1 ? "s" : ""} a observar` : "Sem achados"}
                     </Pill>
+                    {comIA && <Pill tone="analysis">Com análise</Pill>}
                   </div>
                 </div>
                 <button onClick={() => exportar(av)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-semibold text-primary hover:bg-surface-soft">
                   <FileDown className="h-4 w-4" /> Laudo
                 </button>
-                <button onClick={() => removePostural(av.id)} aria-label="Excluir rastreio" className="rounded-md p-2 text-ink-3 hover:bg-surface-soft hover:text-cta">
+                <button onClick={() => removePostural(av.id)} aria-label="Excluir avaliação" className="rounded-md p-2 text-ink-3 hover:bg-surface-soft hover:text-cta">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -114,11 +121,18 @@ export function PosturalCard({ aluno }: { aluno: Aluno }) {
   );
 }
 
+type MarcosPorVista = Partial<Record<VistaPostural, Marco[]>>;
+type MedidasPorVista = Partial<Record<VistaPostural, MedidaPostural[]>>;
+
 function PosturalModal({ aluno, onClose, onSaved }: { aluno: Aluno; onClose: () => void; onSaved: () => void }) {
   const addPostural = useAlunos((s) => s.addPostural);
   const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   const [fotos, setFotos] = React.useState<Partial<Record<VistaPostural, string>>>({});
+  const [marcos, setMarcos] = React.useState<MarcosPorVista>({});
+  const [medidas, setMedidas] = React.useState<MedidasPorVista>({});
+  const [analisando, setAnalisando] = React.useState<VistaPostural | null>(null);
+  const [erro, setErro] = React.useState<Partial<Record<VistaPostural, string>>>({});
   const [achados, setAchados] = React.useState<Record<string, string>>(() =>
     Object.fromEntries(CHECKPOINTS_POSTURAIS.map((c) => [c.id, c.opcoes[0]])),
   );
@@ -130,7 +144,22 @@ function PosturalModal({ aluno, onClose, onSaved }: { aluno: Aluno; onClose: () 
     achado: achados[c.id],
     nota: notas[c.id]?.trim() || undefined,
   }));
-  const previa: AvaliacaoPostural = { id: "previa", alunoId: aluno.id, data: Date.now(), fotos, observacoes };
+  const analises: Partial<Record<VistaPostural, AnalisePosturalVista>> = {};
+  for (const v of VISTAS) {
+    if (marcos[v]) {
+      analises[v] = {
+        marcos: marcos[v]!.map((k) => ({ nome: k.nome, x: k.x, y: k.y, score: k.score })),
+        medidas: (medidas[v] ?? []).map((m) => ({
+          checkpointId: m.checkpointId,
+          rotulo: m.rotulo,
+          valor: m.valor,
+          classificacao: m.classificacao,
+          confianca: m.confianca,
+        })),
+      };
+    }
+  }
+  const previa: AvaliacaoPostural = { id: "previa", alunoId: aluno.id, data: Date.now(), fotos, observacoes, analises };
   const laudoAuto = montarLaudo(previa, aluno.nome);
   const laudo = laudoEditado ?? laudoAuto;
 
@@ -139,10 +168,50 @@ function PosturalModal({ aluno, onClose, onSaved }: { aluno: Aluno; onClose: () 
     try {
       const dataUrl = await lerFotoReduzida(file);
       setFotos((f) => ({ ...f, [v]: dataUrl }));
+      setMarcos((m) => ({ ...m, [v]: undefined }));
+      setErro((e) => ({ ...e, [v]: undefined }));
     } catch {
-      /* imagem inválida: ignora silenciosamente */
+      /* imagem inválida: ignora */
     }
   };
+
+  const analisar = async (v: VistaPostural) => {
+    const foto = fotos[v];
+    if (!foto) return;
+    setAnalisando(v);
+    setErro((e) => ({ ...e, [v]: undefined }));
+    try {
+      const { detectarPose, carregarImagem } = await import("@/lib/postura/vision");
+      const img = await carregarImagem(foto);
+      const detec = await detectarPose(img);
+      setMarcos((m) => ({ ...m, [v]: detec }));
+      setLaudoEditado(null);
+    } catch (e) {
+      setErro((er) => ({ ...er, [v]: (e as Error)?.message ?? "Não consegui analisar. Ajuste manualmente." }));
+    } finally {
+      setAnalisando(null);
+    }
+  };
+
+  // Handlers estáveis por vista (evitam loop de efeito no analisador).
+  const onMarcosDe = React.useCallback(
+    (v: VistaPostural) => (novos: Marco[]) => setMarcos((m) => ({ ...m, [v]: novos })),
+    [],
+  );
+  const onMedidasDe = React.useCallback(
+    (v: VistaPostural) => (novas: MedidaPostural[]) => {
+      setMedidas((md) => ({ ...md, [v]: novas }));
+      // pré-preenche os pontos cobertos pela análise (só os confiáveis); o
+      // profissional ainda pode sobrepor no seletor abaixo.
+      setAchados((a) => {
+        const next = { ...a };
+        for (const med of novas) if (med.classificacao) next[med.checkpointId] = med.classificacao;
+        return next;
+      });
+      setLaudoEditado(null);
+    },
+    [],
+  );
 
   const salvar = () => {
     addPostural({
@@ -151,6 +220,7 @@ function PosturalModal({ aluno, onClose, onSaved }: { aluno: Aluno; onClose: () 
       data: Date.now(),
       fotos: Object.keys(fotos).length ? fotos : undefined,
       observacoes,
+      analises: Object.keys(analises).length ? analises : undefined,
       resumo: laudoEditado ?? laudoAuto,
     });
     onSaved();
@@ -163,35 +233,56 @@ function PosturalModal({ aluno, onClose, onSaved }: { aluno: Aluno; onClose: () 
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label="Novo rastreio postural"
+        aria-label="Nova avaliação postural"
         className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold text-ink">Novo rastreio postural</h2>
+          <h2 className="font-display text-lg font-bold text-ink">Nova avaliação postural</h2>
           <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-6">
           {VISTAS.map((v) => (
-            <section key={v}>
+            <section key={v} className="rounded-xl border border-border p-3">
               <h3 className="mb-2 font-display text-sm font-bold text-ink">{ROTULO_VISTA[v]}</h3>
 
-              <label className="mb-3 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-surface-soft px-3 py-2 text-sm text-ink-2 hover:bg-surface">
-                <Camera className="h-4 w-4 text-ink-3" />
-                {fotos[v] ? "Trocar foto" : "Adicionar foto (opcional)"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => escolherFoto(v, e.target.files?.[0])}
-                />
-                {fotos[v] && <img src={fotos[v]} alt="" className="ml-auto h-10 w-10 rounded object-cover" />}
-              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-surface-soft px-3 py-2 text-sm text-ink-2 hover:bg-surface">
+                  <Camera className="h-4 w-4 text-ink-3" />
+                  {fotos[v] ? "Trocar foto" : "Adicionar foto"}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => escolherFoto(v, e.target.files?.[0])} />
+                </label>
+                {fotos[v] && !marcos[v] && (
+                  <button
+                    onClick={() => analisar(v)}
+                    disabled={analisando === v}
+                    className={buttonClasses("primary", "sm")}
+                  >
+                    {analisando === v ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {analisando === v ? "Analisando..." : "Analisar postura"}
+                  </button>
+                )}
+              </div>
 
-              <div className="grid gap-2 sm:grid-cols-2">
+              {erro[v] && <p className="mt-2 text-xs text-cta">{erro[v]} Você pode marcar os achados na mão abaixo.</p>}
+
+              {fotos[v] && marcos[v] && (
+                <div className="mt-3">
+                  <PosturalAnalyzer
+                    dataUrl={fotos[v]!}
+                    vista={v}
+                    marcos={marcos[v]!}
+                    onMarcos={onMarcosDe(v)}
+                    onMedidas={onMedidasDe(v)}
+                  />
+                </div>
+              )}
+
+              {/* Roteiro manual (pré-preenchido pela análise, sempre editável) */}
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {CHECKPOINTS_POSTURAIS.filter((c) => c.vista === v).map((c) => (
                   <label key={c.id} className="block">
                     <span className="mb-1 block text-xs font-semibold text-ink-2">{c.regiao}</span>
@@ -217,11 +308,11 @@ function PosturalModal({ aluno, onClose, onSaved }: { aluno: Aluno; onClose: () 
 
           <section>
             <h3 className="mb-2 font-display text-sm font-bold text-ink">Rascunho do laudo</h3>
-            <p className="mb-2 text-xs text-ink-3">Gerado a partir dos achados. Ajuste o texto antes de salvar, se quiser.</p>
+            <p className="mb-2 text-xs text-ink-3">Gerado dos achados e das medidas. Ajuste o texto antes de salvar, se quiser.</p>
             <textarea
               value={laudo}
               onChange={(e) => setLaudoEditado(e.target.value)}
-              rows={6}
+              rows={8}
               className="input font-mono text-xs leading-relaxed"
             />
           </section>
@@ -232,7 +323,7 @@ function PosturalModal({ aluno, onClose, onSaved }: { aluno: Aluno; onClose: () 
             Cancelar
           </button>
           <button onClick={salvar} className={buttonClasses("primary", "sm")}>
-            Salvar rastreio
+            Salvar avaliação
           </button>
         </div>
       </div>
