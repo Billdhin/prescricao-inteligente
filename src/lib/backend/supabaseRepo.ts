@@ -1,6 +1,7 @@
 import { getSupabase } from "./supabaseClient";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
+import type { Execucao } from "@/data/execucao";
 import type { PerfilCampos, Plan } from "@/lib/store";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 
@@ -29,6 +30,10 @@ async function uid(): Promise<string> {
 export interface PerfilRemoto extends PerfilCampos {
   plan: Plan;
   mode: "atender" | "aprender";
+  /** 'profissional' (padrao) ou 'aluno' */
+  role: "profissional" | "aluno";
+  /** para o aluno: a conta do profissional dono (marca) */
+  professionalId: string | null;
 }
 
 export async function carregarPerfil(): Promise<Partial<PerfilRemoto> | null> {
@@ -47,6 +52,8 @@ export async function carregarPerfil(): Promise<Partial<PerfilRemoto> | null> {
     corPrimaria: data.cor_primaria ?? "",
     plan: (data.plan ?? "free") as Plan,
     mode: (data.mode ?? "atender") as "atender" | "aprender",
+    role: (data.role ?? "profissional") as "profissional" | "aluno",
+    professionalId: data.professional_id ?? null,
   };
 }
 
@@ -335,4 +342,92 @@ export async function listarLiberacoes(): Promise<Liberacao[]> {
     resultado: r.resultado,
     ajustes: r.ajustes ?? [],
   }));
+}
+
+/* ------------------------- Portal do aluno (convite/execução) ------------------------- */
+
+/** O profissional gera um convite para o aluno reivindicar a conta. Retorna o token. */
+export async function criarConvite(alunoId: string): Promise<string> {
+  const u = await uid();
+  const token = crypto.randomUUID().replace(/-/g, "");
+  const { error } = await getSupabase()
+    .from("convites")
+    .insert({ token, aluno_id: alunoId, professional_id: u });
+  if (error) throw error;
+  return token;
+}
+
+/** O aluno recém-cadastrado reivindica o convite (vincula a conta ao registro). */
+export async function reivindicarConvite(token: string): Promise<void> {
+  const { error } = await getSupabase().rpc("claim_convite", { p_token: token });
+  if (error) throw error;
+}
+
+/** Marca do profissional (nome, logo, cor) para o portal do aluno. */
+export async function carregarMarcaProfissional(
+  professionalId: string,
+): Promise<{ nome: string; logoDataUrl?: string; corPrimaria?: string }> {
+  const { data } = await getSupabase()
+    .from("profiles")
+    .select("name,empresa,logo_url,cor_primaria")
+    .eq("id", professionalId)
+    .single();
+  return {
+    nome: (data?.empresa || data?.name || "Seu treino") as string,
+    logoDataUrl: data?.logo_url || undefined,
+    corPrimaria: data?.cor_primaria || undefined,
+  };
+}
+
+function execToRow(e: Execucao, professionalId: string) {
+  return {
+    id: e.id,
+    aluno_id: e.alunoId,
+    professional_id: professionalId,
+    plano_id: e.planoId ?? null,
+    semana: e.semana ?? null,
+    sessao_ref: e.sessaoRef ?? null,
+    bloco_ref: e.blocoRef ?? null,
+    exercicio_slug: e.exercicioSlug ?? null,
+    carga_feita: e.cargaFeita ?? null,
+    reps_feitas: e.repsFeitas ?? null,
+    rpe: e.rpe ?? null,
+    concluido_em: new Date(e.concluidoEm).toISOString(),
+  };
+}
+
+function execFromRow(r: Record<string, any>): Execucao {
+  return {
+    id: r.id,
+    alunoId: r.aluno_id,
+    planoId: r.plano_id ?? undefined,
+    semana: r.semana ?? 0,
+    sessaoRef: r.sessao_ref ?? "",
+    blocoRef: r.bloco_ref ?? "",
+    exercicioSlug: r.exercicio_slug ?? undefined,
+    cargaFeita: r.carga_feita != null ? Number(r.carga_feita) : undefined,
+    repsFeitas: r.reps_feitas ?? undefined,
+    rpe: r.rpe ?? undefined,
+    concluidoEm: r.concluido_em ? new Date(r.concluido_em).getTime() : Date.now(),
+  };
+}
+
+/**
+ * Grava uma execução. professionalId: o dono do aluno (o aluno passa o do seu
+ * profissional; o profissional passa o proprio). A RLS garante que so o vinculado
+ * insere e so o dono le.
+ */
+export async function salvarExecucao(e: Execucao, professionalId: string): Promise<void> {
+  const { error } = await getSupabase().from("execucoes").upsert(execToRow(e, professionalId));
+  if (error) throw error;
+}
+
+/** Execuções visiveis pela RLS (do proprio aluno, ou dos alunos do profissional). */
+export async function listarExecucoes(): Promise<Execucao[]> {
+  const { data, error } = await getSupabase()
+    .from("execucoes")
+    .select("*")
+    .order("concluido_em", { ascending: false });
+  if (error) return [];
+  return (data ?? []).map(execFromRow);
 }

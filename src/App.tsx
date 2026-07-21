@@ -15,6 +15,7 @@ import { Account } from "@/pages/Account";
 import { Alunos } from "@/pages/Alunos";
 import { AlunoDetail } from "@/pages/AlunoDetail";
 import { AlunoPreview } from "@/pages/AlunoPreview";
+import { AlunoPortal } from "@/pages/AlunoPortal";
 import { Avaliacoes } from "@/pages/Avaliacoes";
 import { Protocolos } from "@/pages/Protocolos";
 import { Comparador } from "@/pages/Comparador";
@@ -76,6 +77,8 @@ export default function App() {
 
         {/* Portal do aluno em tela cheia (prévia do profissional; sem o shell). */}
         <Route path="/alunos/:id/preview" element={<AlunoPreview />} />
+        {/* Portal real do aluno: cadastro/login por convite + app com a marca. */}
+        <Route path="/aluno" element={<AlunoPortal />} />
 
         {/* App (dentro do shell) */}
         <Route element={<AppLayout />}>

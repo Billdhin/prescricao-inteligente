@@ -29,6 +29,8 @@ import {
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
 import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
+import { useCloudAuth } from "@/lib/backend/cloudAuth";
+import { criarConvite } from "@/lib/backend/supabaseRepo";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
@@ -341,6 +343,8 @@ export function AlunoDetail() {
           <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
 
           <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
+
+          <ConvidarAlunoCard alunoId={aluno.id} alunoNome={aluno.nome} />
 
           <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
@@ -814,6 +818,66 @@ function RotuloJ({ children }: { children: React.ReactNode }) {
 
 /** Acompanhamento do vínculo: tempo de cadastro (dias→meses), tempo no nível,
  *  status ativo/saiu e a SUGESTÃO de avançar de nível (progressão é manual). */
+/** Card de convite do aluno para o app (com a marca do profissional). Só aparece
+ *  quando há backend configurado (o portal do aluno depende do Supabase). */
+function ConvidarAlunoCard({ alunoId, alunoNome }: { alunoId: string; alunoNome: string }) {
+  const configured = useCloudAuth((s) => s.configured);
+  const [link, setLink] = React.useState<string | null>(null);
+  const [erro, setErro] = React.useState<string | null>(null);
+  const [carregando, setCarregando] = React.useState(false);
+  const [copiado, setCopiado] = React.useState(false);
+  if (!configured) return null;
+
+  const gerar = async () => {
+    setCarregando(true);
+    setErro(null);
+    try {
+      const token = await criarConvite(alunoId);
+      const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+      setLink(`${window.location.origin}${base}/aluno?convite=${token}`);
+    } catch (e) {
+      setErro((e as Error)?.message ?? "Não consegui gerar o convite agora.");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  return (
+    <Card className="p-5 md:p-6">
+      <h3 className="font-display text-lg font-bold text-ink">App do aluno</h3>
+      <p className="mt-1 text-sm text-ink-2">
+        Convide {alunoNome.split(" ")[0]} para acompanhar o treino no app, com a sua marca. Ele registra as séries e a
+        periodização se ajusta pela execução.
+      </p>
+      {link ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input
+            readOnly
+            value={link}
+            aria-label="Link de convite do aluno"
+            onFocus={(e) => e.currentTarget.select()}
+            className="min-w-0 flex-1 rounded-lg border border-border bg-surface-soft px-3 py-2 text-xs text-ink-2"
+          />
+          <button
+            onClick={() => {
+              navigator.clipboard?.writeText(link);
+              setCopiado(true);
+            }}
+            className={buttonClasses("secondary", "sm")}
+          >
+            {copiado ? "Copiado" : "Copiar link"}
+          </button>
+        </div>
+      ) : (
+        <button onClick={gerar} disabled={carregando} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
+          {carregando ? "Gerando..." : "Gerar convite do aluno"}
+        </button>
+      )}
+      {erro && <p className="mt-2 text-xs text-warning">{erro}</p>}
+    </Card>
+  );
+}
+
 function AcompanhamentoCard({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Partial<Aluno>) => void }) {
   const navigate = useNavigate();
   const cadastro = tempoDesde(aluno.criadoEm);

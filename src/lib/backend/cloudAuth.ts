@@ -24,6 +24,12 @@ interface CloudAuthState {
   user: User | null;
   /** true enquanto hidrata os dados do usuário logo após o login */
   hydrating: boolean;
+  /** papel da conta logada; define qual app renderizar (profissional x aluno) */
+  role: "profissional" | "aluno" | null;
+  /** para o aluno logado: id do registro de aluno e a marca do profissional dele */
+  alunoId: string | null;
+  professionalId: string | null;
+  marca: { nome: string; logoDataUrl?: string; corPrimaria?: string } | null;
 }
 
 export const useCloudAuth = create<CloudAuthState>(() => ({
@@ -32,23 +38,53 @@ export const useCloudAuth = create<CloudAuthState>(() => ({
   session: null,
   user: null,
   hydrating: false,
+  role: null,
+  alunoId: null,
+  professionalId: null,
+  marca: null,
 }));
 
 let hydratedFor: string | null = null;
 
-/** Traz o perfil e os dados do profissional da nuvem para os stores locais. */
+/** Carrega os dados do ALUNO logado (o proprio registro, planos, avaliacoes,
+ *  execucoes) e a marca do profissional dele. O shell do aluno renderiza a partir
+ *  destes stores. */
+async function hydrateAluno(professionalId: string | null) {
+  const [alunos, planos, avaliacoes, execucoes] = await Promise.all([
+    repo.listarAlunos(),
+    repo.listarPlanos(),
+    repo.listarAvaliacoes(),
+    repo.listarExecucoes(),
+  ]);
+  const marca = professionalId
+    ? await repo.carregarMarcaProfissional(professionalId).catch(() => null)
+    : null;
+  useAlunos.setState({ alunos, planos, avaliacoes, execucoes, prescricoes: [], liberacoes: [] });
+  useCloudAuth.setState({ role: "aluno", alunoId: alunos[0]?.id ?? null, professionalId, marca });
+}
+
+/** Traz o perfil e os dados da nuvem para os stores locais. Ramifica por papel:
+ *  aluno carrega o proprio treino; profissional carrega a carteira dele. */
 async function hydrate(userId: string) {
   if (hydratedFor === userId) return;
   hydratedFor = userId;
   useCloudAuth.setState({ hydrating: true });
   try {
-    const [perfil, alunos, avaliacoes, prescricoes, planos, liberacoes] = await Promise.all([
-      repo.carregarPerfil(),
+    const perfil = await repo.carregarPerfil();
+
+    if (perfil?.role === "aluno") {
+      await hydrateAluno(perfil.professionalId ?? null);
+      return;
+    }
+    useCloudAuth.setState({ role: "profissional", alunoId: null, professionalId: null, marca: null });
+
+    const [alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes] = await Promise.all([
       repo.listarAlunos(),
       repo.listarAvaliacoes(),
       repo.listarPrescricoes(),
       repo.listarPlanos(),
       repo.listarLiberacoes(),
+      repo.listarExecucoes(),
     ]);
 
     const nuvemVazia = alunos.length === 0;
@@ -64,7 +100,7 @@ async function hydrate(userId: string) {
       // mantém o store local como está (já é a fonte que acabou de subir)
     } else {
       // A nuvem manda: substitui o store local pelos dados do usuário.
-      useAlunos.setState({ alunos, avaliacoes, prescricoes, planos, liberacoes });
+      useAlunos.setState({ alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes });
     }
 
     // Perfil: se a nuvem tem perfil preenchido, usa; senão, sobe o local.
@@ -103,6 +139,15 @@ async function hydrate(userId: string) {
   }
 }
 
+/** Re-hidrata a sessão atual do zero. Usado após o aluno reivindicar o convite
+ *  (o papel muda para 'aluno' e os dados dele precisam ser recarregados). */
+export async function recarregarSessao() {
+  const userId = useCloudAuth.getState().user?.id;
+  if (!userId) return;
+  hydratedFor = null;
+  await hydrate(userId);
+}
+
 function aplicarSessao(session: Session | null) {
   if (session?.user) {
     setCloudOn(true);
@@ -111,7 +156,7 @@ function aplicarSessao(session: Session | null) {
   } else {
     setCloudOn(false);
     hydratedFor = null;
-    useCloudAuth.setState({ status: "signed-out", session: null, user: null });
+    useCloudAuth.setState({ status: "signed-out", session: null, user: null, role: null, alunoId: null, professionalId: null, marca: null });
   }
 }
 

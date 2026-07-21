@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Navigation,
@@ -235,7 +235,9 @@ export function AppLayout() {
   if (cloud.configured) {
     if (cloud.status === "loading") return <SplashCarregando />;
     if (cloud.status === "signed-out") return <CloudAuthGate />;
-    // sessão ativa: segue para o app (a hidratação roda em segundo plano)
+    // Conta de aluno: o portal do aluno é o lugar dela, não o shell do profissional.
+    if (cloud.role === "aluno") return <Navigate to="/aluno" replace />;
+    // sessão ativa (profissional): segue para o app (a hidratação roda em segundo plano)
   } else if (senhaHash && !logado) {
     return <LoginGate onEntrar={() => setLogado(true)} />;
   }
