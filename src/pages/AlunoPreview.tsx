@@ -14,11 +14,14 @@ export function AlunoPreview() {
   const aluno = useAlunos((s) => s.alunos.find((a) => a.id === id));
   const planos = useAlunos((s) => s.planos);
   const avaliacoes = useAlunos((s) => s.avaliacoes);
+  const execucoes = useAlunos((s) => s.execucoes);
+  const addExecucao = useAlunos((s) => s.addExecucao);
   const user = useUser();
 
   if (!aluno) return <Navigate to="/alunos" replace />;
 
   const plano = planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
+  const execucoesDoAluno = execucoes.filter((e) => e.alunoId === aluno.id);
   const marca = {
     nome: user.empresa || user.name || "Seu treino",
     logoDataUrl: user.logoDataUrl || undefined,
@@ -31,6 +34,8 @@ export function AlunoPreview() {
       plano={plano}
       marca={marca}
       avaliacoes={avaliacoes}
+      execucoes={execucoesDoAluno}
+      onRegistrar={addExecucao}
       preview
       onSair={() => navigate(`/alunos/${aluno.id}`)}
     />

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
+import type { Execucao } from "@/data/execucao";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 import {
@@ -282,6 +283,8 @@ interface AlunosState {
   planos: PlanoTreino[];
   /** liberações do Semáforo (gate pré-sessão do Motor RCD) */
   liberacoes: Liberacao[];
+  /** o que o aluno executou de fato (carga/reps/RPE), base da autorregulação */
+  execucoes: Execucao[];
   addAluno: (a: Aluno) => void;
   updateAluno: (id: string, patch: Partial<Aluno>) => void;
   removeAluno: (id: string) => void;
@@ -292,6 +295,8 @@ interface AlunosState {
   updatePlano: (id: string, patch: Partial<PlanoTreino>) => void;
   removePlano: (id: string) => void;
   addLiberacao: (l: Liberacao) => void;
+  /** registra uma execução do aluno (uma série concluída de um bloco) */
+  addExecucao: (e: Execucao) => void;
   /** carrega os alunos de demonstração (para experimentar sem cadastrar) */
   loadExamples: () => void;
 }
@@ -305,6 +310,7 @@ export const useAlunos = create<AlunosState>()(
       prescricoes: [],
       planos: [],
       liberacoes: [],
+      execucoes: [],
       loadExamples: () => {
         set({ alunos: seedAlunos, avaliacoes: seedAvaliacoes, prescricoes: seedPrescricoes });
         // sobe os exemplos p/ a nuvem quando há sessão (no-op no modo local)
@@ -328,6 +334,7 @@ export const useAlunos = create<AlunosState>()(
           prescricoes: s.prescricoes.filter((p) => p.alunoId !== id),
           planos: s.planos.filter((p) => p.alunoId !== id),
           liberacoes: s.liberacoes.filter((l) => l.alunoId !== id),
+          execucoes: s.execucoes.filter((e) => e.alunoId !== id),
         }));
         // o repositório apaga em cascata avaliações/prescrições/liberações do aluno
         cloudRemoveAluno(id);
@@ -408,6 +415,11 @@ export const useAlunos = create<AlunosState>()(
         set((s) => ({ liberacoes: [l, ...s.liberacoes].slice(0, 200) }));
         cloudSaveLiberacao(l);
       },
+      // Execução do aluno. Espelho na nuvem entra com a conta do aluno (fase de
+      // auth do portal); por ora persiste local, base da autorregulação.
+      addExecucao: (e) => {
+        set((s) => ({ execucoes: [e, ...s.execucoes].slice(0, 2000) }));
+      },
       archivePrescricao: (id) => {
         set((s) => ({
           prescricoes: s.prescricoes.map((p) =>
@@ -439,7 +451,7 @@ export const useAlunos = create<AlunosState>()(
     //     que o profissional já criou é tocado.
     {
       name: "pi-alunos",
-      version: 8,
+      version: 9,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -485,6 +497,8 @@ export const useAlunos = create<AlunosState>()(
           liberacoes: Array.isArray(p.liberacoes) ? p.liberacoes : [],
           // v8: coleção nova; quem vem de versão anterior começa sem planos.
           planos: Array.isArray(p.planos) ? p.planos : [],
+          // v9: execuções do aluno (base da autorregulação). Aditivo.
+          execucoes: Array.isArray(p.execucoes) ? p.execucoes : [],
         } as unknown as AlunosState;
       },
     },

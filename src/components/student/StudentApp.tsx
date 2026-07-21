@@ -1,11 +1,12 @@
 import * as React from "react";
-import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse } from "lucide-react";
+import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse, CheckCircle2 } from "lucide-react";
 import { Card, Pill } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
 import { Logo } from "@/components/brand/Logo";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao } from "@/data/alunos";
+import type { Execucao } from "@/data/execucao";
 import {
   type PlanoTreino,
   type Microciclo,
@@ -41,6 +42,8 @@ export function StudentApp({
   plano,
   marca,
   avaliacoes = [],
+  execucoes = [],
+  onRegistrar,
   preview = false,
   onSair,
 }: {
@@ -48,6 +51,10 @@ export function StudentApp({
   plano?: PlanoTreino;
   marca: Marca;
   avaliacoes?: Avaliacao[];
+  /** o que o aluno já registrou (para marcar sessões feitas) */
+  execucoes?: Execucao[];
+  /** registra uma execução; ausente = portal só-leitura */
+  onRegistrar?: (e: Execucao) => void;
   preview?: boolean;
   onSair?: () => void;
 }) {
@@ -85,7 +92,9 @@ export function StudentApp({
             </h1>
           </div>
 
-          {aba === "hoje" && <AbaHoje plano={plano} cor={cor} />}
+          {aba === "hoje" && (
+            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} onRegistrar={onRegistrar} />
+          )}
           {aba === "plano" && <AbaPlano plano={plano} cor={cor} />}
           {aba === "evolucao" && <AbaEvolucao aluno={aluno} avaliacoes={avaliacoes} />}
         </main>
@@ -124,7 +133,19 @@ export function StudentApp({
 
 /* ------------------------------- Aba: Hoje -------------------------------- */
 
-function AbaHoje({ plano, cor }: { plano?: PlanoTreino; cor: string }) {
+function AbaHoje({
+  plano,
+  cor,
+  aluno,
+  execucoes,
+  onRegistrar,
+}: {
+  plano?: PlanoTreino;
+  cor: string;
+  aluno: Aluno;
+  execucoes: Execucao[];
+  onRegistrar?: (e: Execucao) => void;
+}) {
   if (!plano) return <SemPlano />;
   const semana = semanaAtual(plano);
   const meso = mesocicloAtual(plano);
@@ -143,14 +164,42 @@ function AbaHoje({ plano, cor }: { plano?: PlanoTreino; cor: string }) {
       {!micro || micro.sessoes.length === 0 ? (
         <Card className="p-6 text-center text-sm text-ink-2">Sem sessões nesta semana.</Card>
       ) : (
-        micro.sessoes.map((s) => <SessaoCard key={s.id} sessao={s} cor={cor} />)
+        micro.sessoes.map((s) => (
+          <SessaoCard
+            key={s.id}
+            sessao={s}
+            cor={cor}
+            semana={semana}
+            plano={plano}
+            aluno={aluno}
+            execucoes={execucoes}
+            onRegistrar={onRegistrar}
+          />
+        ))
       )}
     </div>
   );
 }
 
-function SessaoCard({ sessao, cor }: { sessao: Sessao; cor: string }) {
+function SessaoCard({
+  sessao,
+  cor,
+  semana,
+  plano,
+  aluno,
+  execucoes,
+  onRegistrar,
+}: {
+  sessao: Sessao;
+  cor: string;
+  semana: number;
+  plano: PlanoTreino;
+  aluno: Aluno;
+  execucoes: Execucao[];
+  onRegistrar?: (e: Execucao) => void;
+}) {
   const [aberto, setAberto] = React.useState(false);
+  const feitas = sessao.blocos.filter((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id)).length;
   return (
     <Card className="overflow-hidden p-0">
       <button
@@ -162,12 +211,25 @@ function SessaoCard({ sessao, cor }: { sessao: Sessao; cor: string }) {
           <div className="font-display font-bold text-ink">{sessao.nome}</div>
           {sessao.foco && <div className="text-xs text-ink-3">{sessao.foco}</div>}
         </div>
-        <ChevronDown className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
+        <div className="flex items-center gap-2">
+          {feitas > 0 && <span className="text-xs font-semibold" style={{ color: cor }}>{feitas}/{sessao.blocos.length}</span>}
+          <ChevronDown className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
+        </div>
       </button>
       {aberto && (
         <div className="space-y-2 border-t border-border p-3">
           {sessao.blocos.map((b) => (
-            <BlocoRow key={b.id} bloco={b} cor={cor} />
+            <BlocoRow
+              key={b.id}
+              bloco={b}
+              cor={cor}
+              semana={semana}
+              planoId={plano.id}
+              alunoId={aluno.id}
+              sessaoRef={sessao.id}
+              execFeita={execucoes.find((e) => e.semana === semana && e.blocoRef === b.id)}
+              onRegistrar={onRegistrar}
+            />
           ))}
         </div>
       )}
@@ -175,7 +237,25 @@ function SessaoCard({ sessao, cor }: { sessao: Sessao; cor: string }) {
   );
 }
 
-function BlocoRow({ bloco, cor }: { bloco: BlocoSessao; cor: string }) {
+function BlocoRow({
+  bloco,
+  cor,
+  semana,
+  planoId,
+  alunoId,
+  sessaoRef,
+  execFeita,
+  onRegistrar,
+}: {
+  bloco: BlocoSessao;
+  cor: string;
+  semana: number;
+  planoId: string;
+  alunoId: string;
+  sessaoRef: string;
+  execFeita?: Execucao;
+  onRegistrar?: (e: Execucao) => void;
+}) {
   const aerobio = bloco.tipo === "aerobio";
   const linhas = aerobio
     ? [bloco.formato, bloco.duracao, bloco.intensidade, bloco.recuperacao && bloco.recuperacao !== "-" ? `Recuperação: ${bloco.recuperacao}` : ""]
@@ -183,6 +263,32 @@ function BlocoRow({ bloco, cor }: { bloco: BlocoSessao; cor: string }) {
   const detalhe = linhas.filter(Boolean).join(" · ");
   const metodo = getMetodo(bloco.metodo);
   const metodoVisivel = metodo && metodo.id !== "tradicional" ? metodo : undefined;
+
+  const [carga, setCarga] = React.useState("");
+  const [reps, setReps] = React.useState("");
+  const [rpe, setRpe] = React.useState("");
+  const podeRegistrar = !aerobio && !!onRegistrar;
+
+  const registrar = () => {
+    if (!onRegistrar) return;
+    onRegistrar({
+      id: `ex-${bloco.id}-s${semana}-${Date.now()}`,
+      alunoId,
+      planoId,
+      semana,
+      sessaoRef,
+      blocoRef: bloco.id,
+      exercicioSlug: bloco.exercicioSlug,
+      cargaFeita: carga ? parseFloat(carga.replace(",", ".")) : undefined,
+      repsFeitas: reps ? parseInt(reps, 10) : undefined,
+      rpe: rpe ? parseInt(rpe, 10) : undefined,
+      concluidoEm: Date.now(),
+    });
+    setCarga("");
+    setReps("");
+    setRpe("");
+  };
+
   return (
     <div className="rounded-xl border border-border bg-surface-soft p-3">
       <div className="flex items-center gap-2">
@@ -202,6 +308,47 @@ function BlocoRow({ bloco, cor }: { bloco: BlocoSessao; cor: string }) {
       {detalhe && <p className="mt-1.5 text-sm text-ink-2">{detalhe}</p>}
       {metodoVisivel && <p className="mt-1 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
       {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
+
+      {podeRegistrar &&
+        (execFeita ? (
+          <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold" style={{ color: cor }}>
+            <CheckCircle2 className="h-4 w-4" />
+            Feito: {execFeita.cargaFeita != null ? `${execFeita.cargaFeita} kg` : "sem carga"}
+            {execFeita.repsFeitas != null ? ` x ${execFeita.repsFeitas}` : ""}
+            {execFeita.rpe != null ? ` · RPE ${execFeita.rpe}` : ""}
+          </div>
+        ) : (
+          <div className="mt-2 flex flex-wrap items-end gap-2">
+            <CampoNum label="Carga (kg)" value={carga} onChange={setCarga} />
+            <CampoNum label="Reps" value={reps} onChange={setReps} />
+            <CampoNum label="RPE" value={rpe} onChange={setRpe} />
+            <button
+              onClick={registrar}
+              className="rounded-lg px-3 py-2 text-xs font-bold text-white"
+              style={{ background: cor }}
+            >
+              Registrar
+            </button>
+          </div>
+        ))}
+    </div>
+  );
+}
+
+function CampoNum({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const id = React.useId();
+  return (
+    <div className="w-16">
+      <label htmlFor={id} className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-ink-3">
+        {label}
+      </label>
+      <input
+        id={id}
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-border bg-surface px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40"
+      />
     </div>
   );
 }

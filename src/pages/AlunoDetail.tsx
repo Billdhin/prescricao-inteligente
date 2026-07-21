@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
+import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
@@ -59,7 +60,7 @@ const TIPO_AVAL_LABEL: Record<string, string> = {
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, addAvaliacao, updateAluno, removeAluno, archivePrescricao } =
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, addAvaliacao, updateAluno, removeAluno, archivePrescricao } =
     useAlunos();
   const navigate = useNavigate();
   const [editar, setEditar] = React.useState(false);
@@ -101,6 +102,7 @@ export function AlunoDetail() {
   const avalsDesc = [...avals].reverse();
   const prescs = prescricoes.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
   const planosDoAluno = planos.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
+  const execucoesDoAluno = execucoes.filter((e) => e.alunoId === id);
   const reavaliacaoVencida = aluno.proximaReavaliacaoEm ? aluno.proximaReavaliacaoEm < Date.now() : false;
   const libsDoAluno = liberacoes.filter((l) => l.alunoId === id).slice(0, 3);
   const prescAberta = prontuarioDe ? prescs.find((p) => p.id === prontuarioDe) : undefined;
@@ -337,6 +339,8 @@ export function AlunoDetail() {
             </Card>
 
           <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
+
+          <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
 
           <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
