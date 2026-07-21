@@ -14,6 +14,7 @@ import { Library } from "@/pages/Library";
 import { Account } from "@/pages/Account";
 import { Alunos } from "@/pages/Alunos";
 import { AlunoDetail } from "@/pages/AlunoDetail";
+import { AlunoPreview } from "@/pages/AlunoPreview";
 import { Avaliacoes } from "@/pages/Avaliacoes";
 import { Protocolos } from "@/pages/Protocolos";
 import { Comparador } from "@/pages/Comparador";
@@ -72,6 +73,9 @@ export default function App() {
         <Route path="/roi" element={<Roi />} />
         <Route path="/casos-rcd" element={<CasosRcd />} />
         <Route path="/casos-rcd/:slug" element={<CasoRcdDetail />} />
+
+        {/* Portal do aluno em tela cheia (prévia do profissional; sem o shell). */}
+        <Route path="/alunos/:id/preview" element={<AlunoPreview />} />
 
         {/* App (dentro do shell) */}
         <Route element={<AppLayout />}>

@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Navigation,
   CalendarPlus,
+  Smartphone,
   Target,
   Dumbbell,
   Activity,
@@ -180,6 +181,9 @@ export function AlunoDetail() {
             <button onClick={() => setAvaliar(true)} className={buttonClasses("secondary")}>
               <CalendarPlus className="h-4 w-4" /> Registrar avaliação
             </button>
+            <Link to={`/alunos/${aluno.id}/preview`} className={buttonClasses("outline")}>
+              <Smartphone className="h-4 w-4" /> Ver como o aluno vê
+            </Link>
             <Link to={`/gps?aluno=${aluno.id}`} className={buttonClasses("primary")}>
               <Navigation className="h-4 w-4" /> Prescrever
             </Link>
