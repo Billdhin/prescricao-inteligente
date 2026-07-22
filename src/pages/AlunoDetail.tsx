@@ -25,12 +25,15 @@ import {
   CheckCircle2,
   CalendarRange,
   CalendarCheck,
+  Wallet,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
 import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
 import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
 import { PosturalCard } from "@/components/treino/PosturalCard";
+import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
+import { proximoPasso, estadoDoCiclo, dataReavaliacao, type CicloCtx } from "@/lib/gps/proximoPasso";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { criarConvite } from "@/lib/backend/supabaseRepo";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -40,6 +43,7 @@ import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
+import { ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { getModelo, semanaAtual, mesocicloAtual, proximaReavaliacao, type PlanoTreino } from "@/data/periodizacao";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
@@ -62,13 +66,11 @@ const TIPO_AVAL_LABEL: Record<string, string> = {
   retorno: "Retorno",
 };
 
-type Aba = "visao" | "treino" | "avaliacoes" | "postural" | "conta";
+type Aba = "treino" | "avaliacoes" | "conta";
 const ABAS: { id: Aba; label: string; Icon: typeof UserCheck }[] = [
-  { id: "visao", label: "Visão geral", Icon: UserCheck },
-  { id: "treino", label: "Treino", Icon: Dumbbell },
+  { id: "treino", label: "Plano e treino", Icon: Dumbbell },
   { id: "avaliacoes", label: "Avaliações", Icon: Activity },
-  { id: "postural", label: "Postural", Icon: HeartPulse },
-  { id: "conta", label: "Financeiro e app", Icon: Smartphone },
+  { id: "conta", label: "App do aluno", Icon: Smartphone },
 ];
 
 /** Tira de abas da tela do aluno: agrupa o que antes eram 8 cards soltos em
@@ -135,8 +137,8 @@ export function AlunoDetail() {
   const recemCriado = Boolean((location.state as { recemCriado?: boolean } | null)?.recemCriado);
   // "Salvei, e agora?": o retorno do Prescrever traz este sinal para dar o fecho do fluxo.
   const prescricaoSalva = Boolean((location.state as { prescricaoSalva?: boolean } | null)?.prescricaoSalva);
-  // Quem chega salvando prescrição cai direto na aba Treino (onde ela aparece).
-  const [aba, setAba] = React.useState<Aba>(prescricaoSalva ? "treino" : "visao");
+  // A aba "Plano e treino" é o core e abre por padrão.
+  const [aba, setAba] = React.useState<Aba>("treino");
   const [params, setParams] = useSearchParams();
 
   // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação e limpa o param.
@@ -165,8 +167,15 @@ export function AlunoDetail() {
   const avalsDesc = [...avals].reverse();
   const prescs = prescricoes.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
   const planosDoAluno = planos.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
+  const planoAtivo = planosDoAluno.find((p) => p.status === "ativo");
   const execucoesDoAluno = execucoes.filter((e) => e.alunoId === id);
-  const reavaliacaoVencida = aluno.proximaReavaliacaoEm ? aluno.proximaReavaliacaoEm < Date.now() : false;
+  // Fonte única do ciclo (avaliar, planejar, liberar, acompanhar, reavaliar).
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
+  const passo = proximoPasso(aluno, ctx);
+  const estado = estadoDoCiclo(aluno, ctx);
+  // Reavaliação reconciliada: com plano, o macrociclo manda; senão o calendário.
+  const reav = dataReavaliacao(aluno, planoAtivo);
+  const reavaliacaoVencida = reav ? reav.em < Date.now() : false;
   const libsDoAluno = liberacoes.filter((l) => l.alunoId === id).slice(0, 3);
   const prescAberta = prontuarioDe ? prescs.find((p) => p.id === prontuarioDe) : undefined;
 
@@ -211,74 +220,33 @@ export function AlunoDetail() {
         </Card>
       )}
 
-      {/* Cabeçalho */}
-      <Card className="p-5 md:p-6">
-        <div className="flex flex-wrap items-start gap-4">
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl gradient-brand text-xl font-bold text-white">
-            {aluno.iniciais}
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-2xl font-bold text-ink md:text-3xl">{aluno.nome}</h1>
-              <Pill tone={aluno.status === "ativo" ? "success" : "neutral"}>{aluno.status}</Pill>
-            </div>
-            <p className="mt-1 text-sm text-ink-2">
-              {aluno.idade ? `${aluno.idade} anos · ` : ""}
-              {aluno.sexo ? `${aluno.sexo} · ` : ""}
-              {aluno.objetivo} · {aluno.nivel}
-            </p>
-            {aluno.restricoes.length > 0 ? (
-              <div className="mt-3">
-                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-                  Restrições físicas
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {aluno.restricoes.map((r) => (
-                    <span
-                      key={r.tag}
-                      className="inline-flex max-w-[13rem] items-start gap-1.5 rounded-lg bg-[#fef4e2] px-2.5 py-1 text-xs font-semibold text-warning"
-                    >
-                      <AlertTriangle className="mt-[1px] h-3 w-3 shrink-0" />
-                      <span className="leading-snug">{rotuloRestricao(r.tag)}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="mt-3">
-                <Pill tone="neutral">Sem restrição</Pill>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => setEditar(true)} className={buttonClasses("outline")}>
-              Editar
-            </button>
-            <button onClick={() => setAvaliar(true)} className={buttonClasses("secondary")}>
-              <CalendarPlus className="h-4 w-4" /> Registrar avaliação
-            </button>
-            <Link to={`/alunos/${aluno.id}/preview`} className={buttonClasses("outline")}>
-              <Smartphone className="h-4 w-4" /> Ver como o aluno vê
-            </Link>
-            <Link to={`/gps?aluno=${aluno.id}`} className={buttonClasses("primary")}>
-              <Navigation className="h-4 w-4" /> Prescrever
-            </Link>
-          </div>
-        </div>
-      </Card>
+      {/* Cabeçalho: identidade, KPIs e ações (sem espremer o nome nem empilhar restrições) */}
+      <AlunoHeader
+        aluno={aluno}
+        planoAtivo={planoAtivo}
+        reav={reav}
+        reavaliacaoVencida={reavaliacaoVencida}
+        onEditar={() => setEditar(true)}
+        onAvaliar={() => setAvaliar(true)}
+        onToggleStatus={() => {
+          const ativo = aluno.status === "ativo";
+          updateAluno(aluno.id, { status: ativo ? "inativo" : "ativo" });
+          toast(ativo ? `${aluno.nome} marcado(a) como inativo(a)` : `${aluno.nome} reativado(a)`);
+        }}
+      />
+
+      {/* A espinha do cuidado: onde o aluno está e qual o próximo passo, em qualquer aba */}
+      <LinhaDoCuidado
+        aluno={aluno}
+        passo={passo}
+        estado={estado}
+        onAvaliar={() => setAvaliar(true)}
+        onAcompanhar={() => setAba("treino")}
+      />
 
       <AlunoTabs aba={aba} onAba={setAba} />
 
-      {/* VISÃO GERAL: quem é o aluno e onde está, antes de agir. */}
-      {aba === "visao" && (
-        <div className="space-y-4">
-          <AcompanhamentoCard aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
-          <JornadaCard aluno={aluno} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
-          <PerfilTreinoCard aluno={aluno} reavaliacaoVencida={reavaliacaoVencida} />
-        </div>
-      )}
-
-      {/* AVALIAÇÕES: evolução e histórico no mesmo lugar. */}
+      {/* AVALIAÇÕES: evolução, histórico e a análise postural por foto no mesmo lugar. */}
       {aba === "avaliacoes" && (
         <div className="space-y-4">
           <Card className="p-5 md:p-6">
@@ -336,24 +304,23 @@ export function AlunoDetail() {
               </ol>
             )}
           </Card>
+
+          {/* Análise postural por foto: é um tipo de avaliação, então vive aqui. */}
+          <PosturalCard aluno={aluno} />
         </div>
       )}
 
-      {/* POSTURAL isolado: foto sensível no seu próprio espaço. */}
-      {aba === "postural" && <PosturalCard aluno={aluno} />}
+      {/* APP DO ALUNO: prévia, convite e financeiro num só lugar (como o aluno usa e paga). */}
+      {aba === "conta" && <AppDoAlunoPanel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />}
 
-      {/* FINANCEIRO E APP DO ALUNO juntos. */}
-      {aba === "conta" && (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <FinanceiroCard aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
-          <ConvidarAlunoCard alunoId={aluno.id} alunoNome={aluno.nome} />
-        </div>
-      )}
-
-      {/* TREINO: o dia a dia. Plano ativo, execução, prescrições e o semáforo do dia. */}
+      {/* PLANO E TREINO: o core, na ordem do ciclo. Fase, periodização, prescrição, execução. */}
       {aba === "treino" && (
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
+            <SugestaoNivel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+
+            <JornadaCard aluno={aluno} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
+
             <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
 
             <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
@@ -555,6 +522,208 @@ export function AlunoDetail() {
           onClose={() => setProntuarioDe(null)}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Cabeçalho do aluno: identidade + KPIs + ações, em zonas empilhadas.
+ * Empilha no mobile (flex-col) e só vira linha no desktop, com as ações em
+ * `shrink-0`, para o nome nunca ser espremido e as restrições fluírem numa
+ * linha própria (com colapso +N) em vez de empilhar uma por linha.
+ */
+function AlunoHeader({
+  aluno,
+  planoAtivo,
+  reav,
+  reavaliacaoVencida,
+  onEditar,
+  onAvaliar,
+  onToggleStatus,
+}: {
+  aluno: Aluno;
+  planoAtivo?: PlanoTreino;
+  reav: { em: number; semana?: number } | null;
+  reavaliacaoVencida: boolean;
+  onEditar: () => void;
+  onAvaliar: () => void;
+  onToggleStatus: () => void;
+}) {
+  const ativo = aluno.status === "ativo";
+  const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
+  const restr = aluno.restricoes;
+  const planoTxt = planoAtivo ? `Semana ${semanaAtual(planoAtivo)} de ${planoAtivo.semanas}` : "Sem plano";
+  const reavTxt = reav ? (reavaliacaoVencida ? "Vencida" : `em ${Math.max(0, diasAte(reav.em))} dias`) : "A definir";
+  const financeiroTxt = aluno.cobranca ? ROTULO_STATUS_COBRANCA[aluno.cobranca.statusAtual] : "Sem cobrança";
+
+  return (
+    <Card variant="raised" className="p-5 md:p-6">
+      {/* Zona 1: identidade | ações */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl gradient-brand font-display text-xl font-bold text-white">
+            {aluno.iniciais}
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-2xl font-bold text-ink md:text-3xl">{aluno.nome}</h1>
+              <Pill tone={ativo ? "success" : "neutral"}>{ativo ? "Ativo" : "Inativo"}</Pill>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Pill tone="primary">{aluno.objetivo}</Pill>
+              <Pill tone="neutral">{aluno.nivel}</Pill>
+              {aluno.idade ? <Pill tone="neutral">{aluno.idade} anos</Pill> : null}
+              {grupo && (
+                <Pill tone="analysis">
+                  {grupo.nome} · Fase {aluno.faseJornada ?? 1}
+                </Pill>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
+          <button onClick={onEditar} className={buttonClasses("outline")}>
+            Editar
+          </button>
+          <button onClick={onAvaliar} className={buttonClasses("secondary")}>
+            <CalendarPlus className="h-4 w-4" /> Registrar avaliação
+          </button>
+          <Link to={`/gps?aluno=${aluno.id}`} className={buttonClasses("primary")}>
+            <Navigation className="h-4 w-4" /> Prescrever
+          </Link>
+        </div>
+      </div>
+
+      {/* Zona 2: restrições fluem em linha própria, com colapso +N */}
+      {restr.length > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-1.5">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">Restrições</span>
+          {restr.slice(0, 4).map((r) => (
+            <Pill key={r.tag} tone="warning" icon={<AlertTriangle className="h-3 w-3" />}>
+              {rotuloRestricao(r.tag)}
+            </Pill>
+          ))}
+          {restr.length > 4 && (
+            <Pill tone="warning" className="cursor-default">
+              <span title={restr.map((r) => rotuloRestricao(r.tag)).join(", ")}>+{restr.length - 4}</span>
+            </Pill>
+          )}
+        </div>
+      )}
+
+      {/* Zona 3: KPIs preenchem o espaço, absorvem o antigo card de Acompanhamento */}
+      <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
+        <MiniStat icon={<CalendarClock className="h-4 w-4" />} rotulo="Na casa" valor={tempoDesde(aluno.criadoEm).texto} />
+        <MiniStat icon={<CalendarRange className="h-4 w-4" />} rotulo="Plano" valor={planoTxt} />
+        <MiniStat
+          icon={<CalendarCheck className="h-4 w-4" />}
+          rotulo="Próxima reavaliação"
+          valor={reavTxt}
+          tone={reavaliacaoVencida ? "warning" : undefined}
+        />
+        <MiniStat icon={<Wallet className="h-4 w-4" />} rotulo="Financeiro" valor={financeiroTxt} />
+      </dl>
+
+      {/* Ficha completa recolhida: perfil de treino + situação */}
+      <details className="mt-3">
+        <summary className="cursor-pointer list-none text-sm font-semibold text-primary hover:underline">
+          Ver ficha completa
+        </summary>
+        <div className="mt-3 space-y-3">
+          <PerfilTreinoCard aluno={aluno} reavaliacaoVencida={reavaliacaoVencida} />
+          <div className="flex justify-end">
+            <button onClick={onToggleStatus} className={buttonClasses("secondary", "sm")}>
+              {ativo ? <UserMinus className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+              {ativo ? "Inativar aluno" : "Reativar aluno"}
+            </button>
+          </div>
+        </div>
+      </details>
+    </Card>
+  );
+}
+
+/** Sugestão de avançar de nível (a decisão é do profissional). Vive no topo do plano. */
+function SugestaoNivel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Partial<Aluno>) => void }) {
+  const sug = aluno.status === "ativo" ? sugestaoProgressao(aluno) : null;
+  if (!sug) return null;
+  return (
+    <Card tone="primary" className="flex flex-wrap items-center justify-between gap-3 p-4">
+      <div className="flex items-start gap-2">
+        <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <p className="text-sm text-ink">
+          <span className="font-semibold">
+            {aluno.nome.split(" ")[0]} está há {sug.mesesNoNivel} {sug.mesesNoNivel === 1 ? "mês" : "meses"} como {aluno.nivel}.
+          </span>{" "}
+          Considere avançar para {sug.proximo} e revisar toda a prescrição. A decisão é sua; avance quando a técnica e a
+          resposta ao treino indicarem.
+        </p>
+      </div>
+      <button
+        onClick={() => {
+          onUpdate({ nivel: sug.proximo, nivelDesde: Date.now() });
+          toast(`${aluno.nome} avançou para ${sug.proximo}. Revise a prescrição.`);
+        }}
+        className={buttonClasses("primary", "sm")}
+      >
+        Avançar para {sug.proximo}
+      </button>
+    </Card>
+  );
+}
+
+/**
+ * "App do aluno": um só lugar responde "é isto que o aluno vê, e é assim que você
+ * dá acesso". A prévia é local e sempre funciona; o convite depende do Supabase
+ * configurado (sem ele, explica o que falta, nunca promete acesso que não existe).
+ */
+function AppDoAlunoPanel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Partial<Aluno>) => void }) {
+  const configured = useCloudAuth((s) => s.configured);
+  return (
+    <div className="space-y-4">
+      <Card className="p-5 md:p-6">
+        <div className="mb-1 flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary-tint text-primary">
+            <Smartphone className="h-5 w-5" />
+          </span>
+          <h2 className="font-display text-lg font-bold text-ink">Como o aluno acompanha</h2>
+        </div>
+        <p className="text-sm text-ink-2">
+          É esta a tela que abre no celular do aluno, com a sua marca. Ele registra as séries e a periodização se ajusta
+          pela execução.
+        </p>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          {/* 1) Prévia: render local, funciona mesmo sem conta online */}
+          <div className="rounded-xl border border-border bg-surface-soft p-4">
+            <div className="text-sm font-semibold text-ink">Ver a prévia</div>
+            <p className="mt-1 text-sm text-ink-2">
+              Abra a mesma tela que o aluno vê, aqui no seu aparelho. Funciona mesmo sem conta online.
+            </p>
+            <Link to={`/alunos/${aluno.id}/preview`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+              <Smartphone className="h-4 w-4" /> Ver como o aluno vê
+            </Link>
+          </div>
+
+          {/* 2) Acesso: convite quando há nuvem; senão, o que falta */}
+          <div>
+            {configured ? (
+              <ConvidarAlunoCard alunoId={aluno.id} alunoNome={aluno.nome} />
+            ) : (
+              <Card tone="primary" className="h-full p-4">
+                <div className="text-sm font-semibold text-ink">O acesso online ainda não está ligado</div>
+                <p className="mt-1 text-sm text-ink-2">
+                  Por enquanto o app funciona em prévia, aqui no seu aparelho. Para o aluno entrar pelo celular dele, é
+                  preciso ligar a conta na nuvem. Posso preparar isso para você.
+                </p>
+              </Card>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      <FinanceiroCard aluno={aluno} onUpdate={onUpdate} />
     </div>
   );
 }
@@ -940,12 +1109,17 @@ function ConvidarAlunoCard({ alunoId, alunoNome }: { alunoId: string; alunoNome:
   };
 
   return (
-    <Card className="p-5 md:p-6">
-      <h3 className="font-display text-lg font-bold text-ink">App do aluno</h3>
+    <Card className="h-full p-5">
+      <h3 className="font-display text-lg font-bold text-ink">Convidar pelo celular</h3>
       <p className="mt-1 text-sm text-ink-2">
-        Convide {alunoNome.split(" ")[0]} para acompanhar o treino no app, com a sua marca. Ele registra as séries e a
-        periodização se ajusta pela execução.
+        Gere o link de acesso, envie a {alunoNome.split(" ")[0]} pelo WhatsApp e ele entra no próprio treino, com a sua
+        marca.
       </p>
+      <ol className="mt-3 space-y-1 text-sm text-ink-2">
+        <li>1. Gere o link de acesso.</li>
+        <li>2. Envie ao aluno pelo WhatsApp.</li>
+        <li>3. Ele entra no próprio treino pelo celular.</li>
+      </ol>
       {link ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <input
@@ -1048,13 +1222,30 @@ function AcompanhamentoCard({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patc
   );
 }
 
-function MiniStat({ icon, rotulo, valor }: { icon: React.ReactNode; rotulo: string; valor: string }) {
+function MiniStat({
+  icon,
+  rotulo,
+  valor,
+  tone,
+}: {
+  icon: React.ReactNode;
+  rotulo: string;
+  valor: string;
+  tone?: "warning";
+}) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border p-3">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-2">{icon}</span>
+      <span
+        className={cn(
+          "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
+          tone === "warning" ? "bg-[#fef4e2] text-warning" : "bg-surface-soft text-ink-2",
+        )}
+      >
+        {icon}
+      </span>
       <div className="min-w-0">
         <div className="text-xs text-ink-3">{rotulo}</div>
-        <div className="font-semibold text-ink">{valor}</div>
+        <div className={cn("truncate font-semibold", tone === "warning" ? "text-warning" : "text-ink")}>{valor}</div>
       </div>
     </div>
   );
