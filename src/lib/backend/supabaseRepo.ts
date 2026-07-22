@@ -50,7 +50,9 @@ export async function carregarPerfil(): Promise<Partial<PerfilRemoto> | null> {
     fotoDataUrl: data.foto_url ?? "",
     logoDataUrl: data.logo_url ?? "",
     corPrimaria: data.cor_primaria ?? "",
-    plan: (data.plan ?? "free") as Plan,
+    // Produto 100% pago: sem tier "free" (que nem é Plan válido). Perfil sem plano
+    // gravado assume o pago padrão.
+    plan: (data.plan ?? "assinante") as Plan,
     mode: (data.mode ?? "atender") as "atender" | "aprender",
     role: (data.role ?? "profissional") as "profissional" | "aluno",
     professionalId: data.professional_id ?? null,
@@ -428,6 +430,12 @@ function execFromRow(r: Record<string, any>): Execucao {
  */
 export async function salvarExecucao(e: Execucao, professionalId: string): Promise<void> {
   const { error } = await getSupabase().from("execucoes").upsert(execToRow(e, professionalId));
+  if (error) throw error;
+}
+
+/** Desfaz (apaga) uma execução pelo id. A RLS restringe ao dono do registro. */
+export async function apagarExecucao(id: string): Promise<void> {
+  const { error } = await getSupabase().from("execucoes").delete().eq("id", id);
   if (error) throw error;
 }
 

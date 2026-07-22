@@ -306,8 +306,10 @@ interface AlunosState {
   updatePlano: (id: string, patch: Partial<PlanoTreino>) => void;
   removePlano: (id: string) => void;
   addLiberacao: (l: Liberacao) => void;
-  /** registra uma execução do aluno (uma série concluída de um bloco) */
+  /** registra uma execução do aluno (uma série concluída de um bloco); faz upsert */
   addExecucao: (e: Execucao) => void;
+  /** desfaz uma execução registrada pelo id */
+  removeExecucao: (id: string) => void;
   /** salva um rastreio postural (dado local, não vai para a nuvem) */
   addPostural: (a: AvaliacaoPostural) => void;
   /** remove um rastreio postural pelo id */
@@ -434,8 +436,20 @@ export const useAlunos = create<AlunosState>()(
       },
       // Execução do aluno. Espelho na nuvem entra com a conta do aluno (fase de
       // auth do portal); por ora persiste local, base da autorregulação.
+      // UPSERT por (aluno, plano, semana, bloco): registrar de novo o mesmo
+      // exercício da mesma semana SOBRESCREVE, então editar não duplica.
       addExecucao: (e) => {
-        set((s) => ({ execucoes: [e, ...s.execucoes].slice(0, 2000) }));
+        set((s) => ({
+          execucoes: [
+            e,
+            ...s.execucoes.filter(
+              (x) => !(x.alunoId === e.alunoId && x.planoId === e.planoId && x.semana === e.semana && x.blocoRef === e.blocoRef),
+            ),
+          ].slice(0, 2000),
+        }));
+      },
+      removeExecucao: (id) => {
+        set((s) => ({ execucoes: s.execucoes.filter((e) => e.id !== id) }));
       },
       // Rastreio postural: contém fotos (data URL, sensível e pesado). Fica LOCAL,
       // sem espelho na nuvem, para respeitar a privacidade e não inchar o Supabase.

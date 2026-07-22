@@ -2,7 +2,7 @@ import * as React from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useCloudAuth, recarregarSessao } from "@/lib/backend/cloudAuth";
 import { signIn, signUp, signOut } from "@/lib/backend/supabaseAuth";
-import { reivindicarConvite, salvarExecucao } from "@/lib/backend/supabaseRepo";
+import { reivindicarConvite, salvarExecucao, apagarExecucao } from "@/lib/backend/supabaseRepo";
 import { useAlunos } from "@/lib/store";
 import { StudentApp } from "@/components/student/StudentApp";
 import { Logo } from "@/components/brand/Logo";
@@ -41,6 +41,7 @@ function PortalApp() {
   const avaliacoes = useAlunos((s) => s.avaliacoes);
   const execucoes = useAlunos((s) => s.execucoes);
   const addExecucao = useAlunos((s) => s.addExecucao);
+  const removeExecucao = useAlunos((s) => s.removeExecucao);
   const { marca, professionalId } = useCloudAuth();
 
   const aluno = alunos[0];
@@ -59,15 +60,22 @@ function PortalApp() {
     addExecucao(e);
     if (professionalId) void salvarExecucao(e, professionalId).catch(() => {});
   };
+  const desfazer = (execId: string) => {
+    removeExecucao(execId);
+    void apagarExecucao(execId).catch(() => {});
+  };
 
   return (
     <StudentApp
       aluno={aluno}
       plano={plano}
-      marca={marca ?? { nome: aluno.nome }}
+      // Fallback de marca NEUTRO: nunca o nome do aluno (seria estranho o app do
+      // aluno se chamar como ele). Sem marca do profissional, um rótulo genérico.
+      marca={marca ?? { nome: "Seu treino" }}
       avaliacoes={avaliacoes}
       execucoes={execucoes}
       onRegistrar={registrar}
+      onDesfazer={desfazer}
       onSair={() => void signOut()}
     />
   );
@@ -76,16 +84,26 @@ function PortalApp() {
 /* ------------------------------ Auth do aluno ----------------------------- */
 
 function StudentAuthGate({ convite }: { convite?: string }) {
+  // Só se cria conta com um convite válido do profissional. Sem convite, o único
+  // caminho é entrar numa conta já vinculada (o cadastro solto criaria uma conta
+  // órfã que o RPC de convite não conseguiria vincular).
   const [modo, setModo] = React.useState<"entrar" | "criar">(convite ? "criar" : "entrar");
   const [nome, setNome] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [senha, setSenha] = React.useState("");
   const [erro, setErro] = React.useState<string | null>(null);
+  const [aviso, setAviso] = React.useState<string | null>(null);
   const [carregando, setCarregando] = React.useState(false);
 
   const enviar = async (ev: React.FormEvent) => {
     ev.preventDefault();
     setErro(null);
+    setAviso(null);
+    // Guarda dura: criar exige convite. (A UI já esconde o botão, mas trava aqui também.)
+    if (modo === "criar" && !convite) {
+      setErro("Peça o link de convite ao seu profissional para criar a conta.");
+      return;
+    }
     setCarregando(true);
     try {
       const r = modo === "criar" ? await signUp(email, senha, nome) : await signIn(email, senha);
@@ -93,8 +111,23 @@ function StudentAuthGate({ convite }: { convite?: string }) {
         setErro(r.error);
         return;
       }
+      // Confirmação de e-mail ligada no Supabase: signUp volta SEM sessão. O convite
+      // usa auth.uid() e falharia; então não tenta reivindicar agora, orienta a
+      // confirmar e entrar depois (o convite fica pendente e é reivindicado no login).
+      if (modo === "criar" && !r.session) {
+        setAviso("Conta criada. Confirme o seu e-mail e depois entre para vincular o seu treino.");
+        setModo("entrar");
+        return;
+      }
       if (convite) {
-        await reivindicarConvite(convite).catch((e) => setErro(e?.message ?? "Não consegui validar o convite."));
+        try {
+          await reivindicarConvite(convite);
+        } catch (e) {
+          // Convite falhou: NÃO recarrega a sessão (entraria sem papel de aluno,
+          // caindo num limbo). Mostra o erro e deixa o aluno tentar de novo.
+          setErro((e as Error)?.message ?? "Não consegui validar o convite. Confira o link com o seu profissional.");
+          return;
+        }
       }
       await recarregarSessao();
     } catch (e) {
@@ -121,17 +154,26 @@ function StudentAuthGate({ convite }: { convite?: string }) {
         )}
         <Campo label="E-mail" value={email} onChange={setEmail} type="email" />
         <Campo label="Senha" value={senha} onChange={setSenha} type="password" />
+        {aviso && <p className="rounded-lg bg-primary-tint px-3 py-2 text-sm text-ink">{aviso}</p>}
         {erro && <p className="text-sm text-[color:var(--cta-text,#b91c1c)]">{erro}</p>}
         <button type="submit" disabled={carregando} className={buttonClasses("primary") + " w-full justify-center"}>
           {carregando ? "Aguarde..." : modo === "criar" ? "Criar conta" : "Entrar"}
         </button>
-        <button
-          type="button"
-          onClick={() => setModo((m) => (m === "criar" ? "entrar" : "criar"))}
-          className="w-full text-center text-sm font-semibold text-primary hover:underline"
-        >
-          {modo === "criar" ? "Já tenho conta, entrar" : "Não tenho conta, criar"}
-        </button>
+        {convite ? (
+          // Com convite, o aluno pode alternar entre criar e entrar.
+          <button
+            type="button"
+            onClick={() => setModo((m) => (m === "criar" ? "entrar" : "criar"))}
+            className="w-full text-center text-sm font-semibold text-primary hover:underline"
+          >
+            {modo === "criar" ? "Já tenho conta, entrar" : "Não tenho conta, criar"}
+          </button>
+        ) : (
+          // Sem convite, só entrar. Criar conta depende do link do profissional.
+          <p className="text-center text-xs text-ink-3">
+            Para começar, peça o link de convite ao seu profissional.
+          </p>
+        )}
       </form>
     </div>
   );
@@ -170,11 +212,34 @@ function Centro({ children }: { children: React.ReactNode }) {
 }
 
 function Splash() {
+  // Timeout de segurança: se a sessão/hidratação travar, o aluno não fica preso
+  // numa barra pulsando para sempre. Depois de alguns segundos, oferece recarregar
+  // ou sair.
+  const [demorou, setDemorou] = React.useState(false);
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setDemorou(true), 8000);
+    return () => window.clearTimeout(t);
+  }, []);
+
   return (
-    <div className="grid min-h-[100dvh] place-items-center bg-bg">
-      <div className="h-1 w-24 overflow-hidden rounded-full bg-surface-soft">
-        <div className="h-full w-1/2 animate-pulse rounded-full gradient-brand" />
-      </div>
+    <div className="grid min-h-[100dvh] place-items-center bg-bg p-4">
+      {demorou ? (
+        <div className="max-w-sm space-y-3 text-center">
+          <p className="text-sm text-ink-2">Está demorando mais que o normal para carregar o seu treino.</p>
+          <div className="flex justify-center gap-2">
+            <button onClick={() => window.location.reload()} className={buttonClasses("primary", "sm")}>
+              Recarregar
+            </button>
+            <button onClick={() => void signOut()} className={buttonClasses("ghost", "sm")}>
+              Sair
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="h-1 w-24 overflow-hidden rounded-full bg-surface-soft">
+          <div className="h-full w-1/2 animate-pulse rounded-full gradient-brand" />
+        </div>
+      )}
     </div>
   );
 }

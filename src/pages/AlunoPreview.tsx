@@ -15,7 +15,6 @@ export function AlunoPreview() {
   const planos = useAlunos((s) => s.planos);
   const avaliacoes = useAlunos((s) => s.avaliacoes);
   const execucoes = useAlunos((s) => s.execucoes);
-  const addExecucao = useAlunos((s) => s.addExecucao);
   const user = useUser();
 
   if (!aluno) return <Navigate to="/alunos" replace />;
@@ -35,7 +34,9 @@ export function AlunoPreview() {
       marca={marca}
       avaliacoes={avaliacoes}
       execucoes={execucoesDoAluno}
-      onRegistrar={addExecucao}
+      // Prévia é só para o profissional VER como o aluno vê: registrar aqui não
+      // pode sujar as execuções reais do aluno. Por isso o registro é no-op.
+      onRegistrar={() => {}}
       preview
       onSair={() => navigate(`/alunos/${aluno.id}`)}
     />
