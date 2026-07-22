@@ -7,7 +7,7 @@ import { biblioteca, bibliotecaCategorias } from "@/data/library";
 import { ComparadorDefinicoes } from "@/components/library/ComparadorDefinicoes";
 import { cn } from "@/lib/utils";
 
-export function Library() {
+export function Library({ embedded = false }: { embedded?: boolean } = {}) {
   const [q, setQ] = React.useState("");
   const [cat, setCat] = React.useState("Todas");
 
@@ -23,13 +23,15 @@ export function Library() {
   );
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <SectionHeader
-        eyebrow="Referência"
-        icon={<LibraryIcon className="h-3 w-3" />}
-        title="Glossário"
-        subtitle="Termos técnicos e conceitos-chave de decisão, biomecânica, fisiologia e segurança. Para o estagiário ou profissional relembrar um termo em segundos."
-      />
+    <div className={cn(embedded ? "space-y-6" : "mx-auto max-w-4xl space-y-6")}>
+      {!embedded && (
+        <SectionHeader
+          eyebrow="Referência"
+          icon={<LibraryIcon className="h-3 w-3" />}
+          title="Glossário"
+          subtitle="Termos técnicos e conceitos-chave de decisão, biomecânica, fisiologia e segurança. Para o estagiário ou profissional relembrar um termo em segundos."
+        />
+      )}
 
       <Card className="p-4">
         <div className="relative">

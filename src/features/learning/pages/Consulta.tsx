@@ -30,7 +30,7 @@ function pontuar(a: QuickAnswer, q: string): number {
   return score;
 }
 
-export function Consulta() {
+export function Consulta({ embedded = false }: { embedded?: boolean } = {}) {
   const [params, setParams] = useSearchParams();
   const inicial = params.get("q") ?? "";
   const [busca, setBusca] = React.useState(inicial);
@@ -57,13 +57,15 @@ export function Consulta() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <SectionHeader
-        eyebrow="Aprender"
-        icon={<Search className="h-3 w-3" />}
-        title="Consulta rápida"
-        subtitle="Uma resposta visual e prudente para aplicar no atendimento, com o que observar e os limites."
-      />
+    <div className={cn(embedded ? "space-y-6" : "mx-auto max-w-3xl space-y-6")}>
+      {!embedded && (
+        <SectionHeader
+          eyebrow="Aprender"
+          icon={<Search className="h-3 w-3" />}
+          title="Consulta rápida"
+          subtitle="Uma resposta visual e prudente para aplicar no atendimento, com o que observar e os limites."
+        />
+      )}
 
       <form onSubmit={(e) => { e.preventDefault(); submit(busca); }} className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
@@ -73,7 +75,7 @@ export function Consulta() {
           placeholder="Ex.: joelho no agachamento, hipertensão, intervalo para hipertrofia..."
           aria-label="Consulta rápida"
           className="input pl-9"
-          autoFocus
+          autoFocus={!embedded}
         />
       </form>
 

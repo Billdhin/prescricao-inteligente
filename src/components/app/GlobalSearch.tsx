@@ -85,7 +85,7 @@ const BASE_INDEX: SearchItem[] = [
     label: b.termo,
     sub: b.categoria,
     group: "Glossário" as Group,
-    to: b.verExercicio ? `/movement-lab/${b.verExercicio}` : "/library",
+    to: b.verExercicio ? `/movement-lab/${b.verExercicio}` : "/consultar",
     haystack: norm([b.termo, b.categoria, b.resumo].join(" ")),
     Icon: LibraryIcon,
   })),
@@ -139,8 +139,8 @@ const NAV_ITEMS: SearchItem[] = [
     haystack: norm("trilhas licoes"), Icon: RouteIcon, modes: ["aprender"],
   },
   {
-    id: "nav-library", label: "Glossário", group: "Ir para", to: "/library",
-    haystack: norm("biblioteca glossario conceitos"), Icon: LibraryIcon,
+    id: "nav-consultar", label: "Consultar", group: "Ir para", to: "/consultar",
+    haystack: norm("consultar glossario conceitos consulta rapida termos resposta"), Icon: LibraryIcon,
   },
   {
     id: "nav-salvos", label: "Salvos", group: "Ir para", to: "/aprender/salvos",

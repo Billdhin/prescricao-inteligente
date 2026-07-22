@@ -86,8 +86,8 @@ const NAV: NavSection[] = [
     items: [
       { to: "/aprender", label: "Estudar", icon: GraduationCap, match: ["/aprender", "/tracks"], short: "Estudar" },
       { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
-      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
-      { to: "/library", label: "Glossário", icon: Library },
+      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical, match: ["/movement-lab", "/comparador"] },
+      { to: "/consultar", label: "Consultar", icon: Search, match: ["/consultar", "/library"] },
     ],
   },
   {
@@ -143,7 +143,8 @@ const TITULOS_ROTA: [RegExp, string][] = [
   [/^\/semaforo/, "Semáforo de Liberação"],
   [/^\/special-groups/, "Grupos Especiais"],
   [/^\/movement-lab/, "Laboratório Visual"],
-  [/^\/library/, "Glossário"],
+  [/^\/consultar/, "Consultar"],
+  [/^\/library/, "Consultar"],
   [/^\/assessments/, "Avaliações"],
   [/^\/protocols/, "Protocolos"],
   [/^\/comparador/, "Comparador"],

@@ -188,7 +188,7 @@ function ContextualSearch({ mode, onMode }: { mode: "estudar" | "consultar"; onM
     const t = text.trim();
     if (!t) return;
     pushSearch(t);
-    navigate(`/aprender/consulta?q=${encodeURIComponent(t)}`);
+    navigate(`/consultar?q=${encodeURIComponent(t)}`);
   };
 
   return (
@@ -315,7 +315,7 @@ function ConsultaCard() {
         <BookMarked className="h-3.5 w-3.5" /> Consulta rápida
       </div>
       <p className="text-sm text-ink-2">Encontre uma explicação visual para aplicar no atendimento.</p>
-      <Link to="/aprender/consulta" className={cn(buttonClasses("secondary", "sm"), "mt-auto self-start pt-3")}>
+      <Link to="/consultar" className={cn(buttonClasses("secondary", "sm"), "mt-auto self-start pt-3")}>
         Pesquisar <Search className="h-4 w-4" />
       </Link>
     </Card>

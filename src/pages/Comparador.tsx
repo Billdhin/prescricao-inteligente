@@ -818,8 +818,18 @@ export function Comparador() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
+      {/* Comparar é a aba de decisão do Laboratório, não uma ilha: a trilha de
+          volta deixa isso explícito (um nome só para o Laboratório Visual). */}
+      <Link
+        to="/movement-lab"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink"
+      >
+        <FlaskConical className="h-4 w-4" /> Laboratório Visual
+        <span aria-hidden className="text-ink-3">/</span>
+        <span className="text-ink">Comparar</span>
+      </Link>
       <SectionHeader
-        eyebrow="Laboratório"
+        eyebrow="Comparar"
         icon={<GitCompare className="h-3 w-3" />}
         title="Comparador de exercícios"
         subtitle="Compare até 4 opções lado a lado e decida com critério. Dois blocos: treino de força e modalidades aeróbicas, cada um com os marcadores que realmente importam para aquela escolha."

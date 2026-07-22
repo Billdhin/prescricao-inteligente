@@ -38,13 +38,13 @@ export function MovementLabList() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <SectionHeader
-        eyebrow="Vitrine do produto"
+        eyebrow="Análise do movimento"
         icon={<FlaskConical className="h-3 w-3" />}
         title="Laboratório Visual"
         subtitle="Compare a execução do movimento com uma análise biomecânica lado a lado. Explore hotspots interativos para aprofundar da observação prática à evidência."
         right={
           <Link to="/comparador" className={buttonClasses("secondary")}>
-            <GitCompare className="h-4 w-4" /> Comparador
+            <GitCompare className="h-4 w-4" /> Comparar exercícios
           </Link>
         }
       />

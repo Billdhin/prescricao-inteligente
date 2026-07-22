@@ -10,7 +10,7 @@ import { MovementLabList } from "@/pages/MovementLabList";
 import { MovementLabDetail } from "@/pages/MovementLabDetail";
 import { TracksList } from "@/pages/TracksList";
 import { TrackDetail } from "@/pages/TrackDetail";
-import { Library } from "@/pages/Library";
+import { Consultar } from "@/pages/Consultar";
 import { Account } from "@/pages/Account";
 import { Alunos } from "@/pages/Alunos";
 import { AlunoDetail } from "@/pages/AlunoDetail";
@@ -38,7 +38,6 @@ import {
   Casos as AprenderCasos,
   CasoDetail as AprenderCasoDetail,
   Biblioteca as AprenderBiblioteca,
-  Consulta as AprenderConsulta,
   Salvos as AprenderSalvos,
   Progresso as AprenderProgresso,
 } from "@/features/learning/pages";
@@ -62,6 +61,13 @@ function DecisaoRedirect() {
 function CasoSlugRedirect() {
   const { slug } = useParams();
   return <Navigate to={slug ? `/aprender/casos/${slug}` : "/aprender/casos"} replace />;
+}
+
+// Glossário e Consulta rápida foram fundidos em "Consultar". Preserva o ?q= dos
+// deep links de resposta rápida (Home, mocks) para a busca já abrir preenchida.
+function ConsultarRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/consultar${search}`} replace />;
 }
 
 export default function App() {
@@ -106,7 +112,9 @@ export default function App() {
           <Route path="/favorites" element={<Navigate to="/aprender/salvos" replace />} />
           <Route path="/tracks" element={<TracksList />} />
           <Route path="/tracks/:slug" element={<TrackDetail />} />
-          <Route path="/library" element={<Library />} />
+          <Route path="/consultar" element={<Consultar />} />
+          {/* Glossário virou a aba Glossário de Consultar */}
+          <Route path="/library" element={<ConsultarRedirect />} />
           {/* Historico foi fundido em "Meu progresso". */}
           <Route path="/history" element={<Navigate to="/aprender/progresso" replace />} />
           <Route path="/protocols" element={<Protocolos />} />
@@ -127,7 +135,8 @@ export default function App() {
           <Route path="/aprender/casos" element={<AprenderCasos />} />
           <Route path="/aprender/casos/:caseSlug" element={<AprenderCasoDetail />} />
           <Route path="/aprender/biblioteca" element={<AprenderBiblioteca />} />
-          <Route path="/aprender/consulta" element={<AprenderConsulta />} />
+          {/* Consulta rápida virou a aba Resposta rápida de Consultar */}
+          <Route path="/aprender/consulta" element={<ConsultarRedirect />} />
           <Route path="/aprender/salvos" element={<AprenderSalvos />} />
           <Route path="/aprender/progresso" element={<AprenderProgresso />} />
           <Route path="/aprender/trilhas" element={<Navigate to="/tracks" replace />} />
