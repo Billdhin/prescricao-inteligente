@@ -21,8 +21,8 @@ import { MetricaBar } from "@/components/metrica/MetricaBar";
 import { getMetrica, faixaDe } from "@/data/metricasGlossario";
 import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
-import { FaseFigure, faseKind } from "@/components/movement-lab/FaseFigure";
 import { getFasePose } from "@/data/fase-poses";
+import { MovimentoPlayer } from "@/components/movement-lab/MovimentoPlayer";
 import { temErroImagens, getErroImagemPorIndice, temVariacaoImagens, getVariacaoImagemPorIndice } from "@/data/aba-imagens";
 import { getPopulacoesCautela } from "@/data/populacoes-cautela";
 import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
@@ -425,55 +425,36 @@ function LockedOverlay() {
   );
 }
 
-/* Timeline do movimento (compacta, dentro da aba Biomecânica) */
+/* Movimento do exercício: player animado (poses reais em loop) + fases descritas */
 function Timeline({ ex }: { ex: Exercise }) {
-  const [phase, setPhase] = React.useState(0);
+  const temFotos = ex.fases.every((_, i) => getFasePose(ex.slug, i));
   return (
     <div>
-      <div className="mb-2 flex items-center gap-2">
-        <h4 className="font-display font-bold text-ink">Timeline do movimento</h4>
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <h4 className="font-display font-bold text-ink">Movimento do exercício</h4>
         <Pill tone="neutral">{ex.fases.length} fases</Pill>
+        {temFotos && <Pill tone="success">poses reais</Pill>}
       </div>
-      <ol className="flex flex-wrap items-center gap-2">
-        {ex.fases.map((f, i) => {
-          const active = i === phase;
-          return (
-            <li key={f.nome} className="flex items-center gap-2">
-              <button
-                onClick={() => setPhase(i)}
-                aria-pressed={active}
-                className={cn(
-                  "flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors",
-                  active
-                    ? "border-primary bg-primary-tint text-primary"
-                    : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
-                )}
-              >
-                <span
-                  className={cn(
-                    "tabular grid h-5 w-5 place-items-center rounded-full text-[11px]",
-                    active ? "bg-primary text-white" : "bg-surface-soft",
-                  )}
-                >
+      <p className="mb-3 text-xs text-ink-3">
+        {temFotos
+          ? "Sequência das poses reais de cada fase, em loop. Toque para pausar ou escolher uma fase."
+          : "Esquema do que o músculo-alvo faz em cada fase. Toque para pausar ou escolher uma fase."}
+      </p>
+      <div className="grid gap-4 sm:grid-cols-[260px_1fr] sm:items-start">
+        <MovimentoPlayer ex={ex} />
+        <ol className="space-y-2">
+          {ex.fases.map((f, i) => (
+            <li key={f.nome} className="rounded-xl border border-border bg-surface-soft p-3">
+              <div className="flex items-center gap-2">
+                <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-bold text-white">
                   {i + 1}
                 </span>
-                {f.nome}
-              </button>
-              {i < ex.fases.length - 1 && <ArrowRight className="h-4 w-4 text-ink-3" />}
+                <span className="font-semibold text-ink">{f.nome}</span>
+              </div>
+              <p className="mt-1 text-sm text-ink-2">{f.descricao}</p>
             </li>
-          );
-        })}
-      </ol>
-      <div className="mt-3 grid gap-3 sm:grid-cols-[220px_1fr] sm:items-start">
-        <FaseFigure
-          kind={faseKind(ex.fases[phase].nome, phase, ex.fases.length)}
-          musculo={ex.ativacao[0]?.musculo}
-          src={getFasePose(ex.slug, phase)}
-        />
-        <p className="rounded-xl border border-border bg-surface-soft p-3 text-sm text-ink">
-          <span className="font-semibold">{ex.fases[phase].nome}: </span>
-          {ex.fases[phase].descricao}
-        </p>
+          ))}
+        </ol>
       </div>
     </div>
   );
