@@ -36,12 +36,13 @@ jobs:
         env:
           # base do Vite no site de projeto do Pages: "/<nome-do-repo>/"
           VITE_BASE: /${{ github.event.repository.name }}/
-          # Backend Supabase (opcional): defina estes secrets em
-          # Settings > Secrets and variables > Actions para ligar o login em
-          # nuvem no site publicado. Vazios = o site publicado segue 100% local.
-          # IMPORTANTE: use a chave PUBLICÁVEL (anon/public), NUNCA a secreta.
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # Backend Supabase: liga o login em nuvem no site publicado. Um secret
+          # definido em Settings > Secrets and variables > Actions tem precedência;
+          # senão usa o valor publicável abaixo. A chave PUBLICÁVEL (anon/public) já
+          # vai para o bundle do cliente por design e é protegida por RLS; NUNCA a
+          # secreta (sb_secret_).
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://asbaydbxujgsnowmfmbe.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_9qlzoZgQeRe__8kbVQVDfQ_aHlgOb6H' }}
         run: npm run build
 
       - name: Configurar Pages
