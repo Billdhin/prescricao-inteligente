@@ -111,7 +111,13 @@ export function Semaforo() {
         </Card>
       )}
 
-      <SemaforoLiberacao grupoSlug={grupoSlug} alunoId={aluno?.id} alunoNome={aluno?.nome} fase={fase} />
+      <SemaforoLiberacao
+        grupoSlug={grupoSlug}
+        alunoId={aluno?.id}
+        alunoNome={aluno?.nome}
+        fase={fase}
+        planoAtivoId={planoAtivo?.id}
+      />
     </div>
   );
 }

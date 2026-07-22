@@ -150,19 +150,13 @@ export function Gps() {
   const rule = React.useMemo(() => combineRules(condicoesAtivas), [condicoesAtivas]);
 
   const [step, setStep] = React.useState(0);
-  const [answers, setAnswers] = React.useState<GpsAnswers>(() => {
-    // Prefill do onboarding "Primeiro Caso Real" (?objetivo=&nivel=)
-    const obj = params.get("objetivo");
-    const niv = params.get("nivel");
-    return {
-      objetivo: obj && OBJETIVOS.includes(obj as GpsAnswers["objetivo"]) ? (obj as GpsAnswers["objetivo"]) : "Hipertrofia",
-      grupoMuscular: obj === "Emagrecimento" ? "Corpo todo" : "Membros inferiores",
-      prioridade: obj === "Emagrecimento" ? "Cardio + força (misto)" : undefined,
-      nivel: niv === "Intermediário" || niv === "Avançado" ? (niv as Nivel) : "Iniciante",
-      restricoes: [],
-      equipamentos: [...EQUIPAMENTOS],
-    };
-  });
+  const [answers, setAnswers] = React.useState<GpsAnswers>(() => ({
+    objetivo: "Hipertrofia",
+    grupoMuscular: "Membros inferiores",
+    nivel: "Iniciante",
+    restricoes: [],
+    equipamentos: [...EQUIPAMENTOS],
+  }));
   const [results, setResults] = React.useState<Recommendation[] | null>(null);
   const [justify, setJustify] = React.useState<Recommendation | null>(null);
   const [compare, setCompare] = React.useState<string[]>([]);
@@ -886,7 +880,7 @@ function FocoAgora({
         <Pill tone="primary">Fase {fase} · {faseObj.nome}</Pill>
         <Pill tone={complexidadeTone[grupo.complexidade]}>{grupo.complexidade}</Pill>
         <Link
-          to={`/special-groups/${grupo.slug}?fase=${fase}${contexto?.alunoId ? `&aluno=${contexto.alunoId}` : ""}`}
+          to={`/special-groups/${grupo.slug}?fase=${fase}${contexto?.alunoId ? `&aluno=${contexto.alunoId}` : ""}&origem=gps`}
           className="ml-auto text-sm font-semibold text-primary hover:underline"
         >
           Ver jornada completa

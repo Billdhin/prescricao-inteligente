@@ -55,12 +55,18 @@ export function SpecialGroupDetail() {
   // Se cheguei aqui a partir do PERFIL do aluno, o "voltar" leva de volta ao perfil,
   // não ao wizard (senão o profissional perde o lugar de onde saiu).
   const voltandoParaAluno = origem === "aluno" && !!alunoDoFluxo;
+  // Vindo do resultado do Prescrever exercício: o wizard é estado local e zera ao
+  // voltar. O rótulo não promete "continuar a prescrição" (seria falso), diz só
+  // "Voltar ao Prescrever exercício".
+  const voltandoParaGps = origem === "gps";
   const g = getSpecialGroup(slug);
   const voltarPrescricao = alunoDoFluxo
     ? voltandoParaAluno
       ? `/alunos/${alunoDoFluxo.id}`
       : `/gps?aluno=${alunoDoFluxo.id}&grupo=${slug}${faseCtx ? `&fase=${faseCtx}` : ""}`
-    : null;
+    : voltandoParaGps
+      ? `/gps?grupo=${slug}${faseCtx ? `&fase=${faseCtx}` : ""}`
+      : null;
   const primeiroNome = alunoDoFluxo?.nome.split(" ")[0] ?? "";
   if (!g) {
     return (
@@ -83,7 +89,13 @@ export function SpecialGroupDetail() {
         className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink"
       >
         <ArrowLeft className="h-4 w-4" />{" "}
-        {voltarPrescricao ? (voltandoParaAluno ? "Voltar ao perfil" : "Voltar à prescrição") : "Grupos Especiais"}
+        {voltarPrescricao
+          ? voltandoParaAluno
+            ? "Voltar ao perfil"
+            : voltandoParaGps
+              ? "Voltar ao Prescrever exercício"
+              : "Voltar à prescrição"
+          : "Grupos Especiais"}
       </Link>
 
       {/* Contexto do fluxo Prescrever — não perde o aluno/fase já escolhidos */}
@@ -99,7 +111,11 @@ export function SpecialGroupDetail() {
           </div>
           <Link to={voltarPrescricao} className={buttonClasses("primary", "sm")}>
             <ArrowLeft className="h-4 w-4" />{" "}
-            {voltandoParaAluno ? `Voltar ao perfil de ${primeiroNome}` : "Voltar e continuar a prescrição"}
+            {voltandoParaAluno
+              ? `Voltar ao perfil de ${primeiroNome}`
+              : voltandoParaGps
+                ? "Voltar ao Prescrever exercício"
+                : "Voltar e continuar a prescrição"}
           </Link>
         </Card>
       )}
@@ -117,7 +133,11 @@ export function SpecialGroupDetail() {
           (voltarPrescricao ? (
             <Link to={voltarPrescricao} className={buttonClasses("primary")}>
               <ArrowLeft className="h-4 w-4" />{" "}
-              {voltandoParaAluno ? `Voltar ao perfil de ${primeiroNome}` : `Continuar prescrição de ${primeiroNome}`}
+              {voltandoParaAluno
+                ? `Voltar ao perfil de ${primeiroNome}`
+                : voltandoParaGps
+                  ? "Voltar ao Prescrever exercício"
+                  : `Continuar prescrição de ${primeiroNome}`}
             </Link>
           ) : (
             <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
@@ -232,7 +252,7 @@ export function SpecialGroupDetail() {
                             {relacionados.map((c) => (
                               <Link
                                 key={c!.slug}
-                                to={`/cases/${c!.slug}`}
+                                to={`/aprender/casos/${c!.slug}`}
                                 className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-soft"
                               >
                                 <PlayCircle className="h-5 w-5 shrink-0 text-cta" />
@@ -265,7 +285,9 @@ export function SpecialGroupDetail() {
                 <ArrowLeft className="h-4 w-4" />{" "}
                 {voltandoParaAluno
                   ? `Voltar ao perfil de ${primeiroNome}`
-                  : `Voltar e continuar a prescrição de ${primeiroNome}`}
+                  : voltandoParaGps
+                    ? "Voltar ao Prescrever exercício"
+                    : `Voltar e continuar a prescrição de ${primeiroNome}`}
               </Link>
             </div>
           )}

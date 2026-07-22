@@ -20,7 +20,7 @@ const tipoInfo: Record<LessonTipo, { label: string; tone: PillTone; icon: React.
 
 function lessonHref(l: Lesson): string | null {
   if (l.tipo === "lab" && l.ref) return `/movement-lab/${l.ref}`;
-  if (l.tipo === "caso" && l.ref) return `/cases/${l.ref}`;
+  if (l.tipo === "caso" && l.ref) return `/aprender/casos/${l.ref}`;
   return null;
 }
 

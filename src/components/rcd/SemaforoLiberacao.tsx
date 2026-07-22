@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { CheckCircle2, AlertTriangle, XCircle, Printer, RotateCcw, Save, Navigation } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, Printer, RotateCcw, Save, Navigation, CalendarRange } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import {
   getSemaforo,
@@ -55,6 +55,7 @@ export function SemaforoLiberacao({
   alunoId,
   alunoNome,
   fase,
+  planoAtivoId,
   onRegistrado,
   className,
 }: {
@@ -63,6 +64,8 @@ export function SemaforoLiberacao({
   alunoNome?: string;
   /** fase da jornada, propagada para o "Prescrever agora" não perder o contexto */
   fase?: number;
+  /** plano ativo do aluno: liberado com plano, o pós-semáforo abre o plano em vez do /gps */
+  planoAtivoId?: string;
   /** chamado após salvar a liberação no histórico */
   onRegistrado?: (resultado: ResultadoSemaforo) => void;
   className?: string;
@@ -245,18 +248,25 @@ export function SemaforoLiberacao({
             <div className="mt-3 space-y-3 border-t border-black/5 pt-3">
               {/* Próximo passo: prescrever ou voltar, sempre com um caminho de saída (nunca beco sem saída) */}
               <div className="flex flex-wrap items-center gap-2">
-                {resultado.cor !== "vermelho" && (
-                  <Link
-                    to={`/gps?${new URLSearchParams({
-                      ...(alunoId ? { aluno: alunoId } : {}),
-                      ...(grupo ? { grupo: grupoSlug } : {}),
-                      ...(fase ? { fase: String(fase) } : {}),
-                    }).toString()}`}
-                    className={buttonClasses("primary", "sm")}
-                  >
-                    <Navigation className="h-4 w-4" /> Prescrever agora
-                  </Link>
-                )}
+                {resultado.cor !== "vermelho" &&
+                  (planoAtivoId ? (
+                    // Liberado E há plano ativo: a sessão de hoje já mora no plano;
+                    // o próximo passo é abrir o plano, não prescrever exercício do zero.
+                    <Link to={`/prescrever-treino?plano=${planoAtivoId}`} className={buttonClasses("primary", "sm")}>
+                      <CalendarRange className="h-4 w-4" /> Abrir o plano
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/gps?${new URLSearchParams({
+                        ...(alunoId ? { aluno: alunoId } : {}),
+                        ...(grupo ? { grupo: grupoSlug } : {}),
+                        ...(fase ? { fase: String(fase) } : {}),
+                      }).toString()}`}
+                      className={buttonClasses("primary", "sm")}
+                    >
+                      <Navigation className="h-4 w-4" /> Prescrever agora
+                    </Link>
+                  ))}
                 {alunoId ? (
                   <Link to={`/alunos/${alunoId}`} className={buttonClasses("secondary", "sm")}>
                     {resultado.cor === "vermelho" ? "Registrar no perfil e reavaliar" : `Voltar ao perfil${alunoNome ? ` de ${alunoNome.split(" ")[0]}` : ""}`}

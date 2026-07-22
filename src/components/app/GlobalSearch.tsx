@@ -7,6 +7,7 @@ import {
   Route as RouteIcon,
   Library as LibraryIcon,
   Navigation,
+  CalendarRange,
   LayoutDashboard,
   Star,
   History as HistoryIcon,
@@ -98,8 +99,13 @@ const NAV_ITEMS: SearchItem[] = [
     haystack: norm("painel dashboard inicio visao geral"), Icon: LayoutDashboard,
   },
   {
-    id: "nav-gps", label: "Prescrever", group: "Ir para", to: "/gps",
-    haystack: norm("prescrever gps prescricao recomendacao motor decisao rapida"), Icon: Navigation,
+    id: "nav-gps", label: "Prescrever exercício", group: "Ir para", to: "/gps",
+    haystack: norm("prescrever exercicio gps prescricao recomendacao motor decisao rapida"), Icon: Navigation,
+    modes: ["atender"],
+  },
+  {
+    id: "nav-prescrever-treino", label: "Prescrever treino", group: "Ir para", to: "/prescrever-treino",
+    haystack: norm("prescrever treino periodizacao plano montar macrociclo"), Icon: CalendarRange,
     modes: ["atender"],
   },
   {

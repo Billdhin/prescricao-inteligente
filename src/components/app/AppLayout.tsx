@@ -102,11 +102,14 @@ const NAV: NavSection[] = [
   { label: "Sua conta", items: [{ to: "/account", label: "Configurações", icon: Settings }] },
 ];
 
-// Barra inferior do mobile: os 5 destinos mais usados no dia a dia.
+// Barra inferior do mobile: os destinos mais usados no dia a dia. Os dois modos
+// de prescrever (exercício e treino) ficam lado a lado; 6 itens cabem a partir de
+// 390px (cada aba ~65px, rótulos curtos sem truncar).
 const BOTTOM: NavItem[] = [
   { to: "/dashboard", label: "Hoje", icon: LayoutDashboard, short: "Hoje" },
   { to: "/alunos", label: "Alunos", icon: Users, short: "Alunos" },
   { to: "/gps", label: "Prescrever exercício", icon: Navigation, short: "Exercício" },
+  { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange, short: "Treino" },
   { to: "/semaforo", label: "Semáforo", icon: ShieldCheck, short: "Semáforo" },
   { to: "/aprender", label: "Estudar", icon: GraduationCap, match: ["/aprender", "/tracks"], short: "Estudar" },
 ];
@@ -148,10 +151,7 @@ const TITULOS_ROTA: [RegExp, string][] = [
   [/^\/assessments/, "Avaliações"],
   [/^\/protocols/, "Protocolos"],
   [/^\/comparador/, "Comparador"],
-  [/^\/cases/, "Casos"],
   [/^\/tracks/, "Trilhas"],
-  [/^\/favorites/, "Favoritos"],
-  [/^\/history/, "Histórico"],
   [/^\/account/, "Configurações"],
   [/^\/tutorial/, "Tutoriais"],
   [/^\/suporte/, "Suporte"],

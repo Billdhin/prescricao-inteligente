@@ -15,6 +15,8 @@ import {
   ClipboardList,
   PartyPopper,
   CalendarRange,
+  CalendarCheck,
+  Wallet,
   X,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
@@ -22,6 +24,8 @@ import { RetencaoPanel } from "@/components/treino/RetencaoPanel";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { avisosDoAluno, type CicloCtx } from "@/lib/gps/proximoPasso";
+import { proximaReavaliacao } from "@/data/periodizacao";
+import { statusEfetivo, formatBRL } from "@/data/cobranca";
 import { getAtivacao, marcarCelebrado, minutosPrimeiroCaso } from "@/lib/ativacao";
 import type { Aluno } from "@/data/alunos";
 import { cn } from "@/lib/utils";
@@ -55,6 +59,21 @@ export function ProfessionalDashboard() {
   const atencao = ativos
     .map((a) => ({ aluno: a, motivos: avisosDoAluno(a, ctx) }))
     .filter((x) => x.motivos.length > 0);
+
+  // Ritual de segunda (parcial, sem backend): dois agregados deriváveis localmente.
+  // Nada é inventado; se os dois forem zero, a linha some.
+  const agora = Date.now();
+  const diaSemana = (new Date(agora).getDay() + 6) % 7; // 0 = segunda-feira
+  const inicioSemana = new Date(agora).setHours(0, 0, 0, 0) - diaSemana * DIA;
+  const fimSemana = inicioSemana + 7 * DIA - 1;
+  const reavaliamSemana = planosAtivos.filter((p) => {
+    const r = proximaReavaliacao(p);
+    return r != null && r.em >= inicioSemana && r.em <= fimSemana;
+  }).length;
+  const pendentesCentavos = alunos.reduce(
+    (soma, a) => (a.cobranca && statusEfetivo(a.cobranca) === "pendente" ? soma + a.cobranca.valorCentavos : soma),
+    0,
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -90,6 +109,7 @@ export function ProfessionalDashboard() {
         temAluno={alunos.length > 0}
         temAvaliacao={avaliacoes.length > 0}
         temPrescricao={prescricoes.length > 0}
+        temTreino={planos.length > 0}
         temEvolucao={avaliacoes.length >= 2}
         primeiroAlunoId={ativos[0]?.id ?? alunos[0]?.id}
       />
@@ -100,6 +120,27 @@ export function ProfessionalDashboard() {
         <StatInline icon={<CalendarRange className="h-4 w-4 text-primary" />} value={comTreino} label="com treino ativo" to="/alunos" />
         <StatInline icon={<Activity className="h-4 w-4 text-analysis" />} value={avaliacoesMes} label="avaliações (30d)" to="/assessments" />
       </Card>
+
+      {/* Ritual de segunda (parcial): reavaliações da semana e mensalidades pendentes.
+          Só aparece quando há dado real; nunca mostra zero inventado. */}
+      {(reavaliamSemana > 0 || pendentesCentavos > 0) && (
+        <Card variant="soft" className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
+          {reavaliamSemana > 0 && (
+            <Link to="/alunos" className="inline-flex items-center gap-2 text-sm hover:text-ink">
+              <CalendarCheck className="h-4 w-4 text-analysis" />
+              <span className="tabular font-display text-lg font-bold text-ink">{reavaliamSemana}</span>
+              <span className="text-ink-2">{reavaliamSemana === 1 ? "reavalia esta semana" : "reavaliam esta semana"}</span>
+            </Link>
+          )}
+          {pendentesCentavos > 0 && (
+            <Link to="/alunos" className="inline-flex items-center gap-2 text-sm hover:text-ink">
+              <Wallet className="h-4 w-4 text-primary" />
+              <span className="tabular font-display text-lg font-bold text-ink">{formatBRL(pendentesCentavos)}</span>
+              <span className="text-ink-2">em mensalidades pendentes</span>
+            </Link>
+          )}
+        </Card>
+      )}
 
       {/* ÂNCORA: Precisam de atenção */}
       {atencao.length > 0 ? (
@@ -229,12 +270,14 @@ function ProximosPassos({
   temAluno,
   temAvaliacao,
   temPrescricao,
+  temTreino,
   temEvolucao,
   primeiroAlunoId,
 }: {
   temAluno: boolean;
   temAvaliacao: boolean;
   temPrescricao: boolean;
+  temTreino: boolean;
   temEvolucao: boolean;
   primeiroAlunoId?: string;
 }) {
@@ -245,7 +288,8 @@ function ProximosPassos({
   const passos = [
     { done: temAluno, label: "Cadastre um aluno", to: "/alunos?novo=1" },
     { done: temAvaliacao, label: "Registre uma avaliação", to: primeiroAlunoId ? `/alunos/${primeiroAlunoId}?avaliar=1` : "/alunos" },
-    { done: temPrescricao, label: "Prescreva com justificativa", to: primeiroAlunoId ? `/gps?aluno=${primeiroAlunoId}` : "/gps" },
+    { done: temPrescricao, label: "Escolha exercícios com justificativa", to: primeiroAlunoId ? `/gps?aluno=${primeiroAlunoId}` : "/gps" },
+    { done: temTreino, label: "Monte o treino do aluno", to: primeiroAlunoId ? `/prescrever-treino?aluno=${primeiroAlunoId}` : "/prescrever-treino" },
     { done: temEvolucao, label: "Acompanhe a evolução", to: "/assessments" },
   ];
   const feitos = passos.filter((p) => p.done).length;
@@ -267,7 +311,7 @@ function ProximosPassos({
           Ocultar
         </button>
       </div>
-      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         {passos.map((p, i) => {
           const atual = i === atualIdx;
           return (

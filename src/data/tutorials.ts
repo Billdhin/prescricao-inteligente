@@ -225,7 +225,7 @@ export const tutorials: Tutorial[] = [
         descricao: "No modo Aprender, vá em Casos e escolha um cenário para resolver.",
         scene: "nav",
         navLabel: "Casos",
-        cta: { label: "Ver Casos", to: "/cases" },
+        cta: { label: "Ver Casos", to: "/aprender/casos" },
       },
       {
         titulo: "Decida no cenário",

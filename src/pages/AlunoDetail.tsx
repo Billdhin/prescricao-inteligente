@@ -35,7 +35,7 @@ import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
 import { PosturalCard } from "@/components/treino/PosturalCard";
 import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
 import { ListaChips } from "@/components/treino/PlanoEditor";
-import { proximoPasso, estadoDoCiclo, dataReavaliacao, type CicloCtx } from "@/lib/gps/proximoPasso";
+import { proximoPasso, estadoDoCiclo, dataReavaliacao, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { criarConvite } from "@/lib/backend/supabaseRepo";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -125,6 +125,64 @@ function AlunoTabs({ aba, onAba }: { aba: Aba; onAba: (a: Aba) => void }) {
   );
 }
 
+/**
+ * CTA primário roteado pelo ciclo (proximoPasso), sempre com o prefixo
+ * "Próximo passo:". Mesmo mapa de destino do CtaPasso da Linha do cuidado:
+ * avaliar/reavaliar abrem o modal de avaliação, planejar vai ao Prescrever treino,
+ * liberar ao Semáforo, acompanhar ancora na execução. Os CTAs diretos dos cards
+ * (Montar treino, Nova prescrição) continuam existindo (decisão travada 12).
+ */
+function CtaProximoPasso({
+  aluno,
+  passo,
+  onAvaliar,
+  onAcompanhar,
+  variant = "primary",
+  size,
+}: {
+  aluno: Aluno;
+  passo: ProximoPasso;
+  onAvaliar: () => void;
+  onAcompanhar: () => void;
+  variant?: Parameters<typeof buttonClasses>[0];
+  size?: Parameters<typeof buttonClasses>[1];
+}) {
+  const cls = buttonClasses(variant, size);
+  const label = (
+    <>
+      Próximo passo: {passo.cta.label} <ArrowRight className="h-4 w-4" />
+    </>
+  );
+  switch (passo.cta.kind) {
+    case "planejar":
+      return (
+        <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cls}>
+          {label}
+        </Link>
+      );
+    case "liberar":
+      return (
+        <Link to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`} className={cls}>
+          {label}
+        </Link>
+      );
+    case "avaliar":
+    case "reavaliar":
+      return (
+        <button onClick={onAvaliar} className={cls}>
+          {label}
+        </button>
+      );
+    case "acompanhar":
+    default:
+      return (
+        <button onClick={onAcompanhar} className={cls}>
+          {label}
+        </button>
+      );
+  }
+}
+
 export function AlunoDetail() {
   const { id = "" } = useParams();
   const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao } =
@@ -147,6 +205,13 @@ export function AlunoDetail() {
   const aplicado = (location.state as { aplicado?: { n: number; sessao: string; bloco: number; semanas: number } } | null)?.aplicado;
   // A aba "Plano e treino" é o core e abre por padrão (o retorno do plano/aplicado cai nela).
   const [aba, setAba] = React.useState<Aba>("treino");
+  // "Acompanhar" do próximo passo: garante a aba do treino e ancora na execução.
+  const irParaExecucao = React.useCallback(() => {
+    setAba("treino");
+    requestAnimationFrame(() =>
+      document.getElementById("execucao-card")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }, []);
   // Prescrição escolhida para o diálogo "Colocar no treino".
   const [aplicarPresc, setAplicarPresc] = React.useState<Prescricao | null>(null);
   const [params, setParams] = useSearchParams();
@@ -201,17 +266,10 @@ export function AlunoDetail() {
             <CalendarPlus className="h-4 w-4" />
           </span>
           <p className="min-w-0 flex-1 text-sm text-ink">
-            <span className="font-semibold">{aluno.nome} cadastrado(a).</span> Próximo passo: registre a
-            primeira avaliação para acompanhar a evolução, ou já prescreva o treino.
+            <span className="font-semibold">{aluno.nome} cadastrado(a).</span> Comece pela avaliação
+            inicial para acompanhar a evolução; ela abre o resto do ciclo de cuidado.
           </p>
-          <div className="flex gap-2">
-            <button onClick={() => setAvaliar(true)} className={buttonClasses("secondary", "sm")}>
-              Registrar avaliação
-            </button>
-            <Link to={`/gps?aluno=${aluno.id}`} className={buttonClasses("primary", "sm")}>
-              Prescrever agora
-            </Link>
-          </div>
+          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={() => setAvaliar(true)} onAcompanhar={irParaExecucao} size="sm" />
         </Card>
       )}
 
@@ -267,10 +325,12 @@ export function AlunoDetail() {
       <AlunoHeader
         aluno={aluno}
         planoAtivo={planoAtivo}
+        passo={passo}
         reav={reav}
         reavaliacaoVencida={reavaliacaoVencida}
         onEditar={() => setEditar(true)}
         onAvaliar={() => setAvaliar(true)}
+        onAcompanhar={irParaExecucao}
         onToggleStatus={() => {
           const ativo = aluno.status === "ativo";
           updateAluno(aluno.id, { status: ativo ? "inativo" : "ativo" });
@@ -370,7 +430,9 @@ export function AlunoDetail() {
 
             <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
 
-            <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
+            <div id="execucao-card" className="scroll-mt-24">
+              <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
+            </div>
 
           <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
@@ -629,18 +691,22 @@ export function AlunoDetail() {
 function AlunoHeader({
   aluno,
   planoAtivo,
+  passo,
   reav,
   reavaliacaoVencida,
   onEditar,
   onAvaliar,
+  onAcompanhar,
   onToggleStatus,
 }: {
   aluno: Aluno;
   planoAtivo?: PlanoTreino;
+  passo: ProximoPasso;
   reav: { em: number; semana?: number } | null;
   reavaliacaoVencida: boolean;
   onEditar: () => void;
   onAvaliar: () => void;
+  onAcompanhar: () => void;
   onToggleStatus: () => void;
 }) {
   const ativo = aluno.status === "ativo";
@@ -683,9 +749,7 @@ function AlunoHeader({
           <button onClick={onAvaliar} className={buttonClasses("secondary")}>
             <CalendarPlus className="h-4 w-4" /> Registrar avaliação
           </button>
-          <Link to={`/gps?aluno=${aluno.id}`} className={buttonClasses("primary")}>
-            <Navigation className="h-4 w-4" /> Prescrever
-          </Link>
+          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} />
         </div>
       </div>
 
@@ -806,11 +870,11 @@ function AppDoAlunoPanel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: 
               <ConvidarAlunoCard alunoId={aluno.id} alunoNome={aluno.nome} />
             ) : (
               <Card tone="primary" className="h-full p-4">
-                <div className="text-sm font-semibold text-ink">O acesso online ainda não está ligado</div>
-                <p className="mt-1 text-sm text-ink-2">
-                  Por enquanto o app funciona em prévia, aqui no seu aparelho. Para o aluno entrar pelo celular dele, é
-                  preciso ligar a conta na nuvem. Posso preparar isso para você.
-                </p>
+                <div className="text-sm font-semibold text-ink">O acesso online do aluno ainda não está disponível</div>
+                <p className="mt-1 text-sm text-ink-2">A prévia mostra exatamente o que ele verá.</p>
+                <Link to={`/alunos/${aluno.id}/preview`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+                  <Smartphone className="h-4 w-4" /> Ver a prévia
+                </Link>
               </Card>
             )}
           </div>
@@ -1209,8 +1273,6 @@ function RotuloJ({ children }: { children: React.ReactNode }) {
   return <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">{children}</div>;
 }
 
-/** Acompanhamento do vínculo: tempo de cadastro (dias→meses), tempo no nível,
- *  status ativo/saiu e a SUGESTÃO de avançar de nível (progressão é manual). */
 /** Card de convite do aluno para o app (com a marca do profissional). Só aparece
  *  quando há backend configurado (o portal do aluno depende do Supabase). */
 function ConvidarAlunoCard({ alunoId, alunoNome }: { alunoId: string; alunoNome: string }) {
@@ -1272,79 +1334,6 @@ function ConvidarAlunoCard({ alunoId, alunoNome }: { alunoId: string; alunoNome:
         </button>
       )}
       {erro && <p className="mt-2 text-xs text-warning">{erro}</p>}
-    </Card>
-  );
-}
-
-function AcompanhamentoCard({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Partial<Aluno>) => void }) {
-  const navigate = useNavigate();
-  const cadastro = tempoDesde(aluno.criadoEm);
-  const noNivel = tempoDesde(aluno.nivelDesde ?? aluno.criadoEm);
-  const ativo = aluno.status === "ativo";
-  const sug = ativo ? sugestaoProgressao(aluno) : null;
-
-  const toggleStatus = () => {
-    onUpdate({ status: ativo ? "inativo" : "ativo" });
-    toast(ativo ? `${aluno.nome} marcado(a) como inativo(a)` : `${aluno.nome} reativado(a)`);
-  };
-  const avancar = () => {
-    if (!sug) return;
-    onUpdate({ nivel: sug.proximo, nivelDesde: Date.now() });
-    toast(`${aluno.nome} avançou para ${sug.proximo}. Revise a prescrição.`);
-  };
-
-  return (
-    <Card className="p-5 md:p-6">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
-          <CalendarClock className="h-4 w-4" />
-        </span>
-        <h2 className="font-display text-lg font-bold text-ink">Acompanhamento</h2>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        <MiniStat icon={<CalendarClock className="h-4 w-4" />} rotulo="Tempo de cadastro" valor={cadastro.texto} />
-        <MiniStat icon={<TrendingUp className="h-4 w-4" />} rotulo={`No nível ${aluno.nivel}`} valor={noNivel.texto} />
-        <div className="flex items-center gap-3 rounded-xl border border-border p-3">
-          <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", ativo ? "bg-[#e7f8ee] text-success" : "bg-surface-soft text-ink-3")}>
-            {ativo ? <UserCheck className="h-4 w-4" /> : <UserMinus className="h-4 w-4" />}
-          </span>
-          <div className="min-w-0">
-            <div className="text-xs text-ink-3">Situação</div>
-            <div className="font-semibold text-ink">{ativo ? "Ativo" : "Inativo"}</div>
-          </div>
-          <button
-            onClick={toggleStatus}
-            className={cn(buttonClasses("secondary", "sm"), "shrink-0")}
-            aria-label={ativo ? "Inativar aluno" : "Reativar aluno"}
-          >
-            {ativo ? <UserMinus className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-            {ativo ? "Inativar" : "Reativar"}
-          </button>
-        </div>
-      </div>
-
-      {/* Sugestão de progressão de nível (o profissional decide) */}
-      {sug && (
-        <Card tone="primary" className="mt-4 flex flex-wrap items-center justify-between gap-3 p-4">
-          <div className="flex items-start gap-2">
-            <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <p className="text-sm text-ink">
-              <span className="font-semibold">
-                {aluno.nome.split(" ")[0]} está há {sug.mesesNoNivel} {sug.mesesNoNivel === 1 ? "mês" : "meses"} como {aluno.nivel}.
-              </span>{" "}
-              Considere avançar para {sug.proximo} e revisar toda a prescrição. A decisão é sua; avance quando a
-              técnica e a resposta ao treino indicarem.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={avancar} className={buttonClasses("primary", "sm")}>
-              Avançar para {sug.proximo}
-            </button>
-          </div>
-        </Card>
-      )}
-
     </Card>
   );
 }
