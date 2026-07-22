@@ -310,12 +310,30 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
     detalhe: `Índice de eficiência declarado: ${efic}/100.`,
   });
 
+  const scoreAntesCap = score;
   if (!equipOk) score = Math.min(score, 65);
   // grupo incompatível (ratio mínimo 0.1): não pode parecer "Boa" adequação para o alvo pedido.
   const grupoCompativel = grupoRatio >= 0.55;
   if (!grupoCompativel) score = Math.min(score, 55);
   // incompatível por restrição declarada: não pode parecer opção viável.
   if (excluido) score = Math.min(score, 12);
+
+  // M9: quando um teto morde, as parcelas somadas nao batem com o total. Esta
+  // linha registra o corte explicitamente, para o breakdown fechar com o score.
+  if (score < scoreAntesCap - 0.05) {
+    const corte = +(scoreAntesCap - score).toFixed(1);
+    const razao = excluido
+      ? "restrição declarada incompatível"
+      : !equipOk
+        ? "equipamento não disponível"
+        : "grupo muscular incompatível com o alvo";
+    breakdown.push({
+      criterio: "Limite aplicado",
+      peso: -corte,
+      pontosPossiveis: 0,
+      detalhe: `Teto por ${razao}: as parcelas acima são reduzidas para fechar o total.`,
+    });
+  }
 
   const raw = Math.max(0, Math.min(100, score));
   const clamped = Math.round(raw);

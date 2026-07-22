@@ -32,7 +32,8 @@ export function AlunoFormModal({
   const editando = Boolean(inicial);
   const [nome, setNome] = React.useState(inicial?.nome ?? "");
   const [idade, setIdade] = React.useState(inicial?.idade ? String(inicial.idade) : "");
-  const [objetivo, setObjetivo] = React.useState<GpsObjetivo>((inicial?.objetivo as GpsObjetivo) ?? "Hipertrofia");
+  // Padrão alinhado ao posicionamento (condições/emagrecimento), não "Hipertrofia" (L1).
+  const [objetivo, setObjetivo] = React.useState<GpsObjetivo>((inicial?.objetivo as GpsObjetivo) ?? "Emagrecimento");
   const [nivel, setNivel] = React.useState<Nivel>(inicial?.nivel ?? "Iniciante");
   const [restricoes, setRestricoes] = React.useState<RestricaoSelecionada[]>(inicial?.restricoes ?? []);
   const [equipamentos, setEquipamentos] = React.useState<string[]>(inicial?.equipamentos ?? KIT_PADRAO);

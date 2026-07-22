@@ -1274,7 +1274,8 @@ function Results({
           </div>
           <div className="text-right">
             <div className="tabular font-display text-xl font-bold text-primary">
-              {r.score}
+              {/* uma casa decimal desempata visualmente exercicios que arredondariam para o mesmo inteiro (M4) */}
+              {r.scoreExato.toFixed(1)}
               <span className="text-xs font-semibold text-ink-3">/100</span>
             </div>
             <div className="text-[10px] uppercase text-ink-3">adequação</div>

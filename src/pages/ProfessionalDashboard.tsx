@@ -81,7 +81,7 @@ export function ProfessionalDashboard() {
             <UserPlus className="h-4 w-4" /> Cadastrar aluno
           </Link>
           <Link to="/gps" className={buttonClasses("primary")}>
-            <Navigation className="h-4 w-4" /> Prescrever
+            <Navigation className="h-4 w-4" /> Prescrever exercício
           </Link>
         </div>
       </div>
@@ -223,8 +223,8 @@ function CelebracaoPrimeiroCaso() {
         <span className="font-semibold text-ink">
           Primeiro caso real resolvido{min ? ` em ${min} min` : ""}.
         </span>{" "}
-        A decisão ficou documentada no prontuário do aluno; é assim que cada caso vira defesa
-        técnica sua.
+        Você viu a decisão com o porquê de cada escolha. Vincule a um aluno para salvar e exportar
+        o prontuário; é assim que cada caso vira defesa técnica sua.
       </p>
       <button onClick={fechar} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
         <X className="h-4 w-4" />

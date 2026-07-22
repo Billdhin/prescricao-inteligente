@@ -490,13 +490,25 @@ export function avaliarSemaforo(
   const ajustes: { pergunta: string; acao: string }[] = [];
   const refs: string[] = [];
   const peso: Record<CorSemaforo, number> = { verde: 0, amarelo: 1, vermelho: 2 };
+  let faltamRespostas = false;
 
   for (const item of checklist.itens) {
     const opcao = item.opcoes.find((o) => o.valor === respostas[item.id]);
-    if (!opcao) continue;
+    if (!opcao) {
+      // Item sem resposta NAO pode contar como "verde" (falha aberta). Marca a
+      // pendencia para o resultado falhar fechado por seguranca.
+      faltamRespostas = true;
+      continue;
+    }
     if (peso[opcao.cor] > peso[cor]) cor = opcao.cor;
     if (opcao.cor !== "verde" && opcao.acao) ajustes.push({ pergunta: item.pergunta, acao: opcao.acao });
     for (const r of item.refs ?? []) if (!refs.includes(r)) refs.push(r);
+  }
+
+  // Fail-closed: com item pendente, nunca libera direto; pede completar o checklist.
+  if (faltamRespostas && cor === "verde") {
+    cor = "amarelo";
+    ajustes.push({ pergunta: "Checklist incompleto", acao: "Responda todos os itens antes de liberar a sessão." });
   }
 
   return { cor, rotulo: ROTULOS[cor], ajustes, refs };
