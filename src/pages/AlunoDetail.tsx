@@ -33,6 +33,7 @@ import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
 import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
 import { PosturalCard } from "@/components/treino/PosturalCard";
 import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
+import { ListaChips } from "@/components/treino/PlanoEditor";
 import { proximoPasso, estadoDoCiclo, dataReavaliacao, type CicloCtx } from "@/lib/gps/proximoPasso";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { criarConvite } from "@/lib/backend/supabaseRepo";
@@ -45,7 +46,7 @@ import type { Aluno, Avaliacao } from "@/data/alunos";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { getModelo, semanaAtual, mesocicloAtual, proximaReavaliacao, type PlanoTreino } from "@/data/periodizacao";
+import { getModelo, rotuloMeso, semanaAtual, mesocicloAtual, proximaReavaliacao, type PlanoTreino } from "@/data/periodizacao";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
@@ -139,7 +140,9 @@ export function AlunoDetail() {
   const recemCriado = Boolean((location.state as { recemCriado?: boolean } | null)?.recemCriado);
   // "Salvei, e agora?": o retorno do Prescrever traz este sinal para dar o fecho do fluxo.
   const prescricaoSalva = Boolean((location.state as { prescricaoSalva?: boolean } | null)?.prescricaoSalva);
-  // A aba "Plano e treino" é o core e abre por padrão.
+  // Retorno do "Prescrever treino" após o primeiro salvamento de um plano novo.
+  const planoSalvo = Boolean((location.state as { planoSalvo?: boolean } | null)?.planoSalvo);
+  // A aba "Plano e treino" é o core e abre por padrão (o retorno do plano salvo cai nela).
   const [aba, setAba] = React.useState<Aba>("treino");
   const [params, setParams] = useSearchParams();
 
@@ -218,6 +221,21 @@ export function AlunoDetail() {
           </p>
           <a href="#prescricoes-card" className={buttonClasses("secondary", "sm")}>
             Ver prescrição
+          </a>
+        </Card>
+      )}
+
+      {planoSalvo && (
+        <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-success">
+            <CalendarRange className="h-4 w-4" />
+          </span>
+          <p className="min-w-0 flex-1 text-sm text-ink">
+            <span className="font-semibold">Treino montado para {aluno.nome.split(" ")[0]}.</span> Já está no
+            perfil, com a periodização e a progressão organizadas.
+          </p>
+          <a href="#treino-card" className={buttonClasses("secondary", "sm")}>
+            Ver o treino
           </a>
         </Card>
       )}
@@ -968,7 +986,7 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
 
   if (!ativo) {
     return (
-      <Card className="p-5 md:p-6">
+      <Card id="treino-card" className="scroll-mt-24 p-5 md:p-6">
         <h2 className="mb-3 font-display text-lg font-bold text-ink">Treino do aluno</h2>
         <div className="rounded-xl border border-dashed border-border p-4 text-center">
           <p className="text-sm text-ink-2">
@@ -996,7 +1014,7 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
   const pct = Math.round((semana / ativo.semanas) * 100);
 
   return (
-    <Card className="p-5 md:p-6">
+    <Card id="treino-card" className="scroll-mt-24 p-5 md:p-6">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-display text-lg font-bold text-ink">Treino do aluno</h2>
         <Link to={`/prescrever-treino?aluno=${aluno.id}`} className="text-sm font-semibold text-primary hover:underline">
@@ -1036,10 +1054,13 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
 
         {meso && (
           <div className="mt-3 rounded-lg bg-surface-soft p-2.5">
-            <p className="text-sm font-semibold text-ink">{meso.nome}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-3">Bloco atual do plano (pelo calendário)</p>
+            <p className="text-sm font-semibold text-ink">{rotuloMeso(meso)}</p>
             <p className="text-xs text-ink-2">{meso.foco}</p>
             {meso.capacidades.length > 0 && (
-              <p className="mt-1 text-xs text-ink-3">Capacidades: {meso.capacidades.join(", ")}.</p>
+              <div className="mt-2">
+                <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
+              </div>
             )}
           </div>
         )}

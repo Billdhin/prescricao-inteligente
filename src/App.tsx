@@ -140,6 +140,10 @@ export default function App() {
           <Route path="/aprender/salvos" element={<AprenderSalvos />} />
           <Route path="/aprender/progresso" element={<AprenderProgresso />} />
           <Route path="/aprender/trilhas" element={<Navigate to="/tracks" replace />} />
+          {/* Beco de rota DENTRO do shell: uma URL desconhecida de quem já está no app
+              volta ao painel, em vez de expulsar para a Landing. Não há predicado
+              "logado"; o * externo abaixo segue servindo os links externos. */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

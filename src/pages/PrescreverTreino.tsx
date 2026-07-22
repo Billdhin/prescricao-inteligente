@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   CalendarRange,
   Users,
@@ -12,20 +12,30 @@ import {
   Save,
   FileDown,
   Check,
+  AlertTriangle,
 } from "lucide-react";
-import { Card, Pill, buttonClasses, SectionHeader } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, SectionHeader, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
 import { GraficoProgressao, MesocicloCard, ModeloExplicacao, type ContextoFaixa } from "@/components/treino/PlanoEditor";
 import { cn } from "@/lib/utils";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { gerarPlano } from "@/lib/gps/periodizacao";
-import { getModelo, MODELOS_PERIODIZACAO, type Macrociclo, type Mesociclo, type PlanoTreino } from "@/data/periodizacao";
+import {
+  getModelo,
+  MODELOS_PERIODIZACAO,
+  semanaAtual,
+  mesocicloAtual,
+  type Macrociclo,
+  type Mesociclo,
+  type PlanoTreino,
+} from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { bibliografia } from "@/data/referencias";
 import { exportPlanoPDF } from "@/lib/exportPlano";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, uid } from "@/lib/store";
+import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
@@ -36,12 +46,15 @@ const FREQUENCIAS = [2, 3, 4, 5, 6];
 
 export function PrescreverTreino() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const alunos = useAlunos((s) => s.alunos);
   const addPlano = useAlunos((s) => s.addPlano);
   const updatePlano = useAlunos((s) => s.updatePlano);
   const planosSalvos = useAlunos((s) => s.planos);
+  const execucoes = useAlunos((s) => s.execucoes);
   const user = useUser();
   const premium = isPremiumUnlocked(user.plan);
+  const [confirmarRegenerar, setConfirmarRegenerar] = React.useState(false);
 
   // `?plano=` abre um plano salvo para continuar de onde parou; `?aluno=` começa um novo
   // já com o perfil dele. Sem retomar, "abrir plano" no perfil do aluno geraria um plano
@@ -68,20 +81,37 @@ export function PrescreverTreino() {
   // acabou de estudar um modelo e quer montar um plano com ele.
   const modeloPreferido = MODELOS_PERIODIZACAO.find((m) => m.id === params.get("modelo"))?.id;
 
-  const montar = (ctx: {
-    objetivo: GpsObjetivo;
-    nivel: Nivel;
-    semanas: number;
-    frequencia: number;
-    grupoEspecial?: string;
-    disponibilidade?: string;
-    alunoId?: string;
-  }): PlanoTreino => {
+  // Regenerar por cima de um plano JÁ SALVO deste aluno (aberto via ?plano=) é destrutivo:
+  // exige confirmação e REUTILIZA o id, senão o Salvar arquiva o plano editado e cria um
+  // duplicado. Sem ?plano= (ex.: ?aluno=), gerar é sempre um plano novo.
+  const planoSalvoDoAluno = planoPre && planoPre.alunoId === alunoId ? planoPre : undefined;
+  const execucoesEmRisco = React.useMemo(() => {
+    if (!planoSalvoDoAluno) return false;
+    const ids = new Set<string>();
+    planoSalvoDoAluno.macrociclo.mesociclos.forEach((m) =>
+      m.microciclos.forEach((w) => w.sessoes.forEach((s) => s.blocos.forEach((b) => ids.add(b.id)))),
+    );
+    return execucoes.some((e) => ids.has(e.blocoRef));
+  }, [planoSalvoDoAluno, execucoes]);
+
+  const montar = (
+    ctx: {
+      objetivo: GpsObjetivo;
+      nivel: Nivel;
+      semanas: number;
+      frequencia: number;
+      grupoEspecial?: string;
+      disponibilidade?: string;
+      alunoId?: string;
+    },
+    idExistente?: string,
+  ): PlanoTreino => {
     const g = gerarPlano({ ...ctx, modeloPreferido });
     return {
       // `uid()` e não o relógio: dois planos gerados no mesmo milissegundo receberiam o
       // mesmo id, e salvar o segundo sobrescreveria o primeiro em vez de arquivá-lo.
-      id: `plano-${uid()}`,
+      // `idExistente` reaproveita o id do plano salvo, para regenerar sem duplicar.
+      id: idExistente ?? `plano-${uid()}`,
       alunoId: ctx.alunoId ?? "",
       data: Date.now(),
       titulo: g.titulo,
@@ -104,6 +134,14 @@ export function PrescreverTreino() {
   const irParaResultado = () =>
     requestAnimationFrame(() => document.getElementById("resultado-treino")?.scrollIntoView({ behavior: "smooth", block: "start" }));
 
+  // Abrir um plano salvo via ?plano= cai direto no resultado, não no formulário vazio:
+  // senão "Gerar periodização" fica armado por cima do plano salvo (a armadilha antiga).
+  React.useEffect(() => {
+    if (planoPre) irParaResultado();
+    // roda uma vez, no carregamento
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Ao escolher um aluno, herda o perfil (defaults inteligentes).
   const escolherAluno = (id: string | undefined) => {
     setAlunoId(id);
@@ -117,10 +155,18 @@ export function PrescreverTreino() {
     setSalvo(false);
   };
 
-  const gerar = () => {
-    setPlano(montar({ objetivo, nivel, semanas, frequencia, grupoEspecial: grupo || undefined, disponibilidade, alunoId }));
+  const gerarAgora = () => {
+    setPlano(
+      montar({ objetivo, nivel, semanas, frequencia, grupoEspecial: grupo || undefined, disponibilidade, alunoId }, planoSalvoDoAluno?.id),
+    );
     setSalvo(false);
     irParaResultado();
+  };
+
+  const gerar = () => {
+    // Regenerar por cima de um plano salvo confirma antes; caso contrário, gera direto.
+    if (planoSalvoDoAluno) setConfirmarRegenerar(true);
+    else gerarAgora();
   };
 
   const carregarExemplo = () => {
@@ -139,10 +185,17 @@ export function PrescreverTreino() {
   const salvar = () => {
     if (!plano || !aluno) return;
     const jaExiste = planosSalvos.some((p) => p.id === plano.id);
-    if (jaExiste) updatePlano(plano.id, plano);
-    else addPlano({ ...plano, alunoId: aluno.id });
-    setSalvo(true);
-    toast(jaExiste ? "Plano atualizado no perfil do aluno." : `Plano salvo no perfil de ${aluno.nome}.`);
+    if (jaExiste) {
+      updatePlano(plano.id, plano);
+      setSalvo(true);
+      toast("Plano atualizado no perfil do aluno.");
+    } else {
+      addPlano({ ...plano, alunoId: aluno.id });
+      // Primeiro salvamento de um plano novo: leva ao perfil, onde o chip "Sem treino"
+      // morre na frente do usuário, com o banner e a aba de treino aberta. Salvamentos
+      // seguintes (updatePlano) ficam na tela, com o link "Ver no perfil de {nome}".
+      navigate(`/alunos/${aluno.id}`, { state: { planoSalvo: true } });
+    }
   };
 
   const exportar = () => {
@@ -276,8 +329,9 @@ export function PrescreverTreino() {
         </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <button onClick={gerar} className={buttonClasses("primary")}>
-            <Sparkles className="h-4 w-4" /> Gerar periodização
+          <button onClick={gerar} className={buttonClasses(planoSalvoDoAluno ? "secondary" : "primary")}>
+            <Sparkles className="h-4 w-4" />
+            {planoSalvoDoAluno ? "Gerar de novo (substitui o plano salvo)" : "Gerar periodização"}
           </button>
           {!plano && (
             <button
@@ -309,6 +363,66 @@ export function PrescreverTreino() {
           />
         </div>
       )}
+
+      {confirmarRegenerar && (
+        <ConfirmarRegenerarModal
+          execucoesEmRisco={execucoesEmRisco}
+          onClose={() => setConfirmarRegenerar(false)}
+          onConfirm={() => {
+            setConfirmarRegenerar(false);
+            gerarAgora();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Regenerar por cima de um plano salvo é destrutivo (arquiva a versão editada e pode
+ *  desvincular execuções): confirma antes, com um botão primário só. */
+function ConfirmarRegenerarModal({
+  execucoesEmRisco,
+  onClose,
+  onConfirm,
+}: {
+  execucoesEmRisco: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-end bg-black/40 p-0 backdrop-blur-sm sm:place-items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Gerar o plano de novo"
+        className="w-full max-w-md rounded-t-card bg-surface p-6 shadow-elevated outline-none sm:rounded-card"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-2 flex items-center gap-2">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#fef4e2] text-warning">
+            <AlertTriangle className="h-4 w-4" />
+          </span>
+          <h2 className="font-display text-lg font-bold text-ink">Gerar o plano de novo?</h2>
+        </div>
+        <p className="text-sm text-ink-2">
+          Gerar de novo substitui o plano salvo deste aluno.
+          {execucoesEmRisco && " O histórico de execução das sessões atuais será desvinculado."}
+        </p>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button onClick={onClose} className={buttonClasses("secondary", "sm")}>
+            Cancelar
+          </button>
+          <button onClick={onConfirm} className={buttonClasses("primary", "sm")}>
+            Gerar de novo
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -344,6 +458,15 @@ function ResultadoPlano({
   const biblio = bibliografia(plano.refIds);
   const ctx: ContextoFaixa = { objetivo: plano.objetivo, nivel: plano.nivel };
 
+  // "Você está aqui": num plano salvo, o mesociclo/semana correntes saem do calendário;
+  // num rascunho ainda não salvo, o ponto de partida é o primeiro bloco (semana 1).
+  const semanaCorrente = salvo ? semanaAtual(plano) : 1;
+  const mesoAtual = naAlternativa
+    ? macro.mesociclos.find((m) => semanaCorrente >= m.semanaInicio && semanaCorrente <= m.semanaFim)
+    : mesocicloAtual(plano);
+  // "Registrar reavaliação" só faz sentido quando há aluno (o destino é o perfil dele).
+  const reavaliarHref = podeSalvar && plano.alunoId ? `/alunos/${plano.alunoId}?avaliar=1` : undefined;
+
   const trocarMacro = (m: Macrociclo) => onChange(naAlternativa ? { ...plano, alternativa: m } : { ...plano, macrociclo: m });
   const trocarMeso = (meso: Mesociclo) =>
     trocarMacro({ ...macro, mesociclos: macro.mesociclos.map((x) => (x.id === meso.id ? meso : x)) });
@@ -370,9 +493,11 @@ function ResultadoPlano({
       <Card variant="raised" className="border-l-4 border-primary p-5">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Pill tone="primary">{modelo.nome}</Pill>
-          <span className="text-sm text-ink-2">
-            {plano.objetivo} · {plano.nivel} · {plano.semanas} semanas
-          </span>
+          <LinhaDeTokens>
+            <TokenRotulado label="Objetivo" value={plano.objetivo} />
+            <TokenRotulado label="Nível" value={plano.nivel} />
+            <TokenRotulado label="Duração" value={`${plano.semanas} semanas`} />
+          </LinhaDeTokens>
           {grupoObj && <Pill tone="analysis">{grupoObj.nome}</Pill>}
           {/* O plano nasce de um modelo verificado, mas é ponto de partida do
               profissional, não decisão pronta: enquanto não for salvo, é rascunho. */}
@@ -409,6 +534,13 @@ function ResultadoPlano({
             {salvo ? <Check className="h-4 w-4 text-success" /> : <Save className="h-4 w-4" />}
             {salvo ? "Salvo" : "Salvar no perfil"}
           </button>
+          {/* Salvo e continuando na tela (update de plano já salvo): o caminho ao perfil
+              fica à mão. O primeiro salvamento de plano novo já navega para lá sozinho. */}
+          {salvo && podeSalvar && plano.alunoId && (
+            <Link to={`/alunos/${plano.alunoId}`} className={buttonClasses("ghost", "sm")}>
+              Ver no perfil de {aluno}
+            </Link>
+          )}
           <button onClick={onExportar} disabled={!podeSalvar} className={cn(buttonClasses("ghost", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}>
             <FileDown className="h-4 w-4" /> Exportar PDF
           </button>
@@ -473,7 +605,17 @@ function ResultadoPlano({
               />
             ) : null
           ) : (
-            <MesocicloCard key={m.id} meso={m} indice={i} ctx={ctx} editavel={premium && editando} onChange={trocarMeso} />
+            <MesocicloCard
+              key={m.id}
+              meso={m}
+              indice={i}
+              ctx={ctx}
+              editavel={premium && editando}
+              onChange={trocarMeso}
+              atual={m.id === mesoAtual?.id}
+              semanaCorrente={semanaCorrente}
+              reavaliarHref={reavaliarHref}
+            />
           );
         })}
       </div>

@@ -189,6 +189,23 @@ export function mesocicloAtual(plano: PlanoTreino, agora = Date.now()): Mesocicl
   return plano.macrociclo.mesociclos.find((m) => s >= m.semanaInicio && s <= m.semanaFim);
 }
 
+/**
+ * Rótulo de EXIBIÇÃO de um mesociclo (nunca toca o nome persistido).
+ *
+ * Mesociclo nascido de uma fase da jornada (com `faseJornada`) já traz "Fase N: ..."
+ * no nome e a palavra "Fase" é verdadeira: vale como está. Um mesociclo genérico não
+ * pode exibir a palavra "Fase" como se fosse fase clínica; onde um plano antigo de
+ * grupo gravou o prefixo "Fase N:", ele é limpo só para exibir. O PDF continua
+ * imprimindo o nome como está gravado.
+ */
+export function rotuloMeso(meso: Mesociclo, _indice?: number): string {
+  // `faseJornada` é aditivo (nasce na integração do ciclo); acesso tolerante para
+  // não depender do campo existir no tipo ainda.
+  const temFase = Boolean((meso as { faseJornada?: number }).faseJornada);
+  if (temFase) return meso.nome;
+  return meso.nome.replace(/^Fase \d+:\s*/, "");
+}
+
 /** A próxima reavaliação marcada no plano que ainda não passou. */
 export function proximaReavaliacao(
   plano: PlanoTreino,

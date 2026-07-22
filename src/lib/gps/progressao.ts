@@ -11,7 +11,7 @@
  * gráfico dão o que falta para ler o plano de relance: qual fase, e quantas semanas nela.
  */
 
-import type { Macrociclo, Tendencia } from "@/data/periodizacao";
+import { rotuloMeso, type Macrociclo, type Tendencia } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
 
 export interface PontoSemana {
@@ -270,8 +270,9 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
     const x0 = mi === 0 ? left - meio : x(a) - meio;
     const x1 = mi === macro.mesociclos.length - 1 ? right + meio : x(b) + meio;
     const largFaixa = x1 - x0;
-    // "Fase 1: Entrada · segurança · adaptação" fica "Fase 1: Entrada"; nomes curtos passam inteiros.
-    const nomeBase = m.nome.split(" · ")[0];
+    // "Fase 1: Entrada · segurança · adaptação" fica "Fase 1: Entrada"; nomes curtos passam
+    // inteiros. rotuloMeso limpa o prefixo "Fase N:" de mesociclo genérico (só exibição).
+    const nomeBase = rotuloMeso(m, mi).split(" · ")[0];
     return {
       indice: mi,
       x0,
@@ -290,7 +291,8 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
     plot: { top, bottom, left, right },
     series: [
       { nome: "Volume", cor: "var(--primary)", d: caminhoSuave(volPts) },
-      { nome: "Intensidade", cor: "var(--cta)", d: caminhoSuave(pontosDe((p) => p.int)) },
+      // Terracota de DADO: o coral --cta é a ação primária e não pode virar cor de série.
+      { nome: "Intensidade", cor: "var(--data-intensidade)", d: caminhoSuave(pontosDe((p) => p.int)) },
       { nome: "Complexidade", cor: "var(--analysis)", d: caminhoSuave(pontosDe((p) => p.cpx)) },
     ],
     areaVolume,

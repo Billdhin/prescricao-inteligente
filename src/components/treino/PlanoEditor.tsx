@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import {
   getFaixa,
   getModelo,
+  rotuloMeso,
   valorFaixa,
   type Macrociclo,
   type Mesociclo,
@@ -77,7 +78,7 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
       <p className="mb-3 text-xs text-ink-3">
         Tendência qualitativa das cargas por semana. As faixas ao pé mostram cada fase e quantas semanas ela dura.
       </p>
-      <div className="overflow-x-auto">
+      <div className="relative overflow-x-auto">
         <svg
           viewBox={`0 0 ${g.largura} ${g.altura}`}
           className="h-56 w-full min-w-[560px]"
@@ -149,6 +150,8 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
             </text>
           ))}
         </svg>
+        {/* Affordance de rolagem: um fade no canto direito sugere que o gráfico continua. */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#ffffff]" />
       </div>
       <div className="mt-2 flex flex-wrap gap-3">
         {g.series.map((s) => (
@@ -169,14 +172,24 @@ export function MesocicloCard({
   ctx,
   editavel,
   onChange,
+  atual,
+  semanaCorrente,
+  reavaliarHref,
 }: {
   meso: Mesociclo;
   indice: number;
   ctx: ContextoFaixa;
   editavel: boolean;
   onChange?: (m: Mesociclo) => void;
+  /** este é o bloco em que o plano está hoje (pelo calendário) */
+  atual?: boolean;
+  /** semana corrente do plano, para destacar a semana e disparar a reavaliação */
+  semanaCorrente?: number;
+  /** destino do "Registrar reavaliação" (só quando há aluno com plano) */
+  reavaliarHref?: string;
 }) {
-  const [aberto, setAberto] = React.useState(indice === 0);
+  // O bloco corrente abre por padrão ("você está aqui"); sem essa informação, o primeiro.
+  const [aberto, setAberto] = React.useState(atual ?? indice === 0);
 
   // A descarga vive na semana (`tipo`), não num campo à parte: mover a descarga de semana
   // tem que mudar o selo do bloco junto, senão o card diz uma coisa e o plano faz outra.
@@ -184,6 +197,11 @@ export function MesocicloCard({
     const microciclos = meso.microciclos.map((w) => (w.id === m.id ? m : w));
     onChange?.({ ...meso, microciclos, deload: microciclos.some((w) => w.tipo === "deload") });
   };
+
+  // "Registrar reavaliação": só quando o bloco pede reavaliação e o calendário já está
+  // na última (ou penúltima) semana dele, e só quando há aluno para reavaliar.
+  const mostrarReavaliar =
+    Boolean(reavaliarHref) && meso.reavaliacao && semanaCorrente != null && semanaCorrente >= meso.semanaFim - 1;
 
   return (
     <Card className="overflow-hidden">
@@ -195,10 +213,12 @@ export function MesocicloCard({
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary text-sm font-bold text-white">{indice + 1}</span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-display font-bold text-ink">{meso.nome}</span>
+            <span className="font-display font-bold text-ink">{rotuloMeso(meso, indice)}</span>
             <span className="text-xs text-ink-3">
               semanas {meso.semanaInicio} a {meso.semanaFim}
             </span>
+            {/* Teto de 3 selos: "em curso", "com descarga", "reavaliar ao fim". */}
+            {atual && <Pill tone="primary">em curso</Pill>}
             {meso.deload && <Pill tone="neutral">com descarga</Pill>}
             {meso.reavaliacao && <Pill tone="analysis">reavaliar ao fim</Pill>}
           </div>
@@ -209,39 +229,46 @@ export function MesocicloCard({
 
       {aberto && (
         <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
-          {/* Dinâmica e foco da fase, agrupados num cartão só para não virar uma pilha de rótulos. */}
+          {/* (1) Semanas primeiro: é o que decide o que fazer AGORA para o professor com pressa. */}
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">Semanas</p>
+            <div className="space-y-2">
+              {meso.microciclos.map((w) => (
+                <MicrocicloRow
+                  key={w.id}
+                  micro={w}
+                  ctx={ctx}
+                  editavel={editavel}
+                  onChange={trocarMicro}
+                  atual={semanaCorrente != null && w.semana === semanaCorrente}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* (2) Dinâmica: as três tendências da fase, num cartão só. */}
           <div className="rounded-xl border border-border bg-surface-soft p-3">
-            <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="mr-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Dinâmica</span>
               <Pill tone={meso.tendenciaVolume === "sobe" ? "analysis" : "neutral"}>Volume {TEND_LABEL[meso.tendenciaVolume]}</Pill>
               <Pill tone={meso.tendenciaIntensidade === "sobe" ? "analysis" : "neutral"}>Intensidade {TEND_LABEL[meso.tendenciaIntensidade]}</Pill>
               <Pill tone={meso.tendenciaComplexidade === "sobe" ? "analysis" : "neutral"}>Complexidade {TEND_LABEL[meso.tendenciaComplexidade]}</Pill>
             </div>
+          </div>
+
+          {/* (3) O que treinar: identidade da fase (capacidades e modalidades). */}
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">O que treinar</p>
             <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
               <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
-              <ListaChips titulo="Tipos de exercício" itens={meso.tiposExercicio} />
               <ListaChips
                 titulo="Modalidades em foco"
                 itens={(meso.modalidades ?? []).map((id) => getModalidade(id)?.nome ?? id)}
               />
-              {meso.parametros.length > 0 && (
-                <div>
-                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Acompanhar</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {meso.parametros.map((id) => {
-                      const p = getParam(id);
-                      return p ? (
-                        <Pill key={id} tone="neutral">
-                          {p.sigla ?? p.nome}
-                        </Pill>
-                      ) : null;
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
+          {/* (4) Reavaliação e critérios de decisão. */}
           {editavel && (
             <label className="flex items-center gap-2 rounded-xl bg-surface-soft p-2.5 text-sm text-ink-2">
               <input
@@ -272,14 +299,36 @@ export function MesocicloCard({
             />
           </div>
 
-          <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">Semanas</p>
-            <div className="space-y-2">
-              {meso.microciclos.map((w) => (
-                <MicrocicloRow key={w.id} micro={w} ctx={ctx} editavel={editavel} onChange={trocarMicro} />
-              ))}
+          {mostrarReavaliar && (
+            <Link to={reavaliarHref!} className={buttonClasses("secondary", "sm")}>
+              <CalendarCheck className="h-4 w-4" /> Registrar reavaliação
+            </Link>
+          )}
+
+          {/* (5) Detalhes da fase: o que desce da leitura de relance para quem quiser aprofundar. */}
+          <details className="rounded-lg border border-dashed border-border bg-surface-soft p-3 text-xs">
+            <summary className="cursor-pointer list-none font-semibold text-ink-2 [&::-webkit-details-marker]:hidden">
+              Detalhes da fase
+            </summary>
+            <div className="mt-3 grid gap-x-4 gap-y-3 sm:grid-cols-2">
+              <ListaChips titulo="Tipos de exercício" itens={meso.tiposExercicio} />
+              {meso.parametros.length > 0 && (
+                <div>
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Acompanhar</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {meso.parametros.map((id) => {
+                      const p = getParam(id);
+                      return p ? (
+                        <Pill key={id} tone="neutral">
+                          {p.sigla ?? p.nome}
+                        </Pill>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          </details>
         </div>
       )}
     </Card>
@@ -293,13 +342,16 @@ function MicrocicloRow({
   ctx,
   editavel,
   onChange,
+  atual,
 }: {
   micro: Microciclo;
   ctx: ContextoFaixa;
   editavel: boolean;
   onChange: (m: Microciclo) => void;
+  /** a semana corrente do plano: ganha destaque e abre por padrão */
+  atual?: boolean;
 }) {
-  const [aberto, setAberto] = React.useState(false);
+  const [aberto, setAberto] = React.useState(Boolean(atual));
 
   // Frequência é quantas sessões a semana tem. Guardar o número separado das sessões
   // deixaria o plano dizer "4x" e entregar 3.
@@ -309,18 +361,28 @@ function MicrocicloRow({
     trocarSessoes([...micro.sessoes, { id: nid("ses"), nome: `Sessão ${micro.sessoes.length + 1}`, blocos: [] }]);
 
   return (
-    <div className="rounded-xl border border-border">
+    <div className={cn("rounded-xl border", atual ? "border-primary bg-primary-tint" : "border-border")}>
       <button
         onClick={() => setAberto((v) => !v)}
         aria-expanded={aberto}
-        className="flex w-full flex-wrap items-center gap-2 p-2.5 text-left text-sm hover:bg-surface-soft"
+        className="flex w-full items-start gap-2 p-2.5 text-left text-sm hover:bg-surface-soft"
       >
-        <Pill tone={micro.tipo === "deload" ? "warning" : micro.tipo === "teste" ? "analysis" : "neutral"}>Semana {micro.semana}</Pill>
-        <span className="text-ink-2">
-          {micro.sessoes.length} {micro.sessoes.length === 1 ? "sessão" : "sessões"} na semana
-        </span>
-        {micro.tipo !== "carga" && <span className="text-xs text-ink-3">{TIPO_LABEL[micro.tipo]}</span>}
-        <ChevronDown className={cn("ml-auto h-4 w-4 text-ink-3 transition-transform", aberto && "rotate-180")} />
+        {/* Duas linhas: o selo da semana com a contagem em cima, os nomes das sessões embaixo. */}
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <Pill tone={micro.tipo === "deload" ? "warning" : micro.tipo === "teste" ? "analysis" : "neutral"}>
+              Semana {micro.semana}
+              {micro.tipo !== "carga" ? ` · ${TIPO_LABEL[micro.tipo]}` : ""}
+            </Pill>
+            <span className="text-ink-2">
+              {micro.sessoes.length} {micro.sessoes.length === 1 ? "sessão" : "sessões"}
+            </span>
+          </div>
+          {micro.sessoes.length > 0 && (
+            <p className="truncate text-xs text-ink-3">{micro.sessoes.map((s) => s.nome).join(" · ")}</p>
+          )}
+        </div>
+        <ChevronDown className={cn("mt-0.5 h-4 w-4 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
       </button>
 
       {aberto && (
@@ -390,8 +452,15 @@ function FaixaReferencia({ ctx }: { ctx: ContextoFaixa }) {
 
   return (
     <details className="rounded-lg border border-dashed border-border bg-surface-soft text-xs">
-      <summary className="cursor-pointer list-none px-2.5 py-2 font-semibold text-ink-2 [&::-webkit-details-marker]:hidden">
-        Faixa de referência ({ctx.objetivo}, {ctx.nivel}): {linhas.map(([r, v]) => `${r} ${v}`).join(" · ")}
+      <summary className="cursor-pointer list-none px-2.5 py-2 text-ink-2 [&::-webkit-details-marker]:hidden">
+        <span className="font-semibold">Faixa de referência</span> ({ctx.objetivo}, {ctx.nivel}):{" "}
+        {/* Só os valores em negrito: a linha toda em bold virava ruído (o dado é o número). */}
+        {linhas.map(([rot, val], i) => (
+          <React.Fragment key={rot}>
+            {i > 0 ? " · " : ""}
+            {rot} <span className="font-semibold text-ink">{val}</span>
+          </React.Fragment>
+        ))}
       </summary>
       <div className="space-y-1 border-t border-border px-2.5 py-2">
         {linhas.map(([rot, val, nota]) => (
@@ -445,8 +514,8 @@ function QuadroForca({ blocos }: { blocos: BlocoSessao[] }) {
         <Dumbbell className="h-3.5 w-3.5 text-primary" aria-hidden />
         <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">Musculação</span>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
+      <div className="relative overflow-x-auto">
+        <table className="w-full min-w-[520px] text-left text-xs">
           <thead>
             <tr className="text-[10px] uppercase tracking-wide text-ink-3">
               <th className="px-2.5 py-1 font-semibold">Exercício</th>
@@ -475,6 +544,8 @@ function QuadroForca({ blocos }: { blocos: BlocoSessao[] }) {
             ))}
           </tbody>
         </table>
+        {/* Affordance de rolagem: um fade no canto direito sugere que a tabela continua. */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#ffffff]" />
       </div>
     </div>
   );
@@ -694,7 +765,7 @@ function BlocoRow({
         />
         {bloco.exercicioSlug && (
           <Link
-            to={`/lab/${bloco.exercicioSlug}`}
+            to={`/movement-lab/${bloco.exercicioSlug}`}
             className="shrink-0 text-[11px] font-semibold text-primary hover:underline"
             title="Ver a análise deste exercício"
           >

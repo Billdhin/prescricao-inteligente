@@ -21,6 +21,7 @@
   --cta-text: #b24a28; /* coral escuro p/ TEXTO/pills (5.4:1 em branco) */
   --success: #16a34a; /* verde escuro p/ texto em tint */
   --warning: #b45309; /* âmbar escuro p/ texto em tint */
+  --data-intensidade: #9a4f2e; /* terracota de DADO (curva de intensidade); o coral --cta fica reservado à ação principal */
 }
 
 html,
