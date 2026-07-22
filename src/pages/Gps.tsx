@@ -110,7 +110,7 @@ export function Gps() {
   const addActivity = useProgress((s) => s.addActivity);
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { alunos, addPrescricao, liberacoes, avaliacoes, planos, prescricoes, updatePlano } = useAlunos();
+  const { alunos, addPrescricao, liberacoes, avaliacoes, planos, prescricoes, execucoes, updatePlano } = useAlunos();
   // Diálogo "Aplicar no treino" aberto pós-salvar quando o aluno já tem plano ativo.
   const [aplicarDe, setAplicarDe] = React.useState<{ presc: Prescricao; plano: PlanoTreino } | null>(null);
 
@@ -527,6 +527,7 @@ export function Gps() {
         <AplicarNoTreinoDialog
           prescricao={aplicarDe.presc}
           plano={aplicarDe.plano}
+          execucoes={execucoes.filter((e) => e.alunoId === aplicarDe.plano.alunoId)}
           dataDaPrescricao={(pid) => {
             const p = prescricoes.find((x) => x.id === pid);
             return p ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(p.data)) : undefined;

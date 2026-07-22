@@ -39,8 +39,15 @@ export function letraSessao(index: number): string {
  * então cada semana recebe blocos únicos. `semana` faz parte da assinatura para futura
  * variação por semana; a dose base já passa `conferirFaixa` por construção.
  */
-export function blocosDePrescricao(prescricao: Prescricao, ctx: CtxDose, _semana: number): BlocoSessao[] {
-  const dose = doseForca(getFaixa(ctx.objetivo), ctx.nivel);
+export function blocosDePrescricao(
+  prescricao: Prescricao,
+  ctx: CtxDose,
+  _semana: number,
+  // Ênfase da sessão-alvo (ondulatória): faz a dose seguir "(pesado)/(moderado)" em
+  // vez da base, para o nome da sessão não prometer o que a dose não entrega.
+  enfase?: Parameters<typeof doseForca>[2],
+): BlocoSessao[] {
+  const dose = doseForca(getFaixa(ctx.objetivo), ctx.nivel, enfase);
   return prescricao.itens.map((it) => {
     const ex = exercises.find((e) => e.slug === it.slug);
     return {
@@ -106,6 +113,7 @@ export function aplicarPrescricaoNoPlano(
 ): { plano: PlanoTreino; resumo: ResumoAplicacao } {
   const { semanaCorrente, sessaoIndex, escopo, modo } = opcoes;
   const ctxDose: CtxDose = { objetivo: plano.objetivo, nivel: plano.nivel };
+  const enfases = getFaixa(plano.objetivo).enfases;
 
   const mesoIdx = plano.macrociclo.mesociclos.findIndex(
     (m) => semanaCorrente >= m.semanaInicio && semanaCorrente <= m.semanaFim,
@@ -122,7 +130,11 @@ export function aplicarPrescricaoNoPlano(
       if (sessaoIndex >= w.sessoes.length) return w;
       const sessoes = w.sessoes.map((s, si) => {
         if (si !== sessaoIndex) return s;
-        const semeados = blocosDePrescricao(prescricao, ctxDose, w.semana);
+        // A sessão declara a ênfase no próprio nome ("Sessão 1 (pesado)"); casa a
+        // dose com esse rótulo. Sem sufixo (modelo linear), fica a dose base.
+        const rotulo = s.nome.match(/\(([^)]+)\)\s*$/)?.[1];
+        const enfase = rotulo ? enfases?.find((e) => e.rotulo === rotulo) : undefined;
+        const semeados = blocosDePrescricao(prescricao, ctxDose, w.semana, enfase);
         // Substituir remove TODOS os blocos de força (inclui semeados de fases anteriores).
         const mantidos = modo === "substituir" ? s.blocos.filter((b) => b.tipo !== "forca") : s.blocos;
         return { ...s, blocos: [...mantidos, ...semeados] };

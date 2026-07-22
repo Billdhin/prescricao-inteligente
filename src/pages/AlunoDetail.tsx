@@ -665,6 +665,7 @@ export function AlunoDetail() {
         <AplicarNoTreinoDialog
           prescricao={aplicarPresc}
           plano={planoAtivo}
+          execucoes={execucoesDoAluno}
           dataDaPrescricao={(pid) => {
             const pp = prescricoes.find((x) => x.id === pid);
             return pp ? fmtData(pp.data) : undefined;

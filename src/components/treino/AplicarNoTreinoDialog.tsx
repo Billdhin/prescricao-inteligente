@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useDialog } from "@/lib/useDialog";
 import { semanaAtual, mesocicloAtual, rotuloMeso, type PlanoTreino } from "@/data/periodizacao";
 import type { Prescricao } from "@/data/alunos";
+import type { Execucao } from "@/data/execucao";
 import {
   aplicarPrescricaoNoPlano,
   blocosForcaAtuais,
@@ -31,6 +32,7 @@ export function AplicarNoTreinoDialog({
   onAplicar,
   onDecidirDepois,
   dataDaPrescricao,
+  execucoes = [],
 }: {
   prescricao: Prescricao;
   plano: PlanoTreino;
@@ -39,6 +41,8 @@ export function AplicarNoTreinoDialog({
   onDecidirDepois: () => void;
   /** resolve a data de exibição de uma prescrição pela id (para o alcance de substituição) */
   dataDaPrescricao?: (id: string) => string | undefined;
+  /** execuções do aluno, para avisar quando substituir vai desvincular histórico */
+  execucoes?: Execucao[];
 }) {
   const dialogRef = useDialog<HTMLDivElement>(onDecidirDepois);
   const semanaCorrente = semanaAtual(plano);
@@ -55,6 +59,20 @@ export function AplicarNoTreinoDialog({
   // Alcance nominal do que sai quando substitui a sessão-alvo na semana corrente.
   const atuais = blocosForcaAtuais(plano, semanaCorrente, sessaoIndex);
   const semeadosAntes = atuais.filter((b) => b.origemPrescricaoId);
+
+  // Substituir troca os blocos de força por ids novos, então qualquer execução que
+  // o aluno já registrou nesses blocos fica desvinculada. Mesmo guard do regenerar
+  // plano (PrescreverTreino): varre as semanas afetadas e avisa antes. Adicionar
+  // sem substituir não remove nada, então não há risco.
+  const idsEmRisco = React.useMemo(() => {
+    const set = new Set<string>();
+    const ate = meso ? meso.semanaFim : semanaCorrente;
+    for (let w = semanaCorrente; w <= ate; w++) {
+      blocosForcaAtuais(plano, w, sessaoIndex).forEach((b) => set.add(b.id));
+    }
+    return set;
+  }, [plano, meso, semanaCorrente, sessaoIndex]);
+  const execucoesEmRisco = !adicionar && execucoes.some((e) => idsEmRisco.has(e.blocoRef));
   const dataAntes = (() => {
     const ids = Array.from(new Set(semeadosAntes.map((b) => b.origemPrescricaoId!).filter(Boolean)));
     if (ids.length === 1 && dataDaPrescricao) return dataDaPrescricao(ids[0]);
@@ -113,16 +131,27 @@ export function AplicarNoTreinoDialog({
           </div>
         ) : (
           <>
-            {/* Alcance da substituição (o que sai da sessão-alvo) */}
-            {atuais.length > 0 && (
+            {/* Alcance da substituição (o que sai da sessão-alvo). Só quando de fato
+                substitui: com "adicionar" marcado, nada sai. */}
+            {!adicionar && atuais.length > 0 && (
               <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-surface-soft p-2.5 text-xs text-ink-2">
                 <Dumbbell className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
                 <span>
-                  Isto substitui os exercícios de força atuais da Sessão {letra}: {atuais.map((b) => b.nome).join(", ")}.
+                  Isto substitui os exercícios de força atuais da Sessão {letra}: {atuais.map((b) => b.nome).join(", ")}
+                  {meso && meso.semanaFim > semanaCorrente ? ", e os equivalentes nas semanas seguintes deste bloco" : ""}.
                   {semeadosAntes.length > 0 && (
                     <> Inclui os {semeadosAntes.length} aplicados{dataAntes ? ` em ${dataAntes}` : " antes"}.</>
                   )}
                 </span>
+              </p>
+            )}
+
+            {/* Aviso forte: substituir vai desvincular registros do aluno */}
+            {execucoesEmRisco && (
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-[#b45309]/30 bg-[#fef4e2] p-2.5 text-xs text-warning">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                O aluno já registrou execução nessas sessões. Substituir vai desvincular esse histórico das sessões atuais.
+                Se quiser preservar, use "adicionar sem substituir".
               </p>
             )}
 

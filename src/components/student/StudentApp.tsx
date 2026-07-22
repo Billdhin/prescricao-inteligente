@@ -116,7 +116,7 @@ export function StudentApp({
           </div>
 
           {aba === "hoje" && (
-            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} />
+            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} preview={preview} />
           )}
           {aba === "semana" && <AbaPlano plano={plano} cor={cor} aluno={aluno} />}
           {aba === "evolucao" && (
@@ -165,6 +165,7 @@ function AbaHoje({
   execucoes,
   onRegistrar,
   onDesfazer,
+  preview,
 }: {
   plano?: PlanoTreino;
   cor: string;
@@ -172,6 +173,7 @@ function AbaHoje({
   execucoes: Execucao[];
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
+  preview?: boolean;
 }) {
   if (!plano) return <SemPlano />;
   const semana = semanaAtual(plano);
@@ -220,6 +222,7 @@ function AbaHoje({
             execucoes={execucoes}
             onRegistrar={onRegistrar}
             onDesfazer={onDesfazer}
+            preview={preview}
             inicialAberto={i === idxHoje}
             rotulo={i === idxHoje ? "Hoje" : "Próxima"}
           />
@@ -238,6 +241,7 @@ function SessaoCard({
   execucoes,
   onRegistrar,
   onDesfazer,
+  preview,
   inicialAberto = false,
   rotulo,
 }: {
@@ -249,6 +253,7 @@ function SessaoCard({
   execucoes: Execucao[];
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
+  preview?: boolean;
   inicialAberto?: boolean;
   rotulo?: "Hoje" | "Próxima";
 }) {
@@ -291,6 +296,7 @@ function SessaoCard({
               execFeita={execucoes.find((e) => e.semana === semana && e.blocoRef === b.id)}
               onRegistrar={onRegistrar}
               onDesfazer={onDesfazer}
+              preview={preview}
             />
           ))}
         </div>
@@ -309,6 +315,7 @@ function BlocoRow({
   execFeita,
   onRegistrar,
   onDesfazer,
+  preview,
 }: {
   bloco: BlocoSessao;
   cor: string;
@@ -319,6 +326,7 @@ function BlocoRow({
   execFeita?: Execucao;
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
+  preview?: boolean;
 }) {
   const aerobio = bloco.tipo === "aerobio";
   // Cada número com o próprio rótulo (Intensidade 75%, Intervalo 90s), em vez de
@@ -346,10 +354,12 @@ function BlocoRow({
   const metodo = getMetodo(bloco.metodo);
   const metodoVisivel = metodo && metodo.id !== "tradicional" ? metodo : undefined;
 
-  // Pré-preenche só o que o plano prescreve de forma objetiva: as Reps. Carga e
-  // RPE não têm alvo numérico (a intensidade é relativa), então entram vazios
-  // com âncora, sem valor inventado.
-  const repsPrescrito = bloco.reps != null ? String(bloco.reps) : "";
+  // Pré-preenche só o que o plano prescreve de forma objetiva E numérica: as Reps.
+  // A dose vem como FAIXA textual ("6 a 12", "acima de 15"), que num campo numérico
+  // seria truncada (parseInt("6 a 12")=6) ou viraria NaN. Então só pré-preenche
+  // quando é um número puro; do contrário, deixa vazio. Carga e RPE não têm alvo
+  // numérico (a intensidade é relativa), então entram vazios com âncora.
+  const repsPrescrito = /^\d+$/.test(String(bloco.reps ?? "").trim()) ? String(bloco.reps).trim() : "";
   const [editando, setEditando] = React.useState(false);
   const [carga, setCarga] = React.useState(execFeita?.cargaFeita != null ? String(execFeita.cargaFeita) : "");
   const [reps, setReps] = React.useState(execFeita?.repsFeitas != null ? String(execFeita.repsFeitas) : repsPrescrito);
@@ -359,6 +369,12 @@ function BlocoRow({
   // então editar não duplica e desfazer tem um alvo certo.
   const execId = `ex-${bloco.id}-s${semana}`;
 
+  // Só grava número quando é número de verdade; texto ("6 a 12") vira undefined
+  // em vez de piso truncado ou NaN, que envenenaria o histórico do aluno.
+  const numOuUndef = (v: string, f: (s: string) => number): number | undefined => {
+    const n = f(v.replace(",", "."));
+    return Number.isFinite(n) ? n : undefined;
+  };
   const registrar = () => {
     if (!onRegistrar) return;
     onRegistrar({
@@ -369,9 +385,9 @@ function BlocoRow({
       sessaoRef,
       blocoRef: bloco.id,
       exercicioSlug: bloco.exercicioSlug,
-      cargaFeita: carga ? parseFloat(carga.replace(",", ".")) : undefined,
-      repsFeitas: reps ? parseInt(reps, 10) : undefined,
-      rpe: rpe ? parseInt(rpe, 10) : undefined,
+      cargaFeita: carga ? numOuUndef(carga, parseFloat) : undefined,
+      repsFeitas: reps ? numOuUndef(reps, (s) => parseInt(s, 10)) : undefined,
+      rpe: rpe ? numOuUndef(rpe, (s) => parseInt(s, 10)) : undefined,
       concluidoEm: Date.now(),
     });
     setEditando(false);
@@ -414,7 +430,11 @@ function BlocoRow({
       {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
       {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
 
-      {podeRegistrar && (
+      {preview ? (
+        // Na prévia do profissional o registro não grava (onRegistrar é no-op).
+        // Em vez de um botão que parece funcionar e não faz nada, um aviso claro.
+        <p className="mt-2 text-xs text-ink-3">Aqui o seu aluno registra carga, repetições e esforço.</p>
+      ) : podeRegistrar ? (
         execFeita && !editando ? (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: cor }}>
@@ -464,7 +484,7 @@ function BlocoRow({
             <p className="text-[11px] text-ink-3">RPE é o seu esforço de 0 a 10 (7 = difícil, 9 = quase a falha).</p>
           </div>
         )
-      )}
+      ) : null}
     </div>
   );
 }

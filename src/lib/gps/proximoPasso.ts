@@ -177,8 +177,6 @@ export interface AvisoAluno {
 export function avisosDoAluno(aluno: Aluno, ctx: CicloCtx): AvisoAluno[] {
   const avisos: AvisoAluno[] = [];
   const passo = proximoPasso(aluno, ctx);
-  if (passo.chip) avisos.push({ label: passo.chip.label, tone: passo.chip.tone, etapa: passo.etapa });
-
   const planoAtivo = ctx.planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
 
   // Prescrição guardada, mas sem treino montado: o campo `prescricoes` do ctx (antes
@@ -186,7 +184,15 @@ export function avisosDoAluno(aluno: Aluno, ctx: CicloCtx): AvisoAluno[] {
   // (decisão travada 11): `temTreinoAtivo` segue o único predicado; isto é só o lembrete de
   // fechar o ciclo levando os exercícios para dentro do plano.
   const temPrescricao = ctx.prescricoes.some((p) => p.alunoId === aluno.id && p.status === "ativa");
-  if (!planoAtivo && temPrescricao) {
+  const prescricaoSemTreino = !planoAtivo && temPrescricao;
+
+  // O aviso específico ("prescrição guardada sem treino") SUBSTITUI o chip genérico
+  // "Sem treino" da etapa planejar: os dois apontam para a mesma ação (montar o
+  // treino) e mostrá-los juntos era ruído, não informação.
+  if (passo.chip && !(prescricaoSemTreino && passo.etapa === "planejar")) {
+    avisos.push({ label: passo.chip.label, tone: passo.chip.tone, etapa: passo.etapa });
+  }
+  if (prescricaoSemTreino) {
     avisos.push({ label: "Prescrição guardada sem treino montado", tone: "analysis", etapa: "planejar" });
   }
 

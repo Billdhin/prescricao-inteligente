@@ -41,7 +41,10 @@ export function ProfessionalDashboard() {
   const { name, plan } = useUser();
   const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, loadExamples } = useAlunos();
   const premium = isPremiumUnlocked(plan);
+  // Fallback quando o nome está vazio (o profissional pode limpar em Configurações):
+  // "Olá" seco, sem a vírgula pendurada.
   const firstName = name.split(" ")[0];
+  const saudacao = firstName ? `Olá, ${firstName}` : "Olá";
 
   const ativos = alunos.filter((a) => a.status === "ativo");
   const avaliacoesMes = avaliacoes.filter((a) => Date.now() - a.data <= 30 * DIA).length;
@@ -83,7 +86,7 @@ export function ProfessionalDashboard() {
           <Pill tone="primary" icon={<CalendarRange className="h-3 w-3" />} className="mb-3 capitalize">
             Hoje · {fmtHoje(Date.now())}
           </Pill>
-          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Olá, {firstName}</h1>
+          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{saudacao}</h1>
           <p className="mt-2 max-w-xl text-ink-2">
             Comece pelo que precisa de atenção e resolva o próximo passo de cada aluno.
           </p>
@@ -292,8 +295,12 @@ function ProximosPassos({
     { done: temTreino, label: "Monte o treino do aluno", to: primeiroAlunoId ? `/prescrever-treino?aluno=${primeiroAlunoId}` : "/prescrever-treino" },
     { done: temEvolucao, label: "Acompanhe a evolução", to: "/assessments" },
   ];
-  const feitos = passos.filter((p) => p.done).length;
-  const atualIdx = passos.findIndex((p) => !p.done);
+  // Estado MONOTÔNICO para exibição: um passo só conta como feito se todos os
+  // anteriores também estão. Senão o passo 5 (evolução, já verdadeiro pelos seeds)
+  // aparecia com check enquanto o passo 4 ainda era "o próximo", contradição.
+  const feitoMono = passos.map((_, i) => passos.slice(0, i + 1).every((x) => x.done));
+  const feitos = feitoMono.filter(Boolean).length;
+  const atualIdx = feitoMono.indexOf(false);
 
   if (oculto || feitos === passos.length) return null;
 
@@ -314,6 +321,7 @@ function ProximosPassos({
       <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         {passos.map((p, i) => {
           const atual = i === atualIdx;
+          const feito = feitoMono[i];
           return (
             <li key={p.label}>
               <Link
@@ -321,14 +329,14 @@ function ProximosPassos({
                 aria-current={atual ? "step" : undefined}
                 className={cn(
                   "flex h-full items-center gap-2.5 rounded-xl border p-3 text-sm transition-colors",
-                  p.done
+                  feito
                     ? "border-border bg-surface-soft text-ink-3"
                     : atual
                       ? "border-primary bg-primary-tint font-semibold text-ink hover:bg-primary-tint"
                       : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
                 )}
               >
-                {p.done ? (
+                {feito ? (
                   <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
                 ) : (
                   <span
@@ -340,7 +348,7 @@ function ProximosPassos({
                     {i + 1}
                   </span>
                 )}
-                <span className={cn(p.done && "line-through decoration-[#5b6472]/50")}>{p.label}</span>
+                <span className={cn(feito && "line-through decoration-[#5b6472]/50")}>{p.label}</span>
                 {atual && <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-primary" />}
               </Link>
             </li>
