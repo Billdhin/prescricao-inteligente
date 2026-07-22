@@ -111,6 +111,9 @@ export interface Microciclo {
 
 export type Tendencia = "sobe" | "estavel" | "reduz" | "varia";
 
+/** Rótulos de exibição das tendências (fonte única; "estável" com acento, nunca o enum cru). */
+export const TEND_LABEL: Record<Tendencia, string> = { sobe: "sobe", reduz: "reduz", estavel: "estável", varia: "varia" };
+
 /** Um bloco de semanas com um foco. Vira mesociclo do macrociclo. */
 export interface Mesociclo {
   id: string;

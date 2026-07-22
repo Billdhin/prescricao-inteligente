@@ -189,6 +189,8 @@ function focosDaFase(modalidades: string[] | undefined): FocoDesenhado[] {
 }
 
 export interface SerieDesenhada {
+  /** chave estável da série, para lookup de cor robusto (o PDF chaveia por id, não pelo nome exibido) */
+  id: "vol" | "int" | "cpx";
   nome: string;
   cor: string;
   d: string;
@@ -290,10 +292,10 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
     altura,
     plot: { top, bottom, left, right },
     series: [
-      { nome: "Volume", cor: "var(--primary)", d: caminhoSuave(volPts) },
+      { id: "vol", nome: "Volume", cor: "var(--primary)", d: caminhoSuave(volPts) },
       // Terracota de DADO: o coral --cta é a ação primária e não pode virar cor de série.
-      { nome: "Intensidade", cor: "var(--data-intensidade)", d: caminhoSuave(pontosDe((p) => p.int)) },
-      { nome: "Complexidade", cor: "var(--analysis)", d: caminhoSuave(pontosDe((p) => p.cpx)) },
+      { id: "int", nome: "Intensidade", cor: "var(--data-intensidade)", d: caminhoSuave(pontosDe((p) => p.int)) },
+      { id: "cpx", nome: "Complexidade", cor: "var(--analysis)", d: caminhoSuave(pontosDe((p) => p.cpx)) },
     ],
     areaVolume,
     fases,

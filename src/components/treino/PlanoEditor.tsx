@@ -20,13 +20,13 @@ import {
   getFaixa,
   getModelo,
   rotuloMeso,
+  TEND_LABEL,
   valorFaixa,
   type Macrociclo,
   type Mesociclo,
   type Microciclo,
   type Sessao,
   type BlocoSessao,
-  type Tendencia,
   type TipoMicrociclo,
   type MetodoSerie,
   METODOS_SERIE,
@@ -53,7 +53,6 @@ import { uid } from "@/lib/store";
  * é inline e não trava nada: a decisão é do profissional habilitado.
  */
 
-const TEND_LABEL: Record<Tendencia, string> = { sobe: "sobe", reduz: "reduz", estavel: "estável", varia: "varia" };
 const TIPO_LABEL: Record<TipoMicrociclo, string> = { carga: "Carga", deload: "Descarga", teste: "Teste" };
 
 const nid = (p: string) => `${p}-${uid()}`;

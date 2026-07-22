@@ -2,7 +2,7 @@ import type { Aluno } from "@/data/alunos";
 import type { MarcaDocumento } from "@/lib/store";
 import type { Macrociclo, Mesociclo, Microciclo, PlanoTreino, Sessao } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
-import { getModelo, getMetodo } from "@/data/periodizacao";
+import { getModelo, getMetodo, TEND_LABEL } from "@/data/periodizacao";
 import { getModalidade } from "@/data/modalities";
 import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -132,15 +132,23 @@ function mesoHtml(m: Mesociclo, i: number) {
   const lista = (t: string, itens: string[]) =>
     itens.length ? `<p class="rot">${t}</p><ul class="crit">${itens.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>` : "";
 
+  const tags = (t: string, itens: string[]) =>
+    itens.length ? `<p class="rot">${t}</p><div class="tags">${itens.map((c) => `<span class="tag">${esc(c)}</span>`).join("")}</div>` : "";
+
+  // Espelha a tela: Modalidades em foco resolvidas por nome; tipos de exercício como estão.
+  const modalidades = (m.modalidades ?? []).map((id) => getModalidade(id)?.nome ?? id);
+
   return `
   <section class="meso">
     <h2 class="meso-tit"><span class="num">${i + 1}</span> ${esc(m.nome)}
       <span class="range">semanas ${m.semanaInicio} a ${m.semanaFim}</span></h2>
     <p class="meso-foco">${esc(m.foco)}</p>
-    <p class="tend">Volume ${m.tendenciaVolume} · Intensidade ${m.tendenciaIntensidade} · Complexidade ${m.tendenciaComplexidade}${
+    <p class="tend">Volume ${TEND_LABEL[m.tendenciaVolume]} · Intensidade ${TEND_LABEL[m.tendenciaIntensidade]} · Complexidade ${TEND_LABEL[m.tendenciaComplexidade]}${
       m.reavaliacao ? ` · reavaliar ao fim da semana ${m.semanaFim}` : ""
     }</p>
-    ${m.capacidades.length ? `<p class="rot">Capacidades priorizadas</p><div class="tags">${m.capacidades.map((c) => `<span class="tag">${esc(c)}</span>`).join("")}</div>` : ""}
+    ${tags("Capacidades priorizadas", m.capacidades)}
+    ${tags("Modalidades em foco", modalidades)}
+    ${tags("Tipos de exercício", m.tiposExercicio)}
     ${params ? `<p class="rot">Acompanhar</p><div class="tags">${params}</div>` : ""}
     ${lista("Progredir quando", m.criteriosProgressao)}
     ${lista("Regredir ou revisar se", m.criteriosRegressao)}
@@ -151,8 +159,9 @@ function mesoHtml(m: Mesociclo, i: number) {
 function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
   const g = desenharProgressao(macro, 700, 250, nivel);
   if (g.vazio) return "";
-  // O PDF não tem as variáveis CSS do app; as cores entram literais.
-  const cor: Record<string, string> = { Volume: "#2563eb", Intensidade: "#c2410c", Complexidade: "#0e7490", area: "#2563eb" };
+  // O PDF não tem as variáveis CSS do app; as cores da pele clínica entram literais.
+  // Chaveado por id da série (nunca pelo nome exibido), com fallback na cor de área.
+  const cor: Record<string, string> = { vol: "#1b4b66", int: "#9a4f2e", cpx: "#0e7c8a", area: "#1b4b66" };
   const iconesFase = (f: (typeof g.fases)[number]) =>
     posicoesFocos(f, g.iconRowY)
       .map(
@@ -166,8 +175,8 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
   const fases = g.fases
     .map(
       (f) => `
-      ${f.indice % 2 === 0 ? `<rect x="${f.x0.toFixed(1)}" y="${g.bandTop}" width="${(f.x1 - f.x0).toFixed(1)}" height="${(g.faixaBottom - g.bandTop).toFixed(1)}" fill="#f4f6fb" opacity="0.6" />` : ""}
-      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.bandTop}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="#e7ecf3" stroke-width="1" stroke-dasharray="3 3" />` : ""}
+      ${f.indice % 2 === 0 ? `<rect x="${f.x0.toFixed(1)}" y="${g.bandTop}" width="${(f.x1 - f.x0).toFixed(1)}" height="${(g.faixaBottom - g.bandTop).toFixed(1)}" fill="#f2f0ea" opacity="0.6" />` : ""}
+      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.bandTop}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="#e6e2d8" stroke-width="1" stroke-dasharray="3 3" />` : ""}
       ${iconesFase(f)}
       <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="#1e293b" font-size="11" font-weight="700">${esc(f.nome)}</text>
       <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 26).toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`,
@@ -186,11 +195,11 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
       <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.maiorY.toFixed(1)}" text-anchor="end" fill="#94a3b8" font-size="9">maior</text>
       <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.menorY.toFixed(1)}" text-anchor="end" fill="#94a3b8" font-size="9">menor</text>
       <path d="${g.areaVolume}" fill="url(#volpdf)" stroke="none" />
-      ${g.series.map((s) => `<path d="${s.d}" fill="none" stroke="${cor[s.nome]}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`).join("")}
+      ${g.series.map((s) => `<path d="${s.d}" fill="none" stroke="${cor[s.id] ?? cor.area}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`).join("")}
       ${g.rotulos.map((r) => `<text x="${r.x.toFixed(1)}" y="${g.weekLabelY.toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="9">${r.semana}</text>`).join("")}
     </svg>
     <div class="legenda">
-      ${g.series.map((s) => `<span><i style="background:${cor[s.nome]}"></i>${s.nome}</span>`).join("")}
+      ${g.series.map((s) => `<span><i style="background:${cor[s.id] ?? cor.area}"></i>${s.nome}</span>`).join("")}
     </div>
   </section>`;
 }
@@ -224,8 +233,8 @@ export function exportPlanoPDF({
   const biblio = bibliografia(plano.refIds);
   const reavaliacoes = plano.macrociclo.mesociclos.filter((m) => m.reavaliacao).map((m) => m.semanaFim);
 
-    // Acento do documento: a cor da marca do profissional, senão a do produto.
-  const corMarca = marca?.corPrimaria || "#2563eb";
+    // Acento do documento: a cor da marca do profissional, senão a do produto (pele clínica).
+  const corMarca = marca?.corPrimaria || "#1b4b66";
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Plano de treino · ${esc(aluno.nome)}</title>
@@ -238,17 +247,17 @@ export function exportPlanoPDF({
     .brand .sub { font-size: 12px; color: #64748b; }
     h1 { font-size: 22px; margin: 20px 0 2px; }
     .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
-    .aluno { background: #f4f6fb; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
+    .aluno { background: #f2f0ea; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
     .bloco { margin: 16px 0; }
     h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: ${corMarca}; margin: 0 0 8px; }
     .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; margin: 10px 0 4px; }
     .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { background: #eaf1fe; color: ${corMarca}; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+    .tag { background: #f2f0ea; color: #1e293b; border: 1px solid #e6e2d8; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
     ul.crit { margin: 4px 0; padding-left: 18px; font-size: 13px; }
     .legenda { display: flex; gap: 14px; font-size: 11px; color: #475569; margin-top: 4px; }
     .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
     .legenda-nota { font-size: 11px; color: #94a3b8; margin: 0 0 4px; }
-    .meso { margin: 18px 0; padding-top: 12px; border-top: 1px solid #e7ecf3; page-break-inside: avoid; }
+    .meso { margin: 18px 0; padding-top: 12px; border-top: 1px solid #e6e2d8; page-break-inside: avoid; }
     .meso-tit { font-size: 15px; margin: 0 0 2px; color: #1e293b; text-transform: none; letter-spacing: 0; }
     .meso-tit .num { display: inline-flex; width: 20px; height: 20px; border-radius: 6px; background: ${corMarca}; color: #fff; font-size: 12px; align-items: center; justify-content: center; margin-right: 6px; }
     .meso-tit .range { font-size: 12px; font-weight: 400; color: #94a3b8; margin-left: 6px; }
@@ -263,22 +272,22 @@ export function exportPlanoPDF({
     .sessao-nome { font-size: 12px; font-weight: 700; color: #1e293b; margin: 6px 0 3px; }
     .sessao-nome .foco { font-weight: 400; color: #94a3b8; }
     table.blocos { width: 100%; border-collapse: collapse; font-size: 11px; }
-    table.blocos th { text-align: left; color: #94a3b8; font-weight: 600; border-bottom: 1px solid #e7ecf3; padding: 3px 4px; }
-    table.blocos td { padding: 3px 4px; border-bottom: 1px solid #f1f5f9; color: #475569; vertical-align: top; }
+    table.blocos th { text-align: left; color: #94a3b8; font-weight: 600; border-bottom: 1px solid #e6e2d8; padding: 3px 4px; }
+    table.blocos td { padding: 3px 4px; border-bottom: 1px solid #e6e2d8; color: #475569; vertical-align: top; }
     table.blocos td.ex { color: #1e293b; font-weight: 600; }
     .quadros { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
-    .quadro { flex: 1 1 260px; min-width: 240px; border: 1px solid #e7ecf3; border-radius: 6px; overflow: hidden; }
-    .quadro-tit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #475569; background: #f6f8fb; margin: 0; padding: 4px 8px; border-bottom: 1px solid #e7ecf3; }
+    .quadro { flex: 1 1 260px; min-width: 240px; border: 1px solid #e6e2d8; border-radius: 6px; overflow: hidden; }
+    .quadro-tit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #475569; background: #f2f0ea; margin: 0; padding: 4px 8px; border-bottom: 1px solid #e6e2d8; }
     .quadro table.blocos { padding: 2px 6px 4px; }
     .quadro table.blocos th, .quadro table.blocos td { padding: 3px 6px; }
-    .cardio { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+    .cardio { padding: 5px 8px; border-bottom: 1px solid #e6e2d8; }
     .cardio:last-child { border-bottom: 0; }
     .cardio-nome { font-size: 11px; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
     .cardio-linha { font-size: 11px; color: #475569; margin: 1px 0; }
     .cardio-rot { display: inline-block; min-width: 68px; color: #94a3b8; }
     .cardio-obs { font-size: 10px; color: #94a3b8; margin: 3px 0 0; }
     .vazio { font-size: 11px; color: #94a3b8; }
-    .foot { margin-top: 24px; border-top: 1px solid #e7ecf3; padding-top: 12px; font-size: 11px; color: #94a3b8; }
+    .foot { margin-top: 24px; border-top: 1px solid #e6e2d8; padding-top: 12px; font-size: 11px; color: #94a3b8; }
     ol.refs { font-size: 11px; color: #475569; padding-left: 18px; margin: 4px 0; }
     @media print { .page { padding: 0; } @page { margin: 16mm; } }
   </style></head><body>
