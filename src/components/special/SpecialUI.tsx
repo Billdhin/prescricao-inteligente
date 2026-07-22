@@ -138,16 +138,24 @@ export function ParametroDialog({
           {p.escala && p.escala.length > 0 && (
             <section>
               <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-primary">Escala de referência</h4>
-              <div className="overflow-hidden rounded-xl border border-border">
-                {p.escala.map((e, i) => (
-                  <div
-                    key={e.valor}
-                    className={cn("flex gap-3 px-3 py-1.5 text-sm", i % 2 === 0 && "bg-surface-soft")}
+              {/* Grid de 2 colunas: o valor cola no seu significado. A coluna de valor
+                  auto-dimensiona (nao mais w-24 fixo), entao numeros curtos nao abrem
+                  vao e significados longos deixam de espremer em 3 linhas. */}
+              <div className="grid grid-cols-[auto_1fr] overflow-hidden rounded-xl border border-border text-sm">
+                {p.escala.flatMap((e, i) => [
+                  <span
+                    key={`${e.valor}-v`}
+                    className={cn("tabular py-1.5 pl-3 pr-4 font-bold text-primary", i % 2 === 0 && "bg-surface-soft")}
                   >
-                    <span className="tabular w-24 shrink-0 font-bold text-primary">{e.valor}</span>
-                    <span className="text-ink">{e.rotulo}</span>
-                  </div>
-                ))}
+                    {e.valor}
+                  </span>,
+                  <span
+                    key={`${e.valor}-r`}
+                    className={cn("py-1.5 pr-3 text-ink", i % 2 === 0 && "bg-surface-soft")}
+                  >
+                    {e.rotulo}
+                  </span>,
+                ])}
               </div>
             </section>
           )}

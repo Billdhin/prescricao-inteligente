@@ -23,7 +23,7 @@ import {
   SlidersHorizontal,
   CalendarRange,
 } from "lucide-react";
-import { Card, Pill, ScoreRing, buttonClasses, Progress } from "@/components/ui/primitives";
+import { Card, Pill, ScoreRing, buttonClasses, Progress, TokenRotulado } from "@/components/ui/primitives";
 import {
   rankExercises,
   OBJETIVOS,
@@ -419,16 +419,16 @@ export function Gps() {
 
       {/* Contexto clínico-funcional do aluno: a avaliação registrada alimenta a decisão */}
       {aluno && ultimaAval && (
-        <Card variant="soft" className="flex flex-wrap items-center gap-x-3 gap-y-1.5 p-3 text-sm">
+        <Card variant="soft" className="flex flex-wrap items-center gap-x-2 gap-y-1.5 p-3 text-sm">
           <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">Última avaliação</span>
-          {ultimaAval.medidas.peso != null && <span className="text-ink-2">{ultimaAval.medidas.peso} kg</span>}
+          {/* Cada medida como token rotulado: o número carrega o próprio nome e o
+              par sobrevive à quebra de linha, sem virar uma fila de valores soltos. */}
+          {ultimaAval.medidas.peso != null && <TokenRotulado label="Peso" value={`${ultimaAval.medidas.peso} kg`} />}
           {ultimaAval.medidas.percentualGordura != null && (
-            <span className="text-ink-2">{ultimaAval.medidas.percentualGordura}% gordura</span>
+            <TokenRotulado label="Gordura" value={`${ultimaAval.medidas.percentualGordura}%`} />
           )}
           {ultimaAval.dorEscala != null && (
-            <span className={cn("font-semibold", ultimaAval.dorEscala >= 4 ? "text-warning" : "text-ink-2")}>
-              dor {ultimaAval.dorEscala}/10
-            </span>
+            <TokenRotulado label="Dor" value={`${ultimaAval.dorEscala}/10`} tone={ultimaAval.dorEscala >= 4 ? "warning" : "neutral"} />
           )}
           <span className="text-ink-3">
             há {Math.max(0, Math.round((Date.now() - ultimaAval.data) / 86_400_000))} dias

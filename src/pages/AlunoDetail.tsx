@@ -27,7 +27,7 @@ import {
   CalendarCheck,
   Wallet,
 } from "lucide-react";
-import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, ParDado, LinhaDeDose } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
 import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
 import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
@@ -354,15 +354,26 @@ export function AlunoDetail() {
                       <Pill tone={p.status === "ativa" ? "success" : "neutral"}>{p.status}</Pill>
                     </div>
                     <div className="tabular mb-2 text-xs text-ink-3">{fmtData(p.data)}</div>
-                    <ul className="space-y-1">
+                    {/* Nome e dose vinculados: a dose fica logo abaixo do exercicio, nao empurrada
+                        para a borda oposta. A lista vira um bloco unico, com divisorias. */}
+                    <ul className="overflow-hidden rounded-lg border border-border">
                       {p.itens.map((it) => (
-                        <li key={it.slug} className="flex items-center justify-between gap-2 text-sm">
-                          <Link to={`/movement-lab/${it.slug}`} className="inline-flex min-w-0 items-center gap-1.5 text-ink hover:text-primary">
-                            <FlaskConical className="h-3.5 w-3.5 shrink-0 text-ink-3" />
-                            <span className="truncate">{nomeEx(it.slug)}</span>
-                          </Link>
-                          {it.series && <span className="shrink-0 text-xs text-ink-3">{it.series}</span>}
-                        </li>
+                        <LinhaDeDose
+                          key={it.slug}
+                          icon={<FlaskConical className="h-3.5 w-3.5" />}
+                          nome={
+                            <Link to={`/movement-lab/${it.slug}`} className="hover:text-primary">
+                              {nomeEx(it.slug)}
+                            </Link>
+                          }
+                        >
+                          {it.series ? (
+                            <>
+                              <span className="text-ink-3">Dose: </span>
+                              {it.series}
+                            </>
+                          ) : null}
+                        </LinhaDeDose>
                       ))}
                     </ul>
                     {p.observacoes && <p className="mt-2 text-xs text-ink-2">{p.observacoes}</p>}
@@ -1265,15 +1276,10 @@ function Medida({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Rótulo em cima do valor (ParDado stack): a versão antiga usava justify-between
+// e o par se afastava até as bordas da célula. Mantém a assinatura antiga.
 function Info({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="flex items-center gap-2 text-ink-3">
-        {icon} {label}
-      </dt>
-      <dd className="text-right font-semibold text-ink">{value}</dd>
-    </div>
-  );
+  return <ParDado icon={icon} label={label} value={value} />;
 }
 
 // `dir` = direção desejável da métrica: "menor" (cair é bom), "maior" (subir é

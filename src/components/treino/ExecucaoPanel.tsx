@@ -1,5 +1,5 @@
 import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
-import { Card, Pill } from "@/components/ui/primitives";
+import { Card, Pill, LinhaDeDose, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 import { exercises } from "@/data/exercises";
 import type { PlanoTreino } from "@/data/periodizacao";
 import type { Execucao } from "@/data/execucao";
@@ -69,7 +69,8 @@ export function ExecucaoPanel({ plano, execucoes }: { plano?: PlanoTreino; execu
             const meta = ACAO_META[ajuste.acao];
             return (
               <div key={slug} className="rounded-xl border border-border p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                {/* Sugestão colada ao exercício (sem justify-between abrindo vão). */}
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold text-ink">{nomeEx(slug)}</span>
                   <Pill tone={meta.tone}>
                     <meta.Icon className="h-3.5 w-3.5" />
@@ -84,20 +85,28 @@ export function ExecucaoPanel({ plano, execucoes }: { plano?: PlanoTreino; execu
         </div>
       )}
 
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">Últimos registros</div>
-      <div className="mt-1.5 space-y-1">
+      <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Últimos registros</div>
+      {/* Nome + data no bloco; carga, reps e RPE viram tokens rotulados abaixo,
+          cada número com o próprio nome, em vez de "40 kg x 12 · RPE 8" solto na borda. */}
+      <ul className="overflow-hidden rounded-lg border border-border">
         {recentes.map((e) => (
-          <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg bg-surface-soft px-3 py-2 text-sm">
-            <span className="min-w-0 flex-1 truncate text-ink">{nomeEx(e.exercicioSlug)}</span>
-            <span className="shrink-0 text-ink-2">
-              {e.cargaFeita != null ? `${e.cargaFeita} kg` : ""}
-              {e.repsFeitas != null ? ` x ${e.repsFeitas}` : ""}
-              {e.rpe != null ? ` · RPE ${e.rpe}` : ""}
-            </span>
-            <span className="shrink-0 text-xs text-ink-3">{fmtData(e.concluidoEm)}</span>
-          </div>
+          <LinhaDeDose
+            key={e.id}
+            nome={
+              <span className="flex flex-wrap items-baseline gap-x-2">
+                {nomeEx(e.exercicioSlug)}
+                <span className="text-xs font-normal text-ink-3">{fmtData(e.concluidoEm)}</span>
+              </span>
+            }
+          >
+            <LinhaDeTokens>
+              {e.cargaFeita != null && <TokenRotulado label="Carga" value={`${e.cargaFeita} kg`} />}
+              {e.repsFeitas != null && <TokenRotulado label="Reps" value={e.repsFeitas} />}
+              {e.rpe != null && <TokenRotulado label="RPE" value={e.rpe} />}
+            </LinhaDeTokens>
+          </LinhaDeDose>
         ))}
-      </div>
+      </ul>
     </Card>
   );
 }

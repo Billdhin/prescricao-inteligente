@@ -400,7 +400,11 @@ function ResumoDecisao({
         <div>
           <Rotulo icon={<Activity className="h-3.5 w-3.5" />}>Parâmetros essenciais</Rotulo>
           <ParametroPills ids={g.parametros} />
-          <p className="mt-3 text-sm text-ink-2">{g.perfil}</p>
+          {/* Rótulo próprio: o texto abaixo é o perfil da condição, não um parâmetro. */}
+          <div className="mt-4">
+            <Rotulo icon={<Stethoscope className="h-3.5 w-3.5" />}>Perfil da condição</Rotulo>
+            <p className="text-sm text-ink-2">{g.perfil}</p>
+          </div>
         </div>
       </div>
     </Card>

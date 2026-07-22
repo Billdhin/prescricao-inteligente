@@ -281,3 +281,94 @@ export function SectionHeader({
     </div>
   );
 }
+
+/* ------------------------- Pares rótulo → valor -------------------------- */
+// Legibilidade de dados: o valor fica COLADO ao rótulo (empilhado ou "Rótulo:
+// valor"), nunca empurrado para a borda oposta por justify-between. Aquela
+// separação abria um vão no meio e o olho perdia qual rótulo era de qual dado.
+
+/** Par rótulo → valor. `stack` = rótulo em cima do valor (padrão, alinha como
+ *  coluna limpa); `inline` = "Rótulo: valor" para conviver com texto corrido. */
+export function ParDado({
+  label,
+  value,
+  icon,
+  tone = "ink",
+  layout = "stack",
+  className,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon?: React.ReactNode;
+  tone?: "ink" | "warning" | "success";
+  layout?: "stack" | "inline";
+  className?: string;
+}) {
+  const valTone = tone === "warning" ? "text-warning" : tone === "success" ? "text-success" : "text-ink";
+  if (layout === "inline") {
+    return (
+      <span className={cn("text-sm text-ink-2", className)}>
+        {icon ? <span className="mr-1 inline-flex align-[-2px]">{icon}</span> : null}
+        {label}: <span className={cn("font-semibold", valTone)}>{value}</span>
+      </span>
+    );
+  }
+  return (
+    <div className={cn("min-w-0", className)}>
+      <dt className="flex items-center gap-1.5 text-xs text-ink-3">
+        {icon} {label}
+      </dt>
+      <dd className={cn("mt-0.5 font-semibold [overflow-wrap:anywhere]", valTone)}>{value}</dd>
+    </div>
+  );
+}
+
+/** Número medido com o nome colado (ex.: "Carga 40 kg"), para trocar strings
+ *  cruas empacotadas ("3 x 12 · 75% · 90s") por dados que se auto-nomeiam. */
+export function TokenRotulado({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: React.ReactNode;
+  tone?: PillTone;
+}) {
+  return (
+    <span className={cn("inline-flex items-baseline gap-1 rounded-full px-2 py-0.5 text-xs", pillTones[tone])}>
+      <span className="font-medium opacity-70">{label}</span>
+      <span className="tabular font-semibold">{value}</span>
+    </span>
+  );
+}
+
+/** Agrupador de TokenRotulado numa linha que flui, sem afastamento. */
+export function LinhaDeTokens({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={cn("flex flex-wrap gap-1.5", className)}>{children}</div>;
+}
+
+/** Item "nome + dose vinculados": o nome em cima, a dose logo abaixo no mesmo
+ *  bloco. `right` é o ÚNICO lugar com alinhamento à direita, e só para um
+ *  selo/estado (nunca a dose). Renderiza <li>; envolva num <ul>. */
+export function LinhaDeDose({
+  nome,
+  icon,
+  children,
+  right,
+}: {
+  nome: React.ReactNode;
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
+  right?: React.ReactNode;
+}) {
+  return (
+    <li className="flex items-baseline gap-2.5 border-b border-border px-3 py-2 last:border-b-0">
+      {icon ? <span className="shrink-0 translate-y-0.5 text-ink-3">{icon}</span> : null}
+      <div className="min-w-0 flex-1">
+        <div className="font-medium text-ink">{nome}</div>
+        {children ? <div className="mt-0.5 text-xs text-ink-2">{children}</div> : null}
+      </div>
+      {right ? <div className="shrink-0 self-center">{right}</div> : null}
+    </li>
+  );
+}

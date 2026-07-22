@@ -445,6 +445,9 @@ function CardioBloco() {
                     <div className="space-y-1.5">
                       {selected.map((mod, i) => (
                         <div key={mod.id} className="flex items-center gap-2">
+                          {/* Nome visivel antes da barra: liga cada barra a sua modalidade,
+                              sem depender so da cor (como AtivacaoComparada ja faz). */}
+                          <span className="w-24 shrink-0 truncate text-xs text-ink-2 sm:w-32">{mod.nome}</span>
                           <CardioBar
                             srLabel={mod.nome}
                             value={m.bar(mod, calc)}
@@ -472,11 +475,8 @@ function CardioBloco() {
                   <span className={cn("h-2.5 w-2.5 rounded-full", COL_DOT[i])} />
                   <h4 className="truncate font-display font-bold text-ink">{m.nome}</h4>
                 </div>
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                    Grupos musculares
-                  </span>
-                  <span className="text-[11px] font-semibold text-ink-3">{m.gruposMusculares.length}</span>
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-primary">
+                  Grupos musculares ({m.gruposMusculares.length})
                 </div>
                 <div className="mb-3 flex flex-wrap gap-1.5">
                   {m.gruposMusculares.map((g) => (

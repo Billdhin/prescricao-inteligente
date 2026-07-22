@@ -1,6 +1,6 @@
 import * as React from "react";
 import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse, CheckCircle2, Wallet } from "lucide-react";
-import { Card, Pill } from "@/components/ui/primitives";
+import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
 import { Logo } from "@/components/brand/Logo";
@@ -261,10 +261,27 @@ function BlocoRow({
   onRegistrar?: (e: Execucao) => void;
 }) {
   const aerobio = bloco.tipo === "aerobio";
-  const linhas = aerobio
-    ? [bloco.formato, bloco.duracao, bloco.intensidade, bloco.recuperacao && bloco.recuperacao !== "-" ? `Recuperação: ${bloco.recuperacao}` : ""]
-    : [bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : bloco.series || bloco.reps, bloco.intensidade, bloco.intervalo ? `Intervalo: ${bloco.intervalo}` : ""];
-  const detalhe = linhas.filter(Boolean).join(" · ");
+  // Cada número com o próprio rótulo (Intensidade 75%, Intervalo 90s), em vez de
+  // uma string crua "3 x 12 · 75% · Intervalo: 90s" onde o 75% fica solto.
+  const limpo = (v?: string | number | null) =>
+    v != null && String(v).trim() && String(v).trim() !== "-" ? String(v) : "";
+  const tokensDose: { label: string; value: string }[] = (
+    aerobio
+      ? [
+          { label: "Formato", value: limpo(bloco.formato) },
+          { label: "Duração", value: limpo(bloco.duracao) },
+          { label: "Intensidade", value: limpo(bloco.intensidade) },
+          { label: "Recuperação", value: limpo(bloco.recuperacao) },
+        ]
+      : [
+          {
+            label: "Série",
+            value: bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : limpo(bloco.series) || limpo(bloco.reps),
+          },
+          { label: "Intensidade", value: limpo(bloco.intensidade) },
+          { label: "Intervalo", value: limpo(bloco.intervalo) },
+        ]
+  ).filter((t) => t.value);
   const metodo = getMetodo(bloco.metodo);
   const metodoVisivel = metodo && metodo.id !== "tradicional" ? metodo : undefined;
 
@@ -309,8 +326,14 @@ function BlocoRow({
           </span>
         )}
       </div>
-      {detalhe && <p className="mt-1.5 text-sm text-ink-2">{detalhe}</p>}
-      {metodoVisivel && <p className="mt-1 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
+      {tokensDose.length > 0 && (
+        <LinhaDeTokens className="mt-1.5">
+          {tokensDose.map((t) => (
+            <TokenRotulado key={t.label} label={t.label} value={t.value} />
+          ))}
+        </LinhaDeTokens>
+      )}
+      {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
       {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
 
       {podeRegistrar &&
@@ -493,9 +516,9 @@ function AbaEvolucao({
         ) : (
           doAluno.map((a) => (
             <Card key={a.id} className="p-4">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <div className="font-display font-bold text-ink">{fmt(a.data)}</div>
-                {a.medidas.peso != null && <Pill tone="neutral">{a.medidas.peso} kg</Pill>}
+                {a.medidas.peso != null && <ParDado layout="inline" label="Peso" value={`${a.medidas.peso} kg`} />}
               </div>
               {a.observacoes && <p className="mt-1.5 text-sm text-ink-2">{a.observacoes}</p>}
             </Card>
