@@ -21,7 +21,7 @@ import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { RetencaoPanel } from "@/components/treino/RetencaoPanel";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
-import { proximaReavaliacao } from "@/data/periodizacao";
+import { avisosDoAluno, type CicloCtx } from "@/lib/gps/proximoPasso";
 import { getAtivacao, marcarCelebrado, minutosPrimeiroCaso } from "@/lib/ativacao";
 import type { Aluno } from "@/data/alunos";
 import { cn } from "@/lib/utils";
@@ -29,11 +29,13 @@ import { cn } from "@/lib/utils";
 const DIA = 86_400_000;
 const fmtData = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(ts));
+const fmtHoje = (ts: number) =>
+  new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(new Date(ts));
 const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
 
 export function ProfessionalDashboard() {
   const { name, plan } = useUser();
-  const { alunos, avaliacoes, prescricoes, planos, execucoes, loadExamples } = useAlunos();
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, loadExamples } = useAlunos();
   const premium = isPremiumUnlocked(plan);
   const firstName = name.split(" ")[0];
 
@@ -46,23 +48,12 @@ export function ProfessionalDashboard() {
   const temTreinoAtivo = (id: string) => planosAtivos.some((p) => p.alunoId === id);
   const comTreino = ativos.filter((a) => temTreinoAtivo(a.id)).length;
 
+  // Quem precisa de atenção HOJE vem da MESMA fonte do stepper do aluno
+  // (avisosDoAluno), não de uma cópia da lógica: Painel, lista e tela do aluno
+  // falam o mesmo "próximo passo".
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
   const atencao = ativos
-    .map((a) => {
-      const motivos: { label: string; tone: "warning" | "cta" | "analysis" }[] = [];
-      if (a.proximaReavaliacaoEm && a.proximaReavaliacaoEm < Date.now())
-        motivos.push({ label: "Reavaliação vencida", tone: "warning" });
-      if (!temTreinoAtivo(a.id))
-        motivos.push({ label: "Sem treino ativo", tone: "cta" });
-
-      // O plano marca onde reavaliar. Uma reavaliação que chegou é o momento em que o
-      // plano pede uma decisão (progredir, manter ou regredir), então ela aparece aqui.
-      const plano = planosAtivos.find((p) => p.alunoId === a.id);
-      const reav = plano ? proximaReavaliacao(plano) : undefined;
-      if (reav && reav.em - Date.now() <= 7 * DIA)
-        motivos.push({ label: `Reavaliação do plano: semana ${reav.semana}`, tone: "analysis" });
-
-      return { aluno: a, motivos };
-    })
+    .map((a) => ({ aluno: a, motivos: avisosDoAluno(a, ctx) }))
     .filter((x) => x.motivos.length > 0);
 
   return (
@@ -70,12 +61,12 @@ export function ProfessionalDashboard() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Pill tone="primary" icon={<Users className="h-3 w-3" />} className="mb-3">
-            {planLabel[plan]} · Atendimento
+          <Pill tone="primary" icon={<CalendarRange className="h-3 w-3" />} className="mb-3 capitalize">
+            Hoje · {fmtHoje(Date.now())}
           </Pill>
           <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Olá, {firstName}</h1>
           <p className="mt-2 max-w-xl text-ink-2">
-            Comece pelo que precisa de atenção e prescreva com justificativa.
+            Comece pelo que precisa de atenção e resolva o próximo passo de cada aluno.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -149,8 +140,8 @@ export function ProfessionalDashboard() {
         <Card className="flex items-center gap-3 p-5">
           <CheckCircle2 className="h-6 w-6 shrink-0 text-success" />
           <p className="text-sm text-ink-2">
-            <span className="font-semibold text-ink">Tudo em dia.</span> Nenhum aluno com reavaliação
-            vencida, sem prescrição ativa ou com reavaliação de plano chegando.
+            <span className="font-semibold text-ink">Tudo em dia.</span> Nenhum aluno sem avaliação,
+            sem treino ativo, com reavaliação vencida ou chegando.
           </p>
         </Card>
       )}

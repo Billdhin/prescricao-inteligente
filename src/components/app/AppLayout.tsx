@@ -39,11 +39,13 @@ import { sessaoAtiva, encerrarSessao } from "@/lib/auth";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { signOut } from "@/lib/backend/supabaseAuth";
 import { buttonClasses } from "@/components/ui/primitives";
-import { specialGroups } from "@/data/specialGroups";
-import { OBJETIVOS } from "@/lib/gps/engine";
+import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
+import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { marcarAtivacao } from "@/lib/ativacao";
 import { useDialog } from "@/lib/useDialog";
-import { useUI, useUser, useProgress, useAlunos, planLabel } from "@/lib/store";
+import { useUI, useUser, useProgress, useAlunos, planLabel, uid } from "@/lib/store";
+import { iniciaisDe, type Aluno } from "@/data/alunos";
+import type { Nivel } from "@/data/types";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -243,11 +245,13 @@ function RouteFallback() {
    comorbidade chegou HOJE), então o onboarding espelha exatamente isso. */
 function OnboardingGate({ onDone }: { onDone: () => void }) {
   const loadExamples = useAlunos((s) => s.loadExamples);
+  const addAluno = useAlunos((s) => s.addAluno);
   const navigate = useNavigate();
   const dialogRef = useDialog<HTMLDivElement>(() => {});
-  // Onboarding caso-primeiro: o gatilho de uso é situacional (o aluno com condição
-  // chegou HOJE). Uma condição já vem escolhida para o primeiro caso cair direto no
-  // fluxo que mostra o valor. A prescrição vem antes; o Semáforo aparece no resultado.
+  // Onboarding de trilho único: o profissional entra pela ESPINHA, não pelo menu.
+  // Ele descreve o primeiro aluno (condição, objetivo, nível), o sistema cria esse
+  // aluno de verdade e o larga na tela dele com a Linha do cuidado apontando o
+  // primeiro passo (avaliar). Ensina o fluxo do cuidado, não os botões.
   const [caso, setCaso] = React.useState({ grupo: "hipertensao", objetivo: "Emagrecimento", nivel: "Iniciante" });
 
   const finish = () => {
@@ -256,10 +260,28 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
   };
   const resolverCaso = () => {
     marcarAtivacao("inicio");
+    const agora = Date.now();
+    const grupo = caso.grupo ? getSpecialGroup(caso.grupo) : undefined;
+    const nome = grupo ? `Primeiro aluno (${grupo.nome})` : "Primeiro aluno";
+    // Só fatos que o profissional declarou; nenhuma restrição física inventada
+    // (o grupo carrega o contexto clínico, a restrição estrutural ele adiciona).
+    const aluno: Aluno = {
+      id: uid(),
+      nome,
+      iniciais: iniciaisDe(nome),
+      objetivo: caso.objetivo as GpsObjetivo,
+      nivel: caso.nivel as Nivel,
+      restricoes: [],
+      equipamentos: [],
+      status: "ativo",
+      criadoEm: agora,
+      nivelDesde: agora,
+      grupoEspecial: caso.grupo || undefined,
+      observacoes: "Aluno de exemplo do onboarding, para você percorrer a Linha do cuidado. Edite ou remova quando quiser.",
+    };
+    addAluno(aluno);
     finish();
-    const q = new URLSearchParams({ "primeiro-caso": "1", objetivo: caso.objetivo, nivel: caso.nivel });
-    if (caso.grupo) q.set("grupo", caso.grupo);
-    navigate(`/gps?${q.toString()}`);
+    navigate(`/alunos/${aluno.id}`, { state: { recemCriado: true } });
   };
   const explorar = () => {
     loadExamples();
@@ -291,10 +313,11 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
           <Logo />
         </div>
 
-        <h2 className="font-display text-2xl font-bold text-ink">Vamos resolver um caso de verdade</h2>
+        <h2 className="font-display text-2xl font-bold text-ink">Vamos começar pelo seu primeiro aluno</h2>
         <p className="mx-auto mt-1 max-w-sm text-ink-2">
-          Pense num aluno que você tem agora. Em poucos minutos você sai com a decisão documentada;
-          não é demonstração, é o caso de verdade.
+          Prescreva e defenda o treino de qualquer aluno, mesmo com comorbidade, em minutos.
+          Descreva quem chegou hoje: a gente cria esse aluno e abre a Linha do cuidado no
+          primeiro passo.
         </p>
 
         <div className="mt-5 space-y-4 text-left">
@@ -342,7 +365,7 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
         </div>
 
         <button onClick={resolverCaso} className={cn(buttonClasses("primary"), "mt-5 w-full")}>
-          Ver a decisão deste caso →
+          Criar este aluno e abrir a Linha do cuidado →
         </button>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
           <button onClick={explorar} className="font-medium text-ink-2 hover:text-ink">

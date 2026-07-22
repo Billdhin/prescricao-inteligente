@@ -374,6 +374,9 @@ function ResultadoPlano({
             {plano.objetivo} · {plano.nivel} · {plano.semanas} semanas
           </span>
           {grupoObj && <Pill tone="analysis">{grupoObj.nome}</Pill>}
+          {/* O plano nasce de um modelo verificado, mas é ponto de partida do
+              profissional, não decisão pronta: enquanto não for salvo, é rascunho. */}
+          {!salvo && <Pill tone="warning">Rascunho a revisar</Pill>}
         </div>
         {editando ? (
           <input

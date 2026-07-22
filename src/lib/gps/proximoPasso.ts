@@ -1,6 +1,8 @@
 import type { Aluno } from "@/data/alunos";
 import { proximaReavaliacao, type PlanoTreino } from "@/data/periodizacao";
 
+export type AvisoTone = "primary" | "warning" | "cta" | "success" | "analysis";
+
 /**
  * Fonte única de "onde este aluno está e qual o próximo movimento".
  *
@@ -154,3 +156,38 @@ export const AJUDA_ETAPA: Record<EtapaCiclo, string> = {
   acompanhar: "Acompanhou carga, repetições e esforço.",
   reavaliar: "Comparou com o começo e ajustou o rumo.",
 };
+
+export interface AvisoAluno {
+  label: string;
+  tone: AvisoTone;
+  /** a etapa do ciclo a que o aviso pertence, quando é o passo bloqueante */
+  etapa?: EtapaCiclo;
+}
+
+/**
+ * Motivos pelos quais um aluno precisa de atenção HOJE, derivados da MESMA fonte
+ * do stepper (`proximoPasso`), para o Painel e a tela do aluno nunca discordarem.
+ *
+ * Estende o próximo passo com o que o stepper sozinho não mostra: a antecedência
+ * de 7 dias da reavaliação do plano (o stepper só acusa quando já vencida). O
+ * passo bloqueante do ciclo (sem avaliação, sem treino, reavaliação vencida) vem
+ * do `chip` do próprio `proximoPasso`; quando o aluno está em dia (liberar /
+ * acompanhar), não há aviso. Vazio = nada pendente.
+ */
+export function avisosDoAluno(aluno: Aluno, ctx: CicloCtx): AvisoAluno[] {
+  const avisos: AvisoAluno[] = [];
+  const passo = proximoPasso(aluno, ctx);
+  if (passo.chip) avisos.push({ label: passo.chip.label, tone: passo.chip.tone, etapa: passo.etapa });
+
+  // Antecedência: reavaliação do plano chegando em até 7 dias (ainda não vencida,
+  // então o passo bloqueante não é "reavaliar"). Só faz sentido com plano ativo.
+  const planoAtivo = ctx.planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
+  if (planoAtivo) {
+    const reav = proximaReavaliacao(planoAtivo);
+    const agora = Date.now();
+    if (reav && reav.em > agora && reav.em - agora <= 7 * DIA) {
+      avisos.push({ label: `Reavaliação do plano: semana ${reav.semana}`, tone: "analysis", etapa: "reavaliar" });
+    }
+  }
+  return avisos;
+}
