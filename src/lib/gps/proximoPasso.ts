@@ -179,9 +179,19 @@ export function avisosDoAluno(aluno: Aluno, ctx: CicloCtx): AvisoAluno[] {
   const passo = proximoPasso(aluno, ctx);
   if (passo.chip) avisos.push({ label: passo.chip.label, tone: passo.chip.tone, etapa: passo.etapa });
 
+  const planoAtivo = ctx.planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
+
+  // Prescrição guardada, mas sem treino montado: o campo `prescricoes` do ctx (antes
+  // declarado e nunca usado) serve só a este aviso. Não vira segunda moeda de "tem treino"
+  // (decisão travada 11): `temTreinoAtivo` segue o único predicado; isto é só o lembrete de
+  // fechar o ciclo levando os exercícios para dentro do plano.
+  const temPrescricao = ctx.prescricoes.some((p) => p.alunoId === aluno.id && p.status === "ativa");
+  if (!planoAtivo && temPrescricao) {
+    avisos.push({ label: "Prescrição guardada sem treino montado", tone: "analysis", etapa: "planejar" });
+  }
+
   // Antecedência: reavaliação do plano chegando em até 7 dias (ainda não vencida,
   // então o passo bloqueante não é "reavaliar"). Só faz sentido com plano ativo.
-  const planoAtivo = ctx.planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
   if (planoAtivo) {
     const reav = proximaReavaliacao(planoAtivo);
     const agora = Date.now();

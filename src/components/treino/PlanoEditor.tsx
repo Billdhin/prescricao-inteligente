@@ -13,6 +13,9 @@ import {
   CalendarCheck,
   Dumbbell,
   HeartPulse,
+  Replace,
+  Search,
+  X,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
@@ -34,13 +37,16 @@ import {
 } from "@/data/periodizacao";
 import { conferirFaixa, faixaSugerida, type CampoFaixa } from "@/lib/gps/faixas";
 import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
-import type { GpsObjetivo } from "@/lib/gps/engine";
+import { adequacaoLabel, EQUIPAMENTOS, type GpsObjetivo, type Recommendation } from "@/lib/gps/engine";
+import { sugerirTroca, type ContextoTroca } from "@/lib/gps/sugerirTroca";
+import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
 import type { Nivel } from "@/data/types";
 import { getParam } from "@/data/monitoringParameters";
 import { getModalidade } from "@/data/modalities";
 import { refCurta } from "@/data/referencias";
 import { exercises } from "@/data/exercises";
 import { uid } from "@/lib/store";
+import { useDialog } from "@/lib/useDialog";
 
 /**
  * Visualização e edição do macrociclo.
@@ -60,6 +66,40 @@ const nid = (p: string) => `${p}-${uid()}`;
 export interface ContextoFaixa {
   objetivo: GpsObjetivo;
   nivel: Nivel;
+  /** perfil do aluno para a troca segura (Trocar/Adicionar); ausente = plano avulso */
+  restricoes?: RestricaoSelecionada[];
+  equipamentos?: string[];
+  grupoEspecial?: string;
+  /** resolve a data de exibição de uma prescrição pela id (selo "da prescrição de …") */
+  prescricaoData?: (id: string) => string | undefined;
+}
+
+/** Monta o contexto de ranqueamento a partir do ContextoFaixa (defaults do Gps sem aluno). */
+function ctxTrocaDe(ctx: ContextoFaixa): ContextoTroca {
+  return {
+    objetivo: ctx.objetivo,
+    nivel: ctx.nivel,
+    restricoes: ctx.restricoes ?? [],
+    equipamentos: ctx.equipamentos ?? [...EQUIPAMENTOS],
+    grupoEspecial: ctx.grupoEspecial,
+  };
+}
+
+/** Há perfil de aluno que justifique ranquear (senão a ordem alfabética é mais previsível). */
+function temContextoDeAluno(ctx: ContextoFaixa): boolean {
+  return Boolean(ctx.grupoEspecial) || (ctx.restricoes?.length ?? 0) > 0;
+}
+
+/** Selo pequeno "da prescrição de {data}" para blocos vindos do tubo Aplicar no treino. */
+function SeloOrigem({ ctx, bloco }: { ctx: ContextoFaixa; bloco: BlocoSessao }) {
+  if (!bloco.origemPrescricaoId) return null;
+  const data = ctx.prescricaoData?.(bloco.origemPrescricaoId);
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-surface-soft px-1.5 py-0.5 text-[10px] font-medium text-ink-3">
+      <Repeat className="h-2.5 w-2.5" aria-hidden />
+      da prescrição{data ? ` de ${data}` : ""}
+    </span>
+  );
 }
 
 /* ================================ Gráfico ================================ */
@@ -506,7 +546,7 @@ const camposDoBloco = (b: BlocoSessao): CampoBloco[] => (b.tipo === "aerobio" ? 
  * sem ler linhas corridas. Força vai em tabela; cardio vai em ficha com rótulos empilhados,
  * porque as variáveis são outras (formato, duração e intensidade, não séries e carga).
  */
-function QuadroForca({ blocos }: { blocos: BlocoSessao[] }) {
+function QuadroForca({ blocos, ctx }: { blocos: BlocoSessao[]; ctx: ContextoFaixa }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-surface">
       <div className="flex items-center gap-1.5 border-b border-border bg-surface-soft px-2.5 py-1.5">
@@ -528,12 +568,15 @@ function QuadroForca({ blocos }: { blocos: BlocoSessao[] }) {
             {blocos.map((b) => (
               <tr key={b.id} className="border-t border-border align-top">
                 <td className="px-2.5 py-1.5 font-semibold text-ink">
-                  {b.nome}
-                  {b.metodo && b.metodo !== "tradicional" && (
-                    <span className="ml-1.5 rounded-full bg-primary-tint px-1.5 py-0.5 text-[10px] font-bold text-primary">
-                      {getMetodo(b.metodo)?.nome}
-                    </span>
-                  )}
+                  <span className="inline-flex flex-wrap items-center gap-1.5">
+                    {b.nome}
+                    {b.metodo && b.metodo !== "tradicional" && (
+                      <span className="rounded-full bg-primary-tint px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                        {getMetodo(b.metodo)?.nome}
+                      </span>
+                    )}
+                    <SeloOrigem ctx={ctx} bloco={b} />
+                  </span>
                 </td>
                 <td className="px-1.5 py-1.5 text-ink-2">{b.series}</td>
                 <td className="px-1.5 py-1.5 text-ink-2">{b.reps}</td>
@@ -588,14 +631,14 @@ function QuadroCardio({ blocos }: { blocos: BlocoSessao[] }) {
   );
 }
 
-function SessaoQuadro({ sessao }: { sessao: Sessao }) {
+function SessaoQuadro({ sessao, ctx }: { sessao: Sessao; ctx: ContextoFaixa }) {
   if (sessao.blocos.length === 0) return <p className="px-1 py-2 text-xs text-ink-3">Sessão sem exercícios definidos.</p>;
   const forca = sessao.blocos.filter((b) => b.tipo !== "aerobio");
   const cardio = sessao.blocos.filter((b) => b.tipo === "aerobio");
   const duasColunas = forca.length > 0 && cardio.length > 0;
   return (
     <div className={cn("grid gap-2", duasColunas && "md:grid-cols-2")}>
-      {forca.length > 0 && <QuadroForca blocos={forca} />}
+      {forca.length > 0 && <QuadroForca blocos={forca} ctx={ctx} />}
       {cardio.length > 0 && <QuadroCardio blocos={cardio} />}
     </div>
   );
@@ -615,6 +658,16 @@ function SessaoBloco({
   onRemover: () => void;
 }) {
   const faixa = getFaixa(ctx.objetivo);
+
+  // Com perfil de aluno, o "Adicionar" segue o mesmo ranking seguro do Prescrever exercício;
+  // sem perfil, a ordem alfabética é a mais previsível para o plano avulso.
+  const opcoesAdicionar = React.useMemo(
+    () =>
+      temContextoDeAluno(ctx)
+        ? sugerirTroca(ctxTrocaDe(ctx)).map((r) => r.exercise)
+        : [...exercises].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")),
+    [ctx],
+  );
 
   const addBloco = (slug: string) => {
     if (!slug) return;
@@ -678,7 +731,7 @@ function SessaoBloco({
       </div>
 
       {!editavel ? (
-        <SessaoQuadro sessao={sessao} />
+        <SessaoQuadro sessao={sessao} ctx={ctx} />
       ) : (
         <>
           {sessao.blocos.length === 0 && <p className="px-1 py-2 text-xs text-ink-3">Sessão sem exercícios. Adicione abaixo.</p>}
@@ -710,13 +763,11 @@ function SessaoBloco({
               className="input h-8 max-w-[220px] py-0 text-xs"
             >
               <option value="">Escolher do acervo</option>
-              {[...exercises]
-                .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"))
-                .map((e) => (
-                  <option key={e.slug} value={e.slug}>
-                    {e.nome}
-                  </option>
-                ))}
+              {opcoesAdicionar.map((e) => (
+                <option key={e.slug} value={e.slug}>
+                  {e.nome}
+                </option>
+              ))}
             </select>
             <button
               type="button"
@@ -747,10 +798,12 @@ function BlocoRow({
 }) {
   const faixa = getFaixa(ctx.objetivo);
   const aerobio = bloco.tipo === "aerobio";
+  const [trocar, setTrocar] = React.useState(false);
+  const exAtual = bloco.exercicioSlug ? exercises.find((e) => e.slug === bloco.exercicioSlug) : undefined;
 
   return (
     <div className="rounded-lg border border-border bg-surface p-2">
-      <div className="mb-1.5 flex items-center gap-1.5">
+      <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
         {aerobio && (
           <span className="inline-flex shrink-0 items-center gap-1 rounded bg-[#0e7c8a]/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-analysis">
             <HeartPulse className="h-3 w-3" aria-hidden /> Cardio
@@ -762,6 +815,17 @@ function BlocoRow({
           aria-label={aerobio ? "Nome do bloco de cardio" : "Nome do exercício"}
           className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-xs font-semibold text-ink hover:border-border focus:border-primary focus:outline-none"
         />
+        <SeloOrigem ctx={ctx} bloco={bloco} />
+        {!aerobio && (
+          <button
+            type="button"
+            onClick={() => setTrocar(true)}
+            className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
+            title="Trocar por outro exercício, ranqueado pelo perfil do aluno"
+          >
+            <Replace className="h-3.5 w-3.5" /> Trocar
+          </button>
+        )}
         {bloco.exercicioSlug && (
           <Link
             to={`/movement-lab/${bloco.exercicioSlug}`}
@@ -775,6 +839,21 @@ function BlocoRow({
           <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
+
+      {trocar && (
+        <SeletorExercicioSheet
+          ctx={ctx}
+          alvo={exAtual?.grupoMuscular}
+          titulo="Trocar exercício"
+          onClose={() => setTrocar(false)}
+          onEscolher={(ex) => {
+            // Grava slug E nome juntos: renomear sem trocar o slug fazia "ver análise"
+            // apontar para o exercício errado (o drift que isto conserta).
+            onChange({ ...bloco, exercicioSlug: ex.slug, nome: ex.nome });
+            setTrocar(false);
+          }}
+        />
+      )}
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
         {camposDoBloco(bloco).map(({ chave, rotulo, confere }) => {
           const valor = (bloco[chave] as string | undefined) ?? "";
@@ -853,6 +932,129 @@ function CampoInline({
           {aviso}
         </p>
       )}
+    </div>
+  );
+}
+
+/* ============================ Seletor de exercício (troca) ============================ */
+
+/**
+ * Lista ranqueada para trocar (ou adicionar) um exercício, com o mesmo motor seguro do
+ * Prescrever exercício. Bottom sheet no mobile, modal estreito no desktop. Os excluídos pelo
+ * perfil ficam num grupo colapsado ao fim, cada um com o motivo, nunca misturados na lista.
+ * Score exibido com `adequacaoLabel`, nunca "%".
+ */
+function SeletorExercicioSheet({
+  ctx,
+  alvo,
+  titulo,
+  onEscolher,
+  onClose,
+}: {
+  ctx: ContextoFaixa;
+  /** grupo muscular do exercício que está saindo; sem ele, ranqueia de forma geral */
+  alvo?: string;
+  titulo: string;
+  onEscolher: (ex: { slug: string; nome: string }) => void;
+  onClose: () => void;
+}) {
+  const dialogRef = useDialog<HTMLDivElement>(onClose);
+  const [busca, setBusca] = React.useState("");
+  const recs = React.useMemo(() => sugerirTroca(ctxTrocaDe(ctx), alvo), [ctx, alvo]);
+  const q = busca.trim().toLowerCase();
+  const filtra = (r: Recommendation) => !q || r.exercise.nome.toLowerCase().includes(q);
+  const incluidos = recs.filter((r) => !r.excluido).filter(filtra);
+  const excluidos = recs.filter((r) => r.excluido).filter(filtra);
+  // Top 10 quando não há busca; com busca, mostra todos os que casam.
+  const topo = q ? incluidos : incluidos.slice(0, 10);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-end bg-black/40 p-0 backdrop-blur-sm sm:place-items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={titulo}
+        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-card bg-surface shadow-elevated outline-none sm:rounded-card"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-border p-4">
+          <h2 className="font-display text-base font-bold text-ink">{titulo}</h2>
+          <button onClick={onClose} aria-label="Fechar" className="rounded p-1 text-ink-3 hover:bg-surface-soft hover:text-ink">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="border-b border-border p-3">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-2.5">
+            <Search className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar exercício"
+              aria-label="Buscar exercício"
+              className="h-9 w-full bg-transparent text-sm text-ink placeholder:text-ink-3 focus:outline-none"
+            />
+          </div>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+          {topo.length === 0 && <p className="py-6 text-center text-sm text-ink-3">Nenhum exercício encontrado.</p>}
+          <ul className="space-y-1.5">
+            {topo.map((r) => (
+              <li key={r.exercise.slug}>
+                <button
+                  onClick={() => onEscolher({ slug: r.exercise.slug, nome: r.exercise.nome })}
+                  className="flex w-full items-center gap-2 rounded-lg border border-border bg-surface p-2.5 text-left hover:border-primary hover:bg-surface-soft"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold text-ink">{r.exercise.nome}</div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-ink-3">
+                      <span>{r.exercise.grupoMuscular}</span>
+                      <span aria-hidden>·</span>
+                      <span>{r.exercise.equipamento}</span>
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-right">
+                    <span className="block text-xs font-semibold text-primary">{adequacaoLabel(r.score)}</span>
+                    <span className="tabular block text-[10px] text-ink-3">{r.score}/100</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {excluidos.length > 0 && (
+            <details className="mt-3 rounded-lg border border-dashed border-border">
+              <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-ink-2 [&::-webkit-details-marker]:hidden">
+                {excluidos.length} {excluidos.length === 1 ? "excluído" : "excluídos"} pelo perfil
+              </summary>
+              <ul className="space-y-1.5 border-t border-border p-2.5">
+                {excluidos.map((r) => (
+                  <li key={r.exercise.slug} className="rounded-lg bg-surface-soft p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-2">{r.exercise.nome}</span>
+                      <button
+                        onClick={() => onEscolher({ slug: r.exercise.slug, nome: r.exercise.nome })}
+                        className="shrink-0 text-xs font-semibold text-ink-3 hover:text-primary hover:underline"
+                      >
+                        Usar mesmo assim
+                      </button>
+                    </div>
+                    {r.motivoExclusao && (
+                      <p className="mt-1 flex items-start gap-1 text-[11px] leading-snug text-warning">
+                        <AlertTriangle className="mt-px h-3 w-3 shrink-0" aria-hidden />
+                        {r.motivoExclusao}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

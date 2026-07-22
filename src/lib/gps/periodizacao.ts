@@ -22,6 +22,8 @@ import {
   type Sessao,
   type BlocoSessao,
   type Tendencia,
+  type FaixaObjetivo,
+  type EnfaseSessao,
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -41,6 +43,13 @@ export interface GerarPlanoInput {
    * visível como alternativa e é dito no raciocínio, para a decisão ser informada.
    */
   modeloPreferido?: ModeloPeriodizacaoId;
+  /**
+   * Fase da jornada (grupo especial) em que o macrociclo começa: o aluno que já está na
+   * fase 3 recebe o macro nascendo na fase 3, não do zero. Ausente = comportamento
+   * byte-idêntico ao atual (o macro genérico ignora; o de grupo começa na fase 1).
+   * Ranking nunca entra aqui (decisão travada 14): `rankExercises` só opera em edição.
+   */
+  faseInicial?: 1 | 2 | 3 | 4;
 }
 
 export interface PlanoGerado {
@@ -110,6 +119,32 @@ function selecionarExercicios(objetivo: GpsObjetivo, nivel: Nivel, n: number) {
   return pool.slice(0, Math.max(n, 1)).map((e) => ({ slug: e.slug, nome: (e as { nome?: string }).nome ?? e.slug }));
 }
 
+/* --------------------------------- Dose de força --------------------------------- */
+
+/**
+ * Dose de um bloco de força (séries, repetições, intensidade, intervalo) a partir da faixa
+ * citada do objetivo. Com `enfase` (semana ondulatória), repetições e intensidade seguem a
+ * ênfase do dia; sem ela, seguem a base do objetivo/nível.
+ *
+ * Helper puro extraído de `montarSessoes` para ser reusado na semeadura de blocos vindos de
+ * uma Prescricao (src/lib/gps/semear.ts) SEM copiar `PrescricaoItem.series`. A saída aqui é
+ * idêntica à do trecho original (check:faixas byte-idêntico).
+ */
+export interface DoseForca {
+  series: string;
+  reps: string;
+  intensidade: string;
+  intervalo: string;
+}
+export function doseForca(faixa: FaixaObjetivo, nivel: Nivel, enfase?: EnfaseSessao): DoseForca {
+  return {
+    series: faixa.series.valor,
+    reps: enfase?.reps ?? valorFaixa(faixa.reps, nivel),
+    intensidade: enfase?.intensidade ?? faixa.intensidade.valor,
+    intervalo: faixa.intervalo.valor,
+  };
+}
+
 /* --------------------------------- Sessões da semana --------------------------------- */
 
 function montarSessoes(
@@ -158,10 +193,7 @@ function montarSessoes(
         tipo: "forca",
         exercicioSlug: ex.slug,
         nome: ex.nome,
-        series: faixa.series.valor,
-        reps: enfase?.reps ?? valorFaixa(faixa.reps, nivel),
-        intensidade: enfase?.intensidade ?? faixa.intensidade.valor,
-        intervalo: faixa.intervalo.valor,
+        ...doseForca(faixa, nivel, enfase),
       });
     }
 
@@ -283,13 +315,17 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
 
   const { objetivo, nivel, semanas, frequencia } = input;
   const faixa = getFaixa(objetivo);
-  const nMeso = grupo.fases.length; // 4 fases
+  // O aluno que já está na fase 3 recebe o macro nascendo na fase 3: itera das fases a
+  // partir de `faseInicial`. Ausente = 1 = todas as fases = comportamento byte-idêntico.
+  const inicio = Math.min(grupo.fases.length, Math.max(1, input.faseInicial ?? 1)) - 1;
+  const fasesUsadas = grupo.fases.slice(inicio);
+  const nMeso = fasesUsadas.length;
   const base = Math.floor(semanas / nMeso);
   const resto = semanas - base * nMeso;
 
   const mesociclos: Mesociclo[] = [];
   let cursor = 1;
-  grupo.fases.forEach((fase, m) => {
+  fasesUsadas.forEach((fase, m) => {
     const dur = base + (m < resto ? 1 : 0);
     const ini = cursor;
     const fim = cursor + dur - 1;
@@ -305,6 +341,9 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       tiposExercicio: faixa.tiposExercicio,
       // As modalidades em foco vêm da jornada já autorada do grupo, que varia por fase.
       modalidades: fase.modalidades,
+      // `faseJornada` autoriza a palavra "Fase" na tela e alimenta a reconciliação com a
+      // fase clínica do aluno (o número real da fase, não a posição no macro recortado).
+      faseJornada: fase.numero,
       tendenciaVolume: m === 0 ? "estavel" : "sobe",
       tendenciaIntensidade: m === 0 ? "estavel" : "sobe",
       tendenciaComplexidade: m === 0 ? "estavel" : "sobe",

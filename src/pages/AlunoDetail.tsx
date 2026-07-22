@@ -27,8 +27,9 @@ import {
   CalendarCheck,
   Wallet,
 } from "lucide-react";
-import { Card, Pill, buttonClasses, ParDado, LinhaDeDose } from "@/components/ui/primitives";
-import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario } from "@/lib/store";
+import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, TokenRotulado } from "@/components/ui/primitives";
+import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, prescricaoAplicadaEm } from "@/lib/store";
+import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
 import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
 import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
 import { PosturalCard } from "@/components/treino/PosturalCard";
@@ -42,7 +43,7 @@ import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
-import type { Aluno, Avaliacao } from "@/data/alunos";
+import type { Aluno, Avaliacao, Prescricao } from "@/data/alunos";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -126,7 +127,7 @@ function AlunoTabs({ aba, onAba }: { aba: Aba; onAba: (a: Aba) => void }) {
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, addAvaliacao, updateAluno, removeAluno, archivePrescricao } =
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao } =
     useAlunos();
   const navigate = useNavigate();
   const [editar, setEditar] = React.useState(false);
@@ -142,8 +143,12 @@ export function AlunoDetail() {
   const prescricaoSalva = Boolean((location.state as { prescricaoSalva?: boolean } | null)?.prescricaoSalva);
   // Retorno do "Prescrever treino" após o primeiro salvamento de um plano novo.
   const planoSalvo = Boolean((location.state as { planoSalvo?: boolean } | null)?.planoSalvo);
-  // A aba "Plano e treino" é o core e abre por padrão (o retorno do plano salvo cai nela).
+  // Retorno do tubo "Aplicar no treino": {n} exercícios aplicados na Sessão X até o fim do bloco.
+  const aplicado = (location.state as { aplicado?: { n: number; sessao: string; bloco: number; semanas: number } } | null)?.aplicado;
+  // A aba "Plano e treino" é o core e abre por padrão (o retorno do plano/aplicado cai nela).
   const [aba, setAba] = React.useState<Aba>("treino");
+  // Prescrição escolhida para o diálogo "Colocar no treino".
+  const [aplicarPresc, setAplicarPresc] = React.useState<Prescricao | null>(null);
   const [params, setParams] = useSearchParams();
 
   // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação e limpa o param.
@@ -233,6 +238,24 @@ export function AlunoDetail() {
           <p className="min-w-0 flex-1 text-sm text-ink">
             <span className="font-semibold">Treino montado para {aluno.nome.split(" ")[0]}.</span> Já está no
             perfil, com a periodização e a progressão organizadas.
+          </p>
+          <a href="#treino-card" className={buttonClasses("secondary", "sm")}>
+            Ver o treino
+          </a>
+        </Card>
+      )}
+
+      {aplicado && (
+        <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-success">
+            <CalendarRange className="h-4 w-4" />
+          </span>
+          <p className="min-w-0 flex-1 text-sm text-ink">
+            <span className="font-semibold">
+              {aplicado.n} {aplicado.n === 1 ? "exercício aplicado" : "exercícios aplicados"} na Sessão {aplicado.sessao} até o
+              fim do bloco {aplicado.bloco}.
+            </span>{" "}
+            As doses seguem a faixa do plano; o raciocínio da escolha fica no prontuário da prescrição.
           </p>
           <a href="#treino-card" className={buttonClasses("secondary", "sm")}>
             Ver o treino
@@ -343,7 +366,7 @@ export function AlunoDetail() {
           <div className="space-y-4 lg:col-span-2">
             <SugestaoNivel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
 
-            <JornadaCard aluno={aluno} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
+            <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
 
             <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
 
@@ -365,13 +388,22 @@ export function AlunoDetail() {
               </div>
             ) : (
               <div className="space-y-3">
-                {prescs.map((p) => (
+                {prescs.map((p) => {
+                  // Vínculo reverso DERIVADO: onde (se) esta prescrição já entrou no plano.
+                  const local = prescricaoAplicadaEm(planosDoAluno, p.id);
+                  const podeColocar = Boolean(planoAtivo) && p.status === "ativa" && !local;
+                  return (
                   <div key={p.id} className="rounded-xl border border-border p-3">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate font-semibold text-ink">{p.titulo}</span>
                       <Pill tone={p.status === "ativa" ? "success" : "neutral"}>{p.status}</Pill>
                     </div>
-                    <div className="tabular mb-2 text-xs text-ink-3">Prescrita em {fmtData(p.data)}</div>
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <span className="tabular text-xs text-ink-3">Prescrita em {fmtData(p.data)}</span>
+                      {local && (
+                        <TokenRotulado label="No plano" value={`Sessão ${local.sessao} · semana ${local.semana}`} tone="analysis" />
+                      )}
+                    </div>
                     {/* Nome e dose vinculados: a dose fica logo abaixo do exercicio, nao empurrada
                         para a borda oposta. A lista vira um bloco unico, com divisorias. */}
                     <ul className="overflow-hidden rounded-lg border border-border">
@@ -402,6 +434,14 @@ export function AlunoDetail() {
                       </p>
                     )}
                     <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-2.5">
+                      {podeColocar && (
+                        <button
+                          onClick={() => setAplicarPresc(p)}
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                        >
+                          <CalendarRange className="h-4 w-4" /> Colocar no treino
+                        </button>
+                      )}
                       {p.prontuario && (
                         <button
                           onClick={() => setProntuarioDe(p.id)}
@@ -443,7 +483,8 @@ export function AlunoDetail() {
                       )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>
@@ -555,6 +596,24 @@ export function AlunoDetail() {
           }
           podeExportar={premium}
           onClose={() => setProntuarioDe(null)}
+        />
+      )}
+
+      {aplicarPresc && planoAtivo && (
+        <AplicarNoTreinoDialog
+          prescricao={aplicarPresc}
+          plano={planoAtivo}
+          dataDaPrescricao={(pid) => {
+            const pp = prescricoes.find((x) => x.id === pid);
+            return pp ? fmtData(pp.data) : undefined;
+          }}
+          onDecidirDepois={() => setAplicarPresc(null)}
+          onAplicar={(planoAtualizado, resumo) => {
+            updatePlano(planoAtualizado.id, planoAtualizado);
+            setAplicarPresc(null);
+            // Reusa o banner de retorno: atualiza o state da própria rota.
+            navigate(`/alunos/${id}`, { state: { aplicado: resumo }, replace: true });
+          }}
         />
       )}
     </div>
@@ -847,7 +906,15 @@ function PerfilTreinoCard({ aluno, reavaliacaoVencida }: { aluno: Aluno; reavali
   );
 }
 
-function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 4) => void }) {
+function JornadaCard({
+  aluno,
+  planoAtivo,
+  onFase,
+}: {
+  aluno: Aluno;
+  planoAtivo?: PlanoTreino;
+  onFase: (n: 1 | 2 | 3 | 4) => void;
+}) {
   const unlocked = isPremiumUnlocked(useUser((s) => s.plan));
   const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
 
@@ -893,6 +960,13 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
   const modalidades = faseObj.modalidades;
   const parametros = faseObj.parametros;
 
+  // Reconciliação (sem auto-sync, decisão travada 13): a fase clínica é julgamento manual;
+  // a fase do plano é aritmética de calendário. Quando o mesociclo corrente nasceu de uma
+  // fase diferente da avaliação do profissional, mostramos as duas e oferecemos UMA ação.
+  const mesoCorrente = planoAtivo ? mesocicloAtual(planoAtivo) : undefined;
+  const fasePlano = mesoCorrente?.faseJornada;
+  const faseDivergente = fasePlano != null && fasePlano !== fase;
+
   return (
     <Card className="p-5 md:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -917,7 +991,7 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
             <div className="font-semibold text-ink">{grupo.nome}</div>
           </div>
           <div>
-            <RotuloJ>Fase atual</RotuloJ>
+            <RotuloJ>Fase da jornada (avança por critério)</RotuloJ>
             <div className="mb-2 flex gap-1.5">
               {([1, 2, 3, 4] as const).map((n) => (
                 <button
@@ -964,10 +1038,25 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
             to={`/gps?aluno=${aluno.id}&grupo=${grupo.slug}&fase=${fase}`}
             className={cn(buttonClasses("primary"), "w-full")}
           >
-            <Navigation className="h-4 w-4" /> Prescrever para esta fase
+            <Navigation className="h-4 w-4" /> Escolher exercícios para esta fase
           </Link>
         </div>
       </div>
+
+      {faseDivergente && (
+        <div className="mt-4 rounded-xl border border-[#0e7c8a]/40 bg-primary-tint p-3 text-sm">
+          <p className="text-ink-2">
+            <span className="font-semibold text-ink">Sua avaliação: fase {fase}.</span> O plano está na fase {fasePlano}{" "}
+            pelo calendário. A fase clínica é decisão sua; o plano não muda sozinho.
+          </p>
+          <Link
+            to={`/gps?aluno=${aluno.id}&grupo=${grupo.slug}&fase=${fase}`}
+            className={cn(buttonClasses("secondary", "sm"), "mt-2")}
+          >
+            <Navigation className="h-4 w-4" /> Escolher exercícios para a fase {fase}
+          </Link>
+        </div>
+      )}
     </Card>
   );
 }

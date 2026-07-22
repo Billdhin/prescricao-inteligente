@@ -61,6 +61,9 @@ import {
   type JourneyPhase,
 } from "@/data/specialGroups";
 import { ParametroPills } from "@/components/special/SpecialUI";
+import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
+import type { PlanoTreino } from "@/data/periodizacao";
+import type { Prescricao } from "@/data/alunos";
 import { montarProntuario } from "@/lib/gps/prontuario";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
@@ -107,7 +110,9 @@ export function Gps() {
   const addActivity = useProgress((s) => s.addActivity);
   const [params] = useSearchParams();
   const navigate = useNavigate();
-  const { alunos, addPrescricao, liberacoes, avaliacoes, planos } = useAlunos();
+  const { alunos, addPrescricao, liberacoes, avaliacoes, planos, prescricoes, updatePlano } = useAlunos();
+  // Diálogo "Aplicar no treino" aberto pós-salvar quando o aluno já tem plano ativo.
+  const [aplicarDe, setAplicarDe] = React.useState<{ presc: Prescricao; plano: PlanoTreino } | null>(null);
 
   // Passo 0 — contexto editável (para quem / grupo / fase). Absorve a antiga
   // "Decisão rápida": lê ?aluno / ?grupo / ?fase e deixa o usuário ajustar.
@@ -277,7 +282,7 @@ export function Gps() {
   const salvarPrescricao = () => {
     if (!aluno || !results) return;
     marcarAtivacao("primeiroSalvo");
-    addPrescricao({
+    const presc: Prescricao = {
       id: uid(),
       alunoId: aluno.id,
       data: Date.now(),
@@ -300,8 +305,16 @@ export function Gps() {
       criteriosProgressao: faseObj?.criteriosAvancar,
       criteriosRegressao: faseObj?.criteriosRegredir,
       raciocinio: faseObj?.justificativa,
-    });
+    };
+    addPrescricao(presc);
     addActivity(`Prescrição salva para ${aluno.nome}`);
+    // Aluno com plano ativo: em vez de só voltar, oferece levar os exercícios para as
+    // sessões do plano (o tubo). Sem plano ativo, o comportamento é o de sempre.
+    const planoAtivo = planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
+    if (planoAtivo) {
+      setAplicarDe({ presc, plano: planoAtivo });
+      return;
+    }
     toast(`Prescrição salva no perfil de ${aluno.nome}`);
     navigate(`/alunos/${aluno.id}`, { state: { prescricaoSalva: true } });
   };
@@ -516,6 +529,28 @@ export function Gps() {
         />
       )}
 
+      {aplicarDe && (
+        <AplicarNoTreinoDialog
+          prescricao={aplicarDe.presc}
+          plano={aplicarDe.plano}
+          dataDaPrescricao={(pid) => {
+            const p = prescricoes.find((x) => x.id === pid);
+            return p ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(p.data)) : undefined;
+          }}
+          onDecidirDepois={() => {
+            const id = aplicarDe.plano.alunoId;
+            setAplicarDe(null);
+            toast("Prescrição salva. Você pode aplicar no treino depois, pela linha da prescrição.");
+            navigate(`/alunos/${id}`, { state: { prescricaoSalva: true } });
+          }}
+          onAplicar={(planoAtualizado, resumo) => {
+            updatePlano(planoAtualizado.id, planoAtualizado);
+            const id = planoAtualizado.alunoId;
+            setAplicarDe(null);
+            navigate(`/alunos/${id}`, { state: { aplicado: resumo } });
+          }}
+        />
+      )}
       {justify && <JustifyDialog rec={justify} onClose={() => setJustify(null)} />}
       {prontuarioAberto && (
         <ProntuarioView
@@ -1380,23 +1415,20 @@ function Results({
               )}
             </div>
           </div>
-          {/* Esta tela resolve a sessão. O que vem depois dela (os meses) é o plano, e
-              quem acabou de escolher os exercícios é justamente quem precisa disso. */}
+          {/* Esta tela resolve a sessão. Com plano ativo, salvar oferece levar estes
+              exercícios para as sessões dele (o tubo); sem plano, o convite é montar o treino. */}
           {alunoId && (
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-sm">
               <CalendarRange className="h-4 w-4 shrink-0 text-primary" />
               {planoAtivoId ? (
-                <>
-                  <span className="text-ink-2">{alunoNome} já tem uma periodização ativa.</span>
-                  <Link to={`/prescrever-treino?plano=${planoAtivoId}`} className="font-semibold text-primary hover:underline">
-                    Abrir o plano de treino
-                  </Link>
-                </>
+                <span className="text-ink-2">
+                  {alunoNome} já tem um plano ativo. Ao salvar, você pode aplicar estes exercícios nas sessões dele.
+                </span>
               ) : (
                 <>
                   <span className="text-ink-2">Estes exercícios são a sessão. Para organizar os próximos meses:</span>
                   <Link to={`/prescrever-treino?aluno=${alunoId}`} className="font-semibold text-primary hover:underline">
-                    Montar a periodização
+                    Montar o treino agora
                   </Link>
                 </>
               )}

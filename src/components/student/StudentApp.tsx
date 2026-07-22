@@ -16,6 +16,8 @@ import {
   type BlocoSessao,
   semanaAtual,
   mesocicloAtual,
+  rotuloMeso,
+  rotuloPosicao,
   getMetodo,
 } from "@/data/periodizacao";
 
@@ -197,7 +199,11 @@ function AbaHoje({
         {sessoes[idxHoje] && (
           <p className="mt-2 text-sm text-ink">Treino de hoje: <strong>{sessoes[idxHoje].nome}</strong></p>
         )}
-        {meso && <p className="mt-1 text-sm text-ink-2">Fase atual: <strong className="text-ink">{meso.nome}</strong>. {meso.foco}</p>}
+        {meso && (
+          <p className="mt-1 text-sm text-ink-2">
+            {rotuloPosicao(meso)}: <strong className="text-ink">{rotuloMeso(meso)}</strong>. {meso.foco}
+          </p>
+        )}
       </Card>
 
       {sessoes.length === 0 ? (
@@ -534,8 +540,8 @@ function AbaPlano({ plano, cor, aluno }: { plano?: PlanoTreino; cor: string; alu
         return (
           <Card key={m.id} className="p-4" style={atual ? { borderColor: cor, borderWidth: 2 } : undefined}>
             <div className="flex items-center justify-between gap-2">
-              <div className="font-display font-bold text-ink">{m.nome}</div>
-              {atual && <Pill tone="primary">Fase atual</Pill>}
+              <div className="font-display font-bold text-ink">{rotuloMeso(m)}</div>
+              {atual && <Pill tone="primary">{rotuloPosicao(m)}</Pill>}
             </div>
             <p className="mt-1 text-xs text-ink-3">Semanas {m.semanaInicio} a {m.semanaFim}</p>
             <p className="mt-1.5 text-sm text-ink-2">{m.foco}</p>

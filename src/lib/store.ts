@@ -284,6 +284,40 @@ export const FREE_ALUNOS_LIMIT = 3;
 /** intervalo padrão sugerido entre reavaliações (dias) */
 export const REAVALIACAO_DIAS = 60;
 
+/** Onde uma prescrição foi aplicada no plano (vínculo reverso DERIVADO). */
+export interface LocalDaPrescricao {
+  /** letra da sessão (A, B, ...) */
+  sessao: string;
+  /** primeira semana em que aparece */
+  semana: number;
+  /** índice 1-based do mesociclo */
+  bloco: number;
+}
+
+/**
+ * Vínculo reverso Prescricao > plano: varre os planos ATIVOS por blocos com
+ * `origemPrescricaoId === prescricaoId` e devolve o primeiro lugar onde a prescrição foi
+ * aplicada, ou null. É DERIVADO por completo (decisão travada 15): nada é gravado na
+ * Prescricao. Alimenta o selo "No plano: Sessão B · semana 5".
+ */
+export function prescricaoAplicadaEm(planos: PlanoTreino[], prescricaoId: string): LocalDaPrescricao | null {
+  for (const plano of planos) {
+    if (plano.status !== "ativo") continue;
+    // Ordem natural (mesociclos -> semanas -> sessões): o primeiro match é o mais cedo.
+    for (let mi = 0; mi < plano.macrociclo.mesociclos.length; mi++) {
+      const meso = plano.macrociclo.mesociclos[mi];
+      for (const micro of meso.microciclos) {
+        for (let si = 0; si < micro.sessoes.length; si++) {
+          if (micro.sessoes[si].blocos.some((b) => b.origemPrescricaoId === prescricaoId)) {
+            return { sessao: String.fromCharCode(65 + si), semana: micro.semana, bloco: mi + 1 };
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
 interface AlunosState {
   alunos: Aluno[];
   avaliacoes: Avaliacao[];

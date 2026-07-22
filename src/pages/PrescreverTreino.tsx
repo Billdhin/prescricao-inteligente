@@ -31,6 +31,7 @@ import {
   type PlanoTreino,
 } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
+import type { Aluno } from "@/data/alunos";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { bibliografia } from "@/data/referencias";
 import { exportPlanoPDF } from "@/lib/exportPlano";
@@ -42,6 +43,9 @@ const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
 const DURACOES = [8, 12, 16, 24];
 const FREQUENCIAS = [2, 3, 4, 5, 6];
 
+const fmtDataCurta = (ts: number) =>
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(ts));
+
 /* ------------------------------- Página ------------------------------- */
 
 export function PrescreverTreino() {
@@ -52,6 +56,7 @@ export function PrescreverTreino() {
   const updatePlano = useAlunos((s) => s.updatePlano);
   const planosSalvos = useAlunos((s) => s.planos);
   const execucoes = useAlunos((s) => s.execucoes);
+  const prescricoes = useAlunos((s) => s.prescricoes);
   const user = useUser();
   const premium = isPremiumUnlocked(user.plan);
   const [confirmarRegenerar, setConfirmarRegenerar] = React.useState(false);
@@ -106,7 +111,13 @@ export function PrescreverTreino() {
     },
     idExistente?: string,
   ): PlanoTreino => {
-    const g = gerarPlano({ ...ctx, modeloPreferido });
+    // O aluno que já está na fase 3 recebe o macro nascendo na fase 3. Só vale com aluno
+    // (e só surte efeito em plano de grupo especial); avulso segue começando na fase 1.
+    const g = gerarPlano({
+      ...ctx,
+      modeloPreferido,
+      faseInicial: ctx.alunoId ? aluno?.faseJornada : undefined,
+    });
     return {
       // `uid()` e não o relógio: dois planos gerados no mesmo milissegundo receberiam o
       // mesmo id, e salvar o segundo sobrescreveria o primeiro em vez de arquivá-lo.
@@ -197,6 +208,16 @@ export function PrescreverTreino() {
       navigate(`/alunos/${aluno.id}`, { state: { planoSalvo: true } });
     }
   };
+
+  // Resolve a data de exibição de uma prescrição pela id: alimenta o selo "da prescrição de
+  // {data}" nos blocos semeados. Só exibição; o vínculo em si é derivado, nunca gravado.
+  const prescricaoData = React.useCallback(
+    (pid: string) => {
+      const p = prescricoes.find((x) => x.id === pid);
+      return p ? fmtDataCurta(p.data) : undefined;
+    },
+    [prescricoes],
+  );
 
   const exportar = () => {
     if (!plano || !aluno) return;
@@ -356,6 +377,8 @@ export function PrescreverTreino() {
             }}
             premium={premium}
             aluno={aluno?.nome}
+            alunoObj={aluno}
+            prescricaoData={prescricaoData}
             podeSalvar={Boolean(aluno)}
             salvo={salvo}
             onSalvar={salvar}
@@ -434,6 +457,8 @@ function ResultadoPlano({
   onChange,
   premium,
   aluno,
+  alunoObj,
+  prescricaoData,
   podeSalvar,
   salvo,
   onSalvar,
@@ -443,6 +468,9 @@ function ResultadoPlano({
   onChange: (p: PlanoTreino) => void;
   premium: boolean;
   aluno?: string;
+  /** objeto do aluno (perfil) para a troca segura no editor; ausente = plano avulso */
+  alunoObj?: Aluno;
+  prescricaoData?: (id: string) => string | undefined;
   podeSalvar: boolean;
   salvo: boolean;
   onSalvar: () => void;
@@ -456,7 +484,17 @@ function ResultadoPlano({
   const modelo = getModelo(naAlternativa && plano.modeloAltId ? plano.modeloAltId : plano.modeloId);
   const grupoObj = plano.grupoEspecial ? getSpecialGroup(plano.grupoEspecial) : undefined;
   const biblio = bibliografia(plano.refIds);
-  const ctx: ContextoFaixa = { objetivo: plano.objetivo, nivel: plano.nivel };
+  // Contexto estendido: leva o perfil do aluno (restrições/equipamentos/grupo) até o editor,
+  // para a troca segura ranquear pelo mesmo motor do Prescrever exercício. Sem aluno, o
+  // helper interno aplica os defaults do Gps (sem restrição, todos os equipamentos).
+  const ctx: ContextoFaixa = {
+    objetivo: plano.objetivo,
+    nivel: plano.nivel,
+    restricoes: alunoObj?.restricoes,
+    equipamentos: alunoObj?.equipamentos,
+    grupoEspecial: alunoObj?.grupoEspecial ?? plano.grupoEspecial,
+    prescricaoData,
+  };
 
   // "Você está aqui": num plano salvo, o mesociclo/semana correntes saem do calendário;
   // num rascunho ainda não salvo, o ponto de partida é o primeiro bloco (semana 1).

@@ -74,6 +74,12 @@ export interface BlocoSessao {
   modalidade?: string;
   /** rótulo livre quando não vem de um exercício catalogado (ex.: "Mobilidade de quadril") */
   nome?: string;
+  /**
+   * Quando o bloco nasceu de uma Prescricao (tubo "Aplicar no treino"), guarda o id dela.
+   * Aditivo e opcional: alimenta o selo "da prescrição de {data}" e o vínculo reverso
+   * DERIVADO (nunca gravado na Prescricao). Ver src/lib/gps/semear.ts.
+   */
+  origemPrescricaoId?: string;
   // --- Força (tipo "forca"): faixas como texto ("3 a 4", "8 a 12", "60 a 75% 1RM ou RPE 7-8", "60 a 90 s") ---
   series?: string;
   reps?: string;
@@ -128,6 +134,13 @@ export interface Mesociclo {
   tendenciaVolume: Tendencia;
   tendenciaIntensidade: Tendencia;
   tendenciaComplexidade: Tendencia;
+  /**
+   * Fase da jornada de um grupo especial que originou este mesociclo (1 a 4). Só existe
+   * quando o bloco NASCE de uma fase (montarMacrocicloGrupo); ausente nos mesociclos
+   * genéricos. É o que autoriza a palavra "Fase" na tela (decisão travada 17).
+   * `fase.numero` já é tipado 1|2|3|4 em specialGroups.ts.
+   */
+  faseJornada?: 1 | 2 | 3 | 4;
   /** semana de recuperação/descarga ao final do bloco, quando houver */
   deload?: boolean;
   /** ponto de reavaliação sugerido ao final do bloco */
@@ -202,11 +215,19 @@ export function mesocicloAtual(plano: PlanoTreino, agora = Date.now()): Mesocicl
  * imprimindo o nome como está gravado.
  */
 export function rotuloMeso(meso: Mesociclo, _indice?: number): string {
-  // `faseJornada` é aditivo (nasce na integração do ciclo); acesso tolerante para
-  // não depender do campo existir no tipo ainda.
-  const temFase = Boolean((meso as { faseJornada?: number }).faseJornada);
-  if (temFase) return meso.nome;
+  // Mesociclo nascido de fase (com `faseJornada`) já traz "Fase N: ..." verdadeiro no nome.
+  if (meso.faseJornada) return meso.nome;
   return meso.nome.replace(/^Fase \d+:\s*/, "");
+}
+
+/**
+ * Rótulo de EXIBIÇÃO do "onde estou" (eyebrow do bloco corrente): mesociclo nascido de
+ * uma fase da jornada é "Fase atual" (a palavra é verdadeira); um bloco genérico não pode
+ * exibir "Fase" como se fosse fase clínica, então diz "Bloco atual". Fonte única usada no
+ * portal do aluno e onde mais o eyebrow aparecer.
+ */
+export function rotuloPosicao(meso: Mesociclo): string {
+  return meso.faseJornada ? "Fase atual" : "Bloco atual";
 }
 
 /** A próxima reavaliação marcada no plano que ainda não passou. */
