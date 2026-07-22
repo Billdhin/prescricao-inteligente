@@ -75,9 +75,9 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
     return {
       etapa: "planejar",
       tone: "primary",
-      frase: "Avaliação pronta. O próximo passo é montar o plano.",
-      cta: { label: "Montar plano", kind: "planejar" },
-      chip: { label: "Sem plano ativo", tone: "cta" },
+      frase: "Avaliação pronta. O próximo passo é montar o treino.",
+      cta: { label: "Montar treino", kind: "planejar" },
+      chip: { label: "Sem treino", tone: "cta" },
     };
   }
 

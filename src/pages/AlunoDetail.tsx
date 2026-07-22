@@ -969,14 +969,14 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
   if (!ativo) {
     return (
       <Card className="p-5 md:p-6">
-        <h2 className="mb-3 font-display text-lg font-bold text-ink">Plano de treino</h2>
+        <h2 className="mb-3 font-display text-lg font-bold text-ink">Treino do aluno</h2>
         <div className="rounded-xl border border-dashed border-border p-4 text-center">
           <p className="text-sm text-ink-2">
-            Sem periodização montada. O plano organiza os meses de {aluno.nome.split(" ")[0]} em macrociclo,
+            Sem treino montado ainda. O treino organiza os meses de {aluno.nome.split(" ")[0]} em macrociclo,
             mesociclos e semanas, com a progressão justificada.
           </p>
           <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
-            <CalendarRange className="h-4 w-4" /> Montar periodização
+            <CalendarRange className="h-4 w-4" /> Montar treino
           </Link>
         </div>
         {arquivados.length > 0 && (
@@ -998,7 +998,7 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
   return (
     <Card className="p-5 md:p-6">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-display text-lg font-bold text-ink">Plano de treino</h2>
+        <h2 className="font-display text-lg font-bold text-ink">Treino do aluno</h2>
         <Link to={`/prescrever-treino?aluno=${aluno.id}`} className="text-sm font-semibold text-primary hover:underline">
           Novo
         </Link>

@@ -39,18 +39,20 @@ export function ProfessionalDashboard() {
 
   const ativos = alunos.filter((a) => a.status === "ativo");
   const avaliacoesMes = avaliacoes.filter((a) => Date.now() - a.data <= 30 * DIA).length;
-  const prescricoesAtivas = prescricoes.filter((p) => p.status === "ativa");
   const planosAtivos = planos.filter((p) => p.status === "ativo");
-  const temPrescricaoAtiva = (id: string) =>
-    prescricoes.some((p) => p.alunoId === id && p.status === "ativa");
+  // Predicado ÚNICO de "ter treino": o objeto canônico é o plano de treino (a
+  // periodização). A prescrição avulsa é insumo, não o treino. Mesma definição
+  // usada pela Linha do cuidado (proximoPasso.ts), acaba a discordância antiga.
+  const temTreinoAtivo = (id: string) => planosAtivos.some((p) => p.alunoId === id);
+  const comTreino = ativos.filter((a) => temTreinoAtivo(a.id)).length;
 
   const atencao = ativos
     .map((a) => {
       const motivos: { label: string; tone: "warning" | "cta" | "analysis" }[] = [];
       if (a.proximaReavaliacaoEm && a.proximaReavaliacaoEm < Date.now())
         motivos.push({ label: "Reavaliação vencida", tone: "warning" });
-      if (!temPrescricaoAtiva(a.id))
-        motivos.push({ label: "Sem prescrição ativa", tone: "cta" });
+      if (!temTreinoAtivo(a.id))
+        motivos.push({ label: "Sem treino ativo", tone: "cta" });
 
       // O plano marca onde reavaliar. Uma reavaliação que chegou é o momento em que o
       // plano pede uma decisão (progredir, manter ou regredir), então ela aparece aqui.
@@ -104,9 +106,8 @@ export function ProfessionalDashboard() {
       {/* Faixa de contexto (apoio, de-enfatizada) */}
       <Card variant="soft" className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
         <StatInline icon={<Users className="h-4 w-4 text-primary" />} value={ativos.length} label="alunos ativos" to="/alunos" />
+        <StatInline icon={<CalendarRange className="h-4 w-4 text-primary" />} value={comTreino} label="com treino ativo" to="/alunos" />
         <StatInline icon={<Activity className="h-4 w-4 text-analysis" />} value={avaliacoesMes} label="avaliações (30d)" to="/assessments" />
-        <StatInline icon={<Dumbbell className="h-4 w-4 text-ink-3" />} value={prescricoesAtivas.length} label="prescrições ativas" to="/protocols" />
-        <StatInline icon={<CalendarRange className="h-4 w-4 text-ink-3" />} value={planosAtivos.length} label="planos de treino" to="/prescrever-treino" />
       </Card>
 
       {/* ÂNCORA: Precisam de atenção */}
@@ -181,7 +182,7 @@ export function ProfessionalDashboard() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {ativos.slice(0, 4).map((a) => (
-              <AlunoCard key={a.id} aluno={a} temPrescricao={temPrescricaoAtiva(a.id)} />
+              <AlunoCard key={a.id} aluno={a} temTreino={temTreinoAtivo(a.id)} />
             ))}
           </div>
         )}
@@ -361,7 +362,7 @@ function StatInline({ icon, value, label, to }: { icon: ReactNode; value: number
   );
 }
 
-function AlunoCard({ aluno, temPrescricao }: { aluno: Aluno; temPrescricao: boolean }) {
+function AlunoCard({ aluno, temTreino }: { aluno: Aluno; temTreino: boolean }) {
   const dias = aluno.proximaReavaliacaoEm ? diasAte(aluno.proximaReavaliacaoEm) : null;
   // Teto de 1 pill de restrição (+N) para não competir com o flag acionável.
   const restr = aluno.restricoes;
@@ -378,7 +379,7 @@ function AlunoCard({ aluno, temPrescricao }: { aluno: Aluno; temPrescricao: bool
         <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
       </div>
       <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-        {!temPrescricao && <Pill tone="cta">Sem prescrição</Pill>}
+        {!temTreino && <Pill tone="cta">Sem treino</Pill>}
         {restr.length > 0 && (
           <Pill tone="warning">
             {rotuloRestricao(restr[0].tag)}
