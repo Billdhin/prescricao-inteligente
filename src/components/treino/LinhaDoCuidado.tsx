@@ -29,7 +29,9 @@ const ICON_TONE: Record<ProximoPasso["tone"], string> = {
 };
 
 function IconePasso({ tone }: { tone: ProximoPasso["tone"] }) {
-  const cls = cn("h-5 w-5 shrink-0", ICON_TONE[tone]);
+  // Quando há ação pendente, o alvo pulsa de leve para puxar o olhar; "em dia"
+  // (success) fica parado, sem pedir nada.
+  const cls = cn("h-5 w-5 shrink-0", ICON_TONE[tone], tone !== "success" && "animate-alvo");
   if (tone === "warning") return <AlertTriangle className={cls} />;
   if (tone === "success") return <CheckCircle2 className={cls} />;
   return <Target className={cls} />;
@@ -112,7 +114,14 @@ function NoCiclo({ estado }: { estado: EstadoEtapa }) {
     );
   }
   if (estado === "atual") {
-    return <span className="grid h-7 w-7 place-items-center rounded-full gradient-brand text-white ring-4 ring-primary-tint" />;
+    // Passo atual: ponto sólido com um halo pulsante por trás, para dar vida ao
+    // stepper sem distrair (o halo desliga em reduced-motion).
+    return (
+      <span className="relative grid h-7 w-7 place-items-center">
+        <span aria-hidden className="animate-halo absolute inset-0 rounded-full bg-primary/40" />
+        <span className="relative h-7 w-7 rounded-full gradient-brand ring-4 ring-primary-tint" />
+      </span>
+    );
   }
   return <span className="grid h-7 w-7 place-items-center rounded-full border-2 border-border bg-surface" />;
 }
