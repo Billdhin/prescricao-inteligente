@@ -535,25 +535,6 @@ function Sidebar() {
           })}
         </nav>
 
-        {(!collapsed || mobileOpen) && (
-          <div className="p-4">
-            <div className="rounded-2xl gradient-brand p-4 text-white shadow-elevated">
-              <div className="mb-2 flex items-center gap-2">
-                <Crown className="h-4 w-4" />
-                <span className="font-display font-bold">Plano Profissional</span>
-              </div>
-              <p className="mb-3 text-xs leading-relaxed text-white/85">
-                Aproveite todos os recursos avançados da plataforma.
-              </p>
-              <Link
-                to="/pricing"
-                className="block rounded-control bg-white py-2 text-center text-sm font-semibold text-primary hover:bg-white/90"
-              >
-                Ver plano
-              </Link>
-            </div>
-          </div>
-        )}
       </aside>
     </>
   );

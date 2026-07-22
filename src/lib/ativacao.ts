@@ -46,9 +46,14 @@ export function marcarCelebrado() {
   save(a);
 }
 
-/** Minutos entre o início e o primeiro caso salvo (null se ainda não houve). */
+/** Minutos entre o início e o primeiro caso salvo (null se ainda não houve, ou
+ *  se a sessão atravessou horas/dias e o número deixaria de fazer sentido). */
 export function minutosPrimeiroCaso(): number | null {
   const a = getAtivacao();
   if (!a.inicio || !a.primeiroSalvo) return null;
-  return Math.max(1, Math.round((a.primeiroSalvo - a.inicio) / 60_000));
+  const min = Math.round((a.primeiroSalvo - a.inicio) / 60_000);
+  // Acima de ~2h a métrica "resolveu em X min" perde o sentido (o onboarding
+  // começou noutra sessão); melhor omitir o tempo do que mostrar "4281 min".
+  if (min < 1 || min > 120) return null;
+  return min;
 }
