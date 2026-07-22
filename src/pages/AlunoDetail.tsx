@@ -168,17 +168,28 @@ export function AlunoDetail() {
               {aluno.sexo ? `${aluno.sexo} · ` : ""}
               {aluno.objetivo} · {aluno.nivel}
             </p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {aluno.restricoes.length > 0 ? (
-                aluno.restricoes.map((r) => (
-                  <Pill key={r.tag} tone="warning" icon={<AlertTriangle className="h-3 w-3" />}>
-                    {rotuloRestricao(r.tag)}
-                  </Pill>
-                ))
-              ) : (
+            {aluno.restricoes.length > 0 ? (
+              <div className="mt-3">
+                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">
+                  Restrições físicas
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {aluno.restricoes.map((r) => (
+                    <span
+                      key={r.tag}
+                      className="inline-flex max-w-[13rem] items-start gap-1.5 rounded-lg bg-[#fef4e2] px-2.5 py-1 text-xs font-semibold text-warning"
+                    >
+                      <AlertTriangle className="mt-[1px] h-3 w-3 shrink-0" />
+                      <span className="leading-snug">{rotuloRestricao(r.tag)}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3">
                 <Pill tone="neutral">Sem restrição</Pill>
-              )}
-            </div>
+              </div>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setEditar(true)} className={buttonClasses("outline")}>

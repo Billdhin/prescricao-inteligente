@@ -74,6 +74,19 @@ export function RestricoesSelector({
   const seguranca = avaliarSeguranca(value);
   const ativas = restricoesAtivas(value);
 
+  // Selecionadas que pedem detalhe (têm perguntas condicionais): vão para a seção
+  // "Detalhe das selecionadas", em coluna única, em vez de expandir o card da grade.
+  const comDetalhe = React.useMemo(
+    () =>
+      value
+        .map((r) => ({ r, item: CATALOGO_RESTRICOES.find((it) => it.tag === r.tag) }))
+        .filter(
+          (x): x is { r: RestricaoSelecionada; item: RestricaoCatalogoItem } =>
+            !!x.item && x.r.tag !== "nenhuma_restricao" && (x.item.campos?.length ?? 0) > 0,
+        ),
+    [value],
+  );
+
   return (
     <div className="space-y-4">
       {/* Busca */}
@@ -126,15 +139,13 @@ export function RestricoesSelector({
             </button>
             {aberto && (
               <div id={painelId} role="region" aria-label={g.titulo} className="border-t border-border p-3">
-                <div className="grid gap-2.5 sm:grid-cols-2">
+                <div className="grid items-stretch gap-2.5 sm:grid-cols-2">
                   {itens.map((it) => (
                     <RestricaoCard
                       key={it.tag}
                       item={it}
-                      sel={selMap.get(it.tag)}
+                      selecionado={selMap.has(it.tag)}
                       onToggle={() => toggle(it.tag)}
-                      onPatch={(p) => patch(it.tag, p)}
-                      idBase={idBase}
                     />
                   ))}
                 </div>
@@ -143,6 +154,19 @@ export function RestricoesSelector({
           </div>
         );
       })}
+
+      {/* Detalhe das selecionadas: perguntas condicionais fora da grade, em coluna
+          única (cresce na vertical sem quebrar o leiaute da grade). */}
+      {comDetalhe.length > 0 && (
+        <div className="space-y-2">
+          <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">
+            Detalhe das selecionadas
+          </div>
+          {comDetalhe.map(({ r, item }) => (
+            <RefinarCard key={r.tag} item={item} sel={r} onPatch={(p) => patch(r.tag, p)} idBase={idBase} />
+          ))}
+        </div>
+      )}
 
       {/* Alerta de segurança */}
       {seguranca.bloqueado && (
@@ -207,66 +231,77 @@ export function RestricoesSelector({
 
 /* ------------------------------- Card ------------------------------------ */
 
+/** Card da GRADE: só escolhe (marca/desmarca). Altura uniforme, sem expansão
+ *  inline (o detalhamento acontece na seção "Detalhe das selecionadas"). */
 function RestricaoCard({
   item,
-  sel,
+  selecionado,
   onToggle,
-  onPatch,
-  idBase,
 }: {
   item: RestricaoCatalogoItem;
-  sel?: RestricaoSelecionada;
+  selecionado: boolean;
   onToggle: () => void;
-  onPatch: (p: Partial<RestricaoSelecionada>) => void;
-  idBase: string;
 }) {
-  const selecionado = Boolean(sel);
   return (
-    <div
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={selecionado}
+      onClick={onToggle}
       className={cn(
-        "rounded-xl border p-3 transition-colors sm:col-span-1",
+        "flex h-full w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors sm:col-span-1",
         // "Nenhuma" e "Outra" ocupam a linha inteira para separar visualmente
         (item.tag === "nenhuma_restricao" || item.tag === "outra_restricao") && "sm:col-span-2",
         selecionado ? "border-primary bg-primary-tint/50" : "border-border bg-surface hover:bg-surface-soft",
       )}
     >
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={selecionado}
-        onClick={onToggle}
-        className="flex w-full items-start gap-3 text-left"
+      <span
+        aria-hidden
+        className={cn(
+          "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2",
+          selecionado ? "border-primary bg-primary text-white" : "border-ink-3/50 bg-surface",
+        )}
       >
-        <span
-          aria-hidden
-          className={cn(
-            "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2",
-            selecionado ? "border-primary bg-primary text-white" : "border-ink-3/50 bg-surface",
-          )}
-        >
-          {selecionado && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-        </span>
-        <span className="min-w-0">
-          <span className="block font-semibold text-ink">{item.titulo}</span>
-          <span className="mt-0.5 block text-xs leading-relaxed text-ink-2">{item.descricao}</span>
-        </span>
-      </button>
+        {selecionado && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+      </span>
+      <span className="min-w-0">
+        <span className="block font-semibold text-ink">{item.titulo}</span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-ink-2">{item.descricao}</span>
+      </span>
+    </button>
+  );
+}
 
-      {selecionado && (
-        <div className="mt-3 space-y-3 border-t border-primary/20 pt-3">
-          {item.efeitos.length > 0 && (
-            <ul className="space-y-1 text-xs text-ink-2">
-              {item.efeitos.map((e) => (
-                <li key={e} className="flex gap-1.5">
-                  <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-primary" />
-                  {e}
-                </li>
-              ))}
-            </ul>
-          )}
-          <PerguntasCondicionais item={item} sel={sel!} onPatch={onPatch} idBase={idBase} />
-        </div>
+/** Card da seção "Detalhe das selecionadas": largura total, mostra os efeitos e
+ *  as perguntas condicionais da restrição. Cresce na vertical, sem quebrar grade. */
+function RefinarCard({
+  item,
+  sel,
+  onPatch,
+  idBase,
+}: {
+  item: RestricaoCatalogoItem;
+  sel: RestricaoSelecionada;
+  onPatch: (p: Partial<RestricaoSelecionada>) => void;
+  idBase: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-surface p-3">
+      <div className="mb-2 flex items-center gap-1.5">
+        <ShieldAlert className="h-4 w-4 shrink-0 text-warning" />
+        <span className="font-semibold text-ink">{item.titulo}</span>
+      </div>
+      {item.efeitos.length > 0 && (
+        <ul className="mb-3 space-y-1 text-xs text-ink-2">
+          {item.efeitos.map((e) => (
+            <li key={e} className="flex gap-1.5">
+              <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-primary" />
+              {e}
+            </li>
+          ))}
+        </ul>
       )}
+      <PerguntasCondicionais item={item} sel={sel} onPatch={onPatch} idBase={idBase} />
     </div>
   );
 }
