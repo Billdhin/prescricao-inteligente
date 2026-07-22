@@ -43,16 +43,7 @@ import { specialGroups } from "@/data/specialGroups";
 import { OBJETIVOS } from "@/lib/gps/engine";
 import { marcarAtivacao } from "@/lib/ativacao";
 import { useDialog } from "@/lib/useDialog";
-import {
-  useUI,
-  useUser,
-  useProgress,
-  useMode,
-  useAlunos,
-  planLabel,
-  type Plan,
-  type AppMode,
-} from "@/lib/store";
+import { useUI, useUser, useProgress, useAlunos, planLabel } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -69,99 +60,54 @@ type NavItem = {
 // o 1º acesso vê só o caminho do aha; o resto abre quando o usuário quiser).
 type NavSection = { label?: string; items: NavItem[]; collapsible?: boolean };
 
-// Navegação enxuta e agrupada: poucos destinos no topo (o trabalho do dia) e o
-// resto em "Referência" / "Avançado" / "Sua conta".
-const navByMode: Record<AppMode, NavSection[]> = {
-  atender: [
-    {
-      // Os 5 destinos do dia a dia: onde estou, meus alunos, os dois níveis de
-      // prescrição e o cuidado de segurança. O resto mora em "Mais".
-      items: [
-        { to: "/dashboard", label: "Painel", icon: LayoutDashboard, short: "Painel" },
-        { to: "/alunos", label: "Alunos", icon: Users, short: "Alunos" },
-        { to: "/gps", label: "Prescrever exercício", icon: Navigation, short: "Exercício" },
-        { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange, short: "Treino" },
-        { to: "/semaforo", label: "Semáforo", icon: ShieldCheck, short: "Semáforo" },
-      ],
-    },
-    {
-      label: "Ferramentas da sessão",
-      collapsible: true,
-      items: [
-        { to: "/assessments", label: "Avaliações", icon: BarChart3 },
-        { to: "/protocols", label: "Protocolos", icon: ClipboardList },
-      ],
-    },
-    {
-      label: "Referência",
-      collapsible: true,
-      items: [
-        { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
-        { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
-        { to: "/library", label: "Glossário", icon: Library },
-      ],
-    },
-    {
-      label: "Ajuda",
-      collapsible: true,
-      items: [
-        { to: "/tutorial", label: "Tutoriais", icon: GraduationCap },
-        { to: "/suporte", label: "Suporte", icon: LifeBuoy },
-      ],
-    },
-    { label: "Sua conta", items: [{ to: "/account", label: "Configurações", icon: Settings }] },
-  ],
-  aprender: [
-    {
-      // 5 destinos: início, a porta única "Estudar" (disciplinas/trilhas/mapa em
-      // abas), aplicar em casos, consultar e acompanhar o progresso.
-      items: [
-        { to: "/aprender", label: "Início", icon: LayoutDashboard, short: "Início" },
-        {
-          to: "/aprender/disciplinas",
-          label: "Estudar",
-          icon: Library,
-          match: ["/tracks", "/aprender/mapa"],
-          short: "Estudar",
-        },
-        { to: "/aprender/casos", label: "Casos de prescrição", icon: Stethoscope, short: "Casos" },
-        { to: "/aprender/consulta", label: "Consulta rápida", icon: Search, short: "Consulta" },
-        { to: "/aprender/progresso", label: "Meu progresso", icon: BarChart3, short: "Progresso" },
-      ],
-    },
-    {
-      label: "Conteúdo",
-      collapsible: true,
-      items: [
-        { to: "/aprender/biblioteca", label: "Biblioteca científica", icon: BookOpen },
-        { to: "/aprender/salvos", label: "Salvos", icon: Bookmark },
-      ],
-    },
-    {
-      label: "Referência",
-      collapsible: true,
-      items: [
-        { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
-        { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
-      ],
-    },
-    {
-      label: "Ajuda",
-      collapsible: true,
-      items: [
-        { to: "/tutorial", label: "Tutoriais", icon: GraduationCap },
-        { to: "/suporte", label: "Suporte", icon: LifeBuoy },
-      ],
-    },
-    { label: "Sua conta", items: [{ to: "/account", label: "Configurações", icon: Settings }] },
-  ],
-};
+// UMA navegação, estável (fim dos dois modos que trocavam a sidebar inteira).
+// Agrupada por intenção, tudo sempre visível: o usuário nunca mais precisa
+// descobrir "em que mundo estou" nem abrir um "Mais recursos" escondido.
+const NAV: NavSection[] = [
+  {
+    label: "Trabalho",
+    items: [
+      { to: "/dashboard", label: "Hoje", icon: LayoutDashboard, short: "Hoje" },
+      { to: "/alunos", label: "Alunos", icon: Users, short: "Alunos" },
+      { to: "/semaforo", label: "Semáforo", icon: ShieldCheck, short: "Semáforo" },
+    ],
+  },
+  {
+    label: "Prescrever",
+    items: [
+      { to: "/gps", label: "Prescrever exercício", icon: Navigation, short: "Exercício" },
+      { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange, short: "Treino" },
+    ],
+  },
+  {
+    label: "Estudar e referência",
+    items: [
+      { to: "/aprender", label: "Estudar", icon: GraduationCap, match: ["/aprender", "/tracks"], short: "Estudar" },
+      { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
+      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical },
+      { to: "/library", label: "Glossário", icon: Library },
+    ],
+  },
+  {
+    label: "Ferramentas",
+    items: [
+      { to: "/assessments", label: "Avaliações", icon: BarChart3 },
+      { to: "/protocols", label: "Protocolos", icon: ClipboardList },
+      { to: "/tutorial", label: "Tutoriais", icon: HelpCircle },
+      { to: "/suporte", label: "Suporte", icon: LifeBuoy },
+    ],
+  },
+  { label: "Sua conta", items: [{ to: "/account", label: "Configurações", icon: Settings }] },
+];
 
-// Rotas exclusivas de cada modo (não compartilhadas). Ao trocar de modo, só
-// redireciona à home do novo modo se a rota atual pertencer só ao modo que sai.
-const ATENDER_ONLY = ["/alunos", "/assessments", "/protocols", "/gps", "/prescrever-treino", "/semaforo", "/dashboard"];
-const APRENDER_ONLY = ["/aprender", "/tracks"];
-const HOME_POR_MODO: Record<AppMode, string> = { atender: "/dashboard", aprender: "/aprender" };
+// Barra inferior do mobile: os 5 destinos mais usados no dia a dia.
+const BOTTOM: NavItem[] = [
+  { to: "/dashboard", label: "Hoje", icon: LayoutDashboard, short: "Hoje" },
+  { to: "/alunos", label: "Alunos", icon: Users, short: "Alunos" },
+  { to: "/gps", label: "Prescrever exercício", icon: Navigation, short: "Exercício" },
+  { to: "/semaforo", label: "Semáforo", icon: ShieldCheck, short: "Semáforo" },
+  { to: "/aprender", label: "Estudar", icon: GraduationCap, match: ["/aprender", "/tracks"], short: "Estudar" },
+];
 
 function tempoRelativo(ts: number) {
   const diff = Date.now() - ts;
@@ -296,7 +242,6 @@ function RouteFallback() {
    direto o "Primeiro Caso Real" — o gatilho de uso é situacional (o aluno com
    comorbidade chegou HOJE), então o onboarding espelha exatamente isso. */
 function OnboardingGate({ onDone }: { onDone: () => void }) {
-  const setMode = useMode((s) => s.setMode);
   const loadExamples = useAlunos((s) => s.loadExamples);
   const navigate = useNavigate();
   const dialogRef = useDialog<HTMLDivElement>(() => {});
@@ -310,7 +255,6 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
     onDone();
   };
   const resolverCaso = () => {
-    setMode("atender");
     marcarAtivacao("inicio");
     finish();
     const q = new URLSearchParams({ "primeiro-caso": "1", objetivo: caso.objetivo, nivel: caso.nivel });
@@ -318,13 +262,11 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
     navigate(`/gps?${q.toString()}`);
   };
   const explorar = () => {
-    setMode("atender");
     loadExamples();
     finish();
     navigate("/dashboard");
   };
   const irAprender = () => {
-    setMode("aprender");
     finish();
     navigate("/aprender");
   };
@@ -418,33 +360,8 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
 
 function Sidebar() {
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useUI();
-  const { mode, setMode } = useMode();
-  const navigate = useNavigate();
   const location = useLocation();
   const asideRef = React.useRef<HTMLElement>(null);
-  const nav = navByMode[mode];
-  // "Mais recursos" recolhido por padrão (fica só o caminho do aha à vista); a
-  // preferência do usuário persiste depois que ele abre uma vez.
-  const [maisAberto, setMaisAberto] = React.useState(
-    () => typeof window !== "undefined" && localStorage.getItem("pi-nav-mais") === "1",
-  );
-  const toggleMais = () =>
-    setMaisAberto((v) => {
-      const next = !v;
-      localStorage.setItem("pi-nav-mais", next ? "1" : "0");
-      return next;
-    });
-
-  const changeMode = (m: AppMode) => {
-    setMode(m);
-    setMobileOpen(false);
-    // Preserva a rota atual, exceto quando ela é exclusiva do modo que está saindo
-    // (aí não faz sentido no novo contexto → vai para a home do novo modo).
-    const exclusive = m === "atender" ? APRENDER_ONLY : ATENDER_ONLY;
-    if (exclusive.some((prefix) => location.pathname.startsWith(prefix))) {
-      navigate(HOME_POR_MODO[m]);
-    }
-  };
 
   // Fecha o drawer ao trocar de rota
   React.useEffect(() => {
@@ -503,113 +420,26 @@ function Sidebar() {
           </button>
         </div>
 
-        <ModeSwitch mode={mode} onChange={changeMode} collapsed={collapsed && !mobileOpen} />
-
-        <nav aria-label="Menu principal" className="flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-2">
-          {nav.map((section, i) => {
+        <nav aria-label="Menu principal" className="flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-4">
+          {NAV.map((section, i) => {
             const iconOnly = collapsed && !mobileOpen;
-            // No modo icon-only não há rótulos: mostra tudo (é só uma tira de ícones).
-            // Fora dele, seções "collapsible" ficam sob o toggle "Mais recursos".
-            const dentroDoMais = !!section.collapsible && !iconOnly;
-            if (dentroDoMais && !maisAberto) {
-              // Renderiza o toggle uma única vez, antes da primeira seção recolhível.
-              const primeiraColl = !nav.slice(0, i).some((s) => s.collapsible);
-              return primeiraColl ? <MaisRecursosToggle key="mais-toggle" aberto={maisAberto} onToggle={toggleMais} /> : null;
-            }
             const showLabel = !!section.label && !iconOnly;
             const labelId = showLabel ? `navsec-${i}` : undefined;
-            const primeiraColl = dentroDoMais && !nav.slice(0, i).some((s) => s.collapsible);
             return (
-              <React.Fragment key={section.label ?? `sec-${i}`}>
-                {primeiraColl && <MaisRecursosToggle aberto={maisAberto} onToggle={toggleMais} />}
-                <div role={labelId ? "group" : undefined} aria-labelledby={labelId}>
-                  {showLabel && (
-                    <div id={labelId} className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-                      {section.label}
-                    </div>
-                  )}
-                  <NavGroup items={section.items} collapsed={iconOnly} />
-                </div>
-              </React.Fragment>
+              <div key={section.label ?? `sec-${i}`} role={labelId ? "group" : undefined} aria-labelledby={labelId}>
+                {showLabel && (
+                  <div id={labelId} className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+                    {section.label}
+                  </div>
+                )}
+                <NavGroup items={section.items} collapsed={iconOnly} />
+              </div>
             );
           })}
         </nav>
 
       </aside>
     </>
-  );
-}
-
-function ModeSwitch({
-  mode,
-  onChange,
-  collapsed,
-}: {
-  mode: AppMode;
-  onChange: (m: AppMode) => void;
-  collapsed: boolean;
-}) {
-  if (collapsed) {
-    const next: AppMode = mode === "atender" ? "aprender" : "atender";
-    const Icon = mode === "atender" ? Briefcase : GraduationCap;
-    return (
-      <div className="px-3 pt-3">
-        <button
-          onClick={() => onChange(next)}
-          title={`Modo: ${mode === "atender" ? "Atender" : "Aprender"} · clique para trocar`}
-          aria-label="Alternar modo"
-          className="grid h-10 w-full place-items-center rounded-xl bg-surface-soft text-primary hover:bg-primary-tint"
-        >
-          <Icon className="h-5 w-5" />
-        </button>
-      </div>
-    );
-  }
-  const opts: { value: AppMode; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { value: "atender", label: "Atender", icon: Briefcase },
-    { value: "aprender", label: "Aprender", icon: GraduationCap },
-  ];
-  return (
-    <div className="px-3 pt-3">
-      <div
-        role="group"
-        aria-label="Modo do aplicativo"
-        className="grid grid-cols-2 gap-1 rounded-xl bg-surface-soft p-1"
-      >
-        {opts.map((o) => {
-          const active = mode === o.value;
-          const Icon = o.icon;
-          return (
-            <button
-              key={o.value}
-              aria-pressed={active}
-              onClick={() => onChange(o.value)}
-              className={cn(
-                "flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold transition-colors",
-                active ? "bg-surface text-ink shadow-soft" : "text-ink-2 hover:text-ink",
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {o.label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function MaisRecursosToggle({ aberto, onToggle }: { aberto: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-expanded={aberto}
-      className="flex w-full items-center justify-between rounded-control px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3 transition-colors hover:bg-surface-soft hover:text-ink-2"
-    >
-      <span>Mais recursos</span>
-      <ChevronDown className={cn("h-4 w-4 transition-transform", aberto && "rotate-180")} />
-    </button>
   );
 }
 
@@ -650,9 +480,8 @@ function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }
  * São links de rota com aria-current; o "Estudar" acende também nas rotas irmãs.
  */
 function BottomBar() {
-  const { mode } = useMode();
   const { pathname } = useLocation();
-  const itens = navByMode[mode][0].items;
+  const itens = BOTTOM;
   return (
     <nav
       aria-label="Navegação principal"

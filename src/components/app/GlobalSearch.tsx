@@ -26,7 +26,7 @@ import { getLearningRepository } from "@/features/learning/repository";
 import { tracks } from "@/data/tracks";
 import { biblioteca } from "@/data/library";
 import { specialGroups } from "@/data/specialGroups";
-import { useAlunos, useMode, type AppMode } from "@/lib/store";
+import { useAlunos, type AppMode } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { cn } from "@/lib/utils";
 
@@ -192,7 +192,6 @@ function search(q: string, index: SearchItem[]): SearchItem[] {
 export function GlobalSearch() {
   const navigate = useNavigate();
   const alunos = useAlunos((s) => s.alunos);
-  const mode = useMode((s) => s.mode);
   const [q, setQ] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(0);
@@ -200,20 +199,17 @@ export function GlobalSearch() {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
 
-  // Índice montado por modo: no Atender, os alunos são a entidade mais buscada.
+  // Índice único (navegação única): alunos, base, grupos e atalhos, tudo buscável.
   const index = React.useMemo<SearchItem[]>(() => {
-    const alunoItems: SearchItem[] =
-      mode === "atender"
-        ? alunos.map((a) => ({
-            id: `aluno-${a.id}`,
-            label: a.nome,
-            sub: `${a.objetivo} · ${a.nivel}`,
-            group: "Alunos" as Group,
-            to: `/alunos/${a.id}`,
-            haystack: norm([a.nome, a.objetivo, a.nivel, ...a.restricoes.map((r) => rotuloRestricao(r.tag))].join(" ")),
-            Icon: Users,
-          }))
-        : [];
+    const alunoItems: SearchItem[] = alunos.map((a) => ({
+      id: `aluno-${a.id}`,
+      label: a.nome,
+      sub: `${a.objetivo} · ${a.nivel}`,
+      group: "Alunos" as Group,
+      to: `/alunos/${a.id}`,
+      haystack: norm([a.nome, a.objetivo, a.nivel, ...a.restricoes.map((r) => rotuloRestricao(r.tag))].join(" ")),
+      Icon: Users,
+    }));
     const grupoItems: SearchItem[] = specialGroups.map((g) => ({
       id: `sg-${g.slug}`,
       label: g.nome,
@@ -223,9 +219,8 @@ export function GlobalSearch() {
       haystack: norm([g.nome, g.descricaoCurta].join(" ")),
       Icon: HeartPulse,
     }));
-    const navItems = NAV_ITEMS.filter((it) => !it.modes || it.modes.includes(mode));
-    return [...alunoItems, ...BASE_INDEX, ...grupoItems, ...navItems];
-  }, [alunos, mode]);
+    return [...alunoItems, ...BASE_INDEX, ...grupoItems, ...NAV_ITEMS];
+  }, [alunos]);
 
   const results = React.useMemo(() => search(q, index), [q, index]);
 
