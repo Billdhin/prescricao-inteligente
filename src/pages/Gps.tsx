@@ -361,6 +361,15 @@ export function Gps() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
+          {/* Vim de um aluno: caminho de volta sempre visível (não fica perdido). */}
+          {aluno && (
+            <Link
+              to={`/alunos/${aluno.id}`}
+              className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
+            >
+              <ArrowLeft className="h-4 w-4" /> Voltar para {aluno.nome}
+            </Link>
+          )}
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <Pill tone="primary" icon={<Navigation className="h-3 w-3" />}>
               Assistente de decisão
@@ -597,6 +606,8 @@ function ContextoCard({
   faixaEtaria: string;
   setFaixaEtaria: (s: string) => void;
 }) {
+  const [trocando, setTrocando] = React.useState(false);
+  const alunoNome = alunos.find((a) => a.id === alunoId)?.nome;
   const temGrupo = grupoSlug !== "";
   const prescricaoGeral = alunoId === "";
   // Nome e foco de cada fase vêm da própria condição: o seletor deixa de ser "1,2,3,4" sem sentido.
@@ -612,25 +623,54 @@ function ContextoCard({
     .join(" · ");
   return (
     <Card className="p-5">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
-          <UserCheck className="h-4 w-4" />
-        </span>
-        <h2 className="font-display text-base font-bold text-ink">Para quem?</h2>
-        <span className="text-xs text-ink-3">Escolha o aluno. Sem aluno, é uma prescrição geral.</span>
-      </div>
+      {alunoId && !trocando ? (
+        /* Já vim de um aluno: mostra o contexto, não um seletor que convida a re-escolher. */
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-tint text-primary">
+            <UserCheck className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <div className="text-xs text-ink-3">Prescrevendo para</div>
+            <div className="font-display font-bold text-ink">{alunoNome}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTrocando(true)}
+            className="ml-auto text-sm font-semibold text-primary hover:underline"
+          >
+            Trocar aluno
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
+              <UserCheck className="h-4 w-4" />
+            </span>
+            <h2 className="font-display text-base font-bold text-ink">Para quem?</h2>
+            <span className="text-xs text-ink-3">Escolha o aluno. Sem aluno, é uma prescrição geral.</span>
+          </div>
 
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno</span>
-        <select value={alunoId} onChange={(e) => onAluno(e.target.value)} className="input">
-          <option value="">Prescrição geral (sem aluno)</option>
-          {alunos.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.nome}
-            </option>
-          ))}
-        </select>
-      </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno</span>
+            <select
+              value={alunoId}
+              onChange={(e) => {
+                onAluno(e.target.value);
+                setTrocando(false);
+              }}
+              className="input"
+            >
+              <option value="">Prescrição geral (sem aluno)</option>
+              {alunos.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      )}
 
       {/* Grupo, fase e idade são herdados do aluno; ficam num ajuste opcional para
           não competir com a única escolha que importa aqui (o aluno). */}
@@ -1319,14 +1359,14 @@ function Results({
           <div className="flex flex-wrap items-center gap-3">
             <UserCheck className="h-5 w-5 shrink-0 text-success" />
             <div className="min-w-0">
-              <div className="font-semibold text-ink">Prescrição para {alunoNome}</div>
+              <div className="font-semibold text-ink">Último passo: concluir a prescrição de {alunoNome}</div>
               <p className="text-sm text-ink-2">
-                Salve no perfil ou entregue ao aluno em PDF com sua marca, com a justificativa.
+                Salvar registra no perfil do aluno e volta para ele. O PDF com a sua marca é opcional.
               </p>
             </div>
             <div className="ml-auto flex flex-wrap gap-2">
-              <button onClick={onSalvar} className={buttonClasses("primary", "sm")}>
-                <Save className="h-4 w-4" /> Salvar
+              <button onClick={onSalvar} className={buttonClasses("primary")}>
+                <Save className="h-4 w-4" /> Salvar no perfil de {alunoNome}
               </button>
               {podeExportar ? (
                 <button onClick={onExportar} className={buttonClasses("secondary", "sm")}>

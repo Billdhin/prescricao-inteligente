@@ -62,6 +62,63 @@ const TIPO_AVAL_LABEL: Record<string, string> = {
   retorno: "Retorno",
 };
 
+type Aba = "visao" | "treino" | "avaliacoes" | "postural" | "conta";
+const ABAS: { id: Aba; label: string; Icon: typeof UserCheck }[] = [
+  { id: "visao", label: "Visão geral", Icon: UserCheck },
+  { id: "treino", label: "Treino", Icon: Dumbbell },
+  { id: "avaliacoes", label: "Avaliações", Icon: Activity },
+  { id: "postural", label: "Postural", Icon: HeartPulse },
+  { id: "conta", label: "Financeiro e app", Icon: Smartphone },
+];
+
+/** Tira de abas da tela do aluno: agrupa o que antes eram 8 cards soltos em
+ *  poucos destinos claros, no espírito do painel de atleta do ION. */
+function AlunoTabs({ aba, onAba }: { aba: Aba; onAba: (a: Aba) => void }) {
+  const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const onKey = (e: React.KeyboardEvent, i: number) => {
+    const n = ABAS.length;
+    let alvo = -1;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") alvo = (i + 1) % n;
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") alvo = (i - 1 + n) % n;
+    else if (e.key === "Home") alvo = 0;
+    else if (e.key === "End") alvo = n - 1;
+    if (alvo < 0) return;
+    e.preventDefault();
+    onAba(ABAS[alvo].id);
+    refs.current[alvo]?.focus();
+  };
+  return (
+    <div
+      role="tablist"
+      aria-label="Seções do aluno"
+      className="flex flex-wrap gap-1 rounded-control border border-border bg-surface-soft p-1"
+    >
+      {ABAS.map(({ id, label, Icon }, i) => {
+        const ativo = id === aba;
+        return (
+          <button
+            key={id}
+            ref={(el) => (refs.current[i] = el)}
+            role="tab"
+            aria-selected={ativo}
+            tabIndex={ativo ? 0 : -1}
+            onClick={() => onAba(id)}
+            onKeyDown={(e) => onKey(e, i)}
+            className={cn(
+              "inline-flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition-colors sm:flex-none",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+              ativo ? "bg-surface text-primary shadow-soft" : "text-ink-2 hover:bg-surface hover:text-ink",
+            )}
+          >
+            <Icon className="h-4 w-4" aria-hidden />
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function AlunoDetail() {
   const { id = "" } = useParams();
   const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, addAvaliacao, updateAluno, removeAluno, archivePrescricao } =
@@ -78,6 +135,8 @@ export function AlunoDetail() {
   const recemCriado = Boolean((location.state as { recemCriado?: boolean } | null)?.recemCriado);
   // "Salvei, e agora?": o retorno do Prescrever traz este sinal para dar o fecho do fluxo.
   const prescricaoSalva = Boolean((location.state as { prescricaoSalva?: boolean } | null)?.prescricaoSalva);
+  // Quem chega salvando prescrição cai direto na aba Treino (onde ela aparece).
+  const [aba, setAba] = React.useState<Aba>(prescricaoSalva ? "treino" : "visao");
   const [params, setParams] = useSearchParams();
 
   // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação e limpa o param.
@@ -208,15 +267,20 @@ export function AlunoDetail() {
         </div>
       </Card>
 
-      {/* Acompanhamento: tempo de cadastro, tempo no nível, status e progressão */}
-      <AcompanhamentoCard aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+      <AlunoTabs aba={aba} onAba={setAba} />
 
-      {/* Jornada de Prescrição */}
-      <JornadaCard aluno={aluno} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
+      {/* VISÃO GERAL: quem é o aluno e onde está, antes de agir. */}
+      {aba === "visao" && (
+        <div className="space-y-4">
+          <AcompanhamentoCard aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+          <JornadaCard aluno={aluno} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
+          <PerfilTreinoCard aluno={aluno} reavaliacaoVencida={reavaliacaoVencida} />
+        </div>
+      )}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Coluna principal: evolução + avaliações */}
-        <div className="space-y-4 lg:col-span-2">
+      {/* AVALIAÇÕES: evolução e histórico no mesmo lugar. */}
+      {aba === "avaliacoes" && (
+        <div className="space-y-4">
           <Card className="p-5 md:p-6">
             <div className="mb-3 flex items-center gap-2">
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#e0f7f9] text-analysis">
@@ -273,95 +337,26 @@ export function AlunoDetail() {
             )}
           </Card>
         </div>
+      )}
 
-        {/* Coluna lateral: perfil + prescrições */}
-        <div className="space-y-4">
-          <Card className="p-5 md:p-6">
-            <h2 className="mb-3 font-display text-lg font-bold text-ink">Perfil de treino</h2>
-            <dl className="space-y-3 text-sm">
-              <Info icon={<Target className="h-4 w-4 text-primary" />} label="Objetivo" value={aluno.objetivo} />
-              <Info icon={<Activity className="h-4 w-4 text-analysis" />} label="Nível" value={aluno.nivel} />
-              <div>
-                <dt className="mb-1 flex items-center gap-2 text-ink-3">
-                  <Dumbbell className="h-4 w-4" /> Equipamentos
-                </dt>
-                <dd className="flex flex-wrap gap-1.5">
-                  {aluno.equipamentos.map((eq) => (
-                    <Pill key={eq} tone="neutral">
-                      {eq}
-                    </Pill>
-                  ))}
-                </dd>
-              </div>
-              {aluno.proximaReavaliacaoEm && (
-                <Info
-                  icon={<CalendarPlus className={cn("h-4 w-4", reavaliacaoVencida ? "text-warning" : "text-ink-3")} />}
-                  label="Reavaliação"
-                  value={
-                    reavaliacaoVencida
-                      ? `vencida (${fmtData(aluno.proximaReavaliacaoEm)})`
-                      : `em ${diasAte(aluno.proximaReavaliacaoEm)} dias`
-                  }
-                />
-              )}
-            </dl>
-            {aluno.observacoes && (
-              <p className="mt-3 rounded-xl border border-border bg-surface-soft p-3 text-sm text-ink-2">
-                {aluno.observacoes}
-              </p>
-            )}
-          </Card>
+      {/* POSTURAL isolado: foto sensível no seu próprio espaço. */}
+      {aba === "postural" && <PosturalCard aluno={aluno} />}
 
-          {/* Gate pré-sessão vale para TODO aluno: sem grupo especial, usa o checklist geral */}
-          <Card className="p-5">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="font-display text-lg font-bold text-ink">Semáforo de Liberação</h2>
-              </div>
-              <p className="mb-3 text-sm text-ink-2">
-                Antes da sessão: libere o treino de hoje em 30 segundos, com o porquê registrado.
-              </p>
-              {libsDoAluno.length > 0 && (
-                <ul className="mb-3 space-y-1.5">
-                  {libsDoAluno.map((l) => (
-                    <li key={l.id} className="flex items-center gap-2 text-sm">
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "h-2.5 w-2.5 shrink-0 rounded-full",
-                          l.resultado === "verde" && "bg-success",
-                          l.resultado === "amarelo" && "bg-warning",
-                          l.resultado === "vermelho" && "bg-[#ef4444]",
-                        )}
-                      />
-                      <span className="text-ink">
-                        {l.resultado === "verde"
-                          ? "Liberado"
-                          : l.resultado === "amarelo"
-                            ? "Liberado com ajuste"
-                            : "Não liberado"}
-                      </span>
-                      <span className="tabular ml-auto text-xs text-ink-3">{fmtData(l.data)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link
-                to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`}
-                className={buttonClasses("secondary", "sm")}
-              >
-                <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
-              </Link>
-            </Card>
-
-          <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
-
-          <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
-
-          <PosturalCard aluno={aluno} />
-
+      {/* FINANCEIRO E APP DO ALUNO juntos. */}
+      {aba === "conta" && (
+        <div className="grid gap-4 lg:grid-cols-2">
           <FinanceiroCard aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
-
           <ConvidarAlunoCard alunoId={aluno.id} alunoNome={aluno.nome} />
+        </div>
+      )}
+
+      {/* TREINO: o dia a dia. Plano ativo, execução, prescrições e o semáforo do dia. */}
+      {aba === "treino" && (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
+
+            <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
 
           <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
@@ -450,8 +445,52 @@ export function AlunoDetail() {
               </div>
             )}
           </Card>
+          </div>
+
+          <div className="space-y-4">
+            {/* Gate pré-sessão vale para TODO aluno: sem grupo especial, usa o checklist geral */}
+            <Card className="p-5">
+              <div className="mb-2 flex items-center justify-between">
+                <h2 className="font-display text-lg font-bold text-ink">Semáforo de Liberação</h2>
+              </div>
+              <p className="mb-3 text-sm text-ink-2">
+                Antes da sessão: libere o treino de hoje em 30 segundos, com o porquê registrado.
+              </p>
+              {libsDoAluno.length > 0 && (
+                <ul className="mb-3 space-y-1.5">
+                  {libsDoAluno.map((l) => (
+                    <li key={l.id} className="flex items-center gap-2 text-sm">
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "h-2.5 w-2.5 shrink-0 rounded-full",
+                          l.resultado === "verde" && "bg-success",
+                          l.resultado === "amarelo" && "bg-warning",
+                          l.resultado === "vermelho" && "bg-[#ef4444]",
+                        )}
+                      />
+                      <span className="text-ink">
+                        {l.resultado === "verde"
+                          ? "Liberado"
+                          : l.resultado === "amarelo"
+                            ? "Liberado com ajuste"
+                            : "Não liberado"}
+                      </span>
+                      <span className="tabular ml-auto text-xs text-ink-3">{fmtData(l.data)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link
+                to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`}
+                className={buttonClasses("secondary", "sm")}
+              >
+                <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
+              </Link>
+            </Card>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Ação administrativa: excluir (o status ativo/saiu fica em Acompanhamento) */}
       <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4 text-sm">
@@ -560,6 +599,47 @@ function ConfirmarExclusaoModal({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Perfil de treino (objetivo, nível, equipamentos, reavaliação). Vive na Visão geral. */
+function PerfilTreinoCard({ aluno, reavaliacaoVencida }: { aluno: Aluno; reavaliacaoVencida: boolean }) {
+  return (
+    <Card className="p-5 md:p-6">
+      <h2 className="mb-3 font-display text-lg font-bold text-ink">Perfil de treino</h2>
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <Info icon={<Target className="h-4 w-4 text-primary" />} label="Objetivo" value={aluno.objetivo} />
+        <Info icon={<Activity className="h-4 w-4 text-analysis" />} label="Nível" value={aluno.nivel} />
+        <div className="sm:col-span-2">
+          <dt className="mb-1 flex items-center gap-2 text-ink-3">
+            <Dumbbell className="h-4 w-4" /> Equipamentos
+          </dt>
+          <dd className="flex flex-wrap gap-1.5">
+            {aluno.equipamentos.map((eq) => (
+              <Pill key={eq} tone="neutral">
+                {eq}
+              </Pill>
+            ))}
+          </dd>
+        </div>
+        {aluno.proximaReavaliacaoEm && (
+          <Info
+            icon={<CalendarPlus className={cn("h-4 w-4", reavaliacaoVencida ? "text-warning" : "text-ink-3")} />}
+            label="Reavaliação"
+            value={
+              reavaliacaoVencida
+                ? `vencida (${fmtData(aluno.proximaReavaliacaoEm)})`
+                : `em ${diasAte(aluno.proximaReavaliacaoEm)} dias`
+            }
+          />
+        )}
+      </dl>
+      {aluno.observacoes && (
+        <p className="mt-3 rounded-xl border border-border bg-surface-soft p-3 text-sm text-ink-2">
+          {aluno.observacoes}
+        </p>
+      )}
+    </Card>
   );
 }
 
