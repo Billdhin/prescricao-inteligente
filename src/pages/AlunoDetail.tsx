@@ -102,7 +102,9 @@ function AlunoTabs({ aba, onAba }: { aba: Aba; onAba: (a: Aba) => void }) {
             key={id}
             ref={(el) => (refs.current[i] = el)}
             role="tab"
+            id={`aba-tab-${id}`}
             aria-selected={ativo}
+            aria-controls={`aba-painel-${id}`}
             tabIndex={ativo ? 0 : -1}
             onClick={() => onAba(id)}
             onKeyDown={(e) => onKey(e, i)}
@@ -248,7 +250,7 @@ export function AlunoDetail() {
 
       {/* AVALIAÇÕES: evolução, histórico e a análise postural por foto no mesmo lugar. */}
       {aba === "avaliacoes" && (
-        <div className="space-y-4">
+        <div role="tabpanel" id="aba-painel-avaliacoes" aria-labelledby="aba-tab-avaliacoes" className="space-y-4">
           <Card className="p-5 md:p-6">
             <div className="mb-3 flex items-center gap-2">
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#e0f7f9] text-analysis">
@@ -311,11 +313,15 @@ export function AlunoDetail() {
       )}
 
       {/* APP DO ALUNO: prévia, convite e financeiro num só lugar (como o aluno usa e paga). */}
-      {aba === "conta" && <AppDoAlunoPanel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />}
+      {aba === "conta" && (
+        <div role="tabpanel" id="aba-painel-conta" aria-labelledby="aba-tab-conta">
+          <AppDoAlunoPanel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+        </div>
+      )}
 
       {/* PLANO E TREINO: o core, na ordem do ciclo. Fase, periodização, prescrição, execução. */}
       {aba === "treino" && (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div role="tabpanel" id="aba-painel-treino" aria-labelledby="aba-tab-treino" className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             <SugestaoNivel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
 

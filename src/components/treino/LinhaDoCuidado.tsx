@@ -57,9 +57,13 @@ export function LinhaDoCuidado({
   return (
     <Card variant="raised" className="overflow-hidden p-4 md:p-5">
       {/* Stepper do ciclo: rola no mobile, cabe inteiro no desktop */}
-      <ol className="flex items-start gap-1 overflow-x-auto pb-1">
+      <ol aria-label="Etapas do ciclo de cuidado" className="flex items-start gap-1 overflow-x-auto pb-1">
         {ORDEM.map((etapa, i) => (
-          <li key={etapa} className="flex min-w-0 flex-1 items-start">
+          <li
+            key={etapa}
+            aria-current={estado[etapa] === "atual" ? "step" : undefined}
+            className="flex min-w-0 flex-1 items-start"
+          >
             <div className="flex min-w-[4.5rem] flex-col items-center gap-1 text-center">
               <NoCiclo estado={estado[etapa]} />
               <span
@@ -70,6 +74,10 @@ export function LinhaDoCuidado({
                 title={AJUDA_ETAPA[etapa]}
               >
                 {ROTULO_ETAPA[etapa]}
+                <span className="sr-only">
+                  {" "}
+                  {estado[etapa] === "feito" ? "concluído" : estado[etapa] === "atual" ? "etapa atual" : "pendente"}
+                </span>
               </span>
             </div>
             {i < ORDEM.length - 1 && (
@@ -120,7 +128,8 @@ function CtaPasso({
   onAvaliar: () => void;
   onAcompanhar: () => void;
 }) {
-  const cls = buttonClasses(passo.tone === "success" ? "secondary" : "primary", "sm");
+  // Ação primária da tela, acionada no celular ao lado do aluno: alvo de 44px (md).
+  const cls = buttonClasses(passo.tone === "success" ? "secondary" : "primary");
   const label = (
     <>
       {passo.cta.label} <ArrowRight className="h-4 w-4" />

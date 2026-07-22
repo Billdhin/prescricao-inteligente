@@ -69,7 +69,19 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
     };
   }
 
-  // 2) Reavaliação vencida: hora de decidir progredir, manter ou ajustar.
+  // 2) Sem plano ativo: o core (periodização) ainda não foi montado. Precede a
+  //    reavaliação, porque não se reavalia um plano que nunca foi montado.
+  if (!planoAtivo) {
+    return {
+      etapa: "planejar",
+      tone: "primary",
+      frase: "Avaliação pronta. O próximo passo é montar o plano.",
+      cta: { label: "Montar plano", kind: "planejar" },
+      chip: { label: "Sem plano ativo", tone: "cta" },
+    };
+  }
+
+  // 3) Reavaliação vencida (já há plano): hora de decidir progredir, manter ou ajustar.
   const reav = dataReavaliacao(aluno, planoAtivo);
   if (reav && reav.em < agora) {
     const dias = Math.floor((agora - reav.em) / DIA);
@@ -81,17 +93,6 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
         : `Reavaliação vencida há ${dias} ${dias === 1 ? "dia" : "dias"}. Registre para reabrir o ciclo.`,
       cta: { label: "Registrar reavaliação", kind: "reavaliar" },
       chip: { label: "Reavaliação vencida", tone: "warning" },
-    };
-  }
-
-  // 3) Sem plano ativo: o core (periodização) ainda não foi montado.
-  if (!planoAtivo) {
-    return {
-      etapa: "planejar",
-      tone: "primary",
-      frase: "Avaliação pronta. O próximo passo é montar o plano.",
-      cta: { label: "Montar plano", kind: "planejar" },
-      chip: { label: "Sem plano ativo", tone: "cta" },
     };
   }
 
@@ -119,27 +120,22 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
 
 export type EstadoEtapa = "feito" | "atual" | "pendente";
 
-/** Estado de cada nó do stepper do ciclo (para a Linha do cuidado). */
+export const ETAPAS: EtapaCiclo[] = ["avaliar", "planejar", "liberar", "acompanhar", "reavaliar"];
+
+/**
+ * Estado de cada nó do stepper, MONOTÔNICO pela posição no ciclo: tudo que vem
+ * antes do passo atual está "feito", o passo atual é "atual" e o que vem depois
+ * é "pendente". Deriva do próprio próximoPasso (fonte única), então o stepper
+ * nunca mostra um passo posterior concluído antes do atual, nem um nó futuro
+ * marcado como feito antes de acontecer.
+ */
 export function estadoDoCiclo(aluno: Aluno, ctx: CicloCtx): Record<EtapaCiclo, EstadoEtapa> {
   const passo = proximoPasso(aluno, ctx);
-  const avals = ctx.avaliacoes.filter((a) => a.alunoId === aluno.id);
-  const planoAtivo = ctx.planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
-  const libs = ctx.liberacoes.filter((l) => l.alunoId === aluno.id);
-  const execs = ctx.execucoes.filter((e) => e.alunoId === aluno.id);
-  const agora = Date.now();
-  const reav = dataReavaliacao(aluno, planoAtivo);
-
-  const feito: Record<EtapaCiclo, boolean> = {
-    avaliar: avals.length > 0,
-    planejar: !!planoAtivo,
-    liberar: libs.some((l) => mesmoDia(l.data, agora)),
-    acompanhar: execs.length > 0,
-    reavaliar: reav != null && reav.em >= agora,
-  };
-
-  const etapas: EtapaCiclo[] = ["avaliar", "planejar", "liberar", "acompanhar", "reavaliar"];
+  const atual = ETAPAS.indexOf(passo.etapa);
   const out = {} as Record<EtapaCiclo, EstadoEtapa>;
-  for (const e of etapas) out[e] = passo.etapa === e ? "atual" : feito[e] ? "feito" : "pendente";
+  ETAPAS.forEach((e, i) => {
+    out[e] = i < atual ? "feito" : i === atual ? "atual" : "pendente";
+  });
   return out;
 }
 
