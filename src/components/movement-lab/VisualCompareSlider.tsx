@@ -234,7 +234,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
                   on
                     ? "bg-primary text-white"
                     : visto
-                      ? "bg-primary-tint text-primary hover:bg-primary-tint/70"
+                      ? "bg-primary-tint text-primary hover:bg-primary-tint"
                       : "bg-surface-soft text-ink-2 hover:text-ink",
                 )}
               >

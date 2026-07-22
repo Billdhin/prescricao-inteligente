@@ -109,7 +109,7 @@ export function Accordion({ items }: { items: AccordionItemData[] }) {
               className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
             >
               <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-ink-3/40" />
+                <span className="h-2 w-2 rounded-full bg-[#5b6472]/40" />
                 <span className="font-semibold text-ink">{it.title}</span>
               </span>
               <ChevronDown

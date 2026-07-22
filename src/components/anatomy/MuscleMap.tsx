@@ -193,7 +193,7 @@ export function MuscleMap({
               <p className="text-xs text-ink-3">Sem dados de ativação.</p>
             )}
           </div>
-          <div className="rounded-xl bg-primary-tint/50 p-3 text-[11px] leading-relaxed text-ink-2">
+          <div className="rounded-xl bg-primary-tint p-3 text-[11px] leading-relaxed text-ink-2">
             Os valores representam a <span className="font-semibold text-ink">ativação relativa estimada</span> para este exercício; não são medição do aluno.
           </div>
         </div>

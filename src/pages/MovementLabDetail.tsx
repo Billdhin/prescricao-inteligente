@@ -599,7 +599,7 @@ function Bullets({
           <figure
             className={cn(
               "w-40 shrink-0 overflow-hidden rounded-xl border sm:w-44",
-              tone === "warning" ? "border-warning/40" : "border-border",
+              tone === "warning" ? "border-[#b45309]/40" : "border-border",
             )}
           >
             <img
@@ -776,7 +776,7 @@ function PopulacoesCautelaCard({ slug }: { slug: string }) {
   const perfis = getPopulacoesCautela(slug);
   if (perfis.length === 0) return null;
   return (
-    <div className="rounded-xl border border-warning/40 bg-[#fffaf0] p-4 md:p-5">
+    <div className="rounded-xl border border-[#b45309]/40 bg-[#fffaf0] p-4 md:p-5">
       <div className="mb-3 flex items-center gap-2">
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#fef4e2] text-warning">
           <ShieldAlert className="h-4 w-4" />

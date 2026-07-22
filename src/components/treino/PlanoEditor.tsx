@@ -210,7 +210,7 @@ export function MesocicloCard({
       {aberto && (
         <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
           {/* Dinâmica e foco da fase, agrupados num cartão só para não virar uma pilha de rótulos. */}
-          <div className="rounded-xl border border-border bg-surface-soft/50 p-3">
+          <div className="rounded-xl border border-border bg-surface-soft p-3">
             <div className="mb-3 flex flex-wrap items-center gap-1.5 text-xs">
               <span className="mr-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Dinâmica</span>
               <Pill tone={meso.tendenciaVolume === "sobe" ? "analysis" : "neutral"}>Volume {TEND_LABEL[meso.tendenciaVolume]}</Pill>
@@ -389,7 +389,7 @@ function FaixaReferencia({ ctx }: { ctx: ContextoFaixa }) {
   const refs = f.refIds.map(refCurta).filter(Boolean).join(" · ");
 
   return (
-    <details className="rounded-lg border border-dashed border-border bg-surface-soft/60 text-xs">
+    <details className="rounded-lg border border-dashed border-border bg-surface-soft text-xs">
       <summary className="cursor-pointer list-none px-2.5 py-2 font-semibold text-ink-2 [&::-webkit-details-marker]:hidden">
         Faixa de referência ({ctx.objetivo}, {ctx.nivel}): {linhas.map(([r, v]) => `${r} ${v}`).join(" · ")}
       </summary>
@@ -458,7 +458,7 @@ function QuadroForca({ blocos }: { blocos: BlocoSessao[] }) {
           </thead>
           <tbody>
             {blocos.map((b) => (
-              <tr key={b.id} className="border-t border-border/60 align-top">
+              <tr key={b.id} className="border-t border-border align-top">
                 <td className="px-2.5 py-1.5 font-semibold text-ink">
                   {b.nome}
                   {b.metodo && b.metodo !== "tradicional" && (
@@ -487,7 +487,7 @@ function QuadroCardio({ blocos }: { blocos: BlocoSessao[] }) {
         <HeartPulse className="h-3.5 w-3.5 text-analysis" aria-hidden />
         <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">Cardio</span>
       </div>
-      <div className="divide-y divide-border/60">
+      <div className="divide-y divide-border">
         {blocos.map((b) => {
           const atividade = b.modalidade ? getModalidade(b.modalidade)?.nome : undefined;
           const linhas: [string, string | undefined][] = [
@@ -682,7 +682,7 @@ function BlocoRow({
     <div className="rounded-lg border border-border bg-surface p-2">
       <div className="mb-1.5 flex items-center gap-1.5">
         {aerobio && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-analysis/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-analysis">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-[#0e7c8a]/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-analysis">
             <HeartPulse className="h-3 w-3" aria-hidden /> Cardio
           </span>
         )}
@@ -773,7 +773,7 @@ function CampoInline({
         aria-describedby={aviso ? `${id}-aviso` : undefined}
         aria-invalid={undefined}
         className={cn(
-          "w-full rounded-md border bg-surface px-1.5 py-1 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary/40",
+          "w-full rounded-md border bg-surface px-1.5 py-1 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary",
           aviso ? "border-warning bg-[#fef7e8]" : "border-border",
         )}
       />
@@ -824,9 +824,11 @@ export function ListaChips({ titulo, itens }: { titulo: string; itens: string[] 
   return (
     <div>
       <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{titulo}</p>
+      {/* Borda própria: chip sobre fundo soft/branco sem cápsula sumia na
+          paleta pele clínica. Conserta MesocicloCard e ModeloExplicacao de uma vez. */}
       <div className="flex flex-wrap gap-1.5">
         {itens.map((it, i) => (
-          <span key={i} className="rounded-lg bg-surface px-2 py-1 text-xs text-ink-2">
+          <span key={i} className="rounded-lg border border-border bg-surface px-2 py-1 text-xs font-medium text-ink">
             {it}
           </span>
         ))}

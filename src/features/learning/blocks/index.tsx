@@ -317,13 +317,13 @@ function MedidaInterpretacao({ title, items }: { title?: string; items: string[]
       )}
 
       {regra && (
-        <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-primary/30 bg-primary-tint p-3">
+        <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-[#1b4b66]/30 bg-primary-tint p-3">
           <KeyRound className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="text-sm text-ink"><RichInline text={regra} /></p>
         </div>
       )}
       {seguranca && (
-        <div className="mt-2.5 flex items-start gap-2.5 rounded-xl border border-warning/40 bg-[#fef7e8] p-3">
+        <div className="mt-2.5 flex items-start gap-2.5 rounded-xl border border-[#b45309]/40 bg-[#fef7e8] p-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <p className="text-sm text-ink"><RichInline text={seguranca} /></p>
         </div>
@@ -624,7 +624,7 @@ function MechanismAccordion({ title, steps }: { title?: string; steps: NucleoSte
 /** Célula rotulada da tabela do núcleo (aplicação, como medir, erro frequente). */
 function AtlasCell({ icon: Icon, label, text, tone = "neutral" }: { icon: LucideIcon; label: string; text: string; tone?: "neutral" | "warning" }) {
   return (
-    <div className={cn("rounded-lg border p-3", tone === "warning" ? "border-warning/40 bg-warning/5" : "border-border bg-surface")}>
+    <div className={cn("rounded-lg border p-3", tone === "warning" ? "border-[#b45309]/40 bg-[#b45309]/5" : "border-border bg-surface")}>
       <div className={cn("mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide", tone === "warning" ? "text-warning" : "text-ink-3")}>
         <Icon className="h-3.5 w-3.5" aria-hidden />
         {label}
@@ -671,14 +671,14 @@ function NucleosAtlas({ title, steps }: { title?: string; steps: NucleoStep[] })
                 <ol className="grid gap-2 sm:grid-cols-2">
                   {n.passos.map((p, j) => (
                     <li key={j} className="flex gap-2 rounded-lg border border-border bg-surface-soft p-2.5">
-                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink/10 text-[11px] font-bold text-ink">{j + 1}</span>
+                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#1e293b]/10 text-[11px] font-bold text-ink">{j + 1}</span>
                       <span className="text-[13px] leading-snug text-ink-2">{p}</span>
                     </li>
                   ))}
                 </ol>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg border border-primary/30 bg-primary-tint/50 px-3 py-2">
+              <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg border border-[#1b4b66]/30 bg-primary-tint px-3 py-2">
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Relação</span>
                 <span className="text-sm font-semibold text-ink">{n.relacao}</span>
               </div>
@@ -704,7 +704,7 @@ function Comparison({
   content: { leftTitle: string; rightTitle: string; leftItems: string[]; rightItems: string[]; note?: string };
 }) {
   const Col = ({ head, items, tone }: { head: string; items: string[]; tone: "primary" | "analysis" }) => (
-    <div className={cn("rounded-xl border p-4", tone === "primary" ? "border-primary/30 bg-primary-tint/50" : "border-analysis/30 bg-[#f0fbfc]")}>
+    <div className={cn("rounded-xl border p-4", tone === "primary" ? "border-[#1b4b66]/30 bg-primary-tint" : "border-[#0e7c8a]/30 bg-[#f0fbfc]")}>
       <div className={cn("mb-2 font-display font-bold", tone === "primary" ? "text-primary" : "text-analysis")}>{head}</div>
       <ul className="space-y-1.5 text-sm text-ink-2">
         {items.map((it, i) => (
@@ -1077,7 +1077,7 @@ function RelatedContent({ title, items }: { title?: string; items: { title: stri
           const meta = lessonTypeMeta[it.type as keyof typeof lessonTypeMeta];
           const Icon = iconByName(meta?.icon);
           return (
-            <Link key={i} to={it.href} className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:border-primary hover:bg-primary-tint/40">
+            <Link key={i} to={it.href} className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:border-primary hover:bg-primary-tint">
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-2">
                 <Icon className="h-4 w-4" />
               </span>

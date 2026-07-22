@@ -73,7 +73,7 @@ export function ComparadorDefinicoes() {
 
       {/* Linha do que os distingue */}
       {grupo.distincao && (
-        <div className="mt-3 flex gap-2 rounded-xl border border-primary/20 bg-primary-tint/40 p-3">
+        <div className="mt-3 flex gap-2 rounded-xl border border-[#1b4b66]/20 bg-primary-tint p-3">
           <ArrowLeftRight className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
           <p className="text-sm text-ink">
             <span className="font-semibold text-primary">O que muda. </span>

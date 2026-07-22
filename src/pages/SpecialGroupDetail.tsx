@@ -377,7 +377,7 @@ function ResumoDecisao({
         )}
       </div>
 
-      <div className="flex gap-3 rounded-xl bg-primary-tint/60 p-3">
+      <div className="flex gap-3 rounded-xl bg-primary-tint p-3">
         <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <p className="text-sm text-ink">
           <span className="font-semibold">Como começar: </span>

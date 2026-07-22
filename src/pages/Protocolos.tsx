@@ -24,7 +24,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
+import { Card, LinhaDeDose, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { useUser, useAlunos, isPremiumUnlocked, uid } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { exercises } from "@/data/exercises";
@@ -99,7 +99,7 @@ export function Protocolos() {
                     <button
                       key={cat}
                       onClick={() => setCategoria(cat)}
-                      className="flex items-start gap-3 rounded-card border border-border bg-surface p-5 text-left shadow-soft transition-colors hover:border-primary hover:bg-primary-tint/40"
+                      className="flex items-start gap-3 rounded-card border border-border bg-surface p-5 text-left shadow-soft transition-colors hover:border-primary hover:bg-primary-tint"
                     >
                       <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl", catTile[meta.tone])}>
                         <Icon className="h-5 w-5" />
@@ -242,18 +242,26 @@ function ProtocoloCard({
         </span>
       </div>
 
-      <ul className="mb-3 space-y-1.5">
+      {/* Nome e dose vinculados (LinhaDeDose): a dose fica logo abaixo do exercicio,
+          nunca empurrada para a borda oposta por justify-between. */}
+      <ul className="mb-3 overflow-hidden rounded-lg border border-border">
         {p.itens.map((it) => (
-          <li key={it.slug} className="flex items-center justify-between gap-2 text-sm">
-            <Link
-              to={`/movement-lab/${it.slug}`}
-              className="inline-flex min-w-0 items-center gap-1.5 text-ink hover:text-primary"
-            >
-              <FlaskConical className="h-3.5 w-3.5 shrink-0 text-ink-3" />
-              <span className="truncate">{nomeEx(it.slug)}</span>
-            </Link>
-            <span className="shrink-0 text-xs text-ink-3">{it.series}</span>
-          </li>
+          <LinhaDeDose
+            key={it.slug}
+            icon={<FlaskConical className="h-3.5 w-3.5" />}
+            nome={
+              <Link to={`/movement-lab/${it.slug}`} className="hover:text-primary">
+                {nomeEx(it.slug)}
+              </Link>
+            }
+          >
+            {it.series ? (
+              <>
+                <span className="text-ink-3">Dose: </span>
+                {it.series}
+              </>
+            ) : null}
+          </LinhaDeDose>
         ))}
       </ul>
 

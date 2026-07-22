@@ -231,7 +231,7 @@ export function LessonRow({ lesson, status }: { lesson: Lesson; status: Progress
   return (
     <Link
       to={`/aprender/conteudos/${lesson.slug}`}
-      className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:border-primary hover:bg-primary-tint/40"
+      className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:border-primary hover:bg-primary-tint"
     >
       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-2">
         <TypeIcon className="h-4 w-4" />
@@ -287,7 +287,7 @@ export function StudyObjectiveCard({ obj }: { obj: StudyObjective }) {
   return (
     <Link
       to={obj.href}
-      className="flex items-start gap-3 rounded-card border border-border bg-surface p-4 shadow-soft transition-colors hover:border-primary hover:bg-primary-tint/40"
+      className="flex items-start gap-3 rounded-card border border-border bg-surface p-4 shadow-soft transition-colors hover:border-primary hover:bg-primary-tint"
     >
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-tint text-primary">
         <Icon className="h-5 w-5" />

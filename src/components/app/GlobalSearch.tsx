@@ -302,7 +302,7 @@ export function GlobalSearch() {
         aria-controls="global-search-list"
         aria-activedescendant={showPanel && results.length ? `gsr-opt-${active}` : undefined}
         autoComplete="off"
-        className="h-11 w-full rounded-full border border-transparent bg-surface-soft pl-10 pr-4 text-sm outline-none focus-visible:border-primary/40 sm:pr-16"
+        className="h-11 w-full rounded-full border border-transparent bg-surface-soft pl-10 pr-4 text-sm outline-none focus-visible:border-primary sm:pr-16"
       />
       <kbd className="tabular absolute right-3 top-1/2 hidden -translate-y-1/2 items-center rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] font-semibold text-ink-2 sm:inline-flex">
         ⌘K

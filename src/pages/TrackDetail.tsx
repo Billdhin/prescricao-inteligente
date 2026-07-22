@@ -78,7 +78,7 @@ export function TrackDetail() {
                 done
                   ? "border-border bg-surface"
                   : isNext
-                    ? "border-primary bg-primary-tint/40"
+                    ? "border-primary bg-primary-tint"
                     : "border-border bg-surface",
                 href && "hover:bg-surface-soft",
               )}

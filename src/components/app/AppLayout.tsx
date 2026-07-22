@@ -509,7 +509,7 @@ function BottomBar() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-[#ffffff]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
       {itens.map((item) => {
         const Icon = item.icon;

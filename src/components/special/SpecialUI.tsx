@@ -200,7 +200,7 @@ export function ModalidadeCard({ id, cautela }: { id: string; cautela?: boolean 
   const m = getModalidade(id);
   if (!m) return null;
   return (
-    <Card className={cn("p-4", cautela && "border-warning/40")}>
+    <Card className={cn("p-4", cautela && "border-[#b45309]/40")}>
       <div className="mb-1 flex flex-wrap items-center gap-2">
         <h4 className="font-display font-bold text-ink">{m.nome}</h4>
         <Pill tone={impactoTone[m.impacto]}>impacto {m.impacto}</Pill>
@@ -233,7 +233,7 @@ export function VisualModalidadeCard({ id, cautela }: { id: string; cautela?: bo
   if (!m) return null;
   const FallbackIcon = m.ambiente === "aquático" ? Waves : Dumbbell;
   return (
-    <Card className={cn("flex flex-col overflow-hidden", cautela && "border-warning/40")}>
+    <Card className={cn("flex flex-col overflow-hidden", cautela && "border-[#b45309]/40")}>
       <div className="relative h-40 bg-surface-soft">
         {imgOk ? (
           <img
@@ -344,7 +344,7 @@ export function SafetyFlags({ sinais, aviso }: { sinais: string[]; aviso?: strin
           </li>
         ))}
       </ul>
-      {aviso && <p className="mt-3 border-t border-warning/30 pt-3 text-xs text-ink-2">{aviso}</p>}
+      {aviso && <p className="mt-3 border-t border-[#b45309]/30 pt-3 text-xs text-ink-2">{aviso}</p>}
     </Card>
   );
 }

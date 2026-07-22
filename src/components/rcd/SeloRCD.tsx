@@ -23,7 +23,7 @@ export function SeloRCD({
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
         variante === "claro"
-          ? "border-analysis/30 bg-[#e6f7f9] text-[#0e7c8a]"
+          ? "border-[#0e7c8a]/30 bg-[#e6f7f9] text-[#0e7c8a]"
           : "border-cyan-400/30 bg-slate-950/60 text-cyan-300 backdrop-blur-sm",
         className,
       )}

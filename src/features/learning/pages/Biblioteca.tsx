@@ -90,7 +90,7 @@ function ReferenceCard({ r, saved }: { r: ScientificReference; saved: boolean })
           <p className="mt-1 text-sm text-ink-2">{r.abstractSummary}</p>
           <div className="mt-1.5 flex flex-wrap gap-1">
             {r.topics.map((t) => (
-              <span key={t} className="rounded-full bg-surface-soft px-2 py-0.5 text-xs text-ink-3">{t}</span>
+              <span key={t} className="rounded-full border border-border bg-surface-soft px-2 py-0.5 text-xs text-ink-3">{t}</span>
             ))}
           </div>
           {r.usedIn && r.usedIn.length > 0 && (

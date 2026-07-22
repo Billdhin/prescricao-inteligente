@@ -41,7 +41,7 @@ export function Library({ embedded = false }: { embedded?: boolean } = {}) {
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar um conceito, termo ou princípio..."
             aria-label="Buscar na biblioteca"
-            className="h-11 w-full rounded-control border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary/50"
+            className="h-11 w-full rounded-control border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary"
           />
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -78,7 +78,7 @@ export function Library({ embedded = false }: { embedded?: boolean } = {}) {
             ),
             content: (
               <div className="space-y-3">
-                <p className="border-l-2 border-primary/40 bg-primary-tint/30 py-1.5 pl-3 text-[15px] font-semibold leading-snug text-ink">
+                <p className="border-l-2 border-[#1b4b66]/40 bg-primary-tint py-1.5 pl-3 text-[15px] font-semibold leading-snug text-ink">
                   {e.definicao}
                 </p>
                 <p className="text-sm text-ink-2">{e.detalhe}</p>

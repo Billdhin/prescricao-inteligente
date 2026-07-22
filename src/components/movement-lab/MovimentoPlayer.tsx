@@ -75,7 +75,7 @@ export function MovimentoPlayer({ ex, className }: { ex: ExMin; className?: stri
         )}
 
         {/* Selo da fase + sentido do movimento */}
-        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full border border-primary/20 bg-surface/90 px-2 py-0.5 text-[11px] font-semibold text-primary backdrop-blur-sm">
+        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full border border-[#1b4b66]/20 bg-[#ffffff]/90 px-2 py-0.5 text-[11px] font-semibold text-primary backdrop-blur-sm">
           {React.createElement(DirIcon[kind], { className: "h-3 w-3" })}
           {CHIP[kind]}
         </span>

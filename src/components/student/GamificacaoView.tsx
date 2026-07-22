@@ -140,7 +140,7 @@ export function GamificacaoView({
                 <div className="text-xs text-ink-3">{fmtDia(item.ts)}</div>
               </div>
               <span className="shrink-0 text-xs font-bold" style={{ color: cor }}>
-                +{item.quantidade * 10}
+                +{item.quantidade * 10} pts
               </span>
             </li>
           ))}

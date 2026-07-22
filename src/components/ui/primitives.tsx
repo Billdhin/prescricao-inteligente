@@ -17,9 +17,12 @@ const cardVariants: Record<CardVariant, string> = {
 // Cartões de "aviso"/destaque tonal (sem sombra) — padroniza os que eram feitos
 // à mão com hex+opacidade soltos. `tone` tem precedência sobre `variant`.
 const cardTones: Record<CardTone, string> = {
-  warning: "border border-warning/30 bg-[#fef4e2]/50",
-  success: "border border-success/30 bg-[#e7f8ed]/50",
-  primary: "border border-primary/25 bg-primary-tint/40",
+  // Bordas em hex literal com alpha: /NN sobre cor-token (warning/success/primary)
+  // NÃO compila neste repo (tailwind.config sem <alpha-value>). primary-tint já é
+  // suave, então entra como token cheio.
+  warning: "border border-[#b45309]/30 bg-[#fef4e2]/50",
+  success: "border border-[#16a34a]/30 bg-[#e7f8ed]/50",
+  primary: "border border-[#1b4b66]/25 bg-primary-tint",
 };
 
 export function Card({
@@ -71,13 +74,19 @@ export type PillTone =
   | "warning"
   | "neutral";
 
+// Regra do design system: forma de tom neutro NUNCA depende só de preenchimento.
+// Na paleta pele clínica, surface-soft (#f2f0ea) e branco/papel têm contraste
+// mútuo abaixo de 1.15:1, então um chip neutral só com fundo some. Todo tom
+// neutral carrega hairline (ring-1 ring-inset ring-border). E: nunca modificador
+// /NN sobre cor-token (não compila; ver tailwind.config.ts). Propaga a Pill e a
+// TokenRotulado, que leem pillTones.
 const pillTones: Record<PillTone, string> = {
   primary: "bg-primary-tint text-primary",
   analysis: "bg-[#e0f7f9] text-analysis",
   cta: "bg-[#fff1e6] text-[color:var(--cta-text)]",
   success: "bg-[#e7f8ed] text-success",
   warning: "bg-[#fef4e2] text-warning",
-  neutral: "bg-surface-soft text-ink-2",
+  neutral: "bg-surface-soft text-ink-2 ring-1 ring-inset ring-border",
 };
 
 export function Pill({

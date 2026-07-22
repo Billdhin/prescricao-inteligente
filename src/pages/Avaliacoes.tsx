@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { BarChart3, CalendarClock, Clock, ArrowRight, CheckCircle2, TrendingDown, TrendingUp } from "lucide-react";
-import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, SectionHeader, TokenRotulado, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -121,11 +121,17 @@ export function Avaliacoes() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-semibold text-ink">{nomeAluno(av.alunoId)}</div>
-                    <div className="flex flex-wrap gap-x-3 text-xs text-ink-3">
+                    {/* Cada medida como token rotulado: o numero carrega o proprio nome,
+                        em vez de "82 kg" e "18% gord." soltos numa fila. */}
+                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-ink-3">
                       <span>{fmtData(av.data)}</span>
-                      {av.medidas.peso != null && <span>{av.medidas.peso} kg</span>}
-                      {av.medidas.percentualGordura != null && <span>{av.medidas.percentualGordura}% gord.</span>}
-                      {av.dorEscala != null && <span>dor {av.dorEscala}/10</span>}
+                      {av.medidas.peso != null && <TokenRotulado label="Peso" value={`${av.medidas.peso} kg`} />}
+                      {av.medidas.percentualGordura != null && (
+                        <TokenRotulado label="Gordura" value={`${av.medidas.percentualGordura}%`} />
+                      )}
+                      {av.dorEscala != null && (
+                        <TokenRotulado label="Dor" value={`${av.dorEscala}/10`} tone={av.dorEscala >= 4 ? "warning" : "neutral"} />
+                      )}
                     </div>
                   </div>
                   <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />

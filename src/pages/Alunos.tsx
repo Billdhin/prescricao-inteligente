@@ -102,7 +102,7 @@ export function Alunos() {
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar aluno por nome, objetivo, restrição..."
               aria-label="Buscar aluno"
-              className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary/40"
+              className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary"
             />
           </div>
 

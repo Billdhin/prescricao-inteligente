@@ -102,12 +102,14 @@ export function PosturalAnalyzer({
       </p>
 
       {/* Medidas calculadas */}
+      {/* Rotulo+valor colados a esquerda; a classificacao vai para a direita
+          com ml-auto, sem o justify-between que espalhava os tres. */}
       <div className="space-y-1">
         {medidas.map((med) => (
-          <div key={med.checkpointId} className="flex items-center justify-between gap-2 rounded-md bg-surface-soft px-2.5 py-1.5 text-xs">
+          <div key={med.checkpointId} className="flex items-center gap-2 rounded-md bg-surface-soft px-2.5 py-1.5 text-xs">
             <span className="font-semibold text-ink">{med.rotulo}</span>
             <span className="text-ink-3">{med.valor}</span>
-            <span className={med.baixaConfianca ? "text-cta" : "font-semibold text-ink-2"}>
+            <span className={med.baixaConfianca ? "ml-auto text-cta" : "ml-auto font-semibold text-ink-2"}>
               {med.baixaConfianca ? "ajuste manual" : med.classificacao}
             </span>
           </div>

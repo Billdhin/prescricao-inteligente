@@ -101,7 +101,7 @@ export function ModuloDetail() {
           <h2 className="mb-3 font-display text-xl font-bold text-ink">Casos relacionados</h2>
           <div className="space-y-2">
             {casos.map((c) => (
-              <Link key={c.id} to={`/aprender/casos/${c.slug}`} className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:border-primary hover:bg-primary-tint/40">
+              <Link key={c.id} to={`/aprender/casos/${c.slug}`} className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:border-primary hover:bg-primary-tint">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-2">
                   <Stethoscope className="h-4 w-4" />
                 </span>

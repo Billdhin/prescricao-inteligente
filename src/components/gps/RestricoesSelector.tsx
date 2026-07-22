@@ -170,7 +170,7 @@ export function RestricoesSelector({
 
       {/* Alerta de segurança */}
       {seguranca.bloqueado && (
-        <div className="rounded-xl border border-cta/40 bg-cta/10 p-4" role="alert">
+        <div className="rounded-xl border border-[#e0663b]/40 bg-[#e0663b]/10 p-4" role="alert">
           <div className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-cta-text">
             <ShieldAlert className="h-4 w-4" /> Confirme a liberação antes de gerar o treino
           </div>
@@ -252,14 +252,14 @@ function RestricaoCard({
         "flex h-full w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors sm:col-span-1",
         // "Nenhuma" e "Outra" ocupam a linha inteira para separar visualmente
         (item.tag === "nenhuma_restricao" || item.tag === "outra_restricao") && "sm:col-span-2",
-        selecionado ? "border-primary bg-primary-tint/50" : "border-border bg-surface hover:bg-surface-soft",
+        selecionado ? "border-primary bg-primary-tint" : "border-border bg-surface hover:bg-surface-soft",
       )}
     >
       <span
         aria-hidden
         className={cn(
           "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2",
-          selecionado ? "border-primary bg-primary text-white" : "border-ink-3/50 bg-surface",
+          selecionado ? "border-primary bg-primary text-white" : "border-[#5b6472]/50 bg-surface",
         )}
       >
         {selecionado && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
@@ -475,7 +475,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
         "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
         on
           ? "border-primary bg-primary text-white"
-          : "border-border bg-surface text-ink-2 hover:border-primary/50",
+          : "border-border bg-surface text-ink-2 hover:border-[#1b4b66]/50",
       )}
     >
       {children}
@@ -509,7 +509,7 @@ function Radios<T extends string>({
               "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
               on
                 ? "border-primary bg-primary text-white"
-                : "border-border bg-surface text-ink-2 hover:border-primary/50",
+                : "border-border bg-surface text-ink-2 hover:border-[#1b4b66]/50",
             )}
           >
             {o.rotulo}

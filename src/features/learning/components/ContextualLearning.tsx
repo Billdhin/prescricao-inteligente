@@ -25,7 +25,7 @@ export function ContextualLearning({
     <Link
       to={href}
       className={cn(
-        "flex items-start gap-3 rounded-card border border-analysis/30 bg-[#f0fbfc] p-4 transition-colors hover:border-analysis",
+        "flex items-start gap-3 rounded-card border border-[#0e7c8a]/30 bg-[#f0fbfc] p-4 transition-colors hover:border-analysis",
         className,
       )}
     >

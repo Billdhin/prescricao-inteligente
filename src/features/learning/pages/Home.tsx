@@ -245,7 +245,7 @@ function ContextualSearch({ mode, onMode }: { mode: "estudar" | "consultar"; onM
           <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">Perguntas populares</div>
           <div className="flex flex-wrap gap-1.5">
             {SUGESTOES.map((s) => (
-              <button key={s} onMouseDown={() => go(s)} className="rounded-full bg-surface-soft px-2.5 py-1 text-xs text-ink-2 hover:bg-primary-tint hover:text-primary">
+              <button key={s} onMouseDown={() => go(s)} className="rounded-full border border-border bg-surface-soft px-2.5 py-1 text-xs text-ink-2 hover:bg-primary-tint hover:text-primary">
                 {s}
               </button>
             ))}

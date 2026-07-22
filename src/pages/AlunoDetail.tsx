@@ -353,7 +353,7 @@ export function AlunoDetail() {
                       <span className="truncate font-semibold text-ink">{p.titulo}</span>
                       <Pill tone={p.status === "ativa" ? "success" : "neutral"}>{p.status}</Pill>
                     </div>
-                    <div className="tabular mb-2 text-xs text-ink-3">{fmtData(p.data)}</div>
+                    <div className="tabular mb-2 text-xs text-ink-3">Prescrita em {fmtData(p.data)}</div>
                     {/* Nome e dose vinculados: a dose fica logo abaixo do exercicio, nao empurrada
                         para a borda oposta. A lista vira um bloco unico, com divisorias. */}
                     <ul className="overflow-hidden rounded-lg border border-border">
@@ -931,7 +931,7 @@ function JornadaCard({ aluno, onFase }: { aluno: Aluno; onFase: (n: 1 | 2 | 3 | 
 
         <div className="space-y-3">
           <CriteriosLista titulo="Próximos critérios para avançar" itens={faseObj.criteriosAvancar} tipo="avancar" />
-          <div className="rounded-xl border border-warning/30 bg-[#fef4e2]/40 p-3">
+          <div className="rounded-xl border border-[#b45309]/30 bg-[#fef4e2]/40 p-3">
             <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-warning">Cautelas</div>
             <ul className="space-y-1">
               {grupo.riscosCautelas.slice(0, 3).map((c) => (
@@ -1050,7 +1050,7 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
           <div
             className={cn(
               "mt-3 flex flex-wrap items-center gap-2 rounded-lg p-2.5 text-sm",
-              chegou ? "border border-analysis/40 bg-primary-tint" : "",
+              chegou ? "border border-[#0e7c8a]/40 bg-primary-tint" : "",
             )}
           >
             <CalendarCheck className="h-4 w-4 shrink-0 text-analysis" />

@@ -124,7 +124,7 @@ export function StudentApp({
 
         {/* Barra inferior */}
         <nav
-          className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+          className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md border-t border-border bg-[#ffffff]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
           aria-label="Navegação"
         >
           {(
@@ -261,13 +261,13 @@ function SessaoCard({
             {rotulo === "Hoje" ? (
               <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white" style={{ background: cor }}>Hoje</span>
             ) : rotulo === "Próxima" ? (
-              <span className="rounded-full bg-surface-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-3">Próxima</span>
+              <span className="rounded-full bg-surface-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-3 ring-1 ring-inset ring-border">Próxima</span>
             ) : null}
           </div>
           {sessao.foco && <div className="text-xs text-ink-3">{sessao.foco}</div>}
         </div>
         <div className="flex items-center gap-2">
-          {feitas > 0 && <span className="text-xs font-semibold" style={{ color: cor }}>{feitas}/{sessao.blocos.length}</span>}
+          {feitas > 0 && <span className="text-xs font-semibold" style={{ color: cor }}>{feitas}/{sessao.blocos.length} exercícios</span>}
           <ChevronDown className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
         </div>
       </button>
@@ -477,7 +477,7 @@ function RpeSelect({ value, onChange }: { value: string; onChange: (v: string) =
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-[34px] w-full rounded-md border border-border bg-surface px-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary/40"
+        className="h-[34px] w-full rounded-md border border-border bg-surface px-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
       >
         <option value="">-</option>
         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
@@ -504,7 +504,7 @@ function CampoNum({ label, value, onChange, placeholder }: { label: string; valu
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="h-[34px] w-full rounded-md border border-border bg-surface px-2 text-sm text-ink placeholder:text-ink-3/60 focus:outline-none focus:ring-2 focus:ring-primary/40"
+        className="h-[34px] w-full rounded-md border border-border bg-surface px-2 text-sm text-ink placeholder:text-[#5b6472]/60 focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
   );

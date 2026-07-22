@@ -430,9 +430,10 @@ export function Gps() {
           {ultimaAval.dorEscala != null && (
             <TokenRotulado label="Dor" value={`${ultimaAval.dorEscala}/10`} tone={ultimaAval.dorEscala >= 4 ? "warning" : "neutral"} />
           )}
-          <span className="text-ink-3">
-            há {Math.max(0, Math.round((Date.now() - ultimaAval.data) / 86_400_000))} dias
-          </span>
+          <TokenRotulado
+            label="Registrada"
+            value={`há ${Math.max(0, Math.round((Date.now() - ultimaAval.data) / 86_400_000))} dias`}
+          />
           {reavaliacaoVencida && (
             <Link to={`/alunos/${aluno.id}?avaliar=1`} className="font-semibold text-warning hover:underline">
               Reavaliação vencida: registrar agora
@@ -569,7 +570,7 @@ function FlowSteps({ atual }: { atual: 1 | 2 | 3 }) {
               )}
               {label}
             </span>
-            {i < steps.length - 1 && <ArrowRight aria-hidden className="h-3.5 w-3.5 text-ink-3/60" />}
+            {i < steps.length - 1 && <ArrowRight aria-hidden className="h-3.5 w-3.5 text-[#5b6472]/60" />}
           </li>
         );
       })}
@@ -674,7 +675,7 @@ function ContextoCard({
 
       {/* Grupo, fase e idade são herdados do aluno; ficam num ajuste opcional para
           não competir com a única escolha que importa aqui (o aluno). */}
-      <details className="mt-4 rounded-control border border-border bg-surface-soft/60">
+      <details className="mt-4 rounded-control border border-border bg-surface-soft">
         <summary className="flex cursor-pointer select-none items-center gap-2 p-3 text-sm font-semibold text-ink-2">
           <SlidersHorizontal className="h-4 w-4 text-ink-3" />
           Ajustar contexto (opcional)
@@ -857,7 +858,7 @@ function FocoAgora({
         </Link>
       </div>
 
-      <div className="rounded-xl bg-primary-tint/60 p-4">
+      <div className="rounded-xl bg-primary-tint p-4">
         <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
           <Target className="h-3.5 w-3.5" /> Objetivo desta fase
         </div>
@@ -1042,7 +1043,7 @@ function Wizard({
         {step === 3 && (
           <div className="space-y-4">
             {rule && (
-              <div className="rounded-xl border border-primary/25 bg-primary-tint/50 p-4">
+              <div className="rounded-xl border border-[#1b4b66]/25 bg-primary-tint p-4">
                 <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
                   <ShieldAlert className="h-3.5 w-3.5" /> Já considerado pelo grupo: {rule.nome}
                 </div>
@@ -1178,7 +1179,7 @@ function Choices({
             <span className="min-w-0">
               {o}
               {desc && (
-                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-primary/80" : "text-ink-3")}>
+                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-[#1b4b66]/80" : "text-ink-3")}>
                   {desc}
                 </span>
               )}
@@ -1229,7 +1230,7 @@ function MultiChoices({
             <span className="min-w-0">
               {o}
               {desc && (
-                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-primary/80" : "text-ink-3")}>
+                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-[#1b4b66]/80" : "text-ink-3")}>
                   {desc}
                 </span>
               )}
@@ -1784,7 +1785,7 @@ function JustifyDialog({ rec, onClose }: { rec: Recommendation; onClose: () => v
               b.peso < 0 ? "text-[color:var(--cta-text)]" : ratio >= 0.85 ? "text-success" : ratio >= 0.4 ? "text-ink" : "text-warning";
             return (
               <li key={b.criterio} className="rounded-lg border border-border bg-surface-soft p-3">
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-baseline gap-2 text-sm">
                   <span className="font-semibold text-ink">{b.criterio}</span>
                   <span className={cn("tabular text-sm font-bold", tone)}>
                     {b.peso > 0 ? `+${b.peso.toFixed(1)}` : b.peso.toFixed(1)}

@@ -280,7 +280,7 @@ function ProximosPassos({
                   p.done
                     ? "border-border bg-surface-soft text-ink-3"
                     : atual
-                      ? "border-primary bg-primary-tint font-semibold text-ink hover:bg-primary-tint/70"
+                      ? "border-primary bg-primary-tint font-semibold text-ink hover:bg-primary-tint"
                       : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
                 )}
               >
@@ -296,7 +296,7 @@ function ProximosPassos({
                     {i + 1}
                   </span>
                 )}
-                <span className={cn(p.done && "line-through decoration-ink-3/50")}>{p.label}</span>
+                <span className={cn(p.done && "line-through decoration-[#5b6472]/50")}>{p.label}</span>
                 {atual && <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-primary" />}
               </Link>
             </li>
