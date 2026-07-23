@@ -42,6 +42,7 @@ function PortalApp() {
   const avaliacoes = useAlunos((s) => s.avaliacoes);
   const execucoes = useAlunos((s) => s.execucoes);
   const liberacoes = useAlunos((s) => s.liberacoes);
+  const prescricoes = useAlunos((s) => s.prescricoes);
   const addExecucao = useAlunos((s) => s.addExecucao);
   const removeExecucao = useAlunos((s) => s.removeExecucao);
   const { marca, professionalId } = useCloudAuth();
@@ -66,6 +67,12 @@ function PortalApp() {
     removeExecucao(execId);
     void apagarExecucao(execId).catch(() => {});
   };
+  // Selo "Personalizado em DD/MM" nas sessões que nasceram de uma prescrição. Se a
+  // conta do aluno não carregou as prescrições, o selo aparece sem a data (ainda útil).
+  const dataDaPrescricao = (pid: string) => {
+    const p = prescricoes.find((x) => x.id === pid);
+    return p ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(p.data)) : undefined;
+  };
 
   return (
     <StudentApp
@@ -77,6 +84,7 @@ function PortalApp() {
       avaliacoes={avaliacoes}
       execucoes={execucoes}
       liberacoes={liberacoes}
+      dataDaPrescricao={dataDaPrescricao}
       onRegistrar={registrar}
       onDesfazer={desfazer}
       onSair={() => void signOut()}

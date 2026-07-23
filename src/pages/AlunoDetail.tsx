@@ -513,13 +513,18 @@ export function AlunoDetail() {
           <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold text-ink">Prescrições</h2>
+              {/* Com plano ativo, a prescrição do exercício é o "personalizar o treino do
+                  dia" (entra na sessão da semana). Sem plano, é a prescrição avulsa. */}
               {podeTreino.ok ? (
-                <Link to={`/gps?aluno=${aluno.id}`} className="text-sm font-semibold text-primary hover:underline">
-                  Nova
+                <Link
+                  to={planoAtivo ? `/gps?aluno=${aluno.id}&modo=dia` : `/gps?aluno=${aluno.id}`}
+                  className="text-sm font-semibold text-primary hover:underline"
+                >
+                  {planoAtivo ? "Personalizar o treino do dia" : "Nova"}
                 </Link>
               ) : (
                 <span className="text-sm font-semibold text-ink-3" aria-disabled>
-                  Nova
+                  {planoAtivo ? "Personalizar o treino do dia" : "Nova"}
                 </span>
               )}
             </div>
@@ -531,8 +536,11 @@ export function AlunoDetail() {
               podeTreino.ok && (
                 <div className="rounded-xl border border-dashed border-border p-4 text-center">
                   <p className="text-sm text-ink-2">Sem prescrição ainda.</p>
-                  <Link to={`/gps?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
-                    <Navigation className="h-4 w-4" /> Prescrever agora
+                  <Link
+                    to={planoAtivo ? `/gps?aluno=${aluno.id}&modo=dia` : `/gps?aluno=${aluno.id}`}
+                    className={cn(buttonClasses("secondary", "sm"), "mt-3")}
+                  >
+                    <Navigation className="h-4 w-4" /> {planoAtivo ? "Personalizar o treino do dia" : "Prescrever agora"}
                   </Link>
                 </div>
               )
@@ -551,7 +559,7 @@ export function AlunoDetail() {
                     <div className="mb-2 flex flex-wrap items-center gap-2">
                       <span className="tabular text-xs text-ink-3">Prescrita em {fmtData(p.data)}</span>
                       {local && (
-                        <TokenRotulado label="No plano" value={`Sessão ${local.sessao} · semana ${local.semana}`} tone="analysis" />
+                        <TokenRotulado label="No treino" value={`Semana ${local.semana} · Sessão ${local.sessao}`} tone="analysis" />
                       )}
                     </div>
                     {/* Nome e dose vinculados: a dose fica logo abaixo do exercicio, nao empurrada
@@ -1534,6 +1542,13 @@ function PlanoCard({
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
           >
             <CalendarRange className="h-4 w-4" /> Abrir e editar o plano
+          </Link>
+          {/* Exceção diária: personalizar a sessão desta semana sem remontar o treino. */}
+          <Link
+            to={`/gps?aluno=${aluno.id}&modo=dia`}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+          >
+            <Navigation className="h-4 w-4" /> Personalizar o treino do dia
           </Link>
           <Link
             to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`}

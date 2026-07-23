@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle } from "lucide-react";
+import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle, Sparkles } from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
@@ -22,6 +22,7 @@ import {
   rotuloPosicao,
   getMetodo,
   agruparBlocosPorMetodo,
+  sessaoDeHojeIndex,
 } from "@/data/periodizacao";
 
 const nomeDoBloco = (b: BlocoSessao): string => {
@@ -63,6 +64,7 @@ export function StudentApp({
   liberacoes = [],
   onRegistrar,
   onDesfazer,
+  dataDaPrescricao,
   preview = false,
   onSair,
 }: {
@@ -78,6 +80,8 @@ export function StudentApp({
   onRegistrar?: (e: Execucao) => void;
   /** desfaz uma execução registrada; ausente = sem desfazer */
   onDesfazer?: (execId: string) => void;
+  /** resolve a data de exibição de uma prescrição pela id (selo "Personalizado em …") */
+  dataDaPrescricao?: (id: string) => string | undefined;
   preview?: boolean;
   onSair?: () => void;
 }) {
@@ -148,7 +152,7 @@ export function StudentApp({
 
         <main className="flex-1 space-y-4 p-4 pb-24">
           {aba === "hoje" && (
-            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} liberacoes={liberacoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} preview={preview} />
+            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} liberacoes={liberacoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} dataDaPrescricao={dataDaPrescricao} preview={preview} />
           )}
           {aba === "semana" && <AbaPlano plano={plano} cor={cor} aluno={aluno} />}
           {aba === "evolucao" && (
@@ -198,6 +202,7 @@ function AbaHoje({
   liberacoes,
   onRegistrar,
   onDesfazer,
+  dataDaPrescricao,
   preview,
 }: {
   plano?: PlanoTreino;
@@ -207,6 +212,7 @@ function AbaHoje({
   liberacoes: Liberacao[];
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
+  dataDaPrescricao?: (id: string) => string | undefined;
   preview?: boolean;
 }) {
   // Alerta persistente de "treino em pausa": aparece antes de tudo quando o último
@@ -229,13 +235,10 @@ function AbaHoje({
 
   // "Hoje" = a primeira sessão ainda não concluída; se todas foram feitas, a
   // primeira da semana. Ela abre expandida; as demais ficam recolhidas como
-  // "Próxima", para o aluno cair direto no que treina agora.
-  const sessaoConcluida = (s: Sessao) =>
-    s.blocos.length > 0 && s.blocos.every((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id));
-  const idxHoje = (() => {
-    const i = sessoes.findIndex((s) => !sessaoConcluida(s));
-    return i === -1 ? 0 : i;
-  })();
+  // "Próxima", para o aluno cair direto no que treina agora. A regra vem do
+  // helper compartilhado, o mesmo que o "personalizar o treino do dia" usa para
+  // mirar a sessão-alvo (os dois nunca divergem).
+  const idxHoje = sessaoDeHojeIndex(plano, execucoes);
 
   return (
     <div className="space-y-4">
@@ -271,6 +274,7 @@ function AbaHoje({
             execucoes={execucoes}
             onRegistrar={onRegistrar}
             onDesfazer={onDesfazer}
+            dataDaPrescricao={dataDaPrescricao}
             preview={preview}
             inicialAberto={i === idxHoje}
             rotulo={i === idxHoje ? "Hoje" : "Próxima"}
@@ -308,6 +312,7 @@ function SessaoCard({
   execucoes,
   onRegistrar,
   onDesfazer,
+  dataDaPrescricao,
   preview,
   inicialAberto = false,
   rotulo,
@@ -320,12 +325,19 @@ function SessaoCard({
   execucoes: Execucao[];
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
+  dataDaPrescricao?: (id: string) => string | undefined;
   preview?: boolean;
   inicialAberto?: boolean;
   rotulo?: "Hoje" | "Próxima";
 }) {
   const [aberto, setAberto] = React.useState(inicialAberto);
   const feitas = sessao.blocos.filter((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id)).length;
+  // Rastro do "personalizar o treino do dia": se algum bloco nasceu de uma
+  // prescrição (origemPrescricaoId), a sessão é marcada como personalizada. Com um
+  // único id resolvível, mostra a data ("Personalizado em DD/MM").
+  const origemIds = Array.from(new Set(sessao.blocos.map((b) => b.origemPrescricaoId).filter(Boolean) as string[]));
+  const personalizadoData = origemIds.length === 1 ? dataDaPrescricao?.(origemIds[0]) : undefined;
+  const personalizado = origemIds.length > 0;
   return (
     <Card className="overflow-hidden p-0" style={rotulo === "Hoje" ? { borderColor: cor, borderWidth: 2 } : undefined}>
       <button
@@ -341,6 +353,12 @@ function SessaoCard({
             ) : rotulo === "Próxima" ? (
               <span className="rounded-full bg-surface-soft px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3 ring-1 ring-inset ring-border">Próxima</span>
             ) : null}
+            {personalizado && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary-tint px-2 py-0.5 text-2xs font-semibold text-primary">
+                <Sparkles className="h-3 w-3" aria-hidden />
+                Personalizado{personalizadoData ? ` em ${personalizadoData}` : ""}
+              </span>
+            )}
           </div>
           {sessao.foco && <div className="text-xs text-ink-3">{sessao.foco}</div>}
         </div>

@@ -12,6 +12,7 @@
 
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
+import type { Execucao } from "@/data/execucao";
 
 /* ============================ Árvore do plano (persistida) ============================ */
 
@@ -241,6 +242,29 @@ export function semanaAtual(plano: PlanoTreino, agora = Date.now()): number {
 export function mesocicloAtual(plano: PlanoTreino, agora = Date.now()): Mesociclo | undefined {
   const s = semanaAtual(plano, agora);
   return plano.macrociclo.mesociclos.find((m) => s >= m.semanaInicio && s <= m.semanaFim);
+}
+
+/** As sessões da semana em que o plano está hoje (semana pelo calendário). */
+export function sessoesDeHoje(plano: PlanoTreino, agora = Date.now()): Sessao[] {
+  const semana = semanaAtual(plano, agora);
+  const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
+  return micro?.sessoes ?? [];
+}
+
+/**
+ * Índice da "sessão de hoje" dentro da semana atual: a primeira sessão ainda não
+ * concluída (todos os blocos registrados nesta semana). Se todas foram feitas (ou
+ * não há registro), cai na primeira. É a MESMA regra que o app do aluno usa para
+ * abrir o treino do dia; extraída aqui para que o "personalizar o treino do dia"
+ * mire exatamente a sessão que o aluno vê aberta, sem os dois divergirem.
+ */
+export function sessaoDeHojeIndex(plano: PlanoTreino, execucoes: Execucao[], agora = Date.now()): number {
+  const semana = semanaAtual(plano, agora);
+  const sessoes = sessoesDeHoje(plano, agora);
+  const concluida = (s: Sessao) =>
+    s.blocos.length > 0 && s.blocos.every((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id));
+  const i = sessoes.findIndex((s) => !concluida(s));
+  return i === -1 ? 0 : i;
 }
 
 /**

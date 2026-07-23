@@ -179,6 +179,17 @@ export function Gps() {
   // avulso (sem aluno) segue livre, por ser prescrição diária legítima (decisão do fundador).
   const bloqueadoSemAvaliacao = Boolean(aluno) && !ultimaAval;
 
+  // "Personalizar o treino do dia": quando o /gps é aberto com modo=dia a partir de um
+  // aluno que TEM plano ativo, o enquadramento deixa de ser "salvar prescrição avulsa" e
+  // passa a ser personalizar a sessão desta semana do plano (o resultado entra no treino).
+  // Sem aluno ou sem plano ativo, o uso avulso continua igual.
+  const planoAtivo = React.useMemo(
+    () => (aluno ? planos.find((p) => p.alunoId === aluno.id && p.status === "ativo") : undefined),
+    [planos, aluno],
+  );
+  const modoDia = params.get("modo") === "dia";
+  const personalizarDia = modoDia && Boolean(planoAtivo);
+
   // Última liberação do Semáforo aplicável (últimas 24h).
   // Com aluno, a pergunta é "ESTE aluno foi liberado hoje?": exigir também que o
   // slug do checklist batesse fazia o semáforo nunca chegar ao prontuário nas
@@ -313,7 +324,6 @@ export function Gps() {
     addActivity(`Prescrição salva para ${aluno.nome}`);
     // Aluno com plano ativo: em vez de só voltar, oferece levar os exercícios para as
     // sessões do plano (o tubo). Sem plano ativo, o comportamento é o de sempre.
-    const planoAtivo = planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
     if (planoAtivo) {
       setAplicarDe({ presc, plano: planoAtivo });
       return;
@@ -386,13 +396,29 @@ export function Gps() {
           </Link>
         )}
         <SectionHeader
-          eyebrow="Assistente de decisão"
+          eyebrow={personalizarDia ? "Treino do dia" : "Assistente de decisão"}
           icon={<Navigation className="h-3 w-3" />}
-          title="Prescrever exercício"
-          subtitle="Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê."
+          title={personalizarDia ? "Personalizar o treino do dia" : "Prescrever exercício"}
+          subtitle={
+            personalizarDia && aluno
+              ? `Ajuste a sessão desta semana de ${aluno.nome.split(" ")[0]}. As escolhas entram direto no treino dele.`
+              : "Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê."
+          }
           right={<SeloRCD compacto />}
         />
       </div>
+
+      {/* Enquadramento do "personalizar o treino do dia": o resultado não fica avulso,
+          ele personaliza a sessão desta semana do plano do aluno. */}
+      {personalizarDia && aluno && (
+        <Card tone="primary" className="flex flex-wrap items-center gap-3 p-4">
+          <CalendarRange className="h-5 w-5 shrink-0 text-primary" />
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            <span className="font-semibold text-ink">Personalizando o treino do dia.</span> O resultado vai
+            personalizar a sessão desta semana do treino de {aluno.nome.split(" ")[0]}.
+          </p>
+        </Card>
+      )}
 
       {/* Onboarding "Primeiro Caso Real": o gatilho de compra é situacional */}
       {primeiroCaso && !results && (
@@ -523,7 +549,8 @@ export function Gps() {
           setCompare={setCompare}
           alunoNome={aluno?.nome}
           alunoId={aluno?.id}
-          planoAtivoId={aluno ? planos.find((p) => p.alunoId === aluno.id && p.status === "ativo")?.id : undefined}
+          planoAtivoId={planoAtivo?.id}
+          modoDia={personalizarDia}
           onSalvar={aluno ? salvarPrescricao : undefined}
           onExportar={aluno ? exportarPDF : undefined}
           podeExportar={unlocked}
@@ -542,6 +569,7 @@ export function Gps() {
         <AplicarNoTreinoDialog
           prescricao={aplicarDe.presc}
           plano={aplicarDe.plano}
+          modoDia={personalizarDia}
           execucoes={execucoes.filter((e) => e.alunoId === aplicarDe.plano.alunoId)}
           dataDaPrescricao={(pid) => {
             const p = prescricoes.find((x) => x.id === pid);
@@ -1302,6 +1330,7 @@ function Results({
   alunoNome,
   alunoId,
   planoAtivoId,
+  modoDia,
   onSalvar,
   onExportar,
   podeExportar,
@@ -1321,6 +1350,8 @@ function Results({
   alunoId?: string;
   /** plano de treino já ativo do aluno, quando houver */
   planoAtivoId?: string;
+  /** "personalizar o treino do dia": muda o enquadramento do salvar (entra no treino) */
+  modoDia?: boolean;
   onSalvar?: () => void;
   onExportar?: () => void;
   podeExportar?: boolean;
@@ -1408,14 +1439,18 @@ function Results({
           <div className="flex flex-wrap items-center gap-3">
             <UserCheck className="h-5 w-5 shrink-0 text-success" />
             <div className="min-w-0">
-              <div className="font-semibold text-ink">Último passo: concluir a prescrição de {alunoNome}</div>
+              <div className="font-semibold text-ink">
+                {modoDia ? `Último passo: personalizar o treino de ${alunoNome}` : `Último passo: concluir a prescrição de ${alunoNome}`}
+              </div>
               <p className="text-sm text-ink-2">
-                Salvar registra no perfil do aluno e volta para ele. O PDF com a sua marca é opcional.
+                {modoDia
+                  ? "Salvar leva estes exercícios para a sessão desta semana do treino dele. O PDF com a sua marca é opcional."
+                  : "Salvar registra no perfil do aluno e volta para ele. O PDF com a sua marca é opcional."}
               </p>
             </div>
             <div className="ml-auto flex flex-wrap gap-2">
               <button onClick={onSalvar} className={buttonClasses("primary")}>
-                <Save className="h-4 w-4" /> Salvar no perfil de {alunoNome}
+                <Save className="h-4 w-4" /> {modoDia ? `Personalizar o treino de ${alunoNome}` : `Salvar no perfil de ${alunoNome}`}
               </button>
               {podeExportar ? (
                 <button onClick={onExportar} className={buttonClasses("secondary", "sm")}>
@@ -1435,7 +1470,9 @@ function Results({
               <CalendarRange className="h-4 w-4 shrink-0 text-primary" />
               {planoAtivoId ? (
                 <span className="text-ink-2">
-                  {alunoNome} já tem um plano ativo. Ao salvar, você pode aplicar estes exercícios nas sessões dele.
+                  {modoDia
+                    ? `Ao salvar, estes exercícios personalizam a sessão desta semana do treino de ${alunoNome}.`
+                    : `${alunoNome} já tem um plano ativo. Ao salvar, você pode aplicar estes exercícios nas sessões dele.`}
                 </span>
               ) : (
                 <>

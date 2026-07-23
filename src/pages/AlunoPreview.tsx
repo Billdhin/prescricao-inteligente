@@ -16,12 +16,18 @@ export function AlunoPreview() {
   const avaliacoes = useAlunos((s) => s.avaliacoes);
   const execucoes = useAlunos((s) => s.execucoes);
   const liberacoes = useAlunos((s) => s.liberacoes);
+  const prescricoes = useAlunos((s) => s.prescricoes);
   const user = useUser();
 
   if (!aluno) return <Navigate to="/alunos" replace />;
 
   const plano = planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
   const execucoesDoAluno = execucoes.filter((e) => e.alunoId === aluno.id);
+  // Resolve a data de origem das sessões personalizadas (selo "Personalizado em DD/MM").
+  const dataDaPrescricao = (pid: string) => {
+    const p = prescricoes.find((x) => x.id === pid);
+    return p ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(p.data)) : undefined;
+  };
   const marca = {
     nome: user.empresa || user.name || "Seu treino",
     logoDataUrl: user.logoDataUrl || undefined,
@@ -38,6 +44,7 @@ export function AlunoPreview() {
       avaliacoes={avaliacoes}
       execucoes={execucoesDoAluno}
       liberacoes={liberacoes}
+      dataDaPrescricao={dataDaPrescricao}
       // Prévia é só para o profissional VER como o aluno vê: registrar aqui não
       // pode sujar as execuções reais do aluno. Por isso o registro é no-op.
       onRegistrar={() => {}}

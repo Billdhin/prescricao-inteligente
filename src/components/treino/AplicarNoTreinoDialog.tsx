@@ -3,7 +3,7 @@ import { CalendarRange, AlertTriangle, Dumbbell } from "lucide-react";
 import { buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { useDialog } from "@/lib/useDialog";
-import { semanaAtual, mesocicloAtual, rotuloMeso, type PlanoTreino } from "@/data/periodizacao";
+import { semanaAtual, mesocicloAtual, rotuloMeso, sessaoDeHojeIndex, type PlanoTreino } from "@/data/periodizacao";
 import type { Prescricao } from "@/data/alunos";
 import type { Execucao } from "@/data/execucao";
 import {
@@ -33,6 +33,7 @@ export function AplicarNoTreinoDialog({
   onDecidirDepois,
   dataDaPrescricao,
   execucoes = [],
+  modoDia = false,
 }: {
   prescricao: Prescricao;
   plano: PlanoTreino;
@@ -43,13 +44,26 @@ export function AplicarNoTreinoDialog({
   dataDaPrescricao?: (id: string) => string | undefined;
   /** execuções do aluno, para avisar quando substituir vai desvincular histórico */
   execucoes?: Execucao[];
+  /**
+   * "Personalizar o treino do dia": a prescrição nasceu do fluxo diário (/gps?modo=dia).
+   * Muda o DEFAULT para "só esta semana" com a sessão de hoje pré-selecionada (a mesma
+   * regra do app do aluno). Os demais escopos seguem disponíveis. Sem isto, o default é
+   * o de sempre (bloco até o fim, sessão A).
+   */
+  modoDia?: boolean;
 }) {
   const dialogRef = useDialog<HTMLDivElement>(onDecidirDepois);
   const semanaCorrente = semanaAtual(plano);
   const meso = mesocicloAtual(plano);
   const sessoes = sessoesDaSemana(plano, semanaCorrente);
 
-  const [sessaoIndex, setSessaoIndex] = React.useState(0);
+  // No "treino do dia", a sessão-alvo já vem pré-selecionada na sessão de hoje (primeira
+  // não concluída da semana), e o escopo primário é só esta semana.
+  const sessaoHoje = modoDia ? sessaoDeHojeIndex(plano, execucoes) : 0;
+  const escopoPrimario: "bloco" | "semana" = modoDia ? "semana" : "bloco";
+  const escopoAlternativo: "bloco" | "semana" = modoDia ? "bloco" : "semana";
+
+  const [sessaoIndex, setSessaoIndex] = React.useState(sessaoHoje);
   const [picker, setPicker] = React.useState(false);
   const [adicionar, setAdicionar] = React.useState(false);
 
@@ -66,12 +80,14 @@ export function AplicarNoTreinoDialog({
   // sem substituir não remove nada, então não há risco.
   const idsEmRisco = React.useMemo(() => {
     const set = new Set<string>();
-    const ate = meso ? meso.semanaFim : semanaCorrente;
+    // O alcance do aviso acompanha o escopo PRIMÁRIO: no treino do dia, só a semana
+    // corrente; no default de bloco, até o fim do mesociclo.
+    const ate = escopoPrimario === "semana" ? semanaCorrente : meso ? meso.semanaFim : semanaCorrente;
     for (let w = semanaCorrente; w <= ate; w++) {
       blocosForcaAtuais(plano, w, sessaoIndex).forEach((b) => set.add(b.id));
     }
     return set;
-  }, [plano, meso, semanaCorrente, sessaoIndex]);
+  }, [plano, meso, semanaCorrente, sessaoIndex, escopoPrimario]);
   const execucoesEmRisco = !adicionar && execucoes.some((e) => idsEmRisco.has(e.blocoRef));
   const dataAntes = (() => {
     const ids = Array.from(new Set(semeadosAntes.map((b) => b.origemPrescricaoId!).filter(Boolean)));
@@ -138,7 +154,10 @@ export function AplicarNoTreinoDialog({
                 <Dumbbell className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
                 <span>
                   Isto substitui os exercícios de força atuais da Sessão {letra}: {atuais.map((b) => b.nome).join(", ")}
-                  {meso && meso.semanaFim > semanaCorrente ? ", e os equivalentes nas semanas seguintes deste bloco" : ""}.
+                  {escopoPrimario === "bloco" && meso && meso.semanaFim > semanaCorrente
+                    ? ", e os equivalentes nas semanas seguintes deste bloco"
+                    : ""}
+                  .
                   {semeadosAntes.length > 0 && (
                     <> Inclui os {semeadosAntes.length} aplicados{dataAntes ? ` em ${dataAntes}` : " antes"}.</>
                   )}
@@ -196,25 +215,31 @@ export function AplicarNoTreinoDialog({
 
             {/* Botão primário único, com o escopo default já pré-selecionado */}
             <button
-              onClick={() => aplicar("bloco", adicionar ? "adicionar" : "substituir")}
+              onClick={() => aplicar(escopoPrimario, adicionar ? "adicionar" : "substituir")}
               className={cn(buttonClasses("primary"), "mt-4 w-full")}
             >
               <CalendarRange className="h-4 w-4" />
-              {adicionar ? `Adicionar na Sessão ${letra}` : `Aplicar na Sessão ${letra}`}
+              {modoDia
+                ? adicionar
+                  ? `Adicionar na Sessão ${letra} de hoje`
+                  : `Personalizar a Sessão ${letra} de hoje`
+                : adicionar
+                  ? `Adicionar na Sessão ${letra}`
+                  : `Aplicar na Sessão ${letra}`}
             </button>
 
             <p className="mt-2 text-center text-2xs leading-snug text-ink-3">
-              Vale até o fim deste bloco. As doses seguem a faixa do seu plano; o raciocínio da escolha
-              fica no prontuário.
+              {modoDia ? "Vale só nesta semana." : "Vale até o fim deste bloco."} As doses seguem a faixa do seu
+              plano; o raciocínio da escolha fica no prontuário.
             </p>
 
             {/* Alternativas como links pequenos */}
             <div className="mt-3 flex flex-col items-center gap-1.5 border-t border-border pt-3 text-xs">
               <button
-                onClick={() => aplicar("semana", adicionar ? "adicionar" : "substituir")}
+                onClick={() => aplicar(escopoAlternativo, adicionar ? "adicionar" : "substituir")}
                 className="font-semibold text-primary hover:underline"
               >
-                Aplicar só nesta semana
+                {modoDia ? "Aplicar até o fim deste bloco" : "Aplicar só nesta semana"}
               </button>
               <button
                 onClick={() => setPicker((v) => !v)}
