@@ -7,28 +7,35 @@ import {
   XCircle,
   ShieldCheck,
   AlertTriangle,
-  GraduationCap,
-  Dumbbell,
-  UserCheck,
-  FileDown,
-  HeartPulse,
-  FlaskConical,
-  BookOpen,
-  Users,
-  GitCompare,
-  Navigation,
   Info,
   ChevronDown,
+  FileDown,
+  FileCheck,
+  Users,
+  BarChart3,
+  CalendarRange,
+  Navigation,
+  Smartphone,
+  GraduationCap,
+  FlaskConical,
+  ClipboardList,
+  Compass,
+  Route,
+  HeartPulse,
+  UserCheck,
+  Dumbbell,
+  TrendingUp,
 } from "lucide-react";
 import * as React from "react";
 import { Logo } from "@/components/brand/Logo";
-import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, SectionHeader, Eyebrow, ParDado } from "@/components/ui/primitives";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
+import { EspinhaSelo } from "@/components/ui/EspinhaSelo";
 import { TutorialScene } from "@/components/tutorial/TutorialScene";
 import { muscleRegions } from "@/data/muscle-regions";
 import { analysisOverlays } from "@/data/analysis-overlays";
 import { getExercise } from "@/data/exercises";
-import { withBase } from "@/lib/utils";
+import { cn, withBase } from "@/lib/utils";
 
 // Slider carregado sob demanda (abaixo do primeiro paint): o LCP da landing
 // continua sendo texto do hero, e o processamento de máscara do canvas não
@@ -64,6 +71,41 @@ function Kicker({ children, tone = "primary" }: { children: React.ReactNode; ton
   );
 }
 
+/* Item de pilar: ícone quadrado + título + linha. Base dos três pilares. */
+function FeatureItem({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+  return (
+    <li className="flex gap-3">
+      <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-tint text-primary">
+        {icon}
+      </span>
+      <div className="min-w-0">
+        <div className="font-display font-bold text-ink">{title}</div>
+        <p className="mt-0.5 text-sm text-ink-2">{children}</p>
+      </div>
+    </li>
+  );
+}
+
+/* Os três pilares, usados nos chips do hero e no cartão-sistema. */
+const TRIADE = [
+  { id: "registro", label: "Registro", icon: ClipboardList, linha: "Aluno, avaliação, semáforo e treino, registrados.", tone: "primary" as const },
+  { id: "acompanhamento", label: "Acompanhamento", icon: Route, linha: "Do cadastro à reavaliação, com histórico.", tone: "analysis" as const },
+  { id: "direcionamento", label: "Direcionamento", icon: Compass, linha: "Grupo, objetivo e avaliação guiam a prescrição.", tone: "primary" as const },
+];
+
+/* Catálogo de módulos: cada porta aponta para uma rota real do app; os rótulos
+   espelham os nomes usados na navegação. */
+const MODULOS: { icon: React.ComponentType<{ className?: string }>; label: string; to: string; d: string }[] = [
+  { icon: Users, label: "Alunos", to: "/alunos", d: "Cadastro, avaliações e evolução de cada aluno." },
+  { icon: BarChart3, label: "Avaliações", to: "/assessments", d: "Medidas, IMC e RCQ derivados; reavalie e compare." },
+  { icon: ShieldCheck, label: "Semáforo", to: "/semaforo", d: "Libere, ajuste ou adie a sessão do dia, com o porquê." },
+  { icon: CalendarRange, label: "Prescrever treino", to: "/prescrever-treino", d: "Periodização mensal a anual, do mesociclo ao microciclo." },
+  { icon: Navigation, label: "Prescrever exercício", to: "/gps", d: "Personalize o treino do dia do aluno pela avaliação, ou prescreva uma sessão avulsa." },
+  { icon: Smartphone, label: "App do aluno", to: "/alunos", d: "O que o aluno vê: treino, semáforo e registro de execução." },
+  { icon: GraduationCap, label: "Aprender", to: "/aprender", d: "Disciplinas, casos e biblioteca com referências reais." },
+  { icon: FlaskConical, label: "Laboratório Visual", to: "/movement-lab", d: "Foto real e análise biomecânica no divisor interativo." },
+];
+
 /* --------------------------------- página -------------------------------- */
 
 export function Landing() {
@@ -74,8 +116,8 @@ export function Landing() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
           <Logo />
           <nav aria-label="Seções da página" className="hidden items-center gap-6 text-sm font-medium text-ink-2 md:flex">
-            <a href="#como-funciona" className="hover:text-ink">Como funciona</a>
-            <a href="#recursos" className="hover:text-ink">Recursos</a>
+            <a href="#pilares" className="hover:text-ink">A tríade</a>
+            <a href="#modulos" className="hover:text-ink">Módulos</a>
             <a href="#planos" className="hover:text-ink">Planos</a>
             <a href="#faq" className="hover:text-ink">Dúvidas</a>
           </nav>
@@ -94,11 +136,11 @@ export function Landing() {
       <Section className="!pb-10 !pt-10 md:!pt-16">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <div>
-            <Kicker tone="analysis">Para profissionais de Educação Física</Kicker>
-            <h1 className="font-display text-4xl font-extrabold leading-[1.08] text-ink md:text-[3.05rem]">
-              Aluno com hipertensão, diabetes ou dor lombar? Monte um treino{" "}
+            <Kicker tone="analysis">Sistema completo para profissionais de Educação Física</Kicker>
+            <h1 className="font-display text-4xl font-extrabold leading-[1.05] text-ink md:text-[3.1rem]">
+              Registre. Acompanhe.{" "}
               <span className="relative inline-block whitespace-nowrap text-primary">
-                seguro,
+                Direcione.
                 <svg
                   aria-hidden
                   className="absolute -bottom-2 left-0 h-2.5 w-full"
@@ -113,21 +155,39 @@ export function Landing() {
                     strokeLinecap="round"
                   />
                 </svg>
-              </span>{" "}
-              com o porquê documentado.
+              </span>
             </h1>
             <p className="mt-5 max-w-lg text-lg text-ink-2">
-              Para alunos com hipertensão, diabetes, obesidade, dor lombar ou idade avançada: veja o
-              treino recomendado, o porquê de cada exercício e as cautelas de segurança no mesmo
-              lugar. A decisão é sempre sua; a plataforma organiza e documenta o raciocínio.
+              Cadastro, avaliação, semáforo e treino no mesmo lugar. O sistema conduz o
+              acompanhamento do primeiro dia à reavaliação e ajusta a prescrição ao objetivo e à
+              condição de cada aluno. A decisão é sempre sua.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+
+            {/* Os três pilares como âncoras: cada chip rola até o pilar correspondente. */}
+            <div className="mt-6 flex flex-wrap gap-2">
+              {TRIADE.map((t) => {
+                const Icon = t.icon;
+                return (
+                  <a
+                    key={t.id}
+                    href={`#${t.id}`}
+                    className="group inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-2 text-sm font-semibold text-ink shadow-soft transition-colors hover:border-primary hover:bg-primary-tint hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+                  >
+                    <Icon className="h-4 w-4 text-primary" />
+                    {t.label}
+                    <ArrowDown className="h-3.5 w-3.5 text-ink-3 transition-transform group-hover:translate-y-0.5" />
+                  </a>
+                );
+              })}
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/dashboard" className={buttonClasses("primary")}>
-                Resolver meu primeiro caso <ArrowRight className="h-4 w-4" />
+                Começar agora <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link to="/casos-rcd" className={buttonClasses("secondary")}>
-                Ver um caso decidido <ArrowRight className="h-4 w-4" />
-              </Link>
+              <a href="#modulos" className={buttonClasses("secondary")}>
+                Ver os módulos <ArrowDown className="h-4 w-4" />
+              </a>
             </div>
             <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink-2">
               {["Acesso completo", "Sem versão limitada", "Feito por doutor em Educação Física"].map((t) => (
@@ -138,151 +198,240 @@ export function Landing() {
             </ul>
           </div>
 
-          {/* O fosso à vista: a decisão documentada (não a commodity biomecânica) */}
-          <DecisaoDemoCard />
+          {/* A tese à vista: o sistema (a tríade), não um aluno. */}
+          <SistemaCard />
         </div>
       </Section>
 
-      {/* --------------------------- Faixa da dor ---------------------------- */}
+      {/* ------------------ Bridge: por que um sistema ---------------------- */}
       <div className="border-y border-border bg-surface">
-        <div className="mx-auto grid max-w-6xl gap-6 px-4 py-10 md:grid-cols-[1.2fr_1fr] md:items-center md:px-6">
-          <div>
-            <h2 className="font-display text-2xl font-bold text-ink">
-              Treino para aluno saudável, todo mundo monta. A conta aperta quando ele chega com{" "}
-              <span className="text-[color:var(--cta-text)]">pressão alta, diabetes, uma hérnia ou 68 anos</span>.
-            </h2>
-            <p className="mt-2 max-w-xl text-ink-2">
-              Aí a decisão é sua, e precisa ser segura e defensável. A plataforma pensa junto e deixa
-              o porquê documentado, do jeito que você pode mostrar e guardar.
-            </p>
-          </div>
-          <div className="space-y-2">
-            {["“Pode treinar pesado com a pressão descontrolada?”", "“Esse exercício é seguro para a hérnia dele?”", "“Se acontecer algo, como eu me explico?”"].map((q) => (
-              <div key={q} className="flex items-center gap-3 rounded-xl border border-border bg-bg px-4 py-2.5 text-sm text-ink">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-tint text-xs font-bold text-primary">?</span>
-                {q}
-              </div>
-            ))}
-          </div>
+        <div className="mx-auto max-w-3xl px-4 py-14 text-center md:px-6">
+          <Kicker>Por que um sistema, e não uma planilha</Kicker>
+          <h2 className="font-display text-2xl font-bold text-ink md:text-3xl">
+            Registrar, acompanhar e direcionar são o mesmo trabalho. O sistema mantém as três peças
+            juntas.
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-ink-2">
+            Cada peça alimenta a próxima: a avaliação libera a prescrição, o semáforo acompanha o
+            dia, a reavaliação recomeça o ciclo. Nada solto entre planilhas, nada perdido no caminho.
+          </p>
         </div>
       </div>
 
-      {/* ----- Prova visual (posição 2): foto real × análise, o "uau" -------- */}
-      <Section className="!py-12">
-        <div className="mx-auto max-w-4xl text-center">
-          <Kicker tone="analysis">Execução × análise</Kicker>
-          <h2 className="font-display text-3xl font-bold text-ink md:text-4xl">
-            Entenda o movimento por dentro.
-          </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-            Arraste o divisor e revele a análise biomecânica sobre a foto real de execução: músculos
-            ativados, ângulos e linha de força.
-          </p>
-        </div>
-        <div className="mx-auto mt-8 max-w-4xl">
-          <Card variant="raised" className="p-3">
-            <React.Suspense
-              fallback={<div className="aspect-[4/3] w-full animate-pulse rounded-card bg-surface-soft" />}
-            >
-              <BiomechanicsComparisonSlider
-                baseSrc={withBase("/exercises/leg-press-45.webp")}
-                analysisSrc={withBase("/exercises/leg-press-45-analysis.webp")}
-                alt="Leg press 45°, execução real"
-                regions={muscleRegions["leg-press-45"] ?? []}
-                ativacao={getExercise("leg-press-45")?.ativacao ?? []}
-                overlay={analysisOverlays["leg-press-45"]}
-              />
-            </React.Suspense>
-            <p className="px-2 py-2 text-center text-xs text-ink-3">
-              Arraste: execução real e análise na mesma imagem.
-            </p>
-          </Card>
-        </div>
-      </Section>
-
-      {/* --------------------------- Como funciona --------------------------- */}
-      <Section id="como-funciona" className="text-center">
-        <Kicker>Simples assim</Kicker>
-        <h2 className="font-display text-3xl font-bold text-ink md:text-4xl">Três passos. Só isso.</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-          Sem planilhas, sem adivinhação. Um caminho guiado do perfil do aluno até a entrega.
-        </p>
-
-        <div className="relative mt-10 grid gap-6 md:grid-cols-3">
-          {/* linha conectora (desktop) */}
-          <div aria-hidden className="absolute left-[16.6%] right-[16.6%] top-6 hidden border-t-2 border-dashed border-border md:block" />
-          {[
-            {
-              n: 1,
-              t: "Diga a condição do aluno",
-              d: "Escolha a condição (hipertensão, diabetes, dor lombar e mais), o objetivo e o nível. Leva menos de um minuto.",
-              scene: "wizard" as const,
-            },
-            {
-              n: 2,
-              t: "Receba o treino, com o porquê",
-              d: "Exercícios ranqueados por critério, com as cautelas de segurança da condição já embutidas. Toque em “Ver justificativa” e entenda cada escolha.",
-              scene: "recomendacao" as const,
-            },
-            {
-              n: 3,
-              t: "Documente a decisão",
-              d: "O raciocínio vira um registro com referências, o seu nome e o seu CREF. No Profissional, você ainda exporta em PDF com a sua marca.",
-              scene: "pdf" as const,
-            },
-          ].map((s) => (
-            <div key={s.n} className="relative">
-              <span className="relative z-10 mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full gradient-brand font-display text-lg font-bold text-white shadow-elevated">
-                {s.n}
-              </span>
-              <Card className="p-5 text-left">
-                <div className="mb-3 overflow-hidden rounded-xl border border-border bg-surface-soft p-2">
-                  <TutorialScene id={s.scene} label={`Passo ${s.n}: ${s.t}`} />
-                </div>
-                <h3 className="font-display text-lg font-bold text-ink">{s.t}</h3>
-                <p className="mt-1 text-sm text-ink-2">{s.d}</p>
-              </Card>
-            </div>
-          ))}
-        </div>
-
-        <Link to="/dashboard" className={buttonClasses("primary") + " mt-10"}>
-          Dar o primeiro passo <ArrowRight className="h-4 w-4" />
-        </Link>
-        <p className="mt-3 text-xs text-ink-3">
-          Prefere ver antes? <Link to="/tutorial" className="font-semibold text-primary hover:underline">Abra os tutoriais visuais</Link>.
-        </p>
-      </Section>
-
-      {/* -------------------- O mecanismo: Motor RCD ------------------------- */}
-      <div className="border-y border-border bg-surface">
-        <Section id="rcd" className="!py-14">
+      {/* ================================ PILARES =========================== */}
+      <div id="pilares">
+        {/* ------------------------ Pilar 01 · Registro -------------------- */}
+        <Section id="registro" className="scroll-mt-20">
           <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div>
+              <SectionHeader
+                level={2}
+                eyebrow="Pilar 01 · Registro"
+                icon={<ClipboardList className="h-4 w-4" />}
+                title="Tudo registrado, num só lugar."
+                subtitle="Cadastro do aluno, avaliação completa e histórico que não se perde entre planilhas."
+              />
+              <ul className="mt-6 space-y-4">
+                <FeatureItem icon={<Users className="h-4 w-4" />} title="Cadastro do aluno">
+                  Perfil, objetivo, nível, restrições e equipamentos disponíveis.
+                </FeatureItem>
+                <FeatureItem icon={<BarChart3 className="h-4 w-4" />} title="Avaliação completa">
+                  Medidas, IMC e RCQ derivados, pressão e sinais. As contas são do sistema.
+                </FeatureItem>
+                <FeatureItem icon={<TrendingUp className="h-4 w-4" />} title="Reavaliação com evolução">
+                  Os campos já vêm com a avaliação anterior e o gráfico mostra o antes e o depois.
+                </FeatureItem>
+                <FeatureItem icon={<FileCheck className="h-4 w-4" />} title="Prontuário assinável e PDF com a sua marca">
+                  A decisão vira documento com o seu nome e o seu CREF, para guardar e entregar.
+                </FeatureItem>
+              </ul>
+            </div>
+            <Card variant="raised" className="p-3">
+              <div className="overflow-hidden rounded-xl border border-border bg-surface-soft p-2">
+                <TutorialScene id="avaliar" label="Registrar a avaliação do aluno" />
+              </div>
+              <p className="px-2 py-2 text-center text-xs text-ink-3">
+                A avaliação abre o registro: o treino nasce dela.
+              </p>
+            </Card>
+          </div>
+        </Section>
+
+        {/* --------------------- Pilar 02 · Acompanhamento ----------------- */}
+        <div className="border-y border-border bg-surface">
+          <Section id="acompanhamento" className="scroll-mt-20">
+            <div className="grid items-center gap-10 lg:grid-cols-2">
+              <AcompanhamentoVisual />
+              <div className="lg:order-2">
+                <SectionHeader
+                  level={2}
+                  eyebrow="Pilar 02 · Acompanhamento"
+                  icon={<Route className="h-4 w-4" />}
+                  title="Um caminho, do cadastro à reavaliação."
+                  subtitle="O sistema aponta o próximo passo e guarda o histórico de cada etapa."
+                />
+                <ul className="mt-6 space-y-4">
+                  <FeatureItem icon={<Route className="h-4 w-4" />} title="A linha do cuidado">
+                    Avaliar, planejar, liberar, acompanhar e reavaliar, sempre com o próximo passo à
+                    vista.
+                  </FeatureItem>
+                  <FeatureItem icon={<ShieldCheck className="h-4 w-4" />} title="Semáforo diário com histórico">
+                    Libere, ajuste ou adie a sessão do dia. O histórico fica completo, dia a dia.
+                  </FeatureItem>
+                  <FeatureItem icon={<AlertTriangle className="h-4 w-4" />} title="Alerta que persiste">
+                    Um "não liberado" sem novo semáforo avisa você e o aluno até ser resolvido.
+                  </FeatureItem>
+                  <FeatureItem icon={<Smartphone className="h-4 w-4" />} title="App do aluno">
+                    O aluno vê o treino, consulta o semáforo e registra a execução.
+                  </FeatureItem>
+                </ul>
+              </div>
+            </div>
+          </Section>
+        </div>
+
+        {/* ------------ Vale escuro: o Semáforo em cores (assinatura) -------- */}
+        {/* Único respiro escuro da página: um beat de contraste que encena o gesto
+            mais distintivo do produto (o sinal verde/amarelo/vermelho antes de treinar).
+            Não é dark mode nem repintura: é uma seção-assinatura. Cores e rótulos são
+            os reais do Semáforo de Liberação; a decisão continua sendo do profissional. */}
+        <div className="relative overflow-hidden bg-primary text-on-primary">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_75%_at_50%_-10%,rgba(255,255,255,0.09),transparent_60%)]"
+          />
+          <Section className="relative">
+            <div className="mx-auto max-w-2xl text-center">
+              <span className="mb-3 inline-flex items-center gap-2.5 text-2xs font-bold uppercase tracking-[0.18em] text-[#8fd3dd]">
+                <span aria-hidden className="h-px w-7 bg-[#8fd3dd]/60" />
+                Segurança em 30 segundos
+              </span>
+              <h2 className="font-display text-3xl font-bold md:text-4xl">
+                Antes da sessão, o sinal verde. Ou o motivo para esperar.
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-primary-tint">
+                O <span className="font-semibold text-white">Semáforo de Liberação</span> lê a condição do aluno e
+                responde em 30 segundos, com o porquê e a referência de cada resposta.
+              </p>
+            </div>
+
+            <div className="mx-auto mt-10 grid max-w-3xl items-center gap-8 md:grid-cols-[auto_1fr]">
+              {/* Farol: as três luzes acesas, lidas como legenda dos desfechos possíveis */}
+              <div
+                aria-hidden
+                className="mx-auto flex w-fit flex-col gap-3.5 rounded-[30px] border border-white/10 bg-[#0f2e3d] p-4 shadow-xl"
+              >
+                {[
+                  { c: "#22c55e", g: "rgba(34,197,94,0.45)" },
+                  { c: "#f59e0b", g: "rgba(245,158,11,0.45)" },
+                  { c: "#ef4444", g: "rgba(239,68,68,0.45)" },
+                ].map((l) => (
+                  <span
+                    key={l.c}
+                    className="h-14 w-14 rounded-full"
+                    style={{ backgroundColor: l.c, boxShadow: `0 0 22px 3px ${l.g}` }}
+                  />
+                ))}
+              </div>
+
+              {/* Legenda: rótulo real de cada estado + o que ele significa na prática */}
+              <ul className="space-y-5">
+                {[
+                  {
+                    icon: <CheckCircle2 className="h-5 w-5" style={{ color: "#4ade80" }} />,
+                    rotulo: "Liberado",
+                    cor: "#86efac",
+                    d: "Nenhum sinal de alerta nos itens do dia. Siga para a sessão.",
+                  },
+                  {
+                    icon: <AlertTriangle className="h-5 w-5" style={{ color: "#fbbf24" }} />,
+                    rotulo: "Liberado com ajuste",
+                    cor: "#fcd34d",
+                    d: "A sessão acontece com os ajustes indicados. O racional fica registrado.",
+                  },
+                  {
+                    icon: <XCircle className="h-5 w-5" style={{ color: "#f87171" }} />,
+                    rotulo: "Não liberado hoje",
+                    cor: "#fca5a5",
+                    d: "Os sinais pedem reavaliação antes de treinar; se persistirem, encaminhe.",
+                  },
+                ].map((s) => (
+                  <li key={s.rotulo} className="flex items-start gap-3">
+                    <span className="mt-0.5 shrink-0">{s.icon}</span>
+                    <div>
+                      <div className="font-display text-lg font-bold" style={{ color: s.cor }}>
+                        {s.rotulo}
+                      </div>
+                      <p className="mt-0.5 text-sm text-primary-tint">{s.d}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <p className="mx-auto mt-8 max-w-xl text-center text-xs text-primary-tint/75">
+              Quem libera, ajusta ou adia é sempre o profissional habilitado. O Semáforo documenta o racional dessa
+              decisão e ele entra no prontuário.
+            </p>
+          </Section>
+        </div>
+
+        {/* --------------------- Pilar 03 · Direcionamento ----------------- */}
+        <Section id="direcionamento" className="scroll-mt-20">
+          <SectionHeader
+            level={2}
+            eyebrow="Pilar 03 · Direcionamento"
+            icon={<Compass className="h-4 w-4" />}
+            title="A prescrição que se ajusta ao aluno."
+            subtitle="Grupo, objetivo e características definem o treino. A condição de saúde vira critério, não obstáculo."
+          />
+
+          {/* A: os critérios do direcionamento + a decisão documentada */}
+          <div className="mt-8 grid items-start gap-10 lg:grid-cols-2">
+            <div>
+              <ul className="space-y-4">
+                <FeatureItem icon={<HeartPulse className="h-4 w-4" />} title="Classificação de grupo especial">
+                  O sistema indica o grupo pelo critério citado (IMC, pressão, idade). Você confirma.
+                </FeatureItem>
+                <FeatureItem icon={<Compass className="h-4 w-4" />} title="Motor que valida pela avaliação">
+                  Cada exercício é ranqueado e as cautelas da condição já entram na conta.
+                </FeatureItem>
+                <FeatureItem icon={<CalendarRange className="h-4 w-4" />} title="Periodização mensal a anual">
+                  Do mesociclo ao microciclo, com métodos de série (bi-set, drop-set) na semana.
+                </FeatureItem>
+              </ul>
+              <ClassificadorCallout />
+            </div>
+            <DecisaoDemoCard />
+          </div>
+
+          {/* B: o mecanismo (Motor RCD) e o "aha" da justificativa */}
+          <div className="mt-14 grid items-center gap-10 lg:grid-cols-2">
             <div>
               <div className="mb-3">
                 <SeloRCD />
               </div>
-              <h2 className="font-display text-3xl font-bold text-ink">
+              <h3 className="font-display text-xl font-bold text-ink">
                 Não é um gerador de treino. É{" "}
                 <span className="text-primary">Raciocínio Clínico Documentado</span>.
-              </h2>
+              </h3>
               <p className="mt-3 text-ink-2">
-                O Motor RCD acompanha a decisão inteira, do sinal verde para treinar hoje ao
-                documento que você pode assinar. Em três atos:
+                O Motor RCD acompanha a decisão inteira, do critério de escolha ao documento que você
+                pode assinar. Em três atos:
               </p>
               <ol className="mt-5 space-y-3">
                 {[
                   {
                     t: "Semáforo de Liberação",
-                    d: "30 segundos antes da sessão: liberado, liberado com ajuste ou não liberado hoje, com o porquê.",
+                    d: "Antes da sessão: liberado, liberado com ajuste ou não liberado hoje, com o porquê.",
                   },
                   {
                     t: "Decisão justificada",
-                    d: "Exercícios ranqueados critério a critério, inclusive o que foi DESCARTADO, e por quê.",
+                    d: "Exercícios ranqueados critério a critério, inclusive o que foi descartado, e por quê.",
                   },
                   {
                     t: "Prontuário assinável",
-                    d: "O raciocínio vira um documento com referências numeradas, seu nome e seu CREF. Sua defesa técnica.",
+                    d: "O raciocínio vira documento com referências numeradas, seu nome e seu CREF.",
                   },
                 ].map((p, i) => (
                   <li key={p.t} className="flex gap-3">
@@ -300,29 +449,29 @@ export function Landing() {
             <JustifyMock />
           </div>
 
-          {/* ChatGPT × RCD — o hábito real do público, endereçado de frente */}
-          <div className="mx-auto mt-12 max-w-3xl">
+          {/* C: ChatGPT × RCD, o hábito real do público, resumido */}
+          <div className="mx-auto mt-14 max-w-3xl">
             <h3 className="text-center font-display text-xl font-bold text-ink">
-              “Mas eu já uso o ChatGPT pra montar treino…”
+              "Mas eu já uso o ChatGPT para montar treino."
             </h3>
             <p className="mx-auto mt-1 max-w-xl text-center text-sm text-ink-2">
-              Ótimo para rascunhar. Mas quando o aluno chega com uma condição de saúde, a diferença aparece:
-            </p>
-            <p className="mx-auto mt-3 max-w-xl text-center font-display text-xl font-bold text-ink">
-              O ChatGPT não assina embaixo. Você sim.
+              Ótimo para rascunhar. Quando o aluno tem uma condição de saúde, a diferença aparece: o
+              ChatGPT não assina embaixo. Você sim.
             </p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <Card variant="soft" className="p-5">
                 <div className="mb-2 text-sm font-bold uppercase tracking-wider text-ink-3">IA genérica</div>
                 <ul className="space-y-2 text-sm text-ink-2">
                   <li>Entrega um treino, sem rastro do porquê</li>
-                  <li>Não checa se o aluno pode treinar HOJE</li>
+                  <li>Não checa se o aluno pode treinar hoje</li>
                   <li>Não cita a base científica de cada escolha</li>
                   <li>Não gera registro que você assine embaixo</li>
                 </ul>
               </Card>
               <Card className="border-analysis/40 p-5">
-                <div className="mb-2"><SeloRCD compacto /></div>
+                <div className="mb-2">
+                  <SeloRCD compacto />
+                </div>
                 <ul className="space-y-2 text-sm text-ink">
                   {[
                     "Escolhidos E descartados, com o porquê de cada um",
@@ -339,106 +488,86 @@ export function Landing() {
               </Card>
             </div>
             <p className="mt-4 text-center text-xs text-ink-3">
-              Em ambos os casos, quem decide é o profissional habilitado (CREF). A diferença é o
-              que sobra documentado depois da decisão.
+              Em ambos os casos, quem decide é o profissional habilitado (CREF). A diferença é o que
+              sobra documentado depois da decisão.
             </p>
           </div>
         </Section>
       </div>
 
-      {/* -------------------- Vale escuro: o Semáforo em cores ---------------- */}
-      {/* Único respiro escuro da página: um beat de contraste que encena o gesto
-          mais distintivo do produto (o sinal verde/amarelo/vermelho antes de treinar).
-          Não é dark mode nem repintura: é uma seção-assinatura. Cores e rótulos são
-          os reais do Semáforo de Liberação; a decisão continua sendo do profissional. */}
-      <div className="relative overflow-hidden bg-primary text-on-primary">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_75%_at_50%_-10%,rgba(255,255,255,0.09),transparent_60%)]"
-        />
-        <Section className="relative">
-          <div className="mx-auto max-w-2xl text-center">
-            <span className="mb-3 inline-flex items-center gap-2.5 text-2xs font-bold uppercase tracking-[0.18em] text-[#8fd3dd]">
-              <span aria-hidden className="h-px w-7 bg-[#8fd3dd]/60" />
-              Segurança em 30 segundos
-            </span>
-            <h2 className="font-display text-3xl font-bold md:text-4xl">
-              Antes da sessão, o sinal verde. Ou o motivo para esperar.
+      {/* ----- Prova visual: foto real × análise, o motor por dentro -------- */}
+      <div className="border-y border-border bg-surface">
+        <Section className="!py-12">
+          <div className="mx-auto max-w-4xl text-center">
+            <Kicker tone="analysis">Execução × análise</Kicker>
+            <h2 className="font-display text-3xl font-bold text-ink md:text-4xl">
+              Entenda o movimento por dentro.
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-primary-tint">
-              O <span className="font-semibold text-white">Semáforo de Liberação</span> lê a condição do aluno e
-              responde em 30 segundos, com o porquê e a referência de cada resposta.
+            <p className="mx-auto mt-2 max-w-2xl text-ink-2">
+              Arraste o divisor e revele a análise biomecânica sobre a foto real de execução: músculos
+              ativados, ângulos e linha de força. É o que o motor lê para validar cada exercício.
             </p>
           </div>
-
-          <div className="mx-auto mt-10 grid max-w-3xl items-center gap-8 md:grid-cols-[auto_1fr]">
-            {/* Farol: as três luzes acesas, lidas como legenda dos desfechos possíveis */}
-            <div
-              aria-hidden
-              className="mx-auto flex w-fit flex-col gap-3.5 rounded-[30px] border border-white/10 bg-[#0f2e3d] p-4 shadow-xl"
-            >
-              {[
-                { c: "#22c55e", g: "rgba(34,197,94,0.45)" },
-                { c: "#f59e0b", g: "rgba(245,158,11,0.45)" },
-                { c: "#ef4444", g: "rgba(239,68,68,0.45)" },
-              ].map((l) => (
-                <span
-                  key={l.c}
-                  className="h-14 w-14 rounded-full"
-                  style={{ backgroundColor: l.c, boxShadow: `0 0 22px 3px ${l.g}` }}
+          <div className="mx-auto mt-8 max-w-4xl">
+            <Card variant="raised" className="p-3">
+              <React.Suspense
+                fallback={<div className="aspect-[4/3] w-full animate-pulse rounded-card bg-surface-soft" />}
+              >
+                <BiomechanicsComparisonSlider
+                  baseSrc={withBase("/exercises/leg-press-45.webp")}
+                  analysisSrc={withBase("/exercises/leg-press-45-analysis.webp")}
+                  alt="Leg press 45°, execução real"
+                  regions={muscleRegions["leg-press-45"] ?? []}
+                  ativacao={getExercise("leg-press-45")?.ativacao ?? []}
+                  overlay={analysisOverlays["leg-press-45"]}
                 />
-              ))}
-            </div>
-
-            {/* Legenda: rótulo real de cada estado + o que ele significa na prática */}
-            <ul className="space-y-5">
-              {[
-                {
-                  icon: <CheckCircle2 className="h-5 w-5" style={{ color: "#4ade80" }} />,
-                  rotulo: "Liberado",
-                  cor: "#86efac",
-                  d: "Nenhum sinal de alerta nos itens do dia. Siga para a sessão.",
-                },
-                {
-                  icon: <AlertTriangle className="h-5 w-5" style={{ color: "#fbbf24" }} />,
-                  rotulo: "Liberado com ajuste",
-                  cor: "#fcd34d",
-                  d: "A sessão acontece com os ajustes indicados. O racional fica registrado.",
-                },
-                {
-                  icon: <XCircle className="h-5 w-5" style={{ color: "#f87171" }} />,
-                  rotulo: "Não liberado hoje",
-                  cor: "#fca5a5",
-                  d: "Os sinais pedem reavaliação antes de treinar; se persistirem, encaminhe.",
-                },
-              ].map((s) => (
-                <li key={s.rotulo} className="flex items-start gap-3">
-                  <span className="mt-0.5 shrink-0">{s.icon}</span>
-                  <div>
-                    <div className="font-display text-lg font-bold" style={{ color: s.cor }}>
-                      {s.rotulo}
-                    </div>
-                    <p className="mt-0.5 text-sm text-primary-tint">{s.d}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+              </React.Suspense>
+              <p className="px-2 py-2 text-center text-xs text-ink-3">
+                Arraste: execução real e análise na mesma imagem.
+              </p>
+            </Card>
           </div>
-
-          <p className="mx-auto mt-8 max-w-xl text-center text-xs text-primary-tint/75">
-            Quem libera, ajusta ou adia é sempre o profissional habilitado. O Semáforo documenta o racional dessa
-            decisão e ele entra no prontuário.
-          </p>
         </Section>
       </div>
 
-      {/* -------------------- Casos documentados + ROI ------------------------ */}
+      {/* --------------------- Catálogo de módulos -------------------------- */}
+      <Section id="modulos" className="scroll-mt-20">
+        <SectionHeader
+          level={2}
+          eyebrow="O catálogo"
+          title="Oito módulos, um sistema."
+          subtitle="Cada porta abre uma parte do trabalho, e todas conversam entre si."
+        />
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {MODULOS.map((m) => {
+            const Icon = m.icon;
+            return (
+              <Link
+                key={m.label}
+                to={m.to}
+                className="group flex flex-col rounded-card border border-border bg-surface p-5 shadow-soft transition-[box-shadow,transform,border-color] duration-150 hover:border-primary hover:shadow-lift motion-safe:hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+              >
+                <span className="mb-3 inline-grid h-11 w-11 place-items-center rounded-xl bg-primary-tint text-primary">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-display text-base font-bold text-ink">{m.label}</h3>
+                  <ArrowRight className="h-4 w-4 text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                </div>
+                <p className="mt-1 text-sm text-ink-2">{m.d}</p>
+              </Link>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* -------------------- Casos documentados + ROI ---------------------- */}
       <Section className="!py-14 text-center">
         <Kicker tone="analysis">Prova, não promessa</Kicker>
         <h2 className="font-display text-3xl font-bold text-ink">Veja o motor decidir um caso real, agora.</h2>
         <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-          Sem cadastro: escolha um caso típico (hipertenso, dor lombar em idoso, obesidade grave…)
-          e veja o Motor RCD rodar ao vivo: escolhas, descartes e referências.
+          Sem cadastro: escolha um caso típico (hipertenso, dor lombar em idoso, obesidade grave) e
+          veja o Motor RCD rodar ao vivo: escolhas, descartes e referências.
         </p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <Link to="/casos-rcd" className={buttonClasses("primary")}>
@@ -450,45 +579,17 @@ export function Landing() {
         </div>
       </Section>
 
-      {/* ------------------------------ Recursos ----------------------------- */}
-      <Section id="recursos" className="text-center">
-        <Kicker>Tudo no mesmo lugar</Kicker>
-        <h2 className="font-display text-3xl font-bold text-ink">O consultório e a sala de aula, juntos.</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-          Modo <span className="font-semibold text-ink">Atender</span> para o dia a dia com alunos; modo{" "}
-          <span className="font-semibold text-ink">Aprender</span> para treinar sua decisão. Você alterna quando quiser.
-        </p>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            { icon: <Navigation className="h-5 w-5" />, t: "Prescrever com raciocínio", d: "Exercícios ranqueados + justificativa por critério, em 3 passos." },
-            { icon: <FileDown className="h-5 w-5" />, t: "PDF com a sua marca", d: "A prescrição vira um documento profissional para entregar ao aluno." },
-            { icon: <Users className="h-5 w-5" />, t: "Alunos e evolução", d: "Avaliações na linha do tempo, gráfico de evolução e reavaliações em dia." },
-            { icon: <HeartPulse className="h-5 w-5" />, t: "Grupos especiais", d: "Jornadas em 4 fases para obesidade, hipertensão, idosos, dor e mais." },
-            { icon: <FlaskConical className="h-5 w-5" />, t: "Laboratório Visual", d: "Foto real × análise biomecânica no divisor interativo, com hotspots." },
-            { icon: <BookOpen className="h-5 w-5" />, t: "Casos práticos", d: "Cenários reais com feedback do raciocínio, não só certo ou errado." },
-          ].map((f) => (
-            <Card key={f.t} className="p-5 text-left">
-              <span className="mb-3 inline-grid h-11 w-11 place-items-center rounded-xl bg-primary-tint text-primary">
-                {f.icon}
-              </span>
-              <h3 className="font-display text-lg font-bold text-ink">{f.t}</h3>
-              <p className="mt-1 text-sm text-ink-2">{f.d}</p>
-            </Card>
-          ))}
-        </div>
-      </Section>
-
-      {/* ------------------------------ Para quem ---------------------------- */}
+      {/* ------------------------------ Para quem --------------------------- */}
       <div className="border-y border-border bg-surface">
         <Section className="!py-14 text-center">
           <Kicker tone="analysis">Para quem é</Kicker>
-          <h2 className="font-display text-3xl font-bold text-ink">Feito para quem leva o movimento a sério.</h2>
+          <h2 className="font-display text-3xl font-bold text-ink">Do estágio à academia cheia.</h2>
           <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-3">
             {[
               {
                 icon: <GraduationCap className="h-6 w-6" />,
                 t: "Estudante de EF",
-                d: "Treine a decisão com casos e trilhas; chegue no estágio sabendo o porquê.",
+                d: "Treine a decisão com casos e disciplinas; chegue ao estágio sabendo o porquê.",
               },
               {
                 icon: <UserCheck className="h-6 w-6" />,
@@ -498,7 +599,7 @@ export function Landing() {
               {
                 icon: <Dumbbell className="h-6 w-6" />,
                 t: "Professor de musculação",
-                d: "Conduza perfis diferentes (do iniciante ao grupo especial) com critério e progressão.",
+                d: "Conduza perfis diferentes, do iniciante ao grupo especial, com critério e progressão.",
               },
             ].map((p) => (
               <Card key={p.t} className="p-6 text-left">
@@ -513,19 +614,20 @@ export function Landing() {
         </Section>
       </div>
 
-      {/* ------------------------------- Planos ------------------------------ */}
-      <Section id="planos" className="text-center">
+      {/* ------------------------------- Planos ----------------------------- */}
+      <Section id="planos" className="scroll-mt-20 text-center">
         <Kicker>Plano</Kicker>
         <h2 className="font-display text-3xl font-bold text-ink">Um plano, tudo liberado.</h2>
         <p className="mx-auto mt-2 max-w-xl text-ink-2">
-          O Motor RCD completo, sem versão limitada: todos os grupos, casos e ferramentas em um só lugar.
+          O sistema completo, sem versão limitada: registro, acompanhamento e direcionamento em um só
+          lugar, para todos os grupos e casos.
         </p>
         <div className="mx-auto mt-8 max-w-md">
           <PlanCard
             destaque
             nome="Profissional"
             preco="R$ 59"
-            desc="O Motor RCD completo: decisão documentada e assinável."
+            desc="O sistema da tríade completo: decisão documentada e assinável."
             items={[
               "Prontuário de Decisão exportável e assinável",
               "Semáforo de Liberação para todos os grupos",
@@ -538,9 +640,9 @@ export function Landing() {
         </div>
       </Section>
 
-      {/* --------------------------------- FAQ ------------------------------- */}
+      {/* --------------------------------- FAQ ------------------------------ */}
       <div className="border-y border-border bg-surface">
-        <Section id="faq" className="!py-14">
+        <Section id="faq" className="scroll-mt-20 !py-14">
           <div className="mx-auto max-w-3xl">
             <div className="text-center">
               <Kicker tone="analysis">Dúvidas rápidas</Kicker>
@@ -553,8 +655,12 @@ export function Landing() {
                   a: "Não, e nem deveria. Todo o conteúdo é educacional e de apoio à decisão. A plataforma organiza o raciocínio; a avaliação individualizada e a decisão final são suas.",
                 },
                 {
+                  q: "Preciso avaliar antes de montar o treino?",
+                  a: "Sim. O treino nasce da avaliação: sem ela, o sistema não monta a prescrição. É o que mantém a decisão direcionada e defensável.",
+                },
+                {
                   q: "Como funciona o acesso?",
-                  a: "É um plano único, com tudo liberado: você cria a conta e usa o Motor RCD completo, sem versão limitada e sem recurso escondido atrás de upgrade.",
+                  a: "É um plano único, com tudo liberado: você cria a conta e usa o sistema completo, sem versão limitada e sem recurso escondido atrás de upgrade.",
                 },
                 {
                   q: "Funciona no celular?",
@@ -562,7 +668,7 @@ export function Landing() {
                 },
                 {
                   q: "O que o meu aluno recebe?",
-                  a: "Um PDF profissional com a sua marca: os exercícios recomendados, as séries sugeridas e a justificativa de cada escolha, algo que nenhuma planilha genérica entrega.",
+                  a: "Um PDF profissional com a sua marca e o app do aluno, onde ele vê o treino, consulta o semáforo e registra a execução.",
                 },
               ].map((f) => (
                 <FaqItem key={f.q} q={f.q} a={f.a} />
@@ -583,14 +689,14 @@ export function Landing() {
         </Section>
       </div>
 
-      {/* ------------------------------ CTA final ---------------------------- */}
+      {/* ------------------------------ CTA final --------------------------- */}
       <Section>
         <div className="rounded-card gradient-brand p-10 text-center text-white shadow-elevated md:p-14">
           <h2 className="font-display text-3xl font-bold md:text-4xl">
-            Seu primeiro aluno, prescrito em minutos.
+            Comece a registrar, acompanhar e direcionar.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-white/85">
-            Três passos, o porquê de cada exercício e um PDF pronto para entregar. Comece agora.
+            Crie a conta e conduza o primeiro aluno pela linha do cuidado, do cadastro à reavaliação.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
@@ -613,7 +719,7 @@ export function Landing() {
         </div>
       </Section>
 
-      {/* -------------------------------- Footer ----------------------------- */}
+      {/* -------------------------------- Footer ---------------------------- */}
       <footer className="border-t border-border">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 md:flex-row md:items-center md:justify-between md:px-6">
           <Logo />
@@ -632,7 +738,111 @@ export function Landing() {
   );
 }
 
-/* ------ cartão-herói: a decisão documentada (o fosso), estático e prudente ---- */
+/* ---- cartão-tese do hero: o sistema (a tríade), não um aluno ------------- */
+
+function SistemaCard() {
+  return (
+    <Card variant="raised" className="overflow-hidden p-0">
+      <div className="flex items-center justify-between border-b border-border bg-surface-soft px-4 py-2.5">
+        <span className="text-2xs font-bold uppercase tracking-wider text-ink-3">Um sistema, três pilares</span>
+        <SeloRCD compacto />
+      </div>
+      <div className="space-y-2.5 p-4">
+        {TRIADE.map((t) => {
+          const Icon = t.icon;
+          const tile = t.tone === "analysis" ? "bg-analysis-tint text-analysis-text" : "bg-primary-tint text-primary";
+          return (
+            <div key={t.id} className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3">
+              <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", tile)}>
+                <Icon className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <div className="font-display text-sm font-bold text-ink">{t.label}</div>
+                <p className="text-xs text-ink-2">{t.linha}</p>
+              </div>
+            </div>
+          );
+        })}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-xl bg-surface-soft px-3 py-2.5 text-2xs font-semibold text-ink-2">
+          {["Cadastro", "Avaliação", "Prescrição", "Semáforo", "Reavaliação"].map((s, i) => (
+            <React.Fragment key={s}>
+              {i > 0 && (
+                <span aria-hidden className="text-ink-3">
+                  ›
+                </span>
+              )}
+              <span>{s}</span>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* ---- visual do Acompanhamento: a espinha do cuidado + histórico ---------- */
+
+function AcompanhamentoVisual() {
+  const historico = [
+    { dot: "bg-success", rotulo: "Liberado", data: "22/07" },
+    { dot: "bg-warning", rotulo: "Liberado com ajuste", data: "20/07" },
+    { dot: "bg-danger", rotulo: "Não liberado", data: "17/07" },
+  ];
+  return (
+    <Card variant="raised" className="order-2 p-5 lg:order-1">
+      <Eyebrow className="mb-3">A linha do cuidado</Eyebrow>
+      <EspinhaSelo atual={3} halo className="mb-4" />
+      <div className="rounded-xl border border-primary/25 bg-primary-tint px-3 py-2.5">
+        <ParDado label="Próximo passo" value="Reavaliar" layout="inline" />
+      </div>
+      <div className="mt-4">
+        <Eyebrow className="mb-2">Histórico do semáforo</Eyebrow>
+        <ul className="space-y-1.5">
+          {historico.map((h) => (
+            <li
+              key={h.data}
+              className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm"
+            >
+              <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", h.dot)} />
+              <span className="font-medium text-ink">{h.rotulo}</span>
+              <span aria-hidden className="text-ink-3">
+                ·
+              </span>
+              <span className="tabular text-xs text-ink-3">{h.data}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Card>
+  );
+}
+
+/* ---- classificador: a comorbidade como força do Direcionamento ----------- */
+
+function ClassificadorCallout() {
+  return (
+    <div className="mt-6 rounded-card border border-primary/25 bg-primary-tint p-4">
+      <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-primary">
+        <HeartPulse className="h-3.5 w-3.5" /> Direcionamento sugerido
+        <span className="ml-auto rounded-full bg-ink/5 px-2 py-0.5 text-ink-3">Exemplo</span>
+      </div>
+      <ul className="mt-2.5 space-y-1.5 text-sm text-ink">
+        <li>
+          IMC 31,2 indica <span className="font-semibold">obesidade grau I</span> (critério OMS).
+        </li>
+        <li>
+          PA 148/96 pede <span className="font-semibold">atenção</span>; confirme o diagnóstico e a
+          liberação.
+        </li>
+      </ul>
+      <p className="mt-2.5 text-xs text-ink-2">
+        Você confirma o direcionamento; o motor passa a validar os exercícios por esses fatos.
+      </p>
+    </div>
+  );
+}
+
+/* ------ cartão exemplo: a decisão documentada (o fosso), estático e prudente ---- */
 
 function DecisaoDemoCard() {
   return (
@@ -698,11 +908,11 @@ function DecisaoDemoCard() {
 /* ----------------------- mock da justificativa (o "aha") ------------------ */
 
 function JustifyMock() {
-  const rows = [
+  const rows: { c: string; v: string; max: string | null; tone: string }[] = [
     { c: "Compatível com o objetivo (Hipertrofia)", v: "+30,0", max: "30", tone: "text-success" },
     { c: "Adequado ao nível Iniciante", v: "+20,0", max: "20", tone: "text-success" },
     { c: "Equipamento disponível", v: "+15,0", max: "20", tone: "text-ink" },
-    { c: "Cautela: desconforto lombar", v: "−8,0", max: "—", tone: "text-[color:var(--cta-text)]" },
+    { c: "Cautela: desconforto lombar", v: "−8,0", max: null, tone: "text-[color:var(--cta-text)]" },
   ];
   return (
     <Card variant="raised" className="p-5 md:p-6">
@@ -721,7 +931,7 @@ function JustifyMock() {
               <span className="font-semibold text-ink">{r.c}</span>
               <span className={`tabular shrink-0 font-bold ${r.tone}`}>
                 {r.v}
-                {r.max !== "—" && <span className="ml-1 text-xs font-medium text-ink-3">/ {r.max}</span>}
+                {r.max && <span className="ml-1 text-xs font-medium text-ink-3">/ {r.max}</span>}
               </span>
             </div>
           </li>

@@ -39,8 +39,8 @@ export function Pricing() {
         </Pill>
         <h1 className="font-display text-4xl font-extrabold text-ink">Um plano, tudo liberado.</h1>
         <p className="mx-auto mt-3 max-w-xl text-ink-2">
-          O Motor RCD completo, do semáforo ao prontuário assinável, com todos os grupos, casos e
-          ferramentas. Sem versão limitada.
+          O sistema da tríade completo, registro, acompanhamento e direcionamento da prescrição, com
+          todos os grupos, casos e ferramentas. Sem versão limitada.
         </p>
 
         <div className="mt-10 text-left">
