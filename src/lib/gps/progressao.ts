@@ -11,7 +11,7 @@
  * gráfico dão o que falta para ler o plano de relance: qual fase, e quantas semanas nela.
  */
 
-import { rotuloMeso, type Macrociclo, type Tendencia } from "@/data/periodizacao";
+import { rotuloMeso, type Macrociclo, type Tendencia, type TipoMicrociclo } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
 
 export interface PontoSemana {
@@ -221,7 +221,12 @@ export interface DesenhoProgressao {
   fases: FaseDesenhada[];
   /** semanas de descarga/teste como faixa vertical (x central + largura) */
   alivios: { x: number; w: number }[];
-  rotulos: { x: number; semana: number }[];
+  /**
+   * Régua de semanas (camada micro): um tick por microciclo, colorido pelo tipo da semana
+   * (carga, descarga, teste). `rotular` marca quais recebem o rótulo "S1..Sn" espaçado, para
+   * um horizonte anual não sobrepor 48 números. Fonte única para a tela e o PDF.
+   */
+  microTicks: { x: number; semana: number; tipo: TipoMicrociclo; rotular: boolean }[];
   /** y do eixo qualitativo (rótulos "maior" e "menor") e x da coluna */
   eixo: { x: number; maiorY: number; menorY: number };
   /** topo da faixa de fase (inclui a fileira de ícones, acima das curvas) */
@@ -230,6 +235,10 @@ export interface DesenhoProgressao {
   iconRowY: number;
   faixaTop: number;
   faixaBottom: number;
+  /** régua de semanas: topo e base do tick vertical de cada microciclo */
+  weekTickTop: number;
+  weekTickBottom: number;
+  /** baseline do rótulo "S1..Sn" da régua de semanas */
   weekLabelY: number;
   vazio: boolean;
 }
@@ -246,8 +255,11 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
   const bottom = 168;
   const left = padX;
   const right = largura - padX;
-  const weekLabelY = 184;
-  const faixaTop = 198;
+  // Régua de semanas logo abaixo do plot; a faixa de fase (nome + intervalo) vem depois.
+  const weekTickTop = 173;
+  const weekTickBottom = 181;
+  const weekLabelY = 190;
+  const faixaTop = 200;
   const faixaBottom = altura - 6;
 
   const n = pts.length;
@@ -287,6 +299,17 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
     };
   });
 
+  // Régua de semanas: um tick por microciclo, na mesma ordem (e mesmo x) das curvas. O
+  // rótulo é espaçado (~12 no máximo): num plano anual de 48 semanas, um S a cada 4.
+  const microsFlat = macro.mesociclos.flatMap((m) => m.microciclos);
+  const passoRotulo = Math.max(1, Math.round(microsFlat.length / 12));
+  const microTicks = microsFlat.map((w, i) => ({
+    x: x(i),
+    semana: w.semana,
+    tipo: w.tipo,
+    rotular: i % passoRotulo === 0,
+  }));
+
   return {
     largura,
     altura,
@@ -300,12 +323,14 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
     areaVolume,
     fases,
     alivios: pts.map((p, i) => (p.aliviada ? { x: x(i), w: Math.min(18, meio * 1.4) } : null)).filter((v): v is { x: number; w: number } => v !== null),
-    rotulos: pts.map((p, i) => ({ x: x(i), semana: p.semana })),
+    microTicks,
     eixo: { x: left - 8, maiorY: top + 6, menorY: bottom - 2 },
     bandTop,
     iconRowY,
     faixaTop,
     faixaBottom,
+    weekTickTop,
+    weekTickBottom,
     weekLabelY,
     vazio: n === 0,
   };

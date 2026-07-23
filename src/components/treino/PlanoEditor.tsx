@@ -34,6 +34,7 @@ import {
   type MetodoSerie,
   METODOS_SERIE,
   getMetodo,
+  agruparBlocosPorMetodo,
 } from "@/data/periodizacao";
 import { conferirFaixa, faixaSugerida, type CampoFaixa } from "@/lib/gps/faixas";
 import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
@@ -110,6 +111,10 @@ function SeloOrigem({ ctx, bloco }: { ctx: ContextoFaixa; bloco: BlocoSessao }) 
 export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?: Nivel }) {
   const g = desenharProgressao(macro, undefined, undefined, nivel);
   const gid = React.useId().replace(/:/g, "");
+  // Só os tipos de semana que aparecem no plano entram na legenda (nunca "Teste" quando
+  // não há semana de teste).
+  const tiposPresentes = new Set(g.microTicks.map((t) => t.tipo));
+  const tiposSemana = (["carga", "deload", "teste"] as TipoMicrociclo[]).filter((t) => tiposPresentes.has(t));
 
   return (
     <Card className="p-4">
@@ -189,11 +194,26 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
             <path key={s.nome} d={s.d} fill="none" stroke={s.cor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
           ))}
 
-          {/* semanas */}
-          {g.rotulos.map((r, i) => (
-            <text key={i} x={r.x} y={g.weekLabelY} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 9 }}>
-              {r.semana}
-            </text>
+          {/* régua de semanas (camada micro): um tick por microciclo, colorido pelo tipo
+              da semana (carga, descarga, teste), com rótulo "S1..Sn" espaçado para o
+              horizonte anual não sobrepor 48 números. */}
+          {g.microTicks.map((t, i) => (
+            <g key={i}>
+              <line
+                x1={t.x}
+                y1={g.weekTickTop}
+                x2={t.x}
+                y2={g.weekTickBottom}
+                stroke={t.tipo === "deload" ? "var(--warning)" : t.tipo === "teste" ? "var(--analysis)" : "var(--primary)"}
+                strokeWidth={t.tipo === "carga" ? 1.5 : 2.5}
+                strokeLinecap="round"
+              />
+              {t.rotular && (
+                <text x={t.x} y={g.weekLabelY} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 9 }}>
+                  S{t.semana}
+                </text>
+              )}
+            </g>
           ))}
         </svg>
         {/* Affordance de rolagem: um fade no canto direito sugere que o gráfico continua. */}
@@ -206,6 +226,20 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
           </span>
         ))}
       </div>
+      {tiposSemana.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semanas</span>
+          {tiposSemana.map((t) => (
+            <span key={t} className="flex items-center gap-1.5 text-xs text-ink-2">
+              <span
+                className="h-3 w-0.5 rounded-full"
+                style={{ background: t === "deload" ? "var(--warning)" : t === "teste" ? "var(--analysis)" : "var(--primary)" }}
+              />
+              {TIPO_LABEL[t]}
+            </span>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
@@ -385,6 +419,28 @@ export function MesocicloCard({
 
 /* ================================ Microciclo (semana) ================================ */
 
+/**
+ * Resumo dos métodos de série usados na semana ("2x Bi-set · 1x Drop-set"), para o método
+ * ficar visível no nível do microciclo sem abrir cada sessão. Cada grupo (bi/tri/super-set)
+ * conta UMA vez (é um par/trio, não dois exercícios soltos); métodos por bloco (drop-set,
+ * rest-pause...) contam por bloco.
+ */
+function variacoesDoMicro(micro: Microciclo): { metodo: MetodoSerie; n: number }[] {
+  const contagem = new Map<MetodoSerie, number>();
+  const gruposVistos = new Set<string>();
+  for (const s of micro.sessoes) {
+    for (const b of s.blocos) {
+      if (!b.metodo || b.metodo === "tradicional") continue;
+      if (b.grupoMetodo) {
+        if (gruposVistos.has(b.grupoMetodo)) continue;
+        gruposVistos.add(b.grupoMetodo);
+      }
+      contagem.set(b.metodo, (contagem.get(b.metodo) ?? 0) + 1);
+    }
+  }
+  return [...contagem.entries()].map(([metodo, n]) => ({ metodo, n }));
+}
+
 function MicrocicloRow({
   micro,
   ctx,
@@ -400,6 +456,7 @@ function MicrocicloRow({
   atual?: boolean;
 }) {
   const [aberto, setAberto] = React.useState(Boolean(atual));
+  const variacoes = variacoesDoMicro(micro);
 
   // Frequência é quantas sessões a semana tem. Guardar o número separado das sessões
   // deixaria o plano dizer "4x" e entregar 3.
@@ -428,6 +485,11 @@ function MicrocicloRow({
           </div>
           {micro.sessoes.length > 0 && (
             <p className="truncate text-xs text-ink-3">{micro.sessoes.map((s) => s.nome).join(" · ")}</p>
+          )}
+          {variacoes.length > 0 && (
+            <p className="truncate text-2xs text-ink-3">
+              Variações: {variacoes.map((v) => `${v.n}x ${getMetodo(v.metodo)?.nome}`).join(" · ")}
+            </p>
           )}
         </div>
         <ChevronDown className={cn("mt-0.5 h-4 w-4 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
@@ -718,6 +780,28 @@ function SessaoBloco({
     });
   };
 
+  const trocarBloco = (nb: BlocoSessao) => onChange({ ...sessao, blocos: sessao.blocos.map((x) => (x.id === nb.id ? nb : x)) });
+  const removerBloco = (id: string) => onChange({ ...sessao, blocos: sessao.blocos.filter((x) => x.id !== id) });
+
+  // Agrupar marca 2-3 blocos de FORÇA consecutivos com o mesmo grupoMetodo (id gerado) e o
+  // método correspondente; desagrupar limpa o grupo e o método de bi/tri/super daqueles blocos.
+  const agruparIds = (ids: string[], metodo: MetodoSerie) => {
+    const grupoId = nid("grp");
+    onChange({ ...sessao, blocos: sessao.blocos.map((b) => (ids.includes(b.id) ? { ...b, grupoMetodo: grupoId, metodo } : b)) });
+  };
+  const desagruparGrupo = (grupoId: string) => {
+    const deGrupo = new Set<MetodoSerie>(["bi-set", "tri-set", "super-set"]);
+    onChange({
+      ...sessao,
+      blocos: sessao.blocos.map((b) =>
+        b.grupoMetodo === grupoId
+          ? { ...b, grupoMetodo: undefined, metodo: b.metodo && deGrupo.has(b.metodo) ? undefined : b.metodo }
+          : b,
+      ),
+    });
+  };
+  const segmentos = agruparBlocosPorMetodo(sessao.blocos);
+
   return (
     <div className="rounded-lg bg-surface-soft p-2.5">
       <div className="mb-1.5 flex items-center gap-1.5">
@@ -746,16 +830,60 @@ function SessaoBloco({
           {sessao.blocos.length === 0 && <p className="px-1 py-2 text-xs text-ink-3">Sessão sem exercícios. Adicione abaixo.</p>}
 
           <ul className="space-y-1.5">
-            {sessao.blocos.map((b) => (
-              <li key={b.id}>
-                <BlocoRow
-                  bloco={b}
-                  ctx={ctx}
-                  onChange={(nb) => onChange({ ...sessao, blocos: sessao.blocos.map((x) => (x.id === b.id ? nb : x)) })}
-                  onRemover={() => onChange({ ...sessao, blocos: sessao.blocos.filter((x) => x.id !== b.id) })}
-                />
-              </li>
-            ))}
+            {segmentos.map((seg, si) => {
+              if (seg.tipo === "grupo") {
+                const info = getMetodo(seg.metodo);
+                return (
+                  <li key={seg.grupoId}>
+                    {/* Colchete: as linhas do grupo ficam numa moldura única com a badge do
+                        método e a instrução do catálogo; o método é do grupo, não de cada bloco. */}
+                    <div className="rounded-lg border border-primary bg-primary-tint p-1.5">
+                      <div className="mb-1 flex flex-wrap items-center gap-2 px-1">
+                        <span className="rounded-full bg-primary px-2 py-0.5 text-2xs font-bold text-white">{info?.nome}</span>
+                        <span className="min-w-0 flex-1 text-2xs leading-tight text-ink-2">{info?.descricao}</span>
+                        <button
+                          type="button"
+                          onClick={() => desagruparGrupo(seg.grupoId)}
+                          className="shrink-0 text-2xs font-semibold text-ink-3 hover:text-primary hover:underline"
+                        >
+                          Desagrupar
+                        </button>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {seg.blocos.map((b) => (
+                          <li key={b.id}>
+                            <BlocoRow bloco={b} ctx={ctx} ocultarMetodo onChange={trocarBloco} onRemover={() => removerBloco(b.id)} />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </li>
+                );
+              }
+              const b = seg.bloco;
+              const ehForca = b.tipo !== "aerobio";
+              const prox1 = segmentos[si + 1];
+              const prox2 = segmentos[si + 2];
+              const prox1Solo = prox1?.tipo === "solo" && prox1.bloco.tipo !== "aerobio" ? prox1.bloco : undefined;
+              const prox2Solo = prox2?.tipo === "solo" && prox2.bloco.tipo !== "aerobio" ? prox2.bloco : undefined;
+              const podeBi = ehForca && Boolean(prox1Solo);
+              const podeTri = podeBi && Boolean(prox2Solo);
+              return (
+                <li key={b.id}>
+                  <BlocoRow bloco={b} ctx={ctx} onChange={trocarBloco} onRemover={() => removerBloco(b.id)} />
+                  {podeBi && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5 pl-2">
+                      <span className="text-2xs text-ink-3">Agrupar com o próximo:</span>
+                      <BotaoAgrupar onClick={() => agruparIds([b.id, prox1Solo!.id], "bi-set")}>Bi-set</BotaoAgrupar>
+                      <BotaoAgrupar onClick={() => agruparIds([b.id, prox1Solo!.id], "super-set")}>Super-set</BotaoAgrupar>
+                      {podeTri && (
+                        <BotaoAgrupar onClick={() => agruparIds([b.id, prox1Solo!.id, prox2Solo!.id], "tri-set")}>Tri-set</BotaoAgrupar>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -799,11 +927,14 @@ function BlocoRow({
   ctx,
   onChange,
   onRemover,
+  ocultarMetodo,
 }: {
   bloco: BlocoSessao;
   ctx: ContextoFaixa;
   onChange: (b: BlocoSessao) => void;
   onRemover: () => void;
+  /** quando o bloco está num grupo (bi/tri/super-set), o método é do grupo: some o select */
+  ocultarMetodo?: boolean;
 }) {
   const faixa = getFaixa(ctx.objetivo);
   const aerobio = bloco.tipo === "aerobio";
@@ -878,7 +1009,7 @@ function BlocoRow({
           );
         })}
       </div>
-      {!aerobio && (
+      {!aerobio && !ocultarMetodo && (
         <div className="mt-1.5">
           <label className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3">Método de série</label>
           <select
@@ -1177,6 +1308,19 @@ export function CriterioLista({
         + adicionar critério
       </button>
     </div>
+  );
+}
+
+/** Botão-pílula compacto para agrupar blocos consecutivos (bi/tri/super-set). */
+function BotaoAgrupar({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-full border border-border px-2 py-0.5 text-2xs font-semibold text-ink-2 transition-colors hover:border-primary hover:bg-surface hover:text-primary"
+    >
+      {children}
+    </button>
   );
 }
 

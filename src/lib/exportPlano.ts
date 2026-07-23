@@ -2,7 +2,7 @@ import type { Aluno } from "@/data/alunos";
 import type { MarcaDocumento } from "@/lib/store";
 import type { Macrociclo, Mesociclo, Microciclo, PlanoTreino, Sessao } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
-import { getModelo, getMetodo, TEND_LABEL } from "@/data/periodizacao";
+import { getModelo, getMetodo, TEND_LABEL, agruparBlocosPorMetodo } from "@/data/periodizacao";
 import { getModalidade } from "@/data/modalities";
 import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -31,7 +31,9 @@ function agruparSemanas(microciclos: Microciclo[]) {
       tipo: m.tipo,
       sessoes: m.sessoes.map((s) => ({
         nome: s.nome,
-        blocos: s.blocos.map((b) => [b.nome, b.series, b.reps, b.intensidade, b.intervalo, b.formato, b.duracao, b.recuperacao]),
+        // `metodo` e `grupoMetodo` entram na chave: semanas que diferem só na técnica de
+        // série (um bi-set numa, tradicional noutra) não podem mais se fundir numa linha.
+        blocos: s.blocos.map((b) => [b.nome, b.series, b.reps, b.intensidade, b.intervalo, b.formato, b.duracao, b.recuperacao, b.metodo, b.grupoMetodo]),
       })),
     });
 
@@ -56,25 +58,42 @@ function sessaoHtml(s: Sessao) {
   const forca = s.blocos.filter((b) => b.tipo !== "aerobio");
   const cardio = s.blocos.filter((b) => b.tipo === "aerobio");
 
-  const tabelaForca = forca.length
-    ? `<div class="quadro">
-        <p class="quadro-tit">Musculação</p>
-        <table class="blocos">
-          <thead><tr><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Intensidade</th><th>Intervalo</th></tr></thead>
-          <tbody>${forca
-            .map(
-              (b) => `
+  // Linha de um exercício. `comSufixo` mostra o método entre parênteses só nos blocos SOLTOS;
+  // num grupo, o método já vem na linha-cabeçalho, então a linha do bloco fica limpa.
+  const linhaForca = (b: (typeof forca)[number], comSufixo: boolean) => `
             <tr>
               <td class="ex">${esc(b.nome ?? "")}${
-                b.metodo && b.metodo !== "tradicional" ? ` <b>(${esc(getMetodo(b.metodo)?.nome ?? "")})</b>` : ""
+                comSufixo && b.metodo && b.metodo !== "tradicional" ? ` <b>(${esc(getMetodo(b.metodo)?.nome ?? "")})</b>` : ""
               }</td>
               <td>${esc(b.series ?? "")}</td>
               <td>${esc(b.reps ?? "")}</td>
               <td>${esc(b.intensidade ?? "")}</td>
               <td>${esc(b.intervalo && b.intervalo !== "-" ? b.intervalo : "")}</td>
-            </tr>`,
-            )
-            .join("")}</tbody>
+            </tr>`;
+
+  const corpoForca = agruparBlocosPorMetodo(forca)
+    .map((seg) => {
+      if (seg.tipo === "grupo") {
+        const info = getMetodo(seg.metodo);
+        const nomes = seg.blocos.map((b) => esc(b.nome ?? "")).join(" + ");
+        // Blocos do bi/tri/super-set imprimem juntos, sob uma linha que os nomeia ("Bi-set: A + B").
+        return (
+          `<tr class="grupo-metodo"><td colspan="5"><b>${esc(info?.nome ?? "")}:</b> ${nomes}` +
+          (info?.descricao ? ` <span class="grupo-desc">${esc(info.descricao)}</span>` : "") +
+          `</td></tr>` +
+          seg.blocos.map((b) => linhaForca(b, false)).join("")
+        );
+      }
+      return linhaForca(seg.bloco, true);
+    })
+    .join("");
+
+  const tabelaForca = forca.length
+    ? `<div class="quadro">
+        <p class="quadro-tit">Musculação</p>
+        <table class="blocos">
+          <thead><tr><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Intensidade</th><th>Intervalo</th></tr></thead>
+          <tbody>${corpoForca}</tbody>
         </table>
       </div>`
     : "";
@@ -163,6 +182,11 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
   // O PDF não tem as variáveis CSS do app; as cores da pele clínica entram literais.
   // Chaveado por id da série (nunca pelo nome exibido), com fallback na cor de área.
   const cor: Record<string, string> = { vol: "#1b4b66", int: "#9a4f2e", cpx: "#0e7c8a", area: "#1b4b66" };
+  // Cores literais da régua de semanas (o PDF não tem as vars de tema): carga = petróleo,
+  // descarga = âmbar (mesmo do alívio), teste = teal (mesmo da complexidade).
+  const corTick: Record<string, string> = { carga: "#1b4b66", deload: "#f59e0b", teste: "#0e7c8a" };
+  const rotuloTick: Record<string, string> = { carga: "Carga", deload: "Descarga", teste: "Teste" };
+  const tiposSemana = (["carga", "deload", "teste"] as const).filter((t) => g.microTicks.some((mt) => mt.tipo === t));
   const iconesFase = (f: (typeof g.fases)[number]) =>
     posicoesFocos(f, g.iconRowY)
       .map(
@@ -200,11 +224,24 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
       <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.menorY.toFixed(1)}" text-anchor="end" fill="#94a3b8" font-size="9">menor</text>
       <path d="${g.areaVolume}" fill="url(#volpdf)" stroke="none" />
       ${g.series.map((s) => `<path d="${s.d}" fill="none" stroke="${cor[s.id] ?? cor.area}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`).join("")}
-      ${g.rotulos.map((r) => `<text x="${r.x.toFixed(1)}" y="${g.weekLabelY.toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="9">${r.semana}</text>`).join("")}
+      ${g.microTicks
+        .map(
+          (t) =>
+            `<line x1="${t.x.toFixed(1)}" y1="${g.weekTickTop}" x2="${t.x.toFixed(1)}" y2="${g.weekTickBottom}" stroke="${corTick[t.tipo]}" stroke-width="${t.tipo === "carga" ? 1.5 : 2.5}" stroke-linecap="round" />` +
+            (t.rotular ? `<text x="${t.x.toFixed(1)}" y="${g.weekLabelY.toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="9">S${t.semana}</text>` : ""),
+        )
+        .join("")}
     </svg>
     <div class="legenda">
       ${g.series.map((s) => `<span><i style="background:${cor[s.id] ?? cor.area}"></i>${s.nome}</span>`).join("")}
     </div>
+    ${
+      tiposSemana.length
+        ? `<div class="legenda legenda-semanas"><span class="lg-rot">Semanas</span>${tiposSemana
+            .map((t) => `<span><i class="tick" style="background:${corTick[t]}"></i>${rotuloTick[t]}</span>`)
+            .join("")}</div>`
+        : ""
+    }
   </section>`;
 }
 
@@ -256,8 +293,11 @@ export function exportPlanoPDF({
     .tags { display: flex; flex-wrap: wrap; gap: 6px; }
     .tag { background: #f2f0ea; color: #1e293b; border: 1px solid #e6e2d8; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
     ul.crit { margin: 4px 0; padding-left: 18px; font-size: 13px; }
-    .legenda { display: flex; gap: 14px; font-size: 11px; color: #475569; margin-top: 4px; }
+    .legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 11px; color: #475569; margin-top: 4px; }
     .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+    .legenda i.tick { width: 3px; height: 11px; border-radius: 2px; }
+    .legenda-semanas { gap: 12px; margin-top: 2px; }
+    .legenda .lg-rot { color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 10px; }
     .legenda-nota { font-size: 11px; color: #94a3b8; margin: 0 0 4px; }
     .meso { margin: 18px 0; padding-top: 12px; border-top: 1px solid #e6e2d8; page-break-inside: avoid; }
     .meso-tit { font-size: 15px; margin: 0 0 2px; color: #1e293b; text-transform: none; letter-spacing: 0; }
@@ -277,6 +317,8 @@ export function exportPlanoPDF({
     table.blocos th { text-align: left; color: #94a3b8; font-weight: 600; border-bottom: 1px solid #e6e2d8; padding: 3px 4px; }
     table.blocos td { padding: 3px 4px; border-bottom: 1px solid #e6e2d8; color: #475569; vertical-align: top; }
     table.blocos td.ex { color: #1e293b; font-weight: 600; }
+    table.blocos tr.grupo-metodo td { background: #f2f0ea; color: #1e293b; font-size: 11px; padding-top: 5px; }
+    table.blocos tr.grupo-metodo .grupo-desc { color: #94a3b8; font-weight: 400; }
     .quadros { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
     .quadro { flex: 1 1 260px; min-width: 240px; border: 1px solid #e6e2d8; border-radius: 6px; overflow: hidden; }
     .quadro-tit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #475569; background: #f2f0ea; margin: 0; padding: 4px 8px; border-bottom: 1px solid #e6e2d8; }

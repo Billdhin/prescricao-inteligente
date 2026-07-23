@@ -258,8 +258,10 @@ function montarMacrocicloGenerico(
   const { objetivo, nivel, semanas, frequencia } = input;
   const faixa = getFaixa(objetivo);
 
-  // Blocos de ~4 semanas (mínimo 3), no máximo 4 mesociclos.
-  const nMeso = Math.min(4, Math.max(1, Math.round(semanas / 4)));
+  // Blocos de ~4 semanas: um mesociclo a cada 4 semanas, sem teto (o horizonte anual pede
+  // ~12). Os quatro focos ciclam (Base → Desenvolvimento → Intensificação → Consolidação e
+  // recomeça), e cada mesociclo de 4+ semanas fecha com a própria descarga.
+  const nMeso = Math.max(1, Math.round(semanas / 4));
   const base = Math.floor(semanas / nMeso);
   const resto = semanas - base * nMeso;
 
@@ -270,7 +272,7 @@ function montarMacrocicloGenerico(
     const ini = cursor;
     const fim = cursor + dur - 1;
     cursor = fim + 1;
-    const foco = FOCO_BLOCO_LINEAR[Math.min(m, FOCO_BLOCO_LINEAR.length - 1)];
+    const foco = FOCO_BLOCO_LINEAR[m % FOCO_BLOCO_LINEAR.length];
     const ondul = modelo === "ondulatoria" || modelo === "flexivel" || modelo === "autorregulada";
     const comDeload = dur >= 4;
 
@@ -319,13 +321,26 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
   // partir de `faseInicial`. Ausente = 1 = todas as fases = comportamento byte-idêntico.
   const inicio = Math.min(grupo.fases.length, Math.max(1, input.faseInicial ?? 1)) - 1;
   const fasesUsadas = grupo.fases.slice(inicio);
-  const nMeso = fasesUsadas.length;
+
+  // Um mesociclo por fase basta até ~8 semanas por fase. Num horizonte longo (anual), em
+  // que cada fase ficaria com mais de 8 semanas, a ÚLTIMA fase (consolidação/manutenção) se
+  // REPETE, sem inventar fase nova: o programa sustenta os ganhos até o fim do calendário.
+  const MAX_SEM_POR_FASE = 8;
+  const precisaEstender = fasesUsadas.length > 0 && semanas / fasesUsadas.length > MAX_SEM_POR_FASE;
+  const nMeso = precisaEstender
+    ? Math.max(fasesUsadas.length, Math.ceil(semanas / MAX_SEM_POR_FASE))
+    : fasesUsadas.length;
+  // Sequência de fases: as reais primeiro; depois repetições honestas da última fase.
+  const sequencia = Array.from({ length: nMeso }, (_, m) => {
+    const idx = Math.min(m, fasesUsadas.length - 1);
+    return { fase: fasesUsadas[idx], estendida: m >= fasesUsadas.length };
+  });
   const base = Math.floor(semanas / nMeso);
   const resto = semanas - base * nMeso;
 
   const mesociclos: Mesociclo[] = [];
   let cursor = 1;
-  fasesUsadas.forEach((fase, m) => {
+  sequencia.forEach(({ fase, estendida }, m) => {
     const dur = base + (m < resto ? 1 : 0);
     const ini = cursor;
     const fim = cursor + dur - 1;
@@ -333,8 +348,10 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
     const comDeload = dur >= 4;
     mesociclos.push({
       id: nid("mes"),
-      nome: `Fase ${fase.numero}: ${fase.nome}`,
-      foco: fase.foco,
+      // A repetição da última fase é nomeada com honestidade ("continuação"): não é uma
+      // fase clínica nova, é a mesma fase sustentada ao longo do horizonte.
+      nome: estendida ? `Fase ${fase.numero}: ${fase.nome} (continuação)` : `Fase ${fase.numero}: ${fase.nome}`,
+      foco: estendida ? `Continuação da fase para sustentar os ganhos ao longo do horizonte. ${fase.foco}` : fase.foco,
       semanaInicio: ini,
       semanaFim: fim,
       capacidades: [fase.objetivo, ...faixa.capacidades].slice(0, 4),
@@ -344,9 +361,10 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       // `faseJornada` autoriza a palavra "Fase" na tela e alimenta a reconciliação com a
       // fase clínica do aluno (o número real da fase, não a posição no macro recortado).
       faseJornada: fase.numero,
-      tendenciaVolume: m === 0 ? "estavel" : "sobe",
-      tendenciaIntensidade: m === 0 ? "estavel" : "sobe",
-      tendenciaComplexidade: m === 0 ? "estavel" : "sobe",
+      // As repetições da última fase são manutenção: a carga se estabiliza, não sobe sempre.
+      tendenciaVolume: m === 0 || estendida ? "estavel" : "sobe",
+      tendenciaIntensidade: m === 0 || estendida ? "estavel" : "sobe",
+      tendenciaComplexidade: m === 0 || estendida ? "estavel" : "sobe",
       deload: comDeload,
       reavaliacao: true,
       criteriosProgressao: fase.criteriosAvancar,

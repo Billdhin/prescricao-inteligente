@@ -21,6 +21,7 @@ import {
   rotuloMeso,
   rotuloPosicao,
   getMetodo,
+  agruparBlocosPorMetodo,
 } from "@/data/periodizacao";
 
 const nomeDoBloco = (b: BlocoSessao): string => {
@@ -350,21 +351,41 @@ function SessaoCard({
       </button>
       {aberto && (
         <div className="space-y-2 border-t border-border p-3">
-          {sessao.blocos.map((b) => (
-            <BlocoRow
-              key={b.id}
-              bloco={b}
-              cor={cor}
-              semana={semana}
-              planoId={plano.id}
-              alunoId={aluno.id}
-              sessaoRef={sessao.id}
-              execFeita={execucoes.find((e) => e.semana === semana && e.blocoRef === b.id)}
-              onRegistrar={onRegistrar}
-              onDesfazer={onDesfazer}
-              preview={preview}
-            />
-          ))}
+          {agruparBlocosPorMetodo(sessao.blocos).map((seg) => {
+            const linhaBloco = (b: BlocoSessao, emGrupo?: boolean) => (
+              <BlocoRow
+                key={b.id}
+                bloco={b}
+                cor={cor}
+                semana={semana}
+                planoId={plano.id}
+                alunoId={aluno.id}
+                sessaoRef={sessao.id}
+                execFeita={execucoes.find((e) => e.semana === semana && e.blocoRef === b.id)}
+                onRegistrar={onRegistrar}
+                onDesfazer={onDesfazer}
+                preview={preview}
+                emGrupo={emGrupo}
+              />
+            );
+            if (seg.tipo === "grupo") {
+              // Bi/tri/super-set: o par (ou trio) aparece numa moldura única, com a
+              // instrução do catálogo uma vez ("faça em sequência, sem descanso entre eles").
+              const info = getMetodo(seg.metodo);
+              return (
+                <div key={seg.grupoId} className="rounded-xl border-2 p-1.5" style={{ borderColor: cor }}>
+                  <div className="mb-1 flex flex-wrap items-center gap-2 px-1.5 pt-0.5">
+                    <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-white" style={{ background: cor }}>
+                      {info?.nome}
+                    </span>
+                    {info?.descricao && <span className="min-w-0 flex-1 text-2xs leading-tight text-ink-2">{info.descricao}</span>}
+                  </div>
+                  <div className="space-y-2">{seg.blocos.map((b) => linhaBloco(b, true))}</div>
+                </div>
+              );
+            }
+            return linhaBloco(seg.bloco);
+          })}
 
           {/* Rodapé da Sessão: o boilerplate aparece UMA vez por sessão (antes
               repetido por exercício); a dose continua colada a cada exercício. */}
@@ -397,6 +418,7 @@ function BlocoRow({
   onRegistrar,
   onDesfazer,
   preview,
+  emGrupo,
 }: {
   bloco: BlocoSessao;
   cor: string;
@@ -408,6 +430,8 @@ function BlocoRow({
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
   preview?: boolean;
+  /** o bloco está numa moldura de bi/tri/super-set: o método já vem no cabeçalho do grupo */
+  emGrupo?: boolean;
 }) {
   const aerobio = bloco.tipo === "aerobio";
   // Cada número com o próprio rótulo (Intensidade 75%, Intervalo 90s), em vez de
@@ -432,7 +456,8 @@ function BlocoRow({
         ]
   ).filter((t) => t.value);
   const metodo = getMetodo(bloco.metodo);
-  const metodoVisivel = metodo && metodo.id !== "tradicional" ? metodo : undefined;
+  // Num grupo, o método (badge + instrução) já vem no cabeçalho da moldura: não repete aqui.
+  const metodoVisivel = metodo && metodo.id !== "tradicional" && !emGrupo ? metodo : undefined;
 
   // Pré-preenche só o que o plano prescreve de forma objetiva E numérica: as Reps.
   // A dose vem como FAIXA textual ("6 a 12", "acima de 15"), que num campo numérico

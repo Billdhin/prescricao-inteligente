@@ -103,6 +103,44 @@ export interface Sessao {
   blocos: BlocoSessao[];
 }
 
+/**
+ * Segmento de blocos para desenhar: um GRUPO (bi/tri/super-set) que se executa junto, ou
+ * um bloco SOLO. Fonte única de agrupamento visual para a tela, o PDF e o app do aluno,
+ * para os três lerem o mesmo par "faça em dupla, sem descanso entre eles".
+ */
+export type SegmentoBlocos =
+  | { tipo: "grupo"; grupoId: string; metodo: MetodoSerie; blocos: BlocoSessao[] }
+  | { tipo: "solo"; bloco: BlocoSessao };
+
+/**
+ * Agrupa blocos CONSECUTIVOS que compartilham o mesmo `grupoMetodo` (o par de um bi-set,
+ * o trio de um tri-set); os demais saem soltos. Um grupo de um bloco só (dado inconsistente)
+ * vira solo, para nunca desenhar um colchete de item único.
+ */
+export function agruparBlocosPorMetodo(blocos: BlocoSessao[]): SegmentoBlocos[] {
+  const segmentos: SegmentoBlocos[] = [];
+  let i = 0;
+  while (i < blocos.length) {
+    const grupoId = blocos[i].grupoMetodo;
+    if (grupoId) {
+      const grupo: BlocoSessao[] = [];
+      while (i < blocos.length && blocos[i].grupoMetodo === grupoId) {
+        grupo.push(blocos[i]);
+        i++;
+      }
+      if (grupo.length >= 2) {
+        segmentos.push({ tipo: "grupo", grupoId, metodo: grupo[0].metodo ?? "bi-set", blocos: grupo });
+        continue;
+      }
+      segmentos.push({ tipo: "solo", bloco: grupo[0] });
+      continue;
+    }
+    segmentos.push({ tipo: "solo", bloco: blocos[i] });
+    i++;
+  }
+  return segmentos;
+}
+
 export type TipoMicrociclo = "carga" | "deload" | "teste";
 
 /** Uma semana do plano. */

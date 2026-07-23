@@ -42,7 +42,14 @@ import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
-const DURACOES = [8, 12, 16, 24];
+// Horizontes de calendário no lugar de semanas soltas: o profissional pensa em "trimestral",
+// não em "12". `gerarPlano` segue recebendo semanas (o motor não muda de assinatura).
+const HORIZONTES = [
+  { id: "mensal", rotulo: "Mensal", semanas: 4 },
+  { id: "trimestral", rotulo: "Trimestral", semanas: 12 },
+  { id: "semestral", rotulo: "Semestral", semanas: 24 },
+  { id: "anual", rotulo: "Anual", semanas: 48 },
+] as const;
 const FREQUENCIAS = [2, 3, 4, 5, 6];
 
 const fmtDataCurta = (ts: number) =>
@@ -345,8 +352,22 @@ export function PrescreverTreino() {
           <Campo label="Frequência semanal">
             <Opcoes valor={String(frequencia)} opcoes={FREQUENCIAS.map((f) => `${f}`)} onSelect={(v) => setFrequencia(Number(v))} sufixo="x" />
           </Campo>
-          <Campo label="Duração do acompanhamento">
-            <Opcoes valor={String(semanas)} opcoes={DURACOES.map((d) => `${d}`)} onSelect={(v) => setSemanas(Number(v))} sufixo=" sem" />
+          <Campo label="Horizonte do acompanhamento">
+            <div className="flex flex-wrap gap-1.5">
+              {HORIZONTES.map((h) => (
+                <button
+                  key={h.id}
+                  onClick={() => setSemanas(h.semanas)}
+                  aria-pressed={semanas === h.semanas}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                    semanas === h.semanas ? "border-primary bg-primary-tint font-semibold text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
+                  )}
+                >
+                  {h.rotulo} ({h.semanas} semanas)
+                </button>
+              ))}
+            </div>
           </Campo>
         </div>
         <div className="mt-4">
