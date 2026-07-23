@@ -25,6 +25,8 @@ export function AlunoPreview() {
     nome: user.empresa || user.name || "Seu treino",
     logoDataUrl: user.logoDataUrl || undefined,
     corPrimaria: user.corPrimaria || undefined,
+    paleta: user.paleta || undefined,
+    modo: user.modo || undefined,
   };
 
   return (

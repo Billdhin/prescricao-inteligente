@@ -6,6 +6,7 @@ import { hashSenha, novoSalt, abrirSessao, encerrarSessao } from "@/lib/auth";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { signOut } from "@/lib/backend/supabaseAuth";
 import { arquivoParaDataUrl } from "@/lib/imagem";
+import { SeletorTema } from "@/components/theme/SeletorTema";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -130,6 +131,16 @@ export function Account() {
           Nome e CREF assinam o Prontuário de Decisão; e-mail e telefone entram no rodapé dos
           documentos como canal de contato do aluno com você.
         </p>
+      </Card>
+
+      {/* Tema do sistema */}
+      <Card className="p-6">
+        <h3 className="mb-1 font-display text-lg font-bold text-ink">Cores do sistema</h3>
+        <p className="mb-4 text-sm text-ink-2">
+          Escolha a paleta e a aparência do seu app. Muda tudo na hora, e o aluno vê a mesma
+          identidade no portal dele.
+        </p>
+        <SeletorTema />
       </Card>
 
       {/* Marca */}

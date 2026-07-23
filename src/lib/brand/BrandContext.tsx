@@ -10,6 +10,9 @@ export interface Marca {
   nome: string;
   logoDataUrl?: string;
   corPrimaria?: string;
+  /** paleta + aparência do profissional; o portal do aluno herda ambas. */
+  paleta?: string;
+  modo?: import("@/lib/theme/palettes").Modo;
 }
 
 const BrandContext = React.createContext<Marca | null>(null);

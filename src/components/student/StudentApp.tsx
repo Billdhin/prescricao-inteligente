@@ -3,6 +3,7 @@ import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPu
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
+import { aplicarTema, PALETA_PADRAO } from "@/lib/theme/palettes";
 import { Logo } from "@/components/brand/Logo";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
 import { exercises } from "@/data/exercises";
@@ -78,6 +79,16 @@ export function StudentApp({
   const [aba, setAba] = React.useState<Aba>("hoje");
   const cor = marca.corPrimaria || "var(--primary)";
 
+  // O portal do aluno herda a paleta + aparência do profissional (e a cor de
+  // marca sobrepõe a primária). Aplica no container do portal, não na raiz do
+  // documento, para não vazar para uma eventual prévia dentro do app.
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (rootRef.current) {
+      aplicarTema(rootRef.current, marca.paleta || PALETA_PADRAO, marca.modo || "claro", marca.corPrimaria);
+    }
+  }, [marca.paleta, marca.modo, marca.corPrimaria]);
+
   // Financeiro visível na porta de entrada: um selo tocável no cabeçalho quando a
   // mensalidade não está em dia leva direto ao card de pagamento (aba Semana).
   const cobranca = aluno.cobranca;
@@ -85,7 +96,7 @@ export function StudentApp({
 
   return (
     <BrandProvider marca={marca}>
-      <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col bg-bg" style={{ ["--primary" as string]: marca.corPrimaria || undefined }}>
+      <div ref={rootRef} className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col bg-bg">
         {preview && (
           <div className="px-4 py-1.5 text-center text-xs font-semibold text-white" style={{ background: cor }}>
             Prévia: é assim que o seu aluno vê o app
