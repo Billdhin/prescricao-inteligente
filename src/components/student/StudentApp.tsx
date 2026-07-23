@@ -1,14 +1,18 @@
 import * as React from "react";
-import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, ChevronLeft, ChevronRight, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle, Sparkles } from "lucide-react";
+import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, ChevronLeft, ChevronRight, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle, Sparkles, Maximize2, Footprints, Bike, Waves } from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
-import { cn } from "@/lib/utils";
+import { cn, withBase } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
 import { aplicarTema, PALETA_PADRAO } from "@/lib/theme/palettes";
 import { Logo } from "@/components/brand/Logo";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
+import { ExercicioSheet } from "@/components/student/ExercicioSheet";
 import { estadoSemaforo } from "@/lib/gps/semaforoDiario";
-import { exercises } from "@/data/exercises";
+import { exercises, getExercise } from "@/data/exercises";
+import { getFasePose } from "@/data/fase-poses";
+import { getMuscleMapPose } from "@/data/muscle-map-images";
+import { getModalidade, modalidadeImagem } from "@/data/modalities";
 import type { Aluno, Avaliacao, Liberacao } from "@/data/alunos";
 import type { Execucao } from "@/data/execucao";
 import { formatBRL, statusEfetivo, ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
@@ -72,6 +76,30 @@ function tokensDoBloco(bloco: BlocoSessao): { label: string; value: string }[] {
         ]
   ).filter((t) => t.value);
 }
+
+// Resolve o exercício de catálogo de um bloco (undefined quando o bloco não aponta
+// para um slug catalogado). Governa o thumb e a folha do exercício.
+const exercicioDoBloco = (b: BlocoSessao) => (b.exercicioSlug ? getExercise(b.exercicioSlug) : undefined);
+
+// O exercício tem conteúdo visual/instrutivo para abrir a folha? (foto, movimento em
+// fases, boneco muscular posado ou passo a passo). Sem isso, o nome segue como texto,
+// sem virar um gatilho vazio.
+const temFolhaExercicio = (ex?: ReturnType<typeof getExercise>): boolean =>
+  !!ex && (!!ex.imagem || getFasePose(ex.slug, 1) != null || getMuscleMapPose(ex.slug) != null || ex.fases.length > 0);
+
+// Ícone lucide coerente com a modalidade aeróbia quando não há foto de modalidade.
+const iconeModalidade = (raw?: string, ambiente?: string) => {
+  const s = (raw ?? "").toLowerCase();
+  if (ambiente === "aquático" || /aqua|hidro|nata|nado/.test(s)) return Waves;
+  if (/bike|bicicleta|ciclo|spinning/.test(s)) return Bike;
+  if (/caminh|marcha|corr|esteira|trote/.test(s)) return Footprints;
+  return HeartPulse;
+};
+
+// Resolve a modalidade de um bloco aeróbio: aceita tanto o id canônico ("m-bike")
+// quanto o rótulo curto que os planos usam ("bike"/"caminhada").
+const modalidadeDoBloco = (b: BlocoSessao) =>
+  b.modalidade ? getModalidade(b.modalidade) ?? getModalidade(`m-${b.modalidade}`) : undefined;
 
 // A sessão está concluída na semana dada? Todos os blocos com uma Execucao daquela
 // semana batendo o blocoRef. Mesma regra que sessaoDeHojeIndex usa para a semana atual.
@@ -469,9 +497,27 @@ function SessaoCard({
               // Bi/tri/super-set: o par (ou trio) aparece numa moldura única, com a
               // instrução do catálogo uma vez ("faça em sequência, sem descanso entre eles").
               const info = getMetodo(seg.metodo);
+              // Thumbs dos exercícios do grupo, empilhados, reforçam o "faça em dupla".
+              // Decorativos (o thumb clicável de cada exercício vive na própria linha).
+              const thumbsGrupo = seg.blocos
+                .map((b) => exercicioDoBloco(b)?.imagem)
+                .filter((src): src is string => !!src);
               return (
                 <div key={seg.grupoId} className="rounded-xl border-2 p-1.5" style={{ borderColor: cor }}>
                   <div className="mb-1 flex flex-wrap items-center gap-2 px-1.5 pt-0.5">
+                    {thumbsGrupo.length > 0 && (
+                      <div className="flex shrink-0 items-center" aria-hidden>
+                        {thumbsGrupo.map((src, i) => (
+                          <img
+                            key={i}
+                            src={withBase(src)}
+                            alt=""
+                            loading="lazy"
+                            className={cn("h-10 w-10 rounded-lg border-2 border-surface object-cover", i > 0 && "-ml-3")}
+                          />
+                        ))}
+                      </div>
+                    )}
                     <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-white" style={{ background: cor }}>
                       {info?.nome}
                     </span>
@@ -538,6 +584,48 @@ function BlocoRow({
   // Num grupo, o método (badge + instrução) já vem no cabeçalho da moldura: não repete aqui.
   const metodoVisivel = metodo && metodo.id !== "tradicional" && !emGrupo ? metodo : undefined;
 
+  // Visual do exercício: thumb da foto real de execução (força) e a folha com o
+  // movimento, os músculos e o como fazer. Só para blocos de catálogo com conteúdo;
+  // sem foto, o thumb não aparece (nunca empresta a imagem de outro exercício).
+  const ex = exercicioDoBloco(bloco);
+  const temFolha = !aerobio && temFolhaExercicio(ex);
+  const [sheetAberto, setSheetAberto] = React.useState(false);
+  const [thumbOk, setThumbOk] = React.useState(true);
+  const gatilhoRef = React.useRef<HTMLButtonElement>(null);
+  const fecharSheet = () => {
+    setSheetAberto(false);
+    gatilhoRef.current?.focus();
+  };
+  // Aeróbio: foto pequena da modalidade quando houver; senão, ícone lucide coerente.
+  const modalidade = aerobio ? modalidadeDoBloco(bloco) : undefined;
+  const [modImgOk, setModImgOk] = React.useState(true);
+  const IconeAerobio = iconeModalidade(bloco.modalidade, modalidade?.ambiente);
+
+  // Elemento à esquerda do nome: thumb 56px (força com foto), foto pequena da
+  // modalidade (aeróbio) ou o selo colorido de ícone (fallback padrão de hoje).
+  const leading =
+    !aerobio && ex?.imagem && thumbOk ? (
+      <img
+        src={withBase(ex.imagem)}
+        alt={nomeDoBloco(bloco)}
+        loading="lazy"
+        onError={() => setThumbOk(false)}
+        className="h-14 w-14 shrink-0 rounded-xl border border-border object-cover"
+      />
+    ) : aerobio && modalidade && modImgOk ? (
+      <img
+        src={withBase(modalidadeImagem(modalidade.id))}
+        alt={modalidade.nome}
+        loading="lazy"
+        onError={() => setModImgOk(false)}
+        className="h-11 w-11 shrink-0 rounded-lg border border-border object-cover"
+      />
+    ) : (
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white" style={{ background: cor }}>
+        {aerobio ? <IconeAerobio className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
+      </span>
+    );
+
   // Pré-preenche só o que o plano prescreve de forma objetiva E numérica: as Reps.
   // A dose vem como FAIXA textual ("6 a 12", "acima de 15"), que num campo numérico
   // seria truncada (parseInt("6 a 12")=6) ou viraria NaN. Então só pré-preenche
@@ -588,10 +676,27 @@ function BlocoRow({
   return (
     <div className="rounded-xl border border-border bg-surface-soft p-3">
       <div className="flex items-center gap-2">
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white" style={{ background: cor }}>
-          {aerobio ? <HeartPulse className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
-        </span>
-        <span className="min-w-0 flex-1 font-semibold text-ink">{nomeDoBloco(bloco)}</span>
+        {temFolha ? (
+          <button
+            ref={gatilhoRef}
+            type="button"
+            onClick={() => setSheetAberto(true)}
+            aria-haspopup="dialog"
+            aria-label={`Ver o exercício ${nomeDoBloco(bloco)}`}
+            className="group flex min-h-[44px] min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left"
+          >
+            {leading}
+            <span className="min-w-0 flex-1 font-semibold text-ink underline-offset-2 group-hover:underline">
+              {nomeDoBloco(bloco)}
+            </span>
+            <Maximize2 className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
+          </button>
+        ) : (
+          <>
+            {leading}
+            <span className="min-w-0 flex-1 font-semibold text-ink">{nomeDoBloco(bloco)}</span>
+          </>
+        )}
         {metodoVisivel && (
           <span
             className="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold text-white"
@@ -675,6 +780,16 @@ function BlocoRow({
           </div>
         )
       ) : null}
+
+      {sheetAberto && ex && (
+        <ExercicioSheet
+          exercicioSlug={ex.slug}
+          nome={nomeDoBloco(bloco)}
+          tokens={tokensDose}
+          cor={cor}
+          onClose={fecharSheet}
+        />
+      )}
     </div>
   );
 }
