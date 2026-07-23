@@ -70,6 +70,8 @@ export interface ContextoFaixa {
   restricoes?: RestricaoSelecionada[];
   equipamentos?: string[];
   grupoEspecial?: string;
+  /** grupos adicionais confirmados do aluno; combinam-se ao principal na troca segura */
+  condicoesAtencao?: string[];
   /** resolve a data de exibição de uma prescrição pela id (selo "da prescrição de …") */
   prescricaoData?: (id: string) => string | undefined;
 }
@@ -82,6 +84,7 @@ function ctxTrocaDe(ctx: ContextoFaixa): ContextoTroca {
     restricoes: ctx.restricoes ?? [],
     equipamentos: ctx.equipamentos ?? [...EQUIPAMENTOS],
     grupoEspecial: ctx.grupoEspecial,
+    condicoesAtencao: ctx.condicoesAtencao,
   };
 }
 

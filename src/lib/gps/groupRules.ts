@@ -42,7 +42,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       },
     ],
     complexidadeMax: 55,
-    refs: ["donnelly-2009", "acsm-getp11", "oms-2020"],
+    refs: ["donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997"],
   },
 
   hipertensao: {

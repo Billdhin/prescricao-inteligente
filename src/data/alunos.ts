@@ -38,7 +38,10 @@ export interface Aluno {
   /* ---- Jornada de prescrição (grupos especiais) — todos opcionais ---- */
   /** slug do grupo especial principal (ver src/data/specialGroups.ts) */
   grupoEspecial?: string;
-  condicoesAtencao?: string;
+  /** grupos especiais ADICIONAIS confirmados (slugs); combinam-se no motor de validação */
+  condicoesAtencao?: string[];
+  /** grupos que o classificador sugeriu e o profissional DISPENSOU (não reexibir) */
+  sugestoesDispensadas?: string[];
   /** ids de modalidades (ver src/data/modalities.ts) */
   modalidadesPreferenciais?: string[];
   modalidadesEvitadas?: string[];

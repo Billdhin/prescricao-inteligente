@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ClipboardList,
   Crown,
@@ -7,7 +7,6 @@ import {
   FlaskConical,
   Dumbbell,
   X,
-  AlertTriangle,
   BookOpen,
   CalendarDays,
   Gauge,
@@ -25,8 +24,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Card, LinhaDeDose, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
-import { useUser, useAlunos, isPremiumUnlocked, uid } from "@/lib/store";
-import { rotuloRestricao } from "@/lib/gps/restricoes";
+import { useUser, useAlunos, isPremiumUnlocked } from "@/lib/store";
 import { exercises } from "@/data/exercises";
 import { getParam } from "@/data/monitoringParameters";
 import { bibliografia } from "@/data/referencias";
@@ -38,7 +36,6 @@ import {
   type ProtocoloCategoria,
 } from "@/data/protocolos";
 import { useDialog } from "@/lib/useDialog";
-import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const CATEGORIA_ICON: Record<string, LucideIcon> = {
@@ -65,7 +62,6 @@ const fmtData = (ts: number) =>
 export function Protocolos() {
   const { alunos, prescricoes } = useAlunos();
   const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "aluno";
-  const [aplicar, setAplicar] = React.useState<Protocolo | null>(null);
   const [base, setBase] = React.useState<Protocolo | null>(null);
   // Navegação em dois níveis: escolhe a categoria e vê os protocolos dela.
   const [categoria, setCategoria] = React.useState<ProtocoloCategoria | null>(null);
@@ -78,11 +74,26 @@ export function Protocolos() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <SectionHeader
-        eyebrow="Atendimento"
+        eyebrow="Estudo e referência"
         icon={<ClipboardList className="h-3 w-3" />}
         title="Protocolos"
-        subtitle="Modelos por objetivo, com público-alvo, respaldo da literatura e a estrutura da semana. Escolha uma categoria para ver os protocolos."
+        subtitle="Modelos por objetivo, com público-alvo, respaldo da literatura e a estrutura da semana. Material de estudo; escolha uma categoria para consultar."
       />
+
+      {/* Página de ESTUDO: os protocolos são gerais. Cada aluno tem treino próprio, que
+          nasce da avaliação e do direcionamento no perfil dele. */}
+      <Card className="flex flex-wrap items-center gap-3 p-4">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-tint text-primary">
+          <Users className="h-4 w-4" />
+        </span>
+        <p className="min-w-0 flex-1 text-sm text-ink-2">
+          Estes protocolos são gerais, para estudo. Cada aluno tem um treino próprio, que nasce da
+          avaliação e do direcionamento no perfil dele.
+        </p>
+        <Link to="/alunos" className={buttonClasses("secondary", "sm")}>
+          Ver meus alunos <ArrowRight className="h-4 w-4" />
+        </Link>
+      </Card>
 
       <div className="relative">
         <div className="space-y-7">
@@ -137,7 +148,6 @@ export function Protocolos() {
                     key={p.id}
                     p={p}
                     passo={emFamilia ? { atual: i + 1, total: listaDaCategoria.length } : undefined}
-                    onAplicar={() => setAplicar(p)}
                     onBase={() => setBase(p)}
                   />
                 ))}
@@ -150,7 +160,7 @@ export function Protocolos() {
             <h2 className="mb-3 font-display text-lg font-bold text-ink">Suas prescrições</h2>
             {prescricoes.length === 0 ? (
               <Card className="p-6 text-center text-sm text-ink-2">
-                Ainda não há prescrições. Use o Prescrever e salve no perfil de um aluno, ou aplique um modelo acima.
+                Ainda não há prescrições. Use o Prescrever exercício ou o Prescrever treino e salve no perfil de um aluno.
               </Card>
             ) : (
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -179,7 +189,6 @@ export function Protocolos() {
       </div>
 
       {base && <BaseCientificaModal p={base} onClose={() => setBase(null)} />}
-      {aplicar && <AplicarProtocoloModal modelo={aplicar} onClose={() => setAplicar(null)} />}
     </div>
   );
 }
@@ -195,12 +204,10 @@ const TONE_ICON: Record<string, string> = {
 function ProtocoloCard({
   p,
   passo,
-  onAplicar,
   onBase,
 }: {
   p: Protocolo;
   passo?: { atual: number; total: number };
-  onAplicar: () => void;
   onBase: () => void;
 }) {
   return (
@@ -273,12 +280,9 @@ function ProtocoloCard({
         {p.estruturaSemanal}
       </div>
 
-      <div className="mt-auto flex flex-wrap gap-2">
-        <button onClick={onBase} className={cn(buttonClasses("ghost", "sm"), "flex-1")}>
+      <div className="mt-auto">
+        <button onClick={onBase} className={cn(buttonClasses("secondary", "sm"), "w-full")}>
           <BookOpen className="h-4 w-4" /> Base científica
-        </button>
-        <button onClick={onAplicar} className={cn(buttonClasses("secondary", "sm"), "flex-1")}>
-          <Dumbbell className="h-4 w-4" /> Aplicar a um aluno
         </button>
       </div>
     </Card>
@@ -395,109 +399,6 @@ function RotuloBloco({ icon, children }: { icon?: React.ReactNode; children: Rea
     <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-3">
       {icon}
       {children}
-    </div>
-  );
-}
-
-/** Aplica um modelo de protocolo a um aluno ativo, criando uma prescrição de verdade. */
-function AplicarProtocoloModal({ modelo, onClose }: { modelo: Protocolo; onClose: () => void }) {
-  const navigate = useNavigate();
-  const { alunos, addPrescricao } = useAlunos();
-  const ativos = alunos.filter((a) => a.status === "ativo");
-  const dialogRef = useDialog<HTMLDivElement>(onClose);
-  const tituloDoc = modelo.fase ? `${modelo.titulo} (${modelo.fase})` : modelo.titulo;
-
-  const aplicar = (alunoId: string) => {
-    const aluno = alunos.find((a) => a.id === alunoId);
-    if (!aluno) return;
-    addPrescricao({
-      id: uid(),
-      alunoId,
-      data: Date.now(),
-      titulo: tituloDoc,
-      answers: {
-        objetivo: modelo.objetivo,
-        grupoMuscular: "Corpo todo",
-        prioridade: modelo.prioridade,
-        nivel: aluno.nivel,
-        restricoes: aluno.restricoes,
-        equipamentos: aluno.equipamentos,
-      },
-      itens: modelo.itens.map((it) => ({ slug: it.slug, score: 0, series: it.series })),
-      status: "ativa",
-      frequenciaSemanal: modelo.frequencia,
-      parametrosControle: modelo.parametros,
-      criteriosProgressao: modelo.progressao ? [modelo.progressao] : undefined,
-      raciocinio: modelo.base,
-      observacoes:
-        "Aplicado a partir de um modelo de protocolo; ajuste séries, cargas e as restrições do aluno antes de conduzir a sessão.",
-    });
-    toast(`Protocolo "${modelo.titulo}" aplicado a ${aluno.nome}`);
-    navigate(`/alunos/${alunoId}`, { state: { prescricaoSalva: true } });
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Aplicar ${modelo.titulo}`}
-        className="max-h-modal w-full max-w-md overflow-auto rounded-card bg-surface p-5 shadow-overlay outline-none md:p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-1 flex items-start justify-between gap-2">
-          <h2 className="font-display text-lg font-bold text-ink">Aplicar a um aluno</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <p className="mb-4 text-sm text-ink-2">
-          Modelo <span className="font-semibold text-ink">{tituloDoc}</span>. Escolha o aluno; a prescrição entra no
-          perfil dele para você ajustar séries e cargas.
-        </p>
-        {ativos.length === 0 ? (
-          <Card className="p-5 text-center text-sm text-ink-2">
-            Nenhum aluno ativo. Cadastre um aluno primeiro.
-            <Link to="/alunos?novo=1" className={cn(buttonClasses("primary", "sm"), "mt-3")}>
-              Cadastrar aluno
-            </Link>
-          </Card>
-        ) : (
-          <ul className="space-y-2">
-            {ativos.map((a) => {
-              const conflito = a.restricoes.length > 0;
-              return (
-                <li key={a.id}>
-                  <button
-                    onClick={() => aplicar(a.id)}
-                    className="flex w-full items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:border-primary hover:bg-primary-tint"
-                  >
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
-                      {a.iniciais}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-ink">{a.nome}</span>
-                      <span className="block truncate text-xs text-ink-3">
-                        {a.objetivo} · {a.nivel}
-                      </span>
-                    </span>
-                    {conflito && a.restricoes[0] && (
-                      <Pill tone="warning" icon={<AlertTriangle className="h-3 w-3" />}>
-                        {rotuloRestricao(a.restricoes[0].tag)}
-                      </Pill>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        <p className="mt-4 text-2xs leading-relaxed text-ink-3">
-          Modelos são ponto de partida. Revise cargas, séries e as restrições do aluno antes de conduzir a sessão.
-        </p>
-      </div>
     </div>
   );
 }

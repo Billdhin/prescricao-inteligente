@@ -86,6 +86,7 @@ const NAV: NavSection[] = [
     items: [
       { to: "/aprender", label: "Estudar", icon: GraduationCap, match: ["/aprender", "/tracks"], short: "Estudar" },
       { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
+      { to: "/protocols", label: "Protocolos", icon: ClipboardList },
       { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical, match: ["/movement-lab", "/comparador"] },
       { to: "/consultar", label: "Consultar", icon: Search, match: ["/consultar", "/library"] },
     ],
@@ -94,7 +95,6 @@ const NAV: NavSection[] = [
     label: "Ferramentas",
     items: [
       { to: "/assessments", label: "Avaliações", icon: BarChart3 },
-      { to: "/protocols", label: "Protocolos", icon: ClipboardList },
       { to: "/tutorial", label: "Tutoriais", icon: HelpCircle },
       { to: "/suporte", label: "Suporte", icon: LifeBuoy },
     ],

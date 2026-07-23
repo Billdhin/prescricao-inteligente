@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Target,
@@ -9,14 +9,13 @@ import {
   Lightbulb,
   ShieldAlert,
   Sparkles,
-  UserPlus,
   Crown,
-  X,
   ArrowRight,
   ChevronsDownUp,
   BookOpen,
   Stethoscope,
   Microscope,
+  Users,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
@@ -34,17 +33,14 @@ import {
 import { getSpecialGroup, complexidadeTone, AVISO_SEGURANCA } from "@/data/specialGroups";
 import { getCase } from "@/data/cases";
 import { useUser, useAlunos, isPremiumUnlocked } from "@/lib/store";
-import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
 export function SpecialGroupDetail() {
   const { slug = "" } = useParams();
   const [sp] = useSearchParams();
-  const navigate = useNavigate();
   const plan = useUser((s) => s.plan);
   const unlocked = isPremiumUnlocked(plan);
-  const { alunos, updateAluno } = useAlunos();
-  const [aplicar, setAplicar] = React.useState(false);
+  const { alunos } = useAlunos();
 
   // Contexto vindo do fluxo Prescrever: preserva o aluno e a fase já escolhidos,
   // para não perder o caminho nem pedir de novo o aluno.
@@ -129,22 +125,33 @@ export function SpecialGroupDetail() {
           </div>
           <p className="mt-2 max-w-2xl text-ink-2">{g.descricaoCurta}</p>
         </div>
-        {!locked &&
-          (voltarPrescricao ? (
-            <Link to={voltarPrescricao} className={buttonClasses("primary")}>
-              <ArrowLeft className="h-4 w-4" />{" "}
-              {voltandoParaAluno
-                ? `Voltar ao perfil de ${primeiroNome}`
-                : voltandoParaGps
-                  ? "Voltar ao Prescrever exercício"
-                  : `Continuar prescrição de ${primeiroNome}`}
-            </Link>
-          ) : (
-            <button onClick={() => setAplicar(true)} className={buttonClasses("primary")}>
-              <UserPlus className="h-4 w-4" /> Aplicar a um aluno
-            </button>
-          ))}
+        {!locked && voltarPrescricao && (
+          <Link to={voltarPrescricao} className={buttonClasses("primary")}>
+            <ArrowLeft className="h-4 w-4" />{" "}
+            {voltandoParaAluno
+              ? `Voltar ao perfil de ${primeiroNome}`
+              : voltandoParaGps
+                ? "Voltar ao Prescrever exercício"
+                : `Continuar prescrição de ${primeiroNome}`}
+          </Link>
+        )}
       </div>
+
+      {/* Página de ESTUDO: o direcionamento de cada aluno nasce no perfil dele, não aqui. */}
+      {!locked && !voltarPrescricao && (
+        <Card className="flex flex-wrap items-center gap-3 p-4">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-tint text-primary">
+            <Users className="h-4 w-4" />
+          </span>
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            Esta página é material de estudo. O direcionamento de cada aluno acontece no perfil
+            dele, a partir do cadastro e da avaliação, com a sugestão de grupo especial.
+          </p>
+          <Link to="/alunos" className={buttonClasses("secondary", "sm")}>
+            Ver meus alunos <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Card>
+      )}
 
       {locked ? (
         <>
@@ -293,85 +300,6 @@ export function SpecialGroupDetail() {
           )}
         </>
       )}
-
-      {aplicar && (
-        <AplicarModal
-          onClose={() => setAplicar(false)}
-          alunos={alunos.filter((a) => a.status === "ativo")}
-          onAplicar={(alunoId) => {
-            updateAluno(alunoId, {
-              grupoEspecial: g.slug,
-              faseJornada: 1,
-              modalidadesPreferenciais: g.modalidadesIndicadas,
-              parametrosPrioritarios: g.parametros.slice(0, 4),
-              criterioProgressao: g.fases[0]?.criteriosAvancar[0],
-            });
-            setAplicar(false);
-            navigate(`/alunos/${alunoId}`);
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-function AplicarModal({
-  onClose,
-  alunos,
-  onAplicar,
-}: {
-  onClose: () => void;
-  alunos: { id: string; nome: string; iniciais: string; objetivo: string }[];
-  onAplicar: (id: string) => void;
-}) {
-  const dialogRef = useDialog<HTMLDivElement>(onClose);
-
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label="Aplicar a um aluno"
-        className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold text-ink">Aplicar jornada a um aluno</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <p className="mb-3 text-sm text-ink-2">
-          Define o grupo especial, inicia na Fase 1 e sugere modalidades e parâmetros no perfil do
-          aluno. Você pode ajustar tudo depois.
-        </p>
-        {alunos.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-ink-2">
-            Cadastre um aluno primeiro.
-          </p>
-        ) : (
-          <div className="max-h-72 space-y-2 overflow-auto">
-            {alunos.map((a) => (
-              <button
-                key={a.id}
-                onClick={() => onAplicar(a.id)}
-                className="flex w-full items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:bg-surface-soft"
-              >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-xs font-bold text-white">
-                  {a.iniciais}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold text-ink">{a.nome}</div>
-                  <div className="truncate text-xs text-ink-3">{a.objetivo}</div>
-                </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

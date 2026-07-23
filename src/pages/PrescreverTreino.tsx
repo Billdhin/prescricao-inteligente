@@ -540,6 +540,7 @@ function ResultadoPlano({
     restricoes: alunoObj?.restricoes,
     equipamentos: alunoObj?.equipamentos,
     grupoEspecial: alunoObj?.grupoEspecial ?? plano.grupoEspecial,
+    condicoesAtencao: alunoObj?.condicoesAtencao,
     prescricaoData,
   };
 

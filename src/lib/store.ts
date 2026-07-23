@@ -530,9 +530,13 @@ export const useAlunos = create<AlunosState>()(
     // v8: nasce a coleção `planos` (periodização do "Prescrever treino"). Aditivo: o
     //     backfill só garante o array vazio em quem vem de uma versão anterior; nada do
     //     que o profissional já criou é tocado.
+    // v11: `condicoesAtencao` deixou de ser string livre e virou `string[]` (grupos
+    //      especiais adicionais confirmados, combinados no motor de validação); nasce
+    //      `sugestoesDispensadas` (grupos que o profissional dispensou). Aditivo por
+    //      merge: normaliza o campo legado sem tocar no que o profissional criou.
     {
       name: "pi-alunos",
-      version: 10,
+      version: 11,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -567,6 +571,12 @@ export const useAlunos = create<AlunosState>()(
               nivelDesde: merged.nivelDesde ?? merged.criadoEm,
               // v7: restrições string[] legadas → modelo estruturado
               restricoes: migrarRestricoesLegado(merged.restricoes),
+              // v11: condicoesAtencao virou string[] (grupos adicionais). Blobs antigos
+              // podiam trazer uma string livre (nunca era slug de grupo): normaliza para
+              // array, descartando o texto legado que não classificava nada.
+              condicoesAtencao: Array.isArray((merged as { condicoesAtencao?: unknown }).condicoesAtencao)
+                ? (merged as { condicoesAtencao?: string[] }).condicoesAtencao
+                : undefined,
             };
           }),
           avaliacoes: Array.isArray(p.avaliacoes) ? p.avaliacoes : seedAvaliacoes,

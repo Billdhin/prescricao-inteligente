@@ -101,6 +101,7 @@ function alunoToRow(a: Aluno, userId: string) {
     fase_jornada: a.faseJornada ?? null,
     jornada: {
       condicoesAtencao: a.condicoesAtencao,
+      sugestoesDispensadas: a.sugestoesDispensadas,
       modalidadesPreferenciais: a.modalidadesPreferenciais,
       modalidadesEvitadas: a.modalidadesEvitadas,
       parametrosPrioritarios: a.parametrosPrioritarios,
@@ -135,7 +136,8 @@ function rowToAluno(r: Record<string, any>): Aluno {
     proximaReavaliacaoEm: ms(r.proxima_reavaliacao_em),
     grupoEspecial: r.grupo_especial ?? undefined,
     faseJornada: r.fase_jornada ?? undefined,
-    condicoesAtencao: j.condicoesAtencao,
+    condicoesAtencao: Array.isArray(j.condicoesAtencao) ? j.condicoesAtencao : undefined,
+    sugestoesDispensadas: j.sugestoesDispensadas,
     modalidadesPreferenciais: j.modalidadesPreferenciais,
     modalidadesEvitadas: j.modalidadesEvitadas,
     parametrosPrioritarios: j.parametrosPrioritarios,

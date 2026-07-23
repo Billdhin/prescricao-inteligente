@@ -35,6 +35,8 @@ import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
 import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
 import { PosturalCard } from "@/components/treino/PosturalCard";
 import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
+import { SugestaoGrupoCard } from "@/components/treino/SugestaoGrupoCard";
+import { classificarGrupos } from "@/lib/gps/classificador";
 import { ListaChips } from "@/components/treino/PlanoEditor";
 import { proximoPasso, estadoDoCiclo, dataReavaliacao, podeMontarTreino, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
 import { estadoSemaforo, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
@@ -492,7 +494,11 @@ export function AlunoDetail() {
 
       {/* PLANO E TREINO: o core, na ordem do ciclo. Fase, periodização, prescrição, execução. */}
       {aba === "treino" && (
-        <div role="tabpanel" id="aba-painel-treino" aria-labelledby="aba-tab-treino" className="grid gap-4 lg:grid-cols-3">
+        <div role="tabpanel" id="aba-painel-treino" aria-labelledby="aba-tab-treino" className="space-y-4">
+          {/* Direcionamento sugerido: perto da Linha do cuidado, no topo do core. */}
+          <SugestaoGrupoCard aluno={aluno} avaliacoes={avals} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+
+          <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
             <SugestaoNivel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
 
@@ -671,6 +677,7 @@ export function AlunoDetail() {
               </button>
             </Card>
           </div>
+          </div>
         </div>
       )}
 
@@ -712,6 +719,13 @@ export function AlunoDetail() {
             addAvaliacao(av);
             setAvaliar(false);
             toast(`Avaliação registrada para ${aluno.nome}`);
+            // Se a nova avaliação faz surgir um direcionamento que antes não existia,
+            // avisa de leve (o card já aparece no perfil; não abre modal).
+            const antes = classificarGrupos(aluno, avals).map((s) => s.grupoSlug);
+            const surgiu = classificarGrupos(aluno, [...avals, av]).some(
+              (s) => s.fonte === "avaliacao" && !antes.includes(s.grupoSlug),
+            );
+            if (surgiu) toast("A avaliação indica possível grupo especial. Veja a sugestão no perfil.");
           }}
           alunoId={aluno.id}
           anterior={avalsDesc[0]}

@@ -130,7 +130,11 @@ export function Gps() {
   const [faixaEtaria, setFaixaEtaria] = React.useState<string>("");
   // Condições associadas: além da condição principal (que dirige a jornada), o
   // profissional pode somar outras condições e os cuidados de todas se combinam.
-  const [condicoesExtras, setCondicoesExtras] = React.useState<string[]>([]);
+  // Com aluno vinculado, nascem das condicoesAtencao já confirmadas no perfil, para
+  // o motor validar os exercícios pelo combinado (principal + adicionais).
+  const [condicoesExtras, setCondicoesExtras] = React.useState<string[]>(
+    () => alunoInicial?.condicoesAtencao ?? [],
+  );
 
   const aluno = alunoId ? alunos.find((a) => a.id === alunoId) : undefined;
   const grupo = grupoSlug ? getSpecialGroup(grupoSlug) : undefined;

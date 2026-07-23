@@ -25,6 +25,8 @@ export interface ContextoTroca {
   restricoes: RestricaoSelecionada[];
   equipamentos: string[];
   grupoEspecial?: string;
+  /** grupos adicionais confirmados (Aluno.condicoesAtencao); combinam-se ao principal */
+  condicoesAtencao?: string[];
 }
 
 /**
@@ -41,6 +43,10 @@ export function sugerirTroca(ctx: ContextoTroca, alvo?: string): Recommendation[
     restricoes: ctx.restricoes ?? [],
     equipamentos: ctx.equipamentos ?? [],
   };
-  const rule = ctx.grupoEspecial ? combineRules([ctx.grupoEspecial]) : undefined;
+  // Valida pelo COMBINADO: grupo principal + condições adicionais confirmadas.
+  const slugs = [ctx.grupoEspecial, ...(ctx.condicoesAtencao ?? [])].filter(
+    (s): s is string => Boolean(s),
+  );
+  const rule = slugs.length ? combineRules(slugs) : undefined;
   return rankExercises(exercises, answers, rule);
 }
