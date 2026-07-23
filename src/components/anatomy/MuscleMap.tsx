@@ -217,12 +217,16 @@ const BACK_KEYS: MuscleKey[] = ["trapezio", "dorsais", "triceps", "lombar", "glu
 /** Miniatura para cards — frente ou costas conforme a maior ativação. */
 export function MuscleThumb({ activation, slug, className }: { activation: Activation; slug?: string; className?: string }) {
   const imgs = getMuscleMapImages(slug);
+  // Exercícios com boneco na posição (mas sem as vistas frente/costas) usam o
+  // próprio boneco como miniatura: já traz os músculos certos marcados, então
+  // vale mais que a figura cinza neutra do fallback.
+  const pose = getMuscleMapPose(slug);
   const backSum = BACK_KEYS.reduce((s, k) => s + (activation[k] ?? 0), 0);
   const frontSum = (Object.keys(activation) as MuscleKey[])
     .filter((k) => !BACK_KEYS.includes(k))
     .reduce((s, k) => s + (activation[k] ?? 0), 0);
   const back = backSum > frontSum;
-  const src = back ? (imgs?.back ?? BACK_BASE) : (imgs?.front ?? FRONT_BASE);
+  const src = (back ? imgs?.back : imgs?.front) ?? pose ?? (back ? BACK_BASE : FRONT_BASE);
   return (
     <div className={cn("relative aspect-[3/5]", className)}>
       <img src={withBase(src)} alt={`Músculos predominantes (vista ${back ? "posterior" : "frontal"})`} className="h-full w-full object-contain" loading="lazy" />

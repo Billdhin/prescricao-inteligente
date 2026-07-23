@@ -67,6 +67,10 @@ const SLUGS_COM_POSE: string[] = [
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
+  "empurra-puxa-aquatico",
+  "flexao-de-braco",
+  "supino-halteres",
+  "supino-maquina",
 ];
 
 export function getMuscleMapPose(slug?: string): string | undefined {
