@@ -248,13 +248,13 @@ export function VisualModalidadeCard({ id, cautela }: { id: string; cautela?: bo
           </div>
         )}
         <div className="absolute left-3 top-3">
-          <Pill tone={impactoTone[m.impacto]} className="bg-white/90 shadow-soft">
+          <Pill tone={impactoTone[m.impacto]} className="bg-surface/90 shadow-soft">
             impacto {m.impacto}
           </Pill>
         </div>
         {cautela && (
           <div className="absolute right-3 top-3">
-            <Pill tone="warning" className="bg-white/90 shadow-soft" icon={<AlertTriangle className="h-3 w-3" />}>
+            <Pill tone="warning" className="bg-surface/90 shadow-soft" icon={<AlertTriangle className="h-3 w-3" />}>
               cautela
             </Pill>
           </div>

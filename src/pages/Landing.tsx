@@ -70,7 +70,7 @@ export function Landing() {
   return (
     <div className="min-h-screen bg-bg">
       {/* ------------------------------- Header ------------------------------ */}
-      <header className="sticky top-0 z-30 border-b border-border bg-white/85 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-border bg-surface/85 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
           <Logo />
           <nav aria-label="Seções da página" className="hidden items-center gap-6 text-sm font-medium text-ink-2 md:flex">
@@ -595,13 +595,13 @@ export function Landing() {
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
               to="/dashboard"
-              className="inline-flex items-center gap-2 rounded-control bg-white px-6 py-3 font-semibold text-primary hover:bg-white/90"
+              className="inline-flex items-center gap-2 rounded-control bg-surface px-6 py-3 font-semibold text-primary hover:bg-surface/90"
             >
               Começar agora <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/tutorial"
-              className="inline-flex items-center gap-2 rounded-control border border-white/40 px-6 py-3 font-semibold text-white hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-control border border-white/40 px-6 py-3 font-semibold text-white hover:bg-surface/10"
             >
               Ver os tutoriais
             </Link>

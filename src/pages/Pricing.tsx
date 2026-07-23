@@ -24,7 +24,7 @@ const FAQS = [
 export function Pricing() {
   return (
     <div className="min-h-screen bg-bg">
-      <header className="border-b border-border bg-white/80 backdrop-blur">
+      <header className="border-b border-border bg-surface/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 md:px-6">
           <Logo />
           <Link to="/dashboard" className="inline-flex items-center gap-2 text-sm font-medium text-ink-2 hover:text-ink">

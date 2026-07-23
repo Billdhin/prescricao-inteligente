@@ -152,7 +152,7 @@ export function Account() {
         </p>
         <div className="flex flex-wrap items-center gap-4">
           {logoDataUrl ? (
-            <img src={logoDataUrl} alt="Sua logo" className="h-14 max-w-[220px] rounded-lg border border-border bg-white object-contain p-1.5" />
+            <img src={logoDataUrl} alt="Sua logo" className="h-14 max-w-[220px] rounded-lg border border-border bg-surface object-contain p-1.5" />
           ) : (
             <span className="grid h-14 w-36 place-items-center rounded-lg border border-dashed border-border text-ink-3">
               <ImageIcon className="h-5 w-5" />
@@ -214,7 +214,7 @@ export function Account() {
               aria-label="Escolher cor da marca"
               value={corPrimaria || "#1b4b66"}
               onChange={(e) => user.setPerfil({ corPrimaria: e.target.value })}
-              className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-white p-1"
+              className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-surface p-1"
             />
             <span className="tabular text-sm text-ink-2">
               {corPrimaria ? corPrimaria.toUpperCase() : "Cor do produto"}
@@ -231,7 +231,7 @@ export function Account() {
         </div>
 
         {/* Prévia do cabeçalho do documento */}
-        <div className="mt-5 rounded-xl border border-border bg-white p-4">
+        <div className="mt-5 rounded-xl border border-border bg-surface p-4">
           <div className="mb-2 text-2xs font-semibold uppercase tracking-wider text-ink-3">
             Prévia do cabeçalho dos documentos
           </div>

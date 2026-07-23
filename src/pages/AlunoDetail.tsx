@@ -278,7 +278,7 @@ export function AlunoDetail() {
 
       {recemCriado && (
         <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-success">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-success">
             <CalendarPlus className="h-4 w-4" />
           </span>
           <p className="min-w-0 flex-1 text-sm text-ink">
@@ -291,7 +291,7 @@ export function AlunoDetail() {
 
       {prescricaoSalva && (
         <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-success">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-success">
             <CheckCircle2 className="h-4 w-4" />
           </span>
           <p className="min-w-0 flex-1 text-sm text-ink">
@@ -306,7 +306,7 @@ export function AlunoDetail() {
 
       {planoSalvo && (
         <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-success">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-success">
             <CalendarRange className="h-4 w-4" />
           </span>
           <p className="min-w-0 flex-1 text-sm text-ink">
@@ -321,7 +321,7 @@ export function AlunoDetail() {
 
       {aplicado && (
         <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-success">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-success">
             <CalendarRange className="h-4 w-4" />
           </span>
           <p className="min-w-0 flex-1 text-sm text-ink">

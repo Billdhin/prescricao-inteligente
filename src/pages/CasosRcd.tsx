@@ -15,7 +15,7 @@ export function CasosRcd() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="border-b border-border bg-white/80 backdrop-blur">
+      <header className="border-b border-border bg-surface/80 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 md:px-6">
           <Link to="/">
             <Logo />

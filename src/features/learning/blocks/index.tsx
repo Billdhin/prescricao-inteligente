@@ -524,7 +524,7 @@ function FigureImagePlate({ img, compact }: { img: FigureImageDef; compact?: boo
     <div>
       {/* A imagem é centralizada e limitada: um quadrado 1:1 em largura total tomava a tela
           inteira. Os marcadores continuam alinhados por serem % sobre este mesmo contêiner. */}
-      <div className={cn("relative mx-auto overflow-hidden rounded-xl border border-border bg-white", compact ? "max-w-[280px]" : "max-w-[380px]")}>
+      <div className={cn("relative mx-auto overflow-hidden rounded-xl border border-border bg-surface", compact ? "max-w-[280px]" : "max-w-[380px]")}>
         <img src={withBase(img.src)} alt={img.alt} className="block h-auto w-full" loading="lazy" />
         {markers.length > 0 && (
           <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -995,7 +995,7 @@ function PracticalApplication({ title, text }: { title?: string; text: string })
     <section>
       {title && <BlockTitle>{title}</BlockTitle>}
       <Card tone="success" className="flex gap-3 p-4">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-success">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface text-success">
           <Target className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">

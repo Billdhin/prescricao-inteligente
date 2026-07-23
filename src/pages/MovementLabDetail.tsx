@@ -409,7 +409,7 @@ function Legend({ swatch, label }: { swatch: string; label: string }) {
 
 function LockedOverlay() {
   return (
-    <div className="absolute inset-0 z-40 grid place-items-center rounded-card bg-white/70 p-6 text-center backdrop-blur-sm">
+    <div className="absolute inset-0 z-40 grid place-items-center rounded-card bg-surface/70 p-6 text-center backdrop-blur-sm">
       <div>
         <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full gradient-brand text-white shadow-elevated">
           <Lock className="h-5 w-5" />
@@ -608,7 +608,7 @@ function Bullets({
               alt={imgLabel}
               className={cn(
                 "w-full",
-                imgAspect === "square" ? "aspect-square bg-white object-contain" : "aspect-[4/3] object-cover",
+                imgAspect === "square" ? "aspect-square bg-surface object-contain" : "aspect-[4/3] object-cover",
               )}
               loading="lazy"
             />
@@ -685,7 +685,7 @@ function ErrosComuns({ exercise }: { exercise: Exercise }) {
                   <img
                     src={withBase(img)}
                     alt={`Certo e errado: ${e}`}
-                    className="aspect-[3/2] w-full bg-white object-contain transition-opacity hover:opacity-90"
+                    className="aspect-[3/2] w-full bg-surface object-contain transition-opacity hover:opacity-90"
                     loading="lazy"
                   />
                 </button>
@@ -720,7 +720,7 @@ function ErroAmpliado({ src, erro, onClose }: { src: string; erro: string; onClo
             <X className="h-4 w-4" />
           </button>
         </div>
-        <img src={src} alt={`Certo e errado: ${erro}`} className="w-full bg-white object-contain" />
+        <img src={src} alt={`Certo e errado: ${erro}`} className="w-full bg-surface object-contain" />
       </div>
     </div>
   );

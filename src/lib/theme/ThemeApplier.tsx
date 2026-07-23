@@ -11,23 +11,24 @@ import { aplicarTema, PALETA_PADRAO, type Modo } from "./palettes";
 export function ThemeApplier() {
   const paleta = useUser((s) => s.paleta) || PALETA_PADRAO;
   const modo = (useUser((s) => s.modo) || "claro") as Modo;
+  const corMarca = useUser((s) => s.corPrimaria);
 
   React.useEffect(() => {
-    aplicarTema(document.documentElement, paleta, modo);
+    aplicarTema(document.documentElement, paleta, modo, corMarca);
     try {
       localStorage.setItem("pi-tema", JSON.stringify({ paleta, modo }));
     } catch {
       /* localStorage indisponível: sem persistência anti-flash, tudo bem */
     }
-  }, [paleta, modo]);
+  }, [paleta, modo, corMarca]);
 
   React.useEffect(() => {
     if (modo !== "sistema" || typeof window === "undefined" || !window.matchMedia) return;
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const on = () => aplicarTema(document.documentElement, paleta, modo);
+    const on = () => aplicarTema(document.documentElement, paleta, modo, corMarca);
     mq.addEventListener("change", on);
     return () => mq.removeEventListener("change", on);
-  }, [modo, paleta]);
+  }, [modo, paleta, corMarca]);
 
   return null;
 }

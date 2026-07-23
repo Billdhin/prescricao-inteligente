@@ -14,15 +14,15 @@
                   E o tema. Os dois são setados juntos; nunca deixe um sem o outro. */
   /* Padrão = paleta "Grafite" no claro. Espelha src/lib/theme/palettes.ts
      (grafite.claro + compartilhado claro); se mudar lá, mudar aqui. */
-  --bg: #f6f7f9;             --bg-rgb: 246 247 249;
+  --bg: #f8f8f9;             --bg-rgb: 248 248 249;
   --surface: #ffffff;        --surface-rgb: 255 255 255;
-  --surface-soft: #edeff3;   --surface-soft-rgb: 237 239 243;
-  --border: #e0e3e9;         --border-rgb: 224 227 233;
-  --ink: #171b23;            --ink-rgb: 23 27 35;
-  --ink-2: #565d6b;          --ink-2-rgb: 86 93 107;
-  --ink-3: #565d6b;          --ink-3-rgb: 86 93 107;
+  --surface-soft: #f1f2f3;   --surface-soft-rgb: 241 242 243;
+  --border: #e0e2e6;         --border-rgb: 224 226 230;
+  --ink: #1c1f27;            --ink-rgb: 28 31 39;
+  --ink-2: #5a5e68;          --ink-2-rgb: 90 94 104;
+  --ink-3: #5a5e68;          --ink-3-rgb: 90 94 104;
   --primary: #3a4a72;        --primary-rgb: 58 74 114;
-  --primary-tint: #ebedf5;   --primary-tint-rgb: 235 237 245;
+  --primary-tint: #eff1f5;   --primary-tint-rgb: 239 241 245;
   --on-primary: #ffffff;     --on-primary-rgb: 255 255 255;
   --on-analysis: #ffffff;    --on-analysis-rgb: 255 255 255;
   --analysis: #0e7c8a;       --analysis-rgb: 14 124 138;

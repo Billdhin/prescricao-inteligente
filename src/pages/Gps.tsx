@@ -821,7 +821,7 @@ function FaixaEtariaCard({ id }: { id: string }) {
   return (
     <Card tone="primary" className="p-5">
       <div className="mb-1 flex flex-wrap items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-primary">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface text-primary">
           <Users className="h-4 w-4" />
         </span>
         <h2 className="font-display text-base font-bold text-ink">
@@ -1199,7 +1199,7 @@ function Choices({
                 selected ? "border-primary bg-primary text-on-primary" : "border-ink-3",
               )}
             >
-              {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+              {selected && <span className="h-1.5 w-1.5 rounded-full bg-surface" />}
             </span>
             <span className="min-w-0">
               {o}

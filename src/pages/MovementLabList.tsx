@@ -80,12 +80,12 @@ export function MovementLabList() {
                     <MuscleThumb activation={activationFromExercise(e)} slug={e.slug} className="py-2" />
                   )}
                   <div className="absolute right-3 top-3">
-                    <Pill tone="neutral" className="bg-white/85">
+                    <Pill tone="neutral" className="bg-surface/85">
                       {e.nivel}
                     </Pill>
                   </div>
                   {locked && (
-                    <div className="absolute inset-0 grid place-items-center bg-white/50 backdrop-blur-[1px]">
+                    <div className="absolute inset-0 grid place-items-center bg-surface/50 backdrop-blur-[1px]">
                       <span className="grid h-9 w-9 place-items-center rounded-full gradient-brand text-white shadow-elevated">
                         <Lock className="h-4 w-4" />
                       </span>
