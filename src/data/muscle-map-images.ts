@@ -71,6 +71,14 @@ const SLUGS_COM_POSE: string[] = [
   "flexao-de-braco",
   "supino-halteres",
   "supino-maquina",
+  "desenvolvimento-maquina",
+  "desenvolvimento-elastico",
+  "elevacao-lateral-halteres",
+  "remada-curvada-halteres",
+  "remada-maquina",
+  "remada-invertida",
+  "triceps-frances-halter",
+  "mergulho-no-banco",
 ];
 
 export function getMuscleMapPose(slug?: string): string | undefined {
