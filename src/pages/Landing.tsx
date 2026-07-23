@@ -668,10 +668,10 @@ function PlanCard({
   destaque?: boolean;
 }) {
   return (
-    <Card className={`relative p-6 text-left ${destaque ? "border-primary shadow-elevated" : ""}`}>
+    <Card className="relative p-6 text-left">
       {destaque && (
-        <span className="absolute -top-3 left-6 rounded-full gradient-cta px-3 py-0.5 text-xs font-bold text-white">
-          Mais escolhido
+        <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-white">
+          Acesso completo
         </span>
       )}
       <div className="font-display text-lg font-bold text-ink">{nome}</div>

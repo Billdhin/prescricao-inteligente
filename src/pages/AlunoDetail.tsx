@@ -139,6 +139,7 @@ function CtaProximoPasso({
   onAcompanhar,
   variant = "primary",
   size,
+  eyebrow = false,
 }: {
   aluno: Aluno;
   passo: ProximoPasso;
@@ -146,41 +147,56 @@ function CtaProximoPasso({
   onAcompanhar: () => void;
   variant?: Parameters<typeof buttonClasses>[0];
   size?: Parameters<typeof buttonClasses>[1];
+  eyebrow?: boolean;
 }) {
   const cls = buttonClasses(variant, size);
+  // O rótulo carrega só a ação; o contexto "Próximo passo" vira eyebrow acima do
+  // botão (evita rótulo longo que estoura o nowrap a 390px).
   const label = (
     <>
-      Próximo passo: {passo.cta.label} <ArrowRight className="h-4 w-4" />
+      {passo.cta.label} <ArrowRight className="h-4 w-4" />
     </>
   );
+  let botao: React.ReactNode;
   switch (passo.cta.kind) {
     case "planejar":
-      return (
+      botao = (
         <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cls}>
           {label}
         </Link>
       );
+      break;
     case "liberar":
-      return (
+      botao = (
         <Link to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`} className={cls}>
           {label}
         </Link>
       );
+      break;
     case "avaliar":
     case "reavaliar":
-      return (
+      botao = (
         <button onClick={onAvaliar} className={cls}>
           {label}
         </button>
       );
+      break;
     case "acompanhar":
     default:
-      return (
+      botao = (
         <button onClick={onAcompanhar} className={cls}>
           {label}
         </button>
       );
+      break;
   }
+  if (!eyebrow) return <>{botao}</>;
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">Próximo passo</span>
+      {botao}
+    </div>
+  );
 }
 
 export function AlunoDetail() {
@@ -743,14 +759,14 @@ function AlunoHeader({
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
+        <div className="flex shrink-0 flex-wrap items-end gap-2 md:justify-end">
           <button onClick={onEditar} className={buttonClasses("outline")}>
             Editar
           </button>
           <button onClick={onAvaliar} className={buttonClasses("secondary")}>
             <CalendarPlus className="h-4 w-4" /> Registrar avaliação
           </button>
-          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} />
+          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} eyebrow />
         </div>
       </div>
 
@@ -1103,7 +1119,7 @@ function JornadaCard({
             to={`/gps?aluno=${aluno.id}&grupo=${grupo.slug}&fase=${fase}`}
             className={cn(buttonClasses("primary"), "w-full")}
           >
-            <Navigation className="h-4 w-4" /> Escolher exercícios para esta fase
+            <Navigation className="h-4 w-4" /> Escolher exercícios desta fase
           </Link>
         </div>
       </div>

@@ -18,16 +18,16 @@ const CSS = `
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
   .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-  .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #2563eb; padding-bottom: 12px; }
-  .brand .prof { font-size: 20px; font-weight: 800; color: #2563eb; }
+  .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #1b4b66; padding-bottom: 12px; }
+  .brand .prof { font-size: 20px; font-weight: 800; color: #1b4b66; }
   .brand .sub { font-size: 12px; color: #64748b; }
   h1 { font-size: 22px; margin: 20px 0 2px; }
   .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #2563eb; margin: 18px 0 8px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #1b4b66; margin: 18px 0 8px; }
   table { width: 100%; border-collapse: collapse; }
   th, td { border: 1px solid #e7ecf3; padding: 8px 10px; font-size: 13px; text-align: left; vertical-align: top; }
   th { background: #f4f6fb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
-  td.v { font-weight: 800; white-space: nowrap; width: 110px; color: #2563eb; }
+  td.v { font-weight: 800; white-space: nowrap; width: 110px; color: #1b4b66; }
   ol { margin: 4px 0; padding-left: 20px; font-size: 13px; }
   ol li { margin-bottom: 4px; }
   .ref { font-size: 11px; color: #64748b; margin-top: 14px; border-top: 1px solid #e7ecf3; padding-top: 10px; }
@@ -58,7 +58,7 @@ function shell(titulo: string, corpo: string, ident?: IdentProf) {
         ${ident?.logoDataUrl ? `<img src="${ident.logoDataUrl}" alt="" style="height:36px;max-width:120px;object-fit:contain" />` : ""}
         <div>
           <div class="prof">${esc(ident?.nome || "Prescrição Inteligente")}</div>
-          ${ident?.cref ? `<div class="sub" style="font-weight:700;color:#2563eb">CREF ${esc(ident.cref)}</div>` : ""}
+          ${ident?.cref ? `<div class="sub" style="font-weight:700;color:#1b4b66">CREF ${esc(ident.cref)}</div>` : ""}
           <div class="sub">Ficha de apoio ao profissional</div>
         </div>
       </div>

@@ -11,7 +11,7 @@ const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 const COR = {
-  verde: { nome: "LIBERADO", hex: "#16a34a", bg: "#eafaf0" },
+  verde: { nome: "LIBERADO", hex: "#147a3a", bg: "#eafaf0" },
   amarelo: { nome: "LIBERADO COM AJUSTE", hex: "#b45309", bg: "#fef7e8" },
   vermelho: { nome: "NÃO LIBERADO HOJE", hex: "#b91c1c", bg: "#fdecec" },
 } as const;
@@ -54,28 +54,28 @@ export function printSemaforo(
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #14b8c4; padding-bottom: 12px; }
-    .brand .prof { font-size: 18px; font-weight: 800; color: #0e7c8a; }
-    .brand .sub { font-size: 12px; color: #64748b; }
+    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #1b4b66; padding-bottom: 12px; }
+    .brand .prof { font-size: 18px; font-weight: 800; color: #1b4b66; }
+    .brand .sub { font-size: 12px; color: #55606f; }
     h1 { font-size: 20px; margin: 18px 0 2px; }
-    .meta { font-size: 13px; color: #64748b; margin-bottom: 14px; }
+    .meta { font-size: 13px; color: #55606f; margin-bottom: 14px; }
     .resultado { border-radius: 12px; padding: 14px 16px; margin: 14px 0; background: ${cor.bg}; border: 1px solid ${cor.hex}44; }
     .resultado .titulo { font-size: 18px; font-weight: 800; color: ${cor.hex}; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; }
     th, td { border: 1px solid #e7ecf3; padding: 7px 10px; font-size: 13px; text-align: left; }
-    th { background: #f4f6fb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
+    th { background: #f4f6fb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #55606f; }
     .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
-    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #0e7c8a; margin: 16px 0 6px; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #1b4b66; margin: 16px 0 6px; }
     ul { margin: 4px 0; padding-left: 20px; font-size: 13px; }
     ul li { margin-bottom: 4px; }
-    .refs li { font-size: 11px; color: #64748b; }
-    .foot { margin-top: 20px; border-top: 1px solid #e7ecf3; padding-top: 10px; font-size: 10.5px; color: #94a3b8; }
-    .ciencia { margin-top: 26px; padding: 10px 12px; background: #f8fafc; border-left: 3px solid #14b8c4; font-size: 11.5px; color: #475569; page-break-inside: avoid; }
+    .refs li { font-size: 11px; color: #55606f; }
+    .foot { margin-top: 20px; border-top: 1px solid #e7ecf3; padding-top: 10px; font-size: 10.5px; color: #5b6472; }
+    .ciencia { margin-top: 26px; padding: 10px 12px; background: #f8fafc; border-left: 3px solid #1b4b66; font-size: 11.5px; color: #55606f; page-break-inside: avoid; }
     .assinatura { margin-top: 34px; page-break-inside: avoid; display: flex; justify-content: space-between; gap: 24px; }
     .assinatura .linha { border-top: 1.5px solid #1e293b; flex: 1; padding-top: 6px; }
     .assinatura .quem { font-weight: 800; font-size: 12px; }
-    .assinatura .papel { font-size: 10.5px; color: #475569; }
-    .dataassin { margin-top: 16px; font-size: 11.5px; color: #475569; page-break-inside: avoid; }
+    .assinatura .papel { font-size: 10.5px; color: #55606f; }
+    .dataassin { margin-top: 16px; font-size: 11.5px; color: #55606f; page-break-inside: avoid; }
     @media print { .page { padding: 0; } @page { margin: 14mm; } }
   </style></head><body>
   <div class="page">
@@ -84,7 +84,7 @@ export function printSemaforo(
         ${logoDataUrl ? `<img src="${logoDataUrl}" alt="" style="height:38px;max-width:130px;object-fit:contain" />` : ""}
         <div>
           <div class="prof">${esc(profissional || "Motor RCD · Raciocínio Clínico Documentado")}</div>
-          ${cref ? `<div class="sub" style="font-weight:700;color:#0e7c8a">CREF ${esc(cref)}</div>` : ""}
+          ${cref ? `<div class="sub" style="font-weight:700;color:#1b4b66">CREF ${esc(cref)}</div>` : ""}
           <div class="sub">Semáforo de Liberação: gate pré-sessão${profissional ? " · Motor RCD" : ""}</div>
         </div>
       </div>

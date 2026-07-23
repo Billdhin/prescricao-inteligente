@@ -30,7 +30,7 @@ export function exportPosturalPDF({
   cref?: string;
   marca?: MarcaDocumento;
 }) {
-  const cor = marca?.corPrimaria || "#2563eb";
+  const cor = marca?.corPrimaria || "#1b4b66";
   const laudo = avaliacao.resumo?.trim() ? avaliacao.resumo : montarLaudo(avaliacao, aluno.nome);
   const porId = new Map(CHECKPOINTS_POSTURAIS.map((c) => [c.id, c]));
   const vistas: VistaPostural[] = ["anterior", "lateral", "posterior"];

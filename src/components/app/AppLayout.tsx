@@ -366,7 +366,7 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
         </div>
 
         <button onClick={resolverCaso} className={cn(buttonClasses("primary"), "mt-5 w-full")}>
-          Criar este aluno e abrir a Linha do cuidado →
+          Criar este aluno →
         </button>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
           <button onClick={explorar} className="font-medium text-ink-2 hover:text-ink">
@@ -521,7 +521,7 @@ function BottomBar() {
             aria-current={forcado ? "page" : undefined}
             className={({ isActive }) =>
               cn(
-                "flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium leading-none transition-colors",
+                "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium leading-none transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                 isActive || forcado ? "text-primary" : "text-ink-3 hover:text-ink-2",
               )

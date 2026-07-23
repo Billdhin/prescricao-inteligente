@@ -140,7 +140,7 @@ export function Roi() {
               step={1}
               value={premio}
               onChange={(e) => setPremio(Number(e.target.value))}
-              className="mt-2 w-full accent-[#2563eb]"
+              className="mt-2 w-full accent-primary"
               aria-label="Prêmio de especialista (15 a 30%)"
             />
             <div className="flex justify-between text-xs text-ink-3">

@@ -211,15 +211,15 @@ function Detail({ exercise }: { exercise: Exercise }) {
           <button
             onClick={onFav}
             aria-pressed={isFav}
-            className={cn(buttonClasses(isFav ? "primary" : "outline"))}
+            className={buttonClasses("secondary")}
           >
-            <Star className={cn("h-4 w-4", isFav && "fill-current")} />
+            {isFav ? <CheckCircle2 className="h-4 w-4" /> : <Star className="h-4 w-4" />}
             {isFav ? "Favorito salvo" : "Salvar favorito"}
           </button>
           <Link to={`/comparador?base=${exercise.slug}`} className={buttonClasses("outline")}>
             <Repeat2 className="h-4 w-4" /> Comparar
           </Link>
-          <Link to="/gps" className={buttonClasses("outline")}>
+          <Link to="/gps" className={buttonClasses("primary")}>
             <Navigation className="h-4 w-4" /> Usar no Prescrever
           </Link>
         </div>

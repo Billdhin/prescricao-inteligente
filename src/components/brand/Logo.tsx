@@ -34,7 +34,7 @@ export function Logo({ showWord = true, className }: { showWord?: boolean; class
         PI
       </div>
       {showWord && (
-        <span className="font-display text-[17px] font-bold leading-none text-ink">
+        <span className="whitespace-nowrap font-display text-[17px] font-bold leading-none text-ink">
           Prescrição <span className="text-primary">Inteligente</span>
         </span>
       )}

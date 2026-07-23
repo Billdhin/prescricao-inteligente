@@ -41,15 +41,17 @@ export type ButtonSize = "sm" | "md";
 
 export function buttonClasses(variant: ButtonVariant = "primary", size: ButtonSize = "md") {
   const base =
-    "inline-flex select-none items-center justify-center gap-2 rounded-control font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+    "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-control font-semibold " +
+    "transition-[background-color,border-color,box-shadow,transform,filter] duration-150 ease-out " +
+    "active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60";
   const sizes: Record<ButtonSize, string> = {
     sm: "h-9 px-3 text-sm",
     md: "h-11 px-5 text-sm",
   };
   const variants: Record<ButtonVariant, string> = {
-    primary: "gradient-cta text-white shadow-soft hover:opacity-95",
-    secondary: "bg-surface border border-border text-ink hover:bg-surface-soft",
-    outline: "border border-border bg-surface text-ink hover:bg-surface-soft",
+    primary: "gradient-cta text-white shadow-soft hover:brightness-[1.06] active:brightness-95",
+    secondary: "bg-surface border border-border text-ink hover:bg-surface-soft hover:border-[#d6d1c4]",
+    outline: "border border-border bg-surface text-ink hover:bg-surface-soft hover:border-[#d6d1c4]",
     ghost: "text-ink-2 hover:bg-surface-soft hover:text-ink",
   };
   return cn(base, sizes[size], variants[variant]);

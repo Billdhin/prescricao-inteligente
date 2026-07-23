@@ -200,13 +200,12 @@ export function AplicarNoTreinoDialog({
               className={cn(buttonClasses("primary"), "mt-4 w-full")}
             >
               <CalendarRange className="h-4 w-4" />
-              {adicionar
-                ? `Adicionar na Sessão ${letra} até o fim deste bloco`
-                : `Aplicar na Sessão ${letra} até o fim deste bloco`}
+              {adicionar ? `Adicionar na Sessão ${letra}` : `Aplicar na Sessão ${letra}`}
             </button>
 
             <p className="mt-2 text-center text-[11px] leading-snug text-ink-3">
-              As doses seguem a faixa do seu plano. O raciocínio da escolha fica no prontuário.
+              Vale até o fim deste bloco. As doses seguem a faixa do seu plano; o raciocínio da escolha
+              fica no prontuário.
             </p>
 
             {/* Alternativas como links pequenos */}

@@ -7,6 +7,7 @@ import { useAlunos } from "@/lib/store";
 import { StudentApp } from "@/components/student/StudentApp";
 import { Logo } from "@/components/brand/Logo";
 import { buttonClasses } from "@/components/ui/primitives";
+import { cn } from "@/lib/utils";
 
 /**
  * Portal do aluno (/aluno). Entrada única do lado do aluno: gate de cadastro/login
@@ -156,7 +157,7 @@ function StudentAuthGate({ convite }: { convite?: string }) {
         <Campo label="Senha" value={senha} onChange={setSenha} type="password" />
         {aviso && <p className="rounded-lg bg-primary-tint px-3 py-2 text-sm text-ink">{aviso}</p>}
         {erro && <p className="text-sm text-[color:var(--cta-text,#b91c1c)]">{erro}</p>}
-        <button type="submit" disabled={carregando} className={buttonClasses("primary") + " w-full justify-center"}>
+        <button type="submit" disabled={carregando} className={cn(buttonClasses("primary"), "w-full justify-center")}>
           {carregando ? "Aguarde..." : modo === "criar" ? "Criar conta" : "Entrar"}
         </button>
         {convite ? (

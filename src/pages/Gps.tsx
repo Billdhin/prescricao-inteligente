@@ -1017,7 +1017,7 @@ function Wizard({
       </div>
       <Progress value={pct} className="mb-6" />
 
-      <h2 ref={headingRef} tabIndex={-1} className="font-display text-2xl font-bold text-ink outline-none">
+      <h2 ref={headingRef} tabIndex={-1} className="font-display text-2xl font-bold text-ink focus-visible:outline-none">
         {STEP_LABELS[step]}
       </h2>
       <p className="mt-1 text-sm text-ink-2">

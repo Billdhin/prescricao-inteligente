@@ -93,7 +93,7 @@ export function exportPrescricaoPDF({
     : "nenhuma";
 
   // Cor de acento do documento: a cor da marca do profissional, senão a do produto.
-  const cor = marca?.corPrimaria || "#2563eb";
+  const cor = marca?.corPrimaria || "#1b4b66";
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Prescrição · ${esc(aluno.nome)}</title>
