@@ -6,28 +6,20 @@ import {
   BookOpen,
   Route as RouteIcon,
   Library as LibraryIcon,
-  Navigation,
-  CalendarRange,
-  LayoutDashboard,
   Star,
   History as HistoryIcon,
-  Settings,
   CornerDownLeft,
-  GraduationCap,
-  LifeBuoy,
   Users,
-  ShieldCheck,
   HeartPulse,
-  ClipboardList,
   GitCompare,
-  Gauge,
 } from "lucide-react";
 import { exercises } from "@/data/exercises";
 import { getLearningRepository } from "@/features/learning/repository";
 import { tracks } from "@/data/tracks";
 import { biblioteca } from "@/data/library";
 import { specialGroups } from "@/data/specialGroups";
-import { useAlunos, type AppMode } from "@/lib/store";
+import { useAlunos } from "@/lib/store";
+import { NAV } from "@/components/app/nav";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { cn } from "@/lib/utils";
 
@@ -41,8 +33,6 @@ interface SearchItem {
   to: string;
   haystack: string;
   Icon: React.ComponentType<{ className?: string }>;
-  /** se definido, o atalho só aparece nesses modos */
-  modes?: AppMode[];
 }
 
 // remove acentos (combining marks U+0300–U+036F) p/ busca acento-insensível
@@ -92,81 +82,61 @@ const BASE_INDEX: SearchItem[] = [
   })),
 ];
 
-/** Atalhos de navegação. `modes` restringe onde aparecem; sem `modes` = ambos. */
-const NAV_ITEMS: SearchItem[] = [
+// Sinônimos por rota (o que o profissional pode digitar sem saber o rótulo exato).
+// Chave = `to` do item da NAV; a busca soma isto ao rótulo + short do item.
+const SINONIMOS: Record<string, string> = {
+  "/dashboard": "painel dashboard inicio visao geral hoje",
+  "/alunos": "alunos cadastro clientes",
+  "/assessments": "avaliacoes reavaliar medidas peso gordura avaliar",
+  "/semaforo": "semaforo liberacao pre sessao seguranca gate checklist",
+  "/prescrever-treino": "prescrever treino periodizacao plano montar macrociclo",
+  "/gps": "prescrever exercicio gps prescricao recomendacao motor decisao rapida",
+  "/aprender": "estudar aprender trilhas licoes disciplinas mapa",
+  "/special-groups": "grupos especiais hipertensao diabetes obesidade idoso lombar osteoartrite",
+  "/protocols": "protocolos modelos treino prontos",
+  "/movement-lab": "laboratorio visual movimento exercicios comparar",
+  "/consultar": "consultar glossario conceitos consulta rapida termos resposta biblioteca",
+  "/tutorial": "tutoriais tutorial como usar ajuda passo a passo guias aprender a usar",
+  "/suporte": "suporte ajuda contato faq duvida problema fale conosco",
+  "/account": "configuracoes conta perfil plano cref ajustes",
+};
+
+/** Atalhos "Ir para" DERIVADOS da NAV: uma fonte só, nunca dessincroniza. Cada
+ *  destino da navegação vira um item de busca (com os sinônimos do mapa acima),
+ *  inclusive os de grupos comprimidos (a busca acha tudo, comprimido ou não). */
+const NAV_ITEMS: SearchItem[] = NAV.flatMap((sec) =>
+  sec.items.map((it) => ({
+    id: `nav-${it.to}`,
+    label: `Ir para ${it.label}`,
+    group: "Ir para" as Group,
+    to: it.to,
+    haystack: norm([it.label, it.short ?? "", SINONIMOS[it.to] ?? ""].join(" ")),
+    Icon: it.icon,
+  })),
+);
+
+/** Rotas buscáveis que NÃO estão na NAV (abas/atalhos que a busca já anunciava):
+ *  comparador, casos, trilhas, salvos e progresso. Ficam explícitas aqui. */
+const EXTRAS: SearchItem[] = [
   {
-    id: "nav-dashboard", label: "Painel", group: "Ir para", to: "/dashboard",
-    haystack: norm("painel dashboard inicio visao geral"), Icon: LayoutDashboard,
-  },
-  {
-    id: "nav-gps", label: "Prescrever exercício", group: "Ir para", to: "/gps",
-    haystack: norm("prescrever exercicio gps prescricao recomendacao motor decisao rapida"), Icon: Navigation,
-    modes: ["atender"],
-  },
-  {
-    id: "nav-prescrever-treino", label: "Prescrever treino", group: "Ir para", to: "/prescrever-treino",
-    haystack: norm("prescrever treino periodizacao plano montar macrociclo"), Icon: CalendarRange,
-    modes: ["atender"],
-  },
-  {
-    id: "nav-alunos", label: "Alunos", group: "Ir para", to: "/alunos",
-    haystack: norm("alunos cadastro clientes"), Icon: Users, modes: ["atender"],
-  },
-  {
-    id: "nav-avaliacoes", label: "Avaliações", group: "Ir para", to: "/assessments",
-    haystack: norm("avaliacoes reavaliar medidas peso gordura"), Icon: Gauge, modes: ["atender"],
-  },
-  {
-    id: "nav-protocols", label: "Protocolos", group: "Ir para", to: "/protocols",
-    haystack: norm("protocolos modelos treino prontos"), Icon: ClipboardList, modes: ["atender"],
-  },
-  {
-    id: "nav-semaforo", label: "Semáforo de Liberação", group: "Ir para", to: "/semaforo",
-    haystack: norm("semaforo liberacao pre sessao seguranca gate"), Icon: ShieldCheck, modes: ["atender"],
-  },
-  {
-    id: "nav-special-groups", label: "Grupos Especiais", group: "Ir para", to: "/special-groups",
-    haystack: norm("grupos especiais hipertensao diabetes obesidade idoso lombar osteoartrite"), Icon: HeartPulse,
-  },
-  {
-    id: "nav-comparador", label: "Comparador", group: "Ir para", to: "/comparador",
+    id: "nav-/comparador", label: "Ir para Comparador", group: "Ir para", to: "/comparador",
     haystack: norm("comparador comparar exercicios lado a lado"), Icon: GitCompare,
   },
   {
-    id: "nav-lab", label: "Laboratório Visual", group: "Ir para", to: "/movement-lab",
-    haystack: norm("laboratorio visual movimento exercicios"), Icon: FlaskConical,
+    id: "nav-/aprender/casos", label: "Ir para Casos de prescrição", group: "Ir para", to: "/aprender/casos",
+    haystack: norm("casos praticos prescricao decisao"), Icon: BookOpen,
   },
   {
-    id: "nav-cases", label: "Casos de prescrição", group: "Ir para", to: "/aprender/casos",
-    haystack: norm("casos praticos prescricao decisao"), Icon: BookOpen, modes: ["aprender"],
+    id: "nav-/tracks", label: "Ir para Trilhas", group: "Ir para", to: "/tracks",
+    haystack: norm("trilhas licoes"), Icon: RouteIcon,
   },
   {
-    id: "nav-tracks", label: "Trilhas", group: "Ir para", to: "/tracks",
-    haystack: norm("trilhas licoes"), Icon: RouteIcon, modes: ["aprender"],
+    id: "nav-/aprender/salvos", label: "Ir para Salvos", group: "Ir para", to: "/aprender/salvos",
+    haystack: norm("salvos favoritos guardados exercicios"), Icon: Star,
   },
   {
-    id: "nav-consultar", label: "Consultar", group: "Ir para", to: "/consultar",
-    haystack: norm("consultar glossario conceitos consulta rapida termos resposta"), Icon: LibraryIcon,
-  },
-  {
-    id: "nav-salvos", label: "Salvos", group: "Ir para", to: "/aprender/salvos",
-    haystack: norm("salvos favoritos guardados exercicios"), Icon: Star, modes: ["aprender"],
-  },
-  {
-    id: "nav-progresso", label: "Meu progresso", group: "Ir para", to: "/aprender/progresso",
-    haystack: norm("progresso historico atividades xp nivel sequencia"), Icon: HistoryIcon, modes: ["aprender"],
-  },
-  {
-    id: "nav-account", label: "Configurações", group: "Ir para", to: "/account",
-    haystack: norm("configuracoes conta perfil plano cref"), Icon: Settings,
-  },
-  {
-    id: "nav-tutorial", label: "Tutoriais", group: "Ir para", to: "/tutorial",
-    haystack: norm("tutoriais tutorial como usar ajuda passo a passo guias aprender a usar"), Icon: GraduationCap,
-  },
-  {
-    id: "nav-suporte", label: "Suporte", group: "Ir para", to: "/suporte",
-    haystack: norm("suporte ajuda contato faq duvida problema fale conosco"), Icon: LifeBuoy,
+    id: "nav-/aprender/progresso", label: "Ir para Meu progresso", group: "Ir para", to: "/aprender/progresso",
+    haystack: norm("progresso historico atividades xp nivel sequencia"), Icon: HistoryIcon,
   },
 ];
 
@@ -225,7 +195,7 @@ export function GlobalSearch() {
       haystack: norm([g.nome, g.descricaoCurta].join(" ")),
       Icon: HeartPulse,
     }));
-    return [...alunoItems, ...BASE_INDEX, ...grupoItems, ...NAV_ITEMS];
+    return [...alunoItems, ...BASE_INDEX, ...grupoItems, ...NAV_ITEMS, ...EXTRAS];
   }, [alunos]);
 
   const results = React.useMemo(() => search(q, index), [q, index]);

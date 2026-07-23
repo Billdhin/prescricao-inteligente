@@ -1,37 +1,17 @@
 import * as React from "react";
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Navigation,
-  CalendarRange,
-  FlaskConical,
-  BookOpen,
-  Library,
-  History,
-  ClipboardList,
-  BarChart3,
-  Settings,
-  Crown,
   ChevronsLeft,
   X,
   PanelLeft,
   Bell,
   ChevronDown,
-  Check,
   CheckCheck,
-  Users,
-  Briefcase,
-  GraduationCap,
-  HeartPulse,
-  LifeBuoy,
   HelpCircle,
-  ShieldCheck,
-  Stethoscope,
-  Search,
-  Bookmark,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
+import { NAV, BOTTOM, type NavItem } from "@/components/app/nav";
 import { LoginGate } from "@/components/app/LoginGate";
 import { CloudAuthGate } from "@/components/app/CloudAuthGate";
 import { Toasts } from "@/components/app/Toasts";
@@ -48,71 +28,8 @@ import { iniciaisDe, type Aluno } from "@/data/alunos";
 import type { Nivel } from "@/data/types";
 import { cn } from "@/lib/utils";
 
-type NavItem = {
-  to: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  // Prefixos extra que também acendem este item (ex.: "Estudar" acende nas
-  // rotas irmãs de trilhas e mapa, que são abas da mesma porta).
-  match?: string[];
-  // Rótulo curto para a barra inferior do mobile (onde o espaço é apertado).
-  short?: string;
-};
-// collapsible: entra no grupo recolhível "Mais recursos" (descoberta progressiva:
-// o 1º acesso vê só o caminho do aha; o resto abre quando o usuário quiser).
-type NavSection = { label?: string; items: NavItem[]; collapsible?: boolean };
-
-// UMA navegação, estável (fim dos dois modos que trocavam a sidebar inteira).
-// Agrupada por intenção, tudo sempre visível: o usuário nunca mais precisa
-// descobrir "em que mundo estou" nem abrir um "Mais recursos" escondido.
-const NAV: NavSection[] = [
-  {
-    label: "Trabalho",
-    items: [
-      { to: "/dashboard", label: "Hoje", icon: LayoutDashboard, short: "Hoje" },
-      { to: "/alunos", label: "Alunos", icon: Users, short: "Alunos" },
-      { to: "/semaforo", label: "Semáforo", icon: ShieldCheck, short: "Semáforo" },
-    ],
-  },
-  {
-    label: "Prescrever",
-    items: [
-      { to: "/gps", label: "Prescrever exercício", icon: Navigation, short: "Exercício" },
-      { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange, short: "Treino" },
-    ],
-  },
-  {
-    label: "Estudar e referência",
-    items: [
-      { to: "/aprender", label: "Estudar", icon: GraduationCap, match: ["/aprender", "/tracks"], short: "Estudar" },
-      { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
-      { to: "/protocols", label: "Protocolos", icon: ClipboardList },
-      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical, match: ["/movement-lab", "/comparador"] },
-      { to: "/consultar", label: "Consultar", icon: Search, match: ["/consultar", "/library"] },
-    ],
-  },
-  {
-    label: "Ferramentas",
-    items: [
-      { to: "/assessments", label: "Avaliações", icon: BarChart3 },
-      { to: "/tutorial", label: "Tutoriais", icon: HelpCircle },
-      { to: "/suporte", label: "Suporte", icon: LifeBuoy },
-    ],
-  },
-  { label: "Sua conta", items: [{ to: "/account", label: "Configurações", icon: Settings }] },
-];
-
-// Barra inferior do mobile: os destinos mais usados no dia a dia. Os dois modos
-// de prescrever (exercício e treino) ficam lado a lado; 6 itens cabem a partir de
-// 390px (cada aba ~65px, rótulos curtos sem truncar).
-const BOTTOM: NavItem[] = [
-  { to: "/dashboard", label: "Hoje", icon: LayoutDashboard, short: "Hoje" },
-  { to: "/alunos", label: "Alunos", icon: Users, short: "Alunos" },
-  { to: "/gps", label: "Prescrever exercício", icon: Navigation, short: "Exercício" },
-  { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange, short: "Treino" },
-  { to: "/semaforo", label: "Semáforo", icon: ShieldCheck, short: "Semáforo" },
-  { to: "/aprender", label: "Estudar", icon: GraduationCap, match: ["/aprender", "/tracks"], short: "Estudar" },
-];
+// A navegação (NAV/BOTTOM) e seus tipos vivem em nav.ts: fonte única que a busca
+// global também consome, para as duas nunca dessincronizarem.
 
 function tempoRelativo(ts: number) {
   const diff = Date.now() - ts;
@@ -382,8 +299,20 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
   );
 }
 
+// Rota ativa dentro de um grupo: replica a semântica de acender do NavLink
+// (match exato, prefixo de segmento ou os prefixos-irmãos de item.match). Serve
+// para NUNCA esconder o grupo onde o usuário está, mesmo que ele esteja comprimido.
+function rotaAtivaNoGrupo(items: NavItem[], pathname: string) {
+  return items.some(
+    (it) =>
+      pathname === it.to ||
+      pathname.startsWith(it.to + "/") ||
+      (it.match?.some((p) => pathname.startsWith(p)) ?? false),
+  );
+}
+
 function Sidebar() {
-  const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useUI();
+  const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen, gruposComprimidos, toggleGrupo } = useUI();
   const location = useLocation();
   const asideRef = React.useRef<HTMLElement>(null);
 
@@ -449,14 +378,36 @@ function Sidebar() {
             const iconOnly = collapsed && !mobileOpen;
             const showLabel = !!section.label && !iconOnly;
             const labelId = showLabel ? `navsec-${i}` : undefined;
+            const regionId = `navsec-region-${i}`;
+            // No rail (iconOnly) o colapso por grupo é ignorado: todos os ícones
+            // ficam visíveis (previsível). Fora do rail, o grupo comprimível fecha
+            // conforme a preferência salva, MAS nunca quando a rota ativa é dele.
+            const ativoNoGrupo = rotaAtivaNoGrupo(section.items, location.pathname);
+            const comprimivel = !!section.collapsible && !iconOnly && showLabel;
+            const comprimido = comprimivel && gruposComprimidos.includes(section.label!) && !ativoNoGrupo;
             return (
               <div key={section.label ?? `sec-${i}`} role={labelId ? "group" : undefined} aria-labelledby={labelId}>
-                {showLabel && (
-                  <div id={labelId} className="mb-1 px-3 text-2xs font-semibold uppercase tracking-wider text-ink-3">
-                    {section.label}
-                  </div>
+                {comprimivel ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleGrupo(section.label!)}
+                    aria-expanded={!comprimido}
+                    aria-controls={regionId}
+                    className="mb-1 flex min-h-[44px] w-full items-center justify-between gap-2 rounded-lg px-3 text-2xs font-semibold uppercase tracking-wider text-ink-3 transition-colors hover:bg-surface-soft hover:text-ink-2"
+                  >
+                    <span id={labelId}>{section.label}</span>
+                    <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", comprimido && "-rotate-90")} aria-hidden />
+                  </button>
+                ) : (
+                  showLabel && (
+                    <div id={labelId} className="mb-1 px-3 text-2xs font-semibold uppercase tracking-wider text-ink-3">
+                      {section.label}
+                    </div>
+                  )
                 )}
-                <NavGroup items={section.items} collapsed={iconOnly} />
+                <div id={regionId} hidden={comprimido}>
+                  <NavGroup items={section.items} collapsed={iconOnly} />
+                </div>
               </div>
             );
           })}
@@ -499,9 +450,10 @@ function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }
 }
 
 /**
- * Barra inferior do mobile: os mesmos ~5 destinos primários do modo, sempre à
- * mão com o polegar. Some no desktop (lg+), onde a barra lateral cumpre o papel.
- * São links de rota com aria-current; o "Estudar" acende também nas rotas irmãs.
+ * Barra inferior do mobile: os 6 destinos do dia a dia (Hoje, Alunos, Avaliar,
+ * Treino, Semáforo, Estudar), sempre à mão com o polegar. Some no desktop (lg+),
+ * onde a barra lateral cumpre o papel. São links de rota com aria-current; o
+ * "Estudar" acende também nas rotas irmãs.
  */
 function BottomBar() {
   const { pathname } = useLocation();

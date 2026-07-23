@@ -150,20 +150,45 @@ export function isPremiumUnlocked(_plan?: Plan) {
 /* ------------------------------- UI (shell) ------------------------------- */
 
 interface UIState {
+  /** drawer da sidebar no mobile: EFÊMERO, fora do persist */
   mobileOpen: boolean;
+  /** rail de ícones no desktop (preferência do usuário, persiste) */
   collapsed: boolean;
+  /** rótulos dos grupos do menu que estão comprimidos (persiste) */
+  gruposComprimidos: string[];
   setMobileOpen: (v: boolean) => void;
   toggleMobile: () => void;
   toggleCollapsed: () => void;
+  toggleGrupo: (label: string) => void;
 }
 
-export const useUI = create<UIState>((set) => ({
-  mobileOpen: false,
-  collapsed: false,
-  setMobileOpen: (v) => set({ mobileOpen: v }),
-  toggleMobile: () => set((s) => ({ mobileOpen: !s.mobileOpen })),
-  toggleCollapsed: () => set((s) => ({ collapsed: !s.collapsed })),
-}));
+export const useUI = create<UIState>()(
+  persist(
+    (set) => ({
+      mobileOpen: false,
+      collapsed: false,
+      // Nascem comprimidos: o profissional começa vendo só o dia a dia; estudo e
+      // ajuda (referência, não rotina) abrem quando ele quiser. A escolha grava.
+      gruposComprimidos: ["Estudar e referência", "Ajuda e conta"],
+      setMobileOpen: (v) => set({ mobileOpen: v }),
+      toggleMobile: () => set((s) => ({ mobileOpen: !s.mobileOpen })),
+      toggleCollapsed: () => set((s) => ({ collapsed: !s.collapsed })),
+      toggleGrupo: (label) =>
+        set((s) => ({
+          gruposComprimidos: s.gruposComprimidos.includes(label)
+            ? s.gruposComprimidos.filter((x) => x !== label)
+            : [...s.gruposComprimidos, label],
+        })),
+    }),
+    {
+      name: "pi-ui",
+      version: 1,
+      // Só a PREFERÊNCIA sobrevive ao reload (rail colapsado + grupos comprimidos).
+      // mobileOpen é estado do drawer, efêmero: fica FORA do persist (partialize).
+      partialize: (s) => ({ collapsed: s.collapsed, gruposComprimidos: s.gruposComprimidos }),
+    },
+  ),
+);
 
 /* ------------------------------- Favoritos -------------------------------- */
 
@@ -266,25 +291,11 @@ export const FREE_GPS_LIMIT = 3;
 export const FREE_CASES_LIMIT = 2;
 
 /* ---------------------------------- Modo ---------------------------------- */
-// "atender" = ferramenta profissional (alunos/avaliações/prescrições) ·
-// "aprender" = estudo (trilhas/casos/gamificação). Persistido.
-
+// Tipo herdado dos antigos dois modos (atender/aprender). O store useMode e o
+// persist "pi-mode" foram APOSENTADOS junto com a sidebar de modo único (era
+// código morto: ninguém lia o estado). O TIPO fica porque os tutoriais ainda o
+// usam como rótulo opcional de escopo (tutorials.ts).
 export type AppMode = "atender" | "aprender";
-
-interface ModeState {
-  mode: AppMode;
-  setMode: (m: AppMode) => void;
-}
-
-export const useMode = create<ModeState>()(
-  persist(
-    (set) => ({
-      mode: "atender",
-      setMode: (mode) => set({ mode }),
-    }),
-    { name: "pi-mode", version: 1, migrate: (s) => s as ModeState },
-  ),
-);
 
 /* --------------------------------- Alunos --------------------------------- */
 
