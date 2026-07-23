@@ -15,6 +15,7 @@ export function AlunoPreview() {
   const planos = useAlunos((s) => s.planos);
   const avaliacoes = useAlunos((s) => s.avaliacoes);
   const execucoes = useAlunos((s) => s.execucoes);
+  const sessaoFeedbacks = useAlunos((s) => s.sessaoFeedbacks);
   const liberacoes = useAlunos((s) => s.liberacoes);
   const prescricoes = useAlunos((s) => s.prescricoes);
   const user = useUser();
@@ -23,6 +24,7 @@ export function AlunoPreview() {
 
   const plano = planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
   const execucoesDoAluno = execucoes.filter((e) => e.alunoId === aluno.id);
+  const feedbacksDoAluno = sessaoFeedbacks.filter((f) => f.alunoId === aluno.id);
   // Resolve a data de origem das sessões personalizadas (selo "Personalizado em DD/MM").
   const dataDaPrescricao = (pid: string) => {
     const p = prescricoes.find((x) => x.id === pid);
@@ -43,11 +45,14 @@ export function AlunoPreview() {
       marca={marca}
       avaliacoes={avaliacoes}
       execucoes={execucoesDoAluno}
+      sessaoFeedbacks={feedbacksDoAluno}
       liberacoes={liberacoes}
       dataDaPrescricao={dataDaPrescricao}
       // Prévia é só para o profissional VER como o aluno vê: registrar aqui não
-      // pode sujar as execuções reais do aluno. Por isso o registro é no-op.
+      // pode sujar as execuções reais do aluno. Por isso o registro e o feedback
+      // são no-op (o fluxo guiado segue navegável, mas nada é gravado).
       onRegistrar={() => {}}
+      onFeedback={() => {}}
       preview
       onSair={() => navigate(`/alunos/${aluno.id}`)}
     />

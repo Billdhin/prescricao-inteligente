@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
-import type { Execucao } from "@/data/execucao";
+import type { Execucao, SessaoFeedback } from "@/data/execucao";
 import type { AvaliacaoPostural } from "@/data/postural";
 import type { Modo } from "@/lib/theme/palettes";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
@@ -336,6 +336,8 @@ interface AlunosState {
   liberacoes: Liberacao[];
   /** o que o aluno executou de fato (carga/reps/RPE), base da autorregulação */
   execucoes: Execucao[];
+  /** como o aluno sentiu a sessão (PSE + duração medida + recado ao professor) */
+  sessaoFeedbacks: SessaoFeedback[];
   /** rastreios posturais (fotos + observações + laudo); ficam locais (dado sensível) */
   posturais: AvaliacaoPostural[];
   addAluno: (a: Aluno) => void;
@@ -352,6 +354,8 @@ interface AlunosState {
   addExecucao: (e: Execucao) => void;
   /** desfaz uma execução registrada pelo id */
   removeExecucao: (id: string) => void;
+  /** registra o feedback da sessão (PSE + duração + recado); faz upsert por sessão/semana */
+  addSessaoFeedback: (f: SessaoFeedback) => void;
   /** salva um rastreio postural (dado local, não vai para a nuvem) */
   addPostural: (a: AvaliacaoPostural) => void;
   /** remove um rastreio postural pelo id */
@@ -370,6 +374,7 @@ export const useAlunos = create<AlunosState>()(
       planos: [],
       liberacoes: [],
       execucoes: [],
+      sessaoFeedbacks: [],
       posturais: [],
       loadExamples: () => {
         set({ alunos: seedAlunos, avaliacoes: seedAvaliacoes, prescricoes: seedPrescricoes });
@@ -395,6 +400,7 @@ export const useAlunos = create<AlunosState>()(
           planos: s.planos.filter((p) => p.alunoId !== id),
           liberacoes: s.liberacoes.filter((l) => l.alunoId !== id),
           execucoes: s.execucoes.filter((e) => e.alunoId !== id),
+          sessaoFeedbacks: s.sessaoFeedbacks.filter((f) => f.alunoId !== id),
           posturais: s.posturais.filter((pp) => pp.alunoId !== id),
         }));
         // o repositório apaga em cascata avaliações/prescrições/liberações do aluno
@@ -493,6 +499,19 @@ export const useAlunos = create<AlunosState>()(
       removeExecucao: (id) => {
         set((s) => ({ execucoes: s.execucoes.filter((e) => e.id !== id) }));
       },
+      // Feedback da sessão. UPSERT por (aluno, plano, semana, sessão): reenviar o
+      // esforço/recado da mesma sessão SOBRESCREVE, então não duplica. Espelho na
+      // nuvem entra com a conta do aluno (o AlunoPortal chama salvarSessaoFeedback).
+      addSessaoFeedback: (f) => {
+        set((s) => ({
+          sessaoFeedbacks: [
+            f,
+            ...s.sessaoFeedbacks.filter(
+              (x) => !(x.alunoId === f.alunoId && x.planoId === f.planoId && x.semana === f.semana && x.sessaoRef === f.sessaoRef),
+            ),
+          ].slice(0, 500),
+        }));
+      },
       // Rastreio postural: contém fotos (data URL, sensível e pesado). Fica LOCAL,
       // sem espelho na nuvem, para respeitar a privacidade e não inchar o Supabase.
       addPostural: (a) => {
@@ -534,9 +553,12 @@ export const useAlunos = create<AlunosState>()(
     //      especiais adicionais confirmados, combinados no motor de validação); nasce
     //      `sugestoesDispensadas` (grupos que o profissional dispensou). Aditivo por
     //      merge: normaliza o campo legado sem tocar no que o profissional criou.
+    // v12: nasce a coleção `sessaoFeedbacks` (PSE + duração medida + recado da sessão,
+    //      base do lado "como o aluno sentiu"). Aditivo: quem vem de versão anterior
+    //      começa com a lista vazia; nada do que já existe é tocado.
     {
       name: "pi-alunos",
-      version: 11,
+      version: 12,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -590,6 +612,8 @@ export const useAlunos = create<AlunosState>()(
           planos: Array.isArray(p.planos) ? p.planos : [],
           // v9: execuções do aluno (base da autorregulação). Aditivo.
           execucoes: Array.isArray(p.execucoes) ? p.execucoes : [],
+          // v12: feedback da sessão (PSE + duração + recado). Aditivo.
+          sessaoFeedbacks: Array.isArray(p.sessaoFeedbacks) ? p.sessaoFeedbacks : [],
           // v10: rastreios posturais (locais). Aditivo.
           posturais: Array.isArray(p.posturais) ? p.posturais : [],
         } as unknown as AlunosState;

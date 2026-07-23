@@ -2,7 +2,7 @@ import * as React from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useCloudAuth, recarregarSessao } from "@/lib/backend/cloudAuth";
 import { signIn, signUp, signOut } from "@/lib/backend/supabaseAuth";
-import { reivindicarConvite, salvarExecucao, apagarExecucao } from "@/lib/backend/supabaseRepo";
+import { reivindicarConvite, salvarExecucao, apagarExecucao, salvarSessaoFeedback } from "@/lib/backend/supabaseRepo";
 import { useAlunos } from "@/lib/store";
 import { StudentApp } from "@/components/student/StudentApp";
 import { Logo } from "@/components/brand/Logo";
@@ -41,10 +41,12 @@ function PortalApp() {
   const planos = useAlunos((s) => s.planos);
   const avaliacoes = useAlunos((s) => s.avaliacoes);
   const execucoes = useAlunos((s) => s.execucoes);
+  const sessaoFeedbacks = useAlunos((s) => s.sessaoFeedbacks);
   const liberacoes = useAlunos((s) => s.liberacoes);
   const prescricoes = useAlunos((s) => s.prescricoes);
   const addExecucao = useAlunos((s) => s.addExecucao);
   const removeExecucao = useAlunos((s) => s.removeExecucao);
+  const addSessaoFeedback = useAlunos((s) => s.addSessaoFeedback);
   const { marca, professionalId } = useCloudAuth();
 
   const aluno = alunos[0];
@@ -67,6 +69,10 @@ function PortalApp() {
     removeExecucao(execId);
     void apagarExecucao(execId).catch(() => {});
   };
+  const registrarFeedback = (f: Parameters<typeof addSessaoFeedback>[0]) => {
+    addSessaoFeedback(f);
+    if (professionalId) void salvarSessaoFeedback(f, professionalId).catch(() => {});
+  };
   // Selo "Personalizado em DD/MM" nas sessões que nasceram de uma prescrição. Se a
   // conta do aluno não carregou as prescrições, o selo aparece sem a data (ainda útil).
   const dataDaPrescricao = (pid: string) => {
@@ -83,10 +89,12 @@ function PortalApp() {
       marca={marca ?? { nome: "Seu treino" }}
       avaliacoes={avaliacoes}
       execucoes={execucoes}
+      sessaoFeedbacks={sessaoFeedbacks}
       liberacoes={liberacoes}
       dataDaPrescricao={dataDaPrescricao}
       onRegistrar={registrar}
       onDesfazer={desfazer}
+      onFeedback={registrarFeedback}
       onSair={() => void signOut()}
     />
   );

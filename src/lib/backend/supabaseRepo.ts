@@ -1,7 +1,7 @@
 import { getSupabase } from "./supabaseClient";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
-import type { Execucao } from "@/data/execucao";
+import type { Execucao, SessaoFeedback } from "@/data/execucao";
 import type { PerfilCampos, Plan } from "@/lib/store";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 
@@ -449,4 +449,52 @@ export async function listarExecucoes(): Promise<Execucao[]> {
     .order("concluido_em", { ascending: false });
   if (error) return [];
   return (data ?? []).map(execFromRow);
+}
+
+function feedbackToRow(f: SessaoFeedback, professionalId: string) {
+  return {
+    id: f.id,
+    aluno_id: f.alunoId,
+    professional_id: professionalId,
+    plano_id: f.planoId ?? null,
+    semana: f.semana ?? null,
+    sessao_ref: f.sessaoRef ?? null,
+    pse: f.pse ?? null,
+    duracao_min: f.duracaoMin ?? null,
+    observacao: f.observacao ?? null,
+    concluida_em: new Date(f.concluidaEm).toISOString(),
+  };
+}
+
+function feedbackFromRow(r: Record<string, any>): SessaoFeedback {
+  return {
+    id: r.id,
+    alunoId: r.aluno_id,
+    planoId: r.plano_id ?? "",
+    semana: r.semana ?? 0,
+    sessaoRef: r.sessao_ref ?? "",
+    pse: r.pse ?? undefined,
+    duracaoMin: r.duracao_min ?? undefined,
+    observacao: r.observacao ?? undefined,
+    concluidaEm: r.concluida_em ? new Date(r.concluida_em).getTime() : Date.now(),
+  };
+}
+
+/**
+ * Grava o feedback de uma sessão. Mesmo padrão de salvarExecucao: professionalId é o
+ * dono do aluno; a RLS garante que so o vinculado insere e so o dono le.
+ */
+export async function salvarSessaoFeedback(f: SessaoFeedback, professionalId: string): Promise<void> {
+  const { error } = await getSupabase().from("sessao_feedbacks").upsert(feedbackToRow(f, professionalId));
+  if (error) throw error;
+}
+
+/** Feedbacks visiveis pela RLS (do proprio aluno, ou dos alunos do profissional). */
+export async function listarSessaoFeedbacks(): Promise<SessaoFeedback[]> {
+  const { data, error } = await getSupabase()
+    .from("sessao_feedbacks")
+    .select("*")
+    .order("concluida_em", { ascending: false });
+  if (error) return [];
+  return (data ?? []).map(feedbackFromRow);
 }

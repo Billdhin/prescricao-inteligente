@@ -191,6 +191,22 @@ main .grid > * {
   animation: surgir-backdrop 0.3s ease-out both;
 }
 
+/* Entrada leve da tela de conclusao do treino guiado (app do aluno): sobe um
+   pouco e surge por opacidade. O reset de reduced-motion abaixo neutraliza. */
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-surgir {
+  animation: surgir 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

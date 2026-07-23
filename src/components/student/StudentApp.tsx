@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, ChevronLeft, ChevronRight, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle, Sparkles, Maximize2, Footprints, Bike, Waves } from "lucide-react";
+import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, ChevronLeft, ChevronRight, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle, Sparkles, Maximize2, Play } from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
@@ -8,13 +8,21 @@ import { Logo } from "@/components/brand/Logo";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
 import { ExercicioSheet } from "@/components/student/ExercicioSheet";
+import { TreinoGuiado } from "@/components/student/TreinoGuiado";
+import {
+  nomeDoBloco,
+  tokensDoBloco,
+  exercicioDoBloco,
+  temFolhaExercicio,
+  iconeModalidade,
+  modalidadeDoBloco,
+  sessaoConcluida,
+  RegistroBloco,
+} from "@/components/student/blocoRegistro";
 import { estadoSemaforo } from "@/lib/gps/semaforoDiario";
-import { exercises, getExercise } from "@/data/exercises";
-import { getFasePose } from "@/data/fase-poses";
-import { getMuscleMapPose } from "@/data/muscle-map-images";
-import { getModalidade, modalidadeImagem } from "@/data/modalities";
+import { modalidadeImagem } from "@/data/modalities";
 import type { Aluno, Avaliacao, Liberacao } from "@/data/alunos";
-import type { Execucao } from "@/data/execucao";
+import type { Execucao, SessaoFeedback } from "@/data/execucao";
 import { formatBRL, statusEfetivo, ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import {
   type PlanoTreino,
@@ -30,16 +38,6 @@ import {
   sessaoDeHojeIndex,
 } from "@/data/periodizacao";
 
-const nomeDoBloco = (b: BlocoSessao): string => {
-  if (b.exercicioSlug) return exercises.find((e) => e.slug === b.exercicioSlug)?.nome ?? b.nome ?? b.exercicioSlug;
-  return b.nome ?? b.modalidade ?? "Exercício";
-};
-
-// Encurta valores de dose verbosos que quebram no mobile ("moderada a alta"
-// vira "mod. a alta"). Só o texto muda; o número da dose segue intocado e colado
-// ao exercício (mover dose para rodapé é VETADO).
-const abrevDose = (v: string): string => v.replace(/moderada a alta/gi, "mod. a alta");
-
 // A sessão tem algum bloco com intensidade prescrita? Governa a nota educacional
 // única no rodapé do card da Sessão (antes repetida por exercício).
 const temIntensidadeNaSessao = (s: Sessao): boolean =>
@@ -50,61 +48,18 @@ const temIntensidadeNaSessao = (s: Sessao): boolean =>
 const SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
 const DIA_MS = 24 * 60 * 60 * 1000;
 
-// Os tokens de dose de um bloco (Série, Intensidade, Intervalo para força; Formato,
-// Duração, Intensidade, Recuperação para aeróbio), com o rótulo colado ao valor.
-// Fonte única lida pelo BlocoRow (registro) e pelo BlocoLeitura (aba Semana), para
-// os dois nunca divergirem na dose que mostram.
-function tokensDoBloco(bloco: BlocoSessao): { label: string; value: string }[] {
-  const aerobio = bloco.tipo === "aerobio";
-  const limpo = (v?: string | number | null) =>
-    v != null && String(v).trim() && String(v).trim() !== "-" ? String(v) : "";
-  return (
-    aerobio
-      ? [
-          { label: "Formato", value: limpo(bloco.formato) },
-          { label: "Duração", value: limpo(bloco.duracao) },
-          { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
-          { label: "Recuperação", value: limpo(bloco.recuperacao) },
-        ]
-      : [
-          {
-            label: "Série",
-            value: bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : limpo(bloco.series) || limpo(bloco.reps),
-          },
-          { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
-          { label: "Intervalo", value: limpo(bloco.intervalo) },
-        ]
-  ).filter((t) => t.value);
-}
-
-// Resolve o exercício de catálogo de um bloco (undefined quando o bloco não aponta
-// para um slug catalogado). Governa o thumb e a folha do exercício.
-const exercicioDoBloco = (b: BlocoSessao) => (b.exercicioSlug ? getExercise(b.exercicioSlug) : undefined);
-
-// O exercício tem conteúdo visual/instrutivo para abrir a folha? (foto, movimento em
-// fases, boneco muscular posado ou passo a passo). Sem isso, o nome segue como texto,
-// sem virar um gatilho vazio.
-const temFolhaExercicio = (ex?: ReturnType<typeof getExercise>): boolean =>
-  !!ex && (!!ex.imagem || getFasePose(ex.slug, 1) != null || getMuscleMapPose(ex.slug) != null || ex.fases.length > 0);
-
-// Ícone lucide coerente com a modalidade aeróbia quando não há foto de modalidade.
-const iconeModalidade = (raw?: string, ambiente?: string) => {
-  const s = (raw ?? "").toLowerCase();
-  if (ambiente === "aquático" || /aqua|hidro|nata|nado/.test(s)) return Waves;
-  if (/bike|bicicleta|ciclo|spinning/.test(s)) return Bike;
-  if (/caminh|marcha|corr|esteira|trote/.test(s)) return Footprints;
-  return HeartPulse;
-};
-
-// Resolve a modalidade de um bloco aeróbio: aceita tanto o id canônico ("m-bike")
-// quanto o rótulo curto que os planos usam ("bike"/"caminhada").
-const modalidadeDoBloco = (b: BlocoSessao) =>
-  b.modalidade ? getModalidade(b.modalidade) ?? getModalidade(`m-${b.modalidade}`) : undefined;
-
-// A sessão está concluída na semana dada? Todos os blocos com uma Execucao daquela
-// semana batendo o blocoRef. Mesma regra que sessaoDeHojeIndex usa para a semana atual.
-const sessaoConcluida = (sessao: Sessao, semana: number, execucoes: Execucao[]): boolean =>
-  sessao.blocos.length > 0 && sessao.blocos.every((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id));
+// O rótulo da faixa de PSE de uma sessão, para o estado "Concluída" mostrar o esforço
+// registrado ("Esforço: 7 · Intenso"). Rótulos EXATOS de p-rpe; hífen, nunca travessão.
+const PSE_ROTULOS: [number, number, string][] = [
+  [0, 0, "Repouso"],
+  [1, 1, "Muito leve"],
+  [2, 3, "Leve"],
+  [4, 5, "Moderado"],
+  [6, 7, "Intenso"],
+  [8, 9, "Muito intenso"],
+  [10, 10, "Máximo"],
+];
+const rotuloPse = (n: number): string => PSE_ROTULOS.find(([a, b]) => n >= a && n <= b)?.[2] ?? "";
 
 const TIPO_SEMANA: Record<Microciclo["tipo"], { label: string; tone: "neutral" | "warning" | "success" }> = {
   carga: { label: "Semana de carga", tone: "success" },
@@ -127,9 +82,11 @@ export function StudentApp({
   marca,
   avaliacoes = [],
   execucoes = [],
+  sessaoFeedbacks = [],
   liberacoes = [],
   onRegistrar,
   onDesfazer,
+  onFeedback,
   dataDaPrescricao,
   preview = false,
   onSair,
@@ -140,12 +97,16 @@ export function StudentApp({
   avaliacoes?: Avaliacao[];
   /** o que o aluno já registrou (para marcar sessões feitas) */
   execucoes?: Execucao[];
+  /** como o aluno sentiu cada sessão (PSE + duração + recado); alimenta o estado "Concluída" */
+  sessaoFeedbacks?: SessaoFeedback[];
   /** liberações do aluno: alimentam o alerta de "treino em pausa" na aba Hoje */
   liberacoes?: Liberacao[];
   /** registra uma execução; ausente = portal só-leitura */
   onRegistrar?: (e: Execucao) => void;
   /** desfaz uma execução registrada; ausente = sem desfazer */
   onDesfazer?: (execId: string) => void;
+  /** grava o feedback da sessão (fim do treino guiado); ausente = sem gravação */
+  onFeedback?: (f: SessaoFeedback) => void;
   /** resolve a data de exibição de uma prescrição pela id (selo "Personalizado em …") */
   dataDaPrescricao?: (id: string) => string | undefined;
   preview?: boolean;
@@ -153,6 +114,16 @@ export function StudentApp({
 }) {
   const [aba, setAba] = React.useState<Aba>("hoje");
   const cor = marca.corPrimaria || "var(--primary)";
+
+  // Modo guiado ("Iniciar treino"): quando ativo, ocupa o app inteiro no lugar das
+  // abas. Guarda a sessão-alvo; a semana é sempre a atual (a sessão vem da aba Hoje).
+  const [guiado, setGuiado] = React.useState<Sessao | null>(null);
+  const semanaGuiado = plano ? semanaAtual(plano) : 1;
+  const feedbackGuiado = guiado
+    ? sessaoFeedbacks.find(
+        (f) => f.alunoId === aluno.id && f.planoId === plano?.id && f.semana === semanaGuiado && f.sessaoRef === guiado.id,
+      )
+    : undefined;
 
   // O portal do aluno herda a paleta + aparência do profissional (e a cor de
   // marca sobrepõe a primária). Aplica no container do portal, não na raiz do
@@ -172,6 +143,23 @@ export function StudentApp({
   return (
     <BrandProvider marca={marca}>
       <div ref={rootRef} className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col bg-bg">
+        {guiado && plano ? (
+          <TreinoGuiado
+            sessao={guiado}
+            semana={semanaGuiado}
+            cor={cor}
+            planoId={plano.id}
+            alunoId={aluno.id}
+            execucoes={execucoes}
+            onRegistrar={onRegistrar}
+            onDesfazer={onDesfazer}
+            onFeedback={onFeedback}
+            feedbackExistente={feedbackGuiado}
+            preview={preview}
+            onSair={() => setGuiado(null)}
+          />
+        ) : (
+          <>
         {preview && (
           <div className="px-4 py-1.5 text-center text-xs font-semibold text-white" style={{ background: cor }}>
             Prévia: é assim que o seu aluno vê o app
@@ -218,7 +206,7 @@ export function StudentApp({
 
         <main className="flex-1 space-y-4 p-4 pb-24">
           {aba === "hoje" && (
-            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} liberacoes={liberacoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} dataDaPrescricao={dataDaPrescricao} preview={preview} />
+            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} sessaoFeedbacks={sessaoFeedbacks} liberacoes={liberacoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} onIniciar={setGuiado} dataDaPrescricao={dataDaPrescricao} preview={preview} />
           )}
           {aba === "semana" && <AbaPlano plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} />}
           {aba === "evolucao" && (
@@ -253,6 +241,8 @@ export function StudentApp({
             );
           })}
         </nav>
+          </>
+        )}
       </div>
     </BrandProvider>
   );
@@ -265,9 +255,11 @@ function AbaHoje({
   cor,
   aluno,
   execucoes,
+  sessaoFeedbacks,
   liberacoes,
   onRegistrar,
   onDesfazer,
+  onIniciar,
   dataDaPrescricao,
   preview,
 }: {
@@ -275,9 +267,12 @@ function AbaHoje({
   cor: string;
   aluno: Aluno;
   execucoes: Execucao[];
+  sessaoFeedbacks: SessaoFeedback[];
   liberacoes: Liberacao[];
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
+  /** inicia o modo guiado para uma sessão (abre o treino guiado no lugar das abas) */
+  onIniciar?: (sessao: Sessao) => void;
   dataDaPrescricao?: (id: string) => string | undefined;
   preview?: boolean;
 }) {
@@ -352,8 +347,10 @@ function AbaHoje({
             plano={plano}
             aluno={aluno}
             execucoes={execucoes}
+            feedback={sessaoFeedbacks.find((f) => f.alunoId === aluno.id && f.planoId === plano.id && f.semana === semana && f.sessaoRef === s.id)}
             onRegistrar={onRegistrar}
             onDesfazer={onDesfazer}
+            onIniciar={onIniciar}
             dataDaPrescricao={dataDaPrescricao}
             preview={preview}
             inicialAberto={i === idxHoje}
@@ -417,8 +414,10 @@ function SessaoCard({
   plano,
   aluno,
   execucoes,
+  feedback,
   onRegistrar,
   onDesfazer,
+  onIniciar,
   dataDaPrescricao,
   preview,
   inicialAberto = false,
@@ -430,14 +429,21 @@ function SessaoCard({
   plano: PlanoTreino;
   aluno: Aluno;
   execucoes: Execucao[];
+  /** feedback desta sessão nesta semana (PSE + recado), se já enviado */
+  feedback?: SessaoFeedback;
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
+  /** inicia o modo guiado desta sessão */
+  onIniciar?: (sessao: Sessao) => void;
   dataDaPrescricao?: (id: string) => string | undefined;
   preview?: boolean;
   inicialAberto?: boolean;
   rotulo?: "Hoje" | "Próxima";
 }) {
-  const [aberto, setAberto] = React.useState(inicialAberto);
+  // Sessão concluída (todos os blocos registrados): entra recolhida por padrão e troca
+  // o formulário/CTA pelo estado "Concluída" (com o esforço registrado, se houver).
+  const concluida = sessaoConcluida(sessao, semana, execucoes);
+  const [aberto, setAberto] = React.useState(inicialAberto && !concluida);
   const feitas = sessao.blocos.filter((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id)).length;
   // Rastro do "personalizar o treino do dia": se algum bloco nasceu de uma
   // prescrição (origemPrescricaoId), a sessão é marcada como personalizada. Com um
@@ -468,14 +474,42 @@ function SessaoCard({
             )}
           </div>
           {sessao.foco && <div className="text-xs text-ink-3">{sessao.foco}</div>}
+          {concluida && feedback?.pse != null && (
+            <div className="text-xs text-ink-3">
+              Esforço: {feedback.pse}
+              {rotuloPse(feedback.pse) ? ` · ${rotuloPse(feedback.pse)}` : ""}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          {feitas > 0 && <span className="text-xs font-semibold" style={{ color: cor }}>{feitas}/{sessao.blocos.length} exercícios</span>}
+          {concluida ? (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: cor }}>
+              <CheckCircle2 className="h-4 w-4" /> Concluída
+            </span>
+          ) : feitas > 0 ? (
+            <span className="text-xs font-semibold" style={{ color: cor }}>{feitas}/{sessao.blocos.length} exercícios</span>
+          ) : null}
           <ChevronDown className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
         </div>
       </button>
       {aberto && (
         <div className="space-y-2 border-t border-border p-3">
+          {/* Iniciar treino: só na sessão de hoje ainda não concluída. CTA grande na
+              cor da marca (>= 48px), porta de entrada do modo guiado. */}
+          {rotulo === "Hoje" && !concluida && onIniciar && (
+            <button
+              onClick={() => onIniciar(sessao)}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-base font-bold text-white"
+              style={{ background: cor }}
+            >
+              <Play className="h-5 w-5" aria-hidden /> Iniciar treino
+            </button>
+          )}
+          {concluida && feedback?.observacao && (
+            <p className="flex items-center gap-1.5 text-2xs text-ink-3">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: cor }} aria-hidden /> Enviado ao seu professor
+            </p>
+          )}
           {agruparBlocosPorMetodo(sessao.blocos).map((seg) => {
             const linhaBloco = (b: BlocoSessao, emGrupo?: boolean) => (
               <BlocoRow
@@ -626,53 +660,6 @@ function BlocoRow({
       </span>
     );
 
-  // Pré-preenche só o que o plano prescreve de forma objetiva E numérica: as Reps.
-  // A dose vem como FAIXA textual ("6 a 12", "acima de 15"), que num campo numérico
-  // seria truncada (parseInt("6 a 12")=6) ou viraria NaN. Então só pré-preenche
-  // quando é um número puro; do contrário, deixa vazio. Carga e RPE não têm alvo
-  // numérico (a intensidade é relativa), então entram vazios com âncora.
-  const repsPrescrito = /^\d+$/.test(String(bloco.reps ?? "").trim()) ? String(bloco.reps).trim() : "";
-  const [editando, setEditando] = React.useState(false);
-  const [carga, setCarga] = React.useState(execFeita?.cargaFeita != null ? String(execFeita.cargaFeita) : "");
-  const [reps, setReps] = React.useState(execFeita?.repsFeitas != null ? String(execFeita.repsFeitas) : repsPrescrito);
-  const [rpe, setRpe] = React.useState(execFeita?.rpe != null ? String(execFeita.rpe) : "");
-  const podeRegistrar = !!onRegistrar;
-  // Id estável por bloco+semana: registrar de novo SOBRESCREVE (o store faz upsert),
-  // então editar não duplica e desfazer tem um alvo certo.
-  const execId = `ex-${bloco.id}-s${semana}`;
-
-  // Só grava número quando é número de verdade; texto ("6 a 12") vira undefined
-  // em vez de piso truncado ou NaN, que envenenaria o histórico do aluno.
-  const numOuUndef = (v: string, f: (s: string) => number): number | undefined => {
-    const n = f(v.replace(",", "."));
-    return Number.isFinite(n) ? n : undefined;
-  };
-  const registrar = () => {
-    if (!onRegistrar) return;
-    onRegistrar({
-      id: execId,
-      alunoId,
-      planoId,
-      semana,
-      sessaoRef,
-      blocoRef: bloco.id,
-      exercicioSlug: bloco.exercicioSlug,
-      cargaFeita: carga ? numOuUndef(carga, parseFloat) : undefined,
-      repsFeitas: reps ? numOuUndef(reps, (s) => parseInt(s, 10)) : undefined,
-      rpe: rpe ? numOuUndef(rpe, (s) => parseInt(s, 10)) : undefined,
-      concluidoEm: Date.now(),
-    });
-    setEditando(false);
-  };
-  const concluirAerobio = () => {
-    if (!onRegistrar) return;
-    onRegistrar({ id: execId, alunoId, planoId, semana, sessaoRef, blocoRef: bloco.id, exercicioSlug: bloco.exercicioSlug, concluidoEm: Date.now() });
-  };
-  const desfazer = () => {
-    if (execFeita && onDesfazer) onDesfazer(execFeita.id);
-    setEditando(false);
-  };
-
   return (
     <div className="rounded-xl border border-border bg-surface-soft p-3">
       <div className="flex items-center gap-2">
@@ -718,68 +705,19 @@ function BlocoRow({
       {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
       {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
 
-      {!preview && podeRegistrar ? (
-        execFeita && !editando ? (
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: cor }}>
-              <CheckCircle2 className="h-4 w-4" />
-              {aerobio
-                ? "Concluído"
-                : `Feito: ${execFeita.cargaFeita != null ? `${execFeita.cargaFeita} kg` : "sem carga"}${execFeita.repsFeitas != null ? ` x ${execFeita.repsFeitas}` : ""}${execFeita.rpe != null ? ` · RPE ${execFeita.rpe}` : ""}`}
-            </span>
-            {!aerobio && (
-              <button
-                onClick={() => setEditando(true)}
-                className="inline-flex min-h-[44px] items-center px-1 text-xs font-semibold text-ink-2 underline-offset-2 hover:underline"
-              >
-                Editar
-              </button>
-            )}
-            {onDesfazer && (
-              <button
-                onClick={desfazer}
-                className="inline-flex min-h-[44px] items-center px-1 text-xs font-medium text-ink-3 underline-offset-2 hover:underline"
-              >
-                Desfazer
-              </button>
-            )}
-          </div>
-        ) : aerobio ? (
-          <button
-            onClick={concluirAerobio}
-            className="mt-2 inline-flex h-11 items-center gap-1.5 rounded-lg px-4 text-sm font-bold text-white"
-            style={{ background: cor }}
-          >
-            <CheckCircle2 className="h-4 w-4" /> Concluí
-          </button>
-        ) : (
-          <div className="mt-2 space-y-1.5">
-            <div className="flex flex-wrap items-end gap-2">
-              <CampoNum label="Carga (kg)" value={carga} onChange={setCarga} placeholder="kg" />
-              <CampoNum label="Reps" value={reps} onChange={setReps} />
-              <RpeSelect value={rpe} onChange={setRpe} />
-              {/* Abaixo de sm o botão desce para a própria linha (w-full): o
-                  flex-wrap antigo o quebrava de forma imprevisível ao lado do RPE. */}
-              <button
-                onClick={registrar}
-                className="inline-flex h-11 w-full items-center justify-center rounded-lg px-4 text-sm font-bold text-white sm:w-auto"
-                style={{ background: cor }}
-              >
-                {editando ? "Salvar" : "Registrar"}
-              </button>
-              {editando && (
-                <button
-                  onClick={() => setEditando(false)}
-                  className="inline-flex h-11 items-center px-2 text-sm font-medium text-ink-3 hover:text-ink"
-                >
-                  Cancelar
-                </button>
-              )}
-            </div>
-            <p className="text-2xs text-ink-3">RPE é o seu esforço de 0 a 10 (7 = difícil, 9 = quase a falha).</p>
-          </div>
-        )
-      ) : null}
+      {/* Miolo de registro compartilhado (mesmo id/upsert do modo guiado). */}
+      <RegistroBloco
+        bloco={bloco}
+        cor={cor}
+        semana={semana}
+        planoId={planoId}
+        alunoId={alunoId}
+        sessaoRef={sessaoRef}
+        execFeita={execFeita}
+        onRegistrar={onRegistrar}
+        onDesfazer={onDesfazer}
+        preview={preview}
+      />
 
       {sheetAberto && ex && (
         <ExercicioSheet
@@ -790,53 +728,6 @@ function BlocoRow({
           onClose={fecharSheet}
         />
       )}
-    </div>
-  );
-}
-
-// Seletor de RPE de 0 a 10 (esforço percebido), com âncoras nas notas que mais
-// importam. Substitui o campo livre para o aluno não digitar um valor sem sentido.
-function RpeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const id = React.useId();
-  const ancora: Record<number, string> = { 5: "moderado", 7: "difícil", 9: "quase a falha", 10: "falha" };
-  return (
-    <div className="w-24">
-      <label htmlFor={id} className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-ink-3">
-        RPE
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full rounded-md border border-border bg-surface px-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
-      >
-        <option value="">-</option>
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-          <option key={n} value={n}>
-            {n}
-            {ancora[n] ? ` · ${ancora[n]}` : ""}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-function CampoNum({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
-  const id = React.useId();
-  return (
-    <div className="w-20">
-      <label htmlFor={id} className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-ink-3">
-        {label}
-      </label>
-      <input
-        id={id}
-        inputMode="decimal"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full rounded-md border border-border bg-surface px-2 text-sm text-ink placeholder:text-ink-3/60 focus:outline-none focus:ring-2 focus:ring-primary"
-      />
     </div>
   );
 }
