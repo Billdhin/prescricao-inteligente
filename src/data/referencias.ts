@@ -396,6 +396,85 @@ export const referencias: Referencia[] = [
     doi: "10.3390/ijerph18179251",
     nota: "Exercícios acima da cabeça geram forças compressivas no espaço subacromial: base para reduzir movimento overhead na queixa de ombro e preferir alternativas.",
   },
+
+  /* ---- Motor de periodização: progressão real (evidências verificadas no PubMed) ----
+     Fonte única destas oito entradas: dossiê de evidências da onda MP-1. Notas transcritas
+     verbatim do dossiê (já sem travessão). Alimentam o rulepack src/data/regrasProgressao.ts. */
+  {
+    id: "tanaka-fcmax-2001",
+    autores: "Tanaka H, Monahan KD, Seals DR",
+    titulo: "Age-predicted maximal heart rate revisited",
+    fonte: "Journal of the American College of Cardiology, 37(1):153-156",
+    ano: 2001,
+    doi: "10.1016/s0735-1097(00)01054-8",
+    nota: "Meta-análise (351 estudos, 18.712 sujeitos) mais coorte laboratorial (514): a FCmáx estimada é 208 menos 0,7 vezes a idade. Corrige a subestimação da FCmáx em idosos da conta 220 menos idade. É estimativa populacional: a FCmáx medida em teste prevalece quando há.",
+  },
+  {
+    id: "karvonen-1957",
+    autores: "Karvonen MJ, Kentala E, Mustala O",
+    titulo: "The effects of training on heart rate; a longitudinal study",
+    fonte: "Annales Medicinae Experimentalis et Biologiae Fenniae, 35(3):307-315",
+    ano: 1957,
+    nota: "Artigo original que introduziu a frequência cardíaca de reserva (FCR = FCmáx menos FCrepouso). A fórmula-alvo FC = intensidade vezes (FCmáx menos FCrepouso) mais FCrepouso é a formulação-padrão atribuída a este trabalho. PMID 13470504; o PubMed não traz o abstract, então a equação vem da consolidação posterior, com aval contemporâneo em Garber 2011.",
+  },
+  {
+    id: "schoenfeld-carga-2017",
+    autores: "Schoenfeld BJ, Grgic J, Ogborn D, Krieger JW",
+    titulo:
+      "Strength and hypertrophy adaptations between low- versus high-load resistance training: a systematic review and meta-analysis",
+    fonte: "Journal of Strength and Conditioning Research, 31(12):3508-3523",
+    ano: 2017,
+    doi: "10.1519/JSC.0000000000002200",
+    nota: "Meta-análise (21 estudos): ganho de 1RM significativamente maior com carga alta (acima de 60% de 1RM) do que baixa, enquanto a hipertrofia se iguala num amplo espectro de cargas até a falha. Base de que força máxima é dirigida pela carga, e hipertrofia não exige carga alta.",
+  },
+  {
+    id: "seppanen-hakkinen-2022",
+    autores: "Seppanen S, Hakkinen K",
+    titulo:
+      "Step vs. two-phase gradual volume reduction tapering protocols in strength training: effects on neuromuscular performance and serum hormone concentrations",
+    fonte: "Journal of Strength and Conditioning Research, 36(11):2936-2945",
+    ano: 2022,
+    doi: "10.1519/JSC.0000000000003939",
+    nota: "Ensaio pequeno em treinados recreativos: após 8 semanas, um taper de 2 semanas reduzindo o volume (grupo em degrau cortou 54%) e mantendo a carga aumentou o 1RM de agachamento (cerca de 3,4%). Reduzir volume mantendo intensidade é forma eficaz de pico de força. Amostra pequena.",
+  },
+  {
+    id: "izquierdo-tapering-2007",
+    autores: "Izquierdo M, Ibanez J, Gonzalez-Badillo JJ, et al.",
+    titulo: "Detraining and tapering effects on hormonal responses and strength performance",
+    fonte: "Journal of Strength and Conditioning Research, 21(3):768-775",
+    ano: 2007,
+    doi: "10.1519/R-21136.1",
+    nota: "Taper é a redução de curto prazo do volume mantendo intensidade alta. Após 16 semanas, o taper rendeu cerca de 2% de força a mais, enquanto a cessação completa derrubou força (6 a 9%) e potência (14 a 17%). Base de que parar não equivale a descarregar.",
+  },
+  {
+    id: "rogerson-deload-2024",
+    autores: "Rogerson D, Nolan RH, Immonen V, et al.",
+    titulo: "A survey of deload practices in resistance-trained individuals",
+    fonte: "Sports Medicine - Open, 10(1):26",
+    ano: 2024,
+    doi: "10.1186/s40798-024-00691-y",
+    nota: "Levantamento do que os praticantes fazem na descarga: dura cerca de 6,4 dias, a cada cerca de 5,6 semanas, reduzindo volume, intensidade e esforço, mantendo frequência e seleção. Descreve prática, não eficácia comprovada.",
+  },
+  {
+    id: "coleman-deload-2024",
+    autores: "Coleman M, Burke R, Augustin F, et al.",
+    titulo:
+      "Gains in strength and muscle mass are maintained or slightly impaired with a mid-cycle deload week in resistance-trained individuals",
+    fonte: "PeerJ, 12:e16777",
+    ano: 2024,
+    doi: "10.7717/peerj.16777",
+    nota: "Ensaio randomizado em treinados: uma semana de descarga no meio do bloco não trouxe benefício; força levemente pior, hipertrofia sem diferença. Base honesta para não vender a descarga de rotina como otimização.",
+  },
+  {
+    id: "buist-gronorun-2007",
+    autores: "Buist I, Bredeweg SW, van Mechelen W, et al.",
+    titulo:
+      "No effect of a graded training program on the number of running-related injuries in novice runners: a randomized controlled trial",
+    fonte: "The American Journal of Sports Medicine, 36(1):33-39",
+    ano: 2008,
+    doi: "10.1177/0363546507307505",
+    nota: "Ensaio randomizado (n=532, corredores novatos): um programa graduado seguindo a regra dos 10% por semana não reduziu lesões (20,8% contra 20,3%). Base para tratar os 10% por semana como partida prudente, nunca como número comprovado de prevenção.",
+  },
 ];
 
 export function getReferencia(id: string) {
