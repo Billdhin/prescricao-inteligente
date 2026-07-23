@@ -41,6 +41,7 @@ function PortalApp() {
   const planos = useAlunos((s) => s.planos);
   const avaliacoes = useAlunos((s) => s.avaliacoes);
   const execucoes = useAlunos((s) => s.execucoes);
+  const liberacoes = useAlunos((s) => s.liberacoes);
   const addExecucao = useAlunos((s) => s.addExecucao);
   const removeExecucao = useAlunos((s) => s.removeExecucao);
   const { marca, professionalId } = useCloudAuth();
@@ -75,6 +76,7 @@ function PortalApp() {
       marca={marca ?? { nome: "Seu treino" }}
       avaliacoes={avaliacoes}
       execucoes={execucoes}
+      liberacoes={liberacoes}
       onRegistrar={registrar}
       onDesfazer={desfazer}
       onSair={() => void signOut()}

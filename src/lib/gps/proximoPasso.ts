@@ -1,7 +1,8 @@
-import type { Aluno } from "@/data/alunos";
+import type { Aluno, Liberacao } from "@/data/alunos";
 import { proximaReavaliacao, type PlanoTreino } from "@/data/periodizacao";
+import { estadoSemaforo } from "./semaforoDiario";
 
-export type AvisoTone = "primary" | "warning" | "cta" | "success" | "analysis";
+export type AvisoTone = "primary" | "warning" | "cta" | "success" | "analysis" | "danger";
 
 /**
  * Fonte única de "onde este aluno está e qual o próximo movimento".
@@ -16,6 +17,8 @@ export type AvisoTone = "primary" | "warning" | "cta" | "success" | "analysis";
  */
 
 const DIA = 86_400_000;
+const fmtDDMM = (ts: number) =>
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(ts));
 
 /**
  * Gate duro do trilho: sem NENHUMA avaliação registrada, o aluno não tem base para
@@ -57,7 +60,8 @@ export interface CicloCtx {
   avaliacoes: { alunoId?: string; data: number }[];
   prescricoes: { alunoId?: string; status: string }[];
   planos: PlanoTreino[];
-  liberacoes: { alunoId?: string; data: number }[];
+  /** liberações completas (com `resultado`): o semáforo diário deriva daqui */
+  liberacoes: Liberacao[];
   execucoes: { alunoId?: string }[];
 }
 
@@ -196,6 +200,12 @@ export function avisosDoAluno(aluno: Aluno, ctx: CicloCtx): AvisoAluno[] {
   const passo = proximoPasso(aluno, ctx);
   const planoAtivo = ctx.planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
 
+  // Semáforo diário: um "não liberado" segue pendente até um novo semáforo (de
+  // qualquer cor) depois dele. A AUSÊNCIA de semáforo não alerta (a etapa `liberar`
+  // do próprio ciclo mantém `chip: null`); só o vermelho pendente vira alerta, e é
+  // o mais forte da lista, entrando no topo (unshift, mais adiante).
+  const semaforo = estadoSemaforo(aluno.id, ctx.liberacoes);
+
   // Prescrição guardada, mas sem treino montado: o campo `prescricoes` do ctx (antes
   // declarado e nunca usado) serve só a este aviso. Não vira segunda moeda de "tem treino"
   // (decisão travada 11): `temTreinoAtivo` segue o único predicado; isto é só o lembrete de
@@ -221,6 +231,16 @@ export function avisosDoAluno(aluno: Aluno, ctx: CicloCtx): AvisoAluno[] {
     if (reav && reav.em > agora && reav.em - agora <= 7 * DIA) {
       avisos.push({ label: `Reavaliação do plano: semana ${reav.semana}`, tone: "analysis", etapa: "reavaliar" });
     }
+  }
+
+  // Vermelho pendente é a pendência mais grave: entra na frente de tudo, com o dia
+  // do "não liberado" e o CTA (via `etapa: "liberar"`) apontando para o semáforo.
+  if (semaforo.vermelhoPendente) {
+    avisos.unshift({
+      label: `Não liberado em ${fmtDDMM(semaforo.vermelhoPendente.data)} e sem novo semáforo desde então`,
+      tone: "danger",
+      etapa: "liberar",
+    });
   }
   return avisos;
 }

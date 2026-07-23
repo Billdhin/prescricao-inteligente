@@ -92,10 +92,15 @@ async function hydrateAluno(professionalId: string | null) {
     repo.listarAvaliacoes(),
     repo.listarExecucoes(),
   ]);
+  // Liberações do próprio aluno: alimentam o alerta de "treino em pausa" no app.
+  // A leitura depende da policy `liberacoes_aluno_read` (migração 0006). Enquanto
+  // ela não estiver aplicada, a RLS filtra e o select volta vazio (sem erro), então
+  // o portal segue sem alerta. `.catch` blinda contra qualquer falha de policy.
+  const liberacoes = await repo.listarLiberacoes().catch(() => []);
   const marca = professionalId
     ? await repo.carregarMarcaProfissional(professionalId).catch(() => null)
     : null;
-  useAlunos.setState({ alunos, planos, avaliacoes, execucoes, prescricoes: [], liberacoes: [], posturais: [] });
+  useAlunos.setState({ alunos, planos, avaliacoes, execucoes, prescricoes: [], liberacoes, posturais: [] });
   useCloudAuth.setState({ role: "aluno", alunoId: alunos[0]?.id ?? null, professionalId, marca });
 }
 

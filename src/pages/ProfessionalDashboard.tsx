@@ -61,9 +61,15 @@ export function ProfessionalDashboard() {
   // (avisosDoAluno), não de uma cópia da lógica: Painel, lista e tela do aluno
   // falam o mesmo "próximo passo".
   const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
+  // "Não liberado" pendente é a pendência mais grave (tone "danger"): esses alunos
+  // sobem para o topo da lista de atenção. Ordenação estável mantém o resto na
+  // ordem original.
+  const temAlertaVermelho = (motivos: ReturnType<typeof avisosDoAluno>) =>
+    motivos.some((m) => m.tone === "danger");
   const atencao = ativos
     .map((a) => ({ aluno: a, motivos: avisosDoAluno(a, ctx) }))
-    .filter((x) => x.motivos.length > 0);
+    .filter((x) => x.motivos.length > 0)
+    .sort((a, b) => Number(temAlertaVermelho(b.motivos)) - Number(temAlertaVermelho(a.motivos)));
 
   // Deduplicação na CAMADA DE APRESENTAÇÃO (motor intocado): cada aluno aparece
   // uma vez, na sua pendência mais forte. Precedência: atenção > reativar > seus.
@@ -178,7 +184,8 @@ export function ProfessionalDashboard() {
             {atencao.map(({ aluno, motivos }) => (
               <Link
                 key={aluno.id}
-                to={`/alunos/${aluno.id}`}
+                // Com vermelho pendente, o CTA cai direto na aba Semáforo do aluno.
+                to={temAlertaVermelho(motivos) ? `/alunos/${aluno.id}?aba=semaforo` : `/alunos/${aluno.id}`}
                 className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-soft"
               >
                 <Avatar iniciais={aluno.iniciais} />

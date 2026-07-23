@@ -23,6 +23,7 @@ import {
   Route as RouteIcon,
   ShieldCheck,
   CheckCircle2,
+  XCircle,
   CalendarRange,
   CalendarCheck,
   Wallet,
@@ -36,6 +37,8 @@ import { PosturalCard } from "@/components/treino/PosturalCard";
 import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
 import { ListaChips } from "@/components/treino/PlanoEditor";
 import { proximoPasso, estadoDoCiclo, dataReavaliacao, podeMontarTreino, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
+import { estadoSemaforo, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
+import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { criarConvite } from "@/lib/backend/supabaseRepo";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -43,7 +46,7 @@ import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
-import type { Aluno, Prescricao } from "@/data/alunos";
+import type { Aluno, Prescricao, Liberacao } from "@/data/alunos";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -69,12 +72,35 @@ const TIPO_AVAL_LABEL: Record<string, string> = {
   retorno: "Retorno",
 };
 
-type Aba = "treino" | "avaliacoes" | "conta";
+type Aba = "treino" | "avaliacoes" | "semaforo" | "conta";
 const ABAS: { id: Aba; label: string; Icon: typeof UserCheck }[] = [
   { id: "treino", label: "Plano e treino", Icon: Dumbbell },
   { id: "avaliacoes", label: "Avaliações", Icon: Activity },
+  { id: "semaforo", label: "Semáforo", Icon: ShieldCheck },
   { id: "conta", label: "App do aluno", Icon: Smartphone },
 ];
+const ABA_IDS = new Set<string>(ABAS.map((a) => a.id));
+
+/** Vocabulário único do resultado do semáforo (mesmo de src/data/semaforo.ts). */
+const rotuloResultado = (r: "verde" | "amarelo" | "vermelho") =>
+  r === "verde" ? "Liberado" : r === "amarelo" ? "Liberado com ajuste" : "Não liberado hoje";
+
+/** Acabamento por cor do semáforo, com os tokens success/warning/danger. */
+const COR_SEMAFORO: Record<
+  "verde" | "amarelo" | "vermelho",
+  { bg: string; border: string; text: string; dot: string; Icon: typeof CheckCircle2 }
+> = {
+  verde: { bg: "bg-success-tint", border: "border-success/40", text: "text-success", dot: "bg-success", Icon: CheckCircle2 },
+  amarelo: { bg: "bg-warning-tint", border: "border-warning/40", text: "text-warning", dot: "bg-warning", Icon: AlertTriangle },
+  vermelho: { bg: "bg-danger-tint", border: "border-danger/40", text: "text-danger", dot: "bg-danger-fill", Icon: XCircle },
+};
+
+/** "há N dias" a partir de uma data (0 = hoje), para a faixa de estado. */
+const registradoHa = (ts: number) => {
+  const dias = Math.floor((Date.now() - ts) / DIA);
+  if (dias <= 0) return "registrado hoje";
+  return `registrado há ${dias} ${dias === 1 ? "dia" : "dias"}`;
+};
 
 /** Tira de abas da tela do aluno: agrupa o que antes eram 8 cards soltos em
  *  poucos destinos claros, no espírito do painel de atleta do ION. */
@@ -220,8 +246,13 @@ export function AlunoDetail() {
   const planoSalvo = Boolean((location.state as { planoSalvo?: boolean } | null)?.planoSalvo);
   // Retorno do tubo "Aplicar no treino": {n} exercícios aplicados na Sessão X até o fim do bloco.
   const aplicado = (location.state as { aplicado?: { n: number; sessao: string; bloco: number; semanas: number } } | null)?.aplicado;
-  // A aba "Plano e treino" é o core e abre por padrão (o retorno do plano/aplicado cai nela).
-  const [aba, setAba] = React.useState<Aba>("treino");
+  // A aba "Plano e treino" é o core e abre por padrão (o retorno do plano/aplicado cai
+  // nela). O deep-link `?aba=semaforo` (ex.: do aviso "não liberado" no Painel) abre a
+  // aba pedida; o param é limpo logo em seguida para não fixar a aba ao navegar.
+  const [aba, setAba] = React.useState<Aba>(() => {
+    const p = new URLSearchParams(window.location.search).get("aba");
+    return p && ABA_IDS.has(p) ? (p as Aba) : "treino";
+  });
   // "Acompanhar" do próximo passo: garante a aba do treino e ancora na execução.
   const irParaExecucao = React.useCallback(() => {
     setAba("treino");
@@ -233,13 +264,20 @@ export function AlunoDetail() {
   const [aplicarPresc, setAplicarPresc] = React.useState<Prescricao | null>(null);
   const [params, setParams] = useSearchParams();
 
-  // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação e limpa o param.
+  // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação; ?aba= já foi
+  // consumido no estado inicial. Ambos os params são limpos aqui.
   React.useEffect(() => {
+    let mudou = false;
     if (params.get("avaliar") === "1") {
       setAvaliar(true);
       params.delete("avaliar");
-      setParams(params, { replace: true });
+      mudou = true;
     }
+    if (params.get("aba")) {
+      params.delete("aba");
+      mudou = true;
+    }
+    if (mudou) setParams(params, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -271,7 +309,11 @@ export function AlunoDetail() {
   // Reavaliação reconciliada: com plano, o macrociclo manda; senão o calendário.
   const reav = dataReavaliacao(aluno, planoAtivo);
   const reavaliacaoVencida = reav ? reav.em < Date.now() : false;
-  const libsDoAluno = liberacoes.filter((l) => l.alunoId === id).slice(0, 3);
+  // Semáforo diário: histórico completo (desc) para a aba, e o resumo (3 últimas)
+  // para o card compacto da aba principal. O estado deriva da fonte única.
+  const libsAlunoDesc = liberacoes.filter((l) => l.alunoId === id).sort((a, b) => b.data - a.data);
+  const libsDoAluno = libsAlunoDesc.slice(0, 3);
+  const estadoSem = estadoSemaforo(id, liberacoes);
   const prescAberta = prontuarioDe ? prescs.find((p) => p.id === prontuarioDe) : undefined;
 
   return (
@@ -434,6 +476,13 @@ export function AlunoDetail() {
         </div>
       )}
 
+      {/* SEMÁFORO: estado do dia, o checklist inline e o histórico completo por aluno. */}
+      {aba === "semaforo" && (
+        <div role="tabpanel" id="aba-painel-semaforo" aria-labelledby="aba-tab-semaforo">
+          <SemaforoAba aluno={aluno} planoAtivo={planoAtivo} estado={estadoSem} historico={libsAlunoDesc} />
+        </div>
+      )}
+
       {/* APP DO ALUNO: prévia, convite e financeiro num só lugar (como o aluno usa e paga). */}
       {aba === "conta" && (
         <div role="tabpanel" id="aba-painel-conta" aria-labelledby="aba-tab-conta">
@@ -586,45 +635,40 @@ export function AlunoDetail() {
           </div>
 
           <div className="space-y-4">
-            {/* Gate pré-sessão vale para TODO aluno: sem grupo especial, usa o checklist geral */}
+            {/* Gate pré-sessão vale para TODO aluno: sem grupo especial, usa o checklist geral.
+                Este card é o RESUMO; a aba Semáforo tem o estado, o checklist e o histórico. */}
             <Card className="p-5">
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="font-display text-lg font-bold text-ink">Semáforo de Liberação</h2>
               </div>
-              <p className="mb-3 text-sm text-ink-2">
-                Antes da sessão: libere o treino de hoje em 30 segundos, com o porquê registrado.
-              </p>
+              {/* Vermelho pendente: o resumo já mostra que o aluno segue "não liberado". */}
+              {estadoSem.vermelhoPendente ? (
+                <div className={cn("mb-3 flex items-start gap-2 rounded-lg border p-3", COR_SEMAFORO.vermelho.bg, COR_SEMAFORO.vermelho.border)}>
+                  <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-danger-fill" />
+                  <p className="text-sm text-ink">
+                    <span className="font-semibold">Não liberado em {fmtData(estadoSem.vermelhoPendente.data)}.</span> Sem novo
+                    semáforo desde então; faça o semáforo de hoje para reabrir a sessão.
+                  </p>
+                </div>
+              ) : (
+                <p className="mb-3 text-sm text-ink-2">
+                  Antes da sessão: libere o treino de hoje em 30 segundos, com o porquê registrado.
+                </p>
+              )}
               {libsDoAluno.length > 0 && (
                 <ul className="mb-3 space-y-1.5">
                   {libsDoAluno.map((l) => (
                     <li key={l.id} className="flex items-center gap-2 text-sm">
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "h-2.5 w-2.5 shrink-0 rounded-full",
-                          l.resultado === "verde" && "bg-success",
-                          l.resultado === "amarelo" && "bg-warning",
-                          l.resultado === "vermelho" && "bg-danger-fill",
-                        )}
-                      />
-                      <span className="text-ink">
-                        {l.resultado === "verde"
-                          ? "Liberado"
-                          : l.resultado === "amarelo"
-                            ? "Liberado com ajuste"
-                            : "Não liberado"}
-                      </span>
+                      <span aria-hidden className={cn("h-2.5 w-2.5 shrink-0 rounded-full", COR_SEMAFORO[l.resultado].dot)} />
+                      <span className="text-ink">{rotuloResultado(l.resultado)}</span>
                       <span className="tabular ml-auto text-xs text-ink-3">{fmtData(l.data)}</span>
                     </li>
                   ))}
                 </ul>
               )}
-              <Link
-                to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`}
-                className={buttonClasses("secondary", "sm")}
-              >
-                <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
-              </Link>
+              <button onClick={() => setAba("semaforo")} className={buttonClasses("secondary", "sm")}>
+                <ShieldCheck className="h-4 w-4" /> Abrir o semáforo do aluno
+              </button>
             </Card>
           </div>
         </div>
@@ -920,6 +964,189 @@ function AppDoAlunoPanel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: 
       </Card>
 
       <FinanceiroCard aluno={aluno} onUpdate={onUpdate} />
+    </div>
+  );
+}
+
+/**
+ * Aba SEMÁFORO do aluno: o estado do dia (verde/amarelo/não liberado pendente), o
+ * checklist inline (sem sair para /semaforo), a régua da semana e o histórico
+ * completo. Reusa o `SemaforoLiberacao` já existente e a fonte única `estadoSemaforo`.
+ */
+const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+function SemaforoAba({
+  aluno,
+  planoAtivo,
+  estado,
+  historico,
+}: {
+  aluno: Aluno;
+  planoAtivo?: PlanoTreino;
+  estado: EstadoSemaforo;
+  /** liberações do aluno, da mais recente para a mais antiga */
+  historico: Liberacao[];
+}) {
+  const [fazendo, setFazendo] = React.useState(false);
+  const grupoSlug = aluno.grupoEspecial ?? "geral";
+
+  // Régua da semana (início na segunda, como o Painel): marca os dias com semáforo
+  // registrado nesta semana, com a cor do resultado (o mais recente do dia vence).
+  const agora = Date.now();
+  const diaSemana = (new Date(agora).getDay() + 6) % 7;
+  const inicioSemana = new Date(agora).setHours(0, 0, 0, 0) - diaSemana * DIA;
+  const fimSemana = inicioSemana + 7 * DIA;
+  const porDia: Record<number, "verde" | "amarelo" | "vermelho"> = {};
+  for (const l of historico) {
+    if (l.data >= inicioSemana && l.data < fimSemana) {
+      const idx = (new Date(l.data).getDay() + 6) % 7;
+      if (!(idx in porDia)) porDia[idx] = l.resultado; // historico é desc: 1º = mais recente do dia
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Estado atual + ação */}
+      <Card className="p-5 md:p-6">
+        <h2 className="mb-3 font-display text-lg font-bold text-ink">Semáforo de hoje</h2>
+        <FaixaEstado estado={estado} />
+        <div className="mt-4">
+          <button onClick={() => setFazendo((v) => !v)} className={buttonClasses("primary", "sm")}>
+            <ShieldCheck className="h-4 w-4" /> {estado.hoje ? "Refazer o semáforo de hoje" : "Fazer o semáforo de hoje"}
+          </button>
+          {estado.hoje && !fazendo && (
+            <p className="mt-2 text-xs text-ink-3">O semáforo de hoje já foi registrado; refazer substitui o registro do dia.</p>
+          )}
+        </div>
+      </Card>
+
+      {/* Checklist inline (o próprio componente é um Card, então fica como irmão). */}
+      {fazendo && (
+        <SemaforoLiberacao
+          grupoSlug={grupoSlug}
+          alunoId={aluno.id}
+          alunoNome={aluno.nome}
+          fase={aluno.faseJornada}
+          planoAtivoId={planoAtivo?.id}
+          onRegistrado={() => setFazendo(false)}
+        />
+      )}
+
+      {/* Régua da semana */}
+      <Card className="p-5 md:p-6">
+        <h2 className="mb-1 font-display text-lg font-bold text-ink">Dias da semana</h2>
+        <p className="mb-3 text-sm text-ink-2">
+          {planoAtivo
+            ? `Plano de ${planoAtivo.frequenciaSemanal}x por semana. Os pontos marcam os dias com semáforo registrado nesta semana.`
+            : "Monte o treino para ver os dias planejados. Por enquanto, os pontos marcam os dias com semáforo registrado nesta semana."}
+        </p>
+        <div className="grid grid-cols-7 gap-1.5">
+          {DIAS_SEMANA.map((lbl, i) => {
+            const r = porDia[i];
+            const atual = i === diaSemana;
+            return (
+              <div
+                key={lbl}
+                className={cn(
+                  "flex flex-col items-center gap-1.5 rounded-lg border bg-surface p-2",
+                  atual ? "border-primary" : "border-border",
+                )}
+              >
+                <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">{lbl}</span>
+                <span
+                  aria-hidden
+                  className={cn(
+                    "h-2.5 w-2.5 rounded-full",
+                    r ? COR_SEMAFORO[r].dot : "bg-surface-soft ring-1 ring-inset ring-border",
+                  )}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Histórico completo */}
+      <Card className="p-5 md:p-6">
+        <h2 className="mb-3 font-display text-lg font-bold text-ink">Histórico</h2>
+        {historico.length === 0 ? (
+          <p className="py-6 text-center text-sm text-ink-2">Nenhum semáforo registrado ainda.</p>
+        ) : (
+          <ol className="space-y-3">
+            {historico.map((l) => {
+              const c = COR_SEMAFORO[l.resultado];
+              return (
+                <li key={l.id} className="rounded-xl border border-border p-3">
+                  <div className="flex items-center gap-2">
+                    <span aria-hidden className={cn("h-2.5 w-2.5 shrink-0 rounded-full", c.dot)} />
+                    <span className="font-semibold text-ink">{rotuloResultado(l.resultado)}</span>
+                    <span className="tabular ml-auto text-xs text-ink-3">{fmtData(l.data)}</span>
+                  </div>
+                  {l.ajustes.length > 0 && (
+                    <ul className="mt-2 space-y-1.5 border-t border-border pt-2">
+                      {l.ajustes.map((a) => (
+                        <li key={a.pergunta} className="flex gap-2 text-sm text-ink-2">
+                          <span aria-hidden className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", c.dot)} />
+                          <span>
+                            <span className="font-semibold text-ink">{a.acao}</span>{" "}
+                            <span className="text-xs text-ink-3">({a.pergunta})</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+/** Faixa do estado atual do semáforo, com a cor do resultado. */
+function FaixaEstado({ estado }: { estado: EstadoSemaforo }) {
+  if (estado.vermelhoPendente) {
+    const c = COR_SEMAFORO.vermelho;
+    const l = estado.vermelhoPendente;
+    return (
+      <div className={cn("flex items-start gap-3 rounded-xl border p-4", c.bg, c.border)}>
+        <c.Icon className={cn("mt-0.5 h-6 w-6 shrink-0", c.text)} />
+        <div className="min-w-0">
+          <div className={cn("font-display text-lg font-bold", c.text)}>Não liberado</div>
+          <p className="text-sm text-ink-2">
+            Em {fmtData(l.data)} · {registradoHa(l.data)}. Sem novo semáforo desde então; a pendência
+            segue até um novo registro.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  if (estado.ultimo) {
+    const c = COR_SEMAFORO[estado.ultimo.resultado];
+    const l = estado.ultimo;
+    return (
+      <div className={cn("flex items-start gap-3 rounded-xl border p-4", c.bg, c.border)}>
+        <c.Icon className={cn("mt-0.5 h-6 w-6 shrink-0", c.text)} />
+        <div className="min-w-0">
+          <div className={cn("font-display text-lg font-bold", c.text)}>{rotuloResultado(l.resultado)}</div>
+          <p className="text-sm text-ink-2">
+            {fmtData(l.data)} · {registradoHa(l.data)}.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-border bg-surface-soft p-4">
+      <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-ink-3" />
+      <div className="min-w-0">
+        <div className="font-display text-lg font-bold text-ink">Sem semáforo registrado</div>
+        <p className="text-sm text-ink-2">
+          Faça o semáforo de hoje antes da sessão. Registrar por dia é opcional; a ausência não gera
+          alerta.
+        </p>
+      </div>
     </div>
   );
 }

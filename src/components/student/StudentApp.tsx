@@ -1,13 +1,14 @@
 import * as React from "react";
-import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse, CheckCircle2, Wallet } from "lucide-react";
+import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle } from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
 import { aplicarTema, PALETA_PADRAO } from "@/lib/theme/palettes";
 import { Logo } from "@/components/brand/Logo";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
+import { estadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { exercises } from "@/data/exercises";
-import type { Aluno, Avaliacao } from "@/data/alunos";
+import type { Aluno, Avaliacao, Liberacao } from "@/data/alunos";
 import type { Execucao } from "@/data/execucao";
 import { formatBRL, statusEfetivo, ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import {
@@ -58,6 +59,7 @@ export function StudentApp({
   marca,
   avaliacoes = [],
   execucoes = [],
+  liberacoes = [],
   onRegistrar,
   onDesfazer,
   preview = false,
@@ -69,6 +71,8 @@ export function StudentApp({
   avaliacoes?: Avaliacao[];
   /** o que o aluno já registrou (para marcar sessões feitas) */
   execucoes?: Execucao[];
+  /** liberações do aluno: alimentam o alerta de "treino em pausa" na aba Hoje */
+  liberacoes?: Liberacao[];
   /** registra uma execução; ausente = portal só-leitura */
   onRegistrar?: (e: Execucao) => void;
   /** desfaz uma execução registrada; ausente = sem desfazer */
@@ -143,7 +147,7 @@ export function StudentApp({
 
         <main className="flex-1 space-y-4 p-4 pb-24">
           {aba === "hoje" && (
-            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} preview={preview} />
+            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} liberacoes={liberacoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} preview={preview} />
           )}
           {aba === "semana" && <AbaPlano plano={plano} cor={cor} aluno={aluno} />}
           {aba === "evolucao" && (
@@ -190,6 +194,7 @@ function AbaHoje({
   cor,
   aluno,
   execucoes,
+  liberacoes,
   onRegistrar,
   onDesfazer,
   preview,
@@ -198,11 +203,24 @@ function AbaHoje({
   cor: string;
   aluno: Aluno;
   execucoes: Execucao[];
+  liberacoes: Liberacao[];
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
   preview?: boolean;
 }) {
-  if (!plano) return <SemPlano />;
+  // Alerta persistente de "treino em pausa": aparece antes de tudo quando o último
+  // semáforo do aluno foi "não liberado" e não houve um novo depois. Linguagem digna
+  // e não clínica; sai sozinho quando o profissional registra um novo semáforo.
+  const pausa = estadoSemaforo(aluno.id, liberacoes).vermelhoPendente;
+  const alerta = pausa ? <AlertaPausa desde={pausa.data} /> : null;
+
+  if (!plano)
+    return (
+      <div className="space-y-4">
+        {alerta}
+        <SemPlano />
+      </div>
+    );
   const semana = semanaAtual(plano);
   const meso = mesocicloAtual(plano);
   const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
@@ -220,6 +238,7 @@ function AbaHoje({
 
   return (
     <div className="space-y-4">
+      {alerta}
       <Card className="p-4">
         <div className="flex flex-wrap items-center gap-2">
           <Pill tone="primary">Semana {semana} de {plano.semanas}</Pill>
@@ -257,6 +276,24 @@ function AbaHoje({
           />
         ))
       )}
+    </div>
+  );
+}
+
+// Alerta de "treino em pausa" no topo da aba Hoje. Tom danger, texto digno e não
+// clínico: diz que a sessão está pausada por orientação do professor e o que fazer.
+function AlertaPausa({ desde }: { desde: number }) {
+  const dd = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(desde));
+  return (
+    <div className="flex items-start gap-3 rounded-card border border-danger/40 bg-danger-tint p-4">
+      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
+      <div className="min-w-0">
+        <div className="font-display font-bold text-danger">Treino em pausa</div>
+        <p className="mt-0.5 text-sm text-ink-2">
+          Seu treino está em pausa desde {dd} por orientação do seu professor. Fale com ele antes da
+          próxima sessão.
+        </p>
+      </div>
     </div>
   );
 }
