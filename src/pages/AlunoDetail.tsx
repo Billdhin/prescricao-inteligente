@@ -27,11 +27,12 @@ import {
   CalendarRange,
   CalendarCheck,
   Wallet,
+  MessageSquareQuote,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, TokenRotulado, Eyebrow } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, prescricaoAplicadaEm } from "@/lib/store";
 import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
-import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
+import { ExecucaoPanel, PseBadge } from "@/components/treino/ExecucaoPanel";
 import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
 import { PosturalCard } from "@/components/treino/PosturalCard";
 import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
@@ -49,6 +50,7 @@ import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Prescricao, Liberacao } from "@/data/alunos";
+import type { SessaoFeedback } from "@/data/execucao";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -230,7 +232,7 @@ function CtaProximoPasso({
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao } =
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao } =
     useAlunos();
   const navigate = useNavigate();
   const [editar, setEditar] = React.useState(false);
@@ -301,6 +303,9 @@ export function AlunoDetail() {
   const planosDoAluno = planos.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
   const planoAtivo = planosDoAluno.find((p) => p.status === "ativo");
   const execucoesDoAluno = execucoes.filter((e) => e.alunoId === id);
+  // Feedbacks de sessão do aluno (PSE + recado), do mais recente para o mais antigo:
+  // o painel de execução lista os últimos; a aba "App do aluno" mostra o resumo do topo.
+  const feedbacksDoAluno = sessaoFeedbacks.filter((f) => f.alunoId === id).sort((a, b) => b.concluidaEm - a.concluidaEm);
   // Fonte única do ciclo (avaliar, planejar, liberar, acompanhar, reavaliar).
   const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
   const passo = proximoPasso(aluno, ctx);
@@ -488,7 +493,12 @@ export function AlunoDetail() {
       {/* APP DO ALUNO: prévia, convite e financeiro num só lugar (como o aluno usa e paga). */}
       {aba === "conta" && (
         <div role="tabpanel" id="aba-painel-conta" aria-labelledby="aba-tab-conta">
-          <AppDoAlunoPanel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+          <AppDoAlunoPanel
+            aluno={aluno}
+            ultimoFeedback={feedbacksDoAluno[0]}
+            onVerExecucao={irParaExecucao}
+            onUpdate={(patch) => updateAluno(aluno.id, patch)}
+          />
         </div>
       )}
 
@@ -507,7 +517,13 @@ export function AlunoDetail() {
             <PlanoCard aluno={aluno} planos={planosDoAluno} podeTreino={podeTreino} onAvaliar={() => setAvaliar(true)} />
 
             <div id="execucao-card" className="scroll-mt-24">
-              <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
+              <ExecucaoPanel
+                plano={planoAtivo}
+                execucoes={execucoesDoAluno}
+                sessaoFeedbacks={feedbacksDoAluno}
+                liberacoes={liberacoes}
+                alunoId={aluno.id}
+              />
             </div>
 
           <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
@@ -940,7 +956,18 @@ function SugestaoNivel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Pa
  * dá acesso". A prévia é local e sempre funciona; o convite depende do Supabase
  * configurado (sem ele, explica o que falta, nunca promete acesso que não existe).
  */
-function AppDoAlunoPanel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Partial<Aluno>) => void }) {
+function AppDoAlunoPanel({
+  aluno,
+  ultimoFeedback,
+  onVerExecucao,
+  onUpdate,
+}: {
+  aluno: Aluno;
+  /** feedback mais recente do aluno (se houver): motivo para abrir o painel de execução */
+  ultimoFeedback?: SessaoFeedback;
+  onVerExecucao: () => void;
+  onUpdate: (patch: Partial<Aluno>) => void;
+}) {
   const configured = useCloudAuth((s) => s.configured);
   return (
     <div className="space-y-4">
@@ -955,6 +982,33 @@ function AppDoAlunoPanel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: 
           É esta a tela que abre no celular do aluno, com a sua marca. Ele registra as séries e a periodização se ajusta
           pela execução.
         </p>
+
+        {/* Resumo do último feedback: dá um motivo concreto para abrir o painel de
+            execução (onde o recado completo e o histórico de PSE aparecem). */}
+        {ultimoFeedback && (
+          <button
+            type="button"
+            onClick={onVerExecucao}
+            className="mt-4 flex w-full items-center gap-3 rounded-xl border border-border bg-surface-soft p-3 text-left transition-colors hover:border-primary/40 hover:bg-surface"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-tint text-primary">
+              <MessageSquareQuote className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Último feedback</span>
+                <span className="tabular text-xs text-ink-3">{fmtData(ultimoFeedback.concluidaEm)}</span>
+                {ultimoFeedback.pse != null && <PseBadge pse={ultimoFeedback.pse} />}
+              </div>
+              {ultimoFeedback.observacao ? (
+                <p className="mt-0.5 truncate text-sm text-ink">{ultimoFeedback.observacao}</p>
+              ) : (
+                <p className="mt-0.5 text-sm text-ink-3">Sessão concluída sem recado.</p>
+              )}
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
+          </button>
+        )}
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {/* 1) Prévia: render local, funciona mesmo sem conta online */}

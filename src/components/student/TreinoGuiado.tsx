@@ -13,8 +13,8 @@ import {
   RegistroBloco,
 } from "@/components/student/blocoRegistro";
 import { modalidadeImagem } from "@/data/modalities";
-import { getParam } from "@/data/monitoringParameters";
 import { refCurta } from "@/data/referencias";
+import { rotuloFaixaPse, bandaPse, TINT_PSE, RING_PSE } from "@/lib/pse";
 import { PONTOS_POR_REGISTRO } from "@/lib/gamificacao";
 import { agruparBlocosPorMetodo, getMetodo, type Sessao, type BlocoSessao } from "@/data/periodizacao";
 import type { Execucao, SessaoFeedback } from "@/data/execucao";
@@ -436,47 +436,3 @@ function NumeroCard({ valor, rotulo }: { valor: string; rotulo: string }) {
     </div>
   );
 }
-
-/* ------------------------------- PSE da sessão ---------------------------- */
-
-// A escala rotulada de p-rpe (0 Repouso a 10 Máximo), lida do parâmetro para não
-// inventar rótulo. Cada entrada vira uma faixa numérica + o rótulo base (antes do ":").
-const escalaPse = getParam("p-rpe")?.escala ?? [];
-
-function faixaNumerica(valor: string): [number, number] {
-  const nums = (valor.match(/\d+/g) ?? []).map(Number);
-  if (nums.length === 0) return [NaN, NaN];
-  return [nums[0], nums.length > 1 ? nums[1] : nums[0]];
-}
-
-// Rótulo da faixa de p-rpe de um valor (ex.: 6 -> "6-7" / "Intenso"). Usa hífen no
-// intervalo (nunca travessão) e o rótulo EXATO do parâmetro (Repouso/Muito leve/...).
-function rotuloFaixaPse(n: number): { faixa: string; rotulo: string } {
-  for (const e of escalaPse) {
-    const [a, b] = faixaNumerica(e.valor);
-    if (Number.isFinite(a) && n >= a && n <= b) {
-      return { faixa: a === b ? String(a) : `${a}-${b}`, rotulo: e.rotulo.split(":")[0].trim() };
-    }
-  }
-  return { faixa: String(n), rotulo: "" };
-}
-
-// Cor do chip por faixa: 0-3 success, 4-5 warning suave, 6-7 warning (com anel),
-// 8-10 danger. Segue os tokens (tint + texto da mesma família = par com AA garantido).
-function bandaPse(n: number): { familia: "success" | "warning" | "danger"; forte: boolean } {
-  if (n <= 3) return { familia: "success", forte: false };
-  if (n <= 5) return { familia: "warning", forte: false };
-  if (n <= 7) return { familia: "warning", forte: true };
-  return { familia: "danger", forte: false };
-}
-
-const TINT_PSE: Record<"success" | "warning" | "danger", string> = {
-  success: "bg-success-tint text-success",
-  warning: "bg-warning-tint text-warning",
-  danger: "bg-danger-tint text-danger",
-};
-const RING_PSE: Record<"success" | "warning" | "danger", string> = {
-  success: "ring-success/50",
-  warning: "ring-warning/50",
-  danger: "ring-danger/50",
-};

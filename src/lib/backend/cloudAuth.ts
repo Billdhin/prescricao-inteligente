@@ -30,7 +30,7 @@ const setDonoLocal = (id: string | null) => {
 /** Zera os stores locais (na troca/saida de conta), para o proximo usuario nao
  *  ver os dados do anterior. */
 function limparStoresLocais() {
-  useAlunos.setState({ alunos: [], avaliacoes: [], prescricoes: [], planos: [], liberacoes: [], execucoes: [], posturais: [] });
+  useAlunos.setState({ alunos: [], avaliacoes: [], prescricoes: [], planos: [], liberacoes: [], execucoes: [], sessaoFeedbacks: [], posturais: [] });
   useUser.setState({ name: "", cref: "", email: "", telefone: "", empresa: "", site: "", fotoDataUrl: "", logoDataUrl: "", corPrimaria: "" });
 }
 
@@ -86,11 +86,12 @@ let hydratedFor: string | null = null;
  *  execucoes) e a marca do profissional dele. O shell do aluno renderiza a partir
  *  destes stores. */
 async function hydrateAluno(professionalId: string | null) {
-  const [alunos, planos, avaliacoes, execucoes] = await Promise.all([
+  const [alunos, planos, avaliacoes, execucoes, sessaoFeedbacks] = await Promise.all([
     repo.listarAlunos(),
     repo.listarPlanos(),
     repo.listarAvaliacoes(),
     repo.listarExecucoes(),
+    repo.listarSessaoFeedbacks(),
   ]);
   // Liberações do próprio aluno: alimentam o alerta de "treino em pausa" no app.
   // A leitura depende da policy `liberacoes_aluno_read` (migração 0006). Enquanto
@@ -100,7 +101,7 @@ async function hydrateAluno(professionalId: string | null) {
   const marca = professionalId
     ? await repo.carregarMarcaProfissional(professionalId).catch(() => null)
     : null;
-  useAlunos.setState({ alunos, planos, avaliacoes, execucoes, prescricoes: [], liberacoes, posturais: [] });
+  useAlunos.setState({ alunos, planos, avaliacoes, execucoes, sessaoFeedbacks, prescricoes: [], liberacoes, posturais: [] });
   useCloudAuth.setState({ role: "aluno", alunoId: alunos[0]?.id ?? null, professionalId, marca });
 }
 
@@ -120,13 +121,14 @@ async function hydrate(userId: string) {
     }
     useCloudAuth.setState({ role: "profissional", alunoId: null, professionalId: null, marca: null });
 
-    const [alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes] = await Promise.all([
+    const [alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks] = await Promise.all([
       repo.listarAlunos(),
       repo.listarAvaliacoes(),
       repo.listarPrescricoes(),
       repo.listarPlanos(),
       repo.listarLiberacoes(),
       repo.listarExecucoes(),
+      repo.listarSessaoFeedbacks(),
     ]);
 
     const nuvemVazia = alunos.length === 0;
@@ -158,7 +160,7 @@ async function hydrate(userId: string) {
       // mantém o store local como está (já é a fonte que acabou de subir)
     } else if (!localEhDesteUsuario) {
       // O local é de OUTRA conta neste aparelho: não sobe nada; usa só a nuvem.
-      useAlunos.setState({ alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes });
+      useAlunos.setState({ alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks });
     } else {
       // A nuvem manda, mas RECONCILIA: preserva o que só existe no local (ex.: o
       // que falhou de subir antes) e re-sobe esses registros, em vez de apagá-los.
@@ -174,6 +176,7 @@ async function hydrate(userId: string) {
         planos: mpl.merged,
         liberacoes: ml.merged,
         execucoes,
+        sessaoFeedbacks,
       });
       for (const a of ma.soLocais) await repo.salvarAluno(a).catch(() => {});
       for (const av of mav.soLocais) await repo.salvarAvaliacao(av).catch(() => {});
