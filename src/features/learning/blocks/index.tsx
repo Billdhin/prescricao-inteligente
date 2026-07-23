@@ -22,7 +22,7 @@ import {
   Gauge,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, Eyebrow } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
 import { referenceSourceLabel, lessonTypeMeta } from "../constants";
@@ -763,7 +763,7 @@ function DecisionTree({ title, content }: { title?: string; content: { root: str
         <div className="grid gap-2 sm:grid-cols-2">
           {content.branches.map((b, i) => (
             <div key={i} className="rounded-xl border border-border p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-ink-3">Se</div>
+              <Eyebrow>Se</Eyebrow>
               <div className="text-sm font-semibold text-ink">{b.condition}</div>
               <div className="mt-1 flex items-start gap-1 text-sm text-ink-2">
                 <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-analysis" /> {b.outcome}

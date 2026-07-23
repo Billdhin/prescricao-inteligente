@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { X, GraduationCap, CheckCircle2, CalendarRange } from "lucide-react";
-import { buttonClasses, Card } from "@/components/ui/primitives";
+import { buttonClasses, Card, Eyebrow } from "@/components/ui/primitives";
 import { useDialog } from "@/lib/useDialog";
 import { useAlunos } from "@/lib/store";
 import { toast } from "@/lib/toast";
@@ -116,7 +116,7 @@ export function ApplyDrawer({
           <>
             <div className="min-h-0 flex-1 space-y-4 overflow-auto p-5">
               <div className="rounded-xl bg-surface-soft p-3 text-sm">
-                <div className="text-xs font-semibold uppercase tracking-wide text-ink-3">Conteúdo</div>
+                <Eyebrow>Conteúdo</Eyebrow>
                 <div className="font-semibold text-ink">{lessonTitle}</div>
               </div>
 

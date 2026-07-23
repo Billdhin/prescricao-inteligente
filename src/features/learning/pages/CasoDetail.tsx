@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ClipboardList, ListChecks, CheckCircle2, Target, BookOpen } from "lucide-react";
-import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, Eyebrow } from "@/components/ui/primitives";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
@@ -154,10 +154,10 @@ function StepCard({ step, chosen, onChoose }: { step: CaseStep; chosen?: string;
 
   return (
     <Card className="p-5">
-      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-3">
+      <Eyebrow className="mb-2 flex items-center gap-2">
         <span className="grid h-6 w-6 place-items-center rounded-lg bg-surface-soft text-ink-2">{icon}</span>
         {step.type === "decisao" ? "Decisão" : step.type === "consequencia" ? "Consequência" : step.type === "feedback" ? "Síntese" : step.type === "dados" ? "Dados" : "Contexto"}
-      </div>
+      </Eyebrow>
       <h2 className="font-display text-lg font-bold text-ink">{step.title}</h2>
       <p className="mt-1 text-sm text-ink-2">{step.content}</p>
 

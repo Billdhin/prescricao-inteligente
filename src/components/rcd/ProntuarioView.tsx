@@ -55,7 +55,7 @@ export function ProntuarioView({
         role="dialog"
         aria-modal="true"
         aria-label={`Prontuário de decisão: ${titulo}`}
-        className="flex max-h-[88vh] w-full max-w-2xl flex-col rounded-card bg-surface shadow-elevated outline-none"
+        className="flex max-h-modal w-full max-w-2xl flex-col rounded-card bg-surface shadow-overlay outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho */}

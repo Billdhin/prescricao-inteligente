@@ -17,7 +17,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, Eyebrow } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import {
   getFaixa,
@@ -131,7 +131,9 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
             </linearGradient>
           </defs>
 
-          {/* faixas de fase: fundo alternado (inclui a fileira de ícones no topo) + rótulo ao pé */}
+          {/* faixas de fase (identidade de fase, Onda 4): tint alternado + rótulo da
+              fase NO TOPO + divisória sólida de 1px na fronteira. O tint sozinho é
+              ~1.16:1 e não lê; quem marca onde uma fase começa é a divisória e o rótulo. */}
           {g.fases.map((f) => (
             <g key={f.indice}>
               <rect
@@ -143,8 +145,12 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
                 opacity={0.5}
               />
               {f.indice > 0 && (
-                <line x1={f.x0} y1={g.bandTop} x2={f.x0} y2={g.faixaBottom} stroke="var(--border)" strokeWidth={1} strokeDasharray="3 3" />
+                <line x1={f.x0} y1={g.bandTop} x2={f.x0} y2={g.faixaBottom} stroke="var(--border)" strokeWidth={1} />
               )}
+              {/* rótulo da fase no topo da faixa (marca onde cada fase começa) */}
+              <text x={f.cx} y={10} textAnchor="middle" className="fill-ink" style={{ fontSize: 10, fontWeight: 700 }}>
+                {f.nome}
+              </text>
               {/* ícones do que se treina mais na fase, no topo */}
               {posicoesFocos(f, g.iconRowY).map((p, i) => (
                 <g key={i} transform={p.transform} stroke="var(--ink-2)" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -157,10 +163,8 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
                   ))}
                 </g>
               ))}
-              <text x={f.cx} y={g.faixaTop + 12} textAnchor="middle" className="fill-ink" style={{ fontSize: 11, fontWeight: 700 }}>
-                {f.nome}
-              </text>
-              <text x={f.cx} y={g.faixaTop + 26} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 10 }}>
+              {/* ao pé: só o intervalo de semanas (o nome da fase subiu para o topo) */}
+              <text x={f.cx} y={g.faixaTop + 12} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 10 }}>
                 {f.spanSemanas}
                 {f.temDescarga ? " · descarga" : ""}
               </text>
@@ -242,14 +246,16 @@ export function MesocicloCard({
   const mostrarReavaliar =
     Boolean(reavaliarHref) && meso.reavaliacao && semanaCorrente != null && semanaCorrente >= meso.semanaFim - 1;
 
+  // Identidade de fase (Onda 4): filete petróleo no topo do header + disco de fase
+  // com gradiente da marca. Cada bloco lê como uma etapa do ciclo.
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-t-2 border-t-primary">
       <button
         onClick={() => setAberto((v) => !v)}
         aria-expanded={aberto}
         className="flex w-full items-start gap-3 p-4 text-left hover:bg-surface-soft"
       >
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-primary text-sm font-bold text-white">{indice + 1}</span>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">{indice + 1}</span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-display font-bold text-ink">{rotuloMeso(meso, indice)}</span>
@@ -270,7 +276,7 @@ export function MesocicloCard({
         <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
           {/* (1) Semanas primeiro: é o que decide o que fazer AGORA para o professor com pressa. */}
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">Semanas</p>
+            <Eyebrow className="mb-1.5">Semanas</Eyebrow>
             <div className="space-y-2">
               {meso.microciclos.map((w) => (
                 <MicrocicloRow
@@ -297,7 +303,7 @@ export function MesocicloCard({
 
           {/* (3) O que treinar: identidade da fase (capacidades e modalidades). */}
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">O que treinar</p>
+            <Eyebrow className="mb-1.5">O que treinar</Eyebrow>
             <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
               <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
               <ListaChips
@@ -428,7 +434,7 @@ function MicrocicloRow({
         <div className="space-y-2 border-t border-border p-2.5">
           {editavel && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">Tipo da semana</span>
+              <Eyebrow>Tipo da semana</Eyebrow>
               {(["carga", "deload", "teste"] as TipoMicrociclo[]).map((t) => (
                 <button
                   key={t}
@@ -979,7 +985,7 @@ function SeletorExercicioSheet({
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-t-card bg-surface shadow-elevated outline-none sm:rounded-card"
+        className="flex max-h-modal w-full max-w-md flex-col overflow-hidden rounded-t-card bg-surface shadow-overlay outline-none sm:rounded-card"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-2 border-b border-border p-4">
@@ -1095,7 +1101,7 @@ export function ListaChips({ titulo, itens }: { titulo: string; itens: string[] 
   if (!itens.length) return null;
   return (
     <div>
-      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{titulo}</p>
+      <Eyebrow className="mb-1">{titulo}</Eyebrow>
       {/* Borda própria: chip sobre fundo soft/branco sem cápsula sumia na
           paleta pele clínica. Conserta MesocicloCard e ModeloExplicacao de uma vez. */}
       <div className="flex flex-wrap gap-1.5">
@@ -1128,7 +1134,7 @@ export function CriterioLista({
   if (!editavel) {
     return (
       <div>
-        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{titulo}</p>
+        <Eyebrow className="mb-1">{titulo}</Eyebrow>
         <ul className="space-y-1">
           {itens.map((it, i) => (
             <li key={i} className="flex items-start gap-2 text-sm text-ink-2">
@@ -1143,7 +1149,7 @@ export function CriterioLista({
 
   return (
     <div>
-      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">{titulo}</p>
+      <Eyebrow className="mb-1">{titulo}</Eyebrow>
       <ul className="space-y-1">
         {itens.map((it, i) => (
           <li key={i} className="flex items-start gap-1.5">

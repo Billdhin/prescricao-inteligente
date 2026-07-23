@@ -234,7 +234,7 @@ function PosturalModal({ aluno, onClose, onSaved }: { aluno: Aluno; onClose: () 
         role="dialog"
         aria-modal="true"
         aria-label="Nova avaliação postural"
-        className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
+        className="max-h-modal w-full max-w-2xl overflow-auto rounded-card bg-surface p-5 shadow-overlay outline-none md:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">

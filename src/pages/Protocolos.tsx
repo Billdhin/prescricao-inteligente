@@ -299,7 +299,7 @@ function BaseCientificaModal({ p, onClose }: { p: Protocolo; onClose: () => void
         role="dialog"
         aria-modal="true"
         aria-label={`Base científica: ${p.titulo}`}
-        className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-card bg-surface shadow-elevated outline-none"
+        className="flex max-h-modal w-full max-w-lg flex-col overflow-hidden rounded-card bg-surface shadow-overlay outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2 border-b border-border p-5">
@@ -444,7 +444,7 @@ function AplicarProtocoloModal({ modelo, onClose }: { modelo: Protocolo; onClose
         role="dialog"
         aria-modal="true"
         aria-label={`Aplicar ${modelo.titulo}`}
-        className="max-h-[85vh] w-full max-w-md overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
+        className="max-h-modal w-full max-w-md overflow-auto rounded-card bg-surface p-5 shadow-overlay outline-none md:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-1 flex items-start justify-between gap-2">

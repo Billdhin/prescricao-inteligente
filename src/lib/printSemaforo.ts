@@ -6,7 +6,7 @@
 
 import type { ChecklistSemaforo, ResultadoSemaforo } from "@/data/semaforo";
 import { getReferencia } from "@/data/referencias";
-import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
+import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -55,9 +55,7 @@ export function printSemaforo(
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #1b4b66; padding-bottom: 12px; }
-    .brand .prof { font-size: 18px; font-weight: 800; color: #1b4b66; }
-    .brand .sub { font-size: 12px; color: #55606f; }
+    ${cabecalhoCss("#1b4b66")}
     h1 { font-size: 20px; margin: 18px 0 2px; }
     .meta { font-size: 13px; color: #55606f; margin-bottom: 14px; }
     .resultado { border-radius: 12px; padding: 14px 16px; margin: 14px 0; background: ${cor.bg}; border: 1px solid ${cor.hex}44; }
@@ -80,21 +78,15 @@ export function printSemaforo(
     @media print { .page { padding: 0; } @page { margin: 14mm; } }
   </style></head><body>
   <div class="page">
-    <div class="brand">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="" style="height:38px;max-width:130px;object-fit:contain" />` : ""}
-        <div>
-          <div class="prof">${esc(profissional || "Motor RCD · Raciocínio Clínico Documentado")}</div>
-          ${cref ? `<div class="sub" style="font-weight:700;color:#1b4b66">CREF ${esc(cref)}</div>` : ""}
-          <div class="sub">Semáforo de Liberação: gate pré-sessão${profissional ? " · Motor RCD" : ""}</div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        ${carimboRcdPdf("#1b4b66")}
-        <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date())}</div>
-        ${espinhaCuidadoPdf(2, "#1b4b66")}
-      </div>
-    </div>
+    ${cabecalhoHtml({
+      logoDataUrl,
+      logoAltura: 38,
+      profissional: profissional || "Motor RCD · Raciocínio Clínico Documentado",
+      cref,
+      docTipo: `Semáforo de Liberação: gate pré-sessão${profissional ? " · Motor RCD" : ""}`,
+      no: 2,
+      direita: `<div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date())}</div>`,
+    })}
 
     <h1>${esc(grupoNome)}${alunoNome ? `: ${esc(alunoNome)}` : ""}</h1>
     <div class="meta">Checklist de segurança pré-sessão respondido pelo profissional.</div>

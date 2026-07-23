@@ -126,7 +126,7 @@ export function SemaforoLiberacao({
           condição vêm junto: eram o único conteúdo de segurança que existia e ficavam
           presos na tela de estudo. */}
       {usaChecklistGeral && grupo && (
-        <div className="mb-4 rounded-xl border border-[#b45309]/40 bg-warning-tint p-3.5">
+        <div className="mb-4 rounded-xl border border-[#b45309]/40 bg-warning-tint p-4">
           <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#b45309]">
             <AlertTriangle className="h-3.5 w-3.5" /> Sem checklist específico para {grupo.nome}
           </div>

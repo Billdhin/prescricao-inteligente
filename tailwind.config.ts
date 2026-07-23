@@ -42,6 +42,10 @@ export default {
       boxShadow: {
         soft: "0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.04)",
         elevated: "0 8px 24px rgba(16,24,40,.08)",
+        // lift = elevação de hover de card clicável (um passo acima de elevated);
+        // overlay = flutuação profunda para modais/dialogs sobre o overlay escuro.
+        lift: "0 12px 28px rgba(16,24,40,.12), 0 2px 6px rgba(16,24,40,.06)",
+        overlay: "0 24px 60px rgba(16,24,40,.22), 0 6px 16px rgba(16,24,40,.10)",
       },
       keyframes: {
         "fade-up": {

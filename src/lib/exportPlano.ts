@@ -8,7 +8,7 @@ import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { bibliografia } from "@/data/referencias";
 import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
-import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
+import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -173,14 +173,17 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
           `</g>`,
       )
       .join("");
+  // Identidade de fase (Onda 4): tint alternado + rótulo da fase no TOPO da faixa
+  // + divisória sólida de 1px na fronteira. O tint sozinho é ~1.16:1 e não lê;
+  // quem marca a fase é a divisória e o rótulo. Paridade byte-a-byte com a tela.
   const fases = g.fases
     .map(
       (f) => `
       ${f.indice % 2 === 0 ? `<rect x="${f.x0.toFixed(1)}" y="${g.bandTop}" width="${(f.x1 - f.x0).toFixed(1)}" height="${(g.faixaBottom - g.bandTop).toFixed(1)}" fill="#f2f0ea" opacity="0.6" />` : ""}
-      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.bandTop}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="#e6e2d8" stroke-width="1" stroke-dasharray="3 3" />` : ""}
+      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.bandTop}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="#e6e2d8" stroke-width="1" />` : ""}
+      <text x="${f.cx.toFixed(1)}" y="10" text-anchor="middle" fill="#1e293b" font-size="10" font-weight="700">${esc(f.nome)}</text>
       ${iconesFase(f)}
-      <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="#1e293b" font-size="11" font-weight="700">${esc(f.nome)}</text>
-      <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 26).toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`,
+      <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`,
     )
     .join("");
   return `
@@ -243,9 +246,7 @@ export function exportPlanoPDF({
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid ${corMarca}; padding-bottom: 12px; }
-    .brand .prof { font-size: 20px; font-weight: 800; color: ${corMarca}; }
-    .brand .sub { font-size: 12px; color: #64748b; }
+    ${cabecalhoCss(corMarca)}
     h1 { font-size: 22px; margin: 20px 0 2px; }
     .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
     .aluno { background: #f2f0ea; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
@@ -293,23 +294,20 @@ export function exportPlanoPDF({
     @media print { .page { padding: 0; } @page { margin: 16mm; } }
   </style></head><body>
   <div class="page">
-    <div class="brand">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${marca?.logoDataUrl ? `<img src="${marca.logoDataUrl}" alt="" style="height:40px;max-width:140px;object-fit:contain" />` : ""}
-        <div><div class="prof">${esc(profissional)}</div>${
-          cref ? `<div class="sub" style="font-weight:700;color:${corMarca}">CREF ${esc(cref)}</div>` : ""
-        }${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}<div class="sub">Plano de treino</div></div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        ${carimboRcdPdf(corMarca)}
-        <div class="sub" style="text-align:right">${fmt(plano.data)}${
-          marca && (marca.site || marca.email || marca.telefone)
-            ? `<br>${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}`
-            : ""
-        }</div>
-        ${espinhaCuidadoPdf(1, corMarca)}
-      </div>
-    </div>
+    ${cabecalhoHtml({
+      cor: corMarca,
+      logoDataUrl: marca?.logoDataUrl,
+      profissional,
+      cref,
+      empresa: marca?.empresa,
+      docTipo: "Plano de treino",
+      no: 1,
+      direita: `<div class="sub">${fmt(plano.data)}${
+        marca && (marca.site || marca.email || marca.telefone)
+          ? `<br>${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}`
+          : ""
+      }</div>`,
+    })}
 
     <h1>${esc(tituloDoc)}</h1>
     <div class="meta">${plano.semanas} semanas · ${plano.frequenciaSemanal}x por semana · ${esc(modelo.nome)}</div>

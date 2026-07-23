@@ -29,10 +29,25 @@ const cardTones: Record<CardTone, string> = {
 export function Card({
   variant = "base",
   tone,
+  interactive,
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & { variant?: CardVariant; tone?: CardTone }) {
-  return <div className={cn("rounded-card", tone ? cardTones[tone] : cardVariants[variant], className)} {...props} />;
+}: React.HTMLAttributes<HTMLDivElement> & { variant?: CardVariant; tone?: CardTone; interactive?: boolean }) {
+  // `interactive`: liga a affordance de card clicável (cursor + hover-lift). A
+  // sombra é BÔNUS de desktop; o sinal primário do touch continua sendo o
+  // chevron/seta no conteúdo. O lift no hover só desloca no motion-safe.
+  return (
+    <div
+      className={cn(
+        "rounded-card",
+        tone ? cardTones[tone] : cardVariants[variant],
+        interactive &&
+          "cursor-pointer transition-[box-shadow,transform] duration-150 ease-out hover:shadow-lift motion-safe:hover:-translate-y-0.5",
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 /* -------------------------------- Button --------------------------------- */

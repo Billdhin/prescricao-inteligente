@@ -79,6 +79,22 @@ main .grid > * {
   background-image: linear-gradient(135deg, #c2542e 0%, #a0421f 100%);
 }
 
+/* Altura de modal/dialog em dvh (viewport dinâmica: desconta a barra do
+   navegador mobile, que o vh cru ignora e por isso corta o rodapé do modal).
+   Duas declarações = fallback: browsers sem dvh ficam no vh. Token único, nunca
+   vh cru espalhado pelos call sites. `.max-h-dropdown` é a versão menor (menus,
+   busca) que não deve tomar a tela toda. */
+@layer utilities {
+  .max-h-modal {
+    max-height: 88vh;
+    max-height: 88dvh;
+  }
+  .max-h-dropdown {
+    max-height: 70vh;
+    max-height: 70dvh;
+  }
+}
+
 /* Campo de formulário reutilizável (inputs, selects, textarea) */
 @layer components {
   .input {

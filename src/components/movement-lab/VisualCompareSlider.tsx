@@ -192,7 +192,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
         role="dialog"
         aria-modal="true"
         aria-label={hotspot.titulo}
-        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-card bg-surface shadow-elevated outline-none"
+        className="flex max-h-modal w-full max-w-md flex-col overflow-hidden rounded-card bg-surface shadow-overlay outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho */}

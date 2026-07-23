@@ -319,7 +319,7 @@ export function GlobalSearch() {
           id="global-search-list"
           ref={listRef}
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 max-h-[70vh] overflow-y-auto rounded-card border border-border bg-surface p-2 shadow-elevated"
+          className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 max-h-dropdown overflow-y-auto rounded-card border border-border bg-surface p-2 shadow-elevated"
         >
           {results.length === 0 ? (
             <div className="px-3 py-6 text-center text-sm text-ink-2">

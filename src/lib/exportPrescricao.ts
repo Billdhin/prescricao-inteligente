@@ -5,7 +5,7 @@ import { getModalidade } from "@/data/modalities";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
+import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -102,9 +102,7 @@ export function exportPrescricaoPDF({
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid ${cor}; padding-bottom: 12px; }
-    .brand .prof { font-size: 20px; font-weight: 800; color: ${cor}; }
-    .brand .sub { font-size: 12px; color: #64748b; }
+    ${cabecalhoCss(cor)}
     h1 { font-size: 22px; margin: 20px 0 2px; }
     .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
     .aluno { background: #f4f6fb; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
@@ -127,23 +125,20 @@ export function exportPrescricaoPDF({
     @media print { .page { padding: 0; } @page { margin: 16mm; } }
   </style></head><body>
   <div class="page">
-    <div class="brand">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${marca?.logoDataUrl ? `<img src="${marca.logoDataUrl}" alt="" style="height:40px;max-width:140px;object-fit:contain" />` : ""}
-        <div><div class="prof">${esc(profissional)}</div>${
-          cref ? `<div class="sub" style="font-weight:700;color:${cor}">CREF ${esc(cref)}</div>` : ""
-        }${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}<div class="sub">Prescrição de exercício</div></div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        ${carimboRcdPdf(cor)}
-        <div class="sub" style="text-align:right">${fmt(presc.data)}${
-          marca && (marca.site || marca.email || marca.telefone)
-            ? `<br>${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}`
-            : ""
-        }</div>
-        ${espinhaCuidadoPdf(1, cor)}
-      </div>
-    </div>
+    ${cabecalhoHtml({
+      cor,
+      logoDataUrl: marca?.logoDataUrl,
+      profissional,
+      cref,
+      empresa: marca?.empresa,
+      docTipo: "Prescrição de exercício",
+      no: 1,
+      direita: `<div class="sub">${fmt(presc.data)}${
+        marca && (marca.site || marca.email || marca.telefone)
+          ? `<br>${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}`
+          : ""
+      }</div>`,
+    })}
 
     <h1>${esc(tituloDoc)}</h1>
     <div class="meta">Prescrição individualizada · gerada com raciocínio</div>

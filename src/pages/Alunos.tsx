@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Users, UserPlus, Search, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Users, UserPlus, Search, AlertTriangle, CheckCircle2, Stethoscope } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader } from "@/components/ui/primitives";
 import { useAlunos } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -151,7 +151,7 @@ function AlunoRow({ aluno, passo, planoAtivo }: { aluno: Aluno; passo: ProximoPa
   const reavTexto = reav ? textoReav(reav.em) : null;
 
   return (
-    <Card variant="base" className="group flex items-center gap-4 p-4 transition-shadow hover:shadow-elevated">
+    <Card variant="base" interactive className="group flex items-center gap-4 p-4">
       <Link to={`/alunos/${aluno.id}`} className="flex min-w-0 flex-1 items-center gap-4 outline-none">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-card gradient-brand font-display font-bold text-white">
           {aluno.iniciais}
@@ -161,24 +161,33 @@ function AlunoRow({ aluno, passo, planoAtivo }: { aluno: Aluno; passo: ProximoPa
             <p className="truncate font-display font-semibold text-ink group-hover:text-primary">{aluno.nome}</p>
             {aluno.status !== "ativo" && <Pill tone="neutral">Saiu</Pill>}
           </div>
-          {/* Dieta de peso (piloto só nesta tela): o nome é a âncora e fica semibold;
-              os metadados objetivo/nível descem a font-medium para não competir. */}
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <Pill tone="primary" className="font-medium">{aluno.objetivo}</Pill>
-            <Pill tone="neutral" className="font-medium">{aluno.nivel}</Pill>
-            {grupo && <Pill tone="analysis">{grupo.nome}</Pill>}
-            {restr.length > 0 && (
-              <Pill
-                tone="warning"
-                icon={<AlertTriangle className="h-3 w-3" />}
-                className="cursor-default"
-              >
-                <span title={restr.map((r) => rotuloRestricao(r.tag)).join(", ")}>
-                  {restr.length} {restr.length === 1 ? "restrição" : "restrições"}
-                </span>
-              </Pill>
-            )}
-          </div>
+          {/* Taxonomia de pill: o nome é a âncora (semibold, dieta de peso). Metadado
+              não acionável (objetivo, nível) veste TEXTO simples, nunca pill. Só o que
+              é clínico (condição = analysis + ícone) ou alerta (restrição = warning)
+              ganha pill. */}
+          <p className="mt-1 text-sm text-ink-2">
+            {aluno.objetivo} · {aluno.nivel}
+          </p>
+          {(grupo || restr.length > 0) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {grupo && (
+                <Pill tone="analysis" icon={<Stethoscope className="h-3 w-3" />}>
+                  {grupo.nome}
+                </Pill>
+              )}
+              {restr.length > 0 && (
+                <Pill
+                  tone="warning"
+                  icon={<AlertTriangle className="h-3 w-3" />}
+                  className="cursor-default"
+                >
+                  <span title={restr.map((r) => rotuloRestricao(r.tag)).join(", ")}>
+                    {restr.length} {restr.length === 1 ? "restrição" : "restrições"}
+                  </span>
+                </Pill>
+              )}
+            </div>
+          )}
           <p className="tabular mt-1 truncate text-xs text-ink-3">
             {aluno.ultimaAvaliacaoEm ? `Última avaliação ${tempoDesde(aluno.ultimaAvaliacaoEm).texto}` : "Sem avaliação"}
             {reavTexto ? ` · próxima reavaliação ${reavTexto}` : ""}

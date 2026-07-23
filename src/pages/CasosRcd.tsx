@@ -48,7 +48,7 @@ export function CasosRcd() {
             const grupo = c.grupoSlug ? getSpecialGroup(c.grupoSlug) : undefined;
             return (
               <Link key={c.slug} to={`/casos-rcd/${c.slug}`} className="group">
-                <Card className="h-full p-5 transition-shadow group-hover:shadow-elevated">
+                <Card className="h-full p-5 transition-shadow group-hover:shadow-lift">
                   <div className="mb-2 flex flex-wrap gap-1.5">
                     {grupo && <Pill tone="warning">{grupo.nome}</Pill>}
                     <Pill tone="neutral">{c.answers.nivel}</Pill>

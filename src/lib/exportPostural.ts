@@ -8,7 +8,7 @@ import {
   ehReferencia,
   type VistaPostural,
 } from "@/data/postural";
-import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
+import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
@@ -69,9 +69,7 @@ export function exportPosturalPDF({
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid ${cor}; padding-bottom: 12px; }
-    .brand .prof { font-size: 20px; font-weight: 800; color: ${cor}; }
-    .brand .sub { font-size: 12px; color: #64748b; }
+    ${cabecalhoCss(cor)}
     h1 { font-size: 22px; margin: 20px 0 2px; }
     .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
     .fotos { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0 20px; }
@@ -80,17 +78,16 @@ export function exportPosturalPDF({
     @media print { .page { padding: 0; } @page { margin: 16mm; } }
   </style></head><body>
   <div class="page">
-    <div class="brand">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${marca?.logoDataUrl ? `<img src="${marca.logoDataUrl}" alt="" style="height:40px;max-width:140px;object-fit:contain" />` : ""}
-        <div><div class="prof">${esc(profissional)}</div>${cref ? `<div class="sub" style="font-weight:700;color:${cor}">CREF ${esc(cref)}</div>` : ""}${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}<div class="sub">Rastreio postural</div></div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        ${carimboRcdPdf(cor)}
-        <div class="sub" style="text-align:right">${fmt(avaliacao.data)}</div>
-        ${espinhaCuidadoPdf(0, cor)}
-      </div>
-    </div>
+    ${cabecalhoHtml({
+      cor,
+      logoDataUrl: marca?.logoDataUrl,
+      profissional,
+      cref,
+      empresa: marca?.empresa,
+      docTipo: "Rastreio postural",
+      no: 0,
+      direita: `<div class="sub">${fmt(avaliacao.data)}</div>`,
+    })}
 
     <h1>Rastreio postural de ${esc(aluno.nome)}</h1>
     <div class="meta">Rastreio visual assistido. Não substitui exame nem medição instrumental.</div>

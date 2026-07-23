@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { Library as LibraryIcon, Search, ArrowRight } from "lucide-react";
-import { Card, Pill, SectionHeader } from "@/components/ui/primitives";
+import { Card, Pill, SectionHeader, Eyebrow } from "@/components/ui/primitives";
 import { Accordion } from "@/components/ui/disclosure";
 import { biblioteca, bibliotecaCategorias } from "@/data/library";
 import { ComparadorDefinicoes } from "@/components/library/ComparadorDefinicoes";
@@ -84,7 +84,7 @@ export function Library({ embedded = false }: { embedded?: boolean } = {}) {
                 <p className="text-sm text-ink-2">{e.detalhe}</p>
                 {e.formula && (
                   <div className="rounded-lg border border-border bg-surface-soft px-3 py-2 text-sm">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">Fórmula</span>
+                    <Eyebrow>Fórmula</Eyebrow>
                     <div className="font-mono text-[13px] text-ink">{e.formula}</div>
                   </div>
                 )}

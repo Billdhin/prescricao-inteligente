@@ -168,7 +168,7 @@ export function AvaliacaoModal({
         role="dialog"
         aria-modal="true"
         aria-label="Registrar avaliação"
-        className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-card bg-surface shadow-elevated outline-none"
+        className="flex max-h-modal w-full max-w-xl flex-col overflow-hidden rounded-card bg-surface shadow-overlay outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho */}

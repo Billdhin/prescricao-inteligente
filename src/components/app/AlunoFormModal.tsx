@@ -76,7 +76,7 @@ export function AlunoFormModal({
         role="dialog"
         aria-modal="true"
         aria-label={editando ? "Editar aluno" : "Cadastrar aluno"}
-        className="max-h-[88vh] w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
+        className="max-h-modal w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-overlay outline-none md:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">

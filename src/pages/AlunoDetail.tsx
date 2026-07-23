@@ -27,7 +27,7 @@ import {
   CalendarCheck,
   Wallet,
 } from "lucide-react";
-import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, TokenRotulado } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, TokenRotulado, Eyebrow } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, prescricaoAplicadaEm } from "@/lib/store";
 import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
 import { ExecucaoPanel } from "@/components/treino/ExecucaoPanel";
@@ -193,7 +193,7 @@ function CtaProximoPasso({
   if (!eyebrow) return <>{botao}</>;
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">Próximo passo</span>
+      <Eyebrow>Próximo passo</Eyebrow>
       {botao}
     </div>
   );

@@ -1784,7 +1784,7 @@ function JustifyDialog({ rec, onClose }: { rec: Recommendation; onClose: () => v
         role="dialog"
         aria-modal="true"
         aria-label={`Justificativa: ${rec.exercise.nome}`}
-        className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none"
+        className="max-h-modal w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-overlay outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-1 flex items-start justify-between gap-3">

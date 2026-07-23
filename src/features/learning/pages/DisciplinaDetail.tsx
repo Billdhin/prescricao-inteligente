@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Clock, Layers, Stethoscope, HelpCircle, PlayCircle, Network, CalendarCheck } from "lucide-react";
-import { Card, Pill, Progress, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, Progress, buttonClasses, Eyebrow } from "@/components/ui/primitives";
 import { Tabs } from "@/components/ui/disclosure";
 import { cn } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
@@ -91,7 +91,7 @@ export function DisciplinaDetail() {
             <Icon className="h-7 w-7" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-semibold uppercase tracking-wide text-ink-3">{macroareaLabel[disc.category]}</div>
+            <Eyebrow>{macroareaLabel[disc.category]}</Eyebrow>
             <h1 className="font-display text-2xl font-bold text-ink md:text-3xl">{disc.title}</h1>
             <p className="mt-1 max-w-2xl text-ink-2">{disc.description}</p>
           </div>

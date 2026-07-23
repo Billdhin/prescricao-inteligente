@@ -11,7 +11,7 @@ import {
   BookMarked,
   Sparkles,
 } from "lucide-react";
-import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, Eyebrow } from "@/components/ui/primitives";
 import { useUser } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
@@ -232,7 +232,7 @@ function ContextualSearch({ mode, onMode }: { mode: "estudar" | "consultar"; onM
         <div className="mt-3">
           {history.length > 0 && (
             <div className="mb-2">
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">Buscas recentes</div>
+              <Eyebrow className="mb-1">Buscas recentes</Eyebrow>
               <div className="flex flex-wrap gap-1.5">
                 {history.slice(0, 5).map((h) => (
                   <button key={h} onMouseDown={() => go(h)} className="rounded-full border border-border px-2.5 py-1 text-xs text-ink-2 hover:bg-surface-soft">
@@ -242,7 +242,7 @@ function ContextualSearch({ mode, onMode }: { mode: "estudar" | "consultar"; onM
               </div>
             </div>
           )}
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-3">Perguntas populares</div>
+          <Eyebrow className="mb-1">Perguntas populares</Eyebrow>
           <div className="flex flex-wrap gap-1.5">
             {SUGESTOES.map((s) => (
               <button key={s} onMouseDown={() => go(s)} className="rounded-full border border-border bg-surface-soft px-2.5 py-1 text-xs text-ink-2 hover:bg-primary-tint hover:text-primary">

@@ -102,7 +102,7 @@ export function AplicarNoTreinoDialog({
         role="dialog"
         aria-modal="true"
         aria-label="Aplicar no treino"
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-card bg-surface p-6 shadow-elevated outline-none sm:rounded-card"
+        className="max-h-modal w-full max-w-md overflow-y-auto rounded-t-card bg-surface p-6 shadow-overlay outline-none sm:rounded-card"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-2 flex items-center gap-2">

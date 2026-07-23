@@ -89,7 +89,7 @@ function TrustDialog({ level, ex, onClose }: { level: TrustLevel; ex?: Exercise;
         role="dialog"
         aria-modal="true"
         aria-label={`Detalhes: ${level}`}
-        className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
+        className="max-h-modal w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-overlay outline-none md:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between gap-3">

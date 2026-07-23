@@ -105,7 +105,7 @@ export function Consulta({ embedded = false }: { embedded?: boolean } = {}) {
               <button
                 key={termo}
                 onClick={() => submit(termo)}
-                className="group flex w-full items-start gap-3 rounded-card border border-border bg-surface p-4 text-left shadow-soft transition-shadow hover:shadow-elevated"
+                className="group flex w-full items-start gap-3 rounded-card border border-border bg-surface p-4 text-left shadow-soft transition-shadow hover:shadow-lift"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
                   <Search className="h-4 w-4" />
@@ -224,7 +224,7 @@ function QuickAnswerCard({ a }: { a: QuickAnswer }) {
 function Bloco({ titulo, icon, children }: { titulo: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-border p-3">
-      <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-3">{icon}{titulo}</div>
+      <Eyebrow className="mb-1.5 flex items-center gap-1.5">{icon}{titulo}</Eyebrow>
       <div className="text-sm text-ink-2">{children}</div>
     </div>
   );

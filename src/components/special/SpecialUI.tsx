@@ -101,7 +101,7 @@ export function ParametroDialog({
         role="dialog"
         aria-modal="true"
         aria-label={`Como aplicar: ${p.nome}`}
-        className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-card bg-surface shadow-elevated outline-none"
+        className="flex max-h-modal w-full max-w-lg flex-col rounded-card bg-surface shadow-overlay outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 border-b border-border p-5 pb-3">

@@ -7,7 +7,7 @@
  */
 
 import type { MonitoringParameter } from "@/data/monitoringParameters";
-import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
+import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -19,9 +19,7 @@ const CSS = `
   * { box-sizing: border-box; }
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
   .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-  .brand { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #1b4b66; padding-bottom: 12px; }
-  .brand .prof { font-size: 20px; font-weight: 800; color: #1b4b66; }
-  .brand .sub { font-size: 12px; color: #64748b; }
+  ${cabecalhoCss("#1b4b66")}
   h1 { font-size: 22px; margin: 20px 0 2px; }
   .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
   h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #1b4b66; margin: 18px 0 8px; }
@@ -54,21 +52,15 @@ function shell(titulo: string, corpo: string, ident?: IdentProf) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>${esc(titulo)}</title><style>${CSS}</style></head><body>
   <div class="page">
-    <div class="brand">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${ident?.logoDataUrl ? `<img src="${ident.logoDataUrl}" alt="" style="height:36px;max-width:120px;object-fit:contain" />` : ""}
-        <div>
-          <div class="prof">${esc(ident?.nome || "Prescrição Inteligente")}</div>
-          ${ident?.cref ? `<div class="sub" style="font-weight:700;color:#1b4b66">CREF ${esc(ident.cref)}</div>` : ""}
-          <div class="sub">Ficha de apoio ao profissional</div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        ${carimboRcdPdf("#1b4b66")}
-        <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date())}</div>
-        ${espinhaCuidadoPdf(0, "#1b4b66")}
-      </div>
-    </div>
+    ${cabecalhoHtml({
+      logoDataUrl: ident?.logoDataUrl,
+      logoAltura: 36,
+      profissional: ident?.nome || "Prescrição Inteligente",
+      cref: ident?.cref,
+      docTipo: "Ficha de apoio ao profissional",
+      no: 0,
+      direita: `<div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date())}</div>`,
+    })}
     ${corpo}
     <div class="foot">${AVISO}</div>
   </div>

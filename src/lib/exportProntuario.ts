@@ -14,7 +14,7 @@ import { bibliografia } from "@/data/referencias";
 import { rotuloRestricao, GATILHOS_OPCOES, LADO_OPCOES, LIBERACAO_OPCOES } from "@/lib/gps/restricoes";
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { espinhaCuidadoPdf } from "@/lib/pdfSelo";
+import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -179,13 +179,9 @@ export function exportProntuarioPDF({
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; font-size: 13px; }
     .page { max-width: 760px; margin: 0 auto; padding: 32px; }
-    .brand { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 3px solid #0e7c8a; padding-bottom: 12px; }
-    .brand .prof { font-size: 19px; font-weight: 800; color: #1e293b; }
-    .brand .cref { font-size: 12px; color: #0e7c8a; font-weight: 700; }
-    .brand .sub { font-size: 11px; color: #64748b; }
-    .selo { text-align: right; }
-    .selo .motor { display: inline-block; background: #e0f7f9; color: #0c6b77; border: 1px solid #14b8c455; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; }
-    .selo .docid { margin-top: 4px; font-size: 11px; color: #64748b; }
+    ${cabecalhoCss("#0e7c8a")}
+    .motor { display: inline-block; background: #e0f7f9; color: #0c6b77; border: 1px solid #14b8c455; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; }
+    .docid { font-size: 11px; color: #64748b; }
     h1 { font-size: 20px; margin: 18px 0 2px; }
     .meta { font-size: 12px; color: #64748b; margin-bottom: 14px; }
     .aluno { background: #f4f6fb; border-radius: 10px; padding: 11px 14px; margin-bottom: 14px; }
@@ -222,27 +218,23 @@ export function exportProntuarioPDF({
     @media print { .page { padding: 0; } @page { margin: 14mm; } }
   </style></head><body>
   <div class="page">
-    <div class="brand">
-      <div style="display:flex;align-items:center;gap:12px">
-        ${marca?.logoDataUrl ? `<img src="${marca.logoDataUrl}" alt="" style="height:40px;max-width:140px;object-fit:contain" />` : ""}
-        <div>
-          <div class="prof">${esc(profissional)}</div>
-          ${cref ? `<div class="cref">CREF ${esc(cref)}</div>` : ""}
-          ${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}
-          <div class="sub">Prontuário de Decisão Técnica: prescrição de exercício</div>
-        </div>
-      </div>
-      <div class="selo">
-        <span class="motor">Motor RCD · Raciocínio Clínico Documentado · ${esc(prontuario.motorVersao)}</span>
-        <div class="docid">Documento ${docId} · ${fmt(prontuario.geradoEm)}</div>
-        ${
-          marca && (marca.site || marca.email || marca.telefone)
-            ? `<div class="docid">${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}</div>`
-            : ""
-        }
-        <div style="display:flex;justify-content:flex-end;margin-top:6px">${espinhaCuidadoPdf(1, "#1b4b66")}</div>
-      </div>
-    </div>
+    ${cabecalhoHtml({
+      cor: "#0e7c8a",
+      nomeCor: "#1e293b",
+      espinhaCor: "#1b4b66",
+      logoDataUrl: marca?.logoDataUrl,
+      profissional,
+      cref,
+      empresa: marca?.empresa,
+      docTipo: "Prontuário de Decisão Técnica: prescrição de exercício",
+      no: 1,
+      carimbo: `<span class="motor">Motor RCD · Raciocínio Clínico Documentado · ${esc(prontuario.motorVersao)}</span>`,
+      direita:
+        `<div class="docid">Documento ${docId} · ${fmt(prontuario.geradoEm)}</div>` +
+        (marca && (marca.site || marca.email || marca.telefone)
+          ? `<div class="docid">${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}</div>`
+          : ""),
+    })}
 
     <h1>${esc(tituloDoc)}</h1>
     <div class="meta">Registro do raciocínio de decisão: o que foi escolhido, o que foi descartado e por quê.</div>

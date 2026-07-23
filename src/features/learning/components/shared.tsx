@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, BookmarkCheck, Clock, Layers, Stethoscope, CircleDot, CheckCircle2, Circle } from "lucide-react";
-import { Card, Pill, Progress, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, Progress, buttonClasses, Eyebrow } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { iconByName } from "../icons";
 import { nivelLabel, macroareaLabel, lessonTypeMeta } from "../constants";
@@ -138,7 +138,7 @@ export function DisciplineCard({
 }) {
   const Icon = iconByName(disc.icon);
   return (
-    <Card className="flex h-full flex-col p-5 transition-shadow hover:shadow-elevated">
+    <Card className="flex h-full flex-col p-5 transition-shadow hover:shadow-lift">
       <div className="mb-3 flex items-start gap-3">
         <span className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-xl", tokenTile[disc.colorToken])}>
           <Icon className="h-5 w-5" />
@@ -266,7 +266,7 @@ export function RecommendationCard({ rec }: { rec: LearningRecommendation }) {
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-tint text-primary">
           <Icon className="h-4 w-4" />
         </span>
-        <span className="text-xs font-semibold uppercase tracking-wide text-ink-3">{meta.label}</span>
+        <Eyebrow>{meta.label}</Eyebrow>
       </div>
       <h3 className="font-display font-bold leading-snug text-ink">{rec.contentTitle}</h3>
       <p className="mt-1 text-xs text-ink-2">{rec.reason}</p>
