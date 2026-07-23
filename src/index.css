@@ -5,34 +5,40 @@
 @tailwind utilities;
 
 :root {
-  /* Paleta "pele clínica" (Onda 6): documento clínico premium. Cada valor foi
-     conferido para contraste AA sobre o novo fundo papel morno e branco. */
-  --bg: #f6f4ef; /* papel morno (superfície de documento) */
-  --surface: #ffffff;
-  --surface-soft: #f2f0ea; /* fosco morno, casa com o fundo */
-  --border: #e6e2d8;
-  --ink: #1e293b;
-  --ink-2: #585f68; /* 6.46 branco, 5.88 papel, 5.67 soft; mata o viés lilás; AA folgado em todas as tints */
-  --ink-3: #585f68; /* alias de transição; os dois tokens atuais tinham contraste mútuo 1.07, eram o mesmo cinza */
-  --primary: #1b4b66; /* azul petróleo = decisão/recomendação do sistema (9.4:1 em branco) */
-  --primary-tint: #e8eff3;
-  --analysis: #0e7c8a; /* teal profundo, uso pontual */
-  --cta: #e0663b; /* coral autoral, preenchimento/ícone grande da ação principal */
-  --cta-text: #b24a28; /* coral escuro p/ TEXTO/pills (5.4:1 em branco) */
-  --success: #147a3a; /* 5.42 branco, 4.92 na tint, 4.76 soft, 4.93 papel. NÃO usar #15803d (4.40 no soft, reprova) */
-  --warning: #b45309; /* âmbar escuro p/ texto em tint */
-  --data-intensidade: #9a4f2e; /* terracota de DADO (curva de intensidade); o coral --cta fica reservado à ação principal */
-  /* Tints canônicas: uma por papel semântico. LEI: tint sobre o papel #f6f4ef é
-     quase invisível (primary-tint vs papel = 1.06); toda superfície tintada fora
-     de card branco leva `border border-border` obrigatório. */
-  --success-tint: #e7f8ed;
-  --warning-tint: #fef4e2;
-  --cta-tint: #fff1e6;
-  --analysis-tint: #e0f7f9;
-  --analysis-text: #0c6b77; /* 5.57 na tint, 6.20 branco, 5.44 soft; espelha o par cta/cta-text */
-  --danger: #b91c1c; /* 6.47 branco, 5.66 na tint, 5.68 soft, 5.89 papel */
-  --danger-tint: #fdecec;
-  --danger-fill: #ef4444; /* 3.76 branco: SÓ dot/ícone/preenchimento gráfico (mínimo 3:1), NUNCA texto */
+  /* PALETA PADRÃO (fallback de primeiro paint). O ThemeProvider troca estes
+     valores em runtime por paleta/modo escolhidos pelo profissional
+     (src/lib/theme/palettes.ts). Cada token vem em DOIS formatos:
+       --x      = hex, para usos crus em SVG (fill="var(--primary)").
+       --x-rgb  = canais "R G B", que o tailwind.config lê como
+                  rgb(var(--x-rgb) / <alpha-value>) para habilitar alpha (bg-primary/40)
+                  E o tema. Os dois são setados juntos; nunca deixe um sem o outro. */
+  /* Padrão = paleta "Grafite" no claro. Espelha src/lib/theme/palettes.ts
+     (grafite.claro + compartilhado claro); se mudar lá, mudar aqui. */
+  --bg: #f6f7f9;             --bg-rgb: 246 247 249;
+  --surface: #ffffff;        --surface-rgb: 255 255 255;
+  --surface-soft: #edeff3;   --surface-soft-rgb: 237 239 243;
+  --border: #e0e3e9;         --border-rgb: 224 227 233;
+  --ink: #171b23;            --ink-rgb: 23 27 35;
+  --ink-2: #565d6b;          --ink-2-rgb: 86 93 107;
+  --ink-3: #565d6b;          --ink-3-rgb: 86 93 107;
+  --primary: #3a4a72;        --primary-rgb: 58 74 114;
+  --primary-tint: #ebedf5;   --primary-tint-rgb: 235 237 245;
+  --on-primary: #ffffff;     --on-primary-rgb: 255 255 255;
+  --on-analysis: #ffffff;    --on-analysis-rgb: 255 255 255;
+  --analysis: #0e7c8a;       --analysis-rgb: 14 124 138;
+  --analysis-text: #0c6b77;  --analysis-text-rgb: 12 107 119;
+  --cta: #e0663b;            --cta-rgb: 224 102 59;
+  --cta-text: #b24a28;       --cta-text-rgb: 178 74 40;
+  --success: #147a3a;        --success-rgb: 20 122 58;
+  --warning: #b45309;        --warning-rgb: 180 83 9;
+  --danger: #b91c1c;         --danger-rgb: 185 28 28;
+  --danger-fill: #ef4444;    --danger-fill-rgb: 239 68 68;
+  --success-tint: #e7f8ed;   --success-tint-rgb: 231 248 237;
+  --warning-tint: #fef4e2;   --warning-tint-rgb: 254 244 226;
+  --cta-tint: #fff1e6;       --cta-tint-rgb: 255 241 230;
+  --analysis-tint: #e0f7f9;  --analysis-tint-rgb: 224 247 249;
+  --danger-tint: #fdecec;    --danger-tint-rgb: 253 236 236;
+  --data-intensidade: #9a4f2e; /* dado (curva de intensidade); não temável, uso pontual */
 }
 
 html,

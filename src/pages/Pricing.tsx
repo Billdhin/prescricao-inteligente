@@ -97,7 +97,7 @@ function Plan({
   return (
     <Card className="relative p-6">
       {destaque && (
-        <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-white">
+        <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-on-primary">
           Acesso completo
         </span>
       )}

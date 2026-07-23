@@ -148,7 +148,7 @@ export function AplicarNoTreinoDialog({
 
             {/* Aviso forte: substituir vai desvincular registros do aluno */}
             {execucoesEmRisco && (
-              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-[#b45309]/30 bg-warning-tint p-2.5 text-xs text-warning">
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-warning/30 bg-warning-tint p-2.5 text-xs text-warning">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                 O aluno já registrou execução nessas sessões. Substituir vai desvincular esse histórico das sessões atuais.
                 Se quiser preservar, use "adicionar sem substituir".
@@ -157,7 +157,7 @@ export function AplicarNoTreinoDialog({
 
             {/* Aviso de objetivo divergente (não bloqueia) */}
             {objetivoDivergente && (
-              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-[#b45309]/30 bg-warning-tint p-2.5 text-xs text-warning">
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-warning/30 bg-warning-tint p-2.5 text-xs text-warning">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                 A prescrição foi feita para {prescricao.answers.objetivo} e o plano é de {plano.objetivo}. As doses seguem a
                 faixa do plano; confira se os exercícios cabem no objetivo dele.

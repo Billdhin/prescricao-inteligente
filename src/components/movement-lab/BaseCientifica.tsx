@@ -39,7 +39,7 @@ export function BaseCientifica({
       <ol className="space-y-1.5">
         {biblio.map((b) => (
           <li key={b.ref.id} className="flex gap-2 text-xs text-ink-2">
-            <span className="tabular font-semibold text-[#0e7c8a]">{b.n}.</span>
+            <span className="tabular font-semibold text-analysis">{b.n}.</span>
             <span>
               <span className="font-medium text-ink">
                 {b.ref.autores} ({b.ref.ano}).

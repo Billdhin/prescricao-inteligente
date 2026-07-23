@@ -86,7 +86,7 @@ export function TrackDetail() {
               <span
                 className={cn(
                   "grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-bold",
-                  done ? "bg-success text-white" : isNext ? "bg-primary text-white" : "bg-surface-soft text-ink-2",
+                  done ? "bg-success text-on-primary" : isNext ? "bg-primary text-on-primary" : "bg-surface-soft text-ink-2",
                 )}
               >
                 {done ? <Check className="h-4 w-4" /> : i + 1}

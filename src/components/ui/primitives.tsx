@@ -20,10 +20,10 @@ const cardTones: Record<CardTone, string> = {
   // Bordas em hex literal com alpha: /NN sobre cor-token (warning/success/primary)
   // NÃO compila neste repo (tailwind.config sem <alpha-value>). primary-tint já é
   // suave, então entra como token cheio.
-  warning: "border border-[#b45309]/30 bg-[#fef4e2]/50",
-  success: "border border-[#147a3a]/30 bg-[#e7f8ed]/50",
-  primary: "border border-[#1b4b66]/25 bg-primary-tint",
-  danger: "border border-[#b91c1c]/30 bg-[#fdecec]/50",
+  warning: "border border-warning/30 bg-warning-tint/50",
+  success: "border border-success/30 bg-success-tint/50",
+  primary: "border border-primary/25 bg-primary-tint",
+  danger: "border border-danger/30 bg-danger-tint/50",
 };
 
 export function Card({
@@ -66,8 +66,8 @@ export function buttonClasses(variant: ButtonVariant = "primary", size: ButtonSi
   };
   const variants: Record<ButtonVariant, string> = {
     primary: "gradient-cta text-white shadow-soft hover:brightness-[1.06] active:brightness-95",
-    secondary: "bg-surface border border-border text-ink hover:bg-surface-soft hover:border-[#d6d1c4]",
-    outline: "border border-border bg-surface text-ink hover:bg-surface-soft hover:border-[#d6d1c4]",
+    secondary: "bg-surface border border-border text-ink hover:bg-surface-soft hover:border-border",
+    outline: "border border-border bg-surface text-ink hover:bg-surface-soft hover:border-border",
     ghost: "text-ink-2 hover:bg-surface-soft hover:text-ink",
   };
   return cn(base, sizes[size], variants[variant]);

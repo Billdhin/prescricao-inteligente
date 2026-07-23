@@ -1086,7 +1086,7 @@ function JornadaCard({
 
         <div className="space-y-3">
           <CriteriosLista titulo="Próximos critérios para avançar" itens={faseObj.criteriosAvancar} tipo="avancar" />
-          <div className="rounded-xl border border-[#b45309]/30 bg-[#fef4e2]/40 p-3">
+          <div className="rounded-xl border border-warning/30 bg-warning-tint/40 p-3">
             <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-warning">Cautelas</div>
             <ul className="space-y-1">
               {grupo.riscosCautelas.slice(0, 3).map((c) => (
@@ -1107,7 +1107,7 @@ function JornadaCard({
       </div>
 
       {faseDivergente && (
-        <div className="mt-4 rounded-xl border border-[#0e7c8a]/40 bg-primary-tint p-3 text-sm">
+        <div className="mt-4 rounded-xl border border-analysis/40 bg-primary-tint p-3 text-sm">
           <p className="text-ink-2">
             <span className="font-semibold text-ink">Sua avaliação: fase {fase}.</span> O plano está na fase {fasePlano}{" "}
             pelo calendário. A fase clínica é decisão sua; o plano não muda sozinho.
@@ -1223,7 +1223,7 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
           <div
             className={cn(
               "mt-3 flex flex-wrap items-center gap-2 rounded-lg p-2.5 text-sm",
-              chegou ? "border border-[#0e7c8a]/40 bg-primary-tint" : "",
+              chegou ? "border border-analysis/40 bg-primary-tint" : "",
             )}
           >
             <CalendarCheck className="h-4 w-4 shrink-0 text-analysis" />

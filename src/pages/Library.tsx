@@ -78,7 +78,7 @@ export function Library({ embedded = false }: { embedded?: boolean } = {}) {
             ),
             content: (
               <div className="space-y-3">
-                <p className="border-l-2 border-[#1b4b66]/40 bg-primary-tint py-1.5 pl-3 text-[15px] font-semibold leading-snug text-ink">
+                <p className="border-l-2 border-primary/40 bg-primary-tint py-1.5 pl-3 text-[15px] font-semibold leading-snug text-ink">
                   {e.definicao}
                 </p>
                 <p className="text-sm text-ink-2">{e.detalhe}</p>

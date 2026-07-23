@@ -20,9 +20,9 @@ const BANDS: { layer: 1 | 2 | 3; label: string }[] = [
 ];
 
 const nodeTone: Record<string, string> = {
-  primary: "border-[#1b4b66]/30 bg-primary-tint text-primary hover:border-primary",
-  analysis: "border-[#0e7c8a]/30 bg-analysis-tint text-analysis hover:border-analysis",
-  success: "border-[#147a3a]/30 bg-success-tint text-success hover:border-success",
+  primary: "border-primary/30 bg-primary-tint text-primary hover:border-primary",
+  analysis: "border-analysis/30 bg-analysis-tint text-analysis hover:border-analysis",
+  success: "border-success/30 bg-success-tint text-success hover:border-success",
   cta: "border-[color:var(--cta-text)]/25 bg-cta-tint text-cta-text hover:border-[color:var(--cta-text)]",
 };
 
@@ -59,7 +59,7 @@ export function KnowledgeMap({ compact = false }: { compact?: boolean }) {
                   const cls = cn(
                     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
                     nodeTone[n.colorToken],
-                    active?.id === n.id && "ring-2 ring-[#1b4b66]/40",
+                    active?.id === n.id && "ring-2 ring-primary/40",
                   );
                   const events = {
                     onMouseEnter: () => setActive(n),

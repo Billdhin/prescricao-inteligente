@@ -56,7 +56,7 @@ export function Account() {
         <h3 className="mb-4 font-display text-lg font-bold text-ink">Perfil profissional</h3>
         <div className="flex flex-wrap items-center gap-4">
           {fotoDataUrl ? (
-            <img src={fotoDataUrl} alt="Sua foto" className="h-16 w-16 rounded-full object-cover ring-2 ring-[#1b4b66]/20" />
+            <img src={fotoDataUrl} alt="Sua foto" className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/20" />
           ) : (
             <span className="grid h-16 w-16 place-items-center rounded-full gradient-brand text-lg font-bold text-white">
               {initials}

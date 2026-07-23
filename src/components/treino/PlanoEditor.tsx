@@ -811,7 +811,7 @@ function BlocoRow({
     <div className="rounded-lg border border-border bg-surface p-2">
       <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
         {aerobio && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-[#0e7c8a]/10 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-analysis">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-analysis/10 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-analysis">
             <HeartPulse className="h-3 w-3" aria-hidden /> Cardio
           </span>
         )}

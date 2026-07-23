@@ -568,7 +568,7 @@ function CampoNum({ label, value, onChange, placeholder }: { label: string; valu
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full rounded-md border border-border bg-surface px-2 text-sm text-ink placeholder:text-[#5b6472]/60 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="h-11 w-full rounded-md border border-border bg-surface px-2 text-sm text-ink placeholder:text-ink-3/60 focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
   );

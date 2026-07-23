@@ -17,7 +17,8 @@
     "check:aprender": "tsx scripts/check-aprender.ts",
     "check:legibilidade": "tsx scripts/check-legibilidade.ts",
     "check:postura": "tsx scripts/check-postura.ts",
-    "check:design": "node scripts/check-design.mjs"
+    "check:design": "node scripts/check-design.mjs",
+    "check:contraste": "tsx scripts/check-contraste.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

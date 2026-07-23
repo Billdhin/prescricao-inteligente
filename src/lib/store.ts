@@ -4,6 +4,7 @@ import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
 import type { Execucao } from "@/data/execucao";
 import type { AvaliacaoPostural } from "@/data/postural";
+import type { Modo } from "@/lib/theme/palettes";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 import {
@@ -46,6 +47,11 @@ export interface PerfilCampos {
   /** cor principal da marca (hex, ex.: "#1b4b66"); vazio usa a cor do produto.
    *  Tinge o cabeçalho dos documentos e, no portal do aluno, o app inteiro. */
   corPrimaria: string;
+  /** paleta do sistema escolhida pelo profissional (id em palettes.ts). Vazio
+   *  usa o padrão. Adapta o app inteiro e a visão do aluno. */
+  paleta: string;
+  /** claro | escuro | sistema (segue o SO). */
+  modo: Modo;
 }
 
 interface UserState extends PerfilCampos {
@@ -75,6 +81,8 @@ export const useUser = create<UserState>()(
       fotoDataUrl: "",
       logoDataUrl: "",
       corPrimaria: "",
+      paleta: "grafite",
+      modo: "claro",
       senhaHash: "",
       senhaSalt: "",
       setPlan: (plan) => {

@@ -48,7 +48,7 @@ export function LoginGate({ onEntrar }: { onEntrar: () => void }) {
               <img
                 src={fotoDataUrl}
                 alt=""
-                className="h-16 w-16 rounded-full object-cover ring-2 ring-[#1b4b66]/20"
+                className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/20"
               />
             ) : (
               <span className="grid h-16 w-16 place-items-center rounded-full gradient-brand text-xl font-bold text-white">

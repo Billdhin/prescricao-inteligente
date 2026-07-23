@@ -34,7 +34,7 @@ export function MetricaInfo({
         type="button"
         onClick={() => setAberto(true)}
         className={cn(
-          "inline-flex items-center gap-1 rounded text-left underline decoration-dotted decoration-[#5b6472]/60 underline-offset-2 transition-colors hover:text-ink hover:decoration-ink-2",
+          "inline-flex items-center gap-1 rounded text-left underline decoration-dotted decoration-ink-3/60 underline-offset-2 transition-colors hover:text-ink hover:decoration-ink-2",
           className,
         )}
         aria-label={`${nome}: o que este número significa`}

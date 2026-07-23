@@ -118,7 +118,7 @@ export function CasoRcdDetail() {
             {prontuario.escolhidos.map((e, i) => (
               <div key={e.slug} className="rounded-xl border border-border p-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="tabular grid h-6 w-6 place-items-center rounded-full bg-analysis text-xs font-bold text-white">
+                  <span className="tabular grid h-6 w-6 place-items-center rounded-full bg-analysis text-xs font-bold text-on-analysis">
                     {i + 1}
                   </span>
                   <span className="font-display font-bold text-ink">{e.nome}</span>

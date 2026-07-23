@@ -23,7 +23,7 @@ export function SeloRCD({
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold",
         variante === "claro"
-          ? "border-[#0e7c8a]/30 bg-analysis-tint text-analysis-text"
+          ? "border-analysis/30 bg-analysis-tint text-analysis-text"
           : "border-cyan-400/30 bg-slate-950/60 text-cyan-300 backdrop-blur-sm",
         className,
       )}
@@ -31,7 +31,7 @@ export function SeloRCD({
       <ShieldCheck aria-hidden className="h-3.5 w-3.5" />
       <span className="font-bold tracking-wide">Motor RCD</span>
       {!compacto && (
-        <span className={cn("font-medium", variante === "claro" ? "text-[#0e7c8a]/80" : "text-cyan-300/80")}>
+        <span className={cn("font-medium", variante === "claro" ? "text-analysis/80" : "text-cyan-300/80")}>
           · Raciocínio Clínico Documentado
         </span>
       )}

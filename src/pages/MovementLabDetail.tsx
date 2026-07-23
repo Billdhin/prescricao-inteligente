@@ -447,7 +447,7 @@ function Timeline({ ex }: { ex: Exercise }) {
           {ex.fases.map((f, i) => (
             <li key={f.nome} className="rounded-xl border border-border bg-surface-soft p-3">
               <div className="flex items-center gap-2">
-                <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-2xs font-bold text-white">
+                <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-2xs font-bold text-on-primary">
                   {i + 1}
                 </span>
                 <span className="font-semibold text-ink">{f.nome}</span>
@@ -553,7 +553,7 @@ function Concept({
                   {CAMADAS.map((c, i) => (
                     <div key={c.key} className="rounded-lg border border-border bg-surface-soft p-3">
                       <div className="mb-1 flex items-center gap-2 text-2xs font-semibold uppercase tracking-wider text-ink-3">
-                        <span className="tabular grid h-4 w-4 place-items-center rounded-full bg-primary text-2xs text-white">
+                        <span className="tabular grid h-4 w-4 place-items-center rounded-full bg-primary text-2xs text-on-primary">
                           {i + 1}
                         </span>
                         {c.label}
@@ -600,7 +600,7 @@ function Bullets({
           <figure
             className={cn(
               "w-40 shrink-0 overflow-hidden rounded-xl border sm:w-44",
-              tone === "warning" ? "border-[#b45309]/40" : "border-border",
+              tone === "warning" ? "border-warning/40" : "border-border",
             )}
           >
             <img
@@ -777,7 +777,7 @@ function PopulacoesCautelaCard({ slug }: { slug: string }) {
   const perfis = getPopulacoesCautela(slug);
   if (perfis.length === 0) return null;
   return (
-    <div className="rounded-xl border border-[#b45309]/40 bg-warning-tint p-4 md:p-5">
+    <div className="rounded-xl border border-warning/40 bg-warning-tint p-4 md:p-5">
       <div className="mb-3 flex items-center gap-2">
         <span className="grid h-8 w-8 place-items-center rounded-lg bg-warning-tint text-warning">
           <ShieldAlert className="h-4 w-4" />

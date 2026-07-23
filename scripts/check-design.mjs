@@ -94,11 +94,10 @@ const REGRAS = [
     re: /text-\[(?:9|10|10\.5|11)px\]/g,
     svgAware: true,
   },
-  {
-    id: "alpha-em-token",
-    desc: "REGRA DURA: /NN sobre classe de cor-token não compila; use hex literal [#...]/NN.",
-    re: new RegExp(`(?:${PREFIXOS})-(?:${COR_TOKENS})\\/\\d`, "g"),
-  },
+  // A antiga "regra dura" (proibir /NN sobre cor-token) foi APOSENTADA: os tokens
+  // viraram canais RGB no tailwind.config (rgb(var(--x-rgb) / <alpha-value>)),
+  // então bg-primary/40 agora COMPILA e ainda segue a paleta/tema. Usar o token
+  // com alpha é o certo; hex literal [#...]/NN é o que passou a ser exceção.
 ];
 
 for (const arquivo of files) {

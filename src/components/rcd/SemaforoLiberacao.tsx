@@ -29,21 +29,21 @@ const COR_UI: Record<
 > = {
   verde: {
     bg: "bg-success-tint",
-    border: "border-[#147a3a]/40",
+    border: "border-success/40",
     text: "text-success",
     dot: "bg-success",
     icon: <CheckCircle2 className="h-6 w-6 text-success" />,
   },
   amarelo: {
     bg: "bg-warning-tint",
-    border: "border-[#b45309]/40",
+    border: "border-warning/40",
     text: "text-warning",
     dot: "bg-warning",
     icon: <AlertTriangle className="h-6 w-6 text-warning" />,
   },
   vermelho: {
     bg: "bg-danger-tint",
-    border: "border-[#b91c1c]/40",
+    border: "border-danger/40",
     text: "text-danger",
     dot: "bg-danger-fill",
     icon: <XCircle className="h-6 w-6 text-danger-fill" />,
@@ -126,8 +126,8 @@ export function SemaforoLiberacao({
           condição vêm junto: eram o único conteúdo de segurança que existia e ficavam
           presos na tela de estudo. */}
       {usaChecklistGeral && grupo && (
-        <div className="mb-4 rounded-xl border border-[#b45309]/40 bg-warning-tint p-4">
-          <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#b45309]">
+        <div className="mb-4 rounded-xl border border-warning/40 bg-warning-tint p-4">
+          <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-warning">
             <AlertTriangle className="h-3.5 w-3.5" /> Sem checklist específico para {grupo.nome}
           </div>
           <p className="text-xs text-ink-2">
@@ -159,7 +159,7 @@ export function SemaforoLiberacao({
             <p className="mb-1.5 pl-7 text-xs text-ink-3">
               {item.porque}
               {item.refs?.length ? (
-                <span className="ml-1 text-[#5b6472]/80">[{item.refs.map(refCurta).join("; ")}]</span>
+                <span className="ml-1 text-ink-3/80">[{item.refs.map(refCurta).join("; ")}]</span>
               ) : null}
             </p>
             <div className="flex flex-wrap gap-1.5 pl-7">
@@ -182,7 +182,7 @@ export function SemaforoLiberacao({
                         : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
                     )}
                   >
-                    <span aria-hidden className={cn("h-2 w-2 rounded-full", ativa ? COR_UI[op.cor].dot : "bg-[#5b6472]/40")} />
+                    <span aria-hidden className={cn("h-2 w-2 rounded-full", ativa ? COR_UI[op.cor].dot : "bg-ink-3/40")} />
                     {op.rotulo}
                   </button>
                 );

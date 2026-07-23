@@ -587,7 +587,7 @@ function FlowSteps({ atual }: { atual: 1 | 2 | 3 }) {
                 <span
                   className={cn(
                     "tabular grid h-4 w-4 place-items-center rounded-full text-2xs font-bold",
-                    current ? "bg-primary text-white" : "bg-surface-soft text-ink-3",
+                    current ? "bg-primary text-on-primary" : "bg-surface-soft text-ink-3",
                   )}
                 >
                   {n}
@@ -595,7 +595,7 @@ function FlowSteps({ atual }: { atual: 1 | 2 | 3 }) {
               )}
               {label}
             </span>
-            {i < steps.length - 1 && <ArrowRight aria-hidden className="h-3.5 w-3.5 text-[#5b6472]/60" />}
+            {i < steps.length - 1 && <ArrowRight aria-hidden className="h-3.5 w-3.5 text-ink-3/60" />}
           </li>
         );
       })}
@@ -1068,7 +1068,7 @@ function Wizard({
         {step === 3 && (
           <div className="space-y-4">
             {rule && (
-              <div className="rounded-xl border border-[#1b4b66]/25 bg-primary-tint p-4">
+              <div className="rounded-xl border border-primary/25 bg-primary-tint p-4">
                 <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
                   <ShieldAlert className="h-3.5 w-3.5" /> Já considerado pelo grupo: {rule.nome}
                 </div>
@@ -1196,7 +1196,7 @@ function Choices({
             <span
               className={cn(
                 "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border-2",
-                selected ? "border-primary bg-primary text-white" : "border-ink-3",
+                selected ? "border-primary bg-primary text-on-primary" : "border-ink-3",
               )}
             >
               {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
@@ -1204,7 +1204,7 @@ function Choices({
             <span className="min-w-0">
               {o}
               {desc && (
-                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-[#1b4b66]/80" : "text-ink-3")}>
+                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-primary/80" : "text-ink-3")}>
                   {desc}
                 </span>
               )}
@@ -1247,7 +1247,7 @@ function MultiChoices({
             <span
               className={cn(
                 "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2",
-                selected ? "border-primary bg-primary text-white" : "border-ink-3",
+                selected ? "border-primary bg-primary text-on-primary" : "border-ink-3",
               )}
             >
               {selected && <Check className="h-3.5 w-3.5" />}
@@ -1255,7 +1255,7 @@ function MultiChoices({
             <span className="min-w-0">
               {o}
               {desc && (
-                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-[#1b4b66]/80" : "text-ink-3")}>
+                <span className={cn("mt-0.5 block text-xs font-normal leading-snug", selected ? "text-primary/80" : "text-ink-3")}>
                   {desc}
                 </span>
               )}
@@ -1486,7 +1486,7 @@ function Results({
           é a porta de entrada de todo perfil) */}
       {composto && (
         <Card variant="raised" className="overflow-hidden">
-          <div className="bg-analysis px-5 py-2 text-xs font-bold uppercase tracking-wider text-white">
+          <div className="bg-analysis px-5 py-2 text-xs font-bold uppercase tracking-wider text-on-analysis">
             <span className="inline-flex items-center gap-1">
               <HeartPulse className="h-3.5 w-3.5" /> Base da semana: modalidades
             </span>

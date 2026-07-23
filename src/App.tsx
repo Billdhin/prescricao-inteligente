@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { AppLayout } from "@/components/app/AppLayout";
+import { ThemeApplier } from "@/lib/theme/ThemeApplier";
 import { Landing } from "@/pages/Landing";
 import { Pricing } from "@/pages/Pricing";
 import { Dashboard } from "@/pages/Dashboard";
@@ -77,6 +78,7 @@ export default function App() {
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
       <ScrollToTop />
+      <ThemeApplier />
       <Routes>
         {/* Público */}
         <Route path="/" element={<Landing />} />

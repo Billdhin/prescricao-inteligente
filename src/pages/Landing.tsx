@@ -54,7 +54,7 @@ function Section({ id, className = "", children }: { id?: string; className?: st
 function Kicker({ children, tone = "primary" }: { children: React.ReactNode; tone?: "primary" | "analysis" | "cta" }) {
   const text =
     tone === "analysis" ? "text-analysis" : tone === "cta" ? "text-[color:var(--cta-text)]" : "text-primary";
-  const rule = tone === "analysis" ? "bg-[#0e7c8a]/50" : tone === "cta" ? "bg-[#e0663b]/50" : "bg-[#1b4b66]/50";
+  const rule = tone === "analysis" ? "bg-analysis/50" : tone === "cta" ? "bg-cta/50" : "bg-primary/50";
   return (
     <span className={`mb-3 inline-flex items-center gap-2.5 text-2xs font-bold uppercase tracking-[0.18em] ${text}`}>
       <span aria-hidden className={`h-px w-7 ${rule}`} />
@@ -286,7 +286,7 @@ export function Landing() {
                   },
                 ].map((p, i) => (
                   <li key={p.t} className="flex gap-3">
-                    <span className="tabular grid h-7 w-7 shrink-0 place-items-center rounded-full bg-analysis text-sm font-bold text-white">
+                    <span className="tabular grid h-7 w-7 shrink-0 place-items-center rounded-full bg-analysis text-sm font-bold text-on-analysis">
                       {i + 1}
                     </span>
                     <span>
@@ -321,7 +321,7 @@ export function Landing() {
                   <li>Não gera registro que você assine embaixo</li>
                 </ul>
               </Card>
-              <Card className="border-[#0e7c8a]/40 p-5">
+              <Card className="border-analysis/40 p-5">
                 <div className="mb-2"><SeloRCD compacto /></div>
                 <ul className="space-y-2 text-sm text-ink">
                   {[
@@ -351,7 +351,7 @@ export function Landing() {
           mais distintivo do produto (o sinal verde/amarelo/vermelho antes de treinar).
           Não é dark mode nem repintura: é uma seção-assinatura. Cores e rótulos são
           os reais do Semáforo de Liberação; a decisão continua sendo do profissional. */}
-      <div className="relative overflow-hidden bg-primary text-white">
+      <div className="relative overflow-hidden bg-primary text-on-primary">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_75%_at_50%_-10%,rgba(255,255,255,0.09),transparent_60%)]"
@@ -365,7 +365,7 @@ export function Landing() {
             <h2 className="font-display text-3xl font-bold md:text-4xl">
               Antes da sessão, o sinal verde. Ou o motivo para esperar.
             </h2>
-            <p className="mx-auto mt-3 max-w-xl text-[#e8eff3]">
+            <p className="mx-auto mt-3 max-w-xl text-primary-tint">
               O <span className="font-semibold text-white">Semáforo de Liberação</span> lê a condição do aluno e
               responde em 30 segundos, com o porquê e a referência de cada resposta.
             </p>
@@ -418,14 +418,14 @@ export function Landing() {
                     <div className="font-display text-lg font-bold" style={{ color: s.cor }}>
                       {s.rotulo}
                     </div>
-                    <p className="mt-0.5 text-sm text-[#e8eff3]">{s.d}</p>
+                    <p className="mt-0.5 text-sm text-primary-tint">{s.d}</p>
                   </div>
                 </li>
               ))}
             </ul>
           </div>
 
-          <p className="mx-auto mt-8 max-w-xl text-center text-xs text-[#e8eff3]/75">
+          <p className="mx-auto mt-8 max-w-xl text-center text-xs text-primary-tint/75">
             Quem libera, ajusta ou adia é sempre o profissional habilitado. O Semáforo documenta o racional dessa
             decisão e ele entra no prontuário.
           </p>
@@ -639,7 +639,7 @@ function DecisaoDemoCard() {
     <Card variant="raised" className="overflow-hidden p-0">
       <div className="flex items-center justify-between border-b border-border bg-surface-soft px-4 py-2.5">
         <SeloRCD compacto />
-        <span className="rounded-full bg-[#1e293b]/5 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-ink-3">
+        <span className="rounded-full bg-ink/5 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-ink-3">
           Exemplo
         </span>
       </div>
@@ -658,12 +658,12 @@ function DecisaoDemoCard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 rounded-xl border border-[#b45309]/40 bg-warning-tint px-3 py-2.5">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#b45309]/15">
+        <div className="flex items-center gap-2.5 rounded-xl border border-warning/40 bg-warning-tint px-3 py-2.5">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-warning/15">
             <AlertTriangle className="h-4 w-4 text-warning" />
           </span>
           <div>
-            <div className="text-sm font-bold text-[#b45309]">Pode treinar hoje, com ajuste</div>
+            <div className="text-sm font-bold text-warning">Pode treinar hoje, com ajuste</div>
             <div className="text-xs text-ink-2">Checklist de segurança da condição, respondido antes da sessão.</div>
           </div>
         </div>
@@ -678,8 +678,8 @@ function DecisaoDemoCard() {
             apneia (Valsalva); respiração contínua nas séries.
           </p>
           <div className="mt-2 flex items-center gap-1.5 text-2xs text-ink-3">
-            <span className="rounded bg-[#1e293b]/5 px-1.5 py-0.5 font-bold text-ink-2">1</span>
-            <span className="rounded bg-[#1e293b]/5 px-1.5 py-0.5 font-bold text-ink-2">2</span>
+            <span className="rounded bg-ink/5 px-1.5 py-0.5 font-bold text-ink-2">1</span>
+            <span className="rounded bg-ink/5 px-1.5 py-0.5 font-bold text-ink-2">2</span>
             <span>referências citadas na decisão</span>
           </div>
         </div>
@@ -773,7 +773,7 @@ function PlanCard({
   return (
     <Card className="relative p-6 text-left">
       {destaque && (
-        <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-white">
+        <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-on-primary">
           Acesso completo
         </span>
       )}

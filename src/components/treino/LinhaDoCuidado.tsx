@@ -15,10 +15,10 @@ import {
 const ORDEM: EtapaCiclo[] = ["avaliar", "planejar", "liberar", "acompanhar", "reavaliar"];
 
 const TINT: Record<ProximoPasso["tone"], string> = {
-  primary: "border-[#1b4b66]/25 bg-primary-tint",
+  primary: "border-primary/25 bg-primary-tint",
   cta: "border-[color:var(--cta-text)]/20 bg-cta-tint",
-  warning: "border-[#b45309]/30 bg-warning-tint",
-  success: "border-[#147a3a]/30 bg-success-tint",
+  warning: "border-warning/30 bg-warning-tint",
+  success: "border-success/30 bg-success-tint",
 };
 
 const ICON_TONE: Record<ProximoPasso["tone"], string> = {
@@ -85,7 +85,7 @@ export function LinhaDoCuidado({
             {i < ORDEM.length - 1 && (
               <span
                 aria-hidden
-                className={cn("mt-3.5 h-0.5 flex-1 rounded-full", estado[etapa] === "feito" ? "bg-[#147a3a]/50" : "bg-border")}
+                className={cn("mt-3.5 h-0.5 flex-1 rounded-full", estado[etapa] === "feito" ? "bg-success/50" : "bg-border")}
               />
             )}
           </li>
@@ -118,7 +118,7 @@ function NoCiclo({ estado }: { estado: EstadoEtapa }) {
     // stepper sem distrair (o halo desliga em reduced-motion).
     return (
       <span className="relative grid h-7 w-7 place-items-center">
-        <span aria-hidden className="animate-halo absolute inset-0 rounded-full bg-[#1b4b66]/40" />
+        <span aria-hidden className="animate-halo absolute inset-0 rounded-full bg-primary/40" />
         <span className="relative h-7 w-7 rounded-full gradient-brand ring-4 ring-primary-tint" />
       </span>
     );

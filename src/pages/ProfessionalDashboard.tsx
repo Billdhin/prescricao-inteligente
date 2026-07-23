@@ -342,7 +342,7 @@ function MolduraBoasVindas({
       <EspinhaSelo atual={espinhaAtual} halo={!completo} className="mb-4" />
 
       {mostrarCelebracao && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#147a3a]/30 bg-[#e7f8ed]/50 p-3">
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-success/30 bg-success-tint/50 p-3">
           <PartyPopper className="h-5 w-5 shrink-0 text-success" />
           <p className="min-w-0 flex-1 text-sm text-ink-2">
             <span className="font-semibold text-ink">
@@ -388,13 +388,13 @@ function MolduraBoasVindas({
                   <span
                     className={cn(
                       "tabular grid h-5 w-5 shrink-0 place-items-center rounded-full text-2xs font-bold",
-                      atual ? "bg-primary text-white" : "bg-surface-soft text-ink-3",
+                      atual ? "bg-primary text-on-primary" : "bg-surface-soft text-ink-3",
                     )}
                   >
                     {i + 1}
                   </span>
                 )}
-                <span className={cn(feito && "line-through decoration-[#5b6472]/50")}>{p.label}</span>
+                <span className={cn(feito && "line-through decoration-ink-3/50")}>{p.label}</span>
                 {atual && <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-primary" />}
               </Link>
             </li>

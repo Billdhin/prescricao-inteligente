@@ -4,8 +4,38 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#2563EB" />
+    <meta name="theme-color" content="#3a4a72" />
     <title>Prescrição Inteligente | Treino seguro para alunos com comorbidade</title>
+    <!-- Anti-flash do tema escuro: antes do primeiro paint, se o profissional salvou
+         modo escuro, pinta os neutros essenciais do padrão (Grafite escuro) na raiz.
+         O ThemeApplier completa a paleta certa logo depois. Evita o "flash branco". -->
+    <script type="text/javascript">
+      (function () {
+        try {
+          var t = JSON.parse(localStorage.getItem("pi-tema") || "{}");
+          var modo = t.modo || "claro";
+          var dark =
+            modo === "escuro" ||
+            (modo === "sistema" &&
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (!dark) return;
+          var r = document.documentElement;
+          r.setAttribute("data-theme", "escuro");
+          var v = {
+            "--bg": "#14171d", "--bg-rgb": "20 23 29",
+            "--surface": "#1b1f27", "--surface-rgb": "27 31 39",
+            "--surface-soft": "#21262f", "--surface-soft-rgb": "33 38 47",
+            "--border": "#2e343f", "--border-rgb": "46 52 63",
+            "--ink": "#e9ecf1", "--ink-rgb": "233 236 241",
+            "--ink-2": "#a3abb8", "--ink-2-rgb": "163 171 184",
+            "--ink-3": "#a3abb8", "--ink-3-rgb": "163 171 184",
+            "--primary": "#93a6da", "--primary-rgb": "147 166 218"
+          };
+          for (var k in v) r.style.setProperty(k, v[k]);
+        } catch (e) {}
+      })();
+    </script>
     <!-- SPA para GitHub Pages: restaura a rota codificada pelo 404.html (rafgraph/spa-github-pages) -->
     <script type="text/javascript">
       (function (l) {

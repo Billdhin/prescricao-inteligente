@@ -232,7 +232,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
                 className={cn(
                   "shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
                   on
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-on-primary"
                     : visto
                       ? "bg-primary-tint text-primary hover:bg-primary-tint"
                       : "bg-surface-soft text-ink-2 hover:text-ink",
@@ -267,7 +267,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
           {idx < CAMADAS.length - 1 ? (
             <button
               onClick={() => setIdx((i) => i + 1)}
-              className="inline-flex items-center gap-1 rounded-control bg-primary px-4 py-2 text-sm font-semibold text-white hover:opacity-95"
+              className="inline-flex items-center gap-1 rounded-control bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:opacity-95"
             >
               Próxima <ChevronRight className="h-4 w-4" />
             </button>

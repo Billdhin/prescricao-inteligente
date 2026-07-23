@@ -53,7 +53,7 @@ function Disco({ estado, halo }: { estado: "feito" | "atual" | "futuro"; halo: b
   const cheio = estado !== "futuro";
   return (
     <span className="relative grid h-6 w-6 place-items-center">
-      {halo && <span aria-hidden className="animate-halo-3 absolute inset-0 rounded-full bg-[#1b4b66]/30" />}
+      {halo && <span aria-hidden className="animate-halo-3 absolute inset-0 rounded-full bg-primary/30" />}
       <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" className="relative">
         <circle
           cx="12"
