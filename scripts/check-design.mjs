@@ -8,8 +8,8 @@
 //   3. Peso 800 (font-extrabold) é só display de marketing: Landing e Pricing.
 //   4. Tints mortas: as 13 grafias divergentes/typos que a migração de tokens
 //      aposentou não podem reaparecer.
-//   5. Azul fantasma #2563eb (Lovable) banido dos documentos; scenes.tsx tem
-//      allowlist explícito até a Onda 4 (wireframes ainda usam).
+//   5. Azul fantasma #2563eb (Lovable) banido de todo o src (cenas de fallback
+//      já repintadas para petróleo #1b4b66 na Onda 4).
 //   6. Copy proibida: "Mais escolhido" (selo sem prova).
 //   7. REGRA DURA do repo: modificador /NN sobre classe de cor-token NÃO compila
 //      (tailwind.config sem <alpha-value>); alpha só como hex literal [#...]/NN.
@@ -82,8 +82,6 @@ const REGRAS = [
     id: "azul-fantasma",
     desc: "#2563eb (azul Lovable morto); use corMarca || '#1b4b66'.",
     re: /#2563eb(?![0-9a-fA-F])/gi,
-    // Allowlist explícito: os wireframes de src/data/scenes.tsx morrem na Onda 4.
-    ok: (arq) => /(?:^|[\\/])data[\\/]scenes\.tsx$/.test(arq),
   },
   {
     id: "copy-proibida",

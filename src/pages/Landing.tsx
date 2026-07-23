@@ -4,6 +4,7 @@ import {
   ArrowDown,
   Check,
   CheckCircle2,
+  XCircle,
   ShieldCheck,
   AlertTriangle,
   GraduationCap,
@@ -342,6 +343,92 @@ export function Landing() {
               que sobra documentado depois da decisão.
             </p>
           </div>
+        </Section>
+      </div>
+
+      {/* -------------------- Vale escuro: o Semáforo em cores ---------------- */}
+      {/* Único respiro escuro da página: um beat de contraste que encena o gesto
+          mais distintivo do produto (o sinal verde/amarelo/vermelho antes de treinar).
+          Não é dark mode nem repintura: é uma seção-assinatura. Cores e rótulos são
+          os reais do Semáforo de Liberação; a decisão continua sendo do profissional. */}
+      <div className="relative overflow-hidden bg-primary text-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_75%_at_50%_-10%,rgba(255,255,255,0.09),transparent_60%)]"
+        />
+        <Section className="relative">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="mb-3 inline-flex items-center gap-2.5 text-2xs font-bold uppercase tracking-[0.18em] text-[#8fd3dd]">
+              <span aria-hidden className="h-px w-7 bg-[#8fd3dd]/60" />
+              Segurança em 30 segundos
+            </span>
+            <h2 className="font-display text-3xl font-bold md:text-4xl">
+              Antes da sessão, o sinal verde. Ou o motivo para esperar.
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-[#e8eff3]">
+              O <span className="font-semibold text-white">Semáforo de Liberação</span> lê a condição do aluno e
+              responde em 30 segundos, com o porquê e a referência de cada resposta.
+            </p>
+          </div>
+
+          <div className="mx-auto mt-10 grid max-w-3xl items-center gap-8 md:grid-cols-[auto_1fr]">
+            {/* Farol: as três luzes acesas, lidas como legenda dos desfechos possíveis */}
+            <div
+              aria-hidden
+              className="mx-auto flex w-fit flex-col gap-3.5 rounded-[30px] border border-white/10 bg-[#0f2e3d] p-4 shadow-xl"
+            >
+              {[
+                { c: "#22c55e", g: "rgba(34,197,94,0.45)" },
+                { c: "#f59e0b", g: "rgba(245,158,11,0.45)" },
+                { c: "#ef4444", g: "rgba(239,68,68,0.45)" },
+              ].map((l) => (
+                <span
+                  key={l.c}
+                  className="h-14 w-14 rounded-full"
+                  style={{ backgroundColor: l.c, boxShadow: `0 0 22px 3px ${l.g}` }}
+                />
+              ))}
+            </div>
+
+            {/* Legenda: rótulo real de cada estado + o que ele significa na prática */}
+            <ul className="space-y-5">
+              {[
+                {
+                  icon: <CheckCircle2 className="h-5 w-5" style={{ color: "#4ade80" }} />,
+                  rotulo: "Liberado",
+                  cor: "#86efac",
+                  d: "Nenhum sinal de alerta nos itens do dia. Siga para a sessão.",
+                },
+                {
+                  icon: <AlertTriangle className="h-5 w-5" style={{ color: "#fbbf24" }} />,
+                  rotulo: "Liberado com ajuste",
+                  cor: "#fcd34d",
+                  d: "A sessão acontece com os ajustes indicados. O racional fica registrado.",
+                },
+                {
+                  icon: <XCircle className="h-5 w-5" style={{ color: "#f87171" }} />,
+                  rotulo: "Não liberado hoje",
+                  cor: "#fca5a5",
+                  d: "Os sinais pedem reavaliação antes de treinar; se persistirem, encaminhe.",
+                },
+              ].map((s) => (
+                <li key={s.rotulo} className="flex items-start gap-3">
+                  <span className="mt-0.5 shrink-0">{s.icon}</span>
+                  <div>
+                    <div className="font-display text-lg font-bold" style={{ color: s.cor }}>
+                      {s.rotulo}
+                    </div>
+                    <p className="mt-0.5 text-sm text-[#e8eff3]">{s.d}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="mx-auto mt-8 max-w-xl text-center text-xs text-[#e8eff3]/75">
+            Quem libera, ajusta ou adia é sempre o profissional habilitado. O Semáforo documenta o racional dessa
+            decisão e ele entra no prontuário.
+          </p>
         </Section>
       </div>
 
