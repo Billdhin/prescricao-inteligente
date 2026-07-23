@@ -27,7 +27,6 @@ import {
   CalendarRange,
   CalendarCheck,
   Wallet,
-  MessageSquareQuote,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, TokenRotulado, Eyebrow } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, prescricaoAplicadaEm } from "@/lib/store";
@@ -168,6 +167,7 @@ function CtaProximoPasso({
   passo,
   onAvaliar,
   onAcompanhar,
+  onLiberar,
   variant = "primary",
   size,
   eyebrow = false,
@@ -176,6 +176,8 @@ function CtaProximoPasso({
   passo: ProximoPasso;
   onAvaliar: () => void;
   onAcompanhar: () => void;
+  /** liberar abre a aba Semáforo do próprio aluno (nunca sai para /semaforo) */
+  onLiberar: () => void;
   variant?: Parameters<typeof buttonClasses>[0];
   size?: Parameters<typeof buttonClasses>[1];
   eyebrow?: boolean;
@@ -199,9 +201,9 @@ function CtaProximoPasso({
       break;
     case "liberar":
       botao = (
-        <Link to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`} className={cls}>
+        <button onClick={onLiberar} className={cls}>
           {label}
-        </Link>
+        </button>
       );
       break;
     case "avaliar":
@@ -264,6 +266,14 @@ export function AlunoDetail() {
       document.getElementById("execucao-card")?.scrollIntoView({ behavior: "smooth", block: "start" }),
     );
   }, []);
+  // "Liberar" / "Fazer o semáforo de hoje": abre a aba Semáforo aqui mesmo na página
+  // (nunca sai para /semaforo, que virou o painel do dia).
+  const irParaSemaforo = React.useCallback(() => {
+    setAba("semaforo");
+    requestAnimationFrame(() =>
+      document.getElementById("aba-painel-semaforo")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }, []);
   // Prescrição escolhida para o diálogo "Colocar no treino".
   const [aplicarPresc, setAplicarPresc] = React.useState<Prescricao | null>(null);
   const [params, setParams] = useSearchParams();
@@ -316,10 +326,9 @@ export function AlunoDetail() {
   // Reavaliação reconciliada: com plano, o macrociclo manda; senão o calendário.
   const reav = dataReavaliacao(aluno, planoAtivo);
   const reavaliacaoVencida = reav ? reav.em < Date.now() : false;
-  // Semáforo diário: histórico completo (desc) para a aba, e o resumo (3 últimas)
-  // para o card compacto da aba principal. O estado deriva da fonte única.
+  // Semáforo diário: histórico completo (desc) para a aba. O card compacto da aba
+  // de treino mostra só a linha de estado, derivada da fonte única.
   const libsAlunoDesc = liberacoes.filter((l) => l.alunoId === id).sort((a, b) => b.data - a.data);
-  const libsDoAluno = libsAlunoDesc.slice(0, 3);
   const estadoSem = estadoSemaforo(id, liberacoes);
   const prescAberta = prontuarioDe ? prescs.find((p) => p.id === prontuarioDe) : undefined;
 
@@ -338,7 +347,7 @@ export function AlunoDetail() {
             <span className="font-semibold">{aluno.nome} cadastrado(a).</span> Comece pela avaliação
             inicial para acompanhar a evolução; ela abre o resto do ciclo de cuidado.
           </p>
-          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={() => setAvaliar(true)} onAcompanhar={irParaExecucao} size="sm" />
+          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={() => setAvaliar(true)} onAcompanhar={irParaExecucao} onLiberar={irParaSemaforo} size="sm" />
         </Card>
       )}
 
@@ -401,6 +410,7 @@ export function AlunoDetail() {
         onEditar={() => setEditar(true)}
         onAvaliar={() => setAvaliar(true)}
         onAcompanhar={irParaExecucao}
+        onLiberar={irParaSemaforo}
         onToggleStatus={() => {
           const ativo = aluno.status === "ativo";
           updateAluno(aluno.id, { status: ativo ? "inativo" : "ativo" });
@@ -415,6 +425,7 @@ export function AlunoDetail() {
         estado={estado}
         onAvaliar={() => setAvaliar(true)}
         onAcompanhar={() => setAba("treino")}
+        onLiberar={irParaSemaforo}
       />
 
       <AlunoTabs aba={aba} onAba={setAba} />
@@ -514,7 +525,7 @@ export function AlunoDetail() {
 
             <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
 
-            <PlanoCard aluno={aluno} planos={planosDoAluno} podeTreino={podeTreino} onAvaliar={() => setAvaliar(true)} />
+            <PlanoCard aluno={aluno} planos={planosDoAluno} podeTreino={podeTreino} onAvaliar={() => setAvaliar(true)} onIrParaSemaforo={irParaSemaforo} />
 
             <div id="execucao-card" className="scroll-mt-24">
               <ExecucaoPanel
@@ -536,11 +547,11 @@ export function AlunoDetail() {
                   to={planoAtivo ? `/gps?aluno=${aluno.id}&modo=dia` : `/gps?aluno=${aluno.id}`}
                   className="text-sm font-semibold text-primary hover:underline"
                 >
-                  {planoAtivo ? "Personalizar o treino do dia" : "Nova"}
+                  {planoAtivo ? "Personalizar o treino do dia" : "Nova prescrição"}
                 </Link>
               ) : (
                 <span className="text-sm font-semibold text-ink-3" aria-disabled>
-                  {planoAtivo ? "Personalizar o treino do dia" : "Nova"}
+                  {planoAtivo ? "Personalizar o treino do dia" : "Nova prescrição"}
                 </span>
               )}
             </div>
@@ -671,33 +682,11 @@ export function AlunoDetail() {
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="font-display text-lg font-bold text-ink">Semáforo de Liberação</h2>
               </div>
-              {/* Vermelho pendente: o resumo já mostra que o aluno segue "não liberado". */}
-              {estadoSem.vermelhoPendente ? (
-                <div className={cn("mb-3 flex items-start gap-2 rounded-lg border p-3", COR_SEMAFORO.vermelho.bg, COR_SEMAFORO.vermelho.border)}>
-                  <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-danger-fill" />
-                  <p className="text-sm text-ink">
-                    <span className="font-semibold">Não liberado em {fmtData(estadoSem.vermelhoPendente.data)}.</span> Sem novo
-                    semáforo desde então; faça o semáforo de hoje para reabrir a sessão.
-                  </p>
-                </div>
-              ) : (
-                <p className="mb-3 text-sm text-ink-2">
-                  Antes da sessão: libere o treino de hoje em 30 segundos, com o porquê registrado.
-                </p>
-              )}
-              {libsDoAluno.length > 0 && (
-                <ul className="mb-3 space-y-1.5">
-                  {libsDoAluno.map((l) => (
-                    <li key={l.id} className="flex items-center gap-2 text-sm">
-                      <span aria-hidden className={cn("h-2.5 w-2.5 shrink-0 rounded-full", COR_SEMAFORO[l.resultado].dot)} />
-                      <span className="text-ink">{rotuloResultado(l.resultado)}</span>
-                      <span className="tabular ml-auto text-xs text-ink-3">{fmtData(l.data)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <button onClick={() => setAba("semaforo")} className={buttonClasses("secondary", "sm")}>
-                <ShieldCheck className="h-4 w-4" /> Abrir o semáforo do aluno
+              {/* Uma linha de estado: a aba Semáforo tem o checklist, a régua da semana
+                  e o histórico completo (sem repetir a lista aqui). */}
+              <ResumoSemaforoLinha estado={estadoSem} />
+              <button onClick={() => setAba("semaforo")} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+                <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
               </button>
             </Card>
           </div>
@@ -752,6 +741,7 @@ export function AlunoDetail() {
             if (surgiu) toast("A avaliação indica possível grupo especial. Veja a sugestão no perfil.");
           }}
           alunoId={aluno.id}
+          alunoNome={aluno.nome}
           anterior={avalsDesc[0]}
           historico={avals}
         />
@@ -815,6 +805,7 @@ function AlunoHeader({
   onEditar,
   onAvaliar,
   onAcompanhar,
+  onLiberar,
   onToggleStatus,
 }: {
   aluno: Aluno;
@@ -827,6 +818,7 @@ function AlunoHeader({
   onEditar: () => void;
   onAvaliar: () => void;
   onAcompanhar: () => void;
+  onLiberar: () => void;
   onToggleStatus: () => void;
 }) {
   const ativo = aluno.status === "ativo";
@@ -869,7 +861,7 @@ function AlunoHeader({
           <button onClick={onAvaliar} className={buttonClasses("secondary")}>
             <CalendarPlus className="h-4 w-4" /> {temAvaliacao ? "Reavaliar" : "Registrar avaliação"}
           </button>
-          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} eyebrow />
+          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} onLiberar={onLiberar} eyebrow />
         </div>
       </div>
 
@@ -983,31 +975,21 @@ function AppDoAlunoPanel({
           pela execução.
         </p>
 
-        {/* Resumo do último feedback: dá um motivo concreto para abrir o painel de
-            execução (onde o recado completo e o histórico de PSE aparecem). */}
+        {/* Último feedback em UMA linha (data + PSE) + link. O recado completo e o
+            histórico de PSE vivem no ExecucaoPanel da aba Plano e treino. */}
         {ultimoFeedback && (
-          <button
-            type="button"
-            onClick={onVerExecucao}
-            className="mt-4 flex w-full items-center gap-3 rounded-xl border border-border bg-surface-soft p-3 text-left transition-colors hover:border-primary/40 hover:bg-surface"
-          >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-tint text-primary">
-              <MessageSquareQuote className="h-4 w-4" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Último feedback</span>
-                <span className="tabular text-xs text-ink-3">{fmtData(ultimoFeedback.concluidaEm)}</span>
-                {ultimoFeedback.pse != null && <PseBadge pse={ultimoFeedback.pse} />}
-              </div>
-              {ultimoFeedback.observacao ? (
-                <p className="mt-0.5 truncate text-sm text-ink">{ultimoFeedback.observacao}</p>
-              ) : (
-                <p className="mt-0.5 text-sm text-ink-3">Sessão concluída sem recado.</p>
-              )}
-            </div>
-            <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
-          </button>
+          <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-border bg-surface-soft px-3 py-2.5">
+            <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Último feedback</span>
+            <span className="tabular text-xs text-ink-3">{fmtData(ultimoFeedback.concluidaEm)}</span>
+            {ultimoFeedback.pse != null && <PseBadge pse={ultimoFeedback.pse} />}
+            <button
+              type="button"
+              onClick={onVerExecucao}
+              className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+            >
+              Ver execução <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         )}
 
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
@@ -1216,6 +1198,41 @@ function FaixaEstado({ estado }: { estado: EstadoSemaforo }) {
           alerta.
         </p>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Uma linha do estado atual do semáforo, para o resumo na aba de treino: Pill do
+ * estado + "há N dias" quando há registro. Sem lista de liberações (a aba Semáforo
+ * é a fonte do estado, do checklist, da régua e do histórico).
+ */
+function ResumoSemaforoLinha({ estado }: { estado: EstadoSemaforo }) {
+  if (estado.vermelhoPendente) {
+    const l = estado.vermelhoPendente;
+    return (
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-2">
+        <Pill tone="danger" icon={<XCircle className="h-3 w-3" />}>Não liberado</Pill>
+        <span>
+          em {fmtData(l.data)} · {registradoHa(l.data)}. Faça o semáforo de hoje para reabrir a sessão.
+        </span>
+      </div>
+    );
+  }
+  if (estado.ultimo) {
+    const r = estado.ultimo.resultado;
+    const tone = r === "verde" ? "success" : r === "amarelo" ? "warning" : "danger";
+    return (
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-2">
+        <Pill tone={tone}>{rotuloResultado(r)}</Pill>
+        <span>{registradoHa(estado.ultimo.data)}.</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-2">
+      <Pill tone="neutral">Sem semáforo registrado</Pill>
+      <span>Faça o semáforo de hoje antes da sessão.</span>
     </div>
   );
 }
@@ -1454,12 +1471,15 @@ function PlanoCard({
   planos,
   podeTreino,
   onAvaliar,
+  onIrParaSemaforo,
 }: {
   aluno: Aluno;
   planos: PlanoTreino[];
   /** gate duro do trilho: sem avaliação, "Montar treino" fica desabilitado */
   podeTreino: { ok: boolean; motivo?: string };
   onAvaliar: () => void;
+  /** abre a aba Semáforo do aluno (nunca sai para /semaforo) */
+  onIrParaSemaforo: () => void;
 }) {
   const ativo = planos.find((p) => p.status === "ativo");
   const arquivados = planos.filter((p) => p.status === "arquivado");
@@ -1597,12 +1617,12 @@ function PlanoCard({
           >
             <Navigation className="h-4 w-4" /> Personalizar o treino do dia
           </Link>
-          <Link
-            to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`}
+          <button
+            onClick={onIrParaSemaforo}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink"
           >
-            <ShieldCheck className="h-4 w-4" /> Semáforo antes da sessão
-          </Link>
+            <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
+          </button>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import {
   Users,
   UserPlus,
   Navigation,
+  CalendarPlus,
   AlertTriangle,
   ArrowRight,
   Crown,
@@ -66,6 +67,11 @@ export function ProfessionalDashboard() {
   // ordem original.
   const temAlertaVermelho = (motivos: ReturnType<typeof avisosDoAluno>) =>
     motivos.some((m) => m.tone === "danger");
+  // Pendência de LIBERAÇÃO (vermelho pendente ou a etapa "liberar") abre direto na
+  // aba Semáforo do aluno, onde se faz o semáforo de hoje. Antes só o vermelho
+  // roteava; a etapa "liberar" caía na aba padrão.
+  const precisaSemaforo = (motivos: ReturnType<typeof avisosDoAluno>) =>
+    motivos.some((m) => m.etapa === "liberar");
   const atencao = ativos
     .map((a) => ({ aluno: a, motivos: avisosDoAluno(a, ctx) }))
     .filter((x) => x.motivos.length > 0)
@@ -110,8 +116,10 @@ export function ProfessionalDashboard() {
           <Link to="/alunos?novo=1" className={buttonClasses("secondary")}>
             <UserPlus className="h-4 w-4" /> Cadastrar aluno
           </Link>
-          <Link to="/gps" className={buttonClasses("primary")}>
-            <Navigation className="h-4 w-4" /> Prescrever exercício
+          {/* O início do trilho no topo: avaliar é a etapa 1 e o hub /assessments já
+              lista quem precisa. Prescrever exercício vive na nav e no contexto do aluno. */}
+          <Link to="/assessments" className={buttonClasses("primary")}>
+            <CalendarPlus className="h-4 w-4" /> Registrar avaliação
           </Link>
         </div>
       </div>
@@ -184,8 +192,8 @@ export function ProfessionalDashboard() {
             {atencao.map(({ aluno, motivos }) => (
               <Link
                 key={aluno.id}
-                // Com vermelho pendente, o CTA cai direto na aba Semáforo do aluno.
-                to={temAlertaVermelho(motivos) ? `/alunos/${aluno.id}?aba=semaforo` : `/alunos/${aluno.id}`}
+                // Pendência de liberação cai direto na aba Semáforo do aluno.
+                to={precisaSemaforo(motivos) ? `/alunos/${aluno.id}?aba=semaforo` : `/alunos/${aluno.id}`}
                 className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-soft"
               >
                 <Avatar iniciais={aluno.iniciais} />

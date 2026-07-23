@@ -126,7 +126,7 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
       etapa: "liberar",
       tone: "primary",
       frase: "Antes da sessão de hoje, faça o semáforo de liberação.",
-      cta: { label: "Fazer o semáforo", kind: "liberar" },
+      cta: { label: "Fazer o semáforo de hoje", kind: "liberar" },
       chip: null,
     };
   }

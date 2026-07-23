@@ -60,7 +60,7 @@ const TITULOS_ROTA: [RegExp, string][] = [
   [/^\/alunos/, "Alunos"],
   [/^\/prescrever-treino/, "Prescrever treino"],
   [/^\/gps/, "Prescrever exercício"],
-  [/^\/semaforo/, "Semáforo de Liberação"],
+  [/^\/semaforo/, "Semáforo do dia"],
   [/^\/special-groups/, "Grupos Especiais"],
   [/^\/movement-lab/, "Laboratório Visual"],
   [/^\/consultar/, "Consultar"],

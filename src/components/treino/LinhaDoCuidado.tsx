@@ -49,12 +49,15 @@ export function LinhaDoCuidado({
   estado,
   onAvaliar,
   onAcompanhar,
+  onLiberar,
 }: {
   aluno: Aluno;
   passo: ProximoPasso;
   estado: Record<EtapaCiclo, EstadoEtapa>;
   onAvaliar: () => void;
   onAcompanhar: () => void;
+  /** liberar abre a aba Semáforo do próprio aluno (nunca sai para /semaforo) */
+  onLiberar: () => void;
 }) {
   return (
     <Card variant="raised" className="overflow-hidden p-4 md:p-5">
@@ -99,7 +102,7 @@ export function LinhaDoCuidado({
           <div className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Próximo passo</div>
           <p className="text-sm font-medium text-ink">{passo.frase}</p>
         </div>
-        <CtaPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} />
+        <CtaPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} onLiberar={onLiberar} />
       </div>
     </Card>
   );
@@ -131,11 +134,13 @@ function CtaPasso({
   passo,
   onAvaliar,
   onAcompanhar,
+  onLiberar,
 }: {
   aluno: Aluno;
   passo: ProximoPasso;
   onAvaliar: () => void;
   onAcompanhar: () => void;
+  onLiberar: () => void;
 }) {
   // Ação primária da tela, acionada no celular ao lado do aluno: alvo de 44px (md).
   // No mobile desce para a própria linha (w-full) para o texto do passo não ficar
@@ -154,10 +159,12 @@ function CtaPasso({
         </Link>
       );
     case "liberar":
+      // O semáforo do aluno em contexto se faz na aba dele, aqui mesmo na página,
+      // não na /semaforo global (que virou o painel do dia).
       return (
-        <Link to={`/semaforo?grupo=${aluno.grupoEspecial ?? "geral"}&aluno=${aluno.id}`} className={cls}>
+        <button onClick={onLiberar} className={cls}>
           {label}
-        </Link>
+        </button>
       );
     case "avaliar":
     case "reavaliar":

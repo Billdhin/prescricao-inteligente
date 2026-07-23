@@ -911,9 +911,11 @@ function FocoAgora({
   liberacao?: { resultado: string };
   contexto?: { alunoNome?: string; alunoId?: string; objetivo?: string };
 }) {
-  const semaforoHref = `/semaforo?grupo=${grupo.slug}&fase=${fase}${
-    contexto?.alunoId ? `&aluno=${contexto.alunoId}` : ""
-  }`;
+  // Com aluno em contexto, o semáforo se faz na aba dele (nunca na /semaforo global,
+  // que virou o painel do dia). Sem aluno, cai no semáforo avulso por grupo.
+  const semaforoHref = contexto?.alunoId
+    ? `/alunos/${contexto.alunoId}?aba=semaforo`
+    : `/semaforo?grupo=${grupo.slug}&fase=${fase}`;
   return (
     <Card className="border-l-4 border-l-primary p-5 md:p-6">
       <div className="mb-3 flex flex-wrap items-center gap-2">

@@ -72,17 +72,28 @@ export function AvaliacaoModal({
   onClose,
   onSave,
   alunoId,
+  alunoNome,
   anterior,
   historico,
 }: {
   onClose: () => void;
   onSave: (av: Avaliacao) => void;
   alunoId: string;
+  /** nome do aluno, para o título honesto de reavaliação ("Reavaliação de {nome}") */
+  alunoNome?: string;
   /** avaliação mais recente do aluno, para a comparação e o pré-preenchimento dos campos */
   anterior?: Avaliacao;
   /** série completa de avaliações (ascendente), para o painel "Como estava antes" */
   historico?: Avaliacao[];
 }) {
+  // Título e ação honestos: com avaliação anterior, isto é uma REAVALIAÇÃO (não
+  // "Registrar avaliação"), mesmo quando aberto pelo botão "Reavaliar".
+  const ehReavaliacao = !!anterior;
+  const tituloModal = ehReavaliacao
+    ? alunoNome
+      ? `Reavaliação de ${alunoNome.split(" ")[0]}`
+      : "Reavaliação"
+    : "Registrar avaliação";
   const hoje = new Date().toISOString().slice(0, 10);
   const [data, setData] = React.useState(hoje);
   const [tipo, setTipo] = React.useState<TipoAvaliacao>(anterior ? "reavaliacao" : "inicial");
@@ -186,14 +197,14 @@ export function AvaliacaoModal({
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label="Registrar avaliação"
+        aria-label={tituloModal}
         className="flex max-h-modal w-full max-w-xl flex-col overflow-hidden rounded-card bg-surface shadow-overlay outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cabeçalho */}
         <div className="flex items-start justify-between gap-2 border-b border-border p-4 sm:p-5">
           <div>
-            <h2 className="font-display text-lg font-bold text-ink">Registrar avaliação</h2>
+            <h2 className="font-display text-lg font-bold text-ink">{tituloModal}</h2>
             <p className="text-sm text-ink-2">Registre as medidas e o desempenho atual do aluno.</p>
           </div>
           <button onClick={tentarFechar} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
@@ -387,7 +398,7 @@ export function AvaliacaoModal({
               className={cn(buttonClasses("primary", "sm"), (!temConteudo || salvando) && "cursor-not-allowed opacity-50")}
             >
               {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {salvando ? "Salvando" : "Salvar avaliação"}
+              {salvando ? "Salvando" : ehReavaliacao ? "Salvar reavaliação" : "Salvar avaliação"}
             </button>
           </div>
         </div>

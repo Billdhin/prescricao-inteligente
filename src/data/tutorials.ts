@@ -46,7 +46,7 @@ export const tutorials: Tutorial[] = [
           "Antes da sessão do aluno com condição especial, abra o Semáforo e responda o checklist de ~30 segundos: pressão do dia, sintomas, medicação. O resultado sai na hora (liberado, liberado com ajuste ou não liberado hoje), sempre com o porquê.",
         scene: "nav",
         navLabel: "Semáforo",
-        cta: { label: "Abrir o Semáforo", to: "/semaforo" },
+        cta: { label: "Fazer o semáforo de hoje", to: "/semaforo" },
       },
       {
         titulo: "Registre a liberação",
