@@ -22,6 +22,8 @@ import {
   Activity,
   SlidersHorizontal,
   CalendarRange,
+  CalendarPlus,
+  AlertTriangle,
 } from "lucide-react";
 import { Card, Pill, ScoreRing, SectionHeader, buttonClasses, Progress, TokenRotulado } from "@/components/ui/primitives";
 import {
@@ -169,6 +171,9 @@ export function Gps() {
     return [...avaliacoes].filter((a) => a.alunoId === aluno.id).sort((a, b) => b.data - a.data)[0];
   }, [avaliacoes, aluno]);
   const reavaliacaoVencida = aluno?.proximaReavaliacaoEm ? aluno.proximaReavaliacaoEm < Date.now() : false;
+  // Gate duro do trilho: aluno VINCULADO sem nenhuma avaliação não gera prescrição. Uso
+  // avulso (sem aluno) segue livre, por ser prescrição diária legítima (decisão do fundador).
+  const bloqueadoSemAvaliacao = Boolean(aluno) && !ultimaAval;
 
   // Última liberação do Semáforo aplicável (últimas 24h).
   // Com aluno, a pergunta é "ESTE aluno foi liberado hoje?": exigir também que o
@@ -450,13 +455,23 @@ export function Gps() {
         </Card>
       )}
       {aluno && !ultimaAval && (
-        <Card variant="soft" className="flex flex-wrap items-center gap-3 p-3 text-sm">
-          <span className="text-ink-2">
-            Sem avaliação registrada para {aluno.nome}: a decisão fica mais forte com medidas de base.
-          </span>
-          <Link to={`/alunos/${aluno.id}?avaliar=1`} className="font-semibold text-primary hover:underline">
-            Registrar avaliação
-          </Link>
+        <Card tone="warning" className="p-4">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface text-warning">
+              <AlertTriangle className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h2 className="font-display text-base font-bold text-ink">Registre a avaliação primeiro. O treino nasce dela.</h2>
+              <p className="mt-1 text-sm text-ink-2">
+                A prescrição de {aluno.nome.split(" ")[0]} parte das medidas de base. Registre a avaliação e as
+                recomendações passam a considerar o ponto de partida dele. O uso avulso, sem aluno vinculado,
+                continua livre.
+              </p>
+              <Link to={`/alunos/${aluno.id}?avaliar=1`} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
+                <CalendarPlus className="h-4 w-4" /> Registrar avaliação
+              </Link>
+            </div>
+          </div>
         </Card>
       )}
 
@@ -492,6 +507,7 @@ export function Gps() {
           onFinish={gerar}
           aluno={aluno}
           rule={rule}
+          bloqueado={bloqueadoSemAvaliacao}
         />
       ) : (
         <Results
@@ -974,6 +990,7 @@ function Wizard({
   onFinish,
   aluno,
   rule,
+  bloqueado,
 }: {
   step: number;
   setStep: (n: number) => void;
@@ -982,6 +999,8 @@ function Wizard({
   onFinish: () => void;
   aluno?: { nome: string };
   rule?: GroupGpsRule;
+  /** gate duro: aluno vinculado sem avaliação bloqueia a geração */
+  bloqueado?: boolean;
 }) {
   const emagrecimento = answers.objetivo === "Emagrecimento";
   const STEP_LABELS = stepLabels(emagrecimento);
@@ -993,7 +1012,7 @@ function Wizard({
   const seguranca = avaliarSeguranca(answers.restricoes);
   const restricaoStepOk =
     answers.restricoes.length > 0 && !condicionaisPendentes(answers.restricoes) && !seguranca.bloqueado;
-  const geracaoBloqueada = answers.equipamentos.length === 0 || seguranca.bloqueado;
+  const geracaoBloqueada = answers.equipamentos.length === 0 || seguranca.bloqueado || Boolean(bloqueado);
   const headingRef = React.useRef<HTMLHeadingElement>(null);
   const first = React.useRef(true);
   React.useEffect(() => {

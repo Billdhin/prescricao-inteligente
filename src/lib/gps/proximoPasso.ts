@@ -17,6 +17,23 @@ export type AvisoTone = "primary" | "warning" | "cta" | "success" | "analysis";
 
 const DIA = 86_400_000;
 
+/**
+ * Gate duro do trilho: sem NENHUMA avaliação registrada, o aluno não tem base para
+ * montar treino nem prescrever exercício vinculado. O treino nasce da avaliação
+ * (decisão do fundador), então os CTAs de treino ficam desabilitados até existir ao
+ * menos uma avaliação. Uso avulso (sem aluno) não passa por aqui, por definição.
+ */
+export function podeMontarTreino(
+  aluno: Aluno,
+  ctx: { avaliacoes: { alunoId?: string }[] },
+): { ok: boolean; motivo?: string } {
+  const temAvaliacao = ctx.avaliacoes.some((a) => a.alunoId === aluno.id);
+  if (!temAvaliacao) {
+    return { ok: false, motivo: "Registre a avaliação primeiro. O treino nasce dela." };
+  }
+  return { ok: true };
+}
+
 function mesmoDia(a: number, b: number): boolean {
   const da = new Date(a);
   const db = new Date(b);
@@ -93,7 +110,7 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
       frase: reav.semana
         ? `Chegou o ponto de reavaliação da semana ${reav.semana}. Registre para reabrir o ciclo.`
         : `Reavaliação vencida há ${dias} ${dias === 1 ? "dia" : "dias"}. Registre para reabrir o ciclo.`,
-      cta: { label: "Registrar reavaliação", kind: "reavaliar" },
+      cta: { label: "Reavaliar", kind: "reavaliar" },
       chip: { label: "Reavaliação vencida", tone: "warning" },
     };
   }

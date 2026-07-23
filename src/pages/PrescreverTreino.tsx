@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   CalendarRange,
+  CalendarPlus,
   Users,
   UserCheck,
   Sparkles,
@@ -36,6 +37,7 @@ import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { bibliografia } from "@/data/referencias";
 import { exportPlanoPDF } from "@/lib/exportPlano";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, uid } from "@/lib/store";
+import { podeMontarTreino } from "@/lib/gps/proximoPasso";
 import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 
@@ -57,6 +59,7 @@ export function PrescreverTreino() {
   const planosSalvos = useAlunos((s) => s.planos);
   const execucoes = useAlunos((s) => s.execucoes);
   const prescricoes = useAlunos((s) => s.prescricoes);
+  const avaliacoes = useAlunos((s) => s.avaliacoes);
   const user = useUser();
   const premium = isPremiumUnlocked(user.plan);
   const [confirmarRegenerar, setConfirmarRegenerar] = React.useState(false);
@@ -69,6 +72,11 @@ export function PrescreverTreino() {
 
   const [alunoId, setAlunoId] = React.useState<string | undefined>(alunoInicial?.id);
   const aluno = alunos.find((a) => a.id === alunoId);
+  // Gate duro do trilho: sem avaliação, o treino não nasce. Vale quando um aluno está
+  // selecionado e não estamos editando um plano salvo dele. Plano avulso (sem aluno)
+  // segue 100% livre, por ser uso de estudo/simulação.
+  const gate = aluno ? podeMontarTreino(aluno, { avaliacoes }) : { ok: true };
+  const bloquearSemAvaliacao = Boolean(aluno) && !gate.ok && !planoPre;
 
   const [objetivo, setObjetivo] = React.useState<GpsObjetivo>(planoPre?.objetivo ?? alunoInicial?.objetivo ?? "Hipertrofia");
   const [nivel, setNivel] = React.useState<Nivel>(planoPre?.nivel ?? alunoInicial?.nivel ?? "Iniciante");
@@ -291,7 +299,7 @@ export function PrescreverTreino() {
               ))}
             </div>
           )}
-          {aluno && (
+          {aluno && !bloquearSemAvaliacao && (
             <p className="mt-2 text-xs text-ink-3">
               Objetivo, nível e grupo especial vieram do cadastro de {aluno.nome}. Ajuste se quiser.
               {aluno.restricoes.length > 0 && ` ${aluno.restricoes.length} restrição(ões) no perfil: revise os exercícios de cada sessão à luz delas (a periodização organiza volume e intensidade; a seleção segura por restrição fica no Prescrever exercício).`}
@@ -299,6 +307,11 @@ export function PrescreverTreino() {
           )}
         </div>
 
+        {/* Gate duro: aluno selecionado sem avaliação não gera plano; explica e leva a registrar. */}
+        {bloquearSemAvaliacao && aluno ? (
+          <BlocoAvaliacaoNecessaria aluno={aluno} />
+        ) : (
+          <>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <Campo label="Objetivo">
             <Opcoes valor={objetivo} opcoes={OBJETIVOS} onSelect={(v) => setObjetivo(v as GpsObjetivo)} />
@@ -364,6 +377,8 @@ export function PrescreverTreino() {
             </button>
           )}
         </div>
+          </>
+        )}
       </Card>
 
       {/* Resultado */}
@@ -444,6 +459,38 @@ function ConfirmarRegenerarModal({
           <button onClick={onConfirm} className={buttonClasses("primary", "sm")}>
             Gerar de novo
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Gate duro do trilho no Prescrever treino: sem avaliação, o plano não nasce.
+ *  Substitui o formulário de geração, explica o porquê e leva a registrar a
+ *  avaliação (ou voltar ao plano avulso). */
+function BlocoAvaliacaoNecessaria({ aluno }: { aluno: Aluno }) {
+  const primeiro = aluno.nome.split(" ")[0];
+  return (
+    <div className="mt-4 rounded-xl border border-warning/30 bg-warning-tint/50 p-4">
+      <div className="flex items-start gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface text-warning">
+          <AlertTriangle className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="font-display text-base font-bold text-ink">Registre a avaliação primeiro. O treino nasce dela.</h3>
+          <p className="mt-1 text-sm text-ink-2">
+            A periodização de {primeiro} é montada a partir das medidas de base. Registre a avaliação inicial e o
+            plano passa a nascer dela, com a progressão justificada. Para montar um plano de estudo sem aluno,
+            selecione "Plano avulso" acima.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link to={`/alunos/${aluno.id}?avaliar=1`} className={buttonClasses("primary", "sm")}>
+              <CalendarPlus className="h-4 w-4" /> Registrar avaliação
+            </Link>
+            <Link to={`/alunos/${aluno.id}`} className={buttonClasses("secondary", "sm")}>
+              Ver perfil de {primeiro}
+            </Link>
+          </div>
         </div>
       </div>
     </div>

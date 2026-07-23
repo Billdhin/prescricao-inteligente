@@ -1,6 +1,7 @@
 import * as React from "react";
-import { X, Plus, Trash2, Camera, Info, ChevronDown, Loader2 } from "lucide-react";
+import { X, Plus, Trash2, Camera, Info, ChevronDown, Loader2, TrendingUp } from "lucide-react";
 import { buttonClasses, Pill } from "@/components/ui/primitives";
+import { EvolucaoMini, METRICAS_CHAVE } from "@/components/app/EvolucaoMini";
 import { useDialog } from "@/lib/useDialog";
 import { arquivoParaDataUrl } from "@/lib/imagem";
 import { toast } from "@/lib/toast";
@@ -72,23 +73,41 @@ export function AvaliacaoModal({
   onSave,
   alunoId,
   anterior,
+  historico,
 }: {
   onClose: () => void;
   onSave: (av: Avaliacao) => void;
   alunoId: string;
-  /** avaliação mais recente do aluno, para a comparação e o pré-preenchimento da altura */
+  /** avaliação mais recente do aluno, para a comparação e o pré-preenchimento dos campos */
   anterior?: Avaliacao;
+  /** série completa de avaliações (ascendente), para o painel "Como estava antes" */
+  historico?: Avaliacao[];
 }) {
   const hoje = new Date().toISOString().slice(0, 10);
   const [data, setData] = React.useState(hoje);
   const [tipo, setTipo] = React.useState<TipoAvaliacao>(anterior ? "reavaliacao" : "inicial");
   const [condicao, setCondicao] = React.useState("");
-  // medidas numéricas em string (uma chave por medida)
-  const [med, setMed] = React.useState<Record<string, string>>(() => ({
-    altura: anterior?.medidas.altura != null ? String(anterior.medidas.altura) : "",
-  }));
+  // medidas numéricas em string (uma chave por medida). Reavaliação de verdade: os
+  // campos nascem preenchidos com a última avaliação, e o profissional digita por cima
+  // só do que mudou. Sem anterior, começa em branco (a altura já entra, como antes).
+  const [med, setMed] = React.useState<Record<string, string>>(() => {
+    const paraInput = (n: number) => String(n).replace(".", ",");
+    const inicial: Record<string, string> = {};
+    const m = anterior?.medidas;
+    if (m) {
+      for (const k of ["peso", "percentualGordura", "altura", "massaMuscular", "cintura", "quadril", "fcRepouso", "pressaoSistolica", "pressaoDiastolica", "fadiga", "sono"]) {
+        if (m[k] != null) inicial[k] = paraInput(m[k] as number);
+      }
+      if (anterior?.dorEscala != null) inicial.dor = String(anterior.dorEscala);
+    }
+    if (inicial.altura == null) inicial.altura = m?.altura != null ? paraInput(m.altura) : "";
+    return inicial;
+  });
   const [regioesDor, setRegioesDor] = React.useState<string[]>([]);
-  const [perimetros, setPerimetros] = React.useState<AvaliacaoPerimetro[]>([]);
+  // Perímetros também vêm da última avaliação (mesmas regiões a re-medir).
+  const [perimetros, setPerimetros] = React.useState<AvaliacaoPerimetro[]>(() =>
+    anterior?.perimetros ? anterior.perimetros.map((p) => ({ ...p })) : [],
+  );
   const [testes, setTestes] = React.useState<AvaliacaoTeste[]>([]);
   const [fotos, setFotos] = React.useState<AvaliacaoFoto[]>([]);
   const [personalizadas, setPersonalizadas] = React.useState<MedidaPersonalizada[]>([]);
@@ -184,6 +203,25 @@ export function AvaliacaoModal({
 
         {/* Corpo rolável */}
         <div className="min-h-0 flex-1 space-y-4 overflow-auto p-4 sm:p-5">
+          {/* Como estava antes: em reavaliação, a trajetória fica à vista enquanto se
+              registra o novo ponto (mini-gráfico das métricas-chave). */}
+          {anterior && historico && historico.length > 0 && (
+            <div className="rounded-xl border border-analysis/30 bg-analysis-tint p-4">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-surface text-analysis">
+                  <TrendingUp className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-ink">Como estava antes</h3>
+                  <p className="text-xs text-ink-2">
+                    Última avaliação em {fmtData(anterior.data)}. Registre os novos valores abaixo.
+                  </p>
+                </div>
+              </div>
+              <EvolucaoMini avals={historico} metricas={METRICAS_CHAVE} valorUnico />
+            </div>
+          )}
+
           {/* Resumo rápido: sempre visível */}
           <div className="grid gap-3 sm:grid-cols-2">
             <Campo label="Data da avaliação" className="sm:col-span-1">
@@ -210,7 +248,7 @@ export function AvaliacaoModal({
           {/* Composição corporal detalhada */}
           <Secao titulo="Composição corporal" defaultOpen>
             <div className="grid gap-3 sm:grid-cols-2">
-              <NumInput label="Altura (cm)" mkey="altura" med={med} setM={setM} placeholder="Ex.: 172" />
+              <NumInput label="Altura (cm)" mkey="altura" med={med} setM={setM} placeholder="Ex.: 172" anterior={antMed?.altura} anteriorData={anterior?.data} unidade="cm" />
               <Campo label="IMC (automático)">
                 <div className="input flex items-center bg-surface-soft text-ink-2">
                   {imc != null ? `${fmtNum(+imc.toFixed(1))} kg/m²` : "peso e altura"}
@@ -250,8 +288,8 @@ export function AvaliacaoModal({
             <div className="grid gap-3 sm:grid-cols-2">
               <NumInput label="FC de repouso (bpm)" mkey="fcRepouso" med={med} setM={setM} placeholder="Ex.: 68" anterior={antMed?.fcRepouso} anteriorData={anterior?.data} unidade="bpm" />
               <div className="grid grid-cols-2 gap-2">
-                <NumInput label="PA sistólica" mkey="pressaoSistolica" med={med} setM={setM} placeholder="120" />
-                <NumInput label="PA diastólica" mkey="pressaoDiastolica" med={med} setM={setM} placeholder="80" />
+                <NumInput label="PA sistólica" mkey="pressaoSistolica" med={med} setM={setM} placeholder="120" anterior={antMed?.pressaoSistolica} anteriorData={anterior?.data} unidade="mmHg" />
+                <NumInput label="PA diastólica" mkey="pressaoDiastolica" med={med} setM={setM} placeholder="80" anterior={antMed?.pressaoDiastolica} anteriorData={anterior?.data} unidade="mmHg" />
               </div>
             </div>
             <p className="mt-2 text-xs text-ink-3">
@@ -284,8 +322,8 @@ export function AvaliacaoModal({
               </div>
             </Campo>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <NumInput label="Nível de fadiga (0 a 10)" mkey="fadiga" med={med} setM={setM} placeholder="Ex.: 4" max10 />
-              <NumInput label="Qualidade do sono (0 a 10)" mkey="sono" med={med} setM={setM} placeholder="Ex.: 7" max10 />
+              <NumInput label="Nível de fadiga (0 a 10)" mkey="fadiga" med={med} setM={setM} placeholder="Ex.: 4" max10 anterior={antMed?.fadiga} anteriorData={anterior?.data} />
+              <NumInput label="Qualidade do sono (0 a 10)" mkey="sono" med={med} setM={setM} placeholder="Ex.: 7" max10 anterior={antMed?.sono} anteriorData={anterior?.data} />
             </div>
             <p className="mt-2 text-xs text-ink-3">
               O registro de dor serve para acompanhamento e não substitui avaliação de profissional de saúde.
@@ -360,10 +398,14 @@ export function AvaliacaoModal({
 
 /* ------------------------------- subcomponentes ------------------------------- */
 
-function Campo({ label, className, children }: { label: string; className?: string; children: React.ReactNode }) {
+function Campo({ label, hint, className, children }: { label: string; hint?: React.ReactNode; className?: string; children: React.ReactNode }) {
   return (
     <label className={cn("block", className)}>
-      <span className="mb-1.5 block text-sm font-semibold text-ink">{label}</span>
+      {/* Rótulo e "antes: X" colados na mesma linha (nunca justify-between). */}
+      <span className="mb-1.5 flex flex-wrap items-baseline gap-x-2 text-sm font-semibold text-ink">
+        <span>{label}</span>
+        {hint}
+      </span>
       {children}
     </label>
   );
@@ -384,8 +426,16 @@ function NumInput({
 }) {
   const val = med[mkey] ?? "";
   const atual = num(val);
+  // "antes: X" discreto ao lado do rótulo, quando há avaliação anterior desta medida.
+  const hint =
+    anterior != null ? (
+      <span className="text-xs font-normal text-ink-2">
+        antes: {fmtNum(anterior)}
+        {unidade ? ` ${unidade}` : ""}
+      </span>
+    ) : undefined;
   return (
-    <Campo label={label}>
+    <Campo label={label} hint={hint}>
       <input
         value={val}
         onChange={(e) => {
@@ -397,7 +447,8 @@ function NumInput({
         placeholder={placeholder}
         className="input"
       />
-      {atual != null && anterior != null && (
+      {/* Delta ao vivo só quando o valor muda: pré-carregado e intocado não vira ruído. */}
+      {atual != null && anterior != null && atual !== anterior && (
         <ComparaLinha atual={atual} anterior={anterior} unidade={unidade ?? ""} dataAnterior={anteriorData} />
       )}
     </Campo>

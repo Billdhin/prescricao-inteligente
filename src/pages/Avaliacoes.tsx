@@ -67,6 +67,8 @@ export function Avaliacoes() {
               {aReavaliar.map((a) => {
                 const d = diasAte(a.proximaReavaliacaoEm!);
                 const vencida = d < 0;
+                // Já tem avaliação: o CTA é reavaliar (abre o modal pré-carregado no perfil).
+                const temAval = avaliacoes.some((av) => av.alunoId === a.id);
                 return (
                   <div
                     key={a.id}
@@ -86,7 +88,7 @@ export function Avaliacoes() {
                     </Pill>
                     {/* ação direta: registrar sem caçar o botão dentro do perfil */}
                     <Link to={`/alunos/${a.id}?avaliar=1`} className={buttonClasses("secondary", "sm")}>
-                      Registrar
+                      {temAval ? "Reavaliar" : "Registrar"}
                     </Link>
                   </div>
                 );

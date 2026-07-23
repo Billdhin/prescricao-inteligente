@@ -35,7 +35,7 @@ import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
 import { PosturalCard } from "@/components/treino/PosturalCard";
 import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
 import { ListaChips } from "@/components/treino/PlanoEditor";
-import { proximoPasso, estadoDoCiclo, dataReavaliacao, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
+import { proximoPasso, estadoDoCiclo, dataReavaliacao, podeMontarTreino, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { criarConvite } from "@/lib/backend/supabaseRepo";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -43,7 +43,7 @@ import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
-import type { Aluno, Avaliacao, Prescricao } from "@/data/alunos";
+import type { Aluno, Prescricao } from "@/data/alunos";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -51,6 +51,7 @@ import { getModelo, rotuloMeso, semanaAtual, mesocicloAtual, proximaReavaliacao,
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
+import { EvolucaoMini } from "@/components/app/EvolucaoMini";
 import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -263,6 +264,9 @@ export function AlunoDetail() {
   // Fonte única do ciclo (avaliar, planejar, liberar, acompanhar, reavaliar).
   const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
   const passo = proximoPasso(aluno, ctx);
+  // Gate duro do trilho: sem avaliação, treino e prescrição não nascem.
+  const podeTreino = podeMontarTreino(aluno, ctx);
+  const temAvaliacao = avals.length > 0;
   const estado = estadoDoCiclo(aluno, ctx);
   // Reavaliação reconciliada: com plano, o macrociclo manda; senão o calendário.
   const reav = dataReavaliacao(aluno, planoAtivo);
@@ -344,6 +348,7 @@ export function AlunoDetail() {
         passo={passo}
         reav={reav}
         reavaliacaoVencida={reavaliacaoVencida}
+        temAvaliacao={temAvaliacao}
         onEditar={() => setEditar(true)}
         onAvaliar={() => setAvaliar(true)}
         onAcompanhar={irParaExecucao}
@@ -375,14 +380,14 @@ export function AlunoDetail() {
               </span>
               <h2 className="font-display text-lg font-bold text-ink">Evolução</h2>
             </div>
-            <Evolucao avals={avals} />
+            <EvolucaoMini avals={avals} />
           </Card>
 
           <Card className="p-5 md:p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold text-ink">Avaliações</h2>
               <button onClick={() => setAvaliar(true)} className={buttonClasses("secondary", "sm")}>
-                <CalendarPlus className="h-4 w-4" /> Registrar
+                <CalendarPlus className="h-4 w-4" /> {temAvaliacao ? "Reavaliar" : "Registrar"}
               </button>
             </div>
             {avalsDesc.length === 0 ? (
@@ -444,7 +449,7 @@ export function AlunoDetail() {
 
             <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
 
-            <PlanoCard aluno={aluno} planos={planosDoAluno} onAvaliar={() => setAvaliar(true)} />
+            <PlanoCard aluno={aluno} planos={planosDoAluno} podeTreino={podeTreino} onAvaliar={() => setAvaliar(true)} />
 
             <div id="execucao-card" className="scroll-mt-24">
               <ExecucaoPanel plano={planosDoAluno.find((p) => p.status === "ativo")} execucoes={execucoesDoAluno} />
@@ -453,17 +458,29 @@ export function AlunoDetail() {
           <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold text-ink">Prescrições</h2>
-              <Link to={`/gps?aluno=${aluno.id}`} className="text-sm font-semibold text-primary hover:underline">
-                Nova
-              </Link>
-            </div>
-            {prescs.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border p-4 text-center">
-                <p className="text-sm text-ink-2">Sem prescrição ainda.</p>
-                <Link to={`/gps?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
-                  <Navigation className="h-4 w-4" /> Prescrever agora
+              {podeTreino.ok ? (
+                <Link to={`/gps?aluno=${aluno.id}`} className="text-sm font-semibold text-primary hover:underline">
+                  Nova
                 </Link>
-              </div>
+              ) : (
+                <span className="text-sm font-semibold text-ink-3" aria-disabled>
+                  Nova
+                </span>
+              )}
+            </div>
+            {/* Gate duro: sem avaliação, a prescrição não nasce. Explica e leva a registrar. */}
+            {!podeTreino.ok && (
+              <AvisoGateAvaliacao motivo={podeTreino.motivo ?? ""} onAvaliar={() => setAvaliar(true)} />
+            )}
+            {prescs.length === 0 ? (
+              podeTreino.ok && (
+                <div className="rounded-xl border border-dashed border-border p-4 text-center">
+                  <p className="text-sm text-ink-2">Sem prescrição ainda.</p>
+                  <Link to={`/gps?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+                    <Navigation className="h-4 w-4" /> Prescrever agora
+                  </Link>
+                </div>
+              )
             ) : (
               <div className="space-y-3">
                 {prescs.map((p) => {
@@ -654,6 +671,7 @@ export function AlunoDetail() {
           }}
           alunoId={aluno.id}
           anterior={avalsDesc[0]}
+          historico={avals}
         />
       )}
 
@@ -711,6 +729,7 @@ function AlunoHeader({
   passo,
   reav,
   reavaliacaoVencida,
+  temAvaliacao,
   onEditar,
   onAvaliar,
   onAcompanhar,
@@ -721,6 +740,8 @@ function AlunoHeader({
   passo: ProximoPasso;
   reav: { em: number; semana?: number } | null;
   reavaliacaoVencida: boolean;
+  /** aluno já tem ao menos uma avaliação: o botão vira "Reavaliar" */
+  temAvaliacao: boolean;
   onEditar: () => void;
   onAvaliar: () => void;
   onAcompanhar: () => void;
@@ -764,7 +785,7 @@ function AlunoHeader({
             Editar
           </button>
           <button onClick={onAvaliar} className={buttonClasses("secondary")}>
-            <CalendarPlus className="h-4 w-4" /> Registrar avaliação
+            <CalendarPlus className="h-4 w-4" /> {temAvaliacao ? "Reavaliar" : "Registrar avaliação"}
           </button>
           <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} eyebrow />
         </div>
@@ -1132,7 +1153,18 @@ function JornadaCard({
  * diz isso. O sistema não registra presença, então afirmar "o aluno está na semana 6"
  * como fato seria inventar o que não foi medido.
  */
-function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTreino[]; onAvaliar: () => void }) {
+function PlanoCard({
+  aluno,
+  planos,
+  podeTreino,
+  onAvaliar,
+}: {
+  aluno: Aluno;
+  planos: PlanoTreino[];
+  /** gate duro do trilho: sem avaliação, "Montar treino" fica desabilitado */
+  podeTreino: { ok: boolean; motivo?: string };
+  onAvaliar: () => void;
+}) {
   const ativo = planos.find((p) => p.status === "ativo");
   const arquivados = planos.filter((p) => p.status === "arquivado");
 
@@ -1145,9 +1177,19 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
             Sem treino montado ainda. O treino organiza os meses de {aluno.nome.split(" ")[0]} em macrociclo,
             mesociclos e semanas, com a progressão justificada.
           </p>
-          <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
-            <CalendarRange className="h-4 w-4" /> Montar treino
-          </Link>
+          {podeTreino.ok ? (
+            <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+              <CalendarRange className="h-4 w-4" /> Montar treino
+            </Link>
+          ) : (
+            <>
+              {/* NÃO esconder o CTA: mostrar desabilitado e explicar por quê, com o atalho. */}
+              <button disabled className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+                <CalendarRange className="h-4 w-4" /> Montar treino
+              </button>
+              <AvisoGateAvaliacao motivo={podeTreino.motivo ?? ""} onAvaliar={onAvaliar} />
+            </>
+          )}
         </div>
         {arquivados.length > 0 && (
           <p className="mt-3 text-xs text-ink-3">
@@ -1239,7 +1281,7 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
             </span>
             {chegou && (
               <button onClick={onAvaliar} className={buttonClasses("secondary", "sm")}>
-                <Activity className="h-4 w-4" /> Registrar avaliação
+                <Activity className="h-4 w-4" /> Reavaliar
               </button>
             )}
           </div>
@@ -1392,110 +1434,21 @@ function Info({ icon, label, value }: { icon: React.ReactNode; label: string; va
   return <ParDado icon={icon} label={label} value={value} />;
 }
 
-// `dir` = direção desejável da métrica: "menor" (cair é bom), "maior" (subir é
-// bom), "neutro" (sem juízo de valor). Colore o delta pela direção certa, então
-// ganhar massa muscular aparece como positivo, não como alerta.
-type DirMetrica = "menor" | "maior" | "neutro";
-const METRICAS_EVOLUCAO: { key: string; label: string; unit: string; dir: DirMetrica }[] = [
-  { key: "peso", label: "Peso", unit: "kg", dir: "neutro" },
-  { key: "percentualGordura", label: "% gordura", unit: "%", dir: "menor" },
-  { key: "cintura", label: "Cintura", unit: "cm", dir: "menor" },
-  { key: "quadril", label: "Quadril", unit: "cm", dir: "neutro" },
-  { key: "massaMuscular", label: "Massa muscular", unit: "kg", dir: "maior" },
-  { key: "imc", label: "IMC", unit: "", dir: "neutro" },
-  { key: "fcRepouso", label: "FC repouso", unit: "bpm", dir: "menor" },
-  { key: "pressaoSistolica", label: "PA sistólica", unit: "mmHg", dir: "menor" },
-];
-
-/** Classe de cor do delta segundo a direção desejável da métrica. */
-function corDelta(dir: DirMetrica, delta: number): string {
-  if (dir === "neutro" || delta === 0) return "text-ink-2";
-  const bom = dir === "menor" ? delta < 0 : delta > 0;
-  return bom ? "text-success" : "text-[color:var(--cta-text)]";
-}
-
-function Evolucao({ avals }: { avals: Avaliacao[] }) {
-  const metrics = METRICAS_EVOLUCAO;
-  const disponiveis = metrics.filter((m) => avals.some((a) => a.medidas[m.key] != null));
-  const [metric, setMetric] = React.useState(disponiveis[0]?.key ?? "peso");
-
-  if (avals.length === 0) {
-    return <p className="py-6 text-center text-sm text-ink-2">Registre avaliações para ver a evolução.</p>;
-  }
-
-  const cfg = metrics.find((m) => m.key === metric) ?? metrics[0];
-  const serie = avals.map((a) => a.medidas[cfg.key]).filter((v): v is number => v != null);
-  const primeiro = serie[0];
-  const ultimo = serie[serie.length - 1];
-  const delta = ultimo != null && primeiro != null ? +(ultimo - primeiro).toFixed(1) : 0;
-
+/**
+ * Bloco de bloqueio do trilho, inline e visível (nunca tooltip): sem avaliação, o
+ * treino e a prescrição não nascem. Diz o porquê e leva direto a registrar a
+ * avaliação, ao lado do CTA que fica desabilitado.
+ */
+function AvisoGateAvaliacao({ motivo, onAvaliar }: { motivo: string; onAvaliar: () => void }) {
   return (
-    <div>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1.5">
-          {disponiveis.map((m) => (
-            <button
-              key={m.key}
-              onClick={() => setMetric(m.key)}
-              className={cn(
-                "rounded-full px-3 py-1 text-sm font-medium",
-                metric === m.key ? "bg-primary-tint text-primary" : "text-ink-2 hover:bg-surface-soft",
-              )}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
-        {serie.length >= 2 && (
-          <span className="text-sm text-ink-2">
-            {cfg.label}: {ultimo}
-            {cfg.unit} ·{" "}
-            <span className={cn("font-semibold", corDelta(cfg.dir, delta))}>
-              {delta > 0 ? "+" : ""}
-              {delta}
-              {cfg.unit}
-            </span>{" "}
-            no período
-          </span>
-        )}
+    <div className="mt-3 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-tint/50 p-3 text-left">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-ink">{motivo}</p>
+        <button onClick={onAvaliar} className={cn(buttonClasses("primary", "sm"), "mt-2")}>
+          <CalendarPlus className="h-4 w-4" /> Registrar avaliação
+        </button>
       </div>
-      {serie.length < 2 ? (
-        <p className="py-4 text-center text-sm text-ink-3">Ao menos duas avaliações para traçar a curva.</p>
-      ) : (
-        <MiniLine values={serie} />
-      )}
     </div>
-  );
-}
-
-function MiniLine({ values }: { values: number[] }) {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const coord = (v: number, i: number) => {
-    const x = (i / (values.length - 1)) * 100;
-    const y = 40 - ((v - min) / range) * 34 - 3;
-    return { x, y };
-  };
-  const pts = values.map((v, i) => {
-    const c = coord(v, i);
-    return `${c.x},${c.y}`;
-  });
-  return (
-    <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="h-28 w-full">
-      <polyline
-        points={pts.join(" ")}
-        fill="none"
-        stroke="var(--primary)"
-        strokeWidth={2}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
-      {values.map((v, i) => {
-        const c = coord(v, i);
-        return <circle key={i} cx={c.x} cy={c.y} r={3} fill="var(--primary)" vectorEffect="non-scaling-stroke" />;
-      })}
-    </svg>
   );
 }
