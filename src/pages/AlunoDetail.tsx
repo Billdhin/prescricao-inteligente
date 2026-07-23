@@ -738,7 +738,7 @@ function AlunoHeader({
       {/* Zona 1: identidade | ações */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex min-w-0 items-start gap-4">
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl gradient-brand font-display text-xl font-bold text-white">
+          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-card gradient-brand font-display text-xl font-bold text-white">
             {aluno.iniciais}
           </span>
           <div className="min-w-0">

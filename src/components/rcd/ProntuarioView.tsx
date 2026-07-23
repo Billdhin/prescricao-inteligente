@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 import { X, FileDown, Lock, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
-import { Pill, buttonClasses } from "@/components/ui/primitives";
+import { Pill, ChipRcd, buttonClasses } from "@/components/ui/primitives";
 import type { ProntuarioSnapshot } from "@/data/alunos";
 import { bibliografia } from "@/data/referencias";
 import { getParam } from "@/data/monitoringParameters";
@@ -63,7 +63,7 @@ export function ProntuarioView({
           <div className="min-w-0">
             <div className="mb-1.5 flex flex-wrap items-center gap-2">
               <SeloRCD compacto />
-              {docId && <span className="tabular text-xs font-semibold text-ink-3">{docId}</span>}
+              {docId && <ChipRcd className="tabular">{docId}</ChipRcd>}
             </div>
             <h3 className="font-display text-lg font-bold text-ink">Prontuário de Decisão Técnica</h3>
             <p className="text-sm text-ink-2">{titulo}</p>

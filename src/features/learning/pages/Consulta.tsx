@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, Sparkles, Eye, Target, ShieldAlert, BookOpen, Stethoscope } from "lucide-react";
-import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
+import { Search, Sparkles, Eye, Target, ShieldAlert, BookOpen, Stethoscope, ArrowRight } from "lucide-react";
+import { Card, Pill, SectionHeader, Eyebrow, buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { getLearningRepository } from "../repository";
 import { EmptyState } from "../components/shared";
@@ -49,6 +49,24 @@ export function Consulta({ embedded = false }: { embedded?: boolean } = {}) {
         .map((x) => x.a)
     : [];
 
+  // Estado inicial útil: as MESMAS sugestões, mas as 3 primeiras que casam com uma
+  // resposta viram cards clicáveis com a pergunta completa (um toque até o valor),
+  // e o resto segue como chip. Não inventa perguntas: reusa SUGESTOES.
+  const promovidas = React.useMemo(() => {
+    const vistos = new Set<string>();
+    const out: { termo: string; answer: QuickAnswer }[] = [];
+    for (const termo of SUGESTOES) {
+      if (out.length >= 3) break;
+      const best = answers.map((a) => ({ a, s: pontuar(a, termo) })).sort((x, y) => y.s - x.s)[0];
+      if (best && best.s > 0 && !vistos.has(best.a.id)) {
+        vistos.add(best.a.id);
+        out.push({ termo, answer: best.a });
+      }
+    }
+    return out;
+  }, [answers]);
+  const restantes = SUGESTOES.filter((s) => !promovidas.some((p) => p.termo === s));
+
   const submit = (text: string) => {
     const t = text.trim();
     setBusca(t);
@@ -81,14 +99,34 @@ export function Consulta({ embedded = false }: { embedded?: boolean } = {}) {
 
       {!busca.trim() ? (
         <div>
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-3">Perguntas frequentes</div>
-          <div className="flex flex-wrap gap-1.5">
-            {SUGESTOES.map((s) => (
-              <button key={s} onClick={() => submit(s)} className="rounded-full border border-border px-3 py-1.5 text-sm text-ink-2 hover:bg-surface-soft">
-                {s}
+          <Eyebrow className="mb-2">Perguntas frequentes</Eyebrow>
+          <div className="space-y-2">
+            {promovidas.map(({ termo, answer }) => (
+              <button
+                key={termo}
+                onClick={() => submit(termo)}
+                className="group flex w-full items-start gap-3 rounded-card border border-border bg-surface p-4 text-left shadow-soft transition-shadow hover:shadow-elevated"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
+                  <Search className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-ink group-hover:text-primary">{answer.question}</span>
+                  <span className="mt-0.5 line-clamp-2 block text-sm text-ink-2">{answer.summary}</span>
+                </span>
+                <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" />
               </button>
             ))}
           </div>
+          {restantes.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {restantes.map((s) => (
+                <button key={s} onClick={() => submit(s)} className="rounded-full border border-border px-3 py-1.5 text-sm text-ink-2 hover:bg-surface-soft">
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       ) : resultados.length === 0 ? (
         <EmptyState

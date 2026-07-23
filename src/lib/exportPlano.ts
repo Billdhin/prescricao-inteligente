@@ -8,6 +8,7 @@ import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { bibliografia } from "@/data/referencias";
 import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
+import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -299,11 +300,15 @@ export function exportPlanoPDF({
           cref ? `<div class="sub" style="font-weight:700;color:${corMarca}">CREF ${esc(cref)}</div>` : ""
         }${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}<div class="sub">Plano de treino</div></div>
       </div>
-      <div class="sub" style="text-align:right">${fmt(plano.data)}${
-        marca && (marca.site || marca.email || marca.telefone)
-          ? `<br>${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}`
-          : ""
-      }</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        ${carimboRcdPdf(corMarca)}
+        <div class="sub" style="text-align:right">${fmt(plano.data)}${
+          marca && (marca.site || marca.email || marca.telefone)
+            ? `<br>${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}`
+            : ""
+        }</div>
+        ${espinhaCuidadoPdf(1, corMarca)}
+      </div>
     </div>
 
     <h1>${esc(tituloDoc)}</h1>

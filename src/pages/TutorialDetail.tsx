@@ -32,7 +32,7 @@ export function TutorialDetail() {
 
       {/* Cabeçalho */}
       <div className="flex flex-wrap items-start gap-4">
-        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary-tint text-primary">
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-card bg-primary-tint text-primary">
           <Icon className="h-7 w-7" />
         </span>
         <div className="min-w-0 flex-1">

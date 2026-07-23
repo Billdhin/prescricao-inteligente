@@ -201,7 +201,7 @@ export function Account() {
             <input
               type="color"
               aria-label="Escolher cor da marca"
-              value={corPrimaria || "#2563EB"}
+              value={corPrimaria || "#1b4b66"}
               onChange={(e) => user.setPerfil({ corPrimaria: e.target.value })}
               className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-white p-1"
             />
@@ -231,7 +231,7 @@ export function Account() {
             <div className="flex min-w-0 items-center gap-3">
               {logoDataUrl && <img src={logoDataUrl} alt="" className="h-10 max-w-[140px] object-contain" />}
               <div className="min-w-0">
-                <div className="font-display text-base font-extrabold" style={{ color: corMarca }}>{name || "Seu nome"}</div>
+                <div className="font-display text-base font-bold" style={{ color: corMarca }}>{name || "Seu nome"}</div>
                 {cref && <div className="text-xs font-bold" style={{ color: corMarca }}>CREF {cref}</div>}
                 {empresa && <div className="text-xs text-ink-2">{empresa}</div>}
               </div>

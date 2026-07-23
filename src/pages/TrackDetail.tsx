@@ -7,7 +7,7 @@ import {
   FlaskConical,
   Lightbulb,
 } from "lucide-react";
-import { Card, Pill, Progress, buttonClasses, type PillTone } from "@/components/ui/primitives";
+import { Card, Pill, Progress, SectionHeader, buttonClasses, type PillTone } from "@/components/ui/primitives";
 import { getTrack } from "@/data/tracks";
 import type { Lesson, LessonTipo } from "@/data/types";
 import { cn } from "@/lib/utils";
@@ -49,11 +49,11 @@ export function TrackDetail() {
         <Link to="/tracks" className="mb-2 inline-flex items-center gap-2 text-sm font-medium text-ink-2 hover:text-ink">
           <ArrowLeft className="h-4 w-4" /> Voltar às trilhas
         </Link>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-display text-3xl font-bold text-ink">{track.nome}</h1>
-          <Pill tone={track.nivel === "Iniciante" ? "success" : "warning"}>{track.nivel}</Pill>
-        </div>
-        <p className="mt-2 text-ink-2">{track.descricao}</p>
+        <SectionHeader
+          title={track.nome}
+          subtitle={track.descricao}
+          right={<Pill tone={track.nivel === "Iniciante" ? "success" : "warning"}>{track.nivel}</Pill>}
+        />
         <div className="mt-4">
           <div className="mb-1.5 flex items-center justify-between text-sm">
             <span className="text-ink-2">

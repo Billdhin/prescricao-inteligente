@@ -408,7 +408,7 @@ function MolduraBoasVindas({
 function EmptyPro({ onExemplos }: { onExemplos: () => void }) {
   return (
     <Card variant="raised" className="flex flex-col items-center gap-4 p-8 text-center md:p-12">
-      <span className="grid h-16 w-16 place-items-center rounded-2xl bg-primary-tint text-primary">
+      <span className="grid h-16 w-16 place-items-center rounded-card bg-primary-tint text-primary">
         <Navigation className="h-8 w-8" />
       </span>
       <div>

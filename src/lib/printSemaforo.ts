@@ -6,6 +6,7 @@
 
 import type { ChecklistSemaforo, ResultadoSemaforo } from "@/data/semaforo";
 import { getReferencia } from "@/data/referencias";
+import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -88,7 +89,11 @@ export function printSemaforo(
           <div class="sub">Semáforo de Liberação: gate pré-sessão${profissional ? " · Motor RCD" : ""}</div>
         </div>
       </div>
-      <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date())}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        ${carimboRcdPdf("#1b4b66")}
+        <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date())}</div>
+        ${espinhaCuidadoPdf(2, "#1b4b66")}
+      </div>
     </div>
 
     <h1>${esc(grupoNome)}${alunoNome ? `: ${esc(alunoNome)}` : ""}</h1>

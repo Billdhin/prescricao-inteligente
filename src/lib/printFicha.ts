@@ -7,6 +7,7 @@
  */
 
 import type { MonitoringParameter } from "@/data/monitoringParameters";
+import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -62,7 +63,11 @@ function shell(titulo: string, corpo: string, ident?: IdentProf) {
           <div class="sub">Ficha de apoio ao profissional</div>
         </div>
       </div>
-      <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date())}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        ${carimboRcdPdf("#1b4b66")}
+        <div class="sub">${new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date())}</div>
+        ${espinhaCuidadoPdf(0, "#1b4b66")}
+      </div>
     </div>
     ${corpo}
     <div class="foot">${AVISO}</div>

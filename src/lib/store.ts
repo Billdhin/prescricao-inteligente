@@ -43,7 +43,7 @@ export interface PerfilCampos {
   fotoDataUrl: string;
   /** logo da marca (dataURL redimensionada; cabeçalho dos documentos) */
   logoDataUrl: string;
-  /** cor principal da marca (hex, ex.: "#2563EB"); vazio usa a cor do produto.
+  /** cor principal da marca (hex, ex.: "#1b4b66"); vazio usa a cor do produto.
    *  Tinge o cabeçalho dos documentos e, no portal do aluno, o app inteiro. */
   corPrimaria: string;
 }

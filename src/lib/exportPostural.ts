@@ -8,6 +8,7 @@ import {
   ehReferencia,
   type VistaPostural,
 } from "@/data/postural";
+import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
@@ -84,7 +85,11 @@ export function exportPosturalPDF({
         ${marca?.logoDataUrl ? `<img src="${marca.logoDataUrl}" alt="" style="height:40px;max-width:140px;object-fit:contain" />` : ""}
         <div><div class="prof">${esc(profissional)}</div>${cref ? `<div class="sub" style="font-weight:700;color:${cor}">CREF ${esc(cref)}</div>` : ""}${marca?.empresa ? `<div class="sub">${esc(marca.empresa)}</div>` : ""}<div class="sub">Rastreio postural</div></div>
       </div>
-      <div class="sub" style="text-align:right">${fmt(avaliacao.data)}</div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        ${carimboRcdPdf(cor)}
+        <div class="sub" style="text-align:right">${fmt(avaliacao.data)}</div>
+        ${espinhaCuidadoPdf(0, cor)}
+      </div>
     </div>
 
     <h1>Rastreio postural de ${esc(aluno.nome)}</h1>

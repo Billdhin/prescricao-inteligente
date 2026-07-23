@@ -87,7 +87,7 @@ export function DisciplinaDetail() {
       {/* Cabeçalho */}
       <Card className="p-5 md:p-6">
         <div className="flex flex-wrap items-start gap-4">
-          <span className={cn("grid h-14 w-14 shrink-0 place-items-center rounded-2xl", tokenTile[disc.colorToken])}>
+          <span className={cn("grid h-14 w-14 shrink-0 place-items-center rounded-card", tokenTile[disc.colorToken])}>
             <Icon className="h-7 w-7" />
           </span>
           <div className="min-w-0 flex-1">

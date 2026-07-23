@@ -100,7 +100,7 @@ export function Roi() {
           <Pill tone="primary" icon={<Calculator className="h-3 w-3" />} className="mb-3">
             Calculadora aberta, sem cadastro
           </Pill>
-          <h1 className="font-display text-3xl font-extrabold text-ink md:text-4xl">
+          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">
             Quanto vale a sua especialização?
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-ink-2">
@@ -156,15 +156,15 @@ export function Roi() {
           </div>
           <div className="grid gap-4 p-6 text-center sm:grid-cols-3">
             <div>
-              <div className="tabular font-display text-3xl font-extrabold text-ink">{fmtBRL(ganhoExtra)}</div>
+              <div className="tabular font-display text-3xl font-bold text-ink">{fmtBRL(ganhoExtra)}</div>
               <div className="mt-1 text-sm text-ink-2">a mais por mês, na carteira atual</div>
             </div>
             <div>
-              <div className="tabular font-display text-3xl font-extrabold text-ink">{fmtBRL(ganhoExtra * 12)}</div>
+              <div className="tabular font-display text-3xl font-bold text-ink">{fmtBRL(ganhoExtra * 12)}</div>
               <div className="mt-1 text-sm text-ink-2">a mais por ano</div>
             </div>
             <div>
-              <div className="tabular font-display text-3xl font-extrabold text-success">
+              <div className="tabular font-display text-3xl font-bold text-success">
                 {mesesPagos >= 1 ? `${Math.floor(mesesPagos)}×` : "–"}
               </div>
               <div className="mt-1 text-sm text-ink-2">

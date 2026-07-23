@@ -238,8 +238,8 @@ export function PrescreverTreino() {
           <SeloRCD compacto />
           <Pill tone="neutral">Planejamento longitudinal</Pill>
         </div>
-        <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-ink">
-          <CalendarRange className="h-6 w-6 text-primary" /> Prescrever treino
+        <h1 className="flex items-center gap-2 font-display text-3xl font-bold text-ink md:text-4xl">
+          <CalendarRange className="h-7 w-7 text-primary" /> Prescrever treino
         </h1>
         <p className="mt-1 text-ink-2">
           Monte a periodização completa do aluno (macrociclo, mesociclos e microciclos) com base científica.
@@ -254,7 +254,7 @@ export function PrescreverTreino() {
 
       {/* Passo 1: contexto */}
       <Card variant="raised" className="p-5">
-        <SectionHeader eyebrow="Passo 1" title="Contexto do aluno" />
+        <SectionHeader level={2} eyebrow="Passo 1" title="Contexto do aluno" />
 
         <div className="mt-4">
           <label className="mb-1.5 block text-sm font-semibold text-ink">Aluno</label>
@@ -525,7 +525,7 @@ function ResultadoPlano({
 
   return (
     <div className="space-y-5">
-      <SectionHeader eyebrow="Passo 2" title="Periodização proposta" />
+      <SectionHeader level={2} eyebrow="Passo 2" title="Periodização proposta" />
 
       {/* Resumo + raciocínio */}
       <Card variant="raised" className="border-l-4 border-primary p-5">

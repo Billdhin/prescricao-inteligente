@@ -268,30 +268,72 @@ export function ScoreRing({
   );
 }
 
-/* ----------------------------- SectionHeader ----------------------------- */
+/* -------------------------------- Eyebrow -------------------------------- */
+// Microlabel padrão (consolida as ~10 grafias soltas do rótulo em caixa-alta que
+// viviam repetidas pelo app). Idioma: Pill-eyebrow só no TOPO de página
+// (SectionHeader level 1); dentro de card ou seção interna, sempre Eyebrow.
+export function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("text-xs font-semibold uppercase tracking-wide text-ink-3", className)}>{children}</div>
+  );
+}
 
+/* -------------------------------- ChipRcd -------------------------------- */
+// Carimbo RCD: chip monoespaçado com cara de selo de documento. Carimba o
+// identificador do documento (ex.: "RCD-XXXXXXX") no Prontuário e nos PDFs.
+// font-mono + border + tracking dão o ar de carimbo; petróleo, nunca coral.
+export function ChipRcd({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-control border border-border px-2 py-0.5 font-mono text-xs uppercase tracking-wide text-primary",
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+/* ----------------------------- SectionHeader ----------------------------- */
+// Hierarquia com teto: `level` 1 é o H1 da página (renderiza <h1>, texto maior),
+// UMA vez por página, no topo, eyebrow via Pill. `level` 2 é seção/passo interno
+// (renderiza <h2>, sempre menor que o pai), eyebrow via Eyebrow (nunca Pill).
+// Sub-nível nunca maior que o pai; dentro de página, sempre level 2.
 export function SectionHeader({
   eyebrow,
   title,
   subtitle,
   icon,
   right,
+  level = 1,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
   icon?: React.ReactNode;
   right?: React.ReactNode;
+  level?: 1 | 2;
 }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        {eyebrow && (
-          <Pill tone="primary" icon={icon} className="mb-3">
-            {eyebrow}
-          </Pill>
+        {eyebrow &&
+          (level === 1 ? (
+            <Pill tone="primary" icon={icon} className="mb-3">
+              {eyebrow}
+            </Pill>
+          ) : (
+            <Eyebrow className="mb-1.5 flex items-center gap-1.5">
+              {icon}
+              {eyebrow}
+            </Eyebrow>
+          ))}
+        {level === 1 ? (
+          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{title}</h1>
+        ) : (
+          <h2 className="font-display text-xl font-semibold text-ink md:text-2xl">{title}</h2>
         )}
-        <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{title}</h1>
         {subtitle && <p className="mt-2 max-w-2xl text-ink-2">{subtitle}</p>}
       </div>
       {right}

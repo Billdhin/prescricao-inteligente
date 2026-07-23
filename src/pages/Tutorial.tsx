@@ -26,7 +26,7 @@ export function Tutorial() {
 
       {/* Guia em destaque */}
       <Card variant="raised" className="flex flex-col gap-4 border-l-4 border-l-primary p-5 md:flex-row md:items-center md:p-6">
-        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary-tint text-primary">
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-card bg-primary-tint text-primary">
           <PlayCircle className="h-7 w-7" />
         </span>
         <div className="min-w-0 flex-1">

@@ -115,15 +115,11 @@ export function SemaforoLiberacao({
 
   return (
     <Card className={cn("p-5 md:p-6", className)}>
-      <div className="mb-1 flex flex-wrap items-center gap-2">
-        <h2 className="font-display text-xl font-bold text-ink">Semáforo de Liberação</h2>
+      {/* A página já traz o h1 "Semáforo de Liberação"; o card vai direto ao
+          checklist, sem repetir título e subtítulo. Fica só a marca do mecanismo. */}
+      <div className="mb-4">
         <SeloRCD compacto />
       </div>
-      <p className="mb-4 text-sm text-ink-2">
-        {nomeChecklist}
-        {alunoNome ? ` · ${alunoNome}` : ""}: responda e saiba se a sessão de hoje está liberada, e
-        por quê.
-      </p>
 
       {/* Sem esse aviso, o card anunciava a condição e servia o checklist geral, dando
           a entender que havia um gate específico. Os sinais de alerta da própria

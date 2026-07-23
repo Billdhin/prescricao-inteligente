@@ -53,7 +53,7 @@ export function MovimentoPlayer({ ex, className }: { ex: ExMin; className?: stri
 
   return (
     <figure className={cn("select-none", className)}>
-      <div className="relative mx-auto aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-2xl border border-border bg-surface-soft shadow-soft">
+      <div className="relative mx-auto aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-card border border-border bg-surface-soft shadow-soft">
         {temFotos ? (
           // Cross-fade entre as fotos reais empilhadas (movimento suave, sem salto).
           fotos.map((src, i) => (

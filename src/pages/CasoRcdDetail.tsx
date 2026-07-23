@@ -77,7 +77,7 @@ export function CasoRcdDetail() {
             </Pill>
             {grupo && <Pill tone="warning">{grupo.nome}</Pill>}
           </div>
-          <h1 className="font-display text-3xl font-extrabold text-ink">{caso.titulo}</h1>
+          <h1 className="font-display text-3xl font-bold text-ink">{caso.titulo}</h1>
           <p className="mt-3 text-ink-2">{caso.contexto}</p>
           <p className="mt-2 text-sm font-semibold text-ink">A decisão: {caso.decisao}</p>
         </div>

@@ -140,7 +140,7 @@ function StudentAuthGate({ convite }: { convite?: string }) {
 
   return (
     <div className="grid min-h-[100dvh] place-items-center bg-bg p-4">
-      <form onSubmit={enviar} className="w-full max-w-sm space-y-4 rounded-2xl border border-border bg-surface p-6 shadow-elevated">
+      <form onSubmit={enviar} className="w-full max-w-sm space-y-4 rounded-card border border-border bg-surface p-6 shadow-elevated">
         <div className="flex justify-center">
           <Logo />
         </div>

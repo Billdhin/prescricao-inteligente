@@ -16,7 +16,8 @@
     "check:nucleos": "tsx scripts/check-nucleos.ts",
     "check:aprender": "tsx scripts/check-aprender.ts",
     "check:legibilidade": "tsx scripts/check-legibilidade.ts",
-    "check:postura": "tsx scripts/check-postura.ts"
+    "check:postura": "tsx scripts/check-postura.ts",
+    "check:design": "node scripts/check-design.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

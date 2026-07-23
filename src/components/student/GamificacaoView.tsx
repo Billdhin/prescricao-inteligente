@@ -46,7 +46,7 @@ export function GamificacaoView({
   if (r.totalTreinos === 0) {
     return (
       <Card className="p-6 text-center">
-        <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-surface-soft text-ink-3">
+        <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-card bg-surface-soft text-ink-3">
           <Medal className="h-5 w-5" />
         </span>
         <p className="text-sm text-ink-2">
@@ -63,7 +63,7 @@ export function GamificacaoView({
       <Card className="p-4" style={{ borderColor: r.liga.atual.cor, borderWidth: 2 }}>
         <div className="flex items-center gap-3">
           <span
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-white"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-card text-white"
             style={{ background: r.liga.atual.cor }}
           >
             <Medal className="h-6 w-6" />

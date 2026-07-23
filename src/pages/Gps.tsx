@@ -23,7 +23,7 @@ import {
   SlidersHorizontal,
   CalendarRange,
 } from "lucide-react";
-import { Card, Pill, ScoreRing, buttonClasses, Progress, TokenRotulado } from "@/components/ui/primitives";
+import { Card, Pill, ScoreRing, SectionHeader, buttonClasses, Progress, TokenRotulado } from "@/components/ui/primitives";
 import {
   rankExercises,
   OBJETIVOS,
@@ -366,28 +366,23 @@ export function Gps() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          {/* Vim de um aluno: caminho de volta sempre visível (não fica perdido). */}
-          {aluno && (
-            <Link
-              to={`/alunos/${aluno.id}`}
-              className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
-            >
-              <ArrowLeft className="h-4 w-4" /> Voltar para {aluno.nome}
-            </Link>
-          )}
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Pill tone="primary" icon={<Navigation className="h-3 w-3" />}>
-              Assistente de decisão
-            </Pill>
-            <SeloRCD compacto />
-          </div>
-          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Prescrever exercício</h1>
-          <p className="mt-2 max-w-2xl text-ink-2">
-            Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê.
-          </p>
-        </div>
+      <div>
+        {/* Vim de um aluno: caminho de volta sempre visível (não fica perdido). */}
+        {aluno && (
+          <Link
+            to={`/alunos/${aluno.id}`}
+            className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
+          >
+            <ArrowLeft className="h-4 w-4" /> Voltar para {aluno.nome}
+          </Link>
+        )}
+        <SectionHeader
+          eyebrow="Assistente de decisão"
+          icon={<Navigation className="h-3 w-3" />}
+          title="Prescrever exercício"
+          subtitle="Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê."
+          right={<SeloRCD compacto />}
+        />
       </div>
 
       {/* Onboarding "Primeiro Caso Real": o gatilho de compra é situacional */}

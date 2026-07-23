@@ -22,7 +22,7 @@ export function PaywallCard({
   return (
     <Card className={className ? `overflow-hidden ${className}` : "overflow-hidden"}>
       <div className="gradient-brand p-8 text-center text-white">
-        <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-white/15">
+        <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-card bg-white/15">
           <Lock className="h-6 w-6" />
         </span>
         <h2 className="font-display text-2xl font-bold">{titulo}</h2>

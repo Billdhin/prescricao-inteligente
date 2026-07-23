@@ -271,12 +271,13 @@ function Detail({ exercise }: { exercise: Exercise }) {
                 valor={exercise.indiceEficiencia.score}
                 className="text-xs uppercase tracking-wider text-ink-3"
               />
-              <div className="font-display text-xl font-bold text-ink">
-                {qualitativo(exercise.indiceEficiencia.score)}
+              {/* Dado-assinatura em display: NN/100 · Faixa é o que se lê primeiro;
+                  o grupo muscular vira ressalva um degrau abaixo. */}
+              <div className="tabular mt-1 font-display text-2xl font-bold text-ink md:text-3xl">
+                {exercise.indiceEficiencia.score}/100{" "}
+                <span className="font-semibold text-ink-2">· {qualitativo(exercise.indiceEficiencia.score)}</span>
               </div>
-              <div className="text-xs text-ink-2">
-                {exercise.indiceEficiencia.score}/100 · {exercise.grupoMuscular}
-              </div>
+              <div className="mt-1 text-xs text-ink-3">{exercise.grupoMuscular}</div>
             </div>
           </div>
           <div className="mt-5 space-y-3">

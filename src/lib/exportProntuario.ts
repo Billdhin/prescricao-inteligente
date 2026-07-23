@@ -14,6 +14,7 @@ import { bibliografia } from "@/data/referencias";
 import { rotuloRestricao, GATILHOS_OPCOES, LADO_OPCOES, LIBERACAO_OPCOES } from "@/lib/gps/restricoes";
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
+import { espinhaCuidadoPdf } from "@/lib/pdfSelo";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -183,7 +184,7 @@ export function exportProntuarioPDF({
     .brand .cref { font-size: 12px; color: #0e7c8a; font-weight: 700; }
     .brand .sub { font-size: 11px; color: #64748b; }
     .selo { text-align: right; }
-    .selo .motor { display: inline-block; background: #e0f7f9; color: #0c6b77; border: 1px solid #14b8c455; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; }
+    .selo .motor { display: inline-block; background: #e0f7f9; color: #0c6b77; border: 1px solid #14b8c455; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; }
     .selo .docid { margin-top: 4px; font-size: 11px; color: #64748b; }
     h1 { font-size: 20px; margin: 18px 0 2px; }
     .meta { font-size: 12px; color: #64748b; margin-bottom: 14px; }
@@ -239,6 +240,7 @@ export function exportProntuarioPDF({
             ? `<div class="docid">${[marca.site, marca.email, marca.telefone].filter((x): x is string => Boolean(x)).map(esc).join(" · ")}</div>`
             : ""
         }
+        <div style="display:flex;justify-content:flex-end;margin-top:6px">${espinhaCuidadoPdf(1, "#1b4b66")}</div>
       </div>
     </div>
 

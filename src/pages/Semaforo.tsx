@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { TrafficCone, CalendarRange } from "lucide-react";
-import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Card, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
@@ -45,16 +45,12 @@ export function Semaforo() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <Pill tone="primary" icon={<TrafficCone className="h-3 w-3" />} className="mb-3">
-          Gate pré-sessão
-        </Pill>
-        <h1 className="font-display text-3xl font-bold text-ink">Semáforo de Liberação</h1>
-        <p className="mt-2 max-w-2xl text-ink-2">
-          Antes de começar a sessão, saiba em 30 segundos se pode liberar o treino daquele aluno
-          hoje, e por quê. O resultado fica registrado e entra no prontuário.
-        </p>
-      </div>
+      <SectionHeader
+        eyebrow="Gate pré-sessão"
+        icon={<TrafficCone className="h-3 w-3" />}
+        title="Semáforo de Liberação"
+        subtitle="Antes de começar a sessão, saiba em 30 segundos se pode liberar o treino daquele aluno hoje, e por quê. O resultado fica registrado e entra no prontuário."
+      />
 
       <Card className="p-5">
         <div className="grid gap-4 sm:grid-cols-2">

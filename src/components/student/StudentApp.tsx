@@ -702,7 +702,7 @@ function AbaEvolucao({
         <h2 className="font-display text-base font-bold text-ink">Avaliações</h2>
         {doAluno.length === 0 ? (
           <Card className="p-6 text-center">
-            <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-surface-soft text-ink-3">
+            <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-card bg-surface-soft text-ink-3">
               <Clock className="h-5 w-5" />
             </span>
             <p className="text-sm text-ink-2">Suas avaliações vão aparecer aqui conforme o seu profissional registrar.</p>
@@ -726,7 +726,7 @@ function AbaEvolucao({
 function SemPlano() {
   return (
     <Card className="p-6 text-center">
-      <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-surface-soft text-ink-3">
+      <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-card bg-surface-soft text-ink-3">
         <CalendarDays className="h-5 w-5" />
       </span>
       <p className="text-sm text-ink-2">Seu profissional ainda não publicou um plano de treino para você.</p>

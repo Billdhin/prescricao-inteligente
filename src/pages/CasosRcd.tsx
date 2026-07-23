@@ -31,7 +31,7 @@ export function CasosRcd() {
           <Pill tone="primary" icon={<FileSearch className="h-3 w-3" />} className="mb-3">
             Biblioteca pública, sem cadastro
           </Pill>
-          <h1 className="font-display text-3xl font-extrabold text-ink md:text-4xl">
+          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">
             Veja o Motor RCD decidir casos reais
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-ink-2">

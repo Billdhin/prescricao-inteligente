@@ -153,7 +153,7 @@ function AlunoRow({ aluno, passo, planoAtivo }: { aluno: Aluno; passo: ProximoPa
   return (
     <Card variant="base" className="group flex items-center gap-4 p-4 transition-shadow hover:shadow-elevated">
       <Link to={`/alunos/${aluno.id}`} className="flex min-w-0 flex-1 items-center gap-4 outline-none">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl gradient-brand font-display font-bold text-white">
+        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-card gradient-brand font-display font-bold text-white">
           {aluno.iniciais}
         </span>
         <div className="min-w-0 flex-1">
@@ -161,9 +161,11 @@ function AlunoRow({ aluno, passo, planoAtivo }: { aluno: Aluno; passo: ProximoPa
             <p className="truncate font-display font-semibold text-ink group-hover:text-primary">{aluno.nome}</p>
             {aluno.status !== "ativo" && <Pill tone="neutral">Saiu</Pill>}
           </div>
+          {/* Dieta de peso (piloto só nesta tela): o nome é a âncora e fica semibold;
+              os metadados objetivo/nível descem a font-medium para não competir. */}
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <Pill tone="primary">{aluno.objetivo}</Pill>
-            <Pill tone="neutral">{aluno.nivel}</Pill>
+            <Pill tone="primary" className="font-medium">{aluno.objetivo}</Pill>
+            <Pill tone="neutral" className="font-medium">{aluno.nivel}</Pill>
             {grupo && <Pill tone="analysis">{grupo.nome}</Pill>}
             {restr.length > 0 && (
               <Pill
@@ -208,7 +210,7 @@ function textoReav(em: number): string {
 function EmptyAlunos({ onNovo, onExemplos }: { onNovo: () => void; onExemplos: () => void }) {
   return (
     <Card variant="raised" className="flex flex-col items-center gap-4 p-8 text-center md:p-12">
-      <span className="grid h-16 w-16 place-items-center rounded-2xl bg-primary-tint text-primary">
+      <span className="grid h-16 w-16 place-items-center rounded-card bg-primary-tint text-primary">
         <UserPlus className="h-8 w-8" />
       </span>
       <div>
