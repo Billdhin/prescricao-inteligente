@@ -39,7 +39,7 @@ import { SugestaoGrupoCard } from "@/components/treino/SugestaoGrupoCard";
 import { classificarGrupos } from "@/lib/gps/classificador";
 import { ListaChips } from "@/components/treino/PlanoEditor";
 import { proximoPasso, estadoDoCiclo, dataReavaliacao, podeMontarTreino, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
-import { estadoSemaforo, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
+import { estadoSemaforo, semaforoPorDiaDaSemana, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { criarConvite } from "@/lib/backend/supabaseRepo";
@@ -1013,17 +1013,10 @@ function SemaforoAba({
 
   // Régua da semana (início na segunda, como o Painel): marca os dias com semáforo
   // registrado nesta semana, com a cor do resultado (o mais recente do dia vence).
+  // Fonte única compartilhada com a faixa do app do aluno (semaforoPorDiaDaSemana).
   const agora = Date.now();
   const diaSemana = (new Date(agora).getDay() + 6) % 7;
-  const inicioSemana = new Date(agora).setHours(0, 0, 0, 0) - diaSemana * DIA;
-  const fimSemana = inicioSemana + 7 * DIA;
-  const porDia: Record<number, "verde" | "amarelo" | "vermelho"> = {};
-  for (const l of historico) {
-    if (l.data >= inicioSemana && l.data < fimSemana) {
-      const idx = (new Date(l.data).getDay() + 6) % 7;
-      if (!(idx in porDia)) porDia[idx] = l.resultado; // historico é desc: 1º = mais recente do dia
-    }
-  }
+  const porDia = semaforoPorDiaDaSemana(aluno.id, historico, agora);
 
   return (
     <div className="space-y-4">

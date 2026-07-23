@@ -47,3 +47,36 @@ export function estadoSemaforo(alunoId: string, liberacoes: Liberacao[]): Estado
 
   return { ultimo, hoje, vermelhoPendente };
 }
+
+const DIA_MS = 86_400_000;
+
+/**
+ * Resultado do semáforo por dia da SEMANA CIVIL atual (segunda a domingo), como um
+ * array de 7 posições (0 = segunda, 6 = domingo). Cada posição traz a cor do semáforo
+ * daquele dia, ou undefined quando não houve registro. Regra: o registro MAIS RECENTE
+ * do dia vence (igual à régua do profissional em AlunoDetail).
+ *
+ * Fonte única da "aderência por dia": alimenta a faixa da semana no app do aluno
+ * (SemanaStrip) e a régua SEG a DOM da aba Semáforo, para as duas nunca discordarem.
+ */
+export function semaforoPorDiaDaSemana(
+  alunoId: string,
+  liberacoes: Liberacao[],
+  agora = Date.now(),
+): (Liberacao["resultado"] | undefined)[] {
+  // Segunda-feira 00:00 da semana de hoje, como o Painel do profissional.
+  const diaSemana = (new Date(agora).getDay() + 6) % 7;
+  const inicioSemana = new Date(agora).setHours(0, 0, 0, 0) - diaSemana * DIA_MS;
+  const fimSemana = inicioSemana + 7 * DIA_MS;
+
+  // Do aluno, do mais recente para o mais antigo, para o mais recente do dia vencer.
+  const doAluno = liberacoes.filter((l) => l.alunoId === alunoId).sort((a, b) => b.data - a.data);
+  const porDia: (Liberacao["resultado"] | undefined)[] = Array(7).fill(undefined);
+  for (const l of doAluno) {
+    if (l.data >= inicioSemana && l.data < fimSemana) {
+      const idx = (new Date(l.data).getDay() + 6) % 7;
+      if (porDia[idx] === undefined) porDia[idx] = l.resultado; // 1º visto = mais recente do dia
+    }
+  }
+  return porDia;
+}

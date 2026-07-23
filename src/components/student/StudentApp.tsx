@@ -1,11 +1,12 @@
 import * as React from "react";
-import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle, Sparkles } from "lucide-react";
+import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, ChevronLeft, ChevronRight, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle, Sparkles } from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
 import { aplicarTema, PALETA_PADRAO } from "@/lib/theme/palettes";
 import { Logo } from "@/components/brand/Logo";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
+import { SemanaStrip } from "@/components/student/SemanaStrip";
 import { estadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Avaliacao, Liberacao } from "@/data/alunos";
@@ -39,6 +40,43 @@ const abrevDose = (v: string): string => v.replace(/moderada a alta/gi, "mod. a 
 // única no rodapé do card da Sessão (antes repetida por exercício).
 const temIntensidadeNaSessao = (s: Sessao): boolean =>
   s.blocos.some((b) => b.intensidade != null && String(b.intensidade).trim() !== "" && String(b.intensidade).trim() !== "-");
+
+// Uma semana em ms (o SEMANA_MS de periodizacao.ts é local ao módulo). Alimenta o
+// intervalo real de datas do seletor de semana: início = plano.data + (N-1)*SEMANA_MS.
+const SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
+const DIA_MS = 24 * 60 * 60 * 1000;
+
+// Os tokens de dose de um bloco (Série, Intensidade, Intervalo para força; Formato,
+// Duração, Intensidade, Recuperação para aeróbio), com o rótulo colado ao valor.
+// Fonte única lida pelo BlocoRow (registro) e pelo BlocoLeitura (aba Semana), para
+// os dois nunca divergirem na dose que mostram.
+function tokensDoBloco(bloco: BlocoSessao): { label: string; value: string }[] {
+  const aerobio = bloco.tipo === "aerobio";
+  const limpo = (v?: string | number | null) =>
+    v != null && String(v).trim() && String(v).trim() !== "-" ? String(v) : "";
+  return (
+    aerobio
+      ? [
+          { label: "Formato", value: limpo(bloco.formato) },
+          { label: "Duração", value: limpo(bloco.duracao) },
+          { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
+          { label: "Recuperação", value: limpo(bloco.recuperacao) },
+        ]
+      : [
+          {
+            label: "Série",
+            value: bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : limpo(bloco.series) || limpo(bloco.reps),
+          },
+          { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
+          { label: "Intervalo", value: limpo(bloco.intervalo) },
+        ]
+  ).filter((t) => t.value);
+}
+
+// A sessão está concluída na semana dada? Todos os blocos com uma Execucao daquela
+// semana batendo o blocoRef. Mesma regra que sessaoDeHojeIndex usa para a semana atual.
+const sessaoConcluida = (sessao: Sessao, semana: number, execucoes: Execucao[]): boolean =>
+  sessao.blocos.length > 0 && sessao.blocos.every((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id));
 
 const TIPO_SEMANA: Record<Microciclo["tipo"], { label: string; tone: "neutral" | "warning" | "success" }> = {
   carga: { label: "Semana de carga", tone: "success" },
@@ -154,7 +192,7 @@ export function StudentApp({
           {aba === "hoje" && (
             <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} liberacoes={liberacoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} dataDaPrescricao={dataDaPrescricao} preview={preview} />
           )}
-          {aba === "semana" && <AbaPlano plano={plano} cor={cor} aluno={aluno} />}
+          {aba === "semana" && <AbaPlano plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} />}
           {aba === "evolucao" && (
             <AbaEvolucao aluno={aluno} avaliacoes={avaliacoes} execucoes={execucoes} cor={cor} />
           )}
@@ -240,16 +278,30 @@ function AbaHoje({
   // mirar a sessão-alvo (os dois nunca divergem).
   const idxHoje = sessaoDeHojeIndex(plano, execucoes);
 
+  // Números da semana, todos derivados de dados reais: quantas sessões o microciclo
+  // tem, quantas o aluno já fechou, e quantos exercícios ele registrou nesta semana.
+  const concluidas = sessoes.filter((s) => sessaoConcluida(s, semana, execucoes)).length;
+  const registrados = execucoes.filter((e) => e.semana === semana).length;
+
   return (
     <div className="space-y-4">
       {alerta}
+
+      {/* Semana viva: a faixa SEG a DOM (o que aconteceu no dia) e o resumo dos
+          números da semana. Absorve o "Semana N de M" que morava no card de contexto. */}
       <Card className="p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Pill tone="primary">Semana {semana} de {plano.semanas}</Pill>
-          {micro && <Pill tone={TIPO_SEMANA[micro.tipo].tone}>{TIPO_SEMANA[micro.tipo].label}</Pill>}
-        </div>
+        <SemanaStrip alunoId={aluno.id} execucoes={execucoes} liberacoes={liberacoes} cor={cor} />
+        <ResumoSemana semana={semana} totalSemanas={plano.semanas} sessoes={sessoes.length} concluidas={concluidas} registrados={registrados} />
+      </Card>
+
+      <Card className="p-4">
+        {micro && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Pill tone={TIPO_SEMANA[micro.tipo].tone}>{TIPO_SEMANA[micro.tipo].label}</Pill>
+          </div>
+        )}
         {sessoes[idxHoje] && (
-          <p className="mt-2 text-sm text-ink">Treino de hoje: <strong>{sessoes[idxHoje].nome}</strong></p>
+          <p className={cn("text-sm text-ink", micro && "mt-2")}>Treino de hoje: <strong>{sessoes[idxHoje].nome}</strong></p>
         )}
         {meso && (
           <p className="mt-1 text-sm text-ink-2">
@@ -299,6 +351,33 @@ function AlertaPausa({ desde }: { desde: number }) {
           próxima sessão.
         </p>
       </div>
+    </div>
+  );
+}
+
+// Resumo dos números da semana sob a faixa. Todos derivados de dados reais: nunca
+// inventa contagem. Absorve o "Semana N de M" que saiu do card de contexto.
+function ResumoSemana({
+  semana,
+  totalSemanas,
+  sessoes,
+  concluidas,
+  registrados,
+}: {
+  semana: number;
+  totalSemanas: number;
+  sessoes: number;
+  concluidas: number;
+  registrados: number;
+}) {
+  const plural = (n: number, um: string, muitos: string) => `${n} ${n === 1 ? um : muitos}`;
+  return (
+    <div className="mt-3 border-t border-border pt-3">
+      <div className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semana {semana} de {totalSemanas}</div>
+      <p className="mt-1 text-sm text-ink-2">
+        <strong className="text-ink">{plural(sessoes, "sessão", "sessões")}</strong> na semana · {plural(concluidas, "concluída", "concluídas")}
+      </p>
+      <p className="text-sm text-ink-2">{plural(registrados, "exercício registrado", "exercícios registrados")}</p>
     </div>
   );
 }
@@ -454,25 +533,7 @@ function BlocoRow({
   const aerobio = bloco.tipo === "aerobio";
   // Cada número com o próprio rótulo (Intensidade 75%, Intervalo 90s), em vez de
   // uma string crua "3 x 12 · 75% · Intervalo: 90s" onde o 75% fica solto.
-  const limpo = (v?: string | number | null) =>
-    v != null && String(v).trim() && String(v).trim() !== "-" ? String(v) : "";
-  const tokensDose: { label: string; value: string }[] = (
-    aerobio
-      ? [
-          { label: "Formato", value: limpo(bloco.formato) },
-          { label: "Duração", value: limpo(bloco.duracao) },
-          { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
-          { label: "Recuperação", value: limpo(bloco.recuperacao) },
-        ]
-      : [
-          {
-            label: "Série",
-            value: bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : limpo(bloco.series) || limpo(bloco.reps),
-          },
-          { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
-          { label: "Intervalo", value: limpo(bloco.intervalo) },
-        ]
-  ).filter((t) => t.value);
+  const tokensDose = tokensDoBloco(bloco);
   const metodo = getMetodo(bloco.metodo);
   // Num grupo, o método (badge + instrução) já vem no cabeçalho da moldura: não repete aqui.
   const metodoVisivel = metodo && metodo.id !== "tradicional" && !emGrupo ? metodo : undefined;
@@ -667,8 +728,7 @@ function CampoNum({ label, value, onChange, placeholder }: { label: string; valu
 
 /* ------------------------------- Aba: Plano ------------------------------- */
 
-function AbaPlano({ plano, cor, aluno }: { plano?: PlanoTreino; cor: string; aluno: Aluno }) {
-  const semana = plano ? semanaAtual(plano) : 0;
+function AbaPlano({ plano, cor, aluno, execucoes }: { plano?: PlanoTreino; cor: string; aluno: Aluno; execucoes: Execucao[] }) {
   if (!plano) {
     return (
       <div className="space-y-3">
@@ -684,20 +744,199 @@ function AbaPlano({ plano, cor, aluno }: { plano?: PlanoTreino; cor: string; alu
         <div className="font-display font-bold text-ink">{plano.titulo}</div>
         <p className="mt-1 text-sm text-ink-2">{plano.semanas} semanas · {plano.frequenciaSemanal}x por semana</p>
       </Card>
-      {plano.macrociclo.mesociclos.map((m) => {
-        const atual = semana >= m.semanaInicio && semana <= m.semanaFim;
-        return (
-          <Card key={m.id} className="p-4" style={atual ? { borderColor: cor, borderWidth: 2 } : undefined}>
-            <div className="flex items-center justify-between gap-2">
-              <div className="font-display font-bold text-ink">{rotuloMeso(m)}</div>
-              {atual && <Pill tone="primary">{rotuloPosicao(m)}</Pill>}
-            </div>
-            <p className="mt-1 text-xs text-ink-3">Semanas {m.semanaInicio} a {m.semanaFim}</p>
-            <p className="mt-1.5 text-sm text-ink-2">{m.foco}</p>
-          </Card>
-        );
-      })}
+      <SeletorSemana plano={plano} cor={cor} execucoes={execucoes} />
+      <FasesDoPlano plano={plano} cor={cor} />
     </div>
+  );
+}
+
+// Seletor de semana navegável: chevrons e o intervalo REAL de datas da semana
+// (início = plano.data + (N-1)*SEMANA_MS, fim = início + 6 dias), com as sessões
+// daquela semana em leitura. Default e destaque na semana atual (calendário).
+function SeletorSemana({ plano, cor, execucoes }: { plano: PlanoTreino; cor: string; execucoes: Execucao[] }) {
+  const semanaHoje = semanaAtual(plano);
+  const total = plano.semanas;
+  const [sel, setSel] = React.useState(semanaHoje);
+  const semana = Math.min(total, Math.max(1, sel));
+  const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
+  const sessoes = micro?.sessoes ?? [];
+  const inicio = plano.data + (semana - 1) * SEMANA_MS;
+  const fim = inicio + 6 * DIA_MS;
+  const fmtDia = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(ts));
+  const ehAtual = semana === semanaHoje;
+  // Status por sessão só na semana atual ou passada; semanas futuras não recebem pill.
+  const mostrarStatus = semana <= semanaHoje;
+
+  return (
+    <div className="space-y-2">
+      <Card className="p-4" style={ehAtual ? { borderColor: cor, borderWidth: 2 } : undefined}>
+        <div className="flex items-center justify-between gap-2">
+          <button
+            onClick={() => setSel(() => Math.max(1, semana - 1))}
+            disabled={semana <= 1}
+            aria-label="Semana anterior"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-ink-2 hover:bg-surface-soft hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <div className="min-w-0 text-center">
+            <div className="font-display font-bold text-ink">Semana {semana}</div>
+            <div className="text-xs text-ink-3">{fmtDia(inicio)} a {fmtDia(fim)}</div>
+            {ehAtual && <Pill tone="primary" className="mt-1">Semana atual</Pill>}
+          </div>
+          <button
+            onClick={() => setSel(() => Math.min(total, semana + 1))}
+            disabled={semana >= total}
+            aria-label="Próxima semana"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-ink-2 hover:bg-surface-soft hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        </div>
+        {micro && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Pill tone={TIPO_SEMANA[micro.tipo].tone}>{TIPO_SEMANA[micro.tipo].label}</Pill>
+          </div>
+        )}
+      </Card>
+
+      {sessoes.length === 0 ? (
+        <Card className="p-6 text-center text-sm text-ink-2">Sem sessões nesta semana.</Card>
+      ) : (
+        sessoes.map((s) => (
+          <SessaoLeitura
+            key={s.id}
+            sessao={s}
+            cor={cor}
+            concluida={sessaoConcluida(s, semana, execucoes)}
+            mostrarStatus={mostrarStatus}
+          />
+        ))
+      )}
+    </div>
+  );
+}
+
+// Uma sessão em LEITURA (aba Semana): nome, foco, status e as doses por bloco, com
+// os grupos de método na moldura. Sem campos de registro (isso é só na aba Hoje).
+function SessaoLeitura({
+  sessao,
+  cor,
+  concluida,
+  mostrarStatus,
+}: {
+  sessao: Sessao;
+  cor: string;
+  concluida: boolean;
+  mostrarStatus: boolean;
+}) {
+  return (
+    <Card className="p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="font-display font-bold text-ink">{sessao.nome}</div>
+          {sessao.foco && <div className="text-xs text-ink-3">{sessao.foco}</div>}
+        </div>
+        {concluida ? (
+          <Pill tone="success" icon={<CheckCircle2 className="h-3.5 w-3.5" />}>Concluída</Pill>
+        ) : mostrarStatus ? (
+          <Pill tone="neutral">Pendente</Pill>
+        ) : null}
+      </div>
+      <div className="mt-2 space-y-2">
+        {agruparBlocosPorMetodo(sessao.blocos).map((seg) => {
+          if (seg.tipo === "grupo") {
+            const info = getMetodo(seg.metodo);
+            return (
+              <div key={seg.grupoId} className="rounded-xl border-2 p-1.5" style={{ borderColor: cor }}>
+                <div className="mb-1 flex flex-wrap items-center gap-2 px-1.5 pt-0.5">
+                  <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-white" style={{ background: cor }}>
+                    {info?.nome}
+                  </span>
+                  {info?.descricao && <span className="min-w-0 flex-1 text-2xs leading-tight text-ink-2">{info.descricao}</span>}
+                </div>
+                <div className="space-y-2">{seg.blocos.map((b) => <BlocoLeitura key={b.id} bloco={b} cor={cor} emGrupo />)}</div>
+              </div>
+            );
+          }
+          return <BlocoLeitura key={seg.bloco.id} bloco={seg.bloco} cor={cor} />;
+        })}
+      </div>
+    </Card>
+  );
+}
+
+// Um bloco em LEITURA: espelha a apresentação do BlocoRow (ícone, nome, badge de
+// método, doses coladas via TokenRotulado), sem nenhum campo de registro.
+function BlocoLeitura({ bloco, cor, emGrupo }: { bloco: BlocoSessao; cor: string; emGrupo?: boolean }) {
+  const aerobio = bloco.tipo === "aerobio";
+  const tokens = tokensDoBloco(bloco);
+  const metodo = getMetodo(bloco.metodo);
+  const metodoVisivel = metodo && metodo.id !== "tradicional" && !emGrupo ? metodo : undefined;
+  return (
+    <div className="rounded-xl border border-border bg-surface-soft p-3">
+      <div className="flex items-center gap-2">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white" style={{ background: cor }}>
+          {aerobio ? <HeartPulse className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
+        </span>
+        <span className="min-w-0 flex-1 font-semibold text-ink">{nomeDoBloco(bloco)}</span>
+        {metodoVisivel && (
+          <span className="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold text-white" style={{ background: cor }}>
+            {metodoVisivel.nome}
+          </span>
+        )}
+      </div>
+      {tokens.length > 0 && (
+        <LinhaDeTokens className="mt-1.5">
+          {tokens.map((t) => (
+            <TokenRotulado key={t.label} label={t.label} value={t.value} />
+          ))}
+        </LinhaDeTokens>
+      )}
+      {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
+      {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
+    </div>
+  );
+}
+
+// Fases do plano (mesociclos) como contexto colapsado abaixo do seletor de semana.
+// Mantém exatamente o conteúdo que existia (rótulo, posição, semanas, foco), só que
+// recolhido por padrão, já que a semana selecionada acima carrega o detalhe agora.
+function FasesDoPlano({ plano, cor }: { plano: PlanoTreino; cor: string }) {
+  const [aberto, setAberto] = React.useState(false);
+  const semana = semanaAtual(plano);
+  return (
+    <Card className="overflow-hidden p-0">
+      <button
+        onClick={() => setAberto((v) => !v)}
+        aria-expanded={aberto}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      >
+        <span className="font-display font-bold text-ink">Fases do plano</span>
+        <ChevronDown className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
+      </button>
+      {aberto && (
+        <div className="space-y-3 border-t border-border p-3">
+          {plano.macrociclo.mesociclos.map((m) => {
+            const atual = semana >= m.semanaInicio && semana <= m.semanaFim;
+            return (
+              <div
+                key={m.id}
+                className="rounded-xl border border-border bg-surface p-4"
+                style={atual ? { borderColor: cor, borderWidth: 2 } : undefined}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-display font-bold text-ink">{rotuloMeso(m)}</div>
+                  {atual && <Pill tone="primary">{rotuloPosicao(m)}</Pill>}
+                </div>
+                <p className="mt-1 text-xs text-ink-3">Semanas {m.semanaInicio} a {m.semanaFim}</p>
+                <p className="mt-1.5 text-sm text-ink-2">{m.foco}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
   );
 }
 
