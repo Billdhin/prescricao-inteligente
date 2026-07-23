@@ -16,9 +16,9 @@ const ORDEM: EtapaCiclo[] = ["avaliar", "planejar", "liberar", "acompanhar", "re
 
 const TINT: Record<ProximoPasso["tone"], string> = {
   primary: "border-[#1b4b66]/25 bg-primary-tint",
-  cta: "border-[color:var(--cta-text)]/20 bg-[#fff1e6]",
-  warning: "border-[#b45309]/30 bg-[#fef4e2]",
-  success: "border-[#16a34a]/30 bg-[#e7f8ed]",
+  cta: "border-[color:var(--cta-text)]/20 bg-cta-tint",
+  warning: "border-[#b45309]/30 bg-warning-tint",
+  success: "border-[#147a3a]/30 bg-success-tint",
 };
 
 const ICON_TONE: Record<ProximoPasso["tone"], string> = {
@@ -70,7 +70,7 @@ export function LinhaDoCuidado({
               <NoCiclo estado={estado[etapa]} />
               <span
                 className={cn(
-                  "text-[11px] font-semibold leading-tight",
+                  "text-2xs font-semibold leading-tight",
                   estado[etapa] === "atual" ? "text-ink" : estado[etapa] === "feito" ? "text-ink-2" : "text-ink-3",
                 )}
                 title={AJUDA_ETAPA[etapa]}
@@ -85,7 +85,7 @@ export function LinhaDoCuidado({
             {i < ORDEM.length - 1 && (
               <span
                 aria-hidden
-                className={cn("mt-3.5 h-0.5 flex-1 rounded-full", estado[etapa] === "feito" ? "bg-[#16a34a]/50" : "bg-border")}
+                className={cn("mt-3.5 h-0.5 flex-1 rounded-full", estado[etapa] === "feito" ? "bg-[#147a3a]/50" : "bg-border")}
               />
             )}
           </li>
@@ -96,7 +96,7 @@ export function LinhaDoCuidado({
       <div className={cn("mt-3 flex flex-wrap items-center gap-3 rounded-xl border p-3", TINT[passo.tone])}>
         <IconePasso tone={passo.tone} />
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">Próximo passo</div>
+          <div className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Próximo passo</div>
           <p className="text-sm font-medium text-ink">{passo.frase}</p>
         </div>
         <CtaPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} />

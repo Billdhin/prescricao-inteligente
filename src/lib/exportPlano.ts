@@ -265,7 +265,7 @@ export function exportPlanoPDF({
     .tend { font-size: 12px; color: #64748b; margin: 0 0 6px; }
     .semana { margin: 10px 0 0; page-break-inside: avoid; }
     .semana-tit { font-size: 13px; font-weight: 700; margin: 10px 0 4px; }
-    .semana-tit .tipo { font-size: 11px; font-weight: 600; color: #b45309; background: #fef7e8; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
+    .semana-tit .tipo { font-size: 11px; font-weight: 600; color: #b45309; background: #fef4e2; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
     .semana-tit .freq { font-size: 11px; font-weight: 400; color: #94a3b8; margin-left: 6px; }
     .nota { font-size: 11px; color: #94a3b8; margin: 0 0 4px; }
     .sessao { margin: 6px 0 8px; }

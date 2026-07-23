@@ -591,7 +591,7 @@ function FlowSteps({ atual }: { atual: 1 | 2 | 3 }) {
               ) : (
                 <span
                   className={cn(
-                    "tabular grid h-4 w-4 place-items-center rounded-full text-[10px] font-bold",
+                    "tabular grid h-4 w-4 place-items-center rounded-full text-2xs font-bold",
                     current ? "bg-primary text-white" : "bg-surface-soft text-ink-3",
                   )}
                 >
@@ -1349,7 +1349,7 @@ function Results({
               {r.scoreExato.toFixed(1)}
               <span className="text-xs font-semibold text-ink-3">/100</span>
             </div>
-            <div className="text-[10px] uppercase text-ink-3">adequação</div>
+            <div className="text-2xs uppercase text-ink-3">adequação</div>
           </div>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1737,7 +1737,7 @@ function Comparador({
                 key={e.slug}
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold",
-                  i === 0 ? "bg-primary-tint text-primary" : i === 1 ? "bg-[#e0f7f9] text-analysis" : "bg-[#fff1e6] text-[color:var(--cta-text)]",
+                  i === 0 ? "bg-primary-tint text-primary" : i === 1 ? "bg-analysis-tint text-analysis" : "bg-cta-tint text-cta-text",
                 )}
               >
                 {e.nome}

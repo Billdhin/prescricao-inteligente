@@ -92,7 +92,7 @@ export function Alunos() {
           <Card variant="soft" className="flex flex-wrap items-center gap-x-8 gap-y-2 px-5 py-3">
             <ResumoItem valor={ativos} rotulo={ativos === 1 ? "aluno ativo" : "alunos ativos"} />
             <ResumoItem valor={comAtencao} rotulo="precisam de atenção" tone={comAtencao > 0 ? "warning" : "neutro"} />
-            <ResumoItem valor={semPlano} rotulo="sem plano ativo" tone={semPlano > 0 ? "cta" : "neutro"} />
+            <ResumoItem valor={semPlano} rotulo="sem plano ativo" tone={semPlano > 0 ? "warning" : "neutro"} />
           </Card>
 
           <div className="relative">

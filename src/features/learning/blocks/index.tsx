@@ -323,7 +323,7 @@ function MedidaInterpretacao({ title, items }: { title?: string; items: string[]
         </div>
       )}
       {seguranca && (
-        <div className="mt-2.5 flex items-start gap-2.5 rounded-xl border border-[#b45309]/40 bg-[#fef7e8] p-3">
+        <div className="mt-2.5 flex items-start gap-2.5 rounded-xl border border-[#b45309]/40 bg-warning-tint p-3">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
           <p className="text-sm text-ink"><RichInline text={seguranca} /></p>
         </div>
@@ -494,7 +494,7 @@ function ImageHotspots({ title, content }: { title?: string; content: { caption:
               key={i}
               onClick={() => setActive(active === i ? null : i)}
               aria-label={h.label}
-              className="absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-primary text-[10px] font-bold text-white shadow"
+              className="absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-primary text-2xs font-bold text-white shadow"
               style={{ left: `${h.x}%`, top: `${h.y}%` }}
             >
               {i + 1}
@@ -531,7 +531,7 @@ function FigureImagePlate({ img, compact }: { img: FigureImageDef; compact?: boo
             {markers.map((m) => (
               <span
                 key={m.n}
-                className="absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-ink text-[11px] font-bold text-white shadow-md ring-2 ring-white"
+                className="absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-ink text-2xs font-bold text-white shadow-md ring-2 ring-white"
                 style={{ left: `${m.x}%`, top: `${m.y}%` }}
               >
                 {m.n}
@@ -544,7 +544,7 @@ function FigureImagePlate({ img, compact }: { img: FigureImageDef; compact?: boo
         <ol className="mt-3 grid grid-cols-1 gap-x-5 gap-y-1.5 sm:grid-cols-2">
           {markers.map((m) => (
             <li key={m.n} className="flex items-start gap-2 text-sm text-ink-2">
-              <span className="mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-[10px] font-bold text-white">{m.n}</span>
+              <span className="mt-px grid h-5 w-5 shrink-0 place-items-center rounded-full bg-ink text-2xs font-bold text-white">{m.n}</span>
               <span>{m.label}</span>
             </li>
           ))}
@@ -625,7 +625,7 @@ function MechanismAccordion({ title, steps }: { title?: string; steps: NucleoSte
 function AtlasCell({ icon: Icon, label, text, tone = "neutral" }: { icon: LucideIcon; label: string; text: string; tone?: "neutral" | "warning" }) {
   return (
     <div className={cn("rounded-lg border p-3", tone === "warning" ? "border-[#b45309]/40 bg-[#b45309]/5" : "border-border bg-surface")}>
-      <div className={cn("mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide", tone === "warning" ? "text-warning" : "text-ink-3")}>
+      <div className={cn("mb-1 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide", tone === "warning" ? "text-warning" : "text-ink-3")}>
         <Icon className="h-3.5 w-3.5" aria-hidden />
         {label}
       </div>
@@ -662,16 +662,16 @@ function NucleosAtlas({ title, steps }: { title?: string; steps: NucleoStep[] })
                     const F = FIGURES[s.figureId!];
                     return F.img ? <FigureImagePlate img={F.img} compact /> : <div className="mx-auto max-w-[440px]"><F.Comp /></div>;
                   })()}
-                  <figcaption className="mt-1.5 px-1 text-center text-[11px] text-ink-3">{FIGURES[s.figureId].title}</figcaption>
+                  <figcaption className="mt-1.5 px-1 text-center text-2xs text-ink-3">{FIGURES[s.figureId].title}</figcaption>
                 </figure>
               )}
 
               <div className="mt-4">
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Sequência</div>
+                <div className="mb-2 text-2xs font-semibold uppercase tracking-wide text-ink-3">Sequência</div>
                 <ol className="grid gap-2 sm:grid-cols-2">
                   {n.passos.map((p, j) => (
                     <li key={j} className="flex gap-2 rounded-lg border border-border bg-surface-soft p-2.5">
-                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#1e293b]/10 text-[11px] font-bold text-ink">{j + 1}</span>
+                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#1e293b]/10 text-2xs font-bold text-ink">{j + 1}</span>
                       <span className="text-[13px] leading-snug text-ink-2">{p}</span>
                     </li>
                   ))}
@@ -679,7 +679,7 @@ function NucleosAtlas({ title, steps }: { title?: string; steps: NucleoStep[] })
               </div>
 
               <div className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-lg border border-[#1b4b66]/30 bg-primary-tint px-3 py-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Relação</span>
+                <span className="text-2xs font-semibold uppercase tracking-wide text-primary">Relação</span>
                 <span className="text-sm font-semibold text-ink">{n.relacao}</span>
               </div>
 
@@ -704,7 +704,7 @@ function Comparison({
   content: { leftTitle: string; rightTitle: string; leftItems: string[]; rightItems: string[]; note?: string };
 }) {
   const Col = ({ head, items, tone }: { head: string; items: string[]; tone: "primary" | "analysis" }) => (
-    <div className={cn("rounded-xl border p-4", tone === "primary" ? "border-[#1b4b66]/30 bg-primary-tint" : "border-[#0e7c8a]/30 bg-[#f0fbfc]")}>
+    <div className={cn("rounded-xl border p-4", tone === "primary" ? "border-[#1b4b66]/30 bg-primary-tint" : "border-[#0e7c8a]/30 bg-analysis-tint")}>
       <div className={cn("mb-2 font-display font-bold", tone === "primary" ? "text-primary" : "text-analysis")}>{head}</div>
       <ul className="space-y-1.5 text-sm text-ink-2">
         {items.map((it, i) => (
@@ -962,8 +962,8 @@ function QuizItem({
               className={cn(
                 "flex w-full items-center gap-2 rounded-xl border p-2.5 text-left text-sm transition-colors",
                 !answered && "hover:bg-surface-soft",
-                answered && isRight && "border-success bg-[#e7f8ee]",
-                answered && isPick && !isRight && "border-warning bg-[#fef4e2]",
+                answered && isRight && "border-success bg-success-tint",
+                answered && isPick && !isRight && "border-warning bg-warning-tint",
                 !answered && "border-border",
                 answered && !isRight && !isPick && "border-border opacity-70",
               )}

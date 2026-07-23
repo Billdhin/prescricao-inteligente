@@ -198,7 +198,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
         {/* Cabeçalho */}
         <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
           <div className="min-w-0">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+            <div className="text-2xs font-semibold uppercase tracking-wider text-ink-3">
               Ponto de análise
             </div>
             <h3 className="truncate font-display text-lg font-bold text-ink">{hotspot.titulo}</h3>
@@ -246,7 +246,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
 
         {/* Conteúdo da camada (altura mínima estável) */}
         <div className="min-h-[8.5rem] flex-1 overflow-y-auto px-5 py-4" role="tabpanel">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+          <div className="text-2xs font-semibold uppercase tracking-wider text-ink-3">
             {cam.label}
           </div>
           <p className="mt-1.5 text-[15px] leading-relaxed text-ink">{hotspot.camadas[cam.key]}</p>

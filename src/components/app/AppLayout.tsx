@@ -452,7 +452,7 @@ function Sidebar() {
             return (
               <div key={section.label ?? `sec-${i}`} role={labelId ? "group" : undefined} aria-labelledby={labelId}>
                 {showLabel && (
-                  <div id={labelId} className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+                  <div id={labelId} className="mb-1 px-3 text-2xs font-semibold uppercase tracking-wider text-ink-3">
                     {section.label}
                   </div>
                 )}
@@ -521,7 +521,7 @@ function BottomBar() {
             aria-current={forcado ? "page" : undefined}
             className={({ isActive }) =>
               cn(
-                "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-medium leading-none transition-colors",
+                "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-2xs font-medium leading-none transition-colors",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                 isActive || forcado ? "text-primary" : "text-ink-3 hover:text-ink-2",
               )
@@ -612,7 +612,7 @@ function NotificationsMenu() {
       >
         <Bell className="h-4 w-4" />
         {unseen > 0 && (
-          <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-cta px-1 text-[9px] font-bold text-white">
+          <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-cta px-1 text-2xs font-bold text-white">
             {unseen}
           </span>
         )}

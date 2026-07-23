@@ -113,7 +113,7 @@ export function GamificacaoView({
                 </span>
                 <div className="min-w-0">
                   <div className={`text-sm font-bold ${conquistada ? "text-ink" : "text-ink-3"}`}>{badge.nome}</div>
-                  <div className="text-[11px] leading-tight text-ink-3">{badge.descricao}</div>
+                  <div className="text-2xs leading-tight text-ink-3">{badge.descricao}</div>
                 </div>
               </div>
             );

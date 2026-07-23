@@ -33,15 +33,15 @@ export function RetencaoPanel({
   if (sinais.length === 0) return null;
 
   return (
-    <Card variant="raised" className="border-l-4 border-l-cta p-5 md:p-6">
+    <Card className="p-5 md:p-6">
       <div className="mb-4 flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#fdeceb] text-cta">
+        <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary-tint text-primary">
           <HeartPulse className="h-5 w-5" />
         </span>
         <div>
           <h2 className="font-display text-xl font-bold text-ink">Reativar alunos</h2>
           <p className="text-sm text-ink-3">
-            {sinais.length} aluno{sinais.length > 1 ? "s" : ""} sem registrar treino há dias
+            {sinais.length} aluno{sinais.length > 1 ? "s" : ""} sem registro recente
           </p>
         </div>
       </div>
@@ -87,20 +87,21 @@ function LinhaRetencao({
           {sinal.aluno.iniciais}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <Link to={`/alunos/${sinal.aluno.id}`} className="truncate font-semibold text-ink hover:underline">
-              {sinal.aluno.nome}
-            </Link>
-            <Pill tone={sinal.status === "sumido" ? "warning" : "cta"}>{ROTULO_STATUS[sinal.status]}</Pill>
+          <Link to={`/alunos/${sinal.aluno.id}`} className="block truncate font-semibold text-ink hover:underline">
+            {sinal.aluno.nome}
+          </Link>
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-ink-3">
+            <Pill tone="neutral">{ROTULO_STATUS[sinal.status]}</Pill>
+            <span>{tempo}</span>
           </div>
-          <p className="mt-0.5 text-xs text-ink-3">{tempo}</p>
         </div>
         <button
           onClick={onToggle}
           aria-expanded={aberto}
-          className={buttonClasses("secondary", "sm")}
+          aria-label="Escrever mensagem de retorno"
+          className={cn(buttonClasses("secondary", "sm"), "shrink-0")}
         >
-          <MessageCircle className="h-4 w-4" /> Mensagem
+          <MessageCircle className="h-4 w-4" /> <span className="hidden sm:inline">Mensagem</span>
         </button>
       </div>
 

@@ -70,10 +70,10 @@ export function LoginGate({ onEntrar }: { onEntrar: () => void }) {
                 setErro(false);
               }}
               onKeyDown={(e) => e.key === "Enter" && entrar()}
-              className={cn("input", erro && "border-[#ef4444] focus-visible:border-[#ef4444]")}
+              className={cn("input", erro && "border-danger-fill focus-visible:border-danger-fill")}
               autoComplete="current-password"
             />
-            {erro && <span className="mt-1 block text-xs font-medium text-[#b91c1c]">Senha incorreta. Tente de novo.</span>}
+            {erro && <span className="mt-1 block text-xs font-medium text-danger">Senha incorreta. Tente de novo.</span>}
           </label>
 
           <button
@@ -103,7 +103,7 @@ export function LoginGate({ onEntrar }: { onEntrar: () => void }) {
                   abrirSessao();
                   onEntrar();
                 }}
-                className="mt-2 font-semibold text-[#b91c1c] hover:underline"
+                className="mt-2 font-semibold text-danger hover:underline"
               >
                 Remover a senha e entrar
               </button>

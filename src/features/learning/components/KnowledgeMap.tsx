@@ -21,9 +21,9 @@ const BANDS: { layer: 1 | 2 | 3; label: string }[] = [
 
 const nodeTone: Record<string, string> = {
   primary: "border-[#1b4b66]/30 bg-primary-tint text-primary hover:border-primary",
-  analysis: "border-[#0e7c8a]/30 bg-[#e0f7f9] text-analysis hover:border-analysis",
-  success: "border-[#16a34a]/30 bg-[#e7f8ee] text-success hover:border-success",
-  cta: "border-[color:var(--cta-text)]/25 bg-[#fff1e6] text-[color:var(--cta-text)] hover:border-[color:var(--cta-text)]",
+  analysis: "border-[#0e7c8a]/30 bg-analysis-tint text-analysis hover:border-analysis",
+  success: "border-[#147a3a]/30 bg-success-tint text-success hover:border-success",
+  cta: "border-[color:var(--cta-text)]/25 bg-cta-tint text-cta-text hover:border-[color:var(--cta-text)]",
 };
 
 export function KnowledgeMap({ compact = false }: { compact?: boolean }) {
@@ -45,7 +45,7 @@ export function KnowledgeMap({ compact = false }: { compact?: boolean }) {
           const nodes = knowledgeNodes.filter((n) => n.layer === band.layer);
           return (
             <div key={band.layer}>
-              <div className="mb-1.5 text-center text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+              <div className="mb-1.5 text-center text-2xs font-semibold uppercase tracking-wider text-ink-3">
                 {band.label}
               </div>
               <div className="flex flex-wrap justify-center gap-2">

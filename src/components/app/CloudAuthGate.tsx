@@ -153,10 +153,10 @@ export function CloudAuthGate() {
             </label>
 
             {erro && (
-              <p className="rounded-lg bg-[#fef2f2] px-3 py-2 text-xs font-medium text-[#b91c1c]">{erro}</p>
+              <p className="rounded-lg bg-danger-tint px-3 py-2 text-xs font-medium text-danger">{erro}</p>
             )}
             {aviso && (
-              <p className="flex items-start gap-2 rounded-lg bg-[#f0fdf4] px-3 py-2 text-xs font-medium text-[#15803d]">
+              <p className="flex items-start gap-2 rounded-lg bg-success-tint px-3 py-2 text-xs font-medium text-success">
                 <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {aviso}
               </p>
             )}

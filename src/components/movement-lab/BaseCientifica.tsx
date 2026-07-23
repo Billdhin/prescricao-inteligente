@@ -30,7 +30,7 @@ export function BaseCientifica({
   return (
     <section className={cn("rounded-xl border border-border bg-surface-soft p-4", className)}>
       <div className="mb-2 flex items-center gap-2">
-        <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#e6f7f9] text-[#0e7c8a]">
+        <span className="grid h-7 w-7 place-items-center rounded-lg bg-analysis-tint text-analysis">
           <BookOpen className="h-4 w-4" />
         </span>
         <h4 className="font-display text-sm font-bold text-ink">Base científica</h4>

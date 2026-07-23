@@ -12,9 +12,9 @@ import type { Discipline, Module, Lesson, ProgressoStatus, Nivel, LearningRecomm
 
 export const tokenTile: Record<string, string> = {
   primary: "bg-primary-tint text-primary",
-  analysis: "bg-[#e0f7f9] text-analysis",
-  success: "bg-[#e7f8ee] text-success",
-  cta: "bg-[#fff1e6] text-[color:var(--cta-text)]",
+  analysis: "bg-analysis-tint text-analysis",
+  success: "bg-success-tint text-success",
+  cta: "bg-cta-tint text-cta-text",
 };
 
 /** Duração da disciplina a partir da duração real derivada (minutos), com

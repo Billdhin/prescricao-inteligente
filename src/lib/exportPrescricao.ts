@@ -115,7 +115,7 @@ export function exportPrescricaoPDF({
     .ex-head { display: flex; align-items: center; gap: 8px; }
     .ex-num { width: 22px; height: 22px; border-radius: 50%; background: ${cor}; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
     .ex-nome { font-weight: 700; flex: 1; }
-    .ex-score { font-size: 12px; font-weight: 700; color: #16a34a; }
+    .ex-score { font-size: 12px; font-weight: 700; color: #147a3a; }
     .ex-resumo { font-size: 13px; color: #475569; margin: 6px 0 0; }
     .ex-series { font-size: 12px; color: #64748b; margin: 4px 0 0; }
     .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; margin: 10px 0 4px; }

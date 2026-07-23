@@ -28,25 +28,25 @@ const COR_UI: Record<
   { bg: string; border: string; text: string; dot: string; icon: React.ReactNode }
 > = {
   verde: {
-    bg: "bg-[#eafaf0]",
-    border: "border-[#16a34a]/40",
-    text: "text-[#15803d]",
+    bg: "bg-success-tint",
+    border: "border-[#147a3a]/40",
+    text: "text-success",
     dot: "bg-success",
     icon: <CheckCircle2 className="h-6 w-6 text-success" />,
   },
   amarelo: {
-    bg: "bg-[#fef7e8]",
+    bg: "bg-warning-tint",
     border: "border-[#b45309]/40",
-    text: "text-[#b45309]",
+    text: "text-warning",
     dot: "bg-warning",
     icon: <AlertTriangle className="h-6 w-6 text-warning" />,
   },
   vermelho: {
-    bg: "bg-[#fdecec]",
-    border: "border-[#ef4444]/40",
-    text: "text-[#b91c1c]",
-    dot: "bg-[#ef4444]",
-    icon: <XCircle className="h-6 w-6 text-[#ef4444]" />,
+    bg: "bg-danger-tint",
+    border: "border-[#b91c1c]/40",
+    text: "text-danger",
+    dot: "bg-danger-fill",
+    icon: <XCircle className="h-6 w-6 text-danger-fill" />,
   },
 };
 
@@ -130,7 +130,7 @@ export function SemaforoLiberacao({
           condição vêm junto: eram o único conteúdo de segurança que existia e ficavam
           presos na tela de estudo. */}
       {usaChecklistGeral && grupo && (
-        <div className="mb-4 rounded-xl border border-[#b45309]/40 bg-[#fef7e8] p-3.5">
+        <div className="mb-4 rounded-xl border border-[#b45309]/40 bg-warning-tint p-3.5">
           <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#b45309]">
             <AlertTriangle className="h-3.5 w-3.5" /> Sem checklist específico para {grupo.nome}
           </div>
@@ -155,7 +155,7 @@ export function SemaforoLiberacao({
         {checklist.itens.map((item, idx) => (
           <fieldset key={item.id}>
             <legend className="mb-0.5 flex gap-2 text-sm font-semibold text-ink">
-              <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary-tint text-[11px] font-bold text-primary">
+              <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary-tint text-2xs font-bold text-primary">
                 {idx + 1}
               </span>
               {item.pergunta}

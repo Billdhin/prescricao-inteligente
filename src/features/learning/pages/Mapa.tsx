@@ -62,7 +62,7 @@ export function MapaConhecimento() {
         return (
           <section key={macro.id}>
             <div className="mb-3 flex items-center gap-2">
-              <span className={cn("grid h-9 w-9 place-items-center rounded-xl", macro.colorToken === "primary" ? "bg-primary-tint text-primary" : macro.colorToken === "analysis" ? "bg-[#e0f7f9] text-analysis" : "bg-[#fff1e6] text-[color:var(--cta-text)]")}>
+              <span className={cn("grid h-9 w-9 place-items-center rounded-xl", macro.colorToken === "primary" ? "bg-primary-tint text-primary" : macro.colorToken === "analysis" ? "bg-analysis-tint text-analysis" : "bg-cta-tint text-cta-text")}>
                 <Icon className="h-5 w-5" />
               </span>
               <div>

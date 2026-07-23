@@ -310,7 +310,7 @@ export function GlobalSearch() {
         autoComplete="off"
         className="h-11 w-full rounded-full border border-transparent bg-surface-soft pl-10 pr-4 text-sm outline-none focus-visible:border-primary sm:pr-16"
       />
-      <kbd className="tabular absolute right-3 top-1/2 hidden -translate-y-1/2 items-center rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] font-semibold text-ink-2 sm:inline-flex">
+      <kbd className="tabular absolute right-3 top-1/2 hidden -translate-y-1/2 items-center rounded-md border border-border bg-surface px-1.5 py-0.5 text-2xs font-semibold text-ink-2 sm:inline-flex">
         ⌘K
       </kbd>
 
@@ -331,7 +331,7 @@ export function GlobalSearch() {
               if (items.length === 0) return null;
               return (
                 <div key={group} className="mb-1 last:mb-0">
-                  <div className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+                  <div className="px-3 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wider text-ink-3">
                     {group}
                   </div>
                   {items.map((it) => {

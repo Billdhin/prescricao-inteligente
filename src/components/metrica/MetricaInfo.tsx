@@ -138,7 +138,7 @@ function MetricaDialog({
         {def.refs?.length ? (
           <div className="mt-4 border-t border-border pt-3">
             <div className="mb-1.5 text-xs font-bold uppercase tracking-wider text-ink-3">Base científica</div>
-            <ol className="list-decimal space-y-1 pl-4 text-[11px] leading-snug text-ink-3">
+            <ol className="list-decimal space-y-1 pl-4 text-2xs leading-snug text-ink-3">
               {bibliografia(def.refs).map((b) => (
                 <li key={b.ref.id}>
                   {/* autores como "... et al." já terminam em ponto; não dobrar */}
@@ -162,7 +162,7 @@ function MetricaDialog({
             </ol>
           </div>
         ) : null}
-        <p className="mt-3 border-t border-border pt-3 text-[11px] text-ink-3">
+        <p className="mt-3 border-t border-border pt-3 text-2xs text-ink-3">
           Valor estimado para comparar exercícios entre si. Não é medição do seu aluno; a leitura
           final é sua.
         </p>

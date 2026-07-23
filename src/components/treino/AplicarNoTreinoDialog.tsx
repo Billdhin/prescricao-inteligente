@@ -148,7 +148,7 @@ export function AplicarNoTreinoDialog({
 
             {/* Aviso forte: substituir vai desvincular registros do aluno */}
             {execucoesEmRisco && (
-              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-[#b45309]/30 bg-[#fef4e2] p-2.5 text-xs text-warning">
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-[#b45309]/30 bg-warning-tint p-2.5 text-xs text-warning">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                 O aluno já registrou execução nessas sessões. Substituir vai desvincular esse histórico das sessões atuais.
                 Se quiser preservar, use "adicionar sem substituir".
@@ -157,7 +157,7 @@ export function AplicarNoTreinoDialog({
 
             {/* Aviso de objetivo divergente (não bloqueia) */}
             {objetivoDivergente && (
-              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-[#b45309]/30 bg-[#fef4e2] p-2.5 text-xs text-warning">
+              <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-[#b45309]/30 bg-warning-tint p-2.5 text-xs text-warning">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                 A prescrição foi feita para {prescricao.answers.objetivo} e o plano é de {plano.objetivo}. As doses seguem a
                 faixa do plano; confira se os exercícios cabem no objetivo dele.
@@ -203,7 +203,7 @@ export function AplicarNoTreinoDialog({
               {adicionar ? `Adicionar na Sessão ${letra}` : `Aplicar na Sessão ${letra}`}
             </button>
 
-            <p className="mt-2 text-center text-[11px] leading-snug text-ink-3">
+            <p className="mt-2 text-center text-2xs leading-snug text-ink-3">
               Vale até o fim deste bloco. As doses seguem a faixa do seu plano; o raciocínio da escolha
               fica no prontuário.
             </p>

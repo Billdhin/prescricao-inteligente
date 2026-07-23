@@ -22,7 +22,7 @@ const fmt = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(ts));
 
 const SEMAFORO_LABEL = {
-  verde: { nome: "LIBERADO", hex: "#16a34a" },
+  verde: { nome: "LIBERADO", hex: "#147a3a" },
   amarelo: { nome: "LIBERADO COM AJUSTE", hex: "#b45309" },
   vermelho: { nome: "NÃO LIBERADO NO DIA", hex: "#b91c1c" },
 } as const;
@@ -183,7 +183,7 @@ export function exportProntuarioPDF({
     .brand .cref { font-size: 12px; color: #0e7c8a; font-weight: 700; }
     .brand .sub { font-size: 11px; color: #64748b; }
     .selo { text-align: right; }
-    .selo .motor { display: inline-block; background: #e6f7f9; color: #0e7c8a; border: 1px solid #14b8c455; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; }
+    .selo .motor { display: inline-block; background: #e0f7f9; color: #0c6b77; border: 1px solid #14b8c455; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; }
     .selo .docid { margin-top: 4px; font-size: 11px; color: #64748b; }
     h1 { font-size: 20px; margin: 18px 0 2px; }
     .meta { font-size: 12px; color: #64748b; margin-bottom: 14px; }
@@ -198,7 +198,7 @@ export function exportProntuarioPDF({
     .ex-num { width: 22px; height: 22px; border-radius: 50%; background: #0e7c8a; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
     .ex-nome { font-weight: 800; flex: 1; }
     .ex-series { font-size: 11px; color: #64748b; }
-    .ex-score { font-size: 12px; font-weight: 800; color: #16a34a; }
+    .ex-score { font-size: 12px; font-weight: 800; color: #147a3a; }
     table.criterios { width: 100%; border-collapse: collapse; }
     table.criterios td { border-top: 1px solid #f1f5f9; padding: 4px 6px; font-size: 11.5px; vertical-align: top; }
     td.crit { font-weight: 700; width: 160px; }

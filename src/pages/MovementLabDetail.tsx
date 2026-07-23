@@ -94,7 +94,7 @@ function TrustDialog({ level, ex, onClose }: { level: TrustLevel; ex?: Exercise;
       >
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className={cn("grid h-8 w-8 place-items-center rounded-lg", seguranca ? "bg-[#fef4e2] text-warning" : "bg-primary-tint text-primary")}>
+            <span className={cn("grid h-8 w-8 place-items-center rounded-lg", seguranca ? "bg-warning-tint text-warning" : "bg-primary-tint text-primary")}>
               {seguranca ? <ShieldAlert className="h-4 w-4" /> : <Info className="h-4 w-4" />}
             </span>
             <h2 className="font-display text-lg font-bold text-ink first-letter:uppercase">{level}</h2>
@@ -289,7 +289,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
               />
             ))}
           </div>
-          <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
+          <p className="mt-3 text-2xs leading-relaxed text-ink-3">
             Notas de 0 a 100 que comparam os exercícios desta base entre si, estimadas da literatura
             de EMG/biomecânica. Não medem o seu aluno. Clique no nome de cada uma para ver a escala e
             o que o valor quer dizer. Fontes na aba{" "}
@@ -446,7 +446,7 @@ function Timeline({ ex }: { ex: Exercise }) {
           {ex.fases.map((f, i) => (
             <li key={f.nome} className="rounded-xl border border-border bg-surface-soft p-3">
               <div className="flex items-center gap-2">
-                <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-[11px] font-bold text-white">
+                <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-2xs font-bold text-white">
                   {i + 1}
                 </span>
                 <span className="font-semibold text-ink">{f.nome}</span>
@@ -468,14 +468,14 @@ function QuandoUsarEvitar({ ex }: { ex: Exercise }) {
         title="Quando usar"
         icon={<CheckCircle2 className="h-4 w-4" />}
         items={ex.blocos.quandoUsar}
-        iconClass="bg-[#e7f8ed] text-success"
+        iconClass="bg-success-tint text-success"
         dot="bg-success"
       />
       <ListaBloco
         title="Quando evitar"
         icon={<ShieldAlert className="h-4 w-4" />}
         items={ex.blocos.quandoEvitar}
-        iconClass="bg-[#fff1e6] text-[color:var(--cta-text)]"
+        iconClass="bg-cta-tint text-cta-text"
         dot="bg-cta"
       />
     </div>
@@ -551,8 +551,8 @@ function Concept({
                 <div className="space-y-2">
                   {CAMADAS.map((c, i) => (
                     <div key={c.key} className="rounded-lg border border-border bg-surface-soft p-3">
-                      <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-                        <span className="tabular grid h-4 w-4 place-items-center rounded-full bg-primary text-[10px] text-white">
+                      <div className="mb-1 flex items-center gap-2 text-2xs font-semibold uppercase tracking-wider text-ink-3">
+                        <span className="tabular grid h-4 w-4 place-items-center rounded-full bg-primary text-2xs text-white">
                           {i + 1}
                         </span>
                         {c.label}
@@ -613,8 +613,8 @@ function Bullets({
             />
             <figcaption
               className={cn(
-                "px-2 py-1 text-center text-[10px] font-semibold uppercase tracking-wider",
-                tone === "warning" ? "bg-[#fef4e2] text-warning" : "bg-primary-tint text-primary",
+                "px-2 py-1 text-center text-2xs font-semibold uppercase tracking-wider",
+                tone === "warning" ? "bg-warning-tint text-warning" : "bg-primary-tint text-primary",
               )}
             >
               {imgLabel}
@@ -776,9 +776,9 @@ function PopulacoesCautelaCard({ slug }: { slug: string }) {
   const perfis = getPopulacoesCautela(slug);
   if (perfis.length === 0) return null;
   return (
-    <div className="rounded-xl border border-[#b45309]/40 bg-[#fffaf0] p-4 md:p-5">
+    <div className="rounded-xl border border-[#b45309]/40 bg-warning-tint p-4 md:p-5">
       <div className="mb-3 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#fef4e2] text-warning">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-warning-tint text-warning">
           <ShieldAlert className="h-4 w-4" />
         </span>
         <h4 className="font-display font-bold text-ink">Perfis que pedem cautela ou adaptação</h4>
@@ -791,7 +791,7 @@ function PopulacoesCautelaCard({ slug }: { slug: string }) {
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
+      <p className="mt-3 text-2xs leading-relaxed text-ink-3">
         Orientações educacionais gerais, não substituem avaliação individual. A decisão de liberar,
         adaptar ou substituir é do profissional habilitado, junto à equipe de saúde quando indicado.
       </p>
@@ -858,7 +858,7 @@ function Comparador({ exercise }: { exercise: Exercise }) {
             <div key={r.nome}>
               <MetricaInfo nome={r.nome} valor={r.a} className="text-sm font-semibold text-ink" />
               {alvosDiferentes && (
-                <p className="mt-1 text-[11px] leading-relaxed text-ink-3">
+                <p className="mt-1 text-2xs leading-relaxed text-ink-3">
                   Alvo principal diferente em cada exercício. Cada número é relativo ao próprio
                   músculo, então aqui eles não se comparam entre si.
                 </p>
@@ -887,7 +887,7 @@ function Comparador({ exercise }: { exercise: Exercise }) {
       >
         Comparar até 3 no comparador completo <ArrowRight className="h-3.5 w-3.5" />
       </Link>
-      <p className="mt-3 text-[11px] leading-relaxed text-ink-3">
+      <p className="mt-3 text-2xs leading-relaxed text-ink-3">
         Valores relativos estimados da literatura de EMG/biomecânica: comparam exercícios, não
         medem o aluno. Fontes na aba Biomecânica de cada exercício.
       </p>

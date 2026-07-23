@@ -149,7 +149,7 @@ export function ProfessionalDashboard() {
       {atencao.length > 0 ? (
         <Card variant="raised" className="border-l-4 border-l-warning p-5 md:p-6">
           <div className="mb-4 flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#fef4e2] text-warning">
+            <span className="grid h-9 w-9 place-items-center rounded-lg bg-warning-tint text-warning">
               <AlertTriangle className="h-5 w-5" />
             </span>
             <div>
@@ -341,7 +341,7 @@ function ProximosPassos({
                 ) : (
                   <span
                     className={cn(
-                      "tabular grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] font-bold",
+                      "tabular grid h-5 w-5 shrink-0 place-items-center rounded-full text-2xs font-bold",
                       atual ? "bg-primary text-white" : "bg-surface-soft text-ink-3",
                     )}
                   >
@@ -422,7 +422,7 @@ function AlunoCard({ aluno, temTreino }: { aluno: Aluno; temTreino: boolean }) {
         <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
       </div>
       <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-        {!temTreino && <Pill tone="cta">Sem treino</Pill>}
+        {!temTreino && <Pill tone="warning">Sem treino</Pill>}
         {restr.length > 0 && (
           <Pill tone="warning">
             {rotuloRestricao(restr[0].tag)}

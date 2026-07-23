@@ -97,7 +97,7 @@ export function PosturalAnalyzer({
         )}
       </div>
 
-      <p className="text-center text-[11px] text-ink-3">
+      <p className="text-center text-2xs text-ink-3">
         Arraste os pontos para corrigir onde o modelo errou. Pontos em laranja têm baixa confiança.
       </p>
 

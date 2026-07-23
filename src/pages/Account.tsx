@@ -221,7 +221,7 @@ export function Account() {
 
         {/* Prévia do cabeçalho do documento */}
         <div className="mt-5 rounded-xl border border-border bg-white p-4">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+          <div className="mb-2 text-2xs font-semibold uppercase tracking-wider text-ink-3">
             Prévia do cabeçalho dos documentos
           </div>
           <div
@@ -236,7 +236,7 @@ export function Account() {
                 {empresa && <div className="text-xs text-ink-2">{empresa}</div>}
               </div>
             </div>
-            <div className="min-w-0 break-words text-[11px] text-ink-3 sm:text-right">
+            <div className="min-w-0 break-words text-2xs text-ink-3 sm:text-right">
               {[site, email, telefone].filter(Boolean).join(" · ") || "site · e-mail · telefone"}
             </div>
           </div>
@@ -303,7 +303,7 @@ function ContaNuvemCard() {
       </p>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-soft p-3">
         <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">E-mail da conta</div>
+          <div className="text-2xs font-semibold uppercase tracking-wider text-ink-3">E-mail da conta</div>
           <div className="truncate text-sm font-semibold text-ink">{emailConta || "conta conectada"}</div>
         </div>
         <button
@@ -416,7 +416,7 @@ function SenhaCard({ temSenha }: { temSenha: boolean }) {
           <input type="password" value={confirma} onChange={(e) => setConfirma(e.target.value)} className="input" autoComplete="new-password" />
         </label>
       </div>
-      {erro && <p className="mt-2 text-sm font-medium text-[#b91c1c]">{erro}</p>}
+      {erro && <p className="mt-2 text-sm font-medium text-danger">{erro}</p>}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <button onClick={salvar} disabled={salvando} className={cn(buttonClasses("primary", "sm"), salvando && "opacity-60")}>

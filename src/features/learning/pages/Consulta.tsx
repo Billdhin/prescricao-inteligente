@@ -135,10 +135,10 @@ function QuickAnswerCard({ a }: { a: QuickAnswer }) {
         </Bloco>
       </div>
 
-      <div className="mt-3 rounded-xl bg-[#e7f8ee] p-3 text-sm text-ink">
+      <div className="mt-3 rounded-xl bg-success-tint p-3 text-sm text-ink">
         <span className="font-semibold text-success">Aplicação. </span>{a.application}
       </div>
-      <div className="mt-2 flex items-start gap-2 rounded-xl bg-[#fdf6ec] p-3 text-sm text-ink-2">
+      <div className="mt-2 flex items-start gap-2 rounded-xl bg-warning-tint p-3 text-sm text-ink-2">
         <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--cta-text)]" />
         <span><span className="font-semibold text-ink">Limites. </span>{a.limits}</span>
       </div>

@@ -12,16 +12,27 @@
   --surface-soft: #f2f0ea; /* fosco morno, casa com o fundo */
   --border: #e6e2d8;
   --ink: #1e293b;
-  --ink-2: #55606f; /* AA (>=4.5) em branco e no papel morno */
-  --ink-3: #5b6472; /* AA mesmo sobre surface-soft/tint */
+  --ink-2: #585f68; /* 6.46 branco, 5.88 papel, 5.67 soft; mata o viés lilás; AA folgado em todas as tints */
+  --ink-3: #585f68; /* alias de transição; os dois tokens atuais tinham contraste mútuo 1.07, eram o mesmo cinza */
   --primary: #1b4b66; /* azul petróleo = decisão/recomendação do sistema (9.4:1 em branco) */
   --primary-tint: #e8eff3;
   --analysis: #0e7c8a; /* teal profundo, uso pontual */
-  --cta: #e0663b; /* coral autoral — preenchimento/ícone grande da ação principal */
+  --cta: #e0663b; /* coral autoral, preenchimento/ícone grande da ação principal */
   --cta-text: #b24a28; /* coral escuro p/ TEXTO/pills (5.4:1 em branco) */
-  --success: #16a34a; /* verde escuro p/ texto em tint */
+  --success: #147a3a; /* 5.42 branco, 4.92 na tint, 4.76 soft, 4.93 papel. NÃO usar #15803d (4.40 no soft, reprova) */
   --warning: #b45309; /* âmbar escuro p/ texto em tint */
   --data-intensidade: #9a4f2e; /* terracota de DADO (curva de intensidade); o coral --cta fica reservado à ação principal */
+  /* Tints canônicas: uma por papel semântico. LEI: tint sobre o papel #f6f4ef é
+     quase invisível (primary-tint vs papel = 1.06); toda superfície tintada fora
+     de card branco leva `border border-border` obrigatório. */
+  --success-tint: #e7f8ed;
+  --warning-tint: #fef4e2;
+  --cta-tint: #fff1e6;
+  --analysis-tint: #e0f7f9;
+  --analysis-text: #0c6b77; /* 5.57 na tint, 6.20 branco, 5.44 soft; espelha o par cta/cta-text */
+  --danger: #b91c1c; /* 6.47 branco, 5.66 na tint, 5.68 soft, 5.89 papel */
+  --danger-tint: #fdecec;
+  --danger-fill: #ef4444; /* 3.76 branco: SÓ dot/ícone/preenchimento gráfico (mínimo 3:1), NUNCA texto */
 }
 
 html,
@@ -121,6 +132,11 @@ main .grid > * {
 }
 .animate-halo {
   animation: pulso-halo 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+/* Halo com 3 ciclos e para (moldura de boas-vindas do Hoje); o reset de
+   reduced-motion abaixo já cobre (animation-iteration-count: 1). */
+.animate-halo-3 {
+  animation: pulso-halo 2.2s cubic-bezier(0.4, 0, 0.2, 1) 3;
 }
 .animate-alvo {
   animation: brilho-alvo 2.4s ease-in-out infinite;

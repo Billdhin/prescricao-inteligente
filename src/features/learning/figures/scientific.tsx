@@ -164,7 +164,7 @@ function FigSistemas() {
   const left: [string, string, string][] = [
     ["Nervoso", "controle rápido", C.primary],
     ["Endócrino", "controle lento", "#db2777"],
-    ["Cardiovascular", "transporte", "#dc2626"],
+    ["Cardiovascular", "transporte", "var(--danger)"],
     ["Respiratório", "troca gasosa", C.primary],
     ["Esquelético", "suporte e alavancas", C.ink2],
     ["Muscular", "movimento", C.cta],
@@ -371,9 +371,9 @@ function FigCicloCardiaco() {
   return (
     <svg viewBox="0 0 720 360" {...svgProps("Ciclo cardíaco: pressões ventricular esquerda, aórtica e atrial na sístole e diástole")}>
       {/* faixas sístole/diástole */}
-      <rect x={tToX(0.15)} y={yTop} width={tToX(0.45) - tToX(0.15)} height={y0 - yTop} fill="#fdecec" />
+      <rect x={tToX(0.15)} y={yTop} width={tToX(0.45) - tToX(0.15)} height={y0 - yTop} fill="var(--danger-tint)" />
       <rect x={tToX(0.45)} y={yTop} width={x1 - tToX(0.45)} height={y0 - yTop} fill="#eaf1fe" />
-      <text x={(tToX(0.15) + tToX(0.45)) / 2} y={yTop + 16} textAnchor="middle" fontSize={12} fontWeight={700} fill="#dc2626">Sístole</text>
+      <text x={(tToX(0.15) + tToX(0.45)) / 2} y={yTop + 16} textAnchor="middle" fontSize={12} fontWeight={700} fill="var(--danger)">Sístole</text>
       <text x={(tToX(0.45) + x1) / 2} y={yTop + 16} textAnchor="middle" fontSize={12} fontWeight={700} fill={C.primary}>Diástole</text>
       {/* grade */}
       {[0, 40, 80, 120].map((p) => (
@@ -386,12 +386,12 @@ function FigCicloCardiaco() {
       <line x1={x0} y1={y0} x2={x1} y2={y0} stroke={C.ink2} strokeWidth={1.5} />
       <text x={26} y={175} fontSize={12} fill={C.ink2} transform="rotate(-90 26 175)">Pressão (mmHg)</text>
       {/* curvas */}
-      <path d={toPath(aortic)} fill="none" stroke="#dc2626" strokeWidth={2.5} />
+      <path d={toPath(aortic)} fill="none" stroke="var(--danger)" strokeWidth={2.5} />
       <path d={toPath(ventric)} fill="none" stroke={C.primary} strokeWidth={2.5} />
       <path d={toPath(atrial)} fill="none" stroke={C.success} strokeWidth={2.5} />
       {/* legenda */}
       <g fontSize={11} fontWeight={600}>
-        <line x1={430} y1={330} x2={452} y2={330} stroke="#dc2626" strokeWidth={3} /><text x={456} y={334} fill={C.ink2}>Aorta</text>
+        <line x1={430} y1={330} x2={452} y2={330} stroke="var(--danger)" strokeWidth={3} /><text x={456} y={334} fill={C.ink2}>Aorta</text>
         <line x1={510} y1={330} x2={532} y2={330} stroke={C.primary} strokeWidth={3} /><text x={536} y={334} fill={C.ink2}>Ventrículo E</text>
         <line x1={620} y1={330} x2={642} y2={330} stroke={C.success} strokeWidth={3} /><text x={646} y={334} fill={C.ink2}>Átrio E</text>
       </g>
@@ -661,11 +661,11 @@ function FigNefron() {
         <Arrowhead id="ah-nef-e" color={C.warning} />
       </defs>
       {/* glomérulo */}
-      <circle cx={110} cy={90} r={42} fill="none" stroke="#dc2626" strokeWidth={2} />
-      <path d="M78 90 q14 -22 32 0 q14 22 32 0" fill="none" stroke="#dc2626" strokeWidth={3} />
-      <path d="M78 78 q16 -14 32 0 q16 14 32 0" fill="none" stroke="#dc2626" strokeWidth={3} />
-      <path d="M78 102 q16 16 32 0 q16 -16 32 0" fill="none" stroke="#dc2626" strokeWidth={3} />
-      <text x={110} y={44} textAnchor="middle" fontSize={12} fontWeight={700} fill="#dc2626">Glomérulo</text>
+      <circle cx={110} cy={90} r={42} fill="none" stroke="var(--danger)" strokeWidth={2} />
+      <path d="M78 90 q14 -22 32 0 q14 22 32 0" fill="none" stroke="var(--danger)" strokeWidth={3} />
+      <path d="M78 78 q16 -14 32 0 q16 14 32 0" fill="none" stroke="var(--danger)" strokeWidth={3} />
+      <path d="M78 102 q16 16 32 0 q16 -16 32 0" fill="none" stroke="var(--danger)" strokeWidth={3} />
+      <text x={110} y={44} textAnchor="middle" fontSize={12} fontWeight={700} fill="var(--danger)">Glomérulo</text>
       {/* cápsula de Bowman */}
       <path d="M152 90 a42 46 0 1 0 -0.1 0" fill="none" stroke={C.ink3} strokeWidth={1.5} />
       {/* filtração */}
@@ -733,8 +733,8 @@ function FigVentilacao() {
       <text x={250} y={140} textAnchor="middle" fontSize={13} fontWeight={700} fill={C.primary}>Alvéolo</text>
       <text x={250} y={158} textAnchor="middle" fontSize={10.5} fill={C.ink2}>PO₂ alto · PCO₂ baixo</text>
       {/* capilar */}
-      <rect x={360} y={90} width={300} height={100} rx={50} fill="#fdecec" stroke="#dc2626" strokeWidth={2} />
-      <text x={510} y={135} textAnchor="middle" fontSize={13} fontWeight={700} fill="#dc2626">Capilar pulmonar</text>
+      <rect x={360} y={90} width={300} height={100} rx={50} fill="var(--danger-tint)" stroke="var(--danger)" strokeWidth={2} />
+      <text x={510} y={135} textAnchor="middle" fontSize={13} fontWeight={700} fill="var(--danger)">Capilar pulmonar</text>
       <text x={510} y={153} textAnchor="middle" fontSize={10.5} fill={C.ink2}>sangue: PO₂ baixo · PCO₂ alto</text>
       {/* membrana */}
       <line x1={330} y1={90} x2={330} y2={190} stroke={C.warning} strokeWidth={2} strokeDasharray="4 3" />
@@ -759,7 +759,7 @@ function FigEixoEndocrino() {
     <svg viewBox="0 0 720 320" {...svgProps("Eixo hipotálamo-hipófise-glândula com feedback negativo: o hormônio final freia hipotálamo e hipófise")}>
       <defs>
         <Arrowhead id="ah-ee" color={C.primary} />
-        <Arrowhead id="ah-ee-fb" color="#dc2626" />
+        <Arrowhead id="ah-ee-fb" color="var(--danger)" />
       </defs>
       {[
         ["Hipotálamo", "hormônio liberador", 60],
@@ -781,9 +781,9 @@ function FigEixoEndocrino() {
       </NodeBox>
       <line x1={360} y1={266} x2={360} y2={278} stroke={C.success} strokeWidth={2.5} markerEnd="url(#ah-ee)" />
       {/* feedback negativo (alvo -> hipotálamo/hipófise) */}
-      <path d="M490 240 C 620 240, 620 60, 492 60" fill="none" stroke="#dc2626" strokeWidth={2.2} strokeDasharray="6 4" markerEnd="url(#ah-ee-fb)" />
-      <path d="M490 245 C 590 245, 590 150, 492 150" fill="none" stroke="#dc2626" strokeWidth={2.2} strokeDasharray="6 4" markerEnd="url(#ah-ee-fb)" />
-      <text x={628} y={155} fontSize={11.5} fontWeight={700} fill="#dc2626" transform="rotate(90 628 155)">Feedback negativo</text>
+      <path d="M490 240 C 620 240, 620 60, 492 60" fill="none" stroke="var(--danger)" strokeWidth={2.2} strokeDasharray="6 4" markerEnd="url(#ah-ee-fb)" />
+      <path d="M490 245 C 590 245, 590 150, 492 150" fill="none" stroke="var(--danger)" strokeWidth={2.2} strokeDasharray="6 4" markerEnd="url(#ah-ee-fb)" />
+      <text x={628} y={155} fontSize={11.5} fontWeight={700} fill="var(--danger)" transform="rotate(90 628 155)">Feedback negativo</text>
       <text x={40} y={150} fontSize={11} fill={C.ink3} width={160}>O efeito depende de</text>
       <text x={40} y={166} fontSize={11} fill={C.ink3}>dose, tempo, receptor</text>
       <text x={40} y={182} fontSize={11} fill={C.ink3}>e tecido, não de um</text>
@@ -1140,7 +1140,7 @@ function FigSinaisAlerta() {
   const cards: { key: string; c: string; t: string; s: string[]; x: number }[] = [
     { key: "verde", c: C.success, t: "Seguir", s: ["Sem sinais de alerta,", "esforço bem tolerado."], x: 24 },
     { key: "amarelo", c: "var(--warning)", t: "Ajustar e observar", s: ["Fadiga alta, desconforto leve.", "Reduza e monitore de perto."], x: 255 },
-    { key: "vermelho", c: "#dc2626", t: "Interromper", s: ["Dor no peito, tontura, falta de ar", "desproporcional, sinal neurológico."], x: 486 },
+    { key: "vermelho", c: "var(--danger)", t: "Interromper", s: ["Dor no peito, tontura, falta de ar", "desproporcional, sinal neurológico."], x: 486 },
   ];
   return (
     <svg viewBox="0 0 720 300" {...svgProps("Triagem de sinais durante a sessão: seguir, ajustar e observar, ou interromper e encaminhar")}>
@@ -1176,7 +1176,7 @@ function FigBalancoTermico() {
   return (
     <svg viewBox="0 0 720 400" {...svgProps("Balanço térmico: o núcleo corporal produz calor, o sangue leva o calor à pele pela vasodilatação e a pele troca calor com o ambiente por radiação, convecção, condução e evaporação do suor, a via dominante no calor e no exercício")}>
       <defs>
-        <Arrowhead id="ah-bt-red" color="#dc2626" />
+        <Arrowhead id="ah-bt-red" color="var(--danger)" />
         <Arrowhead id="ah-bt-ana" color={C.analysis} />
         <Arrowhead id="ah-bt-grey" color={C.ink3} />
         <Arrowhead id="ah-bt-blue" color={C.primary} />
@@ -1184,14 +1184,14 @@ function FigBalancoTermico() {
       {/* núcleo corporal (fonte de calor) */}
       <text x={78} y={62} textAnchor="middle" fontSize={11} fill={C.ink3}>produção de calor</text>
       <text x={78} y={77} textAnchor="middle" fontSize={10.5} fill={C.ink3}>metabolismo + exercício</text>
-      <line x1={78} y1={90} x2={78} y2={140} stroke="#dc2626" strokeWidth={2} markerEnd="url(#ah-bt-red)" />
-      <circle cx={78} cy={205} r={60} fill={C.tint} stroke="#dc2626" strokeWidth={2} />
-      <CenterText cx={78} cy={198} lines={["Núcleo", "corporal"]} color="#dc2626" size={15} />
+      <line x1={78} y1={90} x2={78} y2={140} stroke="var(--danger)" strokeWidth={2} markerEnd="url(#ah-bt-red)" />
+      <circle cx={78} cy={205} r={60} fill={C.tint} stroke="var(--danger)" strokeWidth={2} />
+      <CenterText cx={78} cy={198} lines={["Núcleo", "corporal"]} color="var(--danger)" size={15} />
       <text x={78} y={228} textAnchor="middle" fontSize={11.5} fill={C.ink2}>~37 °C</text>
       {/* sangue: vasodilatação leva calor à pele, vasoconstrição retém */}
       <text x={220} y={210} textAnchor="middle" fontSize={10} fill={C.ink3}>pelo fluxo de sangue</text>
-      <line x1={144} y1={165} x2={296} y2={165} stroke="#dc2626" strokeWidth={3} markerEnd="url(#ah-bt-red)" />
-      <text x={220} y={157} textAnchor="middle" fontSize={11} fontWeight={700} fill="#dc2626">vasodilatação: leva calor</text>
+      <line x1={144} y1={165} x2={296} y2={165} stroke="var(--danger)" strokeWidth={3} markerEnd="url(#ah-bt-red)" />
+      <text x={220} y={157} textAnchor="middle" fontSize={11} fontWeight={700} fill="var(--danger)">vasodilatação: leva calor</text>
       <line x1={296} y1={252} x2={144} y2={252} stroke={C.analysis} strokeWidth={3} markerEnd="url(#ah-bt-ana)" />
       <text x={220} y={268} textAnchor="middle" fontSize={11} fontWeight={700} fill={C.analysis}>vasoconstrição: retém</text>
       {/* pele (superfície de troca) */}
@@ -1346,8 +1346,8 @@ function FigSinapseQuimica() {
       <text x={560} y={70} textAnchor="middle" fontSize={12.5} fontWeight={700} fill={C.ink}>Soma no neurônio-alvo</text>
       <line x1={452} y1={112} x2={556} y2={96} stroke={C.success} strokeWidth={3} />
       <text x={452} y={132} fontSize={11.5} fontWeight={700} fill={C.success}>Excitatório (+)</text>
-      <line x1={452} y1={168} x2={556} y2={184} stroke="#dc2626" strokeWidth={3} />
-      <text x={452} y={158} fontSize={11.5} fontWeight={700} fill="#dc2626">Inibitório (−)</text>
+      <line x1={452} y1={168} x2={556} y2={184} stroke="var(--danger)" strokeWidth={3} />
+      <text x={452} y={158} fontSize={11.5} fontWeight={700} fill="var(--danger)">Inibitório (−)</text>
       <text x={560} y={216} textAnchor="middle" fontSize={11} fill={C.ink3}>dispara se passar do limiar</text>
       <line x1={362} y1={222} x2={428} y2={150} stroke={C.ink3} strokeWidth={1.6} strokeDasharray="4 3" />
     </svg>

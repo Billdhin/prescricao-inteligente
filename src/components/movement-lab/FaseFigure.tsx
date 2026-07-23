@@ -54,7 +54,7 @@ export function FaseFigure({
             className="h-44 w-full object-cover"
             loading="lazy"
           />
-          <span className="absolute left-2 top-2 rounded-full border border-[#1b4b66]/20 bg-[#ffffff]/90 px-2 py-0.5 text-[11px] font-semibold text-primary backdrop-blur-sm">
+          <span className="absolute left-2 top-2 rounded-full border border-[#1b4b66]/20 bg-[#ffffff]/90 px-2 py-0.5 text-2xs font-semibold text-primary backdrop-blur-sm">
             {c.chip}
           </span>
           <span
@@ -114,13 +114,13 @@ export function FaseFigure({
               )}
             </g>
           </svg>
-          <span className="absolute left-2 top-2 rounded-full border border-[#1b4b66]/20 bg-[#ffffff]/90 px-2 py-0.5 text-[11px] font-semibold text-primary backdrop-blur-sm">
+          <span className="absolute left-2 top-2 rounded-full border border-[#1b4b66]/20 bg-[#ffffff]/90 px-2 py-0.5 text-2xs font-semibold text-primary backdrop-blur-sm">
             {c.chip}
           </span>
         </div>
       )}
       {musculo && (
-        <figcaption className="mt-1.5 text-center text-[11px] text-ink-3">
+        <figcaption className="mt-1.5 text-center text-2xs text-ink-3">
           Músculo-alvo: <span className="font-medium text-ink-2">{musculo}</span>, {c.acao}
         </figcaption>
       )}

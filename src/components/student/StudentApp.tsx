@@ -142,7 +142,7 @@ export function StudentApp({
                 key={id}
                 onClick={() => setAba(id)}
                 aria-current={ativo ? "page" : undefined}
-                className="flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 py-2 text-[11px] font-medium leading-none transition-colors"
+                className="flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 py-2 text-2xs font-medium leading-none transition-colors"
                 style={ativo ? { color: cor } : undefined}
               >
                 <Icon className={cn("h-5 w-5", !ativo && "text-ink-3")} />
@@ -270,9 +270,9 @@ function SessaoCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-display font-bold text-ink">{sessao.nome}</span>
             {rotulo === "Hoje" ? (
-              <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white" style={{ background: cor }}>Hoje</span>
+              <span className="rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-white" style={{ background: cor }}>Hoje</span>
             ) : rotulo === "Próxima" ? (
-              <span className="rounded-full bg-surface-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-3 ring-1 ring-inset ring-border">Próxima</span>
+              <span className="rounded-full bg-surface-soft px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3 ring-1 ring-inset ring-border">Próxima</span>
             ) : null}
           </div>
           {sessao.foco && <div className="text-xs text-ink-3">{sessao.foco}</div>}
@@ -410,7 +410,7 @@ function BlocoRow({
         <span className="min-w-0 flex-1 font-semibold text-ink">{nomeDoBloco(bloco)}</span>
         {metodoVisivel && (
           <span
-            className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold text-white"
+            className="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold text-white"
             style={{ background: cor }}
           >
             {metodoVisivel.nome}
@@ -425,7 +425,7 @@ function BlocoRow({
         </LinhaDeTokens>
       )}
       {temIntensidade && (
-        <p className="mt-1 text-[11px] text-ink-3">Intensidade é a porcentagem da sua carga máxima estimada para este exercício.</p>
+        <p className="mt-1 text-2xs text-ink-3">Intensidade é a porcentagem da sua carga máxima estimada para este exercício.</p>
       )}
       {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
       {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
@@ -481,7 +481,7 @@ function BlocoRow({
                 </button>
               )}
             </div>
-            <p className="text-[11px] text-ink-3">RPE é o seu esforço de 0 a 10 (7 = difícil, 9 = quase a falha).</p>
+            <p className="text-2xs text-ink-3">RPE é o seu esforço de 0 a 10 (7 = difícil, 9 = quase a falha).</p>
           </div>
         )
       ) : null}
@@ -496,7 +496,7 @@ function RpeSelect({ value, onChange }: { value: string; onChange: (v: string) =
   const ancora: Record<number, string> = { 5: "moderado", 7: "difícil", 9: "quase a falha", 10: "falha" };
   return (
     <div className="w-24">
-      <label htmlFor={id} className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-ink-3">
+      <label htmlFor={id} className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-ink-3">
         RPE
       </label>
       <select
@@ -521,7 +521,7 @@ function CampoNum({ label, value, onChange, placeholder }: { label: string; valu
   const id = React.useId();
   return (
     <div className="w-16">
-      <label htmlFor={id} className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-ink-3">
+      <label htmlFor={id} className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-ink-3">
         {label}
       </label>
       <input
@@ -634,7 +634,7 @@ function PixCopia({ chave, cor }: { chave: string; cor: string }) {
       >
         {copiado ? "Chave PIX copiada" : "Copiar chave PIX"}
       </button>
-      <p className="mt-1.5 break-all text-center text-[11px] text-ink-3">{chave}</p>
+      <p className="mt-1.5 break-all text-center text-2xs text-ink-3">{chave}</p>
     </div>
   );
 }

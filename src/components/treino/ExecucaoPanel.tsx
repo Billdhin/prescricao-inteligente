@@ -85,7 +85,7 @@ export function ExecucaoPanel({ plano, execucoes }: { plano?: PlanoTreino; execu
         </div>
       )}
 
-      <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Últimos registros</div>
+      <div className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Últimos registros</div>
       {/* Nome + data no bloco; carga, reps e RPE viram tokens rotulados abaixo,
           cada número com o próprio nome, em vez de "40 kg x 12 · RPE 8" solto na borda. */}
       <ul className="overflow-hidden rounded-lg border border-border">

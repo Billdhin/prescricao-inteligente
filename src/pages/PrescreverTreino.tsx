@@ -428,7 +428,7 @@ function ConfirmarRegenerarModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-2 flex items-center gap-2">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#fef4e2] text-warning">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-warning-tint text-warning">
             <AlertTriangle className="h-4 w-4" />
           </span>
           <h2 className="font-display text-lg font-bold text-ink">Gerar o plano de novo?</h2>

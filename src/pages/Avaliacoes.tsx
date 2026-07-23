@@ -55,7 +55,7 @@ export function Avaliacoes() {
         {/* A reavaliar */}
         <Card className="p-5 md:p-6">
           <div className="mb-4 flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#fff1e6] text-[color:var(--cta-text)]">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-cta-tint text-cta-text">
               <CalendarClock className="h-4 w-4" />
             </span>
             <h2 className="font-display text-lg font-bold text-ink">A reavaliar</h2>
@@ -98,7 +98,7 @@ export function Avaliacoes() {
         {/* Últimas avaliações */}
         <Card className="p-5 md:p-6">
           <div className="mb-4 flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#e0f7f9] text-analysis">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-analysis-tint text-analysis">
               <Clock className="h-4 w-4" />
             </span>
             <h2 className="font-display text-lg font-bold text-ink">Últimas avaliações</h2>

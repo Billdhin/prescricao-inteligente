@@ -177,7 +177,7 @@ function Aplicacoes({ disc }: { disc: ReturnType<typeof repo.getDiscipline> }) {
     <div className="space-y-2">
       {apps.map((a, i) => (
         <Card key={i} className="flex items-start gap-3 p-4">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#e7f8ee] text-success">
+          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-success-tint text-success">
             <PlayCircle className="h-4 w-4" />
           </span>
           <p className="text-sm text-ink-2">{a}</p>

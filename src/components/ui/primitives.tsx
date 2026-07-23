@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 // tela), `soft` = apoio/satélite (fundo fosco, sem sombra). `base` = padrão.
 
 export type CardVariant = "base" | "raised" | "soft";
-export type CardTone = "warning" | "success" | "primary";
+export type CardTone = "warning" | "success" | "primary" | "danger";
 
 const cardVariants: Record<CardVariant, string> = {
   base: "border border-border bg-surface shadow-soft",
@@ -21,8 +21,9 @@ const cardTones: Record<CardTone, string> = {
   // NÃO compila neste repo (tailwind.config sem <alpha-value>). primary-tint já é
   // suave, então entra como token cheio.
   warning: "border border-[#b45309]/30 bg-[#fef4e2]/50",
-  success: "border border-[#16a34a]/30 bg-[#e7f8ed]/50",
+  success: "border border-[#147a3a]/30 bg-[#e7f8ed]/50",
   primary: "border border-[#1b4b66]/25 bg-primary-tint",
+  danger: "border border-[#b91c1c]/30 bg-[#fdecec]/50",
 };
 
 export function Card({
@@ -74,6 +75,7 @@ export type PillTone =
   | "cta"
   | "success"
   | "warning"
+  | "danger"
   | "neutral";
 
 // Regra do design system: forma de tom neutro NUNCA depende só de preenchimento.
@@ -84,10 +86,11 @@ export type PillTone =
 // TokenRotulado, que leem pillTones.
 const pillTones: Record<PillTone, string> = {
   primary: "bg-primary-tint text-primary",
-  analysis: "bg-[#e0f7f9] text-analysis",
-  cta: "bg-[#fff1e6] text-[color:var(--cta-text)]",
-  success: "bg-[#e7f8ed] text-success",
-  warning: "bg-[#fef4e2] text-warning",
+  analysis: "bg-analysis-tint text-analysis-text",
+  cta: "bg-cta-tint text-cta-text",
+  success: "bg-success-tint text-success",
+  warning: "bg-warning-tint text-warning",
+  danger: "bg-danger-tint text-danger",
   neutral: "bg-surface-soft text-ink-2 ring-1 ring-inset ring-border",
 };
 
@@ -256,7 +259,10 @@ export function ScoreRing({
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="tabular font-display text-xl font-bold text-ink">{v}</span>
-        {label && <span className="text-[10px] font-medium text-ink-3">{label}</span>}
+        {/* text-2xs (11px) é o piso tipográfico: rótulo de anel comporta-o. NUNCA
+            usar text-2xs em valor de dose, rótulo de campo de formulário ou texto
+            acionável; abaixo de 11px, só dentro de SVG. */}
+        {label && <span className="text-2xs font-medium text-ink-3">{label}</span>}
       </div>
     </div>
   );

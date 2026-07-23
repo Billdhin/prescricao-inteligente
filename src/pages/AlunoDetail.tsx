@@ -370,7 +370,7 @@ export function AlunoDetail() {
         <div role="tabpanel" id="aba-painel-avaliacoes" aria-labelledby="aba-tab-avaliacoes" className="space-y-4">
           <Card className="p-5 md:p-6">
             <div className="mb-3 flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#e0f7f9] text-analysis">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-analysis-tint text-analysis">
                 <Activity className="h-4 w-4" />
               </span>
               <h2 className="font-display text-lg font-bold text-ink">Evolução</h2>
@@ -460,7 +460,7 @@ export function AlunoDetail() {
             {prescs.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-4 text-center">
                 <p className="text-sm text-ink-2">Sem prescrição ainda.</p>
-                <Link to={`/gps?aluno=${aluno.id}`} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
+                <Link to={`/gps?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
                   <Navigation className="h-4 w-4" /> Prescrever agora
                 </Link>
               </div>
@@ -587,7 +587,7 @@ export function AlunoDetail() {
                           "h-2.5 w-2.5 shrink-0 rounded-full",
                           l.resultado === "verde" && "bg-success",
                           l.resultado === "amarelo" && "bg-warning",
-                          l.resultado === "vermelho" && "bg-[#ef4444]",
+                          l.resultado === "vermelho" && "bg-danger-fill",
                         )}
                       />
                       <span className="text-ink">
@@ -615,7 +615,7 @@ export function AlunoDetail() {
 
       {/* Ação administrativa: excluir (o status ativo/saiu fica em Acompanhamento) */}
       <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4 text-sm">
-        <button onClick={() => setConfirmarExclusao(true)} className="font-medium text-[#b91c1c] hover:underline">
+        <button onClick={() => setConfirmarExclusao(true)} className="font-medium text-danger hover:underline">
           Excluir aluno
         </button>
       </div>
@@ -773,7 +773,7 @@ function AlunoHeader({
       {/* Zona 2: restrições fluem em linha própria, com colapso +N */}
       {restr.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">Restrições</span>
+          <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Restrições</span>
           {restr.slice(0, 4).map((r) => (
             <Pill key={r.tag} tone="warning" icon={<AlertTriangle className="h-3 w-3" />}>
               {rotuloRestricao(r.tag)}
@@ -840,7 +840,7 @@ function SugestaoNivel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Pa
           onUpdate({ nivel: sug.proximo, nivelDesde: Date.now() });
           toast(`${aluno.nome} avançou para ${sug.proximo}. Revise a prescrição.`);
         }}
-        className={buttonClasses("primary", "sm")}
+        className={buttonClasses("secondary", "sm")}
       >
         Avançar para {sug.proximo}
       </button>
@@ -936,7 +936,7 @@ function ConfirmarExclusaoModal({
           </button>
           <button
             onClick={onConfirm}
-            className="inline-flex h-9 items-center gap-1.5 rounded-control bg-[#b91c1c] px-4 text-sm font-semibold text-white hover:bg-[#991b1b]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-control bg-danger px-4 text-sm font-semibold text-white hover:bg-[#991b1b]"
           >
             Excluir definitivamente
           </button>
@@ -996,7 +996,6 @@ function JornadaCard({
   planoAtivo?: PlanoTreino;
   onFase: (n: 1 | 2 | 3 | 4) => void;
 }) {
-  const unlocked = isPremiumUnlocked(useUser((s) => s.plan));
   const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
 
   if (!grupo) {
@@ -1013,23 +1012,6 @@ function JornadaCard({
         </div>
         <Link to="/special-groups" className={buttonClasses("secondary", "sm")}>
           Escolher grupo <ArrowRight className="h-4 w-4" />
-        </Link>
-      </Card>
-    );
-  }
-
-  if (grupo.premium && !unlocked) {
-    return (
-      <Card className="flex flex-wrap items-center gap-3 p-5">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#fff1e6] text-[color:var(--cta-text)]">
-          <HeartPulse className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="font-display font-bold text-ink">Jornada de Prescrição · {grupo.nome}</div>
-          <p className="text-sm text-ink-2">Este grupo faz parte do plano Profissional. Assine para ver a jornada.</p>
-        </div>
-        <Link to="/pricing" className={buttonClasses("primary", "sm")}>
-          Assinar
         </Link>
       </Card>
     );
@@ -1117,7 +1099,7 @@ function JornadaCard({
           </div>
           <Link
             to={`/gps?aluno=${aluno.id}&grupo=${grupo.slug}&fase=${fase}`}
-            className={cn(buttonClasses("primary"), "w-full")}
+            className={cn(buttonClasses("secondary"), "w-full")}
           >
             <Navigation className="h-4 w-4" /> Escolher exercícios desta fase
           </Link>
@@ -1163,7 +1145,7 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
             Sem treino montado ainda. O treino organiza os meses de {aluno.nome.split(" ")[0]} em macrociclo,
             mesociclos e semanas, com a progressão justificada.
           </p>
-          <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
+          <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
             <CalendarRange className="h-4 w-4" /> Montar treino
           </Link>
         </div>
@@ -1224,7 +1206,7 @@ function PlanoCard({ aluno, planos, onAvaliar }: { aluno: Aluno; planos: PlanoTr
 
         {meso && (
           <div className="mt-3 rounded-lg bg-surface-soft p-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-ink-3">Bloco atual do plano (pelo calendário)</p>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Bloco atual do plano (pelo calendário)</p>
             <p className="text-sm font-semibold text-ink">{rotuloMeso(meso)}</p>
             <p className="text-xs text-ink-2">{meso.foco}</p>
             {meso.capacidades.length > 0 && (
@@ -1346,7 +1328,7 @@ function ConvidarAlunoCard({ alunoId, alunoNome }: { alunoId: string; alunoNome:
           </button>
         </div>
       ) : (
-        <button onClick={gerar} disabled={carregando} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
+        <button onClick={gerar} disabled={carregando} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
           {carregando ? "Gerando..." : "Gerar convite do aluno"}
         </button>
       )}
@@ -1371,7 +1353,7 @@ function MiniStat({
       <span
         className={cn(
           "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
-          tone === "warning" ? "bg-[#fef4e2] text-warning" : "bg-surface-soft text-ink-2",
+          tone === "warning" ? "bg-warning-tint text-warning" : "bg-surface-soft text-ink-2",
         )}
       >
         {icon}

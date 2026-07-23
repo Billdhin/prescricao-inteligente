@@ -91,7 +91,7 @@ function Figure({ src, label }: { src: string; label?: string }) {
       <div className="relative mx-auto aspect-[3/5] w-full max-w-[180px]">
         <img src={withBase(src)} alt={label ? `Mapa muscular: ${label}` : "Mapa muscular"} className="h-full w-full object-contain" loading="lazy" />
       </div>
-      {label && <figcaption className="mt-0.5 text-center text-[11px] font-medium text-ink-3">{label}</figcaption>}
+      {label && <figcaption className="mt-0.5 text-center text-2xs font-medium text-ink-3">{label}</figcaption>}
     </figure>
   );
 }
@@ -109,7 +109,7 @@ function PoseBoneco({ src }: { src: string }) {
           loading="lazy"
         />
       </div>
-      <figcaption className="mt-0.5 text-center text-[11px] font-medium text-ink-3">
+      <figcaption className="mt-0.5 text-center text-2xs font-medium text-ink-3">
         Na posição do exercício
       </figcaption>
     </figure>
@@ -164,7 +164,7 @@ export function MuscleMap({
               <li key={n.nome} className="flex items-center gap-2">
                 <span className="h-3.5 w-3.5 shrink-0 rounded" style={{ background: n.cor }} />
                 <span className="text-xs font-medium text-ink-2">{n.nome}</span>
-                <span className="ml-auto text-[11px] tabular-nums text-ink-3">{n.faixa}</span>
+                <span className="ml-auto text-2xs tabular-nums text-ink-3">{n.faixa}</span>
               </li>
             ))}
           </ul>
@@ -193,13 +193,13 @@ export function MuscleMap({
               <p className="text-xs text-ink-3">Sem dados de ativação.</p>
             )}
           </div>
-          <div className="rounded-xl bg-primary-tint p-3 text-[11px] leading-relaxed text-ink-2">
+          <div className="rounded-xl bg-primary-tint p-3 text-2xs leading-relaxed text-ink-2">
             Os valores representam a <span className="font-semibold text-ink">ativação relativa estimada</span> para este exercício; não são medição do aluno.
           </div>
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-ink-3">
+      <div className="mt-3 flex items-center justify-between gap-2 text-2xs text-ink-3">
         <span>Menos ativado</span>
         <div className="flex h-2 flex-1 overflow-hidden rounded-full">
           {SCALE.map((c) => (

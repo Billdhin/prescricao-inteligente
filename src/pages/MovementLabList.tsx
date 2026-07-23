@@ -135,7 +135,7 @@ function Filter({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+      <span className="mb-1 block text-2xs font-semibold uppercase tracking-wider text-ink-3">
         {label}
       </span>
       <select

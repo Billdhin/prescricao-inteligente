@@ -95,7 +95,7 @@ function SeloOrigem({ ctx, bloco }: { ctx: ContextoFaixa; bloco: BlocoSessao }) 
   if (!bloco.origemPrescricaoId) return null;
   const data = ctx.prescricaoData?.(bloco.origemPrescricaoId);
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-surface-soft px-1.5 py-0.5 text-[10px] font-medium text-ink-3">
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-surface-soft px-1.5 py-0.5 text-2xs font-medium text-ink-3">
       <Repeat className="h-2.5 w-2.5" aria-hidden />
       da prescrição{data ? ` de ${data}` : ""}
     </span>
@@ -288,7 +288,7 @@ export function MesocicloCard({
           {/* (2) Dinâmica: as três tendências da fase, num cartão só. */}
           <div className="rounded-xl border border-border bg-surface-soft p-3">
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="mr-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Dinâmica</span>
+              <span className="mr-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Dinâmica</span>
               <Pill tone={meso.tendenciaVolume === "sobe" ? "analysis" : "neutral"}>Volume {TEND_LABEL[meso.tendenciaVolume]}</Pill>
               <Pill tone={meso.tendenciaIntensidade === "sobe" ? "analysis" : "neutral"}>Intensidade {TEND_LABEL[meso.tendenciaIntensidade]}</Pill>
               <Pill tone={meso.tendenciaComplexidade === "sobe" ? "analysis" : "neutral"}>Complexidade {TEND_LABEL[meso.tendenciaComplexidade]}</Pill>
@@ -353,7 +353,7 @@ export function MesocicloCard({
               <ListaChips titulo="Tipos de exercício" itens={meso.tiposExercicio} />
               {meso.parametros.length > 0 && (
                 <div>
-                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-ink-3">Acompanhar</p>
+                  <p className="mb-1 text-2xs font-semibold uppercase tracking-wide text-ink-3">Acompanhar</p>
                   <div className="flex flex-wrap gap-1.5">
                     {meso.parametros.map((id) => {
                       const p = getParam(id);
@@ -551,12 +551,12 @@ function QuadroForca({ blocos, ctx }: { blocos: BlocoSessao[]; ctx: ContextoFaix
     <div className="overflow-hidden rounded-lg border border-border bg-surface">
       <div className="flex items-center gap-1.5 border-b border-border bg-surface-soft px-2.5 py-1.5">
         <Dumbbell className="h-3.5 w-3.5 text-primary" aria-hidden />
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">Musculação</span>
+        <span className="text-2xs font-semibold uppercase tracking-wide text-ink-2">Musculação</span>
       </div>
       <div className="relative overflow-x-auto">
         <table className="w-full min-w-[520px] text-left text-xs">
           <thead>
-            <tr className="text-[10px] uppercase tracking-wide text-ink-3">
+            <tr className="text-2xs uppercase tracking-wide text-ink-3">
               <th className="px-2.5 py-1 font-semibold">Exercício</th>
               <th className="px-1.5 py-1 font-semibold">Séries</th>
               <th className="px-1.5 py-1 font-semibold">Reps</th>
@@ -571,7 +571,7 @@ function QuadroForca({ blocos, ctx }: { blocos: BlocoSessao[]; ctx: ContextoFaix
                   <span className="inline-flex flex-wrap items-center gap-1.5">
                     {b.nome}
                     {b.metodo && b.metodo !== "tradicional" && (
-                      <span className="rounded-full bg-primary-tint px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                      <span className="rounded-full bg-primary-tint px-1.5 py-0.5 text-2xs font-bold text-primary">
                         {getMetodo(b.metodo)?.nome}
                       </span>
                     )}
@@ -598,7 +598,7 @@ function QuadroCardio({ blocos }: { blocos: BlocoSessao[] }) {
     <div className="overflow-hidden rounded-lg border border-border bg-surface">
       <div className="flex items-center gap-1.5 border-b border-border bg-surface-soft px-2.5 py-1.5">
         <HeartPulse className="h-3.5 w-3.5 text-analysis" aria-hidden />
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-2">Cardio</span>
+        <span className="text-2xs font-semibold uppercase tracking-wide text-ink-2">Cardio</span>
       </div>
       <div className="divide-y divide-border">
         {blocos.map((b) => {
@@ -622,7 +622,7 @@ function QuadroCardio({ blocos }: { blocos: BlocoSessao[] }) {
                     </div>
                   ))}
               </dl>
-              {b.observacao && <p className="mt-1 text-[11px] leading-snug text-ink-3">{b.observacao}</p>}
+              {b.observacao && <p className="mt-1 text-2xs leading-snug text-ink-3">{b.observacao}</p>}
             </div>
           );
         })}
@@ -805,7 +805,7 @@ function BlocoRow({
     <div className="rounded-lg border border-border bg-surface p-2">
       <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
         {aerobio && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-[#0e7c8a]/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-analysis">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-[#0e7c8a]/10 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-analysis">
             <HeartPulse className="h-3 w-3" aria-hidden /> Cardio
           </span>
         )}
@@ -820,7 +820,7 @@ function BlocoRow({
           <button
             type="button"
             onClick={() => setTrocar(true)}
-            className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
+            className="inline-flex shrink-0 items-center gap-1 text-2xs font-semibold text-primary hover:underline"
             title="Trocar por outro exercício, ranqueado pelo perfil do aluno"
           >
             <Replace className="h-3.5 w-3.5" /> Trocar
@@ -829,7 +829,7 @@ function BlocoRow({
         {bloco.exercicioSlug && (
           <Link
             to={`/movement-lab/${bloco.exercicioSlug}`}
-            className="shrink-0 text-[11px] font-semibold text-primary hover:underline"
+            className="shrink-0 text-2xs font-semibold text-primary hover:underline"
             title="Ver a análise deste exercício"
           >
             ver análise
@@ -871,7 +871,7 @@ function BlocoRow({
       </div>
       {!aerobio && (
         <div className="mt-1.5">
-          <label className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-ink-3">Método de série</label>
+          <label className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3">Método de série</label>
           <select
             value={bloco.metodo ?? "tradicional"}
             onChange={(e) =>
@@ -890,7 +890,7 @@ function BlocoRow({
             ))}
           </select>
           {bloco.metodo && bloco.metodo !== "tradicional" && (
-            <p className="mt-0.5 text-[10px] leading-tight text-ink-3">{getMetodo(bloco.metodo)?.descricao}</p>
+            <p className="mt-0.5 text-2xs leading-tight text-ink-3">{getMetodo(bloco.metodo)?.descricao}</p>
           )}
         </div>
       )}
@@ -912,7 +912,7 @@ function CampoInline({
   const id = React.useId();
   return (
     <div>
-      <label htmlFor={id} className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wide text-ink-3">
+      <label htmlFor={id} className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3">
         {rotulo}
       </label>
       <input
@@ -923,11 +923,11 @@ function CampoInline({
         aria-invalid={undefined}
         className={cn(
           "w-full rounded-md border bg-surface px-1.5 py-1 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary",
-          aviso ? "border-warning bg-[#fef7e8]" : "border-border",
+          aviso ? "border-warning bg-warning-tint" : "border-border",
         )}
       />
       {aviso && (
-        <p id={`${id}-aviso`} className="mt-0.5 flex items-start gap-1 text-[10px] leading-tight text-warning">
+        <p id={`${id}-aviso`} className="mt-0.5 flex items-start gap-1 text-2xs leading-tight text-warning">
           <AlertTriangle className="mt-px h-3 w-3 shrink-0" />
           {aviso}
         </p>
@@ -1019,7 +1019,7 @@ function SeletorExercicioSheet({
                   </div>
                   <span className="shrink-0 text-right">
                     <span className="block text-xs font-semibold text-primary">{adequacaoLabel(r.score)}</span>
-                    <span className="tabular block text-[10px] text-ink-3">{r.score}/100</span>
+                    <span className="tabular block text-2xs text-ink-3">{r.score}/100</span>
                   </span>
                 </button>
               </li>
@@ -1043,7 +1043,7 @@ function SeletorExercicioSheet({
                       </button>
                     </div>
                     {r.motivoExclusao && (
-                      <p className="mt-1 flex items-start gap-1 text-[11px] leading-snug text-warning">
+                      <p className="mt-1 flex items-start gap-1 text-2xs leading-snug text-warning">
                         <AlertTriangle className="mt-px h-3 w-3 shrink-0" aria-hidden />
                         {r.motivoExclusao}
                       </p>

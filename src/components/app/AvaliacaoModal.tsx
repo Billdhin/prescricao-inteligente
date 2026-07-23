@@ -618,7 +618,7 @@ function FotosBloco({ fotos, setFotos }: { fotos: AvaliacaoFoto[]; setFotos: Rea
           {fotos.map((f) => (
             <div key={f.id} className="group relative overflow-hidden rounded-lg border border-border">
               <img src={f.dataUrl} alt={f.tipo} className="aspect-[3/4] w-full object-cover" />
-              <span className="absolute inset-x-0 bottom-0 bg-black/55 px-1 py-0.5 text-center text-[10px] text-white">{f.tipo}</span>
+              <span className="absolute inset-x-0 bottom-0 bg-black/55 px-1 py-0.5 text-center text-2xs text-white">{f.tipo}</span>
               <button
                 type="button"
                 onClick={() => setFotos((arr) => arr.filter((x) => x.id !== f.id))}

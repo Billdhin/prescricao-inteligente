@@ -125,7 +125,7 @@ export function ParametroDialog({
               <ol className="space-y-1.5">
                 {p.comoAplicar.map((s, i) => (
                   <li key={s} className="flex gap-2.5 text-sm text-ink">
-                    <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary-tint text-[11px] font-bold text-primary">
+                    <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary-tint text-2xs font-bold text-primary">
                       {i + 1}
                     </span>
                     {s}
@@ -243,7 +243,7 @@ export function VisualModalidadeCard({ id, cautela }: { id: string; cautela?: bo
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-primary-tint to-[#e0f7f9] text-analysis">
+          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-primary-tint to-analysis-tint text-analysis">
             <FallbackIcon className="h-9 w-9" />
           </div>
         )}
@@ -331,7 +331,7 @@ export function SafetyFlags({ sinais, aviso }: { sinais: string[]; aviso?: strin
   return (
     <Card tone="warning" className="p-5">
       <div className="mb-3 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#fef4e2] text-warning">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-warning-tint text-warning">
           <ShieldAlert className="h-4 w-4" />
         </span>
         <h3 className="font-display text-lg font-bold text-ink">Sinais de alerta</h3>

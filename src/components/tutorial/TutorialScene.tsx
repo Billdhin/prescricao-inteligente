@@ -374,16 +374,16 @@ function SceneCaso() {
 function SceneFeedback() {
   return (
     <Svg label="Feedback do raciocínio">
-      <rect x="24" y="24" width="292" height="30" rx="9" fill="#e7f8ed" />
+      <rect x="24" y="24" width="292" height="30" rx="9" fill="var(--success-tint)" />
       <circle cx="44" cy="39" r="9" fill="var(--success)" />
       <path d="M40 39 l3 3 5 -6" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <text x="60" y="43" fontSize="9" fontWeight="700" fill="var(--ink)">
         Escolha adequada
       </text>
       {[
-        ["Por que funciona", "var(--success)", "#e7f8ed"],
+        ["Por que funciona", "var(--success)", "var(--success-tint)"],
         ["Critério de decisão", "var(--primary)", "var(--primary-tint)"],
-        ["O que lembrar", "var(--analysis)", "#e0f7f9"],
+        ["O que lembrar", "var(--analysis)", "var(--analysis-tint)"],
       ].map(([t, c, bg], i) => {
         const x = 24 + (i % 2) * 150;
         const y = 66 + Math.floor(i / 2) * 58;

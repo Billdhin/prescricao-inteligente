@@ -474,7 +474,7 @@ function TeoriaCard({ slug, nome, bare }: { slug: string; nome: string; bare?: b
           </div>
         )}
       </div>
-      <p className="mt-4 text-[11px] leading-relaxed text-ink-3">
+      <p className="mt-4 text-2xs leading-relaxed text-ink-3">
         Conteúdo educacional de apoio à decisão do profissional habilitado; não é conduta médica, diagnóstica ou
         terapêutica e não substitui avaliação médica.
       </p>
@@ -484,7 +484,7 @@ function TeoriaCard({ slug, nome, bare }: { slug: string; nome: string; bare?: b
   return (
     <Card className="p-5 md:p-6">
       <div className="mb-3 flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[#e0f7f9] text-analysis">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-analysis-tint text-analysis">
           <Microscope className="h-5 w-5" />
         </span>
         <div>

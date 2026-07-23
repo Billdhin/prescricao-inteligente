@@ -67,7 +67,7 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
       tone: "primary",
       frase: "Comece pela avaliação inicial. Ela abre o resto do ciclo.",
       cta: { label: "Registrar avaliação", kind: "avaliar" },
-      chip: { label: "Sem avaliação", tone: "cta" },
+      chip: { label: "Sem avaliação", tone: "warning" },
     };
   }
 
@@ -79,7 +79,7 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
       tone: "primary",
       frase: "Avaliação pronta. O próximo passo é montar o treino.",
       cta: { label: "Montar treino", kind: "planejar" },
-      chip: { label: "Sem treino", tone: "cta" },
+      chip: { label: "Sem treino", tone: "warning" },
     };
   }
 

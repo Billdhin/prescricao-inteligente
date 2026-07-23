@@ -39,7 +39,7 @@ export function ProntuarioView({
   const SEM_ICON = {
     verde: <CheckCircle2 className="h-4 w-4 text-success" />,
     amarelo: <AlertTriangle className="h-4 w-4 text-warning" />,
-    vermelho: <XCircle className="h-4 w-4 text-[#ef4444]" />,
+    vermelho: <XCircle className="h-4 w-4 text-danger-fill" />,
   } as const;
   const SEM_TXT = {
     verde: "Liberado",

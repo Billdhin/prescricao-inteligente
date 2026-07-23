@@ -25,11 +25,11 @@ export function ContextualLearning({
     <Link
       to={href}
       className={cn(
-        "flex items-start gap-3 rounded-card border border-[#0e7c8a]/30 bg-[#f0fbfc] p-4 transition-colors hover:border-analysis",
+        "flex items-start gap-3 rounded-card border border-[#0e7c8a]/30 bg-analysis-tint p-4 transition-colors hover:border-analysis",
         className,
       )}
     >
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#d6f3f6] text-analysis">
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-analysis-tint text-analysis">
         <GraduationCap className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">

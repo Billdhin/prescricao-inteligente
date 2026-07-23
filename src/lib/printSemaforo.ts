@@ -11,8 +11,8 @@ const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 const COR = {
-  verde: { nome: "LIBERADO", hex: "#147a3a", bg: "#eafaf0" },
-  amarelo: { nome: "LIBERADO COM AJUSTE", hex: "#b45309", bg: "#fef7e8" },
+  verde: { nome: "LIBERADO", hex: "#147a3a", bg: "#e7f8ed" },
+  amarelo: { nome: "LIBERADO COM AJUSTE", hex: "#b45309", bg: "#fef4e2" },
   vermelho: { nome: "NÃO LIBERADO HOJE", hex: "#b91c1c", bg: "#fdecec" },
 } as const;
 

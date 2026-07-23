@@ -199,7 +199,7 @@ function ForcaBloco({ base }: { base: string | null }) {
                       {/* O rótulo explica a si mesmo: escala, referencial e o que o valor
                           quer dizer na prática. Sem isso, "Complexidade 12" não defende ninguém. */}
                       <MetricaInfo nome={m.label} valor={m.get(selected[0])} className="text-sm font-semibold text-ink" />
-                      {m.hint && <span className="shrink-0 text-[11px] text-ink-3">{m.hint}</span>}
+                      {m.hint && <span className="shrink-0 text-2xs text-ink-3">{m.hint}</span>}
                     </div>
                     <div className="space-y-1.5">
                       {selected.map((e, i) => (
@@ -393,7 +393,7 @@ function CardioBloco() {
                         </span>
                         <span className="text-xs text-ink-3">kcal/{minutos}min</span>
                       </div>
-                      <div className="mt-0.5 text-[11px] text-ink-3">
+                      <div className="mt-0.5 text-2xs text-ink-3">
                         {calc[m.id]?.met ?? m.met} MET · esforço {intensidadeLabel}
                       </div>
                     </div>
@@ -440,7 +440,7 @@ function CardioBloco() {
                   <div key={m.key}>
                     <div className="mb-1.5 flex items-center justify-between">
                       <span className="text-sm font-semibold text-ink">{m.label}</span>
-                      {m.hint && <span className="text-[11px] text-ink-3">{m.hint}</span>}
+                      {m.hint && <span className="text-2xs text-ink-3">{m.hint}</span>}
                     </div>
                     <div className="space-y-1.5">
                       {selected.map((mod, i) => (
@@ -486,7 +486,7 @@ function CardioBloco() {
                 <ListaMini titulo="Quando usar" itens={m.quandoUsar} tone="success" />
                 <ListaMini titulo="Quando evitar" itens={m.quandoEvitar} tone="cta" className="mt-3" />
                 {m.observacao && (
-                  <p className="mt-3 flex gap-2 rounded-lg bg-[#e6f7f9] p-2.5 text-[11px] leading-relaxed text-[#0e7c8a]">
+                  <p className="mt-3 flex gap-2 rounded-lg bg-analysis-tint p-2.5 text-2xs leading-relaxed text-analysis-text">
                     <Droplets className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     <span>{m.observacao}</span>
                   </p>
@@ -574,12 +574,12 @@ function CardioParametros({
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center gap-2">
-        <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#fff1e6] text-[color:var(--cta-text)]">
+        <span className="grid h-7 w-7 place-items-center rounded-lg bg-cta-tint text-cta-text">
           <Flame className="h-4 w-4" />
         </span>
         <div>
           <h3 className="font-display text-sm font-bold text-ink">Parâmetros do gasto calórico</h3>
-          <p className="text-[11px] text-ink-3">Ajuste intensidade e tempo: o gasto recalcula na hora.</p>
+          <p className="text-2xs text-ink-3">Ajuste intensidade e tempo: o gasto recalcula na hora.</p>
         </div>
       </div>
 
@@ -602,7 +602,7 @@ function CardioParametros({
                   className={cn(
                     "flex-1 rounded-control border px-2 py-2 text-sm font-semibold transition-colors",
                     on
-                      ? "border-cta bg-[#fff1e6] text-[color:var(--cta-text)]"
+                      ? "border-cta bg-cta-tint text-cta-text"
                       : "border-border text-ink-2 hover:bg-surface-soft",
                   )}
                 >
@@ -611,7 +611,7 @@ function CardioParametros({
               );
             })}
           </div>
-          <p className="mt-1.5 text-[11px] leading-snug text-ink-3">{descricao}.</p>
+          <p className="mt-1.5 text-2xs leading-snug text-ink-3">{descricao}.</p>
         </div>
 
         {/* Tempo */}
@@ -675,7 +675,7 @@ function CardioParametros({
             />
             <span className="text-sm text-ink-3">kg</span>
           </div>
-          <p id="peso-hint" className="mt-1.5 text-[11px] leading-snug text-ink-3">
+          <p id="peso-hint" className="mt-1.5 text-2xs leading-snug text-ink-3">
             De {PESO_MIN_KG} a {PESO_MAX_KG} kg. Padrão de referência: {PESO_PADRAO_KG} kg.
           </p>
         </div>
@@ -858,7 +858,7 @@ export function Comparador() {
 
       <Card variant="soft" className="p-4">
         <div className="mb-2 flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-lg bg-[#e6f7f9] text-[#0e7c8a]">
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-analysis-tint text-analysis">
             {bloco === "forca" ? <BookOpen className="h-4 w-4" /> : <Info className="h-4 w-4" />}
           </span>
           <h4 className="font-display text-sm font-bold text-ink">Como ler estes números</h4>

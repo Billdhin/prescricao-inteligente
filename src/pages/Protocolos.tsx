@@ -52,10 +52,10 @@ const CATEGORIA_ICON: Record<string, LucideIcon> = {
 };
 const catTile: Record<string, string> = {
   primary: "bg-primary-tint text-primary",
-  analysis: "bg-[#e0f7f9] text-analysis",
-  success: "bg-[#e7f8ee] text-success",
-  cta: "bg-[#fff1e6] text-[color:var(--cta-text)]",
-  warning: "bg-[#fdf3e3] text-[color:var(--cta-text)]",
+  analysis: "bg-analysis-tint text-analysis",
+  success: "bg-success-tint text-success",
+  cta: "bg-cta-tint text-cta-text",
+  warning: "bg-warning-tint text-cta-text",
 };
 
 const nomeEx = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ?? slug;
@@ -186,10 +186,10 @@ export function Protocolos() {
 
 const TONE_ICON: Record<string, string> = {
   primary: "bg-primary-tint text-primary",
-  analysis: "bg-[#e0f7f9] text-analysis",
-  success: "bg-[#e7f8ee] text-success",
-  cta: "bg-[#fff1e6] text-[color:var(--cta-text)]",
-  warning: "bg-[#fdf3e3] text-[color:var(--cta-text)]",
+  analysis: "bg-analysis-tint text-analysis",
+  success: "bg-success-tint text-success",
+  cta: "bg-cta-tint text-cta-text",
+  warning: "bg-warning-tint text-cta-text",
 };
 
 function ProtocoloCard({
@@ -218,7 +218,7 @@ function ProtocoloCard({
               <Pill tone="neutral">{p.nivelIndicado}</Pill>
             )}
             {passo && (
-              <span className="text-[11px] font-medium text-ink-3">
+              <span className="text-2xs font-medium text-ink-3">
                 Fase {passo.atual} de {passo.total}
               </span>
             )}
@@ -343,7 +343,7 @@ function BaseCientificaModal({ p, onClose }: { p: Protocolo; onClose: () => void
           )}
 
           {p.cautelas && p.cautelas.length > 0 && (
-            <div className="rounded-xl border border-[#f4d9b8] bg-[#fdf6ec] p-3">
+            <div className="rounded-xl border border-[#f4d9b8] bg-warning-tint p-3">
               <RotuloBloco icon={<ShieldAlert className="h-3.5 w-3.5 text-[color:var(--cta-text)]" />}>
                 Cuidados
               </RotuloBloco>
@@ -372,7 +372,7 @@ function BaseCientificaModal({ p, onClose }: { p: Protocolo; onClose: () => void
           )}
         </div>
 
-        <div className="border-t border-border p-4 text-[11px] leading-relaxed text-ink-3">
+        <div className="border-t border-border p-4 text-2xs leading-relaxed text-ink-3">
           Modelo de apoio à decisão do profissional habilitado. Ajuste séries, cargas, volume e restrições ao contexto
           do aluno; não substitui avaliação individualizada.
         </div>
@@ -494,7 +494,7 @@ function AplicarProtocoloModal({ modelo, onClose }: { modelo: Protocolo; onClose
             })}
           </ul>
         )}
-        <p className="mt-4 text-[11px] leading-relaxed text-ink-3">
+        <p className="mt-4 text-2xs leading-relaxed text-ink-3">
           Modelos são ponto de partida. Revise cargas, séries e as restrições do aluno antes de conduzir a sessão.
         </p>
       </div>
