@@ -20,10 +20,12 @@ import {
   X,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { EspinhaSelo } from "@/components/ui/EspinhaSelo";
 import { RetencaoPanel } from "@/components/treino/RetencaoPanel";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { avisosDoAluno, type CicloCtx } from "@/lib/gps/proximoPasso";
+import { alunosParaReativar } from "@/lib/retencao";
 import { proximaReavaliacao } from "@/data/periodizacao";
 import { statusEfetivo, formatBRL } from "@/data/cobranca";
 import { getAtivacao, marcarCelebrado, minutosPrimeiroCaso } from "@/lib/ativacao";
@@ -62,6 +64,13 @@ export function ProfessionalDashboard() {
   const atencao = ativos
     .map((a) => ({ aluno: a, motivos: avisosDoAluno(a, ctx) }))
     .filter((x) => x.motivos.length > 0);
+
+  // Deduplicação na CAMADA DE APRESENTAÇÃO (motor intocado): cada aluno aparece
+  // uma vez, na sua pendência mais forte. Precedência: atenção > reativar > seus.
+  const atencaoIds = new Set(atencao.map((x) => x.aluno.id));
+  const alunosSemAtencao = alunos.filter((a) => !atencaoIds.has(a.id));
+  const reativarIds = new Set(alunosParaReativar(alunosSemAtencao, execucoes).map((s) => s.aluno.id));
+  const seusAlunos = ativos.filter((a) => !atencaoIds.has(a.id) && !reativarIds.has(a.id));
 
   // Ritual de segunda (parcial, sem backend): dois agregados deriváveis localmente.
   // Nada é inventado; se os dois forem zero, a linha some.
@@ -105,10 +114,9 @@ export function ProfessionalDashboard() {
         <EmptyPro onExemplos={loadExamples} />
       ) : (
         <>
-      {/* Passo a passo guiado (some sozinho quando o fluxo está dominado) */}
-      <CelebracaoPrimeiroCaso />
-
-      <ProximosPassos
+      {/* Moldura única de boas-vindas: celebração do 1º caso + passo a passo,
+          encabeçada pela espinha do cuidado; colapsa a uma linha quando termina. */}
+      <MolduraBoasVindas
         temAluno={alunos.length > 0}
         temAvaliacao={avaliacoes.length > 0}
         temPrescricao={prescricoes.length > 0}
@@ -117,12 +125,21 @@ export function ProfessionalDashboard() {
         primeiroAlunoId={ativos[0]?.id ?? alunos[0]?.id}
       />
 
-      {/* Faixa de contexto (apoio, de-enfatizada) */}
-      <Card variant="soft" className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
-        <StatInline icon={<Users className="h-4 w-4 text-primary" />} value={ativos.length} label="alunos ativos" to="/alunos" />
-        <StatInline icon={<CalendarRange className="h-4 w-4 text-primary" />} value={comTreino} label="com treino ativo" to="/alunos" />
-        <StatInline icon={<Activity className="h-4 w-4 text-analysis" />} value={avaliacoesMes} label="avaliações (30d)" to="/assessments" />
-      </Card>
+      {/* Faixa de contexto (apoio, de-enfatizada). Stats zerados são suprimidos:
+          "0 avaliações (30d)" não vira mobília até existir o primeiro dado real. */}
+      {(ativos.length > 0 || comTreino > 0 || avaliacoesMes > 0) && (
+        <Card variant="soft" className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
+          {ativos.length > 0 && (
+            <StatInline icon={<Users className="h-4 w-4 text-primary" />} value={ativos.length} label="alunos ativos" to="/alunos" />
+          )}
+          {comTreino > 0 && (
+            <StatInline icon={<CalendarRange className="h-4 w-4 text-primary" />} value={comTreino} label="com treino ativo" to="/alunos" />
+          )}
+          {avaliacoesMes > 0 && (
+            <StatInline icon={<Activity className="h-4 w-4 text-analysis" />} value={avaliacoesMes} label="avaliações (30d)" to="/assessments" />
+          )}
+        </Card>
+      )}
 
       {/* Ritual de segunda (parcial): reavaliações da semana e mensalidades pendentes.
           Só aparece quando há dado real; nunca mostra zero inventado. */}
@@ -190,8 +207,9 @@ export function ProfessionalDashboard() {
         </Card>
       )}
 
-      {/* Reativar alunos: retenção a partir da execução real (só aparece se houver quem reativar) */}
-      <RetencaoPanel alunos={alunos} execucoes={execucoes} nomeProfissional={name || undefined} />
+      {/* Reativar alunos: retenção a partir da execução real (só aparece se houver quem
+          reativar). Recebe já sem os que estão em "Precisam de atenção" (dedup). */}
+      <RetencaoPanel alunos={alunosSemAtencao} execucoes={execucoes} nomeProfissional={name || undefined} />
 
       {/* Seus alunos (apoio) */}
       <section>
@@ -214,9 +232,14 @@ export function ProfessionalDashboard() {
               <UserPlus className="h-4 w-4" /> Cadastrar aluno
             </Link>
           </Card>
+        ) : seusAlunos.length === 0 ? (
+          // Todos os ativos já apareceram acima (atenção/reativar): não repetir.
+          <Card className="p-5 text-sm text-ink-2">
+            Todos os seus alunos já aparecem nas seções acima.
+          </Card>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            {ativos.slice(0, 4).map((a) => (
+            {seusAlunos.slice(0, 4).map((a) => (
               <AlunoCard key={a.id} aluno={a} temTreino={temTreinoAtivo(a.id)} />
             ))}
           </div>
@@ -238,38 +261,11 @@ export function ProfessionalDashboard() {
 
 /* ------------------------------- Auxiliares ------------------------------- */
 
-/* Checklist guiado do fluxo de trabalho: 4 passos com estado real. Some quando
-   tudo está feito (o usuário "formou") ou quando o profissional oculta. */
-/* Celebra a ativação (1x): o primeiro caso real resolvido — a métrica-mãe. */
-function CelebracaoPrimeiroCaso() {
-  const [visivel, setVisivel] = useState(() => {
-    const a = getAtivacao();
-    return !!a.primeiroSalvo && !a.celebrado;
-  });
-  if (!visivel) return null;
-  const min = minutosPrimeiroCaso();
-  const fechar = () => {
-    marcarCelebrado();
-    setVisivel(false);
-  };
-  return (
-    <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
-      <PartyPopper className="h-5 w-5 shrink-0 text-success" />
-      <p className="min-w-0 flex-1 text-sm text-ink-2">
-        <span className="font-semibold text-ink">
-          Primeiro caso real resolvido{min ? ` em ${min} min` : ""}.
-        </span>{" "}
-        Você viu a decisão com o porquê de cada escolha. Vincule a um aluno para salvar e exportar
-        o prontuário; é assim que cada caso vira defesa técnica sua.
-      </p>
-      <button onClick={fechar} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
-        <X className="h-4 w-4" />
-      </button>
-    </Card>
-  );
-}
-
-function ProximosPassos({
+/* Moldura única de boas-vindas: funde a celebração do 1º caso (a métrica-mãe) e
+   o checklist "Seu passo a passo" num só card, encabeçado pela espinha do cuidado
+   (halo de 3 ciclos, 1 por página). Colapsa para uma linha quando o fluxo termina,
+   em vez de virar mobília permanente nas aberturas diárias. */
+function MolduraBoasVindas({
   temAluno,
   temAvaliacao,
   temPrescricao,
@@ -287,6 +283,12 @@ function ProximosPassos({
   const [oculto, setOculto] = useState(
     () => typeof window !== "undefined" && localStorage.getItem("pi-passos-ocultos") === "1",
   );
+  const [celebracaoFechada, setCelebracaoFechada] = useState(() => {
+    const a = getAtivacao();
+    return !(a.primeiroSalvo && !a.celebrado);
+  });
+  const min = minutosPrimeiroCaso();
+  const mostrarCelebracao = !celebracaoFechada;
 
   const passos = [
     { done: temAluno, label: "Cadastre um aluno", to: "/alunos?novo=1" },
@@ -301,16 +303,60 @@ function ProximosPassos({
   const feitoMono = passos.map((_, i) => passos.slice(0, i + 1).every((x) => x.done));
   const feitos = feitoMono.filter(Boolean).length;
   const atualIdx = feitoMono.indexOf(false);
-
-  if (oculto || feitos === passos.length) return null;
+  const completo = feitos === passos.length;
 
   const ocultar = () => {
     localStorage.setItem("pi-passos-ocultos", "1");
     setOculto(true);
   };
+  const fecharCelebracao = () => {
+    marcarCelebrado();
+    setCelebracaoFechada(true);
+  };
+
+  if (oculto) return null;
+
+  // Colapsado: uma linha quando o fluxo terminou (e não há mais celebração a mostrar).
+  if (completo && !mostrarCelebracao) {
+    return (
+      <Card className="flex items-center gap-4 p-4">
+        <EspinhaSelo atual={5} className="hidden w-full max-w-[18rem] sm:flex" />
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            <span className="font-semibold text-ink">Fluxo dominado.</span> Você percorreu o ciclo do
+            cuidado, do cadastro à evolução.
+          </p>
+          <button onClick={ocultar} className="shrink-0 text-xs font-medium text-ink-3 hover:text-ink">
+            Ocultar
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  const espinhaAtual = completo ? 5 : Math.max(0, Math.min(atualIdx, 4));
 
   return (
     <Card className="p-5">
+      <EspinhaSelo atual={espinhaAtual} halo={!completo} className="mb-4" />
+
+      {mostrarCelebracao && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-[#147a3a]/30 bg-[#e7f8ed]/50 p-3">
+          <PartyPopper className="h-5 w-5 shrink-0 text-success" />
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            <span className="font-semibold text-ink">
+              Primeiro caso real resolvido{min ? ` em ${min} min` : ""}.
+            </span>{" "}
+            Vincule a um aluno para salvar e exportar o prontuário; é assim que cada caso vira defesa
+            técnica sua.
+          </p>
+          <button onClick={fecharCelebracao} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="font-display text-base font-bold text-ink">Seu passo a passo</h2>
         <Pill tone="primary">{feitos} de {passos.length}</Pill>

@@ -126,14 +126,12 @@ function useMuscleMasks(srcUrl: string, regions: MuscleRegion[]) {
   return masks;
 }
 
-// Cores por ordem de ativação (1º quente → 3º ciano), conforme spec.
-const BAR_COLORS = [
-  "linear-gradient(90deg,#ef4444,#f97316)",
-  "linear-gradient(90deg,#f59e0b,#fbbf24)",
-  "linear-gradient(90deg,#14b8c4,#22d3ee)",
-  "linear-gradient(90deg,#64748b,#94a3b8)",
-];
-const DOT_COLORS = ["#ef4444", "#f59e0b", "#14b8c4", "#94a3b8"];
+// Dois níveis, não quatro (spec 2.7): a cor só aponta o PROTAGONISTA; o ranking
+// real vem sempre do "NN/100" adjacente ao rótulo. Terracota no 1º, neutro nos
+// demais. A rampa vermelho→laranja saiu (contradizia o Semáforo, onde vermelho =
+// não liberado). Terracota #e88b60 = 7.05:1 sobre o overlay #0f172a; neutro #8a96a3 = 5.93:1.
+const BAR_COLORS = ["#e88b60", "#8a96a3", "#8a96a3", "#8a96a3"];
+const DOT_COLORS = ["#e88b60", "#8a96a3", "#8a96a3", "#8a96a3"];
 
 export function BiomechanicsComparisonSlider({
   baseSrc,
@@ -147,6 +145,9 @@ export function BiomechanicsComparisonSlider({
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [pos, setPos] = React.useState(50);
   const [dragging, setDragging] = React.useState(false);
+  // Distingue arrasto (só pela alça) de toque (alterna execução/análise): quando
+  // a alça se move, o clique sintético que o navegador dispara ao soltar é engolido.
+  const movedRef = React.useRef(false);
 
   const updateFromClientX = React.useCallback((clientX: number) => {
     const el = containerRef.current;
@@ -157,7 +158,10 @@ export function BiomechanicsComparisonSlider({
 
   React.useEffect(() => {
     if (!dragging) return;
-    const move = (e: PointerEvent) => updateFromClientX(e.clientX);
+    const move = (e: PointerEvent) => {
+      movedRef.current = true;
+      updateFromClientX(e.clientX);
+    };
     const up = () => setDragging(false);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
@@ -356,14 +360,20 @@ export function BiomechanicsComparisonSlider({
   return (
     <div
       ref={containerRef}
-      onPointerDown={(e) => {
-        setDragging(true);
-        updateFromClientX(e.clientX);
+      onClick={() => {
+        // Arrasto é só pela alça (abaixo); um toque no quadro ALTERNA execução/análise.
+        if (movedRef.current) {
+          movedRef.current = false;
+          return;
+        }
+        setPos((p) => (p >= 50 ? 0 : 100));
       }}
       className={cn(
-        "relative aspect-[4/3] w-full touch-none select-none overflow-hidden rounded-card",
+        // touch-action: pan-y deixa a página rolar na vertical por cima do quadro;
+        // o arrasto horizontal fica confinado à alça (que tem touch-none).
+        "relative aspect-[4/3] w-full touch-pan-y select-none overflow-hidden rounded-card",
         "border border-slate-800 bg-slate-950",
-        dragging ? "cursor-ew-resize" : "cursor-default",
+        dragging ? "cursor-ew-resize" : "cursor-pointer",
         className,
       )}
     >
@@ -498,7 +508,7 @@ export function BiomechanicsComparisonSlider({
               terco === "R" ? "translate(-100%, -50%)" : terco === "L" ? "translateY(-50%)" : "translate(-50%, -50%)";
             return (
               <span
-                className="absolute hidden whitespace-nowrap rounded-full border border-cyan-400/25 bg-slate-950/70 px-2 py-0.5 text-[10px] font-medium tracking-wide text-cyan-300 backdrop-blur-sm sm:inline-flex"
+                className="absolute hidden whitespace-nowrap rounded-full border border-cyan-400/25 bg-slate-950/70 px-2 py-0.5 text-2xs font-medium tracking-wide text-cyan-300 backdrop-blur-sm sm:inline-flex"
                 style={{ left: `${clamp(x2)}%`, top: `${ly}%`, transform }}
               >
                 Linha de força
@@ -508,14 +518,14 @@ export function BiomechanicsComparisonSlider({
         {overlay?.angle &&
           (angleGeom ? (
             <span
-              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10.5px] font-bold tabular-nums text-white backdrop-blur-sm"
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-2xs font-bold tabular-nums text-white backdrop-blur-sm"
               style={{ left: `${angleGeom.label.x}%`, top: `${angleGeom.label.y}%` }}
             >
               ≈{angleGeom.deg}°
             </span>
           ) : (
             <span
-              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-[10.5px] font-bold tabular-nums text-white backdrop-blur-sm"
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-md border border-white/15 bg-slate-950/80 px-2 py-0.5 text-2xs font-bold tabular-nums text-white backdrop-blur-sm"
               style={{ left: `${overlay.angle.x}%`, top: `${overlay.angle.y}%` }}
             >
               ≈{overlay.angle.value}
@@ -530,7 +540,7 @@ export function BiomechanicsComparisonSlider({
               onPointerEnter={() => setFoco(r.nome)}
               onPointerLeave={() => setFoco(null)}
               className={cn(
-                "absolute hidden -translate-y-1/2 truncate whitespace-nowrap rounded-full border border-white/15 bg-slate-950/70 px-2 py-0.5 text-[10.5px] font-medium text-white/95 backdrop-blur-sm transition-opacity sm:inline-flex",
+                "absolute hidden -translate-y-1/2 truncate whitespace-nowrap rounded-full border border-white/15 bg-slate-950/70 px-2 py-0.5 text-2xs font-medium text-white/95 backdrop-blur-sm transition-opacity sm:inline-flex",
                 dim && "opacity-30",
               )}
               style={
@@ -569,10 +579,10 @@ export function BiomechanicsComparisonSlider({
               )}
             >
               <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: DOT_COLORS[i] }} />
-              <span className="text-[10px] font-medium text-white/85">{m.musculo}</span>
+              <span className="text-2xs font-medium text-white/85">{m.musculo}</span>
               {/* "/100" e não "%": a escala é relativa ao próprio músculo, e "95%"
                   sozinho puxa a leitura errada de "95% do esforço vai para o glúteo" */}
-              <span className="tabular text-[10px] font-bold text-white">
+              <span className="tabular text-2xs font-bold text-white">
                 {m.percentual}
                 <span className="font-medium text-white/60">/100</span>
               </span>
@@ -592,7 +602,7 @@ export function BiomechanicsComparisonSlider({
               deste painel, "78% de quadríceps é referente a quê?" */}
           <MetricaInfo
             nome="Ativação relativa"
-            className="mb-2 text-[11px] font-semibold tracking-wide text-white/85 decoration-white/40 hover:text-white hover:decoration-white/70"
+            className="mb-2 text-2xs font-semibold tracking-wide text-white/85 decoration-white/40 hover:text-white hover:decoration-white/70"
           />
           <div className="space-y-0.5">
             {contribuicoes.map((m, i) => (
@@ -612,11 +622,11 @@ export function BiomechanicsComparisonSlider({
                 )}
               >
                 <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: DOT_COLORS[i] }} />
-                <span className="min-w-0 flex-1 truncate text-[11px] leading-tight text-white/90">{m.musculo}</span>
+                <span className="min-w-0 flex-1 truncate text-2xs leading-tight text-white/90">{m.musculo}</span>
                 <span className="h-1 w-12 shrink-0 overflow-hidden rounded-full bg-white/12 sm:w-16">
                   <span className="block h-full rounded-full" style={{ width: `${m.percentual}%`, background: BAR_COLORS[i] }} />
                 </span>
-                <span className="tabular w-12 shrink-0 text-right text-[11px] font-bold leading-tight text-white">
+                <span className="tabular w-12 shrink-0 text-right text-2xs font-bold leading-tight text-white">
                   {m.percentual}
                   <span className="font-medium text-white/60">/100</span>
                 </span>
@@ -651,10 +661,12 @@ export function BiomechanicsComparisonSlider({
         onKeyDown={onKeyDown}
         onPointerDown={(e) => {
           e.stopPropagation();
+          movedRef.current = false;
           setDragging(true);
         }}
+        onClick={(e) => e.stopPropagation()}
         className={cn(
-          "absolute top-1/2 z-20 grid h-9 w-9 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize place-items-center",
+          "absolute top-1/2 z-20 grid h-11 w-11 -translate-x-1/2 -translate-y-1/2 touch-none cursor-ew-resize place-items-center",
           "rounded-full border border-cyan-400/40 bg-slate-950/85 text-cyan-300 shadow-elevated backdrop-blur-sm",
           "transition-transform duration-150 hover:scale-105 focus-visible:scale-105",
         )}

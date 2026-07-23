@@ -26,6 +26,16 @@ const nomeDoBloco = (b: BlocoSessao): string => {
   return b.nome ?? b.modalidade ?? "Exercício";
 };
 
+// Encurta valores de dose verbosos que quebram no mobile ("moderada a alta"
+// vira "mod. a alta"). Só o texto muda; o número da dose segue intocado e colado
+// ao exercício (mover dose para rodapé é VETADO).
+const abrevDose = (v: string): string => v.replace(/moderada a alta/gi, "mod. a alta");
+
+// A sessão tem algum bloco com intensidade prescrita? Governa a nota educacional
+// única no rodapé do card da Sessão (antes repetida por exercício).
+const temIntensidadeNaSessao = (s: Sessao): boolean =>
+  s.blocos.some((b) => b.intensidade != null && String(b.intensidade).trim() !== "" && String(b.intensidade).trim() !== "-");
+
 const TIPO_SEMANA: Record<Microciclo["tipo"], { label: string; tone: "neutral" | "warning" | "success" }> = {
   carga: { label: "Semana de carga", tone: "success" },
   deload: { label: "Semana de descarga", tone: "warning" },
@@ -82,39 +92,45 @@ export function StudentApp({
           </div>
         )}
 
-        {/* Cabeçalho com a marca do profissional */}
-        <header className="flex items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3">
-          <Logo />
-          <div className="flex items-center gap-1.5">
-            {cobrancaPendente && (
-              <button
-                onClick={() => setAba("semana")}
-                className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white"
-                style={{ background: "var(--warning)" }}
-              >
-                <Wallet className="h-3.5 w-3.5" /> Mensalidade pendente
-              </button>
-            )}
-            {onSair && (
-              <button
-                onClick={onSair}
-                className="rounded-lg p-2 text-ink-3 hover:bg-surface-soft hover:text-ink"
-                aria-label={preview ? "Fechar prévia" : "Sair da conta"}
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-            )}
+        {/* Palco de marca: faixa tintada com a cor do profissional (hex+alpha
+            LITERAL, jamais /NN sobre token). Pior caso verificado (preto a 8%
+            sobre branco = #ebebeb) mantém o ink em 12.27:1. A saudação mora dentro. */}
+        <header
+          className="border-b border-border px-4 py-3"
+          style={{ background: (marca.corPrimaria || "#1b4b66") + "14" }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <Logo />
+            <div className="flex items-center gap-1.5">
+              {cobrancaPendente && (
+                <button
+                  onClick={() => setAba("semana")}
+                  className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white"
+                  style={{ background: "var(--warning)" }}
+                >
+                  <Wallet className="h-3.5 w-3.5" /> Mensalidade pendente
+                </button>
+              )}
+              {onSair && (
+                <button
+                  onClick={onSair}
+                  className="rounded-lg p-2 text-ink-3 hover:bg-surface-soft hover:text-ink"
+                  aria-label={preview ? "Fechar prévia" : "Sair da conta"}
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
-        </header>
-
-        <main className="flex-1 space-y-4 p-4 pb-24">
-          <div>
+          <div className="mt-3">
             <p className="text-sm text-ink-3">Olá, {aluno.nome.split(" ")[0]}</p>
             <h1 className="font-display text-2xl font-bold text-ink">
               {aba === "hoje" ? "Hoje" : aba === "semana" ? "Sua semana" : "Sua evolução"}
             </h1>
           </div>
+        </header>
 
+        <main className="flex-1 space-y-4 p-4 pb-24">
           {aba === "hoje" && (
             <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} preview={preview} />
           )}
@@ -203,7 +219,9 @@ function AbaHoje({
         )}
         {meso && (
           <p className="mt-1 text-sm text-ink-2">
-            {rotuloPosicao(meso)}: <strong className="text-ink">{rotuloMeso(meso)}</strong>. {meso.foco}
+            {/* Vírgula (não ":") entre posição e nome: rotuloMeso já traz "Fase N: ..."
+                e o dois-pontos duplo lia "Fase atual: Fase 2: ...". Helpers intocados. */}
+            {rotuloPosicao(meso)}, <strong className="text-ink">{rotuloMeso(meso)}</strong>. {meso.foco}
           </p>
         )}
       </Card>
@@ -299,6 +317,21 @@ function SessaoCard({
               preview={preview}
             />
           ))}
+
+          {/* Rodapé da Sessão: o boilerplate aparece UMA vez por sessão (antes
+              repetido por exercício); a dose continua colada a cada exercício. */}
+          {(temIntensidadeNaSessao(sessao) || preview) && (
+            <div className="space-y-1 pt-0.5">
+              {temIntensidadeNaSessao(sessao) && (
+                <p className="text-2xs text-ink-3">
+                  Intensidade é a porcentagem da sua carga máxima estimada para cada exercício.
+                </p>
+              )}
+              {preview && (
+                <p className="text-xs text-ink-3">Aqui o seu aluno registra carga, repetições e esforço.</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </Card>
@@ -338,7 +371,7 @@ function BlocoRow({
       ? [
           { label: "Formato", value: limpo(bloco.formato) },
           { label: "Duração", value: limpo(bloco.duracao) },
-          { label: "Intensidade", value: limpo(bloco.intensidade) },
+          { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
           { label: "Recuperação", value: limpo(bloco.recuperacao) },
         ]
       : [
@@ -346,11 +379,10 @@ function BlocoRow({
             label: "Série",
             value: bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : limpo(bloco.series) || limpo(bloco.reps),
           },
-          { label: "Intensidade", value: limpo(bloco.intensidade) },
+          { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
           { label: "Intervalo", value: limpo(bloco.intervalo) },
         ]
   ).filter((t) => t.value);
-  const temIntensidade = tokensDose.some((t) => t.label === "Intensidade");
   const metodo = getMetodo(bloco.metodo);
   const metodoVisivel = metodo && metodo.id !== "tradicional" ? metodo : undefined;
 
@@ -424,17 +456,12 @@ function BlocoRow({
           ))}
         </LinhaDeTokens>
       )}
-      {temIntensidade && (
-        <p className="mt-1 text-2xs text-ink-3">Intensidade é a porcentagem da sua carga máxima estimada para este exercício.</p>
-      )}
+      {/* A nota educacional da intensidade e o aviso de prévia sobem para UMA
+          ocorrência no rodapé do card da Sessão; aqui fica só a dose colada. */}
       {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
       {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
 
-      {preview ? (
-        // Na prévia do profissional o registro não grava (onRegistrar é no-op).
-        // Em vez de um botão que parece funcionar e não faz nada, um aviso claro.
-        <p className="mt-2 text-xs text-ink-3">Aqui o seu aluno registra carga, repetições e esforço.</p>
-      ) : podeRegistrar ? (
+      {!preview && podeRegistrar ? (
         execFeita && !editando ? (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
             <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: cor }}>
@@ -444,12 +471,18 @@ function BlocoRow({
                 : `Feito: ${execFeita.cargaFeita != null ? `${execFeita.cargaFeita} kg` : "sem carga"}${execFeita.repsFeitas != null ? ` x ${execFeita.repsFeitas}` : ""}${execFeita.rpe != null ? ` · RPE ${execFeita.rpe}` : ""}`}
             </span>
             {!aerobio && (
-              <button onClick={() => setEditando(true)} className="text-xs font-semibold text-ink-2 underline-offset-2 hover:underline">
+              <button
+                onClick={() => setEditando(true)}
+                className="inline-flex min-h-[44px] items-center px-1 text-xs font-semibold text-ink-2 underline-offset-2 hover:underline"
+              >
                 Editar
               </button>
             )}
             {onDesfazer && (
-              <button onClick={desfazer} className="text-xs font-medium text-ink-3 underline-offset-2 hover:underline">
+              <button
+                onClick={desfazer}
+                className="inline-flex min-h-[44px] items-center px-1 text-xs font-medium text-ink-3 underline-offset-2 hover:underline"
+              >
                 Desfazer
               </button>
             )}
@@ -457,7 +490,7 @@ function BlocoRow({
         ) : aerobio ? (
           <button
             onClick={concluirAerobio}
-            className="mt-2 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-white"
+            className="mt-2 inline-flex h-11 items-center gap-1.5 rounded-lg px-4 text-sm font-bold text-white"
             style={{ background: cor }}
           >
             <CheckCircle2 className="h-4 w-4" /> Concluí
@@ -468,15 +501,20 @@ function BlocoRow({
               <CampoNum label="Carga (kg)" value={carga} onChange={setCarga} placeholder="kg" />
               <CampoNum label="Reps" value={reps} onChange={setReps} />
               <RpeSelect value={rpe} onChange={setRpe} />
+              {/* Abaixo de sm o botão desce para a própria linha (w-full): o
+                  flex-wrap antigo o quebrava de forma imprevisível ao lado do RPE. */}
               <button
                 onClick={registrar}
-                className="rounded-lg px-3 py-2 text-xs font-bold text-white"
+                className="inline-flex h-11 w-full items-center justify-center rounded-lg px-4 text-sm font-bold text-white sm:w-auto"
                 style={{ background: cor }}
               >
                 {editando ? "Salvar" : "Registrar"}
               </button>
               {editando && (
-                <button onClick={() => setEditando(false)} className="px-2 py-2 text-xs font-medium text-ink-3 hover:text-ink">
+                <button
+                  onClick={() => setEditando(false)}
+                  className="inline-flex h-11 items-center px-2 text-sm font-medium text-ink-3 hover:text-ink"
+                >
                   Cancelar
                 </button>
               )}
@@ -503,7 +541,7 @@ function RpeSelect({ value, onChange }: { value: string; onChange: (v: string) =
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-[34px] w-full rounded-md border border-border bg-surface px-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+        className="h-11 w-full rounded-md border border-border bg-surface px-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
       >
         <option value="">-</option>
         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
@@ -520,7 +558,7 @@ function RpeSelect({ value, onChange }: { value: string; onChange: (v: string) =
 function CampoNum({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
   const id = React.useId();
   return (
-    <div className="w-16">
+    <div className="w-20">
       <label htmlFor={id} className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-ink-3">
         {label}
       </label>
@@ -530,7 +568,7 @@ function CampoNum({ label, value, onChange, placeholder }: { label: string; valu
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="h-[34px] w-full rounded-md border border-border bg-surface px-2 text-sm text-ink placeholder:text-[#5b6472]/60 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="h-11 w-full rounded-md border border-border bg-surface px-2 text-sm text-ink placeholder:text-[#5b6472]/60 focus:outline-none focus:ring-2 focus:ring-primary"
       />
     </div>
   );

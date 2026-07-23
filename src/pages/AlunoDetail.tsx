@@ -95,7 +95,7 @@ function AlunoTabs({ aba, onAba }: { aba: Aba; onAba: (a: Aba) => void }) {
     <div
       role="tablist"
       aria-label="Seções do aluno"
-      className="flex flex-wrap gap-1 rounded-control border border-border bg-surface-soft p-1"
+      className="flex gap-1 overflow-x-auto rounded-control border border-border bg-surface-soft p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {ABAS.map(({ id, label, Icon }, i) => {
         const ativo = id === aba;
@@ -111,7 +111,7 @@ function AlunoTabs({ aba, onAba }: { aba: Aba; onAba: (a: Aba) => void }) {
             onClick={() => onAba(id)}
             onKeyDown={(e) => onKey(e, i)}
             className={cn(
-              "inline-flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition-colors sm:flex-none",
+              "inline-flex flex-none items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
               ativo ? "bg-surface text-primary shadow-soft" : "text-ink-2 hover:bg-surface hover:text-ink",
             )}
@@ -1349,18 +1349,30 @@ function MiniStat({
   tone?: "warning";
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+    <div className="flex items-start gap-3 rounded-xl border border-border p-3 sm:items-center">
+      {/* Mobile: sem o quadrado de 36px (comia a largura e amputava o valor); o
+          ícone volta inline, 16px, junto ao rótulo. Desktop mantém o quadrado. */}
       <span
         className={cn(
-          "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
+          "hidden h-9 w-9 shrink-0 place-items-center rounded-lg sm:grid",
           tone === "warning" ? "bg-warning-tint text-warning" : "bg-surface-soft text-ink-2",
         )}
       >
         {icon}
       </span>
       <div className="min-w-0">
-        <div className="text-xs text-ink-3">{rotulo}</div>
-        <div className={cn("truncate font-semibold", tone === "warning" ? "text-warning" : "text-ink")}>{valor}</div>
+        <div className="flex items-center gap-1.5 text-xs text-ink-3">
+          <span className="shrink-0 sm:hidden">{icon}</span>
+          {rotulo}
+        </div>
+        <div
+          className={cn(
+            "mt-0.5 text-sm font-semibold leading-snug sm:truncate",
+            tone === "warning" ? "text-warning" : "text-ink",
+          )}
+        >
+          {valor}
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ export function Logo({ showWord = true, className }: { showWord?: boolean; class
     return (
       <div className={cn("flex items-center gap-2", className)}>
         {marca.logoDataUrl ? (
-          <img src={marca.logoDataUrl} alt="" className="h-8 max-w-[150px] object-contain" />
+          <img src={marca.logoDataUrl} alt="" className="h-8 max-w-[150px] overflow-hidden rounded-lg object-contain ring-1 ring-border" />
         ) : (
           <div
             className="grid h-8 w-8 shrink-0 place-items-center rounded-xl font-display text-sm font-bold text-white"

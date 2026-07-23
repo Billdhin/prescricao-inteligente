@@ -22,13 +22,21 @@ import {
 import * as React from "react";
 import { Logo } from "@/components/brand/Logo";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
-import { BiomechanicsComparisonSlider } from "@/components/movement-lab/BiomechanicsComparisonSlider";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
 import { TutorialScene } from "@/components/tutorial/TutorialScene";
 import { muscleRegions } from "@/data/muscle-regions";
 import { analysisOverlays } from "@/data/analysis-overlays";
 import { getExercise } from "@/data/exercises";
 import { withBase } from "@/lib/utils";
+
+// Slider carregado sob demanda (abaixo do primeiro paint): o LCP da landing
+// continua sendo texto do hero, e o processamento de máscara do canvas não
+// entra no caminho crítico.
+const BiomechanicsComparisonSlider = React.lazy(() =>
+  import("@/components/movement-lab/BiomechanicsComparisonSlider").then((m) => ({
+    default: m.BiomechanicsComparisonSlider,
+  })),
+);
 
 /* ---------------------------------- base --------------------------------- */
 
@@ -157,6 +165,39 @@ export function Landing() {
           </div>
         </div>
       </div>
+
+      {/* ----- Prova visual (posição 2): foto real × análise, o "uau" -------- */}
+      <Section className="!py-12">
+        <div className="mx-auto max-w-4xl text-center">
+          <Kicker tone="analysis">Execução × análise</Kicker>
+          <h2 className="font-display text-3xl font-bold text-ink md:text-4xl">
+            Entenda o movimento por dentro.
+          </h2>
+          <p className="mx-auto mt-2 max-w-2xl text-ink-2">
+            Arraste o divisor e revele a análise biomecânica sobre a foto real de execução: músculos
+            ativados, ângulos e linha de força.
+          </p>
+        </div>
+        <div className="mx-auto mt-8 max-w-4xl">
+          <Card variant="raised" className="p-3">
+            <React.Suspense
+              fallback={<div className="aspect-[4/3] w-full animate-pulse rounded-card bg-surface-soft" />}
+            >
+              <BiomechanicsComparisonSlider
+                baseSrc={withBase("/exercises/leg-press-45.webp")}
+                analysisSrc={withBase("/exercises/leg-press-45-analysis.webp")}
+                alt="Leg press 45°, execução real"
+                regions={muscleRegions["leg-press-45"] ?? []}
+                ativacao={getExercise("leg-press-45")?.ativacao ?? []}
+                overlay={analysisOverlays["leg-press-45"]}
+              />
+            </React.Suspense>
+            <p className="px-2 py-2 text-center text-xs text-ink-3">
+              Arraste: execução real e análise na mesma imagem.
+            </p>
+          </Card>
+        </div>
+      </Section>
 
       {/* --------------------------- Como funciona --------------------------- */}
       <Section id="como-funciona" className="text-center">
@@ -347,31 +388,6 @@ export function Landing() {
               <p className="mt-1 text-sm text-ink-2">{f.d}</p>
             </Card>
           ))}
-        </div>
-      </Section>
-
-      {/* --------------------- Bônus: entenda o movimento -------------------- */}
-      <Section className="!pt-2 text-center">
-        <Kicker tone="analysis">Bônus para aprofundar</Kicker>
-        <h2 className="font-display text-3xl font-bold text-ink">E, quando quiser, entenda o movimento por dentro.</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-          Arraste o divisor e revele a análise biomecânica sobre a foto real de execução: músculos
-          ativados, ângulos e linha de força. Para estudar a fundo, não só decidir.
-        </p>
-        <div className="mx-auto mt-8 max-w-md">
-          <Card variant="raised" className="p-3">
-            <BiomechanicsComparisonSlider
-              baseSrc={withBase("/exercises/leg-press-45.webp")}
-              analysisSrc={withBase("/exercises/leg-press-45-analysis.webp")}
-              alt="Leg press 45°, execução real"
-              regions={muscleRegions["leg-press-45"] ?? []}
-              ativacao={getExercise("leg-press-45")?.ativacao ?? []}
-              overlay={analysisOverlays["leg-press-45"]}
-            />
-            <p className="px-2 py-2 text-center text-xs text-ink-3">
-              Leg press 45°: execução e análise na mesma imagem.
-            </p>
-          </Card>
         </div>
       </Section>
 

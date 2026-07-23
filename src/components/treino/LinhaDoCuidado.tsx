@@ -138,7 +138,9 @@ function CtaPasso({
   onAcompanhar: () => void;
 }) {
   // Ação primária da tela, acionada no celular ao lado do aluno: alvo de 44px (md).
-  const cls = buttonClasses(passo.tone === "success" ? "secondary" : "primary");
+  // No mobile desce para a própria linha (w-full) para o texto do passo não ficar
+  // espremido a uma palavra por linha; a partir de sm volta ao lado.
+  const cls = cn(buttonClasses(passo.tone === "success" ? "secondary" : "primary"), "w-full sm:w-auto");
   const label = (
     <>
       {passo.cta.label} <ArrowRight className="h-4 w-4" />
