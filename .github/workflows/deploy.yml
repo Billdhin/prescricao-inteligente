@@ -32,6 +32,12 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
+      - name: Guardrails (métricas, faixas, progressão, regras, design, contraste...)
+        # Trava a publicação se um guardrail falhar. check:progressao garante que a
+        # prescrição progride de verdade (fim do "mesmo treino toda semana"); os demais
+        # protegem métricas, faixas citadas, referências, legibilidade e contraste.
+        run: npm run check
+
       - name: Build (base = /<repo>/)
         env:
           # base do Vite no site de projeto do Pages: "/<nome-do-repo>/"

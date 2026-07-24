@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
+    "check": "npm run check:metricas && npm run check:faixas && npm run check:progressao && npm run check:regras && npm run check:documentos && npm run check:nucleos && npm run check:aprender && npm run check:legibilidade && npm run check:postura && npm run check:design && npm run check:contraste",
     "gen:seed": "tsx scripts/gen-seed-sql.ts",
     "check:supabase": "node scripts/check-supabase.mjs",
     "check:metricas": "tsx scripts/check-metricas.ts",
