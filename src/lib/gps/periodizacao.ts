@@ -27,6 +27,7 @@ import {
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getSpecialGroup } from "@/data/specialGroups";
+import { alvoSemana, objetivoDaSemana, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
 
 export interface GerarPlanoInput {
   objetivo: GpsObjetivo;
@@ -127,8 +128,12 @@ function selecionarExercicios(objetivo: GpsObjetivo, nivel: Nivel, n: number) {
  * ênfase do dia; sem ela, seguem a base do objetivo/nível.
  *
  * Helper puro extraído de `montarSessoes` para ser reusado na semeadura de blocos vindos de
- * uma Prescricao (src/lib/gps/semear.ts) SEM copiar `PrescricaoItem.series`. A saída aqui é
- * idêntica à do trecho original (check:faixas byte-idêntico).
+ * uma Prescricao (src/lib/gps/semear.ts) SEM copiar `PrescricaoItem.series`. Os campos-texto
+ * são idênticos aos do trecho original (check:faixas byte-idêntico).
+ *
+ * Com `ctx` (a semeadura não passa), delega a src/lib/gps/alvo.ts e acrescenta o ALVO
+ * concreto da semana (seriesAlvo, repsAlvo, rirAlvo, cargaRelativaAlvo, intervaloAlvoSeg,
+ * origemRegraId), sempre DENTRO da faixa. Sem `ctx`, devolve só o texto (byte-idêntico).
  */
 export interface DoseForca {
   series: string;
@@ -136,13 +141,21 @@ export interface DoseForca {
   intensidade: string;
   intervalo: string;
 }
-export function doseForca(faixa: FaixaObjetivo, nivel: Nivel, enfase?: EnfaseSessao): DoseForca {
-  return {
+export function doseForca(
+  faixa: FaixaObjetivo,
+  nivel: Nivel,
+  enfase?: EnfaseSessao,
+  ctx?: CtxAlvo,
+): DoseForca & Partial<AlvoForca> {
+  const texto: DoseForca = {
     series: faixa.series.valor,
     reps: enfase?.reps ?? valorFaixa(faixa.reps, nivel),
     intensidade: enfase?.intensidade ?? faixa.intensidade.valor,
     intervalo: faixa.intervalo.valor,
   };
+  if (!ctx) return texto;
+  const alvo = alvoSemana({ ...texto, intensidadeNota: faixa.intensidade.nota }, ctx);
+  return { ...texto, ...alvo };
 }
 
 /* --------------------------------- Sessões da semana --------------------------------- */
@@ -152,6 +165,10 @@ function montarSessoes(
   nivel: Nivel,
   frequencia: number,
   modelo: ModeloPeriodizacaoId,
+  // Contexto da semana (posição no meso + tendências): faz a dose de força ganhar o ALVO
+  // concreto que progride. Mesmo para todas as sessões da semana; o que muda por sessão é a
+  // ênfase (ondulatória), que já entra na dose antes do alvo.
+  ctx: CtxAlvo,
 ): Sessao[] {
   const faixa = getFaixa(objetivo);
   const escolhidos = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2));
@@ -193,7 +210,7 @@ function montarSessoes(
         tipo: "forca",
         exercicioSlug: ex.slug,
         nome: ex.nome,
-        ...doseForca(faixa, nivel, enfase),
+        ...doseForca(faixa, nivel, enfase, ctx),
       });
     }
 
@@ -217,18 +234,35 @@ function montarMicrociclos(
   semanaInicio: number,
   duracao: number,
   comDeload: boolean,
+  // Tendências do mesociclo dono destas semanas: mandam a DIREÇÃO do alvo semana a semana.
+  tendenciaVolume: Tendencia,
+  tendenciaIntensidade: Tendencia,
 ): Microciclo[] {
   const semanas: Microciclo[] = [];
+  // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
+  const semanasDeCargaNoMeso = comDeload ? Math.max(1, duracao - 1) : duracao;
   for (let s = 0; s < duracao; s++) {
     const semana = semanaInicio + s;
     const ehDeload = comDeload && s === duracao - 1;
+    const freqSemana = ehDeload ? Math.max(1, frequencia - 1) : frequencia;
+    const ctx: CtxAlvo = {
+      // A descarga se ancora no teto do meso (última carga) e reduz a partir dele.
+      semanaNoMeso: ehDeload ? semanasDeCargaNoMeso : s + 1,
+      semanasDeCargaNoMeso,
+      tipoSemana: ehDeload ? "deload" : "carga",
+      tendenciaVolume,
+      tendenciaIntensidade,
+      nivel,
+      objetivo,
+    };
     semanas.push({
       id: nid("mic"),
       semana,
       tipo: ehDeload ? "deload" : "carga",
-      frequencia: ehDeload ? Math.max(1, frequencia - 1) : frequencia,
-      sessoes: montarSessoes(objetivo, nivel, ehDeload ? Math.max(1, frequencia - 1) : frequencia, modelo),
+      frequencia: freqSemana,
+      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, ctx),
       nota: ehDeload ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
+      objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade),
     });
   }
   return semanas;
@@ -275,6 +309,9 @@ function montarMacrocicloGenerico(
     const foco = FOCO_BLOCO_LINEAR[m % FOCO_BLOCO_LINEAR.length];
     const ondul = modelo === "ondulatoria" || modelo === "flexivel" || modelo === "autorregulada";
     const comDeload = dur >= 4;
+    // As tendências do meso mandam a direção do alvo; a mesma fonte alimenta o gráfico e o alvo.
+    const tv: Tendencia = ondul ? "varia" : foco.tv;
+    const ti: Tendencia = ondul ? "varia" : foco.ti;
 
     mesociclos.push({
       id: nid("mes"),
@@ -285,8 +322,8 @@ function montarMacrocicloGenerico(
       capacidades: faixa.capacidades,
       tiposExercicio: faixa.tiposExercicio,
       modalidades: modalidadesDoObjetivo(objetivo),
-      tendenciaVolume: ondul ? "varia" : foco.tv,
-      tendenciaIntensidade: ondul ? "varia" : foco.ti,
+      tendenciaVolume: tv,
+      tendenciaIntensidade: ti,
       tendenciaComplexidade: m === 0 ? "estavel" : "sobe",
       deload: comDeload,
       reavaliacao: true,
@@ -301,7 +338,7 @@ function montarMacrocicloGenerico(
         "Baixa adesão ou sono ruim mantidos",
       ],
       parametros: faixa.parametros,
-      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload),
+      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti),
     });
   }
 
@@ -346,6 +383,9 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
     const fim = cursor + dur - 1;
     cursor = fim + 1;
     const comDeload = dur >= 4;
+    // As repetições da última fase são manutenção (estável); as fases reais progridem (sobe).
+    const tv: Tendencia = m === 0 || estendida ? "estavel" : "sobe";
+    const ti: Tendencia = m === 0 || estendida ? "estavel" : "sobe";
     mesociclos.push({
       id: nid("mes"),
       // A repetição da última fase é nomeada com honestidade ("continuação"): não é uma
@@ -362,15 +402,15 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       // fase clínica do aluno (o número real da fase, não a posição no macro recortado).
       faseJornada: fase.numero,
       // As repetições da última fase são manutenção: a carga se estabiliza, não sobe sempre.
-      tendenciaVolume: m === 0 || estendida ? "estavel" : "sobe",
-      tendenciaIntensidade: m === 0 || estendida ? "estavel" : "sobe",
+      tendenciaVolume: tv,
+      tendenciaIntensidade: ti,
       tendenciaComplexidade: m === 0 || estendida ? "estavel" : "sobe",
       deload: comDeload,
       reavaliacao: true,
       criteriosProgressao: fase.criteriosAvancar,
       criteriosRegressao: fase.criteriosRegredir,
       parametros: fase.parametros?.length ? fase.parametros : faixa.parametros,
-      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload),
+      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti),
     });
   });
 

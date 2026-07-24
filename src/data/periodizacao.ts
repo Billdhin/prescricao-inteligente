@@ -86,6 +86,25 @@ export interface BlocoSessao {
   reps?: string;
   intensidade?: string;
   intervalo?: string;
+  /**
+   * ALVO CONCRETO da semana (onda MP-3), sempre DENTRO da faixa-texto acima, que permanece
+   * como referência ao lado. Todos opcionais e aditivos: um plano antigo (sem alvo) cai na
+   * faixa por fallback (`seriesAlvo ?? meio(series)`), e nada aqui muda os campos-texto nem a
+   * conferência de faixa. A DIREÇÃO do alvo vem da tendência do mesociclo; nenhum número é
+   * inventado (ver src/lib/gps/alvo.ts e o rulepack src/data/regrasProgressao.ts).
+   */
+  /** número de séries-alvo da semana (dentro da faixa `series`) */
+  seriesAlvo?: number;
+  /** repetições-alvo da semana (dentro da faixa `reps`) */
+  repsAlvo?: number;
+  /** repetições de reserva alvo (RIR); menor = mais perto da falha */
+  rirAlvo?: number;
+  /** carga relativa alvo em %1RM, quando a faixa expressa isso (ex.: resistência 40 a 60%) */
+  cargaRelativaAlvo?: number;
+  /** intervalo-alvo entre séries, em segundos (dentro da faixa `intervalo`) */
+  intervaloAlvoSeg?: number;
+  /** id da RegraProgressao (src/data/regrasProgressao.ts) que fundamenta a direção do alvo */
+  origemRegraId?: string;
   // --- Aeróbio (tipo "aerobio"): a intensidade acima é reaproveitada (percentual da FCmáx, RPE ou zona) ---
   /** "Contínuo" ou "Intervalado" */
   formato?: string;
@@ -152,6 +171,12 @@ export interface Microciclo {
   frequencia: number;
   sessoes: Sessao[];
   nota?: string;
+  /**
+   * Objetivo declarado da semana (onda MP-3), em uma frase curta derivada da fase, da
+   * tendência do mesociclo e do tipo da semana (carga/descarga). Aditivo e opcional: planos
+   * antigos ficam sem ele. É texto de exibição, sem travessão.
+   */
+  objetivo?: string;
 }
 
 export type Tendencia = "sobe" | "estavel" | "reduz" | "varia";

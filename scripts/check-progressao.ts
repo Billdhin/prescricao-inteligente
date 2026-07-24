@@ -53,31 +53,47 @@ const ehAerobio = (b: BlocoSessao) => b.tipo === "aerobio";
 const blocos = (m: Microciclo) => m.sessoes.flatMap((s) => s.blocos);
 
 /**
- * proxyVolumeForca = Σ (séries_meio × reps_meio) sobre os blocos de força da semana.
- * Como número absoluto não vale nada; o que importa é COMPARAR semanas do mesmo plano.
+ * proxyVolumeForca = Σ (séries × reps) sobre os blocos de força da semana, LENDO O ALVO
+ * quando presente (`seriesAlvo ?? meio(series)`, `repsAlvo ?? meio(reps)`). Assim a semana
+ * que progrediu o alvo vira volume maior de verdade. Número absoluto não vale nada; o que
+ * importa é COMPARAR semanas do mesmo plano. Sem alvo (plano antigo/sintético), cai no meio
+ * da faixa como antes.
  */
 function proxyVolumeForca(m: Microciclo): number {
   let total = 0;
   for (const b of blocos(m)) {
     if (!ehForca(b)) continue;
-    total += (meio(b.series) ?? 0) * (meio(b.reps) ?? 0);
+    const series = b.seriesAlvo ?? meio(b.series) ?? 0;
+    const reps = b.repsAlvo ?? meio(b.reps) ?? 0;
+    total += series * reps;
   }
   return total;
 }
 
 /**
- * proxyIntensidadeForca = média do meio da faixa de intensidade parseável dos blocos de
- * força. Heurística honesta: o campo `intensidade` mistura %1RM, RPE e repetições de
- * reserva (escalas diferentes), então só lê o número quando existe; se a semana inteira
- * tem intensidade textual ("moderada a alta"), devolve null e o critério não avalia. Num
- * mesmo plano/meso a escala é consistente, então a COMPARAÇÃO entre semanas é válida.
- * (MP-3 formaliza um alvo numérico de %1RM; aí este proxy passa a avaliar de fato.)
+ * Intensidade de UM bloco de força, lendo o ALVO quando presente. Escalas diferentes, mas o
+ * critério só compara semanas do MESMO meso (mesmo objetivo, mesmo campo presente), então a
+ * comparação é válida:
+ * - `cargaRelativaAlvo` (%1RM): maior = mais intenso;
+ * - `rirAlvo` (reps de reserva): menor = mais intenso, então entra como -rir;
+ * - sem alvo numérico, cai no meio da faixa de intensidade textual (null em "moderada a alta").
+ */
+function intensidadeDoBloco(b: BlocoSessao): number | null {
+  if (b.cargaRelativaAlvo != null) return b.cargaRelativaAlvo;
+  if (b.rirAlvo != null) return -b.rirAlvo;
+  return meio(b.intensidade);
+}
+
+/**
+ * proxyIntensidadeForca = média da intensidade parseável dos blocos de força (via alvo ou
+ * texto). Se a semana inteira tem intensidade textual sem alvo ("moderada a alta"), devolve
+ * null e o critério não avalia (como antes). Com o alvo de %1RM/RIR, passa a avaliar de fato.
  */
 function proxyIntensidadeForca(m: Microciclo): number | null {
   const vals: number[] = [];
   for (const b of blocos(m)) {
     if (!ehForca(b)) continue;
-    const v = meio(b.intensidade);
+    const v = intensidadeDoBloco(b);
     if (v != null) vals.push(v);
   }
   if (!vals.length) return null;
