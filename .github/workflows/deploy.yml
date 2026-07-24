@@ -38,10 +38,11 @@ jobs:
         # protegem métricas, faixas citadas, referências, legibilidade e contraste.
         run: npm run check
 
-      - name: Build (base = /<repo>/)
+      - name: Build (base = "/", domínio próprio)
         env:
-          # base do Vite no site de projeto do Pages: "/<nome-do-repo>/"
-          VITE_BASE: /${{ github.event.repository.name }}/
+          # Com o domínio mapadaprescricao.com.br no Pages, o site serve na RAIZ.
+          # (Antes do domínio era "/<nome-do-repo>/".)
+          VITE_BASE: /
           # Backend Supabase: liga o login em nuvem no site publicado. Um secret
           # definido em Settings > Secrets and variables > Actions tem precedência;
           # senão usa o valor publicável abaixo. A chave PUBLICÁVEL (anon/public) já

@@ -5,9 +5,9 @@
     <title>Mapa da Prescrição</title>
     <script type="text/javascript">
       // SPA para GitHub Pages (rafgraph/spa-github-pages): converte a rota em
-      // querystring e redireciona ao index.html, que a restaura. pathSegmentsToKeep=1
-      // mantém o "/<repo>/" do site de projeto.
-      var pathSegmentsToKeep = 1;
+      // querystring e redireciona ao index.html, que a restaura. Com o domínio
+      // próprio (mapadaprescricao.com.br) o site vive na RAIZ: pathSegmentsToKeep=0.
+      var pathSegmentsToKeep = 0;
       var l = window.location;
       l.replace(
         l.protocol +
