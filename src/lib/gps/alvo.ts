@@ -44,6 +44,14 @@ export interface CtxAlvo {
   tendenciaIntensidade: Tendencia;
   nivel: Nivel;
   objetivo: GpsObjetivo;
+  /**
+   * Idade do aluno, quando a geração tem aluno em mãos. Só serve à zona de FC do aeróbio
+   * (FCmax = 208 - 0.7*idade). Ausente no uso avulso/estudo e nos guardrails: sem ela, o
+   * aeróbio guia por duração + PSE, sem inventar zona.
+   */
+  idade?: number;
+  /** FC de repouso MEDIDA do aluno (bpm). Exigida pela zona de Karvonen; ausente = sem zona. */
+  fcRepouso?: number;
 }
 
 /** As faixas-texto da dose (já com nível e ênfase aplicados) que o alvo vai concretizar. */
@@ -226,6 +234,115 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
 /** Arredonda segundos para o múltiplo de 5 mais próximo (intervalos são anotados em passos). */
 function arredonda5(seg: number): number {
   return Math.max(0, Math.round(seg / 5) * 5);
+}
+
+/* =============================== Alvo aeróbio da semana (MP-4) =============================== */
+
+/**
+ * Os campos de alvo que o motor grava no bloco AERÓBIO. Todos opcionais e dentro das faixas
+ * citadas. A zona de FC (zonaFC/percentFCRAlvo) só aparece quando há idade + FCrep medida.
+ */
+export interface AlvoAerobio {
+  duracaoAlvoMin?: number;
+  rpeAlvo?: number;
+  zonaFC?: string;
+  percentFCRAlvo?: { min: number; max: number };
+  velocidade?: string;
+  inclinacao?: string;
+  origemRegraId?: string;
+}
+
+/** As faixas-texto do aeróbio (duração e intensidade citadas) que o alvo vai concretizar. */
+export interface DoseAerobioTextos {
+  /** faixa de duração citada, ex.: "20 a 40 min" */
+  duracao: string;
+  /** texto de intensidade, ex.: "Moderada: cerca de 64 a 76% da FCmáx (...; RPE 4 a 6 de 10)" */
+  intensidade: string;
+}
+
+/**
+ * Extrai o intervalo de PSE (RPE, escala 0 a 10) de um texto ("RPE 4 a 6 de 10" -> {4,6}).
+ * Só quando o texto fala de RPE, para não confundir com o percentual de FC.
+ */
+function faixaRPE(texto: string): Intervalo | null {
+  if (!/\bRPE\b/i.test(texto)) return null;
+  const range = texto.match(/RPE\s*(\d+(?:[.,]\d+)?)\s*(?:a|até)\s*(\d+(?:[.,]\d+)?)/i);
+  if (range) return { min: n(range[1]), max: n(range[2]) };
+  const solo = texto.match(/RPE\s*(\d+(?:[.,]\d+)?)/i);
+  if (solo) return { min: n(solo[1]), max: n(solo[1]) };
+  return null;
+}
+
+/**
+ * Extrai o intervalo de percentual da FCmáx de um texto ("64 a 76% da FCmáx" -> {64,76}). Só
+ * quando o texto realmente fala de FCmáx: assim o RPE ("RPE 4 a 6") não vira percentual.
+ */
+function faixaPctFCmax(texto: string): Intervalo | null {
+  if (!/FC\s*m[aá]x/i.test(texto)) return null;
+  const range = texto.match(/(\d+(?:[.,]\d+)?)\s*(?:a|até)\s*(\d+(?:[.,]\d+)?)\s*%/i);
+  if (range) return { min: n(range[1]), max: n(range[2]) };
+  const solo = texto.match(/(\d+(?:[.,]\d+)?)\s*%/i);
+  if (solo) return { min: n(solo[1]), max: n(solo[1]) };
+  return null;
+}
+
+/**
+ * Devolve o alvo concreto do aeróbio na semana, dentro das faixas citadas, progredindo pela
+ * posição no mesociclo. Espelha a rampa da força, com as leituras próprias do cardio:
+ *
+ * - duracaoAlvoMin (VOLUME): rampa determinística dentro da faixa de duração, guiada pela
+ *   tendência de volume do bloco (a primeira semana de carga parte do piso, a última chega ao
+ *   teto); na descarga, cai para o piso citado (a dose mais leve). É a variável que progride
+ *   primeiro (regra declarada aerobio-progressao-fittvp: volume/duração antes da intensidade).
+ * - rpeAlvo (ESFORÇO): PSE-alvo dentro da faixa de RPE citada, guiado pela tendência de
+ *   INTENSIDADE do bloco. Como as tendências do mesociclo são escalonadas (uma sobe por vez),
+ *   enquanto a duração sobe o RPE fica estável, e vice-versa: uma variável por vez.
+ * - zonaFC/percentFCRAlvo: SÓ quando há idade E FCrep medida. Sem esses dados, não inventa
+ *   zona; o alvo guia por duração + PSE, que é como o produto já orienta o aeróbio.
+ *
+ * Determinístico e puro: as mesmas entradas dão sempre o mesmo alvo.
+ */
+export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAerobio {
+  const durIv = intervaloDe(dose.duracao);
+  const rpeIv = faixaRPE(dose.intensidade);
+  const pctFCmaxIv = faixaPctFCmax(dose.intensidade);
+
+  // A magnitude da duração progride como PARTIDA prudente (regra declarada), nunca como número
+  // comprovado; por isso o bloco aeróbio aponta para a regra da progressão FITT-VP.
+  const alvo: AlvoAerobio = { origemRegraId: "aerobio-progressao-fittvp" };
+  const t = fracaoCarga(ctx);
+
+  if (ctx.tipoSemana === "deload") {
+    // Descarga: a dose mais leve das faixas citadas (piso de duração e de esforço), sempre
+    // abaixo da última semana de carga. Reduzir de verdade, sem sair da faixa.
+    if (durIv) alvo.duracaoAlvoMin = Math.round(intervaloFechado(durIv).min);
+    if (rpeIv) alvo.rpeAlvo = Math.round(intervaloFechado(rpeIv).min);
+  } else {
+    const nivelVolume = nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso);
+    const nivelInt = nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso);
+    if (durIv) alvo.duracaoAlvoMin = Math.round(ponto(durIv, nivelVolume, false));
+    if (rpeIv) alvo.rpeAlvo = ponto(rpeIv, nivelInt, true);
+  }
+
+  // Zona de FC: só com idade + FCrep medida. FCmax por Tanaka (regra aerobio-fcmax-estimada);
+  // a zona em bpm sai do percentual da FCmáx citado, personalizada pela FCmax do aluno; a
+  // percentFCRAlvo é a fração de reserva equivalente (Karvonen, regra aerobio-zona-karvonen),
+  // que usa a FCrep medida. Nenhum número novo: só o percentual já citado, a idade e a FCrep.
+  if (pctFCmaxIv && ctx.idade != null && ctx.fcRepouso != null) {
+    const fcMax = 208 - 0.7 * ctx.idade;
+    const fcRep = ctx.fcRepouso;
+    const fcr = fcMax - fcRep; // reserva de FC (Karvonen)
+    if (fcr > 0 && fcMax > 0) {
+      const bpmMin = Math.round((pctFCmaxIv.min / 100) * fcMax);
+      const bpmMax = Math.round((pctFCmaxIv.max / 100) * fcMax);
+      alvo.zonaFC = `${bpmMin} a ${bpmMax} bpm`;
+      const pMin = Math.round(((bpmMin - fcRep) / fcr) * 100);
+      const pMax = Math.round(((bpmMax - fcRep) / fcr) * 100);
+      alvo.percentFCRAlvo = { min: Math.min(pMin, pMax), max: Math.max(pMin, pMax) };
+    }
+  }
+
+  return alvo;
 }
 
 /* -------------------------------- Objetivo da semana (texto) -------------------------------- */

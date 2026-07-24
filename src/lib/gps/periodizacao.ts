@@ -27,7 +27,7 @@ import {
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { alvoSemana, objetivoDaSemana, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
+import { alvoSemana, alvoAerobioSemana, objetivoDaSemana, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
 
 export interface GerarPlanoInput {
   objetivo: GpsObjetivo;
@@ -51,6 +51,14 @@ export interface GerarPlanoInput {
    * Ranking nunca entra aqui (decisão travada 14): `rankExercises` só opera em edição.
    */
   faseInicial?: 1 | 2 | 3 | 4;
+  /**
+   * Dados do aluno usados SÓ para personalizar a zona de FC do aeróbio (MP-4): idade estima
+   * a FCmax (208 - 0.7*idade) e a FCrep MEDIDA fecha a zona de Karvonen. Ambos opcionais: o
+   * uso avulso/estudo e os guardrails não os passam, e aí o aeróbio guia por duração + PSE,
+   * sem inventar zona. Não alteram a força nem o restante da geração (determinismo mantido).
+   */
+  idade?: number;
+  fcRepouso?: number;
 }
 
 export interface PlanoGerado {
@@ -187,17 +195,25 @@ function montarSessoes(
     // Cardio se prescreve por formato, duração e intensidade, não por séries e carga.
     // Zona moderada e teste da conversa seguem a diretriz do ACSM (garber-2011, acsm-getp11).
     if (objetivo === "Emagrecimento") {
+      // As faixas-texto (duração e intensidade) seguem como REFERÊNCIA ao lado; o alvo concreto
+      // da semana (duração, PSE e, com idade + FCrep, a zona de FC) vem de alvoAerobioSemana,
+      // no mesmo padrão da dose de força: alvo dentro da faixa citada, progredindo por posição.
+      const doseAero = {
+        duracao: "20 a 40 min",
+        intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 4 a 6 de 10)",
+      };
       blocos.push({
         id: nid("blk"),
         tipo: "aerobio",
         modalidade: "caminhada",
         nome: "Aeróbio",
         formato: "Contínuo",
-        duracao: "20 a 40 min",
-        intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 4 a 6 de 10)",
+        duracao: doseAero.duracao,
+        intensidade: doseAero.intensidade,
         recuperacao: "-",
         observacao:
           "Ajuste a intensidade pelo recurso do equipamento: FCmáx na esteira, watts na bike ou pace na corrida. Alternativa intervalada: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total.",
+        ...alvoAerobioSemana(doseAero, ctx),
       });
     }
 
@@ -237,6 +253,9 @@ function montarMicrociclos(
   // Tendências do mesociclo dono destas semanas: mandam a DIREÇÃO do alvo semana a semana.
   tendenciaVolume: Tendencia,
   tendenciaIntensidade: Tendencia,
+  // Idade e FCrep do aluno, quando houver: só personalizam a zona de FC do aeróbio (MP-4).
+  idade?: number,
+  fcRepouso?: number,
 ): Microciclo[] {
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
@@ -254,6 +273,8 @@ function montarMicrociclos(
       tendenciaIntensidade,
       nivel,
       objetivo,
+      idade,
+      fcRepouso,
     };
     semanas.push({
       id: nid("mic"),
@@ -270,14 +291,50 @@ function montarMicrociclos(
 
 /* ------------------------- Macrociclo por objetivo/nível ------------------------- */
 
-// Foco dos blocos por posição (progressão da base à intensificação). Prática comum de
-// periodização; a divisão exata é ajustável pelo profissional.
-const FOCO_BLOCO_LINEAR = [
-  { nome: "Base e adaptação", foco: "Construir tolerância ao volume e consolidar a técnica.", tv: "sobe" as Tendencia, ti: "estavel" as Tendencia },
-  { nome: "Desenvolvimento", foco: "Aumentar a carga de trabalho e a qualidade do estímulo.", tv: "estavel" as Tendencia, ti: "sobe" as Tendencia },
-  { nome: "Intensificação", foco: "Priorizar a intensidade, reduzindo o volume para render o pico.", tv: "reduz" as Tendencia, ti: "sobe" as Tendencia },
-  { nome: "Consolidação", foco: "Sustentar os ganhos e preparar a próxima etapa.", tv: "estavel" as Tendencia, ti: "estavel" as Tendencia },
+// Arquétipos de FASE de uma onda de treino (progressão da base à realização). Prática comum
+// de periodização por blocos; a divisão exata é ajustável pelo profissional. Uma onda é
+// acúmulo -> intensificação -> realização: primeiro acumula volume, depois transfere para
+// intensidade, depois expressa o ganho com o volume enxuto.
+const FASES_ONDA = [
+  { nome: "Acúmulo", foco: "Construir a base: acumular volume e consolidar a técnica.", tv: "sobe" as Tendencia, ti: "estavel" as Tendencia },
+  { nome: "Intensificação", foco: "Elevar a intensidade sobre a base construída, enxugando um pouco o volume.", tv: "estavel" as Tendencia, ti: "sobe" as Tendencia },
+  { nome: "Realização", foco: "Expressar o ganho da fase com o volume mais enxuto e a intensidade em foco.", tv: "reduz" as Tendencia, ti: "sobe" as Tendencia },
 ];
+
+/**
+ * O foco de um mesociclo pela sua POSIÇÃO no ano, para o horizonte anual EVOLUIR em vez de
+ * repetir o mesmo quarteto trimestral quatro vezes. O ano se organiza em ONDAS sucessivas
+ * (acúmulo -> intensificação -> realização); a cada onda, o programa retoma a fase num
+ * patamar mais alto de complexidade. Assim o trimestral (uma onda) segue coerente, e o anual
+ * (várias ondas) sobe de nível ao longo do calendário.
+ *
+ * - `fase = m % 3` escolhe o arquétipo (acúmulo/intensificação/realização);
+ * - `ciclo = floor(m / 3)` é a onda do ano (0 = primeira); a partir da 2ª, o nome ganha o
+ *   ordinal do ciclo e a complexidade sobe, para os mesociclos do ano não serem idênticos.
+ */
+function focoDoMeso(m: number): {
+  nome: string;
+  foco: string;
+  tv: Tendencia;
+  ti: Tendencia;
+  tc: Tendencia;
+  ciclo: number;
+} {
+  const fase = ((m % 3) + 3) % 3;
+  const ciclo = Math.floor(m / 3);
+  const arq = FASES_ONDA[fase];
+  const nome = ciclo === 0 ? arq.nome : `${arq.nome} (${ciclo + 1}º ciclo)`;
+  const foco =
+    ciclo === 0
+      ? arq.foco
+      : `${arq.foco} Ciclo ${ciclo + 1} do ano: retoma a fase num patamar de complexidade mais alto.`;
+  // A complexidade sobe a cada onda: no primeiro ciclo o acúmulo entra estável (assentar a
+  // base) e a realização segura a complexidade para expressar o pico; do 2º ciclo em diante o
+  // acúmulo já retoma num patamar maior. É o que faz a média do ano subir, não repetir.
+  const tc: Tendencia =
+    fase === 2 ? "estavel" : fase === 0 && ciclo === 0 ? "estavel" : "sobe";
+  return { nome, foco, tv: arq.tv, ti: arq.ti, tc, ciclo };
+}
 
 // As modalidades em foco do plano genérico refletem o que `montarSessoes` de fato monta:
 // musculação em todo plano; caminhada entra quando o objetivo é emagrecimento (força + cardio).
@@ -293,8 +350,9 @@ function montarMacrocicloGenerico(
   const faixa = getFaixa(objetivo);
 
   // Blocos de ~4 semanas: um mesociclo a cada 4 semanas, sem teto (o horizonte anual pede
-  // ~12). Os quatro focos ciclam (Base → Desenvolvimento → Intensificação → Consolidação e
-  // recomeça), e cada mesociclo de 4+ semanas fecha com a própria descarga.
+  // ~12). Os focos vêm de `focoDoMeso`: o ano se organiza em ONDAS (acúmulo -> intensificação
+  // -> realização) que EVOLUEM de ciclo em ciclo, em vez do quarteto trimestral repetido; cada
+  // mesociclo de 4+ semanas fecha com a própria descarga.
   const nMeso = Math.max(1, Math.round(semanas / 4));
   const base = Math.floor(semanas / nMeso);
   const resto = semanas - base * nMeso;
@@ -306,7 +364,7 @@ function montarMacrocicloGenerico(
     const ini = cursor;
     const fim = cursor + dur - 1;
     cursor = fim + 1;
-    const foco = FOCO_BLOCO_LINEAR[m % FOCO_BLOCO_LINEAR.length];
+    const foco = focoDoMeso(m);
     const ondul = modelo === "ondulatoria" || modelo === "flexivel" || modelo === "autorregulada";
     const comDeload = dur >= 4;
     // As tendências do meso mandam a direção do alvo; a mesma fonte alimenta o gráfico e o alvo.
@@ -324,7 +382,9 @@ function montarMacrocicloGenerico(
       modalidades: modalidadesDoObjetivo(objetivo),
       tendenciaVolume: tv,
       tendenciaIntensidade: ti,
-      tendenciaComplexidade: m === 0 ? "estavel" : "sobe",
+      // A complexidade sobe a cada onda do ano (ver focoDoMeso): é parte do que faz o anual
+      // evoluir, não repetir. No modelo ondulatório o alvo já varia dentro da semana.
+      tendenciaComplexidade: foco.tc,
       deload: comDeload,
       reavaliacao: true,
       criteriosProgressao: [
@@ -338,7 +398,7 @@ function montarMacrocicloGenerico(
         "Baixa adesão ou sono ruim mantidos",
       ],
       parametros: faixa.parametros,
-      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti),
+      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, input.idade, input.fcRepouso),
     });
   }
 
@@ -410,7 +470,7 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       criteriosProgressao: fase.criteriosAvancar,
       criteriosRegressao: fase.criteriosRegredir,
       parametros: fase.parametros?.length ? fase.parametros : faixa.parametros,
-      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti),
+      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, input.idade, input.fcRepouso),
     });
   });
 

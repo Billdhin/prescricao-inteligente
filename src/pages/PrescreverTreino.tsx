@@ -128,10 +128,19 @@ export function PrescreverTreino() {
   ): PlanoTreino => {
     // O aluno que já está na fase 3 recebe o macro nascendo na fase 3. Só vale com aluno
     // (e só surte efeito em plano de grupo especial); avulso segue começando na fase 1.
+    // Idade e FCrep MEDIDA (da avaliação mais recente) personalizam a zona de FC do aeróbio
+    // (MP-4); sem aluno ou sem FCrep, o aeróbio guia só por duração + PSE, sem inventar zona.
+    const ultimaAval = ctx.alunoId
+      ? avaliacoes
+          .filter((a) => a.alunoId === ctx.alunoId)
+          .sort((a, b) => b.data - a.data)[0]
+      : undefined;
     const g = gerarPlano({
       ...ctx,
       modeloPreferido,
       faseInicial: ctx.alunoId ? aluno?.faseJornada : undefined,
+      idade: ctx.alunoId ? aluno?.idade : undefined,
+      fcRepouso: ultimaAval?.medidas.fcRepouso,
     });
     return {
       // `uid()` e não o relógio: dois planos gerados no mesmo milissegundo receberiam o

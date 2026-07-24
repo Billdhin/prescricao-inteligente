@@ -113,6 +113,28 @@ export interface BlocoSessao {
   /** recuperação entre tiros no intervalado ("2 min em ritmo leve"); "-" no contínuo */
   recuperacao?: string;
   observacao?: string;
+  /**
+   * ALVO CONCRETO do aeróbio na semana (onda MP-4), sempre DENTRO das faixas-texto acima
+   * (duração e intensidade), que permanecem como referência ao lado. Todos opcionais e
+   * aditivos: um plano antigo (sem alvo) cai na faixa por fallback, e nada aqui muda os
+   * campos-texto. A DIREÇÃO vem da tendência do mesociclo; o VOLUME (duração) progride antes
+   * da intensidade (regra declarada aerobio-progressao-fittvp). A zona de FC só entra quando
+   * há idade e FCrep medida (regras aerobio-fcmax-estimada e aerobio-zona-karvonen); sem esses
+   * dados, o alvo guia por duração + esforço percebido (PSE), sem inventar zona.
+   * Ver src/lib/gps/alvo.ts (alvoAerobioSemana) e o rulepack src/data/regrasProgressao.ts.
+   */
+  /** duração-alvo da semana, em minutos (dentro da faixa `duracao`) */
+  duracaoAlvoMin?: number;
+  /** esforço percebido alvo (PSE), escala 0 a 10, dentro da faixa citada na intensidade */
+  rpeAlvo?: number;
+  /** zona-alvo de frequência cardíaca em bpm ("129 a 153 bpm"); só com idade + FCrep medida */
+  zonaFC?: string;
+  /** zona-alvo como percentual da reserva de FC (Karvonen); só com idade + FCrep medida */
+  percentFCRAlvo?: { min: number; max: number };
+  /** velocidade-alvo (esteira/corrida), quando o profissional a define; não derivada pelo motor */
+  velocidade?: string;
+  /** inclinação-alvo (esteira), quando o profissional a define; não derivada pelo motor */
+  inclinacao?: string;
 }
 
 export interface Sessao {

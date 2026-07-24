@@ -25,12 +25,13 @@ import { OBJETIVOS } from "../src/lib/gps/engine";
 import { specialGroups } from "../src/data/specialGroups";
 import type { GpsObjetivo } from "../src/lib/gps/engine";
 import type { Nivel } from "../src/data/types";
-import type { Macrociclo, Microciclo, BlocoSessao } from "../src/data/periodizacao";
+import type { Macrociclo, Microciclo, BlocoSessao, Tendencia } from "../src/data/periodizacao";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
 // Inclui uma duração curta (6) que NÃO gera descarga (mesociclos de 3 semanas): nela todas
 // as semanas ficam de carga, e a repetição total da dose fica visível para o critério 1 e 6.
-const SEMANAS = [6, 8, 12, 24];
+// Inclui 48 (anual, ~12 mesociclos) para o critério do anual ver o horizonte longo.
+const SEMANAS = [6, 8, 12, 24, 48];
 const FREQ = 4;
 
 /* ------------------------------------- Proxies ------------------------------------- */
@@ -100,12 +101,16 @@ function proxyIntensidadeForca(m: Microciclo): number | null {
   return vals.reduce((a, b) => a + b, 0) / vals.length;
 }
 
-/** proxyVolumeAerobio = Σ minutos (meio da faixa de duração) dos blocos aeróbios da semana. */
+/**
+ * proxyVolumeAerobio = Σ minutos dos blocos aeróbios da semana, LENDO O ALVO quando presente
+ * (`duracaoAlvoMin ?? meio(duracao)`). Assim a semana que progrediu a duração-alvo vira volume
+ * aeróbio maior de verdade. Sem alvo (plano antigo/sintético), cai no meio da faixa como antes.
+ */
 function proxyVolumeAerobio(m: Microciclo): number {
   let total = 0;
   for (const b of blocos(m)) {
     if (!ehAerobio(b)) continue;
-    total += meio(b.duracao) ?? 0;
+    total += b.duracaoAlvoMin ?? meio(b.duracao) ?? 0;
   }
   return total;
 }
@@ -197,12 +202,68 @@ function criterio6(macro: Macrociclo): string | null {
   return null;
 }
 
+/**
+ * Assinatura NÚCLEO de um mesociclo para o critério do anual: nome do foco + tendências de
+ * volume e intensidade. É a "identidade do bloco". O quarteto trimestral repetido tem essa
+ * assinatura periódica com período 4 (Base/Desenvolvimento/Intensificação/Consolidação
+ * girando); um anual que EVOLUI, não.
+ */
+function nucleoMeso(m: Macrociclo["mesociclos"][number]): string {
+  return `${m.nome}|${m.tendenciaVolume}|${m.tendenciaIntensidade}`;
+}
+
+/** A sequência se repete com período p? (mesma assinatura a cada p mesociclos, do p-ésimo em diante). */
+function ehPeriodico(sigs: string[], p: number): boolean {
+  if (sigs.length <= p) return false;
+  for (let i = p; i < sigs.length; i++) if (sigs[i] !== sigs[i - p]) return false;
+  return true;
+}
+
+/** Média da intensidade de força das semanas de carga de um mesociclo (null se não parseável). */
+function intensidadeMediaMeso(meso: Macrociclo["mesociclos"][number]): number | null {
+  const vals: number[] = [];
+  for (const mc of cargas(meso.microciclos)) {
+    const v = proxyIntensidadeForca(mc);
+    if (v != null) vals.push(v);
+  }
+  if (!vals.length) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+/** A intensidade média por mesociclo TENDE a subir ao longo do ano? (2ª metade > 1ª metade). */
+function intensidadeSobeNoAno(macro: Macrociclo): boolean {
+  const medias = macro.mesociclos.map(intensidadeMediaMeso).filter((v): v is number => v != null);
+  if (medias.length < 4) return false;
+  const meio = Math.floor(medias.length / 2);
+  const media = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  return media(medias.slice(meio)) > media(medias.slice(0, meio));
+}
+
+/**
+ * Anual evolui (critérios 18/19/20): um plano de horizonte anual (>= 8 mesociclos) NÃO pode
+ * ser o quarteto trimestral repetido 4x. Passa quando a assinatura dos mesos do ano tem MAIS
+ * variação que um período-4 puro OU quando a intensidade média por mesociclo tende a subir ao
+ * longo do ano. Falha (só repetição) quando é período-4 E a intensidade não sobe.
+ */
+function criterioAnual(macro: Macrociclo): string | null {
+  const mesos = macro.mesociclos;
+  if (mesos.length < 8) return null; // não é horizonte anual
+  const sigs = mesos.map(nucleoMeso);
+  const soRepeticao = ehPeriodico(sigs, 4);
+  if (soRepeticao && !intensidadeSobeNoAno(macro)) {
+    const distintas = new Set(sigs).size;
+    return `anual é o quarteto trimestral repetido (assinatura de meso periódica com período 4, só ${distintas} blocos distintos girando) e a intensidade média não sobe ao longo do ano`;
+  }
+  return null;
+}
+
 const CRITERIOS: { id: number; nome: string; fn: (m: Macrociclo) => string | null }[] = [
   { id: 1, nome: "não repetir a dose toda semana", fn: criterio1 },
   { id: 3, nome: "volume sobe vira volume real", fn: criterio3 },
   { id: 4, nome: "intensidade sobe vira intensidade real", fn: criterio4 },
   { id: 5, nome: "descarga reduz o volume", fn: criterio5 },
   { id: 6, nome: "aeróbio não fica constante", fn: criterio6 },
+  { id: 19, nome: "anual evolui (não repete o quarteto trimestral)", fn: criterioAnual },
 ];
 
 /* -------------------------------- Autoverificação --------------------------------- */
@@ -259,6 +320,48 @@ const PLANO_CHAPADO = mesoTeste([
   semanaTeste(3, "carga", { series: "3", reps: "8", intensidade: "70", aerobio: "20 min" }),
 ]);
 
+/** Macrociclo anual sintético a partir de assinaturas de mesociclo (nome + tendências). */
+function macroAnualTeste(specs: { nome: string; tv: Tendencia; ti: Tendencia }[]): Macrociclo {
+  return {
+    objetivoGeral: "teste anual",
+    semanas: specs.length,
+    mesociclos: specs.map((s, i) => ({
+      id: `ma-${i}`,
+      nome: s.nome,
+      foco: s.nome,
+      semanaInicio: i + 1,
+      semanaFim: i + 1,
+      capacidades: [],
+      tiposExercicio: [],
+      tendenciaVolume: s.tv,
+      tendenciaIntensidade: s.ti,
+      tendenciaComplexidade: "estavel",
+      criteriosProgressao: [],
+      criteriosRegressao: [],
+      parametros: [],
+      microciclos: [semanaTeste(i + 1, "carga", { series: "3", reps: "8", intensidade: "moderada a alta" })],
+    })),
+  };
+}
+
+// Anual REPETIDO: o quarteto trimestral girando 4x (o vício que a MP-4 elimina). Assinatura de
+// meso periódica com período 4 e intensidade textual (não sobe) -> deve reprovar no anual.
+const QUARTETO = ["Base e adaptação", "Desenvolvimento", "Intensificação", "Consolidação"];
+const ANUAL_REPETIDO = macroAnualTeste(
+  Array.from({ length: 12 }, (_, i) => ({ nome: QUARTETO[i % 4], tv: "sobe" as Tendencia, ti: "sobe" as Tendencia })),
+);
+
+// Anual que EVOLUI: ondas (acúmulo/intensificação/realização) que retomam em ciclos, com o
+// ordinal do ciclo no nome -> não é período-4 -> deve passar no anual.
+const FASES3 = ["Acúmulo", "Intensificação", "Realização"];
+const ANUAL_EVOLUI = macroAnualTeste(
+  Array.from({ length: 12 }, (_, i) => {
+    const fase = FASES3[i % 3];
+    const ciclo = Math.floor(i / 3);
+    return { nome: ciclo === 0 ? fase : `${fase} (${ciclo + 1}º ciclo)`, tv: "sobe" as Tendencia, ti: "sobe" as Tendencia };
+  }),
+);
+
 function autoverificar(): string[] {
   const problemas: string[] = [];
   const reprovasProgressivo = CRITERIOS.map((c) => c.fn(PLANO_PROGRESSIVO)).filter(Boolean);
@@ -266,6 +369,11 @@ function autoverificar(): string[] {
     problemas.push(`o plano PROGRESSIVO deveria passar em tudo, mas reprovou: ${reprovasProgressivo.join(" | ")}`);
   const reprovasChapado = CRITERIOS.map((c) => c.fn(PLANO_CHAPADO)).filter(Boolean);
   if (!reprovasChapado.length) problemas.push("o plano CHAPADO deveria reprovar (dose idêntica toda semana), mas passou em tudo");
+  // O critério do anual precisa distinguir o quarteto repetido de um ano que evolui.
+  if (criterioAnual(ANUAL_REPETIDO) == null)
+    problemas.push("o anual REPETIDO (quarteto trimestral 4x) deveria reprovar no critério do anual, mas passou");
+  const reprovaEvolui = criterioAnual(ANUAL_EVOLUI);
+  if (reprovaEvolui) problemas.push(`o anual que EVOLUI deveria passar no critério do anual, mas reprovou: ${reprovaEvolui}`);
   return problemas;
 }
 
@@ -325,8 +433,9 @@ for (const c of vermelhos) {
   console.error(`    ex.: ${f.exemplo}`);
 }
 console.error(
-  "\n  Este vermelho é o alvo das próximas ondas: MP-3 faz a dose de força progredir de verdade" +
-    " (critérios 1,3,4,5); MP-4 faz o aeróbio progredir e o anual evoluir (critério 6). Quando" +
-    " tudo ficar verde, o check entra no agregado de CI.\n",
+  "\n  Este vermelho é o alvo das ondas do motor: MP-3 faz a dose de força progredir de verdade" +
+    " (critérios 1,3,4,5); MP-4 faz o aeróbio progredir (critério 6) e o anual evoluir em vez de" +
+    " repetir o quarteto trimestral (critério 19). Quando tudo ficar verde, o check pode entrar no" +
+    " agregado de CI.\n",
 );
 process.exit(1);
