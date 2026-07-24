@@ -1053,6 +1053,32 @@ function SessaoBloco({
           </div>
         </>
       )}
+
+      {/* Fecho de flexibilidade da sessão (onda F): editável no editor, nota no modo leitura. */}
+      {editavel ? (
+        <div className="mt-2">
+          <label
+            htmlFor={`fecho-${sessao.id}`}
+            className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3"
+          >
+            Fecho de flexibilidade
+          </label>
+          <textarea
+            id={`fecho-${sessao.id}`}
+            value={sessao.fecho ?? ""}
+            onChange={(e) => onChange({ ...sessao, fecho: e.target.value || undefined })}
+            rows={2}
+            placeholder="Alongamento ao final da sessão (opcional)"
+            className="w-full rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink placeholder:text-ink-3/60 focus:border-primary focus:outline-none"
+          />
+        </div>
+      ) : (
+        sessao.fecho && (
+          <p className="mt-2 rounded-md border-l-2 border-primary bg-surface px-2 py-1 text-2xs text-ink-2">
+            {sessao.fecho}
+          </p>
+        )
+      )}
     </div>
   );
 }

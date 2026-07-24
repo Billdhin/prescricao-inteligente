@@ -230,11 +230,38 @@ function montarSessoes(
       });
     }
 
+    // Aeróbio COMPLEMENTAR (princípio da variabilidade): todos os objetivos MENOS o
+    // Emagrecimento (onde o aeróbio já é BASE, acima) ganham um componente aeróbio em 1 a 2
+    // sessões da semana, com dose MENOR e ALVO progressivo por semana. Usa a MESMA mecânica da
+    // base (alvoAerobioSemana), então entra na assinaturaSemana/agregadoSemana como os aeróbios
+    // de hoje (fonte única do gráfico). Fica ao FINAL da sessão: o foco do objetivo (carga na
+    // força, reps na resistência) vem primeiro. Dose e frequência saem da faixa citada
+    // (garber-2011), nunca inventadas.
+    const comp = faixa.complementoAerobio;
+    if (comp && i < comp.sessoesPorSemana) {
+      const doseAero = { duracao: comp.duracao, intensidade: comp.intensidade };
+      blocos.push({
+        id: nid("blk"),
+        tipo: "aerobio",
+        modalidade: comp.modalidade,
+        nome: "Aeróbio complementar",
+        formato: "Contínuo",
+        duracao: doseAero.duracao,
+        intensidade: doseAero.intensidade,
+        recuperacao: "-",
+        observacao:
+          "Complemento aeróbio ao treino principal; o foco da sessão segue o objetivo. Guie a intensidade pelo teste da conversa e pela percepção de esforço.",
+        ...alvoAerobioSemana(doseAero, ctx),
+      });
+    }
+
     sessoes.push({
       id: nid("ses"),
       nome: enfase ? `Sessão ${i + 1} (${enfase.rotulo})` : `Sessão ${i + 1}`,
       foco: enfase ? `Ênfase ${enfase.rotulo}` : faixa.capacidades[0],
       blocos,
+      // Fecho de flexibilidade da sessão (variabilidade), citado; o texto vem do objetivo.
+      fecho: faixa.flexibilidade?.texto,
     });
   }
   return sessoes;
@@ -337,9 +364,11 @@ function focoDoMeso(m: number): {
 }
 
 // As modalidades em foco do plano genérico refletem o que `montarSessoes` de fato monta:
-// musculação em todo plano; caminhada entra quando o objetivo é emagrecimento (força + cardio).
+// musculação em todo plano; caminhada entra no Emagrecimento (aeróbio base) e nos demais
+// objetivos que agora recebem o aeróbio COMPLEMENTAR (princípio da variabilidade).
 function modalidadesDoObjetivo(objetivo: GpsObjetivo): string[] {
-  return objetivo === "Emagrecimento" ? ["m-musculacao", "m-caminhada"] : ["m-musculacao"];
+  if (objetivo === "Emagrecimento") return ["m-musculacao", "m-caminhada"];
+  return getFaixa(objetivo).complementoAerobio ? ["m-musculacao", "m-caminhada"] : ["m-musculacao"];
 }
 
 function montarMacrocicloGenerico(
@@ -494,7 +523,16 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
   const faixa = getFaixa(input.objetivo);
   const grupo = input.grupoEspecial ? getSpecialGroup(input.grupoEspecial) : undefined;
 
-  const refIds = Array.from(new Set([...modP.refIds, ...faixa.refIds]));
+  const refIds = Array.from(
+    new Set([
+      ...modP.refIds,
+      ...faixa.refIds,
+      // Onda F: o complemento aeróbio e a flexibilidade citam garber-2011; entram na
+      // bibliografia do plano para a referência aparecer resolvida no PDF e na tela.
+      ...(faixa.complementoAerobio?.refIds ?? []),
+      ...(faixa.flexibilidade?.refIds ?? []),
+    ]),
+  );
 
   const raciocinio = [
     `Modelo principal: ${modP.nome}. ${modP.resumo}`,

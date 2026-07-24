@@ -62,7 +62,7 @@ export function ProntuarioView({
         <div className="flex items-start justify-between gap-3 border-b border-border p-5 pb-3">
           <div className="min-w-0">
             <div className="mb-1.5 flex flex-wrap items-center gap-2">
-              <SeloRCD compacto />
+              <SeloRCD compacto explicavel />
               {docId && <ChipRcd className="tabular">{docId}</ChipRcd>}
             </div>
             <h3 className="font-display text-lg font-bold text-ink">Prontuário de Decisão Técnica</h3>

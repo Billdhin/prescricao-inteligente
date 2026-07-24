@@ -143,6 +143,15 @@ export interface Sessao {
   nome: string;
   foco?: string;
   blocos: BlocoSessao[];
+  /**
+   * Fecho de flexibilidade da sessão (onda F, princípio da variabilidade): um alongamento
+   * curto dos principais grupos trabalhados, ao final. Texto de exibição (sem número
+   * inventado além do citado por garber-2011), NÃO é um BlocoSessao: não entra em
+   * séries/repetições/carga nem nos guardrails de faixa/progressão, é só o fecho da sessão.
+   * Aditivo e opcional: sessões antigas ficam sem ele. Renderizado no editor, no PDF e no
+   * app do aluno, ao lado dos blocos.
+   */
+  fecho?: string;
 }
 
 /**
@@ -570,6 +579,37 @@ export interface EnfaseSessao {
   intensidade: string;
 }
 
+/**
+ * Componente aeróbio COMPLEMENTAR do objetivo (onda F, princípio da variabilidade). TODOS os
+ * objetivos recebem um aeróbio complementar em 1 a 2 sessões da semana, com dose MENOR que a
+ * base do Emagrecimento; o foco do objetivo não muda (força prioriza carga, resistência
+ * prioriza reps). O Emagrecimento é a exceção: ali o aeróbio é BASE (não complemento), então
+ * ele não usa este campo. O alvo por semana progride via alvoAerobioSemana, dentro da faixa
+ * citada. Nenhum número sem referência real.
+ */
+export interface ComplementoAerobio {
+  /** faixa de duração citada, menor que a base do Emagrecimento (ex.: "15 a 25 min") */
+  duracao: string;
+  /** texto de intensidade (percentual da FCmáx + PSE), citado, no mesmo padrão da base */
+  intensidade: string;
+  /** id/rótulo de modalidade (ex.: "caminhada"); baixo impacto e universal por padrão */
+  modalidade: string;
+  /** sessões da semana que recebem o complemento (1 a 2), para não competir com o foco */
+  sessoesPorSemana: 1 | 2;
+  /** ids de referências (src/data/referencias) que sustentam o complemento */
+  refIds: string[];
+  /** nota de aplicação prudente; declara o que é cautela nossa (a divisão por sessão) */
+  nota: string;
+}
+
+/** Fecho de flexibilidade do objetivo (onda F): o texto do fecho da sessão, citado. */
+export interface ComplementoFlexibilidade {
+  /** texto do fecho, sem número inventado além do citado por garber-2011 */
+  texto: string;
+  /** ids de referências (src/data/referencias) que sustentam a flexibilidade */
+  refIds: string[];
+}
+
 /** Faixas por objetivo, expressas como TEXTO (nunca um número solto inventado). */
 export interface FaixaObjetivo {
   objetivo: GpsObjetivo;
@@ -592,6 +632,42 @@ export interface FaixaObjetivo {
   refIds: string[];
   /** ressalva honesta do que a evidência sustenta ou não */
   ressalva: string;
+  /**
+   * Aeróbio complementar do objetivo (variabilidade). Ausente no Emagrecimento, que já tem
+   * o aeróbio como BASE. O gerador entra com um bloco `tipo: "aerobio"` progressivo por
+   * semana; a fonte é a mesma dos aeróbios de hoje (assinaturaSemana/agregadoSemana).
+   */
+  complementoAerobio?: ComplementoAerobio;
+  /** Fecho de flexibilidade da sessão, presente em todos os objetivos. */
+  flexibilidade?: ComplementoFlexibilidade;
+}
+
+/**
+ * Fecho de flexibilidade padrão (onda F): mesmo texto para todos os objetivos, porque a
+ * recomendação (alongar os grupos trabalhados na própria sessão) é geral. Cortes de tempo e
+ * frequência são os da diretriz do ACSM (garber-2011), não inventados.
+ */
+export const FLEX_FECHO: ComplementoFlexibilidade = {
+  texto:
+    "Fecho de flexibilidade: ao final, alongue os principais grupos trabalhados na sessão, cerca de 60 s por grupo, com respiração contínua e sem forçar amplitude com dor. Diretriz do ACSM (Garber, 2011): flexibilidade em pelo menos 2 dias por semana, para manter a amplitude articular.",
+  refIds: ["garber-2011"],
+};
+
+/**
+ * Complemento aeróbio padrão (onda F): dose MENOR que a base do Emagrecimento ("20 a 40 min"),
+ * em 1 a 2 sessões da semana. O alvo semanal de referência (>= 150 min moderados) é do ACSM
+ * (garber-2011); a divisão em uma dose menor por sessão é escolha prudente de complemento,
+ * declarada como cautela, para somar ao foco do objetivo sem competir com ele.
+ */
+export function complementoAerobioPadrao(sessoesPorSemana: 1 | 2): ComplementoAerobio {
+  return {
+    duracao: "15 a 25 min",
+    intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 4 a 6 de 10)",
+    modalidade: "caminhada",
+    sessoesPorSemana,
+    refIds: ["garber-2011"],
+    nota: "Componente aeróbio complementar (princípio da variabilidade). O alvo semanal de referência é o do ACSM (Garber, 2011): pelo menos 150 min por semana de intensidade moderada. A dose menor por sessão, em 1 a 2 sessões, é escolha prudente de complemento, para somar ao foco do objetivo sem competir com ele; a duração progride antes da intensidade.",
+  };
 }
 
 /** O valor que vale para este nível (a diretriz às vezes separa iniciante do resto). */
@@ -618,6 +694,8 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     refIds: ["acsm-progressao-2009", "schoenfeld-2017-volume", "schoenfeld-2010"],
     ressalva:
       "As faixas são referência; o volume ideal varia entre pessoas. Progrida por tolerância e resposta, não por buscar dor.",
+    complementoAerobio: complementoAerobioPadrao(1),
+    flexibilidade: FLEX_FECHO,
   },
   Força: {
     objetivo: "Força",
@@ -641,6 +719,8 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     refIds: ["acsm-progressao-2009", "moesgaard-periodizacao-2022"],
     ressalva:
       "Cargas altas pedem técnica consolidada e progressão gradual; a autorregulação ajuda a respeitar o dia.",
+    complementoAerobio: complementoAerobioPadrao(1),
+    flexibilidade: FLEX_FECHO,
   },
   "Resistência muscular": {
     objetivo: "Resistência muscular",
@@ -654,6 +734,8 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     parametros: ["p-rpe"],
     refIds: ["acsm-progressao-2009"],
     ressalva: "Cargas leves com muitas repetições; a técnica em fadiga merece atenção.",
+    complementoAerobio: complementoAerobioPadrao(2),
+    flexibilidade: FLEX_FECHO,
   },
   Emagrecimento: {
     objetivo: "Emagrecimento",
@@ -668,6 +750,8 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     refIds: ["garber-2011", "oms-2020", "acsm-progressao-2009"],
     ressalva:
       "A meta semanal de atividade (150 a 300 min moderada) e a adesão pesam mais que qualquer detalhe da série. Emagrecimento depende sobretudo do contexto de energia, que é conduta multiprofissional.",
+    // Sem complementoAerobio: aqui o aeróbio é a BASE (montado em toda sessão), não complemento.
+    flexibilidade: FLEX_FECHO,
   },
   "Reabilitação/retorno": {
     objetivo: "Reabilitação/retorno",
@@ -682,6 +766,8 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     refIds: ["acsm-progressao-2009", "acsm-getp11"],
     ressalva:
       "Retorno após lesão ou condição é conduta compartilhada com o profissional de saúde. A ferramenta apoia a progressão, não substitui liberação nem reabilitação.",
+    complementoAerobio: complementoAerobioPadrao(1),
+    flexibilidade: FLEX_FECHO,
   },
   "Aprendizado técnico": {
     objetivo: "Aprendizado técnico",
@@ -695,6 +781,8 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     parametros: ["p-rpe"],
     refIds: ["acsm-progressao-2009"],
     ressalva: "Prática frequente com qualidade consolida o padrão; repetir com erro consolida o erro.",
+    complementoAerobio: complementoAerobioPadrao(1),
+    flexibilidade: FLEX_FECHO,
   },
 };
 

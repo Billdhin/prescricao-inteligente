@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { HelpCircle, X } from "lucide-react";
 import { getMetrica, faixaDe, type DefinicaoMetrica } from "@/data/metricasGlossario";
 import { bibliografia } from "@/data/referencias";
@@ -32,7 +33,14 @@ export function MetricaInfo({
     <>
       <button
         type="button"
-        onClick={() => setAberto(true)}
+        // stopPropagation: dentro do slider biomecânico este rótulo vive sobre a
+        // raiz que tem onClick de alternar execução/análise. Sem isto, abrir o
+        // "(?)" também alternaria o slider por baixo (o clique borbulha na árvore
+        // React até o pai). Inócuo nos demais usos, que não têm pai clicável.
+        onClick={(e) => {
+          e.stopPropagation();
+          setAberto(true);
+        }}
         className={cn(
           "inline-flex items-center gap-1 rounded text-left underline decoration-dotted decoration-ink-3/60 underline-offset-2 transition-colors hover:text-ink hover:decoration-ink-2",
           className,
@@ -63,14 +71,25 @@ function MetricaDialog({
   const melhorTxt =
     def.melhor === "maior" ? "Maior é melhor." : def.melhor === "menor" ? "Menor é melhor." : "Depende do objetivo.";
 
-  return (
-    <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm">
+  // Portal para o document.body: o "(?)" do slider vive dentro de um card com
+  // backdrop-filter, que cria containing block para position:fixed. Sem o portal,
+  // o overlay "fixed inset-0" preenche o card de 256px (e o overflow-hidden do
+  // slider corta o resto) em vez do viewport. Portalizado, o modal centraliza no
+  // viewport de verdade. O stopPropagation abaixo impede que o clique borbulhe
+  // pela árvore React até o onClick da raiz do slider (que alternaria execução/
+  // análise): portais React propagam eventos pela árvore de componentes, não pelo DOM.
+  return createPortal(
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
+    >
       <div
         ref={ref}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={def.nome}
+        onClick={(e) => e.stopPropagation()}
         className="w-full max-w-md rounded-card bg-surface p-5 shadow-elevated outline-none md:p-6"
       >
         <div className="mb-3 flex items-start justify-between gap-3">
@@ -167,6 +186,7 @@ function MetricaDialog({
           final é sua.
         </p>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

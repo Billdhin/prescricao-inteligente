@@ -46,7 +46,7 @@ export const referencias: Referencia[] = [
     fonte: "Medicine & Science in Sports & Exercise",
     ano: 2011,
     doi: "10.1249/MSS.0b013e318213fefb",
-    nota: "Sustenta as faixas de séries/repetições e a progressão gradual sugeridas por objetivo.",
+    nota: "Position Stand do ACSM para adultos saudáveis. Recomenda, por semana, pelo menos 150 min de exercício cardiorrespiratório de intensidade moderada (30 min por dia em 5 dias) ou pelo menos 75 min de intensidade vigorosa (20 min por dia em 3 dias), ou a combinação das duas. Força para cada grande grupo muscular e exercício neuromotor (equilíbrio, agilidade, coordenação) em 2 a 3 dias por semana. Flexibilidade para cada grande grupo musculotendíneo, cerca de 60 s por exercício, em pelo menos 2 dias por semana, importante para manter a amplitude articular. Sustenta as faixas de séries e repetições, a progressão gradual e o complemento aeróbio e de flexibilidade sugeridos por objetivo.",
   },
   {
     id: "sbc-2020",

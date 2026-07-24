@@ -23,18 +23,10 @@ import {
   RecommendationCard,
   StudyObjectiveCard,
 } from "../components/shared";
+import { sugestoesComResposta } from "./Consulta";
 import { useDisciplineStat } from "../progress";
 
 const repo = getLearningRepository();
-
-const SUGESTOES = [
-  "Por que o joelho avança no agachamento?",
-  "Leg press ou agachamento?",
-  "O que limita o VO2máx?",
-  "Como adaptar o treino para hipertensão?",
-  "O que significa insuficiência ativa?",
-  "Como interpretar a dor durante o exercício?",
-];
 
 export function AprenderHome() {
   const name = useUser((s) => s.name);
@@ -90,18 +82,18 @@ export function AprenderHome() {
       {/* 7.2 Busca contextual + 19 seletor de modo */}
       <ContextualSearch mode={consultMode} onMode={setConsultMode} />
 
-      {/* 7.3 Ações imediatas */}
-      <div className="grid gap-4 md:grid-cols-3">{acoes}</div>
-
-      {/* 7.4 Mapa das Ciências da Prescrição */}
+      {/* 7.3 Mapa das Ciências da Prescrição (abertura: primeira coisa de conteúdo) */}
       <section>
         <SectionTitle
           title="Mapa das Ciências da Prescrição"
           subtitle="Veja como as diferentes áreas se conectam a uma decisão profissional."
           action={{ label: "Explorar o mapa", href: "/aprender/mapa" }}
         />
-        <KnowledgeMap compact />
+        <KnowledgeMap />
       </section>
+
+      {/* 7.4 Ações imediatas */}
+      <div className="grid gap-4 md:grid-cols-3">{acoes}</div>
 
       {/* 7.5 Recomendado pelos atendimentos */}
       <section>
@@ -183,6 +175,8 @@ function ContextualSearch({ mode, onMode }: { mode: "estudar" | "consultar"; onM
   const [focus, setFocus] = React.useState(false);
   const history = useAprender((s) => s.searchHistory);
   const pushSearch = useAprender((s) => s.pushSearch);
+  // Fonte única: só sugere o que acha resposta (evita o EmptyState "não encontramos").
+  const sugestoes = React.useMemo(() => sugestoesComResposta(), []);
 
   const go = (text: string) => {
     const t = text.trim();
@@ -244,7 +238,7 @@ function ContextualSearch({ mode, onMode }: { mode: "estudar" | "consultar"; onM
           )}
           <Eyebrow className="mb-1">Perguntas populares</Eyebrow>
           <div className="flex flex-wrap gap-1.5">
-            {SUGESTOES.map((s) => (
+            {sugestoes.map((s) => (
               <button key={s} onMouseDown={() => go(s)} className="rounded-full border border-border bg-surface-soft px-2.5 py-1 text-xs text-ink-2 hover:bg-primary-tint hover:text-primary">
                 {s}
               </button>

@@ -11,7 +11,12 @@ import type { QuickAnswer } from "../types";
 
 const repo = getLearningRepository();
 
-const SUGESTOES = [
+/**
+ * Fonte ÚNICA das sugestões de pergunta do Aprender (a Home reusa esta lista, não
+ * mantém a sua). Termos curtos, propositalmente casáveis pelo matcher abaixo. O
+ * guardrail check:consulta trava a entrada de qualquer termo que não ache resposta.
+ */
+export const SUGESTOES = [
   "Joelho avançar no agachamento",
   "Treinar com hipertensão",
   "Dor lombar e levantamento terra",
@@ -20,7 +25,7 @@ const SUGESTOES = [
   "Diferença entre força e potência",
 ];
 
-function pontuar(a: QuickAnswer, q: string): number {
+export function pontuar(a: QuickAnswer, q: string): number {
   const nq = normalizar(q);
   if (!nq) return 0;
   let score = 0;
@@ -28,6 +33,16 @@ function pontuar(a: QuickAnswer, q: string): number {
   if (normalizar(a.question).includes(nq)) score += 3;
   if (normalizar(a.summary).includes(nq)) score += 1;
   return score;
+}
+
+/**
+ * Sugestões que de fato produzem uma "Resposta visual" (score > 0) contra os
+ * QuickAnswers atuais. Garante um toque até o valor: nenhuma sugestão órfã chega
+ * à UI. Fonte única para os chips do Aprender (Home e Consulta reusam daqui).
+ */
+export function sugestoesComResposta(): string[] {
+  const answers = repo.getQuickAnswers();
+  return SUGESTOES.filter((termo) => answers.some((a) => pontuar(a, termo) > 0));
 }
 
 export function Consulta({ embedded = false }: { embedded?: boolean } = {}) {
@@ -65,7 +80,7 @@ export function Consulta({ embedded = false }: { embedded?: boolean } = {}) {
     }
     return out;
   }, [answers]);
-  const restantes = SUGESTOES.filter((s) => !promovidas.some((p) => p.termo === s));
+  const restantes = sugestoesComResposta().filter((s) => !promovidas.some((p) => p.termo === s));
 
   const submit = (text: string) => {
     const t = text.trim();

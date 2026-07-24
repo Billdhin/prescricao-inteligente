@@ -82,9 +82,9 @@ export const NAV: NavSection[] = [
     collapsible: true,
     items: [
       { to: "/aprender", label: "Estudar", icon: GraduationCap, match: ["/aprender", "/tracks"], short: "Estudar" },
+      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical, match: ["/movement-lab", "/comparador"] },
       { to: "/special-groups", label: "Grupos Especiais", icon: HeartPulse },
       { to: "/protocols", label: "Protocolos", icon: ClipboardList },
-      { to: "/movement-lab", label: "Laboratório Visual", icon: FlaskConical, match: ["/movement-lab", "/comparador"] },
       { to: "/consultar", label: "Consultar", icon: Search, match: ["/consultar", "/library"] },
     ],
   },

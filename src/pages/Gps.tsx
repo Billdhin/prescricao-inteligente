@@ -404,7 +404,7 @@ export function Gps() {
               ? `Ajuste a sessão desta semana de ${aluno.nome.split(" ")[0]}. As escolhas entram direto no treino dele.`
               : "Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê."
           }
-          right={<SeloRCD compacto />}
+          right={<SeloRCD compacto explicavel />}
         />
       </div>
 

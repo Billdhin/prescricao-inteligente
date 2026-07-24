@@ -118,7 +118,7 @@ export function SemaforoLiberacao({
       {/* A página já traz o h1 "Semáforo de Liberação"; o card vai direto ao
           checklist, sem repetir título e subtítulo. Fica só a marca do mecanismo. */}
       <div className="mb-4">
-        <SeloRCD compacto />
+        <SeloRCD compacto explicavel />
       </div>
 
       {/* Sem esse aviso, o card anunciava a condição e servia o checklist geral, dando

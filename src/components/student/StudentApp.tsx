@@ -564,6 +564,8 @@ function SessaoCard({
             return linhaBloco(seg.bloco);
           })}
 
+          <FechoFlex fecho={sessao.fecho} cor={cor} />
+
           {/* Rodapé da Sessão: o boilerplate aparece UMA vez por sessão (antes
               repetido por exercício); a dose continua colada a cada exercício. */}
           {(temIntensidadeNaSessao(sessao) || preview) && (
@@ -867,6 +869,7 @@ function SessaoLeitura({
           }
           return <BlocoLeitura key={seg.bloco.id} bloco={seg.bloco} cor={cor} />;
         })}
+        <FechoFlex fecho={sessao.fecho} cor={cor} />
       </div>
     </Card>
   );
@@ -901,6 +904,20 @@ function BlocoLeitura({ bloco, cor, emGrupo }: { bloco: BlocoSessao; cor: string
       )}
       {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
       {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
+    </div>
+  );
+}
+
+// Fecho de flexibilidade da sessão (onda F, princípio da variabilidade): nota curta ao final
+// da sessão, com um acento da marca à esquerda. Só aparece quando o plano traz o fecho.
+function FechoFlex({ fecho, cor }: { fecho?: string; cor: string }) {
+  if (!fecho) return null;
+  return (
+    <div
+      className="mt-1 rounded-xl border border-border bg-surface-soft p-3"
+      style={{ borderLeftColor: cor, borderLeftWidth: 3 }}
+    >
+      <p className="text-xs text-ink-2">{fecho}</p>
     </div>
   );
 }

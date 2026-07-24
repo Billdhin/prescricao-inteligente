@@ -131,10 +131,12 @@ function sessaoHtml(s: Sessao) {
       </div>`
     : "";
 
+  const fechoHtml = s.fecho ? `<p class="fecho">${esc(s.fecho)}</p>` : "";
   return `
     <div class="sessao">
       <p class="sessao-nome">${esc(s.nome)}${s.foco ? ` <span class="foco">${esc(s.foco)}</span>` : ""}</p>
       ${s.blocos.length ? `<div class="quadros">${tabelaForca}${fichaCardio}</div>` : `<p class="vazio">Sessão sem exercícios definidos.</p>`}
+      ${fechoHtml}
     </div>`;
 }
 
@@ -345,6 +347,7 @@ export function exportPlanoPDF({
     .sessao { margin: 6px 0 8px; }
     .sessao-nome { font-size: 12px; font-weight: 700; color: #1e293b; margin: 6px 0 3px; }
     .sessao-nome .foco { font-weight: 400; color: #94a3b8; }
+    .fecho { font-size: 11px; color: #475569; background: #f2f0ea; border-radius: 6px; padding: 5px 8px; margin: 5px 0 0; }
     table.blocos { width: 100%; border-collapse: collapse; font-size: 11px; }
     table.blocos th { text-align: left; color: #94a3b8; font-weight: 600; border-bottom: 1px solid #e6e2d8; padding: 3px 4px; }
     table.blocos td { padding: 3px 4px; border-bottom: 1px solid #e6e2d8; color: #475569; vertical-align: top; }

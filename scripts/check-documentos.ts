@@ -38,7 +38,8 @@ function textosImpressos(titulo: string, raciocinio: string, macros: (Macrociclo
       for (const micro of meso.microciclos) {
         t.push({ onde: `semana ${micro.semana}`, texto: micro.nota ?? "" });
         for (const sessao of micro.sessoes) {
-          t.push({ onde: `sessão "${sessao.nome}"`, texto: `${sessao.nome} ${sessao.foco ?? ""}` });
+          // Inclui o fecho de flexibilidade (onda F): também vai impresso no documento do aluno.
+          t.push({ onde: `sessão "${sessao.nome}"`, texto: `${sessao.nome} ${sessao.foco ?? ""} ${sessao.fecho ?? ""}` });
           for (const bloco of sessao.blocos) {
             t.push({ onde: `bloco "${bloco.nome}"`, texto: `${bloco.nome ?? ""} ${bloco.observacao ?? ""}` });
           }

@@ -259,7 +259,7 @@ export function PrescreverTreino() {
       {/* Cabeçalho */}
       <div>
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <SeloRCD compacto />
+          <SeloRCD compacto explicavel />
           <Pill tone="neutral">Planejamento longitudinal</Pill>
         </div>
         <h1 className="flex items-center gap-2 font-display text-3xl font-bold text-ink md:text-4xl">

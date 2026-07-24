@@ -135,6 +135,16 @@ export function TreinoGuiado({
             <p className="mt-1 text-sm text-ink-3">{sessao.nome}</p>
           </div>
 
+          {/* Fecho de flexibilidade (onda F): lembrete curto ao encerrar a sessão. */}
+          {sessao.fecho && (
+            <div
+              className="mx-auto mt-4 max-w-md rounded-xl border border-border bg-surface-soft p-3 text-left"
+              style={{ borderLeftColor: cor, borderLeftWidth: 3 }}
+            >
+              <p className="text-xs text-ink-2">{sessao.fecho}</p>
+            </div>
+          )}
+
           {/* Números reais: registrados / duração medida / pontos (10 por registro). */}
           <div className="mt-5 grid grid-cols-3 gap-2">
             <NumeroCard valor={`${registrados}/${total}`} rotulo="exercícios" />
