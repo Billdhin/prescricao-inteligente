@@ -27,15 +27,16 @@ export function Logo({ showWord = true, className }: { showWord?: boolean; class
     );
   }
 
-  // Marca do produto (padrão do app do profissional).
+  // Marca do produto (padrão do app do profissional): Mapa da Prescrição.
+  // O quadrado "MP" é interino até o Filipe escolher a logo definitiva.
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl gradient-brand font-display text-sm font-bold text-white">
-        PI
+        MP
       </div>
       {showWord && (
         <span className="whitespace-nowrap font-display text-[17px] font-bold leading-none text-ink">
-          Prescrição <span className="text-primary">Inteligente</span>
+          Mapa da <span className="text-primary">Prescrição</span>
         </span>
       )}
     </div>

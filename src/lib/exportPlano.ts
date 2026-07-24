@@ -434,7 +434,7 @@ export function exportPlanoPDF({
     <div class="foot">
       As faixas deste plano são referência de diretriz e não substituem a decisão do profissional
       responsável. Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional
-      individualizada nem prescrição clínica. Gerado por Prescrição Inteligente.
+      individualizada nem prescrição clínica. Gerado pelo Mapa da Prescrição.
     </div>
   </div>
   <script>window.onload = function () { window.print(); };</script>

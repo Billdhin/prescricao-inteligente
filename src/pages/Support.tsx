@@ -15,7 +15,7 @@ import { Accordion } from "@/components/ui/disclosure";
 import { useUser } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
-const SUPORTE_EMAIL = "suporte@prescricao-inteligente.app";
+const SUPORTE_EMAIL = "suporte@mapadaprescricao.com.br";
 
 const ASSUNTOS = ["Dúvida de uso", "Problema técnico", "Sugestão", "Assinatura / planos", "Outro"];
 

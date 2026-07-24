@@ -71,7 +71,7 @@ export function Roi() {
   const [premio, setPremio] = React.useState(20);
 
   React.useEffect(() => {
-    document.title = "Quanto vale sua especialização? | Prescrição Inteligente";
+    document.title = "Quanto vale sua especialização? | Mapa da Prescrição";
   }, []);
 
   // 4,33 semanas/mês em média

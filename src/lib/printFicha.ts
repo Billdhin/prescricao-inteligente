@@ -13,7 +13,7 @@ const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 const AVISO =
-  "Conteúdo educacional de apoio à decisão do profissional de Educação Física: não é conduta médica e não substitui avaliação profissional individualizada. Gerado por Prescrição Inteligente.";
+  "Conteúdo educacional de apoio à decisão do profissional de Educação Física: não é conduta médica e não substitui avaliação profissional individualizada. Gerado pelo Mapa da Prescrição.";
 
 const CSS = `
   * { box-sizing: border-box; }
@@ -55,7 +55,7 @@ function shell(titulo: string, corpo: string, ident?: IdentProf) {
     ${cabecalhoHtml({
       logoDataUrl: ident?.logoDataUrl,
       logoAltura: 36,
-      profissional: ident?.nome || "Prescrição Inteligente",
+      profissional: ident?.nome || "Mapa da Prescrição",
       cref: ident?.cref,
       docTipo: "Ficha de apoio ao profissional",
       no: 0,

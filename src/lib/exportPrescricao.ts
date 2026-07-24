@@ -160,7 +160,7 @@ export function exportPrescricaoPDF({
 
     <div class="foot">
       Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional
-      individualizada nem prescrição clínica. Gerado por Prescrição Inteligente.
+      individualizada nem prescrição clínica. Gerado pelo Mapa da Prescrição.
     </div>
   </div>
   <script>window.onload = function () { window.print(); };</script>

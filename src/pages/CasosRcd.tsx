@@ -10,7 +10,7 @@ import { getSpecialGroup } from "@/data/specialGroups";
 /** /casos-rcd — biblioteca pública de casos documentados (prova de mecanismo). */
 export function CasosRcd() {
   React.useEffect(() => {
-    document.title = "Casos documentados pelo Motor RCD | Prescrição Inteligente";
+    document.title = "Casos documentados pelo Motor RCD | Mapa da Prescrição";
   }, []);
 
   return (

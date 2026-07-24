@@ -98,7 +98,7 @@ export function exportPosturalPDF({
 
     <div class="foot">
       Rastreio visual de apoio à conduta do profissional responsável. Não constitui diagnóstico
-      nem medição por imagem. Gerado por Prescrição Inteligente.
+      nem medição por imagem. Gerado pelo Mapa da Prescrição.
     </div>
   </div>
   <script>window.onload = function () { window.print(); };</script>

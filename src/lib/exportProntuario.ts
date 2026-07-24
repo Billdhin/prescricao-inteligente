@@ -282,7 +282,7 @@ export function exportProntuarioPDF({
     </div>
 
     <div class="foot">
-      Documento de apoio à decisão gerado por Prescrição Inteligente (Motor RCD ${esc(prontuario.motorVersao)}),
+      Documento de apoio à decisão gerado pelo Mapa da Prescrição (Motor RCD ${esc(prontuario.motorVersao)}),
       documento ${docId}. Conteúdo educacional: registra e fundamenta o raciocínio do profissional de
       Educação Física habilitado, que é o responsável pela decisão. Não é conduta médica, diagnóstica ou
       terapêutica e não substitui avaliação médica.

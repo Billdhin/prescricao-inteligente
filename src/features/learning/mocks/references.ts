@@ -602,7 +602,7 @@ export const references: ScientificReference[] = [
     authors: "Ribeiro FM",
     year: 2026,
     sourceType: "livro",
-    journalOrPublisher: "Edição para a plataforma Prescrição Inteligente",
+    journalOrPublisher: "Edição para a plataforma Mapa da Prescrição",
     openAccess: false,
     abstractSummary:
       "Manual que organiza a fisiologia dos onze sistemas por núcleos mecanísticos, escalas de tempo, medida e interpretação, com aplicação prudente à decisão de exercício. Fonte primária das aulas-capítulo desta disciplina.",

@@ -119,7 +119,7 @@ export function printSemaforo(
     <div class="foot">
       Conteúdo educacional de apoio à decisão do profissional de Educação Física; não é conduta
       médica e não substitui avaliação profissional individualizada. A decisão de liberar, ajustar ou
-      adiar a sessão é do profissional habilitado. Gerado por Prescrição Inteligente (Motor RCD).
+      adiar a sessão é do profissional habilitado. Gerado pelo Mapa da Prescrição (Motor RCD).
     </div>
   </div>
   <script>window.onload = function () { window.print(); };</script>

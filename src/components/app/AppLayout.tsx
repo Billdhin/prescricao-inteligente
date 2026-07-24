@@ -94,7 +94,7 @@ export function AppLayout() {
   const { pathname } = useLocation();
   React.useEffect(() => {
     const t = TITULOS_ROTA.find(([re]) => re.test(pathname))?.[1];
-    document.title = t ? `${t} | Prescrição Inteligente` : "Prescrição Inteligente";
+    document.title = t ? `${t} | Mapa da Prescrição` : "Mapa da Prescrição";
   }, [pathname]);
 
   // depois de TODOS os hooks (regras de hooks): o gate substitui o shell inteiro
