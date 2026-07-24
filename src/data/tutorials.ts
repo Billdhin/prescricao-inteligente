@@ -4,7 +4,6 @@ import {
   HeartPulse,
   FlaskConical,
   BookOpen,
-  Repeat2,
   ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
@@ -57,9 +56,9 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Prescreva com o motor",
         descricao:
-          "No Prescrever, o Motor RCD ranqueia os exercícios pelo perfil e pelos cuidados do grupo, e mostra também o que foi DESCARTADO e por quê.",
+          "No Treino do dia, o Motor RCD ranqueia os exercícios pelo perfil e pelos cuidados do grupo, e mostra também o que foi DESCARTADO e por quê.",
         scene: "recomendacao",
-        cta: { label: "Ir para Prescrever", to: "/gps" },
+        cta: { label: "Abrir o Treino do dia", to: "/gps" },
       },
       {
         titulo: "Abra o prontuário da decisão",
@@ -92,12 +91,12 @@ export const tutorials: Tutorial[] = [
         cta: { label: "Cadastrar aluno", to: "/alunos?novo=1" },
       },
       {
-        titulo: "Abra o Prescrever",
+        titulo: "Abra o Treino do dia",
         descricao:
-          "No perfil do aluno, use “Prescrever”, ou abra Prescrever no menu e escolha o aluno em “Para quem?”. O perfil já vem pré-preenchido.",
+          "No perfil do aluno, use “Prescrever”, ou abra o Treino do dia no menu (dentro de Prescrever treino) e escolha o aluno em “Para quem?”. O perfil já vem pré-preenchido.",
         scene: "nav",
         navLabel: "Prescrever",
-        cta: { label: "Ir para Prescrever", to: "/gps" },
+        cta: { label: "Abrir o Treino do dia", to: "/gps" },
       },
       {
         titulo: "Confirme o perfil (ou pule)",
@@ -143,9 +142,9 @@ export const tutorials: Tutorial[] = [
       {
         titulo: "Acompanhe a evolução",
         descricao:
-          "O perfil mostra a evolução das medidas em gráfico, e “Avaliações” reúne as reavaliações pendentes de todos os alunos.",
+          "O perfil mostra a evolução das medidas em gráfico, e “Avaliar e reavaliar” reúne as reavaliações pendentes de todos os alunos.",
         scene: "evolucao",
-        cta: { label: "Ver Avaliações", to: "/assessments" },
+        cta: { label: "Abrir Avaliar e reavaliar", to: "/assessments" },
       },
     ],
   },
@@ -177,7 +176,7 @@ export const tutorials: Tutorial[] = [
         descricao:
           "Toque em “Prescrever”: o contexto do grupo e da fase vai junto, e você recebe exercícios coerentes com a estratégia, com as cautelas em destaque.",
         scene: "recomendacao",
-        cta: { label: "Abrir Prescrever", to: "/gps" },
+        cta: { label: "Abrir o Treino do dia", to: "/gps" },
       },
     ],
   },
@@ -237,30 +236,6 @@ export const tutorials: Tutorial[] = [
         descricao:
           "Você recebe por que a escolha funciona (ou não), o critério de decisão e o que lembrar. Não é só “certo ou errado”.",
         scene: "feedback",
-      },
-    ],
-  },
-  {
-    slug: "atender-aprender",
-    titulo: "Alterne entre Atender e Aprender",
-    resumo: "Um app, dois modos: a ferramenta de trabalho e o estudo.",
-    icon: Repeat2,
-    duracao: "~1 min",
-    nivel: "Básico",
-    modo: "ambos",
-    steps: [
-      {
-        titulo: "Use o seletor no topo",
-        descricao:
-          "No topo da barra lateral há um seletor Atender / Aprender. “Atender” é a ferramenta de trabalho; “Aprender” é o estudo com trilhas e casos.",
-        scene: "modo",
-      },
-      {
-        titulo: "A navegação muda com o modo",
-        descricao:
-          "Ao trocar, o menu e o painel se adaptam, mas sua rota atual é preservada quando faz sentido. Você pode alternar quando quiser.",
-        scene: "nav",
-        navLabel: "Painel",
       },
     ],
   },

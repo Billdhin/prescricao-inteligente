@@ -1,11 +1,12 @@
 import type * as React from "react";
 import {
-  LayoutDashboard,
+  Sunrise,
   Users,
-  BarChart3,
+  UserPlus,
+  ClipboardCheck,
   ShieldCheck,
   CalendarRange,
-  Navigation,
+  Dumbbell,
   GraduationCap,
   HeartPulse,
   ClipboardList,
@@ -16,6 +17,17 @@ import {
   Settings,
 } from "lucide-react";
 
+// Filho de um item: aparece indentado sob o pai na sidebar/drawer (nunca no rail
+// colapsado). `acao: true` marca link de AÇÃO (ex.: Cadastrar aluno): abre algo,
+// não "é um lugar", então nunca acende como ativo (o pathname /alunos acenderia
+// pai e filho juntos e mentiria a localização).
+export type NavChild = {
+  to: string; // pode conter query (ex.: /alunos?novo=1)
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  acao?: boolean;
+};
+
 export type NavItem = {
   to: string;
   label: string;
@@ -25,34 +37,44 @@ export type NavItem = {
   match?: string[];
   // Rótulo curto para a barra inferior do mobile (onde o espaço é apertado).
   short?: string;
+  children?: NavChild[];
 };
 
 // collapsible: o grupo pode ser comprimido/expandido pelo usuário. O header do
-// grupo vira botão com chevron e o estado (aberto/fechado) persiste em useUI.
+// grupo vira botão com chevron e o estado (aberto/fechado) persiste em useUI
+// POR LABEL: renomear o label de um grupo comprimível exige migrar o persist
+// (ver comentário em store.ts), senão o estado órfã e o grupo abre expandido.
 // Fonte única da verdade da navegação: a busca global DERIVA daqui (nada de
 // lista paralela para dessincronizar).
 export type NavSection = { label?: string; items: NavItem[]; collapsible?: boolean };
 
-// UMA navegação, agrupada pelas FASES DO DIA (não por categoria de software).
-// "Dia a dia" primeiro (o que se toca toda hora, com Avaliações que é início do
-// trilho, não ferramenta); "Prescrever" com o treino (o principal) antes do
-// exercício (a exceção diária); "Estudar e referência" e "Ajuda e conta"
-// nascem comprimidos (referência, não rotina) e abrem sob demanda.
+// UMA navegação, com o "Dia a dia" na ordem do ciclo do cuidado (abrir o dia,
+// carteira de alunos, avaliar, prescrever, liberar) e todo rótulo dizendo O QUE
+// SE FAZ ali, na língua do personal: nada de substantivo solto. O Treino do dia
+// (/gps) vive DENTRO de Prescrever treino porque o exercício é a visão diária
+// do treino. "Estudar e referência" e "Ajuda e conta" nascem comprimidos
+// (referência, não rotina) e abrem sob demanda.
 export const NAV: NavSection[] = [
   {
     label: "Dia a dia",
     items: [
-      { to: "/dashboard", label: "Hoje", icon: LayoutDashboard, short: "Hoje" },
-      { to: "/alunos", label: "Alunos", icon: Users, short: "Alunos" },
-      { to: "/assessments", label: "Avaliações", icon: BarChart3, short: "Avaliar" },
-      { to: "/semaforo", label: "Semáforo", icon: ShieldCheck, short: "Semáforo" },
-    ],
-  },
-  {
-    label: "Prescrever",
-    items: [
-      { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange, short: "Treino" },
-      { to: "/gps", label: "Prescrever exercício", icon: Navigation, short: "Exercício" },
+      { to: "/dashboard", label: "Meu dia", icon: Sunrise, short: "Meu dia" },
+      {
+        to: "/alunos",
+        label: "Meus alunos",
+        icon: Users,
+        short: "Alunos",
+        children: [{ to: "/alunos?novo=1", label: "Cadastrar aluno", icon: UserPlus, acao: true }],
+      },
+      { to: "/assessments", label: "Avaliar e reavaliar", icon: ClipboardCheck, short: "Avaliar" },
+      {
+        to: "/prescrever-treino",
+        label: "Prescrever treino",
+        icon: CalendarRange,
+        short: "Treino",
+        children: [{ to: "/gps", label: "Treino do dia", icon: Dumbbell }],
+      },
+      { to: "/semaforo", label: "Fazer o semáforo do dia", icon: ShieldCheck, short: "Semáforo" },
     ],
   },
   {
@@ -77,15 +99,15 @@ export const NAV: NavSection[] = [
   },
 ];
 
-// Barra inferior do mobile: os destinos mais tocados no dia. Avaliações (início
-// do trilho) entra com o rótulo curto "Avaliar"; /gps (a exceção diária) SAI
-// daqui e vive na sidebar mobile e no contexto do aluno. 6 itens cabem a partir
-// de 390px (cada aba ~65px, rótulos curtos sem truncar).
+// Barra inferior do mobile: os 5 destinos do dia, na mesma ordem do ciclo do
+// cuidado. "Estudar" sai (referência, não rotina; segue no drawer). A aba
+// "Treino" acende também no Treino do dia (/gps), que é a visão diária do
+// treino. 5 abas de ~64px cabem a 320px; o maior rótulo ("Semáforo", 8 chars a
+// 11px) entra sem truncar, e overflow de rótulo é bug visível de propósito.
 export const BOTTOM: NavItem[] = [
-  { to: "/dashboard", label: "Hoje", icon: LayoutDashboard, short: "Hoje" },
-  { to: "/alunos", label: "Alunos", icon: Users, short: "Alunos" },
-  { to: "/assessments", label: "Avaliações", icon: BarChart3, short: "Avaliar" },
-  { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange, short: "Treino" },
-  { to: "/semaforo", label: "Semáforo", icon: ShieldCheck, short: "Semáforo" },
-  { to: "/aprender", label: "Estudar", icon: GraduationCap, match: ["/aprender", "/tracks"], short: "Estudar" },
+  { to: "/dashboard", label: "Meu dia", icon: Sunrise, short: "Meu dia" },
+  { to: "/alunos", label: "Meus alunos", icon: Users, short: "Alunos" },
+  { to: "/assessments", label: "Avaliar e reavaliar", icon: ClipboardCheck, short: "Avaliar" },
+  { to: "/prescrever-treino", label: "Prescrever treino", icon: CalendarRange, short: "Treino", match: ["/gps"] },
+  { to: "/semaforo", label: "Fazer o semáforo do dia", icon: ShieldCheck, short: "Semáforo" },
 ];

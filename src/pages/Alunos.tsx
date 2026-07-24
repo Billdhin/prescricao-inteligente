@@ -28,6 +28,8 @@ export function Alunos() {
   const [q, setQ] = React.useState("");
   const [novo, setNovo] = React.useState(params.get("novo") === "1");
 
+  // Reage a MUDANÇA de params (não só ao mount): clicar em "Cadastrar aluno" no
+  // menu já estando em /alunos precisa reabrir o modal.
   React.useEffect(() => {
     if (params.get("novo") === "1") {
       setNovo(true);
@@ -35,7 +37,7 @@ export function Alunos() {
       setParams(params, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [params, setParams]);
 
   const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
 

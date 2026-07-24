@@ -852,7 +852,7 @@ export function Comparador() {
           <FlaskConical className="h-4 w-4" /> Ir ao Laboratório
         </Link>
         <Link to="/gps" className={buttonClasses("secondary", "sm")}>
-          Ir para Prescrever exercício <ArrowRight className="h-4 w-4" />
+          Ir para o Treino do dia <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
 

@@ -55,17 +55,17 @@ const TITULOS_ROTA: [RegExp, string][] = [
   [/^\/aprender\/salvos/, "Salvos"],
   [/^\/aprender\/progresso/, "Meu progresso"],
   [/^\/aprender/, "Aprender"],
-  [/^\/dashboard/, "Painel"],
+  [/^\/dashboard/, "Meu dia"],
   [/^\/alunos\/./, "Aluno"],
-  [/^\/alunos/, "Alunos"],
+  [/^\/alunos/, "Meus alunos"],
   [/^\/prescrever-treino/, "Prescrever treino"],
-  [/^\/gps/, "Prescrever exercício"],
+  [/^\/gps/, "Treino do dia"],
   [/^\/semaforo/, "Semáforo do dia"],
   [/^\/special-groups/, "Grupos Especiais"],
   [/^\/movement-lab/, "Laboratório Visual"],
   [/^\/consultar/, "Consultar"],
   [/^\/library/, "Consultar"],
-  [/^\/assessments/, "Avaliações"],
+  [/^\/assessments/, "Avaliar e reavaliar"],
   [/^\/protocols/, "Protocolos"],
   [/^\/comparador/, "Comparador"],
   [/^\/tracks/, "Trilhas"],
@@ -299,15 +299,25 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
   );
 }
 
+// Rota de um filho não-ação está ativa? (filhos de ação, ex. Cadastrar aluno,
+// nunca contam como "lugar": abrem algo, não são um destino próprio.)
+function filhoAtivo(item: NavItem, pathname: string) {
+  return (
+    item.children?.some((c) => !c.acao && (pathname === c.to || pathname.startsWith(c.to + "/"))) ?? false
+  );
+}
+
 // Rota ativa dentro de um grupo: replica a semântica de acender do NavLink
-// (match exato, prefixo de segmento ou os prefixos-irmãos de item.match). Serve
-// para NUNCA esconder o grupo onde o usuário está, mesmo que ele esteja comprimido.
+// (match exato, prefixo de segmento, os prefixos-irmãos de item.match ou a rota
+// de um filho). Serve para NUNCA esconder o grupo onde o usuário está, mesmo
+// que ele esteja comprimido.
 function rotaAtivaNoGrupo(items: NavItem[], pathname: string) {
   return items.some(
     (it) =>
       pathname === it.to ||
       pathname.startsWith(it.to + "/") ||
-      (it.match?.some((p) => pathname.startsWith(p)) ?? false),
+      (it.match?.some((p) => pathname.startsWith(p)) ?? false) ||
+      filhoAtivo(it, pathname),
   );
 }
 
@@ -347,7 +357,7 @@ function Sidebar() {
       />
       <aside
         ref={asideRef}
-        aria-label="Barra lateral"
+        aria-label="Menu completo"
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-[280px] flex-col border-r border-border bg-surface shadow-elevated transition-transform duration-200",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
@@ -424,7 +434,12 @@ function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }
     <ul className="space-y-1">
       {items.map((item) => {
         const Icon = item.icon;
-        const forcado = item.match?.some((p) => pathname.startsWith(p)) ?? false;
+        // No rail (colapsado) os filhos não aparecem, então o PAI acende quando
+        // a rota de um filho está ativa (senão o usuário fica "em lugar nenhum").
+        // Expandido, cada um acende sozinho: o pai não acende junto do filho.
+        const forcado =
+          (item.match?.some((p) => pathname.startsWith(p)) ?? false) ||
+          (collapsed && filhoAtivo(item, pathname));
         return (
           <li key={item.to}>
             <NavLink
@@ -432,7 +447,7 @@ function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }
               title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex min-h-[44px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive || forcado
                     ? "bg-primary-tint text-primary"
                     : "text-ink-2 hover:bg-surface-soft hover:text-ink",
@@ -442,6 +457,43 @@ function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }
               <Icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && <span className="truncate">{item.label}</span>}
             </NavLink>
+            {!collapsed && item.children && (
+              <ul className="mt-1 space-y-1">
+                {item.children.map((child) => {
+                  const ChildIcon = child.icon;
+                  const classeBase =
+                    "flex min-h-[44px] items-center gap-3 rounded-xl py-2 pl-[42px] pr-3 text-sm font-medium transition-colors";
+                  return (
+                    <li key={child.to}>
+                      {child.acao ? (
+                        // Link de AÇÃO (ex.: Cadastrar aluno): nunca acende como
+                        // ativo; em /alunos ele acenderia junto do pai e mentiria
+                        // a localização. Link puro, sem semântica de aria-current.
+                        <Link to={child.to} className={cn(classeBase, "text-ink-2 hover:bg-surface-soft hover:text-ink")}>
+                          <ChildIcon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{child.label}</span>
+                        </Link>
+                      ) : (
+                        <NavLink
+                          to={child.to}
+                          className={({ isActive }) =>
+                            cn(
+                              classeBase,
+                              isActive
+                                ? "bg-primary-tint text-primary"
+                                : "text-ink-2 hover:bg-surface-soft hover:text-ink",
+                            )
+                          }
+                        >
+                          <ChildIcon className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{child.label}</span>
+                        </NavLink>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </li>
         );
       })}
@@ -450,38 +502,44 @@ function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }
 }
 
 /**
- * Barra inferior do mobile: os 6 destinos do dia a dia (Hoje, Alunos, Avaliar,
- * Treino, Semáforo, Estudar), sempre à mão com o polegar. Some no desktop (lg+),
- * onde a barra lateral cumpre o papel. São links de rota com aria-current; o
- * "Estudar" acende também nas rotas irmãs.
+ * Barra inferior do mobile: os 5 destinos do dia, na ordem do ciclo do cuidado
+ * (Meu dia, Alunos, Avaliar, Treino, Semáforo), sempre à mão com o polegar.
+ * Some no desktop (lg+), onde a barra lateral cumpre o papel. A aba "Treino"
+ * acende também no Treino do dia (/gps). Links puros com ativo calculado à mão
+ * (o aria-current do NavLink não cobre o caso `match`); SEM truncate no rótulo:
+ * overflow aqui é bug visível de propósito, conferido a 320px.
  */
 function BottomBar() {
   const { pathname } = useLocation();
   const itens = BOTTOM;
   return (
     <nav
-      aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-[#ffffff]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      aria-label="Atalhos do dia"
+      className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
       {itens.map((item) => {
         const Icon = item.icon;
-        const forcado = item.match?.some((p) => pathname.startsWith(p)) ?? false;
+        const ativo =
+          pathname === item.to ||
+          pathname.startsWith(item.to + "/") ||
+          (item.match?.some((p) => pathname.startsWith(p)) ?? false);
         return (
-          <NavLink
+          <Link
             key={item.to}
             to={item.to}
-            aria-current={forcado ? "page" : undefined}
-            className={({ isActive }) =>
-              cn(
-                "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-2xs font-medium leading-none transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-                isActive || forcado ? "text-primary" : "text-ink-3 hover:text-ink-2",
-              )
-            }
+            aria-current={ativo ? "page" : undefined}
+            className={cn(
+              "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-2xs font-medium leading-none transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+              ativo ? "text-primary" : "text-ink-3 hover:text-ink-2",
+            )}
           >
-            <Icon className="h-5 w-5 shrink-0" aria-hidden />
-            <span className="max-w-full truncate">{item.short ?? item.label}</span>
-          </NavLink>
+            {/* Pill atrás do ícone: o ativo se vê pela forma, não só pela cor (WCAG 1.4.1) */}
+            <span className={cn("grid h-6 w-12 place-items-center rounded-full transition-colors", ativo && "bg-primary-tint")}>
+              <Icon className="h-5 w-5 shrink-0" aria-hidden />
+            </span>
+            <span className="max-w-full">{item.short ?? item.label}</span>
+          </Link>
         );
       })}
     </nav>
@@ -501,7 +559,7 @@ function Topbar() {
       <button
         onClick={onMenu}
         aria-label="Alternar menu lateral"
-        className="rounded-md p-2 text-ink-2 hover:bg-surface-soft"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-2 hover:bg-surface-soft"
       >
         <PanelLeft className="h-4 w-4" />
       </button>
@@ -512,7 +570,7 @@ function Topbar() {
         <Link
           to="/tutorial"
           aria-label="Ajuda e tutoriais"
-          className="grid h-9 w-9 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
+          className="grid h-11 w-11 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
         >
           <HelpCircle className="h-4 w-4" />
         </Link>
@@ -560,7 +618,7 @@ function NotificationsMenu() {
         onClick={openMenu}
         aria-label={`Notificações${unseen ? ` (${unseen} novas)` : ""}`}
         aria-expanded={open}
-        className="relative grid h-9 w-9 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
+        className="relative grid h-11 w-11 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
       >
         <Bell className="h-4 w-4" />
         {unseen > 0 && (
@@ -628,7 +686,7 @@ function UserMenu() {
         onClick={() => setOpen((o) => !o)}
         aria-label="Menu do usuário"
         aria-expanded={open}
-        className="ml-1 flex items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-surface-soft md:pr-3"
+        className="ml-1 flex min-h-[44px] items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-surface-soft md:pr-3"
       >
         {fotoDataUrl ? (
           <img src={fotoDataUrl} alt="" className="h-9 w-9 rounded-full object-cover" />

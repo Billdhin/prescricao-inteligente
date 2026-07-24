@@ -82,15 +82,17 @@ const BASE_INDEX: SearchItem[] = [
   })),
 ];
 
-// Sinônimos por rota (o que o profissional pode digitar sem saber o rótulo exato).
+// Sinônimos por rota (o que o profissional pode digitar sem saber o rótulo exato,
+// incluindo os NOMES ANTIGOS de menu, para a memória de quem já usava não quebrar).
 // Chave = `to` do item da NAV; a busca soma isto ao rótulo + short do item.
 const SINONIMOS: Record<string, string> = {
-  "/dashboard": "painel dashboard inicio visao geral hoje",
-  "/alunos": "alunos cadastro clientes",
-  "/assessments": "avaliacoes reavaliar medidas peso gordura avaliar",
-  "/semaforo": "semaforo liberacao pre sessao seguranca gate checklist",
-  "/prescrever-treino": "prescrever treino periodizacao plano montar macrociclo",
-  "/gps": "prescrever exercicio gps prescricao recomendacao motor decisao rapida",
+  "/dashboard": "painel dashboard inicio visao geral hoje meu dia",
+  "/alunos": "alunos cadastro cadastrar clientes carteira",
+  "/alunos?novo=1": "cadastrar aluno novo aluno adicionar cliente",
+  "/assessments": "avaliacoes reavaliar medidas peso gordura avaliar evolucao",
+  "/semaforo": "semaforo liberacao pre sessao seguranca gate checklist liberar quem pode treinar",
+  "/prescrever-treino": "prescrever treino periodizacao plano montar macrociclo planejar",
+  "/gps": "prescrever exercicio gps prescricao recomendacao motor decisao rapida treino do dia personalizar",
   "/aprender": "estudar aprender trilhas licoes disciplinas mapa",
   "/special-groups": "grupos especiais hipertensao diabetes obesidade idoso lombar osteoartrite",
   "/protocols": "protocolos modelos treino prontos",
@@ -101,18 +103,34 @@ const SINONIMOS: Record<string, string> = {
   "/account": "configuracoes conta perfil plano cref ajustes",
 };
 
-/** Atalhos "Ir para" DERIVADOS da NAV: uma fonte só, nunca dessincroniza. Cada
- *  destino da navegação vira um item de busca (com os sinônimos do mapa acima),
- *  inclusive os de grupos comprimidos (a busca acha tudo, comprimido ou não). */
+// Rótulo que já é frase de ação (começa com verbo do menu) entra puro na busca;
+// os demais ganham o prefixo "Ir para". Evita "Ir para Fazer o semáforo do dia".
+const rotuloDeBusca = (label: string) =>
+  /^(Fazer|Cadastrar|Avaliar|Prescrever|Estudar|Consultar)\b/.test(label) ? label : `Ir para ${label}`;
+
+/** Atalhos "Ir para" DERIVADOS da NAV (itens E filhos): uma fonte só, nunca
+ *  dessincroniza. Cada destino da navegação vira um item de busca (com os
+ *  sinônimos do mapa acima), inclusive os de grupos comprimidos (a busca acha
+ *  tudo, comprimido ou não). */
 const NAV_ITEMS: SearchItem[] = NAV.flatMap((sec) =>
-  sec.items.map((it) => ({
-    id: `nav-${it.to}`,
-    label: `Ir para ${it.label}`,
-    group: "Ir para" as Group,
-    to: it.to,
-    haystack: norm([it.label, it.short ?? "", SINONIMOS[it.to] ?? ""].join(" ")),
-    Icon: it.icon,
-  })),
+  sec.items.flatMap((it) => [
+    {
+      id: `nav-${it.to}`,
+      label: rotuloDeBusca(it.label),
+      group: "Ir para" as Group,
+      to: it.to,
+      haystack: norm([it.label, it.short ?? "", SINONIMOS[it.to] ?? ""].join(" ")),
+      Icon: it.icon,
+    },
+    ...(it.children ?? []).map((c) => ({
+      id: `nav-${c.to}`,
+      label: rotuloDeBusca(c.label),
+      group: "Ir para" as Group,
+      to: c.to,
+      haystack: norm([c.label, SINONIMOS[c.to] ?? ""].join(" ")),
+      Icon: c.icon,
+    })),
+  ]),
 );
 
 /** Rotas buscáveis que NÃO estão na NAV (abas/atalhos que a busca já anunciava):

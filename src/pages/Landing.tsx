@@ -97,10 +97,10 @@ const TRIADE = [
    espelham os nomes usados na navegação. */
 const MODULOS: { icon: React.ComponentType<{ className?: string }>; label: string; to: string; d: string }[] = [
   { icon: Users, label: "Alunos", to: "/alunos", d: "Cadastro, avaliações e evolução de cada aluno." },
-  { icon: BarChart3, label: "Avaliações", to: "/assessments", d: "Medidas, IMC e RCQ derivados; reavalie e compare." },
-  { icon: ShieldCheck, label: "Semáforo", to: "/semaforo", d: "Libere, ajuste ou adie a sessão do dia, com o porquê." },
+  { icon: BarChart3, label: "Avaliar e reavaliar", to: "/assessments", d: "Medidas, IMC e RCQ derivados; reavalie e compare." },
+  { icon: ShieldCheck, label: "Semáforo do dia", to: "/semaforo", d: "Libere, ajuste ou adie a sessão do dia, com o porquê." },
   { icon: CalendarRange, label: "Prescrever treino", to: "/prescrever-treino", d: "Periodização mensal a anual, do mesociclo ao microciclo." },
-  { icon: Navigation, label: "Prescrever exercício", to: "/gps", d: "Personalize o treino do dia do aluno pela avaliação, ou prescreva uma sessão avulsa." },
+  { icon: Navigation, label: "Treino do dia", to: "/gps", d: "Personalize o treino do dia do aluno pela avaliação, ou prescreva uma sessão avulsa." },
   { icon: Smartphone, label: "App do aluno", to: "/alunos", d: "O que o aluno vê: treino, semáforo e registro de execução." },
   { icon: GraduationCap, label: "Aprender", to: "/aprender", d: "Disciplinas, casos e biblioteca com referências reais." },
   { icon: FlaskConical, label: "Laboratório Visual", to: "/movement-lab", d: "Foto real e análise biomecânica no divisor interativo." },

@@ -154,7 +154,10 @@ interface UIState {
   mobileOpen: boolean;
   /** rail de ícones no desktop (preferência do usuário, persiste) */
   collapsed: boolean;
-  /** rótulos dos grupos do menu que estão comprimidos (persiste) */
+  /** rótulos dos grupos do menu que estão comprimidos (persiste POR LABEL:
+   *  renomear um grupo comprimível em nav.ts exige bump de version aqui com
+   *  migrate mapeando o label antigo para o novo, senão o estado órfã e o
+   *  grupo volta a abrir expandido) */
   gruposComprimidos: string[];
   setMobileOpen: (v: boolean) => void;
   toggleMobile: () => void;

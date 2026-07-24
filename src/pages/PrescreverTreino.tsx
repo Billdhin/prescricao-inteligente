@@ -268,9 +268,9 @@ export function PrescreverTreino() {
         <p className="mt-1 text-ink-2">
           Monte a periodização completa do aluno (macrociclo, mesociclos e microciclos) com base científica.
           A ferramenta apoia a sua decisão e organiza a progressão; você edita tudo depois. Para exercícios
-          individuais, use{" "}
+          individuais, use o{" "}
           <Link to="/gps" className="font-semibold text-primary hover:underline">
-            Prescrever exercício
+            Treino do dia
           </Link>
           .
         </p>
@@ -318,7 +318,7 @@ export function PrescreverTreino() {
           {aluno && !bloquearSemAvaliacao && (
             <p className="mt-2 text-xs text-ink-3">
               Objetivo, nível e grupo especial vieram do cadastro de {aluno.nome}. Ajuste se quiser.
-              {aluno.restricoes.length > 0 && ` ${aluno.restricoes.length} restrição(ões) no perfil: revise os exercícios de cada sessão à luz delas (a periodização organiza volume e intensidade; a seleção segura por restrição fica no Prescrever exercício).`}
+              {aluno.restricoes.length > 0 && ` ${aluno.restricoes.length} restrição(ões) no perfil: revise os exercícios de cada sessão à luz delas (a periodização organiza volume e intensidade; a seleção segura por restrição fica no Treino do dia).`}
             </p>
           )}
         </div>
