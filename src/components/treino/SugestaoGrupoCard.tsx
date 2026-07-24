@@ -39,6 +39,9 @@ export function SugestaoGrupoCard({
   const primeiroNome = aluno.nome.split(" ")[0];
 
   const aplicar = (s: SugestaoGrupo) => {
+    // Encaminhamento (ex.: PA >= 180/110) NÃO vira grupo de treino: é recomendação
+    // de conduta de saúde. A UI só informa; não há o que "aplicar" ao aluno.
+    if (s.encaminhamento) return;
     const g = getSpecialGroup(s.grupoSlug);
     if (!aluno.grupoEspecial) {
       // Primeiro direcionamento: vira o grupo principal e semeia a jornada.
@@ -97,14 +100,20 @@ export function SugestaoGrupoCard({
                   <BookOpen className="h-3 w-3 shrink-0" aria-hidden /> {s.criterio} · {refCurta(s.refId)}
                 </p>
               )}
-              <div className="mt-2.5 flex flex-wrap gap-2">
-                <button onClick={() => aplicar(s)} className={buttonClasses("secondary", "sm")}>
-                  <Check className="h-4 w-4" /> Aplicar
-                </button>
-                <button onClick={() => dispensar(s)} className={cn(buttonClasses("ghost", "sm"))}>
-                  <X className="h-4 w-4" /> Dispensar
-                </button>
-              </div>
+              {s.encaminhamento ? (
+                <p className="mt-2.5 rounded-lg border border-warning/40 bg-warning-tint px-3 py-2 text-xs font-medium text-warning">
+                  Recomendação de conduta de saúde: oriente avaliação ou liberação médica antes de prescrever treino. Não é um grupo para aplicar.
+                </p>
+              ) : (
+                <div className="mt-2.5 flex flex-wrap gap-2">
+                  <button onClick={() => aplicar(s)} className={buttonClasses("secondary", "sm")}>
+                    <Check className="h-4 w-4" /> Aplicar
+                  </button>
+                  <button onClick={() => dispensar(s)} className={cn(buttonClasses("ghost", "sm"))}>
+                    <X className="h-4 w-4" /> Dispensar
+                  </button>
+                </div>
+              )}
             </li>
           );
         })}

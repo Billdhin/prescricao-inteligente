@@ -111,6 +111,95 @@ export function EvolucaoMini({
   );
 }
 
+// Data curta para os cabeçalhos de coluna da tabela comparativa (dd mmm aa).
+const fmtDataCurta = (ts: number) =>
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "2-digit" }).format(new Date(ts));
+
+/**
+ * Tabela comparativa de todas as variáveis por data avaliada, no estilo de um
+ * resultado de exame: métricas nas linhas, avaliações em colunas cronológicas
+ * ascendentes, e uma última coluna com o delta do primeiro ao último exame,
+ * colorido pela direção desejável da métrica (mesma regra do EvolucaoMini: ganhar
+ * massa muscular é positivo, nunca alerta). Não recalcula nada; lê `medidas` como
+ * está (inclusive `imc`). Rola na horizontal em telas estreitas.
+ */
+export function TabelaEvolucao({ avals }: { avals: Avaliacao[] }) {
+  // As avaliações já chegam ascendentes; fixamos a ordem aqui para as colunas.
+  const cols = [...avals].sort((a, b) => a.data - b.data);
+  const linhas = METRICAS_EVOLUCAO.filter((m) => cols.some((a) => a.medidas[m.key] != null));
+
+  if (cols.length === 0 || linhas.length === 0) {
+    return (
+      <p className="py-6 text-center text-sm text-ink-2">
+        Registre avaliações com medidas para ver a tabela comparativa.
+      </p>
+    );
+  }
+
+  const th = "whitespace-nowrap px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink-2";
+  const td = "whitespace-nowrap px-3 py-2 text-sm tabular";
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b border-border">
+            <th className={cn(th, "text-left")}>Medida</th>
+            {cols.map((a) => (
+              <th key={a.id} className={cn(th, "text-right")}>
+                {fmtDataCurta(a.data)}
+              </th>
+            ))}
+            <th className={cn(th, "text-right")}>Evolução</th>
+          </tr>
+        </thead>
+        <tbody>
+          {linhas.map((m) => {
+            const serie = cols.map((a) => a.medidas[m.key]);
+            const presentes = serie.filter((v): v is number => v != null);
+            const primeiro = presentes[0];
+            const ultimo = presentes[presentes.length - 1];
+            const delta =
+              presentes.length >= 2 && primeiro != null && ultimo != null
+                ? +(ultimo - primeiro).toFixed(1)
+                : null;
+            return (
+              <tr key={m.key} className="border-b border-border/60">
+                <th scope="row" className={cn("whitespace-nowrap px-3 py-2 text-left text-sm font-medium text-ink")}>
+                  {m.label}
+                </th>
+                {serie.map((v, i) => (
+                  <td key={i} className={cn(td, "text-right text-ink")}>
+                    {v != null ? (
+                      <>
+                        {v}
+                        <span className="text-ink-3">{m.unit}</span>
+                      </>
+                    ) : (
+                      <span className="text-ink-3">·</span>
+                    )}
+                  </td>
+                ))}
+                <td className={cn(td, "text-right")}>
+                  {delta != null ? (
+                    <span className={cn("font-semibold", corDelta(m.dir, delta))}>
+                      {delta > 0 ? "+" : ""}
+                      {delta}
+                      {m.unit}
+                    </span>
+                  ) : (
+                    <span className="text-ink-3">·</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function MiniLine({ values }: { values: number[] }) {
   const min = Math.min(...values);
   const max = Math.max(...values);

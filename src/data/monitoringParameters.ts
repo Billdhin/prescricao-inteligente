@@ -57,7 +57,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Em geral, esforços leves a moderados tendem a ser mais prudentes nas fases iniciais; picos altos pedem cautela.",
     seAlterado:
       "PSE muito alta de forma recorrente sugere reduzir volume/intensidade e reavaliar a progressão.",
-    gruposRelevantes: ["obesidade-grave", "hipertensao", "idoso-destreinado", "diabetes-tipo-2"],
+    gruposRelevantes: ["obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3", "hipertensao-estagio-1", "hipertensao-estagio-2", "idoso-destreinado", "diabetes-tipo-2"],
     modalidadesUteis: ["m-hidro", "m-natacao", "m-caminhada", "m-musculacao", "m-bike"],
     comoAplicar: [
       "Apresente a escala antes da sessão: 0 = repouso total, 10 = esforço máximo.",
@@ -91,7 +91,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Conseguir falar frases curtas costuma indicar intensidade leve a moderada, em geral adequada para começar.",
     seAlterado:
       "Se o aluno não consegue falar nem frases curtas, tende a ser prudente reduzir o ritmo.",
-    gruposRelevantes: ["obesidade-grave", "hipertensao", "idoso-destreinado"],
+    gruposRelevantes: ["obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3", "hipertensao-estagio-1", "hipertensao-estagio-2", "idoso-destreinado"],
     modalidadesUteis: ["m-caminhada", "m-bike", "m-hidro", "m-eliptico"],
     comoAplicar: [
       "Durante o esforço contínuo, peça uma frase curta (ex.: contar de 1 a 10 em voz alta).",
@@ -123,7 +123,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Serve como uma referência de tendência ao longo das sessões, não como número absoluto isolado (validar faixas com diretriz específica).",
     seAlterado:
       "Respostas desproporcionais ao esforço sugerem cautela e podem indicar necessidade de reavaliação.",
-    gruposRelevantes: ["hipertensao", "diabetes-tipo-2", "idoso-destreinado"],
+    gruposRelevantes: ["hipertensao-estagio-1", "hipertensao-estagio-2", "diabetes-tipo-2", "idoso-destreinado"],
     modalidadesUteis: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
     comoAplicar: [
       "Meça em repouso, sentado, antes da sessão: é a referência do dia.",
@@ -148,7 +148,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Use como sinal de contexto e segurança, não para orientar conduta clínica (validar com diretriz específica).",
     seAlterado:
       "Valores muito alterados ou sintomas associados sugerem interromper a sessão e podem indicar necessidade de encaminhamento.",
-    gruposRelevantes: ["hipertensao", "diabetes-tipo-2", "obesidade-grave"],
+    gruposRelevantes: ["hipertensao-estagio-1", "hipertensao-estagio-2", "diabetes-tipo-2", "obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3"],
     modalidadesUteis: ["m-musculacao", "m-caminhada", "m-bike"],
     comoAplicar: [
       "Quando disponível e indicado: aluno sentado, ~5 min de repouso, braço apoiado na altura do coração.",
@@ -170,7 +170,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Dispneia leve que melhora com a pausa costuma ser esperada; falta de ar intensa ou que não cede pede atenção.",
     seAlterado:
       "Dispneia desproporcional ou persistente sugere interromper e reavaliar; pode indicar necessidade de encaminhamento.",
-    gruposRelevantes: ["obesidade-grave", "hipertensao"],
+    gruposRelevantes: ["obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3", "hipertensao-estagio-1", "hipertensao-estagio-2"],
     modalidadesUteis: ["m-hidro", "m-natacao", "m-caminhada"],
     comoAplicar: [
       "Apresente a escala: 0 = nenhuma falta de ar, 10 = máxima.",
@@ -187,7 +187,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       { valor: "10", rotulo: "Máxima: interromper e reavaliar" },
     ],
     referencia:
-      "Escala de dispneia adaptada de Borg (CR10 modificada), amplamente usada em reabilitação. Valide com a diretriz do seu contexto.",
+      "Escala de dispneia adaptada de Borg (CR10 modificada), amplamente usada na fisioterapia e no condicionamento. Valide com a diretriz do seu contexto.",
     ficha: "escala",
   },
   {
@@ -201,7 +201,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Dor leve que não piora ao longo da sessão costuma ser tolerável; dor que aumenta ou muda o padrão de movimento pede ajuste.",
     seAlterado:
       "Dor crescente sugere reduzir amplitude/carga, trocar a modalidade ou reavaliar; dor aguda intensa indica interromper.",
-    gruposRelevantes: ["dor-lombar-inespecifica", "osteoartrite-joelho", "obesidade-grave"],
+    gruposRelevantes: ["dor-lombar-inespecifica", "osteoartrite-joelho", "obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3"],
     modalidadesUteis: ["m-hidro", "m-mobilidade", "m-musculacao", "m-bike"],
     comoAplicar: [
       "Pergunte antes, durante e depois: “De 0 a 10, quanto dói agora?”",
@@ -217,7 +217,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       { valor: "10", rotulo: "Pior dor imaginável: interromper e reavaliar" },
     ],
     referencia:
-      "Escala numérica de dor 0–10 (END/NRS), amplamente usada em reabilitação. Valide com a diretriz do seu contexto.",
+      "Escala numérica de dor 0–10 (END/NRS), amplamente usada na clínica e na fisioterapia. Valide com a diretriz do seu contexto.",
     ficha: "escala",
   },
   {
@@ -231,7 +231,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Fadiga que se recupera até a próxima sessão sugere dose adequada; fadiga acumulada sugere excesso.",
     seAlterado:
       "Fadiga persistente entre sessões tende a pedir redução de volume e mais recuperação.",
-    gruposRelevantes: ["idoso-destreinado", "obesidade-grave", "diabetes-tipo-2"],
+    gruposRelevantes: ["idoso-destreinado", "obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3", "diabetes-tipo-2"],
     modalidadesUteis: ["m-musculacao", "m-combinado", "m-caminhada"],
     comoAplicar: [
       "Na sessão seguinte, pergunte: “Como ficou o cansaço nas 24–48h depois do treino?”",
@@ -249,7 +249,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     comoInterpretar:
       "Boa recuperação abre espaço para progressão; recuperação ruim sugere manter ou reduzir.",
     seAlterado: "Recuperação insuficiente recorrente sugere regressão temporária da carga.",
-    gruposRelevantes: ["idoso-destreinado", "obesidade-grave"],
+    gruposRelevantes: ["idoso-destreinado", "obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3"],
     modalidadesUteis: ["m-musculacao", "m-combinado"],
     comoAplicar: [
       "No início da sessão, pergunte: “De 0 a 10, quão recuperado você chegou hoje?”",
@@ -268,7 +268,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Consistência costuma valer mais que intensidade nas fases iniciais; baixa adesão pede simplificar o plano.",
     seAlterado:
       "Queda de adesão sugere reduzir barreiras (tempo, complexidade, deslocamento) antes de aumentar carga.",
-    gruposRelevantes: ["obesidade-grave", "idoso-destreinado", "diabetes-tipo-2", "hipertensao"],
+    gruposRelevantes: ["obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3", "idoso-destreinado", "diabetes-tipo-2", "hipertensao-estagio-1", "hipertensao-estagio-2"],
     modalidadesUteis: ["m-caminhada", "m-hidro", "m-musculacao"],
     comoAplicar: [
       "Combine com o aluno uma meta semanal realista (ex.: 2–3 sessões).",
@@ -291,7 +291,7 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Aumentos pequenos e graduais tendem a ser mais prudentes que saltos grandes de volume.",
     seAlterado:
       "Sintomas ou fadiga ao subir volume sugerem estabilizar antes de progredir novamente.",
-    gruposRelevantes: ["idoso-destreinado", "obesidade-grave", "dor-lombar-inespecifica"],
+    gruposRelevantes: ["idoso-destreinado", "obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3", "dor-lombar-inespecifica"],
     modalidadesUteis: ["m-caminhada", "m-bike", "m-musculacao", "m-combinado"],
     comoAplicar: [
       "Some os minutos de todas as sessões da semana (a ficha de adesão ajuda).",

@@ -219,7 +219,7 @@ export const populacoesCautela: Record<string, PopulacaoCautela[]> = {
     {
       perfil: "Pós-operatório recente de quadril",
       orientacao:
-        "A extensão terminal carregada pede progressão conforme o protocolo cirúrgico. Comece sem carga externa, respeite a amplitude liberada e progrida com aval da equipe de reabilitação.",
+        "A extensão terminal carregada pede progressão conforme o protocolo cirúrgico. Comece sem carga externa, respeite a amplitude liberada e progrida com aval da equipe de fisioterapia.",
     },
     {
       perfil: "Retinopatia diabética proliferativa (ou pós-laser recente)",
@@ -248,7 +248,7 @@ export const populacoesCautela: Record<string, PopulacaoCautela[]> = {
     {
       perfil: "Artroplastia de joelho ou quadril",
       orientacao:
-        "A amplitude e a carga toleradas variam com o tipo de prótese e o tempo de cirurgia. Adapte profundidade e apoio conforme a orientação da equipe de reabilitação antes de progressões com carga.",
+        "A amplitude e a carga toleradas variam com o tipo de prótese e o tempo de cirurgia. Adapte profundidade e apoio conforme a orientação da equipe de fisioterapia antes de progressões com carga.",
     },
   ],
 
@@ -426,7 +426,7 @@ export const populacoesCautela: Record<string, PopulacaoCautela[]> = {
     {
       perfil: "Prótese de quadril com precauções de flexão",
       orientacao:
-        "O topo da pedalada pode ultrapassar a flexão de quadril permitida. Suba o banco para reduzir o pico de flexão e confirme a amplitude liberada com a equipe de reabilitação.",
+        "O topo da pedalada pode ultrapassar a flexão de quadril permitida. Suba o banco para reduzir o pico de flexão e confirme a amplitude liberada com a equipe de fisioterapia.",
     },
   ],
 
@@ -493,7 +493,7 @@ export const populacoesCautela: Record<string, PopulacaoCautela[]> = {
     {
       perfil: "Prótese de quadril recente com precauções de flexão",
       orientacao:
-        "Assentos baixos levam a flexão de quadril além do permitido. Use assento alto (quadril acima da linha dos joelhos) e reduza a altura apenas com liberação da equipe de reabilitação.",
+        "Assentos baixos levam a flexão de quadril além do permitido. Use assento alto (quadril acima da linha dos joelhos) e reduza a altura apenas com liberação da equipe de fisioterapia.",
     },
     {
       perfil: "Artrose de joelho com dor na subida",
@@ -599,7 +599,7 @@ export const populacoesCautela: Record<string, PopulacaoCautela[]> = {
     {
       perfil: "Pós-operatório de ombro em fase inicial",
       orientacao:
-        "O elástico é ferramenta comum de reabilitação, mas a fase importa. Siga a resistência e a amplitude definidas pelo fisioterapeuta e não antecipe progressões por conta própria.",
+        "O elástico é ferramenta comum na fisioterapia, mas a fase importa. Siga a resistência e a amplitude definidas pelo fisioterapeuta e não antecipe progressões por conta própria.",
     },
     {
       perfil: "Equilíbrio limitado na posição em pé",
@@ -623,7 +623,7 @@ export const populacoesCautela: Record<string, PopulacaoCautela[]> = {
     {
       perfil: "Pós-operatório ou ruptura recente do tendão calcâneo",
       orientacao:
-        "A progressão de flexão plantar carregada segue protocolo rígido de reabilitação. Reintroduza somente conforme a fase liberada pela equipe, começando bilateral, no solo e sem carga extra.",
+        "A progressão de flexão plantar carregada segue protocolo rígido de fisioterapia. Reintroduza somente conforme a fase liberada pela equipe, começando bilateral, no solo e sem carga extra.",
     },
     {
       perfil: "Fascite plantar dolorosa",

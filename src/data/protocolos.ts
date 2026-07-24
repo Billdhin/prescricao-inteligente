@@ -22,7 +22,7 @@ export type ProtocoloCategoria =
   | "Força"
   | "Resistência muscular"
   | "Idoso e autonomia"
-  | "Reabilitação e retorno";
+  | "Retorno e reintrodução de carga";
 
 export interface ProtocoloItem {
   slug: string;
@@ -522,7 +522,7 @@ export const protocolos: Protocolo[] = [
     id: "idoso-autonomia",
     titulo: "Força, equilíbrio e autonomia",
     categoria: "Idoso e autonomia",
-    objetivo: "Reabilitação/retorno",
+    objetivo: "Retorno ao treino",
     nivelIndicado: "Iniciante",
     publico: "Pessoa idosa ou destreinada com foco em autonomia, marcha e prevenção de quedas.",
     tone: "success",
@@ -543,12 +543,12 @@ export const protocolos: Protocolo[] = [
     cautelas: ["Garantir apoio disponível nos exercícios em pé.", "Progredir devagar, priorizando técnica e equilíbrio."],
   },
 
-  /* ============================ REABILITAÇÃO E RETORNO ============================ */
+  /* ============================ RETORNO E REINTRODUÇÃO DE CARGA ============================ */
   {
     id: "retorno-joelho",
     titulo: "Retorno pós-lesão de joelho",
-    categoria: "Reabilitação e retorno",
-    objetivo: "Reabilitação/retorno",
+    categoria: "Retorno e reintrodução de carga",
+    objetivo: "Retorno ao treino",
     nivelIndicado: "Iniciante",
     publico: "Aluno liberado por profissional de saúde para carga leve após lesão de joelho.",
     tone: "warning",
@@ -576,7 +576,7 @@ export const PROTOCOLO_CATEGORIAS: ProtocoloCategoria[] = [
   "Força",
   "Resistência muscular",
   "Idoso e autonomia",
-  "Reabilitação e retorno",
+  "Retorno e reintrodução de carga",
 ];
 
 /** Metadados de cada categoria para a navegação em dois níveis. */
@@ -587,7 +587,7 @@ export const PROTOCOLO_CATEGORIA_META: Record<ProtocoloCategoria, { descricao: s
   Força: { descricao: "Força por padrão de movimento, em baixas repetições.", icon: "Zap", tone: "success" },
   "Resistência muscular": { descricao: "Condicionamento local e trabalho poupando articulações.", icon: "Repeat", tone: "warning" },
   "Idoso e autonomia": { descricao: "Força, equilíbrio e funcionalidade para a vida diária.", icon: "HeartPulse", tone: "success" },
-  "Reabilitação e retorno": { descricao: "Reintrodução de carga após lesão, liberada por profissional de saúde.", icon: "ShieldCheck", tone: "warning" },
+  "Retorno e reintrodução de carga": { descricao: "Reintrodução de carga após lesão, liberada por profissional de saúde.", icon: "ShieldCheck", tone: "warning" },
 };
 
 export function getProtocolo(id: string) {

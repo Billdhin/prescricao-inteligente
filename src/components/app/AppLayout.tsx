@@ -170,7 +170,7 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
   // Ele descreve o primeiro aluno (condição, objetivo, nível), o sistema cria esse
   // aluno de verdade e o larga na tela dele com a Linha do cuidado apontando o
   // primeiro passo (avaliar). Ensina o fluxo do cuidado, não os botões.
-  const [caso, setCaso] = React.useState({ grupo: "hipertensao", objetivo: "Emagrecimento", nivel: "Iniciante" });
+  const [caso, setCaso] = React.useState({ grupo: "hipertensao-estagio-1", objetivo: "Emagrecimento", nivel: "Iniciante" });
 
   const finish = () => {
     localStorage.setItem("pi-onboarded", "1");

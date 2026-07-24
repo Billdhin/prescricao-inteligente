@@ -570,9 +570,20 @@ export const useAlunos = create<AlunosState>()(
     // v12: nasce a coleção `sessaoFeedbacks` (PSE + duração medida + recado da sessão,
     //      base do lado "como o aluno sentiu"). Aditivo: quem vem de versão anterior
     //      começa com a lista vazia; nada do que já existe é tocado.
+    // v13: o objetivo "Reabilitação/retorno" foi renomeado para "Retorno ao treino"
+    //      (a palavra "Reabilitação" saiu do produto). Remapeia o valor persistido em
+    //      Aluno.objetivo, PlanoTreino.objetivo e Prescricao.answers.objetivo; todo o
+    //      resto é preservado (migrate por merge).
+    // v14: obesidade e hipertensão foram fragmentadas por NÍVEL. O slug único
+    //      "obesidade-grave" virou grau I/II/III e "hipertensao" virou estágio 1/2.
+    //      Remapeia todo slug morto em Aluno.grupoEspecial/condicoesAtencao/
+    //      sugestoesDispensadas, PlanoTreino.grupoEspecial e Liberacao.grupoSlug:
+    //      obesidade recalcula pelo IMC da última avaliação (fallback conservador
+    //      obesidade-grau-1 quando não há IMC) e hipertensão pela última PA (fallback
+    //      hipertensao-estagio-1 sem PA). Nenhum registro pode apontar para slug morto.
     {
       name: "pi-alunos",
-      version: 12,
+      version: 14,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -583,6 +594,57 @@ export const useAlunos = create<AlunosState>()(
             prescricoes: seedPrescricoes,
           } as unknown as AlunosState;
         }
+        // v13: renomeação do objetivo (a palavra "Reabilitação" saiu do produto).
+        const remapObjetivo = (o: unknown): unknown =>
+          o === "Reabilitação/retorno" ? "Retorno ao treino" : o;
+
+        // v14: obesidade/hipertensão por NÍVEL. Recalcula o slug pelo dado medido na
+        // ÚLTIMA avaliação do aluno; sem o dado, cai no fallback conservador (grau 1 /
+        // estágio 1), documentado. Um grupo persistido nunca vira slug de encaminhamento:
+        // o teto do mapeamento é grau III / estágio 2 (o mais conservador que É grupo).
+        const avaliacoesV14 = Array.isArray(p.avaliacoes) ? p.avaliacoes : [];
+        type MedidasV14 = {
+          imc?: number; peso?: number; altura?: number;
+          pressaoSistolica?: number; pressaoDiastolica?: number;
+        };
+        const ultimaMedidaDe = (alunoId?: string): MedidasV14 | undefined =>
+          !alunoId
+            ? undefined
+            : (avaliacoesV14
+                .filter((a) => a?.alunoId === alunoId)
+                .sort((a, b) => (b?.data ?? 0) - (a?.data ?? 0))[0]?.medidas as MedidasV14 | undefined);
+        const imcDe = (med?: MedidasV14): number | undefined =>
+          typeof med?.imc === "number"
+            ? med.imc
+            : typeof med?.peso === "number" && typeof med?.altura === "number" && med.altura > 0
+              ? med.peso / (med.altura / 100) ** 2
+              : undefined;
+        const grauPorImc = (imc?: number): string =>
+          typeof imc !== "number" ? "obesidade-grau-1" : imc >= 40 ? "obesidade-grau-3" : imc >= 35 ? "obesidade-grau-2" : "obesidade-grau-1";
+        const estagioPorPa = (sis?: number, dia?: number): string => {
+          const s = typeof sis === "number" ? sis : -1;
+          const d = typeof dia === "number" ? dia : -1;
+          if (s < 0 && d < 0) return "hipertensao-estagio-1"; // fallback conservador (sem PA)
+          return s >= 160 || d >= 100 ? "hipertensao-estagio-2" : "hipertensao-estagio-1";
+        };
+        // Remapeia UM slug: só age nos dois slugs mortos; o resto passa intacto.
+        const remapGrupo = (slug: unknown, alunoId?: string): unknown => {
+          if (slug !== "obesidade-grave" && slug !== "hipertensao") return slug;
+          const med = ultimaMedidaDe(alunoId);
+          return slug === "obesidade-grave"
+            ? grauPorImc(imcDe(med))
+            : estagioPorPa(med?.pressaoSistolica, med?.pressaoDiastolica);
+        };
+        // Remapeia uma LISTA de slugs (condicoesAtencao/sugestoesDispensadas), sem duplicar.
+        const remapGrupos = (slugs: unknown, alunoId?: string): string[] | undefined => {
+          if (!Array.isArray(slugs)) return undefined;
+          const out: string[] = [];
+          for (const s of slugs) {
+            const novo = remapGrupo(s, alunoId) as string;
+            if (!out.includes(novo)) out.push(novo);
+          }
+          return out;
+        };
         const MAQUINAS_AEROBICAS = ["Esteira", "Bicicleta ergométrica", "Elíptico"];
         const normalizaEquip = (eqs: string[] | undefined): string[] => {
           let out = Array.isArray(eqs) ? [...eqs] : [];
@@ -602,28 +664,56 @@ export const useAlunos = create<AlunosState>()(
             const merged = s ? { ...s, ...a } : a;
             return {
               ...merged,
+              // v13: objetivo renomeado ("Reabilitação/retorno" → "Retorno ao treino").
+              objetivo: remapObjetivo(merged.objetivo) as Aluno["objetivo"],
               equipamentos: normalizaEquip(merged.equipamentos),
               // v6: assume que o aluno está no nível desde o cadastro, se não houver registro
               nivelDesde: merged.nivelDesde ?? merged.criadoEm,
               // v7: restrições string[] legadas → modelo estruturado
               restricoes: migrarRestricoesLegado(merged.restricoes),
+              // v14: grupo principal por nível (obesidade grau / hipertensão estágio).
+              grupoEspecial: remapGrupo(merged.grupoEspecial, merged.id) as string | undefined,
               // v11: condicoesAtencao virou string[] (grupos adicionais). Blobs antigos
               // podiam trazer uma string livre (nunca era slug de grupo): normaliza para
               // array, descartando o texto legado que não classificava nada.
-              condicoesAtencao: Array.isArray((merged as { condicoesAtencao?: unknown }).condicoesAtencao)
-                ? (merged as { condicoesAtencao?: string[] }).condicoesAtencao
-                : undefined,
+              // v14: remapeia os slugs mortos (obesidade-grave/hipertensao) por nível.
+              condicoesAtencao: remapGrupos(
+                (merged as { condicoesAtencao?: unknown }).condicoesAtencao,
+                merged.id,
+              ),
+              // v14: idem para as sugestões que o profissional dispensou (não reexibir).
+              sugestoesDispensadas: remapGrupos(
+                (merged as { sugestoesDispensadas?: unknown }).sugestoesDispensadas,
+                merged.id,
+              ),
             };
           }),
           avaliacoes: Array.isArray(p.avaliacoes) ? p.avaliacoes : seedAvaliacoes,
           // v7: as answers salvas guardavam restricoes string[]: migra o rastro do cálculo
           prescricoes: (Array.isArray(p.prescricoes) ? p.prescricoes : seedPrescricoes).map((pr) => ({
             ...pr,
-            answers: { ...pr.answers, restricoes: migrarRestricoesLegado(pr.answers?.restricoes) },
+            // v13: objetivo renomeado no rastro do cálculo salvo.
+            answers: {
+              ...pr.answers,
+              objetivo: remapObjetivo(pr.answers?.objetivo) as Prescricao["answers"]["objetivo"],
+              restricoes: migrarRestricoesLegado(pr.answers?.restricoes),
+            },
           })),
-          liberacoes: Array.isArray(p.liberacoes) ? p.liberacoes : [],
+          // v14: o semáforo salvo guardava o grupo; remapeia o slug morto por nível
+          // (usa a última avaliação do aluno; historial nunca fica com slug morto).
+          liberacoes: (Array.isArray(p.liberacoes) ? p.liberacoes : []).map((l) => ({
+            ...l,
+            grupoSlug: remapGrupo(l.grupoSlug, l.alunoId) as string,
+          })),
           // v8: coleção nova; quem vem de versão anterior começa sem planos.
-          planos: Array.isArray(p.planos) ? p.planos : [],
+          // v13: remapeia o objetivo renomeado nos planos já salvos.
+          // v14: remapeia o grupoEspecial do plano por nível (o rotuloAluno impresso é
+          // o mesmo por condição, então o texto já salvo do plano segue coerente).
+          planos: (Array.isArray(p.planos) ? p.planos : []).map((pl) => ({
+            ...pl,
+            objetivo: remapObjetivo(pl.objetivo) as PlanoTreino["objetivo"],
+            grupoEspecial: remapGrupo(pl.grupoEspecial, pl.alunoId) as string | undefined,
+          })),
           // v9: execuções do aluno (base da autorregulação). Aditivo.
           execucoes: Array.isArray(p.execucoes) ? p.execucoes : [],
           // v12: feedback da sessão (PSE + duração + recado). Aditivo.

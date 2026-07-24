@@ -54,7 +54,8 @@ export const referencias: Referencia[] = [
     titulo: "Diretrizes Brasileiras de Hipertensão Arterial – 2020",
     fonte: "Arquivos Brasileiros de Cardiologia (Sociedade Brasileira de Cardiologia)",
     ano: 2021,
-    nota: "Base dos limites prudentes de pressão arterial pré-sessão e da recomendação de evitar apneia/Valsalva.",
+    doi: "10.36660/abc.20201238",
+    nota: "Diretriz da SBC. Classificação da pressão arterial de consultório em adultos: hipertensão estágio 1 de 140 a 159 por 90 a 99 mmHg; estágio 2 de 160 a 179 por 100 a 109 mmHg; estágio 3 a partir de 180 por 110 mmHg; abaixo de 140 por 90 mmHg não caracteriza hipertensão de consultório. O maior valor, sistólico ou diastólico, define o estágio. Base dos cortes de estágio usados no classificador e no semáforo, dos limites prudentes de pressão pré-sessão por estágio e da recomendação de evitar apneia e manobra de Valsalva. A partir de 180 por 110 mmHg a orientação é adiar a sessão e recomendar avaliação ou liberação médica, não prescrever treino.",
   },
   {
     id: "pescatello-2004",

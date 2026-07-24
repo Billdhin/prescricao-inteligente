@@ -4,7 +4,7 @@
  *
  * Princípios, herdados das regras do produto:
  * - Linguagem PRUDENTE e NÃO diagnóstica: dor/sensibilidade/limitação/insegurança, nunca
- *   "você tem lesão/tendinite/artrose" nem "este exercício trata/reabilita". A ferramenta
+ *   "você tem lesão/tendinite/artrose" nem "este exercício trata a lesão". A ferramenta
  *   APOIA a decisão do profissional habilitado; não é fisioterapia.
  * - Nada de número biomecânico inventado. Onde a decisão precisa de carga articular fina,
  *   o motor lê as demandas JÁ MEDIDAS (Demanda lombar/joelho/ombro, Requisito de

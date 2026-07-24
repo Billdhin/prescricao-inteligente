@@ -19,6 +19,8 @@ import { OBJETIVOS } from "../src/lib/gps/engine";
 import type { GpsObjetivo } from "../src/lib/gps/engine";
 import type { Macrociclo } from "../src/data/periodizacao";
 import type { Nivel } from "../src/data/types";
+import { montarEvolucaoHtml } from "../src/lib/exportEvolucao";
+import type { Aluno, Avaliacao } from "../src/data/alunos";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
 const erros: string[] = [];
@@ -79,10 +81,41 @@ if (!amostra.titulo.includes(specialGroups[0].rotuloAluno)) {
   erros.push(`o título do plano de grupo deixou de citar o programa ("${specialGroups[0].rotuloAluno}"); a checagem acima ficaria vazia.`);
 }
 
+/* A tabela de evolução também pode ir para a mão do aluno. O PDF nunca imprime o
+   rótulo clínico do grupo: quando o aluno tem grupo, mostra o `rotuloAluno`. Aqui
+   geramos o documento para cada grupo e conferimos que o nome clínico NÃO vaza e
+   que o programa (rotuloAluno) aparece de fato (senão a regra valeria por vazio). */
+const avaliacoesFake: Avaliacao[] = [
+  { id: "e1", alunoId: "aluno-check", data: 1_600_000_000_000, medidas: { peso: 82, imc: 28, percentualGordura: 30, cintura: 98 } },
+  { id: "e2", alunoId: "aluno-check", data: 1_610_000_000_000, medidas: { peso: 79, imc: 27, percentualGordura: 28, cintura: 94 } },
+];
+let docsEvolucao = 0;
+for (const grupo of specialGroups) {
+  // Mesmo critério do laço acima: se o programa cita a própria condição, não há
+  // como distinguir, e é decisão do conteúdo do grupo, não deste guardrail.
+  if (grupo.rotuloAluno.toLowerCase().includes(grupo.nome.toLowerCase())) continue;
+  const aluno = { id: "aluno-check", nome: "Aluno de Teste", grupoEspecial: grupo.slug } as Aluno;
+  const html = montarEvolucaoHtml({ aluno, avaliacoes: avaliacoesFake, profissional: "Profissional de Teste" });
+  docsEvolucao++;
+  const alvo = html.toLowerCase();
+  if (alvo.includes(grupo.nome.toLowerCase())) {
+    erros.push(
+      `rótulo clínico "${grupo.nome}" na tabela de evolução em PDF (grupo ${grupo.slug}); use "${grupo.rotuloAluno}".`,
+    );
+  }
+  if (!html.includes(grupo.rotuloAluno)) {
+    erros.push(
+      `a tabela de evolução deixou de imprimir o programa ("${grupo.rotuloAluno}") do grupo ${grupo.slug}; a checagem acima ficaria vazia.`,
+    );
+  }
+}
+
 if (erros.length) {
   console.error(`\n[check:documentos] ${erros.length} problema(s):\n`);
   for (const e of erros) console.error(`  - ${e}`);
   console.error("");
   process.exit(1);
 }
-console.log(`[check:documentos] ok: ${planos} planos de grupo especial, nenhum rótulo clínico no texto que vai para o papel.`);
+console.log(
+  `[check:documentos] ok: ${planos} planos de grupo especial e ${docsEvolucao} tabelas de evolução, nenhum rótulo clínico no texto que vai para o papel.`,
+);

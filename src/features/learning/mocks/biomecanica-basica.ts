@@ -22,7 +22,7 @@ const forcas = deepLesson({
   special: [
     "Treino com trenó e arrasto: a superfície muda a resistência tanto quanto a carga.",
     "Exercícios na água: a resistência vem do meio, não do peso; a velocidade define a carga.",
-    "Reabilitação: ambientes de menor resistência (água, deslizamento) permitem começar com menos exigência.",
+    "Retorno ao treino: ambientes de menor resistência (água, deslizamento) permitem começar com menos exigência.",
   ],
   mistake: {
     mistake: "Analisar a dificuldade de um exercício só pela carga, ignorando atrito, superfície e reação do solo.",
@@ -128,7 +128,7 @@ const torqueBasico = deepLesson({
   apply: "Entenda que a exigência muda com o ângulo porque o braço de momento muda, mesmo com a carga fixa. O ponto de maior torque costuma ser o trecho mais exigente. Responder à abertura: com o antebraço paralelo ao chão, o braço de momento do peso é máximo, gerando o maior torque; no início e no fim, o braço é menor e o exercício fica mais fácil.",
   special: [
     "Progressão: mudar o ângulo ou o equipamento altera onde está o pico de torque e a dificuldade.",
-    "Reabilitação: trabalhar em ângulos de menor torque reduz a exigência para começar com segurança.",
+    "Retorno ao treino: trabalhar em ângulos de menor torque reduz a exigência para começar com segurança.",
     "Seleção de exercícios: saber onde está o pico de torque ajuda a combinar exercícios com picos diferentes.",
   ],
   mistake: {

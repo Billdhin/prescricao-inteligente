@@ -45,29 +45,94 @@ const simNao = (
   { valor: "nao", rotulo: "Não", cor: corNao, acao: corNao !== "verde" ? acaoProblema : undefined },
 ];
 
+/**
+ * Checklist de obesidade por GRAU (I/II/III). A estrutura é a mesma; a conduta fica
+ * progressivamente mais conservadora conforme o grau sobe (teto de esforço menor no
+ * grau III). Cortes de grau: seidell-flegal-1997 e who-imc-2004.
+ */
+function mkObesidadeSemaforo(slug: string, grau: 1 | 2 | 3): ChecklistSemaforo {
+  const pseTeto = grau === 3 ? 3 : 4; // grau III adota teto de esforço menor
+  return {
+    grupoSlug: slug,
+    itens: [
+      {
+        id: "dispneia-repouso",
+        pergunta: "Há falta de ar em repouso ou mal-estar/dor no peito agora?",
+        porque: "Dispneia em repouso não é ponto de partida de sessão: é sinal de investigação.",
+        opcoes: simNao("vermelho", "verde", "Não inicie e oriente avaliação médica antes de retomar."),
+        refs: ["acsm-getp11"],
+      },
+      {
+        id: "dor-articular",
+        pergunta: "Dor articular (joelho/lombar) hoje, de 0 a 10?",
+        porque: "A dor do dia decide o impacto tolerável: a modalidade se adapta ao corpo, não o contrário.",
+        opcoes: [
+          { valor: "leve", rotulo: "0–3 (leve)", cor: "verde" },
+          {
+            valor: "moderada",
+            rotulo: "4–6 (moderada)",
+            cor: "amarelo",
+            acao:
+              grau === 1
+                ? "Reduza volume e prefira baixo impacto (bike, meio aquático); reavalie a dor ao final."
+                : "Migre para baixo impacto (bike, meio aquático) e reduza volume; reavalie a dor ao final.",
+          },
+          {
+            valor: "alta",
+            rotulo: "7–10 (intensa)",
+            cor: "vermelho",
+            acao: "Não carregue essa articulação hoje; considere sessão só de mobilidade/aquático e reavaliação.",
+          },
+        ],
+        refs: ["oarsi-2019", "acr-2019"],
+      },
+      {
+        id: "sono-hidratacao",
+        pergunta: "Dormiu razoavelmente e está hidratado hoje?",
+        porque: "Sono ruim + desidratação derrubam a tolerância: dose menor rende mais que insistência.",
+        opcoes: [
+          { valor: "sim", rotulo: "Sim", cor: "verde" },
+          {
+            valor: "nao",
+            rotulo: "Não",
+            cor: "amarelo",
+            acao: `Reduza a dose da sessão (PSE ≤${pseTeto}, menos blocos) e priorize completar com conforto.`,
+          },
+        ],
+      },
+    ],
+  };
+}
+
 export const semaforos: ChecklistSemaforo[] = [
-  /* ------------------------------ HIPERTENSÃO ----------------------------- */
+  /* ------------------------- HIPERTENSÃO ESTÁGIO 1 ------------------------ */
   {
-    grupoSlug: "hipertensao",
+    grupoSlug: "hipertensao-estagio-1",
     itens: [
       {
         id: "pa-repouso",
         pergunta: "Pressão arterial de repouso medida agora (após ~5 min sentado)",
         porque:
-          "O ponto de partida do dia define se o esforço é prudente. Valores muito elevados em repouso pedem adiar a sessão.",
+          "O ponto de partida do dia define se o esforço é prudente. No estágio 1, subir de faixa em repouso pede adiar a sessão.",
         opcoes: [
           { valor: "ok", rotulo: "Abaixo de 140/90 mmHg", cor: "verde" },
           {
-            valor: "moderada",
-            rotulo: "Entre 140/90 e 159/104 mmHg",
+            valor: "estagio1",
+            rotulo: "140/90 a 159/99 mmHg (estágio 1)",
             cor: "amarelo",
-            acao: "Sessão leve: reduza intensidade, evite isometrias e monitore PSE; remeça a PA após o aquecimento.",
+            acao: "Sessão leve: reduza intensidade, evite isometrias e apneia, monitore PSE; remeça a PA após o aquecimento.",
           },
           {
-            valor: "alta",
-            rotulo: "160/105 mmHg ou acima",
+            valor: "estagio2",
+            rotulo: "160/100 a 179/109 mmHg (acima do habitual)",
             cor: "vermelho",
-            acao: "Não inicie a sessão hoje. Oriente remedir em repouso e procurar o médico se persistir.",
+            acao: "Não inicie a sessão hoje. Oriente remedir em repouso e, se persistir, procurar avaliação médica.",
+          },
+          {
+            valor: "crise",
+            rotulo: "180/110 mmHg ou acima",
+            cor: "vermelho",
+            acao: "Não inicie. Pressão muito elevada: oriente remedir em repouso e procurar avaliação ou liberação médica antes de retomar.",
           },
           {
             valor: "sem-medida",
@@ -118,6 +183,93 @@ export const semaforos: ChecklistSemaforo[] = [
             rotulo: "Não",
             cor: "amarelo",
             acao: "Trabalhe apenas em intensidade leve, sem esforços máximos, e condicione a progressão à liberação médica.",
+          },
+        ],
+        refs: ["acsm-getp11", "warburton-2011"],
+      },
+    ],
+  },
+
+  /* ------------------------- HIPERTENSÃO ESTÁGIO 2 ------------------------ */
+  // Mesmo checklist, cortes de PA e liberação mais conservadores: a linha de base
+  // do estágio 2 já é mais alta e a liberação médica formal é gate (não apenas guia).
+  {
+    grupoSlug: "hipertensao-estagio-2",
+    itens: [
+      {
+        id: "pa-repouso",
+        pergunta: "Pressão arterial de repouso medida agora (após ~5 min sentado)",
+        porque:
+          "No estágio 2 a linha de base é mais alta: só treine com a PA mais baixa do dia; a própria faixa habitual do estágio pede adiar.",
+        opcoes: [
+          { valor: "ok", rotulo: "Abaixo de 140/90 mmHg (bem controlada hoje)", cor: "verde" },
+          {
+            valor: "estagio1",
+            rotulo: "140/90 a 159/99 mmHg",
+            cor: "amarelo",
+            acao: "Sessão leve e vigiada: reduza intensidade, evite isometrias e apneia, monitore PSE e sintomas; remeça a PA após o aquecimento.",
+          },
+          {
+            valor: "estagio2",
+            rotulo: "160/100 a 179/109 mmHg (estágio 2 habitual)",
+            cor: "vermelho",
+            acao: "Não inicie a sessão hoje. Na hipertensão estágio 2, remeça em repouso e só treine com a PA mais baixa; se persistir, avaliação médica.",
+          },
+          {
+            valor: "crise",
+            rotulo: "180/110 mmHg ou acima",
+            cor: "vermelho",
+            acao: "Não inicie. Pressão muito elevada: oriente remedir em repouso e procurar avaliação ou liberação médica antes de retomar.",
+          },
+          {
+            valor: "sem-medida",
+            rotulo: "Não foi possível medir",
+            cor: "amarelo",
+            acao: "Sem medida do dia no estágio 2: mantenha esforço leve (PSE ≤3), sem apneia, e observe sinais durante toda a sessão.",
+          },
+        ],
+        refs: ["sbc-2020", "acsm-getp11"],
+      },
+      {
+        id: "sintomas",
+        pergunta: "Apresenta agora dor de cabeça intensa, tontura, dor no peito ou visão turva?",
+        porque: "Sintomas ativos mudam o dia: não é dia de treinar, é dia de investigar.",
+        opcoes: simNao("vermelho", "verde", "Interrompa o atendimento e oriente avaliação médica antes de retomar."),
+        refs: ["sbc-2020"],
+      },
+      {
+        id: "medicacao",
+        pergunta: "Tomou a medicação anti-hipertensiva habitual hoje (se prescrita)?",
+        porque: "Sem a medicação do dia, a resposta pressórica ao esforço fica menos previsível, ainda mais no estágio 2.",
+        opcoes: [
+          { valor: "sim", rotulo: "Sim", cor: "verde" },
+          {
+            valor: "nao",
+            rotulo: "Não",
+            cor: "vermelho",
+            acao: "No estágio 2, sem a medicação do dia não inicie: remarque ou trabalhe só após remedir a PA e confirmar que está mais baixa.",
+          },
+          { valor: "na", rotulo: "Não usa medicação", cor: "verde" },
+        ],
+        refs: ["pescatello-2004"],
+      },
+      {
+        id: "autorizacao",
+        pergunta: "Há liberação/avaliação médica válida para exercício?",
+        porque: "No estágio 2 a liberação médica formal é gate: a pressão de base mais alta pede lastro clínico antes de treinar.",
+        opcoes: [
+          { valor: "sim", rotulo: "Sim, em dia", cor: "verde" },
+          {
+            valor: "vencida",
+            rotulo: "Sim, mas antiga (>12 meses)",
+            cor: "amarelo",
+            acao: "Prossiga apenas em intensidade leve e oriente atualizar a avaliação médica com prioridade.",
+          },
+          {
+            valor: "nao",
+            rotulo: "Não",
+            cor: "vermelho",
+            acao: "Na hipertensão estágio 2, condicione a sessão à liberação médica formal; sem ela, não inicie hoje.",
           },
         ],
         refs: ["acsm-getp11", "warburton-2011"],
@@ -189,54 +341,12 @@ export const semaforos: ChecklistSemaforo[] = [
     ],
   },
 
-  /* --------------------------- OBESIDADE GRAVE ---------------------------- */
-  {
-    grupoSlug: "obesidade-grave",
-    itens: [
-      {
-        id: "dispneia-repouso",
-        pergunta: "Há falta de ar em repouso ou mal-estar/dor no peito agora?",
-        porque: "Dispneia em repouso não é ponto de partida de sessão: é sinal de investigação.",
-        opcoes: simNao("vermelho", "verde", "Não inicie e oriente avaliação médica antes de retomar."),
-        refs: ["acsm-getp11"],
-      },
-      {
-        id: "dor-articular",
-        pergunta: "Dor articular (joelho/lombar) hoje, de 0 a 10?",
-        porque: "A dor do dia decide o impacto tolerável: a modalidade se adapta ao corpo, não o contrário.",
-        opcoes: [
-          { valor: "leve", rotulo: "0–3 (leve)", cor: "verde" },
-          {
-            valor: "moderada",
-            rotulo: "4–6 (moderada)",
-            cor: "amarelo",
-            acao: "Migre para baixo impacto (bike, meio aquático) e reduza volume; reavalie a dor ao final.",
-          },
-          {
-            valor: "alta",
-            rotulo: "7–10 (intensa)",
-            cor: "vermelho",
-            acao: "Não carregue essa articulação hoje; considere sessão só de mobilidade/aquático e reavaliação.",
-          },
-        ],
-        refs: ["oarsi-2019", "acr-2019"],
-      },
-      {
-        id: "sono-hidratacao",
-        pergunta: "Dormiu razoavelmente e está hidratado hoje?",
-        porque: "Sono ruim + desidratação derrubam a tolerância: dose menor rende mais que insistência.",
-        opcoes: [
-          { valor: "sim", rotulo: "Sim", cor: "verde" },
-          {
-            valor: "nao",
-            rotulo: "Não",
-            cor: "amarelo",
-            acao: "Reduza a dose da sessão (PSE ≤4, menos blocos) e priorize completar com conforto.",
-          },
-        ],
-      },
-    ],
-  },
+  /* -------------------- OBESIDADE GRAU I · II · III ----------------------- */
+  // Mesma estrutura por grau; a conduta fica mais conservadora do I ao III
+  // (ver mkObesidadeSemaforo, teto de esforço menor no grau III).
+  mkObesidadeSemaforo("obesidade-grau-1", 1),
+  mkObesidadeSemaforo("obesidade-grau-2", 2),
+  mkObesidadeSemaforo("obesidade-grau-3", 3),
 
   /* -------------------------- IDOSO DESTREINADO --------------------------- */
   {

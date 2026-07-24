@@ -11,7 +11,7 @@ const exercisesRaw: Exercise[] = [
     nome: "Leg press 45°",
     grupoMuscular: "Membros inferiores",
     equipamento: "Máquina",
-    objetivo: ["Hipertrofia", "Força", "Aprendizado técnico", "Reabilitação/retorno", "Emagrecimento"],
+    objetivo: ["Hipertrofia", "Força", "Aprendizado técnico", "Retorno ao treino", "Emagrecimento"],
     nivel: "Iniciante",
     articulacaoPredominante: "Joelho e quadril",
     restricoes: [],
@@ -317,7 +317,7 @@ const exercisesRaw: Exercise[] = [
     nome: "Cadeira extensora",
     grupoMuscular: "Membros inferiores",
     equipamento: "Máquina",
-    objetivo: ["Hipertrofia", "Reabilitação/retorno", "Resistência muscular"],
+    objetivo: ["Hipertrofia", "Retorno ao treino", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Joelho",
     restricoes: [],
@@ -372,7 +372,7 @@ const exercisesRaw: Exercise[] = [
       biomecanica:
         "Extensão de joelho em cadeia cinética aberta, com os vastos como principais extensores. Na posição sentada, o quadril fica flexionado e encurta o reto femoral (músculo biarticular), reduzindo sua contribuição para a extensão do joelho em relação aos vastos. O braço de resistência é máximo perto da extensão terminal, onde cresce a força femoropatelar; por isso, a amplitude é ajustada ao conforto articular do aluno.",
       fisiologia:
-        "Como exercício monoarticular de cadeia aberta, concentra a tensão nos vastos com pouca fadiga sistêmica, o que permite acumular volume dirigido ao quadríceps mesmo quando padrões multiarticulares ainda geram desconforto. De forma aguda, o esforço localizado recruta o quadríceps de maneira progressiva ao longo da série; de forma crônica, o estímulo repetido de tensão mecânica tende a favorecer hipertrofia e ganho de força do grupo (Schoenfeld, 2010). Por atuar em ângulos e cargas facilmente ajustáveis, é um recurso útil para reforço específico após lesão ou cirurgia de joelho, conduzido pela equipe de reabilitação. Na prescrição, costuma entrar como complemento de volume ao trabalho de cadeia fechada, não como substituto dele (Escamilla et al., 1998).",
+        "Como exercício monoarticular de cadeia aberta, concentra a tensão nos vastos com pouca fadiga sistêmica, o que permite acumular volume dirigido ao quadríceps mesmo quando padrões multiarticulares ainda geram desconforto. De forma aguda, o esforço localizado recruta o quadríceps de maneira progressiva ao longo da série; de forma crônica, o estímulo repetido de tensão mecânica tende a favorecer hipertrofia e ganho de força do grupo (Schoenfeld, 2010). Por atuar em ângulos e cargas facilmente ajustáveis, é um recurso útil para reforço específico após lesão ou cirurgia de joelho, conduzido pela equipe de fisioterapia. Na prescrição, costuma entrar como complemento de volume ao trabalho de cadeia fechada, não como substituto dele (Escamilla et al., 1998).",
       prescricaoPratica: "Em geral, ajuste amplitude ao conforto e controle a fase excêntrica.",
     },
     trustLevel: "regra pedagógica",

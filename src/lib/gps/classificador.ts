@@ -28,6 +28,10 @@ export interface SugestaoGrupo {
   refId: string;
   /** de onde veio o dado que disparou a sugestão */
   fonte: "cadastro" | "avaliacao";
+  /** quando true, é uma RECOMENDAÇÃO DE ENCAMINHAMENTO (não um grupo de treino):
+   *  o dado medido pede avaliação/liberação médica antes de prescrever treino
+   *  (ex.: PA >= 180/110). Não deve virar grupo do aluno; a UI só informa. */
+  encaminhamento?: boolean;
 }
 
 /**
@@ -43,11 +47,45 @@ function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ",");
 }
 
-/** Grau da obesidade pelo IMC (estratificação convencional da OMS). */
-function grauObesidade(imc: number): string {
-  if (imc >= 40) return "Obesidade grau III";
-  if (imc >= 35) return "Obesidade grau II";
-  return "Obesidade grau I";
+/**
+ * Grau da obesidade pelo IMC (estratificação convencional da OMS): devolve o SLUG
+ * do grupo por grau, o rótulo honesto e o corte citável. Chamada só com IMC >= 30.
+ * Fonte do corte: seidell-flegal-1997 (reforçada por who-imc-2004).
+ */
+function grauObesidade(imc: number): { slug: string; rotulo: string; criterio: string } {
+  if (imc >= 40) return { slug: "obesidade-grau-3", rotulo: "Obesidade grau III", criterio: "IMC ≥ 40 kg/m²" };
+  if (imc >= 35) return { slug: "obesidade-grau-2", rotulo: "Obesidade grau II", criterio: "IMC 35 a 39,9 kg/m²" };
+  return { slug: "obesidade-grau-1", rotulo: "Obesidade grau I", criterio: "IMC 30 a 34,9 kg/m²" };
+}
+
+/**
+ * Estágio da hipertensão pela PA de consultório (Diretriz SBC 2020). O maior valor,
+ * sistólico ou diastólico, define o estágio. Devolve null quando nenhum dado de PA
+ * está presente ou quando a PA não caracteriza hipertensão (abaixo de 140/90).
+ *
+ * A partir de 180/110 mmHg NÃO vira grupo de treino: sinaliza ENCAMINHAMENTO
+ * (avaliação/liberação médica antes de qualquer prescrição). Regra do produto:
+ * PA muito elevada recomenda conduta de saúde, nunca sugestão de treino.
+ */
+function estagioHipertensao(
+  sis?: number,
+  dia?: number,
+): { slug: string; rotulo: string; criterio: string; encaminhamento?: boolean } | null {
+  const s = typeof sis === "number" ? sis : -1;
+  const d = typeof dia === "number" ? dia : -1;
+  if (s < 0 && d < 0) return null;
+  if (s >= 180 || d >= 110)
+    return {
+      slug: "encaminhamento-pa-elevada",
+      rotulo: "Pressão muito elevada: avaliação médica",
+      criterio: "PA sistólica ≥ 180 ou diastólica ≥ 110 mmHg (SBC 2020)",
+      encaminhamento: true,
+    };
+  if (s >= 160 || d >= 100)
+    return { slug: "hipertensao-estagio-2", rotulo: "Hipertensão estágio 2", criterio: "PA sistólica 160 a 179 ou diastólica 100 a 109 mmHg (SBC 2020)" };
+  if (s >= 140 || d >= 90)
+    return { slug: "hipertensao-estagio-1", rotulo: "Hipertensão estágio 1", criterio: "PA sistólica 140 a 159 ou diastólica 90 a 99 mmHg (SBC 2020)" };
+  return null;
 }
 
 /**
@@ -78,32 +116,36 @@ export function classificarGrupos(aluno: Aluno, avaliacoes: Avaliacao[]): Sugest
     .sort((a, b) => b.data - a.data)[0];
   const m = ultima?.medidas;
 
-  // --- IMC ≥ 30 → obesidade (com o grau real como rótulo honesto) ---
+  // --- IMC ≥ 30 → obesidade (com o GRAU real: grau I/II/III por faixa) ---
   const imc = m?.imc;
   if (typeof imc === "number" && imc >= 30) {
-    const rotulo = grauObesidade(imc);
+    const g = grauObesidade(imc);
     add({
-      grupoSlug: "obesidade-grave",
-      rotulo,
-      motivo: `IMC ${fmt(imc)} kg/m² na faixa de ${rotulo} (obesidade, IMC ≥ 30). Confirme o direcionamento.`,
-      criterio: "IMC ≥ 30 kg/m²",
+      grupoSlug: g.slug,
+      rotulo: g.rotulo,
+      motivo: `IMC ${fmt(imc)} kg/m² na faixa de ${g.rotulo}. Confirme o direcionamento.`,
+      criterio: g.criterio,
       refId: "seidell-flegal-1997",
       fonte: "avaliacao",
     });
   }
 
-  // --- PA sistólica ≥ 140 ou diastólica ≥ 90 → hipertensão ---
+  // --- PA → hipertensão por ESTÁGIO (1/2); ≥ 180/110 → encaminhamento, não treino ---
   const sis = m?.pressaoSistolica;
   const dia = m?.pressaoDiastolica;
-  if ((typeof sis === "number" && sis >= 140) || (typeof dia === "number" && dia >= 90)) {
+  const est = estagioHipertensao(sis, dia);
+  if (est) {
     const paTxt = `${typeof sis === "number" ? fmt(sis) : "-"}/${typeof dia === "number" ? fmt(dia) : "-"}`;
     add({
-      grupoSlug: "hipertensao",
-      rotulo: "Hipertensão",
-      motivo: `PA aferida ${paTxt} mmHg; confirme o diagnóstico e a liberação médica.`,
-      criterio: "PA sistólica ≥ 140 ou diastólica ≥ 90 mmHg",
+      grupoSlug: est.slug,
+      rotulo: est.rotulo,
+      motivo: est.encaminhamento
+        ? `PA aferida ${paTxt} mmHg, muito elevada. Não prescreva treino hoje; oriente avaliação ou liberação médica antes de retomar.`
+        : `PA aferida ${paTxt} mmHg na faixa de ${est.rotulo}. Confirme o diagnóstico e a liberação médica.`,
+      criterio: est.criterio,
       refId: "sbc-2020",
       fonte: "avaliacao",
+      encaminhamento: est.encaminhamento,
     });
   }
 

@@ -99,8 +99,8 @@ function escolherModelos(input: GerarPlanoInput): {
   const { objetivo, nivel, grupoEspecial } = input;
   const treinado = NIVEL_ORDEM[nivel] >= 1;
 
-  // Reabilitação/retorno ou grupo especial: progressão conservadora e previsível.
-  if (objetivo === "Reabilitação/retorno" || grupoEspecial) {
+  // Retorno ao treino ou grupo especial: progressão conservadora e previsível.
+  if (objetivo === "Retorno ao treino" || grupoEspecial) {
     return { principal: "linear", alternativa: "flexivel" };
   }
   // Iniciante: a progressão linear simples costuma bastar (a ondulatória não rende mais).
@@ -183,7 +183,7 @@ function montarSessoes(
   const sessoes: Sessao[] = [];
 
   // A variação diária só entra quando o modelo pede E o objetivo tem ênfases autoradas
-  // dentro da própria faixa. Emagrecimento e reabilitação não herdam repetições de força.
+  // dentro da própria faixa. Emagrecimento e retorno ao treino não herdam repetições de força.
   const ondula = modelo === "ondulatoria" || modelo === "flexivel";
   const enfases = ondula ? faixa.enfases : undefined;
 

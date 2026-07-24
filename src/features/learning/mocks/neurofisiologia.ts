@@ -23,7 +23,7 @@ const unidadeMotora = deepLesson({
   special: [
     "Iniciantes: grande parte do ganho inicial de força é melhor uso das unidades motoras existentes.",
     "Idosos: o treino de força recupera capacidade de recrutamento, melhorando força e função.",
-    "Reabilitação: reativar o recrutamento é etapa inicial da recuperação de força após desuso.",
+    "Retorno ao treino: reativar o recrutamento é etapa inicial da recuperação de força após desuso.",
   ],
   mistake: {
     mistake: "Assumir que só o tamanho do músculo determina a força, ignorando a contribuição neural do recrutamento.",
@@ -70,7 +70,7 @@ const recrutamento = deepLesson({
   apply: "Para recrutar as unidades motoras maiores (importantes para força e hipertrofia), o estímulo precisa exigir força alta: carga elevada, ou séries levadas para perto da falha com carga moderada. Responder à abertura: ambos os caminhos elevam a demanda de força, recrutando as unidades maiores; por isso proximidade da falha importa quando a carga é moderada.",
   special: [
     "Hipertrofia com cargas moderadas: chegar perto da falha garante o recrutamento das unidades maiores.",
-    "Reabilitação com cargas leves: mais repetições até fadiga podem recrutar unidades maiores quando a carga alta não é possível.",
+    "Retorno com cargas leves: mais repetições até fadiga podem recrutar unidades maiores quando a carga alta não é possível.",
     "Idosos: estímulos que exigem força suficiente preservam as unidades maiores, ligadas à potência e à função.",
   ],
   mistake: {

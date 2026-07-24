@@ -28,7 +28,7 @@ import {
   CalendarCheck,
   Wallet,
 } from "lucide-react";
-import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, TokenRotulado, Eyebrow } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, LinhaDeTokens, TokenRotulado, Eyebrow } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, prescricaoAplicadaEm } from "@/lib/store";
 import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
 import { ExecucaoPanel, PseBadge } from "@/components/treino/ExecucaoPanel";
@@ -49,15 +49,17 @@ import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Prescricao, Liberacao } from "@/data/alunos";
-import type { SessaoFeedback } from "@/data/execucao";
+import type { SessaoFeedback, Execucao } from "@/data/execucao";
+import { nomeDoBloco, tokensDoBloco } from "@/components/student/blocoRegistro";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { getModelo, rotuloMeso, semanaAtual, mesocicloAtual, proximaReavaliacao, type PlanoTreino } from "@/data/periodizacao";
+import { getModelo, rotuloMeso, semanaAtual, mesocicloAtual, proximaReavaliacao, sessoesDeHoje, sessaoDeHojeIndex, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
-import { EvolucaoMini } from "@/components/app/EvolucaoMini";
+import { EvolucaoMini, TabelaEvolucao } from "@/components/app/EvolucaoMini";
+import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
 import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -434,13 +436,31 @@ export function AlunoDetail() {
       {aba === "avaliacoes" && (
         <div role="tabpanel" id="aba-painel-avaliacoes" aria-labelledby="aba-tab-avaliacoes" className="space-y-4">
           <Card className="p-5 md:p-6">
-            <div className="mb-3 flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-analysis-tint text-analysis">
-                <Activity className="h-4 w-4" />
-              </span>
-              <h2 className="font-display text-lg font-bold text-ink">Evolução</h2>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-lg bg-analysis-tint text-analysis">
+                  <Activity className="h-4 w-4" />
+                </span>
+                <h2 className="font-display text-lg font-bold text-ink">Evolução</h2>
+              </div>
+              {avals.length > 0 && (
+                <button
+                  onClick={() =>
+                    exportEvolucaoPDF({ aluno, avaliacoes: avals, profissional: profNome, cref: cref || undefined, marca: marcaDoUsuario(usuario) })
+                  }
+                  className={buttonClasses("secondary", "sm")}
+                >
+                  <FileDown className="h-4 w-4" /> Exportar evolução (PDF)
+                </button>
+              )}
             </div>
             <EvolucaoMini avals={avals} />
+            {avals.length > 0 && (
+              <div className="mt-5 border-t border-border pt-4">
+                <h3 className="mb-3 text-sm font-semibold text-ink-2">Tabela comparativa por data</h3>
+                <TabelaEvolucao avals={avals} />
+              </div>
+            )}
           </Card>
 
           <Card className="p-5 md:p-6">
@@ -525,7 +545,7 @@ export function AlunoDetail() {
 
             <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
 
-            <PlanoCard aluno={aluno} planos={planosDoAluno} podeTreino={podeTreino} onAvaliar={() => setAvaliar(true)} onIrParaSemaforo={irParaSemaforo} />
+            <PlanoCard aluno={aluno} planos={planosDoAluno} execucoes={execucoesDoAluno} podeTreino={podeTreino} onAvaliar={() => setAvaliar(true)} onIrParaSemaforo={irParaSemaforo} />
 
             <div id="execucao-card" className="scroll-mt-24">
               <ExecucaoPanel
@@ -1473,12 +1493,15 @@ function JornadaCard({
 function PlanoCard({
   aluno,
   planos,
+  execucoes,
   podeTreino,
   onAvaliar,
   onIrParaSemaforo,
 }: {
   aluno: Aluno;
   planos: PlanoTreino[];
+  /** execuções do aluno: derivam a "sessão de hoje" com os MESMOS helpers do app do aluno */
+  execucoes: Execucao[];
   /** gate duro do trilho: sem avaliação, "Montar treino" fica desabilitado */
   podeTreino: { ok: boolean; motivo?: string };
   onAvaliar: () => void;
@@ -1527,6 +1550,19 @@ function PlanoCard({
   const modelo = getModelo(ativo.modeloId);
   const pct = Math.round((semana / ativo.semanas) * 100);
 
+  // Treino de hoje: a MESMA sessão que o app do aluno abre (helpers puros compartilhados,
+  // nunca reimplementados), para o profissional e o aluno nunca divergirem sobre "hoje".
+  const sessaoHoje = sessoesDeHoje(ativo)[sessaoDeHojeIndex(ativo, execucoes)];
+
+  // Escalas de monitoramento acopladas ao treino do dia: com grupo, seguem a fase da jornada
+  // (mesma derivação do JornadaCard); sem grupo, fallback seguro por objetivo (id real, nunca
+  // inventado).
+  const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
+  const faseAluno = (Math.min(4, Math.max(1, aluno.faseJornada ?? 1))) as 1 | 2 | 3 | 4;
+  const idsParametros = grupo
+    ? (grupo.fases[faseAluno - 1] ?? grupo.fases[0]).parametros
+    : parametrosPadraoTreino(ativo.objetivo);
+
   return (
     <Card id="treino-card" className="scroll-mt-24 p-5 md:p-6">
       <div className="mb-3 flex items-center justify-between">
@@ -1574,6 +1610,57 @@ function PlanoCard({
             {meso.capacidades.length > 0 && (
               <div className="mt-2">
                 <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Treino de hoje: o conteúdo da sessão que o aluno abre hoje, aqui mesmo no perfil,
+            sem precisar da prévia ou do editor. O semáforo é recomendado, não bloqueia isto. */}
+        {sessaoHoje && (
+          <div className="mt-3 rounded-lg border border-border p-3">
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <Dumbbell className="h-3.5 w-3.5 text-primary" />
+              <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Treino de hoje</p>
+            </div>
+            <p className="text-sm font-semibold text-ink">{sessaoHoje.nome}</p>
+            {sessaoHoje.foco && <p className="text-xs text-ink-3">{sessaoHoje.foco}</p>}
+            {sessaoHoje.blocos.length > 0 && (
+              <ul className="mt-2 overflow-hidden rounded-xl border border-border">
+                {sessaoHoje.blocos.map((b) => {
+                  const tokens = tokensDoBloco(b);
+                  return (
+                    <LinhaDeDose
+                      key={b.id}
+                      nome={nomeDoBloco(b)}
+                      icon={b.tipo === "aerobio" ? <HeartPulse className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
+                    >
+                      {tokens.length > 0 && (
+                        <LinhaDeTokens>
+                          {tokens.map((t) => (
+                            <TokenRotulado key={t.label} label={t.label} value={t.value} />
+                          ))}
+                        </LinhaDeTokens>
+                      )}
+                    </LinhaDeDose>
+                  );
+                })}
+              </ul>
+            )}
+            {/* Fecho de flexibilidade da sessão (onda F), quando o plano o traz. */}
+            {sessaoHoje.fecho && (
+              <div className="mt-2 rounded-lg border border-l-2 border-border border-l-primary bg-surface-soft p-2.5">
+                <p className="text-xs text-ink-2">{sessaoHoje.fecho}</p>
+              </div>
+            )}
+            {/* Escalas de monitoramento acopladas ao treino do dia (item 3): toque para ver
+                como aplicar, escala e ficha. */}
+            {idsParametros.length > 0 && (
+              <div className="mt-2.5 border-t border-border pt-2.5">
+                <p className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+                  Escalas para acompanhar hoje
+                </p>
+                <ParametroPills ids={idsParametros} contexto={{ alunoNome: aluno.nome, objetivo: ativo.objetivo }} />
               </div>
             )}
           </div>

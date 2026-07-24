@@ -285,7 +285,7 @@ export const seedAlunos: Aluno[] = [
     iniciais: "CM",
     idade: 45,
     sexo: "M",
-    objetivo: "Reabilitação/retorno",
+    objetivo: "Retorno ao treino",
     nivel: "Iniciante",
     restricoes: [criarRestricao("joelho_dor")],
     equipamentos: ["Máquina", "Halter", "Peso corporal", "Esteira", "Bicicleta ergométrica", "Elíptico"],
@@ -376,7 +376,7 @@ export const seedPrescricoes: Prescricao[] = [
     data: dias(-70),
     titulo: "Retorno de joelho: carga controlada",
     answers: {
-      objetivo: "Reabilitação/retorno",
+      objetivo: "Retorno ao treino",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
       restricoes: [criarRestricao("joelho_dor")],

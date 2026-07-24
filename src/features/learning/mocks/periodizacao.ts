@@ -30,7 +30,7 @@ const especificidade = deepLesson({
   apply: "Antes de escolher métodos, defina o objetivo e garanta que a maior parte do estímulo aponte para ele. Responder à abertura: para ficar forte no agachamento, o treino precisa incluir agachar com carga progressiva e boas margens, não apenas circuitos leves. Variedade é útil, mas não pode diluir o estímulo específico do objetivo.",
   special: [
     "Idosos: se o objetivo é autonomia, priorize força e padrões do cotidiano (sentar e levantar, subir escada).",
-    "Reabilitação e retorno ao esporte: o estímulo se aproxima gradualmente das demandas específicas, conforme a tolerância.",
+    "Retorno ao esporte: o estímulo se aproxima gradualmente das demandas específicas, conforme a tolerância.",
     "Saúde geral: mesmo aqui, alinhar o estímulo aos ganhos desejados (aeróbio, força, mobilidade) organiza o plano.",
   ],
   mistake: {

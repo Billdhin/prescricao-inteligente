@@ -47,9 +47,41 @@ export interface GroupGpsRule extends GroupRuleInput {
 }
 
 export const groupGpsRules: Record<string, GroupGpsRule> = {
-  "obesidade-grave": {
-    slug: "obesidade-grave",
-    nome: "Obesidade grave / mórbida",
+  "obesidade-grau-1": {
+    slug: "obesidade-grau-1",
+    nome: "Obesidade grau I",
+    cuidados: [
+      "Impacto controlado com progressão gradual: caminhada e bicicleta toleradas, a musculação guiada entra como complemento.",
+      "Baixa tolerância inicial em quem vem de sedentarismo: sessões curtas, esforço leve a moderado por PSE e teste da fala.",
+      "Nas primeiras semanas, a adesão é a principal métrica de sucesso.",
+    ],
+    penalidades: [
+      {
+        metrica: "Demanda de joelho",
+        limite: 65,
+        motivo: "Alta demanda de joelho: em obesidade grau I ainda pede cautela articular cedo demais.",
+      },
+      {
+        metrica: "Demanda lombar",
+        limite: 65,
+        motivo: "Alta demanda lombar: cautela com sobrecarga axial neste perfil.",
+      },
+    ],
+    complexidadeMax: 60,
+    modProgressao: {
+      pseTeto: 7,
+      fatorIncremento: 0.6,
+      descargaCadaSemanas: 5,
+      motivo: "Impacto controlado e adesão antes da intensidade: progride em passos pequenos, guiado por PSE.",
+      cautela: true,
+      refId: ["donnelly-2009", "acsm-getp11"],
+    },
+    refs: ["donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997"],
+  },
+
+  "obesidade-grau-2": {
+    slug: "obesidade-grau-2",
+    nome: "Obesidade grau II",
     cuidados: [
       "Impacto e volume altos tendem a sobrecarregar joelhos e lombar: a base da semana são modalidades de baixo impacto; a musculação entra como complemento guiado.",
       "Dispneia e baixa tolerância inicial: sessões curtas, esforço leve, guiado por PSE e teste da fala.",
@@ -59,7 +91,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       {
         metrica: "Demanda de joelho",
         limite: 60,
-        motivo: "Alta demanda de joelho: em obesidade grave tende a gerar desconforto articular.",
+        motivo: "Alta demanda de joelho: em obesidade grau II tende a gerar desconforto articular.",
       },
       {
         metrica: "Demanda lombar",
@@ -76,12 +108,44 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["donnelly-2009", "acsm-getp11"],
     },
-    refs: ["donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997"],
+    refs: ["donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997", "who-imc-2004"],
   },
 
-  hipertensao: {
-    slug: "hipertensao",
-    nome: "Hipertensão arterial",
+  "obesidade-grau-3": {
+    slug: "obesidade-grau-3",
+    nome: "Obesidade grau III",
+    cuidados: [
+      "A base da semana é de baixo impacto (meio aquático ou bicicleta): impacto e volume altos sobrecarregam joelhos e lombar neste perfil.",
+      "Dispneia e baixa tolerância importantes: sessões curtas, esforço leve, guiado por PSE e teste da fala.",
+      "Nas primeiras semanas, completar a sessão e voltar (adesão) é a principal métrica de sucesso.",
+    ],
+    penalidades: [
+      {
+        metrica: "Demanda de joelho",
+        limite: 55,
+        motivo: "Alta demanda de joelho: em obesidade grau III tende a gerar desconforto articular importante.",
+      },
+      {
+        metrica: "Demanda lombar",
+        limite: 55,
+        motivo: "Alta demanda lombar: cautela reforçada com sobrecarga axial neste perfil.",
+      },
+    ],
+    complexidadeMax: 50,
+    modProgressao: {
+      pseTeto: 6,
+      fatorIncremento: 0.4,
+      descargaCadaSemanas: 3,
+      motivo: "Tolerância baixa e sobrecarga articular acentuadas: progride nos menores passos, guiado por PSE, com descarga frequente.",
+      cautela: true,
+      refId: ["donnelly-2009", "acsm-getp11"],
+    },
+    refs: ["donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997", "who-imc-2004"],
+  },
+
+  "hipertensao-estagio-1": {
+    slug: "hipertensao-estagio-1",
+    nome: "Hipertensão estágio 1",
     cuidados: [
       "Evitar apneia (manobra de Valsalva) e isometrias pesadas: respiração contínua em todas as séries.",
       "Preferir cargas leves a moderadas com progressão gradual; evitar esforços máximos.",
@@ -91,7 +155,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       {
         metrica: "Demanda lombar",
         limite: 65,
-        motivo: "Carga axial elevada favorece apneia/Valsalva: cautela em hipertensão.",
+        motivo: "Carga axial elevada favorece apneia/Valsalva: cautela em hipertensão estágio 1.",
       },
       {
         metrica: "Complexidade técnica",
@@ -103,6 +167,38 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       pseTeto: 6,
       fatorIncremento: 0.6,
       motivo: "Evitar esforços máximos e apneia (Valsalva): progride devagar e com teto de esforço mais baixo.",
+      cautela: true,
+      refId: ["pescatello-2004", "sbc-2020"],
+    },
+    refs: ["sbc-2020", "pescatello-2004", "acsm-getp11"],
+  },
+
+  "hipertensao-estagio-2": {
+    slug: "hipertensao-estagio-2",
+    nome: "Hipertensão estágio 2",
+    cuidados: [
+      "Base de pressão mais alta que o estágio 1: respiração contínua obrigatória, sem isometrias pesadas nem apneia.",
+      "Cargas leves com progressão condicionada à liberação médica formal; a PA aferida antes da sessão orienta o dia.",
+      "Alguns anti-hipertensivos alteram a resposta da FC: PSE e teste da fala tendem a ser guias mais confiáveis.",
+    ],
+    penalidades: [
+      {
+        metrica: "Demanda lombar",
+        limite: 60,
+        motivo: "Carga axial elevada favorece apneia/Valsalva: cautela reforçada em hipertensão estágio 2.",
+      },
+      {
+        metrica: "Complexidade técnica",
+        limite: 70,
+        motivo: "Exercícios de alta exigência técnica tendem a elevar a resposta pressórica sob carga, mais crítica no estágio 2.",
+      },
+    ],
+    complexidadeMax: 60,
+    modProgressao: {
+      pseTeto: 5,
+      fatorIncremento: 0.5,
+      descargaCadaSemanas: 4,
+      motivo: "Pressão de base mais alta e resposta mais reativa: progride nos menores passos, com teto de esforço mais baixo e descarga frequente.",
       cautela: true,
       refId: ["pescatello-2004", "sbc-2020"],
     },

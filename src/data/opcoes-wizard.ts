@@ -11,7 +11,7 @@ export const DESCRICAO_OPCAO: Record<string, string> = {
   Hipertrofia: "Aumentar massa muscular: volume e tensão progressiva no músculo-alvo.",
   Força: "Elevar a força máxima: cargas mais altas, menos repetições e técnica sólida.",
   "Resistência muscular": "Sustentar o esforço por mais tempo: mais repetições com carga leve a moderada.",
-  "Reabilitação/retorno": "Retomar após lesão ou pausa longa: baixo impacto e progressão conservadora.",
+  "Retorno ao treino": "Retomar após lesão ou pausa longa: baixo impacto e progressão conservadora.",
   "Aprendizado técnico": "Dominar o padrão de movimento antes de progredir carga.",
 
   // Prioridades (Emagrecimento)

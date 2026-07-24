@@ -176,7 +176,7 @@ const consumo = deepLesson({
   special: [
     "Aptidão aeróbia: melhorar a **economia** e a capacidade de **sustentar VO2 alto** é o alvo do treino de resistência.",
     "Iniciantes: **pequenas progressões** de intensidade e duração já elevam a demanda com segurança.",
-    "Reabilitação: aumentar a demanda **de forma gradual** respeita a tolerância e a recuperação.",
+    "Retorno ao treino: aumentar a demanda **de forma gradual** respeita a tolerância e a recuperação.",
   ],
   mistake: {
     mistake: "Progredir a demanda aeróbia **bruscamente**, elevando muito intensidade e volume de uma vez.",

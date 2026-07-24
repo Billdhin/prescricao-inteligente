@@ -15,7 +15,7 @@ export type GpsObjetivo =
   | "Hipertrofia"
   | "Força"
   | "Resistência muscular"
-  | "Reabilitação/retorno"
+  | "Retorno ao treino"
   | "Aprendizado técnico";
 
 /** Prioridade física quando o objetivo é Emagrecimento (substitui músculo-alvo). */
@@ -384,7 +384,7 @@ export const OBJETIVOS: GpsObjetivo[] = [
   "Hipertrofia",
   "Força",
   "Resistência muscular",
-  "Reabilitação/retorno",
+  "Retorno ao treino",
   "Aprendizado técnico",
 ];
 

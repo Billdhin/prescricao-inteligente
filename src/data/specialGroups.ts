@@ -160,12 +160,96 @@ function mkCondicao(s: {
 
 const specialGroupsBase: SpecialGroup[] = [
   {
-    slug: "obesidade-grave",
-    nome: "Obesidade grave / mórbida",
+    ...mkCondicao({
+      slug: "obesidade-grau-1",
+      nome: "Obesidade grau I",
+      rotuloAluno: "Recondicionamento de baixo impacto",
+      descricaoCurta: "Obesidade grau I (IMC 30 a 34,9): boa margem para progredir, com impacto controlado e adesão.",
+      perfil:
+        "Pessoa com obesidade grau I (IMC 30 a 34,9), muitas vezes destreinada, que tolera volume moderado mas se beneficia de começar com impacto controlado para proteger as articulações e sustentar a adesão.",
+      objetivos: [
+        "Criar tolerância ao exercício e hábito (adesão)",
+        "Melhorar a capacidade cardiorrespiratória com impacto controlado",
+        "Ganhar força e função para o dia a dia",
+        "Reduzir o risco de abandono",
+      ],
+      riscosCautelas: [
+        "Sobrecarga articular com impacto ou volume altos cedo demais",
+        "Baixa tolerância inicial em quem vem de sedentarismo",
+        "Risco cardiometabólico associado: exige contexto e cautela",
+      ],
+      sinaisAlerta: [
+        "Dor torácica, tontura, palidez ou mal-estar, interromper",
+        "Dispneia desproporcional que não cede com a pausa, interromper e reavaliar",
+        "Dor articular aguda e crescente, ajustar ou trocar a modalidade",
+      ],
+      modIndicadas: ["m-caminhada", "m-bike", "m-musculacao", "m-mobilidade"],
+      modCautela: ["m-funcional", "m-combinado"],
+      parametros: ["p-rpe", "p-fala", "p-dor", "p-adesao", "p-recuperacao"],
+      comoComecar:
+        "Impacto controlado com progressão gradual: caminhada e bicicleta, força em máquinas guiada, esforço leve a moderado por PSE e teste da fala. A adesão vem antes da intensidade.",
+      errosComuns: [
+        "Começar com muito volume ou impacto e gerar dor e abandono",
+        "Exigir intensidade alta cedo demais",
+        "Depender só da FC quando ela não é confiável",
+        "Ignorar a adesão como principal métrica inicial",
+      ],
+      complexidade: "Moderada",
+      premium: false,
+    }),
+    casosRelacionados: ["caso-obesidade-inicio"],
+  },
+
+  {
+    ...mkCondicao({
+      slug: "obesidade-grau-2",
+      nome: "Obesidade grau II",
+      rotuloAluno: "Recondicionamento de baixo impacto",
+      descricaoCurta: "Obesidade grau II (IMC 35 a 39,9): tolerância menor a impacto; base de baixo impacto e força guiada.",
+      perfil:
+        "Pessoa com obesidade grau II (IMC 35 a 39,9), em geral destreinada, com menor tolerância a impacto e a volume que o grau I. Desconforto articular é comum e a adesão é sensível.",
+      objetivos: [
+        "Criar tolerância ao exercício e hábito (adesão)",
+        "Melhorar a capacidade cardiorrespiratória com baixo impacto",
+        "Ganhar força e função para o dia a dia",
+        "Reduzir o desconforto articular e o risco de abandono",
+      ],
+      riscosCautelas: [
+        "Sobrecarga articular com impacto ou volume altos",
+        "Dispneia e baixa tolerância inicial",
+        "Termorregulação e conforto no ambiente",
+        "Risco cardiovascular associado: exige contexto e cautela",
+      ],
+      sinaisAlerta: [
+        "Dor torácica, tontura, palidez ou mal-estar, interromper",
+        "Dispneia desproporcional que não cede com a pausa, interromper e reavaliar",
+        "Dor articular aguda e crescente, ajustar ou trocar a modalidade",
+        "Sinais que fogem do esperado, pode indicar necessidade de encaminhamento",
+      ],
+      modIndicadas: ["m-bike", "m-hidro", "m-musculacao", "m-mobilidade"],
+      modCautela: ["m-caminhada", "m-funcional", "m-combinado"],
+      parametros: ["p-rpe", "p-fala", "p-dispneia", "p-dor", "p-adesao", "p-recuperacao"],
+      comoComecar:
+        "Baixo impacto (bicicleta ou meio aquático), sessões curtas e frequentes, esforço leve guiado por PSE e teste da fala. A força em máquinas entra como complemento guiado. O objetivo inicial é completar a sessão e voltar.",
+      errosComuns: [
+        "Começar com muito volume ou impacto e gerar dor e abandono",
+        "Exigir intensidade alta cedo demais",
+        "Depender só da FC, pouco confiável na água ou sem equipamento",
+        "Ignorar a adesão como principal métrica inicial",
+      ],
+      complexidade: "Alta",
+      premium: false,
+    }),
+    casosRelacionados: ["caso-obesidade-inicio"],
+  },
+
+  {
+    slug: "obesidade-grau-3",
+    nome: "Obesidade grau III",
     rotuloAluno: "Recondicionamento de baixo impacto",
-    descricaoCurta: "Baixa tolerância a impacto e a volume; prioridade em adesão e segurança.",
+    descricaoCurta: "Obesidade grau III (IMC 40 ou mais): prioridade máxima em baixo impacto, segurança e adesão.",
     perfil:
-      "Pessoa com obesidade grave, em geral destreinada, que costuma cansar rápido, tolera pouco tempo de caminhada e pode ter desconforto articular. Autoconfiança e adesão são pontos sensíveis.",
+      "Pessoa com obesidade grau III (IMC 40 ou mais), em geral destreinada, que costuma cansar rápido, tolera pouco tempo de caminhada e pode ter desconforto articular importante. Autoconfiança e adesão são pontos sensíveis.",
     objetivos: [
       "Criar tolerância ao exercício e hábito (adesão)",
       "Melhorar capacidade cardiorrespiratória com baixo impacto",
@@ -195,7 +279,7 @@ const specialGroupsBase: SpecialGroup[] = [
       "Depender só da FC, pouco confiável na água ou sem equipamento",
       "Ignorar a adesão como principal métrica inicial",
     ],
-    casosRelacionados: ["caso-obesidade-grave-inicio"],
+    casosRelacionados: ["caso-obesidade-inicio"],
     complexidade: "Alta",
     premium: false,
     fases: [
@@ -275,12 +359,12 @@ const specialGroupsBase: SpecialGroup[] = [
   },
 
   {
-    slug: "hipertensao",
-    nome: "Hipertensão",
+    slug: "hipertensao-estagio-1",
+    nome: "Hipertensão estágio 1",
     rotuloAluno: "Condicionamento com monitoramento da pressão",
-    descricaoCurta: "Aeróbio + força bem conduzidos; atenção à apneia e a sintomas.",
+    descricaoCurta: "Hipertensão estágio 1 (140 a 159 por 90 a 99 mmHg): aeróbio e força bem conduzidos, com progressão gradual.",
     perfil:
-      "Pessoa com hipertensão (frequentemente também sedentária), que se beneficia de exercício regular bem dosado. Muitas vezes usa medicação que altera a resposta de frequência cardíaca.",
+      "Pessoa com hipertensão estágio 1 (pressão de 140 a 159 por 90 a 99 mmHg), frequentemente também sedentária, que se beneficia de exercício regular bem dosado. Muitas vezes usa medicação que altera a resposta de frequência cardíaca.",
     objetivos: [
       "Melhorar aptidão cardiorrespiratória",
       "Ganhar força com técnica segura",
@@ -359,6 +443,48 @@ const specialGroupsBase: SpecialGroup[] = [
         justificativa: "Regularidade de longo prazo é o que sustenta os benefícios.",
       },
     ],
+  },
+
+  {
+    ...mkCondicao({
+      slug: "hipertensao-estagio-2",
+      nome: "Hipertensão estágio 2",
+      rotuloAluno: "Condicionamento com monitoramento da pressão",
+      descricaoCurta: "Hipertensão estágio 2 (160 a 179 por 100 a 109 mmHg): mesma base, mais conservadora, com liberação médica em dia.",
+      perfil:
+        "Pessoa com hipertensão estágio 2 (pressão de 160 a 179 por 100 a 109 mmHg), com nível de base mais alto que o estágio 1. O exercício regular ajuda, mas a intensidade, a respiração e o monitoramento pedem ainda mais cautela, e a liberação médica formal é prioridade.",
+      objetivos: [
+        "Melhorar a aptidão cardiorrespiratória com esforço bem dosado",
+        "Ganhar força com técnica segura e respiração contínua",
+        "Criar consistência de longo prazo",
+        "Apoiar o controle pressórico junto da conduta de saúde",
+      ],
+      riscosCautelas: [
+        "Manobra de Valsalva (apneia) na força",
+        "Resposta pressórica mais reativa ao esforço",
+        "FC pouco confiável com alguns anti-hipertensivos",
+        "Progressão condicionada à liberação médica",
+      ],
+      sinaisAlerta: [
+        "Dor torácica, tontura, cefaleia intensa, visão turva, interromper",
+        "Mal-estar desproporcional, interromper e reavaliar",
+        "Sintomas recorrentes, pode indicar necessidade de encaminhamento",
+      ],
+      modIndicadas: ["m-caminhada", "m-bike", "m-musculacao", "m-eliptico"],
+      modCautela: ["m-funcional", "m-combinado"],
+      parametros: ["p-rpe", "p-fala", "p-pa", "p-fc", "p-adesao"],
+      comoComecar:
+        "Intensidade leve guiada por PSE e teste da fala, força em máquinas com respiração contínua (evitar apneia) e a PA aferida antes da sessão. A progressão fica condicionada à liberação médica formal.",
+      errosComuns: [
+        "Progredir a intensidade sem liberação médica em dia",
+        "Permitir apneia ou Valsalva nas séries",
+        "Confiar apenas na FC sob medicação",
+        "Focar só em força e esquecer o aeróbio",
+      ],
+      complexidade: "Alta",
+      premium: false,
+    }),
+    casosRelacionados: ["caso-hipertensao-monitoramento"],
   },
 
   {
@@ -974,7 +1100,9 @@ const condicoesAdicionais: SpecialGroup[] = [
 
 /** Ordem de apresentação no seletor de prescrição (aproxima a lista sugerida). */
 const ORDEM_CONDICOES = [
-  "iniciante-sedentario", "retorno-inatividade", "obesidade-grave", "hipertensao",
+  "iniciante-sedentario", "retorno-inatividade",
+  "obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3",
+  "hipertensao-estagio-1", "hipertensao-estagio-2",
   "pre-diabetes", "diabetes-tipo-2", "sindrome-metabolica", "dislipidemia", "esteatose-hepatica",
   "idoso-destreinado", "sarcopenia", "osteoporose", "osteoartrite-joelho", "dor-lombar-inespecifica",
   "gestante", "pos-parto", "climaterio", "apneia-sono", "asma-controlada", "ansiedade-depressao",
@@ -1019,18 +1147,45 @@ export interface TeoriaGrupo {
 }
 
 export const teoriaGrupo: Record<string, TeoriaGrupo> = {
-  "obesidade-grave": {
+  "obesidade-grau-1": {
     oQueE:
-      "Excesso de massa corporal que aumenta a sobrecarga mecânica sobre as articulações e a demanda cardiorrespiratória para uma mesma tarefa. O foco do exercício é função, saúde e adesão, não apenas a perda de peso.",
+      "Obesidade grau I (IMC de 30 a 34,9). Excesso de massa corporal que aumenta a sobrecarga mecânica sobre as articulações e a demanda cardiorrespiratória para uma mesma tarefa. No grau I ainda há boa margem para progredir; o foco do exercício é função, saúde e adesão, não apenas a perda de peso.",
     fisiologia:
       "O maior peso eleva o gasto e a percepção de esforço em atividades com sustentação do corpo (caminhar, subir), e aumenta a carga em joelhos e coluna. A termorregulação e a dispneia limitam o volume inicial. Modalidades sem impacto (água, bicicleta) reduzem a carga articular mantendo o estímulo aeróbio.",
     evidencia:
       "As diretrizes posicionam o volume aeróbio como eixo do gasto energético, com a força preservando massa magra; a progressão prioriza adesão e tolerância antes de intensidade. A resposta é individual e a conduta segue o profissional habilitado.",
-    refIds: ["donnelly-2009", "oms-2020", "garber-2011"],
+    refIds: ["seidell-flegal-1997", "who-imc-2004", "donnelly-2009", "oms-2020", "garber-2011"],
   },
-  hipertensao: {
+  "obesidade-grau-2": {
     oQueE:
-      "Pressão arterial de repouso persistentemente elevada. O exercício é aliado no controle pressórico, mas a intensidade, a respiração e o monitoramento pedem atenção.",
+      "Obesidade grau II (IMC de 35 a 39,9). O excesso de massa é maior e a tolerância a impacto e a volume tende a ser menor que no grau I, com desconforto articular mais comum. O foco segue sendo função, saúde e adesão, apoiado numa base de baixo impacto.",
+    fisiologia:
+      "O maior peso eleva o gasto e a percepção de esforço em atividades com sustentação do corpo (caminhar, subir), e aumenta a carga em joelhos e coluna. A termorregulação e a dispneia limitam o volume inicial. Modalidades sem impacto (água, bicicleta) reduzem a carga articular mantendo o estímulo aeróbio.",
+    evidencia:
+      "As diretrizes posicionam o volume aeróbio como eixo do gasto energético, com a força preservando massa magra; a progressão prioriza adesão e tolerância antes de intensidade. A resposta é individual e a conduta segue o profissional habilitado.",
+    refIds: ["seidell-flegal-1997", "who-imc-2004", "donnelly-2009", "oms-2020", "garber-2011"],
+  },
+  "obesidade-grau-3": {
+    oQueE:
+      "Obesidade grau III (IMC de 40 ou mais, também chamada mórbida). A sobrecarga mecânica e a limitação cardiorrespiratória são maiores; a prioridade é o baixo impacto, a segurança e a adesão. O foco do exercício é função e saúde, não apenas a perda de peso.",
+    fisiologia:
+      "O maior peso eleva o gasto e a percepção de esforço em atividades com sustentação do corpo (caminhar, subir), e aumenta a carga em joelhos e coluna. A termorregulação e a dispneia limitam o volume inicial. Modalidades sem impacto (água, bicicleta) reduzem a carga articular mantendo o estímulo aeróbio.",
+    evidencia:
+      "As diretrizes posicionam o volume aeróbio como eixo do gasto energético, com a força preservando massa magra; a progressão prioriza adesão e tolerância antes de intensidade. A resposta é individual e a conduta segue o profissional habilitado.",
+    refIds: ["seidell-flegal-1997", "who-imc-2004", "donnelly-2009", "oms-2020", "garber-2011"],
+  },
+  "hipertensao-estagio-1": {
+    oQueE:
+      "Hipertensão estágio 1 (pressão de consultório de 140 a 159 por 90 a 99 mmHg). Pressão arterial de repouso persistentemente elevada. O exercício é aliado no controle pressórico, mas a intensidade, a respiração e o monitoramento pedem atenção.",
+    fisiologia:
+      "No esforço, a pressão sistólica sobe com a intensidade; a manobra de Valsalva (prender a respiração) provoca picos pressóricos que convém evitar. Após sessões aeróbias há tendência de queda pressórica (hipotensão pós-exercício). Cargas leves a moderadas com respiração contínua são mais prudentes.",
+    evidencia:
+      "As diretrizes de cardiologia e os consensos de exercício e hipertensão apoiam o treino aeróbio e de força bem conduzidos, com respiração contínua e progressão gradual. A liberação, a medicação e os limites são conduta do profissional de saúde responsável.",
+    refIds: ["sbc-2020", "pescatello-2004", "acsm-getp11"],
+  },
+  "hipertensao-estagio-2": {
+    oQueE:
+      "Hipertensão estágio 2 (pressão de consultório de 160 a 179 por 100 a 109 mmHg). Nível de base mais alto que o estágio 1, com resposta pressórica ao esforço mais reativa. O exercício segue aliado, porém com progressão mais conservadora e liberação médica formal em dia. A partir de 180 por 110 mmHg a orientação é adiar a sessão e recomendar avaliação médica.",
     fisiologia:
       "No esforço, a pressão sistólica sobe com a intensidade; a manobra de Valsalva (prender a respiração) provoca picos pressóricos que convém evitar. Após sessões aeróbias há tendência de queda pressórica (hipotensão pós-exercício). Cargas leves a moderadas com respiração contínua são mais prudentes.",
     evidencia:

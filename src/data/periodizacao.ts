@@ -7,7 +7,7 @@
  *   diretrizes CITADAS (ACSM 2009, Garber 2011, Schoenfeld) como FAIXAS; onde a evidência é
  *   fraca, o texto declara. Cada faixa carrega o `refId` que a sustenta.
  * - Linguagem prudente e NÃO diagnóstica: a ferramenta APOIA a decisão do profissional
- *   habilitado, não prescreve nem reabilita. Sem travessão em texto visível.
+ *   habilitado, não substitui a conduta clínica do profissional de saúde. Sem travessão em texto visível.
  */
 
 import type { GpsObjetivo } from "@/lib/gps/engine";
@@ -753,8 +753,8 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     // Sem complementoAerobio: aqui o aeróbio é a BASE (montado em toda sessão), não complemento.
     flexibilidade: FLEX_FECHO,
   },
-  "Reabilitação/retorno": {
-    objetivo: "Reabilitação/retorno",
+  "Retorno ao treino": {
+    objetivo: "Retorno ao treino",
     capacidades: ["Tolerância à carga", "Amplitude confortável", "Controle e confiança"],
     tiposExercicio: ["Movimentos controlados e progressivos", "Baixo impacto no início"],
     series: { valor: "2 a 3", nota: "conforme tolerância" },
@@ -765,7 +765,7 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     parametros: ["p-rpe"],
     refIds: ["acsm-progressao-2009", "acsm-getp11"],
     ressalva:
-      "Retorno após lesão ou condição é conduta compartilhada com o profissional de saúde. A ferramenta apoia a progressão, não substitui liberação nem reabilitação.",
+      "Retorno após lesão ou condição é conduta compartilhada com o profissional de saúde. A ferramenta apoia a progressão do treino; não substitui a liberação nem a conduta clínica do profissional de saúde.",
     complementoAerobio: complementoAerobioPadrao(1),
     flexibilidade: FLEX_FECHO,
   },
@@ -788,4 +788,17 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
 
 export function getFaixa(objetivo: GpsObjetivo): FaixaObjetivo {
   return FAIXAS_TREINO[objetivo];
+}
+
+/**
+ * Escalas de monitoramento seguras para acoplar ao treino do dia quando o aluno NÃO tem
+ * grupo especial (com grupo, a fase da jornada já define os parâmetros). São ids reais de
+ * monitoringParameters, alinhados às faixas do objetivo; nunca um id inventado. O
+ * Emagrecimento acompanha frequência cardíaca, esforço e adesão (os mesmos de
+ * FAIXAS_TREINO.Emagrecimento.parametros); os demais objetivos guiam pelo esforço percebido
+ * (PSE), que é universal e não exige aparelho. Fonte única do fallback, para o perfil do
+ * aluno e o "treino do dia" do /gps nunca divergirem.
+ */
+export function parametrosPadraoTreino(objetivo: GpsObjetivo): string[] {
+  return objetivo === "Emagrecimento" ? ["p-fc", "p-rpe", "p-adesao"] : ["p-rpe"];
 }

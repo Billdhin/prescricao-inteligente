@@ -72,7 +72,7 @@ const casos: { campo: CampoFaixa; valor: string; objetivo: GpsObjetivo; nivel: N
   { campo: "intervalo", valor: "90 s", objetivo: "Hipertrofia", nivel: "Intermediário", avisa: false, porque: "90 s cabe em 1 a 2 min" },
   { campo: "intervalo", valor: "60 s", objetivo: "Resistência muscular", nivel: "Iniciante", avisa: false, porque: "'até 90 s' aceita menos" },
   { campo: "reps", valor: "20", objetivo: "Resistência muscular", nivel: "Iniciante", avisa: false, porque: "'acima de 15' aceita mais" },
-  { campo: "intervalo", valor: "confortável", objetivo: "Reabilitação/retorno", nivel: "Iniciante", avisa: false, porque: "sem número dos dois lados, não há o que comparar" },
+  { campo: "intervalo", valor: "confortável", objetivo: "Retorno ao treino", nivel: "Iniciante", avisa: false, porque: "sem número dos dois lados, não há o que comparar" },
 ];
 for (const c of casos) {
   const aviso = conferirFaixa(c.campo, c.valor, getFaixa(c.objetivo), c.nivel);

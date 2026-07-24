@@ -23,7 +23,7 @@ const musculosPorFuncao = deepLesson({
   special: [
     "Hipertrofia dirigida: escolher pela função garante treinar o músculo pretendido no papel de agonista.",
     "Estabilidade e core: reconhecer estabilizadores orienta o trabalho de anti-movimento.",
-    "Reabilitação: identificar o papel do músculo na tarefa orienta o fortalecimento seguro.",
+    "Retorno ao treino: identificar o papel do músculo na tarefa orienta o fortalecimento seguro.",
   ],
   mistake: {
     mistake: "Estudar músculos apenas por nome e localização, sem entender o papel deles nos movimentos treinados.",
@@ -69,7 +69,7 @@ const biarticulares = deepLesson({
   apply: "Use a posição das articulações para modular a participação de músculos biarticulares. Mudar o ângulo de uma articulação altera a força e a ênfase na outra. Responder à abertura: o isquiotibial, sendo biarticular, fica em desvantagem de comprimento quando encurtado em quadril e joelho ao mesmo tempo; ajustar a posição do quadril muda sua participação na flexão de joelho.",
   special: [
     "Seleção de exercícios: variar a posição do quadril muda a ênfase entre porções e entre biarticulares e monoarticulares.",
-    "Reabilitação: entender insuficiências ajuda a escolher posições seguras e eficazes.",
+    "Retorno ao treino: entender insuficiências ajuda a escolher posições seguras e eficazes.",
     "Cãibras e desconforto de biarticulares: a posição das duas articulações influencia; ajustar costuma ajudar.",
   ],
   mistake: {
@@ -116,7 +116,7 @@ const tiposArticulacao = deepLesson({
   apply: "Use a forma articular para orientar o que treinar e onde a amplitude tem limite natural. Articulações de muita mobilidade pedem variedade e controle; as de dobradiça, foco nas direções que permitem. Responder à abertura: o ombro é esférico e se beneficia de trabalho multidirecional; o cotovelo é dobradiça, então flexão e extensão são as ações que ele oferece.",
   special: [
     "Ombro: por ser muito móvel, pede trabalho de controle e estabilidade, não só amplitude.",
-    "Reabilitação: respeitar a forma articular evita buscar amplitudes que a articulação não oferece.",
+    "Retorno ao treino: respeitar a forma articular evita buscar amplitudes que a articulação não oferece.",
     "Idosos: manter amplitude funcional nas direções que a articulação permite tem valor no cotidiano.",
   ],
   mistake: {

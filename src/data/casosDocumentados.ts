@@ -31,7 +31,7 @@ export const casosDocumentados: CasoDocumentado[] = [
     buscaTipica: "treino para hipertenso",
     contexto:
       "Chegou com encaminhamento: hipertensão controlada com medicação, liberado pelo cardiologista para exercício. Sedentário há 10 anos, quer 'ganhar saúde' e tem medo de passar mal treinando.",
-    grupoSlug: "hipertensao",
+    grupoSlug: "hipertensao-estagio-1",
     fase: 1,
     answers: {
       objetivo: "Resistência muscular",
@@ -52,7 +52,7 @@ export const casosDocumentados: CasoDocumentado[] = [
     grupoSlug: "dor-lombar-inespecifica",
     fase: 1,
     answers: {
-      objetivo: "Reabilitação/retorno",
+      objetivo: "Retorno ao treino",
       grupoMuscular: "Core (tronco)",
       nivel: "Iniciante",
       restricoes: [criarRestricao("lombar_sensivel")],
@@ -62,12 +62,12 @@ export const casosDocumentados: CasoDocumentado[] = [
       "Como treinar SEM provocar a dor, e por que movimento (e não repouso) é o caminho apontado pelas diretrizes?",
   },
   {
-    slug: "obesidade-grave-joelho",
-    titulo: "Obesidade grave + joelho sensível, 38 anos",
+    slug: "obesidade-grau-3-joelho",
+    titulo: "Obesidade grau III + joelho sensível, 38 anos",
     buscaTipica: "treino para obeso com dor no joelho",
     contexto:
-      "IMC 42, cansa ao subir um lance de escada, joelhos reclamam na caminhada. Já desistiu de academia duas vezes porque 'o treino era pra outra pessoa'. A meta real da fase 1 é ele VOLTAR.",
-    grupoSlug: "obesidade-grave",
+      "IMC 42 (grau III), cansa ao subir um lance de escada, joelhos reclamam na caminhada. Já desistiu de academia duas vezes porque 'o treino era pra outra pessoa'. A meta real da fase 1 é ele VOLTAR.",
+    grupoSlug: "obesidade-grau-3",
     fase: 1,
     answers: {
       objetivo: "Emagrecimento",
@@ -126,7 +126,7 @@ export const casosDocumentados: CasoDocumentado[] = [
     grupoSlug: "idoso-destreinado",
     fase: 1,
     answers: {
-      objetivo: "Reabilitação/retorno",
+      objetivo: "Retorno ao treino",
       grupoMuscular: "Membros inferiores",
       nivel: "Iniciante",
       restricoes: [criarRestricao("mobilidade_limitada")],

@@ -67,7 +67,7 @@ const acoes = deepLesson({
   ],
   apply: "Antes de escolher um exercício, defina a ação articular que recruta o músculo-alvo. Isso evita escolher um movimento que não treina o que se quer. Responder à abertura: para enfatizar glúteos, escolha extensão de quadril (dobradiça, hip thrust); a extensão de joelho foca o quadríceps.",
   special: [
-    "Reabilitação: nomear a ação a fortalecer orienta a seleção segura dos exercícios.",
+    "Retorno ao treino: nomear a ação a fortalecer orienta a seleção segura dos exercícios.",
     "Hipertrofia dirigida: escolher pela ação garante que o exercício treine o músculo pretendido.",
     "Idosos: priorizar ações do cotidiano (extensão de quadril e joelho para levantar) tem valor funcional.",
   ],
@@ -115,7 +115,7 @@ const alavancas = deepLesson({
   ],
   apply: "Use o conceito de alavanca para entender por que a posição muda a dificuldade: afastar a resistência do eixo aumenta o braço de alavanca e a exigência. Responder à abertura: com o braço estendido, a distância do peso ao ombro é grande, aumentando o braço de resistência e o esforço; perto do corpo, o braço diminui e fica mais fácil.",
   special: [
-    "Reabilitação: aproximar a resistência do eixo reduz a exigência, útil para começar com segurança.",
+    "Retorno ao treino: aproximar a resistência do eixo reduz a exigência, útil para começar com segurança.",
     "Progressão: afastar a carga do eixo (braço mais estendido) aumenta a dificuldade sem mudar o peso.",
     "Idosos: entender alavancas ajuda a escolher posições mais seguras para as mesmas ações.",
   ],
@@ -165,7 +165,7 @@ const vantagem = deepLesson({
   apply: "Entenda que a dificuldade varia com o ângulo por causa da vantagem mecânica, e que o ponto mais difícil costuma ser onde o braço de resistência é maior em relação ao de força. Responder à abertura: o travamento no meio ocorre porque ali a vantagem mecânica é pior; é o ponto de aderência do movimento, o trecho mais exigente.",
   special: [
     "Progressão: exercícios e equipamentos com curvas de resistência diferentes alteram onde está o ponto mais difícil.",
-    "Reabilitação: escolher ângulos de melhor vantagem mecânica permite trabalhar com menos exigência no início.",
+    "Retorno ao treino: escolher ângulos de melhor vantagem mecânica permite trabalhar com menos exigência no início.",
     "Hipertrofia: variar a curva de resistência (peso livre, polia, elástico) muda onde o músculo é mais exigido.",
   ],
   mistake: {

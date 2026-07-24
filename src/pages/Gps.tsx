@@ -20,12 +20,13 @@ import {
   Target,
   CheckCircle2,
   Activity,
+  Dumbbell,
   SlidersHorizontal,
   CalendarRange,
   CalendarPlus,
   AlertTriangle,
 } from "lucide-react";
-import { Card, Pill, ScoreRing, SectionHeader, buttonClasses, Progress, TokenRotulado } from "@/components/ui/primitives";
+import { Card, Pill, ScoreRing, SectionHeader, buttonClasses, Progress, LinhaDeDose, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 import {
   rankExercises,
   OBJETIVOS,
@@ -64,7 +65,8 @@ import {
 } from "@/data/specialGroups";
 import { ParametroPills } from "@/components/special/SpecialUI";
 import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
-import type { PlanoTreino } from "@/data/periodizacao";
+import { nomeDoBloco, tokensDoBloco } from "@/components/student/blocoRegistro";
+import { sessoesDeHoje, sessaoDeHojeIndex, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
 import type { Prescricao } from "@/data/alunos";
 import { montarProntuario } from "@/lib/gps/prontuario";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
@@ -89,7 +91,7 @@ const SERIES_POR_OBJETIVO: Record<string, string> = {
   Hipertrofia: "3–4 séries · 8–12 reps",
   Força: "4–5 séries · 3–6 reps",
   "Resistência muscular": "2–3 séries · 15–20 reps",
-  "Reabilitação/retorno": "2–3 séries · 12–15 reps · carga leve",
+  "Retorno ao treino": "2–3 séries · 12–15 reps · carga leve",
   "Aprendizado técnico": "2–3 séries · 8–10 reps · foco na execução",
 };
 const seriesSugerida = (objetivo: string) => SERIES_POR_OBJETIVO[objetivo] ?? "3 séries · 10–12 reps";
@@ -189,6 +191,15 @@ export function Gps() {
   );
   const modoDia = params.get("modo") === "dia";
   const personalizarDia = modoDia && Boolean(planoAtivo);
+
+  // Sessão-alvo real do "treino do dia": a MESMA que o app do aluno abre (helpers puros
+  // compartilhados, nunca reimplementados). O banner mostra qual é a sessão e seus blocos
+  // antes do fim do fluxo, em vez de revelá-la só no AplicarNoTreinoDialog.
+  const sessaoAlvoDia = React.useMemo(() => {
+    if (!planoAtivo || !aluno) return undefined;
+    const exec = execucoes.filter((e) => e.alunoId === aluno.id);
+    return sessoesDeHoje(planoAtivo)[sessaoDeHojeIndex(planoAtivo, exec)];
+  }, [planoAtivo, aluno, execucoes]);
 
   // Última liberação do Semáforo aplicável (últimas 24h).
   // Com aluno, a pergunta é "ESTE aluno foi liberado hoje?": exigir também que o
@@ -409,14 +420,68 @@ export function Gps() {
       </div>
 
       {/* Enquadramento do "personalizar o treino do dia": o resultado não fica avulso,
-          ele personaliza a sessão desta semana do plano do aluno. */}
-      {personalizarDia && aluno && (
-        <Card tone="primary" className="flex flex-wrap items-center gap-3 p-4">
-          <CalendarRange className="h-5 w-5 shrink-0 text-primary" />
-          <p className="min-w-0 flex-1 text-sm text-ink-2">
-            <span className="font-semibold text-ink">Personalizando o treino do dia.</span> O resultado vai
-            personalizar a sessão desta semana do treino de {aluno.nome.split(" ")[0]}.
-          </p>
+          ele personaliza a sessão desta semana do plano do aluno. Mostra QUAL é a sessão
+          de hoje e seus blocos antes do fim do fluxo. */}
+      {personalizarDia && aluno && planoAtivo && (
+        <Card tone="primary" className="p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <CalendarRange className="h-5 w-5 shrink-0 text-primary" />
+            <p className="min-w-0 flex-1 text-sm text-ink-2">
+              <span className="font-semibold text-ink">Personalizando o treino do dia.</span> O resultado vai
+              personalizar a sessão desta semana do treino de {aluno.nome.split(" ")[0]}.
+            </p>
+          </div>
+          {sessaoAlvoDia && (
+            <div className="mt-3 rounded-xl border border-border bg-surface p-3">
+              <div className="mb-1.5 flex items-center gap-1.5">
+                <Target className="h-3.5 w-3.5 text-primary" />
+                <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Sessão de hoje a personalizar</p>
+              </div>
+              <p className="text-sm font-semibold text-ink">{sessaoAlvoDia.nome}</p>
+              {sessaoAlvoDia.foco && <p className="text-xs text-ink-3">{sessaoAlvoDia.foco}</p>}
+              {sessaoAlvoDia.blocos.length > 0 && (
+                <ul className="mt-2 overflow-hidden rounded-xl border border-border">
+                  {sessaoAlvoDia.blocos.map((b) => {
+                    const tokens = tokensDoBloco(b);
+                    return (
+                      <LinhaDeDose
+                        key={b.id}
+                        nome={nomeDoBloco(b)}
+                        icon={b.tipo === "aerobio" ? <HeartPulse className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
+                      >
+                        {tokens.length > 0 && (
+                          <LinhaDeTokens>
+                            {tokens.map((t) => (
+                              <TokenRotulado key={t.label} label={t.label} value={t.value} />
+                            ))}
+                          </LinhaDeTokens>
+                        )}
+                      </LinhaDeDose>
+                    );
+                  })}
+                </ul>
+              )}
+              {/* Fecho de flexibilidade da sessão (onda F), quando o plano o traz. */}
+              {sessaoAlvoDia.fecho && (
+                <div className="mt-2 rounded-lg border border-l-2 border-border border-l-primary bg-surface-soft p-2.5">
+                  <p className="text-xs text-ink-2">{sessaoAlvoDia.fecho}</p>
+                </div>
+              )}
+              {/* Escalas acopladas só quando o aluno NÃO tem grupo; com grupo, o "Foco agora"
+                  acima já mostra os parâmetros da fase (não duplicar). */}
+              {!grupo && (
+                <div className="mt-2.5 border-t border-border pt-2.5">
+                  <p className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+                    Escalas para acompanhar hoje
+                  </p>
+                  <ParametroPills
+                    ids={parametrosPadraoTreino(planoAtivo.objetivo)}
+                    contexto={{ alunoNome: aluno.nome, objetivo: planoAtivo.objetivo }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </Card>
       )}
 

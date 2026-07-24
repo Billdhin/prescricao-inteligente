@@ -119,14 +119,16 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
     };
   }
 
-  // 4) Plano ativo, mas a sessão de hoje ainda não foi liberada.
+  // 4) Plano ativo, e o semáforo de hoje ainda não foi feito. É recomendação, não
+  //    bloqueio: o treino já está pronto e visível; o semáforo confirma que hoje é um
+  //    bom dia para treinar. O texto diz isso, para não soar obrigatório.
   const liberadoHoje = libs.some((l) => mesmoDia(l.data, agora));
   if (!liberadoHoje) {
     return {
       etapa: "liberar",
       tone: "primary",
-      frase: "Antes da sessão de hoje, faça o semáforo de liberação.",
-      cta: { label: "Fazer o semáforo de hoje", kind: "liberar" },
+      frase: "O treino já está pronto; o semáforo confirma que hoje é um bom dia para treinar.",
+      cta: { label: "Recomendado: fazer o semáforo de hoje", kind: "liberar" },
       chip: null,
     };
   }

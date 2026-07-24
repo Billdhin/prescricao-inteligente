@@ -265,13 +265,13 @@ export const cases: PracticeCase[] = [
   /* --------------------------- Grupos especiais --------------------------- */
   {
     id: "c7",
-    slug: "caso-obesidade-grave-inicio",
-    titulo: "Obesidade grave querendo emagrecer",
+    slug: "caso-obesidade-inicio",
+    titulo: "Obesidade querendo emagrecer: por onde começar",
     tema: "Grupos especiais",
     dificuldade: "Iniciante",
     premium: false,
     contexto:
-      "Aluno com obesidade grave, iniciante, relata dor no joelho ao caminhar por mais de 8 minutos, quer emagrecer e tem baixa autoconfiança. Não há como medir a frequência cardíaca com precisão.",
+      "Aluno com obesidade, iniciante, relata dor no joelho ao caminhar por mais de 8 minutos, quer emagrecer e tem baixa autoconfiança. Não há como medir a frequência cardíaca com precisão.",
     pergunta: "Qual seria a estratégia inicial mais prudente?",
     melhorOpcaoId: "b",
     trustLevel: "cuidado de segurança",
