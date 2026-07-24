@@ -19,41 +19,7 @@
 
 import { valorFaixa, type FaixaObjetivo, type FaixaVar } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
-
-interface Intervalo {
-  min: number;
-  max: number;
-}
-
-const NUM = "(\\d+(?:[.,]\\d+)?)";
-const RANGE_RE = new RegExp(`${NUM}\\s*(?:a|até)\\s*${NUM}`, "gi");
-const ATE_RE = new RegExp(`(?:até|no máximo|menos de)\\s*${NUM}`, "i");
-const ACIMA_RE = new RegExp(`(?:acima de|mais de|a partir de|no mínimo)\\s*${NUM}`, "i");
-const NUM_RE = new RegExp(NUM, "g");
-
-const n = (s: string) => Number(s.replace(",", "."));
-
-/** Extrai o intervalo numérico de um texto livre. Sem número, devolve null. */
-function intervaloDe(texto: string): Intervalo | null {
-  const ranges = [...texto.matchAll(RANGE_RE)].map((m) => [n(m[1]), n(m[2])] as const);
-  if (ranges.length) {
-    return { min: Math.min(...ranges.map((r) => r[0])), max: Math.max(...ranges.map((r) => r[1])) };
-  }
-  const ate = ATE_RE.exec(texto);
-  if (ate) return { min: 0, max: n(ate[1]) };
-  const acima = ACIMA_RE.exec(texto);
-  if (acima) return { min: n(acima[1]), max: Infinity };
-  const soltos = [...texto.matchAll(NUM_RE)].map((m) => n(m[1]));
-  if (soltos.length) return { min: Math.min(...soltos), max: Math.max(...soltos) };
-  return null;
-}
-
-/** Segundos por unidade citada no texto. null quando o texto não declara unidade. */
-function unidade(texto: string): number | null {
-  if (/\bmin\b|minuto/i.test(texto)) return 60;
-  if (/\bs\b|\bseg\b|segundo/i.test(texto)) return 1;
-  return null;
-}
+import { intervaloDe, unidade } from "./faixasParse";
 
 /** Tudo que a diretriz cita para a variável, para formar a união da faixa. */
 function textoDeReferencia(v: FaixaVar, nivel: Nivel): string {

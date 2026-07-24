@@ -8,6 +8,7 @@ import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { bibliografia } from "@/data/referencias";
 import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
+import { assinaturaSemana } from "@/lib/gps/assinaturaSemana";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 
 const esc = (s: string) =>
@@ -26,21 +27,13 @@ const TIPO_SEMANA: Record<Microciclo["tipo"], string> = { carga: "carga", deload
  * plano muda. Agrupar deixa a mudança visível.
  */
 function agruparSemanas(microciclos: Microciclo[]) {
-  const chave = (m: Microciclo) =>
-    JSON.stringify({
-      tipo: m.tipo,
-      sessoes: m.sessoes.map((s) => ({
-        nome: s.nome,
-        // `metodo` e `grupoMetodo` entram na chave: semanas que diferem só na técnica de
-        // série (um bi-set numa, tradicional noutra) não podem mais se fundir numa linha.
-        blocos: s.blocos.map((b) => [b.nome, b.series, b.reps, b.intensidade, b.intervalo, b.formato, b.duracao, b.recuperacao, b.metodo, b.grupoMetodo]),
-      })),
-    });
-
+  // A chave de igualdade da semana vive em @/lib/gps/assinaturaSemana (fonte única
+  // compartilhada com o guardrail check:progressao). Inclui `metodo` e `grupoMetodo`:
+  // semanas que diferem só na técnica de série não se fundem numa linha.
   const grupos: { semanas: number[]; micro: Microciclo }[] = [];
   for (const m of microciclos) {
     const ultimo = grupos[grupos.length - 1];
-    if (ultimo && chave(ultimo.micro) === chave(m)) ultimo.semanas.push(m.semana);
+    if (ultimo && assinaturaSemana(ultimo.micro) === assinaturaSemana(m)) ultimo.semanas.push(m.semana);
     else grupos.push({ semanas: [m.semana], micro: m });
   }
   return grupos;
