@@ -203,6 +203,9 @@ export interface Microciclo {
 
 export type Tendencia = "sobe" | "estavel" | "reduz" | "varia";
 
+/** Variável de treino que o profissional pode TRAVAR num mesociclo (não deixa progredir). */
+export type VariavelTravavel = "volume" | "intensidade" | "complexidade";
+
 /** Rótulos de exibição das tendências (fonte única; "estável" com acento, nunca o enum cru). */
 export const TEND_LABEL: Record<Tendencia, string> = { sobe: "sobe", reduz: "reduz", estavel: "estável", varia: "varia" };
 
@@ -227,6 +230,14 @@ export interface Mesociclo {
    * `fase.numero` já é tipado 1|2|3|4 em specialGroups.ts.
    */
   faseJornada?: 1 | 2 | 3 | 4;
+  /**
+   * Variáveis que o profissional TRAVOU neste bloco (critérios 15 e 16 do motor). Uma variável
+   * travada NÃO progride: o motor do alvo (src/lib/gps/alvo.ts) a congela no patamar da primeira
+   * semana de carga e as sugestões responsivas (src/lib/gps/renovarMicrociclo.ts) não a fazem
+   * subir. Aditivo e opcional: ausente = nada travado, e o alvo fica byte-idêntico ao gerado (a
+   * geração e os guardrails nunca passam travas). Recálculo do bloco em src/lib/gps/travas.ts.
+   */
+  variaveisTravadas?: VariavelTravavel[];
   /** semana de recuperação/descarga ao final do bloco, quando houver */
   deload?: boolean;
   /** ponto de reavaliação sugerido ao final do bloco */

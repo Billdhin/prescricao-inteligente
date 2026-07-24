@@ -21,7 +21,7 @@
 import { intervaloDe, unidade, type Intervalo } from "@/lib/gps/faixasParse";
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
-import type { Tendencia, TipoMicrociclo } from "@/data/periodizacao";
+import type { Tendencia, TipoMicrociclo, VariavelTravavel } from "@/data/periodizacao";
 
 /** Os campos de alvo que o motor grava no bloco de força. Todos opcionais e dentro da faixa. */
 export interface AlvoForca {
@@ -52,6 +52,15 @@ export interface CtxAlvo {
   idade?: number;
   /** FC de repouso MEDIDA do aluno (bpm). Exigida pela zona de Karvonen; ausente = sem zona. */
   fcRepouso?: number;
+  /**
+   * Variáveis TRAVADAS pelo profissional neste mesociclo (critérios 15/16, onda MP-6). Uma
+   * variável travada não progride: o nível dela fica CONGELADO no patamar da primeira semana de
+   * carga (sobe -> piso, reduz -> teto) ou no meio (estável/varia), constante em todas as
+   * semanas. Ausente/vazio = nada travado, e o alvo é byte-idêntico ao de antes (a geração e os
+   * guardrails não passam travas). Só volume e intensidade mexem nos números do alvo aqui;
+   * "complexidade" é respeitada fora deste módulo (seleção de exercício e método de série).
+   */
+  variaveisTravadas?: VariavelTravavel[];
 }
 
 /** As faixas-texto da dose (já com nível e ênfase aplicados) que o alvo vai concretizar. */
@@ -96,6 +105,19 @@ function faixaRIR(texto: string): Intervalo | null {
   return null;
 }
 
+/**
+ * Faixa de %1RM lida da intensidade (e da nota, quando dada). Exposta para o tubo responsivo
+ * (renovarMicrociclo) clampear o alvo dentro da faixa citada, com a MESMA leitura do motor.
+ */
+export function lerFaixaPct1RM(intensidade: string, nota?: string): Intervalo | null {
+  return faixaPct1RM(intensidade) ?? (nota ? faixaPct1RM(nota) : null);
+}
+
+/** Faixa de RIR lida da intensidade (e da nota, quando dada). Exposta para o tubo responsivo. */
+export function lerFaixaRIR(intensidade: string, nota?: string): Intervalo | null {
+  return faixaRIR(intensidade) ?? (nota ? faixaRIR(nota) : null);
+}
+
 /* --------------------------------- Rampa determinística --------------------------------- */
 
 /**
@@ -128,6 +150,15 @@ function nivelDaTendencia(tend: Tendencia, t: number, semanaNoMeso: number): num
     case "varia":
       return semanaNoMeso % 2 === 1 ? 0.34 : 0.66;
   }
+}
+
+/**
+ * Nível CONGELADO de uma variável TRAVADA (onda MP-6): fica no patamar da primeira semana de
+ * carga (sobe -> piso 0, reduz -> teto 1) ou no meio (estável/varia -> 0,5), constante em todas
+ * as semanas. Assim uma variável travada pelo profissional não progride ao longo do mesociclo.
+ */
+function nivelCongelado(tend: Tendencia): number {
+  return tend === "reduz" ? 1 : tend === "sobe" ? 0 : 0.5;
 }
 
 /** Colapsa a ponta aberta ("acima de 15" -> só tem piso) para poder posicionar dentro dela. */
@@ -185,14 +216,20 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
   const alvo: AlvoForca = { origemRegraId: origemRegra(ctx) };
   const t = fracaoCarga(ctx);
 
-  // Níveis de volume e intensidade desta semana de CARGA (0..1).
-  const nivelVolume = nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso);
-  const nivelInt = nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso);
+  // Travas do profissional (onda MP-6): uma variável travada tem o nível CONGELADO (não progride).
+  const travas = ctx.variaveisTravadas ?? [];
+  const volTravado = travas.includes("volume");
+  const intTravado = travas.includes("intensidade");
+
+  // Níveis de volume e intensidade desta semana de CARGA (0..1). Travado = congelado.
+  const nivelVolume = volTravado ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso);
+  const nivelInt = intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso);
 
   if (ctx.tipoSemana === "deload") {
-    // A descarga parte do alvo da ÚLTIMA semana de carga (teto do meso) e reduz honestamente.
-    const nvUltima = nivelDaTendencia(ctx.tendenciaVolume, 1, ctx.semanaNoMeso);
-    const niUltima = nivelDaTendencia(ctx.tendenciaIntensidade, 1, ctx.semanaNoMeso);
+    // A descarga parte do alvo da ÚLTIMA semana de carga (teto do meso) e reduz honestamente. Se a
+    // variável está travada, o "teto" dela é o próprio nível congelado (a descarga reduz a partir daí).
+    const nvUltima = volTravado ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, 1, ctx.semanaNoMeso);
+    const niUltima = intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, 1, ctx.semanaNoMeso);
     if (seriesIv) {
       const ultima = ponto(seriesIv, nvUltima, true);
       const piso = Math.round(intervaloFechado(seriesIv).min);
@@ -318,8 +355,10 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
     if (durIv) alvo.duracaoAlvoMin = Math.round(intervaloFechado(durIv).min);
     if (rpeIv) alvo.rpeAlvo = Math.round(intervaloFechado(rpeIv).min);
   } else {
-    const nivelVolume = nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso);
-    const nivelInt = nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso);
+    // Travas do profissional (onda MP-6): volume congela a duração; intensidade congela o PSE-alvo.
+    const travas = ctx.variaveisTravadas ?? [];
+    const nivelVolume = travas.includes("volume") ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso);
+    const nivelInt = travas.includes("intensidade") ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso);
     if (durIv) alvo.duracaoAlvoMin = Math.round(ponto(durIv, nivelVolume, false));
     if (rpeIv) alvo.rpeAlvo = ponto(rpeIv, nivelInt, true);
   }

@@ -534,6 +534,10 @@ export function AlunoDetail() {
                 sessaoFeedbacks={feedbacksDoAluno}
                 liberacoes={liberacoes}
                 alunoId={aluno.id}
+                aluno={aluno}
+                estadoSemaforo={estadoSem}
+                ultimaAvaliacao={avalsDesc[0]}
+                onAplicarPlano={(planoId, patch) => updatePlano(planoId, patch)}
               />
             </div>
 

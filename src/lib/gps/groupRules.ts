@@ -10,6 +10,30 @@
 import type { GroupRuleInput } from "./engine";
 import type { RestricaoTag } from "./restricoes";
 
+/**
+ * MODIFICADOR de progressão por perfil clínico (onda MP-6, critério 11): o quanto este grupo
+ * progride mais devagar e com teto de esforço menor. Aplicado pelo ajuste/tubo responsivo
+ * (src/lib/gps/autorregulacao.ts) para que idoso/obeso/hipertenso, etc., subam com passo reduzido
+ * e margem maior. A DIREÇÃO (teto menor, progressão gradual, sem esforço máximo) vem das
+ * diretrizes citadas em `refs`; a MAGNITUDE (os números abaixo) é um padrão CONSERVADOR declarado
+ * (`cautela: true`), no mesmo espírito das penalidades/complexidadeMax deste arquivo, sob a
+ * palavra final do profissional. Não há RCT cravando estes multiplicadores.
+ */
+export interface ModProgressao {
+  /** teto de RPE (escala 6 a 10 do registro) para autorizar a progressão; acima dele, segura */
+  pseTeto?: number;
+  /** fração do incremento normal (0..1): perfil que progride num passo menor */
+  fatorIncremento?: number;
+  /** descarga mais frequente: sugerir descarga a cada N semanas (menor = mais frequente) */
+  descargaCadaSemanas?: number;
+  /** por que este perfil progride mais devagar (texto curto, sem travessão) */
+  motivo: string;
+  /** true quando a magnitude é cautela DECLARADA (a direção vem das refs; o número é conservador) */
+  cautela?: boolean;
+  /** ids de referencias.ts que sustentam a DIREÇÃO do modificador */
+  refId?: string[];
+}
+
 export interface GroupGpsRule extends GroupRuleInput {
   slug: string;
   /** pré-seleciona a etapa "Alguma restrição?" (o usuário pode trocar) */
@@ -18,6 +42,8 @@ export interface GroupGpsRule extends GroupRuleInput {
   cuidados: string[];
   /** ids de referencias.ts que fundamentam as regras deste grupo (bibliografia do Prontuário) */
   refs?: string[];
+  /** modificador de progressão do perfil (onda MP-6); ausente = progride no passo padrão */
+  modProgressao?: ModProgressao;
 }
 
 export const groupGpsRules: Record<string, GroupGpsRule> = {
@@ -42,6 +68,14 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       },
     ],
     complexidadeMax: 55,
+    modProgressao: {
+      pseTeto: 7,
+      fatorIncremento: 0.5,
+      descargaCadaSemanas: 4,
+      motivo: "Baixa tolerância inicial e sobrecarga articular: progride em passos pequenos, guiado por PSE, com descarga mais frequente.",
+      cautela: true,
+      refId: ["donnelly-2009", "acsm-getp11"],
+    },
     refs: ["donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997"],
   },
 
@@ -65,6 +99,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
         motivo: "Exercícios de alta exigência técnica tendem a elevar a resposta pressórica sob carga.",
       },
     ],
+    modProgressao: {
+      pseTeto: 6,
+      fatorIncremento: 0.6,
+      motivo: "Evitar esforços máximos e apneia (Valsalva): progride devagar e com teto de esforço mais baixo.",
+      cautela: true,
+      refId: ["pescatello-2004", "sbc-2020"],
+    },
     refs: ["sbc-2020", "pescatello-2004", "acsm-getp11"],
   },
 
@@ -95,6 +136,14 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       },
     ],
     complexidadeMax: 50,
+    modProgressao: {
+      pseTeto: 7,
+      fatorIncremento: 0.5,
+      descargaCadaSemanas: 4,
+      motivo: "Técnica antes de carga: progressões pequenas e frequentes, sem esforços máximos.",
+      cautela: true,
+      refId: ["fragala-2019", "chodzko-2009"],
+    },
     refs: ["chodzko-2009", "fragala-2019"],
   },
 
@@ -108,6 +157,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     ],
     // a penalização vem da restrição pré-selecionada (evita punir duas vezes)
     penalidades: [],
+    modProgressao: {
+      pseTeto: 6,
+      fatorIncremento: 0.5,
+      motivo: "Progressão guiada pela resposta de dor: passos pequenos, sem forçar quando a dor cresce.",
+      cautela: true,
+      refId: ["nice-ng59"],
+    },
     refs: ["nice-ng59"],
   },
 
@@ -120,6 +176,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       "Amplitude confortável; progrida guiado pela resposta de dor nas 24–48h seguintes.",
     ],
     penalidades: [],
+    modProgressao: {
+      pseTeto: 6,
+      fatorIncremento: 0.5,
+      motivo: "Amplitude confortável e progressão guiada pela dor nas 24 a 48h seguintes.",
+      cautela: true,
+      refId: ["oarsi-2019", "acr-2019"],
+    },
     refs: ["oarsi-2019", "acr-2019"],
   },
 
@@ -136,6 +199,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       { metrica: "Complexidade técnica", limite: 65, motivo: "Exercícios muito técnicos cedo demais atrapalham a técnica e a adesão do iniciante." },
     ],
     complexidadeMax: 55,
+    modProgressao: {
+      pseTeto: 7,
+      fatorIncremento: 0.5,
+      motivo: "Adesão e técnica antes da carga: progride uma variável por vez, em passos pequenos.",
+      cautela: true,
+      refId: ["acsm-getp11", "oms-2020"],
+    },
     refs: ["acsm-getp11", "oms-2020"],
   },
   "retorno-inatividade": {
@@ -147,6 +217,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     ],
     penalidades: [],
     complexidadeMax: 60,
+    modProgressao: {
+      pseTeto: 7,
+      fatorIncremento: 0.5,
+      motivo: "Retomada com cerca de metade do volume e da carga anteriores, progredindo ao longo de poucas semanas.",
+      cautela: true,
+      refId: ["acsm-getp11", "oms-2020"],
+    },
     refs: ["acsm-getp11", "oms-2020"],
   },
   "pre-diabetes": {
@@ -169,6 +246,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     penalidades: [
       { metrica: "Demanda lombar", limite: 65, motivo: "Carga axial elevada favorece apneia/Valsalva: cautela no perfil cardiometabólico." },
     ],
+    modProgressao: {
+      pseTeto: 7,
+      fatorIncremento: 0.6,
+      motivo: "Vários fatores de risco somados: respiração contínua, progressão gradual e teto de esforço mais baixo.",
+      cautela: true,
+      refId: ["pescatello-2004", "acsm-getp11"],
+    },
     refs: ["colberg-2016", "pescatello-2004", "acsm-getp11"],
   },
   dislipidemia: {
@@ -202,6 +286,14 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       { metrica: "Requisito de mobilidade", limite: 60, motivo: "Alto requisito de mobilidade: adapte a amplitude para o perfil de baixa força." },
     ],
     complexidadeMax: 55,
+    modProgressao: {
+      pseTeto: 7,
+      fatorIncremento: 0.5,
+      descargaCadaSemanas: 4,
+      motivo: "Força com progressão pequena e frequente; recuperação pode ser mais lenta.",
+      cautela: true,
+      refId: ["fragala-2019", "chodzko-2009"],
+    },
     refs: ["fragala-2019", "chodzko-2009"],
   },
   osteoporose: {
@@ -215,6 +307,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       { metrica: "Demanda lombar", limite: 60, motivo: "Alta demanda lombar sugere flexão/carga axial da coluna: cautela na osteoporose." },
     ],
     complexidadeMax: 55,
+    modProgressao: {
+      pseTeto: 7,
+      fatorIncremento: 0.5,
+      motivo: "Estímulo ao osso sem esforço máximo nem flexão brusca da coluna; progressão do impacto só com liberação médica.",
+      cautela: true,
+      refId: ["chodzko-2009", "acsm-getp11"],
+    },
     refs: ["chodzko-2009", "acsm-getp11"],
   },
   gestante: {
@@ -228,6 +327,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       { metrica: "Complexidade técnica", limite: 65, motivo: "Exercícios de alta exigência técnica/equilíbrio aumentam o risco de queda na gestação." },
     ],
     complexidadeMax: 55,
+    modProgressao: {
+      pseTeto: 6,
+      fatorIncremento: 0.5,
+      motivo: "Com liberação obstétrica: intensidade moderada pelo teste da fala, sem esforço máximo.",
+      cautela: true,
+      refId: ["acsm-getp11"],
+    },
     refs: ["acsm-getp11"],
   },
   "pos-parto": {
@@ -239,6 +345,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     ],
     penalidades: [],
     complexidadeMax: 60,
+    modProgressao: {
+      pseTeto: 7,
+      fatorIncremento: 0.5,
+      motivo: "Retomada gradual com atenção ao assoalho pélvico e ao core; sem carga alta cedo demais.",
+      cautela: true,
+      refId: ["acsm-getp11"],
+    },
     refs: ["acsm-getp11"],
   },
   climaterio: {
@@ -249,6 +362,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       "Ajuste ao sono e aos sintomas do dia; atenção ao risco cardiometabólico da transição.",
     ],
     penalidades: [],
+    modProgressao: {
+      pseTeto: 8,
+      fatorIncremento: 0.6,
+      motivo: "Força 2 a 3x/semana como prioridade, ajustada ao sono e aos sintomas do dia.",
+      cautela: true,
+      refId: ["chodzko-2009", "acsm-getp11"],
+    },
     refs: ["chodzko-2009", "acsm-getp11"],
   },
   "apneia-sono": {
@@ -323,5 +443,45 @@ export function combineRules(slugs: string[]): GroupGpsRule | undefined {
     complexidadeMax: maxes.length ? Math.min(...maxes) : undefined,
     restricaoSugerida: rules.find((r) => r.restricaoSugerida)?.restricaoSugerida,
     refs,
+    modProgressao: combinarModProgressao(rules),
   };
+}
+
+/**
+ * Funde os modificadores de progressão de VÁRIAS condições no mais CONSERVADOR: menor teto de
+ * esforço, menor fator de incremento (passo mais curto) e descarga mais frequente. Assim um aluno
+ * idoso + hipertenso progride pelo mais rígido dos dois. Devolve undefined quando nenhuma condição
+ * declara modificador (progride no passo padrão).
+ */
+function combinarModProgressao(rules: GroupGpsRule[]): ModProgressao | undefined {
+  const mods = rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m));
+  if (mods.length === 0) return undefined;
+  if (mods.length === 1) return mods[0];
+  const min = (xs: (number | undefined)[]) => {
+    const nums = xs.filter((n): n is number => typeof n === "number");
+    return nums.length ? Math.min(...nums) : undefined;
+  };
+  const motivos: string[] = [];
+  const refId: string[] = [];
+  for (const m of mods) {
+    if (!motivos.includes(m.motivo)) motivos.push(m.motivo);
+    for (const r of m.refId ?? []) if (!refId.includes(r)) refId.push(r);
+  }
+  return {
+    pseTeto: min(mods.map((m) => m.pseTeto)),
+    fatorIncremento: min(mods.map((m) => m.fatorIncremento)),
+    descargaCadaSemanas: min(mods.map((m) => m.descargaCadaSemanas)),
+    motivo: motivos.join(" "),
+    cautela: mods.some((m) => m.cautela),
+    refId: refId.length ? refId : undefined,
+  };
+}
+
+/**
+ * Modificador de progressão combinado de um conjunto de grupos/condições do aluno (grupo especial
+ * principal + condições de atenção). Fonte única para o ajuste e o tubo responsivo (onda MP-6).
+ */
+export function modProgressaoDe(slugs: (string | undefined)[]): ModProgressao | undefined {
+  const validos = slugs.filter((s): s is string => Boolean(s));
+  return combineRules(validos)?.modProgressao;
 }

@@ -16,6 +16,8 @@ import {
   Replace,
   Search,
   X,
+  Lock,
+  LockOpen,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, Eyebrow, TokenRotulado, LinhaDeTokens, type PillTone } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
@@ -32,10 +34,12 @@ import {
   type BlocoSessao,
   type TipoMicrociclo,
   type MetodoSerie,
+  type VariavelTravavel,
   METODOS_SERIE,
   getMetodo,
   agruparBlocosPorMetodo,
 } from "@/data/periodizacao";
+import { recalcularAlvosDoMeso } from "@/lib/gps/travas";
 import { conferirFaixa, faixaSugerida, type CampoFaixa } from "@/lib/gps/faixas";
 import { desenharProgressao, posicoesFocos, estadoSemana, ESTADO_LABEL, type EstadoSemana } from "@/lib/gps/progressao";
 import {
@@ -298,6 +302,16 @@ export function MesocicloCard({
     onChange?.({ ...meso, microciclos, deload: microciclos.some((w) => w.tipo === "deload") });
   };
 
+  // Cadeado por variável (onda MP-6): travar/destravar volume/intensidade/complexidade. Uma
+  // variável travada NÃO progride; ao travar/destravar, recalcula os alvos das semanas do bloco
+  // (src/lib/gps/travas.ts) para o plano exibido refletir a decisão na hora.
+  const travadas = meso.variaveisTravadas ?? [];
+  const toggleTrava = (v: VariavelTravavel) => {
+    const proximas = travadas.includes(v) ? travadas.filter((x) => x !== v) : [...travadas, v];
+    const base: Mesociclo = { ...meso, variaveisTravadas: proximas.length ? proximas : undefined };
+    onChange?.(recalcularAlvosDoMeso(base, { objetivo: ctx.objetivo, nivel: ctx.nivel }));
+  };
+
   // "Registrar reavaliação": só quando o bloco pede reavaliação e o calendário já está
   // na última (ou penúltima) semana dele, e só quando há aluno para reavaliar.
   const mostrarReavaliar =
@@ -349,7 +363,7 @@ export function MesocicloCard({
             </div>
           </div>
 
-          {/* (2) Dinâmica: as três tendências da fase, num cartão só. */}
+          {/* (2) Dinâmica: as três tendências da fase, num cartão só, com o cadeado por variável. */}
           <div className="rounded-xl border border-border bg-surface-soft p-3">
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="mr-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Dinâmica</span>
@@ -357,6 +371,35 @@ export function MesocicloCard({
               <Pill tone={meso.tendenciaIntensidade === "sobe" ? "analysis" : "neutral"}>Intensidade {TEND_LABEL[meso.tendenciaIntensidade]}</Pill>
               <Pill tone={meso.tendenciaComplexidade === "sobe" ? "analysis" : "neutral"}>Complexidade {TEND_LABEL[meso.tendenciaComplexidade]}</Pill>
             </div>
+            {editavel ? (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <span className="mr-0.5 text-2xs text-ink-3">Travar (não deixa progredir):</span>
+                {(["volume", "intensidade", "complexidade"] as VariavelTravavel[]).map((v) => {
+                  const on = travadas.includes(v);
+                  return (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => toggleTrava(v)}
+                      aria-pressed={on}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-2xs font-semibold transition-colors",
+                        on ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface",
+                      )}
+                    >
+                      {on ? <Lock className="h-3 w-3" aria-hidden /> : <LockOpen className="h-3 w-3" aria-hidden />}
+                      <span className="capitalize">{v}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              travadas.length > 0 && (
+                <p className="mt-2 flex items-center gap-1 text-2xs font-medium text-ink-3">
+                  <Lock className="h-3 w-3" aria-hidden /> Travado (não progride): {travadas.join(", ")}
+                </p>
+              )
+            )}
           </div>
 
           {/* (3) O que treinar: identidade da fase (capacidades e modalidades). */}
