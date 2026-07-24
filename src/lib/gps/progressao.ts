@@ -5,13 +5,25 @@
  * a própria curva, o documento que o profissional assina mostraria uma progressão e o
  * app mostraria outra. Os dois pedem a mesma geometria daqui.
  *
- * A curva é QUALITATIVA: ela mostra a direção que o plano toma (sobe, mantém, reduz,
- * varia), não uma carga em quilos. Por isso o eixo não tem número, só "maior" e "menor":
- * prometer precisão onde só existe tendência seria inventar dado. As faixas ao pé do
- * gráfico dão o que falta para ler o plano de relance: qual fase, e quantas semanas nela.
+ * A curva agora é CONSEQUÊNCIA dos alvos reais (onda MP-5): `serieSemanal` AGREGA os blocos
+ * de cada semana (Σ séries×reps + minutos de aeróbio para o volume; esforço médio para a
+ * intensidade; métodos avançados para a complexidade). Editar uma sessão (subir seriesAlvo)
+ * move a curva de verdade; a descarga cai porque os alvos caíram, não por um multiplicador
+ * fixo. O eixo segue sem número (as três séries são normalizadas para a mesma banda de
+ * plotagem, comparável, preservando a forma da progressão): prometer uma carga em quilos onde
+ * só há a dose relativa da diretriz seria inventar dado. As faixas ao pé dão a fase e quantas
+ * semanas nela.
  */
 
-import { rotuloMeso, type Macrociclo, type Tendencia, type TipoMicrociclo } from "@/data/periodizacao";
+import { intervaloDe } from "@/lib/gps/faixasParse";
+import {
+  rotuloMeso,
+  type Macrociclo,
+  type Microciclo,
+  type BlocoSessao,
+  type Tendencia,
+  type TipoMicrociclo,
+} from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
 
 export interface PontoSemana {
@@ -23,56 +35,285 @@ export interface PontoSemana {
   aliviada: boolean;
 }
 
-// O nível desloca a linha de base e a inclinação da progressão: um avançado treina em
-// intensidade relativa mais alta e progride mais rápido que um iniciante. Por isso trocar
-// o nível muda o gráfico de forma visível, e não só o texto.
-const NIVEL_ESCALA: Record<Nivel, { vol: number; int: number; passo: number }> = {
-  Iniciante: { vol: -0.25, int: -0.55, passo: 0.75 },
-  Intermediário: { vol: 0, int: 0, passo: 1 },
-  Avançado: { vol: 0.3, int: 0.55, passo: 1.3 },
+/* --------------------------- Agregação dos alvos reais (MP-5) --------------------------- */
+
+/** Meio de uma faixa-texto ("3 a 4" -> 3.5; "acima de 15" -> 15; "até 90" -> 90). null sem número. */
+function meioFaixa(texto?: string): number | null {
+  if (!texto) return null;
+  const iv = intervaloDe(texto);
+  if (!iv) return null;
+  if (iv.max === Infinity) return iv.min; // "acima de N": progressão só teria piso
+  if (iv.min === 0) return iv.max; // "até N": progressão só teria teto
+  return (iv.min + iv.max) / 2;
+}
+
+const ehForca = (b: BlocoSessao) => b.tipo !== "aerobio";
+const ehAerobio = (b: BlocoSessao) => b.tipo === "aerobio";
+const blocosDe = (m: Microciclo) => m.sessoes.flatMap((s) => s.blocos);
+
+/**
+ * Índice de esforço 0..100 de um bloco (maior = mais intenso), lendo o ALVO quando houver:
+ * carga relativa (%1RM) direto; o inverso do RIR (menos reserva = mais intenso); a PSE do
+ * aeróbio em décimos; ou o meio da intensidade textual quando ela é parseável (ex.: "40 a
+ * 60% de 1RM"). Sem nenhum desses, devolve null (não inventa número para intensidade textual).
+ */
+function esforcoDoBloco(b: BlocoSessao): number | null {
+  if (b.cargaRelativaAlvo != null) return b.cargaRelativaAlvo;
+  if (b.rirAlvo != null) return Math.max(0, 100 - b.rirAlvo * 10);
+  if (b.rpeAlvo != null) return b.rpeAlvo * 10;
+  return meioFaixa(b.intensidade);
+}
+
+/** O agregado de uma semana: volume (dose total) e intensidade (esforço médio) reais. */
+export interface AgregadoSemana {
+  /** Σ (séries×reps) da força + Σ minutos do aeróbio. Lê o alvo; cai na faixa sem ele. */
+  volume: number;
+  /** esforço médio (ponderado pelo volume) da semana; null quando nada é parseável. */
+  intensidade: number | null;
+}
+
+/**
+ * Agrega os blocos REAIS de uma semana em (volume, intensidade). Fonte ÚNICA lida pelo
+ * gráfico (serieSemanal), pelo selo de estado (estadoSemana) e pelo PDF. É a prova de que a
+ * visualização é consequência dos alvos: subir seriesAlvo de um bloco sobe o volume aqui, e
+ * por isso move a curva. O número absoluto não vale nada sozinho; o que importa é COMPARAR
+ * semanas do mesmo plano (por isso serieSemanal normaliza, e o selo compara vizinhas).
+ */
+export function agregadoSemana(m: Microciclo): AgregadoSemana {
+  let volume = 0;
+  let somaEsforco = 0;
+  let pesoEsforco = 0;
+  for (const b of blocosDe(m)) {
+    if (ehForca(b)) {
+      const series = b.seriesAlvo ?? meioFaixa(b.series) ?? 0;
+      const reps = b.repsAlvo ?? meioFaixa(b.reps) ?? 0;
+      volume += series * reps;
+      const e = esforcoDoBloco(b);
+      if (e != null) {
+        const peso = Math.max(series, 1);
+        somaEsforco += e * peso;
+        pesoEsforco += peso;
+      }
+    } else if (ehAerobio(b)) {
+      // Minutos de aeróbio somam ao volume (coerente com o produto: a dose total da semana).
+      const min = b.duracaoAlvoMin ?? meioFaixa(b.duracao) ?? 0;
+      volume += min;
+      const e = esforcoDoBloco(b);
+      if (e != null) {
+        somaEsforco += e;
+        pesoEsforco += 1;
+      }
+    }
+  }
+  return { volume, intensidade: pesoEsforco > 0 ? somaEsforco / pesoEsforco : null };
+}
+
+/**
+ * Densidade de complexidade REAL de uma semana: cada método avançado (drop-set, rest-pause,
+ * pirâmide...) e cada agrupamento (bi/tri/super-set) conta uma vez. É o único sinal de
+ * complexidade que existe por bloco hoje; quando ele não muda de semana para semana (o caso
+ * comum dos planos gerados), a FORMA vem da tendência declarada da fase (ver cpxRaw abaixo).
+ */
+function complexidadeReal(m: Microciclo): number {
+  let d = 0;
+  const gruposVistos = new Set<string>();
+  for (const b of blocosDe(m)) {
+    if (b.grupoMetodo) {
+      if (!gruposVistos.has(b.grupoMetodo)) {
+        gruposVistos.add(b.grupoMetodo);
+        d += 1;
+      }
+      continue; // o método do grupo conta uma vez pelo grupo, não por bloco
+    }
+    if (b.metodo && b.metodo !== "tradicional") d += 1;
+  }
+  return d;
+}
+
+/* --------------------- Contexto de tendência (fallback qualitativo) --------------------- */
+
+interface SemanaCtx {
+  micro: Microciclo;
+  tendVol: Tendencia;
+  tendInt: Tendencia;
+  tendCpx: Tendencia;
+  mesoIdx: number;
+  /** posição entre as semanas de CARGA do meso (a descarga usa a última) */
+  posCarga: number;
+  cargasNoMeso: number;
+  deload: boolean;
+}
+
+function contextoDasSemanas(macro: Macrociclo): SemanaCtx[] {
+  const out: SemanaCtx[] = [];
+  macro.mesociclos.forEach((meso, mesoIdx) => {
+    const cargasNoMeso = Math.max(1, meso.microciclos.filter((w) => w.tipo === "carga").length);
+    let pos = 0;
+    meso.microciclos.forEach((w) => {
+      const deload = w.tipo !== "carga";
+      if (!deload) pos++;
+      out.push({
+        micro: w,
+        tendVol: meso.tendenciaVolume,
+        tendInt: meso.tendenciaIntensidade,
+        tendCpx: meso.tendenciaComplexidade,
+        mesoIdx,
+        posCarga: deload ? cargasNoMeso : pos,
+        cargasNoMeso,
+        deload,
+      });
+    });
+  });
+  return out;
+}
+
+const passoTend: Record<Tendencia, number> = { sobe: 1, reduz: -1, estavel: 0, varia: 0 };
+
+/**
+ * Curva qualitativa por semana a partir da TENDÊNCIA declarada da fase, usada como FALLBACK
+ * quando não há sinal real para uma série (ex.: intensidade textual "alta", sem %1RM/RIR) e
+ * como forma-base da complexidade. Reproduz o espírito da curva antiga (a fase desloca a base;
+ * "sobe" rampa dentro do meso; "varia" ondula; a descarga cai), mas só entra onde o agregado
+ * real não tem o que dizer.
+ */
+function nivelPorTendencia(ctx: SemanaCtx[], pick: (c: SemanaCtx) => Tendencia): number[] {
+  let base = 0;
+  let mesoAtual = -1;
+  return ctx.map((c) => {
+    const tend = pick(c);
+    if (c.mesoIdx !== mesoAtual) {
+      mesoAtual = c.mesoIdx;
+      base += passoTend[tend];
+    }
+    const frac = c.cargasNoMeso > 1 ? (c.posCarga - 1) / (c.cargasNoMeso - 1) : 0;
+    let v: number;
+    if (tend === "sobe") v = base - 1 + frac;
+    else if (tend === "reduz") v = base - frac;
+    else if (tend === "varia") v = base + (c.posCarga % 2 === 1 ? -0.34 : 0.34);
+    else v = base;
+    if (c.deload) v -= 1;
+    return v;
+  });
+}
+
+/* ------------------------------ Normalização para a banda ------------------------------ */
+
+// A banda de plotagem que o eixo já usa (y = f(v) mapeia ~[0.5, 4]). As três séries são
+// normalizadas para DENTRO dela, preservando a forma: coexistem no mesmo eixo em escala
+// comparável, sem prometer uma unidade absoluta.
+const BANDA_LO = 1.0;
+const BANDA_HI = 3.5;
+const BANDA_MEIO = (BANDA_LO + BANDA_HI) / 2;
+const clampPlot = (v: number) => Math.max(0.5, Math.min(4, v));
+
+/**
+ * Normaliza uma série (min->BANDA_LO, max->BANDA_HI), preservando a FORMA (transformação
+ * afim, monotônica). Uma série praticamente chata (variação relativa < 1%, ruído de
+ * arredondamento) é desenhada plana no meio da banda, para não amplificar um zero em onda.
+ */
+function normalizar(xs: number[]): number[] {
+  if (!xs.length) return xs;
+  const lo = Math.min(...xs);
+  const hi = Math.max(...xs);
+  const span = hi - lo;
+  const ref = Math.max(Math.abs(hi), Math.abs(lo), 1e-9);
+  if (span / ref < 0.01) return xs.map(() => BANDA_MEIO);
+  return xs.map((x) => BANDA_LO + ((x - lo) / span) * (BANDA_HI - BANDA_LO));
+}
+
+/** Preenche buracos (null) de uma série carregando o vizinho conhecido, para a curva não cortar. */
+function preencher(xs: (number | null)[]): number[] {
+  const out: number[] = new Array(xs.length).fill(0);
+  let ultimo: number | null = null;
+  for (let i = 0; i < xs.length; i++) {
+    if (xs[i] != null) {
+      out[i] = xs[i]!;
+      ultimo = xs[i]!;
+    } else {
+      out[i] = ultimo ?? 0;
+    }
+  }
+  // Buracos iniciais (antes do primeiro valor conhecido) herdam o primeiro valor conhecido.
+  const idxPrimeiro = xs.findIndex((v) => v != null);
+  if (idxPrimeiro > 0) for (let i = 0; i < idxPrimeiro; i++) out[i] = xs[idxPrimeiro]!;
+  return out;
+}
+
+/**
+ * A curva é o AGREGADO dos alvos reais, normalizado para a banda de plotagem.
+ *
+ * - VOLUME: sempre real (Σ séries×reps da força + minutos do aeróbio). Editar seriesAlvo move
+ *   esta curva; a descarga cai porque a dose caiu, não por um multiplicador fixo.
+ * - INTENSIDADE: esforço médio real quando há %1RM/RIR/PSE; sem esses (intensidade só textual),
+ *   cai na tendência declarada da fase, para o plano ainda mostrar a direção prevista.
+ * - COMPLEXIDADE: a tendência declarada dá a forma; os métodos avançados dão um empurrão real
+ *   (adicionar um drop-set levanta a linha um pouco), que é o único sinal por bloco disponível.
+ *
+ * `nivel` é aceito por compatibilidade de assinatura; a curva agora sai da dose real (que já
+ * depende do nível, via as faixas por nível), não de um deslocamento por nível.
+ */
+export function serieSemanal(macro: Macrociclo, _nivel?: Nivel): PontoSemana[] {
+  const ctx = contextoDasSemanas(macro);
+  if (!ctx.length) return [];
+
+  const volRaw = ctx.map((c) => agregadoSemana(c.micro).volume);
+
+  const intAgg = ctx.map((c) => agregadoSemana(c.micro).intensidade);
+  const temIntReal = intAgg.some((v) => v != null);
+  const intRaw = temIntReal ? preencher(intAgg) : nivelPorTendencia(ctx, (c) => c.tendInt);
+
+  const cpxTend = nivelPorTendencia(ctx, (c) => c.tendCpx);
+  const cpxRaw = ctx.map((c, i) => cpxTend[i] + complexidadeReal(c.micro) * 0.25);
+
+  const vol = normalizar(volRaw);
+  const int = normalizar(intRaw);
+  const cpx = normalizar(cpxRaw);
+
+  return ctx.map((c, i) => ({
+    semana: c.micro.semana,
+    vol: clampPlot(vol[i]),
+    int: clampPlot(int[i]),
+    cpx: clampPlot(cpx[i]),
+    aliviada: c.micro.tipo !== "carga",
+  }));
+}
+
+/* ------------------------------ Estado da semana (selo) ------------------------------ */
+
+/** Estado de uma semana em relação à anterior, derivado (nunca inventado). */
+export type EstadoSemana = "progressao" | "manutencao" | "regressao" | "descarga" | "teste" | "inicio";
+
+/** Rótulo de exibição de cada estado (fonte única para a tela e o PDF). */
+export const ESTADO_LABEL: Record<EstadoSemana, string> = {
+  progressao: "Progressão",
+  manutencao: "Manutenção",
+  regressao: "Regressão",
+  descarga: "Descarga",
+  teste: "Teste",
+  inicio: "Início do bloco",
 };
 
 /**
- * A curva reflete o MODELO e o NÍVEL, não uma forma genérica.
- *
- * A base de cada capacidade caminha de mesociclo a mesociclo pela TENDÊNCIA da fase (sobe,
- * reduz, mantém), então um plano linear traça um trend limpo. Quando a tendência é "varia"
- * (ondulatória, flexível, autorregulada), a carga oscila semana a semana, e o gráfico vira
- * uma onda, visivelmente diferente do linear. A descarga puxa a semana para baixo.
+ * O estado da semana sai do TIPO (descarga/teste vêm do microciclo) e, para as semanas de
+ * carga, do delta agregado de volume e intensidade vs a semana anterior: as duas subindo (ou
+ * uma subindo sem a outra cair) é progressão; as duas paradas é manutenção; alguma caindo sem
+ * a outra compensar é regressão. Sem semana anterior (início do bloco), fica "inicio". É
+ * derivado do agregado real; não crava juízo onde não há dado (intensidade textual não conta).
  */
-export function serieSemanal(macro: Macrociclo, nivel?: Nivel): PontoSemana[] {
-  const esc = NIVEL_ESCALA[nivel ?? "Intermediário"];
-  const passo: Record<Tendencia, number> = {
-    sobe: 0.5 * esc.passo,
-    reduz: -0.5 * esc.passo,
-    estavel: 0,
-    varia: 0,
-  };
-  const pontos: PontoSemana[] = [];
-  let volBase = 2.4 + esc.vol;
-  let intBase = 1.6 + esc.int;
-  let cpxBase = 1.7;
-  const clamp = (n: number) => Math.max(0.5, Math.min(4, n));
-  macro.mesociclos.forEach((m) => {
-    // A fase desloca a base; é o que dá o trend do modelo (linear sobe, blocos degraus).
-    volBase += passo[m.tendenciaVolume];
-    intBase += passo[m.tendenciaIntensidade];
-    cpxBase += m.tendenciaComplexidade === "sobe" ? 0.4 : m.tendenciaComplexidade === "reduz" ? -0.4 : 0;
-    m.microciclos.forEach((w, wi) => {
-      let vol = volBase;
-      let int = intBase;
-      const cpx = cpxBase;
-      // Modelo ondulatório: a carga sobe e desce semana a semana em torno da base.
-      if (m.tendenciaVolume === "varia") vol += wi % 2 === 0 ? 0.75 : -0.55;
-      if (m.tendenciaIntensidade === "varia") int += wi % 2 === 0 ? -0.55 : 0.75;
-      if (w.tipo === "deload") {
-        vol *= 0.55;
-        int *= 0.65;
-      }
-      pontos.push({ semana: w.semana, vol: clamp(vol), int: clamp(int), cpx: clamp(cpx), aliviada: w.tipo !== "carga" });
-    });
-  });
-  return pontos;
+export function estadoSemana(atual: Microciclo, anterior?: Microciclo): EstadoSemana {
+  if (atual.tipo === "deload") return "descarga";
+  if (atual.tipo === "teste") return "teste";
+  if (!anterior) return "inicio";
+  const a = agregadoSemana(anterior);
+  const b = agregadoSemana(atual);
+  let s = 0;
+  if (b.volume > a.volume + 1e-6) s++;
+  else if (b.volume < a.volume - 1e-6) s--;
+  if (a.intensidade != null && b.intensidade != null) {
+    if (b.intensidade > a.intensidade + 1e-6) s++;
+    else if (b.intensidade < a.intensidade - 1e-6) s--;
+  }
+  return s > 0 ? "progressao" : s < 0 ? "regressao" : "manutencao";
 }
 
 /**

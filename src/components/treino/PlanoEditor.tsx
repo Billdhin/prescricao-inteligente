@@ -17,7 +17,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { Card, Pill, buttonClasses, Eyebrow } from "@/components/ui/primitives";
+import { Card, Pill, buttonClasses, Eyebrow, TokenRotulado, LinhaDeTokens, type PillTone } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import {
   getFaixa,
@@ -37,7 +37,15 @@ import {
   agruparBlocosPorMetodo,
 } from "@/data/periodizacao";
 import { conferirFaixa, faixaSugerida, type CampoFaixa } from "@/lib/gps/faixas";
-import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
+import { desenharProgressao, posicoesFocos, estadoSemana, ESTADO_LABEL, type EstadoSemana } from "@/lib/gps/progressao";
+import {
+  temAlvoForca,
+  tokensAlvoForca,
+  temAlvoAerobio,
+  tokensAlvoAerobio,
+  compararAlvos,
+  regrasDaSessao,
+} from "@/lib/gps/alvoResumo";
 import { adequacaoLabel, EQUIPAMENTOS, type GpsObjetivo, type Recommendation } from "@/lib/gps/engine";
 import { sugerirTroca, type ContextoTroca } from "@/lib/gps/sugerirTroca";
 import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
@@ -61,6 +69,17 @@ import { useDialog } from "@/lib/useDialog";
  */
 
 const TIPO_LABEL: Record<TipoMicrociclo, string> = { carga: "Carga", deload: "Descarga", teste: "Teste" };
+
+// Tom do selo de estado da semana: progressão em verde, regressão/descarga em âmbar, o resto
+// neutro. Só cor; o estado é derivado do agregado real (ver estadoSemana), nunca inventado.
+const ESTADO_TONE: Record<EstadoSemana, PillTone> = {
+  progressao: "success",
+  manutencao: "neutral",
+  regressao: "warning",
+  descarga: "warning",
+  teste: "analysis",
+  inicio: "neutral",
+};
 
 const nid = (p: string) => `${p}-${uid()}`;
 
@@ -123,7 +142,8 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
         <h3 className="font-display text-base font-bold text-ink">Progressão ao longo das semanas</h3>
       </div>
       <p className="mb-3 text-xs text-ink-3">
-        Tendência qualitativa das cargas por semana. As faixas ao pé mostram cada fase e quantas semanas ela dura.
+        Volume, intensidade e complexidade relativos, calculados das sessões (sem unidade absoluta). Editar uma
+        sessão move a curva. As faixas ao pé mostram cada fase e quantas semanas ela dura.
       </p>
       <div className="relative overflow-x-auto">
         <svg
@@ -315,10 +335,11 @@ export function MesocicloCard({
           <div>
             <Eyebrow className="mb-1.5">Semanas</Eyebrow>
             <div className="space-y-2">
-              {meso.microciclos.map((w) => (
+              {meso.microciclos.map((w, wi) => (
                 <MicrocicloRow
                   key={w.id}
                   micro={w}
+                  microAnterior={wi > 0 ? meso.microciclos[wi - 1] : undefined}
                   ctx={ctx}
                   editavel={editavel}
                   onChange={trocarMicro}
@@ -443,12 +464,15 @@ function variacoesDoMicro(micro: Microciclo): { metodo: MetodoSerie; n: number }
 
 function MicrocicloRow({
   micro,
+  microAnterior,
   ctx,
   editavel,
   onChange,
   atual,
 }: {
   micro: Microciclo;
+  /** a semana anterior no mesmo bloco: alimenta o selo de estado e o "o que mudou" */
+  microAnterior?: Microciclo;
   ctx: ContextoFaixa;
   editavel: boolean;
   onChange: (m: Microciclo) => void;
@@ -457,6 +481,13 @@ function MicrocicloRow({
 }) {
   const [aberto, setAberto] = React.useState(Boolean(atual));
   const variacoes = variacoesDoMicro(micro);
+
+  // Estado da semana (progressão/manutenção/regressão/descarga/teste), derivado do agregado
+  // real vs a semana anterior. Descarga e teste já aparecem no selo "Semana N"; para as de
+  // carga, o selo de estado diz para onde a dose foi. "o que mudou" lista as diferenças.
+  const estado = estadoSemana(micro, microAnterior);
+  const mostrarSeloEstado = micro.tipo === "carga" && estado !== "inicio";
+  const mudancas = microAnterior ? compararAlvos(microAnterior, micro) : null;
 
   // Frequência é quantas sessões a semana tem. Guardar o número separado das sessões
   // deixaria o plano dizer "4x" e entregar 3.
@@ -482,6 +513,7 @@ function MicrocicloRow({
             <span className="text-ink-2">
               {micro.sessoes.length} {micro.sessoes.length === 1 ? "sessão" : "sessões"}
             </span>
+            {mostrarSeloEstado && <Pill tone={ESTADO_TONE[estado]}>{ESTADO_LABEL[estado]}</Pill>}
           </div>
           {micro.sessoes.length > 0 && (
             <p className="truncate text-xs text-ink-3">{micro.sessoes.map((s) => s.nome).join(" · ")}</p>
@@ -523,6 +555,33 @@ function MicrocicloRow({
           )}
 
           {micro.nota && <p className="text-xs text-ink-3">{micro.nota}</p>}
+
+          {/* Objetivo declarado da semana (derivado da fase e do tipo). */}
+          {micro.objetivo && (
+            <p className="flex items-start gap-1.5 text-xs text-ink-2">
+              <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-analysis" aria-hidden />
+              <span>
+                <span className="font-semibold text-ink">Objetivo da semana:</span> {micro.objetivo}
+              </span>
+            </p>
+          )}
+
+          {/* O que mudou em relação à semana anterior (só leitura; no editor os campos mudam à mão). */}
+          {!editavel && mudancas && (
+            <div className="rounded-lg border border-dashed border-border bg-surface-soft p-2.5">
+              <p className="mb-1 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+                <TrendingUp className="h-3.5 w-3.5 text-primary" aria-hidden /> Em relação à semana anterior
+              </p>
+              <ul className="space-y-0.5">
+                {mudancas.map((m, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-ink-2">
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-ink-3" />
+                    {m}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <FaixaReferencia ctx={ctx} />
 
@@ -648,6 +707,14 @@ function QuadroForca({ blocos, ctx }: { blocos: BlocoSessao[]; ctx: ContextoFaix
                     )}
                     <SeloOrigem ctx={ctx} bloco={b} />
                   </span>
+                  {/* Alvo concreto da semana ao lado da faixa (as colunas continuam a referência). */}
+                  {temAlvoForca(b) && (
+                    <LinhaDeTokens className="mt-1">
+                      {tokensAlvoForca(b).map((t, i) => (
+                        <TokenRotulado key={i} label={t.label} value={t.value} tone="primary" />
+                      ))}
+                    </LinhaDeTokens>
+                  )}
                 </td>
                 <td className="px-1.5 py-1.5 text-ink-2">{b.series}</td>
                 <td className="px-1.5 py-1.5 text-ink-2">{b.reps}</td>
@@ -693,6 +760,14 @@ function QuadroCardio({ blocos }: { blocos: BlocoSessao[] }) {
                     </div>
                   ))}
               </dl>
+              {/* Alvo concreto da semana ao lado da faixa (duração, PSE e zona quando houver). */}
+              {temAlvoAerobio(b) && (
+                <LinhaDeTokens className="mt-1">
+                  {tokensAlvoAerobio(b).map((t, i) => (
+                    <TokenRotulado key={i} label={t.label} value={t.value} tone="analysis" />
+                  ))}
+                </LinhaDeTokens>
+              )}
               {b.observacao && <p className="mt-1 text-2xs leading-snug text-ink-3">{b.observacao}</p>}
             </div>
           );
@@ -707,10 +782,29 @@ function SessaoQuadro({ sessao, ctx }: { sessao: Sessao; ctx: ContextoFaixa }) {
   const forca = sessao.blocos.filter((b) => b.tipo !== "aerobio");
   const cardio = sessao.blocos.filter((b) => b.tipo === "aerobio");
   const duasColunas = forca.length > 0 && cardio.length > 0;
+  // "Por que este número": as regras da progressão que fundamentaram os alvos desta sessão.
+  const regras = regrasDaSessao(sessao.blocos);
   return (
-    <div className={cn("grid gap-2", duasColunas && "md:grid-cols-2")}>
-      {forca.length > 0 && <QuadroForca blocos={forca} ctx={ctx} />}
-      {cardio.length > 0 && <QuadroCardio blocos={cardio} />}
+    <div className="space-y-1.5">
+      <div className={cn("grid gap-2", duasColunas && "md:grid-cols-2")}>
+        {forca.length > 0 && <QuadroForca blocos={forca} ctx={ctx} />}
+        {cardio.length > 0 && <QuadroCardio blocos={cardio} />}
+      </div>
+      {regras.length > 0 && (
+        <details className="rounded-lg border border-dashed border-border bg-surface-soft text-2xs">
+          <summary className="cursor-pointer list-none px-2.5 py-1.5 text-ink-3 [&::-webkit-details-marker]:hidden">
+            <Info className="mr-1 inline h-3 w-3 align-[-2px]" aria-hidden /> Por que estes números
+          </summary>
+          <ul className="space-y-1 border-t border-border px-2.5 py-1.5">
+            {regras.map((r, i) => (
+              <li key={i} className="text-ink-2">
+                {r.criterio}
+                {r.base && <span className="text-ink-3"> Base: {r.base}.</span>}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }

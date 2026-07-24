@@ -7,7 +7,8 @@ import { getModalidade } from "@/data/modalities";
 import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { bibliografia } from "@/data/referencias";
-import { desenharProgressao, posicoesFocos } from "@/lib/gps/progressao";
+import { desenharProgressao, posicoesFocos, estadoSemana, ESTADO_LABEL, agregadoSemana } from "@/lib/gps/progressao";
+import { temAlvoForca, tokensAlvoForca, temAlvoAerobio, tokensAlvoAerobio } from "@/lib/gps/alvoResumo";
 import { assinaturaSemana } from "@/lib/gps/assinaturaSemana";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 
@@ -53,11 +54,19 @@ function sessaoHtml(s: Sessao) {
 
   // Linha de um exercício. `comSufixo` mostra o método entre parênteses só nos blocos SOLTOS;
   // num grupo, o método já vem na linha-cabeçalho, então a linha do bloco fica limpa.
+  // Alvo concreto da semana como sub-linha do exercício (as colunas seguem sendo a faixa).
+  const alvoForcaHtml = (b: (typeof forca)[number]) =>
+    temAlvoForca(b)
+      ? `<div class="alvo-forca">Alvo: ${tokensAlvoForca(b)
+          .map((t) => `${esc(t.label)} ${esc(t.value)}`)
+          .join(" · ")}</div>`
+      : "";
+
   const linhaForca = (b: (typeof forca)[number], comSufixo: boolean) => `
             <tr>
               <td class="ex">${esc(b.nome ?? "")}${
                 comSufixo && b.metodo && b.metodo !== "tradicional" ? ` <b>(${esc(getMetodo(b.metodo)?.nome ?? "")})</b>` : ""
-              }</td>
+              }${alvoForcaHtml(b)}</td>
               <td>${esc(b.series ?? "")}</td>
               <td>${esc(b.reps ?? "")}</td>
               <td>${esc(b.intensidade ?? "")}</td>
@@ -103,12 +112,18 @@ function sessaoHtml(s: Sessao) {
               ["Intensidade", b.intensidade],
               ["Recuperação", b.recuperacao && b.recuperacao !== "-" ? b.recuperacao : undefined],
             ];
+            const alvoCardio = temAlvoAerobio(b)
+              ? `<p class="cardio-linha"><span class="cardio-rot">Alvo</span> ${tokensAlvoAerobio(b)
+                  .map((t) => `${esc(t.label)} ${esc(t.value)}`)
+                  .join(" · ")}</p>`
+              : "";
             return `<div class="cardio">
               <p class="cardio-nome">${esc(atividade ?? b.nome ?? "Aeróbio")}</p>
               ${linhas
                 .filter(([, v]) => v)
                 .map(([rot, v]) => `<p class="cardio-linha"><span class="cardio-rot">${rot}</span> ${esc(v as string)}</p>`)
                 .join("")}
+              ${alvoCardio}
               ${b.observacao ? `<p class="cardio-obs">${esc(b.observacao)}</p>` : ""}
             </div>`;
           })
@@ -130,16 +145,33 @@ function mesoHtml(m: Mesociclo, i: number) {
     .map((n) => `<span class="tag">${esc(n as string)}</span>`)
     .join("");
 
-  const semanas = agruparSemanas(m.microciclos)
-    .map(
-      (g) => `
+  const grupos = agruparSemanas(m.microciclos);
+  const semanas = grupos
+    .map((g, gi) => {
+      const anterior = gi > 0 ? grupos[gi - 1].micro : undefined;
+      // Selo de estado só nas semanas de carga (descarga/teste já vêm rotulados ao lado).
+      const estado = estadoSemana(g.micro, anterior);
+      const seloEstado =
+        g.micro.tipo === "carga" && estado !== "inicio"
+          ? `<span class="estado estado-${estado}">${ESTADO_LABEL[estado]}</span>`
+          : "";
+      // Na descarga, a magnitude da redução do volume vs a última semana de carga.
+      let reducao = "";
+      if (g.micro.tipo === "deload" && anterior) {
+        const va = agregadoSemana(anterior).volume;
+        const vd = agregadoSemana(g.micro).volume;
+        if (va > 0 && vd < va) reducao = `<p class="reducao">Descarga: volume cerca de ${Math.round((1 - vd / va) * 100)}% menor que a semana de carga anterior.</p>`;
+      }
+      return `
       <div class="semana">
-        <p class="semana-tit">${rotuloSemanas(g.semanas)} <span class="tipo">${TIPO_SEMANA[g.micro.tipo]}</span>
+        <p class="semana-tit">${rotuloSemanas(g.semanas)} <span class="tipo">${TIPO_SEMANA[g.micro.tipo]}</span>${seloEstado}
           <span class="freq">${g.micro.sessoes.length} ${g.micro.sessoes.length === 1 ? "sessão" : "sessões"} na semana</span></p>
+        ${g.micro.objetivo ? `<p class="objetivo-sem"><b>Objetivo da semana:</b> ${esc(g.micro.objetivo)}</p>` : ""}
+        ${reducao}
         ${g.micro.nota ? `<p class="nota">${esc(g.micro.nota)}</p>` : ""}
         ${g.micro.sessoes.map(sessaoHtml).join("")}
-      </div>`,
-    )
+      </div>`;
+    })
     .join("");
 
   const lista = (t: string, itens: string[]) =>
@@ -206,7 +238,7 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
   return `
   <section class="bloco">
     <h2>Progressão ao longo das semanas</h2>
-    <p class="legenda-nota">Tendência qualitativa das cargas. As faixas ao pé mostram cada fase e quantas semanas ela dura.</p>
+    <p class="legenda-nota">Volume, intensidade e complexidade relativos, calculados das sessões (sem unidade absoluta). As faixas ao pé mostram cada fase e quantas semanas ela dura.</p>
     <svg viewBox="0 0 ${g.largura} ${g.altura}" width="100%" height="230">
       <defs><linearGradient id="volpdf" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${cor.area}" stop-opacity="0.16" /><stop offset="100%" stop-color="${cor.area}" stop-opacity="0" />
@@ -301,7 +333,14 @@ export function exportPlanoPDF({
     .semana { margin: 10px 0 0; page-break-inside: avoid; }
     .semana-tit { font-size: 13px; font-weight: 700; margin: 10px 0 4px; }
     .semana-tit .tipo { font-size: 11px; font-weight: 600; color: #b45309; background: #fef4e2; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
+    .semana-tit .estado { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
+    .semana-tit .estado-progressao { color: #15803d; background: #e8f6ee; }
+    .semana-tit .estado-manutencao { color: #475569; background: #f2f0ea; }
+    .semana-tit .estado-regressao { color: #b45309; background: #fef4e2; }
     .semana-tit .freq { font-size: 11px; font-weight: 400; color: #94a3b8; margin-left: 6px; }
+    .objetivo-sem { font-size: 12px; color: #475569; margin: 2px 0 4px; }
+    .reducao { font-size: 11px; color: #b45309; margin: 0 0 4px; }
+    .alvo-forca { font-size: 10px; font-weight: 600; color: #1b4b66; margin: 2px 0 0; }
     .nota { font-size: 11px; color: #94a3b8; margin: 0 0 4px; }
     .sessao { margin: 6px 0 8px; }
     .sessao-nome { font-size: 12px; font-weight: 700; color: #1e293b; margin: 6px 0 3px; }

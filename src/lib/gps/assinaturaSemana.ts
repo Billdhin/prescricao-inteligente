@@ -24,6 +24,11 @@ import type { Microciclo } from "@/data/periodizacao";
  * entra: duas semanas que só diferem no alvo (a dose que PROGREDIU) deixam de ser fundidas
  * pelo PDF, que passa a mostrar a progressão em vez de uma linha só. Comportamento desejado
  * da onda MP-3; planos antigos (sem alvo) mantêm a fusão como antes.
+ *
+ * O ALVO do AERÓBIO (duracaoAlvoMin, rpeAlvo, zonaFC) entra do mesmo jeito (onda MP-5, que
+ * fecha a pendência da MP-4): a faixa-texto do cardio ("20 a 40 min") é a mesma toda semana,
+ * então sem o alvo aeróbio o PDF fundia semanas que só diferem na duração-alvo que progrediu.
+ * Com ele, o PARA de fundir e mostra a progressão do cardio.
  */
 export function assinaturaSemana(m: Microciclo): string {
   return JSON.stringify({
@@ -33,6 +38,7 @@ export function assinaturaSemana(m: Microciclo): string {
       blocos: s.blocos.map((b) => [
         b.nome, b.series, b.reps, b.intensidade, b.intervalo, b.formato, b.duracao, b.recuperacao, b.metodo, b.grupoMetodo,
         b.seriesAlvo, b.repsAlvo, b.rirAlvo, b.cargaRelativaAlvo, b.intervaloAlvoSeg,
+        b.duracaoAlvoMin, b.rpeAlvo, b.zonaFC,
       ]),
     })),
   });
@@ -40,16 +46,20 @@ export function assinaturaSemana(m: Microciclo): string {
 
 /**
  * Só as variáveis de CARGA, sem o nome do exercício: séries/reps/intensidade/intervalo e o
- * ALVO da força; formato/duração do aeróbio. Detecta "mesma dose" mesmo quando os exercícios
- * mudam. Usada pelo check:progressao (critério "não repetir a dose toda semana"): com o alvo,
- * semanas que progridem passam a ter assinaturas diferentes.
+ * ALVO da força; formato/duração do aeróbio e o ALVO do aeróbio (duração/PSE/zona de FC).
+ * Detecta "mesma dose" mesmo quando os exercícios mudam. Usada pelo check:progressao (critério
+ * "não repetir a dose toda semana"): com o alvo, semanas que progridem (na força OU no aeróbio)
+ * passam a ter assinaturas diferentes.
  */
 export function assinaturaCarga(m: Microciclo): string {
   return JSON.stringify(
     m.sessoes.map((s) =>
       s.blocos.map((b) =>
         b.tipo === "aerobio"
-          ? { a: [b.formato ?? null, b.duracao ?? null] }
+          ? {
+              a: [b.formato ?? null, b.duracao ?? null],
+              alvo: [b.duracaoAlvoMin ?? null, b.rpeAlvo ?? null, b.zonaFC ?? null],
+            }
           : {
               f: [b.series ?? null, b.reps ?? null, b.intensidade ?? null, b.intervalo ?? null],
               alvo: [b.seriesAlvo ?? null, b.repsAlvo ?? null, b.rirAlvo ?? null, b.cargaRelativaAlvo ?? null, b.intervaloAlvoSeg ?? null],
