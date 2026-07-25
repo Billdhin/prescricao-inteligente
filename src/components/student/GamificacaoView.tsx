@@ -50,7 +50,7 @@ export function GamificacaoView({
           <Medal className="h-5 w-5" />
         </span>
         <p className="text-sm text-ink-2">
-          Registre seus treinos na aba <strong className="text-ink">Treino</strong> para começar a subir de liga e
+          Inicie o treino de hoje na aba <strong className="text-ink">Hoje</strong> para começar a subir de liga e
           desbloquear conquistas.
         </p>
       </Card>
