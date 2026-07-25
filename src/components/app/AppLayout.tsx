@@ -170,7 +170,7 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
   // Ele descreve o primeiro aluno (condição, objetivo, nível), o sistema cria esse
   // aluno de verdade e o larga na tela dele com a Linha do cuidado apontando o
   // primeiro passo (avaliar). Ensina o fluxo do cuidado, não os botões.
-  const [caso, setCaso] = React.useState({ grupo: "hipertensao-estagio-1", objetivo: "Emagrecimento", nivel: "Iniciante" });
+  const [caso, setCaso] = React.useState({ nome: "", grupo: "hipertensao-estagio-1", objetivo: "Emagrecimento", nivel: "Iniciante" });
 
   const finish = () => {
     localStorage.setItem("pi-onboarded", "1");
@@ -179,8 +179,10 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
   const resolverCaso = () => {
     marcarAtivacao("inicio");
     const agora = Date.now();
-    const grupo = caso.grupo ? getSpecialGroup(caso.grupo) : undefined;
-    const nome = grupo ? `Primeiro aluno (${grupo.nome})` : "Primeiro aluno";
+    // O profissional dá o nome real do aluno; sem nome digitado, cai num rótulo
+    // provisório (ele edita depois). O grupo NÃO entra no nome (fica em grupoEspecial).
+    const nomeDigitado = caso.nome.trim();
+    const nome = nomeDigitado || "Meu primeiro aluno";
     // Só fatos que o profissional declarou; nenhuma restrição física inventada
     // (o grupo carrega o contexto clínico, a restrição estrutural ele adiciona).
     const aluno: Aluno = {
@@ -195,7 +197,10 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
       criadoEm: agora,
       nivelDesde: agora,
       grupoEspecial: caso.grupo || undefined,
-      observacoes: "Aluno de exemplo do onboarding, para você percorrer a Linha do cuidado. Edite ou remova quando quiser.",
+      // Sem nome digitado é um rótulo provisório; com nome real, é um aluno de verdade.
+      observacoes: nomeDigitado
+        ? undefined
+        : "Rótulo provisório. Edite o nome do aluno quando quiser.",
     };
     addAluno(aluno);
     finish();
@@ -239,6 +244,19 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
         </p>
 
         <div className="mt-5 space-y-4 text-left">
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-semibold text-ink">Nome do aluno</span>
+            <input
+              type="text"
+              value={caso.nome}
+              onChange={(e) => setCaso((c) => ({ ...c, nome: e.target.value }))}
+              placeholder="Ex.: Maria Souza"
+              autoComplete="off"
+              autoCapitalize="words"
+              enterKeyHint="done"
+              className="input"
+            />
+          </label>
           <fieldset>
             <legend className="mb-1.5 text-sm font-semibold text-ink">Qual condição o seu aluno tem?</legend>
             <div className="flex flex-wrap gap-1.5">
@@ -282,9 +300,16 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
           </div>
         </div>
 
-        <button onClick={resolverCaso} className={cn(buttonClasses("primary"), "mt-5 w-full")}>
+        <button
+          onClick={resolverCaso}
+          disabled={!caso.nome.trim()}
+          className={cn(buttonClasses("primary"), "mt-5 w-full disabled:cursor-not-allowed disabled:opacity-50")}
+        >
           Criar este aluno →
         </button>
+        {!caso.nome.trim() && (
+          <p className="mt-1.5 text-xs text-ink-3">Escreva o nome do aluno para continuar.</p>
+        )}
         <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
           <button onClick={explorar} className="font-medium text-ink-2 hover:text-ink">
             Não tenho um caso agora? Use um exemplo
