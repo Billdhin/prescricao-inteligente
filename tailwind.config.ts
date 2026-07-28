@@ -35,8 +35,10 @@ export default {
         "danger-fill": "rgb(var(--danger-fill-rgb) / <alpha-value>)",
       },
       fontFamily: {
-        display: ['"Plus Jakarta Sans"', '"Inter"', "system-ui", "sans-serif"],
-        sans: ['"Inter"', "system-ui", "sans-serif"],
+        // Direção "1c Rota": Bricolage nos títulos, Instrument no corpo.
+        // As duas são auto-hospedadas em public/fonts (@font-face em index.css).
+        display: ['"Bricolage Grotesque"', '"Instrument Sans"', "system-ui", "sans-serif"],
+        sans: ['"Instrument Sans"', "system-ui", "sans-serif"],
       },
       fontSize: {
         "2xs": ["11px", { lineHeight: "16px" }],
