@@ -269,6 +269,18 @@ function montarSessoes(
 
 /* ---------------------------------- Microciclos ---------------------------------- */
 
+/**
+ * Dados do aluno que chegam até o alvo da semana. Todos opcionais: o uso avulso, o estudo e
+ * os guardrails não os passam, e o alvo cai no caminho honesto (duração mais PSE) em vez de
+ * inventar número.
+ */
+interface DadosDoAlunoNoAlvo {
+  /** estima a FCmax para a zona de FC do aeróbio */
+  idade?: number;
+  /** FCrep MEDIDA, fecha a zona de Karvonen */
+  fcRepouso?: number;
+}
+
 function montarMicrociclos(
   objetivo: GpsObjetivo,
   nivel: Nivel,
@@ -280,10 +292,12 @@ function montarMicrociclos(
   // Tendências do mesociclo dono destas semanas: mandam a DIREÇÃO do alvo semana a semana.
   tendenciaVolume: Tendencia,
   tendenciaIntensidade: Tendencia,
-  // Idade e FCrep do aluno, quando houver: só personalizam a zona de FC do aeróbio (MP-4).
-  idade?: number,
-  fcRepouso?: number,
+  // Dados do aluno que personalizam o alvo. Ficam num objeto, e não em posicionais, porque
+  // esta lista cresce: hoje idade e FCrep (zona de FC do aeróbio, MP-4), amanhã o perfil
+  // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
+  dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
+  const { idade, fcRepouso } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
   const semanasDeCargaNoMeso = comDeload ? Math.max(1, duracao - 1) : duracao;
@@ -427,7 +441,10 @@ function montarMacrocicloGenerico(
         "Baixa adesão ou sono ruim mantidos",
       ],
       parametros: faixa.parametros,
-      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, input.idade, input.fcRepouso),
+      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, {
+        idade: input.idade,
+        fcRepouso: input.fcRepouso,
+      }),
     });
   }
 
@@ -499,7 +516,10 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       criteriosProgressao: fase.criteriosAvancar,
       criteriosRegressao: fase.criteriosRegredir,
       parametros: fase.parametros?.length ? fase.parametros : faixa.parametros,
-      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, input.idade, input.fcRepouso),
+      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, {
+        idade: input.idade,
+        fcRepouso: input.fcRepouso,
+      }),
     });
   });
 

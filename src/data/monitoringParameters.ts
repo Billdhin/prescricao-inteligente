@@ -12,8 +12,26 @@ export type ParamCategoria =
   | "segurança"
   | "adesão";
 
+/**
+ * Ids dos parâmetros deste catálogo. É union fechado, e não string, para que quem citar um
+ * parâmetro em outro arquivo (o perfil clínico que decide qual instrumento guia a intensidade,
+ * por exemplo) tenha o compilador conferindo o id. Antes disso, um id digitado errado sumia
+ * em silêncio.
+ */
+export type ParamMonitorId =
+  | "p-rpe"
+  | "p-fala"
+  | "p-fc"
+  | "p-pa"
+  | "p-dispneia"
+  | "p-dor"
+  | "p-fadiga"
+  | "p-recuperacao"
+  | "p-adesao"
+  | "p-volume";
+
 export interface MonitoringParameter {
-  id: string;
+  id: ParamMonitorId;
   nome: string;
   sigla?: string;
   categoria: ParamCategoria;

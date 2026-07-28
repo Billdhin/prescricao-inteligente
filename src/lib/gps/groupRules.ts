@@ -512,6 +512,19 @@ export function getGroupRule(slug?: string) {
  */
 export function combineRules(slugs: string[]): GroupGpsRule | undefined {
   const rules = slugs.map((s) => groupGpsRules[s]).filter((r): r is GroupGpsRule => Boolean(r));
+  return fundirRegras(rules);
+}
+
+/**
+ * A fusão em si, separada da resolução de slugs. Recebe as regras JÁ materializadas, então
+ * serve para qualquer fonte de cuidado clínico, não só para os grupos especiais do catálogo
+ * (a camada de fármacos produz regras com esta mesma forma e entra por aqui, sem caminho
+ * paralelo no motor). A lei é sempre a mesma: o mais CONSERVADOR vence.
+ *
+ * O atalho de uma regra só devolve a própria instância de propósito: é o que mantém o
+ * caminho sem fusão byte-idêntico ao de antes desta extração.
+ */
+export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
   if (rules.length === 0) return undefined;
   if (rules.length === 1) return rules[0];
 
@@ -539,7 +552,9 @@ export function combineRules(slugs: string[]): GroupGpsRule | undefined {
     complexidadeMax: maxes.length ? Math.min(...maxes) : undefined,
     restricaoSugerida: rules.find((r) => r.restricaoSugerida)?.restricaoSugerida,
     refs,
-    modProgressao: combinarModProgressao(rules),
+    modProgressao: fundirModProgressao(
+      rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),
+    ),
   };
 }
 
@@ -548,9 +563,12 @@ export function combineRules(slugs: string[]): GroupGpsRule | undefined {
  * esforço, menor fator de incremento (passo mais curto) e descarga mais frequente. Assim um aluno
  * idoso + hipertenso progride pelo mais rígido dos dois. Devolve undefined quando nenhuma condição
  * declara modificador (progride no passo padrão).
+ *
+ * Recebe os modificadores já extraídos, e não as regras, para que qualquer fonte possa
+ * contribuir com um (a camada de fármacos usa o mesmo tipo). Um modificador só nunca
+ * afrouxa nada: a fusão é sempre por mínimo.
  */
-function combinarModProgressao(rules: GroupGpsRule[]): ModProgressao | undefined {
-  const mods = rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m));
+export function fundirModProgressao(mods: ModProgressao[]): ModProgressao | undefined {
   if (mods.length === 0) return undefined;
   if (mods.length === 1) return mods[0];
   const min = (xs: (number | undefined)[]) => {
