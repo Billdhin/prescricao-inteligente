@@ -617,7 +617,7 @@ export function BiomechanicsComparisonSlider({
                 onBlur={() => setFoco(null)}
                 aria-label={`Destacar ${m.musculo} na imagem`}
                 className={cn(
-                  "-mx-1 flex w-[calc(100%+8px)] items-center gap-1.5 rounded-md px-1 py-1 text-left outline-none transition-colors",
+                  "-mx-1 flex w-[calc(100%+8px)] items-center gap-1.5 rounded-full px-1 py-1 text-left outline-none transition-colors",
                   foco === m.musculo ? "bg-white/10" : "hover:bg-white/5",
                 )}
               >

@@ -1341,7 +1341,7 @@ function SeletorExercicioSheet({
               <li key={r.exercise.slug}>
                 <button
                   onClick={() => onEscolher({ slug: r.exercise.slug, nome: r.exercise.nome })}
-                  className="flex w-full items-center gap-2 rounded-lg border border-border bg-surface p-2.5 text-left hover:border-primary hover:bg-surface-soft"
+                  className="flex w-full items-center gap-2 rounded-card border border-border bg-surface p-2.5 text-left hover:border-primary hover:bg-surface-soft"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-semibold text-ink">{r.exercise.nome}</div>

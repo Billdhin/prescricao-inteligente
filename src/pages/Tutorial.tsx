@@ -15,11 +15,11 @@ export function Tutorial() {
       <SectionHeader
         eyebrow="Aprenda a usar"
         icon={<GraduationCap className="h-3 w-3" />}
-        title="Tutoriais"
-        subtitle="Guias visuais, passo a passo, para dominar as ações principais da plataforma. Cada passo tem um atalho para você fazer na hora."
+        title="Ajuda"
+        subtitle="Guias visuais, passo a passo, das ações principais. Cada passo tem um atalho para fazer na hora, e o suporte fica a um clique."
         right={
           <Link to="/suporte" className={buttonClasses("secondary")}>
-            <LifeBuoy className="h-4 w-4" /> Precisa de ajuda?
+            <LifeBuoy className="h-4 w-4" /> Falar com o suporte
           </Link>
         }
       />

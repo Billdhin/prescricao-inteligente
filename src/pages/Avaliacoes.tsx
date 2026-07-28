@@ -47,7 +47,7 @@ export function Avaliacoes() {
       <SectionHeader
         eyebrow="Atendimento"
         icon={<BarChart3 className="h-3 w-3" />}
-        title="Avaliações"
+        title="Avaliar e reavaliar"
         subtitle="Acompanhe reavaliações e o histórico de medidas dos seus alunos. Registre novas avaliações no perfil de cada aluno."
       />
 

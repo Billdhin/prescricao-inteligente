@@ -104,10 +104,10 @@ export function PosturalCard({ aluno }: { aluno: Aluno }) {
                     {comIA && <Pill tone="analysis">Com análise</Pill>}
                   </div>
                 </div>
-                <button onClick={() => exportar(av)} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-semibold text-primary hover:bg-surface-soft">
+                <button onClick={() => exportar(av)} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold text-primary hover:bg-surface-soft">
                   <FileDown className="h-4 w-4" /> Laudo
                 </button>
-                <button onClick={() => removePostural(av.id)} aria-label="Excluir avaliação" className="rounded-md p-2 text-ink-3 hover:bg-surface-soft hover:text-cta">
+                <button onClick={() => removePostural(av.id)} aria-label="Excluir avaliação" className="rounded-full p-2 text-ink-3 hover:bg-surface-soft hover:text-cta">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>

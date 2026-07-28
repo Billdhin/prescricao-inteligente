@@ -10,7 +10,19 @@ export interface TabItem {
   content: React.ReactNode;
 }
 
-export function Tabs({ items, initial }: { items: TabItem[]; initial?: string }) {
+export function Tabs({
+  items,
+  initial,
+  // O rótulo do tablist era cravado em "Seções do exercício", o que ficou errado
+  // assim que as abas passaram a servir também ao comparador, ao glossário e às
+  // três camadas. Vira prop, com o valor antigo como padrão para os call sites
+  // de exercício não mudarem de comportamento.
+  ariaLabel = "Seções do exercício",
+}: {
+  items: TabItem[];
+  initial?: string;
+  ariaLabel?: string;
+}) {
   const [active, setActive] = React.useState(initial ?? items[0]?.id);
   const current = items.find((i) => i.id === active) ?? items[0];
   const uid = React.useId();
@@ -37,7 +49,7 @@ export function Tabs({ items, initial }: { items: TabItem[]; initial?: string })
     <div>
       <div
         role="tablist"
-        aria-label="Seções do exercício"
+        aria-label={ariaLabel}
         onKeyDown={onKeyDown}
         className="flex flex-wrap gap-1 rounded-control bg-surface-soft p-1"
       >
@@ -56,7 +68,7 @@ export function Tabs({ items, initial }: { items: TabItem[]; initial?: string })
               tabIndex={selected ? 0 : -1}
               onClick={() => setActive(it.id)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+                "rounded-full px-3 py-1.5 text-sm font-semibold transition-colors",
                 selected ? "bg-surface text-primary shadow-soft" : "text-ink-2 hover:text-ink",
               )}
             >

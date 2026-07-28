@@ -77,7 +77,7 @@ export function Alunos() {
       <SectionHeader
         eyebrow="Atendimento"
         icon={<Users className="h-3 w-3" />}
-        title="Alunos"
+        title="Meus alunos"
         subtitle="Cadastre seus alunos, prescreva com justificativa e acompanhe a evolução."
         right={
           <button onClick={() => setNovo(true)} className={buttonClasses("primary")}>

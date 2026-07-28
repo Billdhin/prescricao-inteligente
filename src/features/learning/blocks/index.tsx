@@ -603,7 +603,7 @@ function MechanismAccordion({ title, steps }: { title?: string; steps: NucleoSte
               onClick={() => setOpen(open === i ? null : i)}
               aria-expanded={open === i}
               className={cn(
-                "flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
+                "flex items-center gap-3 rounded-card border p-3 text-left transition-colors",
                 open === i ? "border-primary bg-primary-tint" : "border-border bg-surface hover:bg-surface-soft",
               )}
             >
@@ -883,7 +883,7 @@ function ProfessionalCase({
               aria-checked={pick === c.id}
               onClick={() => choose(c.id)}
               className={cn(
-                "flex w-full items-start gap-2 rounded-xl border p-3 text-left text-sm transition-colors",
+                "flex w-full items-start gap-2 rounded-card border p-3 text-left text-sm transition-colors",
                 pick === c.id ? "border-primary bg-primary-tint" : "border-border hover:bg-surface-soft",
               )}
             >
@@ -960,7 +960,7 @@ function QuizItem({
               onClick={() => choose(o.id)}
               disabled={answered}
               className={cn(
-                "flex w-full items-center gap-2 rounded-xl border p-2.5 text-left text-sm transition-colors",
+                "flex w-full items-center gap-2 rounded-card border p-2.5 text-left text-sm transition-colors",
                 !answered && "hover:bg-surface-soft",
                 answered && isRight && "border-success bg-success-tint",
                 answered && isPick && !isRight && "border-warning bg-warning-tint",

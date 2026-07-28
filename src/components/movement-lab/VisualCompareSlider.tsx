@@ -257,7 +257,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
           <button
             onClick={() => setIdx((i) => Math.max(0, i - 1))}
             disabled={idx === 0}
-            className="inline-flex items-center gap-1 rounded-control px-3 py-2 text-sm font-semibold text-ink-2 hover:text-ink disabled:opacity-40"
+            className="inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-ink-2 hover:text-ink disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" /> Anterior
           </button>
@@ -267,7 +267,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
           {idx < CAMADAS.length - 1 ? (
             <button
               onClick={() => setIdx((i) => i + 1)}
-              className="inline-flex items-center gap-1 rounded-control bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:opacity-95"
+              className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:opacity-95"
             >
               Próxima <ChevronRight className="h-4 w-4" />
             </button>

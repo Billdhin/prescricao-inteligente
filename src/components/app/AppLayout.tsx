@@ -1,17 +1,11 @@
 import * as React from "react";
-import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import {
-  ChevronsLeft,
-  X,
-  PanelLeft,
-  Bell,
-  ChevronDown,
-  CheckCheck,
-  HelpCircle,
-} from "lucide-react";
+import { createPortal } from "react-dom";
+import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Bell, ChevronDown, CheckCheck, MoreHorizontal, Search } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
-import { NAV, BOTTOM, type NavItem } from "@/components/app/nav";
+import { PRIMARIOS, MAIS, BOTTOM, itemAtivo } from "@/components/app/nav";
+import { notificacoes } from "@/lib/notificacoes";
 import { LoginGate } from "@/components/app/LoginGate";
 import { CloudAuthGate } from "@/components/app/CloudAuthGate";
 import { Toasts } from "@/components/app/Toasts";
@@ -23,13 +17,13 @@ import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { marcarAtivacao } from "@/lib/ativacao";
 import { useDialog } from "@/lib/useDialog";
-import { useUI, useUser, useProgress, useAlunos, planLabel, uid } from "@/lib/store";
+import { useUser, useAlunos, planLabel, uid } from "@/lib/store";
 import { iniciaisDe, type Aluno } from "@/data/alunos";
 import type { Nivel } from "@/data/types";
 import { cn } from "@/lib/utils";
 
-// A navegação (NAV/BOTTOM) e seus tipos vivem em nav.ts: fonte única que a busca
-// global também consome, para as duas nunca dessincronizarem.
+// A navegação vive em nav.ts (PRIMARIOS + MAIS, com NAV e BOTTOM derivados):
+// fonte única que a busca global e o check:menu também consomem.
 
 function tempoRelativo(ts: number) {
   const diff = Date.now() - ts;
@@ -70,8 +64,8 @@ const TITULOS_ROTA: [RegExp, string][] = [
   [/^\/comparador/, "Comparador"],
   [/^\/tracks/, "Trilhas"],
   [/^\/account/, "Configurações"],
-  [/^\/tutorial/, "Tutoriais"],
-  [/^\/suporte/, "Suporte"],
+  [/^\/tutorial/, "Ajuda"],
+  [/^\/suporte/, "Ajuda"],
 ];
 
 export function AppLayout() {
@@ -111,16 +105,13 @@ export function AppLayout() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-bg">
       {/* Fundo fica inerte enquanto o onboarding está aberto (foco/leitura presos no diálogo) */}
-      <div className="flex min-h-screen w-full" {...(onboarding ? ({ inert: "" } as any) : {})}>
-        <Sidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar />
-          <main className="min-w-0 flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-8">
-            <React.Suspense fallback={<RouteFallback />}>
-              <Outlet />
-            </React.Suspense>
-          </main>
-        </div>
+      <div className="flex min-h-screen w-full flex-col" {...(onboarding ? ({ inert: "" } as any) : {})}>
+        <Topbar />
+        <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-10">
+          <React.Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </React.Suspense>
+        </main>
       </div>
       <BottomBar />
       {onboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
@@ -324,230 +315,233 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
   );
 }
 
-// Rota de um filho não-ação está ativa? (filhos de ação, ex. Cadastrar aluno,
-// nunca contam como "lugar": abrem algo, não são um destino próprio.)
-function filhoAtivo(item: NavItem, pathname: string) {
-  return (
-    item.children?.some((c) => !c.acao && (pathname === c.to || pathname.startsWith(c.to + "/"))) ?? false
-  );
-}
-
-// Rota ativa dentro de um grupo: replica a semântica de acender do NavLink
-// (match exato, prefixo de segmento, os prefixos-irmãos de item.match ou a rota
-// de um filho). Serve para NUNCA esconder o grupo onde o usuário está, mesmo
-// que ele esteja comprimido.
-function rotaAtivaNoGrupo(items: NavItem[], pathname: string) {
-  return items.some(
-    (it) =>
-      pathname === it.to ||
-      pathname.startsWith(it.to + "/") ||
-      (it.match?.some((p) => pathname.startsWith(p)) ?? false) ||
-      filhoAtivo(it, pathname),
-  );
-}
-
-function Sidebar() {
-  const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen, gruposComprimidos, toggleGrupo } = useUI();
-  const location = useLocation();
-  const asideRef = React.useRef<HTMLElement>(null);
-
-  // Fecha o drawer ao trocar de rota
-  React.useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname, setMobileOpen]);
-
-  // Esc fecha + trava scroll do body no mobile
-  React.useEffect(() => {
-    if (!mobileOpen) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMobileOpen(false);
-    document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    asideRef.current?.querySelector<HTMLElement>("a,button")?.focus();
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [mobileOpen, setMobileOpen]);
+/**
+ * A CASCA: uma barra superior, e só. A barra lateral (rail de ícones + drawer
+ * mobile + grupos comprimíveis) saiu inteira: eram 3 estados de menu para o
+ * mesmo menu, e a preferência de cada um ficava salva, então dois profissionais
+ * viam produtos diferentes. Agora são 5 pílulas na linha e um "Mais" com os 8
+ * destinos de referência, iguais para todo mundo.
+ *
+ * Abaixo de xl a busca vira botão com painel, porque a 1280px a linha não
+ * comporta logo + 5 rótulos + Mais + campo de busca + sino + avatar.
+ */
+function Topbar() {
+  const [busca, setBusca] = React.useState(false);
 
   return (
-    <>
-      <div
-        aria-hidden
-        onClick={() => setMobileOpen(false)}
-        className={cn(
-          "fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity lg:hidden",
-          mobileOpen ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
-      />
-      <aside
-        ref={asideRef}
-        aria-label="Menu completo"
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-[280px] flex-col border-r border-border bg-surface shadow-elevated transition-transform duration-200",
-          mobileOpen ? "translate-x-0" : "-translate-x-full",
-          "lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0 lg:shadow-none",
-          collapsed ? "lg:w-[76px]" : "lg:w-[260px]",
-        )}
-      >
-        <div className="flex h-16 items-center justify-between px-4">
-          <Logo showWord={!collapsed || mobileOpen} />
+    <header className="sticky top-0 z-30 border-b border-border bg-surface/85 backdrop-blur">
+      <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center gap-2 px-3 md:gap-3 md:px-6">
+        <Link to="/dashboard" aria-label="Mapa da Prescrição, ir para Meu dia" className="shrink-0">
+          <Logo />
+        </Link>
+
+        <TopbarNav />
+
+        <div className="ml-auto flex shrink-0 items-center gap-1">
+          <div className="hidden w-full min-w-[260px] max-w-md xl:block">
+            <GlobalSearch />
+          </div>
           <button
-            onClick={toggleCollapsed}
-            aria-label="Colapsar menu"
-            className="hidden rounded-full p-1.5 text-ink-2 hover:bg-surface-soft lg:inline-flex"
+            onClick={() => setBusca((v) => !v)}
+            aria-label="Buscar"
+            aria-expanded={busca}
+            className="grid h-11 w-11 place-items-center rounded-full text-ink-2 hover:bg-surface-soft xl:hidden"
           >
-            <ChevronsLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
+            <Search className="h-[18px] w-[18px]" />
           </button>
-          <button
-            onClick={() => setMobileOpen(false)}
-            aria-label="Fechar menu"
-            className="rounded-md p-1.5 text-ink-2 hover:bg-surface-soft lg:hidden"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <MaisMenu />
+          <NotificationsMenu />
+          <UserMenu />
         </div>
+      </div>
 
-        <nav aria-label="Menu principal" className="flex-1 space-y-5 overflow-y-auto px-3 pb-4 pt-4">
-          {NAV.map((section, i) => {
-            const iconOnly = collapsed && !mobileOpen;
-            const showLabel = !!section.label && !iconOnly;
-            const labelId = showLabel ? `navsec-${i}` : undefined;
-            const regionId = `navsec-region-${i}`;
-            // No rail (iconOnly) o colapso por grupo é ignorado: todos os ícones
-            // ficam visíveis (previsível). Fora do rail, o grupo comprimível fecha
-            // conforme a preferência salva, MAS nunca quando a rota ativa é dele.
-            const ativoNoGrupo = rotaAtivaNoGrupo(section.items, location.pathname);
-            const comprimivel = !!section.collapsible && !iconOnly && showLabel;
-            const comprimido = comprimivel && gruposComprimidos.includes(section.label!) && !ativoNoGrupo;
-            return (
-              <div key={section.label ?? `sec-${i}`} role={labelId ? "group" : undefined} aria-labelledby={labelId}>
-                {comprimivel ? (
-                  <button
-                    type="button"
-                    onClick={() => toggleGrupo(section.label!)}
-                    aria-expanded={!comprimido}
-                    aria-controls={regionId}
-                    className="mb-1 flex min-h-[44px] w-full items-center justify-between gap-2 rounded-lg px-3 text-2xs font-semibold uppercase tracking-wider text-ink-3 transition-colors hover:bg-surface-soft hover:text-ink-2"
-                  >
-                    <span id={labelId}>{section.label}</span>
-                    <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", comprimido && "-rotate-90")} aria-hidden />
-                  </button>
-                ) : (
-                  showLabel && (
-                    <div id={labelId} className="mb-1 px-3 text-2xs font-semibold uppercase tracking-wider text-ink-3">
-                      {section.label}
-                    </div>
-                  )
-                )}
-                <div id={regionId} hidden={comprimido}>
-                  <NavGroup items={section.items} collapsed={iconOnly} />
-                </div>
-              </div>
-            );
-          })}
-        </nav>
-
-      </aside>
-    </>
+      {busca && (
+        <div className="border-t border-border px-3 pb-3 pt-2 md:px-6 xl:hidden">
+          <GlobalSearch />
+        </div>
+      )}
+    </header>
   );
 }
 
-function NavGroup({ items, collapsed }: { items: NavItem[]; collapsed: boolean }) {
+/**
+ * Os 5 primários como pílulas, com o ativo em INK SÓLIDO (literal do Design
+ * System: a ação e o lugar atual são a tinta escura, e o azul fica reservado ao
+ * pino da rota e ao anel de foco). Some no mobile, onde a barra inferior faz o
+ * mesmo papel com os mesmos 5 itens.
+ */
+function TopbarNav() {
   const { pathname } = useLocation();
   return (
-    <ul className="space-y-1">
-      {items.map((item) => {
-        const Icon = item.icon;
-        // No rail (colapsado) os filhos não aparecem, então o PAI acende quando
-        // a rota de um filho está ativa (senão o usuário fica "em lugar nenhum").
-        // Expandido, cada um acende sozinho: o pai não acende junto do filho.
-        const forcado =
-          (item.match?.some((p) => pathname.startsWith(p)) ?? false) ||
-          (collapsed && filhoAtivo(item, pathname));
+    <nav aria-label="Menu principal" className="hidden min-w-0 items-center gap-1 lg:flex">
+      {PRIMARIOS.map((item) => {
+        const ativo = itemAtivo(item, pathname);
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            aria-current={ativo ? "page" : undefined}
+            className={cn(
+              "inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-sm font-semibold transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+              ativo ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft hover:text-ink",
+            )}
+          >
+            <item.icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
+            <span className="hidden xl:inline">{item.label}</span>
+            <span className="xl:hidden">{item.short ?? item.label}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/**
+ * "Mais": popover no desktop, folha de baixo no mobile (é onde o polegar
+ * alcança). Toda opção traz a descrição de uma linha que o Design System pede,
+ * porque um menu de 8 destinos sem descrição obriga a abrir para descobrir.
+ */
+function MaisMenu() {
+  const [open, setOpen] = React.useState(false);
+  const { pathname } = useLocation();
+  const ref = React.useRef<HTMLDivElement>(null);
+  const botaoRef = React.useRef<HTMLButtonElement>(null);
+
+  // Fecha ao trocar de rota (o destino já foi alcançado).
+  React.useEffect(() => setOpen(false), [pathname]);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      const alvo = e.target as Node;
+      if (ref.current?.contains(alvo)) return;
+      // A folha do mobile mora num PORTAL, fora deste ref: sem esta checagem o
+      // primeiro toque dentro dela fecharia o menu antes do clique chegar ao link.
+      if ((alvo as Element)?.closest?.('[role="menu"][aria-label="Mais destinos"]')) return;
+      setOpen(false);
+    };
+    // Esc fecha E DEVOLVE O FOCO ao botão, senão o foco cai no início da página.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      botaoRef.current?.focus();
+    };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const algumAtivo = MAIS.some((i) => itemAtivo(i, pathname));
+
+  const lista = (
+    <ul className="space-y-0.5">
+      {MAIS.map((item) => {
+        const ativo = itemAtivo(item, pathname);
         return (
           <li key={item.to}>
-            <NavLink
+            <Link
               to={item.to}
-              title={collapsed ? item.label : undefined}
-              className={({ isActive }) =>
-                cn(
-                  "flex min-h-[44px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive || forcado
-                    ? "bg-primary-tint text-primary"
-                    : "text-ink-2 hover:bg-surface-soft hover:text-ink",
-                )
-              }
+              aria-current={ativo ? "page" : undefined}
+              className={cn(
+                "flex min-h-[44px] items-start gap-3 rounded-control px-2.5 py-2 transition-colors",
+                ativo ? "bg-surface-soft" : "hover:bg-surface-soft",
+              )}
             >
-              <Icon className="h-[18px] w-[18px] shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-            </NavLink>
-            {!collapsed && item.children && (
-              <ul className="mt-1 space-y-1">
-                {item.children.map((child) => {
-                  const ChildIcon = child.icon;
-                  const classeBase =
-                    "flex min-h-[44px] items-center gap-3 rounded-xl py-2 pl-[42px] pr-3 text-sm font-medium transition-colors";
-                  return (
-                    <li key={child.to}>
-                      {child.acao ? (
-                        // Link de AÇÃO (ex.: Cadastrar aluno): nunca acende como
-                        // ativo; em /alunos ele acenderia junto do pai e mentiria
-                        // a localização. Link puro, sem semântica de aria-current.
-                        <Link to={child.to} className={cn(classeBase, "text-ink-2 hover:bg-surface-soft hover:text-ink")}>
-                          <ChildIcon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{child.label}</span>
-                        </Link>
-                      ) : (
-                        <NavLink
-                          to={child.to}
-                          className={({ isActive }) =>
-                            cn(
-                              classeBase,
-                              isActive
-                                ? "bg-primary-tint text-primary"
-                                : "text-ink-2 hover:bg-surface-soft hover:text-ink",
-                            )
-                          }
-                        >
-                          <ChildIcon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{child.label}</span>
-                        </NavLink>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+              <span
+                className={cn(
+                  "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full",
+                  ativo ? "bg-ink text-surface" : "bg-surface-mute text-ink-2",
+                )}
+              >
+                <item.icon className="h-[18px] w-[18px]" aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-ink">{item.label}</span>
+                {item.hint && <span className="block text-xs leading-tight text-ink-2">{item.hint}</span>}
+              </span>
+            </Link>
           </li>
         );
       })}
     </ul>
   );
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        ref={botaoRef}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className={cn(
+          "inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-colors",
+          algumAtivo ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft hover:text-ink",
+        )}
+      >
+        <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden />
+        <span className="hidden sm:inline">Mais</span>
+      </button>
+
+      {/* Desktop: popover ancorado no botão. */}
+      {open && (
+        <div
+          role="menu"
+          aria-label="Mais destinos"
+          className="absolute right-0 top-[calc(100%+8px)] z-50 hidden w-[320px] rounded-card border border-border bg-surface p-2 shadow-overlay lg:block"
+        >
+          {lista}
+        </div>
+      )}
+
+      {/* Mobile: folha de baixo, POR PORTAL. A barra superior tem backdrop-blur,
+          e um ancestral com backdrop-filter vira bloco de contenção de
+          `position: fixed`: sem o portal a folha ancorava dentro do cabeçalho de
+          64px em vez do rodapé da tela (a mesma armadilha do popover de métrica). */}
+      {open &&
+        createPortal(
+          <>
+            <div
+              aria-hidden
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] lg:hidden"
+            />
+            <div
+              role="menu"
+              aria-label="Mais destinos"
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[80dvh] overflow-y-auto rounded-t-card border-t border-border bg-surface p-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-overlay lg:hidden"
+            >
+              <div className="px-2.5 pb-1 pt-1.5 text-2xs font-semibold uppercase tracking-wider text-ink-2">
+                Mais destinos
+              </div>
+              {lista}
+            </div>
+          </>,
+          document.body,
+        )}
+    </div>
+  );
 }
 
 /**
- * Barra inferior do mobile: os 5 destinos do dia, na ordem do ciclo do cuidado
- * (Meu dia, Alunos, Avaliar, Treino, Semáforo), sempre à mão com o polegar.
- * Some no desktop (lg+), onde a barra lateral cumpre o papel. A aba "Treino"
- * acende também no Treino do dia (/gps). Links puros com ativo calculado à mão
- * (o aria-current do NavLink não cobre o caso `match`); SEM truncate no rótulo:
- * overflow aqui é bug visível de propósito, conferido a 320px.
+ * Barra inferior do mobile: os MESMOS 5 primários da barra superior (identidade
+ * referencial em nav.ts), na ordem do ciclo do cuidado, à mão com o polegar.
+ * SEM truncate no rótulo: overflow aqui é bug visível de propósito, conferido a
+ * 320px. O ativo se vê pela FORMA (pílula atrás do ícone), não só pela cor.
  */
 function BottomBar() {
   const { pathname } = useLocation();
-  const itens = BOTTOM;
   return (
     <nav
       aria-label="Atalhos do dia"
       className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
     >
-      {itens.map((item) => {
+      {BOTTOM.map((item) => {
         const Icon = item.icon;
-        const ativo =
-          pathname === item.to ||
-          pathname.startsWith(item.to + "/") ||
-          (item.match?.some((p) => pathname.startsWith(p)) ?? false);
+        const ativo = itemAtivo(item, pathname);
         return (
           <Link
             key={item.to}
@@ -556,11 +550,10 @@ function BottomBar() {
             className={cn(
               "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-2xs font-medium leading-none transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-              ativo ? "text-primary" : "text-ink-3 hover:text-ink-2",
+              ativo ? "text-ink" : "text-ink-2 hover:text-ink",
             )}
           >
-            {/* Pill atrás do ícone: o ativo se vê pela forma, não só pela cor (WCAG 1.4.1) */}
-            <span className={cn("grid h-6 w-12 place-items-center rounded-full transition-colors", ativo && "bg-primary-tint")}>
+            <span className={cn("grid h-6 w-12 place-items-center rounded-full transition-colors", ativo && "bg-ink text-surface")}>
               <Icon className="h-5 w-5 shrink-0" aria-hidden />
             </span>
             <span className="max-w-full">{item.short ?? item.label}</span>
@@ -571,50 +564,31 @@ function BottomBar() {
   );
 }
 
-function Topbar() {
-  const { toggleMobile, toggleCollapsed } = useUI();
-
-  const onMenu = () => {
-    if (typeof window !== "undefined" && window.innerWidth < 1024) toggleMobile();
-    else toggleCollapsed();
-  };
-
-  return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-2 border-b border-border bg-surface/85 px-3 backdrop-blur md:gap-3 md:px-6">
-      <button
-        onClick={onMenu}
-        aria-label="Alternar menu lateral"
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
-      >
-        <PanelLeft className="h-4 w-4" />
-      </button>
-
-      <GlobalSearch />
-
-      <div className="ml-auto flex shrink-0 items-center gap-1">
-        <Link
-          to="/tutorial"
-          aria-label="Ajuda e tutoriais"
-          className="grid h-11 w-11 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
-        >
-          <HelpCircle className="h-4 w-4" />
-        </Link>
-        <NotificationsMenu />
-        <UserMenu />
-      </div>
-    </header>
-  );
-}
-
+/**
+ * O sino mostra O QUE ACONTECEU COM OS ALUNOS, tudo derivado (src/lib/notificacoes.ts).
+ * Antes ele listava o histórico de ESTUDO (`useProgress.activities`): o
+ * profissional abria esperando "o Pedro ficou sem liberação" e via "você
+ * concluiu uma aula".
+ */
 function NotificationsMenu() {
-  const activities = useProgress((s) => s.activities);
+  const alunos = useAlunos((s) => s.alunos);
+  const planos = useAlunos((s) => s.planos);
+  const liberacoes = useAlunos((s) => s.liberacoes);
+  const sessaoFeedbacks = useAlunos((s) => s.sessaoFeedbacks);
   const [open, setOpen] = React.useState(false);
+  // "Lidas até": o carimbo de quando o sino foi aberto pela última vez. Como o
+  // id da notificação é determinístico e o `ts` é o do fato, comparar por tempo
+  // basta e não precisa guardar lista de ids.
   const [seenAt, setSeenAt] = React.useState<number>(() =>
     Number(localStorage.getItem("pi-notif-seen") || 0),
   );
   const ref = React.useRef<HTMLDivElement>(null);
 
-  const unseen = activities.filter((a) => a.ts > seenAt).length;
+  const itens = React.useMemo(
+    () => notificacoes({ alunos, planos, liberacoes, sessaoFeedbacks }),
+    [alunos, planos, liberacoes, sessaoFeedbacks],
+  );
+  const unseen = itens.filter((n) => n.ts > seenAt).length;
 
   React.useEffect(() => {
     if (!open) return;
@@ -645,35 +619,49 @@ function NotificationsMenu() {
         aria-expanded={open}
         className="relative grid h-11 w-11 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
       >
-        <Bell className="h-4 w-4" />
+        <Bell className="h-[18px] w-[18px]" />
+        {/* O contador é danger-fill (o vermelho de preenchimento da identidade),
+            com a tinta escolhida para ele; era bg-cta com branco, herança do coral. */}
         {unseen > 0 && (
-          <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-cta px-1 text-2xs font-bold text-white">
+          <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-danger-fill px-1 text-2xs font-bold text-ink">
             {unseen}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-1.5rem)] rounded-card border border-border bg-surface p-1.5 shadow-elevated">
+        <div className="absolute right-0 z-50 mt-2 w-[336px] max-w-[calc(100vw-1.5rem)] rounded-card border border-border bg-surface p-1.5 shadow-overlay">
           <div className="flex items-center justify-between px-2 py-1.5">
-            <span className="text-sm font-semibold text-ink">Notificações</span>
-            <span className="text-xs text-ink-3">Atividade recente</span>
+            <span className="text-sm font-semibold text-ink">O que aconteceu</span>
+            <span className="text-xs text-ink-2">Últimos 7 dias</span>
           </div>
           <div className="max-h-80 overflow-y-auto">
-            {activities.length === 0 ? (
+            {itens.length === 0 ? (
               <div className="flex flex-col items-center gap-2 px-3 py-8 text-center">
                 <CheckCheck className="h-6 w-6 text-success" />
-                <p className="text-sm text-ink-2">Você está em dia. Nada novo por aqui.</p>
+                <p className="text-sm text-ink-2">Você está em dia. Nada pendente por aqui.</p>
               </div>
             ) : (
-              activities.map((a) => (
-                <div key={a.id} className="flex gap-3 rounded-lg px-2 py-2 hover:bg-surface-soft">
-                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
+              itens.map((n) => (
+                <Link
+                  key={n.id}
+                  to={n.to}
+                  onClick={() => setOpen(false)}
+                  className="flex gap-3 rounded-control px-2 py-2 hover:bg-surface-soft"
+                >
+                  {/* Filete de urgência à esquerda, na cor da família: o Design
+                      System usa a borda de 4px para "esta linha pede atenção". */}
+                  <span
+                    className={cn(
+                      "mt-0.5 w-1 shrink-0 self-stretch rounded-full",
+                      n.tone === "danger" ? "bg-danger-fill" : n.tone === "warning" ? "bg-warning" : "bg-analysis-fill",
+                    )}
+                  />
                   <div className="min-w-0">
-                    <div className="text-sm text-ink">{a.label}</div>
-                    <div className="tabular text-xs text-ink-3">{tempoRelativo(a.ts)}</div>
+                    <div className="text-sm leading-snug text-ink">{n.texto}</div>
+                    <div className="tabular text-xs text-ink-2">{tempoRelativo(n.ts)}</div>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>
@@ -738,7 +726,7 @@ function UserMenu() {
                 await signOut();
                 window.location.reload();
               }}
-              className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
+              className="block w-full rounded-full px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
             >
               Sair da conta
             </button>
@@ -748,7 +736,7 @@ function UserMenu() {
                 encerrarSessao();
                 window.location.reload();
               }}
-              className="block w-full rounded-lg px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
+              className="block w-full rounded-full px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
             >
               Sair (bloquear acesso)
             </button>

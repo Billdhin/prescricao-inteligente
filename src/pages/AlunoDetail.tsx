@@ -143,7 +143,7 @@ function AlunoTabs({ aba, onAba }: { aba: Aba; onAba: (a: Aba) => void }) {
             onClick={() => onAba(id)}
             onKeyDown={(e) => onKey(e, i)}
             className={cn(
-              "inline-flex flex-none items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold transition-colors",
+              "inline-flex flex-none items-center justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
               ativo ? "bg-surface text-primary shadow-soft" : "text-ink-2 hover:bg-surface hover:text-ink",
             )}

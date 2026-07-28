@@ -501,7 +501,7 @@ function SessaoCard({
           {rotulo === "Hoje" && !concluida && onIniciar && (
             <button
               onClick={() => onIniciar(sessao)}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-base font-bold text-on-primary"
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-4 text-base font-bold text-on-primary"
               style={{ background: cor }}
             >
               <Play className="h-5 w-5" aria-hidden /> Iniciar treino
@@ -674,7 +674,7 @@ function BlocoRow({
             onClick={() => setSheetAberto(true)}
             aria-haspopup="dialog"
             aria-label={`Ver o exercício ${nomeDoBloco(bloco)}`}
-            className="group flex min-h-[44px] min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left"
+            className="group flex min-h-[44px] min-w-0 flex-1 items-center gap-2.5 rounded-full text-left"
           >
             {leading}
             <span className="min-w-0 flex-1 font-semibold text-ink underline-offset-2 group-hover:underline">
@@ -785,7 +785,7 @@ function SeletorSemana({ plano, cor, execucoes }: { plano: PlanoTreino; cor: str
             onClick={() => setSel(() => Math.max(1, semana - 1))}
             disabled={semana <= 1}
             aria-label="Semana anterior"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-ink-2 hover:bg-surface-soft hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-soft hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>

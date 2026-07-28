@@ -132,7 +132,12 @@ const REGRAS = [
     id: "raio-de-botao",
     desc: "botão com raio intermediário; controle é pílula (rounded-full) e opção-cartão é rounded-card.",
     varrer: (conteudo, push) => {
-      const tags = /<button\b[\s\S]{0,600}?>/g;
+      // O `(?<!=)` é o que faz a regra funcionar de verdade: a tag termina no
+      // primeiro `>` que NÃO fecha uma arrow function. Sem ele, um
+      // `ref={(el) => ...}` no meio dos atributos cortava a tag ali, e o raio
+      // que vinha depois passava batido (foi assim que o `rounded-lg` das abas
+      // sobreviveu à primeira versão desta regra).
+      const tags = /<button\b[\s\S]{0,900}?(?<!=)>/g;
       let m;
       while ((m = tags.exec(conteudo))) {
         const raios = m[0].match(/\brounded-[a-z0-9[\]#.-]+/g) ?? [];

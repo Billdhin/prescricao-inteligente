@@ -434,7 +434,7 @@ export function Gps() {
         <SectionHeader
           eyebrow={personalizarDia ? "Treino do dia" : "Assistente de decisão"}
           icon={<Navigation className="h-3 w-3" />}
-          title={personalizarDia ? "Personalizar o treino do dia" : "Prescrever exercício"}
+          title={personalizarDia ? "Personalizar o treino do dia" : "Treino do dia"}
           subtitle={
             personalizarDia && aluno
               ? `Ajuste a sessão desta semana de ${aluno.nome.split(" ")[0]}. As escolhas entram direto no treino dele.`
@@ -870,7 +870,7 @@ function ContextoCard({
                     aria-pressed={n === fase}
                     disabled={!temGrupo}
                     className={cn(
-                      "h-11 flex-1 rounded-control text-sm font-bold transition-colors disabled:opacity-40",
+                      "h-11 flex-1 rounded-full text-sm font-bold transition-colors disabled:opacity-40",
                       n === fase && temGrupo
                         ? "gradient-brand text-white"
                         : "bg-surface-soft text-ink-2 hover:bg-primary-tint disabled:hover:bg-surface-soft",
@@ -1330,7 +1330,7 @@ function Choices({
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(o)}
             className={cn(
-              "flex items-start gap-3 rounded-control border px-4 py-3.5 text-left text-sm font-medium transition-colors",
+              "flex items-start gap-3 rounded-card border px-4 py-3.5 text-left text-sm font-medium transition-colors",
               selected
                 ? "border-primary bg-primary-tint text-primary"
                 : "border-border bg-surface text-ink hover:bg-surface-soft",
@@ -1381,7 +1381,7 @@ function MultiChoices({
             aria-pressed={selected}
             onClick={() => onToggle(o)}
             className={cn(
-              "flex items-start gap-3 rounded-control border px-4 py-3.5 text-left text-sm font-medium transition-colors",
+              "flex items-start gap-3 rounded-card border px-4 py-3.5 text-left text-sm font-medium transition-colors",
               selected
                 ? "border-primary bg-primary-tint text-primary"
                 : "border-border bg-surface text-ink hover:bg-surface-soft",

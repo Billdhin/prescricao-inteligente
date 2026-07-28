@@ -79,7 +79,7 @@ export function Salvos() {
                     <button
                       onClick={() => toggleFav(e.slug)}
                       aria-label={`Remover ${e.nome} dos salvos`}
-                      className="rounded-md p-2 text-ink-3 hover:bg-surface-soft hover:text-[color:var(--cta-text)]"
+                      className="rounded-full p-2 text-ink-3 hover:bg-surface-soft hover:text-[color:var(--cta-text)]"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -102,7 +102,7 @@ export function Salvos() {
                       <Link to={b.href} className="min-w-0 flex-1 font-medium text-ink hover:text-primary">
                         <span className="block truncate">{b.title}</span>
                       </Link>
-                      <button onClick={() => removeBookmark(b.id)} aria-label="Remover dos salvos" className="rounded-md p-2 text-ink-3 hover:bg-surface-soft hover:text-[color:var(--cta-text)]">
+                      <button onClick={() => removeBookmark(b.id)} aria-label="Remover dos salvos" className="rounded-full p-2 text-ink-3 hover:bg-surface-soft hover:text-[color:var(--cta-text)]">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>

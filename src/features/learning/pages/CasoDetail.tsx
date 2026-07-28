@@ -170,7 +170,7 @@ function StepCard({ step, chosen, onChoose }: { step: CaseStep; chosen?: string;
               aria-checked={chosen === c.id}
               onClick={() => onChoose(c.id)}
               className={cn(
-                "flex w-full items-start gap-2 rounded-xl border p-3 text-left text-sm transition-colors",
+                "flex w-full items-start gap-2 rounded-card border p-3 text-left text-sm transition-colors",
                 chosen === c.id ? "border-primary bg-primary-tint" : "border-border hover:bg-surface-soft",
               )}
             >

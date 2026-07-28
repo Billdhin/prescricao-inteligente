@@ -137,7 +137,7 @@ function ForcaBloco({ base }: { base: string | null }) {
                     <button
                       onClick={() => toggle(e.slug)}
                       aria-label={`Remover ${e.nome}`}
-                      className="shrink-0 rounded-md p-1 text-ink-3 hover:bg-surface-soft"
+                      className="shrink-0 rounded-full p-1 text-ink-3 hover:bg-surface-soft"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -379,7 +379,7 @@ function CardioBloco() {
                     <button
                       onClick={() => toggle(m.id)}
                       aria-label={`Remover ${m.nome}`}
-                      className="shrink-0 rounded-md p-1 text-ink-3 hover:bg-surface-soft"
+                      className="shrink-0 rounded-full p-1 text-ink-3 hover:bg-surface-soft"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -600,7 +600,7 @@ function CardioParametros({
                   aria-checked={on}
                   onClick={() => onIntensidade(it.id)}
                   className={cn(
-                    "flex-1 rounded-control border px-2 py-2 text-sm font-semibold transition-colors",
+                    "flex-1 rounded-full border px-2 py-2 text-sm font-semibold transition-colors",
                     on
                       ? "border-cta bg-cta-tint text-cta-text"
                       : "border-border text-ink-2 hover:bg-surface-soft",
@@ -630,7 +630,7 @@ function CardioParametros({
                   aria-checked={on}
                   onClick={() => onMinutos(t)}
                   className={cn(
-                    "rounded-control border px-3 py-2 text-sm font-semibold tabular transition-colors",
+                    "rounded-full border px-3 py-2 text-sm font-semibold tabular transition-colors",
                     on
                       ? "border-primary bg-primary-tint text-primary"
                       : "border-border text-ink-2 hover:bg-surface-soft",

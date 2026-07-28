@@ -195,7 +195,7 @@ function ContextualSearch({ mode, onMode }: { mode: "estudar" | "consultar"; onM
               aria-pressed={mode === m}
               onClick={() => onMode(m)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+                "rounded-full px-3 py-1.5 text-sm font-semibold transition-colors",
                 mode === m ? "bg-surface text-ink shadow-soft" : "text-ink-2 hover:text-ink",
               )}
             >

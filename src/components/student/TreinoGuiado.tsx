@@ -168,7 +168,7 @@ export function TreinoGuiado({
                     aria-pressed={sel}
                     aria-label={`Esforço ${n}${rot.rotulo ? ` · ${rot.rotulo}` : ""}`}
                     className={cn(
-                      "flex min-h-[44px] items-center justify-center rounded-xl text-base font-bold",
+                      "flex min-h-[44px] items-center justify-center rounded-full text-base font-bold",
                       !sel && TINT_PSE[familia],
                       !sel && forte && cn("ring-1 ring-inset", RING_PSE[familia]),
                     )}

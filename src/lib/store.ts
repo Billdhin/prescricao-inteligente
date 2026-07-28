@@ -155,48 +155,32 @@ export function isPremiumUnlocked(_plan?: Plan) {
 
 /* ------------------------------- UI (shell) ------------------------------- */
 
+/**
+ * A casca não tem mais PREFERÊNCIA de menu. A barra lateral saiu na
+ * reestruturação (uma barra superior de 5 pílulas + "Mais"), e com ela morreram
+ * os três campos que viviam aqui: `collapsed` (rail de ícones), `mobileOpen`
+ * (drawer) e `gruposComprimidos` (grupos do menu, chaveados por LABEL LITERAL,
+ * uma dívida que obrigava a migrar o persist a cada renomeação de grupo).
+ *
+ * A fatia continua existindo VAZIA de propósito, em `version: 2`, para o
+ * migrate apagar o objeto antigo do localStorage de quem já usava o app; deletar
+ * o `create` deixaria a chave `pi-ui` órfã para sempre. Quando um estado de
+ * casca voltar a ser necessário, ele nasce aqui, sem herdar nada.
+ */
 interface UIState {
-  /** drawer da sidebar no mobile: EFÊMERO, fora do persist */
-  mobileOpen: boolean;
-  /** rail de ícones no desktop (preferência do usuário, persiste) */
-  collapsed: boolean;
-  /** rótulos dos grupos do menu que estão comprimidos (persiste POR LABEL:
-   *  renomear um grupo comprimível em nav.ts exige bump de version aqui com
-   *  migrate mapeando o label antigo para o novo, senão o estado órfã e o
-   *  grupo volta a abrir expandido) */
-  gruposComprimidos: string[];
-  setMobileOpen: (v: boolean) => void;
-  toggleMobile: () => void;
-  toggleCollapsed: () => void;
-  toggleGrupo: (label: string) => void;
+  _vazio?: never;
 }
 
 export const useUI = create<UIState>()(
-  persist(
-    (set) => ({
-      mobileOpen: false,
-      collapsed: false,
-      // Nascem comprimidos: o profissional começa vendo só o dia a dia; estudo e
-      // ajuda (referência, não rotina) abrem quando ele quiser. A escolha grava.
-      gruposComprimidos: ["Estudar e referência", "Ajuda e conta"],
-      setMobileOpen: (v) => set({ mobileOpen: v }),
-      toggleMobile: () => set((s) => ({ mobileOpen: !s.mobileOpen })),
-      toggleCollapsed: () => set((s) => ({ collapsed: !s.collapsed })),
-      toggleGrupo: (label) =>
-        set((s) => ({
-          gruposComprimidos: s.gruposComprimidos.includes(label)
-            ? s.gruposComprimidos.filter((x) => x !== label)
-            : [...s.gruposComprimidos, label],
-        })),
-    }),
-    {
-      name: "pi-ui",
-      version: 1,
-      // Só a PREFERÊNCIA sobrevive ao reload (rail colapsado + grupos comprimidos).
-      // mobileOpen é estado do drawer, efêmero: fica FORA do persist (partialize).
-      partialize: (s) => ({ collapsed: s.collapsed, gruposComprimidos: s.gruposComprimidos }),
-    },
-  ),
+  persist(() => ({}), {
+    name: "pi-ui",
+    version: 2,
+    // v1 guardava collapsed + gruposComprimidos, campos de uma sidebar que não
+    // existe mais. Descartar é o certo: manter reviveria preferência de um menu
+    // que ninguém mais vê.
+    migrate: () => ({}),
+    partialize: () => ({}),
+  }),
 );
 
 /* ------------------------------- Favoritos -------------------------------- */

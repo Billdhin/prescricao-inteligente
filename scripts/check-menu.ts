@@ -15,7 +15,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { NAV, BOTTOM } from "../src/components/app/nav";
+import { NAV, BOTTOM, PRIMARIOS, MAIS } from "../src/components/app/nav";
 
 const erros: string[] = [];
 const ok = (cond: boolean, msg: string) => {
@@ -62,6 +62,64 @@ for (const sec of NAV)
     ok(!/—/.test(it.label + (it.short ?? "")), `Travessão no rótulo "${it.label}"`);
     for (const c of it.children ?? []) ok(!/—/.test(c.label), `Travessão no filho "${c.label}"`);
   }
+
+/* --------------------- 1b. Casca da reestruturação (5 + Mais) --------------- */
+
+// A barra superior mostra PRIMARIOS e a inferior mostra BOTTOM. Elas têm que ser
+// o MESMO array, não duas listas iguais por coincidência: antes eram paralelas e
+// já tinham divergido (o /gps era filho de um lado e `match` do outro).
+ok(BOTTOM === PRIMARIOS, "BOTTOM precisa ser a MESMA referência de PRIMARIOS (identidade, não cópia)");
+ok(PRIMARIOS.length === 5, `PRIMARIOS deve ter 5 destinos, veio ${PRIMARIOS.length}`);
+ok(MAIS.length === 8, `MAIS deve ter 8 destinos de referência, veio ${MAIS.length}`);
+
+// Descrição de uma linha em TODA opção do "Mais": um menu de 8 destinos sem
+// descrição obriga a abrir cada um para descobrir o que é (Design System).
+for (const it of MAIS) {
+  ok(!!it.hint, `Destino do "Mais" sem descrição de uma linha: "${it.label}"`);
+  ok(!/—/.test(it.hint ?? ""), `Travessão na descrição de "${it.label}"`);
+}
+
+// Nenhum destino em dois lugares: se um item estivesse nos primários E no Mais,
+// dois itens acenderiam na mesma rota e o menu mentiria onde o usuário está.
+const rotasPrim = new Set(PRIMARIOS.map((i) => i.to));
+for (const it of MAIS) ok(!rotasPrim.has(it.to), `Destino duplicado (primário e Mais): ${it.to}`);
+
+// Todo `to` resolve para uma rota real de App.tsx (deep-link e query fora).
+const app = ler("src/App.tsx");
+const rotasDeclaradas = [...PRIMARIOS, ...MAIS]
+  .flatMap((i) => [i.to, ...(i.children ?? []).map((c) => c.to)])
+  .map((to) => to.split("?")[0]);
+for (const to of rotasDeclaradas) {
+  const seg = to.replace(/^\//, "");
+  ok(
+    app.includes(`path="${seg}"`) || app.includes(`path="/${seg}"`) || app.includes(`path="${seg}/`),
+    `Destino do menu sem rota em App.tsx: ${to}`,
+  );
+}
+
+// O Comparador virou item de PRIMEIRA CLASSE: enquanto era só um `match` do
+// Laboratório, o menu acendia "Laboratório Visual" numa tela chamada Comparador.
+const lab = MAIS.find((i) => i.to === "/movement-lab");
+ok(!(lab?.match ?? []).includes("/comparador"), 'O Comparador saiu do `match` do Laboratório (é destino próprio)');
+ok(!!MAIS.find((i) => i.to === "/comparador"), "O Comparador precisa ser destino próprio no Mais");
+
+// Tutoriais e Suporte viraram uma porta só ("Ajuda"), e o rótulo tem que bater
+// com o título da página, senão o menu leva a um lugar com outro nome.
+const ajuda = MAIS.find((i) => i.label === "Ajuda");
+ok(!!ajuda, 'O Mais precisa do destino "Ajuda" (Tutoriais + Suporte fundidos)');
+ok((ajuda?.match ?? []).includes("/suporte"), '"Ajuda" deve acender também em /suporte');
+ok(ler("src/pages/Tutorial.tsx").includes('title="Ajuda"'), 'A página de /tutorial deve se chamar "Ajuda" (espelha o menu)');
+
+// O TÍTULO DA TELA repete o rótulo do menu. Clicar em "Meus alunos" e chegar
+// numa página chamada "Alunos" é a mesma dessincronização de vocabulário que o
+// menu do ciclo do cuidado resolveu, só que um nível abaixo.
+const TITULO_DA_TELA: [string, string][] = [
+  ["src/pages/Alunos.tsx", "Meus alunos"],
+  ["src/pages/Avaliacoes.tsx", "Avaliar e reavaliar"],
+  ["src/pages/Gps.tsx", "Treino do dia"],
+];
+for (const [arq, titulo] of TITULO_DA_TELA)
+  ok(ler(arq).includes(`"${titulo}"`), `${arq} deve usar o título "${titulo}" (o mesmo rótulo do menu)`);
 
 /* ------------------------- 2. Barra inferior (mobile) ----------------------- */
 

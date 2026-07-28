@@ -336,7 +336,7 @@ export function GlobalSearch() {
                         onMouseEnter={() => setActive(idx)}
                         onClick={() => go(it)}
                         className={cn(
-                          "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left",
+                          "flex w-full items-center gap-3 rounded-full px-3 py-2 text-left",
                           active === idx ? "bg-primary-tint" : "hover:bg-surface-soft",
                         )}
                       >

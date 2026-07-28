@@ -107,7 +107,7 @@ export function CloudAuthGate() {
                   limpar();
                 }}
                 className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-semibold transition",
+                  "rounded-full px-3 py-2 text-sm font-semibold transition",
                   aba === v ? "bg-surface text-ink shadow-soft" : "text-ink-2 hover:text-ink",
                 )}
               >
