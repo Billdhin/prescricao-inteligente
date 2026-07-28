@@ -4,6 +4,7 @@ import { CheckCircle2, AlertTriangle, XCircle, Printer, RotateCcw, Save, Navigat
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import {
   getSemaforo,
+  montarChecklist,
   avaliarSemaforo,
   type ChecklistSemaforo,
   type CorSemaforo,
@@ -75,8 +76,15 @@ export function SemaforoLiberacao({
   // ("Gestante sem contraindicação") e servia os itens do geral, dando a entender
   // que existia um gate específico que não existe.
   const proprio = getSemaforo(grupoSlug);
-  const checklist = proprio ?? (grupoSlug ? getSemaforo("geral") : undefined);
   const usaChecklistGeral = !proprio && !!grupoSlug;
+  // As classes de medicação declaradas para ESTE aluno acrescentam os gates que justificam
+  // (insulina traz o gate glicêmico mesmo num aluno cadastrado por obesidade). Sem aluno
+  // vinculado, ou sem classe declarada, o checklist é exatamente o mesmo objeto de antes.
+  const farmacosDoAluno = useAlunos((s) => (alunoId ? s.alunos.find((a) => a.id === alunoId)?.farmacos : undefined));
+  const checklist = React.useMemo(
+    () => montarChecklist(grupoSlug, farmacosDoAluno),
+    [grupoSlug, farmacosDoAluno],
+  );
   // "geral" não é grupo especial: o gate vale para qualquer aluno
   const grupo = getSpecialGroup(grupoSlug);
   const nomeChecklist = usaChecklistGeral

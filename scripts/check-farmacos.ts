@@ -7,7 +7,7 @@
  * daqui: o produto se recusa a orientar medicação, e essa recusa precisa estar no CI, não só na
  * boa intenção de quem escreve o próximo texto.
  *
- * As 10 travas:
+ * As 11 travas:
  *  1. Herda check:regras. Todo refId aponta para uma referência real; consequência "aprovada"
  *     tem ao menos um refId; versao >= 1; confiança válida; "aprovada" com confiança "fraca" é
  *     proibido (evidência fraca é DECLARADA como pendente, nunca vendida como aprovada).
@@ -34,6 +34,12 @@
  *     chave de groupGpsRules, e todo slug citado em gruposRelevantes existe de verdade.
  * 10. Recusa catálogo vazio e se AUTOVERIFICA: casos sintéticos que devem passar e casos que
  *     devem falhar, um por trava. Um verificador que não sabe reprovar não protege nada.
+ * 11. O checklist do dia MONTADO: prefixo obrigatório e id único nos itens de medicação, sem
+ *     colisão com id de item de grupo, aluno sem medicação recebendo o MESMO checklist de
+ *     antes (identidade de objeto), pergunta que o grupo já faz não repetida, escopo mudando
+ *     de fato (obesidade com insulina ganha o gate glicêmico), item novo falhando fechado
+ *     quando fica em branco, e gate de fármaco proibido de mandar mexer na carga enquanto
+ *     nenhuma classe declarar passo de carga.
  *
  * EXCEÇÃO DELIBERADA: src/data/referencias.ts fica fora da trava de unidade e de esquema de uso,
  * porque a nota transcreve o protocolo do ensaio e "atorvastatina em dose alta por 6 meses" é
@@ -45,12 +51,20 @@ import {
   DEVOLUCOES,
   GRUPOS_FARMACO,
   PRINCIPIOS_ATIVOS_PERMITIDOS,
+  criarFarmaco,
   fundirMonitoramento,
   type ConsequenciaTreino,
   type EfeitoMonitoramento,
   type FarmacoCatalogoItem,
   type FarmacoClasseId,
 } from "../src/data/farmacos";
+import {
+  GATE_JA_COBERTO_POR,
+  ITENS_SEMAFORO_POR_FARMACO,
+  avaliarSemaforo,
+  montarChecklist,
+  semaforos,
+} from "../src/data/semaforo";
 import { getReferencia } from "../src/data/referencias";
 import { monitoringParameters, type ParamMonitorId } from "../src/data/monitoringParameters";
 import { specialGroups } from "../src/data/specialGroups";
@@ -622,6 +636,119 @@ function autoverificar(): string[] {
   return problemas;
 }
 
+/* ------- 11. O checklist montado: item novo só pode APERTAR o gate do dia ------- */
+
+const PREFIXO = "farmaco:";
+/** Ações que um gate de fármaco não pode dar enquanto nenhuma classe declarar passo de carga. */
+const MEXE_NA_CARGA = /\b(reduz(a|ir)|diminu(a|ir)|baix(e|ar))\b[^.]{0,40}\b(carga|volume|intensidade|s[ée]ries|repeti[cç][õo]es)\b/i;
+
+/**
+ * O checklist do dia é o gate de segurança de MAIOR consequência do produto: é o que decide se
+ * a sessão acontece. Acrescentar item por medicação só é seguro se três coisas valerem sempre:
+ * o aluno sem medicação não vê diferença nenhuma, o item novo não repete uma pergunta que o
+ * grupo já faz, e o item novo nunca pode tornar um resultado mais permissivo.
+ */
+function validarChecklist(): string[] {
+  const e: string[] = [];
+  const itens = ITENS_SEMAFORO_POR_FARMACO.flatMap((x) => x.itens);
+
+  // 11.1 prefixo obrigatório e id único: é o prefixo que dá rastreabilidade dentro de
+  // Liberacao.respostas sem coluna nova, e que impede um item de medicação de se passar por
+  // item de grupo.
+  const vistos = new Set<string>();
+  for (const { classe, itens: doClasse } of ITENS_SEMAFORO_POR_FARMACO) {
+    for (const item of doClasse) {
+      if (!item.id.startsWith(`${PREFIXO}${classe}:`)) {
+        e.push(`checklist: item "${item.id}" não tem o prefixo obrigatório "${PREFIXO}${classe}:".`);
+      }
+      if (vistos.has(item.id)) e.push(`checklist: id de item repetido "${item.id}".`);
+      vistos.add(item.id);
+      if (!item.opcoes.some((o) => o.cor === "vermelho")) {
+        e.push(`checklist: item "${item.id}" não tem opção vermelha; um gate que nunca barra não é gate.`);
+      }
+      for (const o of item.opcoes) {
+        if (o.cor !== "verde" && !o.acao) e.push(`checklist: item "${item.id}" pinta ${o.cor} sem dizer o que fazer.`);
+        if (o.acao && MEXE_NA_CARGA.test(o.acao)) {
+          e.push(
+            `checklist: item "${item.id}" manda mexer na carga ("${o.acao}"), mas nenhuma classe declara passo de carga nesta versão.`,
+          );
+        }
+      }
+    }
+  }
+
+  // 11.2 nenhum id de item de fármaco colide com id de item de grupo (colisão silenciosa
+  // sobrescreveria a resposta de um pelo outro dentro de respostas).
+  const idsDeGrupo = new Set(semaforos.flatMap((s) => s.itens.map((i) => i.id)));
+  for (const item of itens) {
+    if (idsDeGrupo.has(item.id)) e.push(`checklist: id "${item.id}" colide com um item de checklist de grupo.`);
+  }
+
+  // 11.3 aluno SEM medicação declarada não vê diferença nenhuma: mesma instância do checklist.
+  for (const base of semaforos) {
+    if (montarChecklist(base.grupoSlug) !== base || montarChecklist(base.grupoSlug, []) !== base) {
+      e.push(`checklist: "${base.grupoSlug}" sem fármaco deveria devolver o MESMO checklist de antes.`);
+    }
+  }
+
+  // 11.4 o mapa de cobertura aponta para itens que EXISTEM (senão o dedup nunca dispara e
+  // ninguém percebe), e a pergunta que o grupo já faz não é feita de novo.
+  const idsDeItemDeGrupo = new Set(semaforos.flatMap((s) => s.itens.map((i) => i.id)));
+  const sufixosDeGate = new Set(itens.map((i) => i.id.split(":").slice(2).join(":")));
+  for (const [gate, cobrem] of Object.entries(GATE_JA_COBERTO_POR)) {
+    if (!sufixosDeGate.has(gate)) e.push(`checklist: o mapa de cobertura cita o gate inexistente "${gate}".`);
+    for (const id of cobrem) {
+      if (!idsDeItemDeGrupo.has(id)) e.push(`checklist: o gate "${gate}" diz ser coberto pelo item inexistente "${id}".`);
+    }
+  }
+
+  const insulina = [criarFarmaco("insulina-secretagogo")];
+  const doDiabetes = montarChecklist("diabetes-tipo-2", insulina);
+  if (doDiabetes !== getSemaforoBase("diabetes-tipo-2")) {
+    e.push(
+      "checklist: diabetes com insulina ganhou item, mas o checklist do grupo já pergunta hipoglicemia e alimentação. Perguntar duas vezes ensina a passar batido.",
+    );
+  }
+
+  // 11.5 o ESCOPO de fato muda: o MESMO aluno, cadastrado por obesidade, ganha o gate glicêmico.
+  const daObesidade = montarChecklist("obesidade-grau-1", insulina);
+  const baseObesidade = getSemaforoBase("obesidade-grau-1");
+  const ganhou = (daObesidade?.itens.length ?? 0) - (baseObesidade?.itens.length ?? 0);
+  if (ganhou !== 1) {
+    e.push(`checklist: obesidade com insulina deveria ganhar exatamente 1 gate glicêmico, ganhou ${ganhou}.`);
+  }
+
+  // 11.6 item novo só APERTA: responder tudo do grupo e deixar o item da classe em branco NUNCA
+  // pode liberar (o avaliarSemaforo já falha fechado, e é isso que se prova aqui), e a resposta
+  // vermelha do item novo pinta vermelho.
+  if (daObesidade) {
+    const soDoGrupo: Record<string, string> = {};
+    for (const item of getSemaforoBase("obesidade-grau-1")?.itens ?? []) {
+      const verde = item.opcoes.find((o) => o.cor === "verde");
+      if (verde) soDoGrupo[item.id] = verde.valor;
+    }
+    if (avaliarSemaforo(daObesidade, soDoGrupo).cor === "verde") {
+      e.push("checklist: com o item de medicação em branco, o resultado liberou. O gate tem que falhar fechado.");
+    }
+    const tudo = { ...soDoGrupo };
+    for (const item of daObesidade.itens) {
+      if (tudo[item.id]) continue;
+      const vermelha = item.opcoes.find((o) => o.cor === "vermelho");
+      if (vermelha) tudo[item.id] = vermelha.valor;
+    }
+    if (avaliarSemaforo(daObesidade, tudo).cor !== "vermelho") {
+      e.push("checklist: a resposta vermelha do item de medicação não pintou vermelho.");
+    }
+  }
+
+  return e;
+}
+
+/** O checklist do grupo antes de qualquer fármaco (o de verdade, sem cair no geral). */
+function getSemaforoBase(slug: string) {
+  return semaforos.find((s) => s.grupoSlug === slug);
+}
+
 /* --------------------------------- Execução --------------------------------- */
 
 const falhaAuto = autoverificar();
@@ -634,6 +761,7 @@ if (falhaAuto.length) {
 
 const erros: string[] = [...validarGlobal(CATALOGO_FARMACOS)];
 for (const item of CATALOGO_FARMACOS) erros.push(...validarItem(item));
+erros.push(...validarChecklist());
 
 if (erros.length) {
   console.error(`\n[check:farmacos] ${erros.length} problema(s):\n`);
@@ -648,6 +776,10 @@ const agem = CATALOGO_FARMACOS.filter((i) => i.consequencias.some((c) => c.aprov
 
 console.log(
   `\n[check:farmacos] autoverificação OK: o item válido passa e os ${CASOS_NEGATIVOS.length} casos fora de escopo reprovam.`,
+);
+console.log(
+  `[check:farmacos] checklist do dia OK: ${ITENS_SEMAFORO_POR_FARMACO.flatMap((x) => x.itens).length} gates de medicação, ` +
+    `aluno sem medicação recebe o checklist idêntico e o item novo só aperta.`,
 );
 console.log(
   `[check:farmacos] ok: ${CATALOGO_FARMACOS.length} classes (${agem} agem, ${CATALOGO_FARMACOS.length - agem} declaradas), ` +

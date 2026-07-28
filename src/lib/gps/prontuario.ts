@@ -11,7 +11,7 @@ import type { GroupGpsRule } from "./groupRules";
 import type { ModalidadeRec } from "./modalidadeRules";
 import type { Liberacao, ProntuarioSnapshot } from "@/data/alunos";
 import { getParam } from "@/data/monitoringParameters";
-import { getSemaforo } from "@/data/semaforo";
+import { checklistRespondido } from "@/data/semaforo";
 
 export const MOTOR_VERSAO = "RCD v1";
 
@@ -79,7 +79,9 @@ export function montarProntuario({
   addRefs(rule?.refs);
   for (const pid of parametros ?? []) addRefs(getParam(pid)?.refIds);
   if (liberacao) {
-    const checklist = getSemaforo(liberacao.grupoSlug);
+    // Reconstrói o checklist que FOI respondido (inclui os itens que a medicação declarada
+    // acrescentou), para a bibliografia do Prontuário citar o que de fato foi perguntado.
+    const checklist = checklistRespondido(liberacao.grupoSlug, liberacao.respostas);
     for (const item of checklist?.itens ?? []) addRefs(item.refs);
   }
 

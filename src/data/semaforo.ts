@@ -10,6 +10,14 @@
  * Números de diretriz devem ser validados com a edição vigente no contexto local.
  */
 
+import {
+  CATALOGO_FARMACOS,
+  farmacosAtivos,
+  type FarmacoClasseId,
+  type FarmacoSelecionado,
+  type ItemGatePreSessao,
+} from "@/data/farmacos";
+
 export type CorSemaforo = "verde" | "amarelo" | "vermelho";
 
 export interface OpcaoSemaforo {
@@ -573,6 +581,128 @@ export const semaforos: ChecklistSemaforo[] = [
 
 export function getSemaforo(grupoSlug: string) {
   return semaforos.find((s) => s.grupoSlug === grupoSlug);
+}
+
+/* --------------------- checklist condicional por fármaco ------------------ */
+
+const PREFIXO_FARMACO = "farmaco:";
+
+/** O sufixo do id de um item de medicação (`farmaco:estatina:queixa` vira `queixa`). */
+const sufixoDoItem = (id: string) => (id.startsWith(PREFIXO_FARMACO) ? id.split(":").slice(2).join(":") : id);
+
+/**
+ * Quais itens de checklist de GRUPO já cobrem cada gate de medicação. Quando o checklist do
+ * aluno traz TODOS os itens listados, o gate da classe é descartado: perguntar duas vezes a
+ * mesma coisa, com duas redações, ensina o profissional a passar batido pelas duas.
+ *
+ * O mapa mora aqui, e não no catálogo de fármacos, porque é conhecimento desta camada: o
+ * catálogo não sabe (nem deve saber) o que o checklist de diabetes já pergunta.
+ *
+ * O gate da estatina NÃO entra: o item "dor nova" do checklist geral é outra pergunta (dor
+ * ligada ao treino recente, com ação de adaptar a sessão), e o da estatina é queixa muscular
+ * difusa SEM relação com o treino, com ação de registrar e encaminhar. Fundir os dois trocaria
+ * o encaminhamento por um ajuste de sessão, que é exatamente o erro que a classe pede para não
+ * cometer.
+ */
+export const GATE_JA_COBERTO_POR: Record<string, string[]> = {
+  // o checklist de diabetes já pergunta sinais de hipoglicemia E alimentação, separadamente
+  "sinais-hipoglicemia": ["hipoglicemia", "alimentacao"],
+};
+
+/**
+ * Converte o gate do catálogo em item de checklist. O id ganha o prefixo `farmaco:<classe>:`
+ * de forma OBRIGATÓRIA: é ele que deixa a resposta rastreável dentro de `Liberacao.respostas`
+ * (que já é jsonb e já vai para a nuvem) sem precisar de coluna nova, e é ele que garante que
+ * um item de medicação nunca se passe por item do grupo.
+ */
+function itemDoGate(classe: FarmacoClasseId, gate: ItemGatePreSessao): ItemSemaforo {
+  const vermelhoNoSim = gate.respostaVermelha === "sim";
+  return {
+    id: `${PREFIXO_FARMACO}${classe}:${gate.id}`,
+    pergunta: gate.pergunta,
+    porque: gate.porque,
+    opcoes: simNao(vermelhoNoSim ? "vermelho" : "verde", vermelhoNoSim ? "verde" : "vermelho", gate.acao),
+    refs: gate.refs,
+  };
+}
+
+/**
+ * Os itens que cada classe de medicação ACRESCENTA ao checklist do dia, DERIVADOS do catálogo
+ * (`ConsequenciaTreino.gate`), e não escritos aqui de novo. O texto do gate já passa pelo
+ * `check:farmacos` (denylist de dose, de posologia e de imperativo sobre medicação), então
+ * derivar em vez de copiar é o que impede um segundo catálogo de nascer com regra mais frouxa.
+ *
+ * Só entram consequências APROVADAS e que não são de teoria: uma expectativa de adaptação
+ * jamais vira pergunta de checklist.
+ */
+export const ITENS_SEMAFORO_POR_FARMACO: { classe: FarmacoClasseId; itens: ItemSemaforo[] }[] =
+  CATALOGO_FARMACOS.map((item) => ({
+    classe: item.classe,
+    itens: item.consequencias
+      .filter((c) => c.aprovacao === "aprovada" && !c.somenteTeoria && c.gate)
+      .map((c) => itemDoGate(item.classe, c.gate!)),
+  })).filter((e) => e.itens.length > 0);
+
+/**
+ * O checklist do dia deste aluno: o do grupo (ou o geral, quando o grupo não tem um próprio)
+ * mais os itens que as classes declaradas acrescentam, na ordem do catálogo.
+ *
+ * Duas travas que valem a leitura:
+ *
+ * 1. **Item já perguntado não repete.** Um aluno de diabetes que usa insulina já responde sobre
+ *    sinais de hipoglicemia e sobre alimentação pelo checklist do grupo, então o gate da classe
+ *    é descartado (ver `GATE_JA_COBERTO_POR`). O mesmo aluno cadastrado por obesidade, que não
+ *    tem esses itens, recebe o gate: é o ESCOPO que muda, não o cuidado.
+ * 2. **Sem classe declarada, devolve o MESMO objeto de antes.** Nenhum aluno sem medicação vê
+ *    o checklist mudar de forma, de ordem ou de identidade.
+ *
+ * `avaliarSemaforo` não muda e não precisa mudar: já é comutativa, associativa e fail-closed,
+ * então acrescentar item é acrescentar chance de amarelo e vermelho, nunca de verde.
+ */
+export function montarChecklist(
+  grupoSlug: string,
+  farmacos?: FarmacoSelecionado[],
+): ChecklistSemaforo | undefined {
+  const base = getSemaforo(grupoSlug) ?? (grupoSlug ? getSemaforo("geral") : undefined);
+  if (!base) return undefined;
+
+  const ativos = farmacosAtivos(farmacos);
+  if (!ativos.length) return base;
+
+  const jaPerguntado = new Set(base.itens.map((i) => sufixoDoItem(i.id)));
+  const extras: ItemSemaforo[] = [];
+  for (const { classe, itens } of ITENS_SEMAFORO_POR_FARMACO) {
+    if (!ativos.some((f) => f.classe === classe)) continue;
+    for (const item of itens) {
+      const sufixo = sufixoDoItem(item.id);
+      if (jaPerguntado.has(sufixo)) continue;
+      const cobrem = GATE_JA_COBERTO_POR[sufixo];
+      if (cobrem?.length && cobrem.every((id) => jaPerguntado.has(id))) continue;
+      jaPerguntado.add(sufixo);
+      extras.push(item);
+    }
+  }
+  if (!extras.length) return base;
+  return { grupoSlug: base.grupoSlug, itens: [...base.itens, ...extras] };
+}
+
+/**
+ * O checklist que FOI respondido numa liberação já registrada, reconstruído pelas chaves
+ * gravadas em `respostas`. Serve ao Prontuário e ao histórico: uma liberação antiga continua
+ * legível com os itens que ela de fato fez, mesmo que o aluno tenha trocado de medicação
+ * depois. É a rastreabilidade que o prefixo compra de graça, sem coluna nova no banco.
+ */
+export function checklistRespondido(
+  grupoSlug: string,
+  respostas: Record<string, string>,
+): ChecklistSemaforo | undefined {
+  const base = getSemaforo(grupoSlug) ?? (grupoSlug ? getSemaforo("geral") : undefined);
+  if (!base) return undefined;
+  const extras = ITENS_SEMAFORO_POR_FARMACO.flatMap((e) => e.itens).filter(
+    (i) => respostas[i.id] !== undefined,
+  );
+  if (!extras.length) return base;
+  return { grupoSlug: base.grupoSlug, itens: [...base.itens, ...extras] };
 }
 
 /* ------------------------------ avaliação ------------------------------- */
