@@ -249,7 +249,7 @@ function RestricaoCard({
       aria-checked={selecionado}
       onClick={onToggle}
       className={cn(
-        "flex h-full w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors sm:col-span-1",
+        "flex h-full w-full items-start gap-3 rounded-card border p-3 text-left transition-colors sm:col-span-1",
         // "Nenhuma" e "Outra" ocupam a linha inteira para separar visualmente
         (item.tag === "nenhuma_restricao" || item.tag === "outra_restricao") && "sm:col-span-2",
         selecionado ? "border-primary bg-primary-tint" : "border-border bg-surface hover:bg-surface-soft",

@@ -12,6 +12,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Card } from "@/components/ui/primitives";
+import { cn } from "@/lib/utils";
+import { corDeContraste } from "@/lib/theme/palettes";
 import type { Execucao } from "@/data/execucao";
 import { resumoGamificacao } from "@/lib/gamificacao";
 
@@ -62,9 +64,11 @@ export function GamificacaoView({
       {/* Liga atual + progresso para a próxima */}
       <Card className="p-4" style={{ borderColor: r.liga.atual.cor, borderWidth: 2 }}>
         <div className="flex items-center gap-3">
+          {/* A tinta do disco sai da luminância da própria liga: branco no bronze
+              e no diamante, grafite no ouro, que com branco dava 2,4:1. */}
           <span
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-card text-white"
-            style={{ background: r.liga.atual.cor }}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-card"
+            style={{ background: r.liga.atual.cor, color: corDeContraste(r.liga.atual.cor) }}
           >
             <Medal className="h-6 w-6" />
           </span>
@@ -105,9 +109,15 @@ export function GamificacaoView({
                     : { borderColor: "var(--border)", background: "var(--surface-soft)" }
                 }
               >
+                {/* Conquistada = disco na cor da marca com a tinta legível dela
+                    (--on-primary). Trancada = disco apagado, sem cor nenhuma: o
+                    cinza de texto como fundo devolvia branco sobre cinza claro. */}
                 <span
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white"
-                  style={{ background: conquistada ? cor : "var(--ink-3)" }}
+                  className={cn(
+                    "grid h-8 w-8 shrink-0 place-items-center rounded-control",
+                    conquistada ? "text-on-primary" : "bg-surface-mute text-ink-2",
+                  )}
+                  style={conquistada ? { background: cor } : undefined}
                 >
                   {conquistada ? <Icon className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
                 </span>
@@ -128,7 +138,7 @@ export function GamificacaoView({
           {r.feed.map((item) => (
             <li key={item.dia} className="flex items-center gap-3">
               <span
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-white"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-on-primary"
                 style={{ background: cor }}
               >
                 <Dumbbell className="h-4 w-4" />

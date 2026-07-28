@@ -207,7 +207,7 @@ export function AvaliacaoModal({
             <h2 className="font-display text-lg font-bold text-ink">{tituloModal}</h2>
             <p className="text-sm text-ink-2">Registre as medidas e o desempenho atual do aluno.</p>
           </div>
-          <button onClick={tentarFechar} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+          <button onClick={tentarFechar} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -539,7 +539,7 @@ function LadoSelect({ value, onChange, ambos }: { value?: string; onChange: (v: 
 
 function BotaoRemover({ onClick, label }: { onClick: () => void; label: string }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} className="rounded-md p-2 text-ink-3 hover:bg-surface hover:text-[color:var(--cta-text)]">
+    <button type="button" onClick={onClick} aria-label={label} className="rounded-full p-2 text-ink-3 hover:bg-surface hover:text-[color:var(--cta-text)]">
       <Trash2 className="h-4 w-4" />
     </button>
   );

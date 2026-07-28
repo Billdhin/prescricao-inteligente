@@ -122,7 +122,7 @@ export function FarmacosSelector({
           aria-checked={Boolean(naoInformado)}
           onClick={marcarNaoInformado}
           className={cn(
-            "flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors",
+            "flex w-full items-start gap-3 rounded-card border p-3 text-left transition-colors",
             naoInformado ? "border-primary bg-primary-tint" : "border-border bg-surface hover:bg-surface-soft",
           )}
         >
@@ -262,7 +262,7 @@ function FarmacoCard({
       aria-checked={selecionado}
       onClick={onToggle}
       className={cn(
-        "flex h-full w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors sm:col-span-1",
+        "flex h-full w-full items-start gap-3 rounded-card border p-3 text-left transition-colors sm:col-span-1",
         selecionado ? "border-primary bg-primary-tint" : "border-border bg-surface hover:bg-surface-soft",
       )}
     >

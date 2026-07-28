@@ -1294,7 +1294,7 @@ function ConfirmarExclusaoModal({
           </button>
           <button
             onClick={onConfirm}
-            className="inline-flex h-9 items-center gap-1.5 rounded-control bg-danger px-4 text-sm font-semibold text-white hover:bg-[#991b1b]"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-danger px-4 text-sm font-semibold text-white hover:bg-[#991b1b]"
           >
             Excluir definitivamente
           </button>

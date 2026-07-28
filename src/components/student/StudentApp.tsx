@@ -3,7 +3,7 @@ import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, ChevronLeft, C
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
-import { aplicarTema, PALETA_PADRAO } from "@/lib/theme/palettes";
+import { aplicarPaleta, PALETA_ALUNO } from "@/lib/theme/palettes";
 import { Logo } from "@/components/brand/Logo";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
@@ -125,15 +125,18 @@ export function StudentApp({
       )
     : undefined;
 
-  // O portal do aluno herda a paleta + aparência do profissional (e a cor de
-  // marca sobrepõe a primária). Aplica no container do portal, não na raiz do
-  // documento, para não vazar para uma eventual prévia dentro do app.
+  // O portal do aluno tem PELE PRÓPRIA: navy escuro, sempre. Ele não herda mais
+  // a aparência do profissional, porque quem abre esta tela é o aluno, na
+  // academia, e o design aprovado desenhou este lado escuro; se o professor
+  // usasse o app no claro, o aluno via um portal branco que nenhum mockup
+  // previu. O que o profissional continua controlando é a COR DE MARCA, que
+  // entra como acento sobre o mesmo navy.
+  // Aplica no container do portal, não na raiz do documento, para não vazar para
+  // a prévia que roda dentro do app do profissional.
   const rootRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    if (rootRef.current) {
-      aplicarTema(rootRef.current, marca.paleta || PALETA_PADRAO, marca.modo || "claro", marca.corPrimaria);
-    }
-  }, [marca.paleta, marca.modo, marca.corPrimaria]);
+    if (rootRef.current) aplicarPaleta(rootRef.current, PALETA_ALUNO, true, marca.corPrimaria);
+  }, [marca.corPrimaria]);
 
   // Financeiro visível na porta de entrada: um selo tocável no cabeçalho quando a
   // mensalidade não está em dia leva direto ao card de pagamento (aba Semana).
@@ -161,7 +164,7 @@ export function StudentApp({
         ) : (
           <>
         {preview && (
-          <div className="px-4 py-1.5 text-center text-xs font-semibold text-white" style={{ background: cor }}>
+          <div className="px-4 py-1.5 text-center text-xs font-semibold text-on-primary" style={{ background: cor }}>
             Prévia: é assim que o seu aluno vê o app
           </div>
         )}
@@ -179,8 +182,7 @@ export function StudentApp({
               {cobrancaPendente && (
                 <button
                   onClick={() => setAba("semana")}
-                  className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold text-white"
-                  style={{ background: "var(--warning)" }}
+                  className="flex items-center gap-1 rounded-full bg-warning-tint px-2.5 py-1 text-xs font-bold text-warning"
                 >
                   <Wallet className="h-3.5 w-3.5" /> Mensalidade pendente
                 </button>
@@ -188,7 +190,7 @@ export function StudentApp({
               {onSair && (
                 <button
                   onClick={onSair}
-                  className="rounded-lg p-2 text-ink-3 hover:bg-surface-soft hover:text-ink"
+                  className="rounded-full p-2 text-ink-3 hover:bg-surface-soft hover:text-ink"
                   aria-label={preview ? "Fechar prévia" : "Sair da conta"}
                 >
                   <LogOut className="h-4 w-4" />
@@ -462,7 +464,7 @@ function SessaoCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-display font-bold text-ink">{sessao.nome}</span>
             {rotulo === "Hoje" ? (
-              <span className="rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-white" style={{ background: cor }}>Hoje</span>
+              <span className="rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-on-primary" style={{ background: cor }}>Hoje</span>
             ) : rotulo === "Próxima" ? (
               <span className="rounded-full bg-surface-soft px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3 ring-1 ring-inset ring-border">Próxima</span>
             ) : null}
@@ -499,7 +501,7 @@ function SessaoCard({
           {rotulo === "Hoje" && !concluida && onIniciar && (
             <button
               onClick={() => onIniciar(sessao)}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-base font-bold text-white"
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-4 text-base font-bold text-on-primary"
               style={{ background: cor }}
             >
               <Play className="h-5 w-5" aria-hidden /> Iniciar treino
@@ -552,7 +554,7 @@ function SessaoCard({
                         ))}
                       </div>
                     )}
-                    <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-white" style={{ background: cor }}>
+                    <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-on-primary" style={{ background: cor }}>
                       {info?.nome}
                     </span>
                     {info?.descricao && <span className="min-w-0 flex-1 text-2xs leading-tight text-ink-2">{info.descricao}</span>}
@@ -657,7 +659,7 @@ function BlocoRow({
         className="h-11 w-11 shrink-0 rounded-lg border border-border object-cover"
       />
     ) : (
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white" style={{ background: cor }}>
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-on-primary" style={{ background: cor }}>
         {aerobio ? <IconeAerobio className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
       </span>
     );
@@ -688,7 +690,7 @@ function BlocoRow({
         )}
         {metodoVisivel && (
           <span
-            className="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold text-white"
+            className="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold text-on-primary"
             style={{ background: cor }}
           >
             {metodoVisivel.nome}
@@ -858,7 +860,7 @@ function SessaoLeitura({
             return (
               <div key={seg.grupoId} className="rounded-xl border-2 p-1.5" style={{ borderColor: cor }}>
                 <div className="mb-1 flex flex-wrap items-center gap-2 px-1.5 pt-0.5">
-                  <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-white" style={{ background: cor }}>
+                  <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-on-primary" style={{ background: cor }}>
                     {info?.nome}
                   </span>
                   {info?.descricao && <span className="min-w-0 flex-1 text-2xs leading-tight text-ink-2">{info.descricao}</span>}
@@ -885,12 +887,12 @@ function BlocoLeitura({ bloco, cor, emGrupo }: { bloco: BlocoSessao; cor: string
   return (
     <div className="rounded-xl border border-border bg-surface-soft p-3">
       <div className="flex items-center gap-2">
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-white" style={{ background: cor }}>
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-on-primary" style={{ background: cor }}>
           {aerobio ? <HeartPulse className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
         </span>
         <span className="min-w-0 flex-1 font-semibold text-ink">{nomeDoBloco(bloco)}</span>
         {metodoVisivel && (
-          <span className="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold text-white" style={{ background: cor }}>
+          <span className="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold text-on-primary" style={{ background: cor }}>
             {metodoVisivel.nome}
           </span>
         )}
@@ -971,7 +973,7 @@ function MensalidadeCard({ aluno, cor }: { aluno: Aluno; cor: string }) {
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white" style={{ background: cor }}>
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-on-primary" style={{ background: cor }}>
           <Wallet className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
@@ -988,7 +990,7 @@ function MensalidadeCard({ aluno, cor }: { aluno: Aluno; cor: string }) {
                 href={c.linkPagamento}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full rounded-lg py-2 text-center text-sm font-bold text-white"
+                className="block w-full rounded-lg py-2 text-center text-sm font-bold text-on-primary"
                 style={{ background: cor }}
               >
                 Pagar mensalidade
@@ -1020,7 +1022,7 @@ function PixCopia({ chave, cor }: { chave: string; cor: string }) {
     <div>
       <button
         onClick={copiar}
-        className="block w-full rounded-lg py-2 text-center text-sm font-bold text-white"
+        className="block w-full rounded-full py-2 text-center text-sm font-bold text-on-primary"
         style={{ background: cor }}
       >
         {copiado ? "Chave PIX copiada" : "Copiar chave PIX"}

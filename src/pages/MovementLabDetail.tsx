@@ -99,7 +99,7 @@ function TrustDialog({ level, ex, onClose }: { level: TrustLevel; ex?: Exercise;
             </span>
             <h2 className="font-display text-lg font-bold text-ink first-letter:uppercase">{level}</h2>
           </div>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -716,7 +716,7 @@ function ErroAmpliado({ src, erro, onClose }: { src: string; erro: string; onClo
       >
         <div className="flex items-start justify-between gap-3 border-b border-border p-3">
           <p className="text-sm font-semibold text-ink">{erro}</p>
-          <button onClick={onClose} aria-label="Fechar" className="shrink-0 rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="shrink-0 rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>

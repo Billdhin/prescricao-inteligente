@@ -11,6 +11,7 @@ import { desenharProgressao, posicoesFocos, estadoSemana, ESTADO_LABEL, agregado
 import { temAlvoForca, tokensAlvoForca, temAlvoAerobio, tokensAlvoAerobio } from "@/lib/gps/alvoResumo";
 import { assinaturaSemana } from "@/lib/gps/assinaturaSemana";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
+import { CORES_PDF as C } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -206,19 +207,20 @@ function mesoHtml(m: Mesociclo, i: number) {
 function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
   const g = desenharProgressao(macro, 700, 250, nivel);
   if (g.vazio) return "";
-  // O PDF não tem as variáveis CSS do app; as cores da pele clínica entram literais.
-  // Chaveado por id da série (nunca pelo nome exibido), com fallback na cor de área.
-  const cor: Record<string, string> = { vol: "#1b4b66", int: "#9a4f2e", cpx: "#0e7c8a", area: "#1b4b66" };
-  // Cores literais da régua de semanas (o PDF não tem as vars de tema): carga = petróleo,
-  // descarga = âmbar (mesmo do alívio), teste = teal (mesmo da complexidade).
-  const corTick: Record<string, string> = { carga: "#1b4b66", deload: "#f59e0b", teste: "#0e7c8a" };
+  // O PDF não tem as variáveis CSS do app; as cores entram literais, vindas do mapa
+  // do papel. Chaveado por id da série (nunca pelo nome exibido), com fallback na
+  // cor de área.
+  const cor: Record<string, string> = { vol: C.marca, int: C.intensidade, cpx: C.analise, area: C.marca };
+  // Régua de semanas: carga = marca, descarga = âmbar (mesmo do alívio),
+  // teste = turquesa (mesmo da complexidade).
+  const corTick: Record<string, string> = { carga: C.marca, deload: C.alerta, teste: C.analise };
   const rotuloTick: Record<string, string> = { carga: "Carga", deload: "Descarga", teste: "Teste" };
   const tiposSemana = (["carga", "deload", "teste"] as const).filter((t) => g.microTicks.some((mt) => mt.tipo === t));
   const iconesFase = (f: (typeof g.fases)[number]) =>
     posicoesFocos(f, g.iconRowY)
       .map(
         (p) =>
-          `<g transform="${p.transform}" stroke="#475569" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
+          `<g transform="${p.transform}" stroke="${C.ink2}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
           p.foco.glifo.paths.map((d) => `<path d="${d}" />`).join("") +
           (p.foco.glifo.circles ?? []).map((c) => `<circle cx="${c.cx}" cy="${c.cy}" r="${c.r}" />`).join("") +
           `</g>`,
@@ -230,11 +232,11 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
   const fases = g.fases
     .map(
       (f) => `
-      ${f.indice % 2 === 0 ? `<rect x="${f.x0.toFixed(1)}" y="${g.bandTop}" width="${(f.x1 - f.x0).toFixed(1)}" height="${(g.faixaBottom - g.bandTop).toFixed(1)}" fill="#f2f0ea" opacity="0.6" />` : ""}
-      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.bandTop}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="#e6e2d8" stroke-width="1" />` : ""}
-      <text x="${f.cx.toFixed(1)}" y="10" text-anchor="middle" fill="#1e293b" font-size="10" font-weight="700">${esc(f.nome)}</text>
+      ${f.indice % 2 === 0 ? `<rect x="${f.x0.toFixed(1)}" y="${g.bandTop}" width="${(f.x1 - f.x0).toFixed(1)}" height="${(g.faixaBottom - g.bandTop).toFixed(1)}" fill="${C.papelSuave}" opacity="0.6" />` : ""}
+      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.bandTop}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="${C.borda}" stroke-width="1" />` : ""}
+      <text x="${f.cx.toFixed(1)}" y="10" text-anchor="middle" fill="${C.ink}" font-size="10" font-weight="700">${esc(f.nome)}</text>
       ${iconesFase(f)}
-      <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`,
+      <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="${C.ink2}" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`,
     )
     .join("");
   return `
@@ -246,16 +248,16 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
         <stop offset="0%" stop-color="${cor.area}" stop-opacity="0.16" /><stop offset="100%" stop-color="${cor.area}" stop-opacity="0" />
       </linearGradient></defs>
       ${fases}
-      ${g.alivios.map((a) => `<rect x="${(a.x - a.w / 2).toFixed(1)}" y="${g.plot.top}" width="${a.w.toFixed(1)}" height="${(g.plot.bottom - g.plot.top).toFixed(1)}" fill="#f59e0b" opacity="0.09" rx="2" />`).join("")}
-      <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.maiorY.toFixed(1)}" text-anchor="end" fill="#94a3b8" font-size="9">maior</text>
-      <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.menorY.toFixed(1)}" text-anchor="end" fill="#94a3b8" font-size="9">menor</text>
+      ${g.alivios.map((a) => `<rect x="${(a.x - a.w / 2).toFixed(1)}" y="${g.plot.top}" width="${a.w.toFixed(1)}" height="${(g.plot.bottom - g.plot.top).toFixed(1)}" fill="${C.alerta}" opacity="0.09" rx="2" />`).join("")}
+      <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.maiorY.toFixed(1)}" text-anchor="end" fill="${C.ink2}" font-size="9">maior</text>
+      <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.menorY.toFixed(1)}" text-anchor="end" fill="${C.ink2}" font-size="9">menor</text>
       <path d="${g.areaVolume}" fill="url(#volpdf)" stroke="none" />
       ${g.series.map((s) => `<path d="${s.d}" fill="none" stroke="${cor[s.id] ?? cor.area}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`).join("")}
       ${g.microTicks
         .map(
           (t) =>
             `<line x1="${t.x.toFixed(1)}" y1="${g.weekTickTop}" x2="${t.x.toFixed(1)}" y2="${g.weekTickBottom}" stroke="${corTick[t.tipo]}" stroke-width="${t.tipo === "carga" ? 1.5 : 2.5}" stroke-linecap="round" />` +
-            (t.rotular ? `<text x="${t.x.toFixed(1)}" y="${g.weekLabelY.toFixed(1)}" text-anchor="middle" fill="#94a3b8" font-size="9">S${t.semana}</text>` : ""),
+            (t.rotular ? `<text x="${t.x.toFixed(1)}" y="${g.weekLabelY.toFixed(1)}" text-anchor="middle" fill="${C.ink2}" font-size="9">S${t.semana}</text>` : ""),
         )
         .join("")}
     </svg>
@@ -301,73 +303,73 @@ export function exportPlanoPDF({
   const biblio = bibliografia(plano.refIds);
   const reavaliacoes = plano.macrociclo.mesociclos.filter((m) => m.reavaliacao).map((m) => m.semanaFim);
 
-    // Acento do documento: a cor da marca do profissional, senão a do produto (pele clínica).
-  const corMarca = marca?.corPrimaria || "#1b4b66";
+    // Acento do documento: a cor da marca do profissional, senão a do produto.
+  const corMarca = marca?.corPrimaria || C.marca;
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Plano de treino · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
+    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(corMarca)}
     h1 { font-size: 22px; margin: 20px 0 2px; }
-    .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
-    .aluno { background: #f2f0ea; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
+    .meta { font-size: 13px; color: ${C.ink2}; margin-bottom: 18px; }
+    .aluno { background: ${C.papelSuave}; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
     .bloco { margin: 16px 0; }
     h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: ${corMarca}; margin: 0 0 8px; }
-    .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; margin: 10px 0 4px; }
+    .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; margin: 10px 0 4px; }
     .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { background: #f2f0ea; color: #1e293b; border: 1px solid #e6e2d8; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+    .tag { background: ${C.papelSuave}; color: ${C.ink}; border: 1px solid ${C.borda}; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
     ul.crit { margin: 4px 0; padding-left: 18px; font-size: 13px; }
-    .legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 11px; color: #475569; margin-top: 4px; }
+    .legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 11px; color: ${C.ink2}; margin-top: 4px; }
     .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
     .legenda i.tick { width: 3px; height: 11px; border-radius: 2px; }
     .legenda-semanas { gap: 12px; margin-top: 2px; }
-    .legenda .lg-rot { color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 10px; }
-    .legenda-nota { font-size: 11px; color: #94a3b8; margin: 0 0 4px; }
-    .meso { margin: 18px 0; padding-top: 12px; border-top: 1px solid #e6e2d8; page-break-inside: avoid; }
-    .meso-tit { font-size: 15px; margin: 0 0 2px; color: #1e293b; text-transform: none; letter-spacing: 0; }
-    .meso-tit .num { display: inline-flex; width: 20px; height: 20px; border-radius: 6px; background: ${corMarca}; color: #fff; font-size: 12px; align-items: center; justify-content: center; margin-right: 6px; }
-    .meso-tit .range { font-size: 12px; font-weight: 400; color: #94a3b8; margin-left: 6px; }
-    .meso-foco { font-size: 13px; color: #475569; margin: 2px 0 6px; }
-    .tend { font-size: 12px; color: #64748b; margin: 0 0 6px; }
+    .legenda .lg-rot { color: ${C.ink2}; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 10px; }
+    .legenda-nota { font-size: 11px; color: ${C.ink2}; margin: 0 0 4px; }
+    .meso { margin: 18px 0; padding-top: 12px; border-top: 1px solid ${C.borda}; page-break-inside: avoid; }
+    .meso-tit { font-size: 15px; margin: 0 0 2px; color: ${C.ink}; text-transform: none; letter-spacing: 0; }
+    .meso-tit .num { display: inline-flex; width: 20px; height: 20px; border-radius: 6px; background: ${corMarca}; color: ${C.sobreMarca}; font-size: 12px; align-items: center; justify-content: center; margin-right: 6px; }
+    .meso-tit .range { font-size: 12px; font-weight: 400; color: ${C.ink2}; margin-left: 6px; }
+    .meso-foco { font-size: 13px; color: ${C.ink2}; margin: 2px 0 6px; }
+    .tend { font-size: 12px; color: ${C.ink2}; margin: 0 0 6px; }
     .semana { margin: 10px 0 0; page-break-inside: avoid; }
     .semana-tit { font-size: 13px; font-weight: 700; margin: 10px 0 4px; }
-    .semana-tit .tipo { font-size: 11px; font-weight: 600; color: #b45309; background: #fef4e2; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
+    .semana-tit .tipo { font-size: 11px; font-weight: 600; color: ${C.alerta}; background: ${C.alertaTint}; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
     .semana-tit .estado { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
-    .semana-tit .estado-progressao { color: #15803d; background: #e8f6ee; }
-    .semana-tit .estado-manutencao { color: #475569; background: #f2f0ea; }
-    .semana-tit .estado-regressao { color: #b45309; background: #fef4e2; }
-    .semana-tit .freq { font-size: 11px; font-weight: 400; color: #94a3b8; margin-left: 6px; }
-    .objetivo-sem { font-size: 12px; color: #475569; margin: 2px 0 4px; }
-    .reducao { font-size: 11px; color: #b45309; margin: 0 0 4px; }
-    .alvo-forca { font-size: 10px; font-weight: 600; color: #1b4b66; margin: 2px 0 0; }
-    .nota { font-size: 11px; color: #94a3b8; margin: 0 0 4px; }
+    .semana-tit .estado-progressao { color: ${C.sucesso}; background: ${C.sucessoTint}; }
+    .semana-tit .estado-manutencao { color: ${C.ink2}; background: ${C.papelSuave}; }
+    .semana-tit .estado-regressao { color: ${C.alerta}; background: ${C.alertaTint}; }
+    .semana-tit .freq { font-size: 11px; font-weight: 400; color: ${C.ink2}; margin-left: 6px; }
+    .objetivo-sem { font-size: 12px; color: ${C.ink2}; margin: 2px 0 4px; }
+    .reducao { font-size: 11px; color: ${C.alerta}; margin: 0 0 4px; }
+    .alvo-forca { font-size: 10px; font-weight: 600; color: ${C.marca}; margin: 2px 0 0; }
+    .nota { font-size: 11px; color: ${C.ink2}; margin: 0 0 4px; }
     .sessao { margin: 6px 0 8px; }
-    .sessao-nome { font-size: 12px; font-weight: 700; color: #1e293b; margin: 6px 0 3px; }
-    .sessao-nome .foco { font-weight: 400; color: #94a3b8; }
-    .fecho { font-size: 11px; color: #475569; background: #f2f0ea; border-radius: 6px; padding: 5px 8px; margin: 5px 0 0; }
+    .sessao-nome { font-size: 12px; font-weight: 700; color: ${C.ink}; margin: 6px 0 3px; }
+    .sessao-nome .foco { font-weight: 400; color: ${C.ink2}; }
+    .fecho { font-size: 11px; color: ${C.ink2}; background: ${C.papelSuave}; border-radius: 6px; padding: 5px 8px; margin: 5px 0 0; }
     table.blocos { width: 100%; border-collapse: collapse; font-size: 11px; }
-    table.blocos th { text-align: left; color: #94a3b8; font-weight: 600; border-bottom: 1px solid #e6e2d8; padding: 3px 4px; }
-    table.blocos td { padding: 3px 4px; border-bottom: 1px solid #e6e2d8; color: #475569; vertical-align: top; }
-    table.blocos td.ex { color: #1e293b; font-weight: 600; }
-    table.blocos tr.grupo-metodo td { background: #f2f0ea; color: #1e293b; font-size: 11px; padding-top: 5px; }
-    table.blocos tr.grupo-metodo .grupo-desc { color: #94a3b8; font-weight: 400; }
+    table.blocos th { text-align: left; color: ${C.ink2}; font-weight: 600; border-bottom: 1px solid ${C.borda}; padding: 3px 4px; }
+    table.blocos td { padding: 3px 4px; border-bottom: 1px solid ${C.linha}; color: ${C.ink2}; vertical-align: top; }
+    table.blocos td.ex { color: ${C.ink}; font-weight: 600; }
+    table.blocos tr.grupo-metodo td { background: ${C.papelSuave}; color: ${C.ink}; font-size: 11px; padding-top: 5px; }
+    table.blocos tr.grupo-metodo .grupo-desc { color: ${C.ink2}; font-weight: 400; }
     .quadros { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
-    .quadro { flex: 1 1 260px; min-width: 240px; border: 1px solid #e6e2d8; border-radius: 6px; overflow: hidden; }
-    .quadro-tit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #475569; background: #f2f0ea; margin: 0; padding: 4px 8px; border-bottom: 1px solid #e6e2d8; }
+    .quadro { flex: 1 1 260px; min-width: 240px; border: 1px solid ${C.borda}; border-radius: 6px; overflow: hidden; }
+    .quadro-tit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; background: ${C.papelSuave}; margin: 0; padding: 4px 8px; border-bottom: 1px solid ${C.borda}; }
     .quadro table.blocos { padding: 2px 6px 4px; }
     .quadro table.blocos th, .quadro table.blocos td { padding: 3px 6px; }
-    .cardio { padding: 5px 8px; border-bottom: 1px solid #e6e2d8; }
+    .cardio { padding: 5px 8px; border-bottom: 1px solid ${C.linha}; }
     .cardio:last-child { border-bottom: 0; }
-    .cardio-nome { font-size: 11px; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
-    .cardio-linha { font-size: 11px; color: #475569; margin: 1px 0; }
-    .cardio-rot { display: inline-block; min-width: 68px; color: #94a3b8; }
-    .cardio-obs { font-size: 10px; color: #94a3b8; margin: 3px 0 0; }
-    .vazio { font-size: 11px; color: #94a3b8; }
-    .foot { margin-top: 24px; border-top: 1px solid #e6e2d8; padding-top: 12px; font-size: 11px; color: #94a3b8; }
-    ol.refs { font-size: 11px; color: #475569; padding-left: 18px; margin: 4px 0; }
+    .cardio-nome { font-size: 11px; font-weight: 700; color: ${C.ink}; margin: 0 0 2px; }
+    .cardio-linha { font-size: 11px; color: ${C.ink2}; margin: 1px 0; }
+    .cardio-rot { display: inline-block; min-width: 68px; color: ${C.ink2}; }
+    .cardio-obs { font-size: 10px; color: ${C.ink2}; margin: 3px 0 0; }
+    .vazio { font-size: 11px; color: ${C.ink2}; }
+    .foot { margin-top: 24px; border-top: 1px solid ${C.borda}; padding-top: 12px; font-size: 11px; color: ${C.ink2}; }
+    ol.refs { font-size: 11px; color: ${C.ink2}; padding-left: 18px; margin: 4px 0; }
     @media print { .page { padding: 0; } @page { margin: 16mm; } }
   </style></head><body>
   <div class="page">
@@ -401,12 +403,12 @@ export function exportPlanoPDF({
       <h2>Por que este plano</h2>
       <p style="font-size:13px">${esc(plano.raciocinio)}</p>
       <p class="rot">Como o modelo funciona</p>
-      <p style="font-size:13px;color:#475569">${esc(modelo.comoFunciona)}</p>
+      <p style="font-size:13px;color:${C.ink2}">${esc(modelo.comoFunciona)}</p>
       <p class="rot">Racional científico</p>
-      <p style="font-size:13px;color:#475569">${esc(modelo.racionalCientifico)}</p>
+      <p style="font-size:13px;color:${C.ink2}">${esc(modelo.racionalCientifico)}</p>
       ${
         reavaliacoes.length
-          ? `<p class="rot">Reavaliação prevista</p><p style="font-size:13px;color:#475569">Ao fim das semanas ${reavaliacoes.join(", ")}.</p>`
+          ? `<p class="rot">Reavaliação prevista</p><p style="font-size:13px;color:${C.ink2}">Ao fim das semanas ${reavaliacoes.join(", ")}.</p>`
           : ""
       }
     </section>

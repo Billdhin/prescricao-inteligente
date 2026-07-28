@@ -143,7 +143,7 @@ function FinanceiroForm({
           <h2 className="font-display text-base font-bold text-ink">Financeiro</h2>
         </div>
         {onCancel && (
-          <button onClick={onCancel} aria-label="Cancelar" className="rounded-md p-2 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onCancel} aria-label="Cancelar" className="rounded-full p-2 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         )}

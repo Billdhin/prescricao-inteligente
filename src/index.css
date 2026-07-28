@@ -156,10 +156,12 @@ main .grid > * {
   background-image: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-turquesa) 100%);
 }
 
-/* Coral escuro nas duas pontas p/ o texto branco passar em AA (>=4.5:1); coral
-   claro falharia (~3.4:1). É o gradiente da ação principal (buttonClasses primary). */
-.gradient-cta {
-  background-image: linear-gradient(135deg, #c2542e 0%, #a0421f 100%);
+/* O UNICO gradiente do produto fora da marca: o CTA de publicar no app do
+   aluno. O design reserva o gradiente para esse gesto ("Publicar no app do
+   aluno") e a acao principal comum virou pilula escura (bg-ink). O nome
+   antigo (.gradient-cta, coral) morreu junto com o botao coral. */
+.gradient-publicar {
+  background-image: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-turquesa) 100%);
 }
 
 /* Altura de modal/dialog em dvh (viewport dinâmica: desconta a barra do

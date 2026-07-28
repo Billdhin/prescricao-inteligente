@@ -239,7 +239,7 @@ function PosturalModal({ aluno, onClose, onSaved }: { aluno: Aluno; onClose: () 
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-ink">Nova avaliação postural</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>

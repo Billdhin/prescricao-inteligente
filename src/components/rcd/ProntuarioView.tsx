@@ -86,7 +86,7 @@ export function ProntuarioView({
               </Link>
             )}
           </div>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>

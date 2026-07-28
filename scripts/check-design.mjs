@@ -8,10 +8,12 @@
 //   3. Peso 800 (font-extrabold) é só display de marketing: Landing e Pricing.
 //   4. Tints mortas: as 13 grafias divergentes/typos que a migração de tokens
 //      aposentou não podem reaparecer.
-//   5. Azul fantasma #2563eb (Lovable) banido de todo o src (cenas de fallback
-//      já repintadas para petróleo #1b4b66 na Onda 4).
+//   5. Azul fantasma #2563eb (Lovable) banido de todo o src (o azul legítimo é a
+//      primária da identidade, #2064EC, sempre via corMarca || fallback).
 //   6. Copy proibida: "Mais escolhido" (selo sem prova).
-//   7. REGRA DURA do repo: modificador /NN sobre classe de cor-token NÃO compila
+//   7. Forma: gradiente só nas duas classes autoradas, e botão só em pílula
+//      (controle) ou rounded-card (opção em forma de cartão).
+//   8. REGRA DURA do repo: modificador /NN sobre classe de cor-token NÃO compila
 //      (tailwind.config sem <alpha-value>); alpha só como hex literal [#...]/NN.
 //
 // Lê o arquivo inteiro (multiline) porque className quebra linha em JSX.
@@ -80,7 +82,7 @@ const REGRAS = [
   },
   {
     id: "azul-fantasma",
-    desc: "#2563eb (azul Lovable morto); use corMarca || '#1b4b66'.",
+    desc: "#2563eb (azul Lovable morto); use corMarca || '#2064EC' (a primária da identidade).",
     re: /#2563eb(?![0-9a-fA-F])/gi,
   },
   {
@@ -105,6 +107,40 @@ const REGRAS = [
     re: /text-\[(?:9|10|10\.5|11)px\]/g,
     svgAware: true,
   },
+  {
+    // Design System "1c Rota": o gradiente é da MARCA. Ele vive em duas classes
+    // autoradas no index.css (.gradient-brand no logo/cabeçalho e
+    // .gradient-publicar no único CTA que o design manda destacar, "Publicar no
+    // app do aluno") e em lugar nenhum mais. Gradiente de matiz espalhado é o que
+    // dá "cara de template": some a hierarquia, porque tudo brilha igual.
+    // O que continua permitido é o gradiente de PAPEL (from-surface, to-bg),
+    // usado como máscara de rolagem, que não pinta cor de marca nenhuma.
+    id: "gradiente-de-marca",
+    desc:
+      'gradiente com cor de marca/semântica fora das classes autoradas. Use bg-<token> chapado; ' +
+      "gradiente só em .gradient-brand e .gradient-publicar.",
+    re: /\bbg-gradient-to-[a-z]{1,2}\b[^"'`]*?\b(?:from|via|to)-(?:primary|analysis|brand-blue|brand-turquesa|cta|success|warning|danger)[a-z-]*\b/g,
+  },
+  {
+    // "Botões e chips sempre pílula (999)", literal do Design System. O raio
+    // intermediário (md/lg/xl) é o que faz o controle parecer um cartãozinho e
+    // some com a diferença entre "isto é clicável" e "isto é uma caixa".
+    // Duas formas legítimas dentro de <button>: rounded-full quando é CONTROLE
+    // (o caso normal) e rounded-card quando o botão é uma OPÇÃO em forma de
+    // cartão (seletor de fármaco, de restrição), que o design trata como campo,
+    // não como botão. Qualquer outro raio é violação.
+    id: "raio-de-botao",
+    desc: "botão com raio intermediário; controle é pílula (rounded-full) e opção-cartão é rounded-card.",
+    varrer: (conteudo, push) => {
+      const tags = /<button\b[\s\S]{0,600}?>/g;
+      let m;
+      while ((m = tags.exec(conteudo))) {
+        const raios = m[0].match(/\brounded-[a-z0-9[\]#.-]+/g) ?? [];
+        const ruim = raios.find((r) => r !== "rounded-full" && r !== "rounded-card");
+        if (ruim) push(m.index + m[0].indexOf(ruim));
+      }
+    },
+  },
   // A antiga "regra dura" (proibir /NN sobre cor-token) foi APOSENTADA: os tokens
   // viraram canais RGB no tailwind.config (rgb(var(--x-rgb) / <alpha-value>)),
   // então bg-primary/40 agora COMPILA e ainda segue a paleta/tema. Usar o token
@@ -117,6 +153,15 @@ for (const arquivo of files) {
   let svgRegs = null;
   for (const regra of REGRAS) {
     if (regra.ok && regra.ok(arqRel)) continue;
+    // Regra com varredura própria: precisa de contexto (a tag inteira), coisa que
+    // um regex de uma passada não dá. Ela devolve o offset do trecho culpado.
+    if (regra.varrer) {
+      regra.varrer(conteudo, (idx) => {
+        const { linha, trecho } = posInfo(conteudo, idx);
+        violacoes.push({ regra: regra.id, desc: regra.desc, arquivo: arqRel, linha, trecho });
+      });
+      continue;
+    }
     regra.re.lastIndex = 0;
     let m;
     while ((m = regra.re.exec(conteudo))) {
@@ -144,4 +189,4 @@ if (violacoes.length) {
   process.exit(1);
 }
 
-console.log("[check:design] ok: pele clínica disciplinada (raio, peso, tints, azul, copy e a regra dura do /NN).");
+console.log("[check:design] ok: forma disciplinada (raio de botão, gradiente único, peso, tints, azul, copy e token não textual).");

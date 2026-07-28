@@ -206,7 +206,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="shrink-0 rounded-md p-2.5 text-ink-3 hover:bg-surface-soft"
+            className="shrink-0 rounded-full p-2.5 text-ink-3 hover:bg-surface-soft"
           >
             <X className="h-4 w-4" />
           </button>
@@ -274,7 +274,7 @@ function HotspotDialog({ hotspot, onClose }: { hotspot: Hotspot; onClose: () => 
           ) : (
             <button
               onClick={onClose}
-              className="inline-flex items-center gap-1 rounded-control border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-soft"
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-soft"
             >
               Concluir
             </button>

@@ -312,7 +312,7 @@ function BaseCientificaModal({ p, onClose }: { p: Protocolo; onClose: () => void
             <h2 className="font-display text-lg font-bold text-ink">{p.titulo}</h2>
             {p.fase && <div className="mt-0.5 text-sm text-ink-2">{p.fase}{p.tempoTreino ? ` · ${p.tempoTreino}` : ""}</div>}
           </div>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>

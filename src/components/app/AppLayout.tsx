@@ -395,7 +395,7 @@ function Sidebar() {
           <button
             onClick={toggleCollapsed}
             aria-label="Colapsar menu"
-            className="hidden rounded-md p-1.5 text-ink-2 hover:bg-surface-soft lg:inline-flex"
+            className="hidden rounded-full p-1.5 text-ink-2 hover:bg-surface-soft lg:inline-flex"
           >
             <ChevronsLeft className={cn("h-4 w-4 transition-transform", collapsed && "rotate-180")} />
           </button>
@@ -584,7 +584,7 @@ function Topbar() {
       <button
         onClick={onMenu}
         aria-label="Alternar menu lateral"
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-md text-ink-2 hover:bg-surface-soft"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
       >
         <PanelLeft className="h-4 w-4" />
       </button>

@@ -66,7 +66,7 @@ export function FaseFigure({
           </span>
         </div>
       ) : (
-        <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-b from-surface to-surface-soft">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-surface-soft">
           <svg viewBox="0 0 240 190" className="mx-auto h-44 w-full" role="img"
             aria-label={`Fase ${c.belly}: o músculo ${musculo ?? "alvo"} ${c.acao}`}>
             <defs>

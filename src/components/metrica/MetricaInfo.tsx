@@ -105,7 +105,7 @@ function MetricaDialog({
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="shrink-0 rounded-md p-2.5 text-ink-3 hover:bg-surface-soft"
+            className="shrink-0 rounded-full p-2.5 text-ink-3 hover:bg-surface-soft"
           >
             <X className="h-4 w-4" />
           </button>

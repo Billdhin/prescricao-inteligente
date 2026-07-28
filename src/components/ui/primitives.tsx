@@ -56,16 +56,22 @@ export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
 export type ButtonSize = "sm" | "md";
 
 export function buttonClasses(variant: ButtonVariant = "primary", size: ButtonSize = "md") {
+  // Pílula em todo botão, por regra do Design System ("botões e chips sempre
+  // pílula 999"). Antes era rounded-control (10px).
   const base =
-    "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-control font-semibold " +
+    "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold " +
     "transition-[background-color,border-color,box-shadow,transform,filter] duration-150 ease-out " +
     "active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60";
   const sizes: Record<ButtonSize, string> = {
-    sm: "h-9 px-3 text-sm",
+    sm: "h-9 px-4 text-sm",
     md: "h-11 px-5 text-sm",
   };
   const variants: Record<ButtonVariant, string> = {
-    primary: "gradient-cta text-white shadow-soft hover:brightness-[1.06] active:brightness-95",
+    // A ação principal é a pílula ESCURA (ink), não o gradiente coral que
+    // estava aqui. O design reserva gradiente para um lugar só, "Publicar no
+    // app do aluno", e guarda o azul para o pino da rota e o anel de foco.
+    // Uma ação primária por tela é regra do Design System.
+    primary: "bg-ink text-surface shadow-soft hover:brightness-[1.15] active:brightness-95",
     secondary: "bg-surface border border-border text-ink hover:bg-surface-soft hover:border-border",
     outline: "border border-border bg-surface text-ink hover:bg-surface-soft hover:border-border",
     ghost: "text-ink-2 hover:bg-surface-soft hover:text-ink",

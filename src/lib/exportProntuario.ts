@@ -15,6 +15,7 @@ import { rotuloRestricao, GATILHOS_OPCOES, LADO_OPCOES, LIBERACAO_OPCOES } from 
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
+import { CORES_PDF as C } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -23,9 +24,9 @@ const fmt = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(ts));
 
 const SEMAFORO_LABEL = {
-  verde: { nome: "LIBERADO", hex: "#147a3a" },
-  amarelo: { nome: "LIBERADO COM AJUSTE", hex: "#b45309" },
-  vermelho: { nome: "NÃO LIBERADO NO DIA", hex: "#b91c1c" },
+  verde: { nome: "LIBERADO", hex: C.sucesso },
+  amarelo: { nome: "LIBERADO COM AJUSTE", hex: C.alerta },
+  vermelho: { nome: "NÃO LIBERADO NO DIA", hex: C.perigo },
 } as const;
 
 /** ID legível e estável do documento (deriva do id da prescrição). */
@@ -195,51 +196,51 @@ export function exportProntuarioPDF({
   <title>Prontuário de Decisão · ${esc(aluno.nome)} · ${docId}</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; font-size: 13px; }
+    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; font-size: 13px; }
     .page { max-width: 760px; margin: 0 auto; padding: 32px; }
-    ${cabecalhoCss("#0e7c8a")}
-    .motor { display: inline-block; background: #e0f7f9; color: #0c6b77; border: 1px solid #14b8c455; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; }
-    .docid { font-size: 11px; color: #64748b; }
+    ${cabecalhoCss(C.analise)}
+    .motor { display: inline-block; background: ${C.analiseTint}; color: ${C.analise}; border: 1px solid ${C.analiseFill}55; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; }
+    .docid { font-size: 11px; color: ${C.ink2}; }
     h1 { font-size: 20px; margin: 18px 0 2px; }
-    .meta { font-size: 12px; color: #64748b; margin-bottom: 14px; }
-    .aluno { background: #f4f6fb; border-radius: 10px; padding: 11px 14px; margin-bottom: 14px; }
+    .meta { font-size: 12px; color: ${C.ink2}; margin-bottom: 14px; }
+    .aluno { background: ${C.papelSuave}; border-radius: 10px; padding: 11px 14px; margin-bottom: 14px; }
     .bloco { margin: 14px 0; }
     /* O PDF circula sozinho e leva a assinatura: a escala precisa estar definida
        DENTRO dele, e não só na tela de onde ele saiu. */
-    .escala-nota { font-size: 10px; line-height: 1.5; color: #475569; margin: 0 0 10px; }
-    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #0e7c8a; margin: 0 0 6px; }
-    .ex { border: 1px solid #e7ecf3; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; page-break-inside: avoid; }
+    .escala-nota { font-size: 10px; line-height: 1.5; color: ${C.ink2}; margin: 0 0 10px; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${C.analise}; margin: 0 0 6px; }
+    .ex { border: 1px solid ${C.borda}; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; page-break-inside: avoid; }
     .ex-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
-    .ex-num { width: 22px; height: 22px; border-radius: 50%; background: #0e7c8a; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+    .ex-num { width: 22px; height: 22px; border-radius: 50%; background: ${C.analise}; color: ${C.sobreMarca}; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
     .ex-nome { font-weight: 800; flex: 1; }
-    .ex-series { font-size: 11px; color: #64748b; }
-    .ex-score { font-size: 12px; font-weight: 800; color: #147a3a; }
+    .ex-series { font-size: 11px; color: ${C.ink2}; }
+    .ex-score { font-size: 12px; font-weight: 800; color: ${C.sucesso}; }
     table.criterios { width: 100%; border-collapse: collapse; }
-    table.criterios td { border-top: 1px solid #f1f5f9; padding: 4px 6px; font-size: 11.5px; vertical-align: top; }
+    table.criterios td { border-top: 1px solid ${C.linha}; padding: 4px 6px; font-size: 11.5px; vertical-align: top; }
     td.crit { font-weight: 700; width: 160px; }
-    td.pts { white-space: nowrap; width: 84px; color: #0e7c8a; font-weight: 700; }
+    td.pts { white-space: nowrap; width: 84px; color: ${C.analise}; font-weight: 700; }
     td.d-nome { font-weight: 700; width: 190px; }
-    .caut { font-size: 11px; color: #b45309; margin: 6px 0 0; }
+    .caut { font-size: 11px; color: ${C.alerta}; margin: 6px 0 0; }
     table.desc { width: 100%; border-collapse: collapse; }
-    table.desc td, table.desc th { border: 1px solid #e7ecf3; padding: 6px 8px; font-size: 11.5px; text-align: left; vertical-align: top; }
-    table.desc th { background: #f4f6fb; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
+    table.desc td, table.desc th { border: 1px solid ${C.borda}; padding: 6px 8px; font-size: 11.5px; text-align: left; vertical-align: top; }
+    table.desc th { background: ${C.papelSuave}; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; }
     ul, ol { margin: 4px 0; padding-left: 20px; }
     li { margin-bottom: 3px; }
-    .refn { color: #0e7c8a; font-weight: 700; font-size: 10.5px; }
-    .refs li { font-size: 11px; color: #475569; }
-    .mut { color: #94a3b8; }
+    .refn { color: ${C.analise}; font-weight: 700; font-size: 10.5px; }
+    .refs li { font-size: 11px; color: ${C.ink2}; }
+    .mut { color: ${C.ink2}; }
     .assinatura { margin-top: 34px; page-break-inside: avoid; display: flex; justify-content: space-between; gap: 24px; align-items: flex-end; }
-    .assinatura .linha { border-top: 1.5px solid #1e293b; width: 320px; padding-top: 6px; font-size: 12px; }
+    .assinatura .linha { border-top: 1.5px solid ${C.ink}; width: 320px; padding-top: 6px; font-size: 12px; }
     .assinatura .quem { font-weight: 800; }
-    .assinatura .data { font-size: 12px; color: #475569; }
-    .foot { margin-top: 20px; border-top: 1px solid #e7ecf3; padding-top: 10px; font-size: 10px; color: #94a3b8; }
+    .assinatura .data { font-size: 12px; color: ${C.ink2}; }
+    .foot { margin-top: 20px; border-top: 1px solid ${C.borda}; padding-top: 10px; font-size: 10px; color: ${C.ink2}; }
     @media print { .page { padding: 0; } @page { margin: 14mm; } }
   </style></head><body>
   <div class="page">
     ${cabecalhoHtml({
-      cor: "#0e7c8a",
-      nomeCor: "#1e293b",
-      espinhaCor: "#1b4b66",
+      cor: C.analise,
+      nomeCor: C.ink,
+      espinhaCor: C.marca,
       logoDataUrl: marca?.logoDataUrl,
       profissional,
       cref,

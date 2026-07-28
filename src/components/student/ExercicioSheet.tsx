@@ -124,7 +124,7 @@ export function ExercicioSheet({
               type="button"
               onClick={onClose}
               aria-label="Fechar"
-              className="-mr-2 grid h-11 w-11 shrink-0 place-items-center rounded-lg text-ink-3 hover:bg-surface-soft hover:text-ink"
+              className="-mr-2 grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-3 hover:bg-surface-soft hover:text-ink"
             >
               <X className="h-5 w-5" />
             </button>
@@ -181,7 +181,7 @@ export function ExercicioSheet({
                   {ex.fases.map((f, i) => (
                     <li key={f.nome} className="flex gap-3">
                       <span
-                        className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold text-white"
+                        className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold text-on-primary"
                         style={{ background: cor }}
                       >
                         {i + 1}

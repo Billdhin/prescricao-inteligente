@@ -1944,7 +1944,7 @@ function JustifyDialog({ rec, onClose }: { rec: Recommendation; onClose: () => v
             <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">Justificativa</div>
             <h3 className="font-display text-lg font-bold text-ink">{rec.exercise.nome}</h3>
           </div>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>

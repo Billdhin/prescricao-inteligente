@@ -366,7 +366,7 @@ function MolduraBoasVindas({
             Vincule a um aluno para salvar e exportar o prontuário; é assim que cada caso vira defesa
             técnica sua.
           </p>
-          <button onClick={fecharCelebracao} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+          <button onClick={fecharCelebracao} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>

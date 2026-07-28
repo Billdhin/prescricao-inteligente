@@ -54,8 +54,9 @@ export default {
         "2xs": ["11px", { lineHeight: "16px" }],
       },
       borderRadius: {
-        card: "16px",
-        control: "10px",
+        // Design System "1c Rota": card 18px (a faixa e 16-20), controle 12px.
+        card: "18px",
+        control: "12px",
       },
       boxShadow: {
         soft: "0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.04)",

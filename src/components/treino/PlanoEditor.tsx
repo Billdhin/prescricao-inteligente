@@ -258,7 +258,7 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
           ))}
         </svg>
         {/* Affordance de rolagem: um fade no canto direito sugere que o gráfico continua. */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#ffffff]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-surface" />
       </div>
       <div className="mt-2 flex flex-wrap gap-3">
         {g.series.map((s) => (
@@ -799,7 +799,7 @@ function QuadroForca({ blocos, ctx }: { blocos: BlocoSessao[]; ctx: ContextoFaix
           </tbody>
         </table>
         {/* Affordance de rolagem: um fade no canto direito sugere que a tabela continua. */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-[#ffffff]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-surface" />
       </div>
     </div>
   );
@@ -1077,7 +1077,7 @@ function SessaoBloco({
             <button
               type="button"
               onClick={addCardio}
-              className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-semibold text-ink-2 hover:bg-surface"
+              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 text-xs font-semibold text-ink-2 hover:bg-surface"
             >
               <HeartPulse className="h-3.5 w-3.5 text-analysis" /> Adicionar cardio
             </button>

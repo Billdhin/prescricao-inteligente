@@ -128,7 +128,7 @@ export function TreinoGuiado({
       <div className="min-h-[100dvh] w-full overflow-y-auto bg-bg">
         <div className="animate-surgir px-4 py-8">
           <div className="text-center">
-            <span className="mx-auto grid h-20 w-20 place-items-center rounded-full text-white" style={{ background: cor }}>
+            <span className="mx-auto grid h-20 w-20 place-items-center rounded-full text-on-primary" style={{ background: cor }}>
               <Check className="h-10 w-10" />
             </span>
             <h2 className="mt-4 font-display text-2xl font-bold text-ink">Treino concluído</h2>
@@ -208,7 +208,7 @@ export function TreinoGuiado({
 
           <button
             onClick={enviar}
-            className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg px-4 text-base font-bold text-white"
+            className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full px-4 text-base font-bold text-on-primary"
             style={{ background: cor }}
           >
             Enviar e fechar
@@ -241,7 +241,7 @@ export function TreinoGuiado({
             </span>
             <button
               onClick={sair}
-              className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-semibold text-ink-2 hover:bg-surface-soft hover:text-ink"
+              className="inline-flex min-h-[44px] items-center rounded-full px-3 text-sm font-semibold text-ink-2 hover:bg-surface-soft hover:text-ink"
             >
               Sair
             </button>
@@ -256,7 +256,7 @@ export function TreinoGuiado({
         {seg.tipo === "grupo" ? (
           <div className="rounded-card border-2 p-2" style={{ borderColor: cor }}>
             <div className="mb-2 flex flex-wrap items-center gap-2 px-1">
-              <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-white" style={{ background: cor }}>
+              <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-on-primary" style={{ background: cor }}>
                 {getMetodo(seg.metodo)?.nome}
               </span>
               {getMetodo(seg.metodo)?.descricao && (
@@ -279,7 +279,7 @@ export function TreinoGuiado({
         <button
           onClick={voltar}
           disabled={idx === 0}
-          className="inline-flex h-12 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-ink-2 hover:bg-surface-soft disabled:opacity-40 disabled:hover:bg-transparent"
+          className="inline-flex h-12 items-center gap-1 rounded-full px-3 text-sm font-semibold text-ink-2 hover:bg-surface-soft disabled:opacity-40 disabled:hover:bg-transparent"
         >
           <ChevronLeft className="h-4 w-4" /> Anterior
         </button>
@@ -291,7 +291,7 @@ export function TreinoGuiado({
         </button>
         <button
           onClick={avancar}
-          className="ml-auto inline-flex h-12 items-center gap-1.5 rounded-lg px-5 text-sm font-bold text-white"
+          className="ml-auto inline-flex h-12 items-center gap-1.5 rounded-full px-5 text-sm font-bold text-on-primary"
           style={{ background: cor }}
         >
           {ultimo ? "Concluir treino" : <>Próximo <ChevronRight className="h-4 w-4" /></>}
@@ -381,7 +381,7 @@ function BlocoGuiado({
         </div>
       ) : (
         <div className="mx-auto grid aspect-[4/3] w-full max-w-[280px] place-items-center rounded-xl border border-border bg-surface">
-          <span className="grid h-16 w-16 place-items-center rounded-xl text-white" style={{ background: cor }}>
+          <span className="grid h-16 w-16 place-items-center rounded-xl text-on-primary" style={{ background: cor }}>
             {aerobio ? <IconeAerobio className="h-8 w-8" /> : <Dumbbell className="h-8 w-8" />}
           </span>
         </div>

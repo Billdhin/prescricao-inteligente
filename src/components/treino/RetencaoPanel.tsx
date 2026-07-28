@@ -154,7 +154,7 @@ function ScriptCard({
         <div className="flex gap-1.5">
           <button
             onClick={copiar}
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-ink-2 hover:bg-surface"
+            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold text-ink-2 hover:bg-surface"
           >
             {copiado ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
             {copiado ? "Copiado" : "Copiar"}

@@ -906,7 +906,7 @@ function BlocoTab({
       aria-selected={ativo}
       onClick={onClick}
       className={cn(
-        "inline-flex items-center gap-2 rounded-[7px] px-3.5 py-2 text-sm font-semibold transition-colors",
+        "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors",
         ativo ? "gradient-brand text-white shadow-elevated" : "text-ink-2 hover:bg-surface-soft",
       )}
     >

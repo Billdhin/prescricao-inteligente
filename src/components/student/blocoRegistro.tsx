@@ -191,7 +191,7 @@ export function RegistroBloco({
       ) : aerobio ? (
         <button
           onClick={concluirAerobio}
-          className="inline-flex h-11 items-center gap-1.5 rounded-lg px-4 text-sm font-bold text-white"
+          className="inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-sm font-bold text-on-primary"
           style={{ background: cor }}
         >
           <CheckCircle2 className="h-4 w-4" /> Concluí
@@ -205,7 +205,7 @@ export function RegistroBloco({
             {/* Abaixo de sm o botão desce para a própria linha (w-full). */}
             <button
               onClick={registrar}
-              className="inline-flex h-11 w-full items-center justify-center rounded-lg px-4 text-sm font-bold text-white sm:w-auto"
+              className="inline-flex h-11 w-full items-center justify-center rounded-full px-4 text-sm font-bold text-on-primary sm:w-auto"
               style={{ background: cor }}
             >
               {editando ? "Salvar" : "Registrar"}

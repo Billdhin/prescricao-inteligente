@@ -226,6 +226,53 @@ export const PALETA_ROTA: Paleta = {
 export const PALETAS: Paleta[] = [PALETA_ROTA];
 export const PALETA_PADRAO = "rota";
 
+/**
+ * SKIN DO APP DO ALUNO. Escura sempre, e por decisão de design, não por gosto.
+ *
+ * O aluno abre o app no vestiário e na academia, com pouca luz e o celular na
+ * mão; o design aprovado desenhou esse lado em navy escuro e energético,
+ * enquanto o lado do profissional é papel claro e quente. São dois produtos com
+ * duas peles, e por isso o portal PAROU de herdar o claro/escuro do
+ * profissional: se ele usasse o app no claro, o aluno via um portal branco que
+ * nenhum mockup previu.
+ *
+ * O delta em relação ao escuro da Rota é só a rampa de neutro (o design pede o
+ * navy um degrau mais claro, para o cartão descolar do fundo no celular) e o
+ * cinza de texto. Todo o resto (semáforo, turquesa de ação positiva, âmbar de
+ * sequência) é o mesmo `ROTA_COMPART_ESCURO`, para o aluno e o professor nunca
+ * verem o mesmo estado em cores diferentes.
+ *
+ * Fica FORA de `PALETAS` de propósito: não é uma opção de aparência, é a pele de
+ * uma superfície. `check:contraste` valida esta paleta à parte, no modo escuro.
+ */
+const ALUNO_ESCURO: PaletaCore = {
+  bg: "#0D1524",
+  surface: "#131D31",
+  surfaceSoft: "#232F45",
+  surfaceMute: "#2C3A54",
+  border: "#2E3E5A",
+  ink: "#F2F6FC",
+  // o literal do design era #8FA1BD, que dá 4,47 sobre o trilho (#232F45) e
+  // reprovaria por arredondamento; #97A9C5 sobe para 4,90 sem mudar a cor.
+  ink2: "#97A9C5",
+  ink3: "#97A9C5",
+  ink4: "#6E819F",
+  // azul claro legível no navy. O #2064EC do logo vive no gradiente do herói e
+  // como cor de marca do profissional, nunca como texto sobre este fundo.
+  primary: "#7FA3EF",
+  primaryTint: "#1B2A45",
+};
+
+export const PALETA_ALUNO: Paleta = {
+  id: "aluno",
+  nome: "App do aluno",
+  amostra: "#0D1524",
+  claro: ALUNO_ESCURO,
+  escuro: ALUNO_ESCURO,
+  compartClaro: ROTA_COMPART_ESCURO,
+  compartEscuro: ROTA_COMPART_ESCURO,
+};
+
 /** Resolve a paleta por id. Id desconhecido cai no padrão. */
 export function getPaleta(id?: string): Paleta {
   return PALETAS.find((p) => p.id === id) ?? PALETAS[0];
@@ -311,8 +358,15 @@ export function modoEfetivo(modo: Modo): boolean {
  * aluno ver, não para ele mesmo.
  */
 export function aplicarTema(el: HTMLElement, paletaId: string, modo: Modo, corMarca?: string): void {
-  const paleta = getPaleta(paletaId);
-  const escuro = modoEfetivo(modo);
+  aplicarPaleta(el, getPaleta(paletaId), modoEfetivo(modo), corMarca);
+}
+
+/**
+ * Mesma coisa com a paleta e o modo já resolvidos. É por aqui que entra a skin
+ * do app do aluno, que não está em `PALETAS` (logo `getPaleta` não a acha) e é
+ * escura sempre, sem consultar preferência nenhuma.
+ */
+export function aplicarPaleta(el: HTMLElement, paleta: Paleta, escuro: boolean, corMarca?: string): void {
   const tokens = tokensDe(paleta, escuro);
   for (const [nome, hex] of Object.entries(tokens)) {
     el.style.setProperty(`--${nome}`, hex);

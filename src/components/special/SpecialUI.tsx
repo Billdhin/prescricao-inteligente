@@ -113,7 +113,7 @@ export function ParametroDialog({
             <h3 className="font-display text-lg font-bold text-ink">{p.nome}</h3>
             <p className="mt-0.5 text-sm text-ink-2">{p.resumo}</p>
           </div>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-md p-2.5 text-ink-3 hover:bg-surface-soft">
+          <button onClick={onClose} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -243,7 +243,7 @@ export function VisualModalidadeCard({ id, cautela }: { id: string; cautela?: bo
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-primary-tint to-analysis-tint text-analysis">
+          <div className="grid h-full w-full place-items-center bg-primary-tint text-analysis">
             <FallbackIcon className="h-9 w-9" />
           </div>
         )}

@@ -2,7 +2,7 @@
 // Valida WCAG AA (>=4.5 texto normal, >=3 gráfico/UI) de todos os pares críticos
 // em TODA paleta × modo (claro e escuro). Trava se qualquer par reprovar, para
 // nenhuma paleta chegar ao profissional com texto ilegível.
-import { PALETAS, tokensDe } from "../src/lib/theme/palettes.ts";
+import { PALETA_ALUNO, PALETAS, tokensDe } from "../src/lib/theme/palettes.ts";
 
 function lum(hex) {
   const h = hex.replace("#", "");
@@ -63,7 +63,10 @@ const DECORATIVOS = [
 ];
 
 const falhas = [];
-for (const paleta of PALETAS) {
+// A skin do app do aluno não está em PALETAS (não é opção de aparência, é a pele
+// de uma superfície) e é escura sempre, então entra aqui explicitamente. Se
+// ficasse de fora, a única tela que o ALUNO vê seria a única sem guardrail.
+for (const paleta of [...PALETAS, PALETA_ALUNO]) {
   for (const escuro of [false, true]) {
     const t = tokensDe(paleta, escuro);
     const modo = escuro ? "escuro" : "claro";
@@ -80,7 +83,7 @@ for (const paleta of PALETAS) {
   }
 }
 
-console.log(`[check:contraste] ${PALETAS.length} paletas × 2 modos × ${PARES.length} pares + ${DECORATIVOS.length} decorativos.`);
+console.log(`[check:contraste] ${PALETAS.length + 1} paletas × 2 modos × ${PARES.length} pares + ${DECORATIVOS.length} decorativos.`);
 if (falhas.length) {
   console.error(`\n[check:contraste] FALHOU: ${falhas.length} par(es) abaixo do AA:\n`);
   for (const f of falhas) console.error("  • " + f);
