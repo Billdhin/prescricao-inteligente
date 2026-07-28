@@ -70,7 +70,8 @@ export function MovementLabList() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((e) => {
-            const locked = e.premium && !unlocked;
+            // Produto 100% pago: sem tranca por exercicio.
+            const locked = false;
             return (
               <Card key={e.slug} className="flex flex-col overflow-hidden">
                 <div className="relative h-44 border-b border-border bg-surface-soft">

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Users, UserPlus, Search, AlertTriangle, CheckCircle2, Stethoscope } from "lucide-react";
+import { Users, UserPlus, Search, AlertTriangle, CheckCircle2, Stethoscope, ArrowRight } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader } from "@/components/ui/primitives";
 import { useAlunos } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -8,7 +8,16 @@ import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { tempoDesde } from "@/data/alunos";
 import type { Aluno } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { proximoPasso, dataReavaliacao, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
+import {
+  proximoPasso,
+  dataReavaliacao,
+  linkDoPasso,
+  ETAPAS,
+  ROTULO_ETAPA,
+  type CicloCtx,
+  type ProximoPasso,
+  type EtapaCiclo,
+} from "@/lib/gps/proximoPasso";
 import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
@@ -57,7 +66,21 @@ export function Alunos() {
   const comAtencao = comPasso.filter((x) => x.aluno.status === "ativo" && x.passo.chip && x.passo.chip.tone !== "success").length;
   const semPlano = comPasso.filter((x) => x.aluno.status === "ativo" && !x.temPlanoAtivo).length;
 
+  // FILTRO POR ETAPA DO CICLO. O predicado sai de `passo.etapa`, o mesmo campo
+  // que já mandava no chip e na ordenação: nenhum dado novo, e nunca uma
+  // contagem que discorde da linha correspondente.
+  const [filtro, setFiltro] = React.useState<EtapaCiclo | "todos">("todos");
+  const contagem = React.useMemo(() => {
+    const m = new Map<EtapaCiclo, number>();
+    for (const x of comPasso) {
+      if (x.aluno.status !== "ativo") continue;
+      m.set(x.passo.etapa, (m.get(x.passo.etapa) ?? 0) + 1);
+    }
+    return m;
+  }, [comPasso]);
+
   const filtrados = comPasso
+    .filter(({ aluno: a, passo }) => (filtro === "todos" ? true : a.status === "ativo" && passo.etapa === filtro))
     .filter(({ aluno: a }) =>
       [a.nome, a.objetivo, a.nivel, ...a.restricoes.map((r) => rotuloRestricao(r.tag))]
         .join(" ")
@@ -108,9 +131,34 @@ export function Alunos() {
             />
           </div>
 
+          {/* Filtro por etapa: responde "quem estou atendendo agora" sem abrir
+              aluno por aluno. Só aparecem as etapas que existem hoje na carteira;
+              filtro com zero é botão que promete e entrega tela vazia. */}
+          <div role="group" aria-label="Filtrar por etapa do cuidado" className="flex flex-wrap gap-1.5">
+            <ChipFiltro ativo={filtro === "todos"} onClick={() => setFiltro("todos")}>
+              Todos ({ativos})
+            </ChipFiltro>
+            {ETAPAS.filter((e) => (contagem.get(e) ?? 0) > 0).map((e) => (
+              <ChipFiltro key={e} ativo={filtro === e} onClick={() => setFiltro(e)}>
+                {ROTULO_ETAPA[e]} ({contagem.get(e)})
+              </ChipFiltro>
+            ))}
+          </div>
+
           {filtrados.length === 0 ? (
-            <Card className="grid place-items-center p-10 text-center">
-              <p className="text-ink-2">Nenhum aluno encontrado para “{q}”.</p>
+            <Card className="grid place-items-center gap-3 p-10 text-center">
+              {/* A frase diz o que de fato esvaziou a lista: com filtro ligado, o
+                  culpado é o filtro, e "nenhum aluno encontrado para ''" mentiria. */}
+              <p className="text-ink-2">
+                {q.trim()
+                  ? <>Nenhum aluno encontrado para “{q}”.</>
+                  : <>Nenhum aluno nesta etapa do cuidado.</>}
+              </p>
+              {filtro !== "todos" && (
+                <button onClick={() => setFiltro("todos")} className={buttonClasses("secondary", "sm")}>
+                  Ver todos os alunos
+                </button>
+              )}
             </Card>
           ) : (
             <div className="space-y-3">
@@ -153,7 +201,8 @@ function AlunoRow({ aluno, passo, planoAtivo }: { aluno: Aluno; passo: ProximoPa
   const reavTexto = reav ? textoReav(reav.em) : null;
 
   return (
-    <Card variant="base" interactive className="group flex items-center gap-4 p-4">
+    <Card variant="base" interactive className="group overflow-hidden p-0">
+      <div className="flex items-center gap-4 p-4">
       <Link to={`/alunos/${aluno.id}`} className="flex min-w-0 flex-1 items-center gap-4 outline-none">
         <span className="grid h-12 w-12 shrink-0 place-items-center rounded-card gradient-brand font-display font-bold text-white">
           {aluno.iniciais}
@@ -207,7 +256,54 @@ function AlunoRow({ aluno, passo, planoAtivo }: { aluno: Aluno; passo: ProximoPa
           </Pill>
         )}
       </div>
+      </div>
+      <LinhaProximoPasso aluno={aluno} passo={passo} />
     </Card>
+  );
+}
+
+/**
+ * A LINHA DO PRÓXIMO PASSO. `proximoPasso()` já devolvia `frase` e `cta.label`
+ * junto do chip, e a lista jogava os dois fora: o profissional lia "Sem treino"
+ * e tinha que abrir o aluno para descobrir o que fazer. Agora a frase aparece e
+ * o botão diz a ação pelo nome, indo direto ao lugar dela (`linkDoPasso`).
+ *
+ * Some quando o aluno está em dia (`chip` nulo): botão que não precisa ser
+ * apertado é ruído.
+ */
+function LinhaProximoPasso({ aluno, passo }: { aluno: Aluno; passo: ProximoPasso }) {
+  if (!passo.chip) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+      <p className="min-w-0 flex-1 text-sm text-ink-2">
+        <span className="font-semibold text-ink">Próximo passo:</span> {passo.frase}
+      </p>
+      <Link
+        to={linkDoPasso(aluno.id, passo.cta.kind)}
+        className={cn(buttonClasses(passo.tone === "success" ? "secondary" : "primary", "sm"), "shrink-0")}
+      >
+        {passo.cta.label} <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  );
+}
+
+/** Chip de filtro: pílula, com o ativo em ink sólido (a forma diz o estado). */
+function ChipFiltro({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={ativo}
+      className={cn(
+        "min-h-[36px] rounded-full border px-3 text-sm font-semibold transition-colors",
+        ativo
+          ? "border-ink bg-ink text-surface"
+          : "border-border bg-surface text-ink-2 hover:bg-surface-soft hover:text-ink",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 

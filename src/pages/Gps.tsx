@@ -853,7 +853,6 @@ function ContextoCard({
                 {specialGroups.map((g) => (
                   <option key={g.slug} value={g.slug}>
                     {g.nome}
-                    {g.premium && !unlocked ? " (Premium)" : ""}
                   </option>
                 ))}
               </select>
@@ -921,7 +920,6 @@ function ContextoCard({
                       >
                         {on ? "✓ " : "+ "}
                         {g.nome}
-                        {lock ? " (Premium)" : ""}
                       </button>
                     );
                   })}

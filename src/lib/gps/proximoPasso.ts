@@ -246,3 +246,27 @@ export function avisosDoAluno(aluno: Aluno, ctx: CicloCtx): AvisoAluno[] {
   }
   return avisos;
 }
+
+/**
+ * Para ONDE vai o botão do próximo passo, em UMA tabela só.
+ *
+ * A lista de alunos, o sino e a tela do aluno precisavam do mesmo destino, e
+ * cada um ia montar o seu: bastava um deles escrever `?aba=acompanhar` (que não
+ * existe: as abas são treino, avaliacoes, semaforo e conta) para o CTA cair na
+ * aba errada em silêncio. Os deep-links usados aqui são exatamente os que
+ * `AlunoDetail` consome, e o `check:menu` guarda essa correspondência.
+ */
+export function linkDoPasso(alunoId: string, kind: EtapaCiclo): string {
+  switch (kind) {
+    case "planejar":
+      return `/prescrever-treino?aluno=${alunoId}`;
+    case "liberar":
+      return `/alunos/${alunoId}?aba=semaforo`;
+    case "avaliar":
+    case "reavaliar":
+      return `/alunos/${alunoId}?avaliar=1`;
+    case "acompanhar":
+    default:
+      return `/alunos/${alunoId}?aba=treino`;
+  }
+}

@@ -2,7 +2,7 @@ import type { Aluno, Liberacao } from "@/data/alunos";
 import type { SessaoFeedback } from "@/data/execucao";
 import type { PlanoTreino } from "@/data/periodizacao";
 import { estadoSemaforo } from "@/lib/gps/semaforoDiario";
-import { dataReavaliacao } from "@/lib/gps/proximoPasso";
+import { dataReavaliacao, linkDoPasso } from "@/lib/gps/proximoPasso";
 import { rotuloFaixaPse } from "@/lib/pse";
 
 /**
@@ -84,7 +84,7 @@ export function notificacoes(ctx: NotifCtx): Notificacao[] {
         alunoNome: aluno.nome,
         texto: `${aluno.nome} ficou sem liberação ${quando(vermelhoPendente.data)}. Refaça o semáforo antes de treinar.`,
         ts: vermelhoPendente.data,
-        to: `/alunos/${aluno.id}?aba=semaforo`,
+        to: linkDoPasso(aluno.id, "liberar"),
         tone: "danger",
       });
     }
@@ -105,7 +105,7 @@ export function notificacoes(ctx: NotifCtx): Notificacao[] {
             ? `A reavaliação de ${aluno.nome} vence hoje.`
             : `A reavaliação de ${aluno.nome} venceu ${quando(reav.em)}.`,
         ts: reav.em,
-        to: `/alunos/${aluno.id}?avaliar=1`,
+        to: linkDoPasso(aluno.id, "reavaliar"),
         tone: "warning",
       });
     }
@@ -129,7 +129,7 @@ export function notificacoes(ctx: NotifCtx): Notificacao[] {
       alunoNome: nome,
       texto: `${nome} concluiu o treino ${quando(f.concluidaEm)}${esforco}.${recado}`,
       ts: f.concluidaEm,
-      to: `/alunos/${f.alunoId}?aba=acompanhar`,
+      to: linkDoPasso(f.alunoId, "acompanhar"),
       tone: "analysis",
     });
   }

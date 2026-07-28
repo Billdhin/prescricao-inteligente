@@ -178,7 +178,10 @@ export function MovementLabDetail() {
 
 function Detail({ exercise }: { exercise: Exercise }) {
   const plan = useUser((s) => s.plan);
-  const locked = exercise.premium && !isPremiumUnlocked(plan);
+  // Produto 100% pago: nada de exercicio fica trancado (isPremiumUnlocked sempre
+  // devolve true desde a Onda A). O campo premium do seed sobrevive so como
+  // metadado de catalogo.
+  const locked = false;
   const overlay = analysisOverlays[exercise.slug];
   const regions = muscleRegions[exercise.slug];
   const favSlugs = useFavorites((s) => s.slugs);

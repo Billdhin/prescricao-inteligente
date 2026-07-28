@@ -4,6 +4,7 @@ import { buttonClasses } from "@/components/ui/primitives";
 import { uid } from "@/lib/store";
 import { OBJETIVOS, EQUIPAMENTOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
+import { specialGroups } from "@/data/specialGroups";
 import { FarmacosSelector } from "@/components/gps/FarmacosSelector";
 import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
 import type { FarmacoSelecionado } from "@/data/farmacos";
@@ -43,6 +44,7 @@ export function AlunoFormModal({
   const [equipamentos, setEquipamentos] = React.useState<string[]>(inicial?.equipamentos ?? KIT_PADRAO);
   const [observacoes, setObservacoes] = React.useState(inicial?.observacoes ?? "");
   const [telefone, setTelefone] = React.useState(inicial?.telefone ?? "");
+  const [grupo, setGrupo] = React.useState(inicial?.grupoEspecial ?? "");
   const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   const toggle = <T,>(arr: T[], v: T, set: (x: T[]) => void) =>
@@ -71,6 +73,9 @@ export function AlunoFormModal({
       farmacos: farmacos.length ? farmacos : undefined,
       farmacosNaoInformado: farmacosNaoInformado || undefined,
       equipamentos,
+      // String vazia = "sem condição declarada", que no domínio é ausência do
+      // campo, não um grupo chamado "".
+      grupoEspecial: grupo || undefined,
       observacoes: observacoes.trim() || undefined,
       telefone: telefone.trim() || undefined,
     });
@@ -146,6 +151,35 @@ export function AlunoFormModal({
               />
             </Field>
           </div>
+
+          {/*
+            CONDIÇÃO DE SAÚDE: o campo que faltava. `grupoEspecial` comanda o
+            semáforo diário, as regras do motor e o texto do prontuário, mas até
+            aqui só chegava por seed ou pelo onboarding: quem cadastrava um aluno
+            pelo caminho normal criava um aluno hipertenso que o sistema tratava
+            como saudável.
+
+            Opcional de propósito, e sem chute: quem não sabe deixa em branco, e
+            o classificador sugere o grupo depois, pela avaliação (IMC, PA,
+            idade), que é medição e não palpite.
+          */}
+          <fieldset>
+            <legend className="mb-1.5 text-sm font-semibold text-ink">Condição de saúde (opcional)</legend>
+            <p className="mb-2 text-xs text-ink-2">
+              Declarar aqui já liga o semáforo daquela condição no dia a dia. Em branco, a avaliação
+              sugere depois.
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <ChipCondicao ativo={!grupo} onClick={() => setGrupo("")}>
+                Sem condição especial
+              </ChipCondicao>
+              {specialGroups.map((g) => (
+                <ChipCondicao key={g.slug} ativo={grupo === g.slug} onClick={() => setGrupo(g.slug)}>
+                  {g.nome}
+                </ChipCondicao>
+              ))}
+            </div>
+          </fieldset>
 
           <Field label="Restrições físicas">
             <RestricoesSelector value={restricoes} onChange={setRestricoes} idBase="aluno-restr" />
@@ -223,6 +257,25 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
       className={cn(
         "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
         active ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Chip de condição: pílula, ativo em ink sólido (forma, não só cor). */
+function ChipCondicao({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={ativo}
+      className={cn(
+        "min-h-[36px] rounded-full border px-3 text-sm font-medium transition-colors",
+        ativo
+          ? "border-ink bg-ink font-semibold text-surface"
+          : "border-border bg-surface text-ink-2 hover:bg-surface-soft hover:text-ink",
       )}
     >
       {children}

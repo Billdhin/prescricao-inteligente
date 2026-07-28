@@ -743,7 +743,8 @@ function ResultadoPlano({
       {/* Timeline macro -> meso -> micro */}
       <div className="space-y-3">
         {macro.mesociclos.map((m, i) => {
-          const bloqueado = !premium && i > 0;
+          // Produto 100% pago: o plano inteiro aparece, sem previa cortada.
+          const bloqueado = false;
           return bloqueado ? (
             i === 1 ? (
               <PaywallCard
