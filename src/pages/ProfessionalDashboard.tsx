@@ -26,6 +26,7 @@ import { RetencaoPanel } from "@/components/treino/RetencaoPanel";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { avisosDoAluno, type CicloCtx } from "@/lib/gps/proximoPasso";
+import { rotaDoDia, type RotaDoDia, type ParadaDoDia } from "@/lib/gps/rotaDoDia";
 import { alunosParaReativar } from "@/lib/retencao";
 import { proximaReavaliacao } from "@/data/periodizacao";
 import { statusEfetivo, formatBRL } from "@/data/cobranca";
@@ -98,6 +99,11 @@ export function ProfessionalDashboard() {
     (soma, a) => (a.cobranca && statusEfetivo(a.cobranca) === "pendente" ? soma + a.cobranca.valorCentavos : soma),
     0,
   );
+
+  // A rota do dia: as paradas do profissional, da mesma fonte única que alimenta
+  // o chip da lista de alunos e a Linha do cuidado. Sem fonte única, a rota
+  // contradiria a lista na mesma tela.
+  const rota = rotaDoDia(alunos, { avaliacoes, prescricoes, planos, liberacoes, execucoes });
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -176,51 +182,8 @@ export function ProfessionalDashboard() {
         </Card>
       )}
 
-      {/* ÂNCORA: Precisam de atenção */}
-      {atencao.length > 0 ? (
-        <Card variant="raised" className="border-l-4 border-l-warning p-5 md:p-6">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-lg bg-warning-tint text-warning">
-              <AlertTriangle className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="font-display text-xl font-bold text-ink">Precisam de atenção</h2>
-              <p className="text-sm text-ink-3">{atencao.length} aluno{atencao.length > 1 ? "s" : ""} com pendências</p>
-            </div>
-          </div>
-          <div className="grid gap-2.5 sm:grid-cols-2">
-            {atencao.map(({ aluno, motivos }) => (
-              <Link
-                key={aluno.id}
-                // Pendência de liberação cai direto na aba Semáforo do aluno.
-                to={precisaSemaforo(motivos) ? `/alunos/${aluno.id}?aba=semaforo` : `/alunos/${aluno.id}`}
-                className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-soft"
-              >
-                <Avatar iniciais={aluno.iniciais} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-semibold text-ink">{aluno.nome}</div>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {motivos.map((m) => (
-                      <Pill key={m.label} tone={m.tone}>
-                        {m.label}
-                      </Pill>
-                    ))}
-                  </div>
-                </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
-              </Link>
-            ))}
-          </div>
-        </Card>
-      ) : (
-        <Card className="flex items-center gap-3 p-5">
-          <CheckCircle2 className="h-6 w-6 shrink-0 text-success" />
-          <p className="text-sm text-ink-2">
-            <span className="font-semibold text-ink">Tudo em dia.</span> Nenhum aluno sem avaliação,
-            sem treino ativo, com reavaliação vencida ou chegando.
-          </p>
-        </Card>
-      )}
+      {/* ÂNCORA: Sua rota de hoje (o bloco-assinatura do Meu dia no design). */}
+      <RotaDeHojeCard rota={rota} />
 
       {/* Reativar alunos: retenção a partir da execução real (só aparece se houver quem
           reativar). Recebe já sem os que estão em "Precisam de atenção" (dedup). */}
@@ -534,4 +497,88 @@ function ProTools() {
       </div>
     </section>
   );
+}
+
+/**
+ * "Sua rota de hoje": o contador de paradas, a próxima parada em destaque e a
+ * lista das restantes, cada uma com o VERBO da ação (nunca "ver" genérico).
+ *
+ * Substitui o antigo "Precisam de atenção", que mostrava as mesmas pessoas com
+ * pílulas de diagnóstico e um botão sem nome. A diferença que importa: aqui o
+ * profissional lê o que FAZER, e o rótulo vem da mesma fonte que decide o
+ * próximo passo, então a tela nunca sugere uma coisa e a lista outra.
+ */
+function RotaDeHojeCard({ rota }: { rota: RotaDoDia }) {
+  if (rota.total === 0) return null;
+
+  if (rota.paradas.length === 0) {
+    return (
+      <Card className="flex items-center gap-3 p-5">
+        <CheckCircle2 className="h-6 w-6 shrink-0 text-success" />
+        <p className="text-sm text-ink-2">
+          <span className="font-semibold text-ink">Rota de hoje concluída.</span> Os {rota.feitas} alunos ativos estão
+          em dia: avaliação registrada, treino ativo e semáforo do dia feito.
+        </p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card variant="raised" className="p-5 md:p-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl font-bold text-ink">Sua rota de hoje</h2>
+          <p className="tabular text-sm text-ink-2">
+            {rota.feitas} de {rota.total} paradas feitas
+          </p>
+        </div>
+        {rota.agora && (
+          <Link to={destinoDaParada(rota.agora)} className={buttonClasses("primary", "sm")}>
+            {rota.agora.acao} <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
+      </div>
+
+      {/* Trilho de progresso: uma marca por parada, acesa nas já feitas. */}
+      <div className="mt-3 flex gap-1.5" role="img" aria-label={`${rota.feitas} de ${rota.total} paradas feitas`}>
+        {Array.from({ length: rota.total }, (_, i) => (
+          <span
+            key={i}
+            aria-hidden
+            className={cn("h-1.5 flex-1 rounded-full", i < rota.feitas ? "bg-analysis-fill" : "bg-surface-mute")}
+          />
+        ))}
+      </div>
+
+      <ol className="mt-4 space-y-2.5">
+        {rota.paradas.map((p) => (
+          <li key={p.aluno.id}>
+            <Link
+              to={destinoDaParada(p)}
+              className="flex items-center gap-3 rounded-card border border-border bg-surface p-3 transition-colors hover:bg-surface-soft"
+              // Borda esquerda na cor da urgência: regra de linha de lista com
+              // pendência, do Design System.
+              style={{ borderLeftWidth: 4, borderLeftColor: `var(--${p.tone === "cta" ? "warning" : p.tone})` }}
+            >
+              <Avatar iniciais={p.aluno.iniciais} />
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-semibold text-ink">{p.aluno.nome}</div>
+                <div className="truncate text-sm text-ink-2">{p.frase}</div>
+              </div>
+              <span className={cn(buttonClasses("secondary", "sm"), "shrink-0")}>{p.acao}</span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </Card>
+  );
+}
+
+/** Onde cada parada abre. Liberar cai direto na aba Semáforo do aluno; avaliar
+ *  abre o modal de avaliação pelo deep-link; o resto abre a ficha. */
+function destinoDaParada(p: ParadaDoDia): string {
+  if (p.etapa === "liberar") return `/alunos/${p.aluno.id}?aba=semaforo`;
+  if (p.etapa === "avaliar" || p.etapa === "reavaliar") return `/alunos/${p.aluno.id}?avaliar=1`;
+  if (p.etapa === "planejar") return `/prescrever-treino?aluno=${p.aluno.id}`;
+  return `/alunos/${p.aluno.id}`;
 }

@@ -1,6 +1,8 @@
 import * as React from "react";
 import { CheckCircle2, Footprints, Bike, Waves, HeartPulse } from "lucide-react";
 import { exercises, getExercise } from "@/data/exercises";
+import { corDeContraste } from "@/lib/theme/palettes";
+import { PONTOS_POR_REGISTRO } from "@/lib/gamificacao";
 import { getFasePose } from "@/data/fase-poses";
 import { getMuscleMapPose } from "@/data/muscle-map-images";
 import { getModalidade } from "@/data/modalities";
@@ -48,6 +50,57 @@ export function tokensDoBloco(bloco: BlocoSessao): { label: string; value: strin
           { label: "Intervalo", value: limpo(bloco.intervalo) },
         ]
   ).filter((t) => t.value);
+}
+
+/**
+ * A dose em UMA linha, do jeito que o app do aluno mostra sob o nome do
+ * exercício na lista do dia: "3 x 12 · 60s" na força, "25 min · zona 2" no
+ * aeróbio. É o resumo; a dose completa com rótulo colado (TokenRotulado) segue
+ * existindo logo abaixo, para intensidade e intervalo.
+ *
+ * Nunca inventa: sai dos mesmos campos de `tokensDoBloco`, só que abreviada.
+ */
+export function doseCurta(bloco: BlocoSessao): string {
+  const limpo = (v?: string | number | null) =>
+    v != null && String(v).trim() && String(v).trim() !== "-" ? String(v).trim() : "";
+  const partes: string[] = [];
+  if (bloco.tipo === "aerobio") {
+    // Duração + formato. A intensidade do aeróbio é uma FRASE inteira ("cerca de
+    // 64 a 76% da FCmáx, teste da conversa...") e não cabe numa linha de resumo;
+    // ela fica nos tokens abaixo, com o rótulo colado.
+    if (limpo(bloco.duracao)) partes.push(limpo(bloco.duracao));
+    if (limpo(bloco.formato)) partes.push(limpo(bloco.formato).toLowerCase());
+  } else {
+    if (bloco.series && bloco.reps) partes.push(`${bloco.series} x ${bloco.reps}`);
+    else if (limpo(bloco.series) || limpo(bloco.reps)) partes.push(limpo(bloco.series) || limpo(bloco.reps));
+    if (limpo(bloco.intervalo)) partes.push(limpo(bloco.intervalo));
+  }
+  return partes.join(" · ");
+}
+
+/**
+ * O que a linha curta NÃO disse. A lista do dia mostra a `doseCurta` sob o nome
+ * ("3 x 12 · 60s"); repetir a dose inteira logo abaixo em TokenRotulado era
+ * ruído. Aqui ficam só os rótulos que sobraram (tipicamente a Intensidade, que
+ * não cabe na linha curta), com o rótulo colado ao valor.
+ */
+const NA_LINHA_CURTA = new Set(["Série", "Intervalo", "Duração"]);
+export function tokensExtras(bloco: BlocoSessao): { label: string; value: string }[] {
+  const naCurta = bloco.tipo === "aerobio" ? new Set(["Duração", "Formato"]) : NA_LINHA_CURTA;
+  return tokensDoBloco(bloco).filter((t) => !naCurta.has(t.label));
+}
+
+/**
+ * Minutos DECLARADOS de uma sessão: a soma do alvo dos blocos aeróbios. Existe
+ * porque o mockup mostra "45 min" ao lado da contagem de exercícios, e o modelo
+ * não tem duração de sessão. Somar tempo de musculação seria número inventado
+ * (não existe descanso nem tempo sob tensão declarados), então só entra o que o
+ * plano de fato declarou. Sem aeróbio com alvo, devolve undefined e a tela
+ * simplesmente não mostra minutos.
+ */
+export function minutosDeclarados(sessao: Sessao): number | undefined {
+  const total = sessao.blocos.reduce((soma, b) => soma + (b.tipo === "aerobio" ? (b.duracaoAlvoMin ?? 0) : 0), 0);
+  return total > 0 ? total : undefined;
 }
 
 // Resolve o exercício de catálogo de um bloco (undefined quando o bloco não aponta
@@ -125,6 +178,14 @@ export function RegistroBloco({
   const [rpe, setRpe] = React.useState(execFeita?.rpe != null ? String(execFeita.rpe) : "");
   const podeRegistrar = !!onRegistrar;
   const execId = `ex-${bloco.id}-s${semana}`;
+  const tintaDaCor = corDeContraste(cor);
+
+  // Séries prescritas: só conta quando o plano traz um número puro. Dose textual
+  // ("3 a 4") não vira contador inventado; nesse caso o exercício se registra de
+  // uma vez, como antes.
+  const totalSeries = /^\d+$/.test(String(bloco.series ?? "").trim()) ? Number(bloco.series) : 1;
+  const [serie, setSerie] = React.useState(1);
+  const ultimaSerie = serie >= totalSeries;
 
   // Só grava número quando é número de verdade; texto ("6 a 12") vira undefined
   // em vez de piso truncado ou NaN, que envenenaria o histórico do aluno.
@@ -148,6 +209,7 @@ export function RegistroBloco({
       concluidoEm: Date.now(),
     });
     setEditando(false);
+    setSerie(1);
   };
   const concluirAerobio = () => {
     if (!onRegistrar) return;
@@ -197,29 +259,69 @@ export function RegistroBloco({
           <CheckCircle2 className="h-4 w-4" /> Concluí
         </button>
       ) : (
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-end gap-2">
-            <CampoNum label="Carga (kg)" value={carga} onChange={setCarga} placeholder="kg" />
-            <CampoNum label="Reps" value={reps} onChange={setReps} />
-            <RpeSelect value={rpe} onChange={setRpe} />
-            {/* Abaixo de sm o botão desce para a própria linha (w-full). */}
-            <button
-              onClick={registrar}
-              className="inline-flex h-11 w-full items-center justify-center rounded-full px-4 text-sm font-bold text-on-primary sm:w-auto"
-              style={{ background: cor }}
-            >
-              {editando ? "Salvar" : "Registrar"}
-            </button>
-            {editando && (
-              <button
-                onClick={() => setEditando(false)}
-                className="inline-flex h-11 items-center px-2 text-sm font-medium text-ink-3 hover:text-ink"
-              >
-                Cancelar
-              </button>
-            )}
+        <div className="space-y-3">
+          {/* SÉRIES: um disco por série prescrita, marcando onde o aluno está.
+              É estado da SESSÃO em curso, não dado persistido: o modelo grava uma
+              execução por exercício (carga, reps, RPE), e é a última série que
+              fecha o exercício. Marcar cada série no banco seria outro modelo de
+              dados; contar as séries na tela é o que o aluno precisa para não se
+              perder no meio do exercício. */}
+          {totalSeries > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="text-2xs font-bold uppercase tracking-wider text-ink-2">Séries</span>
+              <div className="flex flex-wrap gap-1.5" role="img" aria-label={`Série ${serie} de ${totalSeries}`}>
+                {Array.from({ length: totalSeries }, (_, i) => {
+                  const n = i + 1;
+                  const feita = n < serie;
+                  const atual = n === serie;
+                  return (
+                    <span
+                      key={n}
+                      aria-hidden
+                      className="tabular grid h-9 w-9 place-items-center rounded-full text-sm font-bold"
+                      style={
+                        feita
+                          ? { background: "var(--analysis-fill)", color: "var(--on-analysis-fill)" }
+                          : atual
+                            ? { background: cor, color: tintaDaCor }
+                            : { boxShadow: "inset 0 0 0 1.5px var(--border)", color: "var(--ink-2)" }
+                      }
+                    >
+                      {feita ? <CheckCircle2 className="h-4 w-4" /> : n}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <Stepper label="kg" value={carga} onChange={setCarga} passo={2.5} />
+            <Stepper label="repetições" value={reps} onChange={setReps} passo={1} inteiro />
           </div>
-          <p className="text-2xs text-ink-3">RPE é o seu esforço de 0 a 10 (7 = difícil, 9 = quase a falha).</p>
+
+          <RpeSelect value={rpe} onChange={setRpe} />
+
+          <button
+            onClick={ultimaSerie ? registrar : () => setSerie((s) => s + 1)}
+            className="inline-flex h-12 w-full items-center justify-center rounded-full px-4 text-base font-bold"
+            style={{ background: cor, color: tintaDaCor }}
+          >
+            {editando
+              ? "Salvar"
+              : totalSeries > 1
+                ? `Registrar série ${serie}${ultimaSerie ? ` · +${PONTOS_POR_REGISTRO} pts` : ""}`
+                : `Registrar · +${PONTOS_POR_REGISTRO} pts`}
+          </button>
+          {editando && (
+            <button
+              onClick={() => setEditando(false)}
+              className="inline-flex h-11 w-full items-center justify-center text-sm font-medium text-ink-2 hover:text-ink"
+            >
+              Cancelar
+            </button>
+          )}
+          <p className="text-2xs text-ink-2">RPE é o seu esforço de 0 a 10 (7 = difícil, 9 = quase a falha).</p>
         </div>
       )}
     </div>
@@ -254,21 +356,70 @@ function RpeSelect({ value, onChange }: { value: string; onChange: (v: string) =
   );
 }
 
-function CampoNum({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+
+/**
+ * Controle de número em passo (menos, valor, mais), como no mockup: o aluno na
+ * academia ajusta com o polegar, sem abrir o teclado. O campo continua digitável
+ * para quem prefere escrever; os botões apenas somam e subtraem o passo.
+ *
+ * Alvos de 44px nos dois botões (regra de toque do Design System).
+ */
+function Stepper({
+  label,
+  value,
+  onChange,
+  passo,
+  inteiro,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  passo: number;
+  /** repetições são inteiras; carga aceita meio quilo */
+  inteiro?: boolean;
+}) {
   const id = React.useId();
+  const num = () => {
+    const n = parseFloat(value.replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  };
+  const aplica = (delta: number) => {
+    const bruto = Math.max(0, num() + delta);
+    const v = inteiro ? String(Math.round(bruto)) : String(Number(bruto.toFixed(1)));
+    onChange(v);
+  };
   return (
-    <div className="w-20">
-      <label htmlFor={id} className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-ink-3">
-        {label}
-      </label>
-      <input
-        id={id}
-        inputMode="decimal"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full rounded-md border border-border bg-surface px-2 text-sm text-ink placeholder:text-ink-3/60 focus:outline-none focus:ring-2 focus:ring-primary"
-      />
+    <div className="flex min-w-0 flex-1 items-center gap-1 rounded-card border border-border bg-surface-soft p-1.5">
+      <button
+        type="button"
+        onClick={() => aplica(-passo)}
+        aria-label={`Diminuir ${label}`}
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-surface text-lg font-bold text-ink"
+      >
+        &minus;
+      </button>
+      <div className="min-w-0 flex-1 text-center">
+        <input
+          id={id}
+          inputMode="decimal"
+          value={value}
+          placeholder="0"
+          onChange={(e) => onChange(e.target.value)}
+          aria-label={label}
+          className="tabular w-full bg-transparent text-center font-display text-xl font-bold text-ink placeholder:text-ink-2 focus:outline-none"
+        />
+        <label htmlFor={id} className="block text-2xs text-ink-2">
+          {label}
+        </label>
+      </div>
+      <button
+        type="button"
+        onClick={() => aplica(passo)}
+        aria-label={`Aumentar ${label}`}
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-surface text-lg font-bold text-ink"
+      >
+        +
+      </button>
     </div>
   );
 }

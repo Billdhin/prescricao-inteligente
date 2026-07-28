@@ -82,11 +82,65 @@ export const BADGES: Badge[] = [
   { id: "tres-semanas", nome: "Ritmo firme", descricao: "3 semanas seguidas com treino", icone: "Flame" },
 ];
 
+
 function diaBucket(ts: number): number {
   return Math.floor(ts / DIA);
 }
 function semanaBucket(ts: number): number {
   return Math.floor(ts / SEMANA);
+}
+
+/**
+ * SEQUÊNCIA EM DIAS (o "streak" que o app do aluno mostra).
+ *
+ * Existe porque o design pede dias e o código só tinha semanas. Relabelar
+ * `sequenciaSemanas` como "dias" seria mentir por um fator de sete; então a
+ * contagem em dias é feita de verdade, a partir dos mesmos registros.
+ *
+ * Regra: conta dias CONSECUTIVOS com pelo menos um registro, andando para trás
+ * a partir do último dia treinado. A sequência só é a ATUAL se o último dia
+ * treinado for hoje ou ontem; se o aluno parou há mais tempo, a sequência atual
+ * é 0 (e o recorde continua guardado). Ontem entra na janela porque quem treina
+ * de manhã não deve ver a sequência zerar à meia-noite do mesmo dia.
+ */
+export function sequenciaDias(execs: Execucao[], agora = Date.now()): { atual: number; recorde: number } {
+  const dias = [...new Set(execs.map((e) => diaBucket(e.concluidoEm)))].sort((a, b) => a - b);
+  if (dias.length === 0) return { atual: 0, recorde: 0 };
+
+  let recorde = 1;
+  let corrida = 1;
+  for (let i = 1; i < dias.length; i++) {
+    corrida = dias[i] === dias[i - 1] + 1 ? corrida + 1 : 1;
+    if (corrida > recorde) recorde = corrida;
+  }
+
+  const hoje = diaBucket(agora);
+  const ultimo = dias[dias.length - 1];
+  // `corrida` terminou valendo o comprimento da última sequência da lista, que é
+  // exatamente a que termina em `ultimo`.
+  const atual = ultimo === hoje || ultimo === hoje - 1 ? corrida : 0;
+  return { atual, recorde };
+}
+
+/**
+ * Treinos por semana civil nas últimas `n` semanas, da mais antiga para a mais
+ * recente: alimenta o gráfico de barras do Progresso. Cada valor é a contagem de
+ * DIAS treinados naquela semana (não de exercícios registrados), que é o que a
+ * palavra "treinos" significa para o aluno.
+ */
+export function treinosPorSemana(execs: Execucao[], n = 6, agora = Date.now()): { rotulo: string; treinos: number }[] {
+  const diaDaSemana = (new Date(agora).getDay() + 6) % 7; // segunda = 0
+  const inicioDestaSemana = new Date(agora).setHours(0, 0, 0, 0) - diaDaSemana * DIA;
+  const out: { rotulo: string; treinos: number }[] = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const ini = inicioDestaSemana - i * SEMANA;
+    const fim = ini + SEMANA;
+    const dias = new Set(
+      execs.filter((e) => e.concluidoEm >= ini && e.concluidoEm < fim).map((e) => diaBucket(e.concluidoEm)),
+    );
+    out.push({ rotulo: `s${n - i}`, treinos: dias.size });
+  }
+  return out;
 }
 
 /** Maior sequência de semanas consecutivas com pelo menos um treino. */
@@ -180,6 +234,10 @@ export interface ResumoGamificacao {
   liga: EstadoLiga;
   totalTreinos: number;
   sequenciaSemanas: number;
+  /** sequencia em DIAS (atual e recorde), que e o streak que o app do aluno mostra */
+  sequencia: { atual: number; recorde: number };
+  /** treinos por semana civil nas ultimas 6 semanas (grafico do Progresso) */
+  porSemana: { rotulo: string; treinos: number }[];
   badges: { badge: Badge; conquistada: boolean }[];
   feed: FeedItem[];
 }
@@ -193,6 +251,8 @@ export function resumoGamificacao(alunoId: string, execucoes: Execucao[]): Resum
     liga: ligaDosPontos(pontos),
     totalTreinos: execs.length,
     sequenciaSemanas: maiorSequenciaSemanas(execs),
+    sequencia: sequenciaDias(execs),
+    porSemana: treinosPorSemana(execs),
     badges: BADGES.map((badge) => ({ badge, conquistada: conquistadas.has(badge.id) })),
     feed: feedDoAluno(execs),
   };

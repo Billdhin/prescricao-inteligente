@@ -368,15 +368,85 @@ export async function listarLiberacoes(): Promise<Liberacao[]> {
 
 /* ------------------------- Portal do aluno (convite/execução) ------------------------- */
 
-/** O profissional gera um convite para o aluno reivindicar a conta. Retorna o token. */
-export async function criarConvite(alunoId: string): Promise<string> {
+/** Um convite de acesso do aluno, como o profissional precisa VER: o token, quando
+ *  nasceu, quando expira de verdade e se já foi usado. O prazo sai da coluna do
+ *  banco, nunca de um número escrito na tela: se a migração mudar o intervalo, a
+ *  tela acompanha sozinha em vez de mentir. */
+export interface ConviteAluno {
+  token: string;
+  criadoEm: number;
+  expiraEm: number;
+  usadoEm?: number;
+}
+
+/** O profissional gera um convite para o aluno reivindicar a conta. */
+export async function criarConvite(alunoId: string): Promise<ConviteAluno> {
   const u = await uid();
   const token = crypto.randomUUID().replace(/-/g, "");
+  // O select() no insert devolve a linha já com os defaults do banco (criado_em
+  // e expira_em), que é de onde sai o prazo mostrado ao profissional.
+  const { data, error } = await getSupabase()
+    .from("convites")
+    .insert({ token, aluno_id: alunoId, professional_id: u })
+    .select("token,criado_em,expira_em,usado_em")
+    .single();
+  if (error) throw error;
+  return {
+    token: data.token as string,
+    criadoEm: ms(data.criado_em) ?? Date.now(),
+    expiraEm: ms(data.expira_em) ?? Date.now(),
+    usadoEm: ms(data.usado_em) ?? undefined,
+  };
+}
+
+/**
+ * Em que pé está o acesso deste aluno ao app. Responde as três perguntas que a
+ * tela do profissional precisa fazer, sem inventar nenhuma resposta:
+ *   `vinculado`  o aluno já criou a conta e reivindicou o convite? A prova é
+ *                `alunos.auth_user_id` preenchido, a MESMA coluna que a RLS usa
+ *                para deixar ele ler o próprio treino.
+ *   `convite`    existe um convite ainda válido e não usado? qual, e até quando.
+ *   `vinculadoEm` quando o convite foi consumido (a data de entrada do aluno).
+ */
+export async function statusAcessoAluno(
+  alunoId: string,
+): Promise<{ vinculado: boolean; vinculadoEm?: number; convite?: ConviteAluno }> {
+  const u = await uid();
+  const [{ data: aluno }, { data: convites }] = await Promise.all([
+    getSupabase().from("alunos").select("auth_user_id").eq("user_id", u).eq("id", alunoId).maybeSingle(),
+    getSupabase()
+      .from("convites")
+      .select("token,criado_em,expira_em,usado_em")
+      .eq("professional_id", u)
+      .eq("aluno_id", alunoId)
+      .order("criado_em", { ascending: false }),
+  ]);
+  const linhas: ConviteAluno[] = (convites ?? []).map((r) => ({
+    token: r.token as string,
+    criadoEm: ms(r.criado_em as string | null) ?? 0,
+    expiraEm: ms(r.expira_em as string | null) ?? 0,
+    usadoEm: ms(r.usado_em as string | null) ?? undefined,
+  }));
+  const agora = Date.now();
+  return {
+    vinculado: !!aluno?.auth_user_id,
+    vinculadoEm: linhas.find((c) => c.usadoEm)?.usadoEm,
+    // O mais recente que ainda vale: não usado e dentro do prazo.
+    convite: linhas.find((c) => !c.usadoEm && c.expiraEm > agora),
+  };
+}
+
+/** Invalida os convites pendentes do aluno (o profissional gerou um link novo, ou
+ *  o link vazou). Não mexe nos já usados: aqueles são histórico. */
+export async function revogarConvites(alunoId: string): Promise<void> {
+  const u = await uid();
   const { error } = await getSupabase()
     .from("convites")
-    .insert({ token, aluno_id: alunoId, professional_id: u });
+    .delete()
+    .eq("professional_id", u)
+    .eq("aluno_id", alunoId)
+    .is("usado_em", null);
   if (error) throw error;
-  return token;
 }
 
 /** O aluno recém-cadastrado reivindica o convite (vincula a conta ao registro). */

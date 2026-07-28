@@ -42,7 +42,7 @@ import { proximoPasso, estadoDoCiclo, dataReavaliacao, podeMontarTreino, type Ci
 import { estadoSemaforo, semaforoPorDiaDaSemana, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
-import { criarConvite } from "@/lib/backend/supabaseRepo";
+import { statusAcessoAluno, type ConviteAluno } from "@/lib/backend/supabaseRepo";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
@@ -57,6 +57,7 @@ import { getSpecialGroup } from "@/data/specialGroups";
 import { getModelo, rotuloMeso, semanaAtual, mesocicloAtual, proximaReavaliacao, sessoesDeHoje, sessaoDeHojeIndex, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
+import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
 import { EvolucaoMini, TabelaEvolucao } from "@/components/app/EvolucaoMini";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
@@ -278,6 +279,8 @@ export function AlunoDetail() {
   }, []);
   // Prescrição escolhida para o diálogo "Colocar no treino".
   const [aplicarPresc, setAplicarPresc] = React.useState<Prescricao | null>(null);
+  // Modal de convite: o ciclo de acesso do aluno (link, senha dele, status) num só lugar.
+  const [convidar, setConvidar] = React.useState(false);
   const [params, setParams] = useSearchParams();
 
   // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação; ?aba= já foi
@@ -413,6 +416,7 @@ export function AlunoDetail() {
         onAvaliar={() => setAvaliar(true)}
         onAcompanhar={irParaExecucao}
         onLiberar={irParaSemaforo}
+        onConvidar={() => setConvidar(true)}
         onToggleStatus={() => {
           const ativo = aluno.status === "ativo";
           updateAluno(aluno.id, { status: ativo ? "inativo" : "ativo" });
@@ -528,6 +532,7 @@ export function AlunoDetail() {
             aluno={aluno}
             ultimoFeedback={feedbacksDoAluno[0]}
             onVerExecucao={irParaExecucao}
+            onConvidar={() => setConvidar(true)}
             onUpdate={(patch) => updateAluno(aluno.id, patch)}
           />
         </div>
@@ -725,6 +730,8 @@ export function AlunoDetail() {
         </button>
       </div>
 
+      {convidar && <ConviteAlunoModal aluno={aluno} onClose={() => setConvidar(false)} />}
+
       {editar && (
         <AlunoFormModal
           inicial={aluno}
@@ -830,6 +837,7 @@ function AlunoHeader({
   onAvaliar,
   onAcompanhar,
   onLiberar,
+  onConvidar,
   onToggleStatus,
 }: {
   aluno: Aluno;
@@ -843,6 +851,8 @@ function AlunoHeader({
   onAvaliar: () => void;
   onAcompanhar: () => void;
   onLiberar: () => void;
+  /** abre o ciclo de acesso ao app (link, senha do aluno, status) */
+  onConvidar: () => void;
   onToggleStatus: () => void;
 }) {
   const ativo = aluno.status === "ativo";
@@ -881,6 +891,11 @@ function AlunoHeader({
         <div className="flex shrink-0 flex-wrap items-end gap-2 md:justify-end">
           <button onClick={onEditar} className={buttonClasses("outline")}>
             Editar
+          </button>
+          {/* "Convidar para o app" vive no cabeçalho, como no design: é a ação que
+              coloca o aluno dentro do produto, não um detalhe de uma aba. */}
+          <button onClick={onConvidar} className={buttonClasses("outline")}>
+            <Smartphone className="h-4 w-4" /> Convidar para o app
           </button>
           <button onClick={onAvaliar} className={buttonClasses("secondary")}>
             <CalendarPlus className="h-4 w-4" /> {temAvaliacao ? "Reavaliar" : "Registrar avaliação"}
@@ -976,12 +991,15 @@ function AppDoAlunoPanel({
   aluno,
   ultimoFeedback,
   onVerExecucao,
+  onConvidar,
   onUpdate,
 }: {
   aluno: Aluno;
   /** feedback mais recente do aluno (se houver): motivo para abrir o painel de execução */
   ultimoFeedback?: SessaoFeedback;
   onVerExecucao: () => void;
+  /** abre o modal com o ciclo de acesso (link, senha do aluno, status) */
+  onConvidar: () => void;
   onUpdate: (patch: Partial<Aluno>) => void;
 }) {
   const configured = useCloudAuth((s) => s.configured);
@@ -1028,18 +1046,26 @@ function AppDoAlunoPanel({
             </Link>
           </div>
 
-          {/* 2) Acesso: convite quando há nuvem; senão, o que falta */}
-          <div>
+          {/* 2) Acesso real: o estado de agora (entrou, convite pendente ou nada
+              ainda) e uma porta só para o ciclo inteiro. */}
+          <div className="rounded-xl border border-border bg-surface-soft p-4">
+            <div className="text-sm font-semibold text-ink">Dar acesso ao aluno</div>
             {configured ? (
-              <ConvidarAlunoCard alunoId={aluno.id} alunoNome={aluno.nome} />
+              <>
+                <AcessoStatusLinha aluno={aluno} />
+                <button onClick={onConvidar} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+                  <Smartphone className="h-4 w-4" /> Convidar para o app
+                </button>
+              </>
             ) : (
-              <Card tone="primary" className="h-full p-4">
-                <div className="text-sm font-semibold text-ink">O acesso online do aluno ainda não está disponível</div>
-                <p className="mt-1 text-sm text-ink-2">A prévia mostra exatamente o que ele verá.</p>
+              <>
+                <p className="mt-1 text-sm text-ink-2">
+                  O acesso online ainda não está ligado neste aparelho. A prévia mostra exatamente o que o aluno verá.
+                </p>
                 <Link to={`/alunos/${aluno.id}/preview`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
                   <Smartphone className="h-4 w-4" /> Ver a prévia
                 </Link>
-              </Card>
+              </>
             )}
           </div>
         </div>
@@ -1728,69 +1754,44 @@ function RotuloJ({ children }: { children: React.ReactNode }) {
   return <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">{children}</div>;
 }
 
-/** Card de convite do aluno para o app (com a marca do profissional). Só aparece
- *  quando há backend configurado (o portal do aluno depende do Supabase). */
-function ConvidarAlunoCard({ alunoId, alunoNome }: { alunoId: string; alunoNome: string }) {
-  const configured = useCloudAuth((s) => s.configured);
-  const [link, setLink] = React.useState<string | null>(null);
-  const [erro, setErro] = React.useState<string | null>(null);
-  const [carregando, setCarregando] = React.useState(false);
-  const [copiado, setCopiado] = React.useState(false);
-  if (!configured) return null;
+/**
+ * Uma linha honesta sobre o acesso deste aluno, consultada na hora: já entrou,
+ * tem convite pendente, ou ainda não recebeu nada. O botão de convidar fica ao
+ * lado; aqui é só o estado, porque "gerar link" sem saber se o aluno já entrou é
+ * o que fazia o profissional gerar link atrás de link sem entender o ciclo.
+ */
+function AcessoStatusLinha({ aluno }: { aluno: Aluno }) {
+  const [st, setSt] = React.useState<{ vinculado: boolean; vinculadoEm?: number; convite?: ConviteAluno } | null>(null);
+  const [falhou, setFalhou] = React.useState(false);
+  React.useEffect(() => {
+    let vivo = true;
+    statusAcessoAluno(aluno.id)
+      .then((r) => vivo && setSt(r))
+      .catch(() => vivo && setFalhou(true));
+    return () => {
+      vivo = false;
+    };
+  }, [aluno.id]);
 
-  const gerar = async () => {
-    setCarregando(true);
-    setErro(null);
-    try {
-      const token = await criarConvite(alunoId);
-      const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
-      setLink(`${window.location.origin}${base}/aluno?convite=${token}`);
-    } catch (e) {
-      setErro((e as Error)?.message ?? "Não consegui gerar o convite agora.");
-    } finally {
-      setCarregando(false);
-    }
-  };
-
-  return (
-    <Card className="h-full p-5">
-      <h3 className="font-display text-lg font-bold text-ink">Convidar pelo celular</h3>
-      <p className="mt-1 text-sm text-ink-2">
-        Gere o link de acesso, envie a {alunoNome.split(" ")[0]} pelo WhatsApp e ele entra no próprio treino, com a sua
-        marca.
+  if (falhou) return <p className="mt-1 text-sm text-ink-2">Não consegui consultar o acesso agora.</p>;
+  if (!st) return <p className="mt-1 text-sm text-ink-3">Consultando o acesso...</p>;
+  if (st.vinculado)
+    return (
+      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-ink-2">
+        <Pill tone="success" icon={<CheckCircle2 className="h-3.5 w-3.5" />}>
+          Já está no app
+        </Pill>
+        {st.vinculadoEm ? `desde ${fmtData(st.vinculadoEm)}` : null}
       </p>
-      <ol className="mt-3 space-y-1 text-sm text-ink-2">
-        <li>1. Gere o link de acesso.</li>
-        <li>2. Envie ao aluno pelo WhatsApp.</li>
-        <li>3. Ele entra no próprio treino pelo celular.</li>
-      </ol>
-      {link ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <input
-            readOnly
-            value={link}
-            aria-label="Link de convite do aluno"
-            onFocus={(e) => e.currentTarget.select()}
-            className="min-w-0 flex-1 rounded-lg border border-border bg-surface-soft px-3 py-2 text-xs text-ink-2"
-          />
-          <button
-            onClick={() => {
-              navigator.clipboard?.writeText(link);
-              setCopiado(true);
-            }}
-            className={buttonClasses("secondary", "sm")}
-          >
-            {copiado ? "Copiado" : "Copiar link"}
-          </button>
-        </div>
-      ) : (
-        <button onClick={gerar} disabled={carregando} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
-          {carregando ? "Gerando..." : "Gerar convite do aluno"}
-        </button>
-      )}
-      {erro && <p className="mt-2 text-xs text-warning">{erro}</p>}
-    </Card>
-  );
+    );
+  if (st.convite)
+    return (
+      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-ink-2">
+        <Pill tone="warning">Convite enviado</Pill>
+        vale até {fmtData(st.convite.expiraEm)}, ainda não usado
+      </p>
+    );
+  return <p className="mt-1 text-sm text-ink-2">Ainda sem acesso. Gere o link e envie pelo WhatsApp.</p>;
 }
 
 function MiniStat({

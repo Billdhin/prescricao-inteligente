@@ -1,10 +1,25 @@
 import * as React from "react";
-import { CalendarDays, Dumbbell, TrendingUp, LogOut, ChevronDown, ChevronLeft, ChevronRight, Clock, HeartPulse, CheckCircle2, Wallet, AlertTriangle, Sparkles, Maximize2, Play } from "lucide-react";
+import {
+  Home,
+  Dumbbell,
+  TrendingUp,
+  User,
+  LogOut,
+  ChevronRight,
+  Clock,
+  CheckCircle2,
+  Wallet,
+  AlertTriangle,
+  Sparkles,
+  Play,
+  Flame,
+  MessageCircle,
+  CalendarDays,
+} from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
-import { aplicarPaleta, PALETA_ALUNO } from "@/lib/theme/palettes";
-import { Logo } from "@/components/brand/Logo";
+import { aplicarPaleta, PALETA_ALUNO, corDeContraste } from "@/lib/theme/palettes";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
 import { ExercicioSheet } from "@/components/student/ExercicioSheet";
@@ -17,13 +32,17 @@ import {
   iconeModalidade,
   modalidadeDoBloco,
   sessaoConcluida,
+  doseCurta,
+  tokensExtras,
+  minutosDeclarados,
   RegistroBloco,
 } from "@/components/student/blocoRegistro";
 import { estadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { modalidadeImagem } from "@/data/modalities";
-import type { Aluno, Avaliacao, Liberacao } from "@/data/alunos";
+import { iniciaisDe, type Aluno, type Avaliacao, type Liberacao } from "@/data/alunos";
 import type { Execucao, SessaoFeedback } from "@/data/execucao";
 import { formatBRL, statusEfetivo, ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
+import { sequenciaDias } from "@/lib/gamificacao";
 import {
   type PlanoTreino,
   type Microciclo,
@@ -42,11 +61,6 @@ import {
 // única no rodapé do card da Sessão (antes repetida por exercício).
 const temIntensidadeNaSessao = (s: Sessao): boolean =>
   s.blocos.some((b) => b.intensidade != null && String(b.intensidade).trim() !== "" && String(b.intensidade).trim() !== "-");
-
-// Uma semana em ms (o SEMANA_MS de periodizacao.ts é local ao módulo). Alimenta o
-// intervalo real de datas do seletor de semana: início = plano.data + (N-1)*SEMANA_MS.
-const SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
-const DIA_MS = 24 * 60 * 60 * 1000;
 
 // O rótulo da faixa de PSE de uma sessão, para o estado "Concluída" mostrar o esforço
 // registrado ("Esforço: 7 · Intenso"). Rótulos EXATOS de p-rpe; hífen, nunca travessão.
@@ -67,7 +81,24 @@ const TIPO_SEMANA: Record<Microciclo["tipo"], { label: string; tone: "neutral" |
   teste: { label: "Semana de teste", tone: "neutral" },
 };
 
-type Aba = "hoje" | "semana" | "evolucao";
+/**
+ * Como chamar o profissional numa frase. Normalmente é o primeiro nome da marca
+ * ("Ricardo Costa Personal" vira "Ricardo"), mas quando a marca ainda é o rótulo
+ * neutro de fallback o primeiro nome sairia "Seu", e a tela dizia "Falar com
+ * Seu". Nesse caso a frase usa o substantivo.
+ */
+const MARCA_NEUTRA = "Seu treino";
+const apelidoProfissional = (marca: Marca): string =>
+  marca.nome === MARCA_NEUTRA ? "o seu professor" : marca.nome.split(" ")[0];
+
+/** As 4 abas do design do app do aluno: Hoje, Treinos, Progresso, Perfil. */
+type Aba = "hoje" | "treinos" | "progresso" | "perfil";
+const ABAS: { id: Aba; label: string; Icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "hoje", label: "Hoje", Icon: Home },
+  { id: "treinos", label: "Treinos", Icon: Dumbbell },
+  { id: "progresso", label: "Progresso", Icon: TrendingUp },
+  { id: "perfil", label: "Perfil", Icon: User },
+];
 
 /**
  * Portal do aluno: o app com a marca do PROFISSIONAL, onde o aluno vê o próprio
@@ -75,6 +106,10 @@ type Aba = "hoje" | "semana" | "evolucao";
  * (aluno, plano, marca). Serve tanto para a prévia do profissional ("ver como o
  * aluno vê") quanto para a produção, quando o aluno logado carrega os próprios
  * dados via Supabase.
+ *
+ * A forma segue o mockup do app do aluno: pele navy escura, cabeçalho com o
+ * profissional e a saudação, faixa da semana em segmentos, hero do treino de
+ * hoje em gradiente com a lista de exercícios logo abaixo, e as 4 abas fixas.
  */
 export function StudentApp({
   aluno,
@@ -113,10 +148,11 @@ export function StudentApp({
   onSair?: () => void;
 }) {
   const [aba, setAba] = React.useState<Aba>("hoje");
-  const cor = marca.corPrimaria || "var(--primary)";
+  const cor = marca.corPrimaria || "#2064EC";
+  const tintaDaMarca = corDeContraste(cor);
 
-  // Modo guiado ("Iniciar treino"): quando ativo, ocupa o app inteiro no lugar das
-  // abas. Guarda a sessão-alvo; a semana é sempre a atual (a sessão vem da aba Hoje).
+  // Modo guiado ("Começar treino"): quando ativo, ocupa o app inteiro no lugar
+  // das abas. Guarda a sessão-alvo; a semana é sempre a atual.
   const [guiado, setGuiado] = React.useState<Sessao | null>(null);
   const semanaGuiado = plano ? semanaAtual(plano) : 1;
   const feedbackGuiado = guiado
@@ -125,12 +161,10 @@ export function StudentApp({
       )
     : undefined;
 
-  // O portal do aluno tem PELE PRÓPRIA: navy escuro, sempre. Ele não herda mais
-  // a aparência do profissional, porque quem abre esta tela é o aluno, na
-  // academia, e o design aprovado desenhou este lado escuro; se o professor
-  // usasse o app no claro, o aluno via um portal branco que nenhum mockup
-  // previu. O que o profissional continua controlando é a COR DE MARCA, que
-  // entra como acento sobre o mesmo navy.
+  // O portal do aluno tem PELE PRÓPRIA: navy escuro, sempre. Ele não herda a
+  // aparência do profissional, porque quem abre esta tela é o aluno, na
+  // academia, e o design aprovado desenhou este lado escuro. O que o
+  // profissional controla é a COR DE MARCA, que entra como acento sobre o navy.
   // Aplica no container do portal, não na raiz do documento, para não vazar para
   // a prévia que roda dentro do app do profissional.
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -138,10 +172,10 @@ export function StudentApp({
     if (rootRef.current) aplicarPaleta(rootRef.current, PALETA_ALUNO, true, marca.corPrimaria);
   }, [marca.corPrimaria]);
 
-  // Financeiro visível na porta de entrada: um selo tocável no cabeçalho quando a
-  // mensalidade não está em dia leva direto ao card de pagamento (aba Semana).
   const cobranca = aluno.cobranca;
   const cobrancaPendente = cobranca ? statusEfetivo(cobranca) === "pendente" : false;
+  const execucoesDoAluno = execucoes.filter((e) => e.alunoId === aluno.id);
+  const streak = sequenciaDias(execucoesDoAluno);
 
   return (
     <BrandProvider marca={marca}>
@@ -154,6 +188,8 @@ export function StudentApp({
             planoId={plano.id}
             alunoId={aluno.id}
             execucoes={execucoes}
+            marcaNome={marca.nome}
+            streakAtual={streak.atual}
             onRegistrar={onRegistrar}
             onDesfazer={onDesfazer}
             onFeedback={onFeedback}
@@ -163,90 +199,267 @@ export function StudentApp({
           />
         ) : (
           <>
-        {preview && (
-          <div className="px-4 py-1.5 text-center text-xs font-semibold text-on-primary" style={{ background: cor }}>
-            Prévia: é assim que o seu aluno vê o app
-          </div>
-        )}
-
-        {/* Palco de marca: faixa tintada com a cor do profissional (hex+alpha
-            LITERAL, jamais /NN sobre token). Pior caso verificado (preto a 8%
-            sobre branco = #ebebeb) mantém o ink em 12.27:1. A saudação mora dentro. */}
-        <header
-          className="border-b border-border px-4 py-3"
-          style={{ background: (marca.corPrimaria || "#2064EC") + "14" }}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <Logo />
-            <div className="flex items-center gap-1.5">
-              {cobrancaPendente && (
-                <button
-                  onClick={() => setAba("semana")}
-                  className="flex items-center gap-1 rounded-full bg-warning-tint px-2.5 py-1 text-xs font-bold text-warning"
-                >
-                  <Wallet className="h-3.5 w-3.5" /> Mensalidade pendente
-                </button>
-              )}
-              {onSair && (
-                <button
-                  onClick={onSair}
-                  className="rounded-full p-2 text-ink-3 hover:bg-surface-soft hover:text-ink"
-                  aria-label={preview ? "Fechar prévia" : "Sair da conta"}
-                >
-                  <LogOut className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="mt-3">
-            <p className="text-sm text-ink-3">Olá, {aluno.nome.split(" ")[0]}</p>
-            <h1 className="font-display text-2xl font-bold text-ink">
-              {aba === "hoje" ? "Hoje" : aba === "semana" ? "Sua semana" : "Sua evolução"}
-            </h1>
-          </div>
-        </header>
-
-        <main className="flex-1 space-y-4 p-4 pb-24">
-          {aba === "hoje" && (
-            <AbaHoje plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} sessaoFeedbacks={sessaoFeedbacks} liberacoes={liberacoes} onRegistrar={onRegistrar} onDesfazer={onDesfazer} onIniciar={setGuiado} dataDaPrescricao={dataDaPrescricao} preview={preview} />
-          )}
-          {aba === "semana" && <AbaPlano plano={plano} cor={cor} aluno={aluno} execucoes={execucoes} />}
-          {aba === "evolucao" && (
-            <AbaEvolucao aluno={aluno} avaliacoes={avaliacoes} execucoes={execucoes} cor={cor} />
-          )}
-        </main>
-
-        {/* Barra inferior */}
-        <nav
-          className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md border-t border-border bg-[#ffffff]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
-          aria-label="Navegação"
-        >
-          {(
-            [
-              { id: "hoje", label: "Hoje", Icon: Dumbbell },
-              { id: "semana", label: "Semana", Icon: CalendarDays },
-              { id: "evolucao", label: "Evolução", Icon: TrendingUp },
-            ] as const
-          ).map(({ id, label, Icon }) => {
-            const ativo = aba === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setAba(id)}
-                aria-current={ativo ? "page" : undefined}
-                className="flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 py-2 text-2xs font-medium leading-none transition-colors"
-                style={ativo ? { color: cor } : undefined}
+            {preview && (
+              <div
+                className="px-4 py-1.5 text-center text-xs font-semibold"
+                style={{ background: cor, color: tintaDaMarca }}
               >
-                <Icon className={cn("h-5 w-5", !ativo && "text-ink-3")} />
-                <span className={cn(!ativo && "text-ink-3")}>{label}</span>
-              </button>
-            );
-          })}
-        </nav>
+                Prévia: é assim que o seu aluno vê o app
+              </div>
+            )}
+
+            <CabecalhoAluno
+              aluno={aluno}
+              marca={marca}
+              cor={cor}
+              tinta={tintaDaMarca}
+              streak={streak.atual}
+              plano={plano}
+              execucoes={execucoesDoAluno}
+              cobrancaPendente={cobrancaPendente}
+              onCobranca={() => setAba("perfil")}
+              onSair={onSair}
+              preview={preview}
+            />
+
+            <main className="flex-1 space-y-4 px-4 pb-28 pt-1">
+              {aba === "hoje" && (
+                <AbaHoje
+                  plano={plano}
+                  cor={cor}
+                  tinta={tintaDaMarca}
+                  aluno={aluno}
+                  marca={marca}
+                  execucoes={execucoes}
+                  sessaoFeedbacks={sessaoFeedbacks}
+                  liberacoes={liberacoes}
+                  onRegistrar={onRegistrar}
+                  onDesfazer={onDesfazer}
+                  onIniciar={setGuiado}
+                  dataDaPrescricao={dataDaPrescricao}
+                  preview={preview}
+                />
+              )}
+              {aba === "treinos" && (
+                <AbaTreinos
+                  plano={plano}
+                  cor={cor}
+                  tinta={tintaDaMarca}
+                  aluno={aluno}
+                  marca={marca}
+                  execucoes={execucoes}
+                  onIniciar={setGuiado}
+                />
+              )}
+              {aba === "progresso" && (
+                <AbaProgresso
+                  aluno={aluno}
+                  avaliacoes={avaliacoes}
+                  execucoes={execucoesDoAluno}
+                  feedbacks={sessaoFeedbacks.filter((f) => f.alunoId === aluno.id)}
+                  cor={cor}
+                />
+              )}
+              {aba === "perfil" && (
+                <AbaPerfil
+                  aluno={aluno}
+                  marca={marca}
+                  cor={cor}
+                  tinta={tintaDaMarca}
+                  plano={plano}
+                  avaliacoes={avaliacoes}
+                  onSair={onSair}
+                  preview={preview}
+                />
+              )}
+            </main>
+
+            <BarraDeAbas aba={aba} onAba={setAba} cor={cor} tinta={tintaDaMarca} />
           </>
         )}
       </div>
     </BrandProvider>
+  );
+}
+
+/* ------------------------------- Cabeçalho -------------------------------- */
+
+/**
+ * Cabeçalho do design: o disco com as iniciais do PROFISSIONAL, o nome dele como
+ * sobrenome da tela, a saudação em display e o streak em pílula âmbar. Abaixo, a
+ * faixa da semana em segmentos e a linha "Semana N · X treinos feitos".
+ *
+ * Nada aqui é inventado: o streak vem de `sequenciaDias`, a semana vem do plano e
+ * a contagem de treinos vem das execuções registradas.
+ */
+function CabecalhoAluno({
+  aluno,
+  marca,
+  cor,
+  tinta,
+  streak,
+  plano,
+  execucoes,
+  cobrancaPendente,
+  onCobranca,
+  onSair,
+  preview,
+}: {
+  aluno: Aluno;
+  marca: Marca;
+  cor: string;
+  tinta: string;
+  streak: number;
+  plano?: PlanoTreino;
+  execucoes: Execucao[];
+  cobrancaPendente: boolean;
+  onCobranca: () => void;
+  onSair?: () => void;
+  preview?: boolean;
+}) {
+  const semana = plano ? semanaAtual(plano) : undefined;
+  const feitosNaSemana = React.useMemo(() => {
+    const diaMs = 86_400_000;
+    const diaSemana = (new Date().getDay() + 6) % 7;
+    const inicio = new Date().setHours(0, 0, 0, 0) - diaSemana * diaMs;
+    return new Set(
+      execucoes.filter((e) => e.concluidoEm >= inicio).map((e) => Math.floor(e.concluidoEm / diaMs)),
+    ).size;
+  }, [execucoes]);
+
+  return (
+    <header className="px-4 pb-2 pt-4">
+      <div className="flex items-center gap-3">
+        {marca.logoDataUrl ? (
+          <img
+            src={marca.logoDataUrl}
+            alt=""
+            className="h-11 w-11 shrink-0 rounded-control border border-border object-cover"
+          />
+        ) : (
+          <span
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
+            style={{ background: cor, color: tinta }}
+          >
+            {iniciaisDe(marca.nome)}
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold text-ink-2">{marca.nome}</p>
+          <h1 className="truncate font-display text-2xl font-bold text-ink">Oi, {aluno.nome.split(" ")[0]}!</h1>
+        </div>
+        {/* Streak só aparece quando existe de verdade: zero dias não vira medalha. */}
+        {streak > 0 && (
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warning-tint px-2.5 py-1 text-sm font-bold text-warning">
+            <Flame className="h-4 w-4" aria-hidden />
+            <span className="tabular">{streak}</span>
+            <span className="sr-only">dias seguidos de treino</span>
+          </span>
+        )}
+        {onSair && (
+          <button
+            onClick={onSair}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-soft hover:text-ink"
+            aria-label={preview ? "Fechar prévia" : "Sair da conta"}
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {cobrancaPendente && (
+        <button
+          onClick={onCobranca}
+          className="mt-3 flex w-full items-center gap-2 rounded-full bg-warning-tint px-3 py-2 text-sm font-bold text-warning"
+        >
+          <Wallet className="h-4 w-4" /> Mensalidade pendente
+          <ChevronRight className="ml-auto h-4 w-4" />
+        </button>
+      )}
+
+      {/* Faixa da semana em segmentos, como no mockup: um traço por dia, aceso no
+          que aconteceu. É a mesma leitura da SemanaStrip, em forma compacta. */}
+      <FaixaSegmentos execucoes={execucoes} cor={cor} />
+      <p className="mt-2 text-sm text-ink-2">
+        {semana ? `Semana ${semana} · ` : ""}
+        {feitosNaSemana} {feitosNaSemana === 1 ? "treino feito" : "treinos feitos"}
+      </p>
+    </header>
+  );
+}
+
+/** Sete segmentos SEG a DOM: dia treinado acende na cor da marca, hoje pulsa em
+ *  contorno, futuro fica apagado. Decorativo com rótulo acessível único. */
+function FaixaSegmentos({ execucoes, cor }: { execucoes: Execucao[]; cor: string }) {
+  const DIA_MS = 86_400_000;
+  const DIAS = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"];
+  const hojeIdx = (new Date().getDay() + 6) % 7;
+  const inicio = new Date().setHours(0, 0, 0, 0) - hojeIdx * DIA_MS;
+  const treinou = (i: number) => {
+    const ini = inicio + i * DIA_MS;
+    return execucoes.some((e) => e.concluidoEm >= ini && e.concluidoEm < ini + DIA_MS);
+  };
+  const feitos = DIAS.map((_, i) => treinou(i));
+  const rotulo = `Semana: treino em ${feitos.filter(Boolean).length} de 7 dias. Hoje é ${DIAS[hojeIdx]}.`;
+  return (
+    <div className="mt-3 flex gap-1.5" role="img" aria-label={rotulo}>
+      {DIAS.map((_, i) => (
+        <span
+          key={i}
+          aria-hidden
+          className={cn("h-1.5 flex-1 rounded-full", !feitos[i] && i !== hojeIdx && "bg-surface-mute")}
+          style={
+            feitos[i]
+              ? { background: cor }
+              : i === hojeIdx
+                ? { boxShadow: `inset 0 0 0 1.5px ${cor}` }
+                : undefined
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------ Barra de abas ----------------------------- */
+
+/** As 4 abas fixas do design. O ativo mostra FORMA (pílula tintada), não só cor,
+ *  como o Design System exige para estado nunca depender de cor sozinha. */
+function BarraDeAbas({
+  aba,
+  onAba,
+  cor,
+  tinta,
+}: {
+  aba: Aba;
+  onAba: (a: Aba) => void;
+  cor: string;
+  tinta: string;
+}) {
+  return (
+    <nav
+      className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md gap-1 border-t border-border bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 backdrop-blur"
+      aria-label="Navegação do app"
+    >
+      {ABAS.map(({ id, label, Icon }) => {
+        const ativo = aba === id;
+        return (
+          <button
+            key={id}
+            onClick={() => onAba(id)}
+            aria-current={ativo ? "page" : undefined}
+            className={cn(
+              "flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 rounded-full py-1.5 text-2xs font-semibold leading-none transition-colors",
+              !ativo && "text-ink-2",
+            )}
+            style={ativo ? { background: cor, color: tinta } : undefined}
+          >
+            <Icon className="h-5 w-5" />
+            <span>{label}</span>
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -255,7 +468,9 @@ export function StudentApp({
 function AbaHoje({
   plano,
   cor,
+  tinta,
   aluno,
+  marca,
   execucoes,
   sessaoFeedbacks,
   liberacoes,
@@ -267,7 +482,9 @@ function AbaHoje({
 }: {
   plano?: PlanoTreino;
   cor: string;
+  tinta: string;
   aluno: Aluno;
+  marca: Marca;
   execucoes: Execucao[];
   sessaoFeedbacks: SessaoFeedback[];
   liberacoes: Liberacao[];
@@ -289,77 +506,336 @@ function AbaHoje({
       <div className="space-y-4">
         {alerta}
         <SemPlano />
+        <FalarComProfessor marca={marca} cor={cor} />
       </div>
     );
+
   const semana = semanaAtual(plano);
-  const meso = mesocicloAtual(plano);
   const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
   const sessoes = micro?.sessoes ?? [];
-
   // "Hoje" = a primeira sessão ainda não concluída; se todas foram feitas, a
-  // primeira da semana. Ela abre expandida; as demais ficam recolhidas como
-  // "Próxima", para o aluno cair direto no que treina agora. A regra vem do
-  // helper compartilhado, o mesmo que o "personalizar o treino do dia" usa para
-  // mirar a sessão-alvo (os dois nunca divergem).
+  // primeira da semana. Helper compartilhado com o "personalizar o treino do
+  // dia" do profissional, para os dois nunca mirarem sessões diferentes.
   const idxHoje = sessaoDeHojeIndex(plano, execucoes);
-
-  // Números da semana, todos derivados de dados reais: quantas sessões o microciclo
-  // tem, quantas o aluno já fechou, e quantos exercícios ele registrou nesta semana.
-  const concluidas = sessoes.filter((s) => sessaoConcluida(s, semana, execucoes)).length;
-  const registrados = execucoes.filter((e) => e.semana === semana).length;
+  const sessaoHoje = sessoes[idxHoje];
+  const concluidaHoje = sessaoHoje ? sessaoConcluida(sessaoHoje, semana, execucoes) : false;
+  const outras = sessoes.filter((_, i) => i !== idxHoje);
 
   return (
     <div className="space-y-4">
       {alerta}
 
-      {/* Semana viva: a faixa SEG a DOM (o que aconteceu no dia) e o resumo dos
-          números da semana. Absorve o "Semana N de M" que morava no card de contexto. */}
-      <Card className="p-4">
-        <SemanaStrip alunoId={aluno.id} execucoes={execucoes} liberacoes={liberacoes} cor={cor} />
-        <ResumoSemana semana={semana} totalSemanas={plano.semanas} sessoes={sessoes.length} concluidas={concluidas} registrados={registrados} />
-      </Card>
-
-      <Card className="p-4">
-        {micro && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Pill tone={TIPO_SEMANA[micro.tipo].tone}>{TIPO_SEMANA[micro.tipo].label}</Pill>
-          </div>
-        )}
-        {sessoes[idxHoje] && (
-          <p className={cn("text-sm text-ink", micro && "mt-2")}>Treino de hoje: <strong>{sessoes[idxHoje].nome}</strong></p>
-        )}
-        {meso && (
-          <p className="mt-1 text-sm text-ink-2">
-            {/* Vírgula (não ":") entre posição e nome: rotuloMeso já traz "Fase N: ..."
-                e o dois-pontos duplo lia "Fase atual: Fase 2: ...". Helpers intocados. */}
-            {rotuloPosicao(meso)}, <strong className="text-ink">{rotuloMeso(meso)}</strong>. {meso.foco}
-          </p>
-        )}
-      </Card>
-
-      {sessoes.length === 0 ? (
-        <Card className="p-6 text-center text-sm text-ink-2">Sem sessões nesta semana.</Card>
-      ) : (
-        sessoes.map((s, i) => (
-          <SessaoCard
-            key={s.id}
-            sessao={s}
+      {sessaoHoje ? (
+        <>
+          <HeroTreinoDeHoje
+            sessao={sessaoHoje}
+            plano={plano}
             cor={cor}
+            concluida={concluidaHoje}
+            dataDaPrescricao={dataDaPrescricao}
+            onIniciar={onIniciar ? () => onIniciar(sessaoHoje) : undefined}
+          />
+
+          {/* Lista de exercícios do treino de hoje: foto, nome, dose e o número da
+              ordem, como no mockup. Cada linha abre a folha do exercício. */}
+          <ListaExerciciosDoDia
+            sessao={sessaoHoje}
             semana={semana}
             plano={plano}
             aluno={aluno}
+            cor={cor}
+            tinta={tinta}
             execucoes={execucoes}
-            feedback={sessaoFeedbacks.find((f) => f.alunoId === aluno.id && f.planoId === plano.id && f.semana === semana && f.sessaoRef === s.id)}
             onRegistrar={onRegistrar}
             onDesfazer={onDesfazer}
-            onIniciar={onIniciar}
-            dataDaPrescricao={dataDaPrescricao}
             preview={preview}
-            inicialAberto={i === idxHoje}
-            rotulo={i === idxHoje ? "Hoje" : "Próxima"}
           />
-        ))
+
+          {concluidaHoje && (
+            <ConcluidaHoje
+              feedback={sessaoFeedbacks.find(
+                (f) => f.alunoId === aluno.id && f.planoId === plano.id && f.semana === semana && f.sessaoRef === sessaoHoje.id,
+              )}
+              cor={cor}
+            />
+          )}
+        </>
+      ) : (
+        <Card className="p-6 text-center text-sm text-ink-2">Sem sessões nesta semana.</Card>
       )}
+
+      <FalarComProfessor marca={marca} cor={cor} />
+
+      {/* Faixa completa da semana (treino + semáforo por dia) e as próximas
+          sessões ficam abaixo da dobra: o topo pertence ao treino de hoje. */}
+      {outras.length > 0 && (
+        <section>
+          <h2 className="mb-2 text-2xs font-bold uppercase tracking-wider text-analysis-text">Também nesta semana</h2>
+          <div className="space-y-2">
+            {outras.map((s) => (
+              <LinhaSessao
+                key={s.id}
+                sessao={s}
+                ordem={sessoes.findIndex((x) => x.id === s.id) + 1}
+                concluida={sessaoConcluida(s, semana, execucoes)}
+                cor={cor}
+                onIniciar={onIniciar ? () => onIniciar(s) : undefined}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <Card className="p-4">
+        <h2 className="mb-2.5 text-2xs font-bold uppercase tracking-wider text-analysis-text">Seus dias</h2>
+        <SemanaStrip alunoId={aluno.id} execucoes={execucoes} liberacoes={liberacoes} cor={cor} />
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * O HERO do treino de hoje: card em gradiente da marca, com o rótulo, o nome da
+ * sessão, três números e o botão claro de começar. É a única superfície com
+ * gradiente do app do aluno, exatamente como o design reserva.
+ */
+function HeroTreinoDeHoje({
+  sessao,
+  plano,
+  cor,
+  concluida,
+  dataDaPrescricao,
+  onIniciar,
+}: {
+  sessao: Sessao;
+  plano: PlanoTreino;
+  cor: string;
+  concluida: boolean;
+  dataDaPrescricao?: (id: string) => string | undefined;
+  onIniciar?: () => void;
+}) {
+  const nExercicios = sessao.blocos.length;
+  // Minutos DECLARADOS (soma do alvo aeróbio). Sem aeróbio com alvo, não há
+  // minuto nenhum a mostrar: somar tempo de musculação seria número inventado.
+  const minutos = minutosDeclarados(sessao);
+  const origemIds = Array.from(new Set(sessao.blocos.map((b) => b.origemPrescricaoId).filter(Boolean) as string[]));
+  const personalizadoData = origemIds.length === 1 ? dataDaPrescricao?.(origemIds[0]) : undefined;
+  const meso = mesocicloAtual(plano);
+
+  return (
+    <div
+      className="rounded-card p-5 text-white"
+      style={{ backgroundImage: `linear-gradient(135deg, ${cor} 0%, var(--brand-turquesa) 100%)` }}
+    >
+      <div className="text-2xs font-bold uppercase tracking-wider text-white/80">
+        {concluida ? "Treino de hoje · feito" : "Treino de hoje"}
+      </div>
+      <h2 className="mt-0.5 font-display text-2xl font-bold leading-tight">{sessao.nome}</h2>
+      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/90">
+        <span>
+          <span className="tabular font-bold">{nExercicios}</span> {nExercicios === 1 ? "exercício" : "exercícios"}
+        </span>
+        {minutos ? (
+          <>
+            <span aria-hidden>·</span>
+            <span>
+              <span className="tabular font-bold">{minutos}</span> min
+            </span>
+          </>
+        ) : null}
+        {personalizadoData && (
+          <>
+            <span aria-hidden>·</span>
+            <span className="inline-flex items-center gap-1">
+              <Sparkles className="h-3.5 w-3.5" aria-hidden /> feito pra você {personalizadoData}
+            </span>
+          </>
+        )}
+      </div>
+      {sessao.foco && <p className="mt-1 text-sm text-white/80">{sessao.foco}</p>}
+      {meso && <p className="mt-1 text-xs text-white/70">{rotuloMeso(meso)}</p>}
+
+      {onIniciar && (
+        <button
+          onClick={onIniciar}
+          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-base font-bold"
+          style={{ color: "#17202E" }}
+        >
+          {concluida ? (
+            <>
+              <CheckCircle2 className="h-5 w-5" aria-hidden /> Revisar o treino
+            </>
+          ) : (
+            <>
+              <Play className="h-5 w-5" aria-hidden /> Começar treino
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Lista de exercícios do dia no formato do mockup: foto 56px, nome, dose curta e
+ * o número da ordem à direita (feito = disco cheio na cor da marca). Tocar abre
+ * a folha do exercício; o registro fica dentro do bloco expandido.
+ */
+function ListaExerciciosDoDia({
+  sessao,
+  semana,
+  plano,
+  aluno,
+  cor,
+  tinta,
+  execucoes,
+  onRegistrar,
+  onDesfazer,
+  preview,
+}: {
+  sessao: Sessao;
+  semana: number;
+  plano: PlanoTreino;
+  aluno: Aluno;
+  cor: string;
+  tinta: string;
+  execucoes: Execucao[];
+  onRegistrar?: (e: Execucao) => void;
+  onDesfazer?: (execId: string) => void;
+  preview?: boolean;
+}) {
+  return (
+    <div className="space-y-2">
+      {agruparBlocosPorMetodo(sessao.blocos).map((seg) => {
+        const ordemDe = (b: BlocoSessao) => sessao.blocos.findIndex((x) => x.id === b.id) + 1;
+        const linha = (b: BlocoSessao, emGrupo?: boolean) => (
+          <BlocoRow
+            key={b.id}
+            bloco={b}
+            ordem={ordemDe(b)}
+            cor={cor}
+            tinta={tinta}
+            semana={semana}
+            planoId={plano.id}
+            alunoId={aluno.id}
+            sessaoRef={sessao.id}
+            execFeita={execucoes.find((e) => e.semana === semana && e.blocoRef === b.id)}
+            onRegistrar={onRegistrar}
+            onDesfazer={onDesfazer}
+            preview={preview}
+            emGrupo={emGrupo}
+          />
+        );
+        if (seg.tipo === "grupo") {
+          const info = getMetodo(seg.metodo);
+          return (
+            <div key={seg.grupoId} className="rounded-card border-2 p-1.5" style={{ borderColor: cor }}>
+              <div className="mb-1 flex flex-wrap items-center gap-2 px-1.5 pt-0.5">
+                <span className="rounded-full px-2 py-0.5 text-2xs font-bold" style={{ background: cor, color: tinta }}>
+                  {info?.nome}
+                </span>
+                {info?.descricao && <span className="min-w-0 flex-1 text-2xs leading-tight text-ink-2">{info.descricao}</span>}
+              </div>
+              <div className="space-y-2">{seg.blocos.map((b) => linha(b, true))}</div>
+            </div>
+          );
+        }
+        return linha(seg.bloco);
+      })}
+
+      <FechoFlex fecho={sessao.fecho} cor={cor} />
+
+      {(temIntensidadeNaSessao(sessao) || preview) && (
+        <div className="space-y-1 px-1 pt-0.5">
+          {temIntensidadeNaSessao(sessao) && (
+            <p className="text-2xs text-ink-2">
+              Intensidade é a porcentagem da sua carga máxima estimada para cada exercício.
+            </p>
+          )}
+          {preview && <p className="text-xs text-ink-2">Aqui o seu aluno registra carga, repetições e esforço.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Sessão da semana que não é a de hoje: linha compacta com letra, nome, dose e
+ *  a seta. Espelha o card A/B/C da aba Treinos do mockup. */
+function LinhaSessao({
+  sessao,
+  ordem,
+  concluida,
+  cor,
+  onIniciar,
+}: {
+  sessao: Sessao;
+  /** posição da sessão na semana, usada quando o nome não traz letra */
+  ordem: number;
+  concluida: boolean;
+  cor: string;
+  onIniciar?: () => void;
+}) {
+  const nExercicios = sessao.blocos.length;
+  const letra = selo(sessao, ordem);
+  return (
+    <button
+      onClick={onIniciar}
+      disabled={!onIniciar}
+      className="flex w-full items-center gap-3 rounded-card border border-border bg-surface p-3 text-left disabled:cursor-default"
+    >
+      <span
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-base font-bold"
+        style={concluida ? { background: cor, color: corDeContraste(cor) } : { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }}
+      >
+        {concluida ? <CheckCircle2 className="h-5 w-5" /> : letra}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate font-semibold text-ink">{sessao.nome}</span>
+        <span className="block truncate text-xs text-ink-2">
+          {sessao.foco ? `${sessao.foco} · ` : ""}
+          {nExercicios} {nExercicios === 1 ? "exercício" : "exercícios"}
+          {minutosDeclarados(sessao) ? ` · ${minutosDeclarados(sessao)} min` : ""}
+          {concluida ? " · concluído" : ""}
+        </span>
+      </span>
+      {onIniciar && <ChevronRight className="h-5 w-5 shrink-0 text-ink-2" aria-hidden />}
+    </button>
+  );
+}
+
+/** Depois do treino feito: o esforço que o aluno registrou e o recado enviado. */
+function ConcluidaHoje({ feedback, cor }: { feedback?: SessaoFeedback; cor: string }) {
+  if (!feedback) return null;
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-2">
+        <CheckCircle2 className="h-5 w-5 shrink-0" style={{ color: cor }} aria-hidden />
+        <span className="font-display font-bold text-ink">Treino concluído</span>
+      </div>
+      <div className="mt-2 space-y-1 text-sm text-ink-2">
+        {feedback.pse != null && (
+          <ParDado layout="inline" label="Seu esforço" value={`${feedback.pse}${rotuloPse(feedback.pse) ? ` · ${rotuloPse(feedback.pse)}` : ""}`} />
+        )}
+        {feedback.duracaoMin != null && <ParDado layout="inline" label="Duração" value={`${feedback.duracaoMin} min`} />}
+        {feedback.observacao && <p className="text-xs text-ink-2">Recado enviado ao seu professor.</p>}
+      </div>
+    </Card>
+  );
+}
+
+/** "Falar com o {professor}": a linha de contato do mockup. Só vira link quando
+ *  existe um canal real; sem canal, não finge que dá para mandar mensagem. */
+function FalarComProfessor({ marca, cor }: { marca: Marca; cor: string }) {
+  const primeiro = apelidoProfissional(marca);
+  return (
+    <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5">
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-surface-soft" style={{ color: cor }}>
+        <MessageCircle className="h-5 w-5" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-semibold text-ink">Falar com {primeiro}</div>
+        <div className="text-xs text-ink-2">Ao terminar o treino você registra o esforço e manda um recado.</div>
+      </div>
     </div>
   );
 }
@@ -374,223 +850,18 @@ function AlertaPausa({ desde }: { desde: number }) {
       <div className="min-w-0">
         <div className="font-display font-bold text-danger">Treino em pausa</div>
         <p className="mt-0.5 text-sm text-ink-2">
-          Seu treino está em pausa desde {dd} por orientação do seu professor. Fale com ele antes da
-          próxima sessão.
+          Seu treino está em pausa desde {dd} por orientação do seu professor. Fale com ele antes da próxima sessão.
         </p>
       </div>
     </div>
   );
 }
 
-// Resumo dos números da semana sob a faixa. Todos derivados de dados reais: nunca
-// inventa contagem. Absorve o "Semana N de M" que saiu do card de contexto.
-function ResumoSemana({
-  semana,
-  totalSemanas,
-  sessoes,
-  concluidas,
-  registrados,
-}: {
-  semana: number;
-  totalSemanas: number;
-  sessoes: number;
-  concluidas: number;
-  registrados: number;
-}) {
-  const plural = (n: number, um: string, muitos: string) => `${n} ${n === 1 ? um : muitos}`;
-  return (
-    <div className="mt-3 border-t border-border pt-3">
-      <div className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semana {semana} de {totalSemanas}</div>
-      <p className="mt-1 text-sm text-ink-2">
-        <strong className="text-ink">{plural(sessoes, "sessão", "sessões")}</strong> na semana · {plural(concluidas, "concluída", "concluídas")}
-      </p>
-      <p className="text-sm text-ink-2">{plural(registrados, "exercício registrado", "exercícios registrados")}</p>
-    </div>
-  );
-}
-
-function SessaoCard({
-  sessao,
-  cor,
-  semana,
-  plano,
-  aluno,
-  execucoes,
-  feedback,
-  onRegistrar,
-  onDesfazer,
-  onIniciar,
-  dataDaPrescricao,
-  preview,
-  inicialAberto = false,
-  rotulo,
-}: {
-  sessao: Sessao;
-  cor: string;
-  semana: number;
-  plano: PlanoTreino;
-  aluno: Aluno;
-  execucoes: Execucao[];
-  /** feedback desta sessão nesta semana (PSE + recado), se já enviado */
-  feedback?: SessaoFeedback;
-  onRegistrar?: (e: Execucao) => void;
-  onDesfazer?: (execId: string) => void;
-  /** inicia o modo guiado desta sessão */
-  onIniciar?: (sessao: Sessao) => void;
-  dataDaPrescricao?: (id: string) => string | undefined;
-  preview?: boolean;
-  inicialAberto?: boolean;
-  rotulo?: "Hoje" | "Próxima";
-}) {
-  // Sessão concluída (todos os blocos registrados): entra recolhida por padrão e troca
-  // o formulário/CTA pelo estado "Concluída" (com o esforço registrado, se houver).
-  const concluida = sessaoConcluida(sessao, semana, execucoes);
-  const [aberto, setAberto] = React.useState(inicialAberto && !concluida);
-  const feitas = sessao.blocos.filter((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id)).length;
-  // Rastro do "personalizar o treino do dia": se algum bloco nasceu de uma
-  // prescrição (origemPrescricaoId), a sessão é marcada como personalizada. Com um
-  // único id resolvível, mostra a data ("Personalizado em DD/MM").
-  const origemIds = Array.from(new Set(sessao.blocos.map((b) => b.origemPrescricaoId).filter(Boolean) as string[]));
-  const personalizadoData = origemIds.length === 1 ? dataDaPrescricao?.(origemIds[0]) : undefined;
-  const personalizado = origemIds.length > 0;
-  return (
-    <Card className="overflow-hidden p-0" style={rotulo === "Hoje" ? { borderColor: cor, borderWidth: 2 } : undefined}>
-      <button
-        onClick={() => setAberto((v) => !v)}
-        aria-expanded={aberto}
-        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
-      >
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-display font-bold text-ink">{sessao.nome}</span>
-            {rotulo === "Hoje" ? (
-              <span className="rounded-full px-2 py-0.5 text-2xs font-bold uppercase tracking-wide text-on-primary" style={{ background: cor }}>Hoje</span>
-            ) : rotulo === "Próxima" ? (
-              <span className="rounded-full bg-surface-soft px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3 ring-1 ring-inset ring-border">Próxima</span>
-            ) : null}
-            {personalizado && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary-tint px-2 py-0.5 text-2xs font-semibold text-primary">
-                <Sparkles className="h-3 w-3" aria-hidden />
-                Personalizado{personalizadoData ? ` em ${personalizadoData}` : ""}
-              </span>
-            )}
-          </div>
-          {sessao.foco && <div className="text-xs text-ink-3">{sessao.foco}</div>}
-          {concluida && feedback?.pse != null && (
-            <div className="text-xs text-ink-3">
-              Esforço: {feedback.pse}
-              {rotuloPse(feedback.pse) ? ` · ${rotuloPse(feedback.pse)}` : ""}
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {concluida ? (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold" style={{ color: cor }}>
-              <CheckCircle2 className="h-4 w-4" /> Concluída
-            </span>
-          ) : feitas > 0 ? (
-            <span className="text-xs font-semibold" style={{ color: cor }}>{feitas}/{sessao.blocos.length} exercícios</span>
-          ) : null}
-          <ChevronDown className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
-        </div>
-      </button>
-      {aberto && (
-        <div className="space-y-2 border-t border-border p-3">
-          {/* Iniciar treino: só na sessão de hoje ainda não concluída. CTA grande na
-              cor da marca (>= 48px), porta de entrada do modo guiado. */}
-          {rotulo === "Hoje" && !concluida && onIniciar && (
-            <button
-              onClick={() => onIniciar(sessao)}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-4 text-base font-bold text-on-primary"
-              style={{ background: cor }}
-            >
-              <Play className="h-5 w-5" aria-hidden /> Iniciar treino
-            </button>
-          )}
-          {concluida && feedback?.observacao && (
-            <p className="flex items-center gap-1.5 text-2xs text-ink-3">
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: cor }} aria-hidden /> Enviado ao seu professor
-            </p>
-          )}
-          {agruparBlocosPorMetodo(sessao.blocos).map((seg) => {
-            const linhaBloco = (b: BlocoSessao, emGrupo?: boolean) => (
-              <BlocoRow
-                key={b.id}
-                bloco={b}
-                cor={cor}
-                semana={semana}
-                planoId={plano.id}
-                alunoId={aluno.id}
-                sessaoRef={sessao.id}
-                execFeita={execucoes.find((e) => e.semana === semana && e.blocoRef === b.id)}
-                onRegistrar={onRegistrar}
-                onDesfazer={onDesfazer}
-                preview={preview}
-                emGrupo={emGrupo}
-              />
-            );
-            if (seg.tipo === "grupo") {
-              // Bi/tri/super-set: o par (ou trio) aparece numa moldura única, com a
-              // instrução do catálogo uma vez ("faça em sequência, sem descanso entre eles").
-              const info = getMetodo(seg.metodo);
-              // Thumbs dos exercícios do grupo, empilhados, reforçam o "faça em dupla".
-              // Decorativos (o thumb clicável de cada exercício vive na própria linha).
-              const thumbsGrupo = seg.blocos
-                .map((b) => exercicioDoBloco(b)?.imagem)
-                .filter((src): src is string => !!src);
-              return (
-                <div key={seg.grupoId} className="rounded-xl border-2 p-1.5" style={{ borderColor: cor }}>
-                  <div className="mb-1 flex flex-wrap items-center gap-2 px-1.5 pt-0.5">
-                    {thumbsGrupo.length > 0 && (
-                      <div className="flex shrink-0 items-center" aria-hidden>
-                        {thumbsGrupo.map((src, i) => (
-                          <img
-                            key={i}
-                            src={withBase(src)}
-                            alt=""
-                            loading="lazy"
-                            className={cn("h-10 w-10 rounded-lg border-2 border-surface object-cover", i > 0 && "-ml-3")}
-                          />
-                        ))}
-                      </div>
-                    )}
-                    <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-on-primary" style={{ background: cor }}>
-                      {info?.nome}
-                    </span>
-                    {info?.descricao && <span className="min-w-0 flex-1 text-2xs leading-tight text-ink-2">{info.descricao}</span>}
-                  </div>
-                  <div className="space-y-2">{seg.blocos.map((b) => linhaBloco(b, true))}</div>
-                </div>
-              );
-            }
-            return linhaBloco(seg.bloco);
-          })}
-
-          <FechoFlex fecho={sessao.fecho} cor={cor} />
-
-          {/* Rodapé da Sessão: o boilerplate aparece UMA vez por sessão (antes
-              repetido por exercício); a dose continua colada a cada exercício. */}
-          {(temIntensidadeNaSessao(sessao) || preview) && (
-            <div className="space-y-1 pt-0.5">
-              {temIntensidadeNaSessao(sessao) && (
-                <p className="text-2xs text-ink-3">
-                  Intensidade é a porcentagem da sua carga máxima estimada para cada exercício.
-                </p>
-              )}
-              {preview && (
-                <p className="text-xs text-ink-3">Aqui o seu aluno registra carga, repetições e esforço.</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </Card>
-  );
-}
-
 function BlocoRow({
   bloco,
+  ordem,
   cor,
+  tinta,
   semana,
   planoId,
   alunoId,
@@ -602,7 +873,10 @@ function BlocoRow({
   emGrupo,
 }: {
   bloco: BlocoSessao;
+  /** posição do exercício na sessão (o número do círculo à direita) */
+  ordem: number;
   cor: string;
+  tinta: string;
   semana: number;
   planoId: string;
   alunoId: string;
@@ -615,16 +889,10 @@ function BlocoRow({
   emGrupo?: boolean;
 }) {
   const aerobio = bloco.tipo === "aerobio";
-  // Cada número com o próprio rótulo (Intensidade 75%, Intervalo 90s), em vez de
-  // uma string crua "3 x 12 · 75% · Intervalo: 90s" onde o 75% fica solto.
   const tokensDose = tokensDoBloco(bloco);
   const metodo = getMetodo(bloco.metodo);
-  // Num grupo, o método (badge + instrução) já vem no cabeçalho da moldura: não repete aqui.
   const metodoVisivel = metodo && metodo.id !== "tradicional" && !emGrupo ? metodo : undefined;
 
-  // Visual do exercício: thumb da foto real de execução (força) e a folha com o
-  // movimento, os músculos e o como fazer. Só para blocos de catálogo com conteúdo;
-  // sem foto, o thumb não aparece (nunca empresta a imagem de outro exercício).
   const ex = exercicioDoBloco(bloco);
   const temFolha = !aerobio && temFolhaExercicio(ex);
   const [sheetAberto, setSheetAberto] = React.useState(false);
@@ -634,82 +902,103 @@ function BlocoRow({
     setSheetAberto(false);
     gatilhoRef.current?.focus();
   };
-  // Aeróbio: foto pequena da modalidade quando houver; senão, ícone lucide coerente.
   const modalidade = aerobio ? modalidadeDoBloco(bloco) : undefined;
   const [modImgOk, setModImgOk] = React.useState(true);
   const IconeAerobio = iconeModalidade(bloco.modalidade, modalidade?.ambiente);
 
-  // Elemento à esquerda do nome: thumb 56px (força com foto), foto pequena da
-  // modalidade (aeróbio) ou o selo colorido de ícone (fallback padrão de hoje).
+  // Miniatura 56px, como o mockup: foto real do exercício, foto da modalidade no
+  // aeróbio, ou o selo de ícone quando não há imagem (nunca empresta a foto de
+  // outro exercício).
   const leading =
     !aerobio && ex?.imagem && thumbOk ? (
       <img
         src={withBase(ex.imagem)}
-        alt={nomeDoBloco(bloco)}
+        alt=""
         loading="lazy"
         onError={() => setThumbOk(false)}
-        className="h-14 w-14 shrink-0 rounded-xl border border-border object-cover"
+        className="h-14 w-14 shrink-0 rounded-control border border-border object-cover"
       />
     ) : aerobio && modalidade && modImgOk ? (
       <img
         src={withBase(modalidadeImagem(modalidade.id))}
-        alt={modalidade.nome}
+        alt=""
         loading="lazy"
         onError={() => setModImgOk(false)}
-        className="h-11 w-11 shrink-0 rounded-lg border border-border object-cover"
+        className="h-14 w-14 shrink-0 rounded-control border border-border object-cover"
       />
     ) : (
-      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-on-primary" style={{ background: cor }}>
-        {aerobio ? <IconeAerobio className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
+      <span
+        className="grid h-14 w-14 shrink-0 place-items-center rounded-control bg-surface-soft"
+        style={{ color: cor }}
+      >
+        {aerobio ? <IconeAerobio className="h-6 w-6" /> : <Dumbbell className="h-6 w-6" />}
       </span>
     );
 
+  const feito = !!execFeita;
+  const dose = doseCurta(bloco);
+
   return (
-    <div className="rounded-xl border border-border bg-surface-soft p-3">
-      <div className="flex items-center gap-2">
-        {temFolha ? (
+    <div className="rounded-card border border-border bg-surface p-3">
+      <div className="flex items-center gap-3">
+        {temFolha || (aerobio && modalidade) ? (
           <button
             ref={gatilhoRef}
             type="button"
-            onClick={() => setSheetAberto(true)}
-            aria-haspopup="dialog"
-            aria-label={`Ver o exercício ${nomeDoBloco(bloco)}`}
-            className="group flex min-h-[44px] min-w-0 flex-1 items-center gap-2.5 rounded-full text-left"
+            onClick={() => temFolha && setSheetAberto(true)}
+            disabled={!temFolha}
+            aria-haspopup={temFolha ? "dialog" : undefined}
+            aria-label={temFolha ? `Ver o exercício ${nomeDoBloco(bloco)}` : undefined}
+            className="group flex min-h-[56px] min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
           >
             {leading}
-            <span className="min-w-0 flex-1 font-semibold text-ink underline-offset-2 group-hover:underline">
-              {nomeDoBloco(bloco)}
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-semibold text-ink underline-offset-2 group-enabled:group-hover:underline">
+                {nomeDoBloco(bloco)}
+              </span>
+              {dose && <span className="tabular block truncate text-xs text-ink-2">{dose}</span>}
             </span>
-            <Maximize2 className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
           </button>
         ) : (
           <>
             {leading}
-            <span className="min-w-0 flex-1 font-semibold text-ink">{nomeDoBloco(bloco)}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-semibold text-ink">{nomeDoBloco(bloco)}</span>
+              {dose && <span className="tabular block truncate text-xs text-ink-2">{dose}</span>}
+            </span>
           </>
         )}
-        {metodoVisivel && (
-          <span
-            className="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold text-on-primary"
-            style={{ background: cor }}
-          >
-            {metodoVisivel.nome}
-          </span>
-        )}
+
+        {/* O disco de ordem do mockup: contorno quando falta, cheio quando feito. */}
+        <span
+          aria-hidden
+          className="tabular grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold"
+          style={feito ? { background: cor, color: tinta } : { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }}
+        >
+          {feito ? <CheckCircle2 className="h-4.5 w-4.5" /> : ordem}
+        </span>
       </div>
-      {tokensDose.length > 0 && (
-        <LinhaDeTokens className="mt-1.5">
-          {tokensDose.map((t) => (
+
+      {metodoVisivel && (
+        <span
+          className="mt-2 inline-block rounded-full px-2 py-0.5 text-2xs font-bold"
+          style={{ background: cor, color: tinta }}
+        >
+          {metodoVisivel.nome}
+        </span>
+      )}
+      {/* Só o que a linha curta NÃO disse (tipicamente a Intensidade). Repetir a
+          dose inteira logo abaixo do resumo é ruído, não informação. */}
+      {tokensExtras(bloco).length > 0 && (
+        <LinhaDeTokens className="mt-2">
+          {tokensExtras(bloco).map((t) => (
             <TokenRotulado key={t.label} label={t.label} value={t.value} />
           ))}
         </LinhaDeTokens>
       )}
-      {/* A nota educacional da intensidade e o aviso de prévia sobem para UMA
-          ocorrência no rodapé do card da Sessão; aqui fica só a dose colada. */}
       {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
-      {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
+      {bloco.observacao && <p className="mt-1 text-xs text-ink-2">{bloco.observacao}</p>}
 
-      {/* Miolo de registro compartilhado (mesmo id/upsert do modo guiado). */}
       <RegistroBloco
         bloco={bloco}
         cor={cor}
@@ -736,331 +1025,254 @@ function BlocoRow({
   );
 }
 
-/* ------------------------------- Aba: Plano ------------------------------- */
+/* ------------------------------ Aba: Treinos ------------------------------ */
 
-function AbaPlano({ plano, cor, aluno, execucoes }: { plano?: PlanoTreino; cor: string; aluno: Aluno; execucoes: Execucao[] }) {
-  if (!plano) {
-    return (
-      <div className="space-y-3">
-        <MensalidadeCard aluno={aluno} cor={cor} />
-        <SemPlano />
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-3">
-      <MensalidadeCard aluno={aluno} cor={cor} />
-      <Card className="p-4">
-        <div className="font-display font-bold text-ink">{plano.titulo}</div>
-        <p className="mt-1 text-sm text-ink-2">{plano.semanas} semanas · {plano.frequenciaSemanal}x por semana</p>
-      </Card>
-      <SeletorSemana plano={plano} cor={cor} execucoes={execucoes} />
-      <FasesDoPlano plano={plano} cor={cor} />
-    </div>
-  );
-}
+/**
+ * "Seus treinos": o plano da semana, as fases como trilho e as sessões A/B/C,
+ * exatamente na leitura do mockup. Substitui a antiga aba "Semana", que abria
+ * num seletor de semana antes de dizer o que o aluno treina.
+ */
+function AbaTreinos({
+  plano,
+  cor,
+  tinta,
+  aluno,
+  marca,
+  execucoes,
+  onIniciar,
+}: {
+  plano?: PlanoTreino;
+  cor: string;
+  tinta: string;
+  aluno: Aluno;
+  marca: Marca;
+  execucoes: Execucao[];
+  onIniciar?: (s: Sessao) => void;
+}) {
+  if (!plano) return <SemPlano />;
 
-// Seletor de semana navegável: chevrons e o intervalo REAL de datas da semana
-// (início = plano.data + (N-1)*SEMANA_MS, fim = início + 6 dias), com as sessões
-// daquela semana em leitura. Default e destaque na semana atual (calendário).
-function SeletorSemana({ plano, cor, execucoes }: { plano: PlanoTreino; cor: string; execucoes: Execucao[] }) {
-  const semanaHoje = semanaAtual(plano);
-  const total = plano.semanas;
-  const [sel, setSel] = React.useState(semanaHoje);
-  const semana = Math.min(total, Math.max(1, sel));
+  const semana = semanaAtual(plano);
+  const meso = mesocicloAtual(plano);
   const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
   const sessoes = micro?.sessoes ?? [];
-  const inicio = plano.data + (semana - 1) * SEMANA_MS;
-  const fim = inicio + 6 * DIA_MS;
-  const fmtDia = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(ts));
-  const ehAtual = semana === semanaHoje;
-  // Status por sessão só na semana atual ou passada; semanas futuras não recebem pill.
-  const mostrarStatus = semana <= semanaHoje;
+  const idxHoje = sessaoDeHojeIndex(plano, execucoes);
+  const concluidasNaSemana = sessoes.filter((s) => sessaoConcluida(s, semana, execucoes)).length;
+  const semanaFechada = sessoes.length > 0 && concluidasNaSemana === sessoes.length;
+  // Próxima fase, para a nota do fim da semana. Só existe se houver mesociclo
+  // depois do atual; sem isso, a frase não aparece (nada de fase inventada).
+  const mesos = plano.macrociclo.mesociclos;
+  const idxMeso = meso ? mesos.findIndex((m) => m.id === meso.id) : -1;
+  const proxMeso = idxMeso >= 0 ? mesos[idxMeso + 1] : undefined;
 
   return (
-    <div className="space-y-2">
-      <Card className="p-4" style={ehAtual ? { borderColor: cor, borderWidth: 2 } : undefined}>
-        <div className="flex items-center justify-between gap-2">
-          <button
-            onClick={() => setSel(() => Math.max(1, semana - 1))}
-            disabled={semana <= 1}
-            aria-label="Semana anterior"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-soft hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <div className="min-w-0 text-center">
-            <div className="font-display font-bold text-ink">Semana {semana}</div>
-            <div className="text-xs text-ink-3">{fmtDia(inicio)} a {fmtDia(fim)}</div>
-            {ehAtual && <Pill tone="primary" className="mt-1">Semana atual</Pill>}
-          </div>
-          <button
-            onClick={() => setSel(() => Math.min(total, semana + 1))}
-            disabled={semana >= total}
-            aria-label="Próxima semana"
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-ink-2 hover:bg-surface-soft hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-display text-xl font-bold text-ink">Seus treinos</h2>
+        <p className="mt-0.5 text-sm text-ink-2">
+          Plano de {plano.semanas} semanas
+          {meso ? ` · ${rotuloMeso(meso)}` : ""} · semana {semana}
+        </p>
+      </div>
+
+      {/* Trilho de fases: a fase atual em sólido, as outras em contorno. */}
+      <div className="flex gap-1.5">
+        {mesos.map((m) => {
+          const atual = semana >= m.semanaInicio && semana <= m.semanaFim;
+          const passada = semana > m.semanaFim;
+          return (
+            <span
+              key={m.id}
+              className={cn(
+                "min-w-0 flex-1 truncate rounded-full px-2.5 py-1.5 text-center text-2xs font-bold",
+                !atual && !passada && "bg-surface-soft text-ink-2",
+              )}
+              style={
+                atual
+                  ? { background: cor, color: tinta }
+                  : passada
+                    ? { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }
+                    : undefined
+              }
+            >
+              {rotuloMeso(m)}
+            </span>
+          );
+        })}
+      </div>
+
+      {micro && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Pill tone={TIPO_SEMANA[micro.tipo].tone}>{TIPO_SEMANA[micro.tipo].label}</Pill>
         </div>
-        {micro && (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Pill tone={TIPO_SEMANA[micro.tipo].tone}>{TIPO_SEMANA[micro.tipo].label}</Pill>
-          </div>
-        )}
-      </Card>
+      )}
 
       {sessoes.length === 0 ? (
         <Card className="p-6 text-center text-sm text-ink-2">Sem sessões nesta semana.</Card>
       ) : (
-        sessoes.map((s) => (
-          <SessaoLeitura
-            key={s.id}
-            sessao={s}
-            cor={cor}
-            concluida={sessaoConcluida(s, semana, execucoes)}
-            mostrarStatus={mostrarStatus}
-          />
-        ))
+        <div className="space-y-2">
+          {sessoes.map((s, i) => (
+            <CardSessaoPlano
+              key={s.id}
+              sessao={s}
+              ordem={i + 1}
+              cor={cor}
+              tinta={tinta}
+              hoje={i === idxHoje}
+              concluida={sessaoConcluida(s, semana, execucoes)}
+              onIniciar={onIniciar ? () => onIniciar(s) : undefined}
+            />
+          ))}
+        </div>
       )}
+
+      {semanaFechada && (
+        <div className="rounded-card border border-border bg-surface-soft p-4">
+          <p className="text-sm text-ink-2">
+            Semana {semana} concluída. {apelidoProfissional(marca)} revisa o seu registro
+            {proxMeso ? ` e libera a fase ${rotuloMeso(proxMeso)}.` : " e ajusta o próximo passo."}
+          </p>
+        </div>
+      )}
+
+      <ProfessorCard marca={marca} cor={cor} tinta={tinta} />
+
+      {/* As fases inteiras, com semanas e foco, ficam recolhidas: quem quer o
+          mapa do ciclo abre; quem quer treinar já viu tudo acima. */}
+      <FasesDoPlano plano={plano} cor={cor} />
+
+      <p className="px-1 text-xs text-ink-2">
+        Aluno: {aluno.nome} · {aluno.objetivo} · {aluno.nivel}
+      </p>
     </div>
   );
 }
 
-// Uma sessão em LEITURA (aba Semana): nome, foco, status e as doses por bloco, com
-// os grupos de método na moldura. Sem campos de registro (isso é só na aba Hoje).
-function SessaoLeitura({
+/** Sessão do plano na aba Treinos: letra, foco, dose de tempo e o CTA da de hoje. */
+function CardSessaoPlano({
   sessao,
+  ordem,
   cor,
+  tinta,
+  hoje,
   concluida,
-  mostrarStatus,
+  onIniciar,
 }: {
   sessao: Sessao;
+  /** posição da sessão na semana, usada quando o nome não traz letra */
+  ordem: number;
   cor: string;
+  tinta: string;
+  hoje: boolean;
   concluida: boolean;
-  mostrarStatus: boolean;
+  onIniciar?: () => void;
 }) {
-  return (
-    <Card className="p-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="font-display font-bold text-ink">{sessao.nome}</div>
-          {sessao.foco && <div className="text-xs text-ink-3">{sessao.foco}</div>}
-        </div>
-        {concluida ? (
-          <Pill tone="success" icon={<CheckCircle2 className="h-3.5 w-3.5" />}>Concluída</Pill>
-        ) : mostrarStatus ? (
-          <Pill tone="neutral">Pendente</Pill>
-        ) : null}
-      </div>
-      <div className="mt-2 space-y-2">
-        {agruparBlocosPorMetodo(sessao.blocos).map((seg) => {
-          if (seg.tipo === "grupo") {
-            const info = getMetodo(seg.metodo);
-            return (
-              <div key={seg.grupoId} className="rounded-xl border-2 p-1.5" style={{ borderColor: cor }}>
-                <div className="mb-1 flex flex-wrap items-center gap-2 px-1.5 pt-0.5">
-                  <span className="rounded-full px-2 py-0.5 text-2xs font-bold text-on-primary" style={{ background: cor }}>
-                    {info?.nome}
-                  </span>
-                  {info?.descricao && <span className="min-w-0 flex-1 text-2xs leading-tight text-ink-2">{info.descricao}</span>}
-                </div>
-                <div className="space-y-2">{seg.blocos.map((b) => <BlocoLeitura key={b.id} bloco={b} cor={cor} emGrupo />)}</div>
-              </div>
-            );
-          }
-          return <BlocoLeitura key={seg.bloco.id} bloco={seg.bloco} cor={cor} />;
-        })}
-        <FechoFlex fecho={sessao.fecho} cor={cor} />
-      </div>
-    </Card>
-  );
-}
-
-// Um bloco em LEITURA: espelha a apresentação do BlocoRow (ícone, nome, badge de
-// método, doses coladas via TokenRotulado), sem nenhum campo de registro.
-function BlocoLeitura({ bloco, cor, emGrupo }: { bloco: BlocoSessao; cor: string; emGrupo?: boolean }) {
-  const aerobio = bloco.tipo === "aerobio";
-  const tokens = tokensDoBloco(bloco);
-  const metodo = getMetodo(bloco.metodo);
-  const metodoVisivel = metodo && metodo.id !== "tradicional" && !emGrupo ? metodo : undefined;
-  return (
-    <div className="rounded-xl border border-border bg-surface-soft p-3">
-      <div className="flex items-center gap-2">
-        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-on-primary" style={{ background: cor }}>
-          {aerobio ? <HeartPulse className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
-        </span>
-        <span className="min-w-0 flex-1 font-semibold text-ink">{nomeDoBloco(bloco)}</span>
-        {metodoVisivel && (
-          <span className="shrink-0 rounded-full px-2 py-0.5 text-2xs font-bold text-on-primary" style={{ background: cor }}>
-            {metodoVisivel.nome}
-          </span>
-        )}
-      </div>
-      {tokens.length > 0 && (
-        <LinhaDeTokens className="mt-1.5">
-          {tokens.map((t) => (
-            <TokenRotulado key={t.label} label={t.label} value={t.value} />
-          ))}
-        </LinhaDeTokens>
-      )}
-      {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
-      {bloco.observacao && <p className="mt-1 text-xs text-ink-3">{bloco.observacao}</p>}
-    </div>
-  );
-}
-
-// Fecho de flexibilidade da sessão (onda F, princípio da variabilidade): nota curta ao final
-// da sessão, com um acento da marca à esquerda. Só aparece quando o plano traz o fecho.
-function FechoFlex({ fecho, cor }: { fecho?: string; cor: string }) {
-  if (!fecho) return null;
+  const letra = selo(sessao, ordem);
+  const n = sessao.blocos.length;
   return (
     <div
-      className="mt-1 rounded-xl border border-border bg-surface-soft p-3"
-      style={{ borderLeftColor: cor, borderLeftWidth: 3 }}
+      className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5"
+      style={hoje ? { borderColor: cor, borderWidth: 2 } : undefined}
     >
-      <p className="text-xs text-ink-2">{fecho}</p>
-    </div>
-  );
-}
-
-// Fases do plano (mesociclos) como contexto colapsado abaixo do seletor de semana.
-// Mantém exatamente o conteúdo que existia (rótulo, posição, semanas, foco), só que
-// recolhido por padrão, já que a semana selecionada acima carrega o detalhe agora.
-function FasesDoPlano({ plano, cor }: { plano: PlanoTreino; cor: string }) {
-  const [aberto, setAberto] = React.useState(false);
-  const semana = semanaAtual(plano);
-  return (
-    <Card className="overflow-hidden p-0">
-      <button
-        onClick={() => setAberto((v) => !v)}
-        aria-expanded={aberto}
-        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      <span
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-base font-bold"
+        style={concluida ? { background: cor, color: tinta } : { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }}
       >
-        <span className="font-display font-bold text-ink">Fases do plano</span>
-        <ChevronDown className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
-      </button>
-      {aberto && (
-        <div className="space-y-3 border-t border-border p-3">
-          {plano.macrociclo.mesociclos.map((m) => {
-            const atual = semana >= m.semanaInicio && semana <= m.semanaFim;
-            return (
-              <div
-                key={m.id}
-                className="rounded-xl border border-border bg-surface p-4"
-                style={atual ? { borderColor: cor, borderWidth: 2 } : undefined}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="font-display font-bold text-ink">{rotuloMeso(m)}</div>
-                  {atual && <Pill tone="primary">{rotuloPosicao(m)}</Pill>}
-                </div>
-                <p className="mt-1 text-xs text-ink-3">Semanas {m.semanaInicio} a {m.semanaFim}</p>
-                <p className="mt-1.5 text-sm text-ink-2">{m.foco}</p>
-              </div>
-            );
-          })}
+        {concluida ? <CheckCircle2 className="h-5 w-5" /> : letra}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-semibold text-ink">{sessao.nome}</div>
+        <div className="truncate text-xs text-ink-2">
+          {sessao.foco ? `${sessao.foco} · ` : ""}
+          {n} {n === 1 ? "exercício" : "exercícios"}
+          {minutosDeclarados(sessao) ? ` · ${minutosDeclarados(sessao)} min` : ""}
+          {hoje ? " · hoje" : ""}
         </div>
-      )}
-    </Card>
-  );
-}
-
-function MensalidadeCard({ aluno, cor }: { aluno: Aluno; cor: string }) {
-  const c = aluno.cobranca;
-  if (!c) return null;
-  const efetivo = statusEfetivo(c);
-  const tone: Record<string, "success" | "warning" | "neutral"> = { pago: "success", pendente: "warning", isento: "neutral" };
-  return (
-    <Card className="p-4">
-      <div className="flex items-center gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-on-primary" style={{ background: cor }}>
-          <Wallet className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="font-display font-bold text-ink">Mensalidade {formatBRL(c.valorCentavos)}</div>
-          <div className="text-xs text-ink-3">Vence dia {c.diaVencimento}</div>
-        </div>
-        <Pill tone={tone[efetivo]}>{ROTULO_STATUS_COBRANCA[efetivo]}</Pill>
       </div>
-      {efetivo !== "pago" && efetivo !== "isento" && (
-        <div className="mt-3">
-          {c.linkPagamento ? (
-            /^https?:\/\//i.test(c.linkPagamento) ? (
-              <a
-                href={c.linkPagamento}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full rounded-lg py-2 text-center text-sm font-bold text-on-primary"
-                style={{ background: cor }}
-              >
-                Pagar mensalidade
-              </a>
-            ) : (
-              <PixCopia chave={c.linkPagamento} cor={cor} />
-            )
-          ) : (
-            <p className="text-xs text-ink-3">Combine o pagamento com o seu profissional.</p>
-          )}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-function PixCopia({ chave, cor }: { chave: string; cor: string }) {
-  const [copiado, setCopiado] = React.useState(false);
-  const copiar = async () => {
-    try {
-      await navigator.clipboard.writeText(chave);
-      setCopiado(true);
-      window.setTimeout(() => setCopiado(false), 1800);
-    } catch {
-      /* sem clipboard: a chave segue visível abaixo */
-    }
-  };
-  return (
-    <div>
-      <button
-        onClick={copiar}
-        className="block w-full rounded-full py-2 text-center text-sm font-bold text-on-primary"
-        style={{ background: cor }}
-      >
-        {copiado ? "Chave PIX copiada" : "Copiar chave PIX"}
-      </button>
-      <p className="mt-1.5 break-all text-center text-2xs text-ink-3">{chave}</p>
+      {onIniciar &&
+        (hoje && !concluida ? (
+          <button
+            onClick={onIniciar}
+            className="inline-flex h-10 shrink-0 items-center rounded-full px-4 text-sm font-bold"
+            style={{ background: cor, color: tinta }}
+          >
+            Começar
+          </button>
+        ) : (
+          <button
+            onClick={onIniciar}
+            aria-label={`Abrir ${sessao.nome}`}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-soft hover:text-ink"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+        ))}
     </div>
   );
 }
 
-/* ------------------------------ Aba: Evolução ----------------------------- */
+/** O card do professor: quem acompanha, com as iniciais da marca. */
+function ProfessorCard({ marca, cor, tinta }: { marca: Marca; cor: string; tinta: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5">
+      {marca.logoDataUrl ? (
+        <img src={marca.logoDataUrl} alt="" className="h-11 w-11 shrink-0 rounded-control object-cover" />
+      ) : (
+        <span
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
+          style={{ background: cor, color: tinta }}
+        >
+          {iniciaisDe(marca.nome)}
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-semibold text-ink">{marca.nome}</div>
+        <div className="text-xs text-ink-2">quem monta e acompanha o seu treino</div>
+      </div>
+    </div>
+  );
+}
 
-function AbaEvolucao({
+/* ----------------------------- Aba: Progresso ----------------------------- */
+
+function AbaProgresso({
   aluno,
   avaliacoes,
   execucoes,
+  feedbacks,
   cor,
 }: {
   aluno: Aluno;
   avaliacoes: Avaliacao[];
   execucoes: Execucao[];
+  /** feedbacks de sessão do aluno: alimentam o esforço médio */
+  feedbacks: SessaoFeedback[];
   cor: string;
 }) {
   const doAluno = avaliacoes.filter((a) => a.alunoId === aluno.id).sort((a, b) => b.data - a.data);
   const fmt = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
+
   return (
     <div className="space-y-4">
-      {/* Liga, conquistas e feed a partir dos treinos registrados */}
-      <GamificacaoView alunoId={aluno.id} execucoes={execucoes} cor={cor} />
+      <h2 className="font-display text-xl font-bold text-ink">Seu progresso</h2>
 
-      {/* Avaliações registradas pelo profissional */}
+      {/* Liga, sequência, pontos, gráfico por semana e conquistas: tudo derivado
+          dos registros do próprio aluno (GamificacaoView). */}
+      <GamificacaoView
+        alunoId={aluno.id}
+        execucoes={execucoes}
+        cor={cor}
+        avaliacoes={doAluno}
+        feedbacks={feedbacks}
+      />
+
       <section className="space-y-2">
-        <h2 className="font-display text-base font-bold text-ink">Avaliações</h2>
+        <h3 className="font-display text-base font-bold text-ink">Avaliações</h3>
         {doAluno.length === 0 ? (
           <Card className="p-6 text-center">
-            <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-card bg-surface-soft text-ink-3">
+            <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-card bg-surface-soft text-ink-2">
               <Clock className="h-5 w-5" />
             </span>
-            <p className="text-sm text-ink-2">Suas avaliações vão aparecer aqui conforme o seu profissional registrar.</p>
+            <p className="text-sm text-ink-2">Suas avaliações vão aparecer aqui conforme o seu professor registrar.</p>
           </Card>
         ) : (
           doAluno.map((a) => (
@@ -1078,13 +1290,234 @@ function AbaEvolucao({
   );
 }
 
+/* ------------------------------ Aba: Perfil ------------------------------- */
+
+/**
+ * "Perfil": quem acompanha, o plano em curso, a mensalidade e a saída. É a aba
+ * que o design pede e que antes não existia; a mensalidade morava escondida na
+ * aba de plano, onde ninguém procura por ela.
+ */
+function AbaPerfil({
+  aluno,
+  marca,
+  cor,
+  tinta,
+  plano,
+  avaliacoes,
+  onSair,
+  preview,
+}: {
+  aluno: Aluno;
+  marca: Marca;
+  cor: string;
+  tinta: string;
+  plano?: PlanoTreino;
+  avaliacoes: Avaliacao[];
+  onSair?: () => void;
+  preview?: boolean;
+}) {
+  const ultima = avaliacoes
+    .filter((a) => a.alunoId === aluno.id)
+    .sort((a, b) => b.data - a.data)[0];
+  const fmt = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(ts));
+
+  return (
+    <div className="space-y-4">
+      <h2 className="font-display text-xl font-bold text-ink">Perfil</h2>
+
+      <Card className="p-4">
+        <div className="flex items-center gap-3">
+          <span
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-control font-display text-base font-bold"
+            style={{ background: cor, color: tinta }}
+          >
+            {aluno.iniciais}
+          </span>
+          <div className="min-w-0">
+            <div className="truncate font-display text-lg font-bold text-ink">{aluno.nome}</div>
+            <div className="text-sm text-ink-2">
+              {aluno.objetivo} · {aluno.nivel}
+              {aluno.idade ? ` · ${aluno.idade} anos` : ""}
+            </div>
+          </div>
+        </div>
+        {ultima && (
+          <div className="mt-3 border-t border-border pt-3">
+            <ParDado layout="inline" label="Última avaliação" value={fmt(ultima.data)} />
+            {ultima.medidas.peso != null && <ParDado layout="inline" label="Peso" value={`${ultima.medidas.peso} kg`} />}
+          </div>
+        )}
+      </Card>
+
+      <ProfessorCard marca={marca} cor={cor} tinta={tinta} />
+
+      {plano && (
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-surface-soft" style={{ color: cor }}>
+              <CalendarDays className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <div className="truncate font-semibold text-ink">{plano.titulo}</div>
+              <div className="text-xs text-ink-2">
+                {plano.semanas} semanas · {plano.frequenciaSemanal}x por semana
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      <MensalidadeCard aluno={aluno} cor={cor} tinta={tinta} />
+
+      {onSair && (
+        <button onClick={onSair} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-border text-sm font-semibold text-ink-2 hover:text-ink">
+          <LogOut className="h-4 w-4" /> {preview ? "Fechar prévia" : "Sair da conta"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------- Peças compartilhadas -------------------------- */
+
+/**
+ * O selo redondo da sessão: a letra do nome quando existe ("Treino A", "A ·
+ * Inferiores") e o número de ordem quando não existe ("Sessão 1"). Nunca inventa
+ * uma letra que o nome não tem, que era o que fazia três sessões diferentes
+ * aparecerem todas como "S".
+ */
+function selo(sessao: Sessao, ordem: number): string {
+  const letra = sessao.nome.match(/([A-Z])/)?.[1];
+  return letra ? letra.toUpperCase() : String(ordem);
+}
+
+// Fecho de flexibilidade da sessão (onda F, princípio da variabilidade): nota curta ao final
+// da sessão, com um acento da marca à esquerda. Só aparece quando o plano traz o fecho.
+function FechoFlex({ fecho, cor }: { fecho?: string; cor: string }) {
+  if (!fecho) return null;
+  return (
+    <div
+      className="rounded-card border border-border bg-surface-soft p-3"
+      style={{ borderLeftColor: cor, borderLeftWidth: 3 }}
+    >
+      <p className="text-xs text-ink-2">{fecho}</p>
+    </div>
+  );
+}
+
+// Fases do plano (mesociclos) recolhidas: rótulo, posição, semanas e foco.
+function FasesDoPlano({ plano, cor }: { plano: PlanoTreino; cor: string }) {
+  const [aberto, setAberto] = React.useState(false);
+  const semana = semanaAtual(plano);
+  return (
+    <Card className="overflow-hidden p-0">
+      <button
+        onClick={() => setAberto((v) => !v)}
+        aria-expanded={aberto}
+        className="flex min-h-[52px] w-full items-center justify-between gap-2 px-4 py-3 text-left"
+      >
+        <span className="font-display font-bold text-ink">Fases do plano</span>
+        <ChevronRight className={cn("h-5 w-5 shrink-0 text-ink-2 transition-transform", aberto && "rotate-90")} />
+      </button>
+      {aberto && (
+        <div className="space-y-3 border-t border-border p-3">
+          {plano.macrociclo.mesociclos.map((m) => {
+            const atual = semana >= m.semanaInicio && semana <= m.semanaFim;
+            return (
+              <div
+                key={m.id}
+                className="rounded-card border border-border bg-surface p-4"
+                style={atual ? { borderColor: cor, borderWidth: 2 } : undefined}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-display font-bold text-ink">{rotuloMeso(m)}</div>
+                  {atual && <Pill tone="primary">{rotuloPosicao(m)}</Pill>}
+                </div>
+                <p className="mt-1 text-xs text-ink-2">Semanas {m.semanaInicio} a {m.semanaFim}</p>
+                <p className="mt-1.5 text-sm text-ink-2">{m.foco}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function MensalidadeCard({ aluno, cor, tinta }: { aluno: Aluno; cor: string; tinta: string }) {
+  const c = aluno.cobranca;
+  if (!c) return null;
+  const efetivo = statusEfetivo(c);
+  const tone: Record<string, "success" | "warning" | "neutral"> = { pago: "success", pendente: "warning", isento: "neutral" };
+  return (
+    <Card className="p-4">
+      <div className="flex items-center gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control" style={{ background: cor, color: tinta }}>
+          <Wallet className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-display font-bold text-ink">Mensalidade {formatBRL(c.valorCentavos)}</div>
+          <div className="text-xs text-ink-2">Vence dia {c.diaVencimento}</div>
+        </div>
+        <Pill tone={tone[efetivo]}>{ROTULO_STATUS_COBRANCA[efetivo]}</Pill>
+      </div>
+      {efetivo !== "pago" && efetivo !== "isento" && (
+        <div className="mt-3">
+          {c.linkPagamento ? (
+            /^https?:\/\//i.test(c.linkPagamento) ? (
+              <a
+                href={c.linkPagamento}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full rounded-full py-2.5 text-center text-sm font-bold"
+                style={{ background: cor, color: tinta }}
+              >
+                Pagar mensalidade
+              </a>
+            ) : (
+              <PixCopia chave={c.linkPagamento} cor={cor} tinta={tinta} />
+            )
+          ) : (
+            <p className="text-xs text-ink-2">Combine o pagamento com o seu professor.</p>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function PixCopia({ chave, cor, tinta }: { chave: string; cor: string; tinta: string }) {
+  const [copiado, setCopiado] = React.useState(false);
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(chave);
+      setCopiado(true);
+      window.setTimeout(() => setCopiado(false), 1800);
+    } catch {
+      /* sem clipboard: a chave segue visível abaixo */
+    }
+  };
+  return (
+    <div>
+      <button
+        onClick={copiar}
+        className="block w-full rounded-full py-2.5 text-center text-sm font-bold"
+        style={{ background: cor, color: tinta }}
+      >
+        {copiado ? "Chave PIX copiada" : "Copiar chave PIX"}
+      </button>
+      <p className="mt-1.5 break-all text-center text-2xs text-ink-2">{chave}</p>
+    </div>
+  );
+}
+
 function SemPlano() {
   return (
     <Card className="p-6 text-center">
-      <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-card bg-surface-soft text-ink-3">
+      <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-card bg-surface-soft text-ink-2">
         <CalendarDays className="h-5 w-5" />
       </span>
-      <p className="text-sm text-ink-2">Seu profissional ainda não publicou um plano de treino para você.</p>
+      <p className="text-sm text-ink-2">Seu professor ainda não publicou um plano de treino para você.</p>
     </Card>
   );
 }
