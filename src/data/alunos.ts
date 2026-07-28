@@ -193,6 +193,19 @@ export interface ProntuarioSnapshot {
   semaforo?: { resultado: "verde" | "amarelo" | "vermelho"; data: number; ajustes: string[] };
   modalidades?: { id: string; nome: string; motivo: string }[];
   parametros: string[];
+  /**
+   * Qual instrumento DEIXOU de guiar a intensidade deste aluno e qual entrou no lugar (camada
+   * de fármacos). Ausente na esmagadora maioria dos prontuários, e ausente em todos os que
+   * foram gerados antes de "RCD v2": ler `motorVersao` antes de concluir qualquer coisa da
+   * ausência deste campo. Guarda ids de monitoringParameters, como `parametros` já faz.
+   */
+  monitoramento?: {
+    saiu: string[];
+    entrou: string[];
+    reforcados?: string[];
+    motivo: string;
+    refIds: string[];
+  };
   /** ids de referencias.ts citadas (bibliografia numerada) */
   refIds: string[];
   geradoEm: number;

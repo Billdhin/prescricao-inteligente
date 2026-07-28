@@ -129,6 +129,27 @@ export function ProntuarioView({
             </section>
           )}
 
+          {prontuario.monitoramento && prontuario.monitoramento.saiu.length > 0 && (
+            <section>
+              <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-analysis">
+                Como a intensidade foi guiada neste aluno
+              </h4>
+              <p className="text-sm text-ink-2">
+                <span className="font-semibold text-ink">Deixou de guiar:</span>{" "}
+                {prontuario.monitoramento.saiu.map((id) => getParam(id)?.nome ?? id).join(", ")}.{" "}
+                <span className="font-semibold text-ink">Passou a guiar:</span>{" "}
+                {prontuario.monitoramento.entrou.map((id) => getParam(id)?.nome ?? id).join(", ")}.
+              </p>
+              <p className="mt-1 text-sm text-ink-2">{prontuario.monitoramento.motivo}</p>
+              {prontuario.monitoramento.reforcados?.length ? (
+                <p className="mt-1 text-sm text-ink-2">
+                  <span className="font-semibold text-ink">Sob vigilância maior:</span>{" "}
+                  {prontuario.monitoramento.reforcados.map((id) => getParam(id)?.nome ?? id).join(", ")}.
+                </p>
+              ) : null}
+            </section>
+          )}
+
           {prontuario.modalidades && prontuario.modalidades.length > 0 && (
             <section>
               <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-analysis">

@@ -41,7 +41,7 @@ import {
 import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
 import { criarRestricao, condicionaisPendentes, avaliarSeguranca, rotuloRestricao } from "@/lib/gps/restricoes";
 import { type GroupGpsRule } from "@/lib/gps/groupRules";
-import { regraDoPerfil } from "@/lib/gps/farmacos";
+import { monitoramentoDoPerfil, regraDoPerfil } from "@/lib/gps/farmacos";
 import { recommendModalidades, type ModalidadeRec } from "@/lib/gps/modalidadeRules";
 import { modalidadeImagem, impactoTone } from "@/data/modalities";
 import { exercises } from "@/data/exercises";
@@ -162,6 +162,18 @@ export function Gps() {
   const rule = React.useMemo(
     () =>
       regraDoPerfil({
+        grupos: condicoesAtivas,
+        farmacos: aluno?.farmacos,
+        farmacosNaoInformado: aluno?.farmacosNaoInformado,
+      }),
+    [condicoesAtivas, aluno?.farmacos, aluno?.farmacosNaoInformado],
+  );
+  // Qual instrumento deixou de guiar a intensidade deste aluno e qual entrou no lugar. Vai
+  // para o Prontuário: um documento que diz "guie pelo esforço percebido" sem dizer o que saiu
+  // de guia e por quê não é rastro, é instrução solta.
+  const monitoramentoPerfil = React.useMemo(
+    () =>
+      monitoramentoDoPerfil({
         grupos: condicoesAtivas,
         farmacos: aluno?.farmacos,
         farmacosNaoInformado: aluno?.farmacosNaoInformado,
@@ -310,10 +322,11 @@ export function Gps() {
             parametros:
               faseObj?.parametros ??
               (answers.objetivo === "Emagrecimento" ? ["p-rpe", "p-fala", "p-adesao", "p-volume"] : ["p-rpe", "p-dor"]),
+            monitoramento: monitoramentoPerfil,
           })
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [results, answers, rule, liberacaoDoDia, faseObj],
+    [results, answers, rule, liberacaoDoDia, faseObj, monitoramentoPerfil],
   );
 
   const salvarPrescricao = () => {

@@ -122,6 +122,24 @@ export function exportProntuarioPDF({
        ${sem.ajustes.length ? `<ul>${sem.ajustes.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}</section>`
     : "";
 
+  // Qual instrumento saiu de guia e qual entrou. Só sai no papel quando algo de fato mudou; um
+  // bloco vazio ensinaria o leitor a pular a seção justamente no dia em que ela tem conteúdo.
+  const mon = prontuario.monitoramento;
+  const nomeParam = (id: string) => esc(getParam(id)?.nome ?? id);
+  const monitoramentoHtml =
+    mon && mon.saiu.length
+      ? `<section class="bloco"><h2>Como a intensidade foi guiada neste aluno</h2>
+         <p><strong>Deixou de guiar:</strong> ${mon.saiu.map(nomeParam).join(", ")}.
+         <strong>Passou a guiar:</strong> ${mon.entrou.map(nomeParam).join(", ")}.${
+           mon.refIds.length ? ` <span class="refn">[${mon.refIds.map(refN).filter(Boolean).join(",")}]</span>` : ""
+         }</p>
+         <p>${esc(mon.motivo)}</p>${
+           mon.reforcados?.length
+             ? `<p><strong>Sob vigilância maior:</strong> ${mon.reforcados.map(nomeParam).join(", ")}.</p>`
+             : ""
+         }</section>`
+      : "";
+
   const params = prontuario.parametros
     .map((id) => getParam(id))
     .filter(Boolean)
@@ -246,6 +264,7 @@ export function exportProntuarioPDF({
 
     ${semaforoHtml}
     ${cuidadosHtml}
+    ${monitoramentoHtml}
     ${modalidadesHtml}
 
     <section class="bloco">

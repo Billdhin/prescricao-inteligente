@@ -11,9 +11,16 @@ import type { GroupGpsRule } from "./groupRules";
 import type { ModalidadeRec } from "./modalidadeRules";
 import type { Liberacao, ProntuarioSnapshot } from "@/data/alunos";
 import { getParam } from "@/data/monitoringParameters";
+import type { EfeitoMonitoramento } from "@/data/farmacos";
 import { checklistRespondido } from "@/data/semaforo";
 
-export const MOTOR_VERSAO = "RCD v1";
+/**
+ * Versão do motor CONGELADA em cada snapshot. Subiu para v2 quando o Prontuário passou a
+ * registrar qual instrumento deixou de guiar a intensidade e qual entrou no lugar (camada de
+ * fármacos). Prontuário antigo continua legível e continua dizendo "RCD v1": é ele que explica
+ * por que um documento de antes não traz o bloco de monitoramento.
+ */
+export const MOTOR_VERSAO = "RCD v2";
 
 /** Critério que mais derrubou o score (o "porquê" do descarte). */
 function motivoPrincipal(rec: Recommendation): string {
@@ -41,6 +48,7 @@ export function montarProntuario({
   liberacao,
   modalidades,
   parametros,
+  monitoramento,
 }: {
   results: Recommendation[];
   topN?: number;
@@ -51,6 +59,11 @@ export function montarProntuario({
   liberacao?: Liberacao;
   modalidades?: ModalidadeRec[];
   parametros?: string[];
+  /**
+   * Efeito de monitoramento do perfil (`monitoramentoDoPerfil`): o que saiu de guia e o que
+   * entrou. Chega pronto de fora porque quem sabe montar o perfil é a tela, não o prontuário.
+   */
+  monitoramento?: EfeitoMonitoramento;
 }): ProntuarioSnapshot {
   const escolhidos = results.slice(0, topN).map((r) => ({
     slug: r.exercise.slug,
@@ -78,6 +91,10 @@ export function montarProntuario({
   };
   addRefs(rule?.refs);
   for (const pid of parametros ?? []) addRefs(getParam(pid)?.refIds);
+  // O instrumento que ENTROU no lugar também precisa da bibliografia dele: sem isso, o
+  // documento diria "guie por esforço percebido" sem dizer de onde isso vem.
+  for (const pid of monitoramento?.substituem ?? []) addRefs(getParam(pid)?.refIds);
+  addRefs(monitoramento?.refId);
   if (liberacao) {
     // Reconstrói o checklist que FOI respondido (inclui os itens que a medicação declarada
     // acrescentou), para a bibliografia do Prontuário citar o que de fato foi perguntado.
@@ -98,6 +115,15 @@ export function montarProntuario({
       : undefined,
     modalidades: modalidades?.map((m) => ({ id: m.modalidade.id, nome: m.modalidade.nome, motivo: m.motivo })),
     parametros: parametros ?? [],
+    monitoramento: monitoramento
+      ? {
+          saiu: [...monitoramento.invalidam],
+          entrou: [...monitoramento.substituem],
+          reforcados: monitoramento.reforcam?.length ? [...monitoramento.reforcam] : undefined,
+          motivo: monitoramento.motivo,
+          refIds: [...(monitoramento.refId ?? [])],
+        }
+      : undefined,
     refIds,
     geradoEm: Date.now(),
     motorVersao: MOTOR_VERSAO,
