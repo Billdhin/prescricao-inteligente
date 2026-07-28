@@ -16,6 +16,7 @@
 import { getFaixa, type BlocoSessao, type Mesociclo } from "@/data/periodizacao";
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
+import type { ParamMonitorId } from "@/data/monitoringParameters";
 import { alvoSemana, alvoAerobioSemana, type CtxAlvo } from "@/lib/gps/alvo";
 
 export interface CtxRecalculo {
@@ -24,6 +25,12 @@ export interface CtxRecalculo {
   /** só personalizam a zona de FC do aeróbio; ausentes = sem zona recomputada (a antiga é preservada) */
   idade?: number;
   fcRepouso?: number;
+  /**
+   * Parâmetros que DEIXARAM de guiar a intensidade neste aluno (ver src/lib/gps/farmacos.ts).
+   * Precisa chegar aqui: sem ele, travar uma variável ressuscitaria a zona de frequência
+   * cardíaca que o sistema acabou de decidir que não guia este aluno (ver recalcularBloco).
+   */
+  parametrosInvalidos?: ParamMonitorId[];
 }
 
 /** Re-deriva o alvo de UM bloco a partir dos textos que ele já carrega, sob o contexto (e travas). */
@@ -33,7 +40,17 @@ function recalcularBloco(b: BlocoSessao, ctx: CtxAlvo, nota?: string): BlocoSess
     const alvo = alvoAerobioSemana({ duracao: b.duracao ?? "", intensidade: b.intensidade ?? "" }, ctx);
     // Preserva zonaFC/percentFCRAlvo/velocidade/inclinação (dependem de idade + FCrep, não
     // recomputados aqui): só os campos derivados por posição são reescritos.
-    return { ...b, duracaoAlvoMin: alvo.duracaoAlvoMin, rpeAlvo: alvo.rpeAlvo, origemRegraId: alvo.origemRegraId };
+    const base: BlocoSessao = {
+      ...b,
+      duracaoAlvoMin: alvo.duracaoAlvoMin,
+      rpeAlvo: alvo.rpeAlvo,
+      origemRegraId: alvo.origemRegraId,
+    };
+    // EXCEÇÃO à preservação: quando a frequência cardíaca não guia mais este aluno, preservar
+    // seria ressuscitar, num simples travar de variável, exatamente o número que o sistema
+    // decidiu que não guia. A zona sai, e o bloco fica com duração mais percepção de esforço.
+    if (!(ctx.parametrosInvalidos ?? []).includes("p-fc")) return base;
+    return { ...base, zonaFC: undefined, percentFCRAlvo: undefined };
   }
   if (b.series == null && b.reps == null && b.intensidade == null && b.intervalo == null) return b;
   const alvo = alvoSemana(
@@ -74,6 +91,7 @@ export function recalcularAlvosDoMeso(meso: Mesociclo, ctx: CtxRecalculo): Mesoc
       objetivo: ctx.objetivo,
       idade: ctx.idade,
       fcRepouso: ctx.fcRepouso,
+      parametrosInvalidos: ctx.parametrosInvalidos,
       variaveisTravadas: meso.variaveisTravadas,
     };
     return {

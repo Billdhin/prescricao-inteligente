@@ -1,6 +1,7 @@
 import type { Nivel } from "./types";
 import type { GpsAnswers, GpsObjetivo } from "@/lib/gps/engine";
 import { criarRestricao, type RestricaoSelecionada } from "@/lib/gps/restricoes";
+import type { FarmacoSelecionado } from "./farmacos";
 import type { CobrancaAluno } from "./cobranca";
 
 /**
@@ -21,6 +22,20 @@ export interface Aluno {
   nivel: Nivel;
   /** restrições físicas do aluno (modelo estruturado; vazio = sem restrição) */
   restricoes: RestricaoSelecionada[];
+  /**
+   * CLASSES de medicação em uso declaradas pelo profissional (src/data/farmacos.ts). O campo
+   * guarda a classe e o contexto da informação, e não comporta quantidade, esquema de uso,
+   * marca nem texto livre: o que o tipo não tem, ninguém imprime. Ausente = não declarado.
+   */
+  farmacos?: FarmacoSelecionado[];
+  /**
+   * O profissional respondeu que não sabe ou prefere não informar a medicação. É um estado
+   * DECLARADO, diferente de "ainda não perguntei" (campo ausente) e de "nenhuma" (lista
+   * vazia). Com condição de risco cardiovascular no perfil, ele leva o sistema para o lado
+   * seguro (ver parametrosInvalidosDe em src/lib/gps/farmacos.ts) sem afirmar nada sobre o
+   * aluno.
+   */
+  farmacosNaoInformado?: boolean;
   /** equipamentos disponíveis no local de treino */
   equipamentos: string[];
   observacoes?: string;

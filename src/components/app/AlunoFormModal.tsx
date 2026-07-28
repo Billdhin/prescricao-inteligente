@@ -4,7 +4,9 @@ import { buttonClasses } from "@/components/ui/primitives";
 import { uid } from "@/lib/store";
 import { OBJETIVOS, EQUIPAMENTOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
+import { FarmacosSelector } from "@/components/gps/FarmacosSelector";
 import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
+import type { FarmacoSelecionado } from "@/data/farmacos";
 import type { Nivel } from "@/data/types";
 import { iniciaisDe, type Aluno } from "@/data/alunos";
 import { descricaoOpcao } from "@/data/opcoes-wizard";
@@ -36,6 +38,8 @@ export function AlunoFormModal({
   const [objetivo, setObjetivo] = React.useState<GpsObjetivo>((inicial?.objetivo as GpsObjetivo) ?? "Emagrecimento");
   const [nivel, setNivel] = React.useState<Nivel>(inicial?.nivel ?? "Iniciante");
   const [restricoes, setRestricoes] = React.useState<RestricaoSelecionada[]>(inicial?.restricoes ?? []);
+  const [farmacos, setFarmacos] = React.useState<FarmacoSelecionado[]>(inicial?.farmacos ?? []);
+  const [farmacosNaoInformado, setFarmacosNaoInformado] = React.useState(Boolean(inicial?.farmacosNaoInformado));
   const [equipamentos, setEquipamentos] = React.useState<string[]>(inicial?.equipamentos ?? KIT_PADRAO);
   const [observacoes, setObservacoes] = React.useState(inicial?.observacoes ?? "");
   const [telefone, setTelefone] = React.useState(inicial?.telefone ?? "");
@@ -62,6 +66,10 @@ export function AlunoFormModal({
       nivel,
       nivelDesde,
       restricoes,
+      // Campo ausente é o estado válido "não declarou": lista vazia e flag falsa voltam a
+      // undefined em vez de virarem uma afirmação sobre o aluno.
+      farmacos: farmacos.length ? farmacos : undefined,
+      farmacosNaoInformado: farmacosNaoInformado || undefined,
       equipamentos,
       observacoes: observacoes.trim() || undefined,
       telefone: telefone.trim() || undefined,
@@ -141,6 +149,16 @@ export function AlunoFormModal({
 
           <Field label="Restrições físicas">
             <RestricoesSelector value={restricoes} onChange={setRestricoes} idBase="aluno-restr" />
+          </Field>
+
+          <Field label="Medicamentos em uso">
+            <FarmacosSelector
+              value={farmacos}
+              onChange={setFarmacos}
+              naoInformado={farmacosNaoInformado}
+              onNaoInformado={setFarmacosNaoInformado}
+              idBase="aluno-farm"
+            />
           </Field>
 
           <Field label="Equipamentos disponíveis">

@@ -40,6 +40,8 @@ import {
   agruparBlocosPorMetodo,
 } from "@/data/periodizacao";
 import { recalcularAlvosDoMeso } from "@/lib/gps/travas";
+import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
+import type { FarmacoSelecionado } from "@/data/farmacos";
 import { conferirFaixa, faixaSugerida, type CampoFaixa } from "@/lib/gps/faixas";
 import { desenharProgressao, posicoesFocos, estadoSemana, ESTADO_LABEL, type EstadoSemana } from "@/lib/gps/progressao";
 import {
@@ -96,6 +98,19 @@ export interface ContextoFaixa {
   grupoEspecial?: string;
   /** grupos adicionais confirmados do aluno; combinam-se ao principal na troca segura */
   condicoesAtencao?: string[];
+  /**
+   * Classes de medicação declaradas e o estado "não sei ou prefiro não informar": decidem se a
+   * frequência cardíaca ainda guia a intensidade deste aluno (src/lib/gps/farmacos.ts).
+   */
+  farmacos?: FarmacoSelecionado[];
+  farmacosNaoInformado?: boolean;
+  /**
+   * Idade e FCrep MEDIDA do aluno. Chegam aqui porque o recálculo do alvo ao travar uma
+   * variável precisa delas para reconstruir a zona de FC igual à da geração. Sem elas o
+   * recálculo perdia a personalização em silêncio, e a preservação da zona antiga mascarava.
+   */
+  idade?: number;
+  fcRepouso?: number;
   /** resolve a data de exibição de uma prescrição pela id (selo "da prescrição de …") */
   prescricaoData?: (id: string) => string | undefined;
 }
@@ -309,7 +324,21 @@ export function MesocicloCard({
   const toggleTrava = (v: VariavelTravavel) => {
     const proximas = travadas.includes(v) ? travadas.filter((x) => x !== v) : [...travadas, v];
     const base: Mesociclo = { ...meso, variaveisTravadas: proximas.length ? proximas : undefined };
-    onChange?.(recalcularAlvosDoMeso(base, { objetivo: ctx.objetivo, nivel: ctx.nivel }));
+    onChange?.(
+      recalcularAlvosDoMeso(base, {
+        objetivo: ctx.objetivo,
+        nivel: ctx.nivel,
+        // Idade e FCrep: sem elas o recálculo devolvia um alvo despersonalizado.
+        idade: ctx.idade,
+        fcRepouso: ctx.fcRepouso,
+        // E o perfil de medicação: sem isto, travar uma variável ressuscitaria a zona de FC
+        // que o sistema decidiu que não guia este aluno.
+        parametrosInvalidos: parametrosInvalidosDe(ctx.farmacos, {
+          farmacosNaoInformado: ctx.farmacosNaoInformado,
+          grupos: [ctx.grupoEspecial, ...(ctx.condicoesAtencao ?? [])],
+        }),
+      }),
+    );
   };
 
   // "Registrar reavaliação": só quando o bloco pede reavaliação e o calendário já está

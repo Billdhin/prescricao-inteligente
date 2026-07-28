@@ -109,6 +109,11 @@ function alunoToRow(a: Aluno, userId: string) {
       // telefone e cobrança não têm coluna própria; vão no blob livre (sem migração).
       telefone: a.telefone,
       cobranca: a.cobranca,
+      // classes de medicação declaradas: mesmo precedente de telefone e cobrança, no blob
+      // livre e sem coluna nova (zero migração SQL). O blob não comporta dose nem esquema
+      // de uso porque o TIPO não comporta.
+      farmacos: a.farmacos,
+      farmacosNaoInformado: a.farmacosNaoInformado,
     },
   };
 }
@@ -144,6 +149,10 @@ function rowToAluno(r: Record<string, any>): Aluno {
     criterioProgressao: j.criterioProgressao,
     telefone: j.telefone ?? undefined,
     cobranca: j.cobranca ?? undefined,
+    // leitura simétrica das classes declaradas; linha antiga sem o campo segue como
+    // "não declarou" (undefined), que é o estado válido e não vira lista vazia.
+    farmacos: Array.isArray(j.farmacos) ? j.farmacos : undefined,
+    farmacosNaoInformado: j.farmacosNaoInformado ?? undefined,
   };
 }
 

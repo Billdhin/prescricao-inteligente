@@ -22,6 +22,7 @@ import { GraficoProgressao, MesocicloCard, ModeloExplicacao, type ContextoFaixa 
 import { cn } from "@/lib/utils";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { gerarPlano } from "@/lib/gps/periodizacao";
+import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
 import {
   getModelo,
   MODELOS_PERIODIZACAO,
@@ -104,6 +105,17 @@ export function PrescreverTreino() {
   // Regenerar por cima de um plano JÁ SALVO deste aluno (aberto via ?plano=) é destrutivo:
   // exige confirmação e REUTILIZA o id, senão o Salvar arquiva o plano editado e cria um
   // duplicado. Sem ?plano= (ex.: ?aluno=), gerar é sempre um plano novo.
+  // FCrep MEDIDA na avaliação mais recente do aluno selecionado. Vive aqui porque o editor
+  // também precisa dela: recalcular o alvo ao travar uma variável sem idade e sem FCrep era
+  // perda silenciosa, que a preservação da zona antiga mascarava.
+  const fcRepousoDoAluno = React.useMemo(
+    () =>
+      alunoId
+        ? avaliacoes.filter((a) => a.alunoId === alunoId).sort((a, b) => b.data - a.data)[0]?.medidas.fcRepouso
+        : undefined,
+    [alunoId, avaliacoes],
+  );
+
   const planoSalvoDoAluno = planoPre && planoPre.alunoId === alunoId ? planoPre : undefined;
   const execucoesEmRisco = React.useMemo(() => {
     if (!planoSalvoDoAluno) return false;
@@ -141,6 +153,15 @@ export function PrescreverTreino() {
       faseInicial: ctx.alunoId ? aluno?.faseJornada : undefined,
       idade: ctx.alunoId ? aluno?.idade : undefined,
       fcRepouso: ultimaAval?.medidas.fcRepouso,
+      // O perfil clínico mais as classes de medicação declaradas decidem se a frequência
+      // cardíaca ainda guia a intensidade deste aluno. Sem aluno (plano avulso) ou sem
+      // declaração, a lista sai vazia e o plano é o de sempre.
+      parametrosInvalidos: ctx.alunoId
+        ? parametrosInvalidosDe(aluno?.farmacos, {
+            farmacosNaoInformado: aluno?.farmacosNaoInformado,
+            grupos: [ctx.grupoEspecial, ...(aluno?.condicoesAtencao ?? [])],
+          })
+        : undefined,
     });
     return {
       // `uid()` e não o relógio: dois planos gerados no mesmo milissegundo receberiam o
@@ -423,6 +444,7 @@ export function PrescreverTreino() {
             premium={premium}
             aluno={aluno?.nome}
             alunoObj={aluno}
+            fcRepouso={fcRepousoDoAluno}
             prescricaoData={prescricaoData}
             podeSalvar={Boolean(aluno)}
             salvo={salvo}
@@ -535,6 +557,7 @@ function ResultadoPlano({
   premium,
   aluno,
   alunoObj,
+  fcRepouso,
   prescricaoData,
   podeSalvar,
   salvo,
@@ -547,6 +570,8 @@ function ResultadoPlano({
   aluno?: string;
   /** objeto do aluno (perfil) para a troca segura no editor; ausente = plano avulso */
   alunoObj?: Aluno;
+  /** FCrep MEDIDA na avaliação mais recente; o editor precisa dela para recalcular o alvo */
+  fcRepouso?: number;
   prescricaoData?: (id: string) => string | undefined;
   podeSalvar: boolean;
   salvo: boolean;
@@ -571,6 +596,13 @@ function ResultadoPlano({
     equipamentos: alunoObj?.equipamentos,
     grupoEspecial: alunoObj?.grupoEspecial ?? plano.grupoEspecial,
     condicoesAtencao: alunoObj?.condicoesAtencao,
+    // Classes declaradas, idade e FCrep viajam até o editor porque o recálculo ao travar uma
+    // variável precisa das três: sem elas, travar reconstruía o alvo sem a personalização e
+    // ainda preservava a zona antiga, que é a perda silenciosa que esta onda fecha.
+    farmacos: alunoObj?.farmacos,
+    farmacosNaoInformado: alunoObj?.farmacosNaoInformado,
+    idade: alunoObj?.idade,
+    fcRepouso,
     prescricaoData,
   };
 

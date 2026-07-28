@@ -21,6 +21,7 @@
 import { intervaloDe, unidade, type Intervalo } from "@/lib/gps/faixasParse";
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
+import type { ParamMonitorId } from "@/data/monitoringParameters";
 import type { Tendencia, TipoMicrociclo, VariavelTravavel } from "@/data/periodizacao";
 
 /** Os campos de alvo que o motor grava no bloco de força. Todos opcionais e dentro da faixa. */
@@ -52,6 +53,15 @@ export interface CtxAlvo {
   idade?: number;
   /** FC de repouso MEDIDA do aluno (bpm). Exigida pela zona de Karvonen; ausente = sem zona. */
   fcRepouso?: number;
+  /**
+   * Parâmetros de monitoramento que DEIXAM de guiar a intensidade neste aluno (o perfil clínico
+   * mais as classes de medicação declaradas decidem isso em src/lib/gps/farmacos.ts). Com
+   * "p-fc" na lista, a zona de frequência cardíaca simplesmente NÃO é calculada: o alvo cai no
+   * caminho honesto que já existia (duração mais percepção de esforço), em vez de corrigir a
+   * frequência cardíaca por um fator que nenhuma referência sustenta. Ausente/vazio = tudo
+   * guia como sempre, e o alvo é byte-idêntico ao de antes desta camada.
+   */
+  parametrosInvalidos?: ParamMonitorId[];
   /**
    * Variáveis TRAVADAS pelo profissional neste mesociclo (critérios 15/16, onda MP-6). Uma
    * variável travada não progride: o nível dela fica CONGELADO no patamar da primeira semana de
@@ -363,11 +373,15 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
     if (rpeIv) alvo.rpeAlvo = ponto(rpeIv, nivelInt, true);
   }
 
-  // Zona de FC: só com idade + FCrep medida. FCmax por Tanaka (regra aerobio-fcmax-estimada);
-  // a zona em bpm sai do percentual da FCmáx citado, personalizada pela FCmax do aluno; a
-  // percentFCRAlvo é a fração de reserva equivalente (Karvonen, regra aerobio-zona-karvonen),
-  // que usa a FCrep medida. Nenhum número novo: só o percentual já citado, a idade e a FCrep.
-  if (pctFCmaxIv && ctx.idade != null && ctx.fcRepouso != null) {
+  // Zona de FC: só com idade + FCrep medida E quando a frequência cardíaca ainda GUIA este
+  // aluno (ver parametrosInvalidos). FCmax por Tanaka (regra aerobio-fcmax-estimada); a zona em
+  // bpm sai do percentual da FCmáx citado, personalizada pela FCmax do aluno; a percentFCRAlvo é
+  // a fração de reserva equivalente (Karvonen, regra aerobio-zona-karvonen), que usa a FCrep
+  // medida. Nenhum número novo: só o percentual já citado, a idade e a FCrep. Quando a FC não
+  // guia, a zona não é corrigida por fator nenhum: ela simplesmente não entra, e o alvo segue
+  // por duração mais percepção de esforço, que é o caminho honesto que já existia.
+  const fcGuiaEsteAluno = !(ctx.parametrosInvalidos ?? []).includes("p-fc");
+  if (fcGuiaEsteAluno && pctFCmaxIv && ctx.idade != null && ctx.fcRepouso != null) {
     const fcMax = 208 - 0.7 * ctx.idade;
     const fcRep = ctx.fcRepouso;
     const fcr = fcMax - fcRep; // reserva de FC (Karvonen)

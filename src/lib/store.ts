@@ -581,9 +581,14 @@ export const useAlunos = create<AlunosState>()(
     //      obesidade recalcula pelo IMC da última avaliação (fallback conservador
     //      obesidade-grau-1 quando não há IMC) e hipertensão pela última PA (fallback
     //      hipertensao-estagio-1 sem PA). Nenhum registro pode apontar para slug morto.
+    // v15: o Aluno passa a poder declarar as CLASSES de medicação em uso (`farmacos`) e o
+    //      estado "não sei ou prefiro não informar" (`farmacosNaoInformado`). Aditivo e SEM
+    //      backfill de propósito: campo ausente é o estado válido "não declarou", que é
+    //      diferente de "nenhuma" (lista vazia) e de "não informou" (a flag). Inventar um
+    //      valor no backfill seria afirmar sobre o aluno algo que ninguém perguntou.
     {
       name: "pi-alunos",
-      version: 14,
+      version: 15,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.

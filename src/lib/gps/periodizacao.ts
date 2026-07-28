@@ -27,6 +27,7 @@ import {
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getSpecialGroup } from "@/data/specialGroups";
+import type { ParamMonitorId } from "@/data/monitoringParameters";
 import { alvoSemana, alvoAerobioSemana, objetivoDaSemana, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
 
 export interface GerarPlanoInput {
@@ -59,6 +60,14 @@ export interface GerarPlanoInput {
    */
   idade?: number;
   fcRepouso?: number;
+  /**
+   * Parâmetros de monitoramento que DEIXAM de guiar a intensidade neste aluno, vindos do perfil
+   * clínico mais as classes de medicação declaradas (`parametrosInvalidosDe`, em
+   * src/lib/gps/farmacos.ts). Com "p-fc" aqui, a zona de frequência cardíaca não é calculada e o
+   * bloco aeróbio explica por qual instrumento guiar. Ausente/vazio = plano byte-idêntico ao de
+   * antes desta camada.
+   */
+  parametrosInvalidos?: ParamMonitorId[];
 }
 
 export interface PlanoGerado {
@@ -168,6 +177,29 @@ export function doseForca(
 
 /* --------------------------------- Sessões da semana --------------------------------- */
 
+/**
+ * Explicação acrescentada à NOTA do bloco aeróbio (o campo `observacao`, que é onde vive a
+ * nota do bloco) quando a frequência cardíaca deixou de guiar a intensidade deste aluno. O
+ * texto de `intensidade` NÃO é reescrito: ele é a faixa citada da diretriz, lida pelo
+ * check:faixas, e continua valendo como referência ao lado.
+ *
+ * A frase não nomeia classe de medicação nem condição clínica de propósito: este bloco é
+ * impresso no documento que chega ao aluno, e o porquê clínico é assunto do profissional, no
+ * Prontuário. Ela diz o que fazer, que é o que muda a sessão.
+ */
+const NOTA_SEM_ZONA_FC =
+  "Neste plano a intensidade é guiada pela percepção de esforço e pelo teste da fala, e a zona de frequência cardíaca não entra: use esses dois no lugar dela.";
+
+/**
+ * `semFC` existe para a nota não se contradizer: a base sugere ajustar pelo recurso do
+ * equipamento, e a FCmáx da esteira é um desses recursos. Mandar usá-la na mesma nota que diz
+ * que a frequência cardíaca não guia seria pior que não explicar nada. Sem `semFC`, o texto é
+ * o mesmo; e sem "p-fc" invalidado, a nota sai byte-idêntica à de sempre.
+ */
+function notaAerobio(ctx: CtxAlvo, base: string, semFC: string = base): string {
+  return (ctx.parametrosInvalidos ?? []).includes("p-fc") ? `${semFC} ${NOTA_SEM_ZONA_FC}` : base;
+}
+
 function montarSessoes(
   objetivo: GpsObjetivo,
   nivel: Nivel,
@@ -211,8 +243,11 @@ function montarSessoes(
         duracao: doseAero.duracao,
         intensidade: doseAero.intensidade,
         recuperacao: "-",
-        observacao:
+        observacao: notaAerobio(
+          ctx,
           "Ajuste a intensidade pelo recurso do equipamento: FCmáx na esteira, watts na bike ou pace na corrida. Alternativa intervalada: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total.",
+          "Ajuste a intensidade pelo recurso do equipamento: watts na bike ou pace na corrida. Alternativa intervalada: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total.",
+        ),
         ...alvoAerobioSemana(doseAero, ctx),
       });
     }
@@ -249,8 +284,10 @@ function montarSessoes(
         duracao: doseAero.duracao,
         intensidade: doseAero.intensidade,
         recuperacao: "-",
-        observacao:
+        observacao: notaAerobio(
+          ctx,
           "Complemento aeróbio ao treino principal; o foco da sessão segue o objetivo. Guie a intensidade pelo teste da conversa e pela percepção de esforço.",
+        ),
         ...alvoAerobioSemana(doseAero, ctx),
       });
     }
@@ -279,6 +316,8 @@ interface DadosDoAlunoNoAlvo {
   idade?: number;
   /** FCrep MEDIDA, fecha a zona de Karvonen */
   fcRepouso?: number;
+  /** parâmetros que deixaram de guiar a intensidade neste aluno (ver src/lib/gps/farmacos.ts) */
+  parametrosInvalidos?: ParamMonitorId[];
 }
 
 function montarMicrociclos(
@@ -297,7 +336,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
   const semanasDeCargaNoMeso = comDeload ? Math.max(1, duracao - 1) : duracao;
@@ -316,6 +355,7 @@ function montarMicrociclos(
       objetivo,
       idade,
       fcRepouso,
+      parametrosInvalidos,
     };
     semanas.push({
       id: nid("mic"),
@@ -444,6 +484,7 @@ function montarMacrocicloGenerico(
       microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, {
         idade: input.idade,
         fcRepouso: input.fcRepouso,
+        parametrosInvalidos: input.parametrosInvalidos,
       }),
     });
   }
@@ -519,6 +560,7 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, {
         idade: input.idade,
         fcRepouso: input.fcRepouso,
+        parametrosInvalidos: input.parametrosInvalidos,
       }),
     });
   });

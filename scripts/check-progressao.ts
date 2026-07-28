@@ -377,7 +377,94 @@ function autoverificar(): string[] {
   return problemas;
 }
 
+/* -------------------- Supressão da zona de FC (camada de fármacos) -------------------- */
+
+/**
+ * O perfil clínico mais as classes de medicação declaradas podem decidir que a frequência
+ * cardíaca NÃO guia a intensidade deste aluno (`parametrosInvalidos`). Quando isso acontece, o
+ * caminho é SUPRIMIR a zona e cair no fallback honesto que já existe (duração mais percepção de
+ * esforço), e nunca corrigir a frequência cardíaca por um fator que referência nenhuma sustenta.
+ *
+ * Este bloco trava as duas metades da afirmação:
+ * 1. com "p-fc" invalidado, ZERO blocos com zonaFC ou percentFCRAlvo, a nota do bloco aeróbio
+ *    explica por qual instrumento guiar, e a dose de FORÇA fica intacta (suprimir a zona não
+ *    pode mexer no resto do plano);
+ * 2. sem o campo, a saída NÃO muda: a zona volta com os mesmos bpm, e um `parametrosInvalidos`
+ *    vazio produz um plano idêntico ao gerado sem o campo (aluno sem fármaco não paga nada
+ *    por esta camada existir).
+ */
+function planoSemIds(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(planoSemIds);
+  if (v && typeof v === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      if (k === "id") continue;
+      out[k] = planoSemIds(val);
+    }
+    return out;
+  }
+  return v;
+}
+
+function todosOsBlocos(macro: Macrociclo): BlocoSessao[] {
+  return macro.mesociclos.flatMap((m) => m.microciclos.flatMap((w) => w.sessoes.flatMap((s) => s.blocos)));
+}
+
+function verificarSupressaoDeFC(): string[] {
+  const problemas: string[] = [];
+  // Emagrecimento tem aeróbio de BASE em toda sessão, e idade + FCrep medida fazem a zona
+  // existir: é o caso em que a supressão é visível.
+  const base = { objetivo: "Emagrecimento" as GpsObjetivo, nivel: "Iniciante" as Nivel, semanas: 12, frequencia: FREQ, idade: 52, fcRepouso: 62 };
+
+  const comFC = gerarPlano(base);
+  const blocosComFC = todosOsBlocos(comFC.principal);
+  const zonasAntes = blocosComFC.filter((b) => b.zonaFC != null).length;
+  if (zonasAntes === 0)
+    problemas.push("o plano de referência (com idade e FCrep, sem parâmetro invalidado) deveria ter zona de FC, e não tem: o caso perdeu o sentido");
+
+  const semFC = gerarPlano({ ...base, parametrosInvalidos: ["p-fc"] });
+  const blocosSemFC = todosOsBlocos(semFC.principal);
+  const zonasDepois = blocosSemFC.filter((b) => b.zonaFC != null);
+  const reservasDepois = blocosSemFC.filter((b) => b.percentFCRAlvo != null);
+  if (zonasDepois.length)
+    problemas.push(`com "p-fc" invalidado, ${zonasDepois.length} bloco(s) ainda trazem zonaFC (ex.: ${zonasDepois[0].zonaFC})`);
+  if (reservasDepois.length)
+    problemas.push(`com "p-fc" invalidado, ${reservasDepois.length} bloco(s) ainda trazem percentFCRAlvo`);
+
+  const aerobiosSemFC = blocosSemFC.filter(ehAerobio);
+  const semExplicacao = aerobiosSemFC.filter((b) => !(b.observacao ?? "").includes("percepção de esforço"));
+  if (aerobiosSemFC.length === 0) problemas.push("o plano sem zona de FC não tem bloco aeróbio: nada a explicar, e o caso perdeu o sentido");
+  if (semExplicacao.length)
+    problemas.push(`${semExplicacao.length} bloco(s) aeróbio(s) suprimiram a zona sem explicar por qual instrumento guiar`);
+
+  // Suprimir a zona não pode mexer na dose de força nem no alvo de duração/esforço do aeróbio.
+  const forcaAntes = JSON.stringify(planoSemIds(blocosComFC.filter(ehForca)));
+  const forcaDepois = JSON.stringify(planoSemIds(blocosSemFC.filter(ehForca)));
+  if (forcaAntes !== forcaDepois) problemas.push("suprimir a zona de FC mudou a dose de FORÇA, e não deveria mexer em nada além do aeróbio");
+  const durAntes = blocosComFC.filter(ehAerobio).map((b) => `${b.duracaoAlvoMin}/${b.rpeAlvo}`).join(",");
+  const durDepois = aerobiosSemFC.map((b) => `${b.duracaoAlvoMin}/${b.rpeAlvo}`).join(",");
+  if (durAntes !== durDepois) problemas.push("suprimir a zona de FC mudou a duração-alvo ou o PSE-alvo do aeróbio, e não deveria");
+
+  // Aluno sem fármaco: lista vazia tem que produzir o MESMO plano que a ausência do campo.
+  const vazio = gerarPlano({ ...base, parametrosInvalidos: [] });
+  if (JSON.stringify(planoSemIds(vazio)) !== JSON.stringify(planoSemIds(comFC)))
+    problemas.push("gerar com parametrosInvalidos vazio mudou a saída: o caminho sem fármaco deixou de ser idêntico");
+
+  return problemas;
+}
+
 /* ----------------------------------- Execução ------------------------------------- */
+
+const falhaSupressao = verificarSupressaoDeFC();
+if (falhaSupressao.length) {
+  console.error("\n[check:progressao] SUPRESSÃO DA ZONA DE FC QUEBRADA:\n");
+  for (const p of falhaSupressao) console.error(`  - ${p}`);
+  console.error(
+    "\n  Quando a frequência cardíaca não guia este aluno, a zona SAI do plano e o alvo cai em duração" +
+      " mais percepção de esforço. Corrigir a FC por um fator seria inventar número clínico.\n",
+  );
+  process.exit(1);
+}
 
 const falhaAuto = autoverificar();
 if (falhaAuto.length) {
@@ -419,6 +506,9 @@ for (const objetivo of OBJETIVOS as GpsObjetivo[]) {
 const vermelhos = CRITERIOS.filter((c) => falhas.get(c.id)!.total > 0);
 
 console.log(`\n[check:progressao] autoverificação OK: o progressivo passa, o chapado reprova.`);
+console.log(
+  `[check:progressao] supressão da zona de FC OK: com "p-fc" invalidado nenhum bloco traz zona, a nota explica, e sem o campo a saída não muda.`,
+);
 console.log(`[check:progressao] ${planosAvaliados} macrociclos avaliados no cartesiano (objetivo x nível x grupo x semanas).\n`);
 
 if (!vermelhos.length) {
