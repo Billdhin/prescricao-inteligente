@@ -124,6 +124,8 @@ function ctxTrocaDe(ctx: ContextoFaixa): ContextoTroca {
     equipamentos: ctx.equipamentos ?? [...EQUIPAMENTOS],
     grupoEspecial: ctx.grupoEspecial,
     condicoesAtencao: ctx.condicoesAtencao,
+    farmacos: ctx.farmacos,
+    farmacosNaoInformado: ctx.farmacosNaoInformado,
   };
 }
 

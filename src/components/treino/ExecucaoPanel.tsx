@@ -8,7 +8,7 @@ import type { Execucao, SessaoFeedback } from "@/data/execucao";
 import type { Aluno, Avaliacao, Liberacao } from "@/data/alunos";
 import { ajustarCarga, faixaDeReps, incrementoDoExercicio, type AcaoCarga, type CtxSeguranca, type ModProgressaoAjuste } from "@/lib/gps/autorregulacao";
 import { renovarMicrociclo, aplicarRenovacao } from "@/lib/gps/renovarMicrociclo";
-import { modProgressaoDe } from "@/lib/gps/groupRules";
+import { modProgressaoDoPerfil } from "@/lib/gps/farmacos";
 import type { EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { rotuloFaixaPse, bandaPse, TINT_PSE } from "@/lib/pse";
 import { cn } from "@/lib/utils";
@@ -105,7 +105,13 @@ export function ExecucaoPanel({
 
   // Gate de segurança + modificador do perfil clínico do aluno (fonte única para as sugestões).
   const seg = ctxSeguranca(estadoSemaforo, ultimaAvaliacao);
-  const mod = aluno ? modProgressaoDe([aluno.grupoEspecial, ...(aluno.condicoesAtencao ?? [])]) : undefined;
+  const mod = aluno
+    ? modProgressaoDoPerfil({
+        grupos: [aluno.grupoEspecial, ...(aluno.condicoesAtencao ?? [])],
+        farmacos: aluno.farmacos,
+        farmacosNaoInformado: aluno.farmacosNaoInformado,
+      })
+    : undefined;
   const modPerfil: ModProgressaoAjuste | undefined = mod ? { pseTeto: mod.pseTeto, fatorIncremento: mod.fatorIncremento } : undefined;
 
   // Faixa de repetições por exercício (do primeiro bloco que o usa no plano).

@@ -80,6 +80,12 @@ function regraDaClasse(item: FarmacoCatalogoItem): GroupGpsRule | undefined {
     cuidados,
     penalidades: [],
     refs,
+    // o instrumento que sai de guia viaja DENTRO da regra, e não por um canal paralelo: assim
+    // quem só chama regraDoPerfil (a etapa 4 do Prescrever, a troca segura) recebe a mesma
+    // verdade que o gerador do plano recebe, sem ninguém precisar lembrar de perguntar.
+    monitoramento: fundirMonitoramento(
+      agem.map((c) => c.monitoramento).filter((m): m is EfeitoMonitoramento => Boolean(m)),
+    ),
   };
 }
 
@@ -177,14 +183,10 @@ function efeitoFailSafe(perfil: PerfilFarmacos): EfeitoMonitoramento | undefined
  */
 export function monitoramentoDoPerfil(perfil: PerfilFarmacos): EfeitoMonitoramento | undefined {
   const efeitos: EfeitoMonitoramento[] = [];
-  for (const f of farmacosAtivos(perfil.farmacos)) {
-    const item = itemDaClasse(f.classe);
-    if (!item) continue;
-    for (const c of item.consequencias) {
-      if (!agePorConduta(c) || !c.monitoramento) continue;
-      efeitos.push(c.monitoramento);
-    }
-  }
+  // fonte única: o que já viajou dentro da regra combinada. Ler daqui, e não do catálogo de
+  // novo, é o que garante que a etapa 4 e o gerador do plano nunca divirjam.
+  const daRegra = regraDoPerfil(perfil)?.monitoramento;
+  if (daRegra) efeitos.push(daRegra);
   const failSafe = efeitoFailSafe(perfil);
   if (failSafe) efeitos.push(failSafe);
   return fundirMonitoramento(efeitos);

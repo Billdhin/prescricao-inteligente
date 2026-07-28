@@ -9,6 +9,7 @@
 
 import type { GroupRuleInput } from "./engine";
 import type { RestricaoTag } from "./restricoes";
+import { fundirMonitoramento, type EfeitoMonitoramento } from "@/data/farmacos";
 
 /**
  * MODIFICADOR de progressão por perfil clínico (onda MP-6, critério 11): o quanto este grupo
@@ -44,6 +45,14 @@ export interface GroupGpsRule extends GroupRuleInput {
   refs?: string[];
   /** modificador de progressão do perfil (onda MP-6); ausente = progride no passo padrão */
   modProgressao?: ModProgressao;
+  /**
+   * Qual instrumento DEIXA de guiar a intensidade deste perfil e qual entra no lugar. Hoje
+   * nenhum grupo especial declara isto (a condição em si não invalida um parâmetro); quem
+   * declara são as classes de medicação, que produzem regras com esta mesma forma. O campo
+   * mora aqui, e não num tipo paralelo, para que a fusão de cuidados e a fusão de instrumento
+   * de monitoramento sejam a MESMA operação, e a ordem das fontes nunca mude o resultado.
+   */
+  monitoramento?: EfeitoMonitoramento;
 }
 
 export const groupGpsRules: Record<string, GroupGpsRule> = {
@@ -555,6 +564,9 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
     modProgressao: fundirModProgressao(
       rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),
     ),
+    monitoramento: fundirMonitoramento(
+      rules.map((r) => r.monitoramento).filter((m): m is EfeitoMonitoramento => Boolean(m)),
+    ),
   };
 }
 
@@ -592,10 +604,9 @@ export function fundirModProgressao(mods: ModProgressao[]): ModProgressao | unde
 }
 
 /**
- * Modificador de progressão combinado de um conjunto de grupos/condições do aluno (grupo especial
- * principal + condições de atenção). Fonte única para o ajuste e o tubo responsivo (onda MP-6).
+ * O modificador de progressão combinado de um aluno NÃO se pede aqui: peça a
+ * `modProgressaoDoPerfil` (src/lib/gps/farmacos.ts), que soma as condições clínicas e as classes
+ * de medicação declaradas na mesma fusão. A função `modProgressaoDe`, que só lia os grupos,
+ * saiu de propósito: com a camada de fármacos no ar, uma porta que ignora a medicação é uma
+ * porta que devolve um passo de carga desatualizado sem ninguém perceber.
  */
-export function modProgressaoDe(slugs: (string | undefined)[]): ModProgressao | undefined {
-  const validos = slugs.filter((s): s is string => Boolean(s));
-  return combineRules(validos)?.modProgressao;
-}

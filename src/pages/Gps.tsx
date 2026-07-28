@@ -40,7 +40,8 @@ import {
 } from "@/lib/gps/engine";
 import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
 import { criarRestricao, condicionaisPendentes, avaliarSeguranca, rotuloRestricao } from "@/lib/gps/restricoes";
-import { combineRules, type GroupGpsRule } from "@/lib/gps/groupRules";
+import { type GroupGpsRule } from "@/lib/gps/groupRules";
+import { regraDoPerfil } from "@/lib/gps/farmacos";
 import { recommendModalidades, type ModalidadeRec } from "@/lib/gps/modalidadeRules";
 import { modalidadeImagem, impactoTone } from "@/data/modalities";
 import { exercises } from "@/data/exercises";
@@ -154,8 +155,19 @@ export function Gps() {
     }
     return lista;
   }, [grupo, grupoLocked, condicoesExtras, grupoSlug, unlocked]);
-  // Cuidados combinados interligados ao ranqueamento (etapa 4 + motor)
-  const rule = React.useMemo(() => combineRules(condicoesAtivas), [condicoesAtivas]);
+  // Cuidados combinados interligados ao ranqueamento (etapa 4 + motor). As classes de medicação
+  // declaradas no perfil do aluno entram pela MESMA fusão das condições clínicas: contribuem
+  // cuidado e bibliografia, nunca um caminho próprio. Sem aluno vinculado (prescrição avulsa)
+  // não há medicação declarada, e o resultado é o mesmo `combineRules` de sempre.
+  const rule = React.useMemo(
+    () =>
+      regraDoPerfil({
+        grupos: condicoesAtivas,
+        farmacos: aluno?.farmacos,
+        farmacosNaoInformado: aluno?.farmacosNaoInformado,
+      }),
+    [condicoesAtivas, aluno?.farmacos, aluno?.farmacosNaoInformado],
+  );
 
   const [step, setStep] = React.useState(0);
   const [answers, setAnswers] = React.useState<GpsAnswers>(() => ({

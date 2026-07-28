@@ -15,9 +15,10 @@ import {
   type GpsObjetivo,
   type Recommendation,
 } from "@/lib/gps/engine";
-import { combineRules } from "@/lib/gps/groupRules";
+import { regraDoPerfil } from "@/lib/gps/farmacos";
 import type { Nivel } from "@/data/types";
 import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
+import type { FarmacoSelecionado } from "@/data/farmacos";
 
 export interface ContextoTroca {
   objetivo: GpsObjetivo;
@@ -27,6 +28,9 @@ export interface ContextoTroca {
   grupoEspecial?: string;
   /** grupos adicionais confirmados (Aluno.condicoesAtencao); combinam-se ao principal */
   condicoesAtencao?: string[];
+  /** classes de medicação declaradas; combinam-se às condições na mesma fusão de cuidados */
+  farmacos?: FarmacoSelecionado[];
+  farmacosNaoInformado?: boolean;
 }
 
 /**
@@ -43,10 +47,18 @@ export function sugerirTroca(ctx: ContextoTroca, alvo?: string): Recommendation[
     restricoes: ctx.restricoes ?? [],
     equipamentos: ctx.equipamentos ?? [],
   };
-  // Valida pelo COMBINADO: grupo principal + condições adicionais confirmadas.
+  // Valida pelo COMBINADO: grupo principal + condições adicionais confirmadas + as classes de
+  // medicação declaradas, que entram como mais uma fonte de cuidado na mesma fusão.
   const slugs = [ctx.grupoEspecial, ...(ctx.condicoesAtencao ?? [])].filter(
     (s): s is string => Boolean(s),
   );
-  const rule = slugs.length ? combineRules(slugs) : undefined;
+  const semPerfil = !slugs.length && !(ctx.farmacos ?? []).length;
+  const rule = semPerfil
+    ? undefined
+    : regraDoPerfil({
+        grupos: slugs,
+        farmacos: ctx.farmacos,
+        farmacosNaoInformado: ctx.farmacosNaoInformado,
+      });
   return rankExercises(exercises, answers, rule);
 }
