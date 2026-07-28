@@ -81,7 +81,7 @@ export const useUser = create<UserState>()(
       fotoDataUrl: "",
       logoDataUrl: "",
       corPrimaria: "",
-      paleta: "grafite",
+      paleta: "rota",
       modo: "claro",
       senhaHash: "",
       senhaSalt: "",
@@ -106,11 +106,17 @@ export const useUser = create<UserState>()(
     }),
     {
       name: "pi-user",
-      version: 1,
+      version: 2,
       // v1: fim do tier grátis. Quem estava em "free" vira "assinante".
+      // v2: a identidade "Rota" virou a do produto. A paleta era GRAVADA
+      //     explicitamente no perfil (nunca ficava indefinida), então sem este
+      //     remapeamento quem já usava o app continuaria em Grafite para
+      //     sempre. O modo claro/escuro é preservado: é escolha de conforto,
+      //     não de marca.
       migrate: (persisted) => {
         const p = (persisted ?? {}) as Partial<UserState>;
         if (!p.plan || (p.plan as string) === "free") p.plan = "assinante";
+        p.paleta = "rota";
         return p as UserState;
       },
     },

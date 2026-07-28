@@ -311,7 +311,7 @@ const PRESETS: { id: string; nome: string; hex: string }[] = [
 
 /** A Rota vem primeiro: é a identidade do produto; as geradas ficam atrás. */
 export const PALETAS: Paleta[] = [PALETA_ROTA, ...PRESETS.map((p) => paletaDeHex(p.id, p.nome, p.hex))];
-export const PALETA_PADRAO = "grafite";
+export const PALETA_PADRAO = "rota";
 export const MARCA_ID = "marca";
 
 /** Resolve a paleta por id; `marca` + corMarca gera a paleta da cor do perfil. */
