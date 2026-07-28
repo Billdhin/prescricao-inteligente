@@ -151,7 +151,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     ],
     referencia:
       "Uso de tendência de FC conforme diretrizes de prescrição de exercício (ex.: ACSM, edição vigente). Faixas-alvo devem ser validadas com a diretriz do seu contexto.",
-    refIds: ["acsm-getp11", "garber-2011"],
+    refIds: ["acsm-getp11", "garber-2011", "mitchell-betabloq-2019", "wonisch-betabloq-2003"],
   },
   {
     id: "p-pa",

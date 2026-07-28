@@ -476,6 +476,81 @@ export const referencias: Referencia[] = [
     doi: "10.1177/0363546507307505",
     nota: "Ensaio randomizado (n=532, corredores novatos): um programa graduado seguindo a regra dos 10% por semana não reduziu lesões (20,8% contra 20,3%). Base para tratar os 10% por semana como partida prudente, nunca como número comprovado de prevenção.",
   },
+
+  /* ---- Camada de fármacos: o que muda na LEITURA do treino quando há medicação em uso ----
+     Sete entradas verificadas no PubMed (onda F1). Regra editorial destas notas: o sujeito da
+     frase é a resposta, o parâmetro ou o grupo do ensaio, nunca o fármaco, e a nota transcreve
+     o achado e diz como o produto o aplica. Descrever o protocolo do ensaio (quantidade e
+     duração do braço ativo) é descrição científica legítima e fica restrita a este arquivo:
+     o catálogo em src/data/farmacos.ts não comporta nada disso, por construção.
+     Guardrail: scripts/check-farmacos.ts (npm run check:farmacos). */
+  {
+    id: "mitchell-betabloq-2019",
+    autores: "Mitchell BL, Davison K, Parfitt G, Spedding S, Eston RG",
+    titulo: "Physiological and Perceived Exertion Responses during Exercise: Effect of Beta-blockade",
+    fonte: "Medicine and Science in Sports and Exercise, 51(4):782-791",
+    ano: 2019,
+    doi: "10.1249/MSS.0000000000001845",
+    nota: "Ensaio duplo-cego randomizado contrabalançado com 16 participantes saudáveis, metoprolol contra placebo, em teste incremental máximo na esteira. Sob betabloqueio, a frequência cardíaca e o consumo de oxigênio foram significativamente menores no limiar ventilatório, no ponto de compensação respiratória e no máximo; padronizados pelos picos da própria condição, essas diferenças desaparecem. A percepção de esforço foi discretamente maior no limiar ventilatório sob betabloqueio (12,9 contra 12,3) e menor no máximo (19,1 contra 19,4), e o aumento da percepção de esforço em relação à frequência cardíaca foi maior sob betabloqueio. Conclusão dos autores: para uma dada intensidade relativa a percepção de esforço permaneceu inalterada, a relação entre percepção de esforço e consumo de oxigênio não foi afetada, e a percepção de esforço é medida útil e confiável para teste e prescrição em quem usa betabloqueador. É a base de o produto trocar o instrumento que guia a intensidade (percepção de esforço e teste da fala no lugar da frequência cardíaca) SEM baixar o teto de esforço.",
+  },
+  {
+    id: "wonisch-betabloq-2003",
+    autores: "Wonisch M, Hofmann P, Fruhwald FM, Kraxner W, Hodl R, Pokan R, Klein W",
+    titulo: "Influence of beta-blocker use on percentage of target heart rate exercise prescription",
+    fonte: "European Journal of Cardiovascular Prevention and Rehabilitation, 10(4):296-301",
+    ano: 2003,
+    doi: "10.1097/00149831-200308000-00013",
+    nota: "Ensaio duplo-cego cruzado com 10 homens saudáveis, bisoprolol contra placebo por 2 semanas, em teste cardiopulmonar até a exaustão. O consumo de oxigênio, a potência e a percepção de esforço nos limiares e no máximo não diferiram entre as condições; a frequência cardíaca foi significativamente menor em repouso e em todos os pontos de esforço, e os percentuais de frequência cardíaca máxima nos limiares se deslocaram. Conclusão dos autores: a prescrição por percentual de frequência cardíaca máxima ou de reserva tem acurácia limitada em quem usa betabloqueador, e eles sugerem como substituto o percentual de consumo máximo de oxigênio, o percentual de carga máxima ou a percepção de esforço. Amostra pequena e apenas homens saudáveis: o produto usa o achado para TROCAR de instrumento, nunca para corrigir a frequência cardíaca por um fator.",
+  },
+  {
+    id: "lilja-aine-2018",
+    autores: "Lilja M, Mandic M, Apro W, Melin M, Olsson K, Rosenborg S, Gustafsson T, Lundberg TR",
+    titulo:
+      "High doses of anti-inflammatory drugs compromise muscle strength and hypertrophic adaptations to resistance training in young adults",
+    fonte: "Acta Physiologica (Oxford), 222(2):e12948",
+    ano: 2018,
+    doi: "10.1111/apha.12948",
+    nota: "Ensaio com adultos saudáveis de 18 a 35 anos e 8 semanas de treino supervisionado de extensão de joelho, comparando ibuprofeno em dose máxima de balcão (15 pessoas) com ácido acetilsalicílico em dose baixa (16 pessoas). O aumento de volume do quadríceps foi maior no grupo de dose baixa (7,5% contra 3,7%). Precisão que não pode ser perdida na leitura: na perna de treino convencional a força melhorou de forma semelhante nos dois grupos (11 a 20%), e foi na perna do ergômetro inercial que os ganhos foram geralmente maiores no grupo de dose baixa. População jovem e saudável buscando maximizar hipertrofia, diferente do aluno que usa o medicamento por uma condição sob prescrição: o produto trata o achado como expectativa de adaptação, restrita à teoria, e nunca como motivo para mudar a conduta do treino.",
+  },
+  {
+    id: "parker-estatina-2013",
+    autores:
+      "Parker BA, Capizzi JA, Grimaldi AS, Clarkson PM, Cole SM, Keadle J, Chipkin S, Pescatello LS, Simpson K, White CM, Thompson PD",
+    titulo: "Effect of statins on skeletal muscle function",
+    fonte: "Circulation, 127(1):96-103",
+    ano: 2013,
+    doi: "10.1161/CIRCULATIONAHA.112.136101",
+    nota: "Estudo STOMP: 420 adultos saudáveis sem uso prévio da classe, atorvastatina em dose alta por 6 meses contra placebo, cego e controlado. Nenhum valor individual de creatina quinase passou de 10 vezes o limite normal, embora a creatina quinase média tenha subido. Não houve mudança significativa em várias medidas de força nem na capacidade de exercício. Mais participantes do braço ativo desenvolveram mialgia (19 contra 10, P=0,05). Aplicação no produto: queixa muscular nova é sinal de REGISTRAR e ENCAMINHAR, nunca de reduzir carga por conta própria, já que força e capacidade de exercício não pioraram no ensaio.",
+  },
+  {
+    id: "mikus-estatina-2013",
+    autores:
+      "Mikus CR, Boyle LJ, Borengasser SJ, Oberlin DJ, Naples SP, Fletcher J, Meers GM, Ruebel M, Laughlin MH, Dellsperger KC, Fadel PJ, Thyfault JP",
+    titulo: "Simvastatin impairs exercise training adaptations",
+    fonte: "Journal of the American College of Cardiology, 62(8):709-714",
+    ano: 2013,
+    doi: "10.1016/j.jacc.2013.02.074",
+    nota: "Ensaio com 37 adultos sedentários com sobrepeso ou obesidade e ao menos 2 fatores de risco de síndrome metabólica, 12 semanas de treino aeróbio com ou sem sinvastatina. A aptidão cardiorrespiratória subiu 10% no grupo só com treino e 1,5% no grupo com treino e sinvastatina; a citrato sintase muscular subiu 13% no primeiro e caiu 4,5% no segundo. Amostra pequena, ensaio único e uma única estatina: o produto declara essa expectativa de adaptação como PENDENTE e a mantém fora da tela de sessão e do Prontuário, porque o desfecho ruim de divulgá-la como fato é o aluno interromper por conta própria o que foi prescrito.",
+  },
+  {
+    id: "lundgren-glp1-2021",
+    autores: "Lundgren JR, Janus C, Jensen SBK, Juhl CR, Olsen LM, Christensen RM, e col.",
+    titulo: "Healthy Weight Loss Maintenance with Exercise, Liraglutide, or Both Combined",
+    fonte: "The New England Journal of Medicine, 384(18):1719-1730",
+    ano: 2021,
+    doi: "10.1056/NEJMoa2028198",
+    nota: "Ensaio com 195 adultos com obesidade e sem diabetes, acompanhados por 1 ano após 8 semanas de dieta de baixa caloria, em quatro braços (exercício, liraglutida, combinação e placebo). Todas as estratégias ativas superaram o placebo na perda de peso. A combinação reduziu o percentual de gordura em 3,9 pontos, contra 1,7 do exercício isolado e 1,9 do braço com o fármaco isolado, e apenas a combinação melhorou a hemoglobina glicada, a sensibilidade à insulina e a aptidão cardiorrespiratória. Base para MANTER o treino no plano durante a perda de peso, em vez de reduzi-lo. O estudo não sustenta nenhum número de massa magra.",
+  },
+  {
+    id: "konopka-metformina-2019",
+    autores:
+      "Konopka AR, Laurin JL, Schoenberg HM, Reid JJ, Castor WM, Wolff CA, Musci RV, Safairad OD, Linden MA, Biela LM, Bailey SM, Hamilton KL, Miller BF",
+    titulo: "Metformin inhibits mitochondrial adaptations to aerobic exercise training in older adults",
+    fonte: "Aging Cell, 18(1):e12880",
+    ano: 2019,
+    doi: "10.1111/acel.12880",
+    nota: "Ensaio duplo-cego com 53 adultos por volta dos 62 anos, alocados em placebo (26) ou metformina (27) durante 12 semanas de treino aeróbio. Independente do tratamento, o treino reduziu a massa gorda e melhorou marcadores glicêmicos. No grupo com metformina, o ganho de sensibilidade à insulina e de VO2 máximo foi menor, e não houve mudança geral de sensibilidade à insulina porque conviveram respondedores positivos e negativos: a variabilidade é o achado. Base para declarar a classe sem cravar nenhum número e para tratar a resposta individual medida no aluno como o dado que importa.",
+  },
 ];
 
 export function getReferencia(id: string) {
