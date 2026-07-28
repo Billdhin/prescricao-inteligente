@@ -31,6 +31,35 @@ const PARES = [
   ["analysis", "surface", 4.5],
   ["on-primary", "primary", 4.5], ["on-analysis", "analysis", 4.5],
   ["danger-fill", "surface", 3], ["primary", "surface", 3],
+  /* Tokens da direção "1c Rota". */
+  ["on-analysis-fill", "analysis-fill", 4.5],
+  ["ink", "surface-mute", 4.5], ["ink-2", "surface-mute", 4.5],
+  ["danger-fill", "bg", 3],
+];
+
+/*
+ * DECORATIVOS: turquesa vivo da marca (#14B3BA, 2,52:1 sobre papel) e cinza de
+ * traço (#9AA1AC, 2,56:1). Os dois REPROVAM o 3:1 de UI e estão aqui de
+ * propósito, com a régua que de fato se aplica a eles.
+ *
+ * Por que não escurecer até passar: são as cores do logo e do traçado
+ * aprovadas pelo fundador; mexer nelas descaracteriza a marca.
+ *
+ * Por que isso não vira problema de acessibilidade: o WCAG 1.4.11 exige 3:1 de
+ * objeto gráfico que CARREGUE informação sozinho. Aqui nenhum dos dois carrega:
+ * o Design System manda "estado nunca só por cor (forma + rótulo)", então a
+ * parada feita da rota é turquesa E preenchida E rotulada, a futura é
+ * tracejada, e a atual é o pino azul (#2064EC, que passa). Quem escreve em
+ * turquesa usa `analysis` (#0C6B70, 6,17:1), nunca o fill.
+ *
+ * Os dois controles que substituem o 3:1, e que são mais fortes porque olham o
+ * USO e não o par: a regra `token-nao-textual` do check:design proíbe
+ * `text-analysis-fill` e `text-ink-4`, e o piso abaixo impede que uma edição
+ * futura deixe qualquer um deles invisível no papel.
+ */
+const DECORATIVOS = [
+  ["analysis-fill", "surface", 1.5],
+  ["ink-4", "surface", 1.5],
 ];
 
 const falhas = [];
@@ -38,18 +67,20 @@ for (const paleta of PALETAS) {
   for (const escuro of [false, true]) {
     const t = tokensDe(paleta, escuro);
     const modo = escuro ? "escuro" : "claro";
-    for (const [fg, bg, min] of PARES) {
+    for (const [fg, bg, min] of [...PARES, ...DECORATIVOS]) {
       const cfg = fg === "white" ? WHITE : t[fg];
       const cbg = bg === "white" ? WHITE : t[bg];
       const r = ratio(cfg, cbg);
-      if (r < min) {
+      // O `+1e-9` existe porque o par que dá exatamente 4,4999 imprime "4.50" e
+      // reprovaria, fazendo a mensagem de erro mentir para quem depura.
+      if (r + 1e-9 < min) {
         falhas.push(`${paleta.id}/${modo}: ${fg}(${cfg}) sobre ${bg}(${cbg}) = ${r.toFixed(2)} < ${min}`);
       }
     }
   }
 }
 
-console.log(`[check:contraste] ${PALETAS.length} paletas × 2 modos × ${PARES.length} pares.`);
+console.log(`[check:contraste] ${PALETAS.length} paletas × 2 modos × ${PARES.length} pares + ${DECORATIVOS.length} decorativos.`);
 if (falhas.length) {
   console.error(`\n[check:contraste] FALHOU: ${falhas.length} par(es) abaixo do AA:\n`);
   for (const f of falhas) console.error("  • " + f);

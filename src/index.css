@@ -99,6 +99,17 @@
   --analysis-tint: #e0f7f9;  --analysis-tint-rgb: 224 247 249;
   --danger-tint: #fdecec;    --danger-tint-rgb: 253 236 236;
   --data-intensidade: #9a4f2e; /* dado (curva de intensidade); não temável, uso pontual */
+
+  /* Tokens da direção "1c Rota". Neste :root de primeiro paint eles espelham a
+     paleta ATUAL (Grafite claro), porque o ThemeApplier troca tudo em runtime;
+     o que importa aqui é que a variável exista para o CSS não quebrar antes de
+     o tema montar. Quando a Rota virar padrão, este bloco espelha a Rota. */
+  --analysis-fill: #0e7c8a;      --analysis-fill-rgb: 14 124 138;
+  --on-analysis-fill: #ffffff;   --on-analysis-fill-rgb: 255 255 255;
+  --ink-4: #5b6472;              --ink-4-rgb: 91 100 114;
+  --surface-mute: #f1f2f3;       --surface-mute-rgb: 241 242 243;
+  --brand-blue: #2064ec;         --brand-blue-rgb: 32 100 236;
+  --brand-turquesa: #14b3ba;     --brand-turquesa-rgb: 20 179 186;
 }
 
 html,

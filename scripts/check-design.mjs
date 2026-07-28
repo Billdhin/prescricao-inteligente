@@ -89,6 +89,17 @@ const REGRAS = [
     re: /Mais escolhido/g,
   },
   {
+    // O erro mais provável dos próximos meses, e o único que o check:contraste
+    // NÃO pega: ele valida o par declarado, não onde o token foi usado.
+    // O turquesa vivo (#14B3BA) é a cor mais bonita da paleta e dá 2,52:1 como
+    // texto; o cinza de traço (#9AA1AC) dá 2,56. Quem precisa ESCREVER em
+    // turquesa usa text-analysis (#0C6B70, 6,17:1); quem precisa de cinza de
+    // texto usa text-ink-2.
+    id: "token-nao-textual",
+    desc: "analysis-fill, ink-4 e brand-* são de PREENCHIMENTO; como texto reprovam AA. Use text-analysis ou text-ink-2.",
+    re: /\btext-(?:analysis-fill|ink-4|brand-blue|brand-turquesa)\b/g,
+  },
+  {
     id: "piso-tipografico",
     desc: "text-[≤11px] fora de SVG; o piso é text-2xs. Abaixo disso, só dentro de <svg>.",
     re: /text-\[(?:9|10|10\.5|11)px\]/g,

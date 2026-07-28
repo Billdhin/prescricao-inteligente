@@ -21,6 +21,17 @@ export type Modo = "claro" | "escuro" | "sistema";
 export interface PaletaCore {
   bg: string; surface: string; surfaceSoft: string; border: string;
   ink: string; ink2: string; ink3: string; primary: string; primaryTint: string;
+  /**
+   * Quarto nível de superfície (chip, trilho de progresso, fundo de campo). As
+   * paletas geradas não têm: caem em `surfaceSoft` e ficam idênticas ao de
+   * antes. Só a "Rota" declara, porque o design tem quatro degraus de papel.
+   */
+  surfaceMute?: string;
+  /**
+   * Cinza DECORATIVO: traço de ícone, tracejado da rota, régua. Nunca texto.
+   * Ausente = cai em `ink3`. O guardrail token-nao-textual proibe usa-lo como cor de texto.
+   */
+  ink4?: string;
 }
 
 export interface Compartilhado {
@@ -29,11 +40,30 @@ export interface Compartilhado {
   success: string; warning: string; danger: string; dangerFill: string;
   successTint: string; warningTint: string; ctaTint: string; analysisTint: string; dangerTint: string;
   dataIntensidade: string;
+  /**
+   * Turquesa VIVO da marca (#14B3BA na Rota): bolinha da rota feita, ícone de
+   * check, gradiente do avatar. Dá 2,52:1 sobre papel, então é preenchimento e
+   * nunca texto; quem escreve em turquesa usa `analysis`, que é mais escuro.
+   * Ausente = cai em `analysis`, e as paletas antigas não mudam de aparência.
+   */
+  analysisFill?: string;
+  /** o que vai POR CIMA do turquesa vivo (ink na Rota; branco daria 2,57) */
+  onAnalysisFill?: string;
+  /** cores fixas do logo, para o gradiente da marca. Não seguem a paleta. */
+  brandBlue?: string;
+  brandTurquesa?: string;
 }
 
 export interface Paleta {
   id: string; nome: string; amostra: string;
   claro: PaletaCore; escuro: PaletaCore;
+  /**
+   * Acentos e semânticas PRÓPRIOS desta paleta. Ausentes = usa os
+   * compartilhados, que é o caso das 12 geradas. A "Rota" declara os seus
+   * porque o design fixa a família inteira, não só a primária.
+   */
+  compartClaro?: Compartilhado;
+  compartEscuro?: Compartilhado;
 }
 
 /* ----------------------------- cor: utilidades ---------------------------- */
@@ -156,6 +186,113 @@ export function paletaDeHex(id: string, nome: string, hex: string): Paleta {
   return { id, nome, amostra: hex, claro: gerarCore(hex, false), escuro: gerarCore(hex, true) };
 }
 
+/* ------------------------- a paleta autorada "Rota" ----------------------- */
+
+/**
+ * A identidade da direção "1c Rota", aprovada pelo fundador no Design System.
+ *
+ * É AUTORADA, não gerada: `gerarCore()` deriva os neutros de UMA matiz e sempre
+ * devolve `surface: "#ffffff"`, e o design pede neutros QUENTES desacoplados da
+ * primária (papel #FFFDF9 com azul frio #2064EC) mais uma SEGUNDA matiz de
+ * marca (o turquesa). Nenhuma das duas coisas cabe no gerador, que continua
+ * existindo para o white-label "Minha marca".
+ *
+ * Seis valores literais do mockup reprovariam AA e foram DERIVADOS, com a razão
+ * medida ao lado. Trocar qualquer um deles sem rodar `npm run check:contraste`
+ * é como o produto perde acessibilidade sem ninguém perceber.
+ */
+const ROTA_CLARO: PaletaCore = {
+  bg: "#F7F6F2",
+  surface: "#FFFDF9",
+  surfaceSoft: "#F0EFE9",
+  surfaceMute: "#EEECE5",
+  border: "#E8E6DF",
+  ink: "#17202E",
+  // literal do design era #6A7180, que dá 4,14 sobre surface-soft. Escurecer
+  // ~5% de L é imperceptível e sobe para 4,87.
+  ink2: "#616874",
+  ink3: "#616874",
+  // o #9AA1AC do design dá 2,56 como texto: é cinza decorativo, e vive aqui.
+  ink4: "#9AA1AC",
+  primary: "#2064EC",
+  primaryTint: "#EEF3FE",
+};
+
+const ROTA_ESCURO: PaletaCore = {
+  bg: "#0A0D14",
+  surface: "#0D1524",
+  surfaceSoft: "#1A2537",
+  surfaceMute: "#232F45",
+  border: "#2A3648",
+  ink: "#F2F6FC",
+  ink2: "#9DB2D6",
+  ink3: "#9DB2D6",
+  ink4: "#6E819F",
+  primary: "#7FA3EF",
+  primaryTint: "#16233C",
+};
+
+const ROTA_COMPART_CLARO: Compartilhado = {
+  onPrimary: "#ffffff",
+  onAnalysis: "#ffffff",
+  // o turquesa da marca (#14B3BA) dá 2,52 sobre papel: NÃO é cor de texto.
+  // Quem escreve usa este tom escuro, que é literal do mockup e dá 6,17.
+  analysis: "#0C6B70",
+  analysisText: "#0C6B70",
+  analysisTint: "#E0F5F4",
+  analysisFill: "#14B3BA",
+  onAnalysisFill: "#17202E",
+  // a família coral (cta) não existe no design novo: por ora é ALIAS do âmbar,
+  // então tudo compila e nada muda de significado. O codemod apaga depois.
+  cta: "#8E6009",
+  ctaText: "#8E6009",
+  ctaTint: "#FBF1DC",
+  success: "#177A4C",
+  successTint: "#E3F4EA",
+  // #96650A sobre a tint dá 4,4999 e reprovaria por arredondamento.
+  warning: "#8E6009",
+  warningTint: "#FBF1DC",
+  danger: "#C0361F",
+  dangerTint: "#FCEAE6",
+  dangerFill: "#E2543E",
+  dataIntensidade: "#8E6009",
+  brandBlue: "#2064EC",
+  brandTurquesa: "#14B3BA",
+};
+
+const ROTA_COMPART_ESCURO: Compartilhado = {
+  onPrimary: "#0A0D14",
+  onAnalysis: "#0A0D14",
+  analysis: "#9FDCD8",
+  analysisText: "#9FDCD8",
+  analysisTint: "#123239",
+  analysisFill: "#14B3BA",
+  onAnalysisFill: "#06231F",
+  cta: "#E6B03C",
+  ctaText: "#E6B03C",
+  ctaTint: "#322510",
+  success: "#3ECF8E",
+  successTint: "#10301F",
+  warning: "#E6B03C",
+  warningTint: "#322510",
+  danger: "#FF9D8C",
+  dangerTint: "#331717",
+  dangerFill: "#E2543E",
+  dataIntensidade: "#E6B03C",
+  brandBlue: "#2064EC",
+  brandTurquesa: "#14B3BA",
+};
+
+export const PALETA_ROTA: Paleta = {
+  id: "rota",
+  nome: "Rota",
+  amostra: "#2064EC",
+  claro: ROTA_CLARO,
+  escuro: ROTA_ESCURO,
+  compartClaro: ROTA_COMPART_CLARO,
+  compartEscuro: ROTA_COMPART_ESCURO,
+};
+
 /** Presets: uma boa gama de matizes. "Minha marca" é gerada da cor do perfil. */
 const PRESETS: { id: string; nome: string; hex: string }[] = [
   { id: "grafite", nome: "Grafite", hex: "#3a4a72" },
@@ -172,7 +309,8 @@ const PRESETS: { id: string; nome: string; hex: string }[] = [
   { id: "ardosia", nome: "Ardósia", hex: "#4a5568" },
 ];
 
-export const PALETAS: Paleta[] = PRESETS.map((p) => paletaDeHex(p.id, p.nome, p.hex));
+/** A Rota vem primeiro: é a identidade do produto; as geradas ficam atrás. */
+export const PALETAS: Paleta[] = [PALETA_ROTA, ...PRESETS.map((p) => paletaDeHex(p.id, p.nome, p.hex))];
 export const PALETA_PADRAO = "grafite";
 export const MARCA_ID = "marca";
 
@@ -181,7 +319,10 @@ export function getPaleta(id?: string, corMarca?: string): Paleta {
   if (id === MARCA_ID && corMarca && /^#[0-9a-fA-F]{6}$/.test(corMarca)) {
     return paletaDeHex(MARCA_ID, "Minha marca", corMarca);
   }
-  return PALETAS.find((p) => p.id === id) ?? PALETAS[0];
+  // Fallback pelo PADRÃO, não por PALETAS[0]: a Rota passou a ser o primeiro
+  // item da lista (é a identidade do produto) e um `?? PALETAS[0]` faria id
+  // desconhecido cair nela antes da hora, mudando o tema de quem já escolheu.
+  return PALETAS.find((p) => p.id === id) ?? PALETAS.find((p) => p.id === PALETA_PADRAO) ?? PALETAS[0];
 }
 
 /* ------------------------------ aplicação ------------------------------- */
@@ -193,13 +334,24 @@ export function hexParaCanais(hex: string): string {
 
 export function tokensDe(paleta: Paleta, escuro: boolean): Record<string, string> {
   const core = escuro ? paleta.escuro : paleta.claro;
-  const comp = escuro ? COMPART_ESCURO : COMPART_CLARO;
+  // Acento próprio da paleta quando ela declara (a Rota declara); senão o
+  // compartilhado, que é o que mantém as 12 geradas idênticas ao de antes.
+  const comp = escuro
+    ? paleta.compartEscuro ?? COMPART_ESCURO
+    : paleta.compartClaro ?? COMPART_CLARO;
   return {
     bg: core.bg, surface: core.surface, "surface-soft": core.surfaceSoft, border: core.border,
-    ink: core.ink, "ink-2": core.ink2, "ink-3": core.ink3,
+    // Tokens novos com fallback: paleta sem quarto degrau de papel usa o
+    // terceiro, e sem cinza decorativo usa o ink-3. Ninguém muda de aparência.
+    "surface-mute": core.surfaceMute ?? core.surfaceSoft,
+    ink: core.ink, "ink-2": core.ink2, "ink-3": core.ink3, "ink-4": core.ink4 ?? core.ink3,
     primary: core.primary, "primary-tint": core.primaryTint,
     "on-primary": comp.onPrimary, "on-analysis": comp.onAnalysis,
     analysis: comp.analysis, "analysis-text": comp.analysisText,
+    "analysis-fill": comp.analysisFill ?? comp.analysis,
+    "on-analysis-fill": comp.onAnalysisFill ?? comp.onAnalysis,
+    "brand-blue": comp.brandBlue ?? core.primary,
+    "brand-turquesa": comp.brandTurquesa ?? comp.analysis,
     cta: comp.cta, "cta-text": comp.ctaText,
     success: comp.success, warning: comp.warning, danger: comp.danger, "danger-fill": comp.dangerFill,
     "success-tint": comp.successTint, "warning-tint": comp.warningTint,
