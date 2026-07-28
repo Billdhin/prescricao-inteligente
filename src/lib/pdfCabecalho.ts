@@ -7,39 +7,41 @@
  * (6px, gradiente da matiz do profissional).
  *
  * O documento impresso não tem as variáveis CSS da tela: as cores entram
- * literais e a matiz vem sempre de `corMarca || "#1b4b66"` (petróleo do produto).
+ * literais, e todas saem do mapa de `pdfCores` (derivado da paleta da identidade
+ * no modo claro). A matiz vem sempre de `corMarca || CORES_PDF.marca`.
  */
 import { carimboRcdPdf, espinhaCuidadoPdf } from "@/lib/pdfSelo";
+import { CORES_PDF } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 /**
- * Régua da marca. No padrão (petróleo) é o gradient-brand oficial da tela
- * (petróleo → teal); com marca branca própria, a mesma matiz clareando à direita,
+ * Régua da marca. No padrão é o gradient-brand oficial da tela (azul da marca →
+ * turquesa da marca); com marca branca própria, a mesma matiz clareando à direita,
  * para não impor a cor do produto sobre a do profissional.
  */
 function reguaMarca(cor: string) {
-  return cor.toLowerCase() === "#1b4b66"
-    ? "linear-gradient(90deg,#1b4b66 0%,#0e7c8a 100%)"
+  return cor.toLowerCase() === CORES_PDF.marca.toLowerCase()
+    ? `linear-gradient(90deg,${CORES_PDF.marca} 0%,${CORES_PDF.marcaGradFim} 100%)`
     : `linear-gradient(90deg,${cor} 0%,${cor}bf 100%)`;
 }
 
 /** CSS do cabeçalho unificado + régua. Injetar dentro do <style> do documento. */
-export function cabecalhoCss(cor = "#1b4b66") {
+export function cabecalhoCss(cor = CORES_PDF.marca) {
   return `
     .brand { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 12px; }
     .brand .brand-id { display: flex; align-items: center; gap: 12px; }
     .brand .prof { font-size: 20px; font-weight: 800; color: ${cor}; line-height: 1.15; }
     .brand .cref { font-size: 12px; font-weight: 700; color: ${cor}; }
-    .brand .sub { font-size: 12px; color: #64748b; }
+    .brand .sub { font-size: 12px; color: ${CORES_PDF.ink2}; }
     .brand .brand-selo { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; text-align: right; }
     .regua { height: 6px; border-radius: 999px; background: ${reguaMarca(cor)}; margin: 0 0 4px; }
   `;
 }
 
 export interface CabecalhoOpts {
-  /** matiz de acento (default: petróleo do produto) */
+  /** matiz de acento (default: a cor da marca do produto) */
   cor?: string;
   logoDataUrl?: string;
   /** altura do logo em px (default 40) */
@@ -57,13 +59,13 @@ export interface CabecalhoOpts {
   direita?: string;
   /** cor do nome, quando diferente do acento (ex.: prontuário usa ink) */
   nomeCor?: string;
-  /** cor da espinha, quando diferente do acento (ex.: sempre petróleo) */
+  /** cor da espinha, quando diferente do acento (ex.: sempre a cor da marca) */
   espinhaCor?: string;
 }
 
 /** HTML do cabeçalho + régua. Estrutura idêntica nos 6 documentos. */
 export function cabecalhoHtml(o: CabecalhoOpts) {
-  const cor = o.cor ?? "#1b4b66";
+  const cor = o.cor ?? CORES_PDF.marca;
   const carimbo = o.carimbo ?? carimboRcdPdf(cor);
   return `
   <div class="brand">

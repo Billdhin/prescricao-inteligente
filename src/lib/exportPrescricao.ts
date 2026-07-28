@@ -6,6 +6,7 @@ import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
+import { CORES_PDF as C } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -94,34 +95,34 @@ export function exportPrescricaoPDF({
     : "nenhuma";
 
   // Cor de acento do documento: a cor da marca do profissional, senão a do produto.
-  const cor = marca?.corPrimaria || "#1b4b66";
+  const cor = marca?.corPrimaria || C.marca;
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
   <title>Prescrição · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
+    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(cor)}
     h1 { font-size: 22px; margin: 20px 0 2px; }
-    .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
-    .aluno { background: #f4f6fb; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
-    .aluno strong { color: #1e293b; }
+    .meta { font-size: 13px; color: ${C.ink2}; margin-bottom: 18px; }
+    .aluno { background: ${C.papelSuave}; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
+    .aluno strong { color: ${C.ink}; }
     .bloco { margin: 16px 0; }
     h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; color: ${cor}; margin: 0 0 8px; }
     ul.exs { list-style: none; padding: 0; margin: 0; }
-    .ex { border: 1px solid #e7ecf3; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+    .ex { border: 1px solid ${C.borda}; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
     .ex-head { display: flex; align-items: center; gap: 8px; }
-    .ex-num { width: 22px; height: 22px; border-radius: 50%; background: ${cor}; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+    .ex-num { width: 22px; height: 22px; border-radius: 50%; background: ${cor}; color: ${C.sobreMarca}; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
     .ex-nome { font-weight: 700; flex: 1; }
-    .ex-score { font-size: 12px; font-weight: 700; color: #147a3a; }
-    .ex-resumo { font-size: 13px; color: #475569; margin: 6px 0 0; }
-    .ex-series { font-size: 12px; color: #64748b; margin: 4px 0 0; }
-    .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; margin: 10px 0 4px; }
+    .ex-score { font-size: 12px; font-weight: 700; color: ${C.sucesso}; }
+    .ex-resumo { font-size: 13px; color: ${C.ink2}; margin: 6px 0 0; }
+    .ex-series { font-size: 12px; color: ${C.ink2}; margin: 4px 0 0; }
+    .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; margin: 10px 0 4px; }
     .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { background: #eaf1fe; color: ${cor}; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+    .tag { background: ${C.marcaTint}; color: ${cor}; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
     ul.crit { margin: 4px 0; padding-left: 18px; font-size: 13px; }
-    .foot { margin-top: 24px; border-top: 1px solid #e7ecf3; padding-top: 12px; font-size: 11px; color: #94a3b8; }
+    .foot { margin-top: 24px; border-top: 1px solid ${C.borda}; padding-top: 12px; font-size: 11px; color: ${C.ink2}; }
     @media print { .page { padding: 0; } @page { margin: 16mm; } }
   </style></head><body>
   <div class="page">

@@ -1,19 +1,21 @@
 /**
- * SISTEMA DE TEMA — paletas geradas + claro/escuro.
+ * SISTEMA DE TEMA: uma identidade, dois modos.
  *
  * Cada token existe em dois formatos no CSS: `--x` (hex, para usos crus em SVG)
  * e `--x-rgb` (canais "R G B", que o tailwind.config lê como
  * rgb(var(--x-rgb) / <alpha-value>) para habilitar alpha E o tema).
  *
- * Uma paleta é DERIVADA de UMA cor primária (a marca): `gerarCore(hex, modo)`
- * produz os neutros (tingidos de leve para a cor) e a primária ajustada para
- * AA. Os presets são só uma lista de cores; "Minha marca" gera a paleta da cor
- * que o profissional escolheu. Os acentos (analysis, cta) e semânticas
- * (success/warning/danger) + tints são COMPARTILHADOS e só mudam por modo, para
- * o significado não mudar ao trocar de paleta.
+ * A paleta é AUTORADA (a "Rota", do Design System aprovado), não derivada de uma
+ * cor. O gerador que existia aqui, que produzia 12 presets e um white-label a
+ * partir de qualquer hex, foi removido na reestruturação: ele derivava os
+ * neutros de uma matiz só e sempre devolvia surface branco, e a identidade nova
+ * tem neutros quentes desacoplados da primária e duas matizes de marca.
  *
- * Contraste: `npm run check:contraste` valida AA de todos os pares em toda
- * paleta × modo. Não editar cor sem rodar.
+ * A cor do profissional continua existindo, com outro papel: é ACENTO do portal
+ * do aluno (ver `CORES_DE_MARCA` e `corDeContraste`), não repinta o app dele.
+ *
+ * Contraste: `npm run check:contraste` valida AA de todos os pares em cada
+ * modo. Não editar cor sem rodar.
  */
 
 export type Modo = "claro" | "escuro" | "sistema";
@@ -22,9 +24,7 @@ export interface PaletaCore {
   bg: string; surface: string; surfaceSoft: string; border: string;
   ink: string; ink2: string; ink3: string; primary: string; primaryTint: string;
   /**
-   * Quarto nível de superfície (chip, trilho de progresso, fundo de campo). As
-   * paletas geradas não têm: caem em `surfaceSoft` e ficam idênticas ao de
-   * antes. Só a "Rota" declara, porque o design tem quatro degraus de papel.
+   * Quarto nível de superfície (chip, trilho de progresso, fundo de campo). O design tem quatro degraus de papel; ausente, cai em `surfaceSoft`.
    */
   surfaceMute?: string;
   /**
@@ -44,7 +44,7 @@ export interface Compartilhado {
    * Turquesa VIVO da marca (#14B3BA na Rota): bolinha da rota feita, ícone de
    * check, gradiente do avatar. Dá 2,52:1 sobre papel, então é preenchimento e
    * nunca texto; quem escreve em turquesa usa `analysis`, que é mais escuro.
-   * Ausente = cai em `analysis`, e as paletas antigas não mudam de aparência.
+   * Ausente = cai em `analysis`.
    */
   analysisFill?: string;
   /** o que vai POR CIMA do turquesa vivo (ink na Rota; branco daria 2,57) */
@@ -59,8 +59,8 @@ export interface Paleta {
   claro: PaletaCore; escuro: PaletaCore;
   /**
    * Acentos e semânticas PRÓPRIOS desta paleta. Ausentes = usa os
-   * compartilhados, que é o caso das 12 geradas. A "Rota" declara os seus
-   * porque o design fixa a família inteira, não só a primária.
+   * compartilhados. A "Rota" declara os seus porque o design fixa a família
+   * inteira, não só a primária.
    */
   compartClaro?: Compartilhado;
   compartEscuro?: Compartilhado;
@@ -72,96 +72,18 @@ function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
   return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
 }
-function rgbToHex(r: number, g: number, b: number): string {
-  const c = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
-  return `#${c(r)}${c(g)}${c(b)}`;
-}
-function rgbToHsl(r: number, g: number, b: number): [number, number, number] {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0; const l = (max + min) / 2;
-  const d = max - min;
-  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
-  if (d !== 0) {
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60; if (h < 0) h += 360;
-  }
-  return [h, s * 100, l * 100];
-}
-function hslToHex(h: number, s: number, l: number): string {
-  s /= 100; l /= 100;
-  const c = (1 - Math.abs(2 * l - 1)) * s;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-  const m = l - c / 2;
-  let r = 0, g = 0, b = 0;
-  if (h < 60) [r, g, b] = [c, x, 0];
-  else if (h < 120) [r, g, b] = [x, c, 0];
-  else if (h < 180) [r, g, b] = [0, c, x];
-  else if (h < 240) [r, g, b] = [0, x, c];
-  else if (h < 300) [r, g, b] = [x, 0, c];
-  else [r, g, b] = [c, 0, x];
-  return rgbToHex((r + m) * 255, (g + m) * 255, (b + m) * 255);
-}
+/** Luminância relativa (WCAG), para escolher a tinta que vai por cima de uma cor. */
 function lum(hex: string): number {
-  const c = hexToRgb(hex).map((v) => v / 255).map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
+  const c = hexToRgb(hex)
+    .map((v) => v / 255)
+    .map((v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)));
   return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 }
 function contraste(a: string, b: string): number {
-  const l1 = lum(a), l2 = lum(b);
+  const l1 = lum(a);
+  const l2 = lum(b);
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-
-/** Escurece/clareia a primária (mexendo só em L) até bater AA no fundo dado. */
-function primariaAA(h: number, s: number, lInicial: number, fundo: string, escurecer: boolean): string {
-  let l = lInicial;
-  for (let i = 0; i < 60; i++) {
-    const hex = hslToHex(h, s, l);
-    if (contraste(hex, fundo) >= 4.6) return hex;
-    l += escurecer ? -1.5 : 1.5;
-    if (l < 6 || l > 94) break;
-  }
-  return hslToHex(h, s, clamp(l, 6, 94));
-}
-
-/** Gera os neutros + a primária de um modo, a partir de UMA cor de marca. A
- *  primária é ajustada em L até bater AA no fundo mais CLARO em que ela vira
- *  texto (a tint no claro; a tint/surface no escuro), que é o pior caso. */
-function gerarCore(hex: string, escuro: boolean): PaletaCore {
-  const [h, s, l] = rgbToHsl(...hexToRgb(hex));
-  const sat = clamp(s, 0, 60);
-  if (!escuro) {
-    const primaryTint = hslToHex(h, clamp(s * 0.5, 22, 55), 95);
-    return {
-      bg: hslToHex(h, clamp(sat * 0.28, 5, 12), 97.5),
-      surface: "#ffffff",
-      surfaceSoft: hslToHex(h, clamp(sat * 0.28, 5, 12), 95),
-      border: hslToHex(h, clamp(sat * 0.32, 7, 16), 89),
-      ink: hslToHex(h, clamp(sat * 0.5, 8, 26), 13),
-      ink2: hslToHex(h, clamp(sat * 0.22, 4, 12), 38),
-      ink3: hslToHex(h, clamp(sat * 0.22, 4, 12), 38),
-      primary: primariaAA(h, clamp(s, 30, 85), Math.min(44, l), primaryTint, true),
-      primaryTint,
-    };
-  }
-  const primaryTint = hslToHex(h, clamp(s * 0.55, 26, 58), 13);
-  const surface = hslToHex(h, clamp(sat * 0.28, 7, 14), 12.5);
-  const bindBg = lum(primaryTint) > lum(surface) ? primaryTint : surface;
-  return {
-    bg: hslToHex(h, clamp(sat * 0.32, 8, 16), 8),
-    surface,
-    surfaceSoft: hslToHex(h, clamp(sat * 0.26, 6, 13), 17),
-    border: hslToHex(h, clamp(sat * 0.24, 6, 13), 26),
-    ink: hslToHex(h, 9, 93),
-    ink2: hslToHex(h, 8, 69),
-    ink3: hslToHex(h, 8, 69),
-    primary: primariaAA(h, clamp(s, 35, 80), Math.max(64, l), bindBg, false),
-    primaryTint,
-  };
-}
-
 /* ------------------------- acentos/semânticas ------------------------- */
 
 const COMPART_CLARO: Compartilhado = {
@@ -179,23 +101,14 @@ const COMPART_ESCURO: Compartilhado = {
   dataIntensidade: "#d9926a",
 };
 
-/* -------------------------------- paletas ------------------------------- */
-
-/** Constrói uma paleta completa a partir de uma cor primária. */
-export function paletaDeHex(id: string, nome: string, hex: string): Paleta {
-  return { id, nome, amostra: hex, claro: gerarCore(hex, false), escuro: gerarCore(hex, true) };
-}
-
 /* ------------------------- a paleta autorada "Rota" ----------------------- */
 
 /**
  * A identidade da direção "1c Rota", aprovada pelo fundador no Design System.
  *
- * É AUTORADA, não gerada: `gerarCore()` deriva os neutros de UMA matiz e sempre
- * devolve `surface: "#ffffff"`, e o design pede neutros QUENTES desacoplados da
- * primária (papel #FFFDF9 com azul frio #2064EC) mais uma SEGUNDA matiz de
- * marca (o turquesa). Nenhuma das duas coisas cabe no gerador, que continua
- * existindo para o white-label "Minha marca".
+ * É AUTORADA: o design pede neutros QUENTES desacoplados da primária (papel
+ * #FFFDF9 com azul frio #2064EC) mais uma SEGUNDA matiz de marca (o turquesa),
+ * e nenhuma das duas coisas cabia no gerador que existia aqui.
  *
  * Seis valores literais do mockup reprovariam AA e foram DERIVADOS, com a razão
  * medida ao lado. Trocar qualquer um deles sem rodar `npm run check:contraste`
@@ -293,36 +206,59 @@ export const PALETA_ROTA: Paleta = {
   compartEscuro: ROTA_COMPART_ESCURO,
 };
 
-/** Presets: uma boa gama de matizes. "Minha marca" é gerada da cor do perfil. */
-const PRESETS: { id: string; nome: string; hex: string }[] = [
-  { id: "grafite", nome: "Grafite", hex: "#3a4a72" },
-  { id: "petroleo", nome: "Petróleo", hex: "#17506b" },
-  { id: "oceano", nome: "Oceano", hex: "#2563a8" },
-  { id: "turquesa", nome: "Turquesa", hex: "#0f7d8c" },
-  { id: "esmeralda", nome: "Esmeralda", hex: "#1f7a4d" },
-  { id: "oliva", nome: "Oliva", hex: "#5f6f1c" },
-  { id: "ambar", nome: "Âmbar", hex: "#9a6212" },
-  { id: "terracota", nome: "Terracota", hex: "#b1502f" },
-  { id: "vinho", nome: "Vinho", hex: "#9e2a4f" },
-  { id: "magenta", nome: "Magenta", hex: "#b23a86" },
-  { id: "violeta", nome: "Violeta", hex: "#6a3fc0" },
-  { id: "ardosia", nome: "Ardósia", hex: "#4a5568" },
+/**
+ * UMA paleta, que é a identidade do produto.
+ *
+ * Antes daqui saíam 12 presets gerados mais "Minha marca", que produzia uma 13ª
+ * de qualquer hex. Foram aposentados na reestruturação por três motivos, e não
+ * por gosto: (1) o mockup de Configurações do design aprovado não tem aba
+ * Aparência nem grade de paletas, e a única cor configurável está sob "a cor que
+ * os seus alunos veem"; (2) `gerarCore()` era incapaz de produzir esta paleta,
+ * porque derivava os neutros de uma matiz só e sempre devolvia surface branco,
+ * enquanto o design tem neutros quentes desacoplados da primária e DUAS matizes
+ * de marca; (3) 12 paletas × 2 modos é uma superfície que ninguém consegue
+ * auditar a olho, e o produto passava a ter 13 identidades e nenhuma.
+ *
+ * A personalização que importava sobreviveu, e num lugar mais honesto: a cor do
+ * profissional agora é ACENTO no app do aluno (`corDeContraste` abaixo), que é
+ * onde ela tem função, em vez de repintar o app que ele mesmo usa.
+ */
+export const PALETAS: Paleta[] = [PALETA_ROTA];
+export const PALETA_PADRAO = "rota";
+
+/** Resolve a paleta por id. Id desconhecido cai no padrão. */
+export function getPaleta(id?: string): Paleta {
+  return PALETAS.find((p) => p.id === id) ?? PALETAS[0];
+}
+
+/* --------------------- a cor de marca do profissional --------------------- */
+
+/**
+ * As cinco cores que o profissional pode escolher, literais do mockup de
+ * Configurações. É lista FECHADA, e não um seletor livre, por uma razão
+ * medível: com cinco valores o contraste de cada um é conhecido e verificável
+ * no CI; com um seletor livre, o profissional pode escolher um amarelo em que
+ * nenhum texto passa, e o app do aluno fica ilegível sem ninguém perceber.
+ */
+export const CORES_DE_MARCA: { hex: string; nome: string }[] = [
+  { hex: "#2064EC", nome: "Azul do mapa" },
+  { hex: "#14B3BA", nome: "Turquesa" },
+  { hex: "#E2543E", nome: "Coral" },
+  { hex: "#7C3AED", nome: "Violeta" },
+  { hex: "#17202E", nome: "Grafite" },
 ];
 
-/** A Rota vem primeiro: é a identidade do produto; as geradas ficam atrás. */
-export const PALETAS: Paleta[] = [PALETA_ROTA, ...PRESETS.map((p) => paletaDeHex(p.id, p.nome, p.hex))];
-export const PALETA_PADRAO = "rota";
-export const MARCA_ID = "marca";
-
-/** Resolve a paleta por id; `marca` + corMarca gera a paleta da cor do perfil. */
-export function getPaleta(id?: string, corMarca?: string): Paleta {
-  if (id === MARCA_ID && corMarca && /^#[0-9a-fA-F]{6}$/.test(corMarca)) {
-    return paletaDeHex(MARCA_ID, "Minha marca", corMarca);
-  }
-  // Fallback pelo PADRÃO, não por PALETAS[0]: a Rota passou a ser o primeiro
-  // item da lista (é a identidade do produto) e um `?? PALETAS[0]` faria id
-  // desconhecido cair nela antes da hora, mudando o tema de quem já escolheu.
-  return PALETAS.find((p) => p.id === id) ?? PALETAS.find((p) => p.id === PALETA_PADRAO) ?? PALETAS[0];
+/**
+ * Qual tinta usar POR CIMA de uma cor de marca. Calculada por luminância, nunca
+ * fixada em branco: das cinco amostras, o turquesa e o coral pedem tinta escura
+ * (branco sobre turquesa dá 2,57) e as outras pedem branca. Fixar branco, que é
+ * o que o compartilhado fazia, deixaria dois dos cinco ilegíveis.
+ */
+export function corDeContraste(hex: string): string {
+  const escura = "#17202E";
+  const clara = "#FFFFFF";
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return clara;
+  return contraste(clara, hex) >= contraste(escura, hex) ? clara : escura;
 }
 
 /* ------------------------------ aplicação ------------------------------- */
@@ -368,15 +304,28 @@ export function modoEfetivo(modo: Modo): boolean {
 
 /**
  * Aplica paleta + modo num elemento (raiz do app ou do portal do aluno).
- * `corMarca` é usada quando a paleta é "marca" (paleta gerada da cor do perfil).
+ *
+ * `corMarca` NÃO repinta mais a paleta: ela entra só como ACENTO, e só onde o
+ * chamador pedir (o app do aluno). O app do profissional é sempre a identidade
+ * do produto, porque é o produto que ele comprou; a marca dele existe para o
+ * aluno ver, não para ele mesmo.
  */
 export function aplicarTema(el: HTMLElement, paletaId: string, modo: Modo, corMarca?: string): void {
-  const paleta = getPaleta(paletaId, corMarca);
+  const paleta = getPaleta(paletaId);
   const escuro = modoEfetivo(modo);
   const tokens = tokensDe(paleta, escuro);
   for (const [nome, hex] of Object.entries(tokens)) {
     el.style.setProperty(`--${nome}`, hex);
     el.style.setProperty(`--${nome}-rgb`, hexParaCanais(hex));
+  }
+  // Acento de marca: quem passa `corMarca` (hoje só o portal do aluno) troca a
+  // primária e a tinta que vai por cima dela, sobre a MESMA base neutra.
+  if (corMarca && /^#[0-9a-fA-F]{6}$/.test(corMarca)) {
+    el.style.setProperty("--primary", corMarca);
+    el.style.setProperty("--primary-rgb", hexParaCanais(corMarca));
+    const tinta = corDeContraste(corMarca);
+    el.style.setProperty("--on-primary", tinta);
+    el.style.setProperty("--on-primary-rgb", hexParaCanais(tinta));
   }
   el.setAttribute("data-theme", escuro ? "escuro" : "claro");
   el.setAttribute("data-paleta", paleta.id);

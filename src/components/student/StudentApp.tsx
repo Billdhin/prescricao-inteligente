@@ -171,7 +171,7 @@ export function StudentApp({
             sobre branco = #ebebeb) mantém o ink em 12.27:1. A saudação mora dentro. */}
         <header
           className="border-b border-border px-4 py-3"
-          style={{ background: (marca.corPrimaria || "#1b4b66") + "14" }}
+          style={{ background: (marca.corPrimaria || "#2064EC") + "14" }}
         >
           <div className="flex items-center justify-between gap-3">
             <Logo />

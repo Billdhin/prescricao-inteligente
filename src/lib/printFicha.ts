@@ -8,6 +8,7 @@
 
 import type { MonitoringParameter } from "@/data/monitoringParameters";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
+import { CORES_PDF as C } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -17,24 +18,24 @@ const AVISO =
 
 const CSS = `
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
   .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-  ${cabecalhoCss("#1b4b66")}
+  ${cabecalhoCss(C.marca)}
   h1 { font-size: 22px; margin: 20px 0 2px; }
-  .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #1b4b66; margin: 18px 0 8px; }
+  .meta { font-size: 13px; color: ${C.ink2}; margin-bottom: 18px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${C.marca}; margin: 18px 0 8px; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { border: 1px solid #e7ecf3; padding: 8px 10px; font-size: 13px; text-align: left; vertical-align: top; }
-  th { background: #f4f6fb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
-  td.v { font-weight: 800; white-space: nowrap; width: 110px; color: #1b4b66; }
+  th, td { border: 1px solid ${C.borda}; padding: 8px 10px; font-size: 13px; text-align: left; vertical-align: top; }
+  th { background: ${C.papelSuave}; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; }
+  td.v { font-weight: 800; white-space: nowrap; width: 110px; color: ${C.marca}; }
   ol { margin: 4px 0; padding-left: 20px; font-size: 13px; }
   ol li { margin-bottom: 4px; }
-  .ref { font-size: 11px; color: #64748b; margin-top: 14px; border-top: 1px solid #e7ecf3; padding-top: 10px; }
-  .foot { margin-top: 18px; font-size: 10.5px; color: #94a3b8; }
-  .campo { display: inline-block; min-width: 220px; border-bottom: 1px solid #94a3b8; padding: 0 4px 1px; font-weight: 700; }
-  .linha-campos { font-size: 13px; margin: 6px 0; color: #475569; }
+  .ref { font-size: 11px; color: ${C.ink2}; margin-top: 14px; border-top: 1px solid ${C.borda}; padding-top: 10px; }
+  .foot { margin-top: 18px; font-size: 10.5px; color: ${C.ink2}; }
+  .campo { display: inline-block; min-width: 220px; border-bottom: 1px solid ${C.traco}; padding: 0 4px 1px; font-weight: 700; }
+  .linha-campos { font-size: 13px; margin: 6px 0; color: ${C.ink2}; }
   td.reg { height: 34px; }
-  .legenda { font-size: 11.5px; color: #64748b; margin-top: 8px; }
+  .legenda { font-size: 11.5px; color: ${C.ink2}; margin-top: 8px; }
   @media print { .page { padding: 0; } @page { margin: 14mm; } }
 `;
 

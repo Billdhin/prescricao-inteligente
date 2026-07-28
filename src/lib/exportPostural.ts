@@ -9,6 +9,7 @@ import {
   type VistaPostural,
 } from "@/data/postural";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
+import { CORES_PDF as C } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
@@ -31,7 +32,7 @@ export function exportPosturalPDF({
   cref?: string;
   marca?: MarcaDocumento;
 }) {
-  const cor = marca?.corPrimaria || "#1b4b66";
+  const cor = marca?.corPrimaria || C.marca;
   const laudo = avaliacao.resumo?.trim() ? avaliacao.resumo : montarLaudo(avaliacao, aluno.nome);
   const porId = new Map(CHECKPOINTS_POSTURAIS.map((c) => [c.id, c]));
   const vistas: VistaPostural[] = ["anterior", "lateral", "posterior"];
@@ -40,7 +41,7 @@ export function exportPosturalPDF({
     .map((v) => {
       const f = avaliacao.fotos?.[v];
       if (!f) return "";
-      return `<figure style="margin:0;text-align:center"><img src="${f}" alt="" style="max-height:220px;max-width:100%;border-radius:8px;border:1px solid #e7ecf3" /><figcaption style="font-size:11px;color:#94a3b8;margin-top:4px">${esc(ROTULO_VISTA[v])}</figcaption></figure>`;
+      return `<figure style="margin:0;text-align:center"><img src="${f}" alt="" style="max-height:220px;max-width:100%;border-radius:8px;border:1px solid ${C.borda}" /><figcaption style="font-size:11px;color:${C.ink2};margin-top:4px">${esc(ROTULO_VISTA[v])}</figcaption></figure>`;
     })
     .join("");
 
@@ -53,10 +54,10 @@ export function exportPosturalPDF({
           const cp = porId.get(o.checkpointId)!;
           const ref = ehReferencia(cp, o.achado);
           const cell = ref
-            ? `<span style="color:#64748b">${esc(o.achado)}</span>`
+            ? `<span style="color:${C.ink2}">${esc(o.achado)}</span>`
             : `<strong style="color:${cor}">${esc(o.achado)}</strong>`;
-          const nota = o.nota ? ` <span style="color:#94a3b8">(${esc(o.nota)})</span>` : "";
-          return `<tr><td style="padding:3px 6px;border-bottom:1px solid #f1f5f9">${esc(cp.regiao)}</td><td style="padding:3px 6px;border-bottom:1px solid #f1f5f9">${cell}${nota}</td></tr>`;
+          const nota = o.nota ? ` <span style="color:${C.ink2}">(${esc(o.nota)})</span>` : "";
+          return `<tr><td style="padding:3px 6px;border-bottom:1px solid ${C.linha}">${esc(cp.regiao)}</td><td style="padding:3px 6px;border-bottom:1px solid ${C.linha}">${cell}${nota}</td></tr>`;
         })
         .join("");
       return `<h2 style="font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:${cor};margin:16px 0 6px">${esc(ROTULO_VISTA[v])}</h2><table style="width:100%;border-collapse:collapse;font-size:12px">${linhas}</table>`;
@@ -67,14 +68,14 @@ export function exportPosturalPDF({
   <title>Rastreio postural · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
+    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(cor)}
     h1 { font-size: 22px; margin: 20px 0 2px; }
-    .meta { font-size: 13px; color: #64748b; margin-bottom: 18px; }
+    .meta { font-size: 13px; color: ${C.ink2}; margin-bottom: 18px; }
     .fotos { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 12px 0 20px; }
-    .laudo { white-space: pre-line; font-size: 13px; color: #334155; background: #f4f6fb; border-radius: 10px; padding: 14px 16px; margin-top: 18px; }
-    .foot { margin-top: 24px; border-top: 1px solid #e7ecf3; padding-top: 12px; font-size: 11px; color: #94a3b8; }
+    .laudo { white-space: pre-line; font-size: 13px; color: ${C.ink2}; background: ${C.papelSuave}; border-radius: 10px; padding: 14px 16px; margin-top: 18px; }
+    .foot { margin-top: 24px; border-top: 1px solid ${C.borda}; padding-top: 12px; font-size: 11px; color: ${C.ink2}; }
     @media print { .page { padding: 0; } @page { margin: 16mm; } }
   </style></head><body>
   <div class="page">

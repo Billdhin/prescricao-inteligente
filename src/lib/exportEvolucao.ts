@@ -3,6 +3,7 @@ import type { Aluno, Avaliacao } from "@/data/alunos";
 import { METRICAS_EVOLUCAO, type DirMetrica } from "@/components/app/EvolucaoMini";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
+import { CORES_PDF as C } from "@/lib/pdfCores";
 
 /**
  * Tabela de evolução do aluno em PDF, no estilo de um resultado de exame: cada
@@ -12,8 +13,9 @@ import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
  *
  * Documento honesto: as medidas dependem do método e do dia; a evolução é
  * tendência, não valor exato. Cores literais (o papel não tem as variáveis do
- * tema). Sem travessão. O rótulo clínico do grupo NUNCA entra: se o aluno tem
- * grupo, imprime o `rotuloAluno` (linguagem digna), nunca o nome clínico.
+ * tema), todas vindas do mapa `pdfCores`. Sem travessão. O rótulo clínico do grupo
+ * NUNCA entra: se o aluno tem grupo, imprime o `rotuloAluno` (linguagem digna),
+ * nunca o nome clínico.
  */
 
 const esc = (s: string) =>
@@ -25,12 +27,12 @@ const fmtCurto = (ts: number) =>
 
 // Mesma regra do EvolucaoMini (corDelta), em cores literais do papel: nunca
 // inverte o sinal; a direção desejável da métrica decide o que é bom. Verde e
-// vermelho dos demais documentos (exportProntuario/printSemaforo), fora das
-// tints aposentadas.
+// vermelho vêm do mapa do papel, portanto são os mesmos dos demais documentos
+// (exportProntuario/printSemaforo) e da tela.
 function corDeltaPdf(dir: DirMetrica, delta: number): string {
-  if (dir === "neutro" || delta === 0) return "#64748b";
+  if (dir === "neutro" || delta === 0) return C.ink2;
   const bom = dir === "menor" ? delta < 0 : delta > 0;
-  return bom ? "#147a3a" : "#b91c1c";
+  return bom ? C.sucesso : C.perigo;
 }
 
 export interface EvolucaoPdfOpts {
@@ -46,7 +48,7 @@ export interface EvolucaoPdfOpts {
  * abaixo e para o guardrail `check:documentos` conseguir varrer a saída.
  */
 export function montarEvolucaoHtml({ aluno, avaliacoes, profissional, cref, marca }: EvolucaoPdfOpts): string {
-  const cor = marca?.corPrimaria || "#1b4b66";
+  const cor = marca?.corPrimaria || C.marca;
   const cols = [...avaliacoes].sort((a, b) => a.data - b.data);
   const linhas = METRICAS_EVOLUCAO.filter((m) => cols.some((a) => a.medidas[m.key] != null));
 
@@ -60,7 +62,7 @@ export function montarEvolucaoHtml({ aluno, avaliacoes, profissional, cref, marc
     : "";
 
   const cabDatas = cols
-    .map((a) => `<th style="padding:6px 8px;text-align:right;font-weight:700;color:${cor};border-bottom:2px solid #e7ecf3">${esc(fmtCurto(a.data))}</th>`)
+    .map((a) => `<th style="padding:6px 8px;text-align:right;font-weight:700;color:${cor};border-bottom:2px solid ${C.borda}">${esc(fmtCurto(a.data))}</th>`)
     .join("");
 
   const corpo = linhas
@@ -75,17 +77,17 @@ export function montarEvolucaoHtml({ aluno, avaliacoes, profissional, cref, marc
       const celulas = serie
         .map((v) =>
           v != null
-            ? `<td style="padding:6px 8px;text-align:right;color:#1e293b;border-bottom:1px solid #f1f5f9">${v}<span style="color:#94a3b8">${esc(m.unit)}</span></td>`
-            : `<td style="padding:6px 8px;text-align:right;color:#94a3b8;border-bottom:1px solid #f1f5f9">·</td>`,
+            ? `<td style="padding:6px 8px;text-align:right;color:${C.ink};border-bottom:1px solid ${C.linha}">${v}<span style="color:${C.ink2}">${esc(m.unit)}</span></td>`
+            : `<td style="padding:6px 8px;text-align:right;color:${C.ink2};border-bottom:1px solid ${C.linha}">·</td>`,
         )
         .join("");
 
       const celDelta =
         delta != null
-          ? `<td style="padding:6px 8px;text-align:right;font-weight:700;color:${corDeltaPdf(m.dir, delta)};border-bottom:1px solid #f1f5f9">${delta > 0 ? "+" : ""}${delta}<span style="opacity:.7">${esc(m.unit)}</span></td>`
-          : `<td style="padding:6px 8px;text-align:right;color:#94a3b8;border-bottom:1px solid #f1f5f9">·</td>`;
+          ? `<td style="padding:6px 8px;text-align:right;font-weight:700;color:${corDeltaPdf(m.dir, delta)};border-bottom:1px solid ${C.linha}">${delta > 0 ? "+" : ""}${delta}<span style="opacity:.7">${esc(m.unit)}</span></td>`
+          : `<td style="padding:6px 8px;text-align:right;color:${C.ink2};border-bottom:1px solid ${C.linha}">·</td>`;
 
-      return `<tr><th style="padding:6px 8px;text-align:left;font-weight:600;color:#334155;border-bottom:1px solid #f1f5f9;white-space:nowrap">${esc(m.label)}</th>${celulas}${celDelta}</tr>`;
+      return `<tr><th style="padding:6px 8px;text-align:left;font-weight:600;color:${C.ink2};border-bottom:1px solid ${C.linha};white-space:nowrap">${esc(m.label)}</th>${celulas}${celDelta}</tr>`;
     })
     .join("");
 
@@ -94,9 +96,9 @@ export function montarEvolucaoHtml({ aluno, avaliacoes, profissional, cref, marc
       ? `<table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead>
             <tr>
-              <th style="padding:6px 8px;text-align:left;font-weight:700;color:${cor};border-bottom:2px solid #e7ecf3">Medida</th>
+              <th style="padding:6px 8px;text-align:left;font-weight:700;color:${cor};border-bottom:2px solid ${C.borda}">Medida</th>
               ${cabDatas}
-              <th style="padding:6px 8px;text-align:right;font-weight:700;color:${cor};border-bottom:2px solid #e7ecf3">Evolução</th>
+              <th style="padding:6px 8px;text-align:right;font-weight:700;color:${cor};border-bottom:2px solid ${C.borda}">Evolução</th>
             </tr>
           </thead>
           <tbody>${corpo}</tbody>
@@ -116,16 +118,16 @@ export function montarEvolucaoHtml({ aluno, avaliacoes, profissional, cref, marc
   <title>Evolução · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
+    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
     .page { max-width: 820px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(cor)}
     h1 { font-size: 22px; margin: 20px 0 2px; }
-    .meta { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+    .meta { font-size: 13px; color: ${C.ink2}; margin-bottom: 8px; }
     .tabela-wrap { overflow-x: auto; margin: 14px 0 4px; }
     h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${cor}; margin: 20px 0 6px; }
-    .notas { font-size: 12px; color: #334155; padding-left: 18px; margin: 6px 0 0; }
+    .notas { font-size: 12px; color: ${C.ink2}; padding-left: 18px; margin: 6px 0 0; }
     .notas li { margin: 3px 0; }
-    .foot { margin-top: 24px; border-top: 1px solid #e7ecf3; padding-top: 12px; font-size: 11px; color: #94a3b8; }
+    .foot { margin-top: 24px; border-top: 1px solid ${C.borda}; padding-top: 12px; font-size: 11px; color: ${C.ink2}; }
     @media print { .page { padding: 0; } @page { margin: 16mm; } }
   </style></head><body>
   <div class="page">

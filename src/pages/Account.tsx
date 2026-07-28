@@ -7,6 +7,7 @@ import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { signOut } from "@/lib/backend/supabaseAuth";
 import { arquivoParaDataUrl } from "@/lib/imagem";
 import { SeletorTema } from "@/components/theme/SeletorTema";
+import { CORES_DE_MARCA, corDeContraste } from "@/lib/theme/palettes";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -135,10 +136,9 @@ export function Account() {
 
       {/* Tema do sistema */}
       <Card className="p-6">
-        <h3 className="mb-1 font-display text-lg font-bold text-ink">Cores do sistema</h3>
+        <h3 className="mb-1 font-display text-lg font-bold text-ink">Aparência e marca</h3>
         <p className="mb-4 text-sm text-ink-2">
-          Escolha a paleta e a aparência do seu app. Muda tudo na hora, e o aluno vê a mesma
-          identidade no portal dele.
+          A aparência vale só para você. A cor da marca é o que os seus alunos veem.
         </p>
         <SeletorTema />
       </Card>
@@ -205,28 +205,37 @@ export function Account() {
           </label>
         </div>
 
-        {/* Cor da marca */}
+        {/* Cor da marca: lista FECHADA, não seletor livre. Com cinco valores o
+            contraste de cada um é conhecido e verificado no CI; com um seletor
+            livre, um amarelo claro deixaria o app do aluno ilegível sem
+            ninguém perceber. */}
         <div className="mt-4">
           <span className="mb-1.5 block text-sm font-semibold text-ink">Cor da marca</span>
-          <div className="flex flex-wrap items-center gap-3">
-            <input
-              type="color"
-              aria-label="Escolher cor da marca"
-              value={corPrimaria || "#1b4b66"}
-              onChange={(e) => user.setPerfil({ corPrimaria: e.target.value })}
-              className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-surface p-1"
-            />
-            <span className="tabular text-sm text-ink-2">
-              {corPrimaria ? corPrimaria.toUpperCase() : "Cor do produto"}
-            </span>
-            {corPrimaria && (
-              <button onClick={() => user.setPerfil({ corPrimaria: "" })} className={buttonClasses("ghost", "sm")}>
-                Usar a cor do produto
-              </button>
-            )}
+          <div className="flex flex-wrap items-center gap-2">
+            {CORES_DE_MARCA.map((c) => {
+              const on = (corPrimaria || CORES_DE_MARCA[0].hex).toUpperCase() === c.hex.toUpperCase();
+              return (
+                <button
+                  key={c.hex}
+                  type="button"
+                  onClick={() => user.setPerfil({ corPrimaria: c.hex })}
+                  aria-pressed={on}
+                  title={c.nome}
+                  className={cn(
+                    "grid h-11 w-11 place-items-center rounded-full ring-1 ring-black/10",
+                    on && "outline outline-2 outline-offset-2 outline-primary",
+                  )}
+                  style={{ background: c.hex }}
+                >
+                  {on && <Check className="h-5 w-5" style={{ color: corDeContraste(c.hex) }} />}
+                  <span className="sr-only">{c.nome}</span>
+                </button>
+              );
+            })}
           </div>
           <p className="mt-1.5 text-xs text-ink-3">
-            Tinge o cabeçalho dos documentos. No portal do aluno, vai colorir o app inteiro.
+            Tinge o cabeçalho dos seus documentos e o portal do aluno. O seu app continua na
+            identidade do Mapa da Prescrição.
           </p>
         </div>
 

@@ -7,14 +7,15 @@
 import type { ChecklistSemaforo, ResultadoSemaforo } from "@/data/semaforo";
 import { getReferencia } from "@/data/referencias";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
+import { CORES_PDF as C } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 const COR = {
-  verde: { nome: "LIBERADO", hex: "#147a3a", bg: "#e7f8ed" },
-  amarelo: { nome: "LIBERADO COM AJUSTE", hex: "#b45309", bg: "#fef4e2" },
-  vermelho: { nome: "NÃO LIBERADO HOJE", hex: "#b91c1c", bg: "#fdecec" },
+  verde: { nome: "LIBERADO", hex: C.sucesso, bg: C.sucessoTint },
+  amarelo: { nome: "LIBERADO COM AJUSTE", hex: C.alerta, bg: C.alertaTint },
+  vermelho: { nome: "NÃO LIBERADO HOJE", hex: C.perigo, bg: C.perigoTint },
 } as const;
 
 export function printSemaforo(
@@ -53,28 +54,28 @@ export function printSemaforo(
   <title>Semáforo de Liberação · ${esc(grupoNome)}</title>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; }
+    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    ${cabecalhoCss("#1b4b66")}
+    ${cabecalhoCss(C.marca)}
     h1 { font-size: 20px; margin: 18px 0 2px; }
-    .meta { font-size: 13px; color: #55606f; margin-bottom: 14px; }
+    .meta { font-size: 13px; color: ${C.ink2}; margin-bottom: 14px; }
     .resultado { border-radius: 12px; padding: 14px 16px; margin: 14px 0; background: ${cor.bg}; border: 1px solid ${cor.hex}44; }
     .resultado .titulo { font-size: 18px; font-weight: 800; color: ${cor.hex}; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th, td { border: 1px solid #e7ecf3; padding: 7px 10px; font-size: 13px; text-align: left; }
-    th { background: #f4f6fb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #55606f; }
+    th, td { border: 1px solid ${C.borda}; padding: 7px 10px; font-size: 13px; text-align: left; }
+    th { background: ${C.papelSuave}; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; }
     .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
-    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #1b4b66; margin: 16px 0 6px; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${C.marca}; margin: 16px 0 6px; }
     ul { margin: 4px 0; padding-left: 20px; font-size: 13px; }
     ul li { margin-bottom: 4px; }
-    .refs li { font-size: 11px; color: #55606f; }
-    .foot { margin-top: 20px; border-top: 1px solid #e7ecf3; padding-top: 10px; font-size: 10.5px; color: #5b6472; }
-    .ciencia { margin-top: 26px; padding: 10px 12px; background: #f8fafc; border-left: 3px solid #1b4b66; font-size: 11.5px; color: #55606f; page-break-inside: avoid; }
+    .refs li { font-size: 11px; color: ${C.ink2}; }
+    .foot { margin-top: 20px; border-top: 1px solid ${C.borda}; padding-top: 10px; font-size: 10.5px; color: ${C.ink2}; }
+    .ciencia { margin-top: 26px; padding: 10px 12px; background: ${C.papelSuave}; border-left: 3px solid ${C.marca}; font-size: 11.5px; color: ${C.ink2}; page-break-inside: avoid; }
     .assinatura { margin-top: 34px; page-break-inside: avoid; display: flex; justify-content: space-between; gap: 24px; }
-    .assinatura .linha { border-top: 1.5px solid #1e293b; flex: 1; padding-top: 6px; }
+    .assinatura .linha { border-top: 1.5px solid ${C.ink}; flex: 1; padding-top: 6px; }
     .assinatura .quem { font-weight: 800; font-size: 12px; }
-    .assinatura .papel { font-size: 10.5px; color: #55606f; }
-    .dataassin { margin-top: 16px; font-size: 11.5px; color: #55606f; page-break-inside: avoid; }
+    .assinatura .papel { font-size: 10.5px; color: ${C.ink2}; }
+    .dataassin { margin-top: 16px; font-size: 11.5px; color: ${C.ink2}; page-break-inside: avoid; }
     @media print { .page { padding: 0; } @page { margin: 14mm; } }
   </style></head><body>
   <div class="page">
