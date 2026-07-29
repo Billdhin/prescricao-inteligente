@@ -128,6 +128,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Puxada vertical presa numa porta ou barra alta: o único jeito de treinar o padrão de puxar de cima para baixo sem academia.",
     anguloArticular: "Ombro da elevação até a altura do peito",
+    imagem: "/exercises/puxada-elastico.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 70, papel: "primário" },
@@ -367,6 +368,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Levar a perna para trás contra o elástico: glúteo máximo sem precisar deitar no chão nem carregar peso na coluna.",
     anguloArticular: "Extensão de quadril até cerca de 15 graus além da linha do corpo",
+    imagem: "/exercises/extensao-quadril-elastico.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Glúteo máximo", percentual: 55, papel: "primário" },

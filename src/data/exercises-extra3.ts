@@ -458,6 +458,7 @@ export const extraExercises3: Exercise[] = [
     resumoPratico:
       "Passos laterais contra a resistência do elástico, em pé: glúteo médio já na posição em que ele é usado de verdade, que é sustentando a bacia sobre uma perna.",
     anguloArticular: "Quadril e joelho em semiflexão",
+    imagem: "/exercises/caminhada-lateral-elastico.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Glúteo médio", percentual: 38, papel: "primário" },
