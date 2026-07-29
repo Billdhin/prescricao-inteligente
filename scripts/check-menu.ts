@@ -118,8 +118,18 @@ const TITULO_DA_TELA: [string, string][] = [
   ["src/pages/Avaliacoes.tsx", "Avaliar e reavaliar"],
   ["src/pages/Gps.tsx", "Treino do dia"],
 ];
-for (const [arq, titulo] of TITULO_DA_TELA)
-  ok(ler(arq).includes(`"${titulo}"`), `${arq} deve usar o título "${titulo}" (o mesmo rótulo do menu)`);
+// O título pode estar como prop (`title="Meus alunos"` do SectionHeader) OU como
+// texto direto num heading (`<h1 ...>Meus alunos`). As duas formas satisfazem o
+// contrato, que é sobre o VOCABULÁRIO na tela, não sobre qual componente o
+// desenha: quando a página de alunos trocou o SectionHeader por um cabeçalho
+// próprio (título + contagem + busca na mesma linha, como no design), só a
+// grafia mudou; o rótulo continuou o mesmo.
+for (const [arq, titulo] of TITULO_DA_TELA) {
+  const fonte = ler(arq);
+  const comoProp = fonte.includes(`"${titulo}"`);
+  const comoTexto = new RegExp(`>\\s*${titulo}\\b`).test(fonte);
+  ok(comoProp || comoTexto, `${arq} deve usar o título "${titulo}" (o mesmo rótulo do menu)`);
+}
 
 /* ------------------------- 2. Barra inferior (mobile) ----------------------- */
 

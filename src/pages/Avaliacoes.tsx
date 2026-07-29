@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { BarChart3, CalendarClock, Clock, ArrowRight, CheckCircle2, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, Pill, SectionHeader, TokenRotulado, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos } from "@/lib/store";
+import { dataReavaliacao } from "@/lib/gps/proximoPasso";
 import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
@@ -11,13 +12,37 @@ const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
 const fmtDelta = (n: number, unidade: string) => `${n > 0 ? "+" : ""}${n.toFixed(1)} ${unidade}`;
 
 export function Avaliacoes() {
-  const { alunos, avaliacoes } = useAlunos();
+  const { alunos, avaliacoes, planos } = useAlunos();
   const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "–";
   const iniciais = (id: string) => alunos.find((a) => a.id === id)?.iniciais ?? "?";
 
-  const aReavaliar = alunos
-    .filter((a) => a.status === "ativo" && a.proximaReavaliacaoEm != null)
-    .sort((a, b) => (a.proximaReavaliacaoEm ?? 0) - (b.proximaReavaliacaoEm ?? 0));
+  /**
+   * QUEM PRECISA AGORA. Três situações, na ordem de urgência do mockup:
+   * reavaliação vencida, reavaliação chegando, e quem nunca foi avaliado.
+   *
+   * A data vem de `dataReavaliacao`, a MESMA fonte do perfil do aluno e da rota
+   * do dia. Antes esta tela lia `aluno.proximaReavaliacaoEm` cru e ignorava o
+   * macrociclo, então com plano ativo ela mostrava uma data e o perfil do aluno
+   * mostrava outra.
+   */
+  const precisamAgora = alunos
+    .filter((a) => a.status === "ativo")
+    .map((a) => {
+      const planoAtivo = planos.find((p) => p.alunoId === a.id && p.status === "ativo");
+      const temAval = avaliacoes.some((av) => av.alunoId === a.id);
+      const reav = dataReavaliacao(a, planoAtivo);
+      if (!temAval) return { aluno: a, tipo: "primeira" as const, em: 0, acao: "Avaliar" };
+      if (!reav) return null;
+      const dias = diasAte(reav.em);
+      if (dias < 0) return { aluno: a, tipo: "vencida" as const, em: reav.em, acao: "Reavaliar" };
+      if (dias <= 14) return { aluno: a, tipo: "chegando" as const, em: reav.em, acao: "Reavaliar" };
+      return null;
+    })
+    .filter(Boolean)
+    .sort((x, y) => {
+      const peso = { primeira: 0, vencida: 1, chegando: 2 } as const;
+      return peso[x!.tipo] - peso[y!.tipo] || x!.em - y!.em;
+    }) as { aluno: (typeof alunos)[number]; tipo: "primeira" | "vencida" | "chegando"; em: number; acao: string }[];
 
   const recentes = [...avaliacoes].sort((a, b) => b.data - a.data).slice(0, 12);
 
@@ -52,27 +77,37 @@ export function Avaliacoes() {
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {/* A reavaliar */}
+        {/* Quem precisa agora */}
         <Card className="p-5 md:p-6">
           <div className="mb-4 flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-lg bg-cta-tint text-cta-text">
+            <span className="grid h-8 w-8 place-items-center rounded-control bg-cta-tint text-cta-text">
               <CalendarClock className="h-4 w-4" />
             </span>
-            <h2 className="font-display text-lg font-bold text-ink">A reavaliar</h2>
+            <h2 className="font-display text-lg font-bold text-ink">Quem precisa agora</h2>
           </div>
-          {aReavaliar.length === 0 ? (
-            <p className="py-6 text-center text-sm text-ink-2">Nenhuma reavaliação agendada.</p>
+          {precisamAgora.length === 0 ? (
+            <p className="py-6 text-center text-sm text-ink-2">
+              Ninguém com avaliação pendente ou reavaliação nas próximas duas semanas.
+            </p>
           ) : (
             <div className="space-y-2.5">
-              {aReavaliar.map((a) => {
-                const d = diasAte(a.proximaReavaliacaoEm!);
-                const vencida = d < 0;
-                // Já tem avaliação: o CTA é reavaliar (abre o modal pré-carregado no perfil).
-                const temAval = avaliacoes.some((av) => av.alunoId === a.id);
+              {precisamAgora.map(({ aluno: a, tipo, em, acao }) => {
+                const d = tipo === "primeira" ? 0 : diasAte(em);
+                // A frase diz o MOTIVO, como no mockup, não só um contador solto.
+                const motivo =
+                  tipo === "primeira"
+                    ? "Primeira avaliação pendente"
+                    : tipo === "vencida"
+                      ? `Vencida há ${Math.abs(d)} ${Math.abs(d) === 1 ? "dia" : "dias"}`
+                      : `Reavaliação em ${d} ${d === 1 ? "dia" : "dias"} · ${fmtData(em)}`;
                 return (
                   <div
                     key={a.id}
-                    className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:bg-surface-soft"
+                    className="flex items-center gap-3 rounded-card border border-border p-3 transition-colors hover:bg-surface-soft"
+                    style={{
+                      borderLeftWidth: 4,
+                      borderLeftColor: tipo === "chegando" ? "var(--border)" : "var(--warning)",
+                    }}
                   >
                     <Link to={`/alunos/${a.id}`} className="flex min-w-0 flex-1 items-center gap-3">
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-xs font-bold text-white">
@@ -80,15 +115,12 @@ export function Avaliacoes() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-semibold text-ink">{a.nome}</div>
-                        <div className="text-xs text-ink-3">{a.objetivo}</div>
+                        <div className="truncate text-xs text-ink-2">{motivo}</div>
                       </div>
                     </Link>
-                    <Pill tone={vencida ? "warning" : "neutral"}>
-                      {vencida ? `vencida ${Math.abs(d)}d` : `em ${d}d`}
-                    </Pill>
                     {/* ação direta: registrar sem caçar o botão dentro do perfil */}
                     <Link to={`/alunos/${a.id}?avaliar=1`} className={buttonClasses("secondary", "sm")}>
-                      {temAval ? "Reavaliar" : "Registrar"}
+                      {acao}
                     </Link>
                   </div>
                 );

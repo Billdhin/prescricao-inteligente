@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Users, UserPlus, Search, AlertTriangle, CheckCircle2, Stethoscope, ArrowRight } from "lucide-react";
-import { Card, Pill, buttonClasses, SectionHeader } from "@/components/ui/primitives";
+import { UserPlus, Search, AlertTriangle, CheckCircle2, Stethoscope, ArrowRight } from "lucide-react";
+import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
@@ -63,13 +63,14 @@ export function Alunos() {
   );
 
   const ativos = comPasso.filter((x) => x.aluno.status === "ativo").length;
-  const comAtencao = comPasso.filter((x) => x.aluno.status === "ativo" && x.passo.chip && x.passo.chip.tone !== "success").length;
-  const semPlano = comPasso.filter((x) => x.aluno.status === "ativo" && !x.temPlanoAtivo).length;
 
   // FILTRO POR ETAPA DO CICLO. O predicado sai de `passo.etapa`, o mesmo campo
   // que já mandava no chip e na ordenação: nenhum dado novo, e nunca uma
   // contagem que discorde da linha correspondente.
-  const [filtro, setFiltro] = React.useState<EtapaCiclo | "todos">("todos");
+  // "pausados" é o aluno INATIVO: não é etapa do ciclo (ele saiu do ciclo), mas
+  // o mockup lista o chip junto, e é onde o profissional procura por ele.
+  const [filtro, setFiltro] = React.useState<EtapaCiclo | "todos" | "pausados">("todos");
+  const pausados = comPasso.filter((x) => x.aluno.status !== "ativo").length;
   const contagem = React.useMemo(() => {
     const m = new Map<EtapaCiclo, number>();
     for (const x of comPasso) {
@@ -80,7 +81,13 @@ export function Alunos() {
   }, [comPasso]);
 
   const filtrados = comPasso
-    .filter(({ aluno: a, passo }) => (filtro === "todos" ? true : a.status === "ativo" && passo.etapa === filtro))
+    .filter(({ aluno: a, passo }) =>
+      filtro === "todos"
+        ? true
+        : filtro === "pausados"
+          ? a.status !== "ativo"
+          : a.status === "ativo" && passo.etapa === filtro,
+    )
     .filter(({ aluno: a }) =>
       [a.nome, a.objetivo, a.nivel, ...a.restricoes.map((r) => rotuloRestricao(r.tag))]
         .join(" ")
@@ -97,52 +104,55 @@ export function Alunos() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <SectionHeader
-        eyebrow="Atendimento"
-        icon={<Users className="h-3 w-3" />}
-        title="Meus alunos"
-        subtitle="Cadastre seus alunos, prescreva com justificativa e acompanhe a evolução."
-        right={
-          <button onClick={() => setNovo(true)} className={buttonClasses("primary")}>
-            <UserPlus className="h-4 w-4" /> Cadastrar aluno
-          </button>
-        }
-      />
+      {/* Cabeçalho do mockup: o título com a contagem colada, a busca na mesma
+          linha e a ação primária à direita. O card de "resumo de triagem" saiu:
+          os mesmos números já vivem nos chips de filtro, e repetir contagem em
+          dois lugares é o caminho mais curto para elas discordarem. */}
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-ink">
+          Meus alunos
+          {alunos.length > 0 && (
+            <span className="tabular rounded-full bg-surface-soft px-2.5 py-0.5 text-sm font-bold text-ink-2">
+              {ativos}
+            </span>
+          )}
+        </h1>
+        <div className="relative ml-auto w-full sm:w-64">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-2" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar aluno..."
+            aria-label="Buscar aluno por nome, objetivo ou restrição"
+            className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary"
+          />
+        </div>
+        <button onClick={() => setNovo(true)} className={buttonClasses("primary")}>
+          <UserPlus className="h-4 w-4" /> Cadastrar aluno
+        </button>
+      </div>
 
       {alunos.length === 0 ? (
         <EmptyAlunos onNovo={() => setNovo(true)} onExemplos={loadExamples} />
       ) : (
         <>
-          {/* Resumo de triagem: quantos estão em dia e quantos pedem uma ação */}
-          <Card variant="soft" className="flex flex-wrap items-center gap-x-8 gap-y-2 px-5 py-3">
-            <ResumoItem valor={ativos} rotulo={ativos === 1 ? "aluno ativo" : "alunos ativos"} />
-            <ResumoItem valor={comAtencao} rotulo="precisam de atenção" tone={comAtencao > 0 ? "warning" : "neutro"} />
-            <ResumoItem valor={semPlano} rotulo="sem plano ativo" tone={semPlano > 0 ? "warning" : "neutro"} />
-          </Card>
-
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar aluno por nome, objetivo, restrição..."
-              aria-label="Buscar aluno"
-              className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary"
-            />
-          </div>
-
           {/* Filtro por etapa: responde "quem estou atendendo agora" sem abrir
               aluno por aluno. Só aparecem as etapas que existem hoje na carteira;
               filtro com zero é botão que promete e entrega tela vazia. */}
           <div role="group" aria-label="Filtrar por etapa do cuidado" className="flex flex-wrap gap-1.5">
             <ChipFiltro ativo={filtro === "todos"} onClick={() => setFiltro("todos")}>
-              Todos ({ativos})
+              Todos
             </ChipFiltro>
             {ETAPAS.filter((e) => (contagem.get(e) ?? 0) > 0).map((e) => (
               <ChipFiltro key={e} ativo={filtro === e} onClick={() => setFiltro(e)}>
-                {ROTULO_ETAPA[e]} ({contagem.get(e)})
+                {ROTULO_ETAPA[e]} · {contagem.get(e)}
               </ChipFiltro>
             ))}
+            {pausados > 0 && (
+              <ChipFiltro ativo={filtro === "pausados"} onClick={() => setFiltro("pausados")}>
+                Pausados · {pausados}
+              </ChipFiltro>
+            )}
           </div>
 
           {filtrados.length === 0 ? (
@@ -165,6 +175,20 @@ export function Alunos() {
               {filtrados.map(({ aluno, passo }) => (
                 <AlunoRow key={aluno.id} aluno={aluno} passo={passo} planoAtivo={planos.find((p) => p.alunoId === aluno.id && p.status === "ativo")} />
               ))}
+              {/* O cartão tracejado que fecha a lista no mockup: a porta de
+                  cadastro onde o olho já está, com o custo declarado. */}
+              <button
+                onClick={() => setNovo(true)}
+                className="flex w-full items-center gap-3 rounded-card border-2 border-dashed border-border bg-surface p-4 text-left transition-colors hover:border-primary hover:bg-surface-soft"
+              >
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-card bg-primary-tint text-primary">
+                  <UserPlus className="h-5 w-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-display font-semibold text-ink">Cadastrar aluno</span>
+                  <span className="block text-sm text-ink-2">Nome, condição e objetivo. Leva 30 segundos.</span>
+                </span>
+              </button>
             </div>
           )}
         </>

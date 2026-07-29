@@ -15,6 +15,7 @@ import {
   TrendingUp,
   UserMinus,
   UserCheck,
+  LayoutGrid,
   FlaskConical,
   HeartPulse,
   FileDown,
@@ -40,6 +41,7 @@ import { classificarGrupos } from "@/lib/gps/classificador";
 import { ListaChips } from "@/components/treino/PlanoEditor";
 import { proximoPasso, estadoDoCiclo, dataReavaliacao, podeMontarTreino, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
 import { estadoSemaforo, semaforoPorDiaDaSemana, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
+import { sequenciaDias } from "@/lib/gamificacao";
 import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { statusAcessoAluno, type ConviteAluno } from "@/lib/backend/supabaseRepo";
@@ -48,7 +50,7 @@ import { exportPrescricaoPDF } from "@/lib/exportPrescricao";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
-import type { Aluno, Prescricao, Liberacao } from "@/data/alunos";
+import type { Aluno, Prescricao, Liberacao, Avaliacao } from "@/data/alunos";
 import type { SessaoFeedback, Execucao } from "@/data/execucao";
 import { nomeDoBloco, tokensDoBloco } from "@/components/student/blocoRegistro";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
@@ -78,10 +80,16 @@ const TIPO_AVAL_LABEL: Record<string, string> = {
   retorno: "Retorno",
 };
 
-type Aba = "treino" | "avaliacoes" | "semaforo" | "conta";
+// A ordem do mockup: a Visão geral abre a tela, e o resto continua onde estava.
+// O design desenha 6 abas (com Evolução e Cobrança soltas); aqui são 5, porque
+// Evolução já é o topo de Avaliações e Cobrança é um card de "App do aluno".
+// Quebrar as duas em abas próprias numa tela desta altura custaria mais navegação
+// do que entrega.
+type Aba = "visao" | "treino" | "avaliacoes" | "semaforo" | "conta";
 const ABAS: { id: Aba; label: string; Icon: typeof UserCheck }[] = [
-  { id: "treino", label: "Plano e treino", Icon: Dumbbell },
+  { id: "visao", label: "Visão geral", Icon: LayoutGrid },
   { id: "avaliacoes", label: "Avaliações", Icon: Activity },
+  { id: "treino", label: "Treino", Icon: Dumbbell },
   { id: "semaforo", label: "Semáforo", Icon: ShieldCheck },
   { id: "conta", label: "App do aluno", Icon: Smartphone },
 ];
@@ -260,7 +268,7 @@ export function AlunoDetail() {
   // aba pedida; o param é limpo logo em seguida para não fixar a aba ao navegar.
   const [aba, setAba] = React.useState<Aba>(() => {
     const p = new URLSearchParams(window.location.search).get("aba");
-    return p && ABA_IDS.has(p) ? (p as Aba) : "treino";
+    return p && ABA_IDS.has(p) ? (p as Aba) : "visao";
   });
   // "Acompanhar" do próximo passo: garante a aba do treino e ancora na execução.
   const irParaExecucao = React.useCallback(() => {
@@ -435,6 +443,22 @@ export function AlunoDetail() {
       />
 
       <AlunoTabs aba={aba} onAba={setAba} />
+
+      {/* VISÃO GERAL: os quatro cartões do mockup, na ordem dele. Cada um é um
+          resumo do que já existe nas outras abas, com o CTA que leva pra lá. */}
+      {aba === "visao" && (
+        <div role="tabpanel" id="aba-painel-visao" aria-labelledby="aba-tab-visao" className="grid gap-4 lg:grid-cols-2">
+          <VisaoSemaforo estado={estadoSem} historico={libsAlunoDesc} onFazer={irParaSemaforo} />
+          <VisaoTreino plano={planoAtivo} alunoId={aluno.id} onVer={() => setAba("treino")} podeTreino={podeTreino} />
+          <VisaoAvaliacao avals={avals} reav={reav} vencida={reavaliacaoVencida} onVer={() => setAba("avaliacoes")} onAvaliar={() => setAvaliar(true)} />
+          <VisaoNoApp
+            aluno={aluno}
+            execucoes={execucoesDoAluno}
+            feedbacks={feedbacksDoAluno}
+            onVer={() => setAba("conta")}
+          />
+        </div>
+      )}
 
       {/* AVALIAÇÕES: evolução, histórico e a análise postural por foto no mesmo lugar. */}
       {aba === "avaliacoes" && (
@@ -1865,5 +1889,299 @@ function AvisoGateAvaliacao({ motivo, onAvaliar }: { motivo: string; onAvaliar: 
         </button>
       </div>
     </div>
+  );
+}
+
+/* ------------------------ Visão geral: os 4 cartões ----------------------- */
+
+/**
+ * A VISÃO GERAL do aluno, na forma do mockup: quatro cartões que respondem, sem
+ * clique nenhum, "como ele está hoje". Cada cartão é RESUMO do que já existe nas
+ * outras abas e leva para lá; nenhum deles calcula nada por conta própria.
+ */
+
+/** 1) Semáforo de hoje: o estado do dia e os últimos 7 dias em uma linha. */
+function VisaoSemaforo({
+  estado,
+  historico,
+  onFazer,
+}: {
+  estado: EstadoSemaforo;
+  /** liberações do aluno, da mais recente para a mais antiga */
+  historico: Liberacao[];
+  onFazer: () => void;
+}) {
+  const DIA = 86_400_000;
+  const seteDias = historico.filter((l) => Date.now() - l.data <= 7 * DIA);
+  const conta = (r: Liberacao["resultado"]) => seteDias.filter((l) => l.resultado === r).length;
+  const pendente = estado.vermelhoPendente;
+
+  return (
+    <Card className="flex flex-col p-5">
+      <Eyebrow>Semáforo · hoje</Eyebrow>
+      {estado.hoje ? (
+        <>
+          <div className="mt-1 font-display text-lg font-bold text-ink">
+            {estado.hoje.resultado === "verde"
+              ? "Liberado hoje"
+              : estado.hoje.resultado === "amarelo"
+                ? "Liberado com ajuste"
+                : "Não liberado hoje"}
+          </div>
+          <p className="mt-0.5 text-sm text-ink-2">
+            Registrado às{" "}
+            {new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date(estado.hoje.data))}.
+          </p>
+        </>
+      ) : pendente ? (
+        <>
+          <div className="mt-1 font-display text-lg font-bold text-danger">
+            Não liberado em {fmtData(pendente.data)}
+          </div>
+          <p className="mt-0.5 text-sm text-ink-2">Refaça o semáforo hoje antes da sessão.</p>
+        </>
+      ) : (
+        <>
+          <div className="mt-1 font-display text-lg font-bold text-ink">Sem semáforo hoje</div>
+          <p className="mt-0.5 text-sm text-ink-2">Faça antes da sessão para liberar, ajustar ou segurar o treino.</p>
+        </>
+      )}
+
+      {seteDias.length > 0 && (
+        <p className="mt-3 border-t border-border pt-3 text-xs text-ink-2">
+          <span className="font-semibold uppercase tracking-wide text-ink-3">Últimos 7 dias</span>{" "}
+          <span className="tabular">
+            {conta("verde")} liberado{conta("verde") === 1 ? "" : "s"} · {conta("amarelo")} com ajuste ·{" "}
+            {conta("vermelho")} não liberado{conta("vermelho") === 1 ? "" : "s"}
+          </span>
+        </p>
+      )}
+
+      <button onClick={onFazer} className={cn(buttonClasses("primary", "sm"), "mt-4 self-start")}>
+        <ShieldCheck className="h-4 w-4" /> {estado.hoje ? "Refazer o semáforo" : "Fazer semáforo agora"}
+      </button>
+    </Card>
+  );
+}
+
+/** 2) Treino ativo: plano, fase, sessões da semana e o atalho para o plano. */
+function VisaoTreino({
+  plano,
+  alunoId,
+  onVer,
+  podeTreino,
+}: {
+  plano?: PlanoTreino;
+  alunoId: string;
+  onVer: () => void;
+  podeTreino: { ok: boolean; motivo?: string };
+}) {
+  if (!plano) {
+    return (
+      <Card className="flex flex-col p-5">
+        <Eyebrow>Treino ativo</Eyebrow>
+        <div className="mt-1 font-display text-lg font-bold text-ink">Sem treino montado</div>
+        <p className="mt-0.5 text-sm text-ink-2">
+          {podeTreino.ok ? "A avaliação já está pronta; o próximo passo é montar o plano." : podeTreino.motivo}
+        </p>
+        {podeTreino.ok && (
+          <Link to={`/prescrever-treino?aluno=${alunoId}`} className={cn(buttonClasses("primary", "sm"), "mt-4 self-start")}>
+            <CalendarRange className="h-4 w-4" /> Montar treino
+          </Link>
+        )}
+      </Card>
+    );
+  }
+
+  const semana = semanaAtual(plano);
+  const meso = mesocicloAtual(plano);
+  const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
+  const sessoes = micro?.sessoes ?? [];
+
+  return (
+    <Card className="flex flex-col p-5">
+      <Eyebrow>Treino ativo</Eyebrow>
+      <div className="mt-1 font-display text-lg font-bold text-ink">Plano de {plano.semanas} semanas</div>
+      <p className="mt-0.5 text-sm text-ink-2">
+        {meso ? `${rotuloMeso(meso)} · ` : ""}semana {semana} · {plano.frequenciaSemanal}x por semana
+      </p>
+
+      {/* Trilho de fases, como no mockup: a atual em sólido. */}
+      <div className="mt-3 flex gap-1.5">
+        {plano.macrociclo.mesociclos.map((m) => {
+          const atual = semana >= m.semanaInicio && semana <= m.semanaFim;
+          return (
+            <span
+              key={m.id}
+              className={cn(
+                "min-w-0 flex-1 truncate rounded-full px-2 py-1 text-center text-2xs font-bold",
+                atual ? "bg-ink text-surface" : "bg-surface-soft text-ink-2",
+              )}
+            >
+              {rotuloMeso(m)}
+            </span>
+          );
+        })}
+      </div>
+
+      {sessoes.length > 0 && (
+        <p className="mt-2.5 truncate text-sm text-ink-2">{sessoes.map((s) => s.nome).join(" · ")}</p>
+      )}
+
+      <button onClick={onVer} className={cn(buttonClasses("secondary", "sm"), "mt-4 self-start")}>
+        Ver treino completo <ArrowRight className="h-4 w-4" />
+      </button>
+    </Card>
+  );
+}
+
+/** 3) Última avaliação: as medidas em grade e a data da próxima. */
+function VisaoAvaliacao({
+  avals,
+  reav,
+  vencida,
+  onVer,
+  onAvaliar,
+}: {
+  /** avaliações do aluno em ordem crescente de data */
+  avals: Avaliacao[];
+  reav: { em: number; semana?: number } | null;
+  vencida: boolean;
+  onVer: () => void;
+  onAvaliar: () => void;
+}) {
+  const ultima = avals[avals.length - 1];
+  if (!ultima) {
+    return (
+      <Card className="flex flex-col p-5">
+        <Eyebrow>Última avaliação</Eyebrow>
+        <div className="mt-1 font-display text-lg font-bold text-ink">Nenhuma avaliação ainda</div>
+        <p className="mt-0.5 text-sm text-ink-2">A avaliação inicial abre o resto do ciclo de cuidado.</p>
+        <button onClick={onAvaliar} className={cn(buttonClasses("primary", "sm"), "mt-4 self-start")}>
+          <CalendarPlus className="h-4 w-4" /> Registrar avaliação
+        </button>
+      </Card>
+    );
+  }
+
+  const anterior = avals[avals.length - 2];
+  const delta = (a?: number, b?: number) => (a != null && b != null ? a - b : undefined);
+  const dPeso = delta(ultima.medidas.peso, anterior?.medidas.peso);
+  const m = ultima.medidas;
+  // Só as medidas que EXISTEM nesta avaliação entram na grade.
+  const celulas: { valor: string; rotulo: string; delta?: number }[] = [];
+  if (m.peso != null) celulas.push({ valor: `${m.peso} kg`, rotulo: "peso", delta: dPeso });
+  if (m.paSistolica != null && m.paDiastolica != null)
+    celulas.push({ valor: `${m.paSistolica}/${m.paDiastolica}`, rotulo: "PA repouso" });
+  if (m.percentualGordura != null) celulas.push({ valor: `${m.percentualGordura}%`, rotulo: "gordura" });
+  if (m.cintura != null) celulas.push({ valor: `${m.cintura} cm`, rotulo: "cintura" });
+  if (m.fcRepouso != null) celulas.push({ valor: String(m.fcRepouso), rotulo: "FC repouso" });
+
+  return (
+    <Card className="flex flex-col p-5">
+      <Eyebrow>Última avaliação · {fmtData(ultima.data)}</Eyebrow>
+      <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2.5">
+        {celulas.map((c) => (
+          <div key={c.rotulo}>
+            <dt className="text-2xs text-ink-2">{c.rotulo}</dt>
+            <dd className="tabular font-display text-base font-bold text-ink">
+              {c.valor}
+              {c.delta != null && c.delta !== 0 && (
+                // Em linha própria: grudado no valor, "69 kg" e "menos 1,5" viravam
+                // uma palavra só para quem lê por leitor de tela.
+                <span
+                  className={cn("block text-2xs font-bold", c.delta < 0 ? "text-success" : "text-warning")}
+                >
+                  {c.delta < 0 ? "menos" : "mais"}{" "}
+                  {Math.abs(Number(c.delta.toFixed(1))).toLocaleString("pt-BR")} desde a anterior
+                </span>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      {reav && (
+        <p className={cn("mt-3 border-t border-border pt-3 text-xs", vencida ? "text-warning" : "text-ink-2")}>
+          <span className="font-semibold">Reavaliação {vencida ? "vencida" : "marcada"}:</span> {fmtData(reav.em)}
+          {reav.semana ? ` · fim da semana ${reav.semana}` : ""}
+        </p>
+      )}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button onClick={onAvaliar} className={buttonClasses("primary", "sm")}>
+          <CalendarPlus className="h-4 w-4" /> Reavaliar
+        </button>
+        <button onClick={onVer} className={buttonClasses("secondary", "sm")}>
+          Histórico <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
+    </Card>
+  );
+}
+
+/** 4) No app do aluno: sequência, treinos da semana, esforço médio e o recado. */
+function VisaoNoApp({
+  aluno,
+  execucoes,
+  feedbacks,
+  onVer,
+}: {
+  aluno: Aluno;
+  execucoes: Execucao[];
+  /** feedbacks do aluno, do mais recente para o mais antigo */
+  feedbacks: SessaoFeedback[];
+  onVer: () => void;
+}) {
+  const DIA = 86_400_000;
+  const streak = sequenciaDias(execucoes);
+  const diaSemana = (new Date().getDay() + 6) % 7;
+  const inicio = new Date().setHours(0, 0, 0, 0) - diaSemana * DIA;
+  const naSemana = new Set(
+    execucoes.filter((e) => e.concluidoEm >= inicio).map((e) => Math.floor(e.concluidoEm / DIA)),
+  ).size;
+  const notas = feedbacks.map((f) => f.pse).filter((n): n is number => n != null);
+  const media = notas.length ? Math.round(notas.reduce((s, n) => s + n, 0) / notas.length) : null;
+  const recado = feedbacks.find((f) => f.observacao);
+  const semNada = execucoes.length === 0 && feedbacks.length === 0;
+
+  return (
+    <Card className="flex flex-col p-5">
+      <Eyebrow>No app de {aluno.nome.split(" ")[0]}</Eyebrow>
+      {semNada ? (
+        <>
+          <div className="mt-1 font-display text-lg font-bold text-ink">Ainda sem registro</div>
+          <p className="mt-0.5 text-sm text-ink-2">
+            Quando o aluno registrar o treino no celular, a sequência e o esforço aparecem aqui.
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            {streak.atual > 0 && (
+              <span className="tabular font-display text-lg font-bold text-ink">
+                {streak.atual} {streak.atual === 1 ? "dia" : "dias"} de sequência
+              </span>
+            )}
+            {media != null && (
+              <span className="text-sm text-ink-2">
+                esforço médio <strong className="text-ink">{media}</strong> (Borg)
+              </span>
+            )}
+          </div>
+          <p className="tabular mt-0.5 text-sm text-ink-2">
+            {naSemana} {naSemana === 1 ? "treino" : "treinos"} nesta semana
+          </p>
+          {recado?.observacao && (
+            <p className="mt-3 rounded-card border border-border bg-surface-soft p-3 text-sm italic text-ink-2">
+              {recado.observacao} <span className="not-italic text-xs">· {fmtData(recado.concluidaEm)}</span>
+            </p>
+          )}
+        </>
+      )}
+      <button onClick={onVer} className={cn(buttonClasses("secondary", "sm"), "mt-4 self-start")}>
+        <Smartphone className="h-4 w-4" /> Ver o app do aluno
+      </button>
+    </Card>
   );
 }

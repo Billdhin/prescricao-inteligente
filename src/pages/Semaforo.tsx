@@ -44,6 +44,8 @@ export function Semaforo() {
   const linhas = ativos
     .map((a) => ({ aluno: a, estado: estadoSemaforo(a.id, liberacoes) }))
     .sort((x, y) => Number(!!y.estado.vermelhoPendente) - Number(!!x.estado.vermelhoPendente));
+  // Falta liberar = sem registro de hoje, ou com um "não liberado" ainda aberto.
+  const faltam = linhas.filter((l) => !l.estado.hoje || l.estado.vermelhoPendente).length;
 
   // Avulso (sem aluno): mantém só o seletor de GRUPO. O caminho por aluno agora é a
   // lista acima, então o seletor de aluno saiu daqui. Aceita ?grupo e ?fase para os
@@ -60,7 +62,18 @@ export function Semaforo() {
         eyebrow="Rotina do dia"
         icon={<TrafficCone className="h-3 w-3" />}
         title="Semáforo do dia"
-        subtitle="Quem da sua carteira já fez o semáforo hoje, quem segue com pendência e quem falta. Toque num aluno para fazer ou refazer o semáforo dele."
+        subtitle="Quem já foi liberado hoje e quem falta."
+        right={
+          faltam > 0 ? (
+            <span className="tabular rounded-full bg-warning-tint px-3 py-1.5 text-sm font-bold text-warning">
+              {faltam} para liberar
+            </span>
+          ) : ativos.length > 0 ? (
+            <span className="rounded-full bg-success-tint px-3 py-1.5 text-sm font-bold text-success">
+              Todos liberados
+            </span>
+          ) : undefined
+        }
       />
 
       {/* Lista dos alunos ativos com o estado de hoje */}
@@ -80,40 +93,54 @@ export function Semaforo() {
       ) : (
         <Card className="p-2 sm:p-3">
           <ul className="divide-y divide-border">
-            {linhas.map(({ aluno, estado }) => (
-              <li key={aluno.id}>
-                <Link
-                  to={`/alunos/${aluno.id}?aba=semaforo`}
-                  className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-surface-soft"
-                >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
-                    {aluno.iniciais}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-semibold text-ink">{aluno.nome}</div>
-                    <div className="mt-1">
-                      <EstadoHoje estado={estado} />
+            {linhas.map(({ aluno, estado }) => {
+              const falta = !estado.hoje || !!estado.vermelhoPendente;
+              return (
+                <li key={aluno.id}>
+                  <Link
+                    to={`/alunos/${aluno.id}?aba=semaforo`}
+                    className="flex items-center gap-3 rounded-card p-3 transition-colors hover:bg-surface-soft"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
+                      {aluno.iniciais}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-semibold text-ink">{aluno.nome}</div>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        {/* A bolinha do mockup: cheia quando já houve registro,
+                            vazada quando ainda falta. Decorativa; o Pill ao lado
+                            diz o estado por escrito (nunca só por cor/forma). */}
+                        <Marcador estado={estado} />
+                        <EstadoHoje estado={estado} />
+                      </div>
                     </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
-                </Link>
-              </li>
-            ))}
+                    {falta ? (
+                      <span className={buttonClasses("secondary", "sm")}>Fazer</span>
+                    ) : (
+                      <ArrowRight className="h-4 w-4 shrink-0 text-ink-2" aria-hidden />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </Card>
       )}
 
-      {/* Semáforo avulso (sem aluno) */}
-      <section className="space-y-4 border-t border-border pt-6">
-        <SectionHeader
-          level={2}
-          eyebrow="Sem aluno"
-          icon={<ShieldCheck className="h-3.5 w-3.5" />}
-          title="Semáforo avulso (sem aluno)"
-          subtitle="Uma liberação rápida que não fica no histórico de ninguém. O semáforo de um aluno da carteira se faz no perfil dele, pela lista acima."
-        />
+      {/* Semáforo avulso (sem aluno): recolhido, como o "Liberação avulsa →" do
+          mockup. É exceção, não rotina; aberto por padrão competia com a lista. */}
+      <details className="group space-y-4 border-t border-border pt-6">
+        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-primary hover:underline">
+          <ShieldCheck className="h-4 w-4" aria-hidden />
+          Liberação avulsa (sem aluno)
+          <ArrowRight className="h-4 w-4 transition-transform group-open:rotate-90" aria-hidden />
+        </summary>
+        <p className="mt-2 text-sm text-ink-2">
+          Uma liberação rápida que não fica no histórico de ninguém. O semáforo de um aluno da carteira se faz no perfil
+          dele, pela lista acima.
+        </p>
 
-        <Card className="p-5">
+        <Card className="mt-4 p-5">
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-ink">Grupo / condição</span>
             <select value={grupoSlug} onChange={(e) => setGrupoSlug(e.target.value)} className="input">
@@ -131,9 +158,33 @@ export function Semaforo() {
           </label>
         </Card>
 
-        <SemaforoLiberacao grupoSlug={grupoSlug} fase={fase} />
-      </section>
+        <div className="mt-4">
+          <SemaforoLiberacao grupoSlug={grupoSlug} fase={fase} />
+        </div>
+      </details>
     </div>
+  );
+}
+
+/** O ponto que abre a linha no mockup: cheio na cor do resultado quando houve
+ *  registro, vazado quando ainda falta. Puramente decorativo. */
+function Marcador({ estado }: { estado: EstadoSemaforo }) {
+  const cor = estado.vermelhoPendente
+    ? "bg-danger-fill"
+    : estado.hoje?.resultado === "verde"
+      ? "bg-success"
+      : estado.hoje?.resultado === "amarelo"
+        ? "bg-warning"
+        : null;
+  return (
+    <span
+      aria-hidden
+      className={
+        cor
+          ? `h-2 w-2 shrink-0 rounded-full ${cor}`
+          : "h-2 w-2 shrink-0 rounded-full ring-1 ring-inset ring-ink-3"
+      }
+    />
   );
 }
 

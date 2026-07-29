@@ -145,89 +145,56 @@ export function ProfessionalDashboard() {
         primeiroAlunoId={ativos[0]?.id ?? alunos[0]?.id}
       />
 
-      {/* Faixa de contexto (apoio, de-enfatizada). Stats zerados são suprimidos:
-          "0 avaliações (30d)" não vira mobília até existir o primeiro dado real. */}
-      {(ativos.length > 0 || comTreino > 0 || avaliacoesMes > 0) && (
-        <Card variant="soft" className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
-          {ativos.length > 0 && (
-            <StatInline icon={<Users className="h-4 w-4 text-primary" />} value={ativos.length} label="alunos ativos" to="/alunos" />
-          )}
-          {comTreino > 0 && (
-            <StatInline icon={<CalendarRange className="h-4 w-4 text-primary" />} value={comTreino} label="com treino ativo" to="/alunos" />
-          )}
-          {avaliacoesMes > 0 && (
-            <StatInline icon={<Activity className="h-4 w-4 text-analysis" />} value={avaliacoesMes} label="avaliações (30d)" to="/assessments" />
-          )}
-        </Card>
-      )}
-
-      {/* Ritual de segunda (parcial): reavaliações da semana e mensalidades pendentes.
-          Só aparece quando há dado real; nunca mostra zero inventado. */}
-      {(reavaliamSemana > 0 || pendentesCentavos > 0) && (
-        <Card variant="soft" className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3">
-          {reavaliamSemana > 0 && (
-            <Link to="/alunos" className="inline-flex items-center gap-2 text-sm hover:text-ink">
-              <CalendarCheck className="h-4 w-4 text-analysis" />
-              <span className="tabular font-display text-lg font-bold text-ink">{reavaliamSemana}</span>
-              <span className="text-ink-2">{reavaliamSemana === 1 ? "reavalia esta semana" : "reavaliam esta semana"}</span>
-            </Link>
-          )}
-          {pendentesCentavos > 0 && (
-            <Link to="/alunos" className="inline-flex items-center gap-2 text-sm hover:text-ink">
-              <Wallet className="h-4 w-4 text-primary" />
-              <span className="tabular font-display text-lg font-bold text-ink">{formatBRL(pendentesCentavos)}</span>
-              <span className="text-ink-2">em mensalidades pendentes</span>
-            </Link>
-          )}
-        </Card>
-      )}
+      {/* OS TRÊS NÚMEROS DO DIA, na ordem do mockup: carteira, cobertura de
+          treino e dinheiro parado. O terceiro slot prefere o financeiro (que é o
+          que o design pede) e cai para as avaliações do mês quando não há nada
+          pendente: um "R$ 0 pendentes" seria mobília, não informação. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <NumeroDoDia valor={String(ativos.length)} rotulo={ativos.length === 1 ? "aluno ativo" : "alunos ativos"} to="/alunos" />
+        <NumeroDoDia valor={String(comTreino)} rotulo="com treino ativo" to="/alunos" />
+        {pendentesCentavos > 0 ? (
+          <NumeroDoDia valor={formatBRL(pendentesCentavos)} rotulo="pendentes" to="/alunos" tone="warning" />
+        ) : (
+          <NumeroDoDia valor={String(avaliacoesMes)} rotulo="avaliações em 30 dias" to="/assessments" />
+        )}
+      </div>
 
       {/* ÂNCORA: Sua rota de hoje (o bloco-assinatura do Meu dia no design). */}
-      <RotaDeHojeCard rota={rota} />
+      <RotaDeHojeCard rota={rota} reavaliamSemana={reavaliamSemana} />
+
+      {/* Atalhos de referência, na linha do mockup: três portas, um clique. */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <AtalhoRef to="/comparador" icon={<GitCompare className="h-4 w-4" />} titulo="Comparador" hint="decidir entre dois" />
+        <AtalhoRef to="/protocols" icon={<ClipboardList className="h-4 w-4" />} titulo="Protocolos" hint="pontos de partida" />
+        <AtalhoRef to="/aprender" icon={<Crown className="h-4 w-4" />} titulo="Estudar" hint="trilhas e casos" />
+      </div>
+
+      {/* Semana dos seus alunos: quantos treinos aconteceram por dia, e a
+          variação contra a semana anterior. Tudo contado das execuções reais. */}
+      <SemanaDosAlunos execucoes={execucoes} />
 
       {/* Reativar alunos: retenção a partir da execução real (só aparece se houver quem
           reativar). Recebe já sem os que estão em "Precisam de atenção" (dedup). */}
       <RetencaoPanel alunos={alunosSemAtencao} execucoes={execucoes} nomeProfissional={name || undefined} />
 
-      {/* Seus alunos (apoio) */}
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-base font-bold text-ink">Seus alunos</h2>
-          <Link to="/alunos" className="text-sm font-semibold text-primary hover:underline">
-            Ver todos
-          </Link>
-        </div>
-        {ativos.length === 0 ? (
-          <Card className="flex flex-col items-center gap-3 p-8 text-center">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-primary-tint text-primary">
-              <UserPlus className="h-6 w-6" />
-            </span>
-            <p className="max-w-sm text-sm text-ink-2">
-              Cadastre seu primeiro aluno para avaliar, prescrever com justificativa e acompanhar a
-              evolução.
-            </p>
-            <Link to="/alunos?novo=1" className={buttonClasses("primary", "sm")}>
-              <UserPlus className="h-4 w-4" /> Cadastrar aluno
+      {/* Seus alunos (apoio): quem NÃO está na rota, ou seja, quem está em dia. */}
+      {seusAlunos.length > 0 && (
+        <section>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-display text-base font-bold text-ink">Em dia</h2>
+            <Link to="/alunos" className="text-sm font-semibold text-primary hover:underline">
+              Ver todos
             </Link>
-          </Card>
-        ) : seusAlunos.length === 0 ? (
-          // Todos os ativos já apareceram acima (atenção/reativar): não repetir.
-          <Card className="p-5 text-sm text-ink-2">
-            Todos os seus alunos já aparecem nas seções acima.
-          </Card>
-        ) : (
+          </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {seusAlunos.slice(0, 4).map((a) => (
               <AlunoCard key={a.id} aluno={a} temTreino={temTreinoAtivo(a.id)} />
             ))}
           </div>
-        )}
-      </section>
+        </section>
+      )}
         </>
       )}
-
-      {/* Ferramentas do Profissional (compacto, fora do fluxo principal) */}
-      <ProTools />
 
       <p className="pt-2 text-xs text-ink-3">
         Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional
@@ -419,16 +386,6 @@ function Avatar({ iniciais }: { iniciais: string }) {
   );
 }
 
-function StatInline({ icon, value, label, to }: { icon: ReactNode; value: number; label: string; to: string }) {
-  return (
-    <Link to={to} className="inline-flex items-center gap-2 text-sm hover:text-ink">
-      {icon}
-      <span className="tabular font-display text-lg font-bold text-ink">{value}</span>
-      <span className="text-ink-2">{label}</span>
-    </Link>
-  );
-}
-
 function AlunoCard({ aluno, temTreino }: { aluno: Aluno; temTreino: boolean }) {
   const dias = aluno.proximaReavaliacaoEm ? diasAte(aluno.proximaReavaliacaoEm) : null;
   // Teto de 1 pill de restrição (+N) para não competir com o flag acionável.
@@ -464,40 +421,6 @@ function AlunoCard({ aluno, temTreino }: { aluno: Aluno; temTreino: boolean }) {
   );
 }
 
-function ProTools() {
-  const tools = [
-    { icon: GitCompare, label: "Comparador avançado", sub: "Ranqueie variações por eficiência", to: "/comparador" },
-    { icon: ClipboardList, label: "Protocolos prontos", sub: "Modelos por objetivo", to: "/protocols" },
-    { icon: TrendingUp, label: "Evolução dos alunos", sub: "Visão agregada da saúde e das medidas", to: "/assessments" },
-  ];
-
-  return (
-    <section>
-      <h2 className="mb-3 font-display text-base font-bold text-ink">Ferramentas do Profissional</h2>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {tools.map((t) => {
-          const Icon = t.icon;
-          return (
-            <Link
-              key={t.to}
-              to={t.to}
-              className="flex items-center gap-3 rounded-card border border-border bg-surface p-4 transition-colors hover:bg-surface-soft"
-            >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-tint text-primary">
-                <Icon className="h-4 w-4" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-ink">{t.label}</div>
-                <div className="truncate text-xs text-ink-3">{t.sub}</div>
-              </div>
-              <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
 /**
  * "Sua rota de hoje": o contador de paradas, a próxima parada em destaque e a
@@ -508,7 +431,7 @@ function ProTools() {
  * profissional lê o que FAZER, e o rótulo vem da mesma fonte que decide o
  * próximo passo, então a tela nunca sugere uma coisa e a lista outra.
  */
-function RotaDeHojeCard({ rota }: { rota: RotaDoDia }) {
+function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamSemana: number }) {
   if (rota.total === 0) return null;
 
   if (rota.paradas.length === 0) {
@@ -523,6 +446,16 @@ function RotaDeHojeCard({ rota }: { rota: RotaDoDia }) {
     );
   }
 
+  // Os chips do topo do mockup ("Semáforo · 3 alunos", "Avaliar João"): as
+  // paradas AGRUPADAS por ação. Com um aluno só, o chip diz o nome dele; com
+  // vários, diz quantos. Derivado da mesma lista abaixo, nunca de outra conta.
+  const grupos = new Map<string, ParadaDoDia[]>();
+  for (const p of rota.paradas) {
+    const atual = grupos.get(p.acao) ?? [];
+    atual.push(p);
+    grupos.set(p.acao, atual);
+  }
+
   return (
     <Card variant="raised" className="p-5 md:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -534,7 +467,7 @@ function RotaDeHojeCard({ rota }: { rota: RotaDoDia }) {
         </div>
         {rota.agora && (
           <Link to={destinoDaParada(rota.agora)} className={buttonClasses("primary", "sm")}>
-            {rota.agora.acao} <ArrowRight className="h-4 w-4" />
+            Abrir o dia <ArrowRight className="h-4 w-4" />
           </Link>
         )}
       </div>
@@ -549,6 +482,25 @@ function RotaDeHojeCard({ rota }: { rota: RotaDoDia }) {
           />
         ))}
       </div>
+
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {[...grupos.entries()].map(([acao, ps]) => (
+          <span
+            key={acao}
+            className="rounded-full bg-surface-soft px-3 py-1 text-xs font-semibold text-ink-2 ring-1 ring-inset ring-border"
+          >
+            {acao} · {ps.length === 1 ? ps[0].aluno.nome.split(" ")[0] : `${ps.length} alunos`}
+          </span>
+        ))}
+      </div>
+
+      {reavaliamSemana > 0 && (
+        <p className="mt-3 flex items-center gap-1.5 text-xs text-ink-2">
+          <CalendarCheck className="h-3.5 w-3.5 text-analysis" aria-hidden />
+          Ritual de segunda: {reavaliamSemana}{" "}
+          {reavaliamSemana === 1 ? "reavaliação marcada" : "reavaliações marcadas"} para esta semana.
+        </p>
+      )}
 
       <ol className="mt-4 space-y-2.5">
         {rota.paradas.map((p) => (
@@ -581,4 +533,117 @@ function destinoDaParada(p: ParadaDoDia): string {
   if (p.etapa === "avaliar" || p.etapa === "reavaliar") return `/alunos/${p.aluno.id}?avaliar=1`;
   if (p.etapa === "planejar") return `/prescrever-treino?aluno=${p.aluno.id}`;
   return `/alunos/${p.aluno.id}`;
+}
+
+/** Um dos três números do topo do Meu dia: valor grande, rótulo colado, e a
+ *  tela para onde ele leva. Card clicável inteiro (alvo generoso). */
+function NumeroDoDia({
+  valor,
+  rotulo,
+  to,
+  tone = "neutro",
+}: {
+  valor: string;
+  rotulo: string;
+  to: string;
+  tone?: "neutro" | "warning";
+}) {
+  return (
+    <Link
+      to={to}
+      className="rounded-card border border-border bg-surface p-4 transition-colors hover:bg-surface-soft"
+    >
+      <div className={cn("tabular font-display text-2xl font-bold", tone === "warning" ? "text-warning" : "text-ink")}>
+        {valor}
+      </div>
+      <div className="text-sm text-ink-2">{rotulo}</div>
+    </Link>
+  );
+}
+
+/** Atalho de referência do rodapé do Meu dia: ícone, nome e a descrição de uma
+ *  linha que o Design System exige em toda opção clicável. */
+function AtalhoRef({ to, icon, titulo, hint }: { to: string; icon: ReactNode; titulo: string; hint: string }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-3 rounded-card border border-border bg-surface p-4 transition-colors hover:bg-surface-soft"
+    >
+      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold text-ink">{titulo}</span>
+        <span className="block truncate text-xs text-ink-2">{hint}</span>
+      </span>
+      <ArrowRight className="h-4 w-4 shrink-0 text-ink-2" aria-hidden />
+    </Link>
+  );
+}
+
+/**
+ * "Semana dos seus alunos": quantos treinos aconteceram por dia da semana civil,
+ * o total e a variação contra a semana anterior.
+ *
+ * Um treino = um DIA em que o aluno registrou alguma coisa (a mesma definição do
+ * app do aluno). Contar execuções soltas inflaria o número: seis exercícios num
+ * dia não são seis treinos. A variação só aparece quando a semana anterior teve
+ * movimento; percentual sobre zero não existe.
+ */
+function SemanaDosAlunos({ execucoes }: { execucoes: { alunoId?: string; concluidoEm: number }[] }) {
+  const DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  const agora = Date.now();
+  const diaSemana = (new Date(agora).getDay() + 6) % 7;
+  const inicio = new Date(agora).setHours(0, 0, 0, 0) - diaSemana * DIA;
+
+  // Um "treino" por aluno por dia: chave aluno+dia, contada uma vez.
+  const contaJanela = (de: number, ate: number) =>
+    new Set(
+      execucoes
+        .filter((e) => e.concluidoEm >= de && e.concluidoEm < ate)
+        .map((e) => `${e.alunoId ?? "?"}#${Math.floor(e.concluidoEm / DIA)}`),
+    ).size;
+
+  const porDia = DIAS.map((_, i) => contaJanela(inicio + i * DIA, inicio + (i + 1) * DIA));
+  const total = porDia.reduce((s, n) => s + n, 0);
+  const anterior = contaJanela(inicio - 7 * DIA, inicio);
+  const variacao = anterior > 0 ? Math.round(((total - anterior) / anterior) * 100) : null;
+  const max = Math.max(1, ...porDia);
+  if (total === 0 && anterior === 0) return null;
+
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-display text-base font-bold text-ink">Semana dos seus alunos</h2>
+        <div className="flex items-baseline gap-2">
+          <span className="tabular font-display text-lg font-bold text-ink">
+            {total} {total === 1 ? "treino" : "treinos"}
+          </span>
+          {variacao != null && variacao !== 0 && (
+            <span className={cn("tabular text-xs font-bold", variacao > 0 ? "text-success" : "text-warning")}>
+              {variacao > 0 ? "+" : ""}
+              {variacao}% vs semana passada
+            </span>
+          )}
+        </div>
+      </div>
+      <div
+        className="flex h-20 items-end gap-2"
+        role="img"
+        aria-label={DIAS.map((d, i) => `${d}: ${porDia[i]}`).join(", ")}
+      >
+        {DIAS.map((d, i) => (
+          <div key={d} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+            <span className="tabular text-2xs font-bold text-ink-2">{porDia[i] || ""}</span>
+            <div
+              aria-hidden
+              className={cn("w-full rounded-t-control", i === diaSemana ? "bg-primary" : "bg-surface-mute")}
+              style={{ height: `${Math.max(4, (porDia[i] / max) * 100)}%` }}
+            />
+            <span className={cn("text-2xs", i === diaSemana ? "font-bold text-ink" : "text-ink-2")}>{d}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
 }
