@@ -14,7 +14,7 @@
 import { doseForca } from "@/lib/gps/periodizacao";
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
-import { getFaixa, type BlocoSessao, type PlanoTreino } from "@/data/periodizacao";
+import { getFaixa, type BlocoSessao, type PlanoTreino, type Sessao } from "@/data/periodizacao";
 import type { Prescricao } from "@/data/alunos";
 import { exercises } from "@/data/exercises";
 
@@ -98,6 +98,31 @@ export function sessoesDaSemana(plano: PlanoTreino, semanaCorrente: number) {
     .flatMap((m) => m.microciclos)
     .find((w) => w.semana === semanaCorrente);
   return micro?.sessoes ?? [];
+}
+
+/**
+ * Grava UMA sessão editada à mão de volta no plano, na semana e no índice dados.
+ *
+ * É o caminho do "Personalizar treino": o profissional mexe nos exercícios e nas
+ * variáveis da sessão de hoje e o resultado vale para HOJE, não para o bloco inteiro
+ * (a periodização das outras semanas continua sendo do motor). Imutável, e não toca
+ * em nenhuma outra semana ou sessão. Semana inexistente ou índice fora da semana
+ * devolvem o plano intacto, em vez de inventar sessão.
+ */
+export function substituirSessaoNaSemana(
+  plano: PlanoTreino,
+  semana: number,
+  sessaoIndex: number,
+  sessao: Sessao,
+): PlanoTreino {
+  const mesociclos = plano.macrociclo.mesociclos.map((m) => ({
+    ...m,
+    microciclos: m.microciclos.map((w) => {
+      if (w.semana !== semana || sessaoIndex >= w.sessoes.length) return w;
+      return { ...w, sessoes: w.sessoes.map((s, i) => (i === sessaoIndex ? sessao : s)) };
+    }),
+  }));
+  return { ...plano, macrociclo: { ...plano.macrociclo, mesociclos } };
 }
 
 /**

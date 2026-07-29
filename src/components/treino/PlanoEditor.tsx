@@ -883,7 +883,14 @@ function SessaoQuadro({ sessao, ctx }: { sessao: Sessao; ctx: ContextoFaixa }) {
   );
 }
 
-function SessaoBloco({
+/**
+ * Editor granular de UMA sessão: trocar exercício pelo ranking seguro do perfil,
+ * adicionar/remover, mexer à mão em séries, repetições, intensidade e intervalo com
+ * aviso de faixa, e escolher o método de série. Exportado porque o "Personalizar
+ * treino" (Gps em modo dia) edita a sessão de hoje com ESTE mesmo editor: dois
+ * editores de sessão em paralelo seriam duas verdades sobre a mesma dose.
+ */
+export function SessaoBloco({
   sessao,
   ctx,
   editavel,

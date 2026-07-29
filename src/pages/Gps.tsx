@@ -67,7 +67,16 @@ import {
 import { ParametroPills } from "@/components/special/SpecialUI";
 import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
 import { nomeDoBloco, tokensDoBloco } from "@/components/student/blocoRegistro";
-import { sessoesDeHoje, sessaoDeHojeIndex, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
+import {
+  sessoesDeHoje,
+  sessaoDeHojeIndex,
+  semanaAtual,
+  parametrosPadraoTreino,
+  type PlanoTreino,
+  type Sessao,
+} from "@/data/periodizacao";
+import { substituirSessaoNaSemana, letraSessao } from "@/lib/gps/semear";
+import { SessaoBloco, type ContextoFaixa } from "@/components/treino/PlanoEditor";
 import type { Prescricao } from "@/data/alunos";
 import { montarProntuario } from "@/lib/gps/prontuario";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
@@ -189,7 +198,7 @@ export function Gps() {
     restricoes: [],
     equipamentos: [...EQUIPAMENTOS],
   }));
-  const [results, setResults] = React.useState<Recommendation[] | null>(null);
+  const [resultsManuais, setResults] = React.useState<Recommendation[] | null>(null);
   const [justify, setJustify] = React.useState<Recommendation | null>(null);
   const [compare, setCompare] = React.useState<string[]>([]);
   const [prontuarioAberto, setProntuarioAberto] = React.useState<ProntuarioSnapshot | null>(null);
@@ -219,11 +228,59 @@ export function Gps() {
   // Sessão-alvo real do "treino do dia": a MESMA que o app do aluno abre (helpers puros
   // compartilhados, nunca reimplementados). O banner mostra qual é a sessão e seus blocos
   // antes do fim do fluxo, em vez de revelá-la só no AplicarNoTreinoDialog.
-  const sessaoAlvoDia = React.useMemo(() => {
-    if (!planoAtivo || !aluno) return undefined;
-    const exec = execucoes.filter((e) => e.alunoId === aluno.id);
-    return sessoesDeHoje(planoAtivo)[sessaoDeHojeIndex(planoAtivo, exec)];
+  const sessaoAlvoDiaIndex = React.useMemo(() => {
+    if (!planoAtivo || !aluno) return 0;
+    return sessaoDeHojeIndex(planoAtivo, execucoes.filter((e) => e.alunoId === aluno.id));
   }, [planoAtivo, aluno, execucoes]);
+  const sessaoAlvoDia = React.useMemo(
+    () => (planoAtivo && aluno ? sessoesDeHoje(planoAtivo)[sessaoAlvoDiaIndex] : undefined),
+    [planoAtivo, aluno, sessaoAlvoDiaIndex],
+  );
+
+  // Perfil que ranqueia a troca segura e confere as faixas dentro do editor da sessão.
+  // É o MESMO contexto que o editor do plano monta: a alternativa oferecida aqui não pode
+  // divergir da oferecida lá para o mesmo aluno.
+  const ctxSessaoDia = React.useMemo<ContextoFaixa>(
+    () => ({
+      objetivo: planoAtivo?.objetivo ?? "Hipertrofia",
+      nivel: planoAtivo?.nivel ?? "Iniciante",
+      restricoes: aluno?.restricoes,
+      equipamentos: aluno?.equipamentos,
+      grupoEspecial: aluno?.grupoEspecial ?? planoAtivo?.grupoEspecial,
+      condicoesAtencao: aluno?.condicoesAtencao,
+      farmacos: aluno?.farmacos,
+      farmacosNaoInformado: aluno?.farmacosNaoInformado,
+      idade: aluno?.idade,
+    }),
+    [planoAtivo, aluno],
+  );
+
+  // O CONTEXTO NÃO SE PERGUNTA DUAS VEZES.
+  // Abrindo o /gps como "Personalizar treino" de um aluno que já tem plano ativo,
+  // objetivo, nível, condição, restrições e equipamentos JÁ vieram do perfil e da
+  // periodização. Repetir as 5 etapas do assistente é pedir de novo o que o sistema
+  // já sabe, e foi exatamente a reclamação do fundador ("passa por etapas como se
+  // fosse cadastro do aluno de novo"). Então o ranking é DERIVADO das respostas
+  // herdadas (nada de efeito que gera fora de hora e congela resposta velha) e a
+  // tela abre direto na edição dos exercícios. Quem quiser mexer no contexto abre o
+  // assistente pelo botão, e aí volta a valer a lista gerada à mão.
+  const [contextoAberto, setContextoAberto] = React.useState(false);
+  const abrirDireto = personalizarDia && !bloqueadoSemAvaliacao && !contextoAberto;
+  const rankDireto = React.useMemo(
+    () => (abrirDireto ? rankExercises(exercises, answers, rule) : null),
+    [abrirDireto, answers, rule],
+  );
+  const results = resultsManuais ?? (rankDireto?.length ? rankDireto : null);
+  /** A lista veio herdada (sem o usuário responder nada)? Muda o texto, não o conteúdo. */
+  const listaHerdada = !resultsManuais && Boolean(rankDireto?.length);
+
+  // A lista herdada precisa das mesmas costuras que a gerada à mão: o comparador
+  // começa com o primeiro exercício marcado e a ativação "viu um resultado" conta.
+  React.useEffect(() => {
+    if (!listaHerdada || !rankDireto?.length) return;
+    marcarAtivacao("primeiroResultado");
+    setCompare((c) => (c.length ? c : [rankDireto[0].exercise.slug]));
+  }, [listaHerdada, rankDireto]);
 
   // Última liberação do Semáforo aplicável (últimas 24h).
   // Com aluno, a pergunta é "ESTE aluno foi liberado hoje?": exigir também que o
@@ -243,7 +300,9 @@ export function Gps() {
   // documentada). Invalida e pede para gerar de novo.
   const [contextoAlterado, setContextoAlterado] = React.useState(false);
   const invalidarResultados = () => {
-    if (results) {
+    // Só a lista GERADA À MÃO congela um contexto e pode ficar mentindo. A lista
+    // herdada é derivada das respostas: mudou o aluno, ela já nasce recalculada.
+    if (resultsManuais) {
       setResults(null);
       setCompare([]);
       setStep(0);
@@ -413,9 +472,13 @@ export function Gps() {
     marcarAtivacao("primeiroResultado");
   };
 
-  // Volta ao wizard PRESERVANDO as respostas (para ajustar só uma variável).
+  // Volta ao wizard PRESERVANDO as respostas (para ajustar só uma variável). Na
+  // abertura direta é preciso destravar o assistente também, senão a lista herdada
+  // renasce no mesmo instante e o botão não faz nada.
   const ajustarRespostas = () => {
     setResults(null);
+    setContextoAberto(true);
+    setStep(0);
   };
 
   return (
@@ -437,7 +500,7 @@ export function Gps() {
           title={personalizarDia ? "Personalizar o treino do dia" : "Treino do dia"}
           subtitle={
             personalizarDia && aluno
-              ? `Ajuste a sessão desta semana de ${aluno.nome.split(" ")[0]}. As escolhas entram direto no treino dele.`
+              ? `Ajuste a sessão desta semana de ${aluno.nome.split(" ")[0]}. As escolhas entram direto no treino.`
               : "Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê."
           }
           right={<SeloRCD compacto explicavel />}
@@ -464,28 +527,22 @@ export function Gps() {
               </div>
               <p className="text-sm font-semibold text-ink">{sessaoAlvoDia.nome}</p>
               {sessaoAlvoDia.foco && <p className="text-xs text-ink-3">{sessaoAlvoDia.foco}</p>}
-              {sessaoAlvoDia.blocos.length > 0 && (
-                <ul className="mt-2 overflow-hidden rounded-xl border border-border">
-                  {sessaoAlvoDia.blocos.map((b) => {
-                    const tokens = tokensDoBloco(b);
-                    return (
-                      <LinhaDeDose
-                        key={b.id}
-                        nome={nomeDoBloco(b)}
-                        icon={b.tipo === "aerobio" ? <HeartPulse className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
-                      >
-                        {tokens.length > 0 && (
-                          <LinhaDeTokens>
-                            {tokens.map((t) => (
-                              <TokenRotulado key={t.label} label={t.label} value={t.value} />
-                            ))}
-                          </LinhaDeTokens>
-                        )}
-                      </LinhaDeDose>
-                    );
-                  })}
-                </ul>
-              )}
+              {/* Modificar direto, aqui: trocar cada exercício pelas alternativas ranqueadas
+                  no perfil e mexer à mão em séries, repetições, intensidade e intervalo.
+                  É o mesmo editor do plano, para não existirem duas verdades sobre a dose. */}
+              <EditorDaSessaoDeHoje
+                plano={planoAtivo}
+                sessao={sessaoAlvoDia}
+                sessaoIndex={sessaoAlvoDiaIndex}
+                ctx={ctxSessaoDia}
+                onSalvar={(nova) => {
+                  updatePlano(
+                    planoAtivo.id,
+                    substituirSessaoNaSemana(planoAtivo, semanaAtual(planoAtivo), sessaoAlvoDiaIndex, nova),
+                  );
+                  toast(`Sessão de hoje de ${aluno.nome.split(" ")[0]} atualizada.`);
+                }}
+              />
               {/* Fecho de flexibilidade da sessão (onda F), quando o plano o traz. */}
               {sessaoAlvoDia.fecho && (
                 <div className="mt-2 rounded-lg border border-l-2 border-border border-l-primary bg-surface-soft p-2.5">
@@ -522,8 +579,10 @@ export function Gps() {
         </Card>
       )}
 
-      {/* Mapa do fluxo: onde estou, o que falta */}
-      <FlowSteps atual={results ? 3 : alunoId || grupoSlug ? 2 : 1} />
+      {/* Mapa do fluxo: onde estou, o que falta. Na abertura direta não há fluxo a
+          percorrer (o contexto já veio pronto), então o mapa some em vez de fingir
+          que três etapas foram vencidas. */}
+      {!listaHerdada && <FlowSteps atual={results ? 3 : alunoId || grupoSlug ? 2 : 1} />}
 
       {/* Passo 0 — Para quem? */}
       <ContextoCard
@@ -584,7 +643,7 @@ export function Gps() {
               <h2 className="font-display text-base font-bold text-ink">Registre a avaliação primeiro. O treino nasce dela.</h2>
               <p className="mt-1 text-sm text-ink-2">
                 A prescrição de {aluno.nome.split(" ")[0]} parte das medidas de base. Registre a avaliação e as
-                recomendações passam a considerar o ponto de partida dele. O uso avulso, sem aluno vinculado,
+                recomendações passam a considerar o ponto de partida. O uso avulso, sem aluno vinculado,
                 continua livre.
               </p>
               <Link to={`/alunos/${aluno.id}?avaliar=1`} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
@@ -634,6 +693,7 @@ export function Gps() {
           answers={answers}
           results={results}
           onRefazer={ajustarRespostas}
+          contextoHerdado={listaHerdada}
           onJustify={setJustify}
           compare={compare}
           setCompare={setCompare}
@@ -940,7 +1000,7 @@ function ContextoCard({
                 ))}
               </select>
               <span className="mt-1 block text-xs text-ink-3">
-                Sem aluno selecionado. A idade ajusta cuidados e ênfases; com aluno, a idade dele já é usada.
+                Sem aluno selecionado. A idade ajusta cuidados e ênfases; com aluno, a idade do cadastro já é usada.
               </span>
             </label>
           )}
@@ -1408,12 +1468,76 @@ function MultiChoices({
   );
 }
 
+/* -------------------- Editor da sessão de hoje (modo dia) ------------------- */
+
+/**
+ * O que o "Personalizar treino" precisava ser desde o começo: a sessão de HOJE aberta
+ * para edição, com as alternativas ranqueadas no perfil do aluno e as variáveis na mão
+ * do profissional. Reusa o editor do plano (`SessaoBloco`), então trocar aqui oferece
+ * exatamente as mesmas opções que trocar lá, e o aviso de faixa é o mesmo.
+ *
+ * O que se salva vale só para a semana corrente: a periodização das semanas seguintes
+ * continua sendo do motor. Enquanto não se salva, é rascunho, e "Descartar" volta ao
+ * que o plano diz.
+ */
+function EditorDaSessaoDeHoje({
+  plano,
+  sessao,
+  sessaoIndex,
+  ctx,
+  onSalvar,
+}: {
+  plano: PlanoTreino;
+  sessao: Sessao;
+  sessaoIndex: number;
+  ctx: ContextoFaixa;
+  onSalvar: (s: Sessao) => void;
+}) {
+  const [rascunho, setRascunho] = React.useState<Sessao>(sessao);
+  // A sessão-alvo muda quando o aluno conclui a de hoje ou vira a semana: o rascunho
+  // acompanha, senão o editor ficaria mostrando a sessão de ontem.
+  React.useEffect(() => setRascunho(sessao), [sessao]);
+  const sujo = JSON.stringify(rascunho) !== JSON.stringify(sessao);
+
+  return (
+    <div className="mt-2">
+      <SessaoBloco
+        sessao={rascunho}
+        ctx={ctx}
+        editavel
+        onChange={setRascunho}
+        onRemover={() => {}}
+      />
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => onSalvar(rascunho)}
+          disabled={!sujo}
+          className={cn(buttonClasses("primary", "sm"), "disabled:opacity-50")}
+        >
+          <Save className="h-4 w-4" /> Salvar a sessão de hoje
+        </button>
+        {sujo && (
+          <button onClick={() => setRascunho(sessao)} className={buttonClasses("ghost", "sm")}>
+            Descartar
+          </button>
+        )}
+        <span className="text-2xs text-ink-3">
+          {sujo
+            ? `Vale para a semana ${semanaAtual(plano)}, na Sessão ${letraSessao(sessaoIndex)}. As semanas seguintes seguem a periodização.`
+            : "Troque o exercício ou mexa nas variáveis para habilitar o salvar."}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* -------------------------------- Results -------------------------------- */
 
 function Results({
   answers,
   results,
   onRefazer,
+  contextoHerdado,
   onJustify,
   compare,
   setCompare,
@@ -1433,6 +1557,8 @@ function Results({
   answers: GpsAnswers;
   results: Recommendation[];
   onRefazer: () => void;
+  /** A lista veio do perfil e da periodização, sem o profissional responder etapa nenhuma. */
+  contextoHerdado?: boolean;
   onJustify: (r: Recommendation) => void;
   compare: string[];
   setCompare: React.Dispatch<React.SetStateAction<string[]>>;
@@ -1534,7 +1660,7 @@ function Results({
               </div>
               <p className="text-sm text-ink-2">
                 {modoDia
-                  ? "Salvar leva estes exercícios para a sessão desta semana do treino dele. O PDF com a sua marca é opcional."
+                  ? "Salvar leva estes exercícios para a sessão desta semana do treino. O PDF com a sua marca é opcional."
                   : "Salvar registra no perfil do aluno e volta para ele. O PDF com a sua marca é opcional."}
               </p>
             </div>
@@ -1562,7 +1688,7 @@ function Results({
                 <span className="text-ink-2">
                   {modoDia
                     ? `Ao salvar, estes exercícios personalizam a sessão desta semana do treino de ${alunoNome}.`
-                    : `${alunoNome} já tem um plano ativo. Ao salvar, você pode aplicar estes exercícios nas sessões dele.`}
+                    : `${alunoNome} já tem um plano ativo. Ao salvar, você pode aplicar estes exercícios nas sessões desse plano.`}
                 </span>
               ) : (
                 <>
@@ -1600,6 +1726,15 @@ function Results({
 
       {/* Suas respostas — o vínculo entre o perfil e o ranking fica explícito */}
       <Card variant="soft" className="flex flex-wrap items-center gap-2 p-4">
+        {contextoHerdado && (
+          <p className="basis-full text-xs text-ink-2">
+            <span className="font-semibold text-ink">Contexto herdado.</span> Estes dados vieram do
+            cadastro e da periodização de {alunoNome ?? "quem está em contexto"}, por isso o
+            assistente não perguntou de novo. Se algo mudou hoje, ajuste o contexto. Acima você
+            edita a sessão de hoje item a item; a lista abaixo é o ranking do motor, para trocar o
+            conjunto de uma vez.
+          </p>
+        )}
         <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">Perfil</span>
         {alunoNome && <Pill tone="success">Para: {alunoNome}</Pill>}
         <Pill tone="primary">{answers.objetivo}</Pill>
@@ -1627,7 +1762,8 @@ function Results({
             <FileText className="h-4 w-4" /> Ver prontuário desta decisão
           </button>
           <button onClick={onRefazer} className="inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink">
-            <ArrowLeft className="h-3.5 w-3.5" /> Ajustar respostas
+            <ArrowLeft className="h-3.5 w-3.5" />{" "}
+            {contextoHerdado ? "Ajustar o contexto" : "Ajustar respostas"}
           </button>
         </div>
       </Card>
