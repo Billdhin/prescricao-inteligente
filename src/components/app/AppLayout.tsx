@@ -1,11 +1,13 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, CheckCheck, MoreHorizontal, Search } from "lucide-react";
+import { Bell, ChevronDown, CheckCheck, MoreHorizontal, Search, Eye, Plus } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { PRIMARIOS, MAIS, BOTTOM, itemAtivo } from "@/components/app/nav";
 import { notificacoes } from "@/lib/notificacoes";
+import { contagensDoMenu, alunoParaPrevia } from "@/lib/gps/pendencias";
+import type { CicloCtx } from "@/lib/gps/proximoPasso";
 import { LoginGate } from "@/components/app/LoginGate";
 import { CloudAuthGate } from "@/components/app/CloudAuthGate";
 import { Toasts } from "@/components/app/Toasts";
@@ -105,13 +107,18 @@ export function AppLayout() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-bg">
       {/* Fundo fica inerte enquanto o onboarding está aberto (foco/leitura presos no diálogo) */}
-      <div className="flex min-h-screen w-full flex-col" {...(onboarding ? ({ inert: "" } as any) : {})}>
-        <Topbar />
-        <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-10">
-          <React.Suspense fallback={<RouteFallback />}>
-            <Outlet />
-          </React.Suspense>
-        </main>
+      <div className="flex min-h-screen w-full" {...(onboarding ? ({ inert: "" } as any) : {})}>
+        <Sidebar />
+        {/* A coluna de conteúdo abre espaço para a barra fixa em lg+; no mobile a
+            barra lateral não existe e o espaço é zero. */}
+        <div className="flex min-w-0 flex-1 flex-col lg:pl-[248px]">
+          <Topbar />
+          <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-10">
+            <React.Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </React.Suspense>
+          </main>
+        </div>
       </div>
       <BottomBar />
       {onboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
@@ -325,38 +332,327 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
  * Abaixo de xl a busca vira botão com painel, porque a 1280px a linha não
  * comporta logo + 5 rótulos + Mais + campo de busca + sino + avatar.
  */
-function Topbar() {
-  const [busca, setBusca] = React.useState(false);
+/**
+ * A BARRA LATERAL, de volta por decisão do fundador (mockup de 28/07/2026).
+ *
+ * A rodada anterior tinha trocado a lateral por pílulas na barra superior. O
+ * desenho novo devolve a lateral, e com duas coisas que a topbar não conseguia:
+ * CONTADORES por destino (12 alunos, 2 para avaliar, 3 para liberar) e um card
+ * de ação fixo no rodapé. Um menu que já diz quanto trabalho tem em cada porta
+ * dispensa abrir porta por porta para descobrir.
+ *
+ * A lateral é ESCURA por decisão de contraste do design: ela é casca, não
+ * conteúdo, e o papel claro do miolo fica com o trabalho. Os valores são fixos
+ * (não seguem o tema claro/escuro do profissional) pelo mesmo motivo do app do
+ * aluno: é uma superfície com identidade própria, verificada uma vez.
+ *
+ * Contraste medido sobre o navy #0D1524: o texto inativo #9DB2D6 dá 7,4:1 e o
+ * ativo é papel sobre tinta (o inverso do miolo). Os dois passam AA com folga.
+ */
+const CASCA = {
+  fundo: "#0D1524",
+  fundoTopo: "#0A0D14",
+  borda: "rgba(148,170,210,.12)",
+  tinta: "#F2F6FC",
+  tinta2: "#9DB2D6",
+  ativoFundo: "#FFFDF9",
+  ativoTinta: "#17202E",
+} as const;
+
+/** Largura da lateral. Vive aqui e no padding da coluna de conteúdo. */
+function Sidebar() {
+  const { pathname } = useLocation();
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes } = useAlunos();
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
+  const contagens = contagensDoMenu(alunos, ctx);
+
+  // O contador de cada destino, quando existe. `undefined` não desenha nada: um
+  // badge "0" é ruído, e um badge inventado é pior.
+  const badgeDe = (to: string): { n: number; tom: "neutro" | "atencao" | "urgente" } | undefined => {
+    if (to === "/alunos" && contagens.alunos > 0) return { n: contagens.alunos, tom: "neutro" };
+    if (to === "/assessments" && contagens.avaliar > 0) return { n: contagens.avaliar, tom: "atencao" };
+    if (to === "/semaforo" && contagens.semaforo > 0) return { n: contagens.semaforo, tom: "urgente" };
+    return undefined;
+  };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-surface/85 backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center gap-2 px-3 md:gap-3 md:px-6">
-        <Link to="/dashboard" aria-label="Mapa da Prescrição, ir para Meu dia" className="shrink-0">
+    <aside
+      aria-label="Menu principal"
+      className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto lg:flex"
+      style={{ background: CASCA.fundo, borderRight: `1px solid ${CASCA.borda}` }}
+    >
+      <Link
+        to="/dashboard"
+        aria-label="Mapa da Prescrição, ir para Meu dia"
+        className="flex items-center gap-3 px-5 pb-5 pt-6"
+      >
+        <Logo showWord={false} />
+        <span className="font-display text-base font-bold leading-tight" style={{ color: CASCA.tinta }}>
+          Mapa da
+          <br />
+          Prescrição
+        </span>
+      </Link>
+
+      <nav className="px-3">
+        <ul className="space-y-1">
+          {PRIMARIOS.map((item) => (
+            <li key={item.to}>
+              <ItemLateral item={item} ativo={itemAtivo(item, pathname)} badge={badgeDe(item.to)} />
+            </li>
+          ))}
+        </ul>
+
+        <div
+          className="px-3 pb-2 pt-6 text-2xs font-bold uppercase tracking-[0.14em]"
+          style={{ color: CASCA.tinta2 }}
+        >
+          Mais
+        </div>
+        <ul className="space-y-1 pb-4">
+          {MAIS.map((item) => (
+            <li key={item.to}>
+              <ItemLateral item={item} ativo={itemAtivo(item, pathname)} />
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Empurra o rodapé para baixo sem depender de altura fixa. */}
+      <div className="flex-1" />
+
+      <CardSemaforoLateral quantos={contagens.semaforo} />
+      <RodapeUsuario />
+    </aside>
+  );
+}
+
+/** Uma linha da lateral: ícone, rótulo e o contador. O ATIVO é papel sólido com
+ *  tinta escura, o inverso da lateral, que é a forma mais legível de dizer
+ *  "você está aqui" numa superfície escura. */
+function ItemLateral({
+  item,
+  ativo,
+  badge,
+}: {
+  item: { to: string; label: string; short?: string; icon: React.ComponentType<{ className?: string }> };
+  ativo: boolean;
+  badge?: { n: number; tom: "neutro" | "atencao" | "urgente" };
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      to={item.to}
+      aria-current={ativo ? "page" : undefined}
+      className="flex min-h-[44px] items-center gap-3 rounded-card px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      style={
+        ativo
+          ? { background: CASCA.ativoFundo, color: CASCA.ativoTinta }
+          : { color: CASCA.tinta2 }
+      }
+    >
+      <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
+      <span className="min-w-0 flex-1 truncate">{item.short ?? item.label}</span>
+      {badge && <BadgeLateral n={badge.n} tom={badge.tom} rotulo={item.short ?? item.label} />}
+    </Link>
+  );
+}
+
+/** O contador ao lado do destino. Cor por urgência, com o número sempre legível
+ *  e um rótulo acessível que diz de que se trata (o número sozinho não diz). */
+function BadgeLateral({
+  n,
+  tom,
+  rotulo,
+}: {
+  n: number;
+  tom: "neutro" | "atencao" | "urgente";
+  rotulo: string;
+}) {
+  const estilo =
+    tom === "urgente"
+      ? { background: "var(--danger-fill)", color: "#17202E" }
+      : tom === "atencao"
+        ? { background: "var(--warning-tint)", color: "var(--warning)" }
+        : { background: "rgba(148,170,210,.16)", color: CASCA.tinta2 };
+  return (
+    <span
+      className="tabular grid h-6 min-w-[24px] shrink-0 place-items-center rounded-full px-1.5 text-2xs font-bold"
+      style={estilo}
+    >
+      {n}
+      <span className="sr-only"> em {rotulo}</span>
+    </span>
+  );
+}
+
+/**
+ * O cartão de ação no pé da lateral: quantos alunos ainda não têm o semáforo de
+ * hoje e o botão para resolver. Some quando não há ninguém pendente, porque o
+ * card existe para pedir uma ação, não para ocupar espaço.
+ */
+function CardSemaforoLateral({ quantos }: { quantos: number }) {
+  if (quantos === 0) return null;
+  return (
+    <div className="px-3 pb-3">
+      <div
+        className="rounded-card p-4"
+        style={{ background: "rgba(148,170,210,.08)", border: `1px solid ${CASCA.borda}` }}
+      >
+        <div className="flex items-center gap-1.5">
+          <span aria-hidden className="flex gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-success" />
+            <span className="h-1.5 w-1.5 rounded-full bg-warning" />
+            <span className="h-1.5 w-1.5 rounded-full bg-danger-fill" />
+          </span>
+          <span className="text-2xs font-semibold" style={{ color: CASCA.tinta2 }}>
+            Semáforo do dia
+          </span>
+        </div>
+        <div className="tabular mt-1 font-display text-lg font-bold" style={{ color: CASCA.tinta }}>
+          {quantos} para liberar
+        </div>
+        <Link
+          to="/semaforo"
+          className="mt-3 grid h-10 place-items-center rounded-full text-sm font-bold"
+          style={{ background: "var(--analysis-fill)", color: "var(--on-analysis-fill)" }}
+        >
+          Liberar agora
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/** Rodapé da lateral: quem está logado e a saída. */
+function RodapeUsuario() {
+  const { name, plan } = useUser();
+  const cloud = useCloudAuth();
+  const navigate = useNavigate();
+  const [aberto, setAberto] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!aberto) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setAberto(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [aberto]);
+
+  const sair = async () => {
+    if (cloud.configured) await signOut();
+    else {
+      encerrarSessao();
+      window.location.reload();
+    }
+  };
+
+  return (
+    <div ref={ref} className="relative border-t px-3 py-3" style={{ borderColor: CASCA.borda }}>
+      <button
+        onClick={() => setAberto((v) => !v)}
+        aria-expanded={aberto}
+        aria-haspopup="menu"
+        className="flex min-h-[48px] w-full items-center gap-3 rounded-card px-2 text-left"
+      >
+        <span
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold"
+          style={{ background: "var(--primary)", color: "var(--on-primary)" }}
+        >
+          {iniciaisDe(name || "Profissional")}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold" style={{ color: CASCA.tinta }}>
+            {name || "Seu perfil"}
+          </span>
+          <span className="block truncate text-2xs" style={{ color: CASCA.tinta2 }}>
+            {planLabel[plan]}
+          </span>
+        </span>
+        <MoreHorizontal className="h-4 w-4 shrink-0" style={{ color: CASCA.tinta2 }} aria-hidden />
+      </button>
+
+      {aberto && (
+        <div
+          role="menu"
+          className="absolute inset-x-3 bottom-[calc(100%-0.25rem)] z-50 rounded-card border border-border bg-surface p-1.5 shadow-overlay"
+        >
+          <button
+            role="menuitem"
+            onClick={() => {
+              setAberto(false);
+              navigate("/account");
+            }}
+            className="flex min-h-[40px] w-full items-center rounded-full px-2.5 text-sm font-semibold text-ink hover:bg-surface-soft"
+          >
+            Configurações
+          </button>
+          <button
+            role="menuitem"
+            onClick={() => void sair()}
+            className="flex min-h-[40px] w-full items-center rounded-full px-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-soft hover:text-ink"
+          >
+            Sair
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A barra superior ficou com o que é FERRAMENTA, não navegação: busca, a prévia
+ * do app do aluno, o sino e a ação primária de cadastrar. Os destinos moraram na
+ * lateral (e, no mobile, na barra inferior).
+ */
+function Topbar() {
+  const [busca, setBusca] = React.useState(false);
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes } = useAlunos();
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
+  const previa = alunoParaPrevia(alunos, ctx);
+
+  return (
+    <header className="sticky top-0 z-20 border-b border-border bg-surface/85 backdrop-blur">
+      <div className="flex h-16 w-full items-center gap-2 px-3 md:gap-3 md:px-6">
+        {/* A marca só aparece no mobile: em lg+ ela vive no topo da lateral. */}
+        <Link to="/dashboard" aria-label="Mapa da Prescrição, ir para Meu dia" className="shrink-0 lg:hidden">
           <Logo />
         </Link>
 
-        <TopbarNav />
+        <div className="hidden min-w-0 flex-1 md:block md:max-w-md">
+          <GlobalSearch />
+        </div>
+        <button
+          onClick={() => setBusca((v) => !v)}
+          aria-label="Buscar"
+          aria-expanded={busca}
+          className="grid h-11 w-11 place-items-center rounded-full text-ink-2 hover:bg-surface-soft md:hidden"
+        >
+          <Search className="h-[18px] w-[18px]" />
+        </button>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1">
-          <div className="hidden w-full min-w-[260px] max-w-md xl:block">
-            <GlobalSearch />
-          </div>
-          <button
-            onClick={() => setBusca((v) => !v)}
-            aria-label="Buscar"
-            aria-expanded={busca}
-            className="grid h-11 w-11 place-items-center rounded-full text-ink-2 hover:bg-surface-soft xl:hidden"
-          >
-            <Search className="h-[18px] w-[18px]" />
-          </button>
+        <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2">
+          {previa && (
+            <Link
+              to={`/alunos/${previa.id}/preview`}
+              className="hidden h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold text-ink-2 hover:bg-surface-soft hover:text-ink lg:inline-flex"
+            >
+              <Eye className="h-[18px] w-[18px]" aria-hidden /> Ver como aluno
+            </Link>
+          )}
+          {/* O "Mais" segue existindo no mobile, onde não há lateral. */}
           <MaisMenu />
           <NotificationsMenu />
-          <UserMenu />
+          <Link to="/alunos?novo=1" className={cn(buttonClasses("primary", "sm"), "hidden sm:inline-flex")}>
+            <Plus className="h-4 w-4" /> Cadastrar aluno
+          </Link>
         </div>
       </div>
 
       {busca && (
-        <div className="border-t border-border px-3 pb-3 pt-2 md:px-6 xl:hidden">
+        <div className="border-t border-border px-3 pb-3 pt-2 md:hidden">
           <GlobalSearch />
         </div>
       )}
@@ -365,47 +661,12 @@ function Topbar() {
 }
 
 /**
- * Os 5 primários como pílulas, com o ativo em INK SÓLIDO (literal do Design
- * System: a ação e o lugar atual são a tinta escura, e o azul fica reservado ao
- * pino da rota e ao anel de foco). Some no mobile, onde a barra inferior faz o
- * mesmo papel com os mesmos 5 itens.
- */
-function TopbarNav() {
-  const { pathname } = useLocation();
-  return (
-    <nav aria-label="Menu principal" className="hidden min-w-0 items-center gap-1 lg:flex">
-      {PRIMARIOS.map((item) => {
-        const ativo = itemAtivo(item, pathname);
-        return (
-          <Link
-            key={item.to}
-            to={item.to}
-            aria-current={ativo ? "page" : undefined}
-            className={cn(
-              "inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-sm font-semibold transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-              ativo ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft hover:text-ink",
-            )}
-          >
-            <item.icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
-            <span className="hidden xl:inline">{item.label}</span>
-            <span className="xl:hidden">{item.short ?? item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
-}
-
-/**
- * "Mais": popover no desktop, folha de baixo no mobile (é onde o polegar
- * alcança). Toda opção traz a descrição de uma linha que o Design System pede,
- * porque um menu de 8 destinos sem descrição obriga a abrir para descobrir.
+ * "Mais" no MOBILE: folha de baixo com os destinos que não cabem na barra
+ * inferior de 5. No desktop ele não existe, porque a lateral já lista tudo.
  */
 function MaisMenu() {
   const [open, setOpen] = React.useState(false);
   const { pathname } = useLocation();
-  const ref = React.useRef<HTMLDivElement>(null);
   const botaoRef = React.useRef<HTMLButtonElement>(null);
 
   // Fecha ao trocar de rota (o destino já foi alcançado).
@@ -413,72 +674,27 @@ function MaisMenu() {
 
   React.useEffect(() => {
     if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      const alvo = e.target as Node;
-      if (ref.current?.contains(alvo)) return;
-      // A folha do mobile mora num PORTAL, fora deste ref: sem esta checagem o
-      // primeiro toque dentro dela fecharia o menu antes do clique chegar ao link.
-      if ((alvo as Element)?.closest?.('[role="menu"][aria-label="Mais destinos"]')) return;
-      setOpen(false);
-    };
     // Esc fecha E DEVOLVE O FOCO ao botão, senão o foco cai no início da página.
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       setOpen(false);
       botaoRef.current?.focus();
     };
-    document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
   const algumAtivo = MAIS.some((i) => itemAtivo(i, pathname));
 
-  const lista = (
-    <ul className="space-y-0.5">
-      {MAIS.map((item) => {
-        const ativo = itemAtivo(item, pathname);
-        return (
-          <li key={item.to}>
-            <Link
-              to={item.to}
-              aria-current={ativo ? "page" : undefined}
-              className={cn(
-                "flex min-h-[44px] items-start gap-3 rounded-control px-2.5 py-2 transition-colors",
-                ativo ? "bg-surface-soft" : "hover:bg-surface-soft",
-              )}
-            >
-              <span
-                className={cn(
-                  "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full",
-                  ativo ? "bg-ink text-surface" : "bg-surface-mute text-ink-2",
-                )}
-              >
-                <item.icon className="h-[18px] w-[18px]" aria-hidden />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold text-ink">{item.label}</span>
-                {item.hint && <span className="block text-xs leading-tight text-ink-2">{item.hint}</span>}
-              </span>
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
-
   return (
-    <div className="relative" ref={ref}>
+    <>
       <button
         ref={botaoRef}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-haspopup="menu"
         className={cn(
-          "inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-colors",
+          "inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-colors lg:hidden",
           algumAtivo ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft hover:text-ink",
         )}
       >
@@ -486,19 +702,8 @@ function MaisMenu() {
         <span className="hidden sm:inline">Mais</span>
       </button>
 
-      {/* Desktop: popover ancorado no botão. */}
-      {open && (
-        <div
-          role="menu"
-          aria-label="Mais destinos"
-          className="absolute right-0 top-[calc(100%+8px)] z-50 hidden w-[320px] rounded-card border border-border bg-surface p-2 shadow-overlay lg:block"
-        >
-          {lista}
-        </div>
-      )}
-
-      {/* Mobile: folha de baixo, POR PORTAL. A barra superior tem backdrop-blur,
-          e um ancestral com backdrop-filter vira bloco de contenção de
+      {/* Folha de baixo POR PORTAL. A barra superior tem backdrop-blur, e um
+          ancestral com backdrop-filter vira bloco de contenção de
           `position: fixed`: sem o portal a folha ancorava dentro do cabeçalho de
           64px em vez do rodapé da tela (a mesma armadilha do popover de métrica). */}
       {open &&
@@ -517,12 +722,41 @@ function MaisMenu() {
               <div className="px-2.5 pb-1 pt-1.5 text-2xs font-semibold uppercase tracking-wider text-ink-2">
                 Mais destinos
               </div>
-              {lista}
+              <ul className="space-y-0.5">
+                {MAIS.map((item) => {
+                  const ativo = itemAtivo(item, pathname);
+                  return (
+                    <li key={item.to}>
+                      <Link
+                        to={item.to}
+                        aria-current={ativo ? "page" : undefined}
+                        className={cn(
+                          "flex min-h-[44px] items-start gap-3 rounded-control px-2.5 py-2 transition-colors",
+                          ativo ? "bg-surface-soft" : "hover:bg-surface-soft",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full",
+                            ativo ? "bg-ink text-surface" : "bg-surface-mute text-ink-2",
+                          )}
+                        >
+                          <item.icon className="h-[18px] w-[18px]" aria-hidden />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-ink">{item.label}</span>
+                          {item.hint && <span className="block text-xs leading-tight text-ink-2">{item.hint}</span>}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           </>,
           document.body,
         )}
-    </div>
+    </>
   );
 }
 

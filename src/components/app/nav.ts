@@ -83,7 +83,7 @@ export const PRIMARIOS: NavItem[] = [
     to: "/prescrever-treino",
     label: "Prescrever treino",
     icon: CalendarRange,
-    short: "Treino",
+    short: "Treinos",
     // A aba acende também no Treino do dia (/gps), que é a visão diária do mesmo
     // treino: em /gps o usuário continua "em Prescrever treino".
     match: ["/gps"],
