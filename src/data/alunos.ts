@@ -71,6 +71,24 @@ export interface Aluno {
   parametrosPrioritarios?: string[];
   faseJornada?: 1 | 2 | 3 | 4;
   criterioProgressao?: string;
+
+  /* ---- Preenchimento do perfil (o cadastro virou modal mínimo + perfil) ---- */
+  /**
+   * O profissional respondeu que este aluno NÃO tem condição de saúde a declarar.
+   * Estado declarado, irmão de `farmacosNaoInformado`: diferente de `grupoEspecial`
+   * ausente, que quer dizer "ainda não perguntei". A diferença importa porque a
+   * régua de completude do perfil não pode contar silêncio como resposta.
+   */
+  semCondicaoDeclarada?: boolean;
+  /**
+   * Seções do perfil que o profissional CONFIRMOU explicitamente (ids de
+   * `SECOES_PERFIL`, em src/lib/gps/perfilAluno.ts). Existe para as seções cujo
+   * conteúdo é um padrão razoável e não uma afirmação: equipamentos nasce com o kit
+   * típico de academia e notas nasce vazia, então nenhuma das duas pode se declarar
+   * "conferida" sozinha. Onde o dado fala por si (idade, condição, medicação), a
+   * régua lê o dado e este campo nem é consultado.
+   */
+  perfilConfirmado?: string[];
 }
 
 export type TipoAvaliacao = "inicial" | "reavaliacao" | "pontual" | "retorno";

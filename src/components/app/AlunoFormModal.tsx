@@ -1,254 +1,207 @@
 import * as React from "react";
-import { X } from "lucide-react";
+import { X, MapPin, ArrowRight } from "lucide-react";
 import { buttonClasses } from "@/components/ui/primitives";
 import { uid } from "@/lib/store";
-import { EQUIPAMENTOS, type GpsObjetivo } from "@/lib/gps/engine";
-import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
-import { parValido } from "@/lib/gps/objetivos";
-import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
-import { specialGroups } from "@/data/specialGroups";
-import { FarmacosSelector } from "@/components/gps/FarmacosSelector";
-import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
-import type { FarmacoSelecionado } from "@/data/farmacos";
+import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
 import { iniciaisDe, type Aluno } from "@/data/alunos";
 import { descricaoOpcao } from "@/data/opcoes-wizard";
 import { useDialog } from "@/lib/useDialog";
 import { cn } from "@/lib/utils";
 
-const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
+const NIVEIS: { id: Nivel; curto: string }[] = [
+  { id: "Iniciante", curto: "Iniciante" },
+  { id: "Intermediário", curto: "Interm." },
+  { id: "Avançado", curto: "Avanç." },
+];
 
-/** Kit típico de academia: ponto de partida honesto (o cadastro antigo marcava
- *  os 10, inclusive Piscina, e o perfil nascia dizendo o que o aluno não tem). */
+/** Quantos objetivos aparecem antes do "+N": os quatro mais usados no dia a dia. */
+const OBJETIVOS_VISIVEIS = 4;
+
+/** Kit típico de academia. O aluno nasce com ele porque o motor precisa de algum
+ *  equipamento para ter catálogo; a seção Equipamentos do perfil é quem CONFIRMA,
+ *  e até lá a régua de completude conta a seção como pendente, não como conferida. */
 const KIT_PADRAO = ["Máquina", "Barra", "Halter", "Polia", "Peso corporal"];
 
-/** Formulário de aluno para CRIAR (sem `inicial`) e EDITAR (com `inicial`).
- *  O prefill do Prescrever depende destes campos: manter editável é o que
- *  permite o perfil evoluir (nível, equipamentos, restrições novas). */
+/**
+ * CRIAR ALUNO EM QUATRO CAMPOS.
+ *
+ * Este modal já teve doze campos: objetivo duplo, condição de saúde, restrições,
+ * medicamentos, equipamentos, observações. Tudo aquilo é verdade sobre o aluno, e
+ * nada daquilo o profissional tem na mão quando está com o aluno na frente pedindo
+ * para começar. O resultado era um formulário que ninguém terminava, preenchido no
+ * chute, e um perfil que parecia completo sem ser.
+ *
+ * Agora o cadastro pergunta só o que se sabe de cabeça e o resto vive na página de
+ * perfil (`/alunos/:id/perfil`), que é onde a saúde é preenchida E editada depois.
+ * O modal não edita mais nada: quem quer mudar um aluno vai ao perfil dele.
+ *
+ * O que NÃO mudou: o objetivo continua obrigatório (é ele que dá sentido a tudo o
+ * que vem depois) e a idade continua validada na faixa de 12 a 100.
+ */
 export function AlunoFormModal({
-  inicial,
   onClose,
   onSave,
 }: {
-  inicial?: Aluno;
   onClose: () => void;
   onSave: (a: Aluno) => void;
 }) {
-  const editando = Boolean(inicial);
-  const [nome, setNome] = React.useState(inicial?.nome ?? "");
-  const [idade, setIdade] = React.useState(inicial?.idade ? String(inicial.idade) : "");
-  // Padrão alinhado ao posicionamento (condições/emagrecimento), não "Hipertrofia" (L1).
-  const [objetivo, setObjetivo] = React.useState<GpsObjetivo>((inicial?.objetivo as GpsObjetivo) ?? "Emagrecimento");
-  const [objetivoSecundario, setObjetivoSecundario] = React.useState<GpsObjetivo | undefined>(
-    inicial?.objetivoSecundario,
-  );
-  const [nivel, setNivel] = React.useState<Nivel>(inicial?.nivel ?? "Iniciante");
-  const [restricoes, setRestricoes] = React.useState<RestricaoSelecionada[]>(inicial?.restricoes ?? []);
-  const [farmacos, setFarmacos] = React.useState<FarmacoSelecionado[]>(inicial?.farmacos ?? []);
-  const [farmacosNaoInformado, setFarmacosNaoInformado] = React.useState(Boolean(inicial?.farmacosNaoInformado));
-  const [equipamentos, setEquipamentos] = React.useState<string[]>(inicial?.equipamentos ?? KIT_PADRAO);
-  const [observacoes, setObservacoes] = React.useState(inicial?.observacoes ?? "");
-  const [telefone, setTelefone] = React.useState(inicial?.telefone ?? "");
-  const [grupo, setGrupo] = React.useState(inicial?.grupoEspecial ?? "");
+  const [nome, setNome] = React.useState("");
+  const [idade, setIdade] = React.useState("");
+  const [nivel, setNivel] = React.useState<Nivel>("Iniciante");
+  // Padrão alinhado ao posicionamento (condições/emagrecimento), não "Hipertrofia".
+  const [objetivo, setObjetivo] = React.useState<GpsObjetivo>("Emagrecimento");
+  const [todosObjetivos, setTodosObjetivos] = React.useState(false);
   const dialogRef = useDialog<HTMLDivElement>(onClose);
-
-  const toggle = <T,>(arr: T[], v: T, set: (x: T[]) => void) =>
-    set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   const idadeNum = idade ? Number(idade) : undefined;
   const idadeForaDaFaixa = idadeNum != null && (idadeNum < 12 || idadeNum > 100);
+  const podeSalvar = Boolean(nome.trim()) && !idadeForaDaFaixa;
 
-  // Par de objetivos incompatível não vira aluno: o veredito já explicou por quê
-  // e o que fazer no lugar, então salvar assim mesmo seria guardar uma contradição.
-  const objetivosOk = parValido(objetivo, objetivoSecundario);
+  const objetivosMostrados = todosObjetivos ? OBJETIVOS : OBJETIVOS.slice(0, OBJETIVOS_VISIVEIS);
+  const ocultos = OBJETIVOS.length - OBJETIVOS_VISIVEIS;
 
   const submit = () => {
-    if (!nome.trim() || idadeForaDaFaixa || !objetivosOk) return;
+    if (!podeSalvar) return;
     const agora = Date.now();
-    const base = inicial ?? { id: uid(), status: "ativo" as const, criadoEm: agora, nivelDesde: agora };
-    // Ao trocar o nível (progressão manual), reinicia a contagem de tempo no nível.
-    const nivelDesde = inicial && inicial.nivel !== nivel ? agora : base.nivelDesde ?? base.criadoEm;
     onSave({
-      ...base,
+      id: uid(),
+      status: "ativo",
+      criadoEm: agora,
+      nivelDesde: agora,
       nome: nome.trim(),
       iniciais: iniciaisDe(nome),
       idade: idade ? Number(idade) : undefined,
       objetivo,
-      objetivoSecundario,
       nivel,
-      nivelDesde,
-      restricoes,
-      // Campo ausente é o estado válido "não declarou": lista vazia e flag falsa voltam a
-      // undefined em vez de virarem uma afirmação sobre o aluno.
-      farmacos: farmacos.length ? farmacos : undefined,
-      farmacosNaoInformado: farmacosNaoInformado || undefined,
-      equipamentos,
-      // String vazia = "sem condição declarada", que no domínio é ausência do
-      // campo, não um grupo chamado "".
-      grupoEspecial: grupo || undefined,
-      observacoes: observacoes.trim() || undefined,
-      telefone: telefone.trim() || undefined,
+      // Estados de partida HONESTOS: lista vazia é "ainda não perguntei", e é assim
+      // que a régua do perfil vai lê-los. Nada aqui afirma nada sobre o aluno.
+      restricoes: [],
+      equipamentos: KIT_PADRAO,
     });
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+    >
       <div
         ref={dialogRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label={editando ? "Editar aluno" : "Cadastrar aluno"}
-        className="max-h-modal w-full max-w-lg overflow-auto rounded-card bg-surface p-5 shadow-overlay outline-none md:p-6"
+        aria-label="Novo aluno"
+        className="max-h-modal w-full max-w-lg overflow-auto rounded-t-card bg-surface p-5 shadow-overlay outline-none sm:rounded-card md:p-6"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold text-ink">{editando ? "Editar aluno" : "Cadastrar aluno"}</h2>
-          <button onClick={onClose} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
+        {/* Alça do bottom sheet no mobile (no desktop o modal é centrado e não tem alça) */}
+        <div aria-hidden className="mx-auto mb-4 h-1 w-10 rounded-full bg-border sm:hidden" />
+
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="font-display text-xl font-bold text-ink">Novo aluno</h2>
+            <p className="mt-0.5 text-sm text-ink-2">Só o essencial agora. Saúde e restrições no perfil.</p>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Fechar"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-ink-3 hover:text-ink"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         <div className="space-y-4">
-          <Field label="Nome">
+          <div>
+            <label htmlFor="novo-aluno-nome" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-ink-2">
+              Nome
+            </label>
             <input
+              id="novo-aluno-nome"
               autoFocus
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex.: Mariana Alves"
-              className="input"
+              className="input h-12 text-base"
             />
-          </Field>
+          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Idade">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,7rem)_1fr]">
+            <div>
+              <label htmlFor="novo-aluno-idade" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-ink-2">
+                Idade
+              </label>
               <input
+                id="novo-aluno-idade"
                 value={idade}
                 onChange={(e) => setIdade(e.target.value.replace(/\D/g, "").slice(0, 3))}
                 inputMode="numeric"
-                placeholder="Ex.: 34"
+                placeholder="34"
                 aria-invalid={idadeForaDaFaixa}
-                className="input"
+                aria-describedby={idadeForaDaFaixa ? "novo-aluno-idade-erro" : undefined}
+                className="input h-12 text-base"
               />
-              {idadeForaDaFaixa && (
-                <span className="mt-1 block text-xs text-warning">Idade fora da faixa esperada (12 a 100).</span>
-              )}
-            </Field>
-            <Field label="Nível">
-              <select value={nivel} onChange={(e) => setNivel(e.target.value as Nivel)} className="input">
-                {NIVEIS.map((n) => (
-                  <option key={n}>{n}</option>
-                ))}
-              </select>
-            </Field>
-          </div>
-
-          {/*
-            DOIS OBJETIVOS: o aluno pode perseguir mais de uma coisa, e o sistema
-            precisa dizer na hora se elas somam ou se cobram um preço. A matriz de
-            compatibilidade (src/lib/gps/objetivos.ts) responde com referência
-            verificada; a tela só mostra. Par incompatível não salva.
-          */}
-          <ObjetivoDuplo
-            objetivo={objetivo}
-            objetivoSecundario={objetivoSecundario}
-            onChange={(o, s) => {
-              setObjetivo(o);
-              setObjetivoSecundario(s);
-            }}
-            compacto
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="WhatsApp">
-              <input
-                value={telefone}
-                onChange={(e) => setTelefone(e.target.value)}
-                inputMode="tel"
-                placeholder="Ex.: (11) 99999-0000"
-                className="input"
-              />
-            </Field>
-          </div>
-
-          {/*
-            CONDIÇÃO DE SAÚDE: o campo que faltava. `grupoEspecial` comanda o
-            semáforo diário, as regras do motor e o texto do prontuário, mas até
-            aqui só chegava por seed ou pelo onboarding: quem cadastrava um aluno
-            pelo caminho normal criava um aluno hipertenso que o sistema tratava
-            como saudável.
-
-            Opcional de propósito, e sem chute: quem não sabe deixa em branco, e
-            o classificador sugere o grupo depois, pela avaliação (IMC, PA,
-            idade), que é medição e não palpite.
-          */}
-          <fieldset>
-            <legend className="mb-1.5 text-sm font-semibold text-ink">Condição de saúde (opcional)</legend>
-            <p className="mb-2 text-xs text-ink-2">
-              Declarar aqui já liga o semáforo daquela condição no dia a dia. Em branco, a avaliação
-              sugere depois.
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              <ChipCondicao ativo={!grupo} onClick={() => setGrupo("")}>
-                Sem condição especial
-              </ChipCondicao>
-              {specialGroups.map((g) => (
-                <ChipCondicao key={g.slug} ativo={grupo === g.slug} onClick={() => setGrupo(g.slug)}>
-                  {g.nome}
-                </ChipCondicao>
-              ))}
             </div>
+            <fieldset className="min-w-0">
+              <legend className="mb-1.5 text-xs font-bold uppercase tracking-wider text-ink-2">Nível</legend>
+              <div className="grid grid-cols-3 gap-2">
+                {NIVEIS.map((n) => (
+                  <Opcao key={n.id} ativo={nivel === n.id} onClick={() => setNivel(n.id)} forma="caixa">
+                    {n.curto}
+                  </Opcao>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+          {idadeForaDaFaixa && (
+            <p id="novo-aluno-idade-erro" className="text-xs text-warning">
+              Idade fora da faixa esperada (12 a 100).
+            </p>
+          )}
+
+          <fieldset>
+            <legend className="mb-1.5 text-xs font-bold uppercase tracking-wider text-ink-2">Objetivo principal</legend>
+            <div className="flex flex-wrap gap-2">
+              {objetivosMostrados.map((o) => (
+                <Opcao key={o} ativo={objetivo === o} onClick={() => setObjetivo(o)} titulo={descricaoOpcao(o)}>
+                  {objetivo === o && <span aria-hidden>✓ </span>}
+                  {o}
+                </Opcao>
+              ))}
+              {!todosObjetivos && ocultos > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setTodosObjetivos(true)}
+                  className="min-h-[44px] rounded-full border border-border bg-surface px-4 text-sm font-semibold text-primary hover:bg-surface-soft"
+                >
+                  + {ocultos}
+                </button>
+              )}
+            </div>
+            <p className="mt-2 text-xs text-ink-3">
+              O segundo objetivo, quando houver, entra no perfil: é lá que o sistema diz se os
+              dois somam ou se um cobra o preço do outro.
+            </p>
           </fieldset>
 
-          <Field label="Restrições físicas">
-            <RestricoesSelector value={restricoes} onChange={setRestricoes} idBase="aluno-restr" />
-          </Field>
-
-          <Field label="Medicamentos em uso">
-            <FarmacosSelector
-              value={farmacos}
-              onChange={setFarmacos}
-              naoInformado={farmacosNaoInformado}
-              onNaoInformado={setFarmacosNaoInformado}
-              idBase="aluno-farm"
-            />
-          </Field>
-
-          <Field label="Equipamentos disponíveis">
-            <div className="mb-1.5 flex gap-3 text-xs font-semibold">
-              <button type="button" className="text-primary hover:underline" onClick={() => setEquipamentos([...EQUIPAMENTOS])}>
-                Marcar todos
-              </button>
-              <button type="button" className="text-ink-3 hover:underline" onClick={() => setEquipamentos(["Peso corporal"])}>
-                Limpar
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {EQUIPAMENTOS.map((eq) => (
-                <Chip key={eq} active={equipamentos.includes(eq)} onClick={() => toggle(equipamentos, eq, setEquipamentos)}>
-                  {eq}
-                </Chip>
-              ))}
-            </div>
-          </Field>
-
-          <Field label="Observações">
-            <textarea
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
-              rows={2}
-              placeholder="Histórico, contexto, cuidados..."
-              className="input"
-            />
-          </Field>
+          {/* Para onde este cadastro leva. Dizer isso aqui é o que autoriza o modal a
+              ser tão curto: o profissional sabe que não está deixando nada para trás. */}
+          <div className="flex gap-2.5 rounded-card bg-analysis-tint p-3.5 text-sm text-ink">
+            <MapPin aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-analysis-text" />
+            <p>
+              Depois de criar, o próximo passo já aparece: <strong className="font-semibold">completar a saúde</strong>,
+              ou avaliar direto.
+            </p>
+          </div>
         </div>
 
-        <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onClose} className={buttonClasses("secondary", "sm")}>
+        <div className="mt-5 flex items-center justify-between gap-2">
+          <button onClick={onClose} className="text-sm font-semibold text-ink-2 hover:text-ink">
             Cancelar
           </button>
-          <button onClick={submit} disabled={!nome.trim() || idadeForaDaFaixa || !objetivosOk} className={buttonClasses("primary", "sm")}>
-            {editando ? "Salvar alterações" : "Cadastrar aluno"}
+          <button onClick={submit} disabled={!podeSalvar} className={cn(buttonClasses("primary"), "gap-2")}>
+            Criar e abrir perfil <ArrowRight aria-hidden className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -256,44 +209,33 @@ export function AlunoFormModal({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-semibold text-ink">{label}</span>
-      {children}
-    </label>
-  );
-}
-
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  const desc = typeof children === "string" ? descricaoOpcao(children) : undefined;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      title={desc}
-      className={cn(
-        "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-        active ? "border-primary bg-primary-tint text-primary" : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-/** Chip de condição: pílula, ativo em ink sólido (forma, não só cor). */
-function ChipCondicao({ ativo, onClick, children }: { ativo: boolean; onClick: () => void; children: React.ReactNode }) {
+/** Opção única: pílula por padrão, caixa quando divide uma grade (nível). */
+function Opcao({
+  ativo,
+  onClick,
+  children,
+  titulo,
+  forma = "pilula",
+}: {
+  ativo: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  titulo?: string;
+  forma?: "pilula" | "caixa";
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={ativo}
+      title={titulo}
       className={cn(
-        "min-h-[36px] rounded-full border px-3 text-sm font-medium transition-colors",
+        "min-h-[44px] border px-4 text-sm font-medium transition-colors",
+        forma === "caixa" ? "rounded-card" : "rounded-full",
         ativo
-          ? "border-ink bg-ink font-semibold text-surface"
+          ? forma === "caixa"
+            ? "border-ink bg-ink font-bold text-surface"
+            : "border-primary bg-primary-tint font-bold text-primary"
           : "border-border bg-surface text-ink-2 hover:bg-surface-soft hover:text-ink",
       )}
     >

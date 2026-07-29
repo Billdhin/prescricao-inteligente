@@ -60,7 +60,6 @@ import { ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { getModelo, rotuloMeso, semanaAtual, mesocicloAtual, proximaReavaliacao, sessoesDeHoje, sessaoDeHojeIndex, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
-import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
 import { EvolucaoMini, TabelaEvolucao } from "@/components/app/EvolucaoMini";
@@ -250,7 +249,6 @@ export function AlunoDetail() {
   const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao } =
     useAlunos();
   const navigate = useNavigate();
-  const [editar, setEditar] = React.useState(false);
   const [confirmarExclusao, setConfirmarExclusao] = React.useState(false);
   const usuario = useUser();
   const { name: profNome, plan, cref } = usuario;
@@ -422,7 +420,7 @@ export function AlunoDetail() {
         reav={reav}
         reavaliacaoVencida={reavaliacaoVencida}
         temAvaliacao={temAvaliacao}
-        onEditar={() => setEditar(true)}
+        onEditar={() => navigate(`/alunos/${aluno.id}/perfil`)}
         onAvaliar={() => setAvaliar(true)}
         onAcompanhar={irParaExecucao}
         onLiberar={irParaSemaforo}
@@ -758,17 +756,6 @@ export function AlunoDetail() {
 
       {convidar && <ConviteAlunoModal aluno={aluno} onClose={() => setConvidar(false)} />}
 
-      {editar && (
-        <AlunoFormModal
-          inicial={aluno}
-          onClose={() => setEditar(false)}
-          onSave={(a) => {
-            updateAluno(aluno.id, a);
-            setEditar(false);
-            toast(`Dados de ${a.nome} atualizados`);
-          }}
-        />
-      )}
 
       {confirmarExclusao && (
         <ConfirmarExclusaoModal

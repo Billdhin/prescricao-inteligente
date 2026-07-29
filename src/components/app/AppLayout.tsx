@@ -21,6 +21,7 @@ import { marcarAtivacao } from "@/lib/ativacao";
 import { useDialog } from "@/lib/useDialog";
 import { useUser, useAlunos, planLabel, uid } from "@/lib/store";
 import { iniciaisDe, type Aluno } from "@/data/alunos";
+import { completudeAluno } from "@/lib/gps/perfilAluno";
 import type { Nivel } from "@/data/types";
 import { cn } from "@/lib/utils";
 
@@ -434,12 +435,99 @@ function Sidebar() {
         </ul>
       </nav>
 
+      {/* Contexto do lugar onde o profissional está, quando é um aluno. */}
+      <CardAlunoLateral alunos={alunos} pathname={pathname} />
+
       {/* Empurra o rodapé para baixo sem depender de altura fixa. */}
       <div className="flex-1" />
 
       <CardSemaforoLateral quantos={contagens.semaforo} />
       <RodapeUsuario />
     </aside>
+  );
+}
+
+/**
+ * "ESTE ALUNO": o contexto da lateral quando o profissional está dentro de um.
+ *
+ * Ele é DERIVADO da rota (`/alunos/:id`), não de um estado que alguma página
+ * precise lembrar de setar e de limpar. Estado paralelo para dizer "onde estou"
+ * é a receita conhecida do bloco que fica aceso na tela errada.
+ *
+ * O que ele mostra é a régua única do perfil (`completudeAluno`), a mesma que o
+ * trilho de seções usa, e o que falta em palavras. E ele diz, em toda visita, que
+ * perfil incompleto não impede avaliar: o gate duro é a avaliação, não o cadastro.
+ */
+function CardAlunoLateral({ alunos, pathname }: { alunos: Aluno[]; pathname: string }) {
+  const id = pathname.match(/^\/alunos\/([^/]+)/)?.[1];
+  const aluno = id ? alunos.find((a) => a.id === id) : undefined;
+  if (!aluno) return null;
+
+  const { pct, faltaTexto } = completudeAluno(aluno);
+  const completo = !faltaTexto;
+  const noPerfil = pathname.endsWith("/perfil");
+
+  return (
+    <div className="px-3 pb-1 pt-6">
+      <div className="px-3 pb-2 text-2xs font-bold uppercase tracking-[0.14em]" style={{ color: CASCA.tinta2 }}>
+        Este aluno
+      </div>
+      <Link
+        to={noPerfil ? `/alunos/${aluno.id}` : `/alunos/${aluno.id}/perfil`}
+        className="block rounded-card p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        style={{ background: "rgba(148,170,210,.08)", border: `1px solid ${CASCA.borda}` }}
+      >
+        <div className="flex items-center gap-2.5">
+          <span
+            aria-hidden
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold"
+            style={{ background: "var(--primary)", color: "var(--on-primary)" }}
+          >
+            {aluno.iniciais}
+          </span>
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-bold" style={{ color: CASCA.tinta }}>
+              {aluno.nome}
+            </span>
+            <span className="block truncate text-2xs" style={{ color: CASCA.tinta2 }}>
+              {[aluno.idade ? `${aluno.idade} anos` : null, aluno.nivel.toLowerCase()].filter(Boolean).join(" · ")}
+            </span>
+          </span>
+        </div>
+
+        <div className="mt-3 flex items-baseline justify-between gap-2">
+          <span className="text-2xs font-semibold" style={{ color: CASCA.tinta2 }}>
+            Perfil
+          </span>
+          <span className="tabular text-xs font-bold" style={{ color: completo ? "#14B3BA" : CASCA.tinta }}>
+            {pct}%
+          </span>
+        </div>
+        <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: "rgba(148,170,210,.16)" }}>
+          <div
+            className="h-full rounded-full transition-[width] duration-300"
+            style={{ width: `${pct}%`, background: completo ? "#14B3BA" : "var(--primary)" }}
+          />
+        </div>
+        <p className="mt-2 text-2xs leading-relaxed" style={{ color: CASCA.tinta2 }}>
+          {completo ? (
+            noPerfil ? (
+              "Perfil completo. Voltar para o aluno."
+            ) : (
+              "Perfil completo. Abrir para editar."
+            )
+          ) : (
+            <>
+              Falta: {faltaTexto}. Dá para{" "}
+              <span className="font-bold" style={{ color: CASCA.tinta }}>
+                avaliar já
+              </span>
+              .
+            </>
+          )}
+        </p>
+      </Link>
+    </div>
   );
 }
 

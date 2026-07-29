@@ -16,6 +16,7 @@ import { Account } from "@/pages/Account";
 import { Alunos } from "@/pages/Alunos";
 import { AlunoDetail } from "@/pages/AlunoDetail";
 import { AlunoPreview } from "@/pages/AlunoPreview";
+import { AlunoPerfil } from "@/pages/AlunoPerfil";
 import { AlunoPortal } from "@/pages/AlunoPortal";
 import { Avaliacoes } from "@/pages/Avaliacoes";
 import { Protocolos } from "@/pages/Protocolos";
@@ -107,6 +108,7 @@ export default function App() {
           <Route path="/cases/:slug" element={<CasoSlugRedirect />} />
           <Route path="/alunos" element={<Alunos />} />
           <Route path="/alunos/:id" element={<AlunoDetail />} />
+          <Route path="/alunos/:id/perfil" element={<AlunoPerfil />} />
           <Route path="/special-groups" element={<SpecialGroups />} />
           <Route path="/special-groups/:slug" element={<SpecialGroupDetail />} />
           <Route path="/decisao" element={<DecisaoRedirect />} />

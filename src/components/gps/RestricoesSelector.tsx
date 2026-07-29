@@ -306,6 +306,44 @@ function RefinarCard({
   );
 }
 
+/**
+ * SÓ O DETALHE DAS SELECIONADAS, sem a grade de escolha.
+ *
+ * O perfil do aluno escolhe as restrições numa gaveta lateral (catálogo) e detalha
+ * aqui (este aluno): gatilhos, lado, gravidade, liberação. As perguntas condicionais
+ * são as mesmas do wizard porque são o MESMO componente; duplicar isso seria abrir
+ * caminho para duas versões da mesma pergunta de segurança.
+ */
+export function DetalheRestricoes({
+  restricoes,
+  onChange,
+  idBase = "detalhe-restr",
+}: {
+  restricoes: RestricaoSelecionada[];
+  onChange: (next: RestricaoSelecionada[]) => void;
+  idBase?: string;
+}) {
+  const comDetalhe = restricoes
+    .map((r) => ({ r, item: CATALOGO_RESTRICOES.find((it) => it.tag === r.tag) }))
+    .filter(
+      (x): x is { r: RestricaoSelecionada; item: RestricaoCatalogoItem } =>
+        !!x.item && x.r.tag !== "nenhuma_restricao" && (x.item.campos?.length ?? 0) > 0,
+    );
+  if (!comDetalhe.length) return null;
+
+  const patch = (tag: RestricaoTag, p: Partial<RestricaoSelecionada>) =>
+    onChange(restricoes.map((r) => (r.tag === tag ? { ...r, ...p, atualizadoEm: agora() } : r)));
+
+  return (
+    <div className="space-y-2">
+      <div className="text-2xs font-bold uppercase tracking-wider text-ink-3">Detalhe das selecionadas</div>
+      {comDetalhe.map(({ r, item }) => (
+        <RefinarCard key={r.tag} item={item} sel={r} onPatch={(p) => patch(r.tag, p)} idBase={idBase} />
+      ))}
+    </div>
+  );
+}
+
 /* --------------------------- Perguntas condicionais ----------------------- */
 
 function PerguntasCondicionais({

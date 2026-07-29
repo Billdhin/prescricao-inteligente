@@ -169,11 +169,14 @@ export interface RestricaoCatalogoItem {
   destaque?: boolean;
 }
 
-export const GRUPOS_RESTRICAO: { id: RestricaoGrupo; titulo: string; abertoInicial: boolean }[] = [
-  { id: "dor_regiao", titulo: "Dor ou sensibilidade por região", abertoInicial: true },
-  { id: "limitacao_movimento", titulo: "Limitações de movimento", abertoInicial: false },
-  { id: "impacto_equilibrio", titulo: "Impacto, equilíbrio e estabilidade", abertoInicial: false },
-  { id: "historico", titulo: "Histórico recente e necessidades especiais", abertoInicial: false },
+/** `curto` é o rótulo do filtro na gaveta de seleção do perfil. Ele mora aqui, e
+ *  não é recortado do título na tela: cortar "Impacto, equilíbrio e estabilidade"
+ *  na primeira palavra devolve "Impacto," com vírgula e tudo. */
+export const GRUPOS_RESTRICAO: { id: RestricaoGrupo; titulo: string; curto: string; abertoInicial: boolean }[] = [
+  { id: "dor_regiao", titulo: "Dor ou sensibilidade por região", curto: "Região", abertoInicial: true },
+  { id: "limitacao_movimento", titulo: "Limitações de movimento", curto: "Movimento", abertoInicial: false },
+  { id: "impacto_equilibrio", titulo: "Impacto, equilíbrio e estabilidade", curto: "Impacto", abertoInicial: false },
+  { id: "historico", titulo: "Histórico recente e necessidades especiais", curto: "Histórico", abertoInicial: false },
 ];
 
 export const CATALOGO_RESTRICOES: RestricaoCatalogoItem[] = [

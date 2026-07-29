@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "check": "npm run check:metricas && npm run check:faixas && npm run check:progressao && npm run check:regras && npm run check:farmacos && npm run check:documentos && npm run check:nucleos && npm run check:aprender && npm run check:consulta && npm run check:legibilidade && npm run check:postura && npm run check:design && npm run check:contraste && npm run check:menu && npm run check:condicao && npm run check:objetivos && npm run check:escalas",
+    "check": "npm run check:metricas && npm run check:faixas && npm run check:progressao && npm run check:regras && npm run check:farmacos && npm run check:documentos && npm run check:nucleos && npm run check:aprender && npm run check:consulta && npm run check:legibilidade && npm run check:postura && npm run check:design && npm run check:contraste && npm run check:menu && npm run check:condicao && npm run check:objetivos && npm run check:escalas && npm run check:perfil",
     "gen:seed": "tsx scripts/gen-seed-sql.ts",
     "check:supabase": "node scripts/check-supabase.mjs",
     "check:metricas": "tsx scripts/check-metricas.ts",
@@ -27,7 +27,8 @@
     "check:contraste": "tsx scripts/check-contraste.mjs",
     "check:condicao": "tsx scripts/check-condicao.ts",
     "check:objetivos": "tsx scripts/check-objetivos.ts",
-    "check:escalas": "tsx scripts/check-escalas.ts"
+    "check:escalas": "tsx scripts/check-escalas.ts",
+    "check:perfil": "tsx scripts/check-perfil.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

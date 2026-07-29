@@ -186,7 +186,9 @@ export function Alunos() {
                 </span>
                 <span className="min-w-0">
                   <span className="block font-display font-semibold text-ink">Cadastrar aluno</span>
-                  <span className="block text-sm text-ink-2">Nome, condição e objetivo. Leva 30 segundos.</span>
+                  {/* O que o modal de fato pergunta hoje. A condição de saúde saiu
+                      daqui e foi para o perfil, então prometê-la seria mentir na porta. */}
+                  <span className="block text-sm text-ink-2">Nome, idade, nível e objetivo. Leva 20 segundos.</span>
                 </span>
               </button>
             </div>
@@ -200,7 +202,9 @@ export function Alunos() {
           onSave={(a) => {
             addAluno(a);
             setNovo(false);
-            navigate(`/alunos/${a.id}`, { state: { recemCriado: true } });
+            // O botão promete "Criar e abrir perfil": ele abre o perfil, e na seção
+            // que de fato falta (a saúde), não numa tela de boas-vindas.
+            navigate(`/alunos/${a.id}/perfil`, { state: { recemCriado: true } });
           }}
         />
       )}
