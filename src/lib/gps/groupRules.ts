@@ -39,6 +39,25 @@ export interface GroupGpsRule extends GroupRuleInput {
   slug: string;
   /** pré-seleciona a etapa "Alguma restrição?" (o usuário pode trocar) */
   restricaoSugerida?: RestricaoTag;
+  /**
+   * LIMITAÇÕES ESTRUTURAIS QUE A CONDIÇÃO JÁ IMPLICA, sempre, sem o profissional
+   * precisar marcar nada.
+   *
+   * Existe porque o gerador do PLANO (periodizacao.ts) escolhia exercício só por
+   * objetivo e nível: uma aluna com obesidade grau II recebia elevação de quadril
+   * com barra, deitada no banco, porque nada no caminho olhou a condição. As
+   * penalidades acima ranqueiam (demanda de joelho, demanda lombar); estas tags
+   * FILTRAM pelo perfil estrutural do exercício (ir ao chão, impacto, apoio).
+   *
+   * A diferença entre isto e `restricaoSugerida`: aquela é uma SUGESTÃO que o
+   * profissional confirma ou troca na tela; estas são consequência da própria
+   * condição e entram sempre, porque um plano de 12 semanas é gerado de uma vez,
+   * sem passar pela etapa de restrições.
+   *
+   * Elas somam com o que o profissional declarou; nunca substituem. A regra mais
+   * estrita continua mandando, como no ranqueamento.
+   */
+  restricoesEstruturais?: RestricaoTag[];
   /** cuidados exibidos como "já considerados pelo grupo" */
   cuidados: string[];
   /** ids de referencias.ts que fundamentam as regras deste grupo (bibliografia do Prontuário) */
@@ -58,6 +77,7 @@ export interface GroupGpsRule extends GroupRuleInput {
 export const groupGpsRules: Record<string, GroupGpsRule> = {
   "obesidade-grau-1": {
     slug: "obesidade-grau-1",
+    restricoesEstruturais: ["baixa_tolerancia_impacto"],
     nome: "Obesidade grau I",
     cuidados: [
       "Impacto controlado com progressão gradual: caminhada e bicicleta toleradas, a musculação guiada entra como complemento.",
@@ -90,6 +110,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 
   "obesidade-grau-2": {
     slug: "obesidade-grau-2",
+    restricoesEstruturais: ["baixa_tolerancia_impacto", "dificuldade_chao", "fadiga_precoce"],
     nome: "Obesidade grau II",
     cuidados: [
       "Impacto e volume altos tendem a sobrecarregar joelhos e lombar: a base da semana são modalidades de baixo impacto; a musculação entra como complemento guiado.",
@@ -122,6 +143,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 
   "obesidade-grau-3": {
     slug: "obesidade-grau-3",
+    restricoesEstruturais: ["baixa_tolerancia_impacto", "dificuldade_chao", "dificuldade_sentar_levantar", "fadiga_precoce"],
     nome: "Obesidade grau III",
     cuidados: [
       "A base da semana é de baixo impacto (meio aquático ou bicicleta): impacto e volume altos sobrecarregam joelhos e lombar neste perfil.",
@@ -228,6 +250,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 
   "idoso-destreinado": {
     slug: "idoso-destreinado",
+    restricoesEstruturais: ["baixa_tolerancia_impacto", "equilibrio_reduzido", "dificuldade_chao"],
     nome: "Idoso destreinado",
     cuidados: [
       "Equilíbrio e segurança primeiro: apoio disponível e ambiente livre de obstáculos.",
@@ -254,6 +277,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 
   "dor-lombar-inespecifica": {
     slug: "dor-lombar-inespecifica",
+    restricoesEstruturais: ["lombar_sensivel"],
     nome: "Dor lombar inespecífica",
     restricaoSugerida: "lombar_sensivel",
     cuidados: [
@@ -274,6 +298,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 
   "osteoartrite-joelho": {
     slug: "osteoartrite-joelho",
+    restricoesEstruturais: ["baixa_tolerancia_impacto", "dificuldade_ajoelhar"],
     nome: "Osteoartrite de joelho",
     restricaoSugerida: "joelho_dor",
     cuidados: [
@@ -315,6 +340,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   },
   "retorno-inatividade": {
     slug: "retorno-inatividade",
+    restricoesEstruturais: ["fadiga_precoce"],
     nome: "Retorno após inatividade",
     cuidados: [
       "Recomece com cerca de metade do volume e da carga anteriores e progrida ao longo de poucas semanas.",
@@ -443,6 +469,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   },
   "pos-parto": {
     slug: "pos-parto",
+    restricoesEstruturais: ["baixa_tolerancia_impacto"],
     nome: "Pós-parto com liberação",
     cuidados: [
       "Com liberação: retomada gradual com atenção ao assoalho pélvico e ao core; sinais de perdas ou peso pedem encaminhamento.",

@@ -153,6 +153,10 @@ export function PrescreverTreino() {
       faseInicial: ctx.alunoId ? aluno?.faseJornada : undefined,
       idade: ctx.alunoId ? aluno?.idade : undefined,
       fcRepouso: ultimaAval?.medidas.fcRepouso,
+      // As restrições do PERFIL do aluno entram na geração: elas somam com as que a
+      // condição impõe e filtram a seleção de exercícios do plano inteiro. Sem aluno
+      // (plano avulso), só as da condição valem.
+      restricoes: ctx.alunoId ? aluno?.restricoes : undefined,
       // O perfil clínico mais as classes de medicação declaradas decidem se a frequência
       // cardíaca ainda guia a intensidade deste aluno. Sem aluno (plano avulso) ou sem
       // declaração, a lista sai vazia e o plano é o de sempre.

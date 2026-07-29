@@ -27,6 +27,16 @@ import {
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getSpecialGroup } from "@/data/specialGroups";
+import { groupGpsRules } from "@/lib/gps/groupRules";
+import {
+  restricoesAtivas,
+  rotuloRestricao,
+  criarRestricao,
+  EFEITO_POR_TAG,
+  type RestricaoSelecionada,
+  type RestricaoTag,
+  type AcaoRestricao,
+} from "@/lib/gps/restricoes";
 import type { ParamMonitorId } from "@/data/monitoringParameters";
 import { alvoSemana, alvoAerobioSemana, objetivoDaSemana, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
 
@@ -68,6 +78,12 @@ export interface GerarPlanoInput {
    * antes desta camada.
    */
   parametrosInvalidos?: ParamMonitorId[];
+  /**
+   * Restrições declaradas no perfil do aluno. Somam com as que a condição impõe
+   * (groupRules.restricoesEstruturais) e FILTRAM a seleção de exercícios do plano.
+   * Ausente = plano sem filtro por restrição (uso avulso e estudo).
+   */
+  restricoes?: RestricaoSelecionada[];
 }
 
 export interface PlanoGerado {
@@ -108,33 +124,147 @@ function escolherModelos(input: GerarPlanoInput): {
   const { objetivo, nivel, grupoEspecial } = input;
   const treinado = NIVEL_ORDEM[nivel] >= 1;
 
-  // Retorno ao treino ou grupo especial: progressão conservadora e previsível.
-  if (objetivo === "Retorno ao treino" || grupoEspecial) {
+  /*
+   * O MODELO SEGUE OBJETIVO E NÍVEL. A CONDIÇÃO NÃO ESCOLHE O MODELO.
+   *
+   * Antes, qualquer aluno com condição declarada caía em "linear", fosse ele
+   * iniciante ou avançado, com qualquer objetivo. O efeito prático era um aluno
+   * intermediário de hipertrofia com obesidade receber linear e a tela anunciar
+   * "Periodização linear" onde a decisão correta seria ondulatória.
+   *
+   * O erro era conceitual: confundir MODELO (como as variáveis se distribuem no
+   * tempo) com CAUTELA (quão rápido e até onde progredir). Distribuir ênfase de
+   * repetições entre as sessões não é mais arriscado do que subir carga em linha
+   * reta. Quem cuida da segurança são as outras camadas, e elas já existem:
+   * `modProgressao` (teto de PSE e passo reduzido por perfil), as penalidades de
+   * ranqueamento e, desde agora, o filtro de exercícios por condição.
+   *
+   * O que a condição faz aqui é UMA coisa: entra como a ALTERNATIVA
+   * autorregulada, porque tolerância variável dia a dia é justamente o caso em
+   * que autorregular ajuda.
+   */
+  const alternativaDaCondicao = grupoEspecial ? "flexivel" : undefined;
+
+  // Retorno ao treino é uma FASE, não um objetivo de desempenho: o previsível
+  // vence, porque o propósito é reconstruir tolerância antes de buscar ganho.
+  if (objetivo === "Retorno ao treino") {
     return { principal: "linear", alternativa: "flexivel" };
   }
   // Iniciante: a progressão linear simples costuma bastar (a ondulatória não rende mais).
   if (!treinado) {
-    return { principal: "linear", alternativa: "flexivel" };
+    return { principal: "linear", alternativa: alternativaDaCondicao ?? "ondulatoria" };
   }
   // Força/hipertrofia em treinados: ondulatória tende a render mais para força.
   if (objetivo === "Hipertrofia" || objetivo === "Força") {
-    return { principal: "ondulatoria", alternativa: nivel === "Avançado" ? "blocos" : "linear" };
+    return {
+      principal: "ondulatoria",
+      alternativa: alternativaDaCondicao ?? (nivel === "Avançado" ? "blocos" : "linear"),
+    };
   }
   // Demais objetivos em treinados: linear como base, ondulatória como alternativa.
-  return { principal: "linear", alternativa: "ondulatoria" };
+  return { principal: "linear", alternativa: alternativaDaCondicao ?? "ondulatoria" };
 }
 
 /* ------------------------------ Seleção de exercícios ------------------------------ */
 
-function selecionarExercicios(objetivo: GpsObjetivo, nivel: Nivel, n: number) {
+/**
+ * As restrições que valem para ESTE plano: as que o profissional declarou no
+ * perfil do aluno MAIS as que a condição impõe por si (groupRules
+ * `restricoesEstruturais`). Deduplicadas por tag; a mais estrita manda depois,
+ * no avaliador.
+ */
+function restricoesDoPlano(input: GerarPlanoInput): RestricaoSelecionada[] {
+  const declaradas = input.restricoes ?? [];
+  const daCondicao = input.grupoEspecial ? (groupGpsRules[input.grupoEspecial]?.restricoesEstruturais ?? []) : [];
+  const porTag = new Map<RestricaoTag, RestricaoSelecionada>();
+  for (const r of declaradas) porTag.set(r.tag, r);
+  for (const tag of daCondicao) if (!porTag.has(tag)) porTag.set(tag, criarRestricao(tag));
+  return [...porTag.values()];
+}
+
+/**
+ * SELEÇÃO DE EXERCÍCIOS DO PLANO, agora ciente da condição.
+ *
+ * Antes esta função via só objetivo e nível, e por isso um plano de 12 semanas
+ * para obesidade grau II podia trazer exercício deitado no banco ou que exige ir
+ * ao chão: nada no caminho olhava a condição. O Treino do dia já excluía esses
+ * casos; o plano não. Agora os dois passam pelo MESMO avaliador por tag
+ * (EFEITO_POR_TAG), que é a fonte única de "este exercício cabe neste aluno".
+ *
+ * Ordem de preferência: primeiro os que o avaliador PREFERE, depois os neutros,
+ * depois os adaptáveis. Excluídos nunca entram, nem para completar a lista.
+ *
+ * Devolve também quantos foram descartados e por quê, para a tela poder dizer
+ * "o catálogo não tem exercício suficiente para este perfil" em vez de completar
+ * com o que sobrou (que é como o erro apareceria de novo, só que silencioso).
+ */
+export interface SelecaoExercicios {
+  escolhidos: { slug: string; nome: string }[];
+  /** exercícios retirados pela condição/restrição, com o motivo (para o Prontuário) */
+  descartados: { slug: string; nome: string; motivo: string }[];
+  /** true quando o catálogo não tinha exercícios seguros suficientes para o pedido */
+  faltouCatalogo: boolean;
+}
+
+function selecionarExercicios(
+  objetivo: GpsObjetivo,
+  nivel: Nivel,
+  n: number,
+  restricoes: RestricaoSelecionada[] = [],
+): SelecaoExercicios {
   const teto = NIVEL_ORDEM[nivel];
-  let pool = exercises.filter(
-    (e) => e.objetivo?.includes(objetivo) && NIVEL_ORDEM[(e.nivel as Nivel) ?? "Iniciante"] <= teto,
-  );
-  if (pool.length < n) {
-    pool = exercises.filter((e) => NIVEL_ORDEM[(e.nivel as Nivel) ?? "Iniciante"] <= teto);
+  const noNivel = (e: (typeof exercises)[number]) => NIVEL_ORDEM[(e.nivel as Nivel) ?? "Iniciante"] <= teto;
+
+  // Pool base: do objetivo quando houver o bastante; senão, todo o catálogo no nível.
+  const doObjetivo = exercises.filter((e) => e.objetivo?.includes(objetivo) && noNivel(e));
+  const pool = doObjetivo.length >= n ? doObjetivo : exercises.filter(noNivel);
+
+  const ativas = restricoesAtivas(restricoes);
+  const descartados: SelecaoExercicios["descartados"] = [];
+  // Nota por exercício: 0 = excluído, e o resto é a ação mais estrita entre as tags.
+  const PESO_ACAO: Record<AcaoRestricao, number> = {
+    preferir: 3,
+    adaptar: 2,
+    penalizar_moderado: 1,
+    penalizar_forte: 0.5,
+    excluir: 0,
+  };
+
+  const avaliados = pool.map((e) => {
+    let nota = 2.5; // sem restrição ativa, todos empatam (ordem do catálogo decide)
+    let motivo = "";
+    for (const sel of ativas) {
+      const avaliar = EFEITO_POR_TAG[sel.tag];
+      if (!avaliar) continue;
+      const efeito = avaliar(e, sel);
+      const peso = PESO_ACAO[efeito.acao];
+      if (peso < nota) {
+        nota = peso;
+        motivo = `${rotuloRestricao(sel.tag)}: ${efeito.motivo}`;
+      }
+    }
+    return { e, nota, motivo };
+  });
+
+  for (const a of avaliados) {
+    if (a.nota === 0) {
+      descartados.push({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, motivo: a.motivo });
+    }
   }
-  return pool.slice(0, Math.max(n, 1)).map((e) => ({ slug: e.slug, nome: (e as { nome?: string }).nome ?? e.slug }));
+
+  // Ordenação ESTÁVEL: nota decrescente, e o desempate é a ordem do catálogo, para
+  // o mesmo input gerar sempre o mesmo plano (a impressão digital depende disso).
+  const seguros = avaliados
+    .filter((a) => a.nota > 0)
+    .map((a, i) => ({ ...a, i }))
+    .sort((x, y) => y.nota - x.nota || x.i - y.i)
+    .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
+
+  return {
+    escolhidos: seguros.slice(0, Math.max(n, 1)),
+    descartados,
+    faltouCatalogo: seguros.length < n,
+  };
 }
 
 /* --------------------------------- Dose de força --------------------------------- */
@@ -205,13 +335,16 @@ function montarSessoes(
   nivel: Nivel,
   frequencia: number,
   modelo: ModeloPeriodizacaoId,
+  // Restrições já fundidas (perfil + condição): filtram a seleção de exercícios.
+  restricoes: RestricaoSelecionada[],
   // Contexto da semana (posição no meso + tendências): faz a dose de força ganhar o ALVO
   // concreto que progride. Mesmo para todas as sessões da semana; o que muda por sessão é a
   // ênfase (ondulatória), que já entra na dose antes do alvo.
   ctx: CtxAlvo,
 ): Sessao[] {
   const faixa = getFaixa(objetivo);
-  const escolhidos = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2));
+  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2), restricoes);
+  const escolhidos = selecao.escolhidos;
   const sessoes: Sessao[] = [];
 
   // A variação diária só entra quando o modelo pede E o objetivo tem ênfases autoradas
@@ -318,6 +451,8 @@ interface DadosDoAlunoNoAlvo {
   fcRepouso?: number;
   /** parâmetros que deixaram de guiar a intensidade neste aluno (ver src/lib/gps/farmacos.ts) */
   parametrosInvalidos?: ParamMonitorId[];
+  /** restrições já fundidas (perfil + condição): filtram a seleção de exercícios */
+  restricoes?: RestricaoSelecionada[];
 }
 
 function montarMicrociclos(
@@ -336,7 +471,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso, parametrosInvalidos } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [] } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
   const semanasDeCargaNoMeso = comDeload ? Math.max(1, duracao - 1) : duracao;
@@ -362,7 +497,7 @@ function montarMicrociclos(
       semana,
       tipo: ehDeload ? "deload" : "carga",
       frequencia: freqSemana,
-      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, ctx),
+      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx),
       nota: ehDeload ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
       objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade),
     });
@@ -485,6 +620,7 @@ function montarMacrocicloGenerico(
         idade: input.idade,
         fcRepouso: input.fcRepouso,
         parametrosInvalidos: input.parametrosInvalidos,
+        restricoes: restricoesDoPlano(input),
       }),
     });
   }
@@ -561,6 +697,7 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
         idade: input.idade,
         fcRepouso: input.fcRepouso,
         parametrosInvalidos: input.parametrosInvalidos,
+        restricoes: restricoesDoPlano(input),
       }),
     });
   });
