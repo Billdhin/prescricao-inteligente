@@ -289,6 +289,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Levar a perna para o lado contra o elástico, em pé: glúteo médio dos dois lados ao mesmo tempo, o que trabalha e o que sustenta.",
     anguloArticular: "Abdução de quadril até cerca de 30 graus",
+    imagem: "/exercises/abducao-quadril-elastico.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Glúteo médio", percentual: 45, papel: "primário" },
@@ -930,6 +931,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Deitado, a barra desce até a testa com o cotovelo apontando para cima: alcança a cabeça longa do tríceps, que a polia não alcança.",
     anguloArticular: "Ombro em leve flexão, cotovelo em amplitude completa",
+    imagem: "/exercises/triceps-testa-barra.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Tríceps braquial", percentual: 78, papel: "primário" },
