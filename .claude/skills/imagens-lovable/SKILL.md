@@ -98,6 +98,42 @@ O modelo entende "joelho em vermelho" e ignora a rotação medial. É limite do 
 
 Regra prática: classifique cada erro antes de gerar. Sagital grande = img2img. Rotação sutil = overlay autorado.
 
+### ADENDO de 29/07/2026: a regra vale para a FOTO DE EXECUÇÃO, não só para o erro
+
+Piloto do manguito rotador, 4 exercícios, 2 rodadas, 8 gerações, **0 aproveitáveis**. Os quatro
+são do mesmo tipo, e agora está claro que o tipo é o problema:
+
+| Exercício | O que saiu |
+|---|---|
+| Rotação externa com elástico | Cotovelo descola do tronco e vira puxada horizontal |
+| Rotação interna com elástico | Mesma falha, espelhada |
+| Rotação externa deitado de lado | Braço quase reto: virou elevação lateral deitado |
+| Scaption (plano da escápula) | Elevação lateral em T, mesmo com o ângulo pedido em 3 prompts |
+
+**Dois vieses do modelo, medidos:** com elástico na mão ele **descola o cotovelo do tronco**;
+com um halter em cada mão ele **abre os braços em T**. Nenhum prompt travou nenhum dos dois.
+
+**Um erro que foi MEU, e vale para o próximo briefing:** pedi vista de PERFIL para rotação de
+ombro. Rotação acontece no plano transverso, e de perfil ela é invisível, porque o antebraço se
+move na direção da câmera. Antes de escrever o prompt, pergunte **em que plano o movimento
+acontece e de que ângulo ele é visível**. Se a resposta for "de nenhum ângulo fácil", o movimento
+provavelmente também não vai sair.
+
+**O agente do Lovable errou a própria avaliação.** Ele declarou a #3 correta nas duas rodadas.
+Não estava: o braço subia reto em vez de formar o L com o cotovelo preso às costelas. Ele avisa
+sozinho quando erra feio, mas **não substitui a conferência olho a olho** (regra que a skill já
+tinha, e que se pagou aqui).
+
+**Classificação, agora com 3 famílias:**
+- **Silhueta sagital grande** (agachar, empurrar, puxar, dobradiça, deitar): img2img funciona.
+- **Rotação ou mudança de plano de poucos graus** (rotação de ombro ou de quadril, valgo, plano
+  da escápula, báscula escapular): **não use img2img nem para foto de execução.** O app já cai
+  no boneco anatômico e no `MuscleThumb` quando `imagem` está ausente, e ausência é melhor que
+  imagem que ensina o movimento errado. Alternativa: boneco 3D anatômico esquemático (o modelo
+  respeita muito melhor "cotovelo colado" em render esquemático do que em foto), ou semente real
+  já na pose final.
+- **Marcação de direção de desvio**: overlay SVG autorado, como antes.
+
 ## Verificação é obrigatória
 
 O agente do Lovable **avisa sozinho** quando erra ("a imagem 0 saiu parecendo uma máquina de cabos"). Leia a resposta dele. Mas não confie só nisso: olhe as imagens. Nunca salve lote sem inspecionar item a item.
