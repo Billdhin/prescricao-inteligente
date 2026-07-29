@@ -685,6 +685,7 @@ export const extraExercises7: Exercise[] = [
     resumoPratico:
       "Caminhar com peso em uma mão só: o quadrado lombar do lado oposto trabalha o percurso inteiro para o tronco não tombar.",
     anguloArticular: "Postura ereta com carga assimétrica",
+    imagem: "/exercises/suitcase-carry.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadrado lombar", percentual: 60, papel: "primário" },

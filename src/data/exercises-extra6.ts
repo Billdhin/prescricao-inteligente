@@ -775,6 +775,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Subir degraus sem parar: gasto energético alto sem correr, com impacto menor que o da corrida.",
     anguloArticular: "Flexão e extensão de quadril e joelho em ciclo contínuo",
+    imagem: "/exercises/escada-ergometrica.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadríceps", percentual: 65, papel: "primário" },
@@ -855,6 +856,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Caminhar na rua ou no parque: a modalidade aeróbia com menor barreira de entrada e a única que não depende de academia nem de aparelho.",
     anguloArticular: "Ciclo de marcha em amplitude natural",
+    imagem: "/exercises/caminhada-plana.webp",
     modalidade: "m-caminhada",
     ativacao: [
       { musculo: "Quadríceps", percentual: 40, papel: "primário" },
@@ -935,6 +937,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Correr no lugar dentro da água: o padrão da corrida sem nenhuma aterrissagem, com a água oferecendo resistência em todas as direções.",
     anguloArticular: "Ciclo de corrida em amplitude reduzida pela resistência da água",
+    imagem: "/exercises/corrida-aquatica.webp",
     modalidade: "m-hidro",
     ativacao: [
       { musculo: "Quadríceps", percentual: 50, papel: "primário" },
@@ -1015,6 +1018,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Bicicleta com encosto e assento largo: para quem não tolera ficar sentado sem apoio de tronco por 20 minutos.",
     anguloArticular: "Ciclo de pedalada com tronco apoiado",
+    imagem: "/exercises/bicicleta-reclinada.webp",
     modalidade: "m-bike",
     ativacao: [
       { musculo: "Quadríceps", percentual: 58, papel: "primário" },
@@ -1096,6 +1100,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Ajoelhado sob a polia, enrolando o tronco: o único exercício de abdômen do catálogo com carga que progride placa a placa.",
     anguloArticular: "Flexão de coluna com quadril estável",
+    imagem: "/exercises/abdominal-polia-alta.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Reto abdominal", percentual: 72, papel: "primário" },
