@@ -286,6 +286,28 @@ const MUSCULOS_COMO_ATIVACAO = [
   "serrátil anterior",
   "estabilizadores do quadril",
   "fibulares (estabilizadores do tornozelo)",
+  // Musculatura de apoio, entrada da expansão do catálogo (manguito, escápula,
+  // estabilizador de quadril, tornozelo, antebraço e pescoço). Vieram da matriz de
+  // cobertura do check:catalogo: sem o nome aqui, o rótulo da métrica fica sem
+  // definição e a tela mostra um número que ninguém sabe ler.
+  "deltoide posterior",
+  "supraespinal",
+  "infraespinal",
+  "redondo menor",
+  "subescapular",
+  "trapézio inferior",
+  "quadrado lombar",
+  "diafragma",
+  "glúteo médio",
+  "rotadores externos do quadril",
+  "iliopsoas",
+  "gastrocnêmio",
+  "sóleo",
+  "tibial anterior",
+  "braquiorradial",
+  "flexores do punho",
+  "extensores do punho",
+  "flexores profundos do pescoço",
 ];
 
 // Nomes usados nos dados dos exercícios que apontam para a mesma definição.

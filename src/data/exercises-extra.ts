@@ -56,7 +56,7 @@ export const extraExercises: Exercise[] = [
         y: 45,
         titulo: "Inclinação como dose",
         camadas: {
-          resumo: "Inclinar 3–6% aumenta o esforço sem precisar correr.",
+          resumo: "Inclinar 3 a 6% aumenta o esforço sem precisar correr.",
           biomecanica: "A inclinação desloca trabalho para glúteos e panturrilha e reduz o impacto da passada em relação à corrida.",
           fisiologia: "Permite elevar a demanda cardiorrespiratória mantendo intensidade dosável por velocidade e inclinação.",
           evidencia: "Na prática, subir a inclinação antes da velocidade tende a preservar conforto articular.",
@@ -106,7 +106,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "Sessões contínuas em intensidade leve a moderada (teste da fala confortável) desenvolvem a capacidade cardiorrespiratória e elevam o gasto energético semanal com baixa demanda de recuperação.",
       prescricaoPratica:
-        "Em geral, comece por tempo (15–30 min) em ritmo confortável; progrida primeiro a duração, depois a inclinação e por último a velocidade, tudo guiado por PSE e teste da fala.",
+        "Em geral, comece por tempo (15 a 30 min) em ritmo confortável; progrida primeiro a duração, depois a inclinação e por último a velocidade, tudo guiado por PSE e teste da fala.",
     },
     trustLevel: "tendência prática",
     temCena: false,
@@ -158,7 +158,7 @@ export const extraExercises: Exercise[] = [
         y: 55,
         titulo: "Altura do banco",
         camadas: {
-          resumo: "No ponto mais baixo do pedal, o joelho mantém ~20–30° de flexão.",
+          resumo: "No ponto mais baixo do pedal, o joelho mantém cerca de 20 a 30 graus de flexão.",
           biomecanica: "Banco baixo aumenta a compressão patelofemoral; banco alto força báscula da pelve.",
           fisiologia: "O ajuste correto distribui o trabalho entre quadríceps e glúteos e melhora o conforto.",
           evidencia: "Desconforto anterior de joelho costuma responder à elevação discreta do banco.",
@@ -171,7 +171,7 @@ export const extraExercises: Exercise[] = [
         y: 40,
         titulo: "Carga e cadência",
         camadas: {
-          resumo: "Cadência confortável (60–80 rpm) com carga leve a moderada.",
+          resumo: "Cadência confortável (60 a 80 rpm) com carga leve a moderada.",
           biomecanica: "Carga alta em cadência baixa aproxima o pedal de um exercício de força, o que nem sempre é o objetivo.",
           fisiologia: "Cadências moderadas com carga leve favorecem o trabalho aeróbio contínuo.",
           evidencia: "O teste da fala funciona muito bem na bike para calibrar a zona de esforço.",
@@ -208,7 +208,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "Permite sessões contínuas ou intervaladas leves com demanda cardiorrespiratória dosável; a FC é utilizável, mas PSE e teste da fala funcionam muito bem.",
       prescricaoPratica:
-        "Em geral: ajuste o banco, comece com 15–25 min em carga leve, progrida o tempo antes da carga e use blocos intervalados leves quando a sessão contínua ficar fácil.",
+        "Em geral: ajuste o banco, comece com 15 a 25 min em carga leve, progrida o tempo antes da carga e use blocos intervalados leves quando a sessão contínua ficar fácil.",
     },
     trustLevel: "tendência prática",
     temCena: false,
@@ -310,7 +310,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "Com mais massa muscular ativa que a bike, o custo energético por minuto tende a ser maior na mesma percepção de esforço, o que é útil no emagrecimento.",
       prescricaoPratica:
-        "Comece com resistência baixa e 10–20 min; progrida tempo e depois resistência. PSE e teste da fala são os guias práticos.",
+        "Comece com resistência baixa e 10 a 20 min; progrida tempo e depois resistência. PSE e teste da fala são os guias práticos.",
     },
     trustLevel: "tendência prática",
     temCena: false,
@@ -414,7 +414,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "O trabalho contínuo contra a água eleva a demanda cardiorrespiratória com mínimo estresse articular; a termorregulação facilitada aumenta o conforto de quem sua muito no solo.",
       prescricaoPratica:
-        "Sessões de 20–35 min com blocos de marcha em ritmos variados; guie por PSE, teste da fala e dispneia. Progrida ritmo e variações antes de migrar ao solo.",
+        "Sessões de 20 a 35 min com blocos de marcha em ritmos variados; guie por PSE, teste da fala e dispneia. Progrida ritmo e variações antes de migrar ao solo.",
     },
     trustLevel: "tendência prática",
     temCena: false,
@@ -516,7 +516,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "Trabalha os extensores de joelho e quadril: exatamente a musculatura cuja perda mais compromete a função com a idade.",
       prescricaoPratica:
-        "Séries de 6–12 repetições controladas; progrida abaixando o assento, depois adicionando carga. A fase de descida lenta é onde está metade do valor.",
+        "Séries de 6 a 12 repetições controladas; progrida abaixando o assento, depois adicionando carga. A fase de descida lenta é onde está metade do valor.",
     },
     trustLevel: "regra pedagógica",
     temCena: false,
@@ -575,7 +575,7 @@ export const extraExercises: Exercise[] = [
           biomecanica: "Hiperextender a lombar no topo transfere o trabalho para os eretores e estressa a coluna.",
           fisiologia: "A contração deliberada do glúteo no topo ('apertar') melhora o recrutamento.",
           evidencia: "Sentir a lombar em vez do glúteo é o sinal prático de padrão errado.",
-          cuidados: "Pause 1–2 s no topo com o glúteo contraído antes de descer.",
+          cuidados: "Pause 1 a 2 s no topo com o glúteo contraído antes de descer.",
         },
       },
       {
@@ -608,7 +608,7 @@ export const extraExercises: Exercise[] = [
         "Subir e descer rápido, sem pausa no topo.",
       ],
       variacoes: [
-        "Ponte com pausa longa (3–5 s): mais tempo sob tensão.",
+        "Ponte com pausa longa (3 a 5 s): mais tempo sob tensão.",
         "Ponte unilateral: progressão sem carga.",
         "Hip thrust no banco: progressão com carga.",
       ],
@@ -621,7 +621,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "O glúteo máximo atinge boa ativação no topo do movimento; pausas isométricas aumentam o tempo sob tensão sem precisar de carga.",
       prescricaoPratica:
-        "Séries de 10–15 com pausa de 1–2 s no topo. Progrida para unilateral e depois hip thrust quando 15 repetições ficarem fáceis.",
+        "Séries de 10 a 15 com pausa de 1 a 2 s no topo. Progrida para unilateral e depois hip thrust quando 15 repetições ficarem fáceis.",
     },
     trustLevel: "tendência prática",
     temCena: false,
@@ -723,7 +723,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "O estímulo é de resistência muscular local e controle motor; séries curtas e frequentes consolidam o padrão melhor que testes de tempo máximo.",
       prescricaoPratica:
-        "3–4 séries de 15–40 s com técnica impecável e respiração contínua. Progrida por instabilidade e variações dinâmicas, não só por tempo.",
+        "3 a 4 séries de 15 a 40 s com técnica impecável e respiração contínua. Progrida por instabilidade e variações dinâmicas, não só por tempo.",
     },
     trustLevel: "princípio biomecânico",
     temCena: false,
@@ -824,7 +824,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "Treina o timing de ativação do core (controle motor) mais que força bruta, a qualidade que costuma faltar em quadros de dor lombar inespecífica.",
       prescricaoPratica:
-        "2–3 séries de 6–10 repetições LENTAS por lado, com expiração na extensão. A mão sob a lombar é o melhor professor nas primeiras sessões.",
+        "2 a 3 séries de 6 a 10 repetições LENTAS por lado, com expiração na extensão. A mão sob a lombar é o melhor professor nas primeiras sessões.",
     },
     trustLevel: "princípio biomecânico",
     temCena: false,
@@ -926,7 +926,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "Ideal para resistência muscular e reeducação do padrão; a tensão contínua (ida e volta) compensa a carga absoluta menor.",
       prescricaoPratica:
-        "2–4 séries de 12–20 repetições com pausa de 1 s na retração. Progrida por espessura da banda, tempo sob tensão e variações unilaterais.",
+        "2 a 4 séries de 12 a 20 repetições com pausa de 1 s na retração. Progrida por espessura da banda, tempo sob tensão e variações unilaterais.",
     },
     trustLevel: "tendência prática",
     temCena: false,
@@ -968,7 +968,7 @@ export const extraExercises: Exercise[] = [
     },
     fases: [
       { nome: "Subida", descricao: "Eleva os calcanhares o máximo possível, peso sobre o hálux (dedão)." },
-      { nome: "Pico", descricao: "Pausa de 1–2 s no topo, panturrilha contraída, sem pressa." },
+      { nome: "Pico", descricao: "Pausa de 1 a 2 s no topo, panturrilha contraída, sem pressa." },
       { nome: "Descida", descricao: "Baixa lentamente até o alongamento completo (no degrau, além da linha)." },
     ],
     hotspots: [
@@ -1028,7 +1028,7 @@ export const extraExercises: Exercise[] = [
       fisiologia:
         "Gastrocnêmio e sóleo têm perfis mistos de fibras e toleram volume alto; a bomba muscular da panturrilha auxilia o retorno venoso, com relevância direta em diabetes e sedentarismo.",
       prescricaoPratica:
-        "3–4 séries de 12–20 lentas, com pausa no topo e alongamento no fundo. Progrida para unilateral e depois carga externa.",
+        "3 a 4 séries de 12 a 20 lentas, com pausa no topo e alongamento no fundo. Progrida para unilateral e depois carga externa.",
     },
     trustLevel: "tendência prática",
     temCena: false,

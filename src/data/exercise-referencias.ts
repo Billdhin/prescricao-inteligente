@@ -34,6 +34,27 @@ export const exerciseReferencias: Record<string, string[]> = {
   eliptico: ["acsm-getp11", "garber-2011"],
   "marcha-aquatica": ["acsm-getp11", "donnelly-2009"],
 
+  // Manguito rotador e ombro (lote P1 da expansão)
+  "rotacao-externa-elastico": ["reinold-2004"],
+  "rotacao-externa-deitado": ["reinold-2004"],
+  scaption: ["reinold-2007", "reinold-2004"],
+  // "rotacao-interna-elastico" fica SEM referência de propósito: o subescapular é
+  // profundo e os estudos de eletromiografia de superfície não o isolam. Citar aqui o
+  // estudo de rotação EXTERNA seria emprestar respaldo de um movimento para o outro.
+
+  // Estabilizadores do quadril
+  "clam-shell": ["distefano-2009"],
+  "caminhada-lateral-elastico": ["distefano-2009"],
+
+  // Core em pé e antirrotação
+  "prancha-lateral": ["mcgill-2010", "ekstrom-2007"],
+  "prancha-apoio-banco": ["mcgill-2010"],
+  "pallof-press-polia": ["mcgill-2010"],
+  "pallof-press-elastico": ["mcgill-2010"],
+  "chop-elastico": ["mcgill-2010"],
+  "bird-dog": ["ekstrom-2007", "mcgill-2010"],
+  "elevacao-joelhos-suspenso": ["mcgill-2010"],
+
   // Funcional / core / idoso
   "sentar-levantar": ["ekstrom-2007", "chodzko-2009", "fragala-2019"],
   "ponte-gluteos": ["ekstrom-2007", "contreras-2015"],

@@ -49,4 +49,23 @@ export const RESTRICAO_PERFIS: Record<string, RestricaoPerfilExercicio> = {
   "desenvolvimento-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: true, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
   "mergulho-no-banco": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: true, amplitudeAjustavel: true, possuiApoio: true },
   "empurra-puxa-aquatico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+
+  /* ---- Lote P1 da expansão: musculatura de apoio (manguito, quadril, core) ---- */
+  "rotacao-externa-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "rotacao-externa-deitado": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: true, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "rotacao-interna-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  // Scaption sobe até a ALTURA DO OMBRO de propósito: parar aí é o exercício. Por isso
+  // movimentoAcimaCabeca é falso, e é o que permite prescrevê-lo a quem não pode elevar.
+  scaption: { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "clam-shell": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: true, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "caminhada-lateral-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "prancha-lateral": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: true, unilateral: true, apoioNasMaos: true, amplitudeAjustavel: true, possuiApoio: false },
+  // O apoio elevado é justamente o que dispensa ir ao chão: é o motivo de existir do item.
+  "prancha-apoio-banco": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: true, amplitudeAjustavel: true, possuiApoio: true },
+  "pallof-press-polia": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "pallof-press-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "chop-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "bird-dog": { posicao: "quatro apoios", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: true, exigeIrAoChao: true, unilateral: true, apoioNasMaos: true, amplitudeAjustavel: true, possuiApoio: false },
+  // Suspenso na barra: o corpo fica vertical e todo o peso vai para as mãos.
+  "elevacao-joelhos-suspenso": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: true, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: true, amplitudeAjustavel: true, possuiApoio: false },
 };

@@ -354,6 +354,33 @@ export const referencias: Referencia[] = [
     nota: "EMG de core, quadril e coxa em 9 exercícios (ponte, prancha, quatro apoios, afundo, step-up): quais servem mais para força e quais para estabilização/resistência.",
   },
   {
+    id: "reinold-2004",
+    autores: "Reinold MM, Wilk KE, Fleisig GS, et al.",
+    titulo:
+      "Electromyographic analysis of the rotator cuff and deltoid musculature during common shoulder external rotation exercises",
+    fonte: "Journal of Orthopaedic & Sports Physical Therapy, 34(7):385-394",
+    ano: 2004,
+    doi: "10.2519/jospt.2004.34.7.385",
+    nota: "EMG intramuscular de infraespinal, redondo menor, supraespinal e deltoides em 7 exercícios de rotação externa. A rotação externa DEITADO DE LADO com o braço junto ao corpo produziu a maior atividade do infraespinal (62% da contração isométrica voluntária máxima) e do redondo menor (67%). A abdução horizontal em decúbito ventral a 100 graus com rotação externa completa produziu a maior atividade do supraespinal (82%), do deltoide médio (87%) e do deltoide posterior (88%). Base da escolha de posição nos exercícios de manguito rotador do catálogo.",
+  },
+  {
+    id: "reinold-2007",
+    autores: "Reinold MM, Macrina LC, Wilk KE, et al.",
+    titulo: "Electromyographic analysis of the supraspinatus and deltoid muscles during 3 common rehabilitation exercises",
+    fonte: "Journal of Athletic Training, 42(4):464-469",
+    ano: 2007,
+    nota: "EMG com eletrodo de fio fino comparando elevação no plano da escápula com o polegar para cima (full can), com o polegar para baixo (empty can) e abdução horizontal em decúbito ventral. Os três produziram atividade SEMELHANTE do supraespinal, e o full can gerou atividade significativamente menor dos deltoides (deltoide médio 52% contra 77% no empty can), o que faz dele a posição preferida para recrutar o supraespinal com menos compensação. Base da escolha do scaption com polegar para cima.",
+  },
+  {
+    id: "distefano-2009",
+    autores: "Distefano LJ, Blackburn JT, Marshall SW, Padua DA",
+    titulo: "Gluteal muscle activation during common therapeutic exercises",
+    fonte: "Journal of Orthopaedic & Sports Physical Therapy, 39(7):532-540",
+    ano: 2009,
+    doi: "10.2519/jospt.2009.2796",
+    nota: "EMG de glúteo médio e glúteo máximo em 12 exercícios, em 21 adultos ativos. Glúteo médio: abdução de quadril deitado de lado 81% da contração isométrica voluntária máxima, agachamento unilateral 64%, terra unilateral 59%, afundo 48%, concha (clam) 38 a 40%. Glúteo máximo: agachamento unilateral e terra unilateral 59%, concha 34%, caminhada lateral com elástico 27%. Base da hierarquia de escolha entre os exercícios de estabilizador do quadril do catálogo.",
+  },
+  {
     id: "rodriguez-ridao-2020",
     autores: "Rodríguez-Ridao D, Antequera-Vique JA, Martín-Fuentes I, Muyor JM",
     titulo:
