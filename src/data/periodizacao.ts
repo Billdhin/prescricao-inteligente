@@ -270,6 +270,12 @@ export interface PlanoTreino {
   data: number;
   titulo: string;
   objetivo: GpsObjetivo;
+  /**
+   * Segundo objetivo do aluno, quando ele tem um (src/lib/gps/objetivos.ts). O primario
+   * continua mandando na faixa e na dose; o secundario so DESEMPATA a selecao de
+   * exercicios e aparece no documento. Ausente = plano byte-identico ao de antes.
+   */
+  objetivoSecundario?: GpsObjetivo;
   nivel: Nivel;
   semanas: number;
   frequenciaSemanal: number;

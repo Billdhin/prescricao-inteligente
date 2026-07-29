@@ -49,6 +49,8 @@ import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, uid } from "@/li
 import { podeMontarTreino } from "@/lib/gps/proximoPasso";
 import { groupGpsRules } from "@/lib/gps/groupRules";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
+import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
+import { parValido, linhaObjetivos } from "@/lib/gps/objetivos";
 import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 
@@ -97,6 +99,11 @@ export function PrescreverTreino() {
   const bloquearSemAvaliacao = Boolean(aluno) && !gate.ok && !planoPre;
 
   const [objetivo, setObjetivo] = React.useState<GpsObjetivo>(planoPre?.objetivo ?? alunoInicial?.objetivo ?? "Hipertrofia");
+  // O segundo objetivo do aluno (onda 3) chega ate o PLANO: sem isto, o cadastro
+  // prometia "entra como enfase" e a periodizacao ignorava em silencio.
+  const [objetivoSecundario, setObjetivoSecundario] = React.useState<GpsObjetivo | undefined>(
+    planoPre?.objetivoSecundario ?? alunoInicial?.objetivoSecundario,
+  );
   const [nivel, setNivel] = React.useState<Nivel>(planoPre?.nivel ?? alunoInicial?.nivel ?? "Iniciante");
   const [grupo, setGrupo] = React.useState<string>(planoPre?.grupoEspecial ?? alunoInicial?.grupoEspecial ?? "");
   const [frequencia, setFrequencia] = React.useState(planoPre?.frequenciaSemanal ?? 3);
@@ -170,6 +177,7 @@ export function PrescreverTreino() {
       // condição impõe e filtram a seleção de exercícios do plano inteiro. Sem aluno
       // (plano avulso), só as da condição valem.
       restricoes: ctx.alunoId ? aluno?.restricoes : undefined,
+      objetivoSecundario,
       // O perfil clínico mais as classes de medicação declaradas decidem se a frequência
       // cardíaca ainda guia a intensidade deste aluno. Sem aluno (plano avulso) ou sem
       // declaração, a lista sai vazia e o plano é o de sempre.
@@ -189,6 +197,7 @@ export function PrescreverTreino() {
       data: Date.now(),
       titulo: g.titulo,
       objetivo: ctx.objetivo,
+      objetivoSecundario,
       nivel: ctx.nivel,
       semanas: ctx.semanas,
       frequenciaSemanal: ctx.frequencia,
@@ -389,8 +398,33 @@ export function PrescreverTreino() {
               <>
                 <div className="mt-4">
                   <Campo label="Objetivo">
-                    <Opcoes valor={objetivo} opcoes={OBJETIVOS} onSelect={(v) => setObjetivo(v as GpsObjetivo)} />
+                    <Opcoes
+                      valor={objetivo}
+                      opcoes={OBJETIVOS}
+                      onSelect={(v) => {
+                        const novo = v as GpsObjetivo;
+                        setObjetivo(novo);
+                        // Trocar o principal pode invalidar o secundário guardado.
+                        if (!parValido(novo, objetivoSecundario) || objetivoSecundario === novo) {
+                          setObjetivoSecundario(undefined);
+                        }
+                      }}
+                    />
                   </Campo>
+                  {/* O segundo objetivo do aluno vem do cadastro e pode ser ajustado aqui,
+                      com o veredito do par na hora. Ele desempata a seleção de exercícios
+                      DEPOIS da segurança, e viaja com o plano até o documento. */}
+                  <div className="mt-3 border-t border-border pt-3">
+                    <ObjetivoDuplo
+                      objetivo={objetivo}
+                      objetivoSecundario={objetivoSecundario}
+                      onChange={(o, s) => {
+                        setObjetivo(o);
+                        setObjetivoSecundario(s);
+                      }}
+                      somenteSecundario
+                    />
+                  </div>
                 </div>
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -1146,6 +1180,11 @@ function TrilhoDoPlano({
       <ItemPorque tom="primary" titulo={modelo.nome}>
         {modelo.resumo}
       </ItemPorque>
+      {plano.objetivoSecundario && (
+        <ItemPorque tom="analysis" titulo={`Dois objetivos: ${plano.objetivo} e ${plano.objetivoSecundario}`}>
+          {linhaObjetivos(plano.objetivo, plano.objetivoSecundario)}
+        </ItemPorque>
+      )}
       {alunoObj?.restricoes.length ? (
         <ItemPorque tom="warning" titulo={`Restrição de ${alunoObj.nome.split(" ")[0]}`}>
           {alunoObj.restricoes.map((r) => rotuloRestricao(r.tag)).join(", ")}. Os exercícios incompatíveis

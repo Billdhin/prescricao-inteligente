@@ -48,6 +48,12 @@ export interface GerarPlanoInput {
   /** sessões por semana */
   frequencia: number;
   grupoEspecial?: string;
+  /**
+   * Segundo objetivo do aluno (src/lib/gps/objetivos.ts). O primario continua mandando
+   * na faixa e na dose; o secundario so DESEMPATA a selecao de exercicios, depois da
+   * seguranca. Ausente = plano byte-identico ao de antes.
+   */
+  objetivoSecundario?: GpsObjetivo;
   disponibilidade?: string;
   /**
    * Modelo escolhido pelo profissional (por exemplo, vindo de uma aula do Aprender).
@@ -211,6 +217,7 @@ function selecionarExercicios(
   nivel: Nivel,
   n: number,
   restricoes: RestricaoSelecionada[] = [],
+  objetivoSecundario?: GpsObjetivo,
 ): SelecaoExercicios {
   const teto = NIVEL_ORDEM[nivel];
   const noNivel = (e: (typeof exercises)[number]) => NIVEL_ORDEM[(e.nivel as Nivel) ?? "Iniciante"] <= teto;
@@ -252,12 +259,20 @@ function selecionarExercicios(
     }
   }
 
-  // Ordenação ESTÁVEL: nota decrescente, e o desempate é a ordem do catálogo, para
-  // o mesmo input gerar sempre o mesmo plano (a impressão digital depende disso).
+  // Ordenação ESTÁVEL: segurança primeiro (nota da restrição), depois o objetivo
+  // SECUNDÁRIO como desempate, e por fim a ordem do catálogo, para o mesmo input
+  // gerar sempre o mesmo plano (a impressão digital depende disso).
+  //
+  // O secundário entra DEPOIS da segurança, nunca antes: nenhum objetivo justifica
+  // subir um exercício que a restrição do aluno penalizou. E sem secundário o
+  // desempate é 0 para todos, o que deixa a ordem byte-idêntica à de antes.
+  const bonusSecundario = (e: (typeof exercises)[number]) =>
+    objetivoSecundario && objetivoSecundario !== objetivo && e.objetivo?.includes(objetivoSecundario) ? 1 : 0;
+
   const seguros = avaliados
     .filter((a) => a.nota > 0)
-    .map((a, i) => ({ ...a, i }))
-    .sort((x, y) => y.nota - x.nota || x.i - y.i)
+    .map((a, i) => ({ ...a, i, bonus: bonusSecundario(a.e) }))
+    .sort((x, y) => y.nota - x.nota || y.bonus - x.bonus || x.i - y.i)
     .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
 
   return {
@@ -341,9 +356,11 @@ function montarSessoes(
   // concreto que progride. Mesmo para todas as sessões da semana; o que muda por sessão é a
   // ênfase (ondulatória), que já entra na dose antes do alvo.
   ctx: CtxAlvo,
+  // Segundo objetivo do aluno, quando existe: so desempata a selecao.
+  objetivoSecundario?: GpsObjetivo,
 ): Sessao[] {
   const faixa = getFaixa(objetivo);
-  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2), restricoes);
+  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2), restricoes, objetivoSecundario);
   const escolhidos = selecao.escolhidos;
   const sessoes: Sessao[] = [];
 
@@ -453,6 +470,8 @@ interface DadosDoAlunoNoAlvo {
   parametrosInvalidos?: ParamMonitorId[];
   /** restrições já fundidas (perfil + condição): filtram a seleção de exercícios */
   restricoes?: RestricaoSelecionada[];
+  /** segundo objetivo do aluno: desempata a seleção DEPOIS da segurança */
+  objetivoSecundario?: GpsObjetivo;
 }
 
 function montarMicrociclos(
@@ -471,7 +490,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [] } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
   const semanasDeCargaNoMeso = comDeload ? Math.max(1, duracao - 1) : duracao;
@@ -497,7 +516,7 @@ function montarMicrociclos(
       semana,
       tipo: ehDeload ? "deload" : "carga",
       frequencia: freqSemana,
-      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx),
+      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx, objetivoSecundario),
       nota: ehDeload ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
       objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade),
     });
@@ -621,6 +640,7 @@ function montarMacrocicloGenerico(
         fcRepouso: input.fcRepouso,
         parametrosInvalidos: input.parametrosInvalidos,
         restricoes: restricoesDoPlano(input),
+        objetivoSecundario: input.objetivoSecundario,
       }),
     });
   }
@@ -698,6 +718,7 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
         fcRepouso: input.fcRepouso,
         parametrosInvalidos: input.parametrosInvalidos,
         restricoes: restricoesDoPlano(input),
+        objetivoSecundario: input.objetivoSecundario,
       }),
     });
   });
