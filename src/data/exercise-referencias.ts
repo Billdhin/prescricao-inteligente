@@ -55,6 +55,34 @@ export const exerciseReferencias: Record<string, string[]> = {
   "bird-dog": ["ekstrom-2007", "mcgill-2010"],
   "elevacao-joelhos-suspenso": ["mcgill-2010"],
 
+  // Lote P2: elástico, braços, ombros e membros inferiores
+  "agachamento-elastico": ["escamilla-2001", "gullett-2009"],
+  "puxada-elastico": ["andersen-2014"],
+  "rosca-elastico": ["schoenfeld-2010", "boeckh-behrens-2000"],
+  "abducao-quadril-elastico": ["distefano-2009"],
+  "extensao-quadril-elastico": ["contreras-2015"],
+  "remada-unilateral-elastico": ["andersen-2014", "boeckh-behrens-2000"],
+  "subida-step": ["ekstrom-2007"],
+  "rosca-martelo": ["boeckh-behrens-2000"],
+  "rosca-banco-inclinado": ["schoenfeld-2010"],
+  "rosca-scott-maquina": ["boeckh-behrens-2000"],
+  "triceps-testa-barra": ["schoenfeld-2010", "boeckh-behrens-2000"],
+  "elevacao-frontal": ["boeckh-behrens-2000"],
+  "crucifixo-inverso": ["reinold-2004", "boeckh-behrens-2000"],
+  "face-pull-polia": ["reinold-2004"],
+  "encolhimento-halteres": ["boeckh-behrens-2000"],
+  "agachamento-bulgaro": ["distefano-2009", "escamilla-2001"],
+  "agachamento-goblet": ["escamilla-2001", "gullett-2009"],
+  "cadeira-adutora": ["boeckh-behrens-2000"],
+  "cadeira-abdutora": ["distefano-2009"],
+  "flexora-em-pe": ["boeckh-behrens-2000"],
+  "hip-thrust-unilateral": ["contreras-2015", "distefano-2009"],
+  "good-morning": ["mcgill-2010", "contreras-2015"],
+  "leg-press-horizontal": ["escamilla-1998", "escamilla-2001"],
+  // "panturrilha-sentado" fica sem referência: a separação entre gastrocnêmio e sóleo
+  // pela posição do joelho é fato anatômico, não achado de um estudo específico, e a
+  // base não tem um trabalho de EMG de panturrilha verificado para citar aqui.
+
   // Funcional / core / idoso
   "sentar-levantar": ["ekstrom-2007", "chodzko-2009", "fragala-2019"],
   "ponte-gluteos": ["ekstrom-2007", "contreras-2015"],

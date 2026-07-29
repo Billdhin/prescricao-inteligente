@@ -68,4 +68,34 @@ export const RESTRICAO_PERFIS: Record<string, RestricaoPerfilExercicio> = {
   "bird-dog": { posicao: "quatro apoios", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: true, exigeIrAoChao: true, unilateral: true, apoioNasMaos: true, amplitudeAjustavel: true, possuiApoio: false },
   // Suspenso na barra: o corpo fica vertical e todo o peso vai para as mãos.
   "elevacao-joelhos-suspenso": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: true, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: true, amplitudeAjustavel: true, possuiApoio: false },
+
+  /* ---- Lote P2: elástico e peso corporal (gargalo do treino em casa) ---- */
+  "agachamento-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "puxada-elastico": { posicao: "ajoelhado", impacto: "baixo", movimentoAcimaCabeca: true, exigeAjoelhar: true, exigeIrAoChao: true, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "rosca-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "abducao-quadril-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "extensao-quadril-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "remada-unilateral-elastico": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "panturrilha-sentado": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "subida-step": { posicao: "em pé", impacto: "moderado", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+
+  /* ---- Lote P2: braços e ombros ---- */
+  "rosca-martelo": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: false, possuiApoio: false },
+  "rosca-banco-inclinado": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "rosca-scott-maquina": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "triceps-testa-barra": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: true, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: false, possuiApoio: true },
+  "elevacao-frontal": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "crucifixo-inverso": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "face-pull-polia": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "encolhimento-halteres": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: false, possuiApoio: false },
+
+  /* ---- Lote P2: membros inferiores ---- */
+  "agachamento-bulgaro": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "agachamento-goblet": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "cadeira-adutora": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "cadeira-abdutora": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "flexora-em-pe": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "hip-thrust-unilateral": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "good-morning": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: false, possuiApoio: false },
+  "leg-press-horizontal": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
 };

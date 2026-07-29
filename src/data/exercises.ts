@@ -2,6 +2,8 @@ import type { Exercise } from "./types";
 import { extraExercises } from "./exercises-extra";
 import { extraExercises2 } from "./exercises-extra2";
 import { extraExercises3 } from "./exercises-extra3";
+import { extraExercises4 } from "./exercises-extra4";
+import { extraExercises5 } from "./exercises-extra5";
 import { RESTRICAO_PERFIS } from "./restricao-perfis";
 
 const exercisesRaw: Exercise[] = [
@@ -995,6 +997,8 @@ const exercisesRaw: Exercise[] = [
   ...extraExercises,
   ...extraExercises2,
   ...extraExercises3,
+  ...extraExercises4,
+  ...extraExercises5,
 ];
 
 // Anexa o perfil de restrição (fatos estruturais autorados por inspeção) por slug,
