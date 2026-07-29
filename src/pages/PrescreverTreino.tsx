@@ -2,7 +2,6 @@ import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   CalendarRange,
-  CalendarPlus,
   Users,
   UserCheck,
   Sparkles,
@@ -46,7 +45,8 @@ import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { bibliografia } from "@/data/referencias";
 import { exportPlanoPDF } from "@/lib/exportPlano";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, uid } from "@/lib/store";
-import { podeMontarTreino } from "@/lib/gps/proximoPasso";
+import { prontidaoParaPrescrever } from "@/lib/gps/prontidao";
+import { ProntidaoAviso } from "@/components/alunos/ProntidaoAviso";
 import { groupGpsRules } from "@/lib/gps/groupRules";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
@@ -92,11 +92,17 @@ export function PrescreverTreino() {
 
   const [alunoId, setAlunoId] = React.useState<string | undefined>(alunoInicial?.id);
   const aluno = alunos.find((a) => a.id === alunoId);
-  // Gate duro do trilho: sem avaliação, o treino não nasce. Vale quando um aluno está
-  // selecionado e não estamos editando um plano salvo dele. Plano avulso (sem aluno)
-  // segue 100% livre, por ser uso de estudo/simulação.
-  const gate = aluno ? podeMontarTreino(aluno, { avaliacoes }) : { ok: true };
-  const bloquearSemAvaliacao = Boolean(aluno) && !gate.ok && !planoPre;
+  // GATE COMPLETO, não só a avaliação. Antes daqui, um aluno avaliado de quem
+  // ninguém tinha perguntado condição, restrição nem medicação gerava macrociclo de
+  // 12 semanas sem uma linha de ressalva. O gate agora é `prontidaoParaPrescrever`,
+  // que junta os oito bloqueios numa resposta só. Plano avulso (sem aluno) segue
+  // 100% livre, por ser uso de estudo, e editar plano JÁ SALVO também: o bloqueio é
+  // sobre criar prescrição nova no escuro, não sobre mexer no que já existe.
+  const prontidao = React.useMemo(
+    () => (aluno ? prontidaoParaPrescrever(aluno, { avaliacoes }) : null),
+    [aluno, avaliacoes],
+  );
+  const bloquearPorPerfil = Boolean(aluno) && Boolean(prontidao && !prontidao.ok) && !planoPre;
 
   const [objetivo, setObjetivo] = React.useState<GpsObjetivo>(planoPre?.objetivo ?? alunoInicial?.objetivo ?? "Hipertrofia");
   // O segundo objetivo do aluno (onda 3) chega ate o PLANO: sem isto, o cadastro
@@ -391,9 +397,11 @@ export function PrescreverTreino() {
               </Campo>
             </div>
 
-            {/* Gate duro: aluno selecionado sem avaliação não gera plano. */}
-            {bloquearSemAvaliacao && aluno ? (
-              <BlocoAvaliacaoNecessaria aluno={aluno} />
+            {/* Gate duro: aluno selecionado sem o que decide a prescrição não gera plano. */}
+            {bloquearPorPerfil && aluno && prontidao ? (
+              <div className="mt-4">
+                <ProntidaoAviso aluno={aluno} prontidao={prontidao} />
+              </div>
             ) : (
               <>
                 <div className="mt-4">
@@ -636,35 +644,6 @@ function AvisoDoMotor({ aluno, grupoSlug }: { aluno?: Aluno; grupoSlug: string }
         ficam de fora do plano, e os limítrofes entram rebaixados.
       </p>
     </Card>
-  );
-}
-
-function BlocoAvaliacaoNecessaria({ aluno }: { aluno: Aluno }) {
-  const primeiro = aluno.nome.split(" ")[0];
-  return (
-    <div className="mt-4 rounded-xl border border-warning/30 bg-warning-tint/50 p-4">
-      <div className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-surface text-warning">
-          <AlertTriangle className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <h3 className="font-display text-base font-bold text-ink">Registre a avaliação primeiro. O treino nasce dela.</h3>
-          <p className="mt-1 text-sm text-ink-2">
-            A periodização de {primeiro} é montada a partir das medidas de base. Registre a avaliação inicial e o
-            plano passa a nascer dela, com a progressão justificada. Para montar um plano de estudo sem aluno,
-            selecione "Plano avulso" acima.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link to={`/alunos/${aluno.id}?avaliar=1`} className={buttonClasses("primary", "sm")}>
-              <CalendarPlus className="h-4 w-4" /> Registrar avaliação
-            </Link>
-            <Link to={`/alunos/${aluno.id}`} className={buttonClasses("secondary", "sm")}>
-              Ver perfil de {primeiro}
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 

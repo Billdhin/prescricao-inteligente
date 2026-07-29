@@ -307,7 +307,7 @@ function LinhaProximoPasso({ aluno, passo }: { aluno: Aluno; passo: ProximoPasso
         <span className="font-semibold text-ink">Próximo passo:</span> {passo.frase}
       </p>
       <Link
-        to={linkDoPasso(aluno.id, passo.cta.kind)}
+        to={passo.cta.to ?? linkDoPasso(aluno.id, passo.cta.kind)}
         className={cn(buttonClasses(passo.tone === "success" ? "secondary" : "primary", "sm"), "shrink-0")}
       >
         {passo.cta.label} <ArrowRight className="h-4 w-4" />

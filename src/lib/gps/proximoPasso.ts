@@ -1,4 +1,4 @@
-import type { Aluno, Liberacao } from "@/data/alunos";
+import type { Aluno, Avaliacao, Liberacao } from "@/data/alunos";
 import { proximaReavaliacao, type PlanoTreino } from "@/data/periodizacao";
 import { estadoSemaforo } from "./semaforoDiario";
 
@@ -20,22 +20,14 @@ const DIA = 86_400_000;
 const fmtDDMM = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(ts));
 
-/**
- * Gate duro do trilho: sem NENHUMA avaliação registrada, o aluno não tem base para
- * montar treino nem prescrever exercício vinculado. O treino nasce da avaliação
- * (decisão do fundador), então os CTAs de treino ficam desabilitados até existir ao
- * menos uma avaliação. Uso avulso (sem aluno) não passa por aqui, por definição.
- */
-export function podeMontarTreino(
-  aluno: Aluno,
-  ctx: { avaliacoes: { alunoId?: string }[] },
-): { ok: boolean; motivo?: string } {
-  const temAvaliacao = ctx.avaliacoes.some((a) => a.alunoId === aluno.id);
-  if (!temAvaliacao) {
-    return { ok: false, motivo: "Registre a avaliação primeiro. O treino nasce dela." };
-  }
-  return { ok: true };
-}
+// O gate de prescrição MUDOU DE CASA: ele agora é `prontidaoParaPrescrever`, em
+// src/lib/gps/prontidao.ts, porque a avaliação é só UM dos oito bloqueios. Dava
+// para gerar plano de 12 semanas para um aluno avaliado de quem ninguém tinha
+// perguntado condição, restrição nem medicação. Reexportado daqui para a espinha
+// continuar importando do mesmo lugar, e para não existirem duas respostas
+// diferentes para a pergunta "pode prescrever?".
+export { podeMontarTreino } from "@/lib/gps/prontidao";
+import { prontidaoParaPrescrever } from "@/lib/gps/prontidao";
 
 function mesmoDia(a: number, b: number): boolean {
   const da = new Date(a);
@@ -50,14 +42,27 @@ export type ChipTone = "primary" | "warning" | "cta" | "success";
 export interface ProximoPasso {
   etapa: EtapaCiclo;
   frase: string;
-  cta: { label: string; kind: EtapaCiclo };
+  /**
+   * `to` sobrescreve o destino derivado de `kind`. Existe por um motivo só: quando
+   * a etapa é "planejar" mas o que trava é o PERFIL, o passo continua sendo
+   * planejar (é isso que está pendente no ciclo) e o destino passa a ser a seção do
+   * perfil que resolve. Sem isso, a espinha mandava o profissional para a tela de
+   * prescrição que ele não conseguiria usar.
+   */
+  cta: { label: string; kind: EtapaCiclo; to?: string };
   tone: PassoTone;
   /** rótulo curto para o chip da lista; null quando o aluno está em dia */
   chip: { label: string; tone: ChipTone } | null;
 }
 
 export interface CicloCtx {
-  avaliacoes: { alunoId?: string; data: number }[];
+  /**
+   * Avaliações COMPLETAS, não o par (alunoId, data) que bastava antes. A prontidão
+   * para prescrever consulta o classificador, que lê medidas (IMC, pressão) para
+   * saber se o caso é de encaminhamento em vez de treino. Estreitar isso de novo
+   * faria a espinha do cuidado e o gate de prescrição divergirem.
+   */
+  avaliacoes: Avaliacao[];
   prescricoes: { alunoId?: string; status: string }[];
   planos: PlanoTreino[];
   /** liberações completas (com `resultado`): o semáforo diário deriva daqui */
@@ -95,6 +100,30 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
   // 2) Sem plano ativo: o core (periodização) ainda não foi montado. Precede a
   //    reavaliação, porque não se reavalia um plano que nunca foi montado.
   if (!planoAtivo) {
+    // 2a) ...mas o perfil pode não permitir prescrever ainda. A espinha precisa
+    //     apontar o que DE FATO destrava, senão ela manda o profissional para uma
+    //     tela bloqueada e o sistema parece quebrado em vez de cuidadoso.
+    const pronto = prontidaoParaPrescrever(aluno, { avaliacoes: ctx.avaliacoes });
+    const doPerfil = pronto.bloqueios.filter((b) => b.motivo !== "sem-avaliacao");
+    if (doPerfil.length > 0) {
+      const primeiro = doPerfil[0];
+      return {
+        etapa: "planejar",
+        tone: "warning",
+        frase:
+          doPerfil.length === 1
+            ? `${primeiro.titulo} para poder prescrever.`
+            : `Faltam ${doPerfil.length} definições no perfil antes de prescrever.`,
+        cta: {
+          label: primeiro.acao ?? "Completar o perfil",
+          kind: "planejar",
+          to: primeiro.secao
+            ? `/alunos/${aluno.id}/perfil?secao=${primeiro.secao}`
+            : `/alunos/${aluno.id}/perfil`,
+        },
+        chip: { label: "Perfil incompleto", tone: "warning" },
+      };
+    }
     return {
       etapa: "planejar",
       tone: "primary",

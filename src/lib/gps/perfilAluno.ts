@@ -16,11 +16,19 @@
  *    Sem isso, um aluno recém-criado apareceria com o perfil quase pronto e o
  *    profissional prescreveria em cima de um vazio que parece um preenchimento.
  *
- * 2. **Perfil incompleto NUNCA bloqueia o cuidado.** O gate duro do sistema é a
- *    avaliação, não o perfil: dá para avaliar um aluno de quem só se sabe o nome.
- *    O que a régua faz é dizer o que falta e o que aquilo mudaria, não trancar a
- *    porta. Quem tranca é `podeMontarTreino` (avaliação) e `avaliarSeguranca`
- *    (liberação), cada um pelo seu motivo.
+ * 2. **Perfil incompleto não impede AVALIAR. Impede PRESCREVER.** A porta de
+ *    entrada continua aberta: dá para cadastrar em 20 segundos e avaliar um aluno
+ *    de quem só se sabe o nome, e é assim que tem que ser, porque a avaliação é
+ *    onde os dados aparecem. O que não dá é pular da avaliação para a prescrição
+ *    sem passar pelas perguntas que mudam o que o motor escolhe. Quem decide isso
+ *    é `prontidaoParaPrescrever` (src/lib/gps/prontidao.ts), e esta régua é uma das
+ *    fontes dele.
+ *
+ *    A primeira versão deste arquivo dizia "perfil incompleto NUNCA bloqueia o
+ *    cuidado", e estava errada: dava para gerar plano de 12 semanas para um aluno
+ *    de quem ninguém tinha perguntado condição, restrição nem medicação. A régua
+ *    estava certa, o limite entre o que ela informa e o que ela tranca é que
+ *    estava no lugar errado.
  */
 
 import type { Aluno } from "@/data/alunos";

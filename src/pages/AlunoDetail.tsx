@@ -40,7 +40,9 @@ import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
 import { SugestaoGrupoCard } from "@/components/treino/SugestaoGrupoCard";
 import { classificarGrupos } from "@/lib/gps/classificador";
 import { ListaChips } from "@/components/treino/PlanoEditor";
-import { proximoPasso, estadoDoCiclo, dataReavaliacao, podeMontarTreino, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
+import { proximoPasso, estadoDoCiclo, dataReavaliacao, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
+import { prontidaoParaPrescrever, type Prontidao } from "@/lib/gps/prontidao";
+import { ProntidaoAviso } from "@/components/alunos/ProntidaoAviso";
 import { linhaObjetivos } from "@/lib/gps/objetivos";
 import { estadoSemaforo, semaforoPorDiaDaSemana, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { sequenciaDias } from "@/lib/gamificacao";
@@ -203,7 +205,16 @@ function CtaProximoPasso({
     </>
   );
   let botao: React.ReactNode;
-  switch (passo.cta.kind) {
+  if (passo.cta.to) {
+    // Destino explícito do passo manda em tudo: é por ele que "planejar" leva ao
+    // PERFIL quando é o perfil que trava, em vez de levar a uma tela bloqueada.
+    botao = (
+      <Link to={passo.cta.to} className={cls}>
+        {label}
+      </Link>
+    );
+  } else {
+    switch (passo.cta.kind) {
     case "planejar":
       botao = (
         <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cls}>
@@ -234,6 +245,7 @@ function CtaProximoPasso({
         </button>
       );
       break;
+    }
   }
   if (!eyebrow) return <>{botao}</>;
   return (
@@ -332,8 +344,16 @@ export function AlunoDetail() {
   // Fonte única do ciclo (avaliar, planejar, liberar, acompanhar, reavaliar).
   const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
   const passo = proximoPasso(aluno, ctx);
-  // Gate duro do trilho: sem avaliação, treino e prescrição não nascem.
-  const podeTreino = podeMontarTreino(aluno, ctx);
+  // GATE DURO, agora completo: a avaliação era só o primeiro dos oito bloqueios.
+  // `podeTreino` mantém a forma {ok, motivo} que os cards desta tela consomem, mas o
+  // veredito vem da prontidão inteira, e o motivo é o PRIMEIRO bloqueio de verdade.
+  const prontidao = prontidaoParaPrescrever(aluno, ctx);
+  const podeTreino = {
+    ok: prontidao.ok,
+    motivo: prontidao.primeiro
+      ? `${prontidao.primeiro.titulo}. ${prontidao.primeiro.porque}`
+      : undefined,
+  };
   const temAvaliacao = avals.length > 0;
   const estado = estadoDoCiclo(aluno, ctx);
   // Reavaliação reconciliada: com plano, o macrociclo manda; senão o calendário.
@@ -574,7 +594,7 @@ export function AlunoDetail() {
 
             <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
 
-            <PlanoCard aluno={aluno} planos={planosDoAluno} execucoes={execucoesDoAluno} podeTreino={podeTreino} onAvaliar={() => setAvaliar(true)} onIrParaSemaforo={irParaSemaforo} />
+            <PlanoCard aluno={aluno} planos={planosDoAluno} execucoes={execucoesDoAluno} podeTreino={podeTreino} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} onIrParaSemaforo={irParaSemaforo} />
 
             <div id="execucao-card" className="scroll-mt-24">
               <ExecucaoPanel
@@ -608,9 +628,9 @@ export function AlunoDetail() {
                 </span>
               )}
             </div>
-            {/* Gate duro: sem avaliação, a prescrição não nasce. Explica e leva a registrar. */}
+            {/* Gate duro: o que falta para prescrever, com o atalho de cada item. */}
             {!podeTreino.ok && (
-              <AvisoGateAvaliacao motivo={podeTreino.motivo ?? ""} onAvaliar={() => setAvaliar(true)} />
+              <ProntidaoAviso aluno={aluno} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} />
             )}
             {prescs.length === 0 ? (
               podeTreino.ok && (
@@ -1550,6 +1570,7 @@ function PlanoCard({
   planos,
   execucoes,
   podeTreino,
+  prontidao,
   onAvaliar,
   onIrParaSemaforo,
 }: {
@@ -1557,8 +1578,10 @@ function PlanoCard({
   planos: PlanoTreino[];
   /** execuções do aluno: derivam a "sessão de hoje" com os MESMOS helpers do app do aluno */
   execucoes: Execucao[];
-  /** gate duro do trilho: sem avaliação, "Montar treino" fica desabilitado */
+  /** gate duro do trilho: sem prontidão, "Montar treino" fica desabilitado */
   podeTreino: { ok: boolean; motivo?: string };
+  /** o detalhe do que falta, para o card explicar em vez de só desabilitar */
+  prontidao: Prontidao;
   onAvaliar: () => void;
   /** abre a aba Semáforo do aluno (nunca sai para /semaforo) */
   onIrParaSemaforo: () => void;
@@ -1585,7 +1608,9 @@ function PlanoCard({
               <button disabled className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
                 <CalendarRange className="h-4 w-4" /> Montar treino
               </button>
-              <AvisoGateAvaliacao motivo={podeTreino.motivo ?? ""} onAvaliar={onAvaliar} />
+              <div className="mt-3">
+                <ProntidaoAviso aluno={aluno} prontidao={prontidao} onAvaliar={onAvaliar} />
+              </div>
             </>
           )}
         </div>
@@ -1883,20 +1908,6 @@ function Info({ icon, label, value }: { icon: React.ReactNode; label: string; va
  * treino e a prescrição não nascem. Diz o porquê e leva direto a registrar a
  * avaliação, ao lado do CTA que fica desabilitado.
  */
-function AvisoGateAvaliacao({ motivo, onAvaliar }: { motivo: string; onAvaliar: () => void }) {
-  return (
-    <div className="mt-3 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning-tint/50 p-3 text-left">
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-ink">{motivo}</p>
-        <button onClick={onAvaliar} className={cn(buttonClasses("primary", "sm"), "mt-2")}>
-          <CalendarPlus className="h-4 w-4" /> Registrar avaliação
-        </button>
-      </div>
-    </div>
-  );
-}
-
 /* ------------------------ Visão geral: os 4 cartões ----------------------- */
 
 /**

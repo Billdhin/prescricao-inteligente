@@ -42,6 +42,8 @@ import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
 import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
 import { parValido, linhaObjetivos } from "@/lib/gps/objetivos";
 import { criarRestricao, condicionaisPendentes, avaliarSeguranca, rotuloRestricao } from "@/lib/gps/restricoes";
+import { prontidaoParaPrescrever } from "@/lib/gps/prontidao";
+import { ProntidaoAviso } from "@/components/alunos/ProntidaoAviso";
 import { type GroupGpsRule } from "@/lib/gps/groupRules";
 import { monitoramentoDoPerfil, regraDoPerfil } from "@/lib/gps/farmacos";
 import { recommendModalidades, type ModalidadeRec } from "@/lib/gps/modalidadeRules";
@@ -212,9 +214,16 @@ export function Gps() {
     return [...avaliacoes].filter((a) => a.alunoId === aluno.id).sort((a, b) => b.data - a.data)[0];
   }, [avaliacoes, aluno]);
   const reavaliacaoVencida = aluno?.proximaReavaliacaoEm ? aluno.proximaReavaliacaoEm < Date.now() : false;
-  // Gate duro do trilho: aluno VINCULADO sem nenhuma avaliação não gera prescrição. Uso
-  // avulso (sem aluno) segue livre, por ser prescrição diária legítima (decisão do fundador).
-  const bloqueadoSemAvaliacao = Boolean(aluno) && !ultimaAval;
+  // GATE COMPLETO para aluno VINCULADO: avaliação é só um dos oito bloqueios de
+  // . Sem isto, o atalho "personalizar o treino do dia" pulava
+  // o assistente e ranqueava com as respostas herdadas de um perfil onde ninguém tinha
+  // declarado condição, restrição nem medicação. Uso avulso (sem aluno) segue livre, por
+  // ser prescrição diária legítima de estudo (decisão do fundador).
+  const prontidao = React.useMemo(
+    () => (aluno ? prontidaoParaPrescrever(aluno, { avaliacoes }) : null),
+    [aluno, avaliacoes],
+  );
+  const bloqueadoPorPerfil = Boolean(aluno) && Boolean(prontidao && !prontidao.ok);
 
   // "Personalizar o treino do dia": quando o /gps é aberto com modo=dia a partir de um
   // aluno que TEM plano ativo, o enquadramento deixa de ser "salvar prescrição avulsa" e
@@ -267,7 +276,7 @@ export function Gps() {
   // tela abre direto na edição dos exercícios. Quem quiser mexer no contexto abre o
   // assistente pelo botão, e aí volta a valer a lista gerada à mão.
   const [contextoAberto, setContextoAberto] = React.useState(false);
-  const abrirDireto = personalizarDia && !bloqueadoSemAvaliacao && !contextoAberto;
+  const abrirDireto = personalizarDia && !bloqueadoPorPerfil && !contextoAberto;
   const rankDireto = React.useMemo(
     () => (abrirDireto ? rankExercises(exercises, answers, rule) : null),
     [abrirDireto, answers, rule],
@@ -682,6 +691,12 @@ export function Gps() {
       )}
       {grupo && grupoLocked && <JornadaLockedNote grupo={grupo} />}
 
+      {/* O motivo do bloqueio, antes do assistente: desabilitar o botão sem dizer por
+          quê transforma regra em defeito aparente. */}
+      {bloqueadoPorPerfil && aluno && prontidao && (
+        <ProntidaoAviso aluno={aluno} prontidao={prontidao} />
+      )}
+
       {!results ? (
         <Wizard
           step={step}
@@ -691,7 +706,7 @@ export function Gps() {
           onFinish={gerar}
           aluno={aluno}
           rule={rule}
-          bloqueado={bloqueadoSemAvaliacao}
+          bloqueado={bloqueadoPorPerfil}
         />
       ) : (
         <Results

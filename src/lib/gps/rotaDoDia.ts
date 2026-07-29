@@ -44,6 +44,12 @@ export interface ParadaDoDia {
   frase: string;
   /** rótulo do botão, também da fonte única (nunca um verbo genérico) */
   acao: string;
+  /**
+   * Destino explícito do passo, quando ele tem um. Existe porque a parada precisa
+   * levar ao lugar que DESTRAVA: com o perfil bloqueando a prescrição, mandar o
+   * profissional para a tela de prescrição é mandá-lo para uma porta fechada.
+   */
+  to?: string;
   tone: "primary" | "warning" | "cta" | "success";
 }
 
@@ -79,6 +85,7 @@ export function rotaDoDia(alunos: Aluno[], ctx: CicloCtx): RotaDoDia {
       etapa: passo.etapa,
       frase: passo.frase,
       acao: passo.cta.label,
+      to: passo.cta.to,
       tone: passo.tone,
     });
   }

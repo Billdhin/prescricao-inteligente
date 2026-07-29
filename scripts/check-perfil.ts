@@ -19,8 +19,10 @@
  *   4. A RÉGUA É ÚNICA. O percentual é sempre feitas/total; nenhuma tela pode
  *      calcular por conta própria (o check varre as telas atrás de aritmética
  *      paralela sobre as seções).
- *   5. PERFIL NÃO BLOQUEIA CUIDADO. O gate duro continua sendo a avaliação:
- *      `podeMontarTreino` não pode consultar a completude do perfil.
+ *   5. O LIMITE ENTRE INFORMAR E TRANCAR. Perfil incompleto NÃO impede avaliar (a
+ *      porta de entrada fica aberta) e IMPEDE prescrever. Testadas as duas metades,
+ *      mais a saída de um clique, mais a ordem dos bloqueios, mais a exigência de
+ *      que TODA tela que gera prescrição consulte `prontidaoParaPrescrever`.
  *   6. A CONSEQUÊNCIA É DERIVADA. Toda linha de `oQueIssoMuda` sai de um catálogo
  *      ou motor; e consequência de medicação `somenteTeoria` (expectativa de
  *      adaptação) nunca vira card de ação.
@@ -40,7 +42,13 @@ import { CATALOGO_RESTRICOES, criarRestricao } from "../src/lib/gps/restricoes";
 import { CATALOGO_FARMACOS, criarFarmaco } from "../src/data/farmacos";
 import { groupGpsRules } from "../src/lib/gps/groupRules";
 import { montarChecklist } from "../src/data/semaforo";
-import type { Aluno } from "../src/data/alunos";
+import { proximoPasso } from "../src/lib/gps/proximoPasso";
+import type { Aluno, Avaliacao } from "../src/data/alunos";
+import {
+  prontidaoParaPrescrever,
+  podeMontarTreino,
+  type CtxProntidao,
+} from "../src/lib/gps/prontidao";
 
 const problemas: string[] = [];
 
@@ -155,12 +163,119 @@ const feita = (a: Aluno, id: string) => completudeAluno(a).secoes.find((s) => s.
   }
 }
 
-/* ---- 5. perfil não bloqueia cuidado ---- */
+/* ---- 5. o limite entre informar e trancar ----
+   Perfil incompleto NÃO impede avaliar (a porta de entrada fica aberta) e IMPEDE
+   prescrever (o motor não trabalha no escuro). A primeira versão deste check
+   afirmava o contrário, e por causa disso um aluno de quem ninguém tinha
+   perguntado nada gerava plano de 12 semanas. As duas metades são testadas. */
 {
-  const passo = readFileSync("src/lib/gps/proximoPasso.ts", "utf8");
-  if (/perfilAluno|completudeAluno/.test(passo)) {
+  const novo = alunoRecemCriado();
+  const semAval: CtxProntidao = { avaliacoes: [] };
+  const comAval: CtxProntidao = {
+    avaliacoes: [{ id: "av1", alunoId: novo.id, data: Date.now(), tipo: "inicial", medidas: {} } as Avaliacao],
+  };
+
+  // 5a. avaliar continua livre: nada no caminho da avaliação olha a completude
+  const avaliar = readFileSync("src/pages/Avaliacoes.tsx", "utf8");
+  if (/prontidaoParaPrescrever|completudeAluno/.test(avaliar)) {
     problemas.push(
-      "proximoPasso.ts consulta a completude do perfil. O gate duro e a avaliacao; perfil incompleto informa, nao tranca.",
+      "Avaliacoes.tsx consulta prontidao/completude. Avaliar e a porta de entrada e nao pode depender do perfil.",
+    );
+  }
+
+  // 5b. prescrever tranca: aluno avaliado, mas sem nada declarado, NÃO passa
+  const p = prontidaoParaPrescrever(novo, comAval);
+  if (p.ok) {
+    problemas.push(
+      "prontidao: aluno avaliado sem condicao, restricao nem medicacao declaradas nao pode estar pronto para prescrever.",
+    );
+  }
+  for (const esperado of ["saude-nao-declarada", "restricoes-nao-decididas", "medicacao-nao-decidida"] as const) {
+    if (!p.bloqueios.some((b) => b.motivo === esperado)) {
+      problemas.push(`prontidao: faltou o bloqueio "${esperado}" para o aluno recem-criado.`);
+    }
+  }
+
+  // 5c. o aluno com tudo DECIDIDO passa (o bloqueio tem saída, e ela funciona)
+  const decidido: Aluno = {
+    ...novo,
+    semCondicaoDeclarada: true,
+    restricoes: [criarRestricao("nenhuma_restricao")],
+    farmacosNaoInformado: true,
+  };
+  const q = prontidaoParaPrescrever(decidido, comAval);
+  if (!q.ok) {
+    problemas.push(
+      `prontidao: aluno com tudo declarado deveria liberar (travou em ${q.bloqueios.map((b) => b.motivo).join(", ")}).`,
+    );
+  }
+
+  // 5d. sem avaliação, o primeiro bloqueio é a avaliação (a ordem importa: é o
+  //     primeiro que a tela mostra em uma linha)
+  const r = prontidaoParaPrescrever(decidido, semAval);
+  if (r.primeiro?.motivo !== "sem-avaliacao") {
+    problemas.push("prontidao: sem avaliacao, o primeiro bloqueio precisa ser a avaliacao.");
+  }
+  if (podeMontarTreino(decidido, semAval).ok) {
+    problemas.push("podeMontarTreino: sem avaliacao nao pode liberar.");
+  }
+  // `podeMontarTreino` é o SUBCONJUNTO: com avaliação ele libera mesmo com o perfil
+  // vazio, porque responde só "a avaliação existe?". Quem tranca o resto é a
+  // prontidão inteira. Se um dia os dois derem sempre a mesma resposta, um é morto.
+  if (!podeMontarTreino(novo, comAval).ok) {
+    problemas.push("podeMontarTreino: com avaliacao registrada ele deveria liberar (ele so olha a avaliacao).");
+  }
+
+  // 5e. sem equipamento nenhum não há o que prescrever
+  const semEquip = prontidaoParaPrescrever({ ...decidido, equipamentos: [] }, comAval);
+  if (!semEquip.bloqueios.some((b) => b.motivo === "sem-equipamento")) {
+    problemas.push("prontidao: aluno sem nenhum equipamento precisa bloquear.");
+  }
+
+  // 5f. TODAS as telas que geram prescrição consultam a prontidão
+  for (const tela of ["src/pages/PrescreverTreino.tsx", "src/pages/Gps.tsx"]) {
+    const src = readFileSync(tela, "utf8");
+    if (!src.includes("prontidaoParaPrescrever")) {
+      problemas.push(`${tela} gera prescricao sem consultar prontidaoParaPrescrever.`);
+    }
+  }
+
+  // 5g. O passo com destino explícito manda. Quem desenha o CTA do próximo passo
+  //     precisa honrar `passo.cta.to` ANTES do switch por `kind`, senão a espinha
+  //     mostra o rótulo certo ("Abrir Saúde e restrições") apontando para a tela de
+  //     prescrição bloqueada. Foi exatamente o que aconteceu, e em dois dos três
+  //     lugares que desenham esse botão.
+  const desenhamCta = [
+    "src/pages/ProfessionalDashboard.tsx",
+    "src/pages/AlunoDetail.tsx",
+    "src/pages/Alunos.tsx",
+    "src/components/treino/LinhaDoCuidado.tsx",
+  ];
+  for (const tela of desenhamCta) {
+    // Comentários fora ANTES de procurar: a primeira versão desta regra passava
+    // quando alguém desligava o `if` e deixava `passo.cta.to` no comentário ao lado.
+    const src = readFileSync(tela, "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/\/\/.*$/gm, "");
+    // Precisa ser USO de verdade: dentro de um if, ou como fallback com ??. O
+    // painel recebe o passo já achatado em `ParadaDoDia`, então lá o campo é `p.to`.
+    const usoReal = /(if\s*\(\s*(passo\.cta|p)\.to\s*\))|((passo\.cta|p)\.to\s*\?\?)/.test(src);
+    if (!usoReal) {
+      problemas.push(`${tela} desenha o CTA do proximo passo e ignora passo.cta.to (destino explicito).`);
+    }
+  }
+
+  // ...e o passo bloqueado por perfil precisa DE FATO trazer o destino do perfil.
+  const passoBloqueado = proximoPasso(novo, {
+    avaliacoes: comAval.avaliacoes,
+    prescricoes: [],
+    planos: [],
+    liberacoes: [],
+    execucoes: [],
+  });
+  if (!passoBloqueado.cta.to?.includes("/perfil")) {
+    problemas.push(
+      `proximoPasso: com o perfil bloqueando, o CTA precisa apontar para o perfil (aponta para "${passoBloqueado.cta.to ?? "o padrao da etapa"}").`,
     );
   }
 }

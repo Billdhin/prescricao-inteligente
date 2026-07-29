@@ -529,6 +529,9 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
 /** Onde cada parada abre. Liberar cai direto na aba Semáforo do aluno; avaliar
  *  abre o modal de avaliação pelo deep-link; o resto abre a ficha. */
 function destinoDaParada(p: ParadaDoDia): string {
+  // O destino explícito do passo manda: com o perfil travando a prescrição, a
+  // parada leva à seção do perfil que destrava, não à tela bloqueada.
+  if (p.to) return p.to;
   if (p.etapa === "liberar") return `/alunos/${p.aluno.id}?aba=semaforo`;
   if (p.etapa === "avaliar" || p.etapa === "reavaliar") return `/alunos/${p.aluno.id}?avaliar=1`;
   if (p.etapa === "planejar") return `/prescrever-treino?aluno=${p.aluno.id}`;

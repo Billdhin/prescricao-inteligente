@@ -151,6 +151,17 @@ function CtaPasso({
       {passo.cta.label} <ArrowRight className="h-4 w-4" />
     </>
   );
+  // Destino explícito do passo manda em tudo: é por ele que "planejar" leva à seção
+  // do PERFIL quando é o perfil que trava a prescrição. Sem esta linha, a espinha
+  // do cuidado mandava o profissional para a tela de prescrição bloqueada, com o
+  // rótulo certo e o endereço errado.
+  if (passo.cta.to) {
+    return (
+      <Link to={passo.cta.to} className={cls}>
+        {label}
+      </Link>
+    );
+  }
   switch (passo.cta.kind) {
     case "planejar":
       return (
