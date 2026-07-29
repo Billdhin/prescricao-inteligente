@@ -443,6 +443,7 @@ export const extraExercises7: Exercise[] = [
     resumoPratico:
       "Ficar sobre um pé só, com progressão de dificuldade: o único trabalho de equilíbrio do catálogo, e o mais citado na prevenção de quedas.",
     anguloArticular: "Apoio unipodal com joelho em leve flexão",
+    imagem: "/exercises/equilibrio-unipodal.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Fibulares (estabilizadores do tornozelo)", percentual: 55, papel: "primário" },

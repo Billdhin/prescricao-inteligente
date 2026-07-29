@@ -378,6 +378,7 @@ export const extraExercises3: Exercise[] = [
     resumoPratico:
       "Abrir o joelho de cima com os pés juntos: a entrada mais simples de glúteo médio e rotadores externos, sem carga sobre a coluna nem sobre o joelho.",
     anguloArticular: "Quadril e joelho a cerca de 45 e 90 graus",
+    imagem: "/exercises/clam-shell.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Glúteo médio", percentual: 40, papel: "primário" },
@@ -703,6 +704,7 @@ export const extraExercises3: Exercise[] = [
     resumoPratico:
       "Empurrar a polia à frente do peito enquanto ela puxa para o lado: o core trabalha impedindo a rotação, em pé e sem carga sobre a coluna.",
     anguloArticular: "Coluna neutra, ombros a 90 graus na extensão dos braços",
+    imagem: "/exercises/pallof-press-polia.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Oblíquos", percentual: 55, papel: "primário" },
@@ -784,6 +786,7 @@ export const extraExercises3: Exercise[] = [
     resumoPratico:
       "O mesmo padrão antirrotação da polia, com um elástico preso numa maçaneta: core em pé para quem treina em casa.",
     anguloArticular: "Coluna neutra, ombros a 90 graus na extensão dos braços",
+    imagem: "/exercises/pallof-press-elastico.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Oblíquos", percentual: 48, papel: "primário" },
@@ -1027,6 +1030,7 @@ export const extraExercises3: Exercise[] = [
     resumoPratico:
       "Pendurado na barra, subir os joelhos na direção do peito: a progressão de core mais exigente do catálogo, que ainda treina a pegada.",
     anguloArticular: "Flexão de quadril até cerca de 90 graus, coluna sem hiperextensão",
+    imagem: "/exercises/elevacao-joelhos-suspenso.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Reto abdominal", percentual: 65, papel: "primário" },

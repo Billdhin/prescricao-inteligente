@@ -1090,6 +1090,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Tronco inclinado, braços abrindo para os lados: o primeiro exercício do catálogo que tem o deltoide posterior como alvo.",
     anguloArticular: "Abdução horizontal de ombro com tronco inclinado",
+    imagem: "/exercises/crucifixo-inverso.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide posterior", percentual: 68, papel: "primário" },
