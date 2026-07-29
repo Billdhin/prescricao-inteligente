@@ -225,10 +225,15 @@ const feita = (a: Aluno, id: string) => completudeAluno(a).secoes.find((s) => s.
     }
   }
 
-  // nada declarado, nada afirmado
-  const vazio = oQueIssoMuda({ ...alunoRecemCriado(), equipamentos: [] });
+  // Nada declarado, nada afirmado. O aluno do teste é o do modal mínimo, COM o kit
+  // típico de equipamentos: se equipamento contasse como consequência clínica, a
+  // coluna nunca ficaria vazia e o estado vazio seria código morto.
+  const vazio = oQueIssoMuda(alunoRecemCriado());
   if (vazio.semaforo || vazio.itens.length || vazio.protocolo) {
-    problemas.push("oQueIssoMuda: aluno sem nada declarado nao pode gerar consequencia.");
+    problemas.push("oQueIssoMuda: aluno sem nada declarado nao pode gerar consequencia clinica.");
+  }
+  if (!vazio.catalogo) {
+    problemas.push("oQueIssoMuda: o recorte do catalogo por equipamento deveria aparecer como contexto.");
   }
 }
 

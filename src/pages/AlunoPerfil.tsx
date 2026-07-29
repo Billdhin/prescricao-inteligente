@@ -88,7 +88,7 @@ export function AlunoPerfil() {
 
   return (
     <div className="mx-auto max-w-[1240px] space-y-5">
-      <CabecalhoPerfil aluno={aluno} completude={completude.pct} />
+      <CabecalhoPerfil aluno={aluno} feitas={completude.feitas} total={completude.total} />
 
       {/* Trilho de seções: desktop mostra as seis; mobile mostra passo e barra. */}
       <TrilhoSecoes
@@ -98,11 +98,17 @@ export function AlunoPerfil() {
         indice={indice}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-4">
           <div>
-            <h2 className="font-display text-2xl font-bold text-ink">{atual.titulo}</h2>
-            <p className="mt-1 text-sm text-ink-2">{atual.resumo} Tudo já está salvo.</p>
+            {/* O "passo N de 6" vive COLADO no título da seção, que é o objeto a
+                que ele se refere. Ele já foi um número solto no canto direito do
+                trilho, a meia tela de distância do que estava contando. */}
+            <div className="text-2xs font-bold uppercase tracking-[0.14em] text-analysis-text">
+              Passo {indice + 1} de {completude.total}
+            </div>
+            <h2 className="mt-1 font-display text-2xl font-bold text-ink">{atual.titulo}</h2>
+            <p className="mt-1 max-w-[62ch] text-sm leading-relaxed text-ink-2">{atual.resumo}</p>
           </div>
 
           {secao === "basicos" && <SecaoBasicos aluno={aluno} onPatch={patch} />}
@@ -158,7 +164,7 @@ export function AlunoPerfil() {
 
 /* ------------------------------- Cabeçalho -------------------------------- */
 
-function CabecalhoPerfil({ aluno, completude }: { aluno: Aluno; completude: number }) {
+function CabecalhoPerfil({ aluno, feitas, total }: { aluno: Aluno; feitas: number; total: number }) {
   const criadoHa = tempoDesde(aluno.criadoEm);
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -171,8 +177,15 @@ function CabecalhoPerfil({ aluno, completude }: { aluno: Aluno; completude: numb
       </Link>
       <div className="min-w-0 flex-1">
         <h1 className="truncate font-display text-2xl font-bold text-ink">{aluno.nome}</h1>
-        <p className="text-sm text-ink-2">
-          Perfil do aluno · <span className="font-semibold text-ink">{completude}% preenchido</span>
+        {/* O quanto está preenchido é DITO por extenso aqui, e desenhado como
+            barra no card da lateral. O percentual solto ("33% preenchido") era o
+            mesmo número em outra unidade, e ainda encostava no "2 de 6" do trilho
+            querendo dizer outra coisa. */}
+        <p className="truncate text-sm text-ink-2">
+          Perfil do aluno ·{" "}
+          <span className="font-semibold text-ink">
+            {feitas} de {total} seções preenchidas
+          </span>
           {criadoHa && ` · criado ${criadoHa}`}
         </p>
       </div>
@@ -211,15 +224,15 @@ function TrilhoSecoes({
 }) {
   return (
     <div>
-      {/* Mobile: passo atual e barra segmentada (a fila de seis não cabe a 390) */}
+      {/* Mobile: barra segmentada no lugar da fila de seis pílulas, que não cabe a
+          390. O "Passo N de 6" NÃO se repete aqui: ele já é o eyebrow do título da
+          seção, logo abaixo, e dois deles na mesma dobra é a mesma frase duas vezes. */}
       <div className="mb-3 lg:hidden">
-        <div className="mb-2 flex items-baseline justify-between gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-ink-2">
-            Passo {indice + 1} de {completude.total}
-          </span>
-          <span className="text-xs font-semibold text-ink-3">{completude.feitas} preenchidas</span>
-        </div>
-        <div className="flex gap-1.5" role="presentation">
+        <div
+          className="flex gap-1.5"
+          role="img"
+          aria-label={`${completude.feitas} de ${completude.total} seções preenchidas`}
+        >
           {completude.secoes.map((s, i) => (
             <span
               key={s.secao.id}
@@ -269,9 +282,6 @@ function TrilhoSecoes({
             </button>
           );
         })}
-        <span className="ml-auto text-sm font-semibold text-ink-3 max-lg:hidden">
-          {completude.feitas} de {completude.total}
-        </span>
       </div>
     </div>
   );
@@ -292,7 +302,7 @@ function Campo({ label, children, dica }: { label: string; children: React.React
 function SecaoBasicos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Aluno>) => void }) {
   const idadeForaDaFaixa = aluno.idade != null && (aluno.idade < 12 || aluno.idade > 100);
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-4 p-4 sm:p-5">
       <Campo label="Nome">
         <input
           value={aluno.nome}
@@ -367,7 +377,7 @@ function SecaoObjetivo({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<
   };
 
   return (
-    <Card className="space-y-3">
+    <Card className="space-y-3 p-4 sm:p-5">
       <ObjetivoDuplo objetivo={par.o} objetivoSecundario={par.s} onChange={trocar} />
       {!valido && (
         <p className="rounded-card border border-danger/30 bg-danger-tint p-3 text-sm text-danger-text" role="alert">
@@ -396,9 +406,9 @@ function SecaoSaude({
       <RestricoesFisicas aluno={aluno} onPatch={onPatch} />
       {/* Ponte para a próxima seção: a medicação muda como ler FC e glicemia, e é a
           pergunta que mais some quando não é feita na mesma conversa da saúde. */}
-      <Card variant="soft" className="flex flex-wrap items-center justify-between gap-3">
+      <Card variant="soft" className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
         <div className="min-w-0">
-          <div className="font-semibold text-ink">Medicamentos em uso</div>
+          <h3 className="font-display font-bold text-ink">Medicamentos em uso</h3>
           <p className="text-sm text-ink-2">Só a classe. Ajuda a ler frequência cardíaca e glicemia.</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -451,18 +461,20 @@ function CondicaoDeSaude({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partia
     onPatch({ grupoEspecial: slug, semCondicaoDeclarada: undefined, sugestoesDispensadas: undefined });
 
   return (
-    <Card className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <span className="font-display font-bold text-ink">Condição de saúde</span>{" "}
-          <span className="text-sm text-ink-2">liga o semáforo diário dessa condição</span>
+    <Card className="space-y-3 p-4 sm:p-5">
+      {/* Título em cima, apoio embaixo: as duas coisas na mesma linha brigavam por
+          espaço e empurravam o link para fora do card em telas médias. */}
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+        <div className="min-w-0">
+          <h3 className="font-display font-bold text-ink">Condição de saúde</h3>
+          <p className="text-sm text-ink-2">Liga o semáforo diário dessa condição.</p>
         </div>
         <button
           type="button"
           onClick={() => setVerTodas((v) => !v)}
-          className="text-sm font-semibold text-primary hover:underline"
+          className="shrink-0 whitespace-nowrap text-sm font-semibold text-ink-2 underline decoration-border underline-offset-4 hover:text-ink hover:decoration-ink-3"
         >
-          {verTodas ? "Mostrar menos" : `ver as ${specialGroups.length}`}
+          {verTodas ? "Mostrar menos" : `Ver as ${specialGroups.length}`}
         </button>
       </div>
 
@@ -538,23 +550,26 @@ function RestricoesFisicas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
   };
 
   return (
-    <Card className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="font-display font-bold text-ink">Restrições físicas</span>
-          {ativas.length > 0 && (
-            <Pill tone="warning">
-              {ativas.length} marcada{ativas.length === 1 ? "" : "s"}
-            </Pill>
-          )}
-          {marcouNenhuma && <Pill tone="success">Nenhuma</Pill>}
+    <Card className="space-y-3 p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-display font-bold text-ink">Restrições físicas</h3>
+            {ativas.length > 0 && (
+              <Pill tone="warning">
+                {ativas.length} marcada{ativas.length === 1 ? "" : "s"}
+              </Pill>
+            )}
+            {marcouNenhuma && <Pill tone="success">Nenhuma</Pill>}
+          </div>
+          <p className="text-sm text-ink-2">Mudam o que o motor escolhe, a amplitude e o apoio.</p>
         </div>
         <button
           type="button"
           onClick={() => setGaveta(GRUPOS_GAVETA_RESTRICAO[0].id)}
-          className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-bold text-primary hover:underline"
         >
-          <Plus aria-hidden className="h-4 w-4" /> adicionar
+          <Plus aria-hidden className="h-4 w-4" /> Adicionar
         </button>
       </div>
 
@@ -644,7 +659,7 @@ function RestricoesFisicas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
 
 function SecaoMedicamentos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Aluno>) => void }) {
   return (
-    <Card>
+    <Card className="p-4 sm:p-5">
       <FarmacosSelector
         value={aluno.farmacos ?? []}
         onChange={(f) => onPatch({ farmacos: f.length ? f : undefined, farmacosNaoInformado: undefined })}
@@ -674,7 +689,7 @@ function SecaoEquipamentos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
     });
 
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-4 p-4 sm:p-5">
       <div className="flex flex-wrap gap-3 text-sm font-semibold">
         <button type="button" onClick={() => onPatch({ equipamentos: [...KIT_ACADEMIA] })} className="text-primary hover:underline">
           Kit típico de academia
@@ -714,7 +729,7 @@ function SecaoEquipamentos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
 function SecaoNotas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Aluno>) => void }) {
   const confirmado = (aluno.perfilConfirmado ?? []).includes("notas");
   return (
-    <Card className="space-y-4">
+    <Card className="space-y-4 p-4 sm:p-5">
       <Campo
         label="Observações"
         dica="Histórico, rotina, combinados. Isto não vai para o app do aluno nem para o PDF."

@@ -12,7 +12,6 @@ const BARRA: Record<OrigemMudanca, string> = {
   condicao: "bg-danger",
   restricao: "bg-warning",
   medicacao: "bg-primary",
-  equipamento: "bg-analysis-fill",
 };
 
 /**
@@ -69,6 +68,10 @@ export function OQueIssoMudaPainel({ aluno }: { aluno: Aluno }) {
           </div>
         </div>
       ))}
+
+      {muda.catalogo && (
+        <p className="text-sm leading-relaxed text-ink-3">{muda.catalogo}</p>
+      )}
 
       {muda.noAppDoAluno.length > 0 && (
         <div className="rounded-card bg-surface-soft p-4">

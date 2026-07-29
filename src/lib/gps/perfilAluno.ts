@@ -58,8 +58,11 @@ export const SECOES_PERFIL: SecaoPerfil[] = [
   },
   {
     id: "saude",
+    // O resumo não repete o que os dois cards da seção já dizem de si mesmos; ele
+    // responde à pergunta que o profissional tem ao chegar aqui, que é "preciso
+    // terminar isto agora?".
     titulo: "Saúde e restrições",
-    resumo: "A condição liga o semáforo diário; as restrições mudam o que o motor escolhe.",
+    resumo: "Só o que muda a prescrição. Pode parar quando quiser.",
     fecha: "dado",
   },
   {

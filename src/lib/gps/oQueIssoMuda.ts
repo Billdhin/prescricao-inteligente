@@ -28,7 +28,7 @@ import { itemDaClasse, farmacosAtivos, rotuloFarmaco } from "@/data/farmacos";
 import { regraDoPerfil, monitoramentoDoPerfil } from "@/lib/gps/farmacos";
 import { getParam } from "@/data/monitoringParameters";
 
-export type OrigemMudanca = "condicao" | "restricao" | "medicacao" | "equipamento";
+export type OrigemMudanca = "condicao" | "restricao" | "medicacao";
 
 export interface ItemMudanca {
   id: string;
@@ -58,10 +58,19 @@ export interface ProtocoloSugerido {
 
 export interface OQueIssoMuda {
   semaforo?: DestaqueSemaforo;
+  /**
+   * As consequências CLÍNICAS do que foi declarado. Lista vazia é o estado vazio
+   * de verdade da coluna, e é por isso que equipamento não entra aqui: ele existe
+   * desde o primeiro segundo do aluno (nasce com o kit típico) e, se contasse como
+   * item, a coluna nunca diria "nada declarado ainda" para ninguém. Um painel que
+   * nunca fica vazio é um painel que não informa quando enche.
+   */
   itens: ItemMudanca[];
   protocolo?: ProtocoloSugerido;
   /** o que o app do aluno passa a mostrar por causa do que foi declarado */
   noAppDoAluno: string[];
+  /** o recorte do catálogo pelos equipamentos do local (contexto, não consequência) */
+  catalogo?: string;
 }
 
 /** Primeira frase de um texto longo (os cuidados vêm em parágrafo). */
@@ -160,18 +169,11 @@ export function oQueIssoMuda(aluno: Aluno): OQueIssoMuda {
   }
 
   /* ----------------------------- equipamentos ----------------------------- */
-  if (aluno.equipamentos.length) {
-    itens.push({
-      id: "equipamento",
-      origem: "equipamento",
-      fonte: "Equipamentos do local",
-      efeitos: [
-        aluno.equipamentos.length === 1
-          ? "O catálogo já entra filtrado por 1 equipamento disponível"
-          : `O catálogo já entra filtrado pelos ${aluno.equipamentos.length} equipamentos disponíveis`,
-      ],
-    });
-  }
+  const catalogo = aluno.equipamentos.length
+    ? aluno.equipamentos.length === 1
+      ? "O catálogo entra filtrado por 1 equipamento disponível."
+      : `O catálogo entra filtrado pelos ${aluno.equipamentos.length} equipamentos disponíveis.`
+    : undefined;
 
   /* ------------------------- protocolo sugerido --------------------------- */
   const protocolo: ProtocoloSugerido | undefined =
@@ -184,5 +186,5 @@ export function oQueIssoMuda(aluno: Aluno): OQueIssoMuda {
         }
       : undefined;
 
-  return { semaforo, itens, protocolo, noAppDoAluno };
+  return { semaforo, itens, protocolo, noAppDoAluno, catalogo };
 }
