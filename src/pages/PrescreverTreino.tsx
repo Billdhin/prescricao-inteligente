@@ -14,11 +14,15 @@ import {
   FileDown,
   Check,
   AlertTriangle,
+  MapPin,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
-import { GraficoProgressao, MesocicloCard, ModeloExplicacao, type ContextoFaixa } from "@/components/treino/PlanoEditor";
+import { GraficoProgressao, MesocicloCard, ModeloExplicacao, SessaoBloco, type ContextoFaixa } from "@/components/treino/PlanoEditor";
+import { TresCamadas } from "@/components/ui/camadas";
+import { letraSessao } from "@/lib/gps/semear";
+import { exercises } from "@/data/exercises";
 import { cn } from "@/lib/utils";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { gerarPlano } from "@/lib/gps/periodizacao";
@@ -28,8 +32,12 @@ import {
   MODELOS_PERIODIZACAO,
   semanaAtual,
   mesocicloAtual,
+  rotuloMeso,
+  getFaixa,
   type Macrociclo,
   type Mesociclo,
+  type Microciclo,
+  type Sessao,
   type PlanoTreino,
 } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
@@ -39,6 +47,8 @@ import { bibliografia } from "@/data/referencias";
 import { exportPlanoPDF } from "@/lib/exportPlano";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, uid } from "@/lib/store";
 import { podeMontarTreino } from "@/lib/gps/proximoPasso";
+import { groupGpsRules } from "@/lib/gps/groupRules";
+import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 
@@ -92,6 +102,9 @@ export function PrescreverTreino() {
   const [frequencia, setFrequencia] = React.useState(planoPre?.frequenciaSemanal ?? 3);
   const [semanas, setSemanas] = React.useState(planoPre?.semanas ?? 12);
   const [disponibilidade, setDisponibilidade] = React.useState(planoPre?.disponibilidade ?? "");
+  // Disponibilidade é exceção, não regra: fica recolhida para o botão de gerar não sair
+  // da primeira dobra. Já preenchida (plano retomado), abre sozinha.
+  const [maisOpcoes, setMaisOpcoes] = React.useState(Boolean(planoPre?.disponibilidade));
 
   // O rascunho já nasce como o plano que vai ser salvo: editar, salvar e exportar
   // trabalham no mesmo objeto, então o PDF nunca mostra uma versão anterior da edição.
@@ -280,161 +293,195 @@ export function PrescreverTreino() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      {/* Cabeçalho */}
-      <div>
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <SeloRCD compacto explicavel />
-          <Pill tone="neutral">Planejamento longitudinal</Pill>
-        </div>
-        <h1 className="flex items-center gap-2 font-display text-3xl font-bold text-ink md:text-4xl">
-          <CalendarRange className="h-7 w-7 text-primary" /> Prescrever treino
-        </h1>
-        <p className="mt-1 text-ink-2">
-          Monte a periodização completa do aluno (macrociclo, mesociclos e microciclos) com base científica.
-          A ferramenta apoia a sua decisão e organiza a progressão; você edita tudo depois. Para exercícios
-          individuais, use o{" "}
-          <Link to="/gps" className="font-semibold text-primary hover:underline">
-            Treino do dia
-          </Link>
-          .
-        </p>
-      </div>
-
-      {/* Passo 1: contexto */}
-      <Card variant="raised" className="p-5">
-        <SectionHeader level={2} eyebrow="Passo 1" title="Contexto do aluno" />
-
-        <div className="mt-4">
-          <label className="mb-1.5 block text-sm font-semibold text-ink">Aluno</label>
-          {alunos.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border p-3 text-sm text-ink-3">
-              Nenhum aluno cadastrado ainda. Você pode gerar um plano avulso abaixo ou{" "}
-              <Link to="/alunos" className="font-semibold text-primary hover:underline">
-                cadastrar um aluno
+    // Duas larguras, porque são duas telas: o formulário é curto e fica legível numa
+    // coluna estreita; o plano gerado tem gráfico, semana, sessão e trilho lateral, e
+    // sufoca em 4xl.
+    <div className={cn("mx-auto space-y-6", plano ? "max-w-[1200px]" : "max-w-4xl")}>
+      {/*
+        PASSO ÚNICO: contexto e gerar.
+        Antes eram dois cards ("Passo 1" e um "Passo 2" que ficava vazio embaixo até
+        alguém gerar), e o formulário empurrava a página inteira para baixo. O plano
+        gerado ocupa a tela toda quando existe; enquanto não existe, a tela é o
+        formulário curto e mais nada.
+      */}
+      {!plano && (
+        <>
+          <div>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <SeloRCD compacto explicavel />
+            </div>
+            <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Para quem é este plano?</h1>
+            <p className="mt-1 text-ink-2">
+              6 respostas rápidas. Você edita tudo depois. Exercício avulso?{" "}
+              <Link to="/gps" className="font-semibold text-primary hover:underline">
+                Use o Treino do dia
               </Link>
               .
             </p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => escolherAluno(undefined)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
-                  !alunoId ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
+          </div>
+
+          <Card variant="raised" className="p-5 md:p-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Campo label="Aluno">
+                {alunos.length === 0 ? (
+                  <p className="rounded-control border border-dashed border-border p-3 text-sm text-ink-3">
+                    Nenhum aluno cadastrado.{" "}
+                    <Link to="/alunos?novo=1" className="font-semibold text-primary hover:underline">
+                      Cadastrar aluno
+                    </Link>{" "}
+                    ou siga com um plano avulso.
+                  </p>
+                ) : (
+                  <>
+                    <select
+                      value={alunoId ?? ""}
+                      onChange={(e) => escolherAluno(e.target.value || undefined)}
+                      aria-label="Aluno"
+                      className="input w-full"
+                    >
+                      <option value="">Plano avulso (sem aluno)</option>
+                      {alunos.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.nome}
+                        </option>
+                      ))}
+                    </select>
+                    {/* O perfil dele numa linha, colado ao seletor: é o que diz se o
+                        contexto herdado abaixo faz sentido, sem abrir o cadastro. */}
+                    {aluno && (
+                      <span className="mt-1 block truncate text-xs text-ink-2">
+                        {[aluno.nivel.toLowerCase(), ...aluno.restricoes.map((r) => rotuloRestricao(r.tag).toLowerCase())]
+                          .slice(0, 3)
+                          .join(" · ")}
+                      </span>
+                    )}
+                  </>
                 )}
-              >
-                <Users className="h-3.5 w-3.5" /> Plano avulso
-              </button>
-              {alunos.map((a) => (
-                <button
-                  key={a.id}
-                  onClick={() => escolherAluno(a.id)}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
-                    alunoId === a.id ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
-                  )}
+              </Campo>
+
+              <Campo label="Condição / grupo especial">
+                <select
+                  id="grupo-especial"
+                  value={grupo}
+                  onChange={(e) => setGrupo(e.target.value)}
+                  className="input w-full"
                 >
-                  <UserCheck className="h-3.5 w-3.5" /> {a.nome}
-                </button>
-              ))}
+                  <option value="">Sem condição especial</option>
+                  {specialGroups.map((g) => (
+                    <option key={g.slug} value={g.slug}>
+                      {g.nome}
+                    </option>
+                  ))}
+                </select>
+                {grupo && (
+                  <span className="mt-1 flex items-start gap-1.5 text-xs text-ink-2">
+                    <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-analysis" />
+                    A jornada de fases deste grupo vira a base do macrociclo.
+                  </span>
+                )}
+              </Campo>
             </div>
-          )}
-          {aluno && !bloquearSemAvaliacao && (
-            <p className="mt-2 text-xs text-ink-3">
-              Objetivo, nível e grupo especial vieram do cadastro de {aluno.nome}. Ajuste se quiser.
-              {aluno.restricoes.length > 0 && ` ${aluno.restricoes.length} restrição(ões) no perfil: revise os exercícios de cada sessão à luz delas (a periodização organiza volume e intensidade; a seleção segura por restrição fica no Treino do dia).`}
-            </p>
-          )}
-        </div>
 
-        {/* Gate duro: aluno selecionado sem avaliação não gera plano; explica e leva a registrar. */}
-        {bloquearSemAvaliacao && aluno ? (
-          <BlocoAvaliacaoNecessaria aluno={aluno} />
-        ) : (
-          <>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Campo label="Objetivo">
-            <Opcoes valor={objetivo} opcoes={OBJETIVOS} onSelect={(v) => setObjetivo(v as GpsObjetivo)} />
-          </Campo>
-          <Campo label="Nível de treinamento">
-            <Opcoes valor={nivel} opcoes={NIVEIS} onSelect={(v) => setNivel(v as Nivel)} />
-          </Campo>
-        </div>
+            {/* Gate duro: aluno selecionado sem avaliação não gera plano. */}
+            {bloquearSemAvaliacao && aluno ? (
+              <BlocoAvaliacaoNecessaria aluno={aluno} />
+            ) : (
+              <>
+                <div className="mt-4">
+                  <Campo label="Objetivo">
+                    <Opcoes valor={objetivo} opcoes={OBJETIVOS} onSelect={(v) => setObjetivo(v as GpsObjetivo)} />
+                  </Campo>
+                </div>
 
-        <div className="mt-4">
-          <label htmlFor="grupo-especial" className="mb-1.5 block text-sm font-semibold text-ink">
-            Condição / grupo especial <span className="font-normal text-ink-3">(opcional)</span>
-          </label>
-          <select id="grupo-especial" value={grupo} onChange={(e) => setGrupo(e.target.value)} className="input w-full">
-            <option value="">Sem condição especial</option>
-            {specialGroups.map((g) => (
-              <option key={g.slug} value={g.slug}>
-                {g.nome}
-              </option>
-            ))}
-          </select>
-          {grupo && (
-            <p className="mt-1.5 flex items-start gap-1.5 text-xs text-ink-2">
-              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-analysis" />
-              A jornada de fases deste grupo será a base do macrociclo, e os cuidados serão sobrepostos.
-            </p>
-          )}
-        </div>
+                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                  <Campo label="Nível">
+                    <Opcoes valor={nivel} opcoes={NIVEIS} onSelect={(v) => setNivel(v as Nivel)} />
+                  </Campo>
+                  <Campo label="Sessões por semana">
+                    <Opcoes
+                      valor={String(frequencia)}
+                      opcoes={FREQUENCIAS.map((f) => `${f}`)}
+                      onSelect={(v) => setFrequencia(Number(v))}
+                    />
+                  </Campo>
+                  <Campo label="Duração do plano">
+                    <div className="flex flex-wrap gap-1.5">
+                      {HORIZONTES.map((h) => (
+                        <button
+                          key={h.id}
+                          onClick={() => setSemanas(h.semanas)}
+                          aria-pressed={semanas === h.semanas}
+                          title={`${h.rotulo}: ${h.semanas} semanas`}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                            semanas === h.semanas
+                              ? "border-primary bg-primary-tint font-semibold text-primary"
+                              : "border-border text-ink-2 hover:bg-surface-soft",
+                          )}
+                        >
+                          {h.semanas} sem
+                        </button>
+                      ))}
+                    </div>
+                  </Campo>
+                </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Campo label="Frequência semanal">
-            <Opcoes valor={String(frequencia)} opcoes={FREQUENCIAS.map((f) => `${f}`)} onSelect={(v) => setFrequencia(Number(v))} sufixo="x" />
-          </Campo>
-          <Campo label="Horizonte do acompanhamento">
-            <div className="flex flex-wrap gap-1.5">
-              {HORIZONTES.map((h) => (
-                <button
-                  key={h.id}
-                  onClick={() => setSemanas(h.semanas)}
-                  aria-pressed={semanas === h.semanas}
-                  className={cn(
-                    "rounded-full border px-3 py-1.5 text-sm transition-colors",
-                    semanas === h.semanas ? "border-primary bg-primary-tint font-semibold text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
+                {/* Campo opcional recolhido: ele é a exceção, não a regra, e aberto
+                    empurrava o botão de gerar para fora da primeira dobra. */}
+                <div className="mt-4 border-t border-border pt-4">
+                  {maisOpcoes ? (
+                    <Campo label="Disponibilidade e observações (opcional)">
+                      <input
+                        id="disponibilidade"
+                        autoFocus
+                        value={disponibilidade}
+                        onChange={(e) => setDisponibilidade(e.target.value)}
+                        placeholder="Ex.: seg/qua/sex à noite, 60 min, academia completa"
+                        className="input w-full"
+                      />
+                    </Campo>
+                  ) : (
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        onClick={() => setMaisOpcoes(true)}
+                        className="text-sm font-semibold text-primary hover:underline"
+                      >
+                        + disponibilidade e observações
+                      </button>
+                      <button onClick={gerar} className={buttonClasses("primary")}>
+                        <Sparkles className="h-4 w-4" />
+                        {planoSalvoDoAluno ? "Gerar de novo" : "Gerar periodização"}
+                      </button>
+                    </div>
                   )}
-                >
-                  {h.rotulo} ({h.semanas} semanas)
-                </button>
-              ))}
-            </div>
-          </Campo>
-        </div>
-        <div className="mt-4">
-          <label htmlFor="disponibilidade" className="mb-1.5 block text-sm font-semibold text-ink">
-            Disponibilidade e observações <span className="font-normal text-ink-3">(opcional)</span>
-          </label>
-          <input
-            id="disponibilidade"
-            value={disponibilidade}
-            onChange={(e) => setDisponibilidade(e.target.value)}
-            placeholder="Ex.: seg/qua/sex à noite, 60 min, academia completa"
-            className="input w-full"
-          />
-        </div>
+                  {maisOpcoes && (
+                    <div className="mt-4 flex justify-end">
+                      <button onClick={gerar} className={buttonClasses("primary")}>
+                        <Sparkles className="h-4 w-4" />
+                        {planoSalvoDoAluno ? "Gerar de novo" : "Gerar periodização"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </Card>
 
-        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <button onClick={gerar} className={buttonClasses(planoSalvoDoAluno ? "secondary" : "primary")}>
-            <Sparkles className="h-4 w-4" />
-            {planoSalvoDoAluno ? "Gerar de novo (substitui o plano salvo)" : "Gerar periodização"}
-          </button>
+          {/* O motor propõe, você decide: o que a condição e as restrições DE FATO já
+              filtram neste plano. Derivado do perfil; sem restrição e sem condição, não
+              existe card, em vez de uma frase genérica de marketing. */}
+          <AvisoDoMotor aluno={aluno} grupoSlug={grupo} />
+
           {!plano && (
             <button
               onClick={carregarExemplo}
               className="text-sm text-ink-3 underline decoration-dotted underline-offset-4 hover:text-primary"
-              title="Preenche o formulário com um caso de demonstração (hipertrofia, intermediário, 12 semanas) e gera o plano."
             >
               Não sabe por onde começar? Ver um exemplo pronto
             </button>
           )}
-        </div>
-          </>
-        )}
-      </Card>
+        </>
+      )}
 
       {/* Resultado */}
       {plano && (
@@ -454,6 +501,7 @@ export function PrescreverTreino() {
             salvo={salvo}
             onSalvar={salvar}
             onExportar={exportar}
+            onEditarContexto={() => setPlano(null)}
           />
         </div>
       )}
@@ -524,6 +572,39 @@ function ConfirmarRegenerarModal({
 /** Gate duro do trilho no Prescrever treino: sem avaliação, o plano não nasce.
  *  Substitui o formulário de geração, explica o porquê e leva a registrar a
  *  avaliação (ou voltar ao plano avulso). */
+/**
+ * "O motor propõe, você decide": o que a condição e as restrições DESTE aluno já
+ * filtram, antes de gerar.
+ *
+ * Tudo aqui é DERIVADO: as restrições vêm do perfil, as estruturais vêm da condição
+ * (`restricoesEstruturais` em groupRules, as mesmas que o `check:condicao` trava), e
+ * o texto do efeito vem do catálogo de restrições. Sem restrição e sem condição, o
+ * card não existe: uma frase genérica de marketing aqui seria pior que silêncio.
+ */
+function AvisoDoMotor({ aluno, grupoSlug }: { aluno?: Aluno; grupoSlug: string }) {
+  const tags = React.useMemo(() => {
+    const declaradas = (aluno?.restricoes ?? []).map((r) => r.tag);
+    const daCondicao = grupoSlug ? (groupGpsRules[grupoSlug]?.restricoesEstruturais ?? []) : [];
+    return [...new Set([...declaradas, ...daCondicao])];
+  }, [aluno?.restricoes, grupoSlug]);
+
+  if (tags.length === 0) return null;
+  const nome = aluno ? aluno.nome.split(" ")[0] : "este perfil";
+
+  return (
+    <Card variant="soft" className="flex items-start gap-3 p-4">
+      <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-analysis" aria-hidden />
+      <p className="min-w-0 text-sm text-ink-2">
+        <span className="font-semibold text-ink">O motor propõe, você decide.</span>{" "}
+        {tags.length === 1 ? "A restrição" : "As restrições"} de {nome} já{" "}
+        {tags.length === 1 ? "entra" : "entram"} como filtro:{" "}
+        {tags.map((t) => rotuloRestricao(t).toLowerCase()).join(", ")}. Os exercícios incompatíveis
+        ficam de fora do plano, e os limítrofes entram rebaixados.
+      </p>
+    </Card>
+  );
+}
+
 function BlocoAvaliacaoNecessaria({ aluno }: { aluno: Aluno }) {
   const primeiro = aluno.nome.split(" ")[0];
   return (
@@ -567,6 +648,7 @@ function ResultadoPlano({
   salvo,
   onSalvar,
   onExportar,
+  onEditarContexto,
 }: {
   plano: PlanoTreino;
   onChange: (p: PlanoTreino) => void;
@@ -581,6 +663,8 @@ function ResultadoPlano({
   salvo: boolean;
   onSalvar: () => void;
   onExportar: () => void;
+  /** Volta ao formulário preservando as respostas (o plano salvo segue no perfil). */
+  onEditarContexto: () => void;
 }) {
   const [aba, setAba] = React.useState<"principal" | "alternativa">("principal");
   const [editando, setEditando] = React.useState(false);
@@ -637,175 +721,514 @@ function ResultadoPlano({
     setAba("principal");
   };
 
+  // Semana em foco: o plano deixou de ser uma pilha de mesociclos e virou
+  // "mapa -> semana -> sessão". A semana corrente é o ponto de partida, e clicar
+  // num chip do gráfico troca o foco sem sair da tela.
+  const [semanaFoco, setSemanaFoco] = React.useState(semanaCorrente);
+  React.useEffect(() => setSemanaFoco(semanaCorrente), [semanaCorrente]);
+
+  const semanas = React.useMemo(
+    () =>
+      macro.mesociclos.flatMap((m) =>
+        m.microciclos.map((w) => ({ micro: w, meso: m })),
+      ),
+    [macro],
+  );
+  const emFoco = semanas.find((x) => x.micro.semana === semanaFoco) ?? semanas[0];
+
+  const trocarMicro = (novo: Microciclo) => {
+    if (!emFoco) return;
+    trocarMeso({
+      ...emFoco.meso,
+      microciclos: emFoco.meso.microciclos.map((w) => (w.id === novo.id ? novo : w)),
+    });
+  };
+
   return (
     <div className="space-y-5">
-      <SectionHeader level={2} eyebrow="Passo 2" title="Periodização proposta" />
-
-      {/* Resumo + raciocínio */}
-      <Card variant="raised" className="border-l-4 border-primary p-5">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <Pill tone="primary">{modelo.nome}</Pill>
-          <LinhaDeTokens>
-            <TokenRotulado label="Objetivo" value={plano.objetivo} />
-            <TokenRotulado label="Nível" value={plano.nivel} />
-            <TokenRotulado label="Duração" value={`${plano.semanas} semanas`} />
-          </LinhaDeTokens>
-          {grupoObj && <Pill tone="analysis">{grupoObj.nome}</Pill>}
-          {/* O plano nasce de um modelo verificado, mas é ponto de partida do
-              profissional, não decisão pronta: enquanto não for salvo, é rascunho. */}
-          {!salvo && <Pill tone="warning">Rascunho a revisar</Pill>}
-        </div>
-        {editando ? (
-          <input
-            value={plano.titulo}
-            onChange={(e) => onChange({ ...plano, titulo: e.target.value })}
-            aria-label="Título do plano"
-            className="input mb-2 w-full text-sm font-semibold"
-          />
-        ) : (
-          <p className="mb-1 font-display font-bold text-ink">{plano.titulo}</p>
-        )}
-        <p className="text-sm text-ink">{plano.raciocinio}</p>
-      </Card>
-
-      {/* Ações: editar, salvar, PDF (plano Profissional) */}
-      {premium && (
-        <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setEditando((v) => !v)} className={buttonClasses(editando ? "primary" : "secondary", "sm")}>
-            {editando ? (
+      {/* CABEÇALHO DO PLANO: o que é, em que estado está e as duas saídas.
+          Substitui o "Passo 2" e o card de resumo: o título já diz objetivo e
+          duração, e o estado (rascunho x salvo) fica ao lado, não num card à parte. */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-display text-2xl font-bold text-ink md:text-3xl">
+              {plano.objetivo} · {plano.semanas} semanas
+            </h2>
+            {salvo ? <Pill tone="success">Salvo</Pill> : <Pill tone="warning">Rascunho</Pill>}
+            {grupoObj && <Pill tone="analysis">{grupoObj.nome}</Pill>}
+          </div>
+          <p className="mt-0.5 text-sm text-ink-2">
+            {modelo.nome}
+            {plano.alternativa && premium && (
               <>
-                <Eye className="h-4 w-4" /> Ver como fica
-              </>
-            ) : (
-              <>
-                <Pencil className="h-4 w-4" /> Editar o plano
+                {" · "}
+                <button
+                  onClick={() => setAba(naAlternativa ? "principal" : "alternativa")}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  {naAlternativa ? "voltar à principal" : "trocar modelo"}
+                </button>
               </>
             )}
-          </button>
-          <button onClick={onSalvar} disabled={!podeSalvar} className={cn(buttonClasses("secondary", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}>
-            {salvo ? <Check className="h-4 w-4 text-success" /> : <Save className="h-4 w-4" />}
-            {salvo ? "Salvo" : "Salvar no perfil"}
-          </button>
-          {/* Salvo e continuando na tela (update de plano já salvo): o caminho ao perfil
-              fica à mão. O primeiro salvamento de plano novo já navega para lá sozinho. */}
-          {salvo && podeSalvar && plano.alunoId && (
-            <Link to={`/alunos/${plano.alunoId}`} className={buttonClasses("ghost", "sm")}>
-              Ver no perfil de {aluno}
-            </Link>
-          )}
-          <button onClick={onExportar} disabled={!podeSalvar} className={cn(buttonClasses("ghost", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}>
+            {" · "}
+            {/* Sem esta saída o formulário fica inalcançável depois de gerar, e
+                trocar frequência ou duração exigiria recarregar a página. O plano
+                já salvo continua no perfil; o que se descarta é o rascunho da tela. */}
+            <button onClick={onEditarContexto} className="font-semibold text-primary hover:underline">
+              editar contexto
+            </button>
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {salvo && <span className="text-xs text-ink-3">Salvo no perfil</span>}
+          <button
+            onClick={onExportar}
+            disabled={!podeSalvar}
+            className={cn(buttonClasses("secondary", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}
+          >
             <FileDown className="h-4 w-4" /> Exportar PDF
           </button>
-          {!podeSalvar && (
-            <span className="text-xs text-ink-3">Selecione um aluno no passo 1 para salvar no perfil e exportar com a sua marca.</span>
-          )}
-          {podeSalvar && editando && <span className="text-xs text-ink-3">Editando o plano de {aluno}. As alterações entram ao salvar.</span>}
+          {/* O ÚNICO gradiente do produto, por regra do Design System: publicar é o
+              momento em que o plano deixa de ser rascunho do profissional e vira o
+              treino que o aluno vê. */}
+          <button
+            onClick={onSalvar}
+            disabled={!podeSalvar}
+            className={cn(
+              buttonClasses("primary", "sm"),
+              "gradient-publicar text-white",
+              !podeSalvar && "cursor-not-allowed opacity-50",
+            )}
+          >
+            {salvo ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+            {aluno ? `Publicar no app de ${aluno.split(" ")[0]}` : "Publicar no app do aluno"}
+          </button>
         </div>
-      )}
+      </div>
 
-      {editando && (
-        <p className="rounded-xl border border-dashed border-border bg-surface-soft p-3 text-xs text-ink-2">
-          Tudo abaixo é seu: séries, repetições, intensidade, intervalo, exercícios, sessões da semana,
-          onde cai a descarga e onde entra a reavaliação. As faixas da diretriz aparecem em cada semana
-          como referência, e o aviso de fora da faixa não trava nada.
+      {!podeSalvar && (
+        <p className="text-xs text-ink-3">
+          Plano avulso: escolha um aluno para publicar no app dele e exportar com a sua marca.
         </p>
       )}
 
-      {/* Opção principal x alternativa (a alternativa faz parte do plano Profissional) */}
-      {plano.alternativa && premium && (
-        <div className="flex flex-wrap items-center gap-2">
-          <div role="tablist" aria-label="Opções de periodização" className="flex gap-1.5">
-            {(["principal", "alternativa"] as const).map((k) => {
-              const m = k === "alternativa" ? getModelo(plano.modeloAltId!) : getModelo(plano.modeloId);
-              return (
-                <button
-                  key={k}
-                  role="tab"
-                  aria-selected={aba === k}
-                  onClick={() => setAba(k)}
-                  className={cn(
-                    "rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors",
-                    aba === k ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
-                  )}
-                >
-                  {k === "principal" ? "Opção principal" : "Alternativa"}: {m.nome}
-                </button>
-              );
-            })}
-          </div>
-          {naAlternativa && (
-            <button onClick={promoverAlternativa} className={buttonClasses("ghost", "sm")}>
-              Usar esta como principal
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Gráfico de progressão */}
-      <GraficoProgressao macro={macro} nivel={plano.nivel} />
-
-      {/* Timeline macro -> meso -> micro */}
-      <div className="space-y-3">
-        {macro.mesociclos.map((m, i) => {
-          // Produto 100% pago: o plano inteiro aparece, sem previa cortada.
-          const bloqueado = false;
-          return bloqueado ? (
-            i === 1 ? (
-              <PaywallCard
-                key={m.id}
-                titulo="Veja a periodização completa"
-                descricao="A prévia mostra o primeiro bloco. Os demais mesociclos, a alternativa, a edição e o PDF fazem parte do plano Profissional."
-              />
-            ) : null
-          ) : (
-            <MesocicloCard
-              key={m.id}
-              meso={m}
-              indice={i}
-              ctx={ctx}
-              editavel={premium && editando}
-              onChange={trocarMeso}
-              atual={m.id === mesoAtual?.id}
-              semanaCorrente={semanaCorrente}
-              reavaliarHref={reavaliarHref}
-            />
-          );
-        })}
-      </div>
-
-      {/* Área explicativa do modelo */}
-      <ModeloExplicacao modelo={modelo} />
-
-      {/* Referências */}
-      {biblio.length > 0 && (
-        <Card className="p-4">
-          <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-analysis">
-            <BookOpen className="h-3.5 w-3.5" /> Base científica
-          </h3>
-          <ol className="list-decimal space-y-1 pl-5 text-xs text-ink-2">
-            {biblio.map((b) => (
-              <li key={b.ref.id}>
-                {b.ref.autores}. {b.ref.titulo}. {b.ref.fonte}, {b.ref.ano}.
-                {b.ref.doi && (
-                  <>
-                    {" "}
-                    <a href={`https://doi.org/${b.ref.doi}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                      doi:{b.ref.doi}
-                    </a>
-                  </>
-                )}
-              </li>
-            ))}
-          </ol>
+      {naAlternativa && (
+        <Card tone="warning" className="flex flex-wrap items-center gap-3 p-3">
+          <p className="min-w-0 flex-1 text-sm text-ink-2">
+            Você está vendo a <span className="font-semibold text-ink">alternativa</span> ({getModelo(plano.modeloAltId!).nome}).
+            Publicar guarda a opção principal.
+          </p>
+          <button onClick={promoverAlternativa} className={buttonClasses("secondary", "sm")}>
+            Usar esta como principal
+          </button>
         </Card>
       )}
 
-      <p className="rounded-xl bg-surface-soft p-3 text-xs text-ink-3">
+      {/* Duas colunas: o plano à esquerda, o porquê à direita. Empilha no mobile. */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 space-y-5">
+          <GraficoProgressao macro={macro} nivel={plano.nivel} />
+
+          {/* Régua de semanas: o mapa do plano vira navegação. */}
+          <ReguaDeSemanas
+            semanas={semanas}
+            foco={semanaFoco}
+            corrente={salvo ? semanaCorrente : undefined}
+            onFocar={setSemanaFoco}
+          />
+
+          {emFoco && (
+            <SemanaEmFoco
+              micro={emFoco.micro}
+              meso={emFoco.meso}
+              ctx={ctx}
+              editavel={premium}
+              onChange={trocarMicro}
+              onDuplicar={() => {
+                // Copia as sessões desta semana para as demais semanas de CARGA do
+                // mesmo bloco (ids novos, senão duas semanas apontariam para o mesmo
+                // bloco e a execução do aluno grudaria nas duas).
+                trocarMeso({
+                  ...emFoco.meso,
+                  microciclos: emFoco.meso.microciclos.map((w) =>
+                    w.id === emFoco.micro.id || w.tipo === "deload"
+                      ? w
+                      : {
+                          ...w,
+                          sessoes: emFoco.micro.sessoes.map((s) => ({
+                            ...s,
+                            id: `ses-${uid()}`,
+                            blocos: s.blocos.map((b) => ({ ...b, id: `blk-${uid()}` })),
+                          })),
+                        },
+                  ),
+                });
+                toast(`Sessões da semana ${emFoco.micro.semana} aplicadas às demais semanas de carga do bloco.`);
+              }}
+            />
+          )}
+
+          {/* O plano bloco a bloco continua acessível: é onde vivem tendência,
+              descarga e as travas por variável, que a visão por semana não substitui. */}
+          <details className="rounded-card border border-border bg-surface">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
+              Ver o plano bloco a bloco (tendências, descarga e travas)
+            </summary>
+            <div className="space-y-3 p-4 pt-0">
+              {macro.mesociclos.map((m, i) => (
+                <MesocicloCard
+                  key={m.id}
+                  meso={m}
+                  indice={i}
+                  ctx={ctx}
+                  editavel={premium}
+                  onChange={trocarMeso}
+                  atual={m.id === mesoAtual?.id}
+                  semanaCorrente={semanaCorrente}
+                  reavaliarHref={reavaliarHref}
+                />
+              ))}
+              <ModeloExplicacao modelo={modelo} />
+            </div>
+          </details>
+        </div>
+
+        {/* TRILHO: por que estes números, equilíbrio da semana e avisos. */}
+        <TrilhoDoPlano
+          plano={plano}
+          micro={emFoco?.micro}
+          meso={emFoco?.meso}
+          modelo={modelo}
+          alunoObj={alunoObj}
+          refIds={plano.refIds}
+        />
+      </div>
+
+      <p className="rounded-card bg-surface-soft p-3 text-xs text-ink-3">
         As faixas são referência e não substituem a sua decisão. O plano apoia a organização e a justificativa;
         a conduta é do profissional habilitado. Para condições de saúde, integre a liberação e o acompanhamento
         do profissional de saúde.
       </p>
     </div>
+  );
+}
+
+/* --------------------------- Régua de semanas --------------------------- */
+
+/**
+ * O mapa do plano vira navegação: um chip por semana, com a descarga marcada em
+ * âmbar e a semana corrente com anel. Clicar troca a semana em foco.
+ *
+ * A descarga vem do TIPO do microciclo (dado do plano), não de uma convenção
+ * visual inventada aqui: se um dia o motor mudar onde ela cai, o chip acompanha.
+ */
+function ReguaDeSemanas({
+  semanas,
+  foco,
+  corrente,
+  onFocar,
+}: {
+  semanas: { micro: Microciclo; meso: Mesociclo }[];
+  foco: number;
+  corrente?: number;
+  onFocar: (n: number) => void;
+}) {
+  return (
+    <Card className="p-4">
+      <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semanas do plano</p>
+        <p className="text-xs text-ink-3">
+          Clique numa semana para editar. Âmbar = descarga, anel = semana de hoje.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {semanas.map(({ micro }) => {
+          const ativo = micro.semana === foco;
+          const descarga = micro.tipo === "deload";
+          return (
+            <button
+              key={micro.id}
+              onClick={() => onFocar(micro.semana)}
+              aria-pressed={ativo}
+              aria-label={`Semana ${micro.semana}${descarga ? ", descarga" : ""}`}
+              className={cn(
+                "tabular grid h-9 w-9 place-items-center rounded-full border text-sm font-semibold transition-colors",
+                ativo
+                  ? "border-ink bg-ink text-surface"
+                  : descarga
+                    ? "border-warning/40 bg-warning-tint text-warning"
+                    : "border-border text-ink-2 hover:bg-surface-soft",
+                micro.semana === corrente && !ativo && "ring-2 ring-primary",
+              )}
+            >
+              {micro.semana}
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+/* --------------------------- Semana em foco --------------------------- */
+
+/** A semana escolhida, com as sessões em abas e cada sessão aberta no editor. */
+function SemanaEmFoco({
+  micro,
+  meso,
+  ctx,
+  editavel,
+  onChange,
+  onDuplicar,
+}: {
+  micro: Microciclo;
+  meso: Mesociclo;
+  ctx: ContextoFaixa;
+  editavel: boolean;
+  onChange: (m: Microciclo) => void;
+  onDuplicar: () => void;
+}) {
+  const [sessaoIdx, setSessaoIdx] = React.useState(0);
+  React.useEffect(() => setSessaoIdx(0), [micro.id]);
+  const sessao = micro.sessoes[Math.min(sessaoIdx, micro.sessoes.length - 1)];
+
+  const trocarSessao = (nova: Sessao) =>
+    onChange({ ...micro, sessoes: micro.sessoes.map((s) => (s.id === nova.id ? nova : s)) });
+
+  return (
+    <Card variant="raised" className="p-4 md:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="font-display text-lg font-bold text-ink">
+            Semana {micro.semana}{" "}
+            <span className="font-sans text-sm font-normal text-ink-2">
+              {rotuloMeso(meso)}
+              {micro.tipo === "deload" ? " · descarga" : ""}
+              {meso.foco ? ` · ${meso.foco}` : ""}
+            </span>
+          </h3>
+        </div>
+        {editavel && micro.tipo !== "deload" && (
+          <button onClick={onDuplicar} className={buttonClasses("secondary", "sm")}>
+            Aplicar às outras semanas do bloco
+          </button>
+        )}
+      </div>
+
+      {micro.sessoes.length === 0 ? (
+        <p className="mt-3 rounded-control border border-dashed border-border p-3 text-sm text-ink-3">
+          Esta semana não tem sessão. Ajuste no plano bloco a bloco.
+        </p>
+      ) : (
+        <>
+          <div role="tablist" aria-label="Sessões da semana" className="mt-3 flex flex-wrap gap-1.5 border-b border-border">
+            {micro.sessoes.map((s, i) => (
+              <button
+                key={s.id}
+                role="tab"
+                aria-selected={i === sessaoIdx}
+                onClick={() => setSessaoIdx(i)}
+                className={cn(
+                  "-mb-px border-b-2 px-3 py-2 text-sm font-semibold transition-colors",
+                  i === sessaoIdx
+                    ? "border-ink text-ink"
+                    : "border-transparent text-ink-2 hover:text-ink",
+                )}
+              >
+                {s.nome}
+                {s.foco && <span className="ml-1 font-normal text-ink-3">{s.foco}</span>}
+              </button>
+            ))}
+          </div>
+
+          {sessao && (
+            <div className="mt-3">
+              <SessaoBloco
+                sessao={sessao}
+                ctx={ctx}
+                editavel={editavel}
+                onChange={trocarSessao}
+                onRemover={() => onChange({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) })}
+              />
+            </div>
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+
+/* ------------------------------ Trilho lateral ----------------------------- */
+
+/** Onde as regiões do corpo caem no equilíbrio da semana. */
+const REGIAO: Record<string, "Inferiores" | "Superiores" | "Core" | "Corpo todo"> = {
+  "Membros inferiores": "Inferiores",
+  Peitorais: "Superiores",
+  Costas: "Superiores",
+  Ombros: "Superiores",
+  Braços: "Superiores",
+  "Core (tronco)": "Core",
+  "Corpo todo": "Corpo todo",
+};
+
+/**
+ * O porquê ao lado do plano: as três camadas da casa (Resumo, Na prática, Ciência),
+ * o equilíbrio da semana e os avisos.
+ *
+ * Duas regras de honestidade aqui:
+ *  - o equilíbrio conta SÉRIES de força, e a legenda diz isso. Percentual de "blocos"
+ *    mente (um bloco de 5 séries pesa igual a um de 2), e misturar minuto de aeróbio
+ *    com série de força no mesmo denominador mente mais ainda: o aeróbio sai numa
+ *    linha própria, em minutos.
+ *  - o aviso só existe quando a contagem de fato dispara. Card de aviso vazio ensina
+ *    o leitor a pular a seção justamente no dia em que ela tem conteúdo.
+ */
+function TrilhoDoPlano({
+  plano,
+  micro,
+  meso,
+  modelo,
+  alunoObj,
+  refIds,
+}: {
+  plano: PlanoTreino;
+  micro?: Microciclo;
+  meso?: Mesociclo;
+  modelo: ReturnType<typeof getModelo>;
+  alunoObj?: Aluno;
+  refIds: string[];
+}) {
+  const faixa = getFaixa(plano.objetivo);
+
+  // Equilíbrio: séries de força por região, a partir dos blocos da semana em foco.
+  const equilibrio = React.useMemo(() => {
+    const porRegiao = new Map<string, number>();
+    let series = 0;
+    let minutosAerobio = 0;
+    for (const s of micro?.sessoes ?? []) {
+      for (const b of s.blocos) {
+        if (b.tipo === "aerobio") {
+          const m = /(\d+)/.exec(b.duracaoAlvoMin != null ? String(b.duracaoAlvoMin) : (b.duracao ?? ""));
+          if (m) minutosAerobio += Number(m[1]);
+          continue;
+        }
+        const ex = b.exercicioSlug ? exercises.find((e) => e.slug === b.exercicioSlug) : undefined;
+        const regiao = ex ? (REGIAO[ex.grupoMuscular] ?? "Corpo todo") : "Sem classificação";
+        // Séries do ALVO da semana quando existe; senão, o piso da faixa escrita.
+        const n = b.seriesAlvo ?? Number(/(\d+)/.exec(b.series ?? "")?.[1] ?? 0);
+        if (!n) continue;
+        series += n;
+        porRegiao.set(regiao, (porRegiao.get(regiao) ?? 0) + n);
+      }
+    }
+    return {
+      series,
+      minutosAerobio,
+      linhas: [...porRegiao.entries()]
+        .map(([regiao, n]) => ({ regiao, n, pct: series ? Math.round((n / series) * 100) : 0 }))
+        .sort((a, b) => b.n - a.n),
+    };
+  }, [micro]);
+
+  // Aviso: concentração de uma região só. O corte é declarado, não mágico.
+  const CONCENTRACAO = 60;
+  const concentrada = equilibrio.linhas.find((l) => l.pct >= CONCENTRACAO && l.regiao !== "Corpo todo");
+
+  const resumo = (
+    <ul className="space-y-2.5">
+      <ItemPorque tom="analysis" titulo={`${faixa.reps.valor}, ${faixa.intensidade.valor}`}>
+        A faixa de {plano.objetivo.toLowerCase()} para nível {plano.nivel.toLowerCase()}. O alvo de cada
+        semana sai de dentro dela, nunca fora.
+      </ItemPorque>
+      <ItemPorque tom="primary" titulo={modelo.nome}>
+        {modelo.resumo}
+      </ItemPorque>
+      {alunoObj?.restricoes.length ? (
+        <ItemPorque tom="warning" titulo={`Restrição de ${alunoObj.nome.split(" ")[0]}`}>
+          {alunoObj.restricoes.map((r) => rotuloRestricao(r.tag)).join(", ")}. Os exercícios incompatíveis
+          ficam fora do plano; os limítrofes entram rebaixados.
+        </ItemPorque>
+      ) : null}
+    </ul>
+  );
+
+  const pratica = (
+    <div className="space-y-3 text-sm text-ink-2">
+      <p>{plano.raciocinio}</p>
+      {meso && (
+        <p>
+          <span className="font-semibold text-ink">Este bloco:</span> {rotuloMeso(meso)}
+          {meso.foco ? `, ${meso.foco}` : ""}.
+        </p>
+      )}
+      <p className="text-xs text-ink-3">
+        O que você editar aqui vale para a semana escolhida. Para mexer na tendência do bloco inteiro,
+        use o plano bloco a bloco.
+      </p>
+    </div>
+  );
+
+  return (
+    <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+      <Card className="p-4">
+        <TresCamadas resumo={resumo} pratica={pratica} refs={refIds} ariaLabel="Por que estes números" />
+      </Card>
+
+      {equilibrio.series > 0 && (
+        <Card className="p-4">
+          <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Equilíbrio da semana</h3>
+          <ul className="mt-2 space-y-2">
+            {equilibrio.linhas.map((l) => (
+              <li key={l.regiao}>
+                <div className="flex items-baseline justify-between gap-2 text-sm">
+                  <span className="text-ink-2">{l.regiao}</span>
+                  <span className="tabular font-semibold text-ink">{l.pct}%</span>
+                </div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-mute">
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${l.pct}%` }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-2xs leading-snug text-ink-3">
+            Percentual sobre as {equilibrio.series} séries de força da semana.
+            {equilibrio.minutosAerobio > 0 &&
+              ` O aeróbio entra em minutos, fora desta conta: ${equilibrio.minutosAerobio} min.`}
+          </p>
+        </Card>
+      )}
+
+      {concentrada && (
+        <Card tone="warning" className="p-4">
+          <p className="text-sm text-ink-2">
+            <span className="font-semibold text-ink">1 aviso.</span> {concentrada.pct}% das séries desta
+            semana são de {concentrada.regiao.toLowerCase()}. Acima de {CONCENTRACAO}% numa região só, vale
+            conferir se o resto do corpo está coberto no bloco.
+          </p>
+        </Card>
+      )}
+    </aside>
+  );
+}
+
+function ItemPorque({
+  tom,
+  titulo,
+  children,
+}: {
+  tom: "analysis" | "primary" | "warning";
+  titulo: string;
+  children: React.ReactNode;
+}) {
+  const cor = tom === "analysis" ? "border-analysis" : tom === "primary" ? "border-primary" : "border-warning";
+  return (
+    <li className={cn("border-l-2 pl-3", cor)}>
+      <p className="text-sm font-semibold text-ink">{titulo}</p>
+      <p className="text-sm text-ink-2">{children}</p>
+    </li>
   );
 }
 

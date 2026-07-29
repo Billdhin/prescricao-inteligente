@@ -409,25 +409,28 @@ function Sidebar() {
         >
           Mais
         </div>
-        {/* Três portas com os filhos indentados sob o pai. Nada sumiu: o que era
-            uma pilha de oito virou hierarquia, e a lateral volta a ser lida de
-            relance. O filho acende sozinho (aria-current nele), e o pai acende
-            como grupo que contém a página atual. */}
+        {/* Três portas, e nada mais em repouso. Os filhos aparecem indentados só
+            quando o grupo é o lugar onde o usuário está: assim a lateral tem três
+            linhas de referência (como no desenho) sem nenhum destino virar órfão.
+            O filho acende sozinho; o pai acende como grupo que o contém. */}
         <ul className="space-y-1 pb-4">
-          {MAIS.map((item) => (
-            <li key={item.to}>
-              <ItemLateral item={item} ativo={itemAtivo(item, pathname)} />
-              {item.children && item.children.length > 0 && (
-                <ul className="mt-1 space-y-1 pl-5">
-                  {item.children.map((filho) => (
-                    <li key={filho.to}>
-                      <FilhoLateral filho={filho} ativo={pathname === filho.to} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
+          {MAIS.map((item) => {
+            const grupoAtivo = itemAtivo(item, pathname);
+            return (
+              <li key={item.to}>
+                <ItemLateral item={item} ativo={grupoAtivo} />
+                {grupoAtivo && item.children && item.children.length > 0 && (
+                  <ul className="mt-1 space-y-1 pl-5">
+                    {item.children.map((filho) => (
+                      <li key={filho.to}>
+                        <FilhoLateral filho={filho} ativo={pathname === filho.to} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </nav>
 
