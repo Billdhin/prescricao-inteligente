@@ -437,6 +437,31 @@ function verificarSupressaoDeFC(): string[] {
   if (semExplicacao.length)
     problemas.push(`${semExplicacao.length} bloco(s) aeróbio(s) suprimiram a zona sem explicar por qual instrumento guiar`);
 
+  /*
+   * O TEXTO VISÍVEL também não pode citar a frequência cardíaca.
+   *
+   * Este check só olhava os campos ESTRUTURADOS (`zonaFC`, `percentFCRAlvo`) e ficava
+   * verde enquanto o campo `intensidade` do mesmo bloco dizia, com todas as letras,
+   * "Moderada: cerca de 64 a 76% da FCmáx". O bloco afirmava as duas coisas ao mesmo
+   * tempo, e a que vai para o PDF e para o app do aluno é o `intensidade`. Um aluno
+   * com betabloqueador lia a zona de FC no documento assinado.
+   *
+   * Guardrail que valida só o campo interno e ignora a frase impressa valida a metade
+   * que ninguém lê.
+   */
+  const CITA_FC = /FCm[áa]x|frequ[êe]ncia card[íi]aca|\bFCR\b|bpm/i;
+  const textoComFC = aerobiosSemFC.filter((b) => CITA_FC.test(b.intensidade ?? ""));
+  if (textoComFC.length)
+    problemas.push(
+      `com "p-fc" invalidado, ${textoComFC.length} bloco(s) aeróbio(s) ainda CITAM a frequência cardíaca no texto de intensidade (ex.: "${textoComFC[0].intensidade}")`,
+    );
+  // ...e o texto tem que continuar dizendo por onde guiar, senão a limpeza virou lacuna.
+  const textoSemGuia = aerobiosSemFC.filter((b) => !/convers|RPE|esfor/i.test(b.intensidade ?? ""));
+  if (textoSemGuia.length)
+    problemas.push(
+      `${textoSemGuia.length} bloco(s) aeróbio(s) ficaram sem NENHUM guia no texto de intensidade depois de tirar a FC`,
+    );
+
   // Suprimir a zona não pode mexer na dose de força nem no alvo de duração/esforço do aeróbio.
   const forcaAntes = JSON.stringify(planoSemIds(blocosComFC.filter(ehForca)));
   const forcaDepois = JSON.stringify(planoSemIds(blocosSemFC.filter(ehForca)));

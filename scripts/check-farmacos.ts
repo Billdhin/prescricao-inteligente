@@ -151,7 +151,7 @@ const RE_CAUSAL = new RegExp(
 );
 
 /** Palavra com cara de princípio ativo (trava 3): se parece, tem que estar na whitelist. */
-const RE_PRINCIPIO = /\b\w{3,}(olol|statina|glutida|formina|profeno|tazida)\b/gi;
+const RE_PRINCIPIO = /\b\w{3,}(olol|statina|glutida|formina|profeno|tazida|sartana|pril|dipino)\b/gi;
 
 /* ---------------------- Coleta dos textos de um item ------------------------ */
 

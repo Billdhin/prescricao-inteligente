@@ -50,6 +50,9 @@ import type { Aprovacao, Confianca } from "./regrasProgressao";
 export type FarmacoClasseId =
   | "betabloqueador"
   | "cronotropico-outros"
+  | "bra"
+  | "ieca"
+  | "bcc-di-hidropiridinico"
   | "diuretico"
   | "insulina-secretagogo"
   | "metformina"
@@ -250,6 +253,21 @@ export const PRINCIPIOS_ATIVOS_PERMITIDOS: string[] = [
   "verapamil",
   "ivabradina",
   "digoxina",
+  // pressão, sem efeito conhecido sobre a capacidade de exercício
+  "losartana",
+  "valsartana",
+  "candesartana",
+  "olmesartana",
+  "telmisartana",
+  "enalapril",
+  "captopril",
+  "lisinopril",
+  "ramipril",
+  "perindopril",
+  "anlodipino",
+  "nifedipino",
+  "felodipino",
+  "lercanidipino",
   // pressão e volume
   "clortalidona",
   "espironolactona",
@@ -383,6 +401,137 @@ export const CATALOGO_FARMACOS: FarmacoCatalogoItem[] = [
         versao: 1,
         observacao:
           "Declarada sem número de propósito: a busca não devolveu ensaio de prescrição de exercício com estas classes comparável ao dos betabloqueadores. Enquanto não houver, o produto registra e não afirma.",
+      },
+    ],
+  },
+  /*
+   * As três classes abaixo nasceram de uma pergunta do fundador: "o anti-hipertensivo mais comum
+   * é a losartana e não está lá". Estava certo, e a ausência era pior do que parecia: sem a
+   * classe no catálogo, o profissional declarava o que tinha (quase sempre nada) e o perfil ficava
+   * mudo justamente no medicamento que mais aparece no consultório.
+   *
+   * O que elas afirmam é o CONTRÁRIO do betabloqueador, e é por isso que valem a pena: aqui
+   * NENHUM instrumento sai do plano. A zona de frequência cardíaca continua valendo. Sem esta
+   * declaração explícita, "declarei a medicação e nada mudou" se parece com defeito; com ela, o
+   * profissional lê por que nada mudou e o silêncio vira resposta.
+   *
+   * Fonte da afirmação: ACSM Position Stand sobre exercício e hipertensão (pescatello-2004), que
+   * lista como critério de escolha para quem treina baixar a pressão em repouso e no esforço,
+   * baixar a resistência periférica total e não prejudicar a capacidade de exercício, e por isso
+   * aponta estas três famílias como as escolhas para praticantes recreacionais e atletas.
+   */
+  {
+    classe: "bra",
+    grupo: "cardiovascular",
+    titulo: "Bloqueador do receptor de angiotensina (BRA)",
+    descricao:
+      "A família mais comum no tratamento da hipertensão no Brasil. Reconhecível pelo final \"sartana\" no princípio ativo.",
+    exemplos: ["losartana", "valsartana", "candesartana", "olmesartana", "telmisartana"],
+    efeitos: [
+      "Nenhum instrumento de monitoramento sai do plano",
+      "A zona de frequência cardíaca, quando o aluno já a tinha, continua valendo",
+      "O uso fica registrado no perfil e aparece no Prontuário",
+    ],
+    naoAfirmar: [
+      "qualquer efeito sobre a leitura da frequência cardíaca no esforço",
+      "qualquer teto de esforço percebido ou passo de carga próprio da classe",
+      "que a presença desta classe substitua a medida de pressão antes da sessão",
+    ],
+    devolucao: DEVOLUCOES.conduta,
+    gruposRelevantes: ["hipertensao-estagio-1", "hipertensao-estagio-2", "idoso-destreinado"],
+    consequencias: [
+      {
+        id: "bra-nada-sai-do-plano",
+        tipo: "vigilancia",
+        descricao:
+          "Declarar esta classe não tira nenhum instrumento do plano: a intensidade continua guiada pelos mesmos parâmetros de antes, inclusive a frequência cardíaca. O uso fica registrado e a leitura do esforço segue igual.",
+        vigilancia: { reforcam: ["p-pa"] },
+        tetoEsforco: null,
+        passoCarga: null,
+        aprovacao: "aprovada",
+        confianca: "moderada",
+        refId: ["pescatello-2004"],
+        ano: 2026,
+        versao: 1,
+        observacao:
+          "A referência é uma diretriz de posicionamento, não um ensaio que comparou alunos com e sem a classe. Ela sustenta a afirmação conservadora que o produto faz aqui, que é não retirar instrumento nenhum. A pressão continua na vigilância porque é o parâmetro que o tratamento acompanha, e não porque a resposta ao esforço mereça suspeita.",
+      },
+    ],
+  },
+  {
+    classe: "ieca",
+    grupo: "cardiovascular",
+    titulo: "Inibidor da ECA (IECA)",
+    descricao:
+      "Outra família de primeira linha no tratamento da hipertensão. Reconhecível pelo final \"pril\" no princípio ativo.",
+    exemplos: ["enalapril", "captopril", "lisinopril", "ramipril", "perindopril"],
+    efeitos: [
+      "Nenhum instrumento de monitoramento sai do plano",
+      "A zona de frequência cardíaca, quando o aluno já a tinha, continua valendo",
+      "O uso fica registrado no perfil e aparece no Prontuário",
+    ],
+    naoAfirmar: [
+      "qualquer efeito sobre a leitura da frequência cardíaca no esforço",
+      "qualquer teto de esforço percebido ou passo de carga próprio da classe",
+      "qualquer orientação sobre tosse, potássio ou função renal, que são assunto clínico",
+    ],
+    devolucao: DEVOLUCOES.conduta,
+    gruposRelevantes: ["hipertensao-estagio-1", "hipertensao-estagio-2", "idoso-destreinado"],
+    consequencias: [
+      {
+        id: "ieca-nada-sai-do-plano",
+        tipo: "vigilancia",
+        descricao:
+          "Declarar esta classe não tira nenhum instrumento do plano: a intensidade continua guiada pelos mesmos parâmetros de antes, inclusive a frequência cardíaca. O uso fica registrado e a leitura do esforço segue igual.",
+        vigilancia: { reforcam: ["p-pa"] },
+        tetoEsforco: null,
+        passoCarga: null,
+        aprovacao: "aprovada",
+        confianca: "moderada",
+        refId: ["pescatello-2004"],
+        ano: 2026,
+        versao: 1,
+        observacao:
+          "Mesma base e mesmo limite da classe BRA: diretriz de posicionamento, sem ensaio comparando alunos com e sem a classe. Sustenta a afirmação conservadora de não retirar instrumento nenhum.",
+      },
+    ],
+  },
+  {
+    classe: "bcc-di-hidropiridinico",
+    grupo: "cardiovascular",
+    titulo: "Bloqueador de canal de cálcio di-hidropiridínico",
+    descricao:
+      "Família usada no controle da pressão, reconhecível pelo final \"dipino\". Diltiazem e verapamil NÃO entram aqui: eles pesam sobre a leitura da frequência cardíaca e ficam na classe de redutores de resposta cronotrópica.",
+    exemplos: ["anlodipino", "nifedipino", "felodipino", "lercanidipino"],
+    efeitos: [
+      "Nenhum instrumento de monitoramento sai do plano",
+      "A zona de frequência cardíaca, quando o aluno já a tinha, continua valendo",
+      "O uso fica registrado no perfil e aparece no Prontuário",
+    ],
+    naoAfirmar: [
+      "qualquer efeito sobre a leitura da frequência cardíaca no esforço",
+      "qualquer teto de esforço percebido ou passo de carga próprio da classe",
+      "que o que vale aqui valha para diltiazem ou verapamil, que são declarados em outra classe",
+      "qualquer orientação sobre inchaço nos tornozelos, que é assunto clínico",
+    ],
+    devolucao: DEVOLUCOES.conduta,
+    gruposRelevantes: ["hipertensao-estagio-1", "hipertensao-estagio-2", "idoso-destreinado"],
+    consequencias: [
+      {
+        id: "bcc-dhp-nada-sai-do-plano",
+        tipo: "vigilancia",
+        descricao:
+          "Declarar esta classe não tira nenhum instrumento do plano: a intensidade continua guiada pelos mesmos parâmetros de antes, inclusive a frequência cardíaca. O uso fica registrado e a leitura do esforço segue igual.",
+        vigilancia: { reforcam: ["p-pa"] },
+        tetoEsforco: null,
+        passoCarga: null,
+        aprovacao: "aprovada",
+        confianca: "moderada",
+        refId: ["pescatello-2004"],
+        ano: 2026,
+        versao: 1,
+        observacao:
+          "A referência fala de bloqueadores de canal de cálcio em geral. O produto aplica a afirmação apenas ao subgrupo di-hidropiridínico, que é o recorte conservador: o outro subgrupo já vive em classe própria justamente porque pesa sobre a leitura da frequência cardíaca.",
       },
     ],
   },

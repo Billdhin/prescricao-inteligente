@@ -345,6 +345,34 @@ function notaAerobio(ctx: CtxAlvo, base: string, semFC: string = base): string {
   return (ctx.parametrosInvalidos ?? []).includes("p-fc") ? `${semFC} ${NOTA_SEM_ZONA_FC}` : base;
 }
 
+/**
+ * O TEXTO da intensidade também perde a frequência cardíaca quando ela não guia.
+ *
+ * Este era o buraco: `alvoAerobioSemana` já suprimia a zona CALCULADA (o campo
+ * `zonaFC` em bpm) e a nota já explicava a troca, mas o campo `intensidade`
+ * continuava com a faixa-texto literal "Moderada: cerca de 64 a 76% da FCmáx". O
+ * bloco dizia as duas coisas ao mesmo tempo, e a que vai para o PDF e para o app do
+ * aluno é justamente o `intensidade`. Um aluno com betabloqueador lia "64 a 76% da
+ * FCmáx" no documento assinado.
+ *
+ * A limpeza é textual de propósito e conservadora: tira a cláusula de percentual da
+ * FCmáx e preserva o resto da frase, que já traz teste da conversa e RPE, que são
+ * exatamente os guias que entram no lugar. Se um dia a faixa-texto mudar de forma e
+ * a expressão não casar, o `check:progressao` reprova (ele passou a ler o texto, não
+ * só o campo), em vez de deixar passar calado.
+ */
+function intensidadeAerobia(ctx: CtxAlvo, texto: string): string {
+  if (!(ctx.parametrosInvalidos ?? []).includes("p-fc")) return texto;
+  return texto
+    // "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 4 a 6 de 10)"
+    // vira "Moderada: teste da conversa; RPE 4 a 6 de 10"
+    .replace(/:\s*cerca de\s*\d+\s*a\s*\d+\s*%\s*da\s*FCm[áa]x\s*\((.*?)\)/i, ": $1")
+    // formas sem parênteses: remove só a cláusula da FC, preservando o que sobrar
+    .replace(/,?\s*cerca de\s*\d+\s*a\s*\d+\s*%\s*da\s*FCm[áa]x\s*/i, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function montarSessoes(
   objetivo: GpsObjetivo,
   nivel: Nivel,
@@ -391,7 +419,7 @@ function montarSessoes(
         nome: "Aeróbio",
         formato: "Contínuo",
         duracao: doseAero.duracao,
-        intensidade: doseAero.intensidade,
+        intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
         recuperacao: "-",
         observacao: notaAerobio(
           ctx,
@@ -432,7 +460,7 @@ function montarSessoes(
         nome: "Aeróbio complementar",
         formato: "Contínuo",
         duracao: doseAero.duracao,
-        intensidade: doseAero.intensidade,
+        intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
         recuperacao: "-",
         observacao: notaAerobio(
           ctx,

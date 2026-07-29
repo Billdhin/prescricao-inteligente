@@ -63,7 +63,8 @@ export const referencias: Referencia[] = [
     titulo: "Exercise and Hypertension (ACSM Position Stand)",
     fonte: "Medicine & Science in Sports & Exercise",
     ano: 2004,
-    nota: "Clássico sobre exercício e hipertensão: cargas leves a moderadas, respiração contínua, resposta pressórica.",
+    doi: "10.1249/01.mss.0000115224.88514.3a",
+    nota: "Clássico sobre exercício e hipertensão: cargas leves a moderadas, respiração contínua, resposta pressórica. Recomenda intensidade moderada (40 a menos de 60% do VO2R) na maioria dos dias da semana, 30 min ou mais por dia, predominantemente aeróbio com complemento de força. Sobre medicação em quem treina, estabelece os critérios de escolha (baixar a pressão em repouso e no esforço, baixar a resistência periférica total e não prejudicar a capacidade de exercício) e por isso aponta os inibidores da ECA, os bloqueadores do receptor de angiotensina e os bloqueadores de canal de cálcio como as escolhas para praticantes recreacionais e atletas com hipertensão. Base da declaração, no catálogo de fármacos, de que essas três famílias não retiram nenhum instrumento de monitoramento do plano.",
   },
   {
     id: "colberg-2016",
