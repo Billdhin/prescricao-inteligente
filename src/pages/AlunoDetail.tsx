@@ -40,6 +40,7 @@ import { SugestaoGrupoCard } from "@/components/treino/SugestaoGrupoCard";
 import { classificarGrupos } from "@/lib/gps/classificador";
 import { ListaChips } from "@/components/treino/PlanoEditor";
 import { proximoPasso, estadoDoCiclo, dataReavaliacao, podeMontarTreino, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
+import { linhaObjetivos } from "@/lib/gps/objetivos";
 import { estadoSemaforo, semaforoPorDiaDaSemana, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { sequenciaDias } from "@/lib/gamificacao";
 import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
@@ -901,6 +902,9 @@ function AlunoHeader({
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
               <Pill tone="primary">{aluno.objetivo}</Pill>
+              {aluno.objetivoSecundario && (
+                <Pill tone="neutral">2º: {aluno.objetivoSecundario}</Pill>
+              )}
               <Pill tone="neutral">{aluno.nivel}</Pill>
               {aluno.idade ? <Pill tone="neutral">{aluno.idade} anos</Pill> : null}
               {grupo && (
@@ -1361,6 +1365,18 @@ function PerfilTreinoCard({ aluno, reavaliacaoVencida }: { aluno: Aluno; reavali
       <h2 className="mb-3 font-display text-lg font-bold text-ink">Perfil de treino</h2>
       <dl className="grid gap-3 text-sm sm:grid-cols-2">
         <Info icon={<Target className="h-4 w-4 text-primary" />} label="Objetivo" value={aluno.objetivo} />
+        {/* Dois objetivos: o par e o que ele implica, com a mesma frase que vai ao prontuário. */}
+        {aluno.objetivoSecundario && (
+          <div className="sm:col-span-2">
+            <dt className="mb-1 flex items-center gap-2 text-ink-3">
+              <Target className="h-4 w-4" /> Objetivo secundário
+            </dt>
+            <dd className="text-ink-2">
+              <span className="font-semibold text-ink">{aluno.objetivoSecundario}.</span>{" "}
+              {linhaObjetivos(aluno.objetivo, aluno.objetivoSecundario)}
+            </dd>
+          </div>
+        )}
         <Info icon={<Activity className="h-4 w-4 text-analysis" />} label="Nível" value={aluno.nivel} />
         <div className="sm:col-span-2">
           <dt className="mb-1 flex items-center gap-2 text-ink-3">

@@ -39,6 +39,8 @@ import {
   type Recommendation,
 } from "@/lib/gps/engine";
 import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
+import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
+import { parValido, linhaObjetivos } from "@/lib/gps/objetivos";
 import { criarRestricao, condicionaisPendentes, avaliarSeguranca, rotuloRestricao } from "@/lib/gps/restricoes";
 import { type GroupGpsRule } from "@/lib/gps/groupRules";
 import { monitoramentoDoPerfil, regraDoPerfil } from "@/lib/gps/farmacos";
@@ -339,6 +341,7 @@ export function Gps() {
     setAnswers((a) => ({
       ...a,
       objetivo: aluno.objetivo,
+      objetivoSecundario: aluno.objetivoSecundario,
       nivel: aluno.nivel,
       restricoes: aluno.restricoes,
       equipamentos: aluno.equipamentos.length ? aluno.equipamentos : a.equipamentos,
@@ -382,6 +385,8 @@ export function Gps() {
               faseObj?.parametros ??
               (answers.objetivo === "Emagrecimento" ? ["p-rpe", "p-fala", "p-adesao", "p-volume"] : ["p-rpe", "p-dor"]),
             monitoramento: monitoramentoPerfil,
+            objetivo: answers.objetivo,
+            objetivoSecundario: answers.objetivoSecundario,
           })
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1224,21 +1229,41 @@ function Wizard({
 
       <div className="mt-6">
         {step === 0 && (
-          <Choices
-            ariaLabel={STEP_LABELS[0]}
-            options={OBJETIVOS}
-            value={answers.objetivo}
-            onChange={(v) =>
-              setAnswers((a) => ({
-                ...a,
-                objetivo: v as GpsAnswers["objetivo"],
-                // Emagrecimento trabalha o corpo todo; a etapa 2 vira prioridade física.
-                ...(v === "Emagrecimento"
-                  ? { grupoMuscular: "Corpo todo", prioridade: a.prioridade ?? "Cardio + força (misto)" }
-                  : {}),
-              }))
-            }
-          />
+          <div className="space-y-5">
+            <Choices
+              ariaLabel={STEP_LABELS[0]}
+              options={OBJETIVOS}
+              value={answers.objetivo}
+              onChange={(v) =>
+                setAnswers((a) => ({
+                  ...a,
+                  objetivo: v as GpsAnswers["objetivo"],
+                  // Trocar o principal pode invalidar o secundário guardado.
+                  objetivoSecundario:
+                    parValido(v as GpsAnswers["objetivo"], a.objetivoSecundario) &&
+                    a.objetivoSecundario !== v
+                      ? a.objetivoSecundario
+                      : undefined,
+                  // Emagrecimento trabalha o corpo todo; a etapa 2 vira prioridade física.
+                  ...(v === "Emagrecimento"
+                    ? { grupoMuscular: "Corpo todo", prioridade: a.prioridade ?? "Cardio + força (misto)" }
+                    : {}),
+                }))
+              }
+            />
+            {/* O segundo objetivo, com o veredito do par na hora. Não muda quem manda:
+                o principal segue definindo faixa e dose; o secundário desempata. */}
+            <div className="border-t border-border pt-5">
+              <ObjetivoDuplo
+                objetivo={answers.objetivo}
+                objetivoSecundario={answers.objetivoSecundario}
+                onChange={(o, s) =>
+                  setAnswers((a) => ({ ...a, objetivo: o, objetivoSecundario: s }))
+                }
+                somenteSecundario
+              />
+            </div>
+          </div>
         )}
         {step === 1 &&
           (emagrecimento ? (

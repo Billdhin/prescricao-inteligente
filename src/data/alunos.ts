@@ -19,6 +19,13 @@ export interface Aluno {
   idade?: number;
   sexo?: Sexo;
   objetivo: GpsObjetivo;
+  /**
+   * Segundo objetivo do aluno, quando ele tem um. O PRIMÁRIO continua mandando na
+   * sessão; o secundário entra como ênfase e como condição declarada. A validade do
+   * par vive em src/lib/gps/objetivos.ts (matriz com referência verificada), nunca
+   * espalhada pelas telas. Ausente = objetivo único, e tudo se comporta como antes.
+   */
+  objetivoSecundario?: GpsObjetivo;
   nivel: Nivel;
   /** restrições físicas do aluno (modelo estruturado; vazio = sem restrição) */
   restricoes: RestricaoSelecionada[];
@@ -206,6 +213,12 @@ export interface ProntuarioSnapshot {
     motivo: string;
     refIds: string[];
   };
+  /**
+   * Quando o aluno persegue DOIS objetivos, o par e o que ele implica. Ausente quando o
+   * objetivo é único, que é a maioria dos casos: o documento simplesmente não imprime a
+   * linha, em vez de imprimir "sem objetivo secundário".
+   */
+  objetivos?: { primario: string; secundario: string; estado: string; linha: string };
   /** ids de referencias.ts citadas (bibliografia numerada) */
   refIds: string[];
   geradoEm: number;

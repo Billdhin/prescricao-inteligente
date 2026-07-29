@@ -13,6 +13,8 @@ import type { Liberacao, ProntuarioSnapshot } from "@/data/alunos";
 import { getParam } from "@/data/monitoringParameters";
 import type { EfeitoMonitoramento } from "@/data/farmacos";
 import { checklistRespondido } from "@/data/semaforo";
+import { compatibilidadeObjetivos, linhaObjetivos, ROTULO_COMPAT } from "./objetivos";
+import type { GpsObjetivo } from "./engine";
 
 /**
  * Versão do motor CONGELADA em cada snapshot. Subiu para v2 quando o Prontuário passou a
@@ -49,6 +51,8 @@ export function montarProntuario({
   modalidades,
   parametros,
   monitoramento,
+  objetivo,
+  objetivoSecundario,
 }: {
   results: Recommendation[];
   topN?: number;
@@ -64,6 +68,9 @@ export function montarProntuario({
    * entrou. Chega pronto de fora porque quem sabe montar o perfil é a tela, não o prontuário.
    */
   monitoramento?: EfeitoMonitoramento;
+  /** O par de objetivos do aluno, quando existe um secundário: entra no documento. */
+  objetivo?: GpsObjetivo;
+  objetivoSecundario?: GpsObjetivo;
 }): ProntuarioSnapshot {
   const escolhidos = results.slice(0, topN).map((r) => ({
     slug: r.exercise.slug,
@@ -89,7 +96,12 @@ export function montarProntuario({
   const addRefs = (ids?: string[]) => {
     for (const id of ids ?? []) if (!refIds.includes(id)) refIds.push(id);
   };
+  // Par de objetivos: só existe quando há secundário, e traz a própria bibliografia
+  // (a matriz cita trabalho verificado para toda combinação com condição declarada).
+  const compatPar = objetivo ? compatibilidadeObjetivos(objetivo, objetivoSecundario) : undefined;
+
   addRefs(rule?.refs);
+  addRefs(compatPar?.refIds);
   for (const pid of parametros ?? []) addRefs(getParam(pid)?.refIds);
   // O instrumento que ENTROU no lugar também precisa da bibliografia dele: sem isso, o
   // documento diria "guie por esforço percebido" sem dizer de onde isso vem.
@@ -122,6 +134,14 @@ export function montarProntuario({
           reforcados: monitoramento.reforcam?.length ? [...monitoramento.reforcam] : undefined,
           motivo: monitoramento.motivo,
           refIds: [...(monitoramento.refId ?? [])],
+        }
+      : undefined,
+    objetivos: compatPar
+      ? {
+          primario: objetivo!,
+          secundario: objetivoSecundario!,
+          estado: ROTULO_COMPAT[compatPar.estado],
+          linha: linhaObjetivos(objetivo!, objetivoSecundario)!,
         }
       : undefined,
     refIds,

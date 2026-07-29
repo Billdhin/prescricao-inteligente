@@ -113,6 +113,16 @@ export function ProntuarioView({
             </section>
           )}
 
+          {/* Dois objetivos: o par e o que ele implica. Sem secundário, a seção não existe. */}
+          {prontuario.objetivos && (
+            <section>
+              <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-analysis">
+                Dois objetivos ({prontuario.objetivos.estado})
+              </h4>
+              <p className="text-sm text-ink-2">{prontuario.objetivos.linha}</p>
+            </section>
+          )}
+
           {prontuario.cuidadosGrupo && (
             <section>
               <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-analysis">

@@ -2,7 +2,9 @@ import * as React from "react";
 import { X } from "lucide-react";
 import { buttonClasses } from "@/components/ui/primitives";
 import { uid } from "@/lib/store";
-import { OBJETIVOS, EQUIPAMENTOS, type GpsObjetivo } from "@/lib/gps/engine";
+import { EQUIPAMENTOS, type GpsObjetivo } from "@/lib/gps/engine";
+import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
+import { parValido } from "@/lib/gps/objetivos";
 import { RestricoesSelector } from "@/components/gps/RestricoesSelector";
 import { specialGroups } from "@/data/specialGroups";
 import { FarmacosSelector } from "@/components/gps/FarmacosSelector";
@@ -37,6 +39,9 @@ export function AlunoFormModal({
   const [idade, setIdade] = React.useState(inicial?.idade ? String(inicial.idade) : "");
   // Padrão alinhado ao posicionamento (condições/emagrecimento), não "Hipertrofia" (L1).
   const [objetivo, setObjetivo] = React.useState<GpsObjetivo>((inicial?.objetivo as GpsObjetivo) ?? "Emagrecimento");
+  const [objetivoSecundario, setObjetivoSecundario] = React.useState<GpsObjetivo | undefined>(
+    inicial?.objetivoSecundario,
+  );
   const [nivel, setNivel] = React.useState<Nivel>(inicial?.nivel ?? "Iniciante");
   const [restricoes, setRestricoes] = React.useState<RestricaoSelecionada[]>(inicial?.restricoes ?? []);
   const [farmacos, setFarmacos] = React.useState<FarmacoSelecionado[]>(inicial?.farmacos ?? []);
@@ -53,8 +58,12 @@ export function AlunoFormModal({
   const idadeNum = idade ? Number(idade) : undefined;
   const idadeForaDaFaixa = idadeNum != null && (idadeNum < 12 || idadeNum > 100);
 
+  // Par de objetivos incompatível não vira aluno: o veredito já explicou por quê
+  // e o que fazer no lugar, então salvar assim mesmo seria guardar uma contradição.
+  const objetivosOk = parValido(objetivo, objetivoSecundario);
+
   const submit = () => {
-    if (!nome.trim() || idadeForaDaFaixa) return;
+    if (!nome.trim() || idadeForaDaFaixa || !objetivosOk) return;
     const agora = Date.now();
     const base = inicial ?? { id: uid(), status: "ativo" as const, criadoEm: agora, nivelDesde: agora };
     // Ao trocar o nível (progressão manual), reinicia a contagem de tempo no nível.
@@ -65,6 +74,7 @@ export function AlunoFormModal({
       iniciais: iniciaisDe(nome),
       idade: idade ? Number(idade) : undefined,
       objetivo,
+      objetivoSecundario,
       nivel,
       nivelDesde,
       restricoes,
@@ -133,14 +143,23 @@ export function AlunoFormModal({
             </Field>
           </div>
 
+          {/*
+            DOIS OBJETIVOS: o aluno pode perseguir mais de uma coisa, e o sistema
+            precisa dizer na hora se elas somam ou se cobram um preço. A matriz de
+            compatibilidade (src/lib/gps/objetivos.ts) responde com referência
+            verificada; a tela só mostra. Par incompatível não salva.
+          */}
+          <ObjetivoDuplo
+            objetivo={objetivo}
+            objetivoSecundario={objetivoSecundario}
+            onChange={(o, s) => {
+              setObjetivo(o);
+              setObjetivoSecundario(s);
+            }}
+            compacto
+          />
+
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Objetivo">
-              <select value={objetivo} onChange={(e) => setObjetivo(e.target.value as GpsObjetivo)} className="input">
-                {OBJETIVOS.map((o) => (
-                  <option key={o}>{o}</option>
-                ))}
-              </select>
-            </Field>
             <Field label="WhatsApp">
               <input
                 value={telefone}
@@ -228,7 +247,7 @@ export function AlunoFormModal({
           <button onClick={onClose} className={buttonClasses("secondary", "sm")}>
             Cancelar
           </button>
-          <button onClick={submit} disabled={!nome.trim() || idadeForaDaFaixa} className={buttonClasses("primary", "sm")}>
+          <button onClick={submit} disabled={!nome.trim() || idadeForaDaFaixa || !objetivosOk} className={buttonClasses("primary", "sm")}>
             {editando ? "Salvar alterações" : "Cadastrar aluno"}
           </button>
         </div>

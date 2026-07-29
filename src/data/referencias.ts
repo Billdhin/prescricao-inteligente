@@ -551,6 +551,45 @@ export const referencias: Referencia[] = [
     doi: "10.1111/acel.12880",
     nota: "Ensaio duplo-cego com 53 adultos por volta dos 62 anos, alocados em placebo (26) ou metformina (27) durante 12 semanas de treino aeróbio. Independente do tratamento, o treino reduziu a massa gorda e melhorou marcadores glicêmicos. No grupo com metformina, o ganho de sensibilidade à insulina e de VO2 máximo foi menor, e não houve mudança geral de sensibilidade à insulina porque conviveram respondedores positivos e negativos: a variabilidade é o achado. Base para declarar a classe sem cravar nenhum número e para tratar a resposta individual medida no aluno como o dado que importa.",
   },
+  {
+    id: "wilson-concorrente-2012",
+    autores: "Wilson JM, Marin PJ, Rhea MR, Wilson SMC, Loenneke JP, Anderson JC",
+    titulo:
+      "Concurrent training: a meta-analysis examining interference of aerobic and resistance exercises",
+    fonte: "Journal of Strength and Conditioning Research, 26(8):2293-2307",
+    ano: 2012,
+    doi: "10.1519/JSC.0b013e31823a3e2d",
+    nota: "Metanálise de 21 estudos e 422 tamanhos de efeito comparando treino de força isolado com treino concorrente (força mais aeróbio). Para hipertrofia, o efeito foi 1,23 na força isolada e 0,85 no concorrente; para força, 1,76 e 1,44; para potência, 0,91 e 0,55, com diferença significativa entre os três grupos na potência. Entre os moderadores, correr concorrente reduziu hipertrofia e força de forma significativa, e pedalar não; a frequência e a duração do aeróbio se correlacionaram negativamente com hipertrofia, força e potência. Base para tratar hipertrofia ou força com objetivo secundário aeróbio como combinação POSSÍVEL porém com custo declarado, e para o cuidado com volume e modalidade do aeróbio. O estudo não autoriza nenhum número de séries ou minutos.",
+  },
+  {
+    id: "eddens-ordem-2018",
+    autores: "Eddens L, van Someren K, Howatson G",
+    titulo:
+      "The Role of Intra-Session Exercise Sequence in the Interference Effect: A Systematic Review with Meta-Analysis",
+    fonte: "Sports Medicine, 48(1):177-188",
+    ano: 2018,
+    doi: "10.1007/s40279-017-0784-1",
+    nota: "Revisão sistemática com metanálise de 10 estudos sobre a ORDEM dentro da mesma sessão em programas concorrentes de pelo menos 5 semanas. Fazer força antes do aeróbio favoreceu a força dinâmica de membros inferiores (diferença média ponderada de 6,91% de variação; IC 95% 1,96 a 11,87). Não houve efeito da ordem sobre hipertrofia de membros inferiores, força estática, capacidade aeróbia máxima ou percentual de gordura. Base para a orientação de ordem quando o objetivo primário é força e o secundário é aeróbio. Não sustenta afirmação de ordem para hipertrofia.",
+  },
+  {
+    id: "longland-recomposicao-2016",
+    autores: "Longland TM, Oikawa SY, Mitchell CJ, Devries MC, Phillips SM",
+    titulo:
+      "Higher compared with lower dietary protein during an energy deficit combined with intense exercise promotes greater lean mass gain and fat mass loss: a randomized trial",
+    fonte: "The American Journal of Clinical Nutrition, 103(3):738-746",
+    ano: 2016,
+    doi: "10.3945/ajcn.115.119339",
+    nota: "Ensaio randomizado simples-cego com 40 homens jovens em déficit energético acentuado (cerca de 40% abaixo da necessidade) por 4 semanas, com treino de força e intervalado 6 dias por semana. Com 2,4 g de proteína por quilo por dia a massa magra subiu 1,2 kg e a gordura caiu 4,8 kg; com 1,2 g por quilo por dia a massa magra ficou em 0,1 kg e a gordura caiu 3,5 kg. Base para tratar emagrecimento com hipertrofia secundária como combinação POSSÍVEL e condicionada (treino de força mantido e ingestão proteica adequada), com ganho de massa magra modesto. A ingestão proteica é conduta de nutricionista: aqui a referência serve para declarar a condição, nunca para prescrever dieta.",
+  },
+  {
+    id: "schoenfeld-carga-2016",
+    autores: "Schoenfeld BJ, Wilson JM, Lowery RP, Krieger JW",
+    titulo: "Muscular adaptations in low- versus high-load resistance training: A meta-analysis",
+    fonte: "European Journal of Sport Science, 16(1):1-10",
+    ano: 2016,
+    doi: "10.1080/17461391.2014.989922",
+    nota: "Metanálise de ensaios randomizados comparando carga baixa (até 60% de 1RM) com carga alta (a partir de 65% de 1RM). Para força, o efeito médio foi 1,23 na carga baixa e 2,30 na alta; para hipertrofia, 0,39 e 0,82. As duas diferenças ficaram no limiar da significância (p = 0,09 e p = 0,076), com poucos estudos disponíveis. Cargas de até 50% de 1RM produziram ganhos substanciais de força e de hipertrofia em destreinados. Base para tratar hipertrofia e força como objetivos que se somam (a mesma sessão serve aos dois, com ênfases diferentes de carga), sem prometer que uma carga única otimiza os dois.",
+  },
 ];
 
 export function getReferencia(id: string) {

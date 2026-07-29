@@ -26,6 +26,13 @@ export type GpsPrioridade =
 
 export interface GpsAnswers {
   objetivo: GpsObjetivo;
+  /**
+   * Segundo objetivo, quando existe. Não muda quem manda: o primário continua
+   * definindo faixa, ênfase e dose. Aqui ele serve de DESEMPATE no ranqueamento,
+   * entre exercícios que empatam no primário. A validade do par vive em
+   * src/lib/gps/objetivos.ts. Ausente = ranqueamento byte-idêntico ao de antes.
+   */
+  objetivoSecundario?: GpsObjetivo;
   grupoMuscular: string;
   /** só quando objetivo = Emagrecimento */
   prioridade?: GpsPrioridade;
@@ -137,18 +144,23 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
   });
   if (grupoOk && !exCorpoTodo) reasons.push(corpoTodo ? `Grande massa muscular (${ex.grupoMuscular})` : ex.grupoMuscular);
 
-  // 2) Objetivo
+  // 2) Objetivo (o secundário só desempata: nunca vale tanto quanto o primário)
   const objOk = ex.objetivo.includes(ans.objetivo);
-  const objPts = (objOk ? 1 : 0.25) * W_OBJETIVO;
+  const secOk =
+    !objOk && Boolean(ans.objetivoSecundario) && ex.objetivo.includes(ans.objetivoSecundario!);
+  const objPts = (objOk ? 1 : secOk ? 0.6 : 0.25) * W_OBJETIVO;
   breakdown.push({
     criterio: "Objetivo",
     peso: +(objPts * COMPRESS).toFixed(1),
     pontosPossiveis: +(W_OBJETIVO * COMPRESS).toFixed(1),
     detalhe: objOk
       ? `Alinhado ao objetivo "${ans.objetivo}".`
-      : `Objetivos do exercício: ${ex.objetivo.join(", ")}. Alinhamento parcial com "${ans.objetivo}".`,
+      : secOk
+        ? `Não cobre o objetivo principal "${ans.objetivo}", mas serve ao secundário "${ans.objetivoSecundario}".`
+        : `Objetivos do exercício: ${ex.objetivo.join(", ")}. Alinhamento parcial com "${ans.objetivo}".`,
   });
   if (objOk) reasons.push(`Objetivo: ${ans.objetivo}`);
+  else if (secOk) reasons.push(`Objetivo secundário: ${ans.objetivoSecundario}`);
 
   // 3) Adequação de nível + complexidade técnica
   const diff = nivelIdx(ex.nivel) - nivelIdx(ans.nivel);

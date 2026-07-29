@@ -104,6 +104,13 @@ export function exportProntuarioPDF({
         .join("")}</ul></section>`
     : "";
 
+  // Dois objetivos: sai no papel só quando existe secundário. O texto vem pronto da matriz
+  // (linhaObjetivos), para o PDF nunca reescrever a regra por conta própria.
+  const objetivosHtml = prontuario.objetivos
+    ? `<section class="bloco"><h2>Dois objetivos (${esc(prontuario.objetivos.estado)})</h2>
+       <p>${esc(prontuario.objetivos.linha)}</p></section>`
+    : "";
+
   // Sem o rótulo clínico do grupo no cabeçalho: o documento vai para o aluno.
   const cuidadosHtml = prontuario.cuidadosGrupo
     ? `<section class="bloco"><h2>Cuidados considerados neste perfil</h2>
@@ -264,6 +271,7 @@ export function exportProntuarioPDF({
     </div>
 
     ${semaforoHtml}
+    ${objetivosHtml}
     ${cuidadosHtml}
     ${monitoramentoHtml}
     ${modalidadesHtml}
