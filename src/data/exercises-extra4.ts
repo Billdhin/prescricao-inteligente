@@ -47,6 +47,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Agachamento com o elástico sob os pés e nas mãos: a resistência cresce conforme o aluno sobe, que é onde ele é mais forte.",
     anguloArticular: "Flexão de joelho conforme a tolerância, tronco levemente inclinado",
+    imagem: "/exercises/agachamento-elastico.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadríceps", percentual: 68, papel: "primário" },
@@ -605,6 +606,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Subir e descer de um degrau, uma perna por vez: unilateral com carga baixa e altura regulável, que é o jeito mais simples de dosar.",
     anguloArticular: "Flexão de joelho conforme a altura do degrau",
+    imagem: "/exercises/subida-step.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadríceps", percentual: 65, papel: "primário" },
@@ -1308,4 +1310,4 @@ export const extraExercises4: Exercise[] = [
     trustLevel: "regra pedagógica",
     temCena: false,
   },
-];
+];

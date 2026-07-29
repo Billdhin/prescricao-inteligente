@@ -42,6 +42,7 @@ export const extraExercises5: Exercise[] = [
     resumoPratico:
       "Com o pé de trás apoiado num banco, quase todo o peso vai para a perna da frente: unilateral com carga, que o catálogo não tinha.",
     anguloArticular: "Flexão profunda de joelho e quadril na perna da frente",
+    imagem: "/exercises/agachamento-bulgaro.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Quadríceps", percentual: 75, papel: "primário" },
@@ -124,6 +125,7 @@ export const extraExercises5: Exercise[] = [
     resumoPratico:
       "Halter segurado junto ao peito: o contrapeso à frente ajuda o aluno a manter o tronco ereto, o que faz dele o agachamento mais fácil de ensinar.",
     anguloArticular: "Flexão de joelho e quadril conforme a tolerância",
+    imagem: "/exercises/agachamento-goblet.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Quadríceps", percentual: 70, papel: "primário" },
@@ -204,6 +206,7 @@ export const extraExercises5: Exercise[] = [
     resumoPratico:
       "Fechar as pernas contra a resistência da máquina: o único trabalho direto de adutor do catálogo, com amplitude controlada e trajetória guiada.",
     anguloArticular: "Adução de quadril em amplitude regulável",
+    imagem: "/exercises/cadeira-adutora.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Adutores", percentual: 72, papel: "primário" },
@@ -283,6 +286,7 @@ export const extraExercises5: Exercise[] = [
     resumoPratico:
       "Abrir as pernas contra a resistência da máquina: glúteo médio com carga progressiva, que os elásticos não conseguem entregar.",
     anguloArticular: "Abdução de quadril em amplitude regulável",
+    imagem: "/exercises/cadeira-abdutora.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Glúteo médio", percentual: 65, papel: "primário" },
@@ -362,6 +366,7 @@ export const extraExercises5: Exercise[] = [
     resumoPratico:
       "Isquiotibiais uma perna por vez, em pé: o mesmo trabalho da mesa flexora para quem não deita de bruços com conforto.",
     anguloArticular: "Flexão de joelho em amplitude completa",
+    imagem: "/exercises/flexora-em-pe.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Isquiotibiais", percentual: 72, papel: "primário" },
@@ -666,4 +671,4 @@ export const extraExercises5: Exercise[] = [
     trustLevel: "regra pedagógica",
     temCena: false,
   },
-];
+];

@@ -602,6 +602,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Tirar a barra do chão até ficar em pé: o padrão de dobradiça com maior carga possível, e o de maior custo técnico do catálogo.",
     anguloArticular: "Extensão de quadril e joelho a partir da flexão, coluna neutra",
+    imagem: "/exercises/levantamento-terra.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Glúteo máximo", percentual: 78, papel: "primário" },
@@ -686,6 +687,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Aeróbio de corpo todo sentado: pernas, tronco e braços na mesma remada, com impacto baixo e gasto alto.",
     anguloArticular: "Extensão sequencial de joelho, quadril e ombro",
+    imagem: "/exercises/remo-ergometro.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadríceps", percentual: 62, papel: "primário" },
