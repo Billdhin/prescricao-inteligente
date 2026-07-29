@@ -539,6 +539,7 @@ export const extraExercises3: Exercise[] = [
     resumoPratico:
       "Sustentar o corpo apoiado num antebraço e no lado do pé: o único exercício do catálogo que treina o core contra a flexão lateral, junto com o glúteo médio.",
     anguloArticular: "Coluna neutra, ombro a 90 graus de apoio",
+    imagem: "/exercises/prancha-lateral.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Oblíquos", percentual: 70, papel: "primário" },
@@ -620,6 +621,7 @@ export const extraExercises3: Exercise[] = [
     resumoPratico:
       "A prancha com as mãos num banco ou numa bancada: mesmo trabalho de core, sem precisar descer ao chão nem levantar dele.",
     anguloArticular: "Coluna neutra, tronco inclinado conforme a altura do apoio",
+    imagem: "/exercises/prancha-apoio-banco.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Transverso do abdome", percentual: 45, papel: "primário" },
@@ -942,6 +944,7 @@ export const extraExercises3: Exercise[] = [
     resumoPratico:
       "Estender braço e perna opostos em quatro apoios sem deixar a bacia girar: o par do dead bug pela cadeia posterior, com custo mínimo para a coluna.",
     anguloArticular: "Coluna neutra, quadril e ombro em extensão",
+    imagem: "/exercises/bird-dog.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Eretores da espinha", percentual: 40, papel: "primário" },

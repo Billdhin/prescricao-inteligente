@@ -446,6 +446,7 @@ export const extraExercises5: Exercise[] = [
     resumoPratico:
       "Elevação pélvica com uma perna só: dobra a carga sobre o glúteo sem acrescentar peso, e expõe a assimetria que a versão com as duas pernas esconde.",
     anguloArticular: "Extensão de quadril até a linha do corpo",
+    imagem: "/exercises/hip-thrust-unilateral.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Glúteo máximo", percentual: 72, papel: "primário" },
@@ -526,6 +527,7 @@ export const extraExercises5: Exercise[] = [
     resumoPratico:
       "Dobradiça de quadril com a barra nas costas: exige mais dos eretores e dos isquiotibiais do que o terra romeno, e por isso pede aluno avançado.",
     anguloArticular: "Flexão de quadril com joelho em leve flexão e coluna neutra",
+    imagem: "/exercises/good-morning.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Isquiotibiais", percentual: 75, papel: "primário" },
@@ -607,6 +609,7 @@ export const extraExercises5: Exercise[] = [
     resumoPratico:
       "Leg press com o assento na horizontal: mesma prensa do 45 graus, com entrada e saída muito mais fáceis para quem tem dificuldade de sentar e levantar.",
     anguloArticular: "Flexão de joelho e quadril com amplitude regulável",
+    imagem: "/exercises/leg-press-horizontal.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Quadríceps", percentual: 72, papel: "primário" },

@@ -282,6 +282,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Flexão com as mãos numa bancada: o mesmo padrão de empurrar sem precisar descer ao chão nem levantar dele.",
     anguloArticular: "Cotovelo a cerca de 45 graus do tronco, inclinação conforme a altura do apoio",
+    imagem: "/exercises/flexao-apoio-elevado.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 60, papel: "primário" },

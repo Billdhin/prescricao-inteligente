@@ -603,6 +603,7 @@ export const extraExercises7: Exercise[] = [
     resumoPratico:
       "Caminhar segurando peso nas duas mãos: pegada, trapézio e core na mesma tarefa, e o exercício mais parecido com carregar compras.",
     anguloArticular: "Postura ereta com carga suspensa nas mãos",
+    imagem: "/exercises/farmer-walk.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Flexores do punho", percentual: 70, papel: "primário" },
