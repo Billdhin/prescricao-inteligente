@@ -331,11 +331,12 @@ function CabecalhoAluno({
     <header className="px-4 pb-2 pt-4">
       <div className="flex items-center gap-3">
         {marca.logoDataUrl ? (
-          <img
-            src={marca.logoDataUrl}
-            alt=""
-            className="h-11 w-11 shrink-0 rounded-control border border-border object-cover"
-          />
+          // object-CONTAIN sobre papel branco, nunca cover: a logo do
+          // profissional costuma ser horizontal (símbolo + nome por extenso), e
+          // o cover num quadrado comia as pontas dela.
+          <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-control border border-border bg-white p-1">
+            <img src={marca.logoDataUrl} alt="" className="max-h-full max-w-full object-contain" />
+          </span>
         ) : (
           <span
             className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
@@ -1215,7 +1216,9 @@ function ProfessorCard({ marca, cor, tinta }: { marca: Marca; cor: string; tinta
   return (
     <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5">
       {marca.logoDataUrl ? (
-        <img src={marca.logoDataUrl} alt="" className="h-11 w-11 shrink-0 rounded-control object-cover" />
+        <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-control border border-border bg-white p-1">
+          <img src={marca.logoDataUrl} alt="" className="max-h-full max-w-full object-contain" />
+        </span>
       ) : (
         <span
           className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-sm font-bold"

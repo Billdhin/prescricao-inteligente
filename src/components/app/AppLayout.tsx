@@ -566,7 +566,7 @@ function CardSemaforoLateral({ quantos }: { quantos: number }) {
 
 /** Rodapé da lateral: quem está logado e a saída. */
 function RodapeUsuario() {
-  const { name, plan } = useUser();
+  const { name, plan, fotoDataUrl } = useUser();
   const cloud = useCloudAuth();
   const navigate = useNavigate();
   const [aberto, setAberto] = React.useState(false);
@@ -597,12 +597,24 @@ function RodapeUsuario() {
         aria-haspopup="menu"
         className="flex min-h-[48px] w-full items-center gap-3 rounded-card px-2 text-left"
       >
-        <span
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold"
-          style={{ background: "var(--primary)", color: "var(--on-primary)" }}
-        >
-          {iniciaisDe(name || "Profissional")}
-        </span>
+        {/* A FOTO, quando existe. O rodapé mostrava as iniciais mesmo com foto de
+            perfil carregada em Configurações: quem subiu a própria foto via um "P"
+            genérico e concluía, com razão, que o upload não tinha funcionado. */}
+        {fotoDataUrl ? (
+          <img
+            src={fotoDataUrl}
+            alt=""
+            className="h-9 w-9 shrink-0 rounded-full object-cover"
+            style={{ boxShadow: `0 0 0 1px ${CASCA.borda}` }}
+          />
+        ) : (
+          <span
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold"
+            style={{ background: "var(--primary)", color: "var(--on-primary)" }}
+          >
+            {iniciaisDe(name || "Profissional")}
+          </span>
+        )}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold" style={{ color: CASCA.tinta }}>
             {name || "Seu perfil"}

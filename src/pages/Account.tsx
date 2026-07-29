@@ -134,12 +134,10 @@ export function Account() {
         </p>
       </Card>
 
-      {/* Tema do sistema */}
+      {/* Aparência: só do profissional, e por isso longe da marca. */}
       <Card className="p-6">
-        <h3 className="mb-1 font-display text-lg font-bold text-ink">Aparência e marca</h3>
-        <p className="mb-4 text-sm text-ink-2">
-          A aparência vale só para você. A cor da marca é o que os seus alunos veem.
-        </p>
+        <h3 className="mb-1 font-display text-lg font-bold text-ink">Aparência do seu app</h3>
+        <p className="mb-4 text-sm text-ink-2">Como este app se parece na sua tela.</p>
         <SeletorTema />
       </Card>
 
@@ -234,32 +232,27 @@ export function Account() {
             })}
           </div>
           <p className="mt-1.5 text-xs text-ink-3">
-            Tinge o cabeçalho dos seus documentos e o portal do aluno. O seu app continua na
-            identidade do Mapa da Prescrição.
+            Uma escolha só, que vale nos dois lugares: o app do aluno e o cabeçalho dos seus
+            documentos. O seu app continua na identidade do Mapa da Prescrição.
           </p>
         </div>
 
-        {/* Prévia do cabeçalho do documento */}
-        <div className="mt-5 rounded-xl border border-border bg-surface p-4">
-          <div className="mb-2 text-2xs font-semibold uppercase tracking-wider text-ink-3">
-            Prévia do cabeçalho dos documentos
-          </div>
-          <div
-            className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b-2 pb-3"
-            style={{ borderColor: corMarca }}
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              {logoDataUrl && <img src={logoDataUrl} alt="" className="h-10 max-w-[140px] object-contain" />}
-              <div className="min-w-0">
-                <div className="font-display text-base font-bold" style={{ color: corMarca }}>{name || "Seu nome"}</div>
-                {cref && <div className="text-xs font-bold" style={{ color: corMarca }}>CREF {cref}</div>}
-                {empresa && <div className="text-xs text-ink-2">{empresa}</div>}
-              </div>
-            </div>
-            <div className="min-w-0 break-words text-2xs text-ink-3 sm:text-right">
-              {[site, email, telefone].filter(Boolean).join(" · ") || "site · e-mail · telefone"}
-            </div>
-          </div>
+        {/* AS DUAS SUPERFÍCIES ONDE A COR APARECE, LADO A LADO.
+            A escolha de cor é abstrata até você ver onde ela cai: antes o card
+            mostrava só o cabeçalho do documento, e a metade que o aluno vê (que é
+            a que importa para o profissional) ficava na imaginação. */}
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <PreviaAppDoAluno cor={corMarca} nome={name} empresa={empresa} logoDataUrl={logoDataUrl} />
+          <PreviaDocumento
+            cor={corMarca}
+            nome={name}
+            cref={cref}
+            empresa={empresa}
+            site={site}
+            email={email}
+            telefone={telefone}
+            logoDataUrl={logoDataUrl}
+          />
         </div>
       </Card>
 
@@ -309,6 +302,175 @@ export function Account() {
 }
 
 /** Identidade da conta em nuvem (quando o backend Supabase está ligado). */
+/* ----------------------------- Prévias da marca ---------------------------- */
+
+/** Moldura comum das duas prévias, para elas se lerem como um par. */
+function Previa({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0 overflow-hidden rounded-card border border-border bg-surface">
+      <div className="border-b border-border px-3 py-2 text-2xs font-semibold uppercase tracking-wider text-ink-3">
+        {titulo}
+      </div>
+      <div className="p-3">{children}</div>
+    </div>
+  );
+}
+
+/**
+ * Como a cor cai no portal do aluno: cabeçalho em gradiente da marca, a logo do
+ * profissional e o botão de ação positiva.
+ *
+ * Simplificada de propósito (não é um espelho pixel a pixel do StudentApp), mas
+ * fiel no que decide a escolha: a cor de fundo, o texto por cima dela e a logo
+ * no tamanho real do avatar. É por isso que ela também revela logo cortada.
+ */
+function PreviaAppDoAluno({
+  cor,
+  nome,
+  empresa,
+  logoDataUrl,
+}: {
+  cor: string;
+  nome: string;
+  empresa: string;
+  logoDataUrl: string;
+}) {
+  const tinta = corDeContraste(cor);
+  return (
+    <Previa titulo="No app do aluno">
+      {/* A moldura escura é a skin real do portal do aluno (navy), não decoração:
+          mostrar a cor sobre fundo claro enganaria sobre o contraste. */}
+      <div className="overflow-hidden rounded-control" style={{ background: "#0D1524" }}>
+        <div className="flex items-center gap-2.5 p-3" style={{ background: cor }}>
+          <LogoQuadrada logoDataUrl={logoDataUrl} nome={nome || empresa} cor={cor} tinta={tinta} />
+          <div className="min-w-0">
+            <div className="truncate text-2xs font-semibold" style={{ color: tinta, opacity: 0.85 }}>
+              Seu treino com
+            </div>
+            <div className="truncate text-sm font-bold" style={{ color: tinta }}>
+              {empresa || nome || "Seu nome"}
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2 p-3">
+          <div className="rounded-control p-2.5" style={{ background: "#131D31" }}>
+            <div className="text-2xs" style={{ color: "#8FA1BD" }}>
+              Treino de hoje
+            </div>
+            <div className="text-sm font-semibold" style={{ color: "#F2F6FC" }}>
+              Sessão A · Inferiores
+            </div>
+          </div>
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden
+            className="w-full rounded-full py-2 text-sm font-bold"
+            style={{ background: cor, color: tinta }}
+          >
+            Começar treino
+          </button>
+        </div>
+      </div>
+    </Previa>
+  );
+}
+
+/** Como a cor cai no cabeçalho dos PDFs que o aluno recebe. */
+function PreviaDocumento({
+  cor,
+  nome,
+  cref,
+  empresa,
+  site,
+  email,
+  telefone,
+  logoDataUrl,
+}: {
+  cor: string;
+  nome: string;
+  cref: string;
+  empresa: string;
+  site: string;
+  email: string;
+  telefone: string;
+  logoDataUrl: string;
+}) {
+  return (
+    <Previa titulo="No cabeçalho dos documentos">
+      {/* Papel é sempre claro, independente do tema do profissional: o PDF não
+          herda o modo escuro dele, e a prévia não pode dar a entender que herda. */}
+      <div className="rounded-control bg-white p-3">
+        <div
+          className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b-2 pb-2.5"
+          style={{ borderColor: cor }}
+        >
+          <div className="flex min-w-0 items-center gap-2.5">
+            {logoDataUrl && <img src={logoDataUrl} alt="" className="h-9 max-w-[110px] object-contain" />}
+            <div className="min-w-0">
+              <div className="truncate font-display text-sm font-bold" style={{ color: cor }}>
+                {nome || "Seu nome"}
+              </div>
+              {cref && (
+                <div className="text-2xs font-bold" style={{ color: cor }}>
+                  CREF {cref}
+                </div>
+              )}
+              {empresa && <div className="truncate text-2xs text-[#6A7180]">{empresa}</div>}
+            </div>
+          </div>
+          <div className="min-w-0 break-words text-2xs text-[#9AA1AC] sm:text-right">
+            {[site, email, telefone].filter(Boolean).join(" · ") || "site · e-mail · telefone"}
+          </div>
+        </div>
+        <div className="pt-2.5">
+          <div className="text-2xs font-semibold uppercase tracking-wider" style={{ color: cor }}>
+            Prescrição de treino
+          </div>
+          <div className="mt-1 h-1.5 w-3/4 rounded-full bg-[#E8E6DF]" />
+          <div className="mt-1 h-1.5 w-1/2 rounded-full bg-[#E8E6DF]" />
+        </div>
+      </div>
+    </Previa>
+  );
+}
+
+/**
+ * A logo dentro de um quadrado, SEM CORTAR.
+ *
+ * Era `object-cover` num quadrado de 44px: logo horizontal (a maioria delas, que
+ * é nome por extenso ao lado de um símbolo) entrava esticada e com as pontas
+ * comidas. `object-contain` sobre papel branco preserva a marca inteira, que é o
+ * mínimo que se deve a quem subiu a própria logo.
+ */
+function LogoQuadrada({
+  logoDataUrl,
+  nome,
+  cor,
+  tinta,
+}: {
+  logoDataUrl: string;
+  nome: string;
+  cor: string;
+  tinta: string;
+}) {
+  if (!logoDataUrl) {
+    return (
+      <span
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
+        style={{ background: tinta, color: cor }}
+      >
+        {(nome || "?").trim().charAt(0).toUpperCase()}
+      </span>
+    );
+  }
+  return (
+    <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-control bg-white p-1">
+      <img src={logoDataUrl} alt="" className="max-h-full max-w-full object-contain" />
+    </span>
+  );
+}
+
 function ContaNuvemCard() {
   const user = useCloudAuth((s) => s.user);
   const emailConta = user?.email ?? "";
