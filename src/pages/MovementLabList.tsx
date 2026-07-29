@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Lock, SlidersHorizontal, Sparkles, FlaskConical, GitCompare } from "lucide-react";
+import { ArrowRight, Check, Lock, SlidersHorizontal, Sparkles, FlaskConical, GitCompare } from "lucide-react";
 import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { MuscleThumb, activationFromExercise } from "@/components/anatomy/MuscleMap";
 import { exercises } from "@/data/exercises";
@@ -13,6 +13,9 @@ function uniq(list: string[]) {
   return Array.from(new Set(list));
 }
 
+/** O comparador compara até 4 lado a lado; a barra daqui respeita o mesmo teto. */
+const MAX_COMPARAR = 4;
+
 export function MovementLabList() {
   const plan = useUser((s) => s.plan);
   const unlocked = isPremiumUnlocked(plan);
@@ -21,6 +24,17 @@ export function MovementLabList() {
   const [equip, setEquip] = React.useState(ALL);
   const [objetivo, setObjetivo] = React.useState(ALL);
   const [nivel, setNivel] = React.useState(ALL);
+  /**
+   * Seleção para comparar. O filtro já respondia "quais exercícios têm estas
+   * características"; faltava o passo que transforma isso em decisão, que é levar
+   * os escolhidos para o comparador. Sem ele, o profissional filtrava, lia a lista
+   * e tinha que remontar a mesma escolha na mão do outro lado.
+   */
+  const [marcados, setMarcados] = React.useState<string[]>([]);
+  const alternar = (slug: string) =>
+    setMarcados((c) =>
+      c.includes(slug) ? c.filter((x) => x !== slug) : c.length < MAX_COMPARAR ? [...c, slug] : c,
+    );
 
   const grupos = uniq(exercises.map((e) => e.grupoMuscular));
   const equipamentos = uniq(exercises.map((e) => e.equipamento));
@@ -60,6 +74,46 @@ export function MovementLabList() {
           <Filter label="Objetivo" value={objetivo} onChange={setObjetivo} options={objetivos} />
           <Filter label="Nível" value={nivel} onChange={setNivel} options={niveis} />
         </div>
+
+        {/* O passo que faltava: do filtro para a comparação, sem remontar a escolha
+            do outro lado. "Comparar os N filtrados" só aparece quando o filtro já
+            devolveu um conjunto comparável (2 a 4); acima disso, escolher é do
+            profissional, porque comparar 9 lado a lado não é comparar. */}
+        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+          <span className="text-sm text-ink-2">
+            <strong className="font-semibold text-ink">{filtered.length}</strong>{" "}
+            {filtered.length === 1 ? "exercício" : "exercícios"} com estes filtros
+            {marcados.length > 0 && (
+              <>
+                {" · "}
+                <strong className="font-semibold text-ink">{marcados.length} marcado{marcados.length === 1 ? "" : "s"}</strong>
+              </>
+            )}
+          </span>
+          <div className="ml-auto flex flex-wrap gap-2">
+            {marcados.length > 0 && (
+              <button type="button" onClick={() => setMarcados([])} className={buttonClasses("ghost", "sm")}>
+                Limpar seleção
+              </button>
+            )}
+            {marcados.length >= 2 ? (
+              <Link to={`/comparador?slugs=${marcados.join(",")}`} className={buttonClasses("primary", "sm")}>
+                <GitCompare className="h-4 w-4" /> Comparar {marcados.length} selecionados
+              </Link>
+            ) : filtered.length >= 2 && filtered.length <= MAX_COMPARAR ? (
+              <Link
+                to={`/comparador?slugs=${filtered.map((e) => e.slug).join(",")}`}
+                className={buttonClasses("secondary", "sm")}
+              >
+                <GitCompare className="h-4 w-4" /> Comparar os {filtered.length} filtrados
+              </Link>
+            ) : (
+              <span className="text-sm text-ink-3">
+                Marque de 2 a {MAX_COMPARAR} exercícios para comparar.
+              </span>
+            )}
+          </div>
+        </div>
       </Card>
 
       {/* Grid */}
@@ -85,6 +139,24 @@ export function MovementLabList() {
                       {e.nivel}
                     </Pill>
                   </div>
+                  {/* Marcar para comparar: no canto da imagem, fora do caminho do
+                      CTA de analisar, que continua sendo a ação principal do card. */}
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={marcados.includes(e.slug)}
+                    aria-label={`Marcar ${e.nome} para comparar`}
+                    onClick={() => alternar(e.slug)}
+                    disabled={!marcados.includes(e.slug) && marcados.length >= MAX_COMPARAR}
+                    className={cn(
+                      "absolute left-3 top-3 grid h-8 w-8 place-items-center rounded-full border-2 transition-colors",
+                      marcados.includes(e.slug)
+                        ? "border-primary bg-primary text-on-primary"
+                        : "border-border bg-surface/85 text-ink-3 hover:text-ink disabled:opacity-40",
+                    )}
+                  >
+                    <Check className="h-4 w-4" strokeWidth={3} />
+                  </button>
                   {locked && (
                     <div className="absolute inset-0 grid place-items-center bg-surface/50 backdrop-blur-[1px]">
                       <span className="grid h-9 w-9 place-items-center rounded-full gradient-brand text-white shadow-elevated">

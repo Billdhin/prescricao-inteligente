@@ -297,6 +297,25 @@ export function AlunoDetail() {
       document.getElementById("aba-painel-semaforo")?.scrollIntoView({ behavior: "smooth", block: "start" }),
     );
   }, []);
+  /**
+   * Ir a um card que vive DENTRO de uma aba.
+   *
+   * Estes atalhos já foram `<a href="#treino-card">`, e faziam nada visível: o card
+   * mora na aba "Plano e treino", que não está montada enquanto a aba aberta é outra,
+   * então não havia elemento para o navegador achar. Pior, a navegação por hash
+   * trocava a entrada de histórico e levava junto o `location.state` que segurava o
+   * próprio aviso, que sumia. Era exatamente o "só fechou a mensagem e não foi para
+   * canto nenhum". Agora troca a aba primeiro e só então rola, no quadro seguinte,
+   * quando o card existe de verdade.
+   */
+  const irParaCard = React.useCallback((destino: Aba, id: string) => {
+    setAba(destino);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      ),
+    );
+  }, []);
   // Prescrição escolhida para o diálogo "Colocar no treino".
   const [aplicarPresc, setAplicarPresc] = React.useState<Prescricao | null>(null);
   // Modal de convite: o ciclo de acesso do aluno (link, senha dele, status) num só lugar.
@@ -393,9 +412,9 @@ export function AlunoDetail() {
             <span className="font-semibold">Prescrição salva no perfil de {aluno.nome.split(" ")[0]}.</span> Ela
             já está no histórico abaixo, com o raciocínio registrado para o prontuário.
           </p>
-          <a href="#prescricoes-card" className={buttonClasses("secondary", "sm")}>
+          <button onClick={() => irParaCard("treino", "prescricoes-card")} className={buttonClasses("secondary", "sm")}>
             Ver prescrição
-          </a>
+          </button>
         </Card>
       )}
 
@@ -408,9 +427,9 @@ export function AlunoDetail() {
             <span className="font-semibold">Treino montado para {aluno.nome.split(" ")[0]}.</span> Já está no
             perfil, com a periodização e a progressão organizadas.
           </p>
-          <a href="#treino-card" className={buttonClasses("secondary", "sm")}>
+          <button onClick={() => irParaCard("treino", "treino-card")} className={buttonClasses("secondary", "sm")}>
             Ver o treino
-          </a>
+          </button>
         </Card>
       )}
 
@@ -426,9 +445,9 @@ export function AlunoDetail() {
             </span>{" "}
             As doses seguem a faixa do plano; o raciocínio da escolha fica no prontuário da prescrição.
           </p>
-          <a href="#treino-card" className={buttonClasses("secondary", "sm")}>
+          <button onClick={() => irParaCard("treino", "treino-card")} className={buttonClasses("secondary", "sm")}>
             Ver o treino
-          </a>
+          </button>
         </Card>
       )}
 

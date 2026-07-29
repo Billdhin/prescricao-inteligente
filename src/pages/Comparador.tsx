@@ -76,10 +76,18 @@ const METRICAS_FORCA: MetricaForca[] = [
 const CARDIO_EX_SLUGS = new Set(["caminhada-esteira", "bicicleta-ergometrica", "eliptico", "marcha-aquatica"]);
 const forcaPool = exercises.filter((e) => !CARDIO_EX_SLUGS.has(e.slug));
 
-function ForcaBloco({ base }: { base: string | null }) {
+function ForcaBloco({ base, slugs }: { base: string | null; slugs: string[] }) {
   const initial = React.useMemo(() => {
     const list: string[] = [];
-    if (base && forcaPool.some((e) => e.slug === base)) list.push(base);
+    // `?slugs=` chega do Laboratório Visual: o profissional filtrou, escolheu e
+    // mandou comparar. Ele manda na abertura; `?base=` continua valendo para o
+    // atalho de um exercício só, vindo da ficha.
+    for (const s of slugs) {
+      if (list.length >= MAX) break;
+      if (forcaPool.some((e) => e.slug === s) && !list.includes(s)) list.push(s);
+    }
+    if (base && forcaPool.some((e) => e.slug === base) && !list.includes(base)) list.push(base);
+    // Sem nada na URL, dois padrões conhecidos abrem a tela com conteúdo real.
     for (const s of ["leg-press-45", "agachamento-livre"]) {
       if (list.length >= 2) break;
       if (!list.includes(s)) list.push(s);
@@ -813,6 +821,9 @@ type Bloco = "forca" | "cardio";
 export function Comparador() {
   const [params] = useSearchParams();
   const base = params.get("base");
+  // Seleção vinda do Laboratório Visual (?slugs=a,b,c): comparar o que ele acabou
+  // de filtrar era o passo que faltava para o filtro virar decisão.
+  const slugs = (params.get("slugs") ?? "").split(",").map((x) => x.trim()).filter(Boolean);
   // deep link ?base= aponta para um exercício de força → abre nesse bloco
   const [bloco, setBloco] = React.useState<Bloco>("forca");
 
@@ -845,7 +856,7 @@ export function Comparador() {
         </BlocoTab>
       </div>
 
-      {bloco === "forca" ? <ForcaBloco base={base} /> : <CardioBloco />}
+      {bloco === "forca" ? <ForcaBloco base={base} slugs={slugs} /> : <CardioBloco />}
 
       <div className="flex flex-wrap gap-2">
         <Link to="/movement-lab" className={buttonClasses("secondary", "sm")}>
