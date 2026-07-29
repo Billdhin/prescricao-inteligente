@@ -688,6 +688,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Rosca com a palma virada para dentro: tira parte do bíceps e coloca o braquiorradial e o braquial no comando.",
     anguloArticular: "Flexão de cotovelo com antebraço em posição neutra",
+    imagem: "/exercises/rosca-martelo.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Braquiorradial", percentual: 62, papel: "primário" },
@@ -767,6 +768,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Deitado num banco inclinado, o braço fica atrás da linha do tronco: o bíceps começa a repetição já alongado.",
     anguloArticular: "Banco a cerca de 45 graus, ombro em leve extensão",
+    imagem: "/exercises/rosca-banco-inclinado.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Bíceps braquial", percentual: 72, papel: "primário" },
@@ -846,6 +848,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Com o braço apoiado no banco inclinado, não há como balançar: é a versão de bíceps mais fácil de ensinar.",
     anguloArticular: "Flexão de cotovelo com braço apoiado a cerca de 45 graus",
+    imagem: "/exercises/rosca-scott-maquina.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Bíceps braquial", percentual: 66, papel: "primário" },
@@ -1004,6 +1007,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Levantar os halteres à frente até a altura do ombro: deltoide anterior isolado, sem a participação do tríceps que o desenvolvimento traz.",
     anguloArticular: "Flexão de ombro até 90 graus",
+    imagem: "/exercises/elevacao-frontal.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide anterior", percentual: 70, papel: "primário" },

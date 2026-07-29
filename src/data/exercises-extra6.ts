@@ -43,6 +43,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Banco a cerca de 30 graus: a inclinação desloca a ênfase para a porção superior do peitoral, que o supino horizontal alcança menos.",
     anguloArticular: "Banco a cerca de 30 graus, cotovelo a cerca de 45 graus do tronco",
+    imagem: "/exercises/supino-inclinado-halteres.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 74, papel: "primário" },
@@ -123,6 +124,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Peitoral sem participação do tríceps: a máquina guia a trajetória e o cotovelo quase não se move.",
     anguloArticular: "Adução horizontal de ombro com cotovelo fixo",
+    imagem: "/exercises/crucifixo-maquina.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 72, papel: "primário" },
@@ -202,6 +204,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Cabos cruzando à frente do corpo: tensão constante do começo ao fim, o que nem halter nem barra conseguem entregar.",
     anguloArticular: "Adução horizontal de ombro com cotovelo em leve flexão",
+    imagem: "/exercises/crossover-polia.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 70, papel: "primário" },
@@ -443,6 +446,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Braços quase estendidos puxando de cima para baixo: o único exercício de dorsal do catálogo sem participação do bíceps.",
     anguloArticular: "Extensão de ombro com cotovelo em leve flexão fixa",
+    imagem: "/exercises/pullover-polia.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 68, papel: "primário" },
@@ -522,6 +526,7 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Remada com a barra presa num ponto fixo e o tronco apoiado: carga alta de costas com menos exigência da lombar do que a remada curvada.",
     anguloArticular: "Extensão de ombro com tronco inclinado e apoiado",
+    imagem: "/exercises/remada-cavalinho.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 74, papel: "primário" },
