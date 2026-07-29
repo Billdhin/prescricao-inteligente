@@ -46,6 +46,7 @@ export const extraExercises7: Exercise[] = [
     resumoPratico:
       "Empurrar à frente e continuar empurrando com a escápula: o serrátil anterior nunca aparece como alvo em treino comum, e é ele que gira a escápula para o braço subir.",
     anguloArticular: "Ombro a 90 graus de flexão, protração escapular",
+    imagem: "/exercises/serratus-punch.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Serrátil anterior", percentual: 65, papel: "primário" },

@@ -1174,6 +1174,7 @@ export const extraExercises4: Exercise[] = [
     resumoPratico:
       "Puxar a corda na direção do rosto girando os ombros para fora: junta deltoide posterior, escápula e rotadores externos num movimento só.",
     anguloArticular: "Abdução horizontal com rotação externa de ombro",
+    imagem: "/exercises/face-pull-polia.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide posterior", percentual: 60, papel: "primário" },
