@@ -4,6 +4,8 @@ import { extraExercises2 } from "./exercises-extra2";
 import { extraExercises3 } from "./exercises-extra3";
 import { extraExercises4 } from "./exercises-extra4";
 import { extraExercises5 } from "./exercises-extra5";
+import { extraExercises6 } from "./exercises-extra6";
+import { extraExercises7 } from "./exercises-extra7";
 import { RESTRICAO_PERFIS } from "./restricao-perfis";
 
 const exercisesRaw: Exercise[] = [
@@ -999,6 +1001,8 @@ const exercisesRaw: Exercise[] = [
   ...extraExercises3,
   ...extraExercises4,
   ...extraExercises5,
+  ...extraExercises6,
+  ...extraExercises7,
 ];
 
 // Anexa o perfil de restrição (fatos estruturais autorados por inspeção) por slug,

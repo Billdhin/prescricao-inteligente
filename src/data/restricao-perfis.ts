@@ -98,4 +98,34 @@ export const RESTRICAO_PERFIS: Record<string, RestricaoPerfilExercicio> = {
   "hip-thrust-unilateral": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
   "good-morning": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: false, possuiApoio: false },
   "leg-press-horizontal": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+
+  /* ---- Lote P3: peitorais, costas, aeróbio e o último core ---- */
+  "supino-inclinado-halteres": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "crucifixo-maquina": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "crossover-polia": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  // Apoio elevado: existe justamente para NÃO exigir o chão (par da prancha no banco).
+  "flexao-apoio-elevado": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: true, amplitudeAjustavel: true, possuiApoio: true },
+  "puxada-supinada": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: true, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "pullover-polia": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: true, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "remada-cavalinho": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "levantamento-terra": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: false, possuiApoio: false },
+  "remo-ergometro": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "escada-ergometrica": { posicao: "em pé", impacto: "moderado", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "caminhada-plana": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "corrida-aquatica": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "bicicleta-reclinada": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "abdominal-polia-alta": { posicao: "ajoelhado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: true, exigeIrAoChao: true, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+
+  /* ---- Lote P3: escápula, tornozelo, antebraço, pescoço e respiração ---- */
+  "serratus-punch": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "wall-slide": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: true, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "y-raise-banco": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: true, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "retracao-escapular-polia": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "dorsiflexao-elastico": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "equilibrio-unipodal": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "punho-halter": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "farmer-walk": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "suitcase-carry": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
+  "chin-tuck": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true },
+  "respiracao-360": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: true, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false },
 };

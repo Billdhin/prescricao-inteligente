@@ -83,6 +83,34 @@ export const exerciseReferencias: Record<string, string[]> = {
   // pela posição do joelho é fato anatômico, não achado de um estudo específico, e a
   // base não tem um trabalho de EMG de panturrilha verificado para citar aqui.
 
+  // Lote P3: profundidade em peitorais e costas, aeróbio, escápula e apoio
+  "supino-inclinado-halteres": ["rodriguez-ridao-2020", "schoenfeld-2010"],
+  "crucifixo-maquina": ["boeckh-behrens-2000"],
+  "crossover-polia": ["boeckh-behrens-2000", "schoenfeld-2010"],
+  "flexao-apoio-elevado": ["rodriguez-ridao-2020"],
+  "puxada-supinada": ["andersen-2014", "boeckh-behrens-2000"],
+  "pullover-polia": ["boeckh-behrens-2000"],
+  "remada-cavalinho": ["boeckh-behrens-2000", "mcgill-2010"],
+  "levantamento-terra": ["mcgill-2010", "contreras-2015", "escamilla-2001"],
+  "remo-ergometro": ["acsm-getp11", "garber-2011"],
+  "escada-ergometrica": ["acsm-getp11", "garber-2011"],
+  "caminhada-plana": ["oms-2020", "acsm-getp11", "garber-2011"],
+  "corrida-aquatica": ["acsm-getp11", "donnelly-2009"],
+  "bicicleta-reclinada": ["acsm-getp11", "garber-2011"],
+  "abdominal-polia-alta": ["mcgill-2010"],
+  "serratus-punch": ["ekstrom-2007"],
+  "wall-slide": ["ekstrom-2007"],
+  "y-raise-banco": ["ekstrom-2007"],
+  "retracao-escapular-polia": ["ekstrom-2007"],
+  "dorsiflexao-elastico": ["acsm-getp11", "chodzko-2009"],
+  "equilibrio-unipodal": ["chodzko-2009", "acsm-getp11"],
+  "punho-halter": ["boeckh-behrens-2000"],
+  "farmer-walk": ["mcgill-2010"],
+  "suitcase-carry": ["mcgill-2010"],
+  "respiracao-360": ["mcgill-2010"],
+  // "chin-tuck" fica sem referência: o produto o trata como controle motor e NÃO
+  // prescreve carga cervical, que pediria avaliação que a ferramenta não faz.
+
   // Funcional / core / idoso
   "sentar-levantar": ["ekstrom-2007", "chodzko-2009", "fragala-2019"],
   "ponte-gluteos": ["ekstrom-2007", "contreras-2015"],
