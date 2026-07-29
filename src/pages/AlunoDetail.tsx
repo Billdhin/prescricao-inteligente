@@ -799,6 +799,7 @@ export function AlunoDetail() {
           }}
           alunoId={aluno.id}
           alunoNome={aluno.nome}
+          alunoSexo={aluno.sexo}
           anterior={avalsDesc[0]}
           historico={avals}
         />

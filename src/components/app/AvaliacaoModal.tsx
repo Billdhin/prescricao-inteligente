@@ -2,6 +2,7 @@ import * as React from "react";
 import { X, Plus, Trash2, Camera, Info, ChevronDown, Loader2, TrendingUp } from "lucide-react";
 import { buttonClasses, Pill } from "@/components/ui/primitives";
 import { EvolucaoMini, METRICAS_CHAVE } from "@/components/app/EvolucaoMini";
+import { FaixaDoValor } from "@/components/avaliacao/EscalaInfo";
 import { useDialog } from "@/lib/useDialog";
 import { arquivoParaDataUrl } from "@/lib/imagem";
 import { toast } from "@/lib/toast";
@@ -13,6 +14,7 @@ import type {
   AvaliacaoPerimetro,
   AvaliacaoTeste,
   MedidaPersonalizada,
+  Sexo,
   TipoAvaliacao,
 } from "@/data/alunos";
 
@@ -73,6 +75,7 @@ export function AvaliacaoModal({
   onSave,
   alunoId,
   alunoNome,
+  alunoSexo,
   anterior,
   historico,
 }: {
@@ -81,6 +84,8 @@ export function AvaliacaoModal({
   alunoId: string;
   /** nome do aluno, para o título honesto de reavaliação ("Reavaliação de {nome}") */
   alunoNome?: string;
+  /** Sexo declarado: escala cujo corte difere por sexo NAO classifica sem ele. */
+  alunoSexo?: Sexo;
   /** avaliação mais recente do aluno, para a comparação e o pré-preenchimento dos campos */
   anterior?: Avaliacao;
   /** série completa de avaliações (ascendente), para o painel "Como estava antes" */
@@ -264,6 +269,9 @@ export function AvaliacaoModal({
                 <div className="input flex items-center bg-surface-soft text-ink-2">
                   {imc != null ? `${fmtNum(+imc.toFixed(1))} kg/m²` : "peso e altura"}
                 </div>
+                {/* O IMC calculado deixa de ser numero solto: mostra a faixa da OMS e abre
+                    a escala inteira, com o LIMITE dela (nao distingue massa magra de gordura). */}
+                <FaixaDoValor escalaId="imc" valor={imc != null ? +imc.toFixed(1) : undefined} />
               </Campo>
               <NumInput label="Massa muscular (kg)" mkey="massaMuscular" med={med} setM={setM} placeholder="Ex.: 32" anterior={antMed?.massaMuscular} anteriorData={anterior?.data} unidade="kg" />
             </div>
@@ -299,8 +307,8 @@ export function AvaliacaoModal({
             <div className="grid gap-3 sm:grid-cols-2">
               <NumInput label="FC de repouso (bpm)" mkey="fcRepouso" med={med} setM={setM} placeholder="Ex.: 68" anterior={antMed?.fcRepouso} anteriorData={anterior?.data} unidade="bpm" />
               <div className="grid grid-cols-2 gap-2">
-                <NumInput label="PA sistólica" mkey="pressaoSistolica" med={med} setM={setM} placeholder="120" anterior={antMed?.pressaoSistolica} anteriorData={anterior?.data} unidade="mmHg" />
-                <NumInput label="PA diastólica" mkey="pressaoDiastolica" med={med} setM={setM} placeholder="80" anterior={antMed?.pressaoDiastolica} anteriorData={anterior?.data} unidade="mmHg" />
+                <NumInput label="PA sistólica" mkey="pressaoSistolica" med={med} setM={setM} placeholder="120" anterior={antMed?.pressaoSistolica} anteriorData={anterior?.data} unidade="mmHg" escalaId="pressaoSistolica" sexo={alunoSexo} />
+                <NumInput label="PA diastólica" mkey="pressaoDiastolica" med={med} setM={setM} placeholder="80" anterior={antMed?.pressaoDiastolica} anteriorData={anterior?.data} unidade="mmHg" escalaId="pressaoDiastolica" sexo={alunoSexo} />
               </div>
             </div>
             <p className="mt-2 text-xs text-ink-3">
@@ -423,7 +431,7 @@ function Campo({ label, hint, className, children }: { label: string; hint?: Rea
 }
 
 function NumInput({
-  label, mkey, med, setM, placeholder, unidade, anterior, anteriorData, max10,
+  label, mkey, med, setM, placeholder, unidade, anterior, anteriorData, max10, escalaId, sexo,
 }: {
   label: string;
   mkey: string;
@@ -434,6 +442,9 @@ function NumInput({
   anterior?: number;
   anteriorData?: number;
   max10?: boolean;
+  /** Id da escala de referencia (src/data/escalasAvaliacao.ts), quando existe uma. */
+  escalaId?: string;
+  sexo?: Sexo;
 }) {
   const val = med[mkey] ?? "";
   const atual = num(val);
@@ -458,6 +469,9 @@ function NumInput({
         placeholder={placeholder}
         className="input"
       />
+      {/* A FAIXA em que o numero cai, com caminho para a escala inteira e a fonte.
+          Onde nao ha escala ancorada em fonte verificada, nada aparece. */}
+      {escalaId && <FaixaDoValor escalaId={escalaId} valor={atual ?? undefined} sexo={sexo} />}
       {/* Delta ao vivo só quando o valor muda: pré-carregado e intocado não vira ruído. */}
       {atual != null && anterior != null && atual !== anterior && (
         <ComparaLinha atual={atual} anterior={anterior} unidade={unidade ?? ""} dataAnterior={anteriorData} />
