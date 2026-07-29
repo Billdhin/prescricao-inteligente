@@ -409,14 +409,22 @@ export function TokenRotulado({
   label,
   value,
   tone = "neutral",
+  rotulo,
 }: {
   label: string;
   value: React.ReactNode;
   tone?: PillTone;
+  /**
+   * Substitui a RENDERIZAÇÃO do rótulo, mantendo o par rótulo-valor colado. Existe
+   * para o rótulo poder se explicar ("RIR" vira link para o que é e como aplicar)
+   * sem que este primitivo, que é a base de tudo, passe a importar dados e rotas.
+   * Ausente = rótulo em texto puro, como sempre foi.
+   */
+  rotulo?: React.ReactNode;
 }) {
   return (
     <span className={cn("inline-flex items-baseline gap-1 rounded-full px-2 py-0.5 text-xs", pillTones[tone])}>
-      <span className="font-medium opacity-70">{label}</span>
+      <span className="font-medium opacity-70">{rotulo ?? label}</span>
       <span className="tabular font-semibold">{value}</span>
     </span>
   );

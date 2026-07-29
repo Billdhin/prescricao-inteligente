@@ -20,6 +20,7 @@ import {
   LockOpen,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, Eyebrow, TokenRotulado, LinhaDeTokens, type PillTone } from "@/components/ui/primitives";
+import { TokenDose } from "@/components/gps/TermoDoseInfo";
 import { cn } from "@/lib/utils";
 import {
   getFaixa,
@@ -785,7 +786,7 @@ function QuadroForca({ blocos, ctx }: { blocos: BlocoSessao[]; ctx: ContextoFaix
                   {temAlvoForca(b) && (
                     <LinhaDeTokens className="mt-1">
                       {tokensAlvoForca(b).map((t, i) => (
-                        <TokenRotulado key={i} label={t.label} value={t.value} tone="primary" />
+                        <TokenDose key={i} label={t.label} value={t.value} tone="primary" />
                       ))}
                     </LinhaDeTokens>
                   )}
@@ -838,7 +839,7 @@ function QuadroCardio({ blocos }: { blocos: BlocoSessao[] }) {
               {temAlvoAerobio(b) && (
                 <LinhaDeTokens className="mt-1">
                   {tokensAlvoAerobio(b).map((t, i) => (
-                    <TokenRotulado key={i} label={t.label} value={t.value} tone="analysis" />
+                    <TokenDose key={i} label={t.label} value={t.value} tone="analysis" />
                   ))}
                 </LinhaDeTokens>
               )}

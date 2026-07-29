@@ -15,7 +15,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { NAV, BOTTOM, PRIMARIOS, MAIS } from "../src/components/app/nav";
+import { NAV, BOTTOM, PRIMARIOS, MAIS, CONTA } from "../src/components/app/nav";
 
 const erros: string[] = [];
 const ok = (cond: boolean, msg: string) => {
@@ -70,26 +70,41 @@ for (const sec of NAV)
 // já tinham divergido (o /gps era filho de um lado e `match` do outro).
 ok(BOTTOM === PRIMARIOS, "BOTTOM precisa ser a MESMA referência de PRIMARIOS (identidade, não cópia)");
 ok(PRIMARIOS.length === 5, `PRIMARIOS deve ter 5 destinos, veio ${PRIMARIOS.length}`);
-ok(MAIS.length === 8, `MAIS deve ter 8 destinos de referência, veio ${MAIS.length}`);
+// O "Mais" virou TRÊS portas com filhos, em vez de oito itens soltos na mesma
+// altura visual dos cinco do dia a dia. Nada foi apagado: Grupos Especiais e
+// Consultar são filhos de Estudar, o Comparador é filho do Laboratório, e Ajuda
+// e Configurações foram para o menu do usuário (CONTA).
+ok(MAIS.length === 3, `MAIS deve ter 3 portas de referência, veio ${MAIS.length}`);
 
-// Descrição de uma linha em TODA opção do "Mais": um menu de 8 destinos sem
-// descrição obriga a abrir cada um para descobrir o que é (Design System).
+// Descrição de uma linha em TODA opção do "Mais", INCLUSIVE nos filhos: um menu
+// sem descrição obriga a abrir cada item para descobrir o que é (Design System).
 for (const it of MAIS) {
   ok(!!it.hint, `Destino do "Mais" sem descrição de uma linha: "${it.label}"`);
   ok(!/—/.test(it.hint ?? ""), `Travessão na descrição de "${it.label}"`);
+  for (const c of it.children ?? []) {
+    ok(!!c.hint, `Filho do "Mais" sem descrição de uma linha: "${c.label}"`);
+    ok(!/—/.test(c.hint ?? ""), `Travessão na descrição do filho "${c.label}"`);
+  }
+}
+for (const it of CONTA) {
+  ok(!!it.hint, `Item de conta sem descrição de uma linha: "${it.label}"`);
 }
 
-// Nenhum destino em dois lugares: se um item estivesse nos primários E no Mais,
-// dois itens acenderiam na mesma rota e o menu mentiria onde o usuário está.
-const rotasPrim = new Set(PRIMARIOS.map((i) => i.to));
-for (const it of MAIS) ok(!rotasPrim.has(it.to), `Destino duplicado (primário e Mais): ${it.to}`);
+// Nenhum destino em dois lugares, contando pai, filho e conta: dois itens
+// acendendo na mesma rota fariam o menu mentir sobre onde o usuário está.
+const todosDestinos = [...PRIMARIOS, ...MAIS, ...CONTA].flatMap((i) => [
+  i.to,
+  ...(i.children ?? []).map((c) => c.to),
+]);
+const vistos = new Set<string>();
+for (const to of todosDestinos) {
+  ok(!vistos.has(to), `Destino repetido no menu: ${to}`);
+  vistos.add(to);
+}
 
 // Todo `to` resolve para uma rota real de App.tsx (deep-link e query fora).
 const app = ler("src/App.tsx");
-const rotasDeclaradas = [...PRIMARIOS, ...MAIS]
-  .flatMap((i) => [i.to, ...(i.children ?? []).map((c) => c.to)])
-  .map((to) => to.split("?")[0]);
-for (const to of rotasDeclaradas) {
+for (const to of todosDestinos.map((t) => t.split("?")[0])) {
   const seg = to.replace(/^\//, "");
   ok(
     app.includes(`path="${seg}"`) || app.includes(`path="/${seg}"`) || app.includes(`path="${seg}/`),
@@ -97,18 +112,41 @@ for (const to of rotasDeclaradas) {
   );
 }
 
-// O Comparador virou item de PRIMEIRA CLASSE: enquanto era só um `match` do
-// Laboratório, o menu acendia "Laboratório Visual" numa tela chamada Comparador.
+// O Comparador NÃO pode voltar a ser um `match` do Laboratório: enquanto era,
+// o menu acendia "Laboratório Visual" numa tela chamada Comparador. Como filho
+// declarado, ele acende sozinho e o pai acende como grupo que o contém.
 const lab = MAIS.find((i) => i.to === "/movement-lab");
-ok(!(lab?.match ?? []).includes("/comparador"), 'O Comparador saiu do `match` do Laboratório (é destino próprio)');
-ok(!!MAIS.find((i) => i.to === "/comparador"), "O Comparador precisa ser destino próprio no Mais");
+ok(!(lab?.match ?? []).includes("/comparador"), "O Comparador não pode ser `match` do Laboratório");
+ok(
+  !!lab?.children?.some((c) => c.to === "/comparador"),
+  "O Comparador precisa ser filho declarado do Laboratório Visual",
+);
 
-// Tutoriais e Suporte viraram uma porta só ("Ajuda"), e o rótulo tem que bater
-// com o título da página, senão o menu leva a um lugar com outro nome.
-const ajuda = MAIS.find((i) => i.label === "Ajuda");
-ok(!!ajuda, 'O Mais precisa do destino "Ajuda" (Tutoriais + Suporte fundidos)');
+const estudar = MAIS.find((i) => i.to === "/aprender");
+for (const rota of ["/special-groups", "/consultar"]) {
+  ok(
+    !!estudar?.children?.some((c) => c.to === rota),
+    `"${rota}" precisa ser filho de Estudar (saiu da lista de primeiro nível, não do produto)`,
+  );
+}
+
+// Tutoriais e Suporte seguem sendo uma porta só ("Ajuda"), agora no menu do
+// usuário. O rótulo tem que bater com o título da página, e o menu do rodapé
+// tem que desenhar essa lista, senão os dois destinos ficariam inalcançáveis.
+const ajuda = CONTA.find((i) => i.label === "Ajuda");
+ok(!!ajuda, 'A área de conta precisa do destino "Ajuda" (Tutoriais + Suporte fundidos)');
 ok((ajuda?.match ?? []).includes("/suporte"), '"Ajuda" deve acender também em /suporte');
 ok(ler("src/pages/Tutorial.tsx").includes('title="Ajuda"'), 'A página de /tutorial deve se chamar "Ajuda" (espelha o menu)');
+ok(!!CONTA.find((i) => i.to === "/account"), "A área de conta precisa de Configurações");
+const layout = ler("src/components/app/AppLayout.tsx");
+ok(
+  layout.includes("CONTA.map("),
+  "O menu do usuário precisa DESENHAR a lista CONTA (senão Ajuda e Configurações ficam sem porta)",
+);
+ok(
+  /item\.children[\s\S]{0,400}FilhoLateral/.test(layout),
+  "A lateral precisa desenhar os FILHOS do Mais (senão Comparador, Consultar e Grupos Especiais ficam órfãos)",
+);
 
 // O TÍTULO DA TELA repete o rótulo do menu. Clicar em "Meus alunos" e chegar
 // numa página chamada "Alunos" é a mesma dessincronização de vocabulário que o

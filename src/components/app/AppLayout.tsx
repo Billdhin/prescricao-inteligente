@@ -4,7 +4,7 @@ import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-d
 import { Bell, ChevronDown, CheckCheck, MoreHorizontal, Search, Eye, Plus } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
-import { PRIMARIOS, MAIS, BOTTOM, itemAtivo } from "@/components/app/nav";
+import { PRIMARIOS, MAIS, BOTTOM, CONTA, itemAtivo } from "@/components/app/nav";
 import { notificacoes } from "@/lib/notificacoes";
 import { contagensDoMenu, alunoParaPrevia } from "@/lib/gps/pendencias";
 import type { CicloCtx } from "@/lib/gps/proximoPasso";
@@ -409,10 +409,23 @@ function Sidebar() {
         >
           Mais
         </div>
+        {/* Três portas com os filhos indentados sob o pai. Nada sumiu: o que era
+            uma pilha de oito virou hierarquia, e a lateral volta a ser lida de
+            relance. O filho acende sozinho (aria-current nele), e o pai acende
+            como grupo que contém a página atual. */}
         <ul className="space-y-1 pb-4">
           {MAIS.map((item) => (
             <li key={item.to}>
               <ItemLateral item={item} ativo={itemAtivo(item, pathname)} />
+              {item.children && item.children.length > 0 && (
+                <ul className="mt-1 space-y-1 pl-5">
+                  {item.children.map((filho) => (
+                    <li key={filho.to}>
+                      <FilhoLateral filho={filho} ativo={pathname === filho.to} />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
@@ -454,6 +467,30 @@ function ItemLateral({
       <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
       <span className="min-w-0 flex-1 truncate">{item.short ?? item.label}</span>
       {badge && <BadgeLateral n={badge.n} tom={badge.tom} rotulo={item.short ?? item.label} />}
+    </Link>
+  );
+}
+
+/** Um filho da lateral: mesma linha, um degrau abaixo. Peso menor e ícone menor
+ *  para a hierarquia se ler de relance, e alvo de 40px, que continua confortável
+ *  num item secundário de desktop. */
+function FilhoLateral({
+  filho,
+  ativo,
+}: {
+  filho: { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
+  ativo: boolean;
+}) {
+  const Icon = filho.icon;
+  return (
+    <Link
+      to={filho.to}
+      aria-current={ativo ? "page" : undefined}
+      className="flex min-h-[40px] items-center gap-2.5 rounded-card px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      style={ativo ? { background: CASCA.ativoFundo, color: CASCA.ativoTinta } : { color: CASCA.tinta2 }}
+    >
+      <Icon className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
+      <span className="min-w-0 flex-1 truncate">{filho.label}</span>
     </Link>
   );
 }
@@ -579,16 +616,23 @@ function RodapeUsuario() {
           role="menu"
           className="absolute inset-x-3 bottom-[calc(100%-0.25rem)] z-50 rounded-card border border-border bg-surface p-1.5 shadow-overlay"
         >
-          <button
-            role="menuitem"
-            onClick={() => {
-              setAberto(false);
-              navigate("/account");
-            }}
-            className="flex min-h-[40px] w-full items-center rounded-full px-2.5 text-sm font-semibold text-ink hover:bg-surface-soft"
-          >
-            Configurações
-          </button>
+          {/* Conta e ajuda vivem aqui, e só aqui: era o segundo lugar de
+              "Configurações" (o primeiro era a lista de destinos) e é onde todo
+              mundo procura suporte. A lista vem de nav.ts para a busca global e o
+              check:menu enxergarem os mesmos itens que o menu desenha. */}
+          {CONTA.map((item) => (
+            <button
+              key={item.to}
+              role="menuitem"
+              onClick={() => {
+                setAberto(false);
+                navigate(item.to);
+              }}
+              className="flex min-h-[40px] w-full items-center rounded-full px-2.5 text-sm font-semibold text-ink hover:bg-surface-soft"
+            >
+              {item.label}
+            </button>
+          ))}
           <button
             role="menuitem"
             onClick={() => void sair()}
@@ -722,11 +766,14 @@ function MaisMenu() {
               <div className="px-2.5 pb-1 pt-1.5 text-2xs font-semibold uppercase tracking-wider text-ink-2">
                 Mais destinos
               </div>
+              {/* No mobile a folha lista os destinos e os FILHOS logo abaixo do pai,
+                  mais a conta e a ajuda: aqui não existe rodapé de usuário para
+                  abrigá-las, e destino sem porta é destino perdido. */}
               <ul className="space-y-0.5">
-                {MAIS.map((item) => {
-                  const ativo = itemAtivo(item, pathname);
+                {[...MAIS.flatMap((i) => [i, ...(i.children ?? []).map((c) => ({ ...c, filho: true }))]), ...CONTA].map((item: any) => {
+                  const ativo = item.filho ? pathname === item.to : itemAtivo(item, pathname);
                   return (
-                    <li key={item.to}>
+                    <li key={item.to} className={item.filho ? "pl-6" : undefined}>
                       <Link
                         to={item.to}
                         aria-current={ativo ? "page" : undefined}

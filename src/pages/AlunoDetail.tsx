@@ -30,6 +30,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, LinhaDeTokens, TokenRotulado, Eyebrow } from "@/components/ui/primitives";
+import { TokenDose } from "@/components/gps/TermoDoseInfo";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, prescricaoAplicadaEm } from "@/lib/store";
 import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
 import { ExecucaoPanel, PseBadge } from "@/components/treino/ExecucaoPanel";
@@ -1704,7 +1705,7 @@ function PlanoCard({
                       {tokens.length > 0 && (
                         <LinhaDeTokens>
                           {tokens.map((t) => (
-                            <TokenRotulado key={t.label} label={t.label} value={t.value} />
+                            <TokenDose key={t.label} label={t.label} value={t.value} />
                           ))}
                         </LinhaDeTokens>
                       )}

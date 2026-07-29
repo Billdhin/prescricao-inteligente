@@ -1,6 +1,7 @@
 import * as React from "react";
 import { TrendingUp, TrendingDown, Minus, Activity, MessageSquareQuote, AlertTriangle, ArrowUpRight, Check, X, Lock } from "lucide-react";
 import { Card, Pill, LinhaDeDose, LinhaDeTokens, TokenRotulado, buttonClasses } from "@/components/ui/primitives";
+import { TokenDose } from "@/components/gps/TermoDoseInfo";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
 import { exercises } from "@/data/exercises";
 import type { Macrociclo, PlanoTreino, VariavelTravavel } from "@/data/periodizacao";
@@ -305,9 +306,9 @@ export function ExecucaoPanel({
                 }
               >
                 <LinhaDeTokens>
-                  {e.cargaFeita != null && <TokenRotulado label="Carga" value={`${e.cargaFeita} kg`} />}
+                  {e.cargaFeita != null && <TokenDose label="Carga" value={`${e.cargaFeita} kg`} />}
                   {e.repsFeitas != null && <TokenRotulado label="Reps" value={e.repsFeitas} />}
-                  {e.rpe != null && <TokenRotulado label="RPE" value={e.rpe} />}
+                  {e.rpe != null && <TokenDose label="PSE" value={e.rpe} />}
                 </LinhaDeTokens>
               </LinhaDeDose>
             ))}

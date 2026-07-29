@@ -27,6 +27,8 @@ export type NavChild = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   acao?: boolean;
+  /** Uma linha dizendo o que se faz ali, igual ao pai. Obrigatória nos filhos do "Mais". */
+  hint?: string;
 };
 
 export type NavItem = {
@@ -100,14 +102,21 @@ export const PRIMARIOS: NavItem[] = [
 ];
 
 /**
- * O MENU "MAIS": os 8 destinos de referência e de conta. Não são rotina diária,
- * e por isso saíram da linha de frente; nenhum deles sumiu.
+ * O MENU "MAIS": TRÊS portas de referência, não oito itens soltos.
  *
- * O Comparador virou item de primeira classe (antes acendia como "Laboratório
- * Visual" por um `match`, o que fazia o menu apontar um lugar e a tela mostrar
- * outro). Tutoriais e Suporte viraram uma porta só, "Ajuda": a página de
- * tutoriais já leva ao suporte em dois pontos, e dois itens para o mesmo pedido
- * ("me ajuda") é escolha sem conteúdo.
+ * O fundador olhou a lateral e disse que a barra "não está boa" e que dava para
+ * suprimir item. Estava certo: oito destinos de referência empilhados na mesma
+ * altura visual dos cinco do dia a dia fazem a lateral parecer um índice, e o
+ * profissional lê treze linhas para achar uma.
+ *
+ * A reorganização não APAGA destino nenhum, ela agrupa pelo que a pessoa quer:
+ *   Estudar             leva também a Grupos Especiais e a Consultar
+ *   Laboratório Visual  leva também ao Comparador
+ *   Protocolos          continua sozinho, porque não é filho de ninguém
+ *
+ * "Ajuda" e "Configurações" saíram daqui para o menu do usuário, no rodapé da
+ * lateral, que é onde todo mundo procura conta e suporte. Configurações estava
+ * inclusive DUPLICADA: já existia no rodapé antes desta onda.
  */
 export const MAIS: NavItem[] = [
   {
@@ -117,24 +126,34 @@ export const MAIS: NavItem[] = [
     match: ["/aprender", "/tracks"],
     short: "Estudar",
     hint: "Disciplinas, casos e o mapa do conhecimento.",
+    children: [
+      {
+        to: "/special-groups",
+        label: "Grupos Especiais",
+        icon: HeartPulse,
+        hint: "O que muda na prescrição de cada condição.",
+      },
+      {
+        to: "/consultar",
+        label: "Consultar",
+        icon: Search,
+        hint: "Glossário e resposta rápida na hora da dúvida.",
+      },
+    ],
   },
   {
     to: "/movement-lab",
     label: "Laboratório Visual",
     icon: FlaskConical,
     hint: "Execução, músculos e erros de cada exercício.",
-  },
-  {
-    to: "/comparador",
-    label: "Comparador",
-    icon: Scale,
-    hint: "Dois exercícios lado a lado, com a evidência.",
-  },
-  {
-    to: "/special-groups",
-    label: "Grupos Especiais",
-    icon: HeartPulse,
-    hint: "O que muda na prescrição de cada condição.",
+    children: [
+      {
+        to: "/comparador",
+        label: "Comparador",
+        icon: Scale,
+        hint: "Dois exercícios lado a lado, com a evidência.",
+      },
+    ],
   },
   {
     to: "/protocols",
@@ -142,13 +161,15 @@ export const MAIS: NavItem[] = [
     icon: ClipboardList,
     hint: "Rotinas prontas com respaldo para adaptar.",
   },
-  {
-    to: "/consultar",
-    label: "Consultar",
-    icon: Search,
-    match: ["/consultar", "/library"],
-    hint: "Glossário e resposta rápida na hora da dúvida.",
-  },
+];
+
+/**
+ * CONTA E SUPORTE: o que mora no menu do usuário, no rodapé da lateral. Sai da
+ * lista de destinos porque não é lugar do dia a dia nem material de referência,
+ * e porque é ali que todo mundo procura. Declarado aqui, e não escrito à mão no
+ * AppLayout, para a busca global e o check:menu enxergarem os dois.
+ */
+export const CONTA: NavItem[] = [
   {
     to: "/tutorial",
     label: "Ajuda",
@@ -171,6 +192,7 @@ export const MAIS: NavItem[] = [
 export const NAV: NavSection[] = [
   { label: "Dia a dia", items: PRIMARIOS },
   { label: "Mais", items: MAIS },
+  { label: "Conta e ajuda", items: CONTA },
 ];
 
 /** Barra inferior do mobile: os MESMOS 5 primários, por identidade referencial. */
