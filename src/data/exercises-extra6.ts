@@ -701,6 +701,7 @@ export const extraExercises6: Exercise[] = [
       "Aeróbio de corpo todo sentado: pernas, tronco e braços na mesma remada, com impacto baixo e gasto alto.",
     anguloArticular: "Extensão sequencial de joelho, quadril e ombro",
     imagem: "/exercises/remo-ergometro.webp",
+    imagemAnalise: "/exercises/remo-ergometro-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadríceps", percentual: 62, papel: "primário" },
@@ -783,6 +784,7 @@ export const extraExercises6: Exercise[] = [
       "Subir degraus sem parar: gasto energético alto sem correr, com impacto menor que o da corrida.",
     anguloArticular: "Flexão e extensão de quadril e joelho em ciclo contínuo",
     imagem: "/exercises/escada-ergometrica.webp",
+    imagemAnalise: "/exercises/escada-ergometrica-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadríceps", percentual: 65, papel: "primário" },
@@ -864,6 +866,7 @@ export const extraExercises6: Exercise[] = [
       "Caminhar na rua ou no parque: a modalidade aeróbia com menor barreira de entrada e a única que não depende de academia nem de aparelho.",
     anguloArticular: "Ciclo de marcha em amplitude natural",
     imagem: "/exercises/caminhada-plana.webp",
+    imagemAnalise: "/exercises/caminhada-plana-analysis.webp",
     modalidade: "m-caminhada",
     ativacao: [
       { musculo: "Quadríceps", percentual: 40, papel: "primário" },
