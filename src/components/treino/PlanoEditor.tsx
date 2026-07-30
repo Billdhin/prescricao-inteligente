@@ -742,6 +742,17 @@ const CAMPOS_AEROBIO: CampoBloco[] = [
   { chave: "intensidade", rotulo: "Intensidade" },
   { chave: "recuperacao", rotulo: "Recuperação" },
 ];
+
+/** Formatos de cardio que o profissional escolhe (o campo `formato` é texto livre;
+ *  o motor gera "Contínuo", e aqui ele passa a poder trocar por um formato padrão).
+ *  A recuperação entre tiros só faz sentido fora do contínuo. */
+const FORMATOS_CARDIO = [
+  "Contínuo",
+  "Intervalado",
+  "Intervalado de alta intensidade (HIIT)",
+  "Fartlek",
+  "Circuito",
+] as const;
 const camposDoBloco = (b: BlocoSessao): CampoBloco[] => (b.tipo === "aerobio" ? CAMPOS_AEROBIO : CAMPOS_FORCA);
 
 /* ============================ Quadro da sessão (leitura) ============================ */
@@ -1206,6 +1217,20 @@ function BlocoRow({
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
         {camposDoBloco(bloco).map(({ chave, rotulo, confere }) => {
           const valor = (bloco[chave] as string | undefined) ?? "";
+          // O formato do cardio (contínuo, intervalado, HIIT...) vira um seletor: o
+          // campo é texto livre no modelo, mas escolher de uma lista evita digitar e
+          // padroniza o vocabulário. Continua aceitando um valor fora da lista (planos
+          // antigos ou algo digitado pelo motor) sem perdê-lo.
+          if (aerobio && chave === "formato") {
+            return (
+              <CampoFormatoInline
+                key={chave}
+                rotulo={rotulo}
+                valor={valor}
+                onChange={(v) => onChange({ ...bloco, formato: v })}
+              />
+            );
+          }
           const aviso = confere ? conferirFaixa(confere, valor, faixa, ctx.nivel) : null;
           return (
             <CampoInline
@@ -1281,6 +1306,34 @@ function CampoInline({
           {aviso}
         </p>
       )}
+    </div>
+  );
+}
+
+/** Formato do cardio: seletor com os formatos padrão. Preserva um valor fora da lista
+ *  (plano antigo ou texto do motor) mostrando-o como primeira opção, para não perdê-lo. */
+function CampoFormatoInline({ rotulo, valor, onChange }: { rotulo: string; valor: string; onChange: (v: string) => void }) {
+  const id = React.useId();
+  const foraDaLista = valor && !FORMATOS_CARDIO.includes(valor as (typeof FORMATOS_CARDIO)[number]);
+  return (
+    <div>
+      <label htmlFor={id} className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3">
+        {rotulo}
+      </label>
+      <select
+        id={id}
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        {!valor && <option value="">Escolher</option>}
+        {foraDaLista && <option value={valor}>{valor}</option>}
+        {FORMATOS_CARDIO.map((f) => (
+          <option key={f} value={f}>
+            {f}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
