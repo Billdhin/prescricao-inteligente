@@ -78,12 +78,20 @@ export function ProfessionalDashboard() {
     .filter((x) => x.motivos.length > 0)
     .sort((a, b) => Number(temAlertaVermelho(b.motivos)) - Number(temAlertaVermelho(a.motivos)));
 
+  // A rota do dia: as paradas do profissional, da mesma fonte única que alimenta
+  // o chip da lista de alunos e a Linha do cuidado. Sem fonte única, a rota
+  // contradiria a lista na mesma tela.
+  const rota = rotaDoDia(alunos, ctx);
   // Deduplicação na CAMADA DE APRESENTAÇÃO (motor intocado): cada aluno aparece
-  // uma vez, na sua pendência mais forte. Precedência: atenção > reativar > seus.
+  // uma vez, na sua pendência mais forte. Precedência: rota/atenção > reativar > seus.
   const atencaoIds = new Set(atencao.map((x) => x.aluno.id));
-  const alunosSemAtencao = alunos.filter((a) => !atencaoIds.has(a.id));
+  // Quem está numa parada da rota de hoje (inclui a etapa "liberar", que não gera
+  // aviso porque tem chip null) NÃO pode reaparecer em "Em dia": era a contradição
+  // de o mesmo aluno estar na rota e listado como em dia na mesma tela.
+  const rotaIds = new Set(rota.paradas.map((p) => p.aluno.id));
+  const alunosSemAtencao = alunos.filter((a) => !atencaoIds.has(a.id) && !rotaIds.has(a.id));
   const reativarIds = new Set(alunosParaReativar(alunosSemAtencao, execucoes).map((s) => s.aluno.id));
-  const seusAlunos = ativos.filter((a) => !atencaoIds.has(a.id) && !reativarIds.has(a.id));
+  const seusAlunos = ativos.filter((a) => !atencaoIds.has(a.id) && !rotaIds.has(a.id) && !reativarIds.has(a.id));
 
   // Ritual de segunda (parcial, sem backend): dois agregados deriváveis localmente.
   // Nada é inventado; se os dois forem zero, a linha some.
@@ -99,11 +107,6 @@ export function ProfessionalDashboard() {
     (soma, a) => (a.cobranca && statusEfetivo(a.cobranca) === "pendente" ? soma + a.cobranca.valorCentavos : soma),
     0,
   );
-
-  // A rota do dia: as paradas do profissional, da mesma fonte única que alimenta
-  // o chip da lista de alunos e a Linha do cuidado. Sem fonte única, a rota
-  // contradiria a lista na mesma tela.
-  const rota = rotaDoDia(alunos, { avaliacoes, prescricoes, planos, liberacoes, execucoes });
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">

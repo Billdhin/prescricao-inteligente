@@ -136,7 +136,16 @@ export function oQueIssoMuda(aluno: Aluno): OQueIssoMuda {
   /* ------------------------------- medicação ------------------------------ */
   const ativos = farmacosAtivos(aluno.farmacos);
   if (ativos.length) {
-    const perfil = { farmacos: ativos, naoInformado: false };
+    // Perfil COMPLETO para as funções de fármaco: o campo é `farmacosNaoInformado`
+    // (não `naoInformado`, que era ignorado em silêncio), e `grupos` precisa entrar
+    // porque `regraDoPerfil`/`monitoramentoDoPerfil` combinam a classe do fármaco com
+    // os grupos clínicos. Sem os grupos, esta coluna diria uma coisa e o gerador
+    // aplicaria outra no dia em que uma classe dependesse do grupo.
+    const perfil = {
+      farmacos: ativos,
+      grupos: [aluno.grupoEspecial, ...(aluno.condicoesAtencao ?? [])],
+      farmacosNaoInformado: false,
+    };
     const regraFarmaco = regraDoPerfil(perfil);
     const monitor = monitoramentoDoPerfil(perfil);
     for (const f of ativos) {

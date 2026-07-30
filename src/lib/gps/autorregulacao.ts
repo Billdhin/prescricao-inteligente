@@ -231,16 +231,29 @@ export function ajustarCarga(
   const cumpriuTopo = doMicro.every((e) => (e.repsFeitas ?? 0) >= faixa.max);
   // RPE alvo é o teto: acima dele (não "acima+1") já é esforço alto demais.
   const rpeAlto = doMicro.some((e) => (e.rpe ?? 0) > rpeAlvoMax);
+  // "Subir" exige esforço REGISTRADO e controlado. Sem PSE em nenhum set, o lado
+  // seguro é manter: antes, RPE ausente virava 0 e não contava como esforço alto,
+  // então a sugestão pendia para "subir" no escuro. Coerente com o resto do produto,
+  // que declara a ausência do dado em vez de assumir o melhor caso.
+  const rpeRegistrado = doMicro.some((e) => e.rpe != null);
   const abaixoDaBase = doMicro.some((e) => (e.repsFeitas ?? 0) < faixa.min);
 
   let base: AjusteCarga;
-  if (cumpriuTopo && !rpeAlto) {
+  if (cumpriuTopo && !rpeAlto && rpeRegistrado) {
     base = {
       cargaBase,
       proximaCarga: arredondarMeioKg(cargaBase * (1 + incrementoPct)),
       delta: incrementoPct,
       acao: "subir",
       motivo: `Cumpriu ${faixa.max} repetições em todas as séries com esforço controlado. A carga sobe pelo menor incremento (${fmtPct(incrementoPct)}).`,
+    };
+  } else if (cumpriuTopo && !rpeAlto && !rpeRegistrado) {
+    base = {
+      cargaBase,
+      proximaCarga: cargaBase,
+      delta: 0,
+      acao: "manter",
+      motivo: `Cumpriu ${faixa.max} repetições, mas sem o esforço percebido registrado. Mantém a carga e confirma o PSE do aluno antes de subir.`,
     };
   } else if (abaixoDaBase || rpeAlto) {
     base = {

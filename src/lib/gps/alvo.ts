@@ -389,8 +389,14 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
       const bpmMin = Math.round((pctFCmaxIv.min / 100) * fcMax);
       const bpmMax = Math.round((pctFCmaxIv.max / 100) * fcMax);
       alvo.zonaFC = `${bpmMin} a ${bpmMax} bpm`;
-      const pMin = Math.round(((bpmMin - fcRep) / fcr) * 100);
-      const pMax = Math.round(((bpmMax - fcRep) / fcr) * 100);
+      // Clamp em [0,100]: com FCrep medida alta (idoso destreinado, FCrep > ~64% da
+      // FCmáx), o limite inferior da zona em bpm pode cair ABAIXO da FCrep, e a fração
+      // de reserva equivalente ficaria negativa ("-16% da reserva" num documento
+      // assinável). A zona em bpm continua correta; só a conversão para reserva é presa
+      // na faixa possível.
+      const clampFCR = (p: number) => Math.max(0, Math.min(100, p));
+      const pMin = clampFCR(Math.round(((bpmMin - fcRep) / fcr) * 100));
+      const pMax = clampFCR(Math.round(((bpmMax - fcRep) / fcr) * 100));
       alvo.percentFCRAlvo = { min: Math.min(pMin, pMax), max: Math.max(pMin, pMax) };
     }
   }

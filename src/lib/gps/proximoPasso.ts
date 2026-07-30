@@ -105,6 +105,22 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
     //     tela bloqueada e o sistema parece quebrado em vez de cuidadoso.
     const pronto = prontidaoParaPrescrever(aluno, { avaliacoes: ctx.avaliacoes });
     const doPerfil = pronto.bloqueios.filter((b) => b.motivo !== "sem-avaliacao");
+    // Encaminhamento não é "perfil incompleto": o perfil pode estar completo e o
+    // que impede o treino é uma medida da avaliação (pressão muito elevada). Cai
+    // fora do ramo genérico, senão a frase vira "Não prescreva hoje para poder
+    // prescrever", o chip mente "Perfil incompleto" e o botão "Ver o semáforo"
+    // abre o perfil. Aqui o passo aponta para o semáforo, que é onde a decisão
+    // clínica de encaminhar aparece.
+    const encaminhamento = doPerfil.find((b) => b.motivo === "encaminhamento");
+    if (encaminhamento) {
+      return {
+        etapa: "planejar",
+        tone: "warning",
+        frase: "A última avaliação pede encaminhamento antes de treinar. Confira no semáforo.",
+        cta: { label: "Ver o semáforo", kind: "liberar", to: `/alunos/${aluno.id}?aba=semaforo` },
+        chip: { label: "Encaminhar", tone: "warning" },
+      };
+    }
     if (doPerfil.length > 0) {
       const primeiro = doPerfil[0];
       return {

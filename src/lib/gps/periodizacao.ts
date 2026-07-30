@@ -237,19 +237,38 @@ function selecionarExercicios(
     excluir: 0,
   };
 
+  // Baseline neutro: sem tag ativa, todos empatam e a ordem do catálogo decide.
+  const NEUTRO = 2.5;
   const avaliados = pool.map((e) => {
-    let nota = 2.5; // sem restrição ativa, todos empatam (ordem do catálogo decide)
+    // Segurança PRIMEIRO: o rebaixamento mais estrito entre as tags domina (min),
+    // e é o que exclui/penaliza. A preferência do avaliador é registrada à parte e
+    // só conta quando NADA rebaixou o exercício: um "preferir" nunca sobe algo que
+    // outra restrição penalizou. Antes, `nota` começava em 2.5 e o laço só baixava,
+    // então "preferir" (peso 3) nunca era aplicado e a preferência prometida no
+    // docstring era código morto (empatava com o neutro).
+    let rebaixamento = Infinity;
+    let prefere = false;
     let motivo = "";
     for (const sel of ativas) {
       const avaliar = EFEITO_POR_TAG[sel.tag];
       if (!avaliar) continue;
       const efeito = avaliar(e, sel);
+      if (efeito.acao === "preferir") {
+        prefere = true;
+        continue;
+      }
       const peso = PESO_ACAO[efeito.acao];
-      if (peso < nota) {
-        nota = peso;
+      if (peso < rebaixamento) {
+        rebaixamento = peso;
         motivo = `${rotuloRestricao(sel.tag)}: ${efeito.motivo}`;
       }
     }
+    const nota =
+      rebaixamento < NEUTRO
+        ? rebaixamento // adaptar/penalizar/excluir dominam
+        : prefere
+          ? PESO_ACAO.preferir // sem rebaixamento e com preferência: sobe acima do neutro
+          : NEUTRO;
     return { e, nota, motivo };
   });
 

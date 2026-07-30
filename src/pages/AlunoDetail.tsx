@@ -322,22 +322,27 @@ export function AlunoDetail() {
   const [convidar, setConvidar] = React.useState(false);
   const [params, setParams] = useSearchParams();
 
-  // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação; ?aba= já foi
-  // consumido no estado inicial. Ambos os params são limpos aqui.
+  // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação; ?aba= troca
+  // a aba. O estado inicial já consome ambos no primeiro paint, mas o efeito depende de
+  // `params` (não de `[]`) por um caso real: clicar numa notificação do PRÓPRIO aluno
+  // pelo sino, já estando na ficha dele. O React Router reusa a instância montada, então
+  // um efeito só-de-mount ignorava a nova query e o clique parecia não fazer nada. Ambos
+  // os params são limpos depois de aplicados.
   React.useEffect(() => {
     let mudou = false;
+    const abaParam = params.get("aba");
+    if (abaParam) {
+      if (ABA_IDS.has(abaParam)) setAba(abaParam as Aba);
+      params.delete("aba");
+      mudou = true;
+    }
     if (params.get("avaliar") === "1") {
       setAvaliar(true);
       params.delete("avaliar");
       mudou = true;
     }
-    if (params.get("aba")) {
-      params.delete("aba");
-      mudou = true;
-    }
     if (mudou) setParams(params, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [params, setParams]);
 
   const aluno = alunos.find((a) => a.id === id);
   if (!aluno) {
