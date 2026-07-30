@@ -126,6 +126,7 @@ export const extraExercises6: Exercise[] = [
       "Peitoral sem participação do tríceps: a máquina guia a trajetória e o cotovelo quase não se move.",
     anguloArticular: "Adução horizontal de ombro com cotovelo fixo",
     imagem: "/exercises/crucifixo-maquina.webp",
+    imagemAnalise: "/exercises/crucifixo-maquina-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 72, papel: "primário" },
@@ -206,6 +207,7 @@ export const extraExercises6: Exercise[] = [
       "Cabos cruzando à frente do corpo: tensão constante do começo ao fim, o que nem halter nem barra conseguem entregar.",
     anguloArticular: "Adução horizontal de ombro com cotovelo em leve flexão",
     imagem: "/exercises/crossover-polia.webp",
+    imagemAnalise: "/exercises/crossover-polia-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 70, papel: "primário" },
@@ -287,6 +289,7 @@ export const extraExercises6: Exercise[] = [
       "Flexão com as mãos numa bancada: o mesmo padrão de empurrar sem precisar descer ao chão nem levantar dele.",
     anguloArticular: "Cotovelo a cerca de 45 graus do tronco, inclinação conforme a altura do apoio",
     imagem: "/exercises/flexao-apoio-elevado.webp",
+    imagemAnalise: "/exercises/flexao-apoio-elevado-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 60, papel: "primário" },
