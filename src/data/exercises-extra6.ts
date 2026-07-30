@@ -451,6 +451,7 @@ export const extraExercises6: Exercise[] = [
       "Braços quase estendidos puxando de cima para baixo: o único exercício de dorsal do catálogo sem participação do bíceps.",
     anguloArticular: "Extensão de ombro com cotovelo em leve flexão fixa",
     imagem: "/exercises/pullover-polia.webp",
+    imagemAnalise: "/exercises/pullover-polia-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 68, papel: "primário" },
@@ -531,6 +532,7 @@ export const extraExercises6: Exercise[] = [
       "Remada com a barra presa num ponto fixo e o tronco apoiado: carga alta de costas com menos exigência da lombar do que a remada curvada.",
     anguloArticular: "Extensão de ombro com tronco inclinado e apoiado",
     imagem: "/exercises/remada-cavalinho.webp",
+    imagemAnalise: "/exercises/remada-cavalinho-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 74, papel: "primário" },
@@ -613,6 +615,7 @@ export const extraExercises6: Exercise[] = [
       "Tirar a barra do chão até ficar em pé: o padrão de dobradiça com maior carga possível, e o de maior custo técnico do catálogo.",
     anguloArticular: "Extensão de quadril e joelho a partir da flexão, coluna neutra",
     imagem: "/exercises/levantamento-terra.webp",
+    imagemAnalise: "/exercises/levantamento-terra-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Glúteo máximo", percentual: 78, papel: "primário" },
