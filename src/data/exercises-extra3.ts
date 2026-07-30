@@ -627,6 +627,7 @@ export const extraExercises3: Exercise[] = [
       "A prancha com as mãos num banco ou numa bancada: mesmo trabalho de core, sem precisar descer ao chão nem levantar dele.",
     anguloArticular: "Coluna neutra, tronco inclinado conforme a altura do apoio",
     imagem: "/exercises/prancha-apoio-banco.webp",
+    imagemAnalise: "/exercises/prancha-apoio-banco-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Transverso do abdome", percentual: 45, papel: "primário" },
@@ -708,6 +709,7 @@ export const extraExercises3: Exercise[] = [
       "Empurrar a polia à frente do peito enquanto ela puxa para o lado: o core trabalha impedindo a rotação, em pé e sem carga sobre a coluna.",
     anguloArticular: "Coluna neutra, ombros a 90 graus na extensão dos braços",
     imagem: "/exercises/pallof-press-polia.webp",
+    imagemAnalise: "/exercises/pallof-press-polia-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Oblíquos", percentual: 55, papel: "primário" },
@@ -790,6 +792,7 @@ export const extraExercises3: Exercise[] = [
       "O mesmo padrão antirrotação da polia, com um elástico preso numa maçaneta: core em pé para quem treina em casa.",
     anguloArticular: "Coluna neutra, ombros a 90 graus na extensão dos braços",
     imagem: "/exercises/pallof-press-elastico.webp",
+    imagemAnalise: "/exercises/pallof-press-elastico-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Oblíquos", percentual: 48, papel: "primário" },
