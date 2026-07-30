@@ -287,6 +287,7 @@ export const extraExercises7: Exercise[] = [
     resumoPratico:
       "Só juntar as escápulas, sem dobrar o cotovelo: separa o movimento de escápula do movimento de braço, que é o que a remada mistura.",
     anguloArticular: "Retração escapular pura, cotovelo estendido",
+imagem: "/exercises/retracao-escapular-polia.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Trapézio médio", percentual: 65, papel: "primário" },
@@ -367,6 +368,7 @@ export const extraExercises7: Exercise[] = [
     resumoPratico:
       "Puxar a ponta do pé para cima contra o elástico: o tibial anterior é o antagonista da panturrilha e estava em zero no catálogo.",
     anguloArticular: "Dorsiflexão de tornozelo em amplitude completa",
+imagem: "/exercises/dorsiflexao-elastico.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Tibial anterior", percentual: 65, papel: "primário" },
@@ -528,6 +530,7 @@ export const extraExercises7: Exercise[] = [
     resumoPratico:
       "Antebraço apoiado no banco, só o punho se move: os dois grupos do antebraço estavam em zero no catálogo.",
     anguloArticular: "Flexão e extensão de punho em amplitude completa",
+imagem: "/exercises/punho-halter.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Flexores do punho", percentual: 65, papel: "primário" },
