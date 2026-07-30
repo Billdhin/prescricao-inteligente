@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Lock, SlidersHorizontal, Sparkles, FlaskConical, GitCompare } from "lucide-react";
+import { ArrowRight, Check, Lock, SlidersHorizontal, FlaskConical, GitCompare } from "lucide-react";
 import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { MuscleThumb, activationFromExercise } from "@/components/anatomy/MuscleMap";
 import { exercises } from "@/data/exercises";
@@ -56,11 +56,6 @@ export function MovementLabList() {
         icon={<FlaskConical className="h-3 w-3" />}
         title="Laboratório Visual"
         subtitle="Compare a execução do movimento com uma análise biomecânica lado a lado. Explore hotspots interativos para aprofundar da observação prática à evidência."
-        right={
-          <Link to="/comparador" className={buttonClasses("secondary")}>
-            <GitCompare className="h-4 w-4" /> Comparar exercícios
-          </Link>
-        }
       />
 
       {/* Filtros */}
@@ -174,10 +169,7 @@ export function MovementLabList() {
                   <p className="mt-3 line-clamp-2 text-sm text-ink-2">{e.resumoPratico}</p>
                   <Link
                     to={`/movement-lab/${e.slug}`}
-                    className={cn(
-                      "mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-control font-semibold text-white",
-                      "gradient-brand hover:opacity-95",
-                    )}
+                    className={cn(buttonClasses("primary"), "mt-4 w-full")}
                   >
                     Analisar movimento <ArrowRight className="h-4 w-4" />
                   </Link>

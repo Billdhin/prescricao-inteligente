@@ -1881,7 +1881,9 @@ function Results({
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                <button onClick={() => onJustify(best)} className={buttonClasses("primary", "sm")}>
+                {/* Secundário: o primário escuro da tela é "Salvar no perfil". A
+                    justificativa é exploração, não a âncora, então não compete. */}
+                <button onClick={() => onJustify(best)} className={buttonClasses("secondary", "sm")}>
                   <Info className="h-4 w-4" /> Ver justificativa
                 </button>
                 <Link to={`/movement-lab/${best.exercise.slug}`} className={buttonClasses("outline", "sm")}>

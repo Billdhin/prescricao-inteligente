@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   Sparkles,
   Star,
-  Repeat2,
   Navigation,
   CheckCircle2,
   ShieldAlert,
@@ -239,9 +238,8 @@ function Detail({ exercise }: { exercise: Exercise }) {
             {isFav ? <CheckCircle2 className="h-4 w-4" /> : <Star className="h-4 w-4" />}
             {isFav ? "Favorito salvo" : "Salvar favorito"}
           </button>
-          <Link to={`/comparador?base=${exercise.slug}`} className={buttonClasses("outline")}>
-            <Repeat2 className="h-4 w-4" /> Comparar
-          </Link>
+          {/* "Comparar" vive na aba Comparar desta página (comparação inline) e no
+              link para o comparador completo lá dentro; não repetir aqui no cabeçalho. */}
           <Link to="/gps" className={buttonClasses("primary")}>
             <Navigation className="h-4 w-4" /> Usar no Prescrever
           </Link>

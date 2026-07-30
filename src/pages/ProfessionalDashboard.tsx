@@ -122,7 +122,8 @@ export function ProfessionalDashboard() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to="/alunos?novo=1" className={buttonClasses("secondary")}>
+          {/* Só no mobile: a topbar já traz "Cadastrar aluno" a partir de sm. */}
+          <Link to="/alunos?novo=1" className={cn(buttonClasses("secondary"), "sm:hidden")}>
             <UserPlus className="h-4 w-4" /> Cadastrar aluno
           </Link>
           {/* O início do trilho no topo: avaliar é a etapa 1 e o hub /assessments já

@@ -169,92 +169,11 @@ function AlunoTabs({ aba, onAba }: { aba: Aba; onAba: (a: Aba) => void }) {
   );
 }
 
-/**
- * CTA primário roteado pelo ciclo (proximoPasso), sempre com o prefixo
- * "Próximo passo:". Mesmo mapa de destino do CtaPasso da Linha do cuidado:
- * avaliar/reavaliar abrem o modal de avaliação, planejar vai ao Prescrever treino,
- * liberar ao Semáforo, acompanhar ancora na execução. Os CTAs diretos dos cards
- * (Montar treino, Nova prescrição) continuam existindo (decisão travada 12).
- */
-function CtaProximoPasso({
-  aluno,
-  passo,
-  onAvaliar,
-  onAcompanhar,
-  onLiberar,
-  variant = "primary",
-  size,
-  eyebrow = false,
-}: {
-  aluno: Aluno;
-  passo: ProximoPasso;
-  onAvaliar: () => void;
-  onAcompanhar: () => void;
-  /** liberar abre a aba Semáforo do próprio aluno (nunca sai para /semaforo) */
-  onLiberar: () => void;
-  variant?: Parameters<typeof buttonClasses>[0];
-  size?: Parameters<typeof buttonClasses>[1];
-  eyebrow?: boolean;
-}) {
-  const cls = buttonClasses(variant, size);
-  // O rótulo carrega só a ação; o contexto "Próximo passo" vira eyebrow acima do
-  // botão (evita rótulo longo que estoura o nowrap a 390px).
-  const label = (
-    <>
-      {passo.cta.label} <ArrowRight className="h-4 w-4" />
-    </>
-  );
-  let botao: React.ReactNode;
-  if (passo.cta.to) {
-    // Destino explícito do passo manda em tudo: é por ele que "planejar" leva ao
-    // PERFIL quando é o perfil que trava, em vez de levar a uma tela bloqueada.
-    botao = (
-      <Link to={passo.cta.to} className={cls}>
-        {label}
-      </Link>
-    );
-  } else {
-    switch (passo.cta.kind) {
-    case "planejar":
-      botao = (
-        <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cls}>
-          {label}
-        </Link>
-      );
-      break;
-    case "liberar":
-      botao = (
-        <button onClick={onLiberar} className={cls}>
-          {label}
-        </button>
-      );
-      break;
-    case "avaliar":
-    case "reavaliar":
-      botao = (
-        <button onClick={onAvaliar} className={cls}>
-          {label}
-        </button>
-      );
-      break;
-    case "acompanhar":
-    default:
-      botao = (
-        <button onClick={onAcompanhar} className={cls}>
-          {label}
-        </button>
-      );
-      break;
-    }
-  }
-  if (!eyebrow) return <>{botao}</>;
-  return (
-    <div className="flex flex-col gap-1">
-      <Eyebrow>Próximo passo</Eyebrow>
-      {botao}
-    </div>
-  );
-}
+// O CTA primário do próximo passo vive numa fonte só: a Linha do cuidado
+// (`LinhaDoCuidado`/`CtaPasso`), que é a âncora do ciclo. O antigo `CtaProximoPasso`
+// duplicava esse primário no cabeçalho e no banner de recém-criado, empilhando duas
+// ações escuras idênticas na mesma dobra. Removido: o cabeçalho fica com Editar,
+// Convidar e Avaliar; o banner só contextualiza.
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
@@ -404,7 +323,8 @@ export function AlunoDetail() {
             <span className="font-semibold">{aluno.nome} cadastrado(a).</span> Comece pela avaliação
             inicial para acompanhar a evolução; ela abre o resto do ciclo de cuidado.
           </p>
-          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={() => setAvaliar(true)} onAcompanhar={irParaExecucao} onLiberar={irParaSemaforo} size="sm" />
+          {/* Sem CTA próprio: a ação "Registrar avaliação" é o primário da Linha do
+              cuidado logo abaixo. O banner só dá as boas-vindas e aponta o começo. */}
         </Card>
       )}
 
@@ -618,7 +538,7 @@ export function AlunoDetail() {
 
             <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
 
-            <PlanoCard aluno={aluno} planos={planosDoAluno} execucoes={execucoesDoAluno} podeTreino={podeTreino} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} onIrParaSemaforo={irParaSemaforo} />
+            <PlanoCard aluno={aluno} planos={planosDoAluno} execucoes={execucoesDoAluno} podeTreino={podeTreino} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} />
 
             <div id="execucao-card" className="scroll-mt-24">
               <ExecucaoPanel
@@ -637,20 +557,22 @@ export function AlunoDetail() {
           <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="font-display text-lg font-bold text-ink">Prescrições</h2>
-              {/* Com plano ativo, a prescrição do exercício é o "personalizar o treino do
-                  dia" (entra na sessão da semana). Sem plano, é a prescrição avulsa. */}
-              {podeTreino.ok ? (
-                <Link
-                  to={planoAtivo ? `/gps?aluno=${aluno.id}&modo=dia` : `/gps?aluno=${aluno.id}`}
-                  className="text-sm font-semibold text-primary hover:underline"
-                >
-                  {planoAtivo ? "Personalizar o treino do dia" : "Nova prescrição"}
-                </Link>
-              ) : (
-                <span className="text-sm font-semibold text-ink-3" aria-disabled>
-                  {planoAtivo ? "Personalizar o treino do dia" : "Nova prescrição"}
-                </span>
-              )}
+              {/* Sem plano ativo, a porta daqui é a prescrição avulsa ("Nova prescrição").
+                  COM plano, "personalizar o treino do dia" vive só no card do plano acima,
+                  para não oferecer a mesma ação duas vezes na mesma aba. */}
+              {!planoAtivo &&
+                (podeTreino.ok ? (
+                  <Link
+                    to={`/gps?aluno=${aluno.id}`}
+                    className="text-sm font-semibold text-primary hover:underline"
+                  >
+                    Nova prescrição
+                  </Link>
+                ) : (
+                  <span className="text-sm font-semibold text-ink-3" aria-disabled>
+                    Nova prescrição
+                  </span>
+                ))}
             </div>
             {/* Gate duro: o que falta para prescrever, com o atalho de cada item. */}
             {!podeTreino.ok && (
@@ -660,12 +582,15 @@ export function AlunoDetail() {
               podeTreino.ok && (
                 <div className="rounded-xl border border-dashed border-border p-4 text-center">
                   <p className="text-sm text-ink-2">Sem prescrição ainda.</p>
-                  <Link
-                    to={planoAtivo ? `/gps?aluno=${aluno.id}&modo=dia` : `/gps?aluno=${aluno.id}`}
-                    className={cn(buttonClasses("secondary", "sm"), "mt-3")}
-                  >
-                    <Navigation className="h-4 w-4" /> {planoAtivo ? "Personalizar o treino do dia" : "Prescrever agora"}
-                  </Link>
+                  {/* CTA só sem plano: com plano, "personalizar o treino do dia" é do card do plano. */}
+                  {!planoAtivo && (
+                    <Link
+                      to={`/gps?aluno=${aluno.id}`}
+                      className={cn(buttonClasses("secondary", "sm"), "mt-3")}
+                    >
+                      <Navigation className="h-4 w-4" /> Prescrever agora
+                    </Link>
+                  )}
                 </div>
               )
             ) : (
@@ -958,10 +883,14 @@ function AlunoHeader({
           <button onClick={onConvidar} className={buttonClasses("outline")}>
             <Smartphone className="h-4 w-4" /> Convidar para o app
           </button>
-          <button onClick={onAvaliar} className={buttonClasses("secondary")}>
-            <CalendarPlus className="h-4 w-4" /> {temAvaliacao ? "Reavaliar" : "Registrar avaliação"}
-          </button>
-          <CtaProximoPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} onLiberar={onLiberar} eyebrow />
+          {/* Avaliar/Reavaliar como affordance permanente do cabeçalho, MENOS quando o
+              próximo passo já é avaliar/reavaliar: aí a ação é o primário da Linha do
+              cuidado e repetir aqui seria a mesma ação duas vezes na mesma dobra. */}
+          {passo.cta.kind !== "avaliar" && passo.cta.kind !== "reavaliar" && (
+            <button onClick={onAvaliar} className={buttonClasses("secondary")}>
+              <CalendarPlus className="h-4 w-4" /> {temAvaliacao ? "Reavaliar" : "Registrar avaliação"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -1119,14 +1048,10 @@ function AppDoAlunoPanel({
                 </button>
               </>
             ) : (
-              <>
-                <p className="mt-1 text-sm text-ink-2">
-                  O acesso online ainda não está ligado neste aparelho. A prévia mostra exatamente o que o aluno verá.
-                </p>
-                <Link to={`/alunos/${aluno.id}/preview`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
-                  <Smartphone className="h-4 w-4" /> Ver a prévia
-                </Link>
-              </>
+              <p className="mt-1 text-sm text-ink-2">
+                O acesso online ainda não está ligado neste aparelho. Use a prévia ao lado para ver
+                exatamente o que o aluno verá.
+              </p>
             )}
           </div>
         </div>
@@ -1596,7 +1521,6 @@ function PlanoCard({
   podeTreino,
   prontidao,
   onAvaliar,
-  onIrParaSemaforo,
 }: {
   aluno: Aluno;
   planos: PlanoTreino[];
@@ -1607,8 +1531,6 @@ function PlanoCard({
   /** o detalhe do que falta, para o card explicar em vez de só desabilitar */
   prontidao: Prontidao;
   onAvaliar: () => void;
-  /** abre a aba Semáforo do aluno (nunca sai para /semaforo) */
-  onIrParaSemaforo: () => void;
 }) {
   const ativo = planos.find((p) => p.status === "ativo");
   const arquivados = planos.filter((p) => p.status === "arquivado");
@@ -1805,19 +1727,15 @@ function PlanoCard({
           >
             <CalendarRange className="h-4 w-4" /> Abrir e editar o plano
           </Link>
-          {/* Exceção diária: personalizar a sessão desta semana sem remontar o treino. */}
+          {/* Exceção diária: personalizar a sessão desta semana sem remontar o treino.
+              É o ÚNICO ponto de entrada para "personalizar o treino do dia" (o card
+              Prescrições não repete). O semáforo tem o card-resumo próprio ao lado. */}
           <Link
             to={`/gps?aluno=${aluno.id}&modo=dia`}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
           >
             <Navigation className="h-4 w-4" /> Personalizar o treino do dia
           </Link>
-          <button
-            onClick={onIrParaSemaforo}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 hover:text-ink"
-          >
-            <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
-          </button>
         </div>
       </div>
 
@@ -2220,7 +2138,7 @@ function VisaoNoApp({
         </>
       )}
       <button onClick={onVer} className={cn(buttonClasses("secondary", "sm"), "mt-4 self-start")}>
-        <Smartphone className="h-4 w-4" /> Ver o app do aluno
+        <Smartphone className="h-4 w-4" /> Ver como o aluno vê
       </button>
     </Card>
   );

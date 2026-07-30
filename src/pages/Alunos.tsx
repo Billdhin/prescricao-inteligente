@@ -127,7 +127,10 @@ export function Alunos() {
             className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary"
           />
         </div>
-        <button onClick={() => setNovo(true)} className={buttonClasses("primary")}>
+        {/* Só no mobile: a topbar já mostra "Cadastrar aluno" a partir de sm, e dois
+            primários escuros idênticos na mesma dobra eram ruído. Abaixo de sm a topbar
+            esconde o dela, então este cobre o vão. */}
+        <button onClick={() => setNovo(true)} className={cn(buttonClasses("primary"), "sm:hidden")}>
           <UserPlus className="h-4 w-4" /> Cadastrar aluno
         </button>
       </div>
@@ -208,16 +211,6 @@ export function Alunos() {
           }}
         />
       )}
-    </div>
-  );
-}
-
-function ResumoItem({ valor, rotulo, tone = "neutro" }: { valor: number; rotulo: string; tone?: "neutro" | "warning" | "cta" }) {
-  const cor = tone === "warning" ? "text-warning" : tone === "cta" ? "text-[color:var(--cta-text)]" : "text-ink";
-  return (
-    <div className="flex items-baseline gap-1.5">
-      <span className={cn("tabular font-display text-xl font-bold", cor)}>{valor}</span>
-      <span className="text-sm text-ink-2">{rotulo}</span>
     </div>
   );
 }

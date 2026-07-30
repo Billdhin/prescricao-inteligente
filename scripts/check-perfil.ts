@@ -245,9 +245,14 @@ const feita = (a: Aluno, id: string) => completudeAluno(a).secoes.find((s) => s.
   //     mostra o rótulo certo ("Abrir Saúde e restrições") apontando para a tela de
   //     prescrição bloqueada. Foi exatamente o que aconteceu, e em dois dos três
   //     lugares que desenham esse botão.
+  // AlunoDetail NÃO desenha mais o CTA do próximo passo por conta própria: ele
+  // renderiza sempre a `LinhaDoCuidado` (nesta lista), que é a âncora única do ciclo
+  // e honra `passo.cta.to`. Antes havia um `CtaProximoPasso` duplicado no cabeçalho e
+  // no banner, dois primários escuros idênticos na mesma dobra; removidos. O destino
+  // explícito continua garantido pela Linha do cuidado, que é montada sem condição na
+  // ficha do aluno.
   const desenhamCta = [
     "src/pages/ProfessionalDashboard.tsx",
-    "src/pages/AlunoDetail.tsx",
     "src/pages/Alunos.tsx",
     "src/components/treino/LinhaDoCuidado.tsx",
   ];
