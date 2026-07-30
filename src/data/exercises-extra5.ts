@@ -207,6 +207,7 @@ export const extraExercises5: Exercise[] = [
       "Fechar as pernas contra a resistência da máquina: o único trabalho direto de adutor do catálogo, com amplitude controlada e trajetória guiada.",
     anguloArticular: "Adução de quadril em amplitude regulável",
     imagem: "/exercises/cadeira-adutora.webp",
+    imagemAnalise: "/exercises/cadeira-adutora-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Adutores", percentual: 72, papel: "primário" },
