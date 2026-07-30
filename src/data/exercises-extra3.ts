@@ -379,6 +379,7 @@ export const extraExercises3: Exercise[] = [
       "Abrir o joelho de cima com os pés juntos: a entrada mais simples de glúteo médio e rotadores externos, sem carga sobre a coluna nem sobre o joelho.",
     anguloArticular: "Quadril e joelho a cerca de 45 e 90 graus",
     imagem: "/exercises/clam-shell.webp",
+    imagemAnalise: "/exercises/clam-shell-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Glúteo médio", percentual: 40, papel: "primário" },
@@ -460,6 +461,7 @@ export const extraExercises3: Exercise[] = [
       "Passos laterais contra a resistência do elástico, em pé: glúteo médio já na posição em que ele é usado de verdade, que é sustentando a bacia sobre uma perna.",
     anguloArticular: "Quadril e joelho em semiflexão",
     imagem: "/exercises/caminhada-lateral-elastico.webp",
+    imagemAnalise: "/exercises/caminhada-lateral-elastico-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Glúteo médio", percentual: 38, papel: "primário" },
@@ -542,6 +544,7 @@ export const extraExercises3: Exercise[] = [
       "Sustentar o corpo apoiado num antebraço e no lado do pé: o único exercício do catálogo que treina o core contra a flexão lateral, junto com o glúteo médio.",
     anguloArticular: "Coluna neutra, ombro a 90 graus de apoio",
     imagem: "/exercises/prancha-lateral.webp",
+    imagemAnalise: "/exercises/prancha-lateral-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Oblíquos", percentual: 70, papel: "primário" },
