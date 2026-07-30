@@ -948,6 +948,7 @@ export const extraExercises6: Exercise[] = [
       "Correr no lugar dentro da água: o padrão da corrida sem nenhuma aterrissagem, com a água oferecendo resistência em todas as direções.",
     anguloArticular: "Ciclo de corrida em amplitude reduzida pela resistência da água",
     imagem: "/exercises/corrida-aquatica.webp",
+    imagemAnalise: "/exercises/corrida-aquatica-analysis.webp",
     modalidade: "m-hidro",
     ativacao: [
       { musculo: "Quadríceps", percentual: 50, papel: "primário" },
@@ -1029,6 +1030,7 @@ export const extraExercises6: Exercise[] = [
       "Bicicleta com encosto e assento largo: para quem não tolera ficar sentado sem apoio de tronco por 20 minutos.",
     anguloArticular: "Ciclo de pedalada com tronco apoiado",
     imagem: "/exercises/bicicleta-reclinada.webp",
+    imagemAnalise: "/exercises/bicicleta-reclinada-analysis.webp",
     modalidade: "m-bike",
     ativacao: [
       { musculo: "Quadríceps", percentual: 58, papel: "primário" },
@@ -1111,6 +1113,7 @@ export const extraExercises6: Exercise[] = [
       "Ajoelhado sob a polia, enrolando o tronco: o único exercício de abdômen do catálogo com carga que progride placa a placa.",
     anguloArticular: "Flexão de coluna com quadril estável",
     imagem: "/exercises/abdominal-polia-alta.webp",
+    imagemAnalise: "/exercises/abdominal-polia-alta-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Reto abdominal", percentual: 72, papel: "primário" },
