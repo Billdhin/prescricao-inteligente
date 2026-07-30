@@ -23,6 +23,7 @@ import {
   Lock,
   Route as RouteIcon,
   ShieldCheck,
+  Check,
   CheckCircle2,
   XCircle,
   CalendarRange,
@@ -59,7 +60,7 @@ import type { Aluno, Prescricao, Liberacao, Avaliacao } from "@/data/alunos";
 import type { SessaoFeedback, Execucao } from "@/data/execucao";
 import { nomeDoBloco, tokensDoBloco } from "@/components/student/blocoRegistro";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
-import { ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
+import { ROTULO_STATUS_COBRANCA, formatBRL, statusEfetivo } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { getModelo, rotuloMeso, semanaAtual, mesocicloAtual, proximaReavaliacao, sessoesDeHoje, sessaoDeHojeIndex, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
@@ -690,12 +691,13 @@ export function AlunoDetail() {
             <LinhaDoTempo avaliacoes={avals} planos={planosDoAluno} feedbacks={feedbacksDoAluno} liberacoes={libsAlunoDesc} />
           </div>
           <div className="space-y-4">
-            <VisaoTreino plano={planoAtivo} alunoId={aluno.id} onVer={() => setAba("treino")} podeTreino={podeTreino} />
-            <VisaoAvaliacao avals={avals} reav={reav} vencida={reavaliacaoVencida} onVer={() => setAba("avaliacoes")} onAvaliar={() => setAvaliar(true)} />
+            <VisaoTreino aluno={aluno} plano={planoAtivo} alunoId={aluno.id} onVer={() => setAba("treino")} podeTreino={podeTreino} />
+            <VisaoAvaliacao aluno={aluno} avals={avals} reav={reav} vencida={reavaliacaoVencida} onVer={() => setAba("avaliacoes")} onAvaliar={() => setAvaliar(true)} />
             <VisaoNoApp
               aluno={aluno}
               execucoes={execucoesDoAluno}
               feedbacks={feedbacksDoAluno}
+              metaSemanal={planoAtivo?.frequenciaSemanal}
               onVer={() => navigate(`/alunos/${aluno.id}/preview`)}
             />
           </div>
@@ -2197,12 +2199,49 @@ function VisaoSemaforo({
 }
 
 /** 2) Treino ativo: plano, fase, sessões da semana e o atalho para o plano. */
+/** Próximo vencimento (DD/MM) a partir do dia do mês, para a linha de mensalidade. */
+function proximoVencimento(dia: number): string {
+  const hoje = new Date();
+  let d = new Date(hoje.getFullYear(), hoje.getMonth(), dia);
+  if (d.getTime() < hoje.setHours(0, 0, 0, 0)) d = new Date(hoje.getFullYear(), hoje.getMonth() + 1, dia);
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(d);
+}
+
+/** Linha de mensalidade do card "Estado atual": selo verde quando em dia. */
+function MensalidadeLinha({ aluno }: { aluno: Aluno }) {
+  const c = aluno.cobranca;
+  if (!c) return null;
+  const st = statusEfetivo(c);
+  const emDia = st === "pago" || st === "isento";
+  return (
+    <div className="mt-3 flex items-center gap-2.5 border-t border-border pt-3">
+      <span
+        className={cn(
+          "grid h-7 w-7 shrink-0 place-items-center rounded-lg",
+          emDia ? "bg-success-tint text-success" : "bg-warning-tint text-warning",
+        )}
+      >
+        {emDia ? <Check className="h-4 w-4" strokeWidth={3} /> : <AlertTriangle className="h-4 w-4" />}
+      </span>
+      <div className="min-w-0">
+        <div className="text-sm font-semibold text-ink">{emDia ? "Mensalidade em dia" : ROTULO_STATUS_COBRANCA[st]}</div>
+        <div className="tabular text-xs text-ink-2">
+          {formatBRL(c.valorCentavos)} · próxima em {proximoVencimento(c.diaVencimento)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 2) Estado atual: treino ativo com barra de progresso da semana + mensalidade. */
 function VisaoTreino({
+  aluno,
   plano,
   alunoId,
   onVer,
   podeTreino,
 }: {
+  aluno: Aluno;
   plano?: PlanoTreino;
   alunoId: string;
   onVer: () => void;
@@ -2211,7 +2250,7 @@ function VisaoTreino({
   if (!plano) {
     return (
       <Card className="flex flex-col p-5">
-        <Eyebrow>Treino ativo</Eyebrow>
+        <Eyebrow>Estado atual</Eyebrow>
         <div className="mt-1 font-display text-lg font-bold text-ink">Sem treino montado</div>
         <p className="mt-0.5 text-sm text-ink-2">
           {podeTreino.ok ? "A avaliação já está pronta; o próximo passo é montar o plano." : podeTreino.motivo}
@@ -2221,60 +2260,58 @@ function VisaoTreino({
             <CalendarRange className="h-4 w-4" /> Montar treino
           </Link>
         )}
+        <MensalidadeLinha aluno={aluno} />
       </Card>
     );
   }
 
   const semana = semanaAtual(plano);
+  const total = plano.semanas;
+  const pct = Math.max(6, Math.min(100, Math.round((semana / Math.max(total, 1)) * 100)));
   const meso = mesocicloAtual(plano);
   const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
   const sessoes = micro?.sessoes ?? [];
+  // Divisão em letras (A/B/C...), o "split" da semana — sem despejar o rótulo de
+  // cada mesociclo (era isso que virava "B... · D..." e poluía o card).
+  const split = sessoes.length ? sessoes.map((_, i) => String.fromCharCode(65 + i)).join("/") : null;
 
   return (
     <Card className="flex flex-col p-5">
-      <Eyebrow>Treino ativo</Eyebrow>
-      <div className="mt-1 font-display text-lg font-bold text-ink">Plano de {plano.semanas} semanas</div>
-      <p className="mt-0.5 text-sm text-ink-2">
-        {meso ? `${rotuloMeso(meso)} · ` : ""}semana {semana} · {plano.frequenciaSemanal}x por semana
-      </p>
-
-      {/* Trilho de fases, como no mockup: a atual em sólido. */}
-      <div className="mt-3 flex gap-1.5">
-        {plano.macrociclo.mesociclos.map((m) => {
-          const atual = semana >= m.semanaInicio && semana <= m.semanaFim;
-          return (
-            <span
-              key={m.id}
-              className={cn(
-                "min-w-0 flex-1 truncate rounded-full px-2 py-1 text-center text-2xs font-bold",
-                atual ? "bg-ink text-surface" : "bg-surface-soft text-ink-2",
-              )}
-            >
-              {rotuloMeso(m)}
-            </span>
-          );
-        })}
+      <Eyebrow>Estado atual</Eyebrow>
+      <div className="mt-1.5 flex items-baseline justify-between gap-2">
+        <span className="font-display text-lg font-bold text-ink">Treino ativo</span>
+        <span className="tabular shrink-0 text-sm text-ink-2">
+          semana {semana} de {total}
+        </span>
       </div>
-
-      {sessoes.length > 0 && (
-        <p className="mt-2.5 truncate text-sm text-ink-2">{sessoes.map((s) => s.nome).join(" · ")}</p>
-      )}
-
-      <button onClick={onVer} className={cn(buttonClasses("secondary", "sm"), "mt-4 self-start")}>
-        Ver treino completo <ArrowRight className="h-4 w-4" />
-      </button>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-soft">
+        <div className="h-full rounded-full gradient-brand transition-[width] duration-500" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <p className="min-w-0 truncate text-sm text-ink-2">
+          {meso && <span className="font-semibold text-analysis">{rotuloMeso(meso)}</span>}
+          {split ? ` · ${split}` : ""} · {plano.frequenciaSemanal}×/sem
+        </p>
+        <button onClick={onVer} className="shrink-0 text-sm font-semibold text-primary hover:underline">
+          abrir
+        </button>
+      </div>
+      <MensalidadeLinha aluno={aluno} />
     </Card>
   );
 }
 
-/** 3) Última avaliação: as medidas em grade e a data da próxima. */
+/** 3) Medidas do aluno: rótulo, valor e a variação desde a avaliação anterior em
+ *  pílula (verde quando melhora), no formato do desenho. */
 function VisaoAvaliacao({
+  aluno,
   avals,
   reav,
   vencida,
   onVer,
   onAvaliar,
 }: {
+  aluno: Aluno;
   /** avaliações do aluno em ordem crescente de data */
   avals: Avaliacao[];
   reav: { em: number; semana?: number } | null;
@@ -2286,7 +2323,7 @@ function VisaoAvaliacao({
   if (!ultima) {
     return (
       <Card className="flex flex-col p-5">
-        <Eyebrow>Última avaliação</Eyebrow>
+        <Eyebrow>Medidas</Eyebrow>
         <div className="mt-1 font-display text-lg font-bold text-ink">Nenhuma avaliação ainda</div>
         <p className="mt-0.5 text-sm text-ink-2">A avaliação inicial abre o resto do ciclo de cuidado.</p>
         <button onClick={onAvaliar} className={cn(buttonClasses("primary", "sm"), "mt-4 self-start")}>
@@ -2296,124 +2333,164 @@ function VisaoAvaliacao({
     );
   }
 
-  const anterior = avals[avals.length - 2];
-  const delta = (a?: number, b?: number) => (a != null && b != null ? a - b : undefined);
-  const dPeso = delta(ultima.medidas.peso, anterior?.medidas.peso);
   const m = ultima.medidas;
-  // Só as medidas que EXISTEM nesta avaliação entram na grade.
-  const celulas: { valor: string; rotulo: string; delta?: number }[] = [];
-  if (m.peso != null) celulas.push({ valor: `${m.peso} kg`, rotulo: "peso", delta: dPeso });
+  const p = avals[avals.length - 2]?.medidas;
+  const num = (v: number) => Math.abs(Number(v.toFixed(1))).toLocaleString("pt-BR");
+
+  // Uma linha por medida presente. "menorMelhora" pinta a variação de verde quando
+  // o valor CAI (peso, gordura, cintura, FC de repouso melhoram caindo).
+  type Linha = { rotulo: string; valor: string; pill?: React.ReactNode };
+  const linhas: Linha[] = [];
+  const deltaPill = (atual: number, ant: number | undefined, unidade: string) => {
+    if (ant == null || atual === ant) return undefined;
+    const desce = atual < ant;
+    return (
+      <Pill tone={desce ? "success" : "warning"}>
+        {desce ? "▼" : "▲"} {num(atual - ant)} {unidade}
+      </Pill>
+    );
+  };
+  if (m.peso != null) linhas.push({ rotulo: "Peso", valor: `${num(m.peso)} kg`, pill: deltaPill(m.peso, p?.peso, "kg") });
   if (m.paSistolica != null && m.paDiastolica != null)
-    celulas.push({ valor: `${m.paSistolica}/${m.paDiastolica}`, rotulo: "PA repouso" });
-  if (m.percentualGordura != null) celulas.push({ valor: `${m.percentualGordura}%`, rotulo: "gordura" });
-  if (m.cintura != null) celulas.push({ valor: `${m.cintura} cm`, rotulo: "cintura" });
-  if (m.fcRepouso != null) celulas.push({ valor: String(m.fcRepouso), rotulo: "FC repouso" });
+    linhas.push({
+      rotulo: "PA repouso",
+      valor: `${m.paSistolica}/${m.paDiastolica}`,
+      pill:
+        p?.paSistolica != null && p?.paDiastolica != null ? (
+          <Pill tone={m.paSistolica < p.paSistolica ? "success" : "neutral"}>era {p.paSistolica}/{p.paDiastolica}</Pill>
+        ) : undefined,
+    });
+  if (m.percentualGordura != null)
+    linhas.push({ rotulo: "Gordura", valor: `${num(m.percentualGordura)}%`, pill: deltaPill(m.percentualGordura, p?.percentualGordura, "p.p.") });
+  if (m.cintura != null) linhas.push({ rotulo: "Cintura", valor: `${num(m.cintura)} cm`, pill: deltaPill(m.cintura, p?.cintura, "cm") });
+  if (m.fcRepouso != null) linhas.push({ rotulo: "FC repouso", valor: `${m.fcRepouso} bpm`, pill: deltaPill(m.fcRepouso, p?.fcRepouso, "bpm") });
 
   return (
     <Card className="flex flex-col p-5">
-      <Eyebrow>Última avaliação · {fmtData(ultima.data)}</Eyebrow>
-      <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-2.5">
-        {celulas.map((c) => (
-          <div key={c.rotulo}>
-            <dt className="text-2xs text-ink-2">{c.rotulo}</dt>
-            <dd className="tabular font-display text-base font-bold text-ink">
-              {c.valor}
-              {c.delta != null && c.delta !== 0 && (
-                // Em linha própria: grudado no valor, "69 kg" e "menos 1,5" viravam
-                // uma palavra só para quem lê por leitor de tela.
-                <span
-                  className={cn("block text-2xs font-bold", c.delta < 0 ? "text-success" : "text-warning")}
-                >
-                  {c.delta < 0 ? "menos" : "mais"}{" "}
-                  {Math.abs(Number(c.delta.toFixed(1))).toLocaleString("pt-BR")} desde a anterior
-                </span>
-              )}
-            </dd>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-base font-bold text-ink">Medidas de {aluno.nome.split(" ")[0]}</span>
+          <span className="tabular text-xs text-ink-3">{fmtData(ultima.data)}</span>
+        </div>
+        <button onClick={onVer} className="shrink-0 text-sm font-semibold text-primary hover:underline">
+          evolução ›
+        </button>
+      </div>
+
+      <div className="divide-y divide-border">
+        {linhas.map((l) => (
+          <div key={l.rotulo} className="flex items-center gap-3 py-2">
+            <span className="w-24 shrink-0 text-sm text-ink-2">{l.rotulo}</span>
+            <span className="tabular font-display text-base font-bold text-ink">{l.valor}</span>
+            {l.pill && <span className="ml-auto shrink-0">{l.pill}</span>}
           </div>
         ))}
-      </dl>
+      </div>
 
       {reav && (
         <p className={cn("mt-3 border-t border-border pt-3 text-xs", vencida ? "text-warning" : "text-ink-2")}>
           <span className="font-semibold">Reavaliação {vencida ? "vencida" : "marcada"}:</span> {fmtData(reav.em)}
           {reav.semana ? ` · fim da semana ${reav.semana}` : ""}
+          {vencida && (
+            <button onClick={onAvaliar} className="ml-2 font-semibold text-primary hover:underline">
+              Reavaliar agora
+            </button>
+          )}
         </p>
       )}
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button onClick={onAvaliar} className={buttonClasses("primary", "sm")}>
-          <CalendarPlus className="h-4 w-4" /> Reavaliar
-        </button>
-        <button onClick={onVer} className={buttonClasses("secondary", "sm")}>
-          Histórico <ArrowRight className="h-4 w-4" />
-        </button>
-      </div>
     </Card>
   );
 }
 
-/** 4) No app do aluno: sequência, treinos da semana, esforço médio e o recado. */
+/** 4) No app do aluno: cartão escuro (navy) com a sequência e três números:
+ *  treinos da semana, esforço médio e o último acesso, como no desenho. */
 function VisaoNoApp({
   aluno,
   execucoes,
   feedbacks,
+  metaSemanal,
   onVer,
 }: {
   aluno: Aluno;
   execucoes: Execucao[];
   /** feedbacks do aluno, do mais recente para o mais antigo */
   feedbacks: SessaoFeedback[];
+  /** meta de treinos por semana (frequência do plano ativo), para "N/meta" */
+  metaSemanal?: number;
   onVer: () => void;
 }) {
-  const DIA = 86_400_000;
+  const UM_DIA = 86_400_000;
   const streak = sequenciaDias(execucoes);
   const diaSemana = (new Date().getDay() + 6) % 7;
-  const inicio = new Date().setHours(0, 0, 0, 0) - diaSemana * DIA;
+  const inicio = new Date().setHours(0, 0, 0, 0) - diaSemana * UM_DIA;
   const naSemana = new Set(
-    execucoes.filter((e) => e.concluidoEm >= inicio).map((e) => Math.floor(e.concluidoEm / DIA)),
+    execucoes.filter((e) => e.concluidoEm >= inicio).map((e) => Math.floor(e.concluidoEm / UM_DIA)),
   ).size;
+  const meta = metaSemanal ?? 3;
   const notas = feedbacks.map((f) => f.pse).filter((n): n is number => n != null);
   const media = notas.length ? Math.round(notas.reduce((s, n) => s + n, 0) / notas.length) : null;
+  const ultimoTs = execucoes.length ? Math.max(...execucoes.map((e) => e.concluidoEm)) : null;
+  const ultimoAcesso = ultimoTs != null ? rotuloDiaTempo(ultimoTs).dia : "—";
   const recado = feedbacks.find((f) => f.observacao);
   const semNada = execucoes.length === 0 && feedbacks.length === 0;
+  const primeiro = aluno.nome.split(" ")[0];
 
   return (
-    <Card className="flex flex-col p-5">
-      <Eyebrow>No app de {aluno.nome.split(" ")[0]}</Eyebrow>
+    <div className="rounded-card p-5" style={{ background: "#0D1524" }}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-2xs font-bold uppercase tracking-[0.14em]" style={{ color: "#8FA1BD" }}>
+          No app de {primeiro}
+        </span>
+        {streak.atual > 0 && (
+          <span className="tabular text-sm font-bold" style={{ color: "#E6B03C" }}>
+            🔥 {streak.atual} {streak.atual === 1 ? "dia" : "dias"}
+          </span>
+        )}
+      </div>
+
       {semNada ? (
-        <>
-          <div className="mt-1 font-display text-lg font-bold text-ink">Ainda sem registro</div>
-          <p className="mt-0.5 text-sm text-ink-2">
-            Quando o aluno registrar o treino no celular, a sequência e o esforço aparecem aqui.
-          </p>
-        </>
+        <p className="mt-2 text-sm" style={{ color: "#8FA1BD" }}>
+          Quando {primeiro} registrar o treino no celular, a sequência e o esforço aparecem aqui.
+        </p>
       ) : (
         <>
-          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            {streak.atual > 0 && (
-              <span className="tabular font-display text-lg font-bold text-ink">
-                {streak.atual} {streak.atual === 1 ? "dia" : "dias"} de sequência
-              </span>
-            )}
-            {media != null && (
-              <span className="text-sm text-ink-2">
-                esforço médio <strong className="text-ink">{media}</strong> (Borg)
-              </span>
-            )}
+          <div className="mt-3 grid grid-cols-3 gap-3">
+            <StatApp valor={`${naSemana}/${meta}`} rotulo="treinos da semana" />
+            <StatApp valor={media != null ? String(media) : "—"} rotulo="esforço médio" />
+            <StatApp valor={ultimoAcesso} rotulo="último acesso" />
           </div>
-          <p className="tabular mt-0.5 text-sm text-ink-2">
-            {naSemana} {naSemana === 1 ? "treino" : "treinos"} nesta semana
-          </p>
           {recado?.observacao && (
-            <p className="mt-3 rounded-card border border-border bg-surface-soft p-3 text-sm italic text-ink-2">
+            <p
+              className="mt-3 rounded-lg p-2.5 text-sm italic"
+              style={{ background: "rgba(148,170,210,.10)", color: "#C7D3E8" }}
+            >
               {recado.observacao} <span className="not-italic text-xs">· {fmtData(recado.concluidaEm)}</span>
             </p>
           )}
         </>
       )}
-      <button onClick={onVer} className={cn(buttonClasses("secondary", "sm"), "mt-4 self-start")}>
+
+      <button
+        onClick={onVer}
+        className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
+        style={{ color: "#14B3BA" }}
+      >
         <Smartphone className="h-4 w-4" /> Ver como o aluno vê
       </button>
-    </Card>
+    </div>
+  );
+}
+
+/** Um número do cartão escuro "No app": valor grande claro + rótulo apagado. */
+function StatApp({ valor, rotulo }: { valor: string; rotulo: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="tabular font-display text-2xl font-bold leading-none" style={{ color: "#F2F6FC" }}>
+        {valor}
+      </div>
+      <div className="mt-1 text-2xs leading-tight" style={{ color: "#8FA1BD" }}>
+        {rotulo}
+      </div>
+    </div>
   );
 }
