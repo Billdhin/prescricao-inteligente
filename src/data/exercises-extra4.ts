@@ -213,6 +213,7 @@ export const extraExercises4: Exercise[] = [
       "Rosca com os pés sobre o elástico: o segundo exercício de bíceps do catálogo, e o primeiro que cabe em casa.",
     anguloArticular: "Flexão de cotovelo até cerca de 130 graus",
 imagem: "/exercises/rosca-elastico.webp",
+    imagemAnalise: "/exercises/rosca-elastico-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Bíceps braquial", percentual: 68, papel: "primário" },
@@ -537,6 +538,7 @@ imagem: "/exercises/remada-unilateral-elastico.webp",
       "Com o joelho dobrado, o sóleo assume o trabalho: é o exercício que o catálogo não tinha, porque a versão em pé enfatiza o gastrocnêmio.",
     anguloArticular: "Joelho a 90 graus, tornozelo em amplitude total",
 imagem: "/exercises/panturrilha-sentado.webp",
+    imagemAnalise: "/exercises/panturrilha-sentado-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Sóleo", percentual: 70, papel: "primário" },
@@ -1272,6 +1274,7 @@ imagem: "/exercises/panturrilha-sentado.webp",
       "Elevar os ombros na direção das orelhas com halteres nas mãos: trapézio superior direto, e um estímulo de pegada de graça.",
     anguloArticular: "Elevação escapular em amplitude completa",
 imagem: "/exercises/encolhimento-halteres.webp",
+    imagemAnalise: "/exercises/encolhimento-halteres-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Trapézio superior", percentual: 75, papel: "primário" },
