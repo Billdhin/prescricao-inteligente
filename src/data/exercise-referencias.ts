@@ -116,6 +116,23 @@ export const exerciseReferencias: Record<string, string[]> = {
   "ponte-gluteos": ["ekstrom-2007", "contreras-2015"],
   "prancha-frontal": ["mcgill-2010", "ekstrom-2007"],
   "dead-bug": ["mcgill-2010", "ekstrom-2007"],
+
+  // Lote base (extra2): peito, ombro, costas, tríceps e aquático. As atribuições
+  // seguem a precedência já usada acima para cada padrão de movimento (empurrar
+  // horizontal = rodriguez-ridao-2020; puxar/remar = andersen-2014 + atlas de EMG;
+  // ombro/braço = boeckh-behrens-2000/schoenfeld-2010; aquático = acsm/donnelly).
+  "flexao-de-braco": ["rodriguez-ridao-2020", "boeckh-behrens-2000"],
+  "supino-halteres": ["rodriguez-ridao-2020", "boeckh-behrens-2000", "schoenfeld-2010"],
+  "supino-maquina": ["rodriguez-ridao-2020", "boeckh-behrens-2000"],
+  "elevacao-lateral-halteres": ["boeckh-behrens-2000", "schoenfeld-2010"],
+  "desenvolvimento-maquina": ["boeckh-behrens-2000", "schoenfeld-2010"],
+  "remada-curvada-halteres": ["andersen-2014", "boeckh-behrens-2000"],
+  "remada-maquina": ["andersen-2014", "boeckh-behrens-2000"],
+  "triceps-frances-halter": ["schoenfeld-2010", "boeckh-behrens-2000"],
+  "remada-invertida": ["andersen-2014", "boeckh-behrens-2000"],
+  "desenvolvimento-elastico": ["boeckh-behrens-2000"],
+  "mergulho-no-banco": ["boeckh-behrens-2000", "schoenfeld-2010"],
+  "empurra-puxa-aquatico": ["acsm-getp11", "donnelly-2009"],
 };
 
 export function getExercicioRefs(slug: string): string[] {
