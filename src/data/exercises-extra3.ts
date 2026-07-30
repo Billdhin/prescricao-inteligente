@@ -955,6 +955,7 @@ export const extraExercises3: Exercise[] = [
       "Estender braço e perna opostos em quatro apoios sem deixar a bacia girar: o par do dead bug pela cadeia posterior, com custo mínimo para a coluna.",
     anguloArticular: "Coluna neutra, quadril e ombro em extensão",
     imagem: "/exercises/bird-dog.webp",
+    imagemAnalise: "/exercises/bird-dog-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Eretores da espinha", percentual: 40, papel: "primário" },
@@ -1037,6 +1038,7 @@ export const extraExercises3: Exercise[] = [
       "Pendurado na barra, subir os joelhos na direção do peito: a progressão de core mais exigente do catálogo, que ainda treina a pegada.",
     anguloArticular: "Flexão de quadril até cerca de 90 graus, coluna sem hiperextensão",
     imagem: "/exercises/elevacao-joelhos-suspenso.webp",
+    imagemAnalise: "/exercises/elevacao-joelhos-suspenso-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Reto abdominal", percentual: 65, papel: "primário" },

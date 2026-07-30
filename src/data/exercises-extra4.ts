@@ -48,6 +48,7 @@ export const extraExercises4: Exercise[] = [
       "Agachamento com o elástico sob os pés e nas mãos: a resistência cresce conforme o aluno sobe, que é onde ele é mais forte.",
     anguloArticular: "Flexão de joelho conforme a tolerância, tronco levemente inclinado",
     imagem: "/exercises/agachamento-elastico.webp",
+    imagemAnalise: "/exercises/agachamento-elastico-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadríceps", percentual: 68, papel: "primário" },
