@@ -454,6 +454,7 @@ imagem: "/exercises/rosca-elastico.webp",
     resumoPratico:
       "Puxada horizontal com um braço por vez: expõe a assimetria que a remada com os dois braços esconde, e cabe em casa.",
     anguloArticular: "Extensão de ombro até a linha do tronco",
+imagem: "/exercises/remada-unilateral-elastico.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 62, papel: "primário" },
