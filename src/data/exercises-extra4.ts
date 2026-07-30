@@ -610,6 +610,7 @@ export const extraExercises4: Exercise[] = [
       "Subir e descer de um degrau, uma perna por vez: unilateral com carga baixa e altura regulável, que é o jeito mais simples de dosar.",
     anguloArticular: "Flexão de joelho conforme a altura do degrau",
     imagem: "/exercises/subida-step.webp",
+    imagemAnalise: "/exercises/subida-step-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadríceps", percentual: 65, papel: "primário" },
@@ -692,6 +693,7 @@ export const extraExercises4: Exercise[] = [
       "Rosca com a palma virada para dentro: tira parte do bíceps e coloca o braquiorradial e o braquial no comando.",
     anguloArticular: "Flexão de cotovelo com antebraço em posição neutra",
     imagem: "/exercises/rosca-martelo.webp",
+    imagemAnalise: "/exercises/rosca-martelo-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Braquiorradial", percentual: 62, papel: "primário" },
@@ -932,6 +934,7 @@ export const extraExercises4: Exercise[] = [
       "Deitado, a barra desce até a testa com o cotovelo apontando para cima: alcança a cabeça longa do tríceps, que a polia não alcança.",
     anguloArticular: "Ombro em leve flexão, cotovelo em amplitude completa",
     imagem: "/exercises/triceps-testa-barra.webp",
+    imagemAnalise: "/exercises/triceps-testa-barra-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Tríceps braquial", percentual: 78, papel: "primário" },
