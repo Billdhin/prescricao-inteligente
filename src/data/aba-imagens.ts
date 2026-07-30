@@ -97,6 +97,7 @@ const ERRO_IMGS: Record<string, number[]> = {
   "good-morning": [0, 1, 2],
   "leg-press-horizontal": [0, 1, 2],
   "hip-thrust-unilateral": [0, 1, 2],
+  "agachamento-bulgaro": [0, 1, 2],
 };
 
 /** Imagem dedicada do i-ésimo erro comum, se existir. */
