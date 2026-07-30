@@ -127,6 +127,7 @@ export const extraExercises7: Exercise[] = [
     resumoPratico:
       "Subir os antebraços pela parede mantendo o contato: ensina a escápula a girar junto com o braço, sem carga nenhuma.",
     anguloArticular: "Elevação de ombro com rotação escapular acompanhando",
+imagem: "/exercises/wall-slide.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Serrátil anterior", percentual: 55, papel: "primário" },
@@ -777,6 +778,7 @@ imagem: "/exercises/punho-halter.webp",
     resumoPratico:
       "Levar o queixo para trás sem inclinar a cabeça: controle motor dos flexores profundos do pescoço, sem carga nenhuma.",
     anguloArticular: "Retração cervical em amplitude curta",
+imagem: "/exercises/chin-tuck.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Flexores profundos do pescoço", percentual: 45, papel: "primário" },
@@ -854,6 +856,7 @@ imagem: "/exercises/punho-halter.webp",
     resumoPratico:
       "Respirar expandindo as costelas para todos os lados: o diafragma é parte do core e nenhum exercício do catálogo o alcançava.",
     anguloArticular: "Expansão torácica sem movimento de coluna",
+imagem: "/exercises/respiracao-360.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Diafragma", percentual: 55, papel: "primário" },
