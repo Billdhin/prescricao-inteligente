@@ -774,6 +774,7 @@ export const extraExercises4: Exercise[] = [
       "Deitado num banco inclinado, o braço fica atrás da linha do tronco: o bíceps começa a repetição já alongado.",
     anguloArticular: "Banco a cerca de 45 graus, ombro em leve extensão",
     imagem: "/exercises/rosca-banco-inclinado.webp",
+    imagemAnalise: "/exercises/rosca-banco-inclinado-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Bíceps braquial", percentual: 72, papel: "primário" },
@@ -1015,6 +1016,7 @@ export const extraExercises4: Exercise[] = [
       "Levantar os halteres à frente até a altura do ombro: deltoide anterior isolado, sem a participação do tríceps que o desenvolvimento traz.",
     anguloArticular: "Flexão de ombro até 90 graus",
     imagem: "/exercises/elevacao-frontal.webp",
+    imagemAnalise: "/exercises/elevacao-frontal-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide anterior", percentual: 70, papel: "primário" },
@@ -1096,6 +1098,7 @@ export const extraExercises4: Exercise[] = [
       "Tronco inclinado, braços abrindo para os lados: o primeiro exercício do catálogo que tem o deltoide posterior como alvo.",
     anguloArticular: "Abdução horizontal de ombro com tronco inclinado",
     imagem: "/exercises/crucifixo-inverso.webp",
+    imagemAnalise: "/exercises/crucifixo-inverso-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide posterior", percentual: 68, papel: "primário" },
