@@ -877,6 +877,7 @@ imagem: "/exercises/rotacao-interna-elastico.webp",
       "Levar as mãos na diagonal, de cima para baixo, girando pelo quadril: o padrão de rotação controlada, em pé, que faltava ao lado dos antirrotação.",
     anguloArticular: "Rotação de tronco e quadril, coluna sem flexão",
 imagem: "/exercises/chop-elastico.webp",
+    imagemAnalise: "/exercises/chop-elastico-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Oblíquos", percentual: 58, papel: "primário" },
