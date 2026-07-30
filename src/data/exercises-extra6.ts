@@ -44,6 +44,7 @@ export const extraExercises6: Exercise[] = [
       "Banco a cerca de 30 graus: a inclinação desloca a ênfase para a porção superior do peitoral, que o supino horizontal alcança menos.",
     anguloArticular: "Banco a cerca de 30 graus, cotovelo a cerca de 45 graus do tronco",
     imagem: "/exercises/supino-inclinado-halteres.webp",
+    imagemAnalise: "/exercises/supino-inclinado-halteres-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Peitoral maior", percentual: 74, papel: "primário" },

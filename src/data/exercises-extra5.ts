@@ -534,6 +534,7 @@ export const extraExercises5: Exercise[] = [
       "Dobradiça de quadril com a barra nas costas: exige mais dos eretores e dos isquiotibiais do que o terra romeno, e por isso pede aluno avançado.",
     anguloArticular: "Flexão de quadril com joelho em leve flexão e coluna neutra",
     imagem: "/exercises/good-morning.webp",
+    imagemAnalise: "/exercises/good-morning-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Isquiotibiais", percentual: 75, papel: "primário" },
@@ -616,6 +617,7 @@ export const extraExercises5: Exercise[] = [
       "Leg press com o assento na horizontal: mesma prensa do 45 graus, com entrada e saída muito mais fáceis para quem tem dificuldade de sentar e levantar.",
     anguloArticular: "Flexão de joelho e quadril com amplitude regulável",
     imagem: "/exercises/leg-press-horizontal.webp",
+    imagemAnalise: "/exercises/leg-press-horizontal-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Quadríceps", percentual: 72, papel: "primário" },
