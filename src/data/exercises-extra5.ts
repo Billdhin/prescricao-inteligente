@@ -127,6 +127,7 @@ export const extraExercises5: Exercise[] = [
       "Halter segurado junto ao peito: o contrapeso à frente ajuda o aluno a manter o tronco ereto, o que faz dele o agachamento mais fácil de ensinar.",
     anguloArticular: "Flexão de joelho e quadril conforme a tolerância",
     imagem: "/exercises/agachamento-goblet.webp",
+    imagemAnalise: "/exercises/agachamento-goblet-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Quadríceps", percentual: 70, papel: "primário" },
@@ -370,6 +371,7 @@ export const extraExercises5: Exercise[] = [
       "Isquiotibiais uma perna por vez, em pé: o mesmo trabalho da mesa flexora para quem não deita de bruços com conforto.",
     anguloArticular: "Flexão de joelho em amplitude completa",
     imagem: "/exercises/flexora-em-pe.webp",
+    imagemAnalise: "/exercises/flexora-em-pe-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Isquiotibiais", percentual: 72, papel: "primário" },
@@ -450,6 +452,7 @@ export const extraExercises5: Exercise[] = [
       "Elevação pélvica com uma perna só: dobra a carga sobre o glúteo sem acrescentar peso, e expõe a assimetria que a versão com as duas pernas esconde.",
     anguloArticular: "Extensão de quadril até a linha do corpo",
     imagem: "/exercises/hip-thrust-unilateral.webp",
+    imagemAnalise: "/exercises/hip-thrust-unilateral-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Glúteo máximo", percentual: 72, papel: "primário" },
