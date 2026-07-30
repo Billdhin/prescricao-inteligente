@@ -30,6 +30,8 @@ import {
   CalendarCheck,
   Wallet,
   MoreHorizontal,
+  Plus,
+  ClipboardList,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, LinhaDeTokens, TokenRotulado, Eyebrow, type PillTone } from "@/components/ui/primitives";
 import { TokenDose } from "@/components/gps/TermoDoseInfo";
@@ -46,7 +48,7 @@ import { proximoPasso, estadoDoCiclo, dataReavaliacao, type CicloCtx, type Proxi
 import { prontidaoParaPrescrever, type Prontidao } from "@/lib/gps/prontidao";
 import { ProntidaoAviso } from "@/components/alunos/ProntidaoAviso";
 import { linhaObjetivos } from "@/lib/gps/objetivos";
-import { estadoSemaforo, semaforoPorDiaDaSemana, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
+import { estadoSemaforo, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { sequenciaDias } from "@/lib/gamificacao";
 import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
@@ -67,6 +69,8 @@ import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/sp
 import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
 import { EvolucaoMini, TabelaEvolucao } from "@/components/app/EvolucaoMini";
+import { TresCamadas } from "@/components/ui/camadas";
+import { montarChecklist } from "@/data/semaforo";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
 import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
@@ -76,6 +80,8 @@ const DIA = 86_400_000;
 const fmtData = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
 const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
+const fmtDiaMes = (ts: number) =>
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(ts));
 const nomeEx = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ?? slug;
 
 const TIPO_AVAL_LABEL: Record<string, string> = {
@@ -704,85 +710,114 @@ export function AlunoDetail() {
         </div>
       )}
 
-      {/* AVALIAÇÕES: evolução, histórico e a análise postural por foto no mesmo lugar. */}
+      {/* AVALIAÇÕES: a evolução e o histórico à esquerda; a ação de registrar, o
+          prazo da reavaliação e a leitura da evolução na coluna de apoio à direita. */}
       {aba === "avaliacoes" && (
-        <div role="tabpanel" id="aba-painel-avaliacoes" aria-labelledby="aba-tab-avaliacoes" className="space-y-4">
-          <Card className="p-5 md:p-6">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+        <div
+          role="tabpanel"
+          id="aba-painel-avaliacoes"
+          aria-labelledby="aba-tab-avaliacoes"
+          className="grid gap-4 lg:grid-cols-[1.6fr_1fr]"
+        >
+          {/* Coluna principal */}
+          <div className="space-y-4">
+            <Card className="p-5 md:p-6">
+              <div className="mb-3 flex items-center gap-2">
                 <span className="grid h-8 w-8 place-items-center rounded-lg bg-analysis-tint text-analysis">
                   <Activity className="h-4 w-4" />
                 </span>
                 <h2 className="font-display text-lg font-bold text-ink">Evolução</h2>
               </div>
-              {avals.length > 0 && (
-                <button
-                  onClick={() =>
-                    exportEvolucaoPDF({ aluno, avaliacoes: avals, profissional: profNome, cref: cref || undefined, marca: marcaDoUsuario(usuario) })
-                  }
-                  className={buttonClasses("secondary", "sm")}
-                >
-                  <FileDown className="h-4 w-4" /> Exportar evolução (PDF)
-                </button>
-              )}
-            </div>
-            <EvolucaoMini avals={avals} />
+              <EvolucaoMini avals={avals} />
+            </Card>
+
             {avals.length > 0 && (
-              <div className="mt-5 border-t border-border pt-4">
-                <h3 className="mb-3 text-sm font-semibold text-ink-2">Tabela comparativa por data</h3>
+              <Card className="p-5 md:p-6">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-ink-2">Tabela comparativa por data</h3>
+                  <button
+                    onClick={() =>
+                      exportEvolucaoPDF({ aluno, avaliacoes: avals, profissional: profNome, cref: cref || undefined, marca: marcaDoUsuario(usuario) })
+                    }
+                    className={buttonClasses("secondary", "sm")}
+                  >
+                    <FileDown className="h-4 w-4" /> Exportar evolução (PDF)
+                  </button>
+                </div>
                 <TabelaEvolucao avals={avals} />
-              </div>
+              </Card>
             )}
-          </Card>
 
-          <Card className="p-5 md:p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-lg font-bold text-ink">Avaliações</h2>
-              <button onClick={() => setAvaliar(true)} className={buttonClasses("secondary", "sm")}>
-                <CalendarPlus className="h-4 w-4" /> {temAvaliacao ? "Reavaliar" : "Registrar"}
-              </button>
-            </div>
-            {avalsDesc.length === 0 ? (
-              <p className="py-6 text-center text-sm text-ink-2">Nenhuma avaliação registrada ainda.</p>
-            ) : (
-              <ol className="space-y-3">
-                {avalsDesc.map((av) => (
-                  <li key={av.id} className="flex gap-3 rounded-xl border border-border p-3">
-                    <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-2">
-                      <Clock className="h-4 w-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                        <span className="font-semibold text-ink">{fmtData(av.data)}</span>
-                        {av.tipo && <Pill tone="neutral">{TIPO_AVAL_LABEL[av.tipo]}</Pill>}
-                        {av.medidas.peso != null && <Medida label="Peso" value={`${av.medidas.peso} kg`} />}
-                        {av.medidas.percentualGordura != null && (
-                          <Medida label="% gordura" value={`${av.medidas.percentualGordura}%`} />
-                        )}
-                        {av.medidas.cintura != null && <Medida label="Cintura" value={`${av.medidas.cintura} cm`} />}
-                        {av.dorEscala != null && <Medida label="Dor" value={`${av.dorEscala}/10`} />}
-                      </div>
-                      {(av.testes?.length || av.fotos?.length || av.regioesDor?.length) && (
-                        <div className="mt-1 flex flex-wrap gap-1.5">
-                          {av.testes?.length ? (
-                            <Pill tone="analysis">{av.testes.length} teste{av.testes.length > 1 ? "s" : ""}</Pill>
-                          ) : null}
-                          {av.fotos?.length ? <Pill tone="primary">{av.fotos.length} foto{av.fotos.length > 1 ? "s" : ""}</Pill> : null}
-                          {av.regioesDor?.length ? (
-                            <Pill tone="warning">dor: {av.regioesDor.slice(0, 2).join(", ")}{av.regioesDor.length > 2 ? "..." : ""}</Pill>
-                          ) : null}
+            <Card className="p-5 md:p-6">
+              <h2 className="mb-4 font-display text-lg font-bold text-ink">Histórico de avaliações</h2>
+              {avalsDesc.length === 0 ? (
+                <p className="py-6 text-center text-sm text-ink-2">Nenhuma avaliação registrada ainda.</p>
+              ) : (
+                <ol className="space-y-3">
+                  {avalsDesc.map((av) => (
+                    <li key={av.id} className="flex gap-3 rounded-xl border border-border p-3">
+                      <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-2">
+                        <Clock className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                          <span className="font-semibold text-ink">{fmtData(av.data)}</span>
+                          {av.tipo && <Pill tone="neutral">{TIPO_AVAL_LABEL[av.tipo]}</Pill>}
+                          {av.medidas.peso != null && <Medida label="Peso" value={`${av.medidas.peso} kg`} />}
+                          {av.medidas.percentualGordura != null && (
+                            <Medida label="% gordura" value={`${av.medidas.percentualGordura}%`} />
+                          )}
+                          {av.medidas.cintura != null && <Medida label="Cintura" value={`${av.medidas.cintura} cm`} />}
+                          {av.dorEscala != null && <Medida label="Dor" value={`${av.dorEscala}/10`} />}
                         </div>
-                      )}
-                      {av.observacoes && <p className="mt-1 text-sm text-ink-2">{av.observacoes}</p>}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Card>
+                        {(av.testes?.length || av.fotos?.length || av.regioesDor?.length) && (
+                          <div className="mt-1 flex flex-wrap gap-1.5">
+                            {av.testes?.length ? (
+                              <Pill tone="analysis">{av.testes.length} teste{av.testes.length > 1 ? "s" : ""}</Pill>
+                            ) : null}
+                            {av.fotos?.length ? <Pill tone="primary">{av.fotos.length} foto{av.fotos.length > 1 ? "s" : ""}</Pill> : null}
+                            {av.regioesDor?.length ? (
+                              <Pill tone="warning">dor: {av.regioesDor.slice(0, 2).join(", ")}{av.regioesDor.length > 2 ? "..." : ""}</Pill>
+                            ) : null}
+                          </div>
+                        )}
+                        {av.observacoes && <p className="mt-1 text-sm text-ink-2">{av.observacoes}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </Card>
 
-          {/* Análise postural por foto: é um tipo de avaliação, então vive aqui. */}
-          <PosturalCard aluno={aluno} />
+            {/* Análise postural por foto: é um tipo de avaliação, então vive aqui. */}
+            <PosturalCard aluno={aluno} />
+          </div>
+
+          {/* Coluna de apoio */}
+          <div className="space-y-4">
+            <button
+              onClick={() => setAvaliar(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-card bg-ink px-5 py-4 text-sm font-bold text-surface shadow-soft transition hover:brightness-[1.15] active:brightness-95"
+            >
+              <Plus className="h-4 w-4" /> {temAvaliacao ? "Registrar reavaliação" : "Registrar avaliação"}
+            </button>
+
+            {reav && (
+              <Card tone="warning" className="p-4">
+                <div className="flex items-start gap-3">
+                  <span aria-hidden className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-warning" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-ink">
+                      {reavaliacaoVencida ? "Reavaliação vencida" : `Reavaliar em ${fmtDiaMes(reav.em)}`}
+                    </p>
+                    <p className="mt-0.5 text-sm text-ink-2">{legendaReavaliacao(reav, reavaliacaoVencida, planoAtivo)}</p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <LeituraEvolucaoCard avals={avals} />
+          </div>
         </div>
       )}
 
@@ -1338,12 +1373,356 @@ function AppDoAlunoPanel({
   );
 }
 
+/* -------------------- APOIO DA ABA AVALIAÇÕES -------------------- */
+
+/** Legenda do prazo de reavaliação: quando cai e a fase do plano que fecha. */
+function legendaReavaliacao(
+  reav: { em: number; semana?: number },
+  vencida: boolean,
+  planoAtivo?: PlanoTreino,
+): string {
+  const meso = planoAtivo ? mesocicloAtual(planoAtivo) : undefined;
+  const fase = meso ? rotuloMeso(meso) : undefined;
+  if (vencida) {
+    return fase ? `Fim de ${fase}. Reavalie para reabrir a progressão.` : "Reavalie para retomar a progressão do plano.";
+  }
+  const dias = Math.max(0, diasAte(reav.em));
+  const quando = dias === 0 ? "hoje" : dias === 1 ? "em 1 dia" : `em ${dias} dias`;
+  return fase ? `Fim de ${fase} · ${quando}.` : `Próxima reavaliação ${quando}.`;
+}
+
+type LeituraTom = "analysis" | "primary" | "warning" | "success";
+type LeituraItem = { tom: LeituraTom; texto: React.ReactNode };
+const BORDA_LEITURA: Record<LeituraTom, string> = {
+  analysis: "border-analysis",
+  primary: "border-primary",
+  warning: "border-warning",
+  success: "border-success",
+};
+
 /**
- * Aba SEMÁFORO do aluno: o estado do dia (verde/amarelo/não liberado pendente), o
- * checklist inline (sem sair para /semaforo), a régua da semana e o histórico
- * completo. Reusa o `SemaforoLiberacao` já existente e a fonte única `estadoSemaforo`.
+ * Lê a evolução do aluno a partir das medidas REAIS registradas (nunca inventa
+ * número): descreve peso, cintura, gordura e PA de repouso do primeiro ao último
+ * exame, e junta as referências pertinentes para a camada Ciência.
  */
-const DIAS_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+function leituraEvolucao(avals: Avaliacao[]): { itens: LeituraItem[]; refs: string[] } {
+  const itens: LeituraItem[] = [];
+  const refs: string[] = [];
+  if (avals.length < 2) return { itens, refs };
+
+  const primeiro = avals[0];
+  const ultimo = avals[avals.length - 1];
+  const meses = Math.max(0, (ultimo.data - primeiro.data) / (DIA * 30.4));
+
+  const peso0 = primeiro.medidas.peso;
+  const peso1 = ultimo.medidas.peso;
+  if (peso0 != null && peso1 != null) {
+    const d = +(peso1 - peso0).toFixed(1);
+    const taxa = meses >= 1 ? Math.abs(d / meses) : null;
+    const verbo = d < 0 ? "Perda de" : d > 0 ? "Ganho de" : "Manutenção do peso:";
+    itens.push({
+      tom: "success",
+      texto: (
+        <>
+          {verbo} {d !== 0 && <strong>{Math.abs(d)} kg</strong>}
+          {taxa != null ? <> ({taxa.toFixed(1)} kg/mês)</> : null} no período.
+        </>
+      ),
+    });
+    refs.push("donnelly-2009");
+  }
+
+  const cint0 = primeiro.medidas.cintura;
+  const cint1 = ultimo.medidas.cintura;
+  if (cint0 != null && cint1 != null && cint1 !== cint0) {
+    const dc = +(cint1 - cint0).toFixed(1);
+    itens.push({
+      tom: "primary",
+      texto: dc < 0
+        ? <>Cintura caiu <strong>{Math.abs(dc)} cm</strong>: sinal de perda de gordura central.</>
+        : <>Cintura subiu <strong>{Math.abs(dc)} cm</strong> no período.</>,
+    });
+    refs.push("seidell-flegal-1997");
+  }
+
+  const g0 = primeiro.medidas.percentualGordura;
+  const g1 = ultimo.medidas.percentualGordura;
+  if (g0 != null && g1 != null && g1 !== g0) {
+    const dg = +(g1 - g0).toFixed(1);
+    itens.push({
+      tom: "analysis",
+      texto: <>Percentual de gordura {dg < 0 ? "caiu" : "subiu"} <strong>{Math.abs(dg)} p.p.</strong> no período.</>,
+    });
+  }
+
+  const pa0 = primeiro.medidas.pressaoSistolica;
+  const pa1 = ultimo.medidas.pressaoSistolica;
+  if (pa0 != null && pa1 != null && pa1 !== pa0) {
+    itens.push({
+      tom: "warning",
+      texto: <>PA sistólica de repouso {pa1 < pa0 ? "melhorou" : "subiu"} ({pa0} para {pa1} mmHg): mantenha o semáforo diário.</>,
+    });
+    refs.push("sbc-2020");
+  }
+
+  return { itens, refs: [...new Set(refs)] };
+}
+
+/** Cartão de apoio "Leitura da evolução" (Resumo/Na prática/Ciência). */
+function LeituraEvolucaoCard({ avals }: { avals: Avaliacao[] }) {
+  const { itens, refs } = leituraEvolucao(avals);
+  if (itens.length === 0) return null;
+
+  const resumo = (
+    <div className="space-y-3">
+      <h4 className="font-display text-sm font-bold text-ink">Leitura da evolução</h4>
+      <ul className="space-y-2.5">
+        {itens.map((it, i) => (
+          <li key={i} className={cn("border-l-2 pl-3 text-sm text-ink-2", BORDA_LEITURA[it.tom])}>
+            {it.texto}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+  const pratica = (
+    <p className="text-sm leading-relaxed text-ink-2">
+      Leia a tendência, não o valor isolado: compare sempre a mesma medida entre as datas. Combine
+      peso, cintura e percentual de gordura antes de mudar o rumo do treino, e deixe a próxima
+      reavaliação confirmar o ajuste.
+    </p>
+  );
+  return (
+    <Card className="p-4">
+      <TresCamadas resumo={resumo} pratica={pratica} refs={refs} initial="resumo" ariaLabel="Leitura da evolução" />
+    </Card>
+  );
+}
+
+/* -------------------- APOIO DA ABA SEMÁFORO -------------------- */
+
+/**
+ * Resultado do semáforo por dia nos ÚLTIMOS 30 DIAS (índice 0 = 29 dias atrás,
+ * 29 = hoje). O registro mais recente do dia vence; dia sem registro fica vazio.
+ */
+function ultimos30Dias(
+  alunoId: string,
+  liberacoes: Liberacao[],
+  agora = Date.now(),
+): (Liberacao["resultado"] | undefined)[] {
+  const hoje0 = new Date(agora).setHours(0, 0, 0, 0);
+  const doAluno = liberacoes.filter((l) => l.alunoId === alunoId).sort((a, b) => b.data - a.data);
+  const dias: (Liberacao["resultado"] | undefined)[] = Array(30).fill(undefined);
+  for (const l of doAluno) {
+    const d0 = new Date(l.data).setHours(0, 0, 0, 0);
+    const atras = Math.round((hoje0 - d0) / DIA);
+    if (atras < 0 || atras > 29) continue;
+    const idx = 29 - atras;
+    if (dias[idx] === undefined) dias[idx] = l.resultado;
+  }
+  return dias;
+}
+
+/** Distribuição dos resultados do histórico (para o cartão de registros). */
+function distribuicaoSemaforo(historico: Liberacao[]) {
+  return {
+    total: historico.length,
+    verde: historico.filter((l) => l.resultado === "verde").length,
+    amarelo: historico.filter((l) => l.resultado === "amarelo").length,
+    vermelho: historico.filter((l) => l.resultado === "vermelho").length,
+  };
+}
+
+/** Banner do estado de hoje: escuro com "Fazer semáforo" (pendente) ou colorido (já feito). */
+function BannerSemaforo({
+  estado,
+  nItens,
+  grupoNome,
+  onFazer,
+}: {
+  estado: EstadoSemaforo;
+  nItens: number;
+  grupoNome?: string;
+  onFazer: () => void;
+}) {
+  if (estado.hoje) {
+    const c = COR_SEMAFORO[estado.hoje.resultado];
+    return (
+      <div className={cn("flex flex-wrap items-center gap-3 rounded-card border p-4", c.bg, c.border)}>
+        <c.Icon className={cn("h-6 w-6 shrink-0", c.text)} />
+        <div className="min-w-0 flex-1">
+          <div className={cn("font-display text-base font-bold", c.text)}>{rotuloResultado(estado.hoje.resultado)} hoje</div>
+          <p className="text-sm text-ink-2">Semáforo de hoje já registrado. Refazer substitui o registro do dia.</p>
+        </div>
+        <button onClick={onFazer} className={buttonClasses("secondary", "sm")}>
+          <ShieldCheck className="h-4 w-4" /> Refazer
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3 rounded-card px-4 py-3.5" style={{ background: "#0D1524" }}>
+        <span aria-hidden className="relative grid h-3 w-3 shrink-0 place-items-center">
+          <span className="animate-halo absolute inset-0 rounded-full" style={{ background: "rgba(226,84,62,.5)" }} />
+          <span className="relative h-2.5 w-2.5 rounded-full" style={{ background: "var(--danger-fill)" }} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold" style={{ color: "#F2F6FC" }}>Hoje ainda não avaliado</p>
+          <p className="mt-0.5 text-2xs" style={{ color: "#8FA1BD" }}>
+            {nItens} pergunta{nItens === 1 ? "" : "s"} · cerca de 40 segundos · checklist{" "}
+            {grupoNome ? `de ${grupoNome.toLowerCase()}` : "geral"}
+          </p>
+        </div>
+        <button
+          onClick={onFazer}
+          className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-opacity hover:opacity-90"
+          style={{ background: "#14B3BA", color: "#06231F" }}
+        >
+          <ShieldCheck className="h-4 w-4" /> Fazer semáforo
+        </button>
+      </div>
+      {estado.vermelhoPendente && (
+        <div className={cn("flex items-start gap-2.5 rounded-card border p-3", COR_SEMAFORO.vermelho.bg, COR_SEMAFORO.vermelho.border)}>
+          <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
+          <p className="text-sm text-ink-2">
+            <span className="font-semibold text-danger">Não liberado em aberto</span> desde{" "}
+            {fmtData(estado.vermelhoPendente.data)}. A pendência segue até um novo semáforo.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Régua dos últimos 30 dias, com legenda e o dia de hoje destacado. */
+function Ultimos30DiasCard({ dias }: { dias: (Liberacao["resultado"] | undefined)[] }) {
+  const legenda: { cor: Liberacao["resultado"]; label: string }[] = [
+    { cor: "verde", label: "liberada" },
+    { cor: "amarelo", label: "com ajuste" },
+    { cor: "vermelho", label: "não liberada" },
+  ];
+  return (
+    <Card className="p-5 md:p-6">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <h2 className="text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Últimos 30 dias</h2>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {legenda.map((l) => (
+            <span key={l.cor} className="flex items-center gap-1.5 text-2xs text-ink-2">
+              <span aria-hidden className={cn("h-2 w-2 rounded-full", COR_SEMAFORO[l.cor].dot)} />
+              {l.label}
+            </span>
+          ))}
+          <span className="flex items-center gap-1.5 text-2xs text-ink-2">
+            <span aria-hidden className="h-2 w-2 rounded-full bg-surface-soft ring-1 ring-inset ring-border" />
+            sem sessão
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {dias.map((r, i) => {
+          const hoje = i === dias.length - 1;
+          return (
+            <span
+              key={i}
+              aria-hidden
+              className={cn(
+                "h-3 w-3 rounded-full",
+                r
+                  ? COR_SEMAFORO[r].dot
+                  : hoje
+                    ? "border-2 border-dashed border-ink-3"
+                    : "bg-surface-soft ring-1 ring-inset ring-border",
+              )}
+            />
+          );
+        })}
+      </div>
+      <p className="mt-3 text-xs text-ink-3">Cada ponto é um dia; o mais recente é hoje. Registrar por dia é opcional.</p>
+    </Card>
+  );
+}
+
+/** Cartão de registros: distribuição dos resultados do histórico do aluno. */
+function RegistrosCard({ dist }: { dist: ReturnType<typeof distribuicaoSemaforo> }) {
+  const linhas = [
+    { label: "Liberada", n: dist.verde, dot: COR_SEMAFORO.verde.dot, bar: "bg-success" },
+    { label: "Com ajuste", n: dist.amarelo, dot: COR_SEMAFORO.amarelo.dot, bar: "bg-warning" },
+    { label: "Não liberada", n: dist.vermelho, dot: COR_SEMAFORO.vermelho.dot, bar: "bg-danger-fill" },
+  ];
+  const max = Math.max(1, dist.total);
+  return (
+    <Card className="p-5">
+      <h2 className="mb-3 text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">
+        {dist.total} registro{dist.total === 1 ? "" : "s"}
+      </h2>
+      <ul className="space-y-3">
+        {linhas.map((l) => (
+          <li key={l.label}>
+            <div className="mb-1 flex items-center gap-2 text-sm">
+              <span aria-hidden className={cn("h-2 w-2 rounded-full", l.dot)} />
+              <span className="text-ink-2">{l.label}</span>
+              <span className="tabular ml-auto font-semibold text-ink">{l.n}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-surface-soft">
+              <div className={cn("h-full rounded-full", l.bar)} style={{ width: `${(l.n / max) * 100}%` }} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
+
+/** Cartão do checklist de hoje (perguntas numeradas + Resumo/Na prática/Ciência). */
+function ChecklistHojeCard({ aluno, grupoNome }: { aluno: Aluno; grupoNome?: string }) {
+  const checklist = montarChecklist(aluno.grupoEspecial ?? "geral", aluno.farmacos);
+  if (!checklist) return null;
+  const refs = [...new Set(checklist.itens.flatMap((i) => i.refs ?? []))];
+
+  const resumo = (
+    <p className="text-sm leading-relaxed text-ink-2">
+      {checklist.itens.length} pergunta{checklist.itens.length === 1 ? "" : "s"} de{" "}
+      {grupoNome ? grupoNome.toLowerCase() : "rotina"} antes da sessão. A pior resposta define a cor,
+      e um item sem resposta nunca libera direto.
+    </p>
+  );
+  const pratica = (
+    <p className="text-sm leading-relaxed text-ink-2">
+      O verde libera a sessão como planejada. O amarelo libera com o ajuste sugerido (intensidade,
+      volume ou modalidade). O vermelho não libera hoje: reavalie e, se necessário, oriente avaliação
+      médica.
+    </p>
+  );
+
+  return (
+    <Card className="p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-analysis-tint text-analysis">
+          <ClipboardList className="h-4 w-4" />
+        </span>
+        <h2 className="font-display text-base font-bold text-ink">Checklist de hoje</h2>
+      </div>
+      <ol className="mb-3 space-y-2">
+        {checklist.itens.map((it, i) => (
+          <li key={it.id} className="flex items-start gap-2.5 text-sm">
+            <span className="tabular grid h-6 w-6 shrink-0 place-items-center rounded-full bg-surface-soft text-xs font-bold text-ink-2">
+              {i + 1}
+            </span>
+            <span className="line-clamp-2 text-ink">{it.pergunta}</span>
+          </li>
+        ))}
+      </ol>
+      <TresCamadas resumo={resumo} pratica={pratica} refs={refs} initial="resumo" ariaLabel="Sobre o checklist" />
+    </Card>
+  );
+}
+
+/**
+ * Aba SEMÁFORO do aluno: à esquerda, o banner do estado de hoje, o checklist inline,
+ * a régua dos últimos 30 dias e o histórico; à direita, a distribuição dos registros
+ * e o cartão do checklist. Reusa o `SemaforoLiberacao` e a fonte única `estadoSemaforo`.
+ */
 function SemaforoAba({
   aluno,
   planoAtivo,
@@ -1358,157 +1737,82 @@ function SemaforoAba({
 }) {
   const [fazendo, setFazendo] = React.useState(false);
   const grupoSlug = aluno.grupoEspecial ?? "geral";
+  const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
 
-  // Régua da semana (início na segunda, como o Painel): marca os dias com semáforo
-  // registrado nesta semana, com a cor do resultado (o mais recente do dia vence).
-  // Fonte única compartilhada com a faixa do app do aluno (semaforoPorDiaDaSemana).
-  const agora = Date.now();
-  const diaSemana = (new Date(agora).getDay() + 6) % 7;
-  const porDia = semaforoPorDiaDaSemana(aluno.id, historico, agora);
+  const dias30 = ultimos30Dias(aluno.id, historico);
+  const dist = distribuicaoSemaforo(historico);
+  const checklist = montarChecklist(grupoSlug, aluno.farmacos);
+  const nItens = checklist?.itens.length ?? 0;
 
   return (
-    <div className="space-y-4">
-      {/* Estado atual + ação */}
-      <Card className="p-5 md:p-6">
-        <h2 className="mb-3 font-display text-lg font-bold text-ink">Semáforo de hoje</h2>
-        <FaixaEstado estado={estado} />
-        <div className="mt-4">
-          <button onClick={() => setFazendo((v) => !v)} className={buttonClasses("primary", "sm")}>
-            <ShieldCheck className="h-4 w-4" /> {estado.hoje ? "Refazer o semáforo de hoje" : "Fazer o semáforo de hoje"}
-          </button>
-          {estado.hoje && !fazendo && (
-            <p className="mt-2 text-xs text-ink-3">O semáforo de hoje já foi registrado; refazer substitui o registro do dia.</p>
-          )}
-        </div>
-      </Card>
+    <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+      {/* Coluna principal */}
+      <div className="space-y-4">
+        <BannerSemaforo estado={estado} nItens={nItens} grupoNome={grupo?.nome} onFazer={() => setFazendo((v) => !v)} />
 
-      {/* Checklist inline (o próprio componente é um Card, então fica como irmão). */}
-      {fazendo && (
-        <SemaforoLiberacao
-          grupoSlug={grupoSlug}
-          alunoId={aluno.id}
-          alunoNome={aluno.nome}
-          fase={aluno.faseJornada}
-          planoAtivoId={planoAtivo?.id}
-          onRegistrado={() => setFazendo(false)}
-        />
-      )}
-
-      {/* Régua da semana */}
-      <Card className="p-5 md:p-6">
-        <h2 className="mb-1 font-display text-lg font-bold text-ink">Dias da semana</h2>
-        <p className="mb-3 text-sm text-ink-2">
-          {planoAtivo
-            ? `Plano de ${planoAtivo.frequenciaSemanal}x por semana. Os pontos marcam os dias com semáforo registrado nesta semana.`
-            : "Monte o treino para ver os dias planejados. Por enquanto, os pontos marcam os dias com semáforo registrado nesta semana."}
-        </p>
-        <div className="grid grid-cols-7 gap-1.5">
-          {DIAS_SEMANA.map((lbl, i) => {
-            const r = porDia[i];
-            const atual = i === diaSemana;
-            return (
-              <div
-                key={lbl}
-                className={cn(
-                  "flex flex-col items-center gap-1.5 rounded-lg border bg-surface p-2",
-                  atual ? "border-primary" : "border-border",
-                )}
-              >
-                <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">{lbl}</span>
-                <span
-                  aria-hidden
-                  className={cn(
-                    "h-2.5 w-2.5 rounded-full",
-                    r ? COR_SEMAFORO[r].dot : "bg-surface-soft ring-1 ring-inset ring-border",
-                  )}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* Histórico completo */}
-      <Card className="p-5 md:p-6">
-        <h2 className="mb-3 font-display text-lg font-bold text-ink">Histórico</h2>
-        {historico.length === 0 ? (
-          <p className="py-6 text-center text-sm text-ink-2">Nenhum semáforo registrado ainda.</p>
-        ) : (
-          <ol className="space-y-3">
-            {historico.map((l) => {
-              const c = COR_SEMAFORO[l.resultado];
-              return (
-                <li key={l.id} className="rounded-xl border border-border p-3">
-                  <div className="flex items-center gap-2">
-                    <span aria-hidden className={cn("h-2.5 w-2.5 shrink-0 rounded-full", c.dot)} />
-                    <span className="font-semibold text-ink">{rotuloResultado(l.resultado)}</span>
-                    <span className="tabular ml-auto text-xs text-ink-3">{fmtData(l.data)}</span>
-                  </div>
-                  {l.ajustes.length > 0 && (
-                    <ul className="mt-2 space-y-1.5 border-t border-border pt-2">
-                      {l.ajustes.map((a) => (
-                        <li key={a.pergunta} className="flex gap-2 text-sm text-ink-2">
-                          <span aria-hidden className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", c.dot)} />
-                          <span>
-                            <span className="font-semibold text-ink">{a.acao}</span>{" "}
-                            <span className="text-xs text-ink-3">({a.pergunta})</span>
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
+        {estado.hoje && !fazendo && (
+          <p className="px-1 text-xs text-ink-3">O semáforo de hoje já foi registrado; refazer substitui o registro do dia.</p>
         )}
-      </Card>
-    </div>
-  );
-}
 
-/** Faixa do estado atual do semáforo, com a cor do resultado. */
-function FaixaEstado({ estado }: { estado: EstadoSemaforo }) {
-  if (estado.vermelhoPendente) {
-    const c = COR_SEMAFORO.vermelho;
-    const l = estado.vermelhoPendente;
-    return (
-      <div className={cn("flex items-start gap-3 rounded-xl border p-4", c.bg, c.border)}>
-        <c.Icon className={cn("mt-0.5 h-6 w-6 shrink-0", c.text)} />
-        <div className="min-w-0">
-          <div className={cn("font-display text-lg font-bold", c.text)}>Não liberado</div>
-          <p className="text-sm text-ink-2">
-            Em {fmtData(l.data)} · {registradoHa(l.data)}. Sem novo semáforo desde então; a pendência
-            segue até um novo registro.
-          </p>
-        </div>
+        {/* Checklist inline (o próprio componente é um Card, então fica como irmão). */}
+        {fazendo && (
+          <SemaforoLiberacao
+            grupoSlug={grupoSlug}
+            alunoId={aluno.id}
+            alunoNome={aluno.nome}
+            fase={aluno.faseJornada}
+            planoAtivoId={planoAtivo?.id}
+            onRegistrado={() => setFazendo(false)}
+          />
+        )}
+
+        <Ultimos30DiasCard dias={dias30} />
+
+        {/* Histórico completo */}
+        <Card className="p-5 md:p-6">
+          <h2 className="mb-3 font-display text-lg font-bold text-ink">
+            Histórico {historico.length > 0 && <span className="text-ink-3">· {historico.length}</span>}
+          </h2>
+          {historico.length === 0 ? (
+            <p className="py-6 text-center text-sm text-ink-2">Nenhum semáforo registrado ainda.</p>
+          ) : (
+            <ol className="space-y-3">
+              {historico.map((l) => {
+                const c = COR_SEMAFORO[l.resultado];
+                const bordaL =
+                  l.resultado === "verde" ? "border-l-success" : l.resultado === "amarelo" ? "border-l-warning" : "border-l-danger";
+                return (
+                  <li key={l.id} className={cn("rounded-xl border border-l-4 border-border p-3", bordaL)}>
+                    <div className="flex items-center gap-2">
+                      <span aria-hidden className={cn("h-2.5 w-2.5 shrink-0 rounded-full", c.dot)} />
+                      <span className="font-semibold text-ink">{rotuloResultado(l.resultado)}</span>
+                      <span className="tabular ml-auto text-xs text-ink-3">{fmtData(l.data)}</span>
+                    </div>
+                    {l.ajustes.length > 0 && (
+                      <ul className="mt-2 space-y-1.5 border-t border-border pt-2">
+                        {l.ajustes.map((a) => (
+                          <li key={a.pergunta} className="flex gap-2 text-sm text-ink-2">
+                            <span aria-hidden className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", c.dot)} />
+                            <span>
+                              <span className="font-semibold text-ink">{a.acao}</span>{" "}
+                              <span className="text-xs text-ink-3">({a.pergunta})</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </Card>
       </div>
-    );
-  }
-  if (estado.ultimo) {
-    const c = COR_SEMAFORO[estado.ultimo.resultado];
-    const l = estado.ultimo;
-    return (
-      <div className={cn("flex items-start gap-3 rounded-xl border p-4", c.bg, c.border)}>
-        <c.Icon className={cn("mt-0.5 h-6 w-6 shrink-0", c.text)} />
-        <div className="min-w-0">
-          <div className={cn("font-display text-lg font-bold", c.text)}>{rotuloResultado(l.resultado)}</div>
-          <p className="text-sm text-ink-2">
-            {fmtData(l.data)} · {registradoHa(l.data)}.
-          </p>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-start gap-3 rounded-xl border border-border bg-surface-soft p-4">
-      <ShieldCheck className="mt-0.5 h-6 w-6 shrink-0 text-ink-3" />
-      <div className="min-w-0">
-        <div className="font-display text-lg font-bold text-ink">Sem semáforo registrado</div>
-        <p className="text-sm text-ink-2">
-          Faça o semáforo de hoje antes da sessão. Registrar por dia é opcional; a ausência não gera
-          alerta.
-        </p>
+
+      {/* Coluna de apoio */}
+      <div className="space-y-4">
+        {historico.length > 0 && <RegistrosCard dist={dist} />}
+        <ChecklistHojeCard aluno={aluno} grupoNome={grupo?.nome} />
       </div>
     </div>
   );
