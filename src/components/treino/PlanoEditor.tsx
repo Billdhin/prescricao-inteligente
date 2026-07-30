@@ -18,10 +18,11 @@ import {
   X,
   Lock,
   LockOpen,
+  ExternalLink,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, Eyebrow, TokenRotulado, LinhaDeTokens, type PillTone } from "@/components/ui/primitives";
 import { TokenDose } from "@/components/gps/TermoDoseInfo";
-import { cn } from "@/lib/utils";
+import { cn, withBase } from "@/lib/utils";
 import {
   getFaixa,
   getModelo,
@@ -1169,13 +1170,19 @@ function BlocoRow({
           </button>
         )}
         {bloco.exercicioSlug && (
-          <Link
-            to={`/movement-lab/${bloco.exercicioSlug}`}
-            className="shrink-0 text-2xs font-semibold text-primary hover:underline"
-            title="Ver a análise deste exercício"
+          // ABRE EM NOVA ABA de propósito. O plano gerado vive só em estado local
+          // enquanto não é salvo; navegar para o Laboratório na MESMA aba e voltar
+          // remontava a página e obrigava a gerar tudo de novo. Numa aba separada, a
+          // periodização fica intacta e o profissional só fecha a aba para voltar.
+          <a
+            href={withBase(`/movement-lab/${bloco.exercicioSlug}`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 items-center gap-0.5 text-2xs font-semibold text-primary hover:underline"
+            title="Abrir a análise deste exercício em uma nova aba (a periodização fica aberta aqui)"
           >
-            ver análise
-          </Link>
+            ver análise <ExternalLink className="h-3 w-3" />
+          </a>
         )}
         <button onClick={onRemover} aria-label={`Remover ${bloco.nome}`} className="shrink-0 rounded p-1 text-ink-3 hover:bg-surface-soft hover:text-[color:var(--cta-text)]">
           <Trash2 className="h-3.5 w-3.5" />

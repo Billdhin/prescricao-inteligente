@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Sparkles,
@@ -176,6 +176,31 @@ export function MovementLabDetail() {
   return <Detail exercise={exercise} />;
 }
 
+/**
+ * "Voltar" ciente do histórico. Antes era um Link fixo para /movement-lab, então
+ * quem chegava de outra tela (resultados do Prescrever, Comparador, busca) sempre
+ * caía no catálogo, não na tela de onde veio. Se há histórico dentro do app, volta
+ * uma página; senão (aba nova aberta pelo "ver análise", ou link direto), cai no
+ * catálogo, que é o destino seguro.
+ */
+function VoltarLink() {
+  const navigate = useNavigate();
+  const temHistorico = typeof window !== "undefined" && window.history.length > 1;
+  const classe = "mb-2 inline-flex items-center gap-2 text-sm font-medium text-ink-2 hover:text-ink";
+  if (temHistorico) {
+    return (
+      <button type="button" onClick={() => navigate(-1)} className={classe}>
+        <ArrowLeft className="h-4 w-4" /> Voltar
+      </button>
+    );
+  }
+  return (
+    <Link to="/movement-lab" className={classe}>
+      <ArrowLeft className="h-4 w-4" /> Voltar ao Laboratório
+    </Link>
+  );
+}
+
 function Detail({ exercise }: { exercise: Exercise }) {
   const plan = useUser((s) => s.plan);
   // Produto 100% pago: nada de exercicio fica trancado (isPremiumUnlocked sempre
@@ -198,12 +223,7 @@ function Detail({ exercise }: { exercise: Exercise }) {
     <div className="mx-auto max-w-6xl space-y-6">
       {/* Header enxuto */}
       <div>
-        <Link
-          to="/movement-lab"
-          className="mb-2 inline-flex items-center gap-2 text-sm font-medium text-ink-2 hover:text-ink"
-        >
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Link>
+        <VoltarLink />
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{exercise.nome}</h1>
         </div>

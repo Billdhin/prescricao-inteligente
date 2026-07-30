@@ -199,15 +199,9 @@ export function StudentApp({
           />
         ) : (
           <>
-            {preview && (
-              <div
-                className="px-4 py-1.5 text-center text-xs font-semibold"
-                style={{ background: cor, color: tintaDaMarca }}
-              >
-                Prévia: é assim que o seu aluno vê o app
-              </div>
-            )}
-
+            {/* A moldura de celular e o chrome do profissional (AlunoPreview) já
+                sinalizam que isto é prévia. Uma tarja aqui dentro contradizia o "é
+                exatamente o que o aluno vê", já que o aluno real nunca a vê. */}
             <CabecalhoAluno
               aluno={aluno}
               marca={marca}
