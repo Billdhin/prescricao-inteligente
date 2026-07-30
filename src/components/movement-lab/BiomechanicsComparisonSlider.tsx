@@ -137,7 +137,7 @@ export function BiomechanicsComparisonSlider({
   baseSrc,
   analysisSrc,
   alt,
-  regions,
+  regions = [],
   ativacao,
   overlay,
   className,
@@ -386,37 +386,50 @@ export function BiomechanicsComparisonSlider({
           a diferença é apenas de luz, então não existe emenda de montagem. */}
       <div className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${pos}%)` }}>
         <img src={analysisSrc} alt="" aria-hidden draggable={false} className="absolute inset-0 h-full w-full object-cover" />
-        {/* escurecimento navy + vignette */}
-        <div className="absolute inset-0 bg-slate-950/45" />
-        <div
-          className="absolute inset-0"
-          style={{ background: "radial-gradient(ellipse 78% 72% at 50% 46%, transparent 48%, rgba(2,6,23,0.5) 100%)" }}
-        />
-        {/* spotlight: a mesma imagem, em brilho pleno, apenas na SILHUETA dos músculos */}
-        <img
-          src={analysisSrc}
-          alt=""
-          aria-hidden
-          draggable={false}
-          className="absolute inset-0 h-full w-full object-cover"
-          style={
-            maskAtiva
-              ? {
-                  maskImage: `url(${maskAtiva})`,
-                  WebkitMaskImage: `url(${maskAtiva})`,
-                  maskSize: "100% 100%",
-                  WebkitMaskSize: "100% 100%",
-                  maskRepeat: "no-repeat",
-                  WebkitMaskRepeat: "no-repeat",
-                  filter: "saturate(1.08)",
-                }
-              : {
-                  maskImage: maskFallback,
-                  WebkitMaskImage: maskFallback,
-                  filter: "saturate(1.08)",
-                }
-          }
-        />
+        {regions.length > 0 ? (
+          <>
+            {/* escurecimento navy + vignette */}
+            <div className="absolute inset-0 bg-slate-950/45" />
+            <div
+              className="absolute inset-0"
+              style={{ background: "radial-gradient(ellipse 78% 72% at 50% 46%, transparent 48%, rgba(2,6,23,0.5) 100%)" }}
+            />
+            {/* spotlight: a mesma imagem, em brilho pleno, apenas na SILHUETA dos músculos */}
+            <img
+              src={analysisSrc}
+              alt=""
+              aria-hidden
+              draggable={false}
+              className="absolute inset-0 h-full w-full object-cover"
+              style={
+                maskAtiva
+                  ? {
+                      maskImage: `url(${maskAtiva})`,
+                      WebkitMaskImage: `url(${maskAtiva})`,
+                      maskSize: "100% 100%",
+                      WebkitMaskSize: "100% 100%",
+                      maskRepeat: "no-repeat",
+                      WebkitMaskRepeat: "no-repeat",
+                      filter: "saturate(1.08)",
+                    }
+                  : {
+                      maskImage: maskFallback,
+                      WebkitMaskImage: maskFallback,
+                      filter: "saturate(1.08)",
+                    }
+              }
+            />
+          </>
+        ) : (
+          // Sem regiões autoradas: a imagem de análise (img2img alinhada à base)
+          // já traz a musculatura e o músculo-alvo em destaque, então é revelada
+          // INTEIRA, sem máscara nem escurecimento; só um leve gradiente no topo
+          // para o rótulo "Análise biomecânica" respirar.
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(to bottom, rgba(2,6,23,0.4) 0%, transparent 20%)" }}
+          />
+        )}
 
         {/* Anotações mínimas: vetor de força + ângulo + 2 rótulos finos */}
         <svg viewBox="0 0 400 300" preserveAspectRatio="none" aria-hidden className="absolute inset-0 h-full w-full">

@@ -287,6 +287,7 @@ export const extraExercises5: Exercise[] = [
       "Abrir as pernas contra a resistência da máquina: glúteo médio com carga progressiva, que os elásticos não conseguem entregar.",
     anguloArticular: "Abdução de quadril em amplitude regulável",
     imagem: "/exercises/cadeira-abdutora.webp",
+    imagemAnalise: "/exercises/cadeira-abdutora-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Glúteo médio", percentual: 65, papel: "primário" },
@@ -674,4 +675,4 @@ export const extraExercises5: Exercise[] = [
     trustLevel: "regra pedagógica",
     temCena: false,
   },
-];
+];
