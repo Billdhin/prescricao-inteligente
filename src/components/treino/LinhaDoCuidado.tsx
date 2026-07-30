@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { Check, ArrowRight, AlertTriangle, CheckCircle2, Target } from "lucide-react";
-import { Card, buttonClasses } from "@/components/ui/primitives";
+import { Check, ArrowRight, MapPin } from "lucide-react";
+import { Card } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import type { Aluno } from "@/data/alunos";
 import {
@@ -9,44 +9,55 @@ import {
   type EtapaCiclo,
   type EstadoEtapa,
   ROTULO_ETAPA,
-  AJUDA_ETAPA,
 } from "@/lib/gps/proximoPasso";
 
-const ORDEM: EtapaCiclo[] = ["avaliar", "planejar", "liberar", "acompanhar", "reavaliar"];
-
-const TINT: Record<ProximoPasso["tone"], string> = {
-  primary: "border-primary/25 bg-primary-tint",
-  cta: "border-[color:var(--cta-text)]/20 bg-cta-tint",
-  warning: "border-warning/30 bg-warning-tint",
-  success: "border-success/30 bg-success-tint",
-};
-
-const ICON_TONE: Record<ProximoPasso["tone"], string> = {
-  primary: "text-primary",
-  cta: "text-[color:var(--cta-text)]",
-  warning: "text-warning",
-  success: "text-success",
-};
-
-function IconePasso({ tone }: { tone: ProximoPasso["tone"] }) {
-  // Quando há ação pendente, o alvo pulsa de leve para puxar o olhar; "em dia"
-  // (success) fica parado, sem pedir nada.
-  const cls = cn("h-5 w-5 shrink-0", ICON_TONE[tone], tone !== "success" && "animate-alvo");
-  if (tone === "warning") return <AlertTriangle className={cls} />;
-  if (tone === "success") return <CheckCircle2 className={cls} />;
-  return <Target className={cls} />;
+/** Datas de cada marco do ciclo (quando existem), para os chips datados. */
+export interface DatasCiclo {
+  cadastro?: number;
+  avaliar?: number;
+  planejar?: number;
+  reavaliar?: number;
 }
 
+const fmtDDMM = (ts: number) =>
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(ts));
+
+const DIA = 86_400_000;
+
 /**
- * A espinha do cuidado: um stepper de cinco nós (avaliar, planejar, liberar,
- * acompanhar, reavaliar) e a faixa "Próximo passo" com a ação primária. Fica no
- * topo da tela do aluno, em qualquer aba, para o profissional nunca perder de
- * vista onde o aluno está e o que fazer a seguir.
+ * Os cinco passos do ciclo COMO O PROFISSIONAL LÊ (o desenho): Cadastrar, Avaliar,
+ * Planejar, Liberar, Reavaliar. O motor tem "acompanhar" no lugar de "cadastrar";
+ * aqui o cadastro (o aluno existe) é sempre o passo 1 e o "acompanhar" some, virando
+ * o estado de quem já passou por Liberar. O estado de cada chip vem do `estado`
+ * monotônico do motor, então o chip nunca mente sobre onde o aluno está.
+ */
+const PASSOS_DISPLAY: { chave: string; rotulo: string; engine?: EtapaCiclo }[] = [
+  { chave: "cadastro", rotulo: "Cadastrar" },
+  { chave: "avaliar", rotulo: "Avaliar", engine: "avaliar" },
+  { chave: "planejar", rotulo: "Planejar", engine: "planejar" },
+  { chave: "liberar", rotulo: "Liberar", engine: "liberar" },
+  { chave: "reavaliar", rotulo: "Reavaliar", engine: "reavaliar" },
+];
+
+/** "etapa N de 5" a partir da etapa atual do motor. */
+const NUM_ETAPA: Record<EtapaCiclo, number> = {
+  avaliar: 2,
+  planejar: 3,
+  liberar: 4,
+  acompanhar: 4,
+  reavaliar: 5,
+};
+
+/**
+ * O CICLO DO CUIDADO: onde o aluno está e qual o próximo movimento, no topo da tela
+ * do aluno em qualquer aba. É a assinatura do produto: chips datados dos marcos e,
+ * embaixo, um cartão escuro com o passo de AGORA e a ação primária.
  */
 export function LinhaDoCuidado({
   aluno,
   passo,
   estado,
+  datas,
   onAvaliar,
   onAcompanhar,
   onLiberar,
@@ -54,53 +65,82 @@ export function LinhaDoCuidado({
   aluno: Aluno;
   passo: ProximoPasso;
   estado: Record<EtapaCiclo, EstadoEtapa>;
+  datas?: DatasCiclo;
   onAvaliar: () => void;
   onAcompanhar: () => void;
   /** liberar abre a aba Semáforo do próprio aluno (nunca sai para /semaforo) */
   onLiberar: () => void;
 }) {
+  const n = NUM_ETAPA[passo.etapa];
+  const dataDe = (chave: string): number | undefined =>
+    chave === "cadastro" ? datas?.cadastro : chave === "avaliar" ? datas?.avaliar : chave === "planejar" ? datas?.planejar : chave === "reavaliar" ? datas?.reavaliar : undefined;
+
   return (
     <Card variant="raised" className="overflow-hidden p-4 md:p-5">
-      {/* Stepper do ciclo: rola no mobile, cabe inteiro no desktop */}
-      <ol aria-label="Etapas do ciclo de cuidado" className="flex items-start gap-1 overflow-x-auto pb-1">
-        {ORDEM.map((etapa, i) => (
-          <li
-            key={etapa}
-            aria-current={estado[etapa] === "atual" ? "step" : undefined}
-            className="flex min-w-0 flex-1 items-start"
-          >
-            <div className="flex min-w-[4.5rem] flex-col items-center gap-1 text-center">
-              <NoCiclo estado={estado[etapa]} />
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">
+          Ciclo do cuidado <span className="normal-case tracking-normal text-ink-2">· etapa {n} de 5</span>
+        </div>
+        <Link to="/tutorial" className="shrink-0 text-2xs font-semibold text-primary hover:underline">
+          como funciona?
+        </Link>
+      </div>
+
+      {/* Chips datados dos marcos. O atual ganha o pino da marca; o feito, o traço
+          verde; o futuro, a borda tracejada. */}
+      <ol aria-label="Etapas do ciclo de cuidado" className="flex flex-wrap gap-2">
+        {PASSOS_DISPLAY.map((p) => {
+          const est: EstadoEtapa = p.chave === "cadastro" ? "feito" : estado[p.engine!];
+          const ts = dataDe(p.chave);
+          const futuroReav = p.chave === "reavaliar" && est !== "feito" && ts != null;
+          const dias = futuroReav ? Math.max(0, Math.round((ts! - Date.now()) / DIA)) : 0;
+          return (
+            <li key={p.chave}>
               <span
+                aria-current={est === "atual" ? "step" : undefined}
                 className={cn(
-                  "text-2xs font-semibold leading-tight",
-                  estado[etapa] === "atual" ? "text-ink" : estado[etapa] === "feito" ? "text-ink-2" : "text-ink-3",
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold",
+                  est === "feito" && "border-success/40 bg-success-tint text-success",
+                  est === "atual" && "border-primary bg-primary-tint text-primary",
+                  est === "pendente" && "border-dashed border-border text-ink-3",
                 )}
-                title={AJUDA_ETAPA[etapa]}
               >
-                {ROTULO_ETAPA[etapa]}
-                <span className="sr-only">
-                  {" "}
-                  {estado[etapa] === "feito" ? "concluído" : estado[etapa] === "atual" ? "etapa atual" : "pendente"}
-                </span>
+                {est === "feito" ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : est === "atual" ? (
+                  <MapPin className="h-3.5 w-3.5" />
+                ) : null}
+                <span>{p.rotulo}</span>
+                {ts != null && (
+                  <span className={cn("tabular font-medium", est === "pendente" ? "text-ink-3" : "opacity-80")}>
+                    {fmtDDMM(ts)}
+                    {futuroReav && ` · em ${dias} ${dias === 1 ? "dia" : "dias"}`}
+                  </span>
+                )}
               </span>
-            </div>
-            {i < ORDEM.length - 1 && (
-              <span
-                aria-hidden
-                className={cn("mt-3.5 h-0.5 flex-1 rounded-full", estado[etapa] === "feito" ? "bg-success/50" : "bg-border")}
-              />
-            )}
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ol>
 
-      {/* Faixa do próximo passo */}
-      <div className={cn("mt-3 flex flex-wrap items-center gap-3 rounded-xl border p-3", TINT[passo.tone])}>
-        <IconePasso tone={passo.tone} />
+      {/* Cartão escuro do AGORA: o passo atual e a ação primária, no navy da marca. */}
+      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-card px-4 py-3.5" style={{ background: "#0D1524" }}>
+        <span aria-hidden className="relative grid h-3 w-3 place-items-center">
+          {passo.tone !== "success" && (
+            <span className="animate-halo absolute inset-0 rounded-full" style={{ background: "rgba(226,84,62,.5)" }} />
+          )}
+          <span
+            className="relative h-2.5 w-2.5 rounded-full"
+            style={{ background: passo.tone === "success" ? "#14B3BA" : "var(--danger-fill)" }}
+          />
+        </span>
         <div className="min-w-0 flex-1">
-          <div className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Próximo passo</div>
-          <p className="text-sm font-medium text-ink">{passo.frase}</p>
+          <div className="text-2xs font-bold uppercase tracking-[0.14em]" style={{ color: "#8FA1BD" }}>
+            Agora · {ROTULO_ETAPA[passo.etapa]}
+          </div>
+          <p className="mt-0.5 text-sm font-semibold" style={{ color: "#F2F6FC" }}>
+            {passo.frase}
+          </p>
         </div>
         <CtaPasso aluno={aluno} passo={passo} onAvaliar={onAvaliar} onAcompanhar={onAcompanhar} onLiberar={onLiberar} />
       </div>
@@ -108,27 +148,7 @@ export function LinhaDoCuidado({
   );
 }
 
-function NoCiclo({ estado }: { estado: EstadoEtapa }) {
-  if (estado === "feito") {
-    return (
-      <span className="grid h-7 w-7 place-items-center rounded-full bg-success text-white">
-        <Check className="h-4 w-4" />
-      </span>
-    );
-  }
-  if (estado === "atual") {
-    // Passo atual: ponto sólido com um halo pulsante por trás, para dar vida ao
-    // stepper sem distrair (o halo desliga em reduced-motion).
-    return (
-      <span className="relative grid h-7 w-7 place-items-center">
-        <span aria-hidden className="animate-halo absolute inset-0 rounded-full bg-primary/40" />
-        <span className="relative h-7 w-7 rounded-full gradient-brand ring-4 ring-primary-tint" />
-      </span>
-    );
-  }
-  return <span className="grid h-7 w-7 place-items-center rounded-full border-2 border-border bg-surface" />;
-}
-
+/** Botão de ação do AGORA, em teal sobre o navy (o positivo do app do aluno). */
 function CtaPasso({
   aluno,
   passo,
@@ -142,10 +162,9 @@ function CtaPasso({
   onAcompanhar: () => void;
   onLiberar: () => void;
 }) {
-  // Ação primária da tela, acionada no celular ao lado do aluno: alvo de 44px (md).
-  // No mobile desce para a própria linha (w-full) para o texto do passo não ficar
-  // espremido a uma palavra por linha; a partir de sm volta ao lado.
-  const cls = cn(buttonClasses(passo.tone === "success" ? "secondary" : "primary"), "w-full sm:w-auto");
+  const cls =
+    "inline-flex w-full items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#14B3BA] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D1524] sm:w-auto";
+  const estilo = { background: "#14B3BA", color: "#06231F" };
   const label = (
     <>
       {passo.cta.label} <ArrowRight className="h-4 w-4" />
@@ -157,7 +176,7 @@ function CtaPasso({
   // rótulo certo e o endereço errado.
   if (passo.cta.to) {
     return (
-      <Link to={passo.cta.to} className={cls}>
+      <Link to={passo.cta.to} className={cls} style={estilo}>
         {label}
       </Link>
     );
@@ -165,7 +184,7 @@ function CtaPasso({
   switch (passo.cta.kind) {
     case "planejar":
       return (
-        <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cls}>
+        <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cls} style={estilo}>
           {label}
         </Link>
       );
@@ -173,21 +192,21 @@ function CtaPasso({
       // O semáforo do aluno em contexto se faz na aba dele, aqui mesmo na página,
       // não na /semaforo global (que virou o painel do dia).
       return (
-        <button onClick={onLiberar} className={cls}>
+        <button onClick={onLiberar} className={cls} style={estilo}>
           {label}
         </button>
       );
     case "avaliar":
     case "reavaliar":
       return (
-        <button onClick={onAvaliar} className={cls}>
+        <button onClick={onAvaliar} className={cls} style={estilo}>
           {label}
         </button>
       );
     case "acompanhar":
     default:
       return (
-        <button onClick={onAcompanhar} className={cls}>
+        <button onClick={onAcompanhar} className={cls} style={estilo}>
           {label}
         </button>
       );

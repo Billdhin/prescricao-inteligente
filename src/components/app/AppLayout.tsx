@@ -113,7 +113,10 @@ export function AppLayout() {
         {/* A coluna de conteúdo abre espaço para a barra fixa em lg+; no mobile a
             barra lateral não existe e o espaço é zero. */}
         <div className="flex min-w-0 flex-1 flex-col lg:pl-[248px]">
-          <Topbar />
+          {/* A barra global (busca, notificações, cadastrar) vive SÓ no Meu dia: é o
+              painel do dia, onde faz sentido ter tudo à mão. Nas outras telas cada
+              página é dona do próprio cabeçalho, como no desenho da tela do aluno. */}
+          {pathname === "/dashboard" && <Topbar />}
           <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-10">
             <React.Suspense fallback={<RouteFallback />}>
               <Outlet />
@@ -435,13 +438,13 @@ function Sidebar() {
         </ul>
       </nav>
 
-      {/* Contexto do lugar onde o profissional está, quando é um aluno. */}
-      <CardAlunoLateral alunos={alunos} pathname={pathname} />
-
-      {/* Empurra o rodapé para baixo sem depender de altura fixa. */}
+      {/* Empurra o rodapé para baixo sem depender de altura fixa. A lateral fica
+          com nav + rodapé e nada mais: os cartões "Este aluno" e "Semáforo do dia"
+          moravam aqui e empurravam o conteúdo além da altura da tela, o que ligava
+          um scroll feio na barra. O contexto do aluno agora vive na PRÓPRIA tela do
+          aluno (ciclo do cuidado) e o semáforo já tem o destino com contador no menu. */}
       <div className="flex-1" />
 
-      <CardSemaforoLateral quantos={contagens.semaforo} />
       <RodapeUsuario />
     </aside>
   );
@@ -551,7 +554,7 @@ function ItemLateral({
       className="flex min-h-[44px] items-center gap-3 rounded-card px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       style={
         ativo
-          ? { background: CASCA.ativoFundo, color: CASCA.ativoTinta }
+          ? { background: CASCA.ativoFundo, color: CASCA.ativoTinta, boxShadow: "0 1px 3px rgba(13,21,36,.28)" }
           : { color: CASCA.tinta2 }
       }
     >
