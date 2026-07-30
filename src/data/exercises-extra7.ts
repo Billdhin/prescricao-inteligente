@@ -208,6 +208,7 @@ imagem: "/exercises/wall-slide.webp",
     resumoPratico:
       "Deitado de bruços no banco inclinado, os braços sobem em Y: a posição que recruta o trapézio inferior, que estava em zero no catálogo.",
     anguloArticular: "Elevação a cerca de 120 graus na diagonal do corpo",
+imagem: "/exercises/y-raise-banco.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Trapézio inferior", percentual: 62, papel: "primário" },
