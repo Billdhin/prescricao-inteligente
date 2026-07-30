@@ -43,6 +43,7 @@ export const extraExercises5: Exercise[] = [
       "Com o pé de trás apoiado num banco, quase todo o peso vai para a perna da frente: unilateral com carga, que o catálogo não tinha.",
     anguloArticular: "Flexão profunda de joelho e quadril na perna da frente",
     imagem: "/exercises/agachamento-bulgaro.webp",
+    imagemAnalise: "/exercises/agachamento-bulgaro-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Quadríceps", percentual: 75, papel: "primário" },

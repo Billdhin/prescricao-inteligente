@@ -859,6 +859,7 @@ export const extraExercises4: Exercise[] = [
       "Com o braço apoiado no banco inclinado, não há como balançar: é a versão de bíceps mais fácil de ensinar.",
     anguloArticular: "Flexão de cotovelo com braço apoiado a cerca de 45 graus",
     imagem: "/exercises/rosca-scott-maquina.webp",
+    imagemAnalise: "/exercises/rosca-scott-maquina-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Bíceps braquial", percentual: 66, papel: "primário" },
@@ -1185,6 +1186,7 @@ export const extraExercises4: Exercise[] = [
       "Puxar a corda na direção do rosto girando os ombros para fora: junta deltoide posterior, escápula e rotadores externos num movimento só.",
     anguloArticular: "Abdução horizontal com rotação externa de ombro",
     imagem: "/exercises/face-pull-polia.webp",
+    imagemAnalise: "/exercises/face-pull-polia-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Deltoide posterior", percentual: 60, papel: "primário" },
