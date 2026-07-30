@@ -47,6 +47,7 @@ export const extraExercises7: Exercise[] = [
       "Empurrar à frente e continuar empurrando com a escápula: o serrátil anterior nunca aparece como alvo em treino comum, e é ele que gira a escápula para o braço subir.",
     anguloArticular: "Ombro a 90 graus de flexão, protração escapular",
     imagem: "/exercises/serratus-punch.webp",
+    imagemAnalise: "/exercises/serratus-punch-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Serrátil anterior", percentual: 65, papel: "primário" },
@@ -445,6 +446,7 @@ export const extraExercises7: Exercise[] = [
       "Ficar sobre um pé só, com progressão de dificuldade: o único trabalho de equilíbrio do catálogo, e o mais citado na prevenção de quedas.",
     anguloArticular: "Apoio unipodal com joelho em leve flexão",
     imagem: "/exercises/equilibrio-unipodal.webp",
+    imagemAnalise: "/exercises/equilibrio-unipodal-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Fibulares (estabilizadores do tornozelo)", percentual: 55, papel: "primário" },
@@ -606,6 +608,7 @@ export const extraExercises7: Exercise[] = [
       "Caminhar segurando peso nas duas mãos: pegada, trapézio e core na mesma tarefa, e o exercício mais parecido com carregar compras.",
     anguloArticular: "Postura ereta com carga suspensa nas mãos",
     imagem: "/exercises/farmer-walk.webp",
+    imagemAnalise: "/exercises/farmer-walk-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Flexores do punho", percentual: 70, papel: "primário" },
@@ -688,6 +691,7 @@ export const extraExercises7: Exercise[] = [
       "Caminhar com peso em uma mão só: o quadrado lombar do lado oposto trabalha o percurso inteiro para o tronco não tombar.",
     anguloArticular: "Postura ereta com carga assimétrica",
     imagem: "/exercises/suitcase-carry.webp",
+    imagemAnalise: "/exercises/suitcase-carry-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadrado lombar", percentual: 60, papel: "primário" },
