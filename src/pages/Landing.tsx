@@ -6,8 +6,8 @@ import {
   Plus,
   ShieldCheck,
   Lock,
-  MapPin,
 } from "lucide-react";
+import { MarcaPino } from "@/components/brand/Logo";
 import { MonitorMockup, type MockupTela } from "@/components/landing/MockupApp";
 
 /**
@@ -115,16 +115,18 @@ function Header() {
   );
 }
 
-/* Marca: pino com rota (mesma ideia da logo do produto) + wordmark */
+/* Marca OFICIAL do produto: o pino com a rota de 3 nós (/brand/marca-pino.webp,
+   a arte escolhida pelo Filipe) + o wordmark de duas cores. Fundo transparente,
+   então serve no cabeçalho claro e no rodapé escuro. */
 function Brand({ dark = false }: { dark?: boolean }) {
-  const ink = dark ? "#F6F5F2" : "#10233A";
   return (
     <span className="inline-flex items-center gap-2">
-      <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[#2064EC]">
-        <MapPin className="h-4 w-4 text-white" strokeWidth={2.4} />
-      </span>
-      <span className="font-display text-[17px] font-bold tracking-tight" style={{ color: ink }}>
-        Mapa da Prescrição
+      <MarcaPino className="h-8 w-8 shrink-0" />
+      <span
+        className="whitespace-nowrap font-display text-[17px] font-bold leading-none"
+        style={{ color: dark ? "#F6F5F2" : "#10233A" }}
+      >
+        Mapa da <span style={{ color: dark ? "#12B5A8" : "#2064EC" }}>Prescrição</span>
       </span>
     </span>
   );

@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { MarcaPino } from "@/components/brand/Logo";
 
 /**
  * Mockups do produto para a seção "Por dentro do app" da landing.
@@ -189,12 +190,8 @@ function Sidebar({ tela }: { tela: MockupTela }) {
     >
       {/* marca */}
       <div className="flex items-center gap-3 px-5 pb-5 pt-6">
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[9px]" style={{ background: T.primary }}>
-          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="#fff" strokeWidth="2.4">
-            <path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" />
-            <circle cx="12" cy="10" r="2.4" />
-          </svg>
-        </span>
+        {/* mesma marca do app: o pino oficial, como o Sidebar real usa */}
+        <MarcaPino className="h-8 w-8 shrink-0" />
         <span className="font-display text-base font-bold leading-tight" style={{ color: T.cascaTinta }}>
           Mapa da
           <br />
