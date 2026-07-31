@@ -56,6 +56,7 @@ export const extraExercises3: Exercise[] = [
       "Rotação externa com o cotovelo junto ao tronco: o exercício de manguito mais fácil de ensinar e de fazer em casa, porque o próprio corpo limita a compensação.",
     anguloArticular: "0 graus de abdução, cotovelo a 90 graus",
 imagem: "/exercises/rotacao-externa-elastico.webp",
+    imagemAnalise: "/exercises/rotacao-externa-elastico-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Infraespinal", percentual: 55, papel: "primário" },
