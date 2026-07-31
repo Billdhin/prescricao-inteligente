@@ -17,6 +17,11 @@
  * base, sem gerar imagem quase idêntica.
  */
 const VARIACAO_IMGS: Record<string, number[]> = {
+  "rotacao-interna-elastico": [1],
+  "rotacao-externa-elastico": [2],
+  "scaption": [0, 1],
+  "corrida-aquatica": [0, 2],
+  "caminhada-plana": [0, 2],
   "escada-ergometrica": [2],
   "respiracao-360": [1, 2],
   "chin-tuck": [0, 1],
