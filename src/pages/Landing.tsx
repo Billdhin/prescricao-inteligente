@@ -8,6 +8,7 @@ import {
   Lock,
   MapPin,
 } from "lucide-react";
+import { MonitorMockup, type MockupTela } from "@/components/landing/MockupApp";
 
 /**
  * Landing "Redesign do Mapa da Prescrição".
@@ -351,7 +352,7 @@ const ABAS = [
   {
     id: "cadastro",
     label: "1 · Cadastro",
-    url: "app.mapadaprescricao.com.br/alunos/novo",
+    url: "app.mapadaprescricao.com.br/alunos/mariana/perfil",
     titulo: "Cadastro que só pergunta o que muda a prescrição",
     d1: "Seis passos: básicos, objetivo, saúde e restrições, medicamentos, equipamentos e notas.",
     d2: "Nada de formulário longo — o que não altera a conduta fica de fora.",
@@ -359,7 +360,7 @@ const ABAS = [
   {
     id: "avaliacoes",
     label: "2 · Avaliações",
-    url: "app.mapadaprescricao.com.br/alunos/marina/avaliacoes",
+    url: "app.mapadaprescricao.com.br/assessments",
     titulo: "Evolução que vira argumento",
     d1: "Peso, % de gordura e cintura por data, com leitura automática do período e exportação em PDF para mostrar ao aluno.",
     d2: "A reavaliação aparece com data e motivo — o ciclo cobra você antes do aluno cobrar.",
@@ -367,7 +368,7 @@ const ABAS = [
   {
     id: "semaforo",
     label: "3 · Semáforo",
-    url: "app.mapadaprescricao.com.br/semaforo",
+    url: "app.mapadaprescricao.com.br/alunos/mariana?aba=semaforo",
     titulo: "A decisão do dia, com o porquê",
     d1: "Quatro perguntas antes da sessão. A pior resposta define a cor e a conduta recomendada.",
     d2: "Cada resposta fica registrada, dia a dia, no histórico do aluno.",
@@ -378,7 +379,7 @@ const ABAS = [
     url: "app.mapadaprescricao.com.br/prescrever-treino",
     titulo: "A curva que responde à edição",
     d1: "Volume, intensidade e complexidade ao longo do bloco. Editar uma sessão move a curva na hora.",
-    d2: "Do mesociclo ao microciclo, com os métodos de série da semana.",
+    d2: "As fases aparecem nomeadas, com a semana de descarga marcada e a semana de hoje em destaque.",
   },
 ];
 
@@ -416,40 +417,9 @@ function PorDentro() {
           ))}
         </div>
 
-        <div className="mt-8 grid items-center gap-8 lg:grid-cols-[1.4fr_1fr]">
-          {/* monitor */}
-          <div className="overflow-hidden rounded-[18px] border border-[#EAE8E3] bg-white shadow-[0_24px_60px_-30px_rgba(16,35,58,0.28)]">
-            <div className="flex items-center gap-1.5 border-b border-[#EAE8E3] bg-[#F6F5F2] px-4 py-2.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#E3E0DA]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[#E3E0DA]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[#E3E0DA]" />
-              <span className="ml-2 truncate font-mono text-[11.5px] text-[#8A97A6]">{aba.url}</span>
-            </div>
-            <div className="aspect-[16/10] w-full bg-[#FBFAF8] p-5">
-              {/* representação limpa da tela — o briefing pede screenshots reais aqui */}
-              <div className="flex h-full flex-col rounded-[12px] border border-[#EFEDE8] bg-white p-4">
-                <div className="mb-3 h-2.5 w-40 rounded bg-[#E7EEF7]" />
-                <div className="grid flex-1 grid-cols-3 gap-3">
-                  <div className="col-span-2 rounded-[10px] border border-[#EFEDE8] p-3">
-                    <div className="mb-2 h-2 w-24 rounded bg-[#EFEDE8]" />
-                    <div className="flex h-[70%] items-end gap-1.5">
-                      {[40, 55, 48, 66, 60, 78, 72].map((h, i) => (
-                        <span key={i} className="flex-1 rounded-t bg-[#DCE7F6]" style={{ height: `${h}%` }} />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    {[0, 1, 2, 3].map((i) => (
-                      <div key={i} className="rounded-[8px] border border-[#EFEDE8] p-2">
-                        <div className="mb-1 h-1.5 w-12 rounded bg-[#EFEDE8]" />
-                        <div className="h-1.5 w-8 rounded bg-[#E9F6EE]" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="mt-8 grid items-center gap-10 lg:grid-cols-[1.55fr_1fr]">
+          {/* monitor com a interface real do sistema */}
+          <MonitorMockup tela={aba.id as MockupTela} url={aba.url} />
 
           {/* explicativo da aba */}
           <div>
@@ -457,7 +427,7 @@ function PorDentro() {
             <p className="mt-3 text-[15px] leading-relaxed text-[#5A6B7D]">{aba.d1}</p>
             <p className="mt-3 text-[15px] leading-relaxed text-[#5A6B7D]">{aba.d2}</p>
             <p className="mt-5 text-[12.5px] text-[#8A97A6]">
-              Telas reais do sistema · imagem estática, troque pelas abas acima.
+              A interface real do sistema, com os dados de um aluno de exemplo.
             </p>
           </div>
         </div>
