@@ -177,7 +177,7 @@ function Hero() {
 /* Mockup do celular: o ciclo do cuidado da Marina + evolução + reavaliação */
 function PhoneMock() {
   return (
-    <div className="relative mx-auto w-full max-w-[380px]">
+    <div className="relative mx-auto w-full max-w-[400px]">
       <div className="overflow-hidden rounded-[18px] border border-[#EAE8E3] bg-white shadow-[0_24px_60px_-24px_rgba(16,35,58,0.28)]">
         {/* barra do navegador */}
         <div className="flex items-center gap-1.5 border-b border-[#EAE8E3] bg-[#FBFAF8] px-3.5 py-2.5">
@@ -205,31 +205,33 @@ function PhoneMock() {
               <span>Ciclo do cuidado</span>
               <span className="text-[#5A6B7D]">· etapa 4 de 5</span>
             </div>
-            <div className="flex items-center gap-1">
+            {/* as 5 etapas cabem na linha com padding curto; se a fonte do
+                sistema esticar, quebram em duas em vez de serem cortadas. A data
+                da reavaliação vive no cartão de baixo, não no chip. */}
+            <div className="flex flex-wrap items-center gap-1">
               {[
                 ["Cadastrar", "done"],
                 ["Avaliar", "done"],
                 ["Planejar", "done"],
                 ["Liberar", "now"],
                 ["Reavaliar", "next"],
-              ].map(([label, st], i) => (
-                <React.Fragment key={label}>
-                  {i > 0 && <span className="h-px flex-1 bg-[#EFEDE8]" />}
-                  <span
-                    className={
-                      "whitespace-nowrap rounded-full px-2 py-0.5 text-2xs font-semibold " +
-                      (st === "done"
-                        ? "bg-[#E9F6EE] text-[#1B7A4B]"
-                        : st === "now"
-                          ? "bg-[#0D1A2B] text-white"
-                          : "border border-[#EAE8E3] text-[#8A97A6]")
-                    }
-                  >
-                    {st === "done" ? "✓ " : ""}
-                    {label}
-                    {label === "Reavaliar" ? " 20/08" : ""}
-                  </span>
-                </React.Fragment>
+              ].map(([label, st]) => (
+                <span
+                  key={label}
+                  className={
+                    // borda em todos (transparente nos preenchidos) para que os
+                    // cinco chips tenham exatamente a mesma altura
+                    "whitespace-nowrap rounded-full border px-1.5 py-0.5 text-2xs font-semibold " +
+                    (st === "done"
+                      ? "border-transparent bg-[#E9F6EE] text-[#1B7A4B]"
+                      : st === "now"
+                        ? "border-transparent bg-[#0D1A2B] text-white"
+                        : "border-[#EAE8E3] text-[#8A97A6]")
+                  }
+                >
+                  {st === "done" ? "✓ " : ""}
+                  {label}
+                </span>
               ))}
             </div>
           </div>
@@ -254,9 +256,18 @@ function PhoneMock() {
               <span className="font-display text-2xl font-bold tabular-nums text-[#10233A]">78,2 kg</span>
               <span className="rounded-full bg-[#E9F6EE] px-2 py-0.5 text-[12px] font-bold text-[#1B7A4B]">−2,4 kg</span>
             </div>
-            <div className="mt-2 flex items-end gap-1">
-              {[26, 22, 24, 19, 16, 13, 10].map((h, i) => (
-                <span key={i} className="flex-1 rounded-t bg-[#DCE7F6]" style={{ height: h }} />
+            {/* altura em % de uma caixa fixa: barras de gráfico, não blocos
+                achatados. A última é a medida de hoje, por isso destacada. */}
+            <div className="mt-2.5 flex h-16 items-end justify-between gap-1.5">
+              {[100, 89, 93, 76, 67, 55, 46].map((h, i, a) => (
+                <span
+                  key={i}
+                  className={
+                    "w-full max-w-[26px] rounded-t-[3px] " +
+                    (i === a.length - 1 ? "bg-[#2064EC]" : "bg-[#DCE7F6]")
+                  }
+                  style={{ height: `${h}%` }}
+                />
               ))}
             </div>
           </div>
