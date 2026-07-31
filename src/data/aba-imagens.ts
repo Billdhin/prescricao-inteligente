@@ -70,6 +70,9 @@ const VARIACAO_IMGS: Record<string, number[]> = {
  * mostra o texto do erro sem imagem, em vez de uma figura que não corresponde.
  */
 const ERRO_IMGS: Record<string, number[]> = {
+  "caminhada-plana": [0, 1, 2],
+  "escada-ergometrica": [0, 1, 2],
+  "remo-ergometro": [0, 1, 2],
   "levantamento-terra": [0, 1, 2],
   "remada-cavalinho": [0, 1, 2],
   "pullover-polia": [0, 1, 2],
