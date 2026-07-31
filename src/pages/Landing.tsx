@@ -35,31 +35,76 @@ function Eyebrow({ children, color = "#12B5A8" }: { children: React.ReactNode; c
   );
 }
 
-/* Botão primário (navy sólido) e secundário (branco com borda quente) */
-function CtaPrimary({ to, children, className = "" }: { to: string; children: React.ReactNode; className?: string }) {
+/**
+ * Destino que pode ser uma seção desta página (#id) ou uma rota do app.
+ *
+ * O `<Link to="#x">` do react-router NÃO é âncora: ele trata como rota, não
+ * encontra, cai no curinga `path="*"` e devolve o visitante à home — foi assim
+ * que "Ver o app por dentro" parecia não fazer nada. Âncora é `<a href>`.
+ */
+function Acao({ to, children, className = "" }: { to: string; children: React.ReactNode; className?: string }) {
+  // Âncora NATIVA de propósito: é o navegador que rola, então funciona mesmo se
+  // o JS falhar, e honra o scroll-mt das seções (o título não fica atrás do
+  // cabeçalho fixo). A suavidade vem do CSS, em `useRolagemSuave`.
+  if (to.startsWith("#")) {
+    return (
+      <a href={to} className={className}>
+        {children}
+      </a>
+    );
+  }
   return (
-    <Link
-      to={to}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl bg-[#0D1A2B] px-6 py-3.5 text-base font-semibold text-white shadow-[0_2px_10px_rgba(13,26,43,0.18)] transition-colors hover:bg-[#16283f] ${className}`}
-    >
+    <Link to={to} className={className}>
       {children}
     </Link>
   );
 }
-function CtaSecondary({ to, children, className = "" }: { to: string; children: React.ReactNode; className?: string }) {
+
+/**
+ * Rolagem suave só enquanto a landing está na tela (e só para quem não pediu
+ * menos movimento). Escopado ao ciclo de vida da página para não alterar o
+ * comportamento de rolagem do app logado.
+ */
+function useRolagemSuave() {
+  React.useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const raiz = document.documentElement;
+    const anterior = raiz.style.scrollBehavior;
+    raiz.style.scrollBehavior = "smooth";
+    return () => {
+      raiz.style.scrollBehavior = anterior;
+    };
+  }, []);
+}
+
+/* Botão primário (navy sólido) e secundário (branco com borda quente) */
+const CTA_BASE = "inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-base font-semibold transition-colors";
+
+function CtaPrimary({ to, children, className = "" }: { to: string; children: React.ReactNode; className?: string }) {
   return (
-    <Link
+    <Acao
       to={to}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl border border-[#EAE8E3] bg-white px-6 py-3.5 text-base font-semibold text-[#10233A] transition-colors hover:border-[#d9d6cf] ${className}`}
+      className={`${CTA_BASE} bg-[#0D1A2B] text-white shadow-[0_2px_10px_rgba(13,26,43,0.18)] hover:bg-[#16283f] ${className}`}
     >
       {children}
-    </Link>
+    </Acao>
+  );
+}
+function CtaSecondary({ to, children, className = "" }: { to: string; children: React.ReactNode; className?: string }) {
+  return (
+    <Acao
+      to={to}
+      className={`${CTA_BASE} border border-[#EAE8E3] bg-white text-[#10233A] hover:border-[#d9d6cf] ${className}`}
+    >
+      {children}
+    </Acao>
   );
 }
 
 /* --------------------------------- página -------------------------------- */
 
 export function Landing() {
+  useRolagemSuave();
   return (
     <div className="min-h-screen bg-[#F6F5F2] text-[#10233A] antialiased">
       <Header />
@@ -94,21 +139,21 @@ function Header() {
         <Brand />
         <nav className="hidden items-center gap-7 text-[15px] text-[#10233A] md:flex">
           {nav.map(([label, href]) => (
-            <a key={href} href={href} className="text-[#5A6B7D] transition-colors hover:text-[#10233A]">
+            <Acao key={href} to={href} className="text-[#5A6B7D] transition-colors hover:text-[#10233A]">
               {label}
-            </a>
+            </Acao>
           ))}
         </nav>
         <div className="flex items-center gap-3">
           <Link to="/dashboard" className="hidden text-[15px] font-medium text-[#5A6B7D] hover:text-[#10233A] sm:block">
             Entrar
           </Link>
-          <Link
-            to="/dashboard"
+          <Acao
+            to="#planos"
             className="inline-flex items-center rounded-xl bg-[#0D1A2B] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#16283f]"
           >
             Assinar agora
-          </Link>
+          </Acao>
         </div>
       </div>
     </header>
@@ -158,7 +203,7 @@ function Hero() {
             guarda o raciocínio.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <CtaPrimary to="/dashboard">Assinar o Mapa</CtaPrimary>
+            <CtaPrimary to="#planos">Assinar o Mapa</CtaPrimary>
             <CtaSecondary to="#por-dentro">Ver o app por dentro</CtaSecondary>
           </div>
           <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-[13.5px] font-medium text-[#8A97A6]">
@@ -921,12 +966,12 @@ function CtaFinal() {
           justificativa técnica do lado.
         </p>
         <div className="mt-7 flex justify-center">
-          <Link
-            to="/dashboard"
+          <Acao
+            to="#planos"
             className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-[15px] font-semibold text-[#0D1A2B] transition-colors hover:bg-white/90"
           >
             Assinar o Mapa da Prescrição <ArrowRight className="h-4 w-4" />
-          </Link>
+          </Acao>
         </div>
         <p className="mt-5 text-[12.5px] text-[#7f93ab]">7 dias para testar · cancelamento em dois cliques</p>
       </div>
@@ -952,24 +997,24 @@ function Footer() {
       "Ciência",
       [
         ["Respaldo técnico", "#ciencia"],
-        ["Referências bibliográficas", "/aprender"],
+        ["Referências bibliográficas", "/aprender/biblioteca"],
         ["Módulo Estudar", "/aprender"],
-        ["Protocolos ativos", "/aprender"],
+        ["Protocolos ativos", "/protocols"],
       ],
     ],
+    // Termos, Privacidade, LGPD e Cookies ainda NÃO existem como página. Enquanto
+    // não existirem ficam fora daqui: o curinga de rota devolve o visitante à
+    // home, e um "Termos de uso" que não abre nada é pior que a ausência dele.
     [
-      "Legal e suporte",
+      "Suporte",
       [
-        ["Termos de uso", "/termos"],
-        ["Política de privacidade", "/privacidade"],
-        ["Tratamento de dados e LGPD", "/lgpd"],
-        ["Política de cookies", "/cookies"],
         ["Falar com o suporte", "/suporte"],
+        ["Tutoriais", "/tutorial"],
+        ["Entrar na conta", "/dashboard"],
       ],
     ],
   ];
   const linkCls = "text-[14px] text-[#9fb0c4] transition-colors hover:text-white";
-  const isHash = (h: string) => h.startsWith("#");
   return (
     <footer className="bg-[#0B1220] text-white">
       <div className={`${WRAP} py-14`}>
@@ -990,15 +1035,9 @@ function Footer() {
               <ul className="space-y-2.5">
                 {links.map(([label, href]) => (
                   <li key={label}>
-                    {isHash(href) ? (
-                      <a href={href} className={linkCls}>
-                        {label}
-                      </a>
-                    ) : (
-                      <Link to={href} className={linkCls}>
-                        {label}
-                      </Link>
-                    )}
+                    <Acao to={href} className={linkCls}>
+                      {label}
+                    </Acao>
                   </li>
                 ))}
               </ul>
