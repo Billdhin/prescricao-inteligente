@@ -203,11 +203,17 @@ for (const [re, titulo] of TITULOS_ESPERADOS) {
 
 /* -------------------------- 4. Landing (MODULOS) ---------------------------- */
 
+// O redesign de 31/07/2026 (protótipo "Mapa da Prescrição") trocou o catálogo de
+// 8 módulos por uma narrativa de marketing (ciclo do cuidado, por dentro, semáforo,
+// planos). Se o catálogo MODULOS existir, ele DEVE espelhar os nomes novos do menu;
+// se a Landing não o tiver mais, não há o que sincronizar e a checagem é pulada.
 const landing = ler("src/pages/Landing.tsx");
-for (const label of ["Avaliar e reavaliar", "Semáforo do dia", "Treino do dia", "Prescrever treino"])
-  ok(landing.includes(`label: "${label}"`), `MODULOS da Landing sem o nome novo "${label}" (espelha o menu de propósito)`);
-for (const velho of ['label: "Avaliações"', 'label: "Semáforo",', 'label: "Prescrever exercício"'])
-  ok(!landing.includes(velho), `MODULOS da Landing ainda usa o nome antigo: ${velho}`);
+if (landing.includes("const MODULOS")) {
+  for (const label of ["Avaliar e reavaliar", "Semáforo do dia", "Treino do dia", "Prescrever treino"])
+    ok(landing.includes(`label: "${label}"`), `MODULOS da Landing sem o nome novo "${label}" (espelha o menu de propósito)`);
+  for (const velho of ['label: "Avaliações"', 'label: "Semáforo",', 'label: "Prescrever exercício"'])
+    ok(!landing.includes(velho), `MODULOS da Landing ainda usa o nome antigo: ${velho}`);
+}
 
 /* ----------------------------- 5. Tutoriais --------------------------------- */
 

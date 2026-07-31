@@ -1,1007 +1,1050 @@
 import { Link } from "react-router-dom";
+import * as React from "react";
 import {
   ArrowRight,
-  ArrowDown,
   Check,
-  CheckCircle2,
-  XCircle,
+  Plus,
   ShieldCheck,
-  AlertTriangle,
-  Info,
-  ChevronDown,
-  FileDown,
-  FileCheck,
-  Users,
-  BarChart3,
-  CalendarRange,
-  Navigation,
-  Smartphone,
-  GraduationCap,
-  FlaskConical,
-  ClipboardList,
-  Compass,
-  Route,
-  HeartPulse,
-  UserCheck,
-  Dumbbell,
-  TrendingUp,
+  Lock,
+  MapPin,
 } from "lucide-react";
-import * as React from "react";
-import { Logo } from "@/components/brand/Logo";
-import { Card, Pill, buttonClasses, SectionHeader, Eyebrow, ParDado } from "@/components/ui/primitives";
-import { SeloRCD } from "@/components/rcd/SeloRCD";
-import { EspinhaSelo } from "@/components/ui/EspinhaSelo";
-import { TutorialScene } from "@/components/tutorial/TutorialScene";
-import { muscleRegions } from "@/data/muscle-regions";
-import { analysisOverlays } from "@/data/analysis-overlays";
-import { getExercise } from "@/data/exercises";
-import { cn, withBase } from "@/lib/utils";
 
-// Slider carregado sob demanda (abaixo do primeiro paint): o LCP da landing
-// continua sendo texto do hero, e o processamento de máscara do canvas não
-// entra no caminho crítico.
-const BiomechanicsComparisonSlider = React.lazy(() =>
-  import("@/components/movement-lab/BiomechanicsComparisonSlider").then((m) => ({
-    default: m.BiomechanicsComparisonSlider,
-  })),
-);
+/**
+ * Landing "Redesign do Mapa da Prescrição".
+ *
+ * Reconstrução fiel do protótipo de redesign (o site público de marketing),
+ * na paleta e tipografia exatas dele: fundo areia #F6F5F2, texto navy #10233A,
+ * teal #12B5A8, borda quente #EAE8E3, botão navy #0D1A2B, rodapé escuro #0B1220.
+ * Bricolage Grotesque nos títulos (font-display), Instrument Sans no corpo.
+ * Ordem: dor → ciclo do cuidado → por dentro → semáforo → ciência → comparativo
+ * → prova social → preço → FAQ → CTA. Links e preço são os reais do produto.
+ */
 
-/* ---------------------------------- base --------------------------------- */
+/* ------------------------------ átomos ---------------------------------- */
 
-function Section({ id, className = "", children }: { id?: string; className?: string; children: React.ReactNode }) {
+const WRAP = "mx-auto w-full max-w-[1160px] px-6";
+
+/* Etiqueta versalete das seções (ex.: "O CICLO DO CUIDADO") */
+function Eyebrow({ children, color = "#12B5A8" }: { children: React.ReactNode; color?: string }) {
   return (
-    <section id={id} className={`mx-auto max-w-6xl px-4 py-14 md:px-6 md:py-20 ${className}`}>
+    <div className="mb-3 flex items-center gap-2 text-[11.5px] font-bold uppercase tracking-[0.16em]" style={{ color }}>
+      <span aria-hidden className="h-px w-6" style={{ background: color }} />
       {children}
-    </section>
+    </div>
   );
 }
 
-/* Kicker editorial: filete + versalete espaçado (etiqueta de prancha científica),
-   no lugar do pill-bolha genérico. */
-function Kicker({ children, tone = "primary" }: { children: React.ReactNode; tone?: "primary" | "analysis" | "cta" }) {
-  const text =
-    tone === "analysis" ? "text-analysis" : tone === "cta" ? "text-[color:var(--cta-text)]" : "text-primary";
-  const rule = tone === "analysis" ? "bg-analysis/50" : tone === "cta" ? "bg-cta/50" : "bg-primary/50";
+/* Botão primário (navy sólido) e secundário (branco com borda quente) */
+function CtaPrimary({ to, children, className = "" }: { to: string; children: React.ReactNode; className?: string }) {
   return (
-    <span className={`mb-3 inline-flex items-center gap-2.5 text-2xs font-bold uppercase tracking-[0.18em] ${text}`}>
-      <span aria-hidden className={`h-px w-7 ${rule}`} />
+    <Link
+      to={to}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl bg-[#0D1A2B] px-6 py-3.5 text-base font-semibold text-white shadow-[0_2px_10px_rgba(13,26,43,0.18)] transition-colors hover:bg-[#16283f] ${className}`}
+    >
       {children}
-      <span aria-hidden className={`h-px w-7 ${rule}`} />
-    </span>
+    </Link>
   );
 }
-
-/* Item de pilar: ícone quadrado + título + linha. Base dos três pilares. */
-function FeatureItem({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function CtaSecondary({ to, children, className = "" }: { to: string; children: React.ReactNode; className?: string }) {
   return (
-    <li className="flex gap-3">
-      <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-tint text-primary">
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <div className="font-display font-bold text-ink">{title}</div>
-        <p className="mt-0.5 text-sm text-ink-2">{children}</p>
-      </div>
-    </li>
+    <Link
+      to={to}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl border border-[#EAE8E3] bg-white px-6 py-3.5 text-base font-semibold text-[#10233A] transition-colors hover:border-[#d9d6cf] ${className}`}
+    >
+      {children}
+    </Link>
   );
 }
-
-/* Os três pilares, usados nos chips do hero e no cartão-sistema. */
-const TRIADE = [
-  { id: "registro", label: "Registro", icon: ClipboardList, linha: "Aluno, avaliação, semáforo e treino, registrados.", tone: "primary" as const },
-  { id: "acompanhamento", label: "Acompanhamento", icon: Route, linha: "Do cadastro à reavaliação, com histórico.", tone: "analysis" as const },
-  { id: "direcionamento", label: "Direcionamento", icon: Compass, linha: "Grupo, objetivo e avaliação guiam a prescrição.", tone: "primary" as const },
-];
-
-/* Catálogo de módulos: cada porta aponta para uma rota real do app; os rótulos
-   espelham os nomes usados na navegação. */
-const MODULOS: { icon: React.ComponentType<{ className?: string }>; label: string; to: string; d: string }[] = [
-  { icon: Users, label: "Alunos", to: "/alunos", d: "Cadastro, avaliações e evolução de cada aluno." },
-  { icon: BarChart3, label: "Avaliar e reavaliar", to: "/assessments", d: "Medidas, IMC e RCQ derivados; reavalie e compare." },
-  { icon: ShieldCheck, label: "Semáforo do dia", to: "/semaforo", d: "Libere, ajuste ou adie a sessão do dia, com o porquê." },
-  { icon: CalendarRange, label: "Prescrever treino", to: "/prescrever-treino", d: "Periodização mensal a anual, do mesociclo ao microciclo." },
-  { icon: Navigation, label: "Treino do dia", to: "/gps", d: "Personalize o treino do dia do aluno pela avaliação, ou prescreva uma sessão avulsa." },
-  { icon: Smartphone, label: "App do aluno", to: "/alunos", d: "O que o aluno vê: treino, semáforo e registro de execução." },
-  { icon: GraduationCap, label: "Aprender", to: "/aprender", d: "Disciplinas, casos e biblioteca com referências reais." },
-  { icon: FlaskConical, label: "Laboratório Visual", to: "/movement-lab", d: "Foto real e análise biomecânica no divisor interativo." },
-];
 
 /* --------------------------------- página -------------------------------- */
 
 export function Landing() {
   return (
-    <div className="min-h-screen bg-bg">
-      {/* ------------------------------- Header ------------------------------ */}
-      <header className="sticky top-0 z-30 border-b border-border bg-surface/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
-          <Logo />
-          <nav aria-label="Seções da página" className="hidden items-center gap-6 text-sm font-medium text-ink-2 md:flex">
-            <a href="#pilares" className="hover:text-ink">A tríade</a>
-            <a href="#modulos" className="hover:text-ink">Módulos</a>
-            <a href="#planos" className="hover:text-ink">Planos</a>
-            <a href="#faq" className="hover:text-ink">Dúvidas</a>
-          </nav>
-          <div className="flex items-center gap-2">
-            <Link to="/dashboard" className="hidden text-sm font-medium text-ink-2 hover:text-ink sm:block">
-              Entrar
-            </Link>
-            <Link to="/dashboard" className={buttonClasses("primary", "sm")}>
-              Começar agora
-            </Link>
-          </div>
+    <div className="min-h-screen bg-[#F6F5F2] text-[#10233A] antialiased">
+      <Header />
+      <Hero />
+      <Problema />
+      <Ciclo />
+      <PorDentro />
+      <Semaforo />
+      <Respaldo />
+      <Comparativo />
+      <Depoimentos />
+      <Planos />
+      <Faq />
+      <CtaFinal />
+      <Footer />
+    </div>
+  );
+}
+
+/* --------------------------------- header -------------------------------- */
+
+function Header() {
+  const nav = [
+    ["O ciclo", "#ciclo"],
+    ["Por dentro", "#por-dentro"],
+    ["Ciência", "#ciencia"],
+    ["Planos", "#planos"],
+  ];
+  return (
+    <header className="sticky top-0 z-40 border-b border-[#EAE8E3] bg-[#F6F5F2]/[0.86] backdrop-blur-md">
+      <div className={`${WRAP} flex h-[67px] items-center justify-between`}>
+        <Brand />
+        <nav className="hidden items-center gap-7 text-[15px] text-[#10233A] md:flex">
+          {nav.map(([label, href]) => (
+            <a key={href} href={href} className="text-[#5A6B7D] transition-colors hover:text-[#10233A]">
+              {label}
+            </a>
+          ))}
+        </nav>
+        <div className="flex items-center gap-3">
+          <Link to="/dashboard" className="hidden text-[15px] font-medium text-[#5A6B7D] hover:text-[#10233A] sm:block">
+            Entrar
+          </Link>
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center rounded-xl bg-[#0D1A2B] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#16283f]"
+          >
+            Assinar agora
+          </Link>
         </div>
-      </header>
+      </div>
+    </header>
+  );
+}
 
-      {/* -------------------------------- Hero ------------------------------- */}
-      <Section className="!pb-10 !pt-10 md:!pt-16">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
-          <div>
-            <Kicker tone="analysis">Sistema completo para profissionais de Educação Física</Kicker>
-            <h1 className="font-display text-4xl font-extrabold leading-[1.05] text-ink md:text-[3.1rem]">
-              Registre. Acompanhe.{" "}
-              <span className="relative inline-block whitespace-nowrap text-primary">
-                Direcione.
-                <svg
-                  aria-hidden
-                  className="absolute -bottom-2 left-0 h-2.5 w-full"
-                  viewBox="0 0 120 10"
-                  preserveAspectRatio="none"
-                >
-                  <path
-                    d="M2 7 C 28 10.5, 62 2.5, 118 6.5"
-                    fill="none"
-                    stroke="var(--cta)"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-            </h1>
-            <p className="mt-5 max-w-lg text-lg text-ink-2">
-              Cadastro, avaliação, semáforo e treino no mesmo lugar. O sistema conduz o
-              acompanhamento do primeiro dia à reavaliação e ajusta a prescrição ao objetivo e à
-              condição de cada aluno. A decisão é sempre sua.
-            </p>
+/* Marca: pino com rota (mesma ideia da logo do produto) + wordmark */
+function Brand({ dark = false }: { dark?: boolean }) {
+  const ink = dark ? "#F6F5F2" : "#10233A";
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-[#2064EC]">
+        <MapPin className="h-4 w-4 text-white" strokeWidth={2.4} />
+      </span>
+      <span className="font-display text-[17px] font-bold tracking-tight" style={{ color: ink }}>
+        Mapa da Prescrição
+      </span>
+    </span>
+  );
+}
 
-            {/* Os três pilares como âncoras: cada chip rola até o pilar correspondente. */}
-            <div className="mt-6 flex flex-wrap gap-2">
-              {TRIADE.map((t) => {
-                const Icon = t.icon;
-                return (
-                  <a
-                    key={t.id}
-                    href={`#${t.id}`}
-                    className="group inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3.5 py-2 text-sm font-semibold text-ink shadow-soft transition-colors hover:border-primary hover:bg-primary-tint hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-                  >
-                    <Icon className="h-4 w-4 text-primary" />
-                    {t.label}
-                    <ArrowDown className="h-3.5 w-3.5 text-ink-3 transition-transform group-hover:translate-y-0.5" />
-                  </a>
-                );
-              })}
-            </div>
+/* ---------------------------------- hero --------------------------------- */
 
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/dashboard" className={buttonClasses("primary")}>
-                Começar agora <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a href="#modulos" className={buttonClasses("secondary")}>
-                Ver os módulos <ArrowDown className="h-4 w-4" />
-              </a>
-            </div>
-            <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink-2">
-              {["Acesso completo", "Sem versão limitada", "Feito por doutor em Educação Física"].map((t) => (
-                <li key={t} className="inline-flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-success" /> {t}
-                </li>
-              ))}
-            </ul>
+function Hero() {
+  return (
+    <section className="px-6 pb-[72px] pt-[60px]">
+      <div className="mx-auto grid w-full max-w-[1160px] items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+        <div>
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#EAE8E3] bg-white px-3.5 py-1.5 text-[13px] font-semibold text-[#5A6B7D]">
+            <span className="h-2 w-2 rounded-full bg-[#12B5A8]" />
+            Feito por profissionais de Educação Física
           </div>
-
-          {/* A tese à vista: o sistema (a tríade), não um aluno. */}
-          <SistemaCard />
-        </div>
-      </Section>
-
-      {/* ------------------ Bridge: por que um sistema ---------------------- */}
-      <div className="border-y border-border bg-surface">
-        <div className="mx-auto max-w-3xl px-4 py-14 text-center md:px-6">
-          <Kicker>Por que um sistema, e não uma planilha</Kicker>
-          <h2 className="font-display text-2xl font-bold text-ink md:text-3xl">
-            Registrar, acompanhar e direcionar são o mesmo trabalho. O sistema mantém as três peças
-            juntas.
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-ink-2">
-            Cada peça alimenta a próxima: a avaliação libera a prescrição, o semáforo acompanha o
-            dia, a reavaliação recomeça o ciclo. Nada solto entre planilhas, nada perdido no caminho.
+          <h1 className="font-display text-[42px] font-bold leading-[1.06] tracking-[-0.01em] text-[#10233A] md:text-[52px]">
+            Todo treino que você entrega tem um porquê.
+            <br />
+            <span
+              className="bg-gradient-to-r from-[#12B5A8] to-[#2064EC] bg-clip-text text-transparent"
+            >
+              Aqui ele fica registrado.
+            </span>
+          </h1>
+          <p className="mt-5 max-w-[34rem] text-[18px] leading-relaxed text-[#5A6B7D]">
+            Cadastrar, avaliar, planejar, liberar e reavaliar: o ciclo inteiro do cuidado num lugar
+            só — cada decisão com a justificativa técnica e a fonte ao lado. Você decide; o sistema
+            guarda o raciocínio.
           </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <CtaPrimary to="/dashboard">Assinar o Mapa</CtaPrimary>
+            <CtaSecondary to="#por-dentro">Ver o app por dentro</CtaSecondary>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1.5 text-[13.5px] font-medium text-[#8A97A6]">
+            {["7 dias para testar", "Cancela quando quiser", "Seus dados são seus"].map((t) => (
+              <span key={t} className="inline-flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-[#12B5A8]" /> {t}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <PhoneMock />
+      </div>
+    </section>
+  );
+}
+
+/* Mockup do celular: o ciclo do cuidado da Marina + evolução + reavaliação */
+function PhoneMock() {
+  return (
+    <div className="relative mx-auto w-full max-w-[380px]">
+      <div className="overflow-hidden rounded-[18px] border border-[#EAE8E3] bg-white shadow-[0_24px_60px_-24px_rgba(16,35,58,0.28)]">
+        {/* barra do navegador */}
+        <div className="flex items-center gap-1.5 border-b border-[#EAE8E3] bg-[#FBFAF8] px-3.5 py-2.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-[#E3E0DA]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#E3E0DA]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#E3E0DA]" />
+          <span className="ml-2 font-mono text-[11.5px] text-[#8A97A6]">app.mapadaprescricao.com.br</span>
+        </div>
+
+        <div className="space-y-3 p-4">
+          {/* aluno */}
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#E9F6EE] font-display text-base font-bold text-[#1B7A4B]">
+              M
+            </span>
+            <div>
+              <div className="font-display text-[15px] font-bold text-[#10233A]">Marina</div>
+              <div className="text-[12px] text-[#8A97A6]">Emagrecimento · Iniciante · desde jul/2026</div>
+            </div>
+          </div>
+
+          {/* ciclo do cuidado */}
+          <div className="rounded-[14px] border border-[#EFEDE8] p-3">
+            <div className="mb-2 flex items-center justify-between text-2xs font-bold uppercase tracking-[0.12em] text-[#8A97A6]">
+              <span>Ciclo do cuidado</span>
+              <span className="text-[#5A6B7D]">· etapa 4 de 5</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {[
+                ["Cadastrar", "done"],
+                ["Avaliar", "done"],
+                ["Planejar", "done"],
+                ["Liberar", "now"],
+                ["Reavaliar", "next"],
+              ].map(([label, st], i) => (
+                <React.Fragment key={label}>
+                  {i > 0 && <span className="h-px flex-1 bg-[#EFEDE8]" />}
+                  <span
+                    className={
+                      "whitespace-nowrap rounded-full px-2 py-0.5 text-2xs font-semibold " +
+                      (st === "done"
+                        ? "bg-[#E9F6EE] text-[#1B7A4B]"
+                        : st === "now"
+                          ? "bg-[#0D1A2B] text-white"
+                          : "border border-[#EAE8E3] text-[#8A97A6]")
+                    }
+                  >
+                    {st === "done" ? "✓ " : ""}
+                    {label}
+                    {label === "Reavaliar" ? " 20/08" : ""}
+                  </span>
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+
+          {/* AGORA · liberar */}
+          <div className="rounded-[14px] bg-[#0D1A2B] p-3.5 text-white">
+            <div className="mb-1 text-2xs font-bold uppercase tracking-[0.14em] text-[#7f93ab]">Agora · Liberar</div>
+            <div className="text-[13.5px] font-medium leading-snug">
+              O treino está pronto; o semáforo confirma o dia.
+            </div>
+            <div className="mt-2 inline-flex items-center gap-1 text-[12.5px] font-semibold text-[#5ee0d0]">
+              Fazer o semáforo <ArrowRight className="h-3.5 w-3.5" />
+            </div>
+          </div>
+
+          {/* evolução */}
+          <div className="rounded-[14px] border border-[#EFEDE8] p-3">
+            <div className="mb-1.5 text-2xs font-bold uppercase tracking-[0.12em] text-[#8A97A6]">
+              Evolução · peso
+            </div>
+            <div className="flex items-end justify-between">
+              <span className="font-display text-2xl font-bold tabular-nums text-[#10233A]">78,2 kg</span>
+              <span className="rounded-full bg-[#E9F6EE] px-2 py-0.5 text-[12px] font-bold text-[#1B7A4B]">−2,4 kg</span>
+            </div>
+            <div className="mt-2 flex items-end gap-1">
+              {[26, 22, 24, 19, 16, 13, 10].map((h, i) => (
+                <span key={i} className="flex-1 rounded-t bg-[#DCE7F6]" style={{ height: h }} />
+              ))}
+            </div>
+          </div>
+
+          {/* reavaliar */}
+          <div className="flex items-center justify-between rounded-[14px] border border-[#EAE8E3] bg-[#FBFAF8] px-3 py-2.5">
+            <div>
+              <div className="text-2xs font-bold uppercase tracking-[0.12em] text-[#8A97A6]">Reavaliar em 20/08</div>
+              <div className="text-[12px] text-[#5A6B7D]">Fim de Base e adaptação · 20 dias.</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ================================ PILARES =========================== */}
-      <div id="pilares">
-        {/* ------------------------ Pilar 01 · Registro -------------------- */}
-        <Section id="registro" className="scroll-mt-20">
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            <div>
-              <SectionHeader
-                level={2}
-                eyebrow="Pilar 01 · Registro"
-                icon={<ClipboardList className="h-4 w-4" />}
-                title="Tudo registrado, num só lugar."
-                subtitle="Cadastro do aluno, avaliação completa e histórico que não se perde entre planilhas."
-              />
-              <ul className="mt-6 space-y-4">
-                <FeatureItem icon={<Users className="h-4 w-4" />} title="Cadastro do aluno">
-                  Perfil, objetivo, nível, restrições e equipamentos disponíveis.
-                </FeatureItem>
-                <FeatureItem icon={<BarChart3 className="h-4 w-4" />} title="Avaliação completa">
-                  Medidas, IMC e RCQ derivados, pressão e sinais. As contas são do sistema.
-                </FeatureItem>
-                <FeatureItem icon={<TrendingUp className="h-4 w-4" />} title="Reavaliação com evolução">
-                  Os campos já vêm com a avaliação anterior e o gráfico mostra o antes e o depois.
-                </FeatureItem>
-                <FeatureItem icon={<FileCheck className="h-4 w-4" />} title="Prontuário assinável e PDF com a sua marca">
-                  A decisão vira documento com o seu nome e o seu CREF, para guardar e entregar.
-                </FeatureItem>
-              </ul>
-            </div>
-            <Card variant="raised" className="p-3">
-              <div className="overflow-hidden rounded-xl border border-border bg-surface-soft p-2">
-                <TutorialScene id="avaliar" label="Registrar a avaliação do aluno" />
-              </div>
-              <p className="px-2 py-2 text-center text-xs text-ink-3">
-                A avaliação abre o registro: o treino nasce dela.
-              </p>
-            </Card>
-          </div>
-        </Section>
+      {/* selo flutuante */}
+      <div className="absolute -bottom-3 -left-3 inline-flex items-center gap-1.5 rounded-[14px] border border-[#EAE8E3] bg-white px-3 py-2 shadow-[0_10px_24px_-12px_rgba(16,35,58,0.35)]">
+        <span className="h-2 w-2 rounded-full bg-[#1B7A4B]" />
+        <span className="text-[12.5px] font-semibold text-[#10233A]">Justificativa registrada</span>
+      </div>
+    </div>
+  );
+}
 
-        {/* --------------------- Pilar 02 · Acompanhamento ----------------- */}
-        <div className="border-y border-border bg-surface">
-          <Section id="acompanhamento" className="scroll-mt-20">
-            <div className="grid items-center gap-10 lg:grid-cols-2">
-              <AcompanhamentoVisual />
-              <div className="lg:order-2">
-                <SectionHeader
-                  level={2}
-                  eyebrow="Pilar 02 · Acompanhamento"
-                  icon={<Route className="h-4 w-4" />}
-                  title="Um caminho, do cadastro à reavaliação."
-                  subtitle="O sistema aponta o próximo passo e guarda o histórico de cada etapa."
-                />
-                <ul className="mt-6 space-y-4">
-                  <FeatureItem icon={<Route className="h-4 w-4" />} title="A linha do cuidado">
-                    Avaliar, planejar, liberar, acompanhar e reavaliar, sempre com o próximo passo à
-                    vista.
-                  </FeatureItem>
-                  <FeatureItem icon={<ShieldCheck className="h-4 w-4" />} title="Semáforo diário com histórico">
-                    Libere, ajuste ou adie a sessão do dia. O histórico fica completo, dia a dia.
-                  </FeatureItem>
-                  <FeatureItem icon={<AlertTriangle className="h-4 w-4" />} title="Alerta que persiste">
-                    Um "não liberado" sem novo semáforo avisa você e o aluno até ser resolvido.
-                  </FeatureItem>
-                  <FeatureItem icon={<Smartphone className="h-4 w-4" />} title="App do aluno">
-                    O aluno vê o treino, consulta o semáforo e registra a execução.
-                  </FeatureItem>
-                </ul>
-              </div>
-            </div>
-          </Section>
+/* ------------------------------- problema -------------------------------- */
+
+function Problema() {
+  const cards = [
+    ["A planilha", "Cada aluno numa aba, cada aba com um padrão diferente. Só você entende — e às vezes nem você."],
+    ["A dúvida", "Aluno chega com pressão alta e dor no ombro. Libera? Adapta? Encaminha? A resposta some junto com o dia."],
+    ["O retrabalho", "Todo mês, montar tudo de novo do zero, sem lembrar por que você tinha escolhido aquilo."],
+    ["A reavaliação", "Marcada de cabeça, cobrada por ninguém, feita quando dá. E o progresso vira achismo."],
+  ];
+  return (
+    <section className={`${WRAP} pb-[84px]`}>
+      <h2 className="mx-auto max-w-2xl text-center font-display text-[28px] font-bold leading-tight text-[#10233A] md:text-[34px]">
+        Você conhece essa rotina melhor do que gostaria
+      </h2>
+      <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {cards.map(([t, d]) => (
+          <div key={t} className="rounded-[18px] border border-[#EAE8E3] bg-white p-5">
+            <div className="font-display text-[17px] font-bold text-[#10233A]">{t}</div>
+            <p className="mt-1.5 text-[14px] leading-relaxed text-[#5A6B7D]">{d}</p>
+          </div>
+        ))}
+      </div>
+      <p className="mx-auto mt-8 max-w-2xl text-center text-[16px] text-[#5A6B7D]">
+        Nada disso é falta de competência sua. É falta de um lugar onde o seu raciocínio caiba inteiro.
+      </p>
+    </section>
+  );
+}
+
+/* ------------------------------ ciclo do cuidado ------------------------- */
+
+function Ciclo() {
+  const steps = [
+    ["01", "Cadastrar", "Perfil em 6 passos: básicos, objetivo, saúde e restrições, medicamentos, equipamentos e notas. Só o que muda a prescrição."],
+    ["02", "Avaliar", "Medidas, dor, evolução por data e avaliação postural por visão computacional — a foto nunca sai do seu dispositivo."],
+    ["03", "Planejar", "Periodização de até 12 semanas com curva de volume, intensidade e complexidade. Editar uma sessão move a curva."],
+    ["04", "Liberar", "Quatro perguntas antes da sessão, cerca de 40 segundos. A pior resposta define a cor do dia."],
+    ["05", "Reavaliar", "Data marcada pelo fim do bloco, não pela sua memória. O sistema cobra você antes do aluno cobrar."],
+  ];
+  return (
+    <section id="ciclo" className={`${WRAP} scroll-mt-24 pb-[84px]`}>
+      <div className="text-center">
+        <div className="flex justify-center">
+          <Eyebrow color="#1B7A4B">O ciclo do cuidado</Eyebrow>
+        </div>
+        <h2 className="font-display text-[28px] font-bold text-[#10233A] md:text-[34px]">
+          Cinco etapas. O sistema sempre te diz em qual você está.
+        </h2>
+        <p className="mx-auto mt-3 max-w-2xl text-[16px] text-[#5A6B7D]">
+          Nenhum aluno fica no limbo. Cada perfil mostra a etapa atual, o que falta e a próxima ação
+          recomendada — do primeiro cadastro até a reavaliação com data marcada.
+        </p>
+      </div>
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {steps.map(([n, t, d]) => (
+          <div key={n} className="flex flex-col rounded-[18px] border border-[#EAE8E3] bg-white p-[22px]">
+            <span className="font-mono text-[11.5px] font-bold text-[#1B7A4B]">{n}</span>
+            <div className="mt-2 font-display text-[18px] font-bold text-[#10233A]">{t}</div>
+            <p className="mt-1.5 text-[13.5px] leading-relaxed text-[#5A6B7D]">{d}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------ por dentro ------------------------------- */
+
+const ABAS = [
+  {
+    id: "cadastro",
+    label: "1 · Cadastro",
+    url: "app.mapadaprescricao.com.br/alunos/novo",
+    titulo: "Cadastro que só pergunta o que muda a prescrição",
+    d1: "Seis passos: básicos, objetivo, saúde e restrições, medicamentos, equipamentos e notas.",
+    d2: "Nada de formulário longo — o que não altera a conduta fica de fora.",
+  },
+  {
+    id: "avaliacoes",
+    label: "2 · Avaliações",
+    url: "app.mapadaprescricao.com.br/alunos/marina/avaliacoes",
+    titulo: "Evolução que vira argumento",
+    d1: "Peso, % de gordura e cintura por data, com leitura automática do período e exportação em PDF para mostrar ao aluno.",
+    d2: "A reavaliação aparece com data e motivo — o ciclo cobra você antes do aluno cobrar.",
+  },
+  {
+    id: "semaforo",
+    label: "3 · Semáforo",
+    url: "app.mapadaprescricao.com.br/semaforo",
+    titulo: "A decisão do dia, com o porquê",
+    d1: "Quatro perguntas antes da sessão. A pior resposta define a cor e a conduta recomendada.",
+    d2: "Cada resposta fica registrada, dia a dia, no histórico do aluno.",
+  },
+  {
+    id: "periodizacao",
+    label: "4 · Periodização",
+    url: "app.mapadaprescricao.com.br/prescrever-treino",
+    titulo: "A curva que responde à edição",
+    d1: "Volume, intensidade e complexidade ao longo do bloco. Editar uma sessão move a curva na hora.",
+    d2: "Do mesociclo ao microciclo, com os métodos de série da semana.",
+  },
+];
+
+function PorDentro() {
+  const [ativa, setAtiva] = React.useState(1);
+  const aba = ABAS[ativa];
+  return (
+    <section id="por-dentro" className="scroll-mt-24 border-y border-[#EAE8E3] bg-[#FBFAF8]">
+      <div className={`${WRAP} py-[84px]`}>
+        <div className="text-center">
+          <div className="flex justify-center">
+            <Eyebrow>Por dentro do app</Eyebrow>
+          </div>
+          <h2 className="font-display text-[28px] font-bold text-[#10233A] md:text-[34px]">
+            O sistema como ele é hoje, tela por tela
+          </h2>
         </div>
 
-        {/* ------------ Vale escuro: o Semáforo em cores (assinatura) -------- */}
-        {/* Único respiro escuro da página: um beat de contraste que encena o gesto
-            mais distintivo do produto (o sinal verde/amarelo/vermelho antes de treinar).
-            Não é dark mode nem repintura: é uma seção-assinatura. Cores e rótulos são
-            os reais do Semáforo de Liberação; a decisão continua sendo do profissional. */}
-        <div className="relative overflow-hidden bg-primary text-on-primary">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_75%_at_50%_-10%,rgba(255,255,255,0.09),transparent_60%)]"
-          />
-          <Section className="relative">
-            <div className="mx-auto max-w-2xl text-center">
-              <span className="mb-3 inline-flex items-center gap-2.5 text-2xs font-bold uppercase tracking-[0.18em] text-[#8fd3dd]">
-                <span aria-hidden className="h-px w-7 bg-[#8fd3dd]/60" />
-                Segurança em 30 segundos
-              </span>
-              <h2 className="font-display text-3xl font-bold md:text-4xl">
-                Antes da sessão, o sinal verde. Ou o motivo para esperar.
-              </h2>
-              <p className="mx-auto mt-3 max-w-xl text-primary-tint">
-                O <span className="font-semibold text-white">Semáforo de Liberação</span> lê a condição do aluno e
-                responde em 30 segundos, com o porquê e a referência de cada resposta.
-              </p>
+        {/* abas */}
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
+          {ABAS.map((a, i) => (
+            <button
+              key={a.id}
+              onClick={() => setAtiva(i)}
+              aria-pressed={i === ativa}
+              className={
+                "rounded-full px-4 py-2 text-[14px] font-semibold transition-colors " +
+                (i === ativa
+                  ? "bg-[#0D1A2B] text-white"
+                  : "border border-[#EAE8E3] bg-white text-[#5A6B7D] hover:text-[#10233A]")
+              }
+            >
+              {a.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-8 grid items-center gap-8 lg:grid-cols-[1.4fr_1fr]">
+          {/* monitor */}
+          <div className="overflow-hidden rounded-[18px] border border-[#EAE8E3] bg-white shadow-[0_24px_60px_-30px_rgba(16,35,58,0.28)]">
+            <div className="flex items-center gap-1.5 border-b border-[#EAE8E3] bg-[#F6F5F2] px-4 py-2.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#E3E0DA]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#E3E0DA]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#E3E0DA]" />
+              <span className="ml-2 truncate font-mono text-[11.5px] text-[#8A97A6]">{aba.url}</span>
             </div>
-
-            <div className="mx-auto mt-10 grid max-w-3xl items-center gap-8 md:grid-cols-[auto_1fr]">
-              {/* Farol: as três luzes acesas, lidas como legenda dos desfechos possíveis */}
-              <div
-                aria-hidden
-                className="mx-auto flex w-fit flex-col gap-3.5 rounded-[30px] border border-white/10 bg-[#0f2e3d] p-4 shadow-xl"
-              >
-                {[
-                  { c: "#22c55e", g: "rgba(34,197,94,0.45)" },
-                  { c: "#f59e0b", g: "rgba(245,158,11,0.45)" },
-                  { c: "#ef4444", g: "rgba(239,68,68,0.45)" },
-                ].map((l) => (
-                  <span
-                    key={l.c}
-                    className="h-14 w-14 rounded-full"
-                    style={{ backgroundColor: l.c, boxShadow: `0 0 22px 3px ${l.g}` }}
-                  />
-                ))}
-              </div>
-
-              {/* Legenda: rótulo real de cada estado + o que ele significa na prática */}
-              <ul className="space-y-5">
-                {[
-                  {
-                    icon: <CheckCircle2 className="h-5 w-5" style={{ color: "#4ade80" }} />,
-                    rotulo: "Liberado",
-                    cor: "#86efac",
-                    d: "Nenhum sinal de alerta nos itens do dia. Siga para a sessão.",
-                  },
-                  {
-                    icon: <AlertTriangle className="h-5 w-5" style={{ color: "#fbbf24" }} />,
-                    rotulo: "Liberado com ajuste",
-                    cor: "#fcd34d",
-                    d: "A sessão acontece com os ajustes indicados. O racional fica registrado.",
-                  },
-                  {
-                    icon: <XCircle className="h-5 w-5" style={{ color: "#f87171" }} />,
-                    rotulo: "Não liberado hoje",
-                    cor: "#fca5a5",
-                    d: "Os sinais pedem reavaliação antes de treinar; se persistirem, encaminhe.",
-                  },
-                ].map((s) => (
-                  <li key={s.rotulo} className="flex items-start gap-3">
-                    <span className="mt-0.5 shrink-0">{s.icon}</span>
-                    <div>
-                      <div className="font-display text-lg font-bold" style={{ color: s.cor }}>
-                        {s.rotulo}
-                      </div>
-                      <p className="mt-0.5 text-sm text-primary-tint">{s.d}</p>
+            <div className="aspect-[16/10] w-full bg-[#FBFAF8] p-5">
+              {/* representação limpa da tela — o briefing pede screenshots reais aqui */}
+              <div className="flex h-full flex-col rounded-[12px] border border-[#EFEDE8] bg-white p-4">
+                <div className="mb-3 h-2.5 w-40 rounded bg-[#E7EEF7]" />
+                <div className="grid flex-1 grid-cols-3 gap-3">
+                  <div className="col-span-2 rounded-[10px] border border-[#EFEDE8] p-3">
+                    <div className="mb-2 h-2 w-24 rounded bg-[#EFEDE8]" />
+                    <div className="flex h-[70%] items-end gap-1.5">
+                      {[40, 55, 48, 66, 60, 78, 72].map((h, i) => (
+                        <span key={i} className="flex-1 rounded-t bg-[#DCE7F6]" style={{ height: `${h}%` }} />
+                      ))}
                     </div>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                  <div className="space-y-2">
+                    {[0, 1, 2, 3].map((i) => (
+                      <div key={i} className="rounded-[8px] border border-[#EFEDE8] p-2">
+                        <div className="mb-1 h-1.5 w-12 rounded bg-[#EFEDE8]" />
+                        <div className="h-1.5 w-8 rounded bg-[#E9F6EE]" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
+          </div>
 
-            <p className="mx-auto mt-8 max-w-xl text-center text-xs text-primary-tint/75">
-              Quem libera, ajusta ou adia é sempre o profissional habilitado. O Semáforo documenta o racional dessa
-              decisão e ele entra no prontuário.
+          {/* explicativo da aba */}
+          <div>
+            <h3 className="font-display text-[22px] font-bold text-[#10233A]">{aba.titulo}</h3>
+            <p className="mt-3 text-[15px] leading-relaxed text-[#5A6B7D]">{aba.d1}</p>
+            <p className="mt-3 text-[15px] leading-relaxed text-[#5A6B7D]">{aba.d2}</p>
+            <p className="mt-5 text-[12.5px] text-[#8A97A6]">
+              Telas reais do sistema · imagem estática, troque pelas abas acima.
             </p>
-          </Section>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* -------------------------------- semáforo ------------------------------- */
+
+const TONE_DOT: Record<string, string> = { success: "bg-success", warning: "bg-warning", danger: "bg-danger" };
+const TONE_TINT: Record<string, string> = { success: "bg-success/15", warning: "bg-warning/15", danger: "bg-danger/15" };
+
+const CORES = [
+  {
+    id: "verde",
+    label: "Liberada",
+    tone: "success",
+    titulo: "Segue o treino como está.",
+    d: "Nenhum sinal de alerta nos itens do dia: sono, dor, energia e prontidão dentro do esperado. A sessão planejada acontece integralmente.",
+    conduta: "Executar o microciclo do dia como prescrito. Registrar a PSE ao final para alimentar a próxima progressão.",
+  },
+  {
+    id: "amarelo",
+    label: "Com ajuste",
+    tone: "warning",
+    titulo: "Treina, sim. Com ajuste e com registro.",
+    d: "Existe algo a considerar — dor nova em um movimento, noite ruim de sono, cansaço fora do comum. Não é motivo para parar, é motivo para adaptar e anotar por quê.",
+    conduta: "Sessão conservadora: monitore a PSE e substitua os padrões que provocam sintoma. Fica registrado o que gerou o ajuste.",
+  },
+  {
+    id: "vermelho",
+    label: "Não liberada",
+    tone: "danger",
+    titulo: "Hoje não. E fica claro por quê.",
+    d: "Um sinal exige cautela antes de treinar: pressão fora da faixa, dor aguda, sintoma que pede avaliação. A sessão espera e o motivo fica registrado.",
+    conduta: "Adiar o treino de carga. Reavaliar o sinal e, se persistir, encaminhar ao profissional de saúde. O alerta acompanha o aluno até ser resolvido.",
+  },
+];
+
+function Semaforo() {
+  const [sel, setSel] = React.useState(1);
+  const c = CORES[sel];
+  return (
+    <section id="semaforo" className={`${WRAP} scroll-mt-24 pb-[84px] pt-[84px]`}>
+      <div className="text-center">
+        <div className="flex justify-center">
+          <Eyebrow color="#F59E0B">O semáforo</Eyebrow>
+        </div>
+        <h2 className="font-display text-[28px] font-bold text-[#10233A] md:text-[34px]">
+          Quatro perguntas, quarenta segundos, uma decisão registrada.
+        </h2>
+        <p className="mx-auto mt-3 max-w-2xl text-[16px] text-[#5A6B7D]">
+          Antes da sessão, o checklist do dia. A pior resposta define a cor — e um item sem resposta
+          nunca libera direto. Clique nas cores para ver como a conduta muda.
+        </p>
+      </div>
+
+      <div className="mx-auto mt-8 max-w-3xl">
+        <div className="flex flex-wrap justify-center gap-2">
+          {CORES.map((cc, i) => (
+            <button
+              key={cc.id}
+              onClick={() => setSel(i)}
+              aria-pressed={i === sel}
+              className={
+                "inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[14px] font-semibold transition-colors " +
+                (i === sel ? "border-[#0D1A2B] bg-[#0D1A2B] text-white" : "border-[#EAE8E3] bg-[#FBFAF8] text-[#10233A] hover:border-[#d9d6cf]")
+              }
+            >
+              <span className={"h-2.5 w-2.5 rounded-full " + TONE_DOT[cc.tone]} />
+              {cc.label}
+            </button>
+          ))}
         </div>
 
-        {/* --------------------- Pilar 03 · Direcionamento ----------------- */}
-        <Section id="direcionamento" className="scroll-mt-20">
-          <SectionHeader
-            level={2}
-            eyebrow="Pilar 03 · Direcionamento"
-            icon={<Compass className="h-4 w-4" />}
-            title="A prescrição que se ajusta ao aluno."
-            subtitle="Grupo, objetivo e características definem o treino. A condição de saúde vira critério, não obstáculo."
-          />
-
-          {/* A: os critérios do direcionamento + a decisão documentada */}
-          <div className="mt-8 grid items-start gap-10 lg:grid-cols-2">
-            <div>
-              <ul className="space-y-4">
-                <FeatureItem icon={<HeartPulse className="h-4 w-4" />} title="Classificação de grupo especial">
-                  O sistema indica o grupo pelo critério citado (IMC, pressão, idade). Você confirma.
-                </FeatureItem>
-                <FeatureItem icon={<Compass className="h-4 w-4" />} title="Motor que valida pela avaliação">
-                  Cada exercício é ranqueado e as cautelas da condição já entram na conta.
-                </FeatureItem>
-                <FeatureItem icon={<CalendarRange className="h-4 w-4" />} title="Periodização mensal a anual">
-                  Do mesociclo ao microciclo, com métodos de série (bi-set, drop-set) na semana.
-                </FeatureItem>
-              </ul>
-              <ClassificadorCallout />
-            </div>
-            <DecisaoDemoCard />
+        <div className="mt-6 overflow-hidden rounded-[18px] border border-[#EAE8E3] bg-white">
+          <div className="flex items-center gap-3 border-b border-[#EFEDE8] px-6 py-4">
+            <span className={"grid h-9 w-9 place-items-center rounded-full " + TONE_TINT[c.tone]}>
+              <span className={"h-3.5 w-3.5 rounded-full " + TONE_DOT[c.tone]} />
+            </span>
+            <span className="font-display text-[18px] font-bold text-[#10233A]">{c.titulo}</span>
           </div>
-
-          {/* B: o mecanismo (Motor RCD) e o "aha" da justificativa */}
-          <div className="mt-14 grid items-center gap-10 lg:grid-cols-2">
-            <div>
-              <div className="mb-3">
-                <SeloRCD />
-              </div>
-              <h3 className="font-display text-xl font-bold text-ink">
-                Não é um gerador de treino. É{" "}
-                <span className="text-primary">Raciocínio Clínico Documentado</span>.
-              </h3>
-              <p className="mt-3 text-ink-2">
-                O Motor RCD acompanha a decisão inteira, do critério de escolha ao documento que você
-                pode assinar. Em três atos:
-              </p>
-              <ol className="mt-5 space-y-3">
-                {[
-                  {
-                    t: "Semáforo de Liberação",
-                    d: "Antes da sessão: liberado, liberado com ajuste ou não liberado hoje, com o porquê.",
-                  },
-                  {
-                    t: "Decisão justificada",
-                    d: "Exercícios ranqueados critério a critério, inclusive o que foi descartado, e por quê.",
-                  },
-                  {
-                    t: "Prontuário assinável",
-                    d: "O raciocínio vira documento com referências numeradas, seu nome e seu CREF.",
-                  },
-                ].map((p, i) => (
-                  <li key={p.t} className="flex gap-3">
-                    <span className="tabular grid h-7 w-7 shrink-0 place-items-center rounded-full bg-analysis text-sm font-bold text-on-analysis">
-                      {i + 1}
-                    </span>
-                    <span>
-                      <span className="font-display font-bold text-ink">{p.t}</span>
-                      <span className="block text-sm text-ink-2">{p.d}</span>
-                    </span>
-                  </li>
-                ))}
-              </ol>
+          <div className="grid gap-0 md:grid-cols-[1.3fr_1fr]">
+            <p className="px-6 py-5 text-[15px] leading-relaxed text-[#5A6B7D]">{c.d}</p>
+            <div className="border-t border-[#EFEDE8] bg-[#FBFAF8] px-6 py-5 md:border-l md:border-t-0">
+              <div className="mb-1.5 text-2xs font-bold uppercase tracking-[0.14em] text-[#8A97A6]">Conduta</div>
+              <p className="text-[14px] leading-relaxed text-[#10233A]">{c.conduta}</p>
             </div>
-            <JustifyMock />
           </div>
+        </div>
+        <p className="mx-auto mt-4 max-w-xl text-center text-[12.5px] text-[#8A97A6]">
+          Quem libera, ajusta ou adia é sempre o profissional habilitado. O semáforo documenta o
+          racional dessa decisão e ele entra no prontuário.
+        </p>
+      </div>
+    </section>
+  );
+}
 
-          {/* C: ChatGPT × RCD, o hábito real do público, resumido */}
-          <div className="mx-auto mt-14 max-w-3xl">
-            <h3 className="text-center font-display text-xl font-bold text-ink">
-              "Mas eu já uso o ChatGPT para montar treino."
-            </h3>
-            <p className="mx-auto mt-1 max-w-xl text-center text-sm text-ink-2">
-              Ótimo para rascunhar. Quando o aluno tem uma condição de saúde, a diferença aparece: o
-              ChatGPT não assina embaixo. Você sim.
+/* ------------------------------- respaldo -------------------------------- */
+
+const CIENCIA_ABAS = [
+  {
+    id: "resumo",
+    label: "Resumo",
+    corpo:
+      "PA de repouso entre 130/85 e 159/99 mmHg classifica a sessão como com ajuste: intensidade moderada, respiração contínua, sem Valsalva.",
+  },
+  {
+    id: "pratica",
+    label: "Na prática",
+    corpo:
+      "Prefira cadeia fechada e tronco apoiado, evite apneia nas séries e mantenha a percepção de esforço em faixa moderada. Meça a pressão antes se houver sintoma.",
+  },
+  {
+    id: "ciencia",
+    label: "Ciência",
+    corpo:
+      "A recomendação de intensidade moderada e respiração contínua para hipertensão estágio 1 vem das diretrizes abaixo, citadas na decisão.",
+  },
+];
+
+const REFS = [
+  ["01", "ACSM's Guidelines for Exercise Testing and Prescription", "American College of Sports Medicine"],
+  ["02", "Garber et al., 2011 — Quantity and Quality of Exercise", "Position stand do ACSM"],
+  ["03", "Diretriz Brasileira de Hipertensão Arterial", "Sociedade Brasileira de Cardiologia"],
+];
+
+function Respaldo() {
+  const [aba, setAba] = React.useState(0);
+  return (
+    <section id="ciencia" className="scroll-mt-24 border-y border-[#EAE8E3] bg-[#FBFAF8]">
+      <div className={`${WRAP} py-[84px]`}>
+        <div className="grid items-start gap-12 lg:grid-cols-2">
+          <div>
+            <Eyebrow color="#2064EC">Respaldo técnico</Eyebrow>
+            <h2 className="font-display text-[28px] font-bold leading-tight text-[#10233A] md:text-[34px]">
+              Toda tela tem uma aba "Ciência". Nenhuma sugestão sai do nada.
+            </h2>
+            <p className="mt-4 text-[16px] leading-relaxed text-[#5A6B7D]">
+              Em cada painel existem três leituras: <b className="text-[#10233A]">Resumo</b> para decidir
+              rápido, <b className="text-[#10233A]">Na prática</b> para a sessão e{" "}
+              <b className="text-[#10233A]">Ciência</b> para ver de onde a regra veio — a referência a um
+              clique, no meio do atendimento.
             </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Card variant="soft" className="p-5">
-                <div className="mb-2 text-sm font-bold uppercase tracking-wider text-ink-3">IA genérica</div>
-                <ul className="space-y-2 text-sm text-ink-2">
-                  <li>Entrega um treino, sem rastro do porquê</li>
-                  <li>Não checa se o aluno pode treinar hoje</li>
-                  <li>Não cita a base científica de cada escolha</li>
-                  <li>Não gera registro que você assine embaixo</li>
-                </ul>
-              </Card>
-              <Card className="border-analysis/40 p-5">
-                <div className="mb-2">
-                  <SeloRCD compacto />
+            <p className="mt-3 text-[16px] leading-relaxed text-[#5A6B7D]">
+              O módulo Estudar reúne o material completo, e os Protocolos mostram cada regra ativa com a
+              fonte declarada.
+            </p>
+            <div className="mt-6 flex gap-4">
+              <div className="rounded-[14px] border border-[#EAE8E3] bg-white px-5 py-4">
+                <div className="font-display text-[28px] font-bold text-[#10233A]">23</div>
+                <div className="mt-0.5 text-[13px] text-[#5A6B7D]">condições de saúde com regra e fonte declaradas</div>
+              </div>
+              <div className="rounded-[14px] border border-[#EAE8E3] bg-white px-5 py-4">
+                <div className="font-display text-[28px] font-bold text-[#10233A]">100%</div>
+                <div className="mt-0.5 text-[13px] text-[#5A6B7D]">das faixas de treino com referência rastreável</div>
+              </div>
+            </div>
+          </div>
+
+          {/* cartão da aba Ciência */}
+          <div className="overflow-hidden rounded-[18px] border border-[#EAE8E3] bg-white">
+            <div className="flex items-center justify-between border-b border-[#EFEDE8] px-5 py-3.5">
+              <span className="font-display text-[15px] font-bold text-[#10233A]">Hipertensão e treino de força</span>
+              <span className="font-mono text-2xs text-[#8A97A6]">/estudar</span>
+            </div>
+            <div className="flex gap-1 border-b border-[#EFEDE8] px-5 pt-3">
+              {CIENCIA_ABAS.map((a, i) => (
+                <button
+                  key={a.id}
+                  onClick={() => setAba(i)}
+                  className={
+                    "rounded-full px-3 py-2 text-[13px] font-semibold transition-colors " +
+                    (i === aba ? "bg-[#F6F5F2] text-[#10233A]" : "text-[#8A97A6] hover:text-[#10233A]")
+                  }
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+            <div className="px-5 py-4">
+              <div className="mb-1.5 text-2xs font-bold uppercase tracking-[0.14em] text-[#8A97A6]">
+                {aba === 0 ? "Regra aplicada" : CIENCIA_ABAS[aba].label}
+              </div>
+              <p className="text-[14px] leading-relaxed text-[#10233A]">{CIENCIA_ABAS[aba].corpo}</p>
+
+              <div className="mt-4 space-y-2">
+                {REFS.map(([n, t, org]) => (
+                  <div key={n} className="flex gap-3 rounded-[10px] border border-[#EFEDE8] bg-[#FBFAF8] p-3">
+                    <span className="font-mono text-2xs font-bold text-[#2064EC]">{n}</span>
+                    <div>
+                      <div className="text-[13px] font-semibold leading-snug text-[#10233A]">{t}</div>
+                      <div className="text-[12px] text-[#8A97A6]">{org}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 flex items-center justify-between text-[11.5px] text-[#8A97A6]">
+                <span>Revisado em 03/2026</span>
+                <span>Responsável técnico CREF</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------ comparativo ------------------------------ */
+
+function Comparativo() {
+  const planilha = [
+    "O treino está lá. O motivo dele, não.",
+    "O risco do aluno mora na sua memória.",
+    "A reavaliação depende de você lembrar.",
+    "Se alguém questionar sua conduta, você reconstrói de cabeça.",
+  ];
+  const mapa = [
+    "Cada escolha carrega o porquê e a fonte ao lado dela.",
+    "O ciclo do cuidado mostra em que etapa está cada aluno.",
+    "A reavaliação chega até você, com data e motivo.",
+    "Histórico completo, pronto para mostrar a quem perguntar.",
+  ];
+  return (
+    <section className={`${WRAP} pb-[84px] pt-[84px]`}>
+      <h2 className="mx-auto max-w-2xl text-center font-display text-[28px] font-bold leading-tight text-[#10233A] md:text-[34px]">
+        Ter os dados é uma coisa. Ter o raciocínio guardado é outra.
+      </h2>
+      <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-2">
+        <div className="rounded-[18px] border border-[#EAE8E3] bg-white p-6">
+          <div className="mb-3 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[#8A97A6]">Na planilha</div>
+          <ul className="space-y-3">
+            {planilha.map((t) => (
+              <li key={t} className="flex gap-3 text-[14.5px] text-[#5A6B7D]">
+                <span className="mt-2.5 h-px w-3 shrink-0 bg-[#c9c5bd]" />
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-[18px] border-2 border-[#1B7A4B]/25 bg-[#E9F6EE]/40 p-6">
+          <div className="mb-3 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[#1B7A4B]">No Mapa da Prescrição</div>
+          <ul className="space-y-3">
+            {mapa.map((t) => (
+              <li key={t} className="flex gap-3 text-[14.5px] text-[#10233A]">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#1B7A4B]" />
+                {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------ depoimentos ------------------------------ */
+
+function Depoimentos() {
+  const deps = [
+    "Parei de acordar pensando em quem eu tinha esquecido de reavaliar.",
+    "Me formei há pouco tempo. O semáforo me deu segurança para conduzir aluno com comorbidade.",
+    "Abro a aba Ciência na frente do aluno. Mudou a forma como ele me enxerga.",
+  ];
+  return (
+    <section className="border-y border-[#EAE8E3] bg-[#FBFAF8]">
+      <div className={`${WRAP} py-[72px]`}>
+        <div className="flex justify-center">
+          <Eyebrow>Quem já usa</Eyebrow>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {deps.map((q) => (
+            <figure key={q} className="rounded-[18px] border border-[#EAE8E3] bg-white p-6">
+              <blockquote className="font-display text-[17px] font-medium leading-snug text-[#10233A]">
+                "{q}"
+              </blockquote>
+              <figcaption className="mt-4 border-t border-[#EFEDE8] pt-3">
+                <div className="text-[14px] font-semibold text-[#10233A]">Nome do profissional</div>
+                <div className="text-[12.5px] text-[#8A97A6]">Personal · CREF 000000-G/UF</div>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* --------------------------------- planos -------------------------------- */
+
+function Planos() {
+  const [anual, setAnual] = React.useState(false);
+  const planos = [
+    {
+      nome: "Essencial",
+      desc: "Para quem está começando a organizar a carteira.",
+      mensal: 59,
+      destaque: false,
+      itens: [
+        "Até 20 alunos ativos",
+        "Ciclo do cuidado completo e semáforo diário",
+        "Periodização e exportação em PDF",
+        "Histórico e evolução por data",
+      ],
+      cta: "Assinar Essencial",
+    },
+    {
+      nome: "Profissional",
+      desc: "Para quem vive disso e não pode perder o fio de nenhum aluno.",
+      mensal: 97,
+      destaque: true,
+      itens: [
+        "Alunos ilimitados",
+        "App do aluno e lembretes de reavaliação",
+        "Avaliação postural por visão computacional",
+        "Estudar, Protocolos e Laboratório Visual",
+        "Suporte com profissional de Educação Física",
+      ],
+      cta: "Assinar Profissional",
+    },
+  ];
+  return (
+    <section id="planos" className="scroll-mt-24 px-6 pb-[84px] pt-[84px]">
+      <div className="mx-auto w-full max-w-[860px]">
+        <div className="text-center">
+          <div className="flex justify-center">
+            <Eyebrow>Planos</Eyebrow>
+          </div>
+          <h2 className="font-display text-[28px] font-bold text-[#10233A] md:text-[34px]">
+            Menos que uma hora de aula por mês
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-[16px] text-[#5A6B7D]">
+            Assine, cadastre o primeiro aluno hoje e veja o ciclo se montar. Se não fizer sentido, você
+            cancela sozinho — sem ligação, sem retenção.
+          </p>
+
+          <div className="mt-6 inline-flex items-center gap-1 rounded-full border border-[#EAE8E3] bg-white p-1 text-[13.5px] font-semibold">
+            <button
+              onClick={() => setAnual(false)}
+              className={"rounded-full px-3.5 py-1.5 " + (!anual ? "bg-[#0D1A2B] text-white" : "text-[#5A6B7D]")}
+            >
+              Mensal
+            </button>
+            <button
+              onClick={() => setAnual(true)}
+              className={"rounded-full px-3.5 py-1.5 " + (anual ? "bg-[#0D1A2B] text-white" : "text-[#5A6B7D]")}
+            >
+              Anual · 2 meses grátis
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {planos.map((p) => {
+            const preco = anual ? Math.round((p.mensal * 10) / 12) : p.mensal;
+            return (
+              <div
+                key={p.nome}
+                className={
+                  "relative flex flex-col rounded-[18px] bg-white p-6 text-left " +
+                  (p.destaque ? "border-2 border-[#0D1A2B] shadow-[0_20px_50px_-30px_rgba(16,35,58,0.4)]" : "border border-[#EAE8E3]")
+                }
+              >
+                {p.destaque && (
+                  <span className="absolute -top-3 right-6 rounded-full bg-[#0D1A2B] px-3 py-0.5 text-[11.5px] font-bold text-white">
+                    Recomendado
+                  </span>
+                )}
+                <div className="font-display text-[19px] font-bold text-[#10233A]">{p.nome}</div>
+                <p className="mt-1 text-[13.5px] text-[#5A6B7D]">{p.desc}</p>
+                <div className="mt-4 flex items-end gap-1">
+                  <span className="text-[16px] font-semibold text-[#8A97A6]">R$</span>
+                  <span className="font-display text-[40px] font-extrabold leading-none tabular-nums text-[#10233A]">{preco}</span>
+                  <span className="mb-1 text-[14px] font-medium text-[#8A97A6]">/mês</span>
                 </div>
-                <ul className="space-y-2 text-sm text-ink">
-                  {[
-                    "Escolhidos E descartados, com o porquê de cada um",
-                    "Semáforo pré-sessão específico por condição",
-                    "Referências numeradas em cada decisão",
-                    "Prontuário em PDF com seu nome e CREF",
-                  ].map((t) => (
-                    <li key={t} className="flex gap-2">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                      {t}
+                <div className="text-[12px] text-[#8A97A6]">{anual ? "cobrado anualmente" : "cobrado mensalmente"}</div>
+                <ul className="mt-4 flex-1 space-y-2.5">
+                  {p.itens.map((it) => (
+                    <li key={it} className="flex gap-2.5 text-[14px] text-[#10233A]">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#1B7A4B]" />
+                      {it}
                     </li>
                   ))}
                 </ul>
-              </Card>
-            </div>
-            <p className="mt-4 text-center text-xs text-ink-3">
-              Em ambos os casos, quem decide é o profissional habilitado (CREF). A diferença é o que
-              sobra documentado depois da decisão.
-            </p>
-          </div>
-        </Section>
-      </div>
-
-      {/* ----- Prova visual: foto real × análise, o motor por dentro -------- */}
-      <div className="border-y border-border bg-surface">
-        <Section className="!py-12">
-          <div className="mx-auto max-w-4xl text-center">
-            <Kicker tone="analysis">Execução × análise</Kicker>
-            <h2 className="font-display text-3xl font-bold text-ink md:text-4xl">
-              Entenda o movimento por dentro.
-            </h2>
-            <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-              Arraste o divisor e revele a análise biomecânica sobre a foto real de execução: músculos
-              ativados, ângulos e linha de força. É o que o motor lê para validar cada exercício.
-            </p>
-          </div>
-          <div className="mx-auto mt-8 max-w-4xl">
-            <Card variant="raised" className="p-3">
-              <React.Suspense
-                fallback={<div className="aspect-[4/3] w-full animate-pulse rounded-card bg-surface-soft" />}
-              >
-                <BiomechanicsComparisonSlider
-                  baseSrc={withBase("/exercises/leg-press-45.webp")}
-                  analysisSrc={withBase("/exercises/leg-press-45-analysis.webp")}
-                  alt="Leg press 45°, execução real"
-                  regions={muscleRegions["leg-press-45"] ?? []}
-                  ativacao={getExercise("leg-press-45")?.ativacao ?? []}
-                  overlay={analysisOverlays["leg-press-45"]}
-                />
-              </React.Suspense>
-              <p className="px-2 py-2 text-center text-xs text-ink-3">
-                Arraste: execução real e análise na mesma imagem.
-              </p>
-            </Card>
-          </div>
-        </Section>
-      </div>
-
-      {/* --------------------- Catálogo de módulos -------------------------- */}
-      <Section id="modulos" className="scroll-mt-20">
-        <SectionHeader
-          level={2}
-          eyebrow="O catálogo"
-          title="Oito módulos, um sistema."
-          subtitle="Cada porta abre uma parte do trabalho, e todas conversam entre si."
-        />
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {MODULOS.map((m) => {
-            const Icon = m.icon;
-            return (
-              <Link
-                key={m.label}
-                to={m.to}
-                className="group flex flex-col rounded-card border border-border bg-surface p-5 shadow-soft transition-[box-shadow,transform,border-color] duration-150 hover:border-primary hover:shadow-lift motion-safe:hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-              >
-                <span className="mb-3 inline-grid h-11 w-11 place-items-center rounded-xl bg-primary-tint text-primary">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-display text-base font-bold text-ink">{m.label}</h3>
-                  <ArrowRight className="h-4 w-4 text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                </div>
-                <p className="mt-1 text-sm text-ink-2">{m.d}</p>
-              </Link>
+                <Link
+                  to="/dashboard"
+                  className={
+                    "mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-[15px] font-semibold transition-colors " +
+                    (p.destaque
+                      ? "bg-[#0D1A2B] text-white hover:bg-[#16283f]"
+                      : "border border-[#EAE8E3] bg-white text-[#10233A] hover:border-[#d9d6cf]")
+                  }
+                >
+                  {p.cta}
+                </Link>
+              </div>
             );
           })}
         </div>
-      </Section>
-
-      {/* -------------------- Casos documentados + ROI ---------------------- */}
-      <Section className="!py-14 text-center">
-        <Kicker tone="analysis">Prova, não promessa</Kicker>
-        <h2 className="font-display text-3xl font-bold text-ink">Veja o motor decidir um caso real, agora.</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-ink-2">
-          Sem cadastro: escolha um caso típico (hipertenso, dor lombar em idoso, obesidade grave) e
-          veja o Motor RCD rodar ao vivo: escolhas, descartes e referências.
-        </p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <Link to="/casos-rcd" className={buttonClasses("primary")}>
-            Abrir casos documentados <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link to="/roi" className={buttonClasses("outline")}>
-            Quanto vale sua especialização? (calculadora)
-          </Link>
-        </div>
-      </Section>
-
-      {/* ------------------------------ Para quem --------------------------- */}
-      <div className="border-y border-border bg-surface">
-        <Section className="!py-14 text-center">
-          <Kicker tone="analysis">Para quem é</Kicker>
-          <h2 className="font-display text-3xl font-bold text-ink">Do estágio à academia cheia.</h2>
-          <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-3">
-            {[
-              {
-                icon: <GraduationCap className="h-6 w-6" />,
-                t: "Estudante de EF",
-                d: "Treine a decisão com casos e disciplinas; chegue ao estágio sabendo o porquê.",
-              },
-              {
-                icon: <UserCheck className="h-6 w-6" />,
-                t: "Personal recém-formado",
-                d: "Prescreva com segurança desde o primeiro aluno e mostre profissionalismo no PDF.",
-              },
-              {
-                icon: <Dumbbell className="h-6 w-6" />,
-                t: "Professor de musculação",
-                d: "Conduza perfis diferentes, do iniciante ao grupo especial, com critério e progressão.",
-              },
-            ].map((p) => (
-              <Card key={p.t} className="p-6 text-left">
-                <span className="mb-3 inline-grid h-12 w-12 place-items-center rounded-xl bg-primary-tint text-primary">
-                  {p.icon}
-                </span>
-                <h3 className="font-display text-lg font-bold text-ink">{p.t}</h3>
-                <p className="mt-1 text-sm text-ink-2">{p.d}</p>
-              </Card>
-            ))}
-          </div>
-        </Section>
       </div>
+    </section>
+  );
+}
 
-      {/* ------------------------------- Planos ----------------------------- */}
-      <Section id="planos" className="scroll-mt-20 text-center">
-        <Kicker>Plano</Kicker>
-        <h2 className="font-display text-3xl font-bold text-ink">Um plano, tudo liberado.</h2>
-        <p className="mx-auto mt-2 max-w-xl text-ink-2">
-          O sistema completo, sem versão limitada: registro, acompanhamento e direcionamento em um só
-          lugar, para todos os grupos e casos.
-        </p>
-        <div className="mx-auto mt-8 max-w-md">
-          <PlanCard
-            destaque
-            nome="Profissional"
-            preco="R$ 59"
-            desc="O sistema da tríade completo: decisão documentada e assinável."
-            items={[
-              "Prontuário de Decisão exportável e assinável",
-              "Semáforo de Liberação para todos os grupos",
-              "Prescrições e alunos ilimitados",
-              "Laboratório, casos, comparador e trilhas completos",
-              "Portal do aluno com a sua marca, avaliação postural e gamificação",
-            ]}
-            cta="Começar agora"
-          />
+/* ---------------------------------- FAQ ---------------------------------- */
+
+const FAQ = [
+  [
+    "O sistema prescreve no meu lugar?",
+    "Não. Ele organiza o raciocínio, ranqueia os exercícios pela avaliação e documenta o porquê de cada escolha — mas quem decide, libera e assina é sempre o profissional habilitado (CREF). É apoio à decisão, não decisão automática.",
+  ],
+  [
+    "Quanto tempo leva para cadastrar um aluno?",
+    "Poucos minutos. O cadastro tem 6 passos e só pergunta o que muda a prescrição: básicos, objetivo, saúde e restrições, medicamentos, equipamentos e notas.",
+  ],
+  [
+    "Serve para quem acabou de se formar?",
+    "Especialmente. O semáforo e a base científica de cada regra dão segurança para conduzir aluno com comorbidade desde o primeiro atendimento, com o respaldo à mão.",
+  ],
+  [
+    "A foto da avaliação postural vai para algum servidor?",
+    "Não. A análise postural por visão computacional roda no seu próprio dispositivo — a foto nunca sai dele.",
+  ],
+  [
+    "Meu aluno também tem acesso?",
+    "Sim, no plano Profissional. Ele recebe o app do aluno, onde vê o treino, consulta o semáforo e registra a execução, além do PDF com a sua marca.",
+  ],
+  [
+    "Consigo cancelar sem dor de cabeça?",
+    "Sim. Você cancela sozinho, em dois cliques, sem ligação e sem retenção. Os 7 dias iniciais são para testar sem compromisso.",
+  ],
+];
+
+function Faq() {
+  const [open, setOpen] = React.useState<number | null>(null);
+  return (
+    <section className={`${WRAP} pb-[84px] pt-[84px]`}>
+      <div className="mx-auto max-w-2xl">
+        <h2 className="text-center font-display text-[28px] font-bold text-[#10233A] md:text-[34px]">
+          Perguntas que todo mundo faz
+        </h2>
+        <div className="mt-8 space-y-2.5">
+          {FAQ.map(([q, a], i) => (
+            <div key={q} className="overflow-hidden rounded-[14px] border border-[#EAE8E3] bg-white">
+              <button
+                onClick={() => setOpen((o) => (o === i ? null : i))}
+                aria-expanded={open === i}
+                className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+              >
+                <span className="text-[15.5px] font-semibold text-[#10233A]">{q}</span>
+                <Plus
+                  className={"h-4 w-4 shrink-0 text-[#8A97A6] transition-transform " + (open === i ? "rotate-45" : "")}
+                />
+              </button>
+              {open === i && <p className="px-5 pb-5 text-[14.5px] leading-relaxed text-[#5A6B7D]">{a}</p>}
+            </div>
+          ))}
         </div>
-      </Section>
+      </div>
+    </section>
+  );
+}
 
-      {/* --------------------------------- FAQ ------------------------------ */}
-      <div className="border-y border-border bg-surface">
-        <Section id="faq" className="scroll-mt-20 !py-14">
-          <div className="mx-auto max-w-3xl">
-            <div className="text-center">
-              <Kicker tone="analysis">Dúvidas rápidas</Kicker>
-              <h2 className="font-display text-3xl font-bold text-ink">Perguntas frequentes</h2>
-            </div>
-            <div className="mt-8 space-y-2">
-              {[
-                {
-                  q: "Isso substitui minha avaliação profissional?",
-                  a: "Não, e nem deveria. Todo o conteúdo é educacional e de apoio à decisão. A plataforma organiza o raciocínio; a avaliação individualizada e a decisão final são suas.",
-                },
-                {
-                  q: "Preciso avaliar antes de montar o treino?",
-                  a: "Sim. O treino nasce da avaliação: sem ela, o sistema não monta a prescrição. É o que mantém a decisão direcionada e defensável.",
-                },
-                {
-                  q: "Como funciona o acesso?",
-                  a: "É um plano único, com tudo liberado: você cria a conta e usa o sistema completo, sem versão limitada e sem recurso escondido atrás de upgrade.",
-                },
-                {
-                  q: "Funciona no celular?",
-                  a: "Sim. É uma plataforma web responsiva: funciona no celular, no tablet e no computador, sem instalar nada.",
-                },
-                {
-                  q: "O que o meu aluno recebe?",
-                  a: "Um PDF profissional com a sua marca e o app do aluno, onde ele vê o treino, consulta o semáforo e registra a execução.",
-                },
-              ].map((f) => (
-                <FaqItem key={f.q} q={f.q} a={f.a} />
-              ))}
-            </div>
-            <p className="mt-6 text-center text-sm text-ink-2">
-              Outras dúvidas?{" "}
-              <Link to="/suporte" className="font-semibold text-primary hover:underline">
-                Fale com o suporte
-              </Link>{" "}
-              ou veja os{" "}
-              <Link to="/tutorial" className="font-semibold text-primary hover:underline">
-                tutoriais passo a passo
-              </Link>
-              .
+/* -------------------------------- CTA final ------------------------------ */
+
+function CtaFinal() {
+  return (
+    <section className="px-6 py-[52px]">
+      <div className="mx-auto w-full max-w-[1160px] rounded-[24px] bg-[#0D1A2B] px-6 py-14 text-center text-white md:px-14">
+        <h2 className="mx-auto max-w-3xl font-display text-[30px] font-bold leading-tight md:text-[38px]">
+          O próximo aluno que entrar merece uma prescrição com endereço.
+        </h2>
+        <p className="mx-auto mt-4 max-w-xl text-[16px] text-[#aeb9c8]">
+          Cadastre hoje, avalie na primeira sessão e publique o plano ainda essa semana — com a
+          justificativa técnica do lado.
+        </p>
+        <div className="mt-7 flex justify-center">
+          <Link
+            to="/dashboard"
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-[15px] font-semibold text-[#0D1A2B] transition-colors hover:bg-white/90"
+          >
+            Assinar o Mapa da Prescrição <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <p className="mt-5 text-[12.5px] text-[#7f93ab]">7 dias para testar · cancelamento em dois cliques</p>
+      </div>
+    </section>
+  );
+}
+
+/* --------------------------------- footer -------------------------------- */
+
+function Footer() {
+  const cols: [string, [string, string][]][] = [
+    [
+      "Produto",
+      [
+        ["O ciclo do cuidado", "#ciclo"],
+        ["Por dentro do app", "#por-dentro"],
+        ["Semáforo diário", "#semaforo"],
+        ["Planos e preços", "#planos"],
+        ["Entrar na conta", "/dashboard"],
+      ],
+    ],
+    [
+      "Ciência",
+      [
+        ["Respaldo técnico", "#ciencia"],
+        ["Referências bibliográficas", "/aprender"],
+        ["Módulo Estudar", "/aprender"],
+        ["Protocolos ativos", "/aprender"],
+      ],
+    ],
+    [
+      "Legal e suporte",
+      [
+        ["Termos de uso", "/termos"],
+        ["Política de privacidade", "/privacidade"],
+        ["Tratamento de dados e LGPD", "/lgpd"],
+        ["Política de cookies", "/cookies"],
+        ["Falar com o suporte", "/suporte"],
+      ],
+    ],
+  ];
+  const linkCls = "text-[14px] text-[#9fb0c4] transition-colors hover:text-white";
+  const isHash = (h: string) => h.startsWith("#");
+  return (
+    <footer className="bg-[#0B1220] text-white">
+      <div className={`${WRAP} py-14`}>
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+          <div>
+            <Brand dark />
+            <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-[#9fb0c4]">
+              Cadastrar, avaliar, planejar, liberar e reavaliar — com o porquê documentado. A decisão é
+              sempre sua.
+            </p>
+            <p className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] text-[#7f93ab]">
+              <ShieldCheck className="h-3.5 w-3.5" /> Responsável técnico registrado no CREF
             </p>
           </div>
-        </Section>
-      </div>
-
-      {/* ------------------------------ CTA final --------------------------- */}
-      <Section>
-        <div className="rounded-card gradient-brand p-10 text-center text-white shadow-elevated md:p-14">
-          <h2 className="font-display text-3xl font-bold md:text-4xl">
-            Comece a registrar, acompanhar e direcionar.
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-white/85">
-            Crie a conta e conduza o primeiro aluno pela linha do cuidado, do cadastro à reavaliação.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center gap-2 rounded-control bg-surface px-6 py-3 font-semibold text-primary hover:bg-surface/90"
-            >
-              Começar agora <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              to="/tutorial"
-              className="inline-flex items-center gap-2 rounded-control border border-white/40 px-6 py-3 font-semibold text-white hover:bg-surface/10"
-            >
-              Ver os tutoriais
-            </Link>
-          </div>
-          <p className="mt-5 inline-flex items-center gap-2 text-xs text-white/70">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional individualizada.
-          </p>
-        </div>
-      </Section>
-
-      {/* -------------------------------- Footer ---------------------------- */}
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 md:flex-row md:items-center md:justify-between md:px-6">
-          <Logo />
-          <p className="max-w-md text-xs text-ink-3">
-            Conteúdo educacional em ciências do exercício. Não substitui avaliação e prescrição
-            profissional individualizada.
-          </p>
-          <div className="flex gap-4 text-sm text-ink-2">
-            <Link to="/tutorial" className="hover:text-ink">Tutoriais</Link>
-            <Link to="/suporte" className="hover:text-ink">Suporte</Link>
-            <Link to="/pricing" className="hover:text-ink">Planos</Link>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
-
-/* ---- cartão-tese do hero: o sistema (a tríade), não um aluno ------------- */
-
-function SistemaCard() {
-  return (
-    <Card variant="raised" className="overflow-hidden p-0">
-      <div className="flex items-center justify-between border-b border-border bg-surface-soft px-4 py-2.5">
-        <span className="text-2xs font-bold uppercase tracking-wider text-ink-3">Um sistema, três pilares</span>
-        <SeloRCD compacto />
-      </div>
-      <div className="space-y-2.5 p-4">
-        {TRIADE.map((t) => {
-          const Icon = t.icon;
-          const tile = t.tone === "analysis" ? "bg-analysis-tint text-analysis-text" : "bg-primary-tint text-primary";
-          return (
-            <div key={t.id} className="flex items-start gap-3 rounded-xl border border-border bg-surface p-3">
-              <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", tile)}>
-                <Icon className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <div className="font-display text-sm font-bold text-ink">{t.label}</div>
-                <p className="text-xs text-ink-2">{t.linha}</p>
-              </div>
+          {cols.map(([titulo, links]) => (
+            <div key={titulo}>
+              <div className="mb-3 text-[11.5px] font-bold uppercase tracking-[0.14em] text-[#5f7290]">{titulo}</div>
+              <ul className="space-y-2.5">
+                {links.map(([label, href]) => (
+                  <li key={label}>
+                    {isHash(href) ? (
+                      <a href={href} className={linkCls}>
+                        {label}
+                      </a>
+                    ) : (
+                      <Link to={href} className={linkCls}>
+                        {label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
             </div>
-          );
-        })}
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-xl bg-surface-soft px-3 py-2.5 text-2xs font-semibold text-ink-2">
-          {["Cadastro", "Avaliação", "Prescrição", "Semáforo", "Reavaliação"].map((s, i) => (
-            <React.Fragment key={s}>
-              {i > 0 && (
-                <span aria-hidden className="text-ink-3">
-                  ›
-                </span>
-              )}
-              <span>{s}</span>
-            </React.Fragment>
           ))}
         </div>
-      </div>
-    </Card>
-  );
-}
 
-/* ---- visual do Acompanhamento: a espinha do cuidado + histórico ---------- */
-
-function AcompanhamentoVisual() {
-  const historico = [
-    { dot: "bg-success", rotulo: "Liberado", data: "22/07" },
-    { dot: "bg-warning", rotulo: "Liberado com ajuste", data: "20/07" },
-    { dot: "bg-danger", rotulo: "Não liberado", data: "17/07" },
-  ];
-  return (
-    <Card variant="raised" className="order-2 p-5 lg:order-1">
-      <Eyebrow className="mb-3">A linha do cuidado</Eyebrow>
-      <EspinhaSelo atual={3} halo className="mb-4" />
-      <div className="rounded-xl border border-primary/25 bg-primary-tint px-3 py-2.5">
-        <ParDado label="Próximo passo" value="Reavaliar" layout="inline" />
-      </div>
-      <div className="mt-4">
-        <Eyebrow className="mb-2">Histórico do semáforo</Eyebrow>
-        <ul className="space-y-1.5">
-          {historico.map((h) => (
-            <li
-              key={h.data}
-              className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm"
-            >
-              <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", h.dot)} />
-              <span className="font-medium text-ink">{h.rotulo}</span>
-              <span aria-hidden className="text-ink-3">
-                ·
-              </span>
-              <span className="tabular text-xs text-ink-3">{h.data}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </Card>
-  );
-}
-
-/* ---- classificador: a comorbidade como força do Direcionamento ----------- */
-
-function ClassificadorCallout() {
-  return (
-    <div className="mt-6 rounded-card border border-primary/25 bg-primary-tint p-4">
-      <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wider text-primary">
-        <HeartPulse className="h-3.5 w-3.5" /> Direcionamento sugerido
-        <span className="ml-auto rounded-full bg-ink/5 px-2 py-0.5 text-ink-3">Exemplo</span>
-      </div>
-      <ul className="mt-2.5 space-y-1.5 text-sm text-ink">
-        <li>
-          IMC 31,2 indica <span className="font-semibold">obesidade grau I</span> (critério OMS).
-        </li>
-        <li>
-          PA 148/96 pede <span className="font-semibold">atenção</span>; confirme o diagnóstico e a
-          liberação.
-        </li>
-      </ul>
-      <p className="mt-2.5 text-xs text-ink-2">
-        Você confirma o direcionamento; o motor passa a validar os exercícios por esses fatos.
-      </p>
-    </div>
-  );
-}
-
-/* ------ cartão exemplo: a decisão documentada (o fosso), estático e prudente ---- */
-
-function DecisaoDemoCard() {
-  return (
-    <Card variant="raised" className="overflow-hidden p-0">
-      <div className="flex items-center justify-between border-b border-border bg-surface-soft px-4 py-2.5">
-        <SeloRCD compacto />
-        <span className="rounded-full bg-ink/5 px-2 py-0.5 text-2xs font-bold uppercase tracking-wider text-ink-3">
-          Exemplo
-        </span>
-      </div>
-      <div className="space-y-3 p-4">
-        <div>
-          <div className="mb-1.5 text-2xs font-bold uppercase tracking-wider text-ink-3">Condição do aluno</div>
-          <div className="flex flex-wrap gap-1.5">
-            <span className="rounded-full border border-primary bg-primary-tint px-2.5 py-1 text-xs font-semibold text-primary">
-              Hipertensão
-            </span>
-            {["Diabetes", "Dor lombar", "Idoso"].map((c) => (
-              <span key={c} className="rounded-full border border-border px-2.5 py-1 text-xs font-medium text-ink-3">
-                {c}
-              </span>
-            ))}
+        <div className="mt-10 rounded-[14px] border border-white/10 bg-white/[0.03] p-5">
+          <div className="mb-1.5 flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.12em] text-[#c9a24b]">
+            <span className="grid h-4 w-4 place-items-center rounded-full bg-[#c9a24b] text-2xs font-black text-[#0B1220]">!</span>
+            Aviso importante
           </div>
-        </div>
-
-        <div className="flex items-center gap-2.5 rounded-xl border border-warning/40 bg-warning-tint px-3 py-2.5">
-          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-warning/15">
-            <AlertTriangle className="h-4 w-4 text-warning" />
-          </span>
-          <div>
-            <div className="text-sm font-bold text-warning">Pode treinar hoje, com ajuste</div>
-            <div className="text-xs text-ink-2">Checklist de segurança da condição, respondido antes da sessão.</div>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border p-3">
-          <div className="flex items-center justify-between">
-            <span className="font-display text-sm font-bold text-ink">Leg press 45°</span>
-            <span className="rounded-full bg-success-tint px-2 py-0.5 text-2xs font-bold text-success">Recomendado</span>
-          </div>
-          <p className="mt-1 text-xs text-ink-2">
-            Tronco apoiado e cadeia fechada: a pressão sobe menos que no agachamento livre. Evitar
-            apneia (Valsalva); respiração contínua nas séries.
+          <p className="text-[13px] leading-relaxed text-[#9fb0c4]">
+            O Mapa da Prescrição é uma ferramenta de apoio à decisão destinada a profissionais de
+            Educação Física registrados no CREF. Não realiza diagnóstico, não substitui avaliação de
+            profissional de saúde e não emite prescrição de forma autônoma: toda conduta registrada é de
+            responsabilidade do profissional que a assina. As faixas e classificações do semáforo são
+            referências baseadas em diretrizes públicas e não configuram liberação ou contraindicação
+            clínica.
           </p>
-          <div className="mt-2 flex items-center gap-1.5 text-2xs text-ink-3">
-            <span className="rounded bg-ink/5 px-1.5 py-0.5 font-bold text-ink-2">1</span>
-            <span className="rounded bg-ink/5 px-1.5 py-0.5 font-bold text-ink-2">2</span>
-            <span>referências citadas na decisão</span>
-          </div>
         </div>
 
-        <div className="flex items-center gap-2 rounded-xl bg-surface-soft px-3 py-2.5">
-          <FileDown className="h-4 w-4 shrink-0 text-analysis" />
-          <span className="text-xs text-ink-2">
-            Vira um registro com o seu nome e CREF, para guardar e assinar. A decisão é sempre sua.
+        <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 text-[12.5px] text-[#7f93ab] md:flex-row md:items-center md:justify-between">
+          <span>© 2026 Mapa da Prescrição · CNPJ 00.000.000/0001-00</span>
+          <span className="inline-flex items-center gap-1.5">
+            <Lock className="h-3.5 w-3.5" /> Dados hospedados no Brasil, com criptografia
           </span>
         </div>
       </div>
-    </Card>
-  );
-}
-
-/* ----------------------- mock da justificativa (o "aha") ------------------ */
-
-function JustifyMock() {
-  const rows: { c: string; v: string; max: string | null; tone: string }[] = [
-    { c: "Compatível com o objetivo (Hipertrofia)", v: "+30,0", max: "30", tone: "text-success" },
-    { c: "Adequado ao nível Iniciante", v: "+20,0", max: "20", tone: "text-success" },
-    { c: "Equipamento disponível", v: "+15,0", max: "20", tone: "text-ink" },
-    { c: "Cautela: desconforto lombar", v: "−8,0", max: null, tone: "text-[color:var(--cta-text)]" },
-  ];
-  return (
-    <Card variant="raised" className="p-5 md:p-6">
-      <div className="mb-1 flex items-center justify-between gap-3">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-ink-3">Justificativa</div>
-          <h3 className="font-display text-lg font-bold text-ink">Leg press 45°</h3>
-        </div>
-        <Pill tone="success">adequação 82/100</Pill>
-      </div>
-      <p className="mb-3 text-sm text-ink-2">Como cada critério pesou no ranqueamento:</p>
-      <ul className="space-y-2">
-        {rows.map((r) => (
-          <li key={r.c} className="rounded-lg border border-border bg-surface-soft p-3">
-            <div className="flex items-center justify-between gap-3 text-sm">
-              <span className="font-semibold text-ink">{r.c}</span>
-              <span className={`tabular shrink-0 font-bold ${r.tone}`}>
-                {r.v}
-                {r.max && <span className="ml-1 text-xs font-medium text-ink-3">/ {r.max}</span>}
-              </span>
-            </div>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-ink-3">
-        <Info className="h-3.5 w-3.5" /> Exemplo real de como a recomendação é explicada dentro da plataforma.
-      </p>
-    </Card>
-  );
-}
-
-/* --------------------------------- FAQ item ------------------------------- */
-
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = React.useState(false);
-  return (
-    <div className="overflow-hidden rounded-xl border border-border bg-bg">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
-      >
-        <span className="font-semibold text-ink">{q}</span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-ink-3 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && <p className="px-4 pb-4 text-sm text-ink-2">{a}</p>}
-    </div>
-  );
-}
-
-/* --------------------------------- planos --------------------------------- */
-
-function PlanCard({
-  nome,
-  preco,
-  desc,
-  items,
-  cta,
-  destaque,
-}: {
-  nome: string;
-  preco: string;
-  desc: string;
-  items: string[];
-  cta: string;
-  destaque?: boolean;
-}) {
-  return (
-    <Card className="relative p-6 text-left">
-      {destaque && (
-        <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-on-primary">
-          Acesso completo
-        </span>
-      )}
-      <div className="font-display text-lg font-bold text-ink">{nome}</div>
-      <p className="text-sm text-ink-2">{desc}</p>
-      <div className="mt-3 font-display text-3xl font-extrabold text-ink">
-        {preco} <span className="text-sm font-medium text-ink-3">/mês</span>
-      </div>
-      <ul className="mt-4 space-y-2 text-sm text-ink">
-        {items.map((i) => (
-          <li key={i} className="flex gap-2">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" /> {i}
-          </li>
-        ))}
-      </ul>
-      <Link to="/dashboard" className={buttonClasses(destaque ? "primary" : "secondary") + " mt-5 w-full"}>
-        {cta}
-      </Link>
-    </Card>
+    </footer>
   );
 }
