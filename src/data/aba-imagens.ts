@@ -17,6 +17,12 @@
  * base, sem gerar imagem quase idêntica.
  */
 const VARIACAO_IMGS: Record<string, number[]> = {
+  "wall-slide": [1],
+  "suitcase-carry": [2],
+  "farmer-walk": [2],
+  "punho-halter": [0, 1],
+  "retracao-escapular-polia": [0, 1],
+  "serratus-punch": [0, 1],
   "abdominal-polia-alta": [1, 2],
   "remo-ergometro": [2],
   "levantamento-terra": [0, 2],
