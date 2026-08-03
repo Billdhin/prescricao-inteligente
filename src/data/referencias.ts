@@ -17,6 +17,12 @@ export interface Referencia {
   ano: number;
   /** DOI verificado (PubMed), quando o trabalho tem um. Torna a citação verificável em 1 clique. */
   doi?: string;
+  /**
+   * PMID, para os clássicos anteriores ao DOI. Trabalho de 1968 não tem DOI, e
+   * ficar sem link nenhum tornaria a citação impossível de conferir justamente
+   * onde ela sustenta uma conta.
+   */
+  pmid?: string;
   /** como o Motor RCD aplica esta referência (linguagem prudente) */
   nota?: string;
 }
@@ -617,6 +623,35 @@ export const referencias: Referencia[] = [
     ano: 2016,
     doi: "10.1080/17461391.2014.989922",
     nota: "Metanálise de ensaios randomizados comparando carga baixa (até 60% de 1RM) com carga alta (a partir de 65% de 1RM). Para força, o efeito médio foi 1,23 na carga baixa e 2,30 na alta; para hipertrofia, 0,39 e 0,82. As duas diferenças ficaram no limiar da significância (p = 0,09 e p = 0,076), com poucos estudos disponíveis. Cargas de até 50% de 1RM produziram ganhos substanciais de força e de hipertrofia em destreinados. Base para tratar hipertrofia e força como objetivos que se somam (a mesma sessão serve aos dois, com ênfases diferentes de carga), sem prometer que uma carga única otimiza os dois.",
+  },
+  {
+    id: "mayhew-2008",
+    autores: "Mayhew JL, Johnson BD, LaMonte MJ, Lauber D, Kemmler W",
+    titulo:
+      "Accuracy of prediction equations for determining one repetition maximum bench press in women before and after resistance training",
+    fonte: "Journal of Strength and Conditioning Research, 22(5):1570-1577",
+    ano: 2008,
+    doi: "10.1519/JSC.0b013e31817b02ad",
+    pmid: "18714230",
+    nota: "103 mulheres testadas em 1RM de supino e em repetições até a fadiga com cargas sorteadas entre 60% e 90% de 1RM, antes e depois de 12 semanas de treino de força progressivo. As equações de predição foram mais precisas quando o teste usou menos de 10 repetições até a fadiga, e o treino não comprometeu essa precisão. Base do LIMITE que o app avisa ao estimar 1RM por repetições: acima de 10 repetições a estimativa perde precisão. Não sustenta a escolha de uma equação específica sobre as outras.",
+  },
+  {
+    id: "kline-1987",
+    autores: "Kline GM, Porcari JP, Hintermeister R, Freedson PS, Ward A, McCarron RF, Ross J, Rippe JM",
+    titulo: "Estimation of VO2max from a one-mile track walk, gender, age, and body weight",
+    fonte: "Medicine & Science in Sports & Exercise, 19(3):253-259",
+    ano: 1987,
+    pmid: "3600239",
+    nota: "Equação de campo derivada em adultos que caminharam 1 milha em pista, com sexo, idade, peso corporal, tempo e frequência cardíaca ao final como entradas (correlação múltipla de 0,93 com o VO2max medido, erro padrão de estimativa de 0,325 L/min). Base da estimativa de VO₂ por caminhada oferecida na avaliação, que é a viável para quem não corre. Usa frequência cardíaca como entrada, então perde validade sob betabloqueador.",
+  },
+  {
+    id: "cooper-1968",
+    autores: "Cooper KH",
+    titulo: "A means of assessing maximal oxygen intake. Correlation between field and treadmill testing",
+    fonte: "JAMA, 203(3):201-204",
+    ano: 1968,
+    pmid: "5694044",
+    nota: "Trabalho que estabeleceu a correlação entre a distância percorrida em 12 minutos e o consumo máximo de oxigênio medido em esteira, origem do teste de campo que leva o nome do autor. Base da estimativa de VO₂ por 12 minutos. É teste de esforço máximo, e a forma da equação em metros circula em versões ligeiramente diferentes: o app trata o resultado como faixa, não como medida.",
   },
 ];
 

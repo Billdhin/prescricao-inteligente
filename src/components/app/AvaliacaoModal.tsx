@@ -3,6 +3,7 @@ import { X, Plus, Trash2, Camera, Info, ChevronDown, Loader2, TrendingUp } from 
 import { buttonClasses, Pill } from "@/components/ui/primitives";
 import { EvolucaoMini, METRICAS_CHAVE } from "@/components/app/EvolucaoMini";
 import { FaixaDoValor } from "@/components/avaliacao/EscalaInfo";
+import { CalculadoraEstimativa } from "@/components/avaliacao/CalculadoraEstimativa";
 import { useDialog } from "@/lib/useDialog";
 import { arquivoParaDataUrl } from "@/lib/imagem";
 import { toast } from "@/lib/toast";
@@ -76,6 +77,7 @@ export function AvaliacaoModal({
   alunoId,
   alunoNome,
   alunoSexo,
+  alunoIdade,
   anterior,
   historico,
 }: {
@@ -86,6 +88,8 @@ export function AvaliacaoModal({
   alunoNome?: string;
   /** Sexo declarado: escala cujo corte difere por sexo NAO classifica sem ele. */
   alunoSexo?: Sexo;
+  /** Idade declarada: entra na equação de VO₂ por caminhada, que a usa como termo. */
+  alunoIdade?: number;
   /** avaliação mais recente do aluno, para a comparação e o pré-preenchimento dos campos */
   anterior?: Avaliacao;
   /** série completa de avaliações (ascendente), para o painel "Como estava antes" */
@@ -351,6 +355,15 @@ export function AvaliacaoModal({
 
           {/* Testes físicos */}
           <Secao titulo="Testes físicos e funcionais">
+            {/* A conta vem ANTES da lista: quem mediu distância ou repetições sai
+                daqui com o número que a prescrição usa, e ele entra na lista abaixo
+                como teste normal, com a memória de cálculo junto. */}
+            <CalculadoraEstimativa
+              sexoAluno={alunoSexo}
+              pesoMedido={num(med.peso ?? "")}
+              idadeAluno={alunoIdade}
+              onRegistrar={(t) => setTestes((arr) => [...arr, t])}
+            />
             <ListaDinamica
               itens={testes}
               vazio="Nenhum teste registrado. Use o botão para adicionar."

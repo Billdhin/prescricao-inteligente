@@ -781,6 +781,25 @@ export function AlunoDetail() {
                             ) : null}
                           </div>
                         )}
+                        {/* Os testes por extenso, e não só a contagem. Um 1RM estimado
+                            que vira a pílula "1 teste" é um dado que o profissional
+                            registrou e não consegue mais ler. A observação carrega a
+                            memória de cálculo das estimativas, então fica junto. */}
+                        {av.testes?.length ? (
+                          <ul className="mt-1.5 space-y-1">
+                            {av.testes.map((t, i) => (
+                              <li key={i} className="border-l-2 border-border pl-2.5">
+                                <span className="tabular text-sm text-ink-2">
+                                  {t.nome}
+                                  {t.lado && t.lado !== "NA" ? ` (${t.lado})` : ""}:{" "}
+                                  <span className="font-semibold text-ink">{t.resultado}</span>
+                                  {t.unidade ? ` ${t.unidade}` : ""}
+                                </span>
+                                {t.obs && <span className="block text-2xs text-ink-3">{t.obs}</span>}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
                         {av.observacoes && <p className="mt-1 text-sm text-ink-2">{av.observacoes}</p>}
                       </div>
                     </li>
@@ -1067,6 +1086,7 @@ export function AlunoDetail() {
           alunoId={aluno.id}
           alunoNome={aluno.nome}
           alunoSexo={aluno.sexo}
+          alunoIdade={aluno.idade}
           anterior={avalsDesc[0]}
           historico={avals}
         />
