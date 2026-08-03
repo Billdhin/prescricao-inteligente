@@ -56,7 +56,6 @@ export const extraExercises3: Exercise[] = [
       "Rotação externa com o cotovelo junto ao tronco: o exercício de manguito mais fácil de ensinar e de fazer em casa, porque o próprio corpo limita a compensação.",
     anguloArticular: "0 graus de abdução, cotovelo a 90 graus",
 imagem: "/exercises/rotacao-externa-elastico.webp",
-    imagemAnalise: "/exercises/rotacao-externa-elastico-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Infraespinal", percentual: 55, papel: "primário" },
@@ -139,7 +138,6 @@ imagem: "/exercises/rotacao-externa-elastico.webp",
       "A posição com maior atividade medida do infraespinal e do redondo menor: deitado de lado, o peso do halter resiste exatamente onde o manguito trabalha.",
     anguloArticular: "0 graus de abdução, cotovelo a 90 graus",
 imagem: "/exercises/rotacao-externa-deitado.webp",
-    imagemAnalise: "/exercises/rotacao-externa-deitado-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Infraespinal", percentual: 62, papel: "primário" },
@@ -221,7 +219,6 @@ imagem: "/exercises/rotacao-externa-deitado.webp",
       "O lado de dentro do manguito, que quase nunca é treinado: o subescapular é o único rotador interno profundo e faz par com os rotadores externos.",
     anguloArticular: "0 graus de abdução, cotovelo a 90 graus",
 imagem: "/exercises/rotacao-interna-elastico.webp",
-    imagemAnalise: "/exercises/rotacao-interna-elastico-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Subescapular", percentual: 50, papel: "primário" },

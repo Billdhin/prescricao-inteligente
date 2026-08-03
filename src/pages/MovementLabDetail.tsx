@@ -260,6 +260,17 @@ function Detail({ exercise }: { exercise: Exercise }) {
                   ativacao={exercise.ativacao}
                   overlay={overlay}
                 />
+              ) : exercise.imagem ? (
+                /* Foto correta, sem camada de análise. Acontece quando o músculo
+                   primário não é visível NAQUELA vista (rotadores do manguito numa
+                   vista frontal, quadrado lombar num perfil) e pintá-lo ali seria
+                   inventar anatomia. Cair no boneco genérico aqui seria pior: jogaria
+                   fora uma execução correta por causa de uma camada ausente. */
+                <img
+                  src={withBase(exercise.imagem)}
+                  alt={`Execução: ${exercise.nome}`}
+                  className="w-full rounded-card border border-border object-cover"
+                />
               ) : (
                 <VisualCompareSlider
                   before={<ExecutionScene />}
@@ -271,8 +282,19 @@ function Detail({ exercise }: { exercise: Exercise }) {
           </div>
 
           <p className="px-1 text-xs text-ink-3">
-            Arraste o divisor: a análise é revelada sobre a <span className="font-semibold text-ink-2">mesma imagem</span>:
-            músculos em foco, ângulo articular e linha de força.
+            {exercise.imagem && !exercise.imagemAnalise ? (
+              <>
+                Este exercício não tem a camada de análise: o músculo principal dele não aparece
+                nesta vista, e destacá-lo aqui seria adivinhar. Os músculos envolvidos estão
+                listados abaixo.
+              </>
+            ) : (
+              <>
+                Arraste o divisor: a análise é revelada sobre a{" "}
+                <span className="font-semibold text-ink-2">mesma imagem</span>: músculos em foco,
+                ângulo articular e linha de força.
+              </>
+            )}
           </p>
         </div>
 

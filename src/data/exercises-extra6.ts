@@ -370,8 +370,6 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Puxada com as palmas voltadas para o rosto: mesma máquina, mais bíceps e uma linha de puxada mais confortável para muitos ombros.",
     anguloArticular: "Adução de ombro com antebraço supinado",
-imagem: "/exercises/puxada-supinada.webp",
-    imagemAnalise: "/exercises/puxada-supinada-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 72, papel: "primário" },
