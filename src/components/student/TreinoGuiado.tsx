@@ -15,7 +15,6 @@ import { modalidadeImagem } from "@/data/modalities";
 import { refCurta } from "@/data/referencias";
 import { corDeContraste } from "@/lib/theme/palettes";
 import { rotuloFaixaPse, bandaPse, TINT_PSE, RING_PSE } from "@/lib/pse";
-import { PONTOS_POR_REGISTRO } from "@/lib/gamificacao";
 import { agruparBlocosPorMetodo, getMetodo, type Sessao, type BlocoSessao } from "@/data/periodizacao";
 import type { Execucao, SessaoFeedback } from "@/data/execucao";
 
@@ -30,12 +29,13 @@ import type { Execucao, SessaoFeedback } from "@/data/execucao";
  * dose; a dica do professor destacada em âmbar; e o rodapé Anterior / Pular /
  * Próximo.
  *
- * Ao concluir, a tela de fechamento traz números REAIS (exercícios registrados,
- * duração MEDIDA pelo cronômetro e pontos ganhos) e a percepção de esforço da SESSÃO
- * (escala de Borg, base do sRPE de Foster), com um recado opcional ao professor.
+ * Ao concluir, a tela de fechamento traz números REAIS (exercícios registrados e
+ * duração MEDIDA pelo cronômetro) e a percepção de esforço da SESSÃO (escala de
+ * Borg, base do sRPE de Foster), com um recado opcional ao professor.
  *
  * Sem número inventado: a duração vem do cronômetro (nunca estimada) e some se o aluno
- * sair sem concluir; os pontos seguem a regra da gamificação (10 por registro).
+ * sair sem concluir. Pontuação saiu a pedido do Filipe (31/07/2026): a proposta é
+ * registro clínico, não jogo.
  */
 export function TreinoGuiado({
   sessao,
@@ -116,7 +116,6 @@ export function TreinoGuiado({
   if (fase === "conclusao") {
     const registrados = sessao.blocos.filter((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id)).length;
     const total = sessao.blocos.length;
-    const pontos = registrados * PONTOS_POR_REGISTRO;
     const duracaoMin = Math.max(1, Math.round(((fimMs ?? Date.now()) - inicioRef.current) / 60000));
     const faixaSel = pse != null ? rotuloFaixaPse(pse) : null;
 
@@ -163,11 +162,12 @@ export function TreinoGuiado({
             </div>
           )}
 
-          {/* Números reais: registrados / duração medida / pontos (10 por registro). */}
-          <div className="mt-5 grid grid-cols-3 gap-2">
+          {/* Números reais da sessão: o que foi registrado e quanto tempo levou.
+              Pontuação saiu a pedido do Filipe: a proposta é registro clínico,
+              não jogo. */}
+          <div className="mt-5 grid grid-cols-2 gap-2">
             <NumeroCard valor={`${registrados}/${total}`} rotulo="exercícios" />
             <NumeroCard valor={`${duracaoMin} min`} rotulo="duração real" />
-            <NumeroCard valor={`+${pontos}`} rotulo="pontos" />
           </div>
 
           {/* Percepção de esforço da SESSÃO (rótulos de p-rpe, escala de Borg). */}

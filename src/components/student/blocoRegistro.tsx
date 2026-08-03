@@ -2,7 +2,6 @@ import * as React from "react";
 import { CheckCircle2, Footprints, Bike, Waves, HeartPulse } from "lucide-react";
 import { exercises, getExercise } from "@/data/exercises";
 import { corDeContraste } from "@/lib/theme/palettes";
-import { PONTOS_POR_REGISTRO } from "@/lib/gamificacao";
 import { getFasePose } from "@/data/fase-poses";
 import { getMuscleMapPose } from "@/data/muscle-map-images";
 import { getModalidade } from "@/data/modalities";
@@ -307,11 +306,7 @@ export function RegistroBloco({
             className="inline-flex h-12 w-full items-center justify-center rounded-full px-4 text-base font-bold"
             style={{ background: cor, color: tintaDaCor }}
           >
-            {editando
-              ? "Salvar"
-              : totalSeries > 1
-                ? `Registrar série ${serie}${ultimaSerie ? ` · +${PONTOS_POR_REGISTRO} pts` : ""}`
-                : `Registrar · +${PONTOS_POR_REGISTRO} pts`}
+            {editando ? "Salvar" : totalSeries > 1 ? `Registrar série ${serie}` : "Registrar"}
           </button>
           {editando && (
             <button

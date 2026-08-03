@@ -66,7 +66,7 @@ export function GamificacaoView({
         </span>
         <p className="text-sm text-ink-2">
           Comece o treino de hoje na aba <strong className="text-ink">Hoje</strong>. A partir do primeiro registro
-          aparecem aqui a sua sequência, os pontos e as conquistas.
+          aparecem aqui a sua sequência e as suas conquistas.
         </p>
       </Card>
     );
@@ -74,50 +74,28 @@ export function GamificacaoView({
 
   return (
     <div className="space-y-3">
-      {/* Herói: liga, sequência em DIAS (com recorde) e pontos. */}
+      {/* Aderência do aluno: exercícios registrados e sequência em DIAS (contada
+          de verdade). Pontos e liga saíram a pedido do Filipe: a proposta é
+          registro clínico, não jogo. O que fica são números do próprio aluno. */}
       <Card className="p-4">
         <div className="flex items-center gap-3">
-          <span
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-card"
-            style={{ background: r.liga.atual.cor, color: corDeContraste(r.liga.atual.cor) }}
-          >
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-card bg-surface-soft text-ink-2">
             <Medal className="h-6 w-6" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="font-display text-lg font-bold text-ink">Liga {r.liga.atual.nome}</div>
+            <div className="font-display text-lg font-bold text-ink">Seu histórico</div>
             <div className="text-xs text-ink-2">{r.totalTreinos} exercícios registrados</div>
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-card bg-surface-soft p-3">
-            <div className="flex items-baseline gap-1.5">
-              <span className="tabular font-display text-2xl font-bold text-ink">{r.sequencia.atual}</span>
-              <span className="text-sm text-ink-2">{r.sequencia.atual === 1 ? "dia" : "dias"}</span>
-              <Flame className="h-4 w-4 text-warning" aria-hidden />
-            </div>
-            <div className="text-2xs text-ink-2">de sequência · recorde: {r.sequencia.recorde}</div>
+        <div className="mt-4 rounded-card bg-surface-soft p-3">
+          <div className="flex items-baseline gap-1.5">
+            <span className="tabular font-display text-2xl font-bold text-ink">{r.sequencia.atual}</span>
+            <span className="text-sm text-ink-2">{r.sequencia.atual === 1 ? "dia" : "dias"}</span>
+            <Flame className="h-4 w-4 text-warning" aria-hidden />
           </div>
-          <div className="rounded-card bg-surface-soft p-3">
-            <div className="tabular font-display text-2xl font-bold text-ink">{r.pontos}</div>
-            <div className="text-2xs text-ink-2">pontos</div>
-          </div>
+          <div className="text-2xs text-ink-2">de sequência · recorde: {r.sequencia.recorde}</div>
         </div>
-
-        {r.liga.proxima && (
-          <div className="mt-3">
-            <div className="mb-1 flex items-center justify-between text-xs text-ink-2">
-              <span>Rumo à liga {r.liga.proxima.nome}</span>
-              <span className="tabular">faltam {r.liga.faltam} pts</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-surface-mute">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${Math.round(r.liga.progresso * 100)}%`, background: cor }}
-              />
-            </div>
-          </div>
-        )}
       </Card>
 
       <GraficoSemanas dados={r.porSemana} cor={cor} />
