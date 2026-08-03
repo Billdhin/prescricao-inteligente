@@ -104,7 +104,10 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
     //     apontar o que DE FATO destrava, senão ela manda o profissional para uma
     //     tela bloqueada e o sistema parece quebrado em vez de cuidadoso.
     const pronto = prontidaoParaPrescrever(aluno, { avaliacoes: ctx.avaliacoes });
-    const doPerfil = pronto.bloqueios.filter((b) => b.motivo !== "sem-avaliacao");
+    // Entram bloqueios E pendências: desde 01/08/2026 a completude do perfil não
+    // tranca mais a prescrição, mas a espinha continua sendo quem diz o que falta.
+    // Se ela deixasse de apontar, o profissional perderia o guia junto com a trava.
+    const doPerfil = [...pronto.bloqueios, ...pronto.pendencias].filter((b) => b.motivo !== "sem-avaliacao");
     // Encaminhamento não é "perfil incompleto": o perfil pode estar completo e o
     // que impede o treino é uma medida da avaliação (pressão muito elevada). Cai
     // fora do ramo genérico, senão a frase vira "Não prescreva hoje para poder
@@ -128,8 +131,8 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
         tone: "warning",
         frase:
           doPerfil.length === 1
-            ? `${primeiro.titulo} para poder prescrever.`
-            : `Faltam ${doPerfil.length} definições no perfil antes de prescrever.`,
+            ? `${primeiro.titulo} antes de prescrever.`
+            : `Faltam ${doPerfil.length} definições no perfil para o plano sair completo.`,
         cta: {
           label: primeiro.acao ?? "Completar o perfil",
           kind: "planejar",

@@ -67,13 +67,33 @@ export interface ItemProntidao<T extends string> {
 }
 
 export interface Prontidao {
-  /** pode gerar treino para este aluno? */
+  /** pode gerar treino para este aluno? (só RISCO trava; ver DUROS) */
   ok: boolean;
+  /** o que TRAVA: risco clínico e impossibilidade técnica */
   bloqueios: ItemProntidao<MotivoBloqueio>[];
+  /** o que FALTA mas não trava: as declarações de completude do perfil */
+  pendencias: ItemProntidao<MotivoBloqueio>[];
   avisos: ItemProntidao<MotivoAviso>[];
   /** o primeiro bloqueio, que é o que a tela mostra em uma linha */
   primeiro?: ItemProntidao<MotivoBloqueio>;
 }
+
+/**
+ * O que de fato TRAVA a prescrição, depois do feedback de campo (31/07/2026): o
+ * Herivaldo achou o fluxo "preso a uma sequência rígida", e o Filipe decidiu que
+ * as verificações continuam existindo, mas sem serem pré-requisito.
+ *
+ * Ficam travando só dois tipos de coisa:
+ *  - RISCO CLÍNICO (`seguranca`, `encaminhamento`): cirurgia recente sem liberação
+ *    ou pressão que pede encaminhamento não viram treino hoje. Destravar isso seria
+ *    contrariar a tese do produto, não a rigidez dele.
+ *  - IMPOSSIBILIDADE TÉCNICA (`sem-equipamento`): sem nenhum equipamento o catálogo
+ *    fica vazio e não existe plano a gerar; não é rigidez, é aritmética.
+ *
+ * Todo o resto (avaliação, condição, restrições, medicação, detalhe pendente) virou
+ * PENDÊNCIA: aparece, explica o que muda, e deixa seguir. O profissional decide.
+ */
+const DUROS = new Set<MotivoBloqueio>(["seguranca", "encaminhamento", "sem-equipamento"]);
 
 export interface CtxProntidao {
   avaliacoes: Avaliacao[];
@@ -208,7 +228,10 @@ export function prontidaoParaPrescrever(aluno: Aluno, ctx: CtxProntidao): Pronti
     });
   }
 
-  return { ok: bloqueios.length === 0, bloqueios, avisos, primeiro: bloqueios[0] };
+  // Separa o que é RISCO do que é COMPLETUDE (ver DUROS, acima). Só o risco trava.
+  const duros = bloqueios.filter((b) => DUROS.has(b.motivo));
+  const pendencias = bloqueios.filter((b) => !DUROS.has(b.motivo));
+  return { ok: duros.length === 0, bloqueios: duros, pendencias, avisos, primeiro: duros[0] };
 }
 
 /**
@@ -219,8 +242,11 @@ export function prontidaoParaPrescrever(aluno: Aluno, ctx: CtxProntidao): Pronti
  */
 export function podeMontarTreino(aluno: Aluno, ctx: CtxProntidao): { ok: boolean; motivo?: string } {
   const p = prontidaoParaPrescrever(aluno, ctx);
-  const semAval = p.bloqueios.find((b) => b.motivo === "sem-avaliacao");
-  if (semAval) return { ok: false, motivo: "Registre a avaliação primeiro. O treino nasce dela." };
+  // Risco/impossibilidade travam; falta de avaliação virou recomendação forte, não
+  // porta trancada (o profissional decide se prescreve antes de avaliar).
+  if (!p.ok) return { ok: false, motivo: p.primeiro?.titulo };
+  const semAval = p.pendencias.some((b) => b.motivo === "sem-avaliacao");
+  if (semAval) return { ok: true, motivo: "Sem avaliação registrada: o treino nasce dela, e sem ela o plano sai mais conservador." };
   return { ok: true };
 }
 

@@ -154,6 +154,9 @@ export function StudentApp({
   // Modo guiado ("Começar treino"): quando ativo, ocupa o app inteiro no lugar
   // das abas. Guarda a sessão-alvo; a semana é sempre a atual.
   const [guiado, setGuiado] = React.useState<Sessao | null>(null);
+  // Sessão aberta a partir da lista de treinos: mostra a visão da sessão (a mesma
+  // da de hoje) antes de começar, em vez de pular para o guiado.
+  const [sessaoAberta, setSessaoAberta] = React.useState<Sessao | null>(null);
   const semanaGuiado = plano ? semanaAtual(plano) : 1;
   const feedbackGuiado = guiado
     ? sessaoFeedbacks.find(
@@ -217,6 +220,38 @@ export function StudentApp({
             />
 
             <main className="flex-1 space-y-4 px-4 pb-28 pt-1">
+              {/* Sessão aberta pela aba Treinos: a MESMA visão da de hoje (ver a
+                  sessão inteira e então começar), em vez de saltar direto para o
+                  modo guiado. É o que dá o início, meio e fim consistente. */}
+              {sessaoAberta && plano ? (
+                <>
+                  <button
+                    onClick={() => setSessaoAberta(null)}
+                    className="-ml-1 inline-flex items-center gap-1 rounded-full px-1 py-1 text-sm font-semibold text-ink-2 hover:text-ink"
+                  >
+                    <ChevronRight className="h-4 w-4 rotate-180" aria-hidden /> Voltar aos treinos
+                  </button>
+                  <VisaoSessao
+                    sessao={sessaoAberta}
+                    plano={plano}
+                    semana={semanaGuiado}
+                    aluno={aluno}
+                    cor={cor}
+                    tinta={tintaDaMarca}
+                    execucoes={execucoes}
+                    sessaoFeedbacks={sessaoFeedbacks}
+                    onRegistrar={onRegistrar}
+                    onDesfazer={onDesfazer}
+                    onIniciar={() => {
+                      setGuiado(sessaoAberta);
+                      setSessaoAberta(null);
+                    }}
+                    dataDaPrescricao={dataDaPrescricao}
+                    preview={preview}
+                  />
+                </>
+              ) : (
+                <>
               {aba === "hoje" && (
                 <AbaHoje
                   plano={plano}
@@ -230,6 +265,7 @@ export function StudentApp({
                   onRegistrar={onRegistrar}
                   onDesfazer={onDesfazer}
                   onIniciar={setGuiado}
+                  onAbrir={setSessaoAberta}
                   dataDaPrescricao={dataDaPrescricao}
                   preview={preview}
                 />
@@ -242,7 +278,7 @@ export function StudentApp({
                   aluno={aluno}
                   marca={marca}
                   execucoes={execucoes}
-                  onIniciar={setGuiado}
+                  onIniciar={setSessaoAberta}
                 />
               )}
               {aba === "progresso" && (
@@ -266,9 +302,21 @@ export function StudentApp({
                   preview={preview}
                 />
               )}
+                </>
+              )}
             </main>
 
-            <BarraDeAbas aba={aba} onAba={setAba} cor={cor} tinta={tintaDaMarca} />
+            {/* Trocar de aba fecha a sessão aberta: sem isso ela continuaria na
+                tela por cima da aba escolhida. */}
+            <BarraDeAbas
+              aba={aba}
+              onAba={(a) => {
+                setAba(a);
+                setSessaoAberta(null);
+              }}
+              cor={cor}
+              tinta={tintaDaMarca}
+            />
           </>
         )}
       </div>
@@ -472,6 +520,7 @@ function AbaHoje({
   onRegistrar,
   onDesfazer,
   onIniciar,
+  onAbrir,
   dataDaPrescricao,
   preview,
 }: {
@@ -487,6 +536,8 @@ function AbaHoje({
   onDesfazer?: (execId: string) => void;
   /** inicia o modo guiado para uma sessão (abre o treino guiado no lugar das abas) */
   onIniciar?: (sessao: Sessao) => void;
+  /** abre a visão de OUTRA sessão da semana (mesma tela da de hoje, não o guiado) */
+  onAbrir?: (sessao: Sessao) => void;
   dataDaPrescricao?: (id: string) => string | undefined;
   preview?: boolean;
 }) {
@@ -513,7 +564,6 @@ function AbaHoje({
   // dia" do profissional, para os dois nunca mirarem sessões diferentes.
   const idxHoje = sessaoDeHojeIndex(plano, execucoes);
   const sessaoHoje = sessoes[idxHoje];
-  const concluidaHoje = sessaoHoje ? sessaoConcluida(sessaoHoje, semana, execucoes) : false;
   const outras = sessoes.filter((_, i) => i !== idxHoje);
 
   return (
@@ -521,40 +571,21 @@ function AbaHoje({
       {alerta}
 
       {sessaoHoje ? (
-        <>
-          <HeroTreinoDeHoje
-            sessao={sessaoHoje}
-            plano={plano}
-            cor={cor}
-            concluida={concluidaHoje}
-            dataDaPrescricao={dataDaPrescricao}
-            onIniciar={onIniciar ? () => onIniciar(sessaoHoje) : undefined}
-          />
-
-          {/* Lista de exercícios do treino de hoje: foto, nome, dose e o número da
-              ordem, como no mockup. Cada linha abre a folha do exercício. */}
-          <ListaExerciciosDoDia
-            sessao={sessaoHoje}
-            semana={semana}
-            plano={plano}
-            aluno={aluno}
-            cor={cor}
-            tinta={tinta}
-            execucoes={execucoes}
-            onRegistrar={onRegistrar}
-            onDesfazer={onDesfazer}
-            preview={preview}
-          />
-
-          {concluidaHoje && (
-            <ConcluidaHoje
-              feedback={sessaoFeedbacks.find(
-                (f) => f.alunoId === aluno.id && f.planoId === plano.id && f.semana === semana && f.sessaoRef === sessaoHoje.id,
-              )}
-              cor={cor}
-            />
-          )}
-        </>
+        <VisaoSessao
+          sessao={sessaoHoje}
+          plano={plano}
+          semana={semana}
+          aluno={aluno}
+          cor={cor}
+          tinta={tinta}
+          execucoes={execucoes}
+          sessaoFeedbacks={sessaoFeedbacks}
+          onRegistrar={onRegistrar}
+          onDesfazer={onDesfazer}
+          onIniciar={onIniciar ? () => onIniciar(sessaoHoje) : undefined}
+          dataDaPrescricao={dataDaPrescricao}
+          preview={preview}
+        />
       ) : (
         <Card className="p-6 text-center text-sm text-ink-2">Sem sessões nesta semana.</Card>
       )}
@@ -574,7 +605,7 @@ function AbaHoje({
                 ordem={sessoes.findIndex((x) => x.id === s.id) + 1}
                 concluida={sessaoConcluida(s, semana, execucoes)}
                 cor={cor}
-                onIniciar={onIniciar ? () => onIniciar(s) : undefined}
+                onIniciar={onAbrir ? () => onAbrir(s) : undefined}
               />
             ))}
           </div>
@@ -586,6 +617,80 @@ function AbaHoje({
         <SemanaStrip alunoId={aluno.id} execucoes={execucoes} liberacoes={liberacoes} cor={cor} />
       </Card>
     </div>
+  );
+}
+
+/**
+ * A VISÃO DE UMA SESSÃO: o hero com "Começar treino" + a lista de exercícios (+
+ * o fecho, quando já concluída).
+ *
+ * Existe para que TODA sessão abra do mesmo jeito. Antes, a de hoje mostrava a
+ * lista e as outras pulavam direto para o modo guiado — o mesmo objeto tinha
+ * duas aberturas diferentes, e foi o que o Herivaldo leu como "a aba do aluno
+ * não segue início, meio e fim". Agora o caminho é sempre: ver a sessão inteira
+ * (início) → Começar treino, um exercício por vez (meio) → conclusão (fim).
+ */
+function VisaoSessao({
+  sessao,
+  plano,
+  semana,
+  aluno,
+  cor,
+  tinta,
+  execucoes,
+  sessaoFeedbacks,
+  onRegistrar,
+  onDesfazer,
+  onIniciar,
+  dataDaPrescricao,
+  preview,
+}: {
+  sessao: Sessao;
+  plano: PlanoTreino;
+  semana: number;
+  aluno: Aluno;
+  cor: string;
+  tinta: string;
+  execucoes: Execucao[];
+  sessaoFeedbacks: SessaoFeedback[];
+  onRegistrar?: (e: Execucao) => void;
+  onDesfazer?: (execId: string) => void;
+  onIniciar?: () => void;
+  dataDaPrescricao?: (id: string) => string | undefined;
+  preview?: boolean;
+}) {
+  const concluida = sessaoConcluida(sessao, semana, execucoes);
+  return (
+    <>
+      <HeroTreinoDeHoje
+        sessao={sessao}
+        plano={plano}
+        cor={cor}
+        concluida={concluida}
+        dataDaPrescricao={dataDaPrescricao}
+        onIniciar={onIniciar}
+      />
+      <ListaExerciciosDoDia
+        sessao={sessao}
+        semana={semana}
+        plano={plano}
+        aluno={aluno}
+        cor={cor}
+        tinta={tinta}
+        execucoes={execucoes}
+        onRegistrar={onRegistrar}
+        onDesfazer={onDesfazer}
+        preview={preview}
+      />
+      {concluida && (
+        <ConcluidaHoje
+          feedback={sessaoFeedbacks.find(
+            (f) => f.alunoId === aluno.id && f.planoId === plano.id && f.semana === semana && f.sessaoRef === sessao.id,
+          )}
+          cor={cor}
+        />
+      )}
+    </>
   );
 }
 

@@ -183,16 +183,17 @@ const feita = (a: Aluno, id: string) => completudeAluno(a).secoes.find((s) => s.
     );
   }
 
-  // 5b. prescrever tranca: aluno avaliado, mas sem nada declarado, NÃO passa
+  // 5b. As três declarações de saúde continuam SENDO COBRADAS, mas como PENDÊNCIA:
+  //     desde 01/08/2026 elas não trancam a prescrição (feedback de campo: o fluxo
+  //     estava preso a uma sequência rígida). O que o guardrail protege agora é que
+  //     elas não sumam — cobrar sem trancar, nunca deixar de cobrar.
   const p = prontidaoParaPrescrever(novo, comAval);
-  if (p.ok) {
-    problemas.push(
-      "prontidao: aluno avaliado sem condicao, restricao nem medicacao declaradas nao pode estar pronto para prescrever.",
-    );
-  }
   for (const esperado of ["saude-nao-declarada", "restricoes-nao-decididas", "medicacao-nao-decidida"] as const) {
-    if (!p.bloqueios.some((b) => b.motivo === esperado)) {
-      problemas.push(`prontidao: faltou o bloqueio "${esperado}" para o aluno recem-criado.`);
+    if (!p.pendencias.some((b) => b.motivo === esperado)) {
+      problemas.push(`prontidao: faltou a pendencia "${esperado}" para o aluno recem-criado.`);
+    }
+    if (p.bloqueios.some((b) => b.motivo === esperado)) {
+      problemas.push(`prontidao: "${esperado}" e completude de perfil e nao pode voltar a TRANCAR a prescricao.`);
     }
   }
 
@@ -210,20 +211,20 @@ const feita = (a: Aluno, id: string) => completudeAluno(a).secoes.find((s) => s.
     );
   }
 
-  // 5d. sem avaliação, o primeiro bloqueio é a avaliação (a ordem importa: é o
-  //     primeiro que a tela mostra em uma linha)
+  // 5d. sem avaliação, a avaliação é a PRIMEIRA pendência (a ordem importa: é a
+  //     primeira coisa que a tela cobra). Ela não tranca mais, mas nunca some.
   const r = prontidaoParaPrescrever(decidido, semAval);
-  if (r.primeiro?.motivo !== "sem-avaliacao") {
-    problemas.push("prontidao: sem avaliacao, o primeiro bloqueio precisa ser a avaliacao.");
+  if (r.pendencias[0]?.motivo !== "sem-avaliacao") {
+    problemas.push("prontidao: sem avaliacao, a primeira pendencia precisa ser a avaliacao.");
   }
-  if (podeMontarTreino(decidido, semAval).ok) {
-    problemas.push("podeMontarTreino: sem avaliacao nao pode liberar.");
+  if (r.bloqueios.some((b) => b.motivo === "sem-avaliacao")) {
+    problemas.push("prontidao: falta de avaliacao virou pendencia e nao pode voltar a TRANCAR.");
   }
-  // `podeMontarTreino` é o SUBCONJUNTO: com avaliação ele libera mesmo com o perfil
-  // vazio, porque responde só "a avaliação existe?". Quem tranca o resto é a
-  // prontidão inteira. Se um dia os dois derem sempre a mesma resposta, um é morto.
-  if (!podeMontarTreino(novo, comAval).ok) {
-    problemas.push("podeMontarTreino: com avaliacao registrada ele deveria liberar (ele so olha a avaliacao).");
+  if (!podeMontarTreino(decidido, semAval).ok) {
+    problemas.push("podeMontarTreino: sem avaliacao ele agora libera, com a ressalva no motivo.");
+  }
+  if (!podeMontarTreino(decidido, semAval).motivo) {
+    problemas.push("podeMontarTreino: sem avaliacao ele precisa devolver o motivo da ressalva.");
   }
 
   // 5e. sem equipamento nenhum não há o que prescrever
