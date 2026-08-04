@@ -27,6 +27,7 @@ import { gerarPlano, slugsClinicosDoPlano, metricaDoExercicio } from "../src/lib
 import { agregadoSemana } from "../src/lib/gps/progressao";
 import { alvoSemana } from "../src/lib/gps/alvo";
 import { aplicarPrescricaoNoPlano, sessoesDaSemana } from "../src/lib/gps/semear";
+import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
 import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
@@ -551,6 +552,52 @@ for (const objetivo of OBJETIVOS) {
   }
 }
 
+/*
+ * (I) A TROCA DE EXERCÍCIO DO EDITOR SEGUE AS MESMAS REGRAS DO GERADOR.
+ *
+ * Achado de uma bateria funcional: as correções de cardio e de posição evitada tinham ido só
+ * para o gerador de plano. No diálogo "Trocar", que mostra as DEZ primeiras sugestões, uma
+ * caminhada aparecia entre elas em todos os casos testados, inclusive para substituir um
+ * exercício de peitorais, e a gestante recebia quatro exercícios executados deitado no topo.
+ *
+ * Aqui o tratamento é o do módulo: cardio REBAIXA (continua na lista, sai do topo) e posição
+ * evitada vai para os EXCLUÍDOS com o motivo escrito, que é onde a tela já sabe mostrá-los.
+ */
+{
+  const AEROBIOS_TROCA = new Set(exercises.filter((e) => e.doseAerobia).map((e) => e.slug));
+  const GRUPOS_ALVO = ["Peitorais", "Costas", "Membros inferiores", "Ombros", "Braços"];
+  let avaliadas = 0;
+  for (const grupo of [undefined, "gestante", "hipertensao-estagio-2", "obesidade-grau-3"]) {
+    const regra = grupo ? combineRules([grupo]) : undefined;
+    for (const objetivo of OBJETIVOS) {
+      for (const alvo of GRUPOS_ALVO) {
+        const recs = sugerirTroca(
+          { objetivo, nivel: "Intermediário", restricoes: [], equipamentos: [], grupoEspecial: grupo },
+          alvo,
+        );
+        avaliadas++;
+        const incluidos = recs.filter((r) => !r.excluido);
+        for (const r of incluidos.slice(0, 10)) {
+          if (AEROBIOS_TROCA.has(r.exercise.slug)) {
+            erro(`TROCA COM CARDIO NO TOPO: ${objetivo}/${grupo ?? "sem grupo"}/alvo ${alvo} sugere "${r.exercise.nome}" entre as 10 primeiras de um bloco de força.`);
+          }
+        }
+        for (const r of incluidos) {
+          const pos = r.exercise.restricaoPerfil?.posicao;
+          if (pos && regra?.posicoesEvitar?.includes(pos)) {
+            erro(`TROCA OFERECE POSIÇÃO EVITADA: ${objetivo}/${grupo}/alvo ${alvo} lista "${r.exercise.nome}" (posição "${pos}") como sugestão, e não como evitado com motivo.`);
+          }
+        }
+        const evitadosSemMotivo = recs.filter((r) => r.excluido && !r.motivoExclusao);
+        if (evitadosSemMotivo.length) {
+          erro(`TROCA SEM MOTIVO: ${objetivo}/${grupo ?? "sem grupo"}/alvo ${alvo} tem ${evitadosSemMotivo.length} evitado(s) sem explicação.`);
+        }
+      }
+    }
+  }
+  if (avaliadas === 0) erro("AUTOVERIFICAÇÃO (I): nenhuma troca avaliada; a asserção passaria por vazio.");
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
@@ -560,5 +607,5 @@ if (problemas.length) {
   process.exit(1);
 }
 console.log(
-  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, e o alvo da semana sobrevive ao "Aplicar no treino".`,
+  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, o alvo da semana sobrevive ao "Aplicar no treino" e a troca de exercicio segue as mesmas regras do gerador.`,
 );

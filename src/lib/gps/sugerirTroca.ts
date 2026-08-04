@@ -60,5 +60,50 @@ export function sugerirTroca(ctx: ContextoTroca, alvo?: string): Recommendation[
         farmacos: ctx.farmacos,
         farmacosNaoInformado: ctx.farmacosNaoInformado,
       });
-  return rankExercises(exercises, answers, rule);
+  return rebaixarInadequados(rankExercises(exercises, answers, rule), rule);
+}
+
+/**
+ * REBAIXA, sem esconder, o que não cabe num bloco de FORÇA.
+ *
+ * Este ranking alimenta o "Trocar" e o "Adicionar" do editor de plano, e o diálogo mostra as
+ * DEZ primeiras sugestões. Uma bateria funcional flagrou duas coisas ali:
+ *
+ * 1. "Caminhada em piso plano" aparecia entre as dez em TODOS os casos testados, inclusive
+ *    para substituir um exercício de peitorais. É o mesmo defeito que o gerador de plano
+ *    tinha: aparelho de cardio é o mais seguro em todas as métricas, então sobe no ranking
+ *    de segurança. Só que o bloco que está sendo trocado se prescreve em série e repetição,
+ *    e uma caminhada não.
+ * 2. Para uma gestante, as dez traziam quatro exercícios executados deitado, apesar de a
+ *    condição declarar "evitar decúbito dorsal prolongado após o 1º trimestre". A correção
+ *    que fiz no gerador não alcançava este caminho.
+ *
+ * Os dois casos recebem tratamentos DIFERENTES de propósito, e a primeira tentativa errou
+ * nisso: rebaixar os dois às cegas tirou do topo o ÚNICO exercício de costas disponível para
+ * a gestante, e ela ficou com dez sugestões sem nenhuma do grupo pedido. Pior que o defeito.
+ *
+ *   - APARELHO DE CARDIO: rebaixado. Continua na lista, porque o profissional pode ter razão
+ *     para pôr uma caminhada ali, mas sai do topo, porque o bloco se prescreve em série e
+ *     repetição.
+ *   - POSIÇÃO QUE A CONDIÇÃO PEDE PARA EVITAR: vai para os EXCLUÍDOS, com o motivo escrito.
+ *     A tela já tem um grupo separado para eles, e é ali que a informação serve: o
+ *     profissional vê o exercício, lê por que a condição desaconselha e decide. Sumir com a
+ *     opção sem dizer nada seria decidir por ele.
+ */
+function rebaixarInadequados(
+  recs: Recommendation[],
+  rule?: { posicoesEvitar?: readonly string[]; nome?: string },
+): Recommendation[] {
+  const evitar = new Set(rule?.posicoesEvitar ?? []);
+  const tratados = recs.map((r) => {
+    const pos = r.exercise.restricaoPerfil?.posicao;
+    if (r.excluido || !pos || !evitar.has(pos)) return r;
+    return {
+      ...r,
+      excluido: true,
+      motivoExclusao: `Executado na posição "${pos}", que a condição declarada pede para evitar.`,
+    };
+  });
+  const peso = (r: Recommendation) => (r.excluido ? 2 : r.exercise.doseAerobia ? 1 : 0);
+  return tratados.map((r, i) => ({ r, i, p: peso(r) })).sort((a, b) => a.p - b.p || a.i - b.i).map((x) => x.r);
 }
