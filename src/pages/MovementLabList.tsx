@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Check, Lock, SlidersHorizontal, FlaskConical, GitCompare } from "lucide-react";
 import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { MuscleThumb, activationFromExercise } from "@/components/anatomy/MuscleMap";
+import { getMuscleMapImages, getMuscleMapPose } from "@/data/muscle-map-images";
 import { exercises } from "@/data/exercises";
 import { useUser, isPremiumUnlocked } from "@/lib/store";
 import { cn, withBase } from "@/lib/utils";
@@ -123,11 +124,19 @@ export function MovementLabList() {
             const locked = false;
             return (
               <Card key={e.slug} className="flex flex-col overflow-hidden">
-                <div className="relative h-44 border-b border-border bg-surface-soft">
+                {/* 4:3, a MESMA proporção em que as fotos são geradas. Antes era uma
+                    faixa fixa de 176px, e com object-cover sobre uma foto 4:3 isso
+                    cortava quase 25% em cima e embaixo: em exercício de pessoa em pé,
+                    o que sumia era a cabeça. O fundador reportou três vezes o mesmo
+                    exercício achando que o arquivo estava errado, e o arquivo estava
+                    certo; quem cortava era o cartão. */}
+                <div className="relative aspect-[4/3] border-b border-border bg-surface-soft">
                   {e.imagem ? (
                     <img src={withBase(e.imagem)} alt={`Execução: ${e.nome}`} className="h-full w-full object-cover" />
-                  ) : (
+                  ) : getMuscleMapImages(e.slug) || getMuscleMapPose(e.slug) ? (
                     <MuscleThumb activation={activationFromExercise(e)} slug={e.slug} className="py-2" />
+                  ) : (
+                    <SemFigura nome={e.nome} musculo={e.ativacao?.[0]?.musculo} />
                   )}
                   <div className="absolute right-3 top-3">
                     <Pill tone="neutral" className="bg-surface/85">
@@ -216,5 +225,41 @@ function Filter({
         ))}
       </select>
     </label>
+  );
+}
+
+/**
+ * O que o cartão mostra quando o exercício NÃO tem foto e nem boneco próprio.
+ *
+ * Antes caía no `MuscleThumb`, que sem mapa muscular e sem pose renderiza a
+ * figura anatômica NEUTRA: um corpo cinza em pé, sem nenhum músculo marcado,
+ * idêntico para qualquer exercício. O fundador viu isso e a leitura foi exata:
+ * "boneco genérico branco, sem nome do exercício nem nada". Ele estava certo,
+ * porque aquela figura não carregava informação nenhuma, e ainda por cima
+ * insinuava que o exercício era feito em pé e parado.
+ *
+ * Enquanto a foto correta não sai (há exercícios em que o gerador não acerta o
+ * movimento, e imagem errada é pior que imagem nenhuma), o cartão passa a
+ * assumir a ausência em palavras e a dizer o que de fato se sabe: qual é o
+ * músculo principal.
+ */
+function SemFigura({ nome, musculo }: { nome: string; musculo?: string }) {
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 bg-surface-soft px-5 text-center">
+      <FlaskConical aria-hidden className="h-6 w-6 text-ink-3" />
+      <span className="text-sm font-semibold text-ink-2">Sem foto de execução</span>
+      <span className="text-xs leading-relaxed text-ink-3">
+        {musculo ? (
+          <>
+            Ainda não temos uma foto fiel deste movimento. O trabalho principal é de{" "}
+            <span className="font-semibold text-ink-2">{musculo.toLowerCase()}</span>, e a análise
+            completa está na ficha.
+          </>
+        ) : (
+          <>Ainda não temos uma foto fiel deste movimento. A análise completa está na ficha.</>
+        )}
+      </span>
+      <span className="sr-only">{nome}</span>
+    </div>
   );
 }
