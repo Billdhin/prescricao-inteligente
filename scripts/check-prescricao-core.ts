@@ -26,6 +26,7 @@
 import { gerarPlano, slugsClinicosDoPlano, metricaDoExercicio } from "../src/lib/gps/periodizacao";
 import { agregadoSemana } from "../src/lib/gps/progressao";
 import { alvoSemana } from "../src/lib/gps/alvo";
+import { aplicarPrescricaoNoPlano, sessoesDaSemana } from "../src/lib/gps/semear";
 import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
@@ -508,6 +509,48 @@ for (const slug of ["hipertensao-estagio-2", "obesidade-grau-3", "idoso-destrein
   }
 }
 
+/*
+ * (H) O ALVO DA SEMANA SOBREVIVE AO "APLICAR NO TREINO".
+ *
+ * Achado de uma bateria de fluxo: `blocosDePrescricao` devolvia só o TEXTO da faixa. Aplicar
+ * uma prescrição na semana 5 trocava quatro blocos que diziam "3x7, RIR 2" por dois que
+ * diziam apenas "3 a 4 x 6 a 8". A sessão que o profissional acabou de editar voltava a ser
+ * faixa enquanto as vizinhas seguiam com número, no mesmo plano e na mesma semana. Nenhum
+ * guardrail via, porque todos olhavam o plano RECÉM-GERADO, e este defeito só existe depois
+ * que alguém mexe nele.
+ */
+for (const objetivo of OBJETIVOS) {
+  for (const grupo of [undefined, "hipertensao-estagio-2"]) {
+    for (const escopo of ["semana", "bloco"] as const) {
+      const g = gerarPlano({ objetivo, nivel: "Intermediário", semanas: 12, frequencia: 3, grupoEspecial: grupo });
+      const plano = {
+        id: "p", alunoId: "a", titulo: g.titulo, objetivo, nivel: "Intermediário" as Nivel, semanas: 12,
+        frequencia: 3, modeloId: g.modeloId, macrociclo: g.principal, criadoEm: 1, atualizadoEm: 1,
+        semanaAtual: 1, status: "ativo", raciocinio: g.raciocinio, refIds: g.refIds, grupoEspecial: grupo,
+      } as never as Parameters<typeof aplicarPrescricaoNoPlano>[0];
+
+      const antes = sessoesDaSemana(plano, 5)[0]?.blocos.find((b) => b.tipo === "forca");
+      if (antes?.repsAlvo == null) {
+        erro(`AUTOVERIFICAÇÃO (H): a semana 5 de ${objetivo}/${grupo ?? "sem grupo"} já nasce sem alvo; esta asserção passaria por vazio.`);
+        continue;
+      }
+      const r = aplicarPrescricaoNoPlano(
+        plano,
+        { id: "pr", alunoId: "a", objetivo, nivel: "Intermediário", criadoEm: 1, itens: [{ slug: "supino-maquina" }] } as never as Parameters<typeof aplicarPrescricaoNoPlano>[1],
+        { semanaCorrente: 5, sessaoIndex: 0, escopo, modo: "substituir" } as never as Parameters<typeof aplicarPrescricaoNoPlano>[2],
+      );
+      const depois = sessoesDaSemana(r.plano, 5)[0]?.blocos.find((b) => b.tipo === "forca");
+      if (depois?.repsAlvo == null) {
+        erro(`ALVO PERDIDO AO APLICAR: ${objetivo}/${grupo ?? "sem grupo"} (${escopo}) ficou só com a faixa, sem número da semana.`);
+      } else if (depois.seriesAlvo !== antes.seriesAlvo || depois.repsAlvo !== antes.repsAlvo || depois.rirAlvo !== antes.rirAlvo) {
+        erro(
+          `ALVO DIVERGENTE AO APLICAR: ${objetivo}/${grupo ?? "sem grupo"} (${escopo}) tinha ${antes.seriesAlvo}x${antes.repsAlvo} rir ${antes.rirAlvo} e virou ${depois.seriesAlvo}x${depois.repsAlvo} rir ${depois.rirAlvo}.`,
+        );
+      }
+    }
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
@@ -517,5 +560,5 @@ if (problemas.length) {
   process.exit(1);
 }
 console.log(
-  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo.`,
+  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, e o alvo da semana sobrevive ao "Aplicar no treino".`,
 );

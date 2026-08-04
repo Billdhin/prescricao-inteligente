@@ -14,7 +14,7 @@
 import { doseForca } from "@/lib/gps/periodizacao";
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
-import { getFaixa, type BlocoSessao, type PlanoTreino, type Sessao } from "@/data/periodizacao";
+import { getFaixa, type BlocoSessao, type Microciclo, type PlanoTreino, type Sessao } from "@/data/periodizacao";
 import type { Prescricao } from "@/data/alunos";
 import { exercises } from "@/data/exercises";
 
@@ -33,11 +33,51 @@ export function letraSessao(index: number): string {
   return String.fromCharCode(65 + Math.max(0, index));
 }
 
+/** Os campos de ALVO de um bloco de força (o número concreto da semana, dentro da faixa). */
+const CAMPOS_ALVO = ["seriesAlvo", "repsAlvo", "rirAlvo", "cargaRelativaAlvo", "intervaloAlvoSeg", "origemRegraId"] as const;
+
+/**
+ * O ALVO QUE ESTA SEMANA JÁ TEM, herdado do bloco vizinho.
+ *
+ * A prescrição troca QUAIS exercícios a sessão tem, não em que ponto da periodização ela
+ * está. Então o alvo concreto do bloco novo é o mesmo que o motor já calculou para aquela
+ * semana, e a fonte mais fiel dele é o bloco de força que já estava ali.
+ *
+ * Reconstruir o contexto do alvo aqui seria a alternativa óbvia e é a errada: exigiria
+ * repetir, fora do gerador, a rampa no macrociclo, o piso da onda do modelo de blocos e o
+ * passo do perfil clínico. Na primeira tentativa foi exatamente o que aconteceu, e a sessão
+ * aplicada saiu com 3x8 onde o plano dizia 3x7. Herdar não tem como divergir.
+ *
+ * A sessão vem primeiro que a semana de propósito: na ondulatória, a sessão "(pesado)" e a
+ * "(moderado)" da mesma semana têm alvos diferentes, e o certo é herdar o da sessão-alvo.
+ */
+function alvoHerdado(micro: Microciclo, sessaoIndex: number): Partial<BlocoSessao> {
+  const daSessao = micro.sessoes[sessaoIndex]?.blocos.find((b) => b.tipo === "forca" && b.repsAlvo != null);
+  const daSemana = micro.sessoes.flatMap((s) => s.blocos).find((b) => b.tipo === "forca" && b.repsAlvo != null);
+  const ref = daSessao ?? daSemana;
+  if (!ref) return {};
+  const alvo: Record<string, unknown> = {};
+  for (const campo of CAMPOS_ALVO) if (ref[campo] != null) alvo[campo] = ref[campo];
+  return alvo as Partial<BlocoSessao>;
+}
+
 /**
  * Mapeia os itens de uma prescrição para blocos de força, com o exercício real, o nome
- * colado ao slug (sem drift) e a dose REDERIVADA da faixa do plano. Ids novos por chamada,
- * então cada semana recebe blocos únicos. `semana` faz parte da assinatura para futura
- * variação por semana; a dose base já passa `conferirFaixa` por construção.
+ * colado ao slug (sem drift) e a dose REDERIVADA da faixa do plano.
+ *
+ * ## O ALVO DA SEMANA VEM JUNTO
+ *
+ * Até uma bateria de testes de fluxo apontar, esta função devolvia só o TEXTO da faixa
+ * ("3 a 4 x 6 a 8") e nenhum alvo concreto. O efeito era invisível na geração e visível na
+ * sessão: aplicar uma prescrição na semana 5 trocava quatro blocos que diziam "3x7, RIR 2"
+ * por dois que diziam apenas "3 a 4 x 6 a 8". A sessão editada pelo profissional voltava a
+ * ser faixa, enquanto as vizinhas seguiam com número, dentro do mesmo plano e da mesma
+ * semana. Era a onda inteira do alvo semanal sendo desfeita por um clique de "Aplicar no
+ * treino".
+ *
+ * Por isso `alvo` existe: quem chama passa o alvo que aquela semana do plano já tem (ver
+ * `alvoHerdado`). Sem ele o bloco sai só com a faixa, que é o certo para uma
+ * pré-visualização fora do plano.
  */
 export function blocosDePrescricao(
   prescricao: Prescricao,
@@ -46,6 +86,8 @@ export function blocosDePrescricao(
   // Ênfase da sessão-alvo (ondulatória): faz a dose seguir "(pesado)/(moderado)" em
   // vez da base, para o nome da sessão não prometer o que a dose não entrega.
   enfase?: Parameters<typeof doseForca>[2],
+  /** alvo concreto da semana, herdado do plano; ausente = bloco só com a faixa */
+  alvo?: Partial<BlocoSessao>,
 ): BlocoSessao[] {
   const dose = doseForca(getFaixa(ctx.objetivo), ctx.nivel, enfase);
   return prescricao.itens.map((it) => {
@@ -57,6 +99,7 @@ export function blocosDePrescricao(
       nome: ex?.nome ?? it.slug,
       origemPrescricaoId: prescricao.id,
       ...dose,
+      ...alvo,
     };
   });
 }
@@ -164,7 +207,9 @@ export function aplicarPrescricaoNoPlano(
         // dose com esse rótulo. Sem sufixo (modelo linear), fica a dose base.
         const rotulo = s.nome.match(/\(([^)]+)\)\s*$/)?.[1];
         const enfase = rotulo ? enfases?.find((e) => e.rotulo === rotulo) : undefined;
-        const semeados = blocosDePrescricao(prescricao, ctxDose, w.semana, enfase);
+        // A posição desta semana DENTRO do mesociclo é o que transforma a faixa em alvo. Sem
+        // ela, a sessão aplicada perdia o número e voltava a ser faixa (ver blocosDePrescricao).
+        const semeados = blocosDePrescricao(prescricao, ctxDose, w.semana, enfase, alvoHerdado(w, sessaoIndex));
         // Substituir remove TODOS os blocos de força (inclui semeados de fases anteriores).
         const mantidos = modo === "substituir" ? s.blocos.filter((b) => b.tipo !== "forca") : s.blocos;
         return { ...s, blocos: [...mantidos, ...semeados] };
