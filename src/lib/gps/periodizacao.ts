@@ -326,17 +326,34 @@ function selecionarExercicios(
 
   const ativas = restricoesAtivas(restricoes);
   const descartados: SelecaoExercicios["descartados"] = [];
-  // Nota por exercício: 0 = excluído, e o resto é a ação mais estrita entre as tags.
+  /*
+   * Nota por exercício: 0 = excluído, e o resto é a ação mais estrita entre as tags.
+   *
+   * "ADAPTAR" NÃO REBAIXA, E ISSO É O CONSERTO DE UM DEFEITO REAL.
+   *
+   * `adaptar` valia 2, abaixo do baseline neutro de 2,5. Só que `adaptar` é o resultado
+   * NEUTRO deste módulo (`const NEUTRO = { acao: "adaptar", motivo: "" }` em restricoes.ts) e
+   * é também o que os avaliadores puramente informativos devolvem para TODOS os exercícios,
+   * quando só querem deixar uma nota de conduta. O efeito, medido: um aluno com
+   * "assimetria funcional" recebia o exercício unilateral com nota 3 (preferido, que é o que
+   * a restrição pede); bastava declarar TAMBÉM "cãibras frequentes", que é uma nota
+   * informativa e não desaconselha nada, para o mesmo exercício cair para 2 e empatar com
+   * quem ninguém preferiu. A segunda restrição, que não desaconselhava nada, apagava a
+   * preferência da primeira.
+   *
+   * É a mesma família do defeito da fusão de regras clínicas: declarar MAIS sobre o aluno
+   * deixava o sistema pior. Agora `adaptar` empata com o neutro (ela carrega um MOTIVO para a
+   * tela, não uma reordenação), e quem rebaixa continua rebaixando: penalizar e excluir.
+   */
+  // Baseline neutro: sem tag ativa, todos empatam e a ordem do catálogo decide.
+  const NEUTRO = 2.5;
   const PESO_ACAO: Record<AcaoRestricao, number> = {
     preferir: 3,
-    adaptar: 2,
+    adaptar: NEUTRO,
     penalizar_moderado: 1,
     penalizar_forte: 0.5,
     excluir: 0,
   };
-
-  // Baseline neutro: sem tag ativa, todos empatam e a ordem do catálogo decide.
-  const NEUTRO = 2.5;
   const avaliados = pool.map((e) => {
     // Segurança PRIMEIRO: o rebaixamento mais estrito entre as tags domina (min),
     // e é o que exclui/penaliza. A preferência do avaliador é registrada à parte e

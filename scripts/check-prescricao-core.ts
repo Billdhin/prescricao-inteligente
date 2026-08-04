@@ -31,6 +31,7 @@ import { aplicarPrescricaoNoPlano, sessoesDaSemana } from "../src/lib/gps/semear
 import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
 import { recalcularAlvosDoMeso } from "../src/lib/gps/travas";
 import { doseCurta, tokensDoBloco } from "../src/components/student/blocoRegistro";
+import { EFEITO_POR_TAG, criarRestricao, rotuloRestricao } from "../src/lib/gps/restricoes";
 import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
@@ -759,6 +760,56 @@ for (const objetivo of OBJETIVOS) {
   }
 }
 
+/*
+ * (M) RESTRIÇÃO PURAMENTE INFORMATIVA NÃO REORDENA O CATÁLOGO.
+ *
+ * Várias das 30 restrições físicas são avisos de conduta: "cãibras frequentes" e "torácica
+ * sensível", por exemplo, não desaconselham exercício nenhum, só deixam uma nota para o
+ * profissional. Elas devolvem a ação `adaptar` para os 97 exercícios.
+ *
+ * Só que `adaptar` valia 2 e o baseline neutro do seletor é 2,5, então uma restrição que não
+ * desaconselha NADA rebaixava tudo abaixo do neutro e, com isso, anulava a preferência que
+ * outra restrição tinha estabelecido. Medido: um aluno com "assimetria funcional" recebia
+ * exercícios unilaterais (afundo, clam shell, rotação externa, prancha lateral); marcar
+ * TAMBÉM "cãibras frequentes" trocava a lista inteira por leg press, ponte de glúteos e
+ * puxada alta. Declarar mais sobre o aluno piorava o plano dele, que é a mesma família do
+ * defeito da fusão de regras clínicas.
+ */
+{
+  const tagsInformativas = (Object.keys(EFEITO_POR_TAG) as (keyof typeof EFEITO_POR_TAG)[]).filter((tag) => {
+    const avaliar = EFEITO_POR_TAG[tag]!;
+    const sel = criarRestricao(tag, { gravidade: "moderada" });
+    return exercises.every((ex) => avaliar(ex, sel).acao === "adaptar");
+  });
+  if (!tagsInformativas.length) {
+    erro("AUTOVERIFICAÇÃO (M): nenhuma restrição puramente informativa no catálogo; a asserção passaria por vazio.");
+  }
+
+  const listaDe = (restricoes: ReturnType<typeof criarRestricao>[], objetivo: (typeof OBJETIVOS)[number]) => {
+    const p = gerarPlano({ objetivo, nivel: "Intermediário", semanas: 8, frequencia: 3, restricoes });
+    const s = new Set<string>();
+    for (const m of p.principal.mesociclos)
+      for (const w of m.microciclos)
+        for (const se of w.sessoes)
+          for (const b of se.blocos) if (b.tipo !== "aerobio" && b.exercicioSlug) s.add(b.exercicioSlug);
+    return [...s].sort().join(",");
+  };
+
+  // Uma restrição que PREFERE alguma coisa, para a preferência ter o que perder.
+  const comPreferencia = criarRestricao("assimetria_funcional", { gravidade: "moderada" });
+  for (const objetivo of OBJETIVOS) {
+    const base = listaDe([comPreferencia], objetivo);
+    for (const tag of tagsInformativas) {
+      const somada = listaDe([comPreferencia, criarRestricao(tag, { gravidade: "moderada" })], objetivo);
+      if (base !== somada) {
+        erro(
+          `RESTRIÇÃO INFORMATIVA REORDENOU: em ${objetivo}, acrescentar "${rotuloRestricao(tag)}" (que não desaconselha exercício nenhum) trocou a seleção de [${base}] para [${somada}].`,
+        );
+      }
+    }
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
@@ -768,5 +819,5 @@ if (problemas.length) {
   process.exit(1);
 }
 console.log(
-  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, o alvo da semana sobrevive ao "Aplicar no treino" a troca de exercicio segue as mesmas regras do gerador travar variavel congela so aquela variavel, o grafico nao contraria a dose, o classificador acerta os cortes e o aluno ve o alvo da semana.`,
+  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, o alvo da semana sobrevive ao "Aplicar no treino" a troca de exercicio segue as mesmas regras do gerador travar variavel congela so aquela variavel, o grafico nao contraria a dose, o classificador acerta os cortes o aluno ve o alvo da semana e restricao informativa nao reordena o catalogo.`,
 );
