@@ -44,7 +44,9 @@ export function ProntuarioView({
   const SEM_TXT = {
     verde: "Liberado",
     amarelo: "Liberado com ajuste",
-    vermelho: "Não liberado no dia",
+    // Vocabulário ÚNICO do semáforo: as outras duas telas dizem "Não liberado hoje", e a
+    // divergência tinha caído justamente no documento assinável.
+    vermelho: "Não liberado hoje",
   } as const;
 
   return (

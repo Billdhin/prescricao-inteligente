@@ -93,7 +93,11 @@ export function LinhaDoCuidado({
           const est: EstadoEtapa = p.chave === "cadastro" ? "feito" : estado[p.engine!];
           const ts = dataDe(p.chave);
           const futuroReav = p.chave === "reavaliar" && est !== "feito" && ts != null;
-          const dias = futuroReav ? Math.max(0, Math.round((ts! - Date.now()) / DIA)) : 0;
+          // O `Math.max(0, ...)` que estava aqui ESMAGAVA O PASSADO: uma reavaliação vencida
+          // há 15 dias saía como "em 0 dias", ou seja, a tira que é a espinha do cuidado
+          // traduzia atraso como "é hoje", enquanto o cartão Medidas da MESMA tela dizia
+          // "Reavaliação vencida". Atraso é a informação que mais precisa aparecer.
+          const dias = futuroReav ? Math.round((ts! - Date.now()) / DIA) : 0;
           return (
             <li key={p.chave}>
               <span
@@ -114,7 +118,12 @@ export function LinhaDoCuidado({
                 {ts != null && (
                   <span className={cn("tabular font-medium", est === "pendente" ? "text-ink-3" : "opacity-80")}>
                     {fmtDDMM(ts)}
-                    {futuroReav && ` · em ${dias} ${dias === 1 ? "dia" : "dias"}`}
+                    {futuroReav &&
+                      (dias < 0
+                        ? ` · vencida há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? "dia" : "dias"}`
+                        : dias === 0
+                          ? " · é hoje"
+                          : ` · em ${dias} ${dias === 1 ? "dia" : "dias"}`)}
                   </span>
                 )}
               </span>

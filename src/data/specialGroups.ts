@@ -959,7 +959,7 @@ const condicoesAdicionais: SpecialGroup[] = [
     sinaisAlerta: ["Dor articular aguda, ajustar", "Fadiga desproporcional", "Instabilidade ou risco de queda, priorizar apoio"],
     modIndicadas: ["m-musculacao", "m-funcional", "m-caminhada", "m-mobilidade"],
     modCautela: ["m-combinado"],
-    parametros: ["p-rpe", "p-carga", "p-recuperacao", "p-dor", "p-adesao"],
+    parametros: ["p-rpe", "p-volume", "p-recuperacao", "p-dor", "p-adesao"],
     comoComecar:
       "Priorize a força em máquinas guiadas 2 a 3 vezes por semana, com progressão pequena e frequente, mais caminhada e mobilidade. Encaminhe para avaliação nutricional.",
     errosComuns: ["Focar só no aeróbio", "Carga alta sem técnica", "Ignorar a ingestão proteica (encaminhar)"],
@@ -977,7 +977,7 @@ const condicoesAdicionais: SpecialGroup[] = [
     sinaisAlerta: ["Dor óssea ou nas costas nova ou persistente, interromper e encaminhar", "Instabilidade ou risco de queda", "Sinais que fogem do esperado, reavaliar"],
     modIndicadas: ["m-musculacao", "m-caminhada", "m-funcional", "m-mobilidade"],
     modCautela: ["m-combinado", "m-hidro"],
-    parametros: ["p-rpe", "p-carga", "p-dor", "p-adesao", "p-recuperacao"],
+    parametros: ["p-rpe", "p-volume", "p-dor", "p-adesao", "p-recuperacao"],
     comoComecar:
       "Comece com força guiada e caminhada, evitando flexão brusca da coluna e movimentos de alto risco de queda. Progrida o impacto de forma gradual, com liberação e acompanhamento do profissional de saúde.",
     errosComuns: ["Evitar toda carga por medo (o osso precisa de estímulo)", "Impacto alto sem progressão", "Ignorar o risco de queda"],
@@ -1035,7 +1035,7 @@ const condicoesAdicionais: SpecialGroup[] = [
     sinaisAlerta: ["Tontura, palpitações ou mal-estar, pausar", "Dor articular nova ou persistente, ajustar", "Sinais fora do esperado, encaminhar"],
     modIndicadas: ["m-musculacao", "m-caminhada", "m-bike", "m-mobilidade"],
     modCautela: ["m-funcional", "m-combinado"],
-    parametros: ["p-rpe", "p-carga", "p-adesao", "p-recuperacao"],
+    parametros: ["p-rpe", "p-volume", "p-adesao", "p-recuperacao"],
     comoComecar:
       "Priorize a força 2 a 3 vezes por semana (preserva músculo e osso) mais aeróbio moderado, ajustando ao sono e aos sintomas do dia.",
     errosComuns: ["Só aeróbio, sem força", "Ignorar a saúde óssea", "Não ajustar ao sono e aos sintomas"],

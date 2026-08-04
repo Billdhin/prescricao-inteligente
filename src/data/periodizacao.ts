@@ -710,7 +710,9 @@ export function complementoAerobioPadrao(sessoesPorSemana: 1 | 2): ComplementoAe
   return {
     duracao: "15 a 25 min",
     intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 5 a 6 de 10)",
-    modalidade: "caminhada",
+    // Id CANONICO da modalidade. Sem o prefixo, getModalidade nao resolve, e o mesmo bloco
+    // saia como "Caminhada" no app do aluno e como "Aerobio" no PDF e no editor.
+    modalidade: "m-caminhada",
     sessoesPorSemana,
     refIds: ["garber-2011"],
     nota: "Componente aeróbio complementar (princípio da variabilidade). O alvo semanal de referência é o do ACSM (Garber, 2011): pelo menos 150 min por semana de intensidade moderada. A dose menor por sessão, em 1 a 2 sessões, é escolha prudente de complemento, para somar ao foco do objetivo sem competir com ele; a duração progride antes da intensidade.",

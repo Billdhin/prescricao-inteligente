@@ -600,7 +600,9 @@ function montarSessoes(
       blocos.push({
         id: nid("blk"),
         tipo: "aerobio",
-        modalidade: "caminhada",
+        // Id CANONICO da modalidade. Sem o prefixo, getModalidade nao resolve, e o mesmo bloco
+    // saia como "Caminhada" no app do aluno e como "Aerobio" no PDF e no editor.
+    modalidade: "m-caminhada",
         nome: "Aeróbio",
         formato: "Contínuo",
         duracao: doseAero.duracao,

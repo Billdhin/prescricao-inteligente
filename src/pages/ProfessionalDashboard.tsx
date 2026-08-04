@@ -48,7 +48,8 @@ export function ProfessionalDashboard() {
   // Fallback quando o nome está vazio (o profissional pode limpar em Configurações):
   // "Olá" seco, sem a vírgula pendurada.
   const firstName = name.split(" ")[0];
-  const saudacao = firstName ? `Olá, ${firstName}` : "Olá";
+  // Sem nome preenchido, o H1 da home saía como "Olá" pendurado, uma saudação inacabada.
+  const saudacao = firstName ? `Olá, ${firstName}` : "Seu dia";
 
   const ativos = alunos.filter((a) => a.status === "ativo");
   const avaliacoesMes = avaliacoes.filter((a) => Date.now() - a.data <= 30 * DIA).length;

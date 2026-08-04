@@ -199,7 +199,7 @@ function Hero() {
           </h1>
           <p className="mt-5 max-w-[34rem] text-[18px] leading-relaxed text-[#5A6B7D]">
             Cadastrar, avaliar, planejar, liberar e reavaliar: o ciclo inteiro do cuidado num lugar
-            só — cada decisão com a justificativa técnica e a fonte ao lado. Você decide; o sistema
+            só, cada decisão com a justificativa técnica e a fonte ao lado. Você decide; o sistema
             guarda o raciocínio.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
@@ -342,7 +342,7 @@ function PhoneMock() {
 
 function Problema() {
   const cards = [
-    ["A planilha", "Cada aluno numa aba, cada aba com um padrão diferente. Só você entende — e às vezes nem você."],
+    ["A planilha", "Cada aluno numa aba, cada aba com um padrão diferente. Só você entende, e às vezes nem você."],
     ["A dúvida", "Aluno chega com pressão alta e dor no ombro. Libera? Adapta? Encaminha? A resposta some junto com o dia."],
     ["O retrabalho", "Todo mês, montar tudo de novo do zero, sem lembrar por que você tinha escolhido aquilo."],
     ["A reavaliação", "Marcada de cabeça, cobrada por ninguém, feita quando dá. E o progresso vira achismo."],
@@ -372,7 +372,7 @@ function Problema() {
 function Ciclo() {
   const steps = [
     ["01", "Cadastrar", "Perfil em 6 passos: básicos, objetivo, saúde e restrições, medicamentos, equipamentos e notas. Só o que muda a prescrição."],
-    ["02", "Avaliar", "Medidas, dor, evolução por data e avaliação postural por visão computacional — a foto nunca sai do seu dispositivo."],
+    ["02", "Avaliar", "Medidas, dor, evolução por data e avaliação postural por visão computacional, e a foto nunca sai do seu dispositivo."],
     ["03", "Planejar", "Periodização de até 12 semanas com curva de volume, intensidade e complexidade. Editar uma sessão move a curva."],
     ["04", "Liberar", "Quatro perguntas antes da sessão, cerca de 40 segundos. A pior resposta define a cor do dia."],
     ["05", "Reavaliar", "Data marcada pelo fim do bloco, não pela sua memória. O sistema cobra você antes do aluno cobrar."],
@@ -388,7 +388,7 @@ function Ciclo() {
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-[16px] text-[#5A6B7D]">
           Nenhum aluno fica no limbo. Cada perfil mostra a etapa atual, o que falta e a próxima ação
-          recomendada — do primeiro cadastro até a reavaliação com data marcada.
+          recomendada, do primeiro cadastro até a reavaliação com data marcada.
         </p>
       </div>
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -413,7 +413,7 @@ const ABAS = [
     url: "app.mapadaprescricao.com.br/alunos/mariana/perfil",
     titulo: "Cadastro que só pergunta o que muda a prescrição",
     d1: "Seis passos: básicos, objetivo, saúde e restrições, medicamentos, equipamentos e notas.",
-    d2: "Nada de formulário longo — o que não altera a conduta fica de fora.",
+    d2: "Nada de formulário longo: o que não altera a conduta fica de fora.",
   },
   {
     id: "avaliacoes",
@@ -421,7 +421,7 @@ const ABAS = [
     url: "app.mapadaprescricao.com.br/assessments",
     titulo: "Evolução que vira argumento",
     d1: "Peso, % de gordura e cintura por data, com leitura automática do período e exportação em PDF para mostrar ao aluno.",
-    d2: "A reavaliação aparece com data e motivo — o ciclo cobra você antes do aluno cobrar.",
+    d2: "A reavaliação aparece com data e motivo, e o ciclo cobra você antes do aluno cobrar.",
   },
   {
     id: "semaforo",
@@ -513,7 +513,7 @@ const CORES = [
     label: "Com ajuste",
     tone: "warning",
     titulo: "Treina, sim. Com ajuste e com registro.",
-    d: "Existe algo a considerar — dor nova em um movimento, noite ruim de sono, cansaço fora do comum. Não é motivo para parar, é motivo para adaptar e anotar por quê.",
+    d: "Existe algo a considerar: dor nova em um movimento, noite ruim de sono, cansaço fora do comum. Não é motivo para parar, é motivo para adaptar e anotar por quê.",
     conduta: "Sessão conservadora: monitore a PSE e substitua os padrões que provocam sintoma. Fica registrado o que gerou o ajuste.",
   },
   {
@@ -539,7 +539,7 @@ function Semaforo() {
           Quatro perguntas, quarenta segundos, uma decisão registrada.
         </h2>
         <p className="mx-auto mt-3 max-w-2xl text-[16px] text-[#5A6B7D]">
-          Antes da sessão, o checklist do dia. A pior resposta define a cor — e um item sem resposta
+          Antes da sessão, o checklist do dia. A pior resposta define a cor, e um item sem resposta
           nunca libera direto. Clique nas cores para ver como a conduta muda.
         </p>
       </div>
@@ -611,7 +611,7 @@ const CIENCIA_ABAS = [
 
 const REFS = [
   ["01", "ACSM's Guidelines for Exercise Testing and Prescription", "American College of Sports Medicine"],
-  ["02", "Garber et al., 2011 — Quantity and Quality of Exercise", "Position stand do ACSM"],
+  ["02", "Garber et al., 2011: Quantity and Quality of Exercise", "Position stand do ACSM"],
   ["03", "Diretriz Brasileira de Hipertensão Arterial", "Sociedade Brasileira de Cardiologia"],
 ];
 
@@ -629,7 +629,7 @@ function Respaldo() {
             <p className="mt-4 text-[16px] leading-relaxed text-[#5A6B7D]">
               Em cada painel existem três leituras: <b className="text-[#10233A]">Resumo</b> para decidir
               rápido, <b className="text-[#10233A]">Na prática</b> para a sessão e{" "}
-              <b className="text-[#10233A]">Ciência</b> para ver de onde a regra veio — a referência a um
+              <b className="text-[#10233A]">Ciência</b> para ver de onde a regra veio, com a referência a um
               clique, no meio do atendimento.
             </p>
             <p className="mt-3 text-[16px] leading-relaxed text-[#5A6B7D]">
@@ -822,7 +822,7 @@ function Planos() {
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-[16px] text-[#5A6B7D]">
             Assine, cadastre o primeiro aluno hoje e veja o ciclo se montar. Se não fizer sentido, você
-            cancela sozinho — sem ligação, sem retenção.
+            cancela sozinho, sem ligação, sem retenção.
           </p>
 
           <div className="mt-6 inline-flex items-center gap-1 rounded-full border border-[#EAE8E3] bg-white p-1 text-[13.5px] font-semibold">
@@ -898,7 +898,7 @@ function Planos() {
 const FAQ = [
   [
     "O sistema prescreve no meu lugar?",
-    "Não. Ele organiza o raciocínio, ranqueia os exercícios pela avaliação e documenta o porquê de cada escolha — mas quem decide, libera e assina é sempre o profissional habilitado (CREF). É apoio à decisão, não decisão automática.",
+    "Não. Ele organiza o raciocínio, ranqueia os exercícios pela avaliação e documenta o porquê de cada escolha, mas quem decide, libera e assina é sempre o profissional habilitado (CREF). É apoio à decisão, não decisão automática.",
   ],
   [
     "Quanto tempo leva para cadastrar um aluno?",
@@ -910,7 +910,7 @@ const FAQ = [
   ],
   [
     "A foto da avaliação postural vai para algum servidor?",
-    "Não. A análise postural por visão computacional roda no seu próprio dispositivo — a foto nunca sai dele.",
+    "Não. A análise postural por visão computacional roda no seu próprio dispositivo, e a foto nunca sai dele.",
   ],
   [
     "Meu aluno também tem acesso?",
@@ -962,7 +962,7 @@ function CtaFinal() {
           O próximo aluno que entrar merece uma prescrição com endereço.
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-[16px] text-[#aeb9c8]">
-          Cadastre hoje, avalie na primeira sessão e publique o plano ainda essa semana — com a
+          Cadastre hoje, avalie na primeira sessão e publique o plano ainda essa semana, com a
           justificativa técnica do lado.
         </p>
         <div className="mt-7 flex justify-center">
@@ -1022,7 +1022,7 @@ function Footer() {
           <div>
             <Brand dark />
             <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-[#9fb0c4]">
-              Cadastrar, avaliar, planejar, liberar e reavaliar — com o porquê documentado. A decisão é
+              Cadastrar, avaliar, planejar, liberar e reavaliar, com o porquê documentado. A decisão é
               sempre sua.
             </p>
             <p className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] text-[#7f93ab]">
