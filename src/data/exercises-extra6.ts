@@ -370,6 +370,10 @@ export const extraExercises6: Exercise[] = [
     resumoPratico:
       "Puxada com as palmas voltadas para o rosto: mesma máquina, mais bíceps e uma linha de puxada mais confortável para muitos ombros.",
     anguloArticular: "Adução de ombro com antebraço supinado",
+    // Foto sem `imagemAnalise` de propósito: o primário é o latíssimo, que fica
+    // nas COSTAS, e esta é uma vista frontal. Ver o terceiro estado do
+    // MovementLabDetail.
+    imagem: "/exercises/puxada-supinada.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 72, papel: "primário" },
