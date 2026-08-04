@@ -40,6 +40,14 @@ export interface CtxAlvo {
   semanaNoMeso: number;
   /** total de semanas de carga do mesociclo (a descarga fica fora desta conta) */
   semanasDeCargaNoMeso: number;
+  /**
+   * Posição 1-based desta semana entre as semanas de carga do MACROCICLO inteiro, e o total
+   * delas. Só o modelo LINEAR passa estes dois campos, e é o que transforma a progressão
+   * numa rampa única do começo ao fim do plano, em vez de uma rampa que reinicia a cada
+   * bloco. Ausentes = fração por mesociclo, exatamente como antes.
+   */
+  semanaNoMacro?: number;
+  semanasDeCargaNoMacro?: number;
   tipoSemana: TipoMicrociclo;
   tendenciaVolume: Tendencia;
   tendenciaIntensidade: Tendencia;
@@ -133,8 +141,25 @@ export function lerFaixaRIR(intensidade: string, nota?: string): Intervalo | nul
 /**
  * Fração 0..1 desta semana de carga dentro do mesociclo: a primeira semana de carga fica em
  * 0 (piso), a última em 1 (teto). Um único bloco de carga fica em 0 (não há para onde rampar).
+ *
+ * ## A exceção do modelo linear
+ *
+ * Quando o ciclo traz `semanaNoMacro`/`semanasDeCargaNoMacro`, a fração passa a ser medida no
+ * MACROCICLO inteiro, e não em cada bloco. É o que faz a periodização linear ser de fato uma
+ * rampa contínua do começo ao fim do plano.
+ *
+ * Sem isso, "reduz" reiniciava a cada mesociclo: dentro do bloco a curva descia, e no bloco
+ * seguinte voltava ao topo. O gráfico virava um serrote, e foi assim que o fundador escolheu
+ * "linear" e viu ondulação na tela. Os demais modelos não recebem estes campos, então a
+ * fração deles continua por mesociclo, byte-idêntica.
  */
 function fracaoCarga(ctx: CtxAlvo): number {
+  if (ctx.semanaNoMacro != null && ctx.semanasDeCargaNoMacro != null) {
+    const totalM = ctx.semanasDeCargaNoMacro;
+    if (totalM <= 1) return 0;
+    const posM = Math.min(Math.max(ctx.semanaNoMacro, 1), totalM);
+    return (posM - 1) / (totalM - 1);
+  }
   const total = ctx.semanasDeCargaNoMeso;
   if (total <= 1) return 0;
   const pos = Math.min(Math.max(ctx.semanaNoMeso, 1), total);
@@ -160,6 +185,35 @@ function nivelDaTendencia(tend: Tendencia, t: number, semanaNoMeso: number): num
     case "varia":
       return semanaNoMeso % 2 === 1 ? 0.34 : 0.66;
   }
+}
+
+/**
+ * O nível do AERÓBIO nesta semana. Igual ao da força em tudo, menos num ponto: "estável".
+ *
+ * ## Por que existe
+ *
+ * Feedback de campo: "o trem tava montando o cardio tudo igual pra ele, não tava variando o
+ * tempo, o volume, a intensidade". Estava certo, e a causa era literal: `nivelDaTendencia`
+ * devolve 0,5 fixo para "estavel", e o macrociclo de grupo especial marca a primeira fase e
+ * as fases de manutenção como estáveis. Resultado: duração e PSE idênticos, semana após
+ * semana, no plano inteiro de quem tem condição declarada.
+ *
+ * ## O que muda
+ *
+ * Em bloco estável, a duração passa a fazer uma micro-oscilação DENTRO da mesma faixa já
+ * citada, em torno do meio (0,38 a 0,62), em vez de travar no centro. É variabilidade de
+ * dose, que é o princípio que o aeróbio complementar já invoca, e continua sendo o que
+ * "estável" quer dizer: **não muda de patamar**, e não "é sempre igual".
+ *
+ * Nada de número novo: a oscilação anda dentro do intervalo que a diretriz citada define.
+ * A força NÃO usa esta função: manter carga estável entre semanas é decisão clínica em fase
+ * de adaptação, e mexer nela quebraria o `check:progressao`.
+ */
+function nivelAerobio(tend: Tendencia, t: number, semanaNoMeso: number): number {
+  if (tend !== "estavel") return nivelDaTendencia(tend, t, semanaNoMeso);
+  // Ciclo de 4 semanas em torno do meio: leve, médio, mais longo, médio.
+  const passo = [0.38, 0.5, 0.62, 0.5];
+  return passo[(Math.max(1, semanaNoMeso) - 1) % passo.length];
 }
 
 /**
@@ -367,8 +421,8 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
   } else {
     // Travas do profissional (onda MP-6): volume congela a duração; intensidade congela o PSE-alvo.
     const travas = ctx.variaveisTravadas ?? [];
-    const nivelVolume = travas.includes("volume") ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso);
-    const nivelInt = travas.includes("intensidade") ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso);
+    const nivelVolume = travas.includes("volume") ? nivelCongelado(ctx.tendenciaVolume) : nivelAerobio(ctx.tendenciaVolume, t, ctx.semanaNoMeso);
+    const nivelInt = travas.includes("intensidade") ? nivelCongelado(ctx.tendenciaIntensidade) : nivelAerobio(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso);
     if (durIv) alvo.duracaoAlvoMin = Math.round(ponto(durIv, nivelVolume, false));
     if (rpeIv) alvo.rpeAlvo = ponto(rpeIv, nivelInt, true);
   }

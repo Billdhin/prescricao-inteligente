@@ -9,6 +9,7 @@
  */
 
 import type { Aluno, Prescricao, ProntuarioSnapshot } from "@/data/alunos";
+import { rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import type { MarcaDocumento } from "@/lib/store";
 import { bibliografia } from "@/data/referencias";
 import { rotuloRestricao, GATILHOS_OPCOES, LADO_OPCOES, LIBERACAO_OPCOES } from "@/lib/gps/restricoes";
@@ -267,7 +268,7 @@ export function exportProntuarioPDF({
 
     <div class="aluno">
       <strong>${esc(aluno.nome)}</strong>${aluno.idade ? ` · ${aluno.idade} anos` : ""} ·
-      Objetivo: ${esc(aluno.objetivo)} · Nível: ${esc(aluno.nivel)} · Restrições consideradas: ${restr}${restrNota}
+      Objetivo: ${esc(rotuloObjetivoPar(aluno.objetivo, aluno.objetivoSecundario))} · Nível: ${esc(aluno.nivel)} · Restrições consideradas: ${restr}${restrNota}
     </div>
 
     ${semaforoHtml}

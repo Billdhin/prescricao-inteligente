@@ -457,8 +457,31 @@ function CondicaoDeSaude({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partia
       ? ordenadas
       : ordenadas.slice(0, CONDICOES_ATALHO);
 
-  const escolher = (slug: string) =>
-    onPatch({ grupoEspecial: slug, semCondicaoDeclarada: undefined, sugestoesDispensadas: undefined });
+  /**
+   * Marcar e desmarcar condição, agora com MAIS DE UMA por aluno.
+   *
+   * O feedback de campo foi direto: "a parada de não poder colocar várias condições do
+   * indivíduo". O modelo de dados já suportava (`grupoEspecial` + `condicoesAtencao`) e o
+   * motor já sabia fundir regras pela mais conservadora; só a tela obrigava a escolher uma.
+   *
+   * A PRIMEIRA marcada vira a principal, porque é ela que dá o esqueleto de fases do
+   * macrociclo (uma jornada clínica não se funde com outra). As demais entram como
+   * condições de atenção e pesam em tudo o mais. Ao desmarcar a principal, a próxima da
+   * lista assume, para o aluno nunca ficar com atenção sem principal.
+   */
+  const selecionadas = [aluno.grupoEspecial, ...(aluno.condicoesAtencao ?? [])].filter(Boolean) as string[];
+
+  const alternar = (slug: string) => {
+    const novas = selecionadas.includes(slug)
+      ? selecionadas.filter((s) => s !== slug)
+      : [...selecionadas, slug];
+    onPatch({
+      grupoEspecial: novas[0],
+      condicoesAtencao: novas.slice(1).length ? novas.slice(1) : undefined,
+      semCondicaoDeclarada: novas.length ? undefined : true,
+      sugestoesDispensadas: undefined,
+    });
+  };
 
   return (
     <Card className="space-y-3 p-4 sm:p-5">
@@ -466,8 +489,11 @@ function CondicaoDeSaude({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partia
           espaço e empurravam o link para fora do card em telas médias. */}
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
-          <h3 className="font-display font-bold text-ink">Condição de saúde</h3>
-          <p className="text-sm text-ink-2">Liga o semáforo diário dessa condição.</p>
+          <h3 className="font-display font-bold text-ink">Condições de saúde</h3>
+          <p className="text-sm text-ink-2">
+            Pode marcar mais de uma. Onde elas divergem, o plano aplica sempre a mais
+            conservadora, e a primeira marcada dá o esqueleto de fases do treino.
+          </p>
         </div>
         <button
           type="button"
@@ -492,14 +518,19 @@ function CondicaoDeSaude({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partia
 
       <div className="flex flex-wrap gap-2">
         <ChipEscolha
-          ativo={aluno.semCondicaoDeclarada === true && !aluno.grupoEspecial}
-          onClick={() => onPatch({ grupoEspecial: undefined, semCondicaoDeclarada: true })}
+          ativo={aluno.semCondicaoDeclarada === true && selecionadas.length === 0}
+          onClick={() =>
+            onPatch({ grupoEspecial: undefined, condicoesAtencao: undefined, semCondicaoDeclarada: true })
+          }
         >
           Sem condição
         </ChipEscolha>
         {lista.map((g) => (
-          <ChipEscolha key={g.slug} ativo={aluno.grupoEspecial === g.slug} onClick={() => escolher(g.slug)}>
+          <ChipEscolha key={g.slug} ativo={selecionadas.includes(g.slug)} onClick={() => alternar(g.slug)}>
+            {/* A principal se identifica na própria etiqueta: sem isso, com duas marcadas
+                ninguém saberia qual delas dá as fases do macrociclo. */}
             {g.nome}
+            {aluno.grupoEspecial === g.slug && selecionadas.length > 1 ? " · principal" : ""}
           </ChipEscolha>
         ))}
       </div>

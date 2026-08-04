@@ -1,4 +1,5 @@
 import type { Aluno } from "@/data/alunos";
+import { rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import type { MarcaDocumento } from "@/lib/store";
 import type { Macrociclo, Mesociclo, Microciclo, PlanoTreino, Sessao } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
@@ -393,7 +394,7 @@ export function exportPlanoPDF({
 
     <div class="aluno">
       <strong>${esc(aluno.nome)}</strong>${aluno.idade ? ` · ${aluno.idade} anos` : ""}<br>
-      Objetivo: ${esc(plano.objetivo)} · Nível: ${esc(plano.nivel)} · Restrições: ${esc(restr)}
+      Objetivo: ${esc(rotuloObjetivoPar(plano.objetivo, plano.objetivoSecundario))} · Nível: ${esc(plano.nivel)} · Restrições: ${esc(restr)}
       ${plano.disponibilidade ? `<br>Disponibilidade: ${esc(plano.disponibilidade)}` : ""}
     </div>
 

@@ -27,7 +27,7 @@ import {
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { groupGpsRules } from "@/lib/gps/groupRules";
+import { combineRules, groupGpsRules, type GroupGpsRule } from "@/lib/gps/groupRules";
 import {
   restricoesAtivas,
   rotuloRestricao,
@@ -48,6 +48,19 @@ export interface GerarPlanoInput {
   /** sessões por semana */
   frequencia: number;
   grupoEspecial?: string;
+  /**
+   * As DEMAIS condições declaradas do aluno (`Aluno.condicoesAtencao`), além da principal.
+   *
+   * Existe porque o campo já era gravado (confirmar uma sugestão do classificador escreve
+   * nele) e o motor o ignorava por completo: um aluno com hipertensão estágio 2 confirmada
+   * por ali recebia plano genérico, e o feedback de campo do Filipe foi exatamente esse.
+   *
+   * A principal continua dando o ESQUELETO de fases do macrociclo, porque uma jornada
+   * clínica não se funde com outra. Todo o resto (restrições estruturais, teto de
+   * complexidade, penalidades e modificador de progressão) sai da regra FUNDIDA de todas
+   * elas, e a fusão é sempre pela mais conservadora (ver `fundirRegras`).
+   */
+  condicoesAtencao?: string[];
   /**
    * Segundo objetivo do aluno (src/lib/gps/objetivos.ts). O primario continua mandando
    * na faixa e na dose; o secundario so DESEMPATA a selecao de exercicios, depois da
@@ -149,7 +162,11 @@ function escolherModelos(input: GerarPlanoInput): {
    * autorregulada, porque tolerância variável dia a dia é justamente o caso em
    * que autorregular ajuda.
    */
-  const alternativaDaCondicao = grupoEspecial ? "flexivel" : undefined;
+  // Qualquer condição declarada abre a alternativa autorregulada, não só a principal:
+  // tolerância variável dia a dia é o caso em que autorregular ajuda, e ela não deixa de
+  // variar porque a condição foi registrada como secundária.
+  const alternativaDaCondicao =
+    grupoEspecial || (input.condicoesAtencao?.length ?? 0) > 0 ? "flexivel" : undefined;
 
   // Retorno ao treino é uma FASE, não um objetivo de desempenho: o previsível
   // vence, porque o propósito é reconstruir tolerância antes de buscar ganho.
@@ -171,17 +188,75 @@ function escolherModelos(input: GerarPlanoInput): {
   return { principal: "linear", alternativa: alternativaDaCondicao ?? "ondulatoria" };
 }
 
+/* ------------------------------ Condição clínica do plano ------------------------------ */
+
+/**
+ * TODAS as condições declaradas do aluno, na ordem em que mandam: a principal primeiro.
+ *
+ * Fonte única. Antes cada consumidor lia `input.grupoEspecial` por conta própria, e foi por
+ * isso que `condicoesAtencao` pôde existir no cadastro sem nunca chegar ao plano.
+ */
+export function slugsClinicosDoPlano(input: {
+  grupoEspecial?: string;
+  condicoesAtencao?: string[];
+}): string[] {
+  const todos = [input.grupoEspecial, ...(input.condicoesAtencao ?? [])].filter(
+    (s): s is string => Boolean(s),
+  );
+  return Array.from(new Set(todos));
+}
+
+/**
+ * A regra clínica que vale para este plano: a fusão CONSERVADORA de todas as condições
+ * declaradas. Com uma condição só, `fundirRegras` devolve a própria instância, então o
+ * caminho de aluno com uma condição continua byte-idêntico ao de antes.
+ */
+function regraClinicaDoPlano(input: GerarPlanoInput) {
+  return combineRules(slugsClinicosDoPlano(input));
+}
+
+/**
+ * A frase do raciocínio que declara quantos perfis de cuidado entraram na geração e qual é
+ * a lei quando eles divergem.
+ *
+ * **Nomeia pelo `rotuloAluno`, nunca pelo rótulo clínico.** O raciocínio é impresso no
+ * documento que chega ao aluno, e `check:documentos` trava diagnóstico ali, com razão: um
+ * plano entregue em mãos não é lugar de "hipertensão estágio 2". O nome clínico das
+ * condições segue à vista do PROFISSIONAL, na tela de Prescrever treino e no perfil.
+ *
+ * Um programa só já era declarado na frase anterior; esta existe para o caso de DOIS ou
+ * mais, que era exatamente o silêncio que o Filipe encontrou.
+ */
+function frasePerfilClinico(input: GerarPlanoInput): string {
+  const slugs = slugsClinicosDoPlano(input);
+  if (slugs.length < 2) return "";
+  const rotulos = slugs
+    .map((s) => getSpecialGroup(s)?.rotuloAluno)
+    .filter((r): r is string => Boolean(r));
+  const regra = regraClinicaDoPlano(input);
+  const teto =
+    regra?.complexidadeMax != null
+      ? ` O teto de complexidade técnica dos exercícios deste plano é ${regra.complexidadeMax} de 100.`
+      : "";
+  const lista = rotulos.length === slugs.length ? ` (${rotulos.join(", ")})` : "";
+  return `Este plano considerou ${slugs.length} perfis de cuidado ao mesmo tempo${lista}, e onde eles divergem vale sempre o mais conservador.${teto}`;
+}
+
 /* ------------------------------ Seleção de exercícios ------------------------------ */
 
 /**
  * As restrições que valem para ESTE plano: as que o profissional declarou no
- * perfil do aluno MAIS as que a condição impõe por si (groupRules
- * `restricoesEstruturais`). Deduplicadas por tag; a mais estrita manda depois,
- * no avaliador.
+ * perfil do aluno MAIS as que as condições impõem por si (groupRules
+ * `restricoesEstruturais`, já fundidas). Deduplicadas por tag; a mais estrita
+ * manda depois, no avaliador.
  */
 function restricoesDoPlano(input: GerarPlanoInput): RestricaoSelecionada[] {
   const declaradas = input.restricoes ?? [];
-  const daCondicao = input.grupoEspecial ? (groupGpsRules[input.grupoEspecial]?.restricoesEstruturais ?? []) : [];
+  // Antes: só `groupGpsRules[input.grupoEspecial]`. Duas condições no mesmo aluno e as
+  // restrições estruturais da segunda sumiam do plano inteiro.
+  const daCondicao = slugsClinicosDoPlano(input).flatMap(
+    (slug) => groupGpsRules[slug]?.restricoesEstruturais ?? [],
+  );
   const porTag = new Map<RestricaoTag, RestricaoSelecionada>();
   for (const r of declaradas) porTag.set(r.tag, r);
   for (const tag of daCondicao) if (!porTag.has(tag)) porTag.set(tag, criarRestricao(tag));
@@ -212,12 +287,19 @@ export interface SelecaoExercicios {
   faltouCatalogo: boolean;
 }
 
+/** Valor de uma métrica do índice de eficiência, pelo nome. Mesmo acesso do engine. */
+function metricaDoExercicio(e: (typeof exercises)[number], nome: string): number | undefined {
+  return e.indiceEficiencia.metrics.find((m) => m.nome.toLowerCase() === nome.toLowerCase())?.valor;
+}
+
 function selecionarExercicios(
   objetivo: GpsObjetivo,
   nivel: Nivel,
   n: number,
   restricoes: RestricaoSelecionada[] = [],
   objetivoSecundario?: GpsObjetivo,
+  /** regra clínica FUNDIDA de todas as condições do aluno; ausente = sem peso de condição */
+  regraClinica?: GroupGpsRule,
 ): SelecaoExercicios {
   const teto = NIVEL_ORDEM[nivel];
   const noNivel = (e: (typeof exercises)[number]) => NIVEL_ORDEM[(e.nivel as Nivel) ?? "Iniciante"] <= teto;
@@ -288,10 +370,34 @@ function selecionarExercicios(
   const bonusSecundario = (e: (typeof exercises)[number]) =>
     objetivoSecundario && objetivoSecundario !== objetivo && e.objetivo?.includes(objetivoSecundario) ? 1 : 0;
 
+  // PESO DA CONDIÇÃO no plano, o que faltava para o treino "nascer da condição".
+  //
+  // O Treino do dia já cobrava o teto de complexidade e as penalidades por métrica da regra
+  // clínica (src/lib/gps/engine.ts); a PERIODIZAÇÃO não cobrava nada disso, e por isso um
+  // plano para hipertensão estágio 2 podia abrir com o exercício mais exigente do catálogo.
+  //
+  // Entra como REBAIXAMENTO de ordem, nunca como exclusão: quem exclui é a restrição
+  // estrutural, que já rodou acima. Assim o exercício exigente vai para o fim da fila e só
+  // é escolhido se não houver alternativa, em vez de sumir do catálogo do aluno.
+  const pesoDaCondicao = (e: (typeof exercises)[number]) => {
+    if (!regraClinica) return 0;
+    let p = 0;
+    for (const pen of regraClinica.penalidades) {
+      const val = metricaDoExercicio(e, pen.metrica);
+      if (val !== undefined && val >= pen.limite) p += 1;
+    }
+    const complexidade = metricaDoExercicio(e, "Complexidade técnica");
+    if (complexidade !== undefined && regraClinica.complexidadeMax !== undefined && complexidade > regraClinica.complexidadeMax) {
+      p += 1;
+    }
+    return p;
+  };
+
   const seguros = avaliados
     .filter((a) => a.nota > 0)
-    .map((a, i) => ({ ...a, i, bonus: bonusSecundario(a.e) }))
-    .sort((x, y) => y.nota - x.nota || y.bonus - x.bonus || x.i - y.i)
+    .map((a, i) => ({ ...a, i, bonus: bonusSecundario(a.e), pesoCond: pesoDaCondicao(a.e) }))
+    // Segurança, depois a condição, depois o objetivo secundário, depois a ordem do catálogo.
+    .sort((x, y) => y.nota - x.nota || x.pesoCond - y.pesoCond || y.bonus - x.bonus || x.i - y.i)
     .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
 
   return {
@@ -405,9 +511,11 @@ function montarSessoes(
   ctx: CtxAlvo,
   // Segundo objetivo do aluno, quando existe: so desempata a selecao.
   objetivoSecundario?: GpsObjetivo,
+  // Regra clínica fundida de TODAS as condições: rebaixa o exercício exigente demais.
+  regraClinica?: GroupGpsRule,
 ): Sessao[] {
   const faixa = getFaixa(objetivo);
-  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2), restricoes, objetivoSecundario);
+  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2), restricoes, objetivoSecundario, regraClinica);
   const escolhidos = selecao.escolhidos;
   const sessoes: Sessao[] = [];
 
@@ -519,6 +627,15 @@ interface DadosDoAlunoNoAlvo {
   restricoes?: RestricaoSelecionada[];
   /** segundo objetivo do aluno: desempata a seleção DEPOIS da segurança */
   objetivoSecundario?: GpsObjetivo;
+  /** regra clínica FUNDIDA de todas as condições declaradas (ver `regraClinicaDoPlano`) */
+  regraClinica?: GroupGpsRule;
+  /**
+   * RAMPA NO MACRO (só o modelo linear passa): posição da primeira semana de carga deste
+   * mesociclo dentro do macrociclo, e o total de semanas de carga do macro. É o que faz a
+   * progressão linear ser uma rampa única do começo ao fim, em vez de reiniciar a cada bloco.
+   */
+  cargaAntesDesteMeso?: number;
+  semanasDeCargaNoMacro?: number;
 }
 
 function montarMicrociclos(
@@ -537,7 +654,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
   const semanasDeCargaNoMeso = comDeload ? Math.max(1, duracao - 1) : duracao;
@@ -549,6 +666,10 @@ function montarMicrociclos(
       // A descarga se ancora no teto do meso (última carga) e reduz a partir dele.
       semanaNoMeso: ehDeload ? semanasDeCargaNoMeso : s + 1,
       semanasDeCargaNoMeso,
+      // Rampa no macro: a posição desta semana de carga contada desde o início do plano.
+      semanaNoMacro:
+        cargaAntesDesteMeso != null ? cargaAntesDesteMeso + (ehDeload ? semanasDeCargaNoMeso : s + 1) : undefined,
+      semanasDeCargaNoMacro,
       tipoSemana: ehDeload ? "deload" : "carga",
       tendenciaVolume,
       tendenciaIntensidade,
@@ -563,7 +684,7 @@ function montarMicrociclos(
       semana,
       tipo: ehDeload ? "deload" : "carga",
       frequencia: freqSemana,
-      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx, objetivoSecundario),
+      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx, objetivoSecundario, regraClinica),
       nota: ehDeload ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
       objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade),
     });
@@ -626,6 +747,56 @@ function modalidadesDoObjetivo(objetivo: GpsObjetivo): string[] {
   return getFaixa(objetivo).complementoAerobio ? ["m-musculacao", "m-caminhada"] : ["m-musculacao"];
 }
 
+/**
+ * As tendências de volume e intensidade de um mesociclo, A PARTIR DO MODELO ESCOLHIDO.
+ *
+ * Existe porque o modelo era ignorado aqui, e o Filipe pegou a contradição: escolheu
+ * periodização LINEAR e o gráfico saiu ondulando. O motivo era que, fora dos modelos
+ * ondulatórios, as tendências vinham direto de `focoDoMeso`, cujo ciclo de ondas
+ * (acúmulo -> intensificação -> realização) faz o volume subir e descer de bloco em bloco.
+ * O rótulo dizia uma coisa e o gráfico mostrava outra.
+ *
+ * Agora cada modelo faz o que o nome dele promete:
+ *
+ * - **linear**: rampa contínua no macrociclo inteiro. Volume desce, intensidade sobe, do
+ *   começo ao fim, com a descarga de cada bloco preservada. É a definição clássica, e é o
+ *   que o gráfico agregado passa a mostrar.
+ * - **ondulatória, flexível, autorregulada**: variam de propósito, dentro da semana.
+ * - **blocos**: mantém as ondas de `focoDoMeso`, porque ondular de bloco em bloco É o
+ *   modelo de blocos. Aqui o nome e o comportamento sempre bateram.
+ */
+function tendenciasDoModelo(
+  modelo: ModeloPeriodizacaoId,
+  foco: { tv: Tendencia; ti: Tendencia },
+): { tv: Tendencia; ti: Tendencia } {
+  if (modelo === "ondulatoria" || modelo === "flexivel" || modelo === "autorregulada") {
+    return { tv: "varia", ti: "varia" };
+  }
+  if (modelo === "linear") return { tv: "reduz", ti: "sobe" };
+  return { tv: foco.tv, ti: foco.ti };
+}
+
+/**
+ * A contagem de semanas de CARGA por mesociclo, e o acumulado antes de cada um.
+ *
+ * Só o modelo linear usa: é o que permite ao alvo medir a rampa no MACROCICLO inteiro em
+ * vez de reiniciá-la a cada bloco. Sem isso, "reduz" descia dentro do bloco e voltava ao
+ * topo no bloco seguinte, e o gráfico do plano "linear" saía em serrote.
+ */
+function rampaNoMacro(
+  modelo: ModeloPeriodizacaoId,
+  duracoes: number[],
+): { antes: number[]; total?: number } {
+  const cargas = duracoes.map((d) => (d >= 4 ? d - 1 : d));
+  const antes: number[] = [];
+  let acc = 0;
+  for (const c of cargas) {
+    antes.push(acc);
+    acc += c;
+  }
+  return modelo === "linear" ? { antes, total: acc } : { antes: duracoes.map(() => 0), total: undefined };
+}
+
 function montarMacrocicloGenerico(
   input: GerarPlanoInput,
   modelo: ModeloPeriodizacaoId,
@@ -641,19 +812,19 @@ function montarMacrocicloGenerico(
   const base = Math.floor(semanas / nMeso);
   const resto = semanas - base * nMeso;
 
+  const duracoes = Array.from({ length: nMeso }, (_, m) => base + (m < resto ? 1 : 0));
+  const rampa = rampaNoMacro(modelo, duracoes);
   const mesociclos: Mesociclo[] = [];
   let cursor = 1;
   for (let m = 0; m < nMeso; m++) {
-    const dur = base + (m < resto ? 1 : 0);
+    const dur = duracoes[m];
     const ini = cursor;
     const fim = cursor + dur - 1;
     cursor = fim + 1;
     const foco = focoDoMeso(m);
-    const ondul = modelo === "ondulatoria" || modelo === "flexivel" || modelo === "autorregulada";
     const comDeload = dur >= 4;
     // As tendências do meso mandam a direção do alvo; a mesma fonte alimenta o gráfico e o alvo.
-    const tv: Tendencia = ondul ? "varia" : foco.tv;
-    const ti: Tendencia = ondul ? "varia" : foco.ti;
+    const { tv, ti } = tendenciasDoModelo(modelo, foco);
 
     mesociclos.push({
       id: nid("mes"),
@@ -688,6 +859,9 @@ function montarMacrocicloGenerico(
         parametrosInvalidos: input.parametrosInvalidos,
         restricoes: restricoesDoPlano(input),
         objetivoSecundario: input.objetivoSecundario,
+        regraClinica: regraClinicaDoPlano(input),
+        cargaAntesDesteMeso: rampa.total != null ? rampa.antes[m] : undefined,
+        semanasDeCargaNoMacro: rampa.total,
       }),
     });
   }
@@ -725,17 +899,33 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
   const base = Math.floor(semanas / nMeso);
   const resto = semanas - base * nMeso;
 
+  const duracoes = sequencia.map((_, m) => base + (m < resto ? 1 : 0));
+  // A rampa do macro conta SÓ os mesociclos que de fato progridem. As fases de adaptação
+  // (a primeira) e de manutenção (as estendidas) ficam estáveis por decisão clínica, e
+  // incluí-las no cômputo fazia a rampa começar acima do patamar da adaptação: o volume
+  // subia um degrau ao sair da fase 1, que é o contrário do que "linear" promete.
+  const progride = sequencia.map(({ estendida }, m) => !(m === 0 || estendida));
+  const rampa = rampaNoMacro(
+    modelo,
+    duracoes.map((d, m) => (progride[m] ? d : 0)),
+  );
   const mesociclos: Mesociclo[] = [];
   let cursor = 1;
   sequencia.forEach(({ fase, estendida }, m) => {
-    const dur = base + (m < resto ? 1 : 0);
+    const dur = duracoes[m];
     const ini = cursor;
     const fim = cursor + dur - 1;
     cursor = fim + 1;
     const comDeload = dur >= 4;
-    // As repetições da última fase são manutenção (estável); as fases reais progridem (sobe).
-    const tv: Tendencia = m === 0 || estendida ? "estavel" : "sobe";
-    const ti: Tendencia = m === 0 || estendida ? "estavel" : "sobe";
+    // A PRIMEIRA fase e as repetições da última são de adaptação e manutenção: ficam
+    // estáveis por decisão clínica, e o modelo não manda nisso. Nas fases do meio, quem
+    // manda é o MODELO escolhido, como no macrociclo genérico. Antes o modelo era ignorado
+    // aqui do começo ao fim, então um plano "linear" de aluno com condição subia volume e
+    // intensidade juntos, que não é linear nenhum.
+    const adaptativa = m === 0 || estendida;
+    const doModelo = tendenciasDoModelo(modelo, { tv: "sobe", ti: "sobe" });
+    const tv: Tendencia = adaptativa ? "estavel" : doModelo.tv;
+    const ti: Tendencia = adaptativa ? "estavel" : doModelo.ti;
     mesociclos.push({
       id: nid("mes"),
       // A repetição da última fase é nomeada com honestidade ("continuação"): não é uma
@@ -766,6 +956,9 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
         parametrosInvalidos: input.parametrosInvalidos,
         restricoes: restricoesDoPlano(input),
         objetivoSecundario: input.objetivoSecundario,
+        regraClinica: regraClinicaDoPlano(input),
+        cargaAntesDesteMeso: rampa.total != null && progride[m] ? rampa.antes[m] : undefined,
+        semanasDeCargaNoMacro: progride[m] ? rampa.total : undefined,
       }),
     });
   });
@@ -813,6 +1006,10 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
         // condição. A condição segue à vista do profissional no selo do plano e no perfil.
         `A jornada de fases do programa ${grupo.rotuloAluno} é o esqueleto do macrociclo, e os cuidados e parâmetros dessa jornada são sobrepostos.`
       : `Escolha por objetivo (${input.objetivo}) e nível (${input.nivel}).`,
+    // O plano DIZ o que considerou. O Filipe cadastrou hipertensão estágio 2 e não achou a
+    // condição em lugar nenhum do plano; o motor de fato a ignorava, e mesmo depois de
+    // passar a usá-la, um plano que a aplica em silêncio não é auditável.
+    frasePerfilClinico(input),
     `As faixas de séries, repetições, intensidade e intervalo seguem as diretrizes citadas, sempre como faixa e sob o seu critério. ${faixa.ressalva}`,
     alternativa
       ? `Uma alternativa (${getModelo(alternativa).nome}) é oferecida porque a evidência sustenta mais de uma estratégia; as diferenças costumam ser pequenas quando o volume é equiparado.`

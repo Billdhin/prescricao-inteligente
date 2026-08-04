@@ -285,6 +285,12 @@ export interface PlanoTreino {
   /** modelo alternativo, quando a evidência sustenta mais de uma estratégia */
   modeloAltId?: ModeloPeriodizacaoId;
   grupoEspecial?: string;
+  /**
+   * As demais condições declaradas do aluno no momento da geração. Fica GRAVADA no plano,
+   * e não só no aluno, porque o plano é um documento assinável: seis meses depois é preciso
+   * saber o que o motor considerou quando gerou, mesmo que o perfil do aluno tenha mudado.
+   */
+  condicoesAtencao?: string[];
   macrociclo: Macrociclo;
   /** alternativa gerada (opção 2), quando existir */
   alternativa?: Macrociclo;
@@ -306,6 +312,34 @@ const SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
  * aluno treinou. Por isso a tela sempre diz "desde tal data", em vez de afirmar que o
  * aluno cumpriu N semanas.
  */
+/**
+ * Os horizontes de calendário oferecidos ao montar um plano.
+ *
+ * O profissional pensa em "trimestral", não em "12". Vive na camada de dados, e não na
+ * página, porque o PDF e o cabeçalho do plano precisam nomear o mesmo horizonte que o botão
+ * escolheu: quando isso morava só na tela, o documento saía dizendo "48 semanas" onde o
+ * profissional tinha escolhido "Anual".
+ *
+ * O BIMESTRAL entrou por pedido de campo: um professor que trabalha com consultoria monta
+ * ciclos de 8 semanas, e o produto só ia de 4 para 12.
+ */
+export const HORIZONTES_PLANO = [
+  { id: "mensal", rotulo: "Mensal", semanas: 4 },
+  { id: "bimestral", rotulo: "Bimestral", semanas: 8 },
+  { id: "trimestral", rotulo: "Trimestral", semanas: 12 },
+  { id: "semestral", rotulo: "Semestral", semanas: 24 },
+  { id: "anual", rotulo: "Anual", semanas: 48 },
+] as const;
+
+/**
+ * O nome do horizonte de um plano pela duração dele. Devolve `undefined` quando a duração
+ * não corresponde a nenhum horizonte nomeado (plano editado à mão), e aí a tela mostra só
+ * as semanas, sem inventar um nome que não é verdade.
+ */
+export function rotuloHorizonte(semanas: number): string | undefined {
+  return HORIZONTES_PLANO.find((h) => h.semanas === semanas)?.rotulo;
+}
+
 export function semanaAtual(plano: PlanoTreino, agora = Date.now()): number {
   const passadas = Math.floor((agora - plano.data) / SEMANA_MS);
   return Math.min(plano.semanas, Math.max(1, passadas + 1));

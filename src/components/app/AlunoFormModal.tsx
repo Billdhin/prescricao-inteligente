@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
 import { X, MapPin, ArrowRight } from "lucide-react";
 import { buttonClasses } from "@/components/ui/primitives";
 import { uid } from "@/lib/store";
@@ -51,6 +52,7 @@ export function AlunoFormModal({
   const [nivel, setNivel] = React.useState<Nivel>("Iniciante");
   // Padrão alinhado ao posicionamento (condições/emagrecimento), não "Hipertrofia".
   const [objetivo, setObjetivo] = React.useState<GpsObjetivo>("Emagrecimento");
+  const [objetivoSecundario, setObjetivoSecundario] = React.useState<GpsObjetivo | undefined>();
   const [todosObjetivos, setTodosObjetivos] = React.useState(false);
   const dialogRef = useDialog<HTMLDivElement>(onClose);
 
@@ -73,6 +75,7 @@ export function AlunoFormModal({
       iniciais: iniciaisDe(nome),
       idade: idade ? Number(idade) : undefined,
       objetivo,
+      objetivoSecundario,
       nivel,
       // Estados de partida HONESTOS: lista vazia é "ainda não perguntei", e é assim
       // que a régua do perfil vai lê-los. Nada aqui afirma nada sobre o aluno.
@@ -179,10 +182,23 @@ export function AlunoFormModal({
                 </button>
               )}
             </div>
-            <p className="mt-2 text-xs text-ink-3">
-              O segundo objetivo, quando houver, entra no perfil: é lá que o sistema diz se os
-              dois somam ou se um cobra o preço do outro.
-            </p>
+            {/* O SEGUNDO objetivo entra aqui, e não só no perfil.
+                Antes o cadastro oferecia um objetivo e o perfil oferecia dois, e o mesmo
+                aluno tinha duas verdades diferentes dependendo da porta por onde entrou.
+                O modo `somenteSecundario` mantém o modal curto: acrescenta uma linha, não
+                um campo, e já traz o veredito de compatibilidade do par. */}
+            <div className="mt-3 border-t border-border pt-3">
+              <ObjetivoDuplo
+                objetivo={objetivo}
+                objetivoSecundario={objetivoSecundario}
+                onChange={(o, s) => {
+                  setObjetivo(o);
+                  setObjetivoSecundario(s);
+                }}
+                somenteSecundario
+                compacto
+              />
+            </div>
           </fieldset>
 
           {/* Para onde este cadastro leva. Dizer isso aqui é o que autoriza o modal a

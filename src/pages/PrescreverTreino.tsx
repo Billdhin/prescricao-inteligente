@@ -24,12 +24,14 @@ import { letraSessao } from "@/lib/gps/semear";
 import { exercises } from "@/data/exercises";
 import { cn } from "@/lib/utils";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
-import { gerarPlano } from "@/lib/gps/periodizacao";
+import { gerarPlano, slugsClinicosDoPlano } from "@/lib/gps/periodizacao";
 import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
 import {
   getModelo,
   MODELOS_PERIODIZACAO,
   semanaAtual,
+  HORIZONTES_PLANO,
+  rotuloHorizonte,
   mesocicloAtual,
   rotuloMeso,
   getFaixa,
@@ -55,14 +57,9 @@ import { useDialog } from "@/lib/useDialog";
 import { toast } from "@/lib/toast";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
-// Horizontes de calendário no lugar de semanas soltas: o profissional pensa em "trimestral",
-// não em "12". `gerarPlano` segue recebendo semanas (o motor não muda de assinatura).
-const HORIZONTES = [
-  { id: "mensal", rotulo: "Mensal", semanas: 4 },
-  { id: "trimestral", rotulo: "Trimestral", semanas: 12 },
-  { id: "semestral", rotulo: "Semestral", semanas: 24 },
-  { id: "anual", rotulo: "Anual", semanas: 48 },
-] as const;
+// A lista vive em src/data/periodizacao.ts: o PDF e o cabeçalho do plano nomeiam o mesmo
+// horizonte que este botão escolheu. `gerarPlano` segue recebendo semanas.
+const HORIZONTES = HORIZONTES_PLANO;
 const FREQUENCIAS = [2, 3, 4, 5, 6];
 
 const fmtDataCurta = (ts: number) =>
@@ -183,6 +180,10 @@ export function PrescreverTreino() {
       // condição impõe e filtram a seleção de exercícios do plano inteiro. Sem aluno
       // (plano avulso), só as da condição valem.
       restricoes: ctx.alunoId ? aluno?.restricoes : undefined,
+      // As DEMAIS condições do aluno chegam ao motor. Sem esta linha, confirmar uma
+      // condição pelo card de sugestão (que grava em `condicoesAtencao`) não mudava nada
+      // no plano: foi o que o Filipe viu com a hipertensão estágio 2.
+      condicoesAtencao: ctx.alunoId ? aluno?.condicoesAtencao : undefined,
       objetivoSecundario,
       // O perfil clínico mais as classes de medicação declaradas decidem se a frequência
       // cardíaca ainda guia a intensidade deste aluno. Sem aluno (plano avulso) ou sem
@@ -211,6 +212,7 @@ export function PrescreverTreino() {
       modeloId: g.modeloId,
       modeloAltId: g.modeloAltId,
       grupoEspecial: ctx.grupoEspecial,
+      condicoesAtencao: ctx.alunoId ? aluno?.condicoesAtencao : undefined,
       macrociclo: g.principal,
       alternativa: g.alternativa,
       raciocinio: g.raciocinio,
@@ -236,6 +238,10 @@ export function PrescreverTreino() {
     const a = alunos.find((x) => x.id === id);
     if (a) {
       setObjetivo(a.objetivo);
+      // O SEGUNDO objetivo vem junto. Sem esta linha, escolher o aluno herdava objetivo e
+      // nível e descartava o secundário em silêncio, e o plano saía prometendo menos do que
+      // o perfil dele declara.
+      setObjetivoSecundario(a.objetivoSecundario);
       setNivel(a.nivel);
       setGrupo(a.grupoEspecial ?? "");
     }
@@ -455,13 +461,17 @@ export function PrescreverTreino() {
                           aria-pressed={semanas === h.semanas}
                           title={`${h.rotulo}: ${h.semanas} semanas`}
                           className={cn(
-                            "rounded-full border px-3 py-1.5 text-sm transition-colors",
+                            "rounded-full border px-3 py-1.5 text-sm leading-tight transition-colors",
                             semanas === h.semanas
                               ? "border-primary bg-primary-tint font-semibold text-primary"
                               : "border-border text-ink-2 hover:bg-surface-soft",
                           )}
                         >
-                          {h.semanas} sem
+                          {/* O NOME do horizonte é o texto principal, e as semanas viram a
+                              legenda. Antes o botão mostrava só "12 sem" e o nome ficava
+                              escondido no title, então o profissional escolhia um horizonte
+                              sem nunca ver o nome dele. */}
+                          {h.rotulo} <span className="opacity-70">· {h.semanas} sem</span>
                         </button>
                       ))}
                     </div>
@@ -624,24 +634,42 @@ function ConfirmarRegenerarModal({
  * card não existe: uma frase genérica de marketing aqui seria pior que silêncio.
  */
 function AvisoDoMotor({ aluno, grupoSlug }: { aluno?: Aluno; grupoSlug: string }) {
+  // TODAS as condições do aluno, não só a principal: é a mesma lista que o motor recebe.
+  const slugs = React.useMemo(
+    () => slugsClinicosDoPlano({ grupoEspecial: grupoSlug || undefined, condicoesAtencao: aluno?.condicoesAtencao }),
+    [grupoSlug, aluno?.condicoesAtencao],
+  );
   const tags = React.useMemo(() => {
     const declaradas = (aluno?.restricoes ?? []).map((r) => r.tag);
-    const daCondicao = grupoSlug ? (groupGpsRules[grupoSlug]?.restricoesEstruturais ?? []) : [];
+    const daCondicao = slugs.flatMap((s) => groupGpsRules[s]?.restricoesEstruturais ?? []);
     return [...new Set([...declaradas, ...daCondicao])];
-  }, [aluno?.restricoes, grupoSlug]);
+  }, [aluno?.restricoes, slugs]);
 
-  if (tags.length === 0) return null;
+  if (tags.length === 0 && slugs.length < 2) return null;
   const nome = aluno ? aluno.nome.split(" ")[0] : "este perfil";
+  const nomesCondicoes = slugs.map((s) => groupGpsRules[s]?.nome ?? s);
 
   return (
     <Card variant="soft" className="flex items-start gap-3 p-4">
       <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-analysis" aria-hidden />
       <p className="min-w-0 text-sm text-ink-2">
         <span className="font-semibold text-ink">O motor propõe, você decide.</span>{" "}
-        {tags.length === 1 ? "A restrição" : "As restrições"} de {nome} já{" "}
-        {tags.length === 1 ? "entra" : "entram"} como filtro:{" "}
-        {tags.map((t) => rotuloRestricao(t).toLowerCase()).join(", ")}. Os exercícios incompatíveis
-        ficam de fora do plano, e os limítrofes entram rebaixados.
+        {tags.length > 0 && (
+          <>
+            {tags.length === 1 ? "A restrição" : "As restrições"} de {nome} já{" "}
+            {tags.length === 1 ? "entra" : "entram"} como filtro:{" "}
+            {tags.map((t) => rotuloRestricao(t).toLowerCase()).join(", ")}. Os exercícios incompatíveis
+            ficam de fora do plano, e os limítrofes entram rebaixados.{" "}
+          </>
+        )}
+        {/* Com mais de uma condição, a tela diz qual é a lei da combinação. Sem isto, o
+            profissional não tem como saber qual delas mandou em cada limite. */}
+        {slugs.length > 1 && (
+          <>
+            {nome} tem <span className="font-semibold text-ink">{slugs.length} condições declaradas</span> (
+            {nomesCondicoes.join(", ")}), e onde elas divergem o plano aplica sempre a mais conservadora.
+          </>
+        )}
       </p>
     </Card>
   );
@@ -766,10 +794,20 @@ function ResultadoPlano({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="font-display text-2xl font-bold text-ink md:text-3xl">
-              {plano.objetivo} · {plano.semanas} semanas
+              {/* O NOME do horizonte, e não só o número: era o que o profissional escolheu
+                  no formulário e o que ele sumia de vista assim que o plano era gerado. */}
+              {plano.objetivo} · {rotuloHorizonte(plano.semanas) ?? `${plano.semanas} semanas`}
             </h2>
             {salvo ? <Pill tone="success">Salvo</Pill> : <Pill tone="warning">Rascunho</Pill>}
             {grupoObj && <Pill tone="analysis">{grupoObj.nome}</Pill>}
+            {/* As DEMAIS condições ao lado da principal: o profissional vê, num relance,
+                tudo o que o motor considerou. Aqui vale o rótulo clínico, porque esta tela
+                é dele; o documento do aluno usa o rótulo de programa. */}
+            {(plano.condicoesAtencao ?? []).map((slug) => (
+              <Pill key={slug} tone="analysis">
+                {getSpecialGroup(slug)?.nome ?? groupGpsRules[slug]?.nome ?? slug}
+              </Pill>
+            ))}
           </div>
           <p className="mt-0.5 text-sm text-ink-2">
             {modelo.nome}

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import {
   Home,
   Dumbbell,
@@ -1241,7 +1242,7 @@ function AbaTreinos({
       <FasesDoPlano plano={plano} cor={cor} />
 
       <p className="px-1 text-xs text-ink-2">
-        Aluno: {aluno.nome} · {aluno.objetivo} · {aluno.nivel}
+        Aluno: {aluno.nome} · {rotuloObjetivoPar(aluno.objetivo, aluno.objetivoSecundario)} · {aluno.nivel}
       </p>
     </div>
   );
@@ -1438,7 +1439,7 @@ function AbaPerfil({
           <div className="min-w-0">
             <div className="truncate font-display text-lg font-bold text-ink">{aluno.nome}</div>
             <div className="text-sm text-ink-2">
-              {aluno.objetivo} · {aluno.nivel}
+              {rotuloObjetivoPar(aluno.objetivo, aluno.objetivoSecundario)} · {aluno.nivel}
               {aluno.idade ? ` · ${aluno.idade} anos` : ""}
             </div>
           </div>

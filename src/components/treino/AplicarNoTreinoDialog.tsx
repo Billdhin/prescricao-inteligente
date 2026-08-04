@@ -1,4 +1,5 @@
 import * as React from "react";
+import { parAtende, rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import { CalendarRange, AlertTriangle, Dumbbell } from "lucide-react";
 import { buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
@@ -68,7 +69,14 @@ export function AplicarNoTreinoDialog({
   const [adicionar, setAdicionar] = React.useState(false);
 
   const podeAplicar = sessoes.length > 0;
-  const objetivoDivergente = prescricao.answers.objetivo !== plano.objetivo;
+  // Divergente só quando a prescrição não atende NENHUM dos objetivos do plano. Antes
+  // comparava só o primário, então prescrever para o segundo objetivo do aluno (que o
+  // sistema deixa declarar) disparava um aviso de divergência que não existia.
+  const objetivoDivergente = !parAtende(
+    prescricao.answers.objetivo,
+    plano.objetivo,
+    plano.objetivoSecundario,
+  );
 
   // Alcance nominal do que sai quando substitui a sessão-alvo na semana corrente.
   const atuais = blocosForcaAtuais(plano, semanaCorrente, sessaoIndex);
@@ -178,7 +186,7 @@ export function AplicarNoTreinoDialog({
             {objetivoDivergente && (
               <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-warning/30 bg-warning-tint p-2.5 text-xs text-warning">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                A prescrição foi feita para {prescricao.answers.objetivo} e o plano é de {plano.objetivo}. As doses seguem a
+                A prescrição foi feita para {prescricao.answers.objetivo} e o plano é de {rotuloObjetivoPar(plano.objetivo, plano.objetivoSecundario)}. As doses seguem a
                 faixa do plano; confira se os exercícios cabem no objetivo do plano.
               </p>
             )}

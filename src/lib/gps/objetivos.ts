@@ -229,3 +229,36 @@ export function linhaObjetivos(
   const base = `${primario} (principal) com ${secundario} (secundário): ${c.resumo}`;
   return c.condicao ? `${base} Condição: ${c.condicao}` : base;
 }
+
+/**
+ * O par de objetivos em UMA linha curta, para cabeçalho, documento e app do aluno.
+ *
+ * ## Por que virou helper
+ *
+ * O par primário + secundário existia no cadastro, no perfil, no Prescrever exercício e no
+ * Prescrever treino, e sumia em tudo o que era saída: os três PDFs, o app do aluno e o
+ * cabeçalho do plano imprimiam só o primário, cada um formatando à mão. O efeito prático é
+ * o que o Filipe apontou, e a regra que ele deu vale para o sistema inteiro: **se em algum
+ * lugar dá para escolher dois objetivos, isso tem que ser verdade em todas as ações daquele
+ * aluno**. Um documento que esconde o segundo objetivo desmente a tela onde ele foi
+ * escolhido.
+ *
+ * Fonte única de formatação. Sem secundário, devolve exatamente o primário, então todo
+ * ponto que já imprimia `objetivo` continua byte-idêntico.
+ */
+export function rotuloObjetivoPar(primario: GpsObjetivo, secundario?: GpsObjetivo): string {
+  if (!secundario || secundario === primario) return primario;
+  return `${primario} + ${secundario}`;
+}
+
+/**
+ * O objetivo `alvo` é atendido por este par? Serve para não acusar divergência onde o
+ * profissional prescreveu justamente para o segundo objetivo do aluno.
+ */
+export function parAtende(
+  alvo: GpsObjetivo,
+  primario: GpsObjetivo,
+  secundario?: GpsObjetivo,
+): boolean {
+  return alvo === primario || alvo === secundario;
+}
