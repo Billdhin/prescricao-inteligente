@@ -76,12 +76,19 @@ function proxyVolumeForca(m: Microciclo): number {
  * critério só compara semanas do MESMO meso (mesmo objetivo, mesmo campo presente), então a
  * comparação é válida:
  * - `cargaRelativaAlvo` (%1RM): maior = mais intenso;
- * - `rirAlvo` (reps de reserva): menor = mais intenso, então entra como -rir;
+ * - `rirAlvo` (reps de reserva): menor = mais intenso, então entra como -rir. O RIR é INTEIRO,
+ *   e num objetivo cuja faixa vai de 3 a 1 ele só tem três degraus para percorrer o macrociclo
+ *   inteiro. Quando a rampa é contínua no macro (modelo linear), duas semanas seguidas caem no
+ *   mesmo degrau de RIR e a diferença real aparece nas REPETIÇÕES: menos repetições com o mesmo
+ *   RIR é mais carga na barra, que é o que intensidade quer dizer aqui. Por isso o proxy é
+ *   lexicográfico, RIR primeiro e repetições como desempate: -(rir x 100 + reps). Ele não
+ *   perdoa nada que o proxy antigo pegava (RIR parado E repetição parada continua reprovando);
+ *   só passa a enxergar o degrau fino que o antigo não via.
  * - sem alvo numérico, cai no meio da faixa de intensidade textual (null em "moderada a alta").
  */
 function intensidadeDoBloco(b: BlocoSessao): number | null {
   if (b.cargaRelativaAlvo != null) return b.cargaRelativaAlvo;
-  if (b.rirAlvo != null) return -b.rirAlvo;
+  if (b.rirAlvo != null) return -(b.rirAlvo * 100 + (b.repsAlvo ?? 0));
   return meio(b.intensidade);
 }
 
@@ -148,7 +155,20 @@ function criterio3(macro: Macrociclo): string | null {
   return null;
 }
 
-/** 4. Intensidade sobe -> real: em meso "intensidade sobe", última carga > primeira (quando parseável). */
+/**
+ * 4. Intensidade sobe -> real: em meso "intensidade sobe", a intensidade tem que subir de
+ * verdade. O QUE MUDOU AQUI, e por quê:
+ *
+ * A janela continua sendo o próprio mesociclo (última semana de carga > primeira), porque é
+ * dele que o cartão do plano fala. O que mudou foi do outro lado: o gerador passou a REBAIXAR
+ * o rótulo do meso que não entrega (`sincronizarTendencias`), então este critério deixou de
+ * pegar o caso do horizonte anual e passou a valer como trava de dessincronização: se alguém
+ * escrever "sobe" à mão num meso que não sobe, aqui fica vermelho.
+ *
+ * Sozinho isso não bastaria (um plano todo rotulado "estavel" passaria por vazio), e é por
+ * isso que existe o critério 21 logo abaixo: ele não olha rótulo nenhum, olha a dose das
+ * pontas do macrociclo.
+ */
 function criterio4(macro: Macrociclo): string | null {
   for (const meso of macro.mesociclos) {
     if (meso.tendenciaIntensidade !== "sobe") continue;
@@ -158,6 +178,34 @@ function criterio4(macro: Macrociclo): string | null {
     const fim = proxyIntensidadeForca(c[c.length - 1]);
     if (ini == null || fim == null) continue; // intensidade textual: não avalia
     if (!(fim > ini)) return `meso "${meso.nome}" (intensidade sobe): intensidade ${ini} -> ${fim}, não aumentou`;
+  }
+  return null;
+}
+
+/**
+ * 21. A SEGUNDA METADE DO PLANO NÃO É CÓPIA DA PRIMEIRA. Este critério não lê rótulo nenhum:
+ * compara a dose das semanas de carga da primeira metade do macrociclo com a das semanas
+ * correspondentes da segunda.
+ *
+ * Foi ele que pegou o defeito que o critério 1 não pegava: na ondulatória a onda alternava em
+ * torno de um centro FIXO, então as semanas 4, 5 e 6 saíam idênticas às semanas 1, 2 e 3, e um
+ * plano de seis meses era a mesma quinzena repetida doze vezes. O critério 1 passava, porque
+ * as semanas não eram todas iguais entre si; e o critério 4 passava, porque a tendência era
+ * "varia" e não "sobe". A dose repetida ficava exatamente no ponto cego dos dois.
+ *
+ * Terminar perto de onde começou NÃO reprova aqui, de propósito: no modelo de blocos o plano
+ * fecha em pico, com o volume voltando ao piso na semana de realização. Isso é taper, não
+ * estagnação. O que reprova é o caminho inteiro se repetir.
+ */
+function criterioMacroProgride(macro: Macrociclo): string | null {
+  if (macro.mesociclos.length < 2) return null;
+  const c = macro.mesociclos.flatMap((m) => cargas(m.microciclos));
+  if (c.length < 4) return null;
+  const meio = Math.floor(c.length / 2);
+  const primeira = c.slice(0, meio).map(assinaturaCarga);
+  const segunda = c.slice(meio, meio * 2).map(assinaturaCarga);
+  if (primeira.every((a, i) => a === segunda[i])) {
+    return `a segunda metade do macrociclo repete a primeira semana a semana (${meio} semanas de carga idênticas)`;
   }
   return null;
 }
@@ -264,6 +312,7 @@ const CRITERIOS: { id: number; nome: string; fn: (m: Macrociclo) => string | nul
   { id: 5, nome: "descarga reduz o volume", fn: criterio5 },
   { id: 6, nome: "aeróbio não fica constante", fn: criterio6 },
   { id: 19, nome: "anual evolui (não repete o quarteto trimestral)", fn: criterioAnual },
+  { id: 21, nome: "o macrociclo progride de ponta a ponta", fn: criterioMacroProgride },
 ];
 
 /* -------------------------------- Autoverificação --------------------------------- */

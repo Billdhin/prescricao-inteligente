@@ -23,13 +23,15 @@
  *
  * Roda com `npm run check:core`.
  */
-import { gerarPlano, slugsClinicosDoPlano } from "../src/lib/gps/periodizacao";
+import { gerarPlano, slugsClinicosDoPlano, metricaDoExercicio } from "../src/lib/gps/periodizacao";
 import { agregadoSemana } from "../src/lib/gps/progressao";
-import { combineRules } from "../src/lib/gps/groupRules";
+import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
 import { specialGroups } from "../src/data/specialGroups";
-import { HORIZONTES_PLANO, rotuloHorizonte, type Mesociclo } from "../src/data/periodizacao";
+import { exercises } from "../src/data/exercises";
+import { estimativas } from "../src/lib/avaliacao/estimativas";
+import { HORIZONTES_PLANO, rotuloHorizonte, getFaixa, type Mesociclo } from "../src/data/periodizacao";
 import type { Nivel } from "../src/data/types";
 
 const problemas: string[] = [];
@@ -255,6 +257,101 @@ for (const arq of TELAS_DE_OBJETIVO) {
   }
 }
 
+/* ===========================================================================
+ * AUDITORIA DE EVIDÊNCIA (04/08/2026): quatro auditores conferiram o motor
+ * contra o PubMed. Estas asserções travam as classes de defeito que acharam.
+ * ========================================================================= */
+
+/*
+ * (A) REGRA CLÍNICA QUE NUNCA DISPARA É BUG.
+ *
+ * A escada de cautela de joelho na obesidade era 65/60/55 numa métrica cujo MAIOR valor no
+ * catálogo é 58: os graus I e II prometiam cautela articular e não rebaixavam exercício
+ * nenhum. Não dava erro, não dava tipo, e ninguém veria pela tela. Penalidade ou teto que
+ * nenhum exercício alcança é código morto com aparência de segurança.
+ */
+for (const [slug, r] of Object.entries(groupGpsRules)) {
+  for (const p of r.penalidades ?? []) {
+    const atinge = exercises.filter((e) => {
+      const v = metricaDoExercicio(e, p.metrica);
+      return v !== undefined && v >= p.limite;
+    }).length;
+    if (atinge === 0) {
+      erro(
+        `REGRA MORTA: ${slug} penaliza "${p.metrica}" >= ${p.limite} e NENHUM dos ${exercises.length} exercícios alcança esse limite.`,
+      );
+    }
+  }
+  if (r.complexidadeMax != null) {
+    const acima = exercises.filter((e) => {
+      const v = metricaDoExercicio(e, "Complexidade técnica");
+      return v !== undefined && v > r.complexidadeMax;
+    }).length;
+    if (acima === 0) {
+      erro(`REGRA MORTA: ${slug} tem complexidadeMax ${r.complexidadeMax} e nenhum exercício passa disso.`);
+    }
+  }
+}
+
+/*
+ * (B) INICIANTE NUNCA RECEBE REPETIÇÕES ABAIXO DA FAIXA DO PRÓPRIO NÍVEL.
+ *
+ * A ênfase da ondulatória era chaveada só pelo MODELO e atropelava o `porNivel`: um
+ * INICIANTE de Força recebia blocos de "3 a 5" repetições, quando o ACSM Position Stand
+ * 2009 (PMID 19204579) recomenda 8 a 12 RM para novato. Pior: o iniciante COM condição
+ * declarada recebe justamente a alternativa flexível, que também ondula, ou seja, o aluno
+ * mais frágil era quem pegava a dose mais pesada.
+ */
+for (const objetivo of OBJETIVOS) {
+  const porNivel = getFaixa(objetivo).reps.porNivel?.Iniciante;
+  const pisoDoNivel = Number(porNivel?.match(/\d+/)?.[0] ?? 0);
+  if (!pisoDoNivel) continue;
+  for (const modelo of ["linear", "ondulatoria", "flexivel", "blocos", "autorregulada"] as const) {
+    const p = gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, modeloPreferido: modelo });
+    for (const macro of [p.principal, p.alternativa]) {
+      for (const m of macro?.mesociclos ?? []) {
+        for (const w of m.microciclos) {
+          for (const s of w.sessoes) {
+            for (const b of s.blocos) {
+              if (b.tipo !== "forca" || !b.reps) continue;
+              const piso = Number(b.reps.match(/\d+/)?.[0] ?? 0);
+              if (piso && piso < pisoDoNivel) {
+                erro(
+                  `INICIANTE ABAIXO DA FAIXA: ${objetivo}/${modelo} entregou bloco de "${b.reps}" repetições, e o porNivel do iniciante é "${porNivel}".`,
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/*
+ * (C) ESTIMATIVA NUNCA DEVOLVE NÚMERO FISIOLOGICAMENTE IMPOSSÍVEL.
+ *
+ * O piso do teste de 12 minutos era 800 m e a equação devolvia 6,6 mL/kg/min ali: menos de
+ * 2 METs, abaixo do custo de ficar em pé. O app aceitava, imprimia com uma casa decimal e
+ * gravava no histórico do aluno como se fosse um teste.
+ */
+for (const est of estimativas.filter((e) => e.unidade === "mL/kg/min")) {
+  const numericos = est.campos.filter((c) => c.tipo === "numero");
+  for (const c of numericos) {
+    const v: Record<string, number> = {};
+    for (const cc of est.campos) v[cc.chave] = cc.tipo === "sexo" ? 1 : (cc.min + cc.max) / 2;
+    for (const extremo of [c.min, c.max]) {
+      v[c.chave] = extremo;
+      const r = est.calcular(v);
+      if (r.valor != null && r.valor < 15) {
+        erro(
+          `VO2 IMPLAUSÍVEL: ${est.id} devolveu ${r.valor} mL/kg/min com ${c.chave}=${extremo}, abaixo do que um adulto que caminha tem em repouso.`,
+        );
+      }
+    }
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
@@ -264,5 +361,5 @@ if (problemas.length) {
   process.exit(1);
 }
 console.log(
-  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida e o par de objetivos é único no sistema.`,
+  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele e nenhuma estimativa devolve VO₂ impossível.`,
 );

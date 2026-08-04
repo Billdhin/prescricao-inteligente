@@ -48,6 +48,21 @@ export interface CtxAlvo {
    */
   semanaNoMacro?: number;
   semanasDeCargaNoMacro?: number;
+  /**
+   * PISO (0..1) a partir do qual o nível desta semana é lido, usado pelo modelo de BLOCOS.
+   *
+   * O modelo de blocos organiza o plano em ondas de acúmulo, intensificação e realização. A
+   * intenção declarada sempre foi que "a cada onda o programa retoma a fase num patamar mais
+   * alto", mas só a complexidade subia: a DOSE reiniciava do zero em cada onda, e um plano de
+   * 24 semanas saía com as semanas 13 a 24 idênticas às semanas 1 a 12. A onda existia, o
+   * patamar não.
+   *
+   * Com o piso, a segunda onda lê o mesmo desenho de nível dentro de um trecho mais alto da
+   * MESMA faixa citada: nível 0 da onda 2 já vale mais que o nível 0 da onda 1. A forma do
+   * bloco (sobe, estável, reduz) fica igual; o chão dela é que sobe. Nenhum número novo entra:
+   * o piso é uma posição dentro do intervalo que a diretriz já define.
+   */
+  pisoDoCiclo?: number;
   tipoSemana: TipoMicrociclo;
   tendenciaVolume: Tendencia;
   tendenciaIntensidade: Tendencia;
@@ -171,9 +186,23 @@ function fracaoCarga(ctx: CtxAlvo): number {
  * - "sobe": rampa do piso (0) ao teto (1) ao longo das semanas de carga (monotônica);
  * - "reduz": rampa inversa (teto ao piso);
  * - "estavel": mantém no meio;
- * - "varia" (ondulatória): alterna semana a semana, de forma determinística, sem sair da
- *   faixa (semanas ímpares mais leves, pares mais fortes, dentro do intervalo).
+ * - "varia" (ondulatória): alterna semana a semana, de forma determinística e sem sair da
+ *   faixa (ímpares mais leves, pares mais fortes), MAS em torno de uma linha de base que
+ *   anda com `t`. A onda pura, em torno de um centro fixo, fazia a semana 4 sair idêntica à
+ *   semana 1: um plano de seis meses virava a mesma quinzena repetida. Ondular é variar em
+ *   torno de uma base que progride, e a amplitude continua a mesma de antes (±0,16).
  */
+/**
+ * Remapeia um nível 0..1 para o trecho [piso, 1] da faixa. É o que faz a onda seguinte do
+ * modelo de blocos começar mais alto que a anterior sem mudar o desenho dela. Sem piso
+ * (todos os outros modelos), devolve o nível intacto.
+ */
+function comPiso(nivel: number, piso?: number): number {
+  if (!piso) return nivel;
+  const p = Math.min(Math.max(piso, 0), 0.5); // teto de meia faixa: a onda nunca some
+  return p + nivel * (1 - p);
+}
+
 function nivelDaTendencia(tend: Tendencia, t: number, semanaNoMeso: number): number {
   switch (tend) {
     case "sobe":
@@ -182,8 +211,11 @@ function nivelDaTendencia(tend: Tendencia, t: number, semanaNoMeso: number): num
       return 1 - t;
     case "estavel":
       return 0.5;
-    case "varia":
-      return semanaNoMeso % 2 === 1 ? 0.34 : 0.66;
+    case "varia": {
+      const onda = semanaNoMeso % 2 === 1 ? -0.16 : 0.16;
+      const base = 0.34 + 0.32 * t;
+      return Math.min(1, Math.max(0, base + onda));
+    }
   }
 }
 
@@ -286,14 +318,14 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
   const intTravado = travas.includes("intensidade");
 
   // Níveis de volume e intensidade desta semana de CARGA (0..1). Travado = congelado.
-  const nivelVolume = volTravado ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso);
-  const nivelInt = intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso);
+  const nivelVolume = comPiso(volTravado ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
+  const nivelInt = comPiso(intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
 
   if (ctx.tipoSemana === "deload") {
     // A descarga parte do alvo da ÚLTIMA semana de carga (teto do meso) e reduz honestamente. Se a
     // variável está travada, o "teto" dela é o próprio nível congelado (a descarga reduz a partir daí).
-    const nvUltima = volTravado ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, 1, ctx.semanaNoMeso);
-    const niUltima = intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, 1, ctx.semanaNoMeso);
+    const nvUltima = comPiso(volTravado ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, 1, ctx.semanaNoMeso), ctx.pisoDoCiclo);
+    const niUltima = comPiso(intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, 1, ctx.semanaNoMeso), ctx.pisoDoCiclo);
     if (seriesIv) {
       const ultima = ponto(seriesIv, nvUltima, true);
       const piso = Math.round(intervaloFechado(seriesIv).min);
@@ -421,36 +453,43 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
   } else {
     // Travas do profissional (onda MP-6): volume congela a duração; intensidade congela o PSE-alvo.
     const travas = ctx.variaveisTravadas ?? [];
-    const nivelVolume = travas.includes("volume") ? nivelCongelado(ctx.tendenciaVolume) : nivelAerobio(ctx.tendenciaVolume, t, ctx.semanaNoMeso);
-    const nivelInt = travas.includes("intensidade") ? nivelCongelado(ctx.tendenciaIntensidade) : nivelAerobio(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso);
+    const nivelVolume = comPiso(travas.includes("volume") ? nivelCongelado(ctx.tendenciaVolume) : nivelAerobio(ctx.tendenciaVolume, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
+    const nivelInt = comPiso(travas.includes("intensidade") ? nivelCongelado(ctx.tendenciaIntensidade) : nivelAerobio(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
     if (durIv) alvo.duracaoAlvoMin = Math.round(ponto(durIv, nivelVolume, false));
     if (rpeIv) alvo.rpeAlvo = ponto(rpeIv, nivelInt, true);
   }
 
-  // Zona de FC: só com idade + FCrep medida E quando a frequência cardíaca ainda GUIA este
-  // aluno (ver parametrosInvalidos). FCmax por Tanaka (regra aerobio-fcmax-estimada); a zona em
-  // bpm sai do percentual da FCmáx citado, personalizada pela FCmax do aluno; a percentFCRAlvo é
-  // a fração de reserva equivalente (Karvonen, regra aerobio-zona-karvonen), que usa a FCrep
-  // medida. Nenhum número novo: só o percentual já citado, a idade e a FCrep. Quando a FC não
-  // guia, a zona não é corrigida por fator nenhum: ela simplesmente não entra, e o alvo segue
-  // por duração mais percepção de esforço, que é o caminho honesto que já existia.
+  /*
+   * ZONA DE FC. Duas correções vieram da auditoria de evidência, e as duas eram de
+   * ROTULAGEM e de domínio, não de aritmética.
+   *
+   * 1. A zona é calculada por PERCENTUAL DA FCMÁX, e não por Karvonen. O comentário antigo
+   *    creditava a conta à regra `aerobio-zona-karvonen`, cujo critério é literalmente
+   *    "FC = intensidade x (FCmax - FCrep) + FCrep". São métodos diferentes e discordam
+   *    quando a FCrep é alta, que é justamente o idoso destreinado e o obeso, a população
+   *    que este produto existe para servir. A fração de reserva que sai daqui é DERIVADA da
+   *    zona em bpm, não a origem dela, e agora o nome diz isso.
+   * 2. Com FCrep muito alta, o piso da zona podia cair ABAIXO do repouso do aluno: uma
+   *    prescrição para treinar numa frequência que ele tem sentado. O clamp antigo escondia
+   *    a fração negativa e deixava a zona impossível impressa no documento. Agora a zona
+   *    inteira é suprimida nesse caso, e o alvo cai no caminho honesto que já existia
+   *    (duração mais percepção de esforço), o mesmo destino de quem usa betabloqueador.
+   *
+   * FCmax por Tanaka (PMID 11153730, verificado: "208 - 0.7 x age"), regra
+   * `aerobio-fcmax-estimada`. Nenhum número novo entra aqui.
+   */
   const fcGuiaEsteAluno = !(ctx.parametrosInvalidos ?? []).includes("p-fc");
   if (fcGuiaEsteAluno && pctFCmaxIv && ctx.idade != null && ctx.fcRepouso != null) {
     const fcMax = 208 - 0.7 * ctx.idade;
     const fcRep = ctx.fcRepouso;
-    const fcr = fcMax - fcRep; // reserva de FC (Karvonen)
-    if (fcr > 0 && fcMax > 0) {
-      const bpmMin = Math.round((pctFCmaxIv.min / 100) * fcMax);
-      const bpmMax = Math.round((pctFCmaxIv.max / 100) * fcMax);
+    const fcr = fcMax - fcRep; // reserva de frequência cardíaca
+    const bpmMin = Math.round((pctFCmaxIv.min / 100) * fcMax);
+    const bpmMax = Math.round((pctFCmaxIv.max / 100) * fcMax);
+    // A zona só existe se ela for treinável: acima do repouso medido e com reserva positiva.
+    if (fcr > 0 && fcMax > 0 && bpmMin > fcRep) {
       alvo.zonaFC = `${bpmMin} a ${bpmMax} bpm`;
-      // Clamp em [0,100]: com FCrep medida alta (idoso destreinado, FCrep > ~64% da
-      // FCmáx), o limite inferior da zona em bpm pode cair ABAIXO da FCrep, e a fração
-      // de reserva equivalente ficaria negativa ("-16% da reserva" num documento
-      // assinável). A zona em bpm continua correta; só a conversão para reserva é presa
-      // na faixa possível.
-      const clampFCR = (p: number) => Math.max(0, Math.min(100, p));
-      const pMin = clampFCR(Math.round(((bpmMin - fcRep) / fcr) * 100));
-      const pMax = clampFCR(Math.round(((bpmMax - fcRep) / fcr) * 100));
+      const pMin = Math.round(((bpmMin - fcRep) / fcr) * 100);
+      const pMax = Math.round(((bpmMax - fcRep) / fcr) * 100);
       alvo.percentFCRAlvo = { min: Math.min(pMin, pMax), max: Math.max(pMin, pMax) };
     }
   }

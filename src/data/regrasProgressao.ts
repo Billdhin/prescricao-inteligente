@@ -127,16 +127,16 @@ export const REGRAS_PROGRESSAO: RegraProgressao[] = [
     id: "aerobio-zona-karvonen",
     variavel: "intensidadeAerobia",
     criterios:
-      "Zona-alvo pela reserva de frequência cardíaca: FC = intensidade x (FCmax - FCrep) + FCrep, com FCR = FCmax - FCrep; exige a FCrep medida.",
+      "Zona-alvo em bpm a partir do percentual da FCmáx citado pela diretriz, e a fração EQUIVALENTE da reserva de frequência cardíaca derivada dela: FCR = FCmax - FCrep, fração = (bpm - FCrep) / FCR. Exige a FCrep medida. A zona NAO e calculada pelo metodo de Karvonen: a reserva aqui e leitura, nao origem.",
     limites: null,
     incremento: null,
-    sinaisAlerta: ["Exige a FCrep (repouso) medida; sem ela, não aplicar a zona."],
+    sinaisAlerta: ["Exige a FCrep (repouso) medida; sem ela, não aplicar a zona.", "Com FCrep medida muito alta, o piso da zona pode cair abaixo do repouso: nesse caso a zona nao vale e a intensidade guia por duração e percepção de esforço."],
     aprovacao: "aprovada",
     refId: ["karvonen-1957", "garber-2011"],
     ano: 2026,
     versao: 1,
     confianca: "forte",
-    formula: "zona = [%inf*FCR+FCrep, %sup*FCR+FCrep]; FCR = FCmax - FCrep",
+    formula: "zona = [%inf*FCmax, %sup*FCmax]; fração de reserva equivalente = (bpm - FCrep) / (FCmax - FCrep)",
   },
   {
     id: "objetivo-hipertrofia-prioriza-volume",
@@ -172,7 +172,7 @@ export const REGRAS_PROGRESSAO: RegraProgressao[] = [
     id: "taper-pico-forca",
     variavel: "volume",
     criterios:
-      "Antes de um teste ou objetivo, cortar o volume para cerca de 0,5 (0,4 a 0,6) mantendo a carga, por 1 a 2 semanas.",
+      "Antes de um teste ou objetivo, cortar o volume para cerca de 0,5 (0,4 a 0,6) mantendo a carga, por 2 semanas (a duração de fato testada nos ensaios citados; 1 semana não foi testada por fonte nenhuma).",
     limites: { min: 0.4, max: 0.6, unidade: "multiplicador de volume" },
     incremento: null,
     sinaisAlerta: [],
@@ -182,7 +182,7 @@ export const REGRAS_PROGRESSAO: RegraProgressao[] = [
     versao: 1,
     confianca: "moderada",
     observacao: "Baseado em ensaios pequenos.",
-    duracaoSemanas: { min: 1, max: 2 },
+    duracaoSemanas: { min: 2, max: 2 },
     intensidadeMantida: true,
   },
 

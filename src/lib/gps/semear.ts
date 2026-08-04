@@ -138,7 +138,12 @@ export function aplicarPrescricaoNoPlano(
 ): { plano: PlanoTreino; resumo: ResumoAplicacao } {
   const { semanaCorrente, sessaoIndex, escopo, modo } = opcoes;
   const ctxDose: CtxDose = { objetivo: plano.objetivo, nivel: plano.nivel };
-  const enfases = getFaixa(plano.objetivo).enfases;
+  // Mesmo gate do gerador: iniciante não recebe ênfase, nem por plano antigo.
+  // O gerador já parou de pôr o sufixo "(pesado)" no nome da sessão de iniciante, então em
+  // plano NOVO isto nunca dispara. Existe pelos planos SALVOS antes daquela correção, que
+  // ainda carregam o sufixo: sem esta linha, aplicar uma prescrição neles ressuscitaria a
+  // dose de 3 a 5 repetições que o ACSM 2009 não recomenda para quem está começando.
+  const enfases = plano.nivel === "Iniciante" ? undefined : getFaixa(plano.objetivo).enfases;
 
   const mesoIdx = plano.macrociclo.mesociclos.findIndex(
     (m) => semanaCorrente >= m.semanaInicio && semanaCorrente <= m.semanaFim,

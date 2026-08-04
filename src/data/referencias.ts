@@ -57,11 +57,11 @@ export const referencias: Referencia[] = [
   {
     id: "sbc-2020",
     autores: "Barroso WKS, Rodrigues CIS, Bortolotto LA, et al.",
-    titulo: "Diretrizes Brasileiras de Hipertensão Arterial – 2020",
+    titulo: "Diretrizes Brasileiras de Hipertensão Arterial 2020",
     fonte: "Arquivos Brasileiros de Cardiologia (Sociedade Brasileira de Cardiologia)",
     ano: 2021,
     doi: "10.36660/abc.20201238",
-    nota: "Diretriz da SBC. Classificação da pressão arterial de consultório em adultos: hipertensão estágio 1 de 140 a 159 por 90 a 99 mmHg; estágio 2 de 160 a 179 por 100 a 109 mmHg; estágio 3 a partir de 180 por 110 mmHg; abaixo de 140 por 90 mmHg não caracteriza hipertensão de consultório. O maior valor, sistólico ou diastólico, define o estágio. Base dos cortes de estágio usados no classificador e no semáforo, dos limites prudentes de pressão pré-sessão por estágio e da recomendação de evitar apneia e manobra de Valsalva. A partir de 180 por 110 mmHg a orientação é adiar a sessão e recomendar avaliação ou liberação médica, não prescrever treino.",
+    nota: "Diretriz da SBC. Classificação da pressão arterial de consultório em adultos: hipertensão estágio 1 de 140 a 159 por 90 a 99 mmHg; estágio 2 de 160 a 179 por 100 a 109 mmHg; estágio 3 a partir de 180 por 110 mmHg; abaixo de 140 por 90 mmHg não caracteriza hipertensão de consultório. O maior valor, sistólico ou diastólico, define o estágio. Base dos cortes de estágio usados no classificador e no semáforo, dos limites prudentes de pressão pré-sessão por estágio. A partir de 180 por 110 mmHg a orientação é adiar a sessão e recomendar avaliação ou liberação médica, não prescrever treino.",
   },
   {
     id: "pescatello-2004",
@@ -93,8 +93,9 @@ export const referencias: Referencia[] = [
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",
-    fonte: "Medicine & Science in Sports & Exercise",
+    fonte: "Medicine & Science in Sports & Exercise, 41(7):1510-1530",
     ano: 2009,
+    doi: "10.1249/MSS.0b013e3181a0c95c",
     nota: "Base do racional de força, equilíbrio e progressões pequenas e frequentes para idosos destreinados.",
   },
   {
@@ -483,18 +484,18 @@ export const referencias: Referencia[] = [
   },
   {
     id: "rogerson-deload-2024",
-    autores: "Rogerson D, Nolan RH, Immonen V, et al.",
-    titulo: "A survey of deload practices in resistance-trained individuals",
+    autores: "Rogerson D, Nolan D, Androulakis Korakakis P, Immonen V, Wolf M, Bell L",
+    titulo: "Deloading Practices in Strength and Physique Sports: A Cross-sectional Survey",
     fonte: "Sports Medicine - Open, 10(1):26",
     ano: 2024,
     doi: "10.1186/s40798-024-00691-y",
-    nota: "Levantamento do que os praticantes fazem na descarga: dura cerca de 6,4 dias, a cada cerca de 5,6 semanas, reduzindo volume, intensidade e esforço, mantendo frequência e seleção. Descreve prática, não eficácia comprovada.",
+    nota: "Levantamento com 246 ATLETAS COMPETITIVOS de força e físico (não praticantes em geral): a descarga dura cerca de 6,4 dias, a cada cerca de 5,6 semanas, reduzindo volume, carga e esforço, mantendo frequência e seleção de exercícios. Descreve prática de um grupo específico, não eficácia comprovada nem conduta para o praticante comum.",
   },
   {
     id: "coleman-deload-2024",
     autores: "Coleman M, Burke R, Augustin F, et al.",
     titulo:
-      "Gains in strength and muscle mass are maintained or slightly impaired with a mid-cycle deload week in resistance-trained individuals",
+      "Gaining more from doing less? The effects of a one-week deload period during supervised resistance training on muscular adaptations",
     fonte: "PeerJ, 12:e16777",
     ano: 2024,
     doi: "10.7717/peerj.16777",

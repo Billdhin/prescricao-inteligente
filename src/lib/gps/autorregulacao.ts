@@ -57,7 +57,7 @@ export interface CtxSeguranca {
 
 /** Modificador de progressão por perfil clínico (teto de esforço menor e passo reduzido). */
 export interface ModProgressaoAjuste {
-  /** teto de RPE (mesma escala do registro, 6 a 10) para autorizar a progressão */
+  /** teto de RPE na mesma escala do registro do aluno, que é 0 a 10 */
   pseTeto?: number;
   /** fração do incremento normal (0..1): perfil que progride num passo menor */
   fatorIncremento?: number;

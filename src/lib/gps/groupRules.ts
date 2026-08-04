@@ -21,7 +21,7 @@ import { fundirMonitoramento, type EfeitoMonitoramento } from "@/data/farmacos";
  * palavra final do profissional. Não há RCT cravando estes multiplicadores.
  */
 export interface ModProgressao {
-  /** teto de RPE (escala 6 a 10 do registro) para autorizar a progressão; acima dele, segura */
+  /** teto de RPE na escala 0 a 10 do registro do aluno; acima dele, segura a progressão */
   pseTeto?: number;
   /** fração do incremento normal (0..1): perfil que progride num passo menor */
   fatorIncremento?: number;
@@ -87,7 +87,14 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     penalidades: [
       {
         metrica: "Demanda de joelho",
-        limite: 65,
+        // RECALIBRADO contra a escala real do catálogo. A escada era 65/60/55 e o MAIOR
+        // valor de "Demanda de joelho" entre os 97 exercícios é 58: os graus I e II nunca
+        // disparavam, ou seja, o produto prometia cautela articular na obesidade leve e
+        // moderada e não fazia nada. A escada agora é 55/50/45, que preserva a ordem
+        // (quanto mais grave o grau, mais cedo o rebaixamento) e de fato alcança
+        // exercícios. Estes limites são calibração da casa nesta escala relativa, não
+        // número de diretriz, como todo o resto de `penalidades`.
+        limite: 55,
         motivo: "Alta demanda de joelho: em obesidade grau I ainda pede cautela articular cedo demais.",
       },
       {
@@ -120,7 +127,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     penalidades: [
       {
         metrica: "Demanda de joelho",
-        limite: 60,
+        limite: 50, // ver a nota de recalibração no grau I
         motivo: "Alta demanda de joelho: em obesidade grau II tende a gerar desconforto articular.",
       },
       {
@@ -153,7 +160,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     penalidades: [
       {
         metrica: "Demanda de joelho",
-        limite: 55,
+        limite: 45, // ver a nota de recalibração no grau I
         motivo: "Alta demanda de joelho: em obesidade grau III tende a gerar desconforto articular importante.",
       },
       {

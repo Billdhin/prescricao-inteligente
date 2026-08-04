@@ -288,7 +288,7 @@ export interface SelecaoExercicios {
 }
 
 /** Valor de uma métrica do índice de eficiência, pelo nome. Mesmo acesso do engine. */
-function metricaDoExercicio(e: (typeof exercises)[number], nome: string): number | undefined {
+export function metricaDoExercicio(e: (typeof exercises)[number], nome: string): number | undefined {
   return e.indiceEficiencia.metrics.find((m) => m.nome.toLowerCase() === nome.toLowerCase())?.valor;
 }
 
@@ -489,7 +489,7 @@ function notaAerobio(ctx: CtxAlvo, base: string, semFC: string = base): string {
 function intensidadeAerobia(ctx: CtxAlvo, texto: string): string {
   if (!(ctx.parametrosInvalidos ?? []).includes("p-fc")) return texto;
   return texto
-    // "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 4 a 6 de 10)"
+    // "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 5 a 6 de 10)"
     // vira "Moderada: teste da conversa; RPE 4 a 6 de 10"
     .replace(/:\s*cerca de\s*\d+\s*a\s*\d+\s*%\s*da\s*FCm[áa]x\s*\((.*?)\)/i, ": $1")
     // formas sem parênteses: remove só a cláusula da FC, preservando o que sobrar
@@ -522,7 +522,28 @@ function montarSessoes(
   // A variação diária só entra quando o modelo pede E o objetivo tem ênfases autoradas
   // dentro da própria faixa. Emagrecimento e retorno ao treino não herdam repetições de força.
   const ondula = modelo === "ondulatoria" || modelo === "flexivel";
-  const enfases = ondula ? faixa.enfases : undefined;
+  /*
+   * INICIANTE NÃO RECEBE ÊNFASE, EM MODELO NENHUM.
+   *
+   * A ênfase era chaveada só pelo MODELO, e por isso atropelava o `porNivel` que a própria
+   * faixa declara. O efeito concreto, medido: um INICIANTE de Força em modelo ondulatório
+   * recebia blocos de "3 a 5 repetições", quando o `porNivel` do objetivo diz "8 a 12" para
+   * ele. E o caminho não era exótico: o iniciante recebe a ondulatória como ALTERNATIVA
+   * (linha ~178), e o iniciante COM CONDIÇÃO DECLARADA recebe a flexível (linha ~168), que
+   * também ondula. Ou seja, o aluno mais frágil era justamente quem recebia o plano
+   * alternativo com repetições de força máxima.
+   *
+   * Fonte: ACSM Position Stand 2009 (PMID 19204579), literal: "For novice (untrained
+   * individuals with no RT experience or who have not trained for several years) training,
+   * it is recommended that loads correspond to a repetition range of an 8-12 repetition
+   * maximum (RM)."
+   *
+   * Distribuir ênfase entre as sessões pressupõe técnica consolidada. Para o iniciante, o
+   * modelo continua sendo o que ele é (a periodização segue ondulando volume e intensidade
+   * ao longo das semanas); o que não acontece mais é descer a faixa de repetições abaixo do
+   * que a diretriz recomenda para quem está começando.
+   */
+  const enfases = ondula && nivel !== "Iniciante" ? faixa.enfases : undefined;
 
   for (let i = 0; i < frequencia; i++) {
     const enfase = enfases?.[i % enfases.length];
@@ -537,7 +558,7 @@ function montarSessoes(
       // no mesmo padrão da dose de força: alvo dentro da faixa citada, progredindo por posição.
       const doseAero = {
         duracao: "20 a 40 min",
-        intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 4 a 6 de 10)",
+        intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 5 a 6 de 10)",
       };
       blocos.push({
         id: nid("blk"),
@@ -636,6 +657,8 @@ interface DadosDoAlunoNoAlvo {
    */
   cargaAntesDesteMeso?: number;
   semanasDeCargaNoMacro?: number;
+  /** piso da faixa para esta ONDA do modelo de blocos (ver CtxAlvo.pisoDoCiclo) */
+  pisoDoCiclo?: number;
 }
 
 function montarMicrociclos(
@@ -654,7 +677,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
   const semanasDeCargaNoMeso = comDeload ? Math.max(1, duracao - 1) : duracao;
@@ -670,6 +693,7 @@ function montarMicrociclos(
       semanaNoMacro:
         cargaAntesDesteMeso != null ? cargaAntesDesteMeso + (ehDeload ? semanasDeCargaNoMeso : s + 1) : undefined,
       semanasDeCargaNoMacro,
+      pisoDoCiclo,
       tipoSemana: ehDeload ? "deload" : "carga",
       tendenciaVolume,
       tendenciaIntensidade,
@@ -779,9 +803,17 @@ function tendenciasDoModelo(
 /**
  * A contagem de semanas de CARGA por mesociclo, e o acumulado antes de cada um.
  *
- * Só o modelo linear usa: é o que permite ao alvo medir a rampa no MACROCICLO inteiro em
- * vez de reiniciá-la a cada bloco. Sem isso, "reduz" descia dentro do bloco e voltava ao
- * topo no bloco seguinte, e o gráfico do plano "linear" saía em serrote.
+ * Serve para o alvo medir a posição no MACROCICLO inteiro em vez de reiniciar a cada bloco.
+ *
+ * - No **linear** é a rampa: sem isso, "reduz" descia dentro do bloco e voltava ao topo no
+ *   bloco seguinte, e o gráfico do plano "linear" saía em serrote.
+ * - Na **ondulatória** (e nas primas flexível e autorregulada) é a LINHA DE BASE da onda.
+ *   A onda alternava semana sim, semana não, em torno de um centro fixo, e nada mais: em seis
+ *   semanas, as semanas 4, 5 e 6 saíam idênticas às semanas 1, 2 e 3, e um plano de meio ano
+ *   era a mesma quinzena repetida doze vezes. Ondular é variar em torno de uma base, e a base
+ *   tem que andar; senão não é periodização, é repetição com nome bonito.
+ * - **Blocos** fica de fora de propósito: ali o movimento é de bloco em bloco, pelas ondas de
+ *   `focoDoMeso`, e é assim que o modelo se define.
  */
 function rampaNoMacro(
   modelo: ModeloPeriodizacaoId,
@@ -794,7 +826,9 @@ function rampaNoMacro(
     antes.push(acc);
     acc += c;
   }
-  return modelo === "linear" ? { antes, total: acc } : { antes: duracoes.map(() => 0), total: undefined };
+  const usaMacro =
+    modelo === "linear" || modelo === "ondulatoria" || modelo === "flexivel" || modelo === "autorregulada";
+  return usaMacro ? { antes, total: acc } : { antes: duracoes.map(() => 0), total: undefined };
 }
 
 function montarMacrocicloGenerico(
@@ -814,6 +848,12 @@ function montarMacrocicloGenerico(
 
   const duracoes = Array.from({ length: nMeso }, (_, m) => base + (m < resto ? 1 : 0));
   const rampa = rampaNoMacro(modelo, duracoes);
+  // Ondas do modelo de blocos (acúmulo -> intensificação -> realização se repetem a cada 3
+  // mesociclos). A onda seguinte lê a MESMA faixa a partir de um piso mais alto, senão o plano
+  // de 24 semanas sai com as semanas 13 a 24 idênticas às 1 a 12. Ver CtxAlvo.pisoDoCiclo.
+  const ondas = Math.ceil(nMeso / FASES_ONDA.length);
+  const pisoDaOnda = (m: number) =>
+    modelo === "blocos" && ondas > 1 ? (Math.floor(m / FASES_ONDA.length) / ondas) * 0.5 : undefined;
   const mesociclos: Mesociclo[] = [];
   let cursor = 1;
   for (let m = 0; m < nMeso; m++) {
@@ -862,11 +902,91 @@ function montarMacrocicloGenerico(
         regraClinica: regraClinicaDoPlano(input),
         cargaAntesDesteMeso: rampa.total != null ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: rampa.total,
+        pisoDoCiclo: pisoDaOnda(m),
       }),
     });
   }
 
-  return { objetivoGeral: `${objetivo} (${nivel})`, semanas, mesociclos };
+  return sincronizarTendencias({ objetivoGeral: `${objetivo} (${nivel})`, semanas, mesociclos });
+}
+
+/* ------------------- O rótulo do mesociclo tem que bater com a dose ------------------- */
+
+/**
+ * INTENSIDADE DE UMA SEMANA, do jeito que o aluno sente: RIR primeiro, repetição como
+ * desempate. Menos repetição com o mesmo RIR é mais carga na barra, então as duas entram
+ * numa escada lexicográfica só. Semana sem alvo numérico devolve null e não é comparada.
+ */
+function intensidadeDaSemana(w: Microciclo): number | null {
+  const vals: number[] = [];
+  for (const s of w.sessoes)
+    for (const b of s.blocos) {
+      if (b.tipo !== "forca") continue;
+      if (b.cargaRelativaAlvo != null) vals.push(b.cargaRelativaAlvo);
+      else if (b.rirAlvo != null) vals.push(-(b.rirAlvo * 100 + (b.repsAlvo ?? 0)));
+    }
+  if (!vals.length) return null;
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+/** Volume de força da semana: séries x repetições somadas. */
+function volumeDaSemana(w: Microciclo): number | null {
+  let total = 0;
+  let achou = false;
+  for (const s of w.sessoes)
+    for (const b of s.blocos) {
+      if (b.tipo !== "forca" || b.seriesAlvo == null || b.repsAlvo == null) continue;
+      total += b.seriesAlvo * b.repsAlvo;
+      achou = true;
+    }
+  return achou ? total : null;
+}
+
+/**
+ * O MESOCICLO NÃO PROMETE O QUE NÃO ENTREGA.
+ *
+ * A rampa contínua do modelo linear percorre o macrociclo inteiro (decisão do fundador, para
+ * o linear parar de sair ondulado no gráfico). Em horizonte longo isso esbarra num limite de
+ * aritmética, não de programação: um plano anual tem 44 semanas de carga e a faixa citada do
+ * objetivo tem 7 valores de repetição e 3 de RIR. A rampa então anda de mesociclo em
+ * mesociclo, e há mesociclo em que a dose prescrita fica igual à do anterior. Quem carrega o
+ * incremento naquelas semanas é a CARGA, pela dupla progressão, que o plano já prevê.
+ *
+ * O defeito nisso não é a dose: é o CARTÃO do mesociclo dizer "intensidade sobe" numa janela
+ * em que ela não sobe. Numa ferramenta que o profissional assina, rótulo que promete demais é
+ * o mesmo problema que o fundador trouxe do campo ("diz linear e o gráfico sai ondulado"),
+ * só que ao contrário.
+ *
+ * Então, depois de montar o macrociclo, o rótulo é conferido contra o que as semanas de carga
+ * de fato fazem, e SÓ REBAIXA: "sobe" ou "reduz" que não acontecem viram "estavel". Nada aqui
+ * altera uma série, uma repetição ou um RIR: a dose sai idêntica, muda o que o cartão diz
+ * dela. "varia" (ondulatória) é preservado, porque ali o movimento é dentro da semana.
+ */
+function sincronizarTendencias(macro: Macrociclo): Macrociclo {
+  const mesos = macro.mesociclos;
+  const cargasDo = (m: Mesociclo) => m.microciclos.filter((w) => w.tipo === "carga");
+
+  for (const meso of mesos) {
+    const c = cargasDo(meso);
+    if (c.length < 2) continue;
+    // A janela é o próprio mesociclo, porque é dele que o cartão fala: da primeira à última
+    // semana de CARGA (a descarga é exceção de propósito e não conta).
+    const fimDaJanela = c[c.length - 1];
+
+    for (const [campo, medir] of [
+      ["tendenciaIntensidade", intensidadeDaSemana],
+      ["tendenciaVolume", volumeDaSemana],
+    ] as const) {
+      const atual = meso[campo];
+      if (atual !== "sobe" && atual !== "reduz") continue;
+      const ini = medir(c[0]);
+      const fim = medir(fimDaJanela);
+      if (ini == null || fim == null) continue; // sem alvo numérico: não dá para conferir
+      const aconteceu = atual === "sobe" ? fim > ini : fim < ini;
+      if (!aconteceu) meso[campo] = "estavel";
+    }
+  }
+  return macro;
 }
 
 /* --------------------- Macrociclo com jornada do grupo especial --------------------- */
@@ -965,7 +1085,11 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
 
   // `rotuloAluno` e não `nome`: o macrociclo vai impresso no documento que chega ao aluno,
   // e ali ele é um programa ("Fortalecimento com cuidado lombar"), não um diagnóstico.
-  return { objetivoGeral: `${objetivo} (${nivel}): ${grupo.rotuloAluno}`, semanas, mesociclos };
+  return sincronizarTendencias({
+    objetivoGeral: `${objetivo} (${nivel}): ${grupo.rotuloAluno}`,
+    semanas,
+    mesociclos,
+  });
 }
 
 /* ----------------------------------- Entrada pública ----------------------------------- */

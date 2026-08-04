@@ -129,7 +129,14 @@ export interface BlocoSessao {
   rpeAlvo?: number;
   /** zona-alvo de frequência cardíaca em bpm ("129 a 153 bpm"); só com idade + FCrep medida */
   zonaFC?: string;
-  /** zona-alvo como percentual da reserva de FC (Karvonen); só com idade + FCrep medida */
+  /**
+   * A fração da reserva de FC EQUIVALENTE à zona em bpm, derivada dela para leitura.
+   *
+   * Não é uma prescrição por Karvonen: a zona nasce do percentual da FCmáx citado pela
+   * diretriz, e esta fração é a conversão. Os dois métodos discordam quando a FCrep é alta,
+   * e chamar isto de "zona de Karvonen" era rótulo errado num documento assinável.
+   * Só existe com idade e FCrep MEDIDA.
+   */
   percentFCRAlvo?: { min: number; max: number };
   /** velocidade-alvo (esteira/corrida), quando o profissional a define; não derivada pelo motor */
   velocidade?: string;
@@ -702,7 +709,7 @@ export const FLEX_FECHO: ComplementoFlexibilidade = {
 export function complementoAerobioPadrao(sessoesPorSemana: 1 | 2): ComplementoAerobio {
   return {
     duracao: "15 a 25 min",
-    intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 4 a 6 de 10)",
+    intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 5 a 6 de 10)",
     modalidade: "caminhada",
     sessoesPorSemana,
     refIds: ["garber-2011"],
@@ -721,8 +728,8 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     capacidades: ["Hipertrofia", "Força de base", "Tolerância ao volume"],
     tiposExercicio: ["Multiarticulares primeiro", "Uniarticulares como complemento"],
     series: { valor: "3 a 4", nota: "por exercício; volume maior tende a favorecer, dentro da tolerância" },
-    reps: { valor: "6 a 12", nota: "a faixa útil vai de 6 a 20 quando o esforço é parecido" },
-    intensidade: { valor: "moderada a alta", nota: "próxima da falha, por 1 a 3 repetições de reserva" },
+    reps: { valor: "6 a 12", nota: "a faixa útil se estende de 6 a 20 quando as séries chegam perto da falha (Schoenfeld, 2017)" },
+    intensidade: { valor: "moderada a alta", nota: "próxima da falha; a escala de repetições de reserva (Zourdos, 2016) é o instrumento de controle. A faixa de 1 a 3 de reserva é escolha prudente da casa, não número de diretriz" },
     intervalo: { valor: "1 a 2 min" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3 a 4x/sem", Avançado: "4 a 5x/sem" },
     enfases: [
@@ -731,7 +738,7 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
       { rotulo: "controlado", reps: "12 a 15", intensidade: "moderada, com controle" },
     ],
     parametros: ["p-rpe", "p-volume"],
-    refIds: ["acsm-progressao-2009", "schoenfeld-2017-volume", "schoenfeld-2010"],
+    refIds: ["acsm-progressao-2009", "schoenfeld-2017-volume", "schoenfeld-2010", "zourdos-rir-2016", "schoenfeld-carga-2017"],
     ressalva:
       "As faixas são referência; o volume ideal varia entre pessoas. Progrida por tolerância e resposta, não por buscar dor.",
     complementoAerobio: complementoAerobioPadrao(1),

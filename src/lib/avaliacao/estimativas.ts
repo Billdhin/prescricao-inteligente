@@ -116,7 +116,7 @@ export const estimativas: Estimativa[] = [
     ],
     formula: "1RM ≈ carga × (1 + repetições ÷ 30)",
     limite:
-      "É estimativa de uma série só, no exercício testado: não se transfere para outro exercício nem para outro dia. A precisão cai conforme o número de repetições sobe.",
+      "É estimativa de uma série só, no exercício testado: não se transfere para outro exercício nem para outro dia. A equação usada é a de Epley, convenção de campo sem publicação indexada; a referência citada sustenta o LIMITE de repetições, não a escolha da equação. O trabalho citado é em mulheres, no supino.",
     refIds: ["mayhew-2008"],
     calcular(v) {
       const erro = validar(this.campos, v);
@@ -131,11 +131,11 @@ export const estimativas: Estimativa[] = [
         };
       }
       const valor = uma(carga * (1 + reps / 30));
-      if (reps > 10) {
+      if (reps >= 10) {
         return {
           valor,
           ressalva:
-            "Acima de 10 repetições até a fadiga a predição de 1RM perde precisão (Mayhew, 2008). Para prescrever percentual de carga, prefira repetir o teste com carga maior e menos repetições.",
+            "A partir de 10 repetições até a fadiga a predição de 1RM perde precisão: Mayhew (2008) encontrou maior acurácia com MENOS de 10 repetições. Para prescrever percentual de carga, prefira repetir o teste com carga maior e menos repetições.",
         };
       }
       return { valor };
@@ -151,15 +151,15 @@ export const estimativas: Estimativa[] = [
     unidade: "mL/kg/min",
     campos: [
       { chave: "tempo", rotulo: "Tempo da caminhada", unidade: "minutos", placeholder: "Ex.: 13,5", tipo: "numero", min: 8, max: 30 },
-      { chave: "fc", rotulo: "Frequência cardíaca ao terminar", unidade: "bpm", placeholder: "Ex.: 140", tipo: "numero", min: 60, max: 220 },
+      { chave: "fc", rotulo: "Frequência cardíaca no último quarto do percurso", unidade: "bpm", placeholder: "Ex.: 140", tipo: "numero", min: 60, max: 220 },
       { chave: "peso", rotulo: "Peso corporal", unidade: "kg", placeholder: "Ex.: 72", tipo: "numero", min: 30, max: 250, vemDe: "peso" },
-      { chave: "idade", rotulo: "Idade", unidade: "anos", placeholder: "Ex.: 45", tipo: "numero", min: 18, max: 90, vemDe: "idade" },
+      { chave: "idade", rotulo: "Idade", unidade: "anos", placeholder: "Ex.: 45", tipo: "numero", min: 30, max: 69, vemDe: "idade" },
       { chave: "sexo", rotulo: "Sexo", unidade: "", placeholder: "", tipo: "sexo", min: 0, max: 1 },
     ],
     formula:
       "VO₂ (L/min) = 6,9652 + (0,0091 × peso em libras) − (0,0257 × idade) + (0,5955 × sexo) − (0,2240 × tempo em minutos) − (0,0115 × FC final), com sexo = 1 para homens e 0 para mulheres. O resultado em L/min é dividido pelo peso para virar mL/kg/min.",
     limite:
-      "Foi construída em adultos caminhando, não correndo: se o aluno correr parte do percurso, a estimativa deixa de valer. Betabloqueador altera a frequência cardíaca e derruba a validade da equação, que usa a FC como entrada.",
+      "Foi derivada em 343 adultos de 30 a 69 anos, caminhando e não correndo: fora dessa faixa etária, ou se o aluno correr parte do percurso, o resultado é extrapolação e não estimativa validada. O erro padrão da equação é de 0,325 L/min, o que num adulto de 72 kg equivale a cerca de 4,5 mL/kg/min para mais ou para menos: leia o número como faixa. Meça a frequência cardíaca ao completar a milha, sem esperar, porque a FC de recuperação cai e superestima o resultado. Betabloqueador derruba a validade da equação, que usa a FC como entrada.",
     refIds: ["kline-1987"],
     calcular(v) {
       const erro = validar(this.campos, v);
@@ -174,6 +174,17 @@ export const estimativas: Estimativa[] = [
         };
       }
       const valor = uma((litrosPorMin * 1000) / peso);
+      // A amostra de Kline tinha VO2max de 37,0 +/- 10,7 mL/kg/min. Abaixo de 15 o resultado
+      // está a mais de dois desvios-padrão da amostra em que a equação foi ajustada, e nessa
+      // ponta ela deixa de estimar e passa a extrapolar. Aconteceu de verdade no domínio:
+      // aluno pesado, caminhada muito lenta e FC alta devolviam 5,5 mL/kg/min, menos que o
+      // custo da própria caminhada que ele acabou de fazer.
+      if (valor < 15) {
+        return {
+          valor: null,
+          erro: "Com esses valores a equação devolve um consumo abaixo de 15 mL/kg/min, mais de duas vezes o desvio-padrão abaixo da amostra em que ela foi derivada (37,0 mais ou menos 10,7). Aí não é estimativa, é extrapolação. Confira o tempo da caminhada e a frequência cardíaca.",
+        };
+      }
       if (fc < 100) {
         return {
           valor,
@@ -193,17 +204,33 @@ export const estimativas: Estimativa[] = [
     nomeTeste: "VO₂ estimado (teste de 12 minutos)",
     unidade: "mL/kg/min",
     campos: [
-      { chave: "distancia", rotulo: "Distância em 12 minutos", unidade: "metros", placeholder: "Ex.: 2200", tipo: "numero", min: 800, max: 5000 },
+      { chave: "distancia", rotulo: "Distância em 12 minutos", unidade: "metros", placeholder: "Ex.: 2200", tipo: "numero", min: 1200, max: 5000 },
     ],
     formula: "VO₂ (mL/kg/min) = (distância em metros − 504,9) ÷ 44,73",
     limite:
-      "É teste de esforço máximo: não deve ser aplicado antes da liberação, nem em quem o semáforo do dia manda segurar. O trabalho de origem estabeleceu a correlação entre a distância e o VO₂ medido em esteira; a forma da equação em metros circula em versões ligeiramente diferentes, então trate o resultado como faixa, não como medida.",
+      "É teste de esforço máximo: não deve ser aplicado antes da liberação, nem em quem o semáforo do dia manda segurar. O trabalho de origem estabeleceu a correlação entre a distância e o VO₂ medido em esteira, mas NÃO é possível conferir no PubMed a forma da equação em metros, porque o artigo de 1968 não tem resumo indexado. Os coeficientes usados aqui são os que circulam na literatura aplicada. Trate o resultado como faixa, e prefira a caminhada de 1 milha, cuja equação tem coeficientes conferíveis.",
     refIds: ["cooper-1968"],
     calcular(v) {
       const erro = validar(this.campos, v);
       if (erro) return { valor: null, erro };
       const valor = uma((v.distancia - 504.9) / 44.73);
-      if (v.distancia < 1200) {
+      /*
+       * PISO FISIOLÓGICO, e não só de domínio.
+       *
+       * O piso antigo era 800 m, e a equação devolvia 6,6 mL/kg/min ali: menos de 2 METs,
+       * abaixo do custo de ficar em pé. O app aceitava, imprimia com uma casa decimal e
+       * gravava no histórico do aluno como se fosse um teste. O domínio subiu para 1.200 m
+       * e este guard fecha o resto: abaixo de 15 mL/kg/min o número não é interpretável
+       * para um adulto que anda, e é mais honesto não devolver nada.
+       */
+      if (valor < 15) {
+        return {
+          valor: null,
+          erro:
+            "Com essa distância a equação devolve um consumo abaixo do que um adulto que caminha apresenta em repouso, ou seja, o resultado não é interpretável. Confira a distância; se ela está certa, use a caminhada de 1 milha, que foi construída para esta faixa.",
+        };
+      }
+      if (v.distancia < 1600) {
         return {
           valor,
           ressalva:
