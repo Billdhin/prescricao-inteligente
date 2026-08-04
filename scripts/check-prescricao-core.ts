@@ -30,6 +30,7 @@ import { alvoSemana } from "../src/lib/gps/alvo";
 import { aplicarPrescricaoNoPlano, sessoesDaSemana } from "../src/lib/gps/semear";
 import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
 import { recalcularAlvosDoMeso } from "../src/lib/gps/travas";
+import { doseCurta, tokensDoBloco } from "../src/components/student/blocoRegistro";
 import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
@@ -718,6 +719,46 @@ for (const objetivo of OBJETIVOS) {
   }
 }
 
+/*
+ * (L) O ALUNO VÊ O ALVO DA SEMANA, NÃO A FAIXA DA DIRETRIZ.
+ *
+ * Achado de bateria funcional, e era o defeito mais caro do app do aluno. Um plano de 12
+ * semanas progride de "4 x 12, RIR 3" até "3 x 6, RIR 1", com descarga nas semanas 4, 8 e 12,
+ * e o aluno recebia nas DOZE semanas a mesma frase: "3 a 4 x 6 a 12 · 1 a 2 min". Nem a
+ * progressão nem a descarga chegavam a quem executa. A onda inteira do alvo semanal chegava
+ * ao editor do profissional e ao PDF, e parava antes do app.
+ */
+{
+  const gL = gerarPlano({ objetivo: "Hipertrofia", nivel: "Iniciante", semanas: 12, frequencia: 3 });
+  const vistos = new Set<string>();
+  let comAlvo = 0;
+  for (const m of gL.principal.mesociclos)
+    for (const w of m.microciclos)
+      for (const b of w.sessoes[0]?.blocos ?? []) {
+        if (b.tipo === "aerobio" || b.repsAlvo == null) continue;
+        comAlvo++;
+        const linha = doseCurta(b);
+        vistos.add(linha);
+        // O número da semana precisa aparecer para o aluno, não a faixa.
+        if (!linha.includes(`${b.seriesAlvo} x ${b.repsAlvo}`)) {
+          erro(`APP DO ALUNO SEM O ALVO: semana ${w.semana}, "${b.nome}" tem alvo ${b.seriesAlvo}x${b.repsAlvo} e o aluno lê "${linha}".`);
+        }
+        if (b.rirAlvo != null && !linha.includes(`RIR ${b.rirAlvo}`)) {
+          erro(`APP DO ALUNO SEM O RIR: semana ${w.semana}, "${b.nome}" tem RIR ${b.rirAlvo} e o aluno lê "${linha}".`);
+        }
+        for (const t of tokensDoBloco(b)) {
+          if (!t.value || t.value.includes("undefined") || t.value.includes("NaN")) {
+            erro(`APP DO ALUNO COM TOKEN VAZIO: semana ${w.semana}, "${b.nome}", token "${t.label}" saiu "${t.value}".`);
+          }
+        }
+      }
+  if (comAlvo === 0) erro("AUTOVERIFICAÇÃO (L): nenhum bloco com alvo no plano de teste; a asserção passaria por vazio.");
+  // E o aluno tem que ver o plano MUDAR: uma frase só nas 12 semanas é o defeito de origem.
+  if (vistos.size <= 1) {
+    erro(`APP DO ALUNO CHAPADO: as 12 semanas mostram a MESMA dose ao aluno ("${[...vistos][0]}").`);
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
@@ -727,5 +768,5 @@ if (problemas.length) {
   process.exit(1);
 }
 console.log(
-  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, o alvo da semana sobrevive ao "Aplicar no treino" a troca de exercicio segue as mesmas regras do gerador travar variavel congela so aquela variavel, o grafico nao contraria a dose e o classificador acerta os cortes.`,
+  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, o alvo da semana sobrevive ao "Aplicar no treino" a troca de exercicio segue as mesmas regras do gerador travar variavel congela so aquela variavel, o grafico nao contraria a dose, o classificador acerta os cortes e o aluno ve o alvo da semana.`,
 );

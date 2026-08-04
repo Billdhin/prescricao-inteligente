@@ -18,7 +18,7 @@ export interface TokenAlvo {
 const fmtNum = (x: number) => (Number.isInteger(x) ? `${x}` : `${(Math.round(x * 10) / 10).toString().replace(".", ",")}`);
 
 /** Intervalo-alvo em segundos como "90 s" ou "2 min" (múltiplos de minuto viram minutos). */
-function fmtIntervalo(seg: number): string {
+export function fmtIntervalo(seg: number): string {
   if (seg >= 60 && seg % 60 === 0) return `${seg / 60} min`;
   if (seg >= 60) return `${fmtNum(seg / 60)} min`;
   return `${Math.round(seg)} s`;

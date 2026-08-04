@@ -6,6 +6,7 @@ import { getFasePose } from "@/data/fase-poses";
 import { getMuscleMapPose } from "@/data/muscle-map-images";
 import { getModalidade } from "@/data/modalities";
 import type { BlocoSessao, Sessao } from "@/data/periodizacao";
+import { tokensAlvoForca, temAlvoForca, fmtIntervalo } from "@/lib/gps/alvoResumo";
 import type { Execucao } from "@/data/execucao";
 
 /**
@@ -28,25 +29,42 @@ const abrevDose = (v: string): string => v.replace(/moderada a alta/gi, "mod. a 
 // Os tokens de dose de um bloco (Série, Intensidade, Intervalo para força; Formato,
 // Duração, Intensidade, Recuperação para aeróbio), com o rótulo colado ao valor.
 // Fonte única lida pelo registro e pela leitura, para os dois nunca divergirem.
+/**
+ * O QUE O ALUNO VÊ É O ALVO DA SEMANA, NÃO A FAIXA DA DIRETRIZ.
+ *
+ * Achado de uma bateria funcional, e era o defeito mais caro do app do aluno. O plano de 12
+ * semanas progride de "4 x 12, RIR 3" até "3 x 6, RIR 1", com descarga nas semanas 4, 8 e 12.
+ * O aluno recebia, nas DOZE semanas, exatamente a mesma frase: "3 a 4 x 6 a 12 · 1 a 2 min".
+ * Nem a progressão nem a descarga chegavam a ele.
+ *
+ * A onda inteira do alvo semanal existia para transformar a faixa citada num número concreto,
+ * e esse número chegava ao editor do profissional e ao PDF, mas parava antes de quem executa
+ * o treino. Agora o alvo vem primeiro, e a faixa citada continua disponível como referência.
+ *
+ * Bloco sem alvo (plano antigo, ou sessão montada à mão) cai na faixa, como antes.
+ */
 export function tokensDoBloco(bloco: BlocoSessao): { label: string; value: string }[] {
   const aerobio = bloco.tipo === "aerobio";
   const limpo = (v?: string | number | null) =>
     v != null && String(v).trim() && String(v).trim() !== "-" ? String(v) : "";
+  const faixaSerie =
+    bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : limpo(bloco.series) || limpo(bloco.reps);
   return (
     aerobio
       ? [
           { label: "Formato", value: limpo(bloco.formato) },
-          { label: "Duração", value: limpo(bloco.duracao) },
+          // Duração-alvo da semana quando existe; a faixa citada fica na linha de referência.
+          { label: "Duração", value: bloco.duracaoAlvoMin != null ? `${bloco.duracaoAlvoMin} min` : limpo(bloco.duracao) },
+          { label: "Referência", value: bloco.duracaoAlvoMin != null ? limpo(bloco.duracao) : "" },
           { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
           { label: "Recuperação", value: limpo(bloco.recuperacao) },
         ]
       : [
-          {
-            label: "Série",
-            value: bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : limpo(bloco.series) || limpo(bloco.reps),
-          },
+          ...tokensAlvoForca(bloco).map((t) => ({ label: t.label === "Alvo" ? "Série" : t.label, value: t.value })),
+          // Sem alvo nenhum, a faixa É a dose. Com alvo, ela fica como referência declarada.
+          { label: temAlvoForca(bloco) ? "Referência" : "Série", value: faixaSerie },
           { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
-          { label: "Intervalo", value: limpo(bloco.intervalo) },
+          { label: "Intervalo", value: bloco.intervaloAlvoSeg != null ? "" : limpo(bloco.intervalo) },
         ]
   ).filter((t) => t.value);
 }
@@ -67,12 +85,17 @@ export function doseCurta(bloco: BlocoSessao): string {
     // Duração + formato. A intensidade do aeróbio é uma FRASE inteira ("cerca de
     // 64 a 76% da FCmáx, teste da conversa...") e não cabe numa linha de resumo;
     // ela fica nos tokens abaixo, com o rótulo colado.
-    if (limpo(bloco.duracao)) partes.push(limpo(bloco.duracao));
+    if (bloco.duracaoAlvoMin != null) partes.push(`${bloco.duracaoAlvoMin} min`);
+    else if (limpo(bloco.duracao)) partes.push(limpo(bloco.duracao));
     if (limpo(bloco.formato)) partes.push(limpo(bloco.formato).toLowerCase());
   } else {
-    if (bloco.series && bloco.reps) partes.push(`${bloco.series} x ${bloco.reps}`);
+    // O ALVO da semana primeiro: é o que o aluno faz hoje (ver tokensDoBloco).
+    if (bloco.seriesAlvo != null && bloco.repsAlvo != null) partes.push(`${bloco.seriesAlvo} x ${bloco.repsAlvo}`);
+    else if (bloco.series && bloco.reps) partes.push(`${bloco.series} x ${bloco.reps}`);
     else if (limpo(bloco.series) || limpo(bloco.reps)) partes.push(limpo(bloco.series) || limpo(bloco.reps));
-    if (limpo(bloco.intervalo)) partes.push(limpo(bloco.intervalo));
+    if (bloco.rirAlvo != null) partes.push(`RIR ${bloco.rirAlvo}`);
+    if (bloco.intervaloAlvoSeg != null) partes.push(fmtIntervalo(bloco.intervaloAlvoSeg));
+    else if (limpo(bloco.intervalo)) partes.push(limpo(bloco.intervalo));
   }
   return partes.join(" · ");
 }
