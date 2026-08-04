@@ -25,6 +25,7 @@
  */
 import { gerarPlano, slugsClinicosDoPlano, metricaDoExercicio } from "../src/lib/gps/periodizacao";
 import { agregadoSemana } from "../src/lib/gps/progressao";
+import { alvoSemana } from "../src/lib/gps/alvo";
 import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
@@ -352,6 +353,161 @@ for (const est of estimativas.filter((e) => e.unidade === "mL/kg/min")) {
   }
 }
 
+/* ===========================================================================
+ * BANCADA DE CENÁRIOS CLÍNICOS (04/08/2026): quatro defeitos que passaram por
+ * TODOS os guardrails e só apareceram quando eu li plano por plano, de um aluno
+ * inventado de cada vez. Nenhum dava erro, nenhum quebrava tipo, e os três
+ * primeiros eram visíveis para o profissional na primeira sessão.
+ * ========================================================================= */
+
+/*
+ * (D) APARELHO DE CARDIO NÃO ENTRA EM BLOCO DE FORÇA.
+ *
+ * Os aparelhos de cardio são os mais seguros em todas as métricas, então quanto mais estrita
+ * a regra clínica do aluno, mais alto eles subiam na fila do seletor de força. O plano de
+ * emagrecimento de um hipertenso estágio 2 com obesidade grau II saía com "Bicicleta
+ * ergométrica 3 séries de 13 repetições". Quanto mais frágil o aluno, mais absurda a sessão.
+ */
+const AEROBIOS = new Set(exercises.filter((e) => e.doseAerobia).map((e) => e.slug));
+if (AEROBIOS.size === 0) erro("Nenhum exercício marcado com doseAerobia: esta verificação passaria por vazio.");
+for (const objetivo of OBJETIVOS) {
+  for (const grupo of [undefined, "hipertensao-estagio-2", "obesidade-grau-3", "dor-lombar-inespecifica"]) {
+    const p = gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo });
+    for (const macro of [p.principal, p.alternativa]) {
+      for (const m of macro?.mesociclos ?? [])
+        for (const w of m.microciclos)
+          for (const s of w.sessoes)
+            for (const b of s.blocos) {
+              if (b.tipo === "aerobio" || !b.exercicioSlug) continue;
+              if (AEROBIOS.has(b.exercicioSlug)) {
+                erro(
+                  `CARDIO COMO FORÇA: ${objetivo}/${grupo ?? "sem grupo"} prescreveu "${b.nome}" em bloco de força, com ${b.series} séries de ${b.reps}. A dose desse exercício é tempo.`,
+                );
+              }
+            }
+    }
+  }
+}
+
+/*
+ * (E) FUNDIR CONDIÇÕES NUNCA DEIXA O PLANO MENOS SEGURO.
+ *
+ * `fundirRegras` simplesmente não copiava `restricoesEstruturais` nem `posicoesEvitar` para o
+ * objeto fundido. Declarar a SEGUNDA condição do aluno apagava as limitações estruturais da
+ * primeira, o contrário do que o plano promete por escrito ao profissional.
+ */
+for (const [a, b] of [
+  ["hipertensao-estagio-2", "obesidade-grau-2"],
+  ["dor-lombar-inespecifica", "obesidade-grau-3"],
+  ["osteoartrite-joelho", "idoso-destreinado"],
+  ["gestante", "obesidade-grau-1"],
+] as const) {
+  const ra = groupGpsRules[a];
+  const rb = groupGpsRules[b];
+  const fundida = combineRules([a, b]);
+  for (const t of [...(ra?.restricoesEstruturais ?? []), ...(rb?.restricoesEstruturais ?? [])]) {
+    if (!fundida?.restricoesEstruturais?.includes(t)) {
+      erro(`FUSÃO PERDEU SEGURANÇA: "${a}"+"${b}" descartou a limitação estrutural "${t}", que uma das duas condições declara sozinha.`);
+    }
+  }
+  for (const pos of [...(ra?.posicoesEvitar ?? []), ...(rb?.posicoesEvitar ?? [])]) {
+    if (!fundida?.posicoesEvitar?.includes(pos)) {
+      erro(`FUSÃO PERDEU SEGURANÇA: "${a}"+"${b}" descartou a posição a evitar "${pos}".`);
+    }
+  }
+}
+
+/*
+ * (F) A CONDIÇÃO QUE PEDE PARA EVITAR UMA POSIÇÃO NÃO RECEBE EXERCÍCIO NAQUELA POSIÇÃO.
+ *
+ * A gestante declarava, no próprio texto de cuidados, "evitar decúbito dorsal prolongado após
+ * o 1º trimestre", e o plano dela abria com supino com halteres, deitada.
+ */
+for (const [slug, regra] of Object.entries(groupGpsRules)) {
+  if (!regra.posicoesEvitar?.length) continue;
+  for (const objetivo of OBJETIVOS) {
+    const p = gerarPlano({ objetivo, nivel: "Intermediário", semanas: 12, frequencia: 3, grupoEspecial: slug });
+    for (const m of p.principal.mesociclos)
+      for (const w of m.microciclos)
+        for (const s of w.sessoes)
+          for (const b of s.blocos) {
+            if (b.tipo === "aerobio" || !b.exercicioSlug) continue;
+            const pos = exercises.find((e) => e.slug === b.exercicioSlug)?.restricaoPerfil?.posicao;
+            if (pos && regra.posicoesEvitar.includes(pos)) {
+              erro(`POSIÇÃO EVITADA NO PLANO: ${slug}/${objetivo} prescreveu "${b.nome}", que é executado na posição "${pos}".`);
+            }
+          }
+  }
+}
+
+/*
+ * (G) A FASE DE ENTRADA É A MAIS LEVE DO PLANO, E O PERFIL CLÍNICO PROGRIDE NO PASSO DELE.
+ *
+ * A primeira fase da jornada clínica era marcada "estável", e estável lê o MEIO da faixa,
+ * enquanto a fase seguinte começa no PISO. O plano saía mais pesado na semana 1 do que na
+ * semana 4, e terminava na dose em que tinha começado: a fase chamada "Entrada, segurança e
+ * adaptação" era o segundo trecho mais pesado do macrociclo. Junto disso, o `modProgressao`
+ * fundido (o quanto ESTE perfil progride mais devagar) era calculado, aparecia no raciocínio
+ * e não chegava à geração: idoso obeso hipertenso recebia a mesma rampa de um adulto saudável.
+ */
+for (const slug of ["hipertensao-estagio-2", "obesidade-grau-3", "idoso-destreinado", "gestante", "pos-parto"]) {
+  const p = gerarPlano({ objetivo: "Hipertrofia", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: slug });
+  const cargas = p.principal.mesociclos.flatMap((m) => m.microciclos.filter((w) => w.tipo === "carga"));
+  const dose = (w: (typeof cargas)[number]) => {
+    const b = w.sessoes[0]?.blocos.find((x) => x.tipo !== "aerobio");
+    return b?.rirAlvo != null ? -(b.rirAlvo * 100 + (b.repsAlvo ?? 0)) : null;
+  };
+  const primeira = dose(cargas[0]);
+  const ultima = dose(cargas[cargas.length - 1]);
+  if (primeira == null || ultima == null) continue;
+  const maisPesadaQueODepois = cargas.slice(1).some((w) => (dose(w) ?? 0) < primeira);
+  if (maisPesadaQueODepois) {
+    erro(`ENTRADA PESADA DEMAIS: no plano de "${slug}" existe semana POSTERIOR mais leve que a semana 1, ou seja, a fase de entrada não é a mais leve do macrociclo.`);
+  }
+  if (!(ultima > primeira)) {
+    erro(`PLANO CLÍNICO NÃO PROGRIDE: "${slug}" termina na mesma dose em que começou (intensidade ${primeira} -> ${ultima}).`);
+  }
+}
+
+/*
+ * O PASSO DO PERFIL CLÍNICO CHEGA AO ALVO.
+ *
+ * Comparar dois PLANOS não serve de prova aqui: o macrociclo com condição tem outra
+ * quantidade de fases e outras semanas de descarga, então a diferença poderia vir daí e a
+ * asserção passaria por vazio (foi o que aconteceu na primeira versão dela). A prova honesta
+ * é chamar o alvo duas vezes com o MESMO contexto, mudando só o fator, e exigir que a versão
+ * com passo reduzido caminhe menos e comece no mesmo lugar.
+ */
+{
+  const dose = { series: "3 a 4", reps: "6 a 12", intensidade: "moderada a alta, 1 a 3 repetições de reserva", intervalo: "1 a 2 min" };
+  const base = {
+    semanasDeCargaNoMeso: 6,
+    tipoSemana: "carga" as const,
+    tendenciaVolume: "reduz" as const,
+    tendenciaIntensidade: "sobe" as const,
+    nivel: "Iniciante" as Nivel,
+    objetivo: "Hipertrofia" as const,
+  };
+  const cheio1 = alvoSemana(dose, { ...base, semanaNoMeso: 1 });
+  const cheio6 = alvoSemana(dose, { ...base, semanaNoMeso: 6 });
+  const curto1 = alvoSemana(dose, { ...base, semanaNoMeso: 1, fatorProgressao: 0.5 });
+  const curto6 = alvoSemana(dose, { ...base, semanaNoMeso: 6, fatorProgressao: 0.5 });
+
+  if (curto1.repsAlvo !== cheio1.repsAlvo || curto1.rirAlvo !== cheio1.rirAlvo) {
+    erro(`PASSO CLÍNICO: o fator mudou o PONTO DE PARTIDA (${cheio1.repsAlvo}x rir ${cheio1.rirAlvo} virou ${curto1.repsAlvo}x rir ${curto1.rirAlvo}); ele só deve encurtar o caminho.`);
+  }
+  const caminhouCheio = Math.abs((cheio6.repsAlvo ?? 0) - (cheio1.repsAlvo ?? 0));
+  const caminhouCurto = Math.abs((curto6.repsAlvo ?? 0) - (curto1.repsAlvo ?? 0));
+  if (!(caminhouCurto < caminhouCheio)) {
+    erro(
+      `PASSO CLÍNICO IGNORADO: com fatorProgressao 0,5 a rampa andou ${caminhouCurto} repetições, e sem fator andou ${caminhouCheio}. O modificador do perfil não está chegando ao alvo.`,
+    );
+  }
+  if (caminhouCurto === 0) {
+    erro("PASSO CLÍNICO EXAGERADO: com fator 0,5 a rampa parou de andar; progredir devagar não é deixar de progredir.");
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
@@ -361,5 +517,5 @@ if (problemas.length) {
   process.exit(1);
 }
 console.log(
-  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele e nenhuma estimativa devolve VO₂ impossível.`,
+  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo.`,
 );

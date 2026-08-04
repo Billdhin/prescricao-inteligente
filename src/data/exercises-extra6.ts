@@ -693,6 +693,8 @@ export const extraExercises6: Exercise[] = [
   {
     id: "e85",
     slug: "remo-ergometro",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Remo ergômetro",
     grupoMuscular: "Corpo todo",
     equipamento: "Máquina",
@@ -776,6 +778,8 @@ export const extraExercises6: Exercise[] = [
   {
     id: "e86",
     slug: "escada-ergometrica",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Escada ergométrica",
     grupoMuscular: "Membros inferiores",
     equipamento: "Máquina",
@@ -858,6 +862,8 @@ export const extraExercises6: Exercise[] = [
   {
     id: "e87",
     slug: "caminhada-plana",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Caminhada em piso plano",
     grupoMuscular: "Corpo todo",
     equipamento: "Peso corporal",
@@ -940,6 +946,8 @@ export const extraExercises6: Exercise[] = [
   {
     id: "e88",
     slug: "corrida-aquatica",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Corrida estacionária na piscina",
     grupoMuscular: "Corpo todo",
     equipamento: "Piscina",
@@ -1022,6 +1030,8 @@ export const extraExercises6: Exercise[] = [
   {
     id: "e89",
     slug: "bicicleta-reclinada",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Bicicleta reclinada",
     grupoMuscular: "Membros inferiores",
     equipamento: "Bicicleta ergométrica",

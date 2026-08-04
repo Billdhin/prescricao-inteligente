@@ -14,6 +14,8 @@ export const extraExercises: Exercise[] = [
   {
     id: "e14",
     slug: "caminhada-esteira",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Caminhada inclinada (esteira)",
     grupoMuscular: "Membros inferiores",
     equipamento: "Esteira",
@@ -116,6 +118,8 @@ export const extraExercises: Exercise[] = [
   {
     id: "e15",
     slug: "bicicleta-ergometrica",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Bicicleta ergométrica",
     grupoMuscular: "Membros inferiores",
     equipamento: "Bicicleta ergométrica",
@@ -218,6 +222,8 @@ export const extraExercises: Exercise[] = [
   {
     id: "e16",
     slug: "eliptico",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Elíptico",
     grupoMuscular: "Corpo todo",
     equipamento: "Elíptico",
@@ -320,6 +326,8 @@ export const extraExercises: Exercise[] = [
   {
     id: "e17",
     slug: "marcha-aquatica",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Marcha aquática (hidro)",
     grupoMuscular: "Corpo todo",
     equipamento: "Piscina",

@@ -905,6 +905,8 @@ export const extraExercises2: Exercise[] = [
   {
     id: "e34",
     slug: "empurra-puxa-aquatico",
+    // Dose em MINUTOS: nunca entra na lista de exercicios de forca (ver Exercise.doseAerobia).
+    doseAerobia: true,
     nome: "Empurrar e puxar na água (halteres de espuma)",
     grupoMuscular: "Corpo todo",
     equipamento: "Piscina",

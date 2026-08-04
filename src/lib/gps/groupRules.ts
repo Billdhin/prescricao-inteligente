@@ -9,6 +9,7 @@
 
 import type { GroupRuleInput } from "./engine";
 import type { RestricaoTag } from "./restricoes";
+import type { Exercise } from "@/data/types";
 import { fundirMonitoramento, type EfeitoMonitoramento } from "@/data/farmacos";
 
 /**
@@ -58,6 +59,21 @@ export interface GroupGpsRule extends GroupRuleInput {
    * estrita continua mandando, como no ranqueamento.
    */
   restricoesEstruturais?: RestricaoTag[];
+  /**
+   * POSIÇÕES DE EXECUÇÃO QUE ESTA CONDIÇÃO PEDE PARA EVITAR.
+   *
+   * Nasceu de um achado de bancada: a gestante declarava, no próprio campo `cuidados`,
+   * "evitar decúbito dorsal prolongado após o 1º trimestre", e recebia supino com halteres
+   * DEITADA na semana 1. O cuidado estava escrito, e nada no caminho o aplicava. As tags de
+   * `restricoesEstruturais` não cobrem posição (elas falam de impacto, chão, apoio), e criar
+   * uma restrição de aluno chamada "evitar decúbito dorsal" seria pedir ao profissional que
+   * marcasse à mão o que a condição já sabe.
+   *
+   * Entra como REBAIXAMENTO forte, e não como exclusão, pela mesma razão das penalidades: o
+   * exercício vai para o fim da fila e só aparece se o catálogo não tiver alternativa, em vez
+   * de sumir e deixar o plano sem bloco.
+   */
+  posicoesEvitar?: NonNullable<Exercise["restricaoPerfil"]>["posicao"][];
   /** cuidados exibidos como "já considerados pelo grupo" */
   cuidados: string[];
   /** ids de referencias.ts que fundamentam as regras deste grupo (bibliografia do Prontuário) */
@@ -465,6 +481,9 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       { metrica: "Complexidade técnica", limite: 65, motivo: "Exercícios de alta exigência técnica/equilíbrio aumentam o risco de queda na gestação." },
     ],
     complexidadeMax: 55,
+    // O cuidado logo acima diz "evitar decúbito dorsal prolongado após o 1º trimestre". Antes
+    // disto, ele era só texto: o plano entregava supino com halteres, deitada, na semana 1.
+    posicoesEvitar: ["deitado"],
     modProgressao: {
       pseTeto: 6,
       fatorIncremento: 0.5,
@@ -472,7 +491,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["acsm-getp11"],
     },
-    refs: ["acsm-getp11"],
+    refs: ["acsm-getp11", "mottola-gestacao-2019", "acog-804-2020"],
   },
   "pos-parto": {
     slug: "pos-parto",
@@ -587,6 +606,25 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
   const refs: string[] = [];
   for (const r of rules) for (const ref of r.refs ?? []) if (!refs.includes(ref)) refs.push(ref);
 
+  /*
+   * UNIÃO DAS LIMITAÇÕES ESTRUTURAIS, e não interseção nem descarte.
+   *
+   * Achado de bancada, e era grave: estes dois campos simplesmente NÃO ENTRAVAM no objeto
+   * fundido. O efeito é o contrário do que o plano promete por escrito ao profissional
+   * ("onde eles divergem vale sempre o mais conservador"): um aluno com hipertensão estágio 2
+   * MAIS obesidade grau II perdia o `baixa_tolerancia_impacto` que a obesidade sozinha
+   * aplicava. Declarar a segunda condição deixava o plano MENOS seguro que declarar só a
+   * primeira, que é o pior incentivo possível num produto de decisão clínica.
+   *
+   * Restrição estrutural e posição a evitar não têm "mais estrita": ou a condição pede, ou
+   * não pede. Somar é o conservador aqui, do mesmo jeito que o menor limite é o conservador
+   * nas penalidades.
+   */
+  const estruturais: RestricaoTag[] = [];
+  for (const r of rules) for (const t of r.restricoesEstruturais ?? []) if (!estruturais.includes(t)) estruturais.push(t);
+  const posicoes: NonNullable<GroupGpsRule["posicoesEvitar"]> = [];
+  for (const r of rules) for (const p of r.posicoesEvitar ?? []) if (!posicoes.includes(p)) posicoes.push(p);
+
   return {
     slug: rules.map((r) => r.slug).join("+"),
     nome: rules.map((r) => r.nome).join(" + "),
@@ -594,6 +632,8 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
     penalidades: [...penMap.values()],
     complexidadeMax: maxes.length ? Math.min(...maxes) : undefined,
     restricaoSugerida: rules.find((r) => r.restricaoSugerida)?.restricaoSugerida,
+    restricoesEstruturais: estruturais.length ? estruturais : undefined,
+    posicoesEvitar: posicoes.length ? posicoes : undefined,
     refs,
     modProgressao: fundirModProgressao(
       rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),

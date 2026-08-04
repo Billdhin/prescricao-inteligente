@@ -124,6 +124,20 @@ export interface Exercise {
   imagemAnalise?: string;
   /** id da modalidade (src/data/modalities.ts) a que o exercício pertence */
   modalidade?: string;
+  /**
+   * A DOSE DESTE EXERCÍCIO É TEMPO, NÃO SÉRIE E REPETIÇÃO.
+   *
+   * Existe porque o gerador de plano escolhia exercício de FORÇA por objetivo, nível e
+   * segurança, e nada no caminho perguntava se aquilo era um exercício de força. Numa
+   * prescrição de emagrecimento para aluno com condição, os aparelhos de cardio subiam ao
+   * topo da fila justamente por serem os mais seguros em todas as métricas, e o plano saía
+   * mandando "Bicicleta ergométrica 3 séries de 13 repetições". Quanto mais frágil o aluno,
+   * mais absurda ficava a sessão dele.
+   *
+   * Vale para esteira, bicicleta, elíptico, exercício aquático e ergômetros de remo e
+   * escada: todos se prescrevem em minutos. `ehDoseAerobia` é a leitura única desta marca.
+   */
+  doseAerobia?: boolean;
   ativacao: MuscleActivation[];
   indiceEficiencia: IndiceEficiencia;
   fases: Fase[];

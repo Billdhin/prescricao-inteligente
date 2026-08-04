@@ -63,6 +63,20 @@ export interface CtxAlvo {
    * o piso é uma posição dentro do intervalo que a diretriz já define.
    */
   pisoDoCiclo?: number;
+  /**
+   * FRAÇÃO DO PASSO DE PROGRESSÃO deste perfil clínico (0 a 1), vinda de
+   * `GroupGpsRule.modProgressao.fatorIncremento` já FUNDIDA de todas as condições do aluno.
+   *
+   * O campo existia no catálogo de regras, era fundido pelo mais conservador, aparecia no
+   * raciocínio e não chegava a lugar nenhum da geração: idoso com hipertensão e obesidade
+   * grau III recebia exatamente a mesma rampa semanal de um adulto saudável. A cautela estava
+   * declarada e não era aplicada, que é o defeito mais comum deste motor.
+   *
+   * Aplica-se comprimindo a rampa em torno do PONTO DE PARTIDA dela: o plano começa no mesmo
+   * lugar e caminha menos dentro da MESMA faixa citada. Nenhum número novo, nenhuma dose fora
+   * da faixa, e o sentido da tendência é preservado. Ausente = passo cheio, como sempre foi.
+   */
+  fatorProgressao?: number;
   tipoSemana: TipoMicrociclo;
   tendenciaVolume: Tendencia;
   tendenciaIntensidade: Tendencia;
@@ -203,6 +217,18 @@ function comPiso(nivel: number, piso?: number): number {
   return p + nivel * (1 - p);
 }
 
+/**
+ * Comprime a rampa em torno do ponto de partida dela, na fração que o perfil clínico pede
+ * (ver CtxAlvo.fatorProgressao). O começo é o mesmo; o quanto se caminha é que encolhe.
+ * Piso de 0,2 para que "progride devagar" nunca vire "não progride", que seria trocar um
+ * defeito por outro: um plano que não muda em 12 semanas é a queixa que abriu esta obra.
+ */
+function comPasso(nivel: number, inicial: number, fator?: number): number {
+  if (fator == null || fator >= 1) return nivel;
+  const f = Math.min(1, Math.max(0.2, fator));
+  return inicial + (nivel - inicial) * f;
+}
+
 function nivelDaTendencia(tend: Tendencia, t: number, semanaNoMeso: number): number {
   switch (tend) {
     case "sobe":
@@ -317,9 +343,18 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
   const volTravado = travas.includes("volume");
   const intTravado = travas.includes("intensidade");
 
-  // Níveis de volume e intensidade desta semana de CARGA (0..1). Travado = congelado.
-  const nivelVolume = comPiso(volTravado ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
-  const nivelInt = comPiso(intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
+  // Níveis de volume e intensidade desta semana de CARGA (0..1). Travado = congelado. O perfil
+  // clínico comprime a rampa em torno do ponto de partida dela (ver `comPasso`).
+  const nivelVolume = comPasso(
+    comPiso(volTravado ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, t, ctx.semanaNoMeso), ctx.pisoDoCiclo),
+    comPiso(nivelDaTendencia(ctx.tendenciaVolume, 0, ctx.semanaNoMeso), ctx.pisoDoCiclo),
+    volTravado ? undefined : ctx.fatorProgressao,
+  );
+  const nivelInt = comPasso(
+    comPiso(intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso), ctx.pisoDoCiclo),
+    comPiso(nivelDaTendencia(ctx.tendenciaIntensidade, 0, ctx.semanaNoMeso), ctx.pisoDoCiclo),
+    intTravado ? undefined : ctx.fatorProgressao,
+  );
 
   if (ctx.tipoSemana === "deload") {
     // A descarga parte do alvo da ÚLTIMA semana de carga (teto do meso) e reduz honestamente. Se a
@@ -331,8 +366,10 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
       const piso = Math.round(intervaloFechado(seriesIv).min);
       alvo.seriesAlvo = Math.max(piso, ultima - 1); // menos uma série que a última carga
     }
-    // As repetições acompanham a última carga (a redução de volume vem das séries e da frequência).
-    if (repsIv) alvo.repsAlvo = ponto(repsIv, nvUltima, true);
+    // As repetições acompanham a última carga (a redução de volume vem das séries e da
+    // frequência). Elas seguem a INTENSIDADE, como na semana de carga: a descarga mantém a
+    // mesma repetição do fim do bloco e alivia por séries, RIR e carga relativa.
+    if (repsIv) alvo.repsAlvo = ponto(repsIv, 1 - niUltima, true);
     if (pctIv) {
       // Carga relativa mais baixa na descarga (esforço menor), sem sair da faixa.
       alvo.cargaRelativaAlvo = ponto(pctIv, Math.max(0, niUltima * 0.6), false);
@@ -350,9 +387,26 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
     return alvo;
   }
 
-  // Semana de carga: volume nas séries/reps, intensidade na carga relativa e no RIR.
+  /*
+   * REPETIÇÃO É DOSE DE CARGA, NÃO DE VOLUME.
+   *
+   * Ela seguia o nível de VOLUME, e a leitura era coerente na aritmética (mais repetição =
+   * mais volume) e incoerente na sala. Num mesociclo de "Acúmulo" do modelo de blocos, o
+   * volume sobe, então a repetição partia do PISO da faixa citada: um plano de Força para
+   * avançado abria a semana 1 com "3 séries de 1 repetição, intensidade alta, 3 a 5 min de
+   * descanso". Isso não é acúmulo, é teste de carga máxima, e ninguém assina isso.
+   *
+   * O piso de uma faixa de repetições é sempre a ponta MAIS PESADA, não a mais leve. Então a
+   * repetição passa a andar com a INTENSIDADE, invertida, junto com o RIR: intensidade sobe,
+   * repetição cai, carga sobe. O volume continua subindo pelas SÉRIES, que é onde ele de fato
+   * mora. O efeito nos três blocos clássicos é o que o professor espera:
+   *   - acúmulo (volume sobe, intensidade estável): mesma repetição, mais séries;
+   *   - intensificação (volume estável, intensidade sobe): menos repetição, mesmas séries;
+   *   - realização (volume reduz, intensidade sobe): menos repetição e menos séries.
+   * Nenhum número novo entra: a repetição continua dentro da mesma faixa citada.
+   */
   if (seriesIv) alvo.seriesAlvo = ponto(seriesIv, nivelVolume, true);
-  if (repsIv) alvo.repsAlvo = ponto(repsIv, nivelVolume, true);
+  if (repsIv) alvo.repsAlvo = ponto(repsIv, 1 - nivelInt, true);
   if (pctIv) alvo.cargaRelativaAlvo = ponto(pctIv, nivelInt, false);
   // RIR anda ao contrário da intensidade: mais intensidade = menos reserva (mais perto da falha).
   if (rirIv) alvo.rirAlvo = ponto(rirIv, 1 - nivelInt, true);

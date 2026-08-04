@@ -211,7 +211,7 @@ export function slugsClinicosDoPlano(input: {
  * declaradas. Com uma condição só, `fundirRegras` devolve a própria instância, então o
  * caminho de aluno com uma condição continua byte-idêntico ao de antes.
  */
-function regraClinicaDoPlano(input: GerarPlanoInput) {
+export function regraClinicaDoPlano(input: GerarPlanoInput) {
   return combineRules(slugsClinicosDoPlano(input));
 }
 
@@ -250,7 +250,7 @@ function frasePerfilClinico(input: GerarPlanoInput): string {
  * `restricoesEstruturais`, já fundidas). Deduplicadas por tag; a mais estrita
  * manda depois, no avaliador.
  */
-function restricoesDoPlano(input: GerarPlanoInput): RestricaoSelecionada[] {
+export function restricoesDoPlano(input: GerarPlanoInput): RestricaoSelecionada[] {
   const declaradas = input.restricoes ?? [];
   // Antes: só `groupGpsRules[input.grupoEspecial]`. Duas condições no mesmo aluno e as
   // restrições estruturais da segunda sumiam do plano inteiro.
@@ -304,9 +304,25 @@ function selecionarExercicios(
   const teto = NIVEL_ORDEM[nivel];
   const noNivel = (e: (typeof exercises)[number]) => NIVEL_ORDEM[(e.nivel as Nivel) ?? "Iniciante"] <= teto;
 
+  /*
+   * APARELHO DE CARDIO NÃO É EXERCÍCIO DE FORÇA.
+   *
+   * Este seletor monta os blocos de FORÇA, e ele escolhia por objetivo, nível e segurança,
+   * sem nunca perguntar se aquilo se prescreve em série e repetição. O efeito era perverso e
+   * silencioso: os aparelhos de cardio são os mais seguros em TODAS as métricas (joelho,
+   * lombar, complexidade), então quanto mais estrita a regra clínica do aluno, mais alto eles
+   * subiam na fila. Um plano de emagrecimento para hipertenso estágio 2 com obesidade grau II
+   * saía com "Bicicleta ergométrica 3 séries de 13 repetições" e "Caminhada inclinada
+   * (esteira) 3 x 13" no lugar do treino de força. O aluno mais frágil recebia a sessão mais
+   * absurda, e o profissional é quem assinava embaixo.
+   *
+   * O aeróbio continua no plano, no bloco dele, prescrito em minutos, como sempre esteve.
+   */
+  const ehForca = (e: (typeof exercises)[number]) => !e.doseAerobia;
+
   // Pool base: do objetivo quando houver o bastante; senão, todo o catálogo no nível.
-  const doObjetivo = exercises.filter((e) => e.objetivo?.includes(objetivo) && noNivel(e));
-  const pool = doObjetivo.length >= n ? doObjetivo : exercises.filter(noNivel);
+  const doObjetivo = exercises.filter((e) => e.objetivo?.includes(objetivo) && noNivel(e) && ehForca(e));
+  const pool = doObjetivo.length >= n ? doObjetivo : exercises.filter((e) => noNivel(e) && ehForca(e));
 
   const ativas = restricoesAtivas(restricoes);
   const descartados: SelecaoExercicios["descartados"] = [];
@@ -390,6 +406,10 @@ function selecionarExercicios(
     if (complexidade !== undefined && regraClinica.complexidadeMax !== undefined && complexidade > regraClinica.complexidadeMax) {
       p += 1;
     }
+    // Posição que a condição pede para evitar (ver GroupGpsRule.posicoesEvitar): peso alto o
+    // bastante para ir ao fim da fila atrás de QUALQUER alternativa, sem sumir do catálogo.
+    const posicao = e.restricaoPerfil?.posicao;
+    if (posicao && regraClinica.posicoesEvitar?.includes(posicao)) p += 10;
     return p;
   };
 
@@ -659,6 +679,8 @@ interface DadosDoAlunoNoAlvo {
   semanasDeCargaNoMacro?: number;
   /** piso da faixa para esta ONDA do modelo de blocos (ver CtxAlvo.pisoDoCiclo) */
   pisoDoCiclo?: number;
+  /** passo de progressao deste perfil clinico, ja fundido (ver CtxAlvo.fatorProgressao) */
+  fatorProgressao?: number;
 }
 
 function montarMicrociclos(
@@ -677,7 +699,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
   const semanasDeCargaNoMeso = comDeload ? Math.max(1, duracao - 1) : duracao;
@@ -694,6 +716,7 @@ function montarMicrociclos(
         cargaAntesDesteMeso != null ? cargaAntesDesteMeso + (ehDeload ? semanasDeCargaNoMeso : s + 1) : undefined,
       semanasDeCargaNoMacro,
       pisoDoCiclo,
+      fatorProgressao,
       tipoSemana: ehDeload ? "deload" : "carga",
       tendenciaVolume,
       tendenciaIntensidade,
@@ -900,6 +923,8 @@ function montarMacrocicloGenerico(
         restricoes: restricoesDoPlano(input),
         objetivoSecundario: input.objetivoSecundario,
         regraClinica: regraClinicaDoPlano(input),
+        // O perfil clinico progride no passo dele: fundido pelo mais conservador (ver comPasso).
+        fatorProgressao: regraClinicaDoPlano(input)?.modProgressao?.fatorIncremento,
         cargaAntesDesteMeso: rampa.total != null ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: rampa.total,
         pisoDoCiclo: pisoDaOnda(m),
@@ -1020,11 +1045,25 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
   const resto = semanas - base * nMeso;
 
   const duracoes = sequencia.map((_, m) => base + (m < resto ? 1 : 0));
-  // A rampa do macro conta SÓ os mesociclos que de fato progridem. As fases de adaptação
-  // (a primeira) e de manutenção (as estendidas) ficam estáveis por decisão clínica, e
-  // incluí-las no cômputo fazia a rampa começar acima do patamar da adaptação: o volume
-  // subia um degrau ao sair da fase 1, que é o contrário do que "linear" promete.
-  const progride = sequencia.map(({ estendida }, m) => !(m === 0 || estendida));
+  /*
+   * A FASE DE ENTRADA É O COMEÇO DA RAMPA, NÃO UM PLATÔ NO MEIO DA FAIXA.
+   *
+   * Antes, a primeira fase era marcada como "estável" junto com as fases de manutenção. E
+   * "estável" lê o MEIO da faixa citada, enquanto a fase seguinte, que progride, começa no
+   * PISO dela. O resultado, visível numa bancada de cenários clínicos: um plano de 12 semanas
+   * para hipertenso estágio 2 com obesidade grau II saía 4x9 com RIR 2 nas semanas 1 a 3,
+   * caía para 4x12 com RIR 3 (mais leve) na semana 4, e só voltava ao patamar da semana 1 na
+   * semana 11. A fase chamada "Entrada, segurança e adaptação" era o segundo trecho mais
+   * pesado do macrociclo, e o plano terminava na dose em que tinha começado.
+   *
+   * Agora a fase de entrada participa da rampa como o primeiro trecho dela: começa no piso e
+   * sobe, sem degrau na passagem para a fase 2. Quem continua estável são só as fases
+   * ESTENDIDAS, que são repetição da última fase para sustentar ganho em horizonte longo, e
+   * ali o platô é o objetivo declarado. O passo dessa subida já é o do perfil clínico, pelo
+   * `fatorProgressao` fundido: quem precisa progredir devagar progride devagar, e não
+   * "progride do meio da faixa para o meio da faixa".
+   */
+  const progride = sequencia.map(({ estendida }) => !estendida);
   const rampa = rampaNoMacro(
     modelo,
     duracoes.map((d, m) => (progride[m] ? d : 0)),
@@ -1037,12 +1076,10 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
     const fim = cursor + dur - 1;
     cursor = fim + 1;
     const comDeload = dur >= 4;
-    // A PRIMEIRA fase e as repetições da última são de adaptação e manutenção: ficam
-    // estáveis por decisão clínica, e o modelo não manda nisso. Nas fases do meio, quem
-    // manda é o MODELO escolhido, como no macrociclo genérico. Antes o modelo era ignorado
-    // aqui do começo ao fim, então um plano "linear" de aluno com condição subia volume e
-    // intensidade juntos, que não é linear nenhum.
-    const adaptativa = m === 0 || estendida;
+    // As repetições da última fase são MANUTENÇÃO: ficam estáveis por decisão clínica, e o
+    // modelo não manda nisso. Em todas as demais, inclusive a de entrada, quem manda é o
+    // MODELO escolhido, como no macrociclo genérico (ver o comentário da rampa acima).
+    const adaptativa = estendida;
     const doModelo = tendenciasDoModelo(modelo, { tv: "sobe", ti: "sobe" });
     const tv: Tendencia = adaptativa ? "estavel" : doModelo.tv;
     const ti: Tendencia = adaptativa ? "estavel" : doModelo.ti;
@@ -1077,6 +1114,8 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
         restricoes: restricoesDoPlano(input),
         objetivoSecundario: input.objetivoSecundario,
         regraClinica: regraClinicaDoPlano(input),
+        // O perfil clinico progride no passo dele: fundido pelo mais conservador (ver comPasso).
+        fatorProgressao: regraClinicaDoPlano(input)?.modProgressao?.fatorIncremento,
         cargaAntesDesteMeso: rampa.total != null && progride[m] ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: progride[m] ? rampa.total : undefined,
       }),
