@@ -20,7 +20,10 @@ const tipoInfo: Record<LessonTipo, { label: string; tone: PillTone; icon: React.
 
 function lessonHref(l: Lesson): string | null {
   if (l.tipo === "lab" && l.ref) return `/movement-lab/${l.ref}`;
-  if (l.tipo === "caso" && l.ref) return `/aprender/casos/${l.ref}`;
+  // Os `ref` de caso nas trilhas são slugs de @/data/cases (caso-lombar-iniciante e
+  // companhia), não do catálogo do Aprender. Apontar para /aprender/casos fazia os
+  // três itens de caso das trilhas caírem em "Caso não encontrado".
+  if (l.tipo === "caso" && l.ref) return `/casos-praticos/${l.ref}`;
   return null;
 }
 

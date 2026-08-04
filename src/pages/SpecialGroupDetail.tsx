@@ -259,7 +259,10 @@ export function SpecialGroupDetail() {
                             {relacionados.map((c) => (
                               <Link
                                 key={c!.slug}
-                                to={`/aprender/casos/${c!.slug}`}
+                                // O cartão monta o título com `getCase` de @/data/cases e o
+                                // link ia para /aprender/casos, que é OUTRO catálogo, com
+                                // outros slugs. Card de um lugar, endereço de outro.
+                                to={`/casos-praticos/${c!.slug}`}
                                 className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 transition-colors hover:bg-surface-soft"
                               >
                                 <PlayCircle className="h-5 w-5 shrink-0 text-cta" />

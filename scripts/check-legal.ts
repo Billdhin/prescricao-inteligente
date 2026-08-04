@@ -128,6 +128,47 @@ if (!precoNaFonte) reprovar("F", "planos.ts não define PRECO_MENSAL.");
 if (!/PRECO_ANUAL_FUNDADOR/.test(PLANOS) || PLANOS.length < 400)
   reprovar("F", "controle positivo: a fonte única de preço está vazia demais para o bloco F significar algo.");
 
+
+/* --- G. Nenhum link de caso aponta para um destino que não existe --------- */
+
+// Os grupos especiais e as trilhas montam o cartão do caso com o título vindo de
+// `@/data/cases` e mandavam o clique para /aprender/casos, que é OUTRO catálogo.
+// A interseção entre os dois conjuntos de slugs era ZERO: onze links, onze
+// "Caso não encontrado". Esta asserção trava a volta disso, de qualquer origem.
+{
+  const CASES = lerCru("src/data/cases.ts");
+  const APRENDER = lerCru("src/features/learning/mocks/cases.ts");
+  const slugs = (t: string) => new Set([...t.matchAll(/slug:\s*"([^"]+)"/g)].map((m) => m[1]));
+  const praticos = slugs(CASES);
+  const doAprender = slugs(APRENDER);
+
+  if (praticos.size < 5)
+    reprovar("G", "controle positivo: o catálogo de casos práticos está pequeno demais para o bloco G significar algo.");
+
+  const refs: [string, string][] = [];
+  for (const m of lerCru("src/data/specialGroups.ts").matchAll(/casosRelacionados:\s*\[([^\]]*)\]/g))
+    for (const s2 of m[1].matchAll(/"([^"]+)"/g)) refs.push(["specialGroups", s2[1]]);
+  for (const m of lerCru("src/data/tracks.ts").matchAll(/tipo:\s*"caso"[^}]*?ref:\s*"([^"]+)"/g))
+    refs.push(["tracks", m[1]]);
+
+  if (refs.length < 5)
+    reprovar("G", "controle positivo: quase nenhuma referência de caso foi encontrada; o bloco G não está lendo os dados.");
+
+  if (!/path="\/casos-praticos\/:slug"/.test(APP))
+    reprovar("G", "a rota /casos-praticos/:slug não existe: os casos práticos voltam a não ter destino.");
+
+  for (const [origem, slug] of refs) {
+    if (praticos.has(slug) || doAprender.has(slug)) continue;
+    reprovar("G", `${origem} referencia o caso "${slug}", que não existe em nenhum dos dois catálogos.`);
+  }
+
+  // E o construtor de link tem que mandar para a rota certa.
+  if (!lerCru("src/pages/TrackDetail.tsx").includes("/casos-praticos/"))
+    reprovar("G", "TrackDetail monta o link de caso para uma rota que não conhece os slugs de @/data/cases.");
+  if (!lerCru("src/pages/SpecialGroupDetail.tsx").includes("/casos-praticos/"))
+    reprovar("G", "SpecialGroupDetail monta o link de caso para uma rota que não conhece os slugs de @/data/cases.");
+}
+
 /* ------------------------------- resultado ------------------------------- */
 
 if (falhas.length) {

@@ -5,6 +5,7 @@ import { ThemeApplier } from "@/lib/theme/ThemeApplier";
 import { Landing } from "@/pages/Landing";
 import { Pricing } from "@/pages/Pricing";
 import { Termos, Privacidade } from "@/pages/DocumentoLegal";
+import { CasoPratico } from "@/pages/CasoPratico";
 import { Dashboard } from "@/pages/Dashboard";
 import { Gps } from "@/pages/Gps";
 import { PrescreverTreino } from "@/pages/PrescreverTreino";
@@ -116,6 +117,9 @@ export default function App() {
           <Route path="/alunos/:id" element={<AlunoDetail />} />
           <Route path="/alunos/:id/perfil" element={<AlunoPerfil />} />
           <Route path="/special-groups" element={<SpecialGroups />} />
+          {/* Os 10 casos de decisao de src/data/cases.ts voltaram a ter destino: os
+              links dos grupos e das trilhas caiam todos em "Caso nao encontrado". */}
+          <Route path="/casos-praticos/:slug" element={<CasoPratico />} />
           <Route path="/special-groups/:slug" element={<SpecialGroupDetail />} />
           <Route path="/decisao" element={<DecisaoRedirect />} />
           {/* Favoritos de exercício foram fundidos no "Salvos" do Aprender. */}
