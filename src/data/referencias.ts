@@ -61,7 +61,7 @@ export const referencias: Referencia[] = [
     fonte: "Arquivos Brasileiros de Cardiologia (Sociedade Brasileira de Cardiologia)",
     ano: 2021,
     doi: "10.36660/abc.20201238",
-    nota: "Diretriz da SBC. Classificação da pressão arterial de consultório em adultos: hipertensão estágio 1 de 140 a 159 por 90 a 99 mmHg; estágio 2 de 160 a 179 por 100 a 109 mmHg; estágio 3 a partir de 180 por 110 mmHg; abaixo de 140 por 90 mmHg não caracteriza hipertensão de consultório. O maior valor, sistólico ou diastólico, define o estágio. Base dos cortes de estágio usados no classificador e no semáforo, dos limites prudentes de pressão pré-sessão por estágio. A partir de 180 por 110 mmHg a orientação é adiar a sessão e recomendar avaliação ou liberação médica, não prescrever treino.",
+    nota: "Diretriz da SBC. Classificação da pressão arterial de consultório em adultos: hipertensão estágio 1 de 140 a 159 por 90 a 99 mmHg; estágio 2 de 160 a 179 por 100 a 109 mmHg; estágio 3 a partir de 180 por 110 mmHg; abaixo de 140 por 90 mmHg não caracteriza hipertensão de consultório. O maior valor, sistólico ou diastólico, define o estágio. Base dos cortes de estágio usados no classificador e no semáforo. ATENÇÃO ao que é da diretriz e ao que é da casa: a diretriz dá a CLASSIFICAÇÃO acima; a decisão de adiar a sessão a partir de 180 por 110 mmHg é prudencial do produto, apoiada na gravidade dessa faixa (ver tocci-emergencia-2018) e não numa recomendação de cancelar treino que a diretriz tenha escrito.",
   },
   {
     id: "pescatello-2004",
@@ -653,6 +653,130 @@ export const referencias: Referencia[] = [
     ano: 1968,
     pmid: "5694044",
     nota: "Trabalho que estabeleceu a correlação entre a distância percorrida em 12 minutos e o consumo máximo de oxigênio medido em esteira, origem do teste de campo que leva o nome do autor. Base da estimativa de VO₂ por 12 minutos. É teste de esforço máximo, e a forma da equação em metros circula em versões ligeiramente diferentes: o app trata o resultado como faixa, não como medida.",
+  },
+
+  /* ===========================================================================
+   * GATES CLÍNICOS POR CONDIÇÃO (04/08/2026)
+   *
+   * Entraram na rodada que deu checklist próprio a TODAS as condições do
+   * catálogo. Cada uma foi conferida no PubMed antes de ser citada, e a nota
+   * separa o que o resumo indexado CONFIRMA do que é decisão prudente da casa.
+   * ========================================================================= */
+  {
+    id: "meah-contraindicacoes-2020",
+    autores: "Meah VL, Davies GA, Davenport MH",
+    titulo:
+      "Why can't I exercise during pregnancy? Time to revisit medical 'absolute' and 'relative' contraindications: systematic review of evidence of harm and a call to action",
+    fonte: "British Journal of Sports Medicine, 54(23):1395-1404",
+    ano: 2020,
+    doi: "10.1136/bjsports-2020-102042",
+    pmid: "32513676",
+    nota: "Revisão sistemática de 44 estudos que reavaliou as contraindicações ao exercício na gestação. Achado central, e é o que muda o gate: a MAIORIA das condições listadas como contraindicação vinha de opinião de especialista, com evidência mínima de dano do exercício ou de benefício da restrição de atividade; 11 complicações antes classificadas como contraindicação (por exemplo hipertensão gestacional e gestação gemelar) são casos em que a gestante tende a se beneficiar da atividade regular, com ou sem adaptação. As que o trabalho sustenta como contraindicação ABSOLUTA, por forte potencial de dano materno ou fetal, são: doença cardiorrespiratória grave, descolamento prematuro da placenta, vasa prévia, diabetes tipo 1 descontrolado, restrição de crescimento intrauterino, trabalho de parto prematuro ativo, pré-eclâmpsia grave e insuficiência cervical. É esta lista, e não uma lista maior, que fecha o semáforo da gestante.",
+  },
+  {
+    id: "mottola-gestacao-2019",
+    autores:
+      "Mottola MF, Davenport MH, Ruchat SM, Davies GA, Poitras VJ, Gray CE, Jaramillo Garcia A, Barrowman N, Adamo KB, et al.",
+    titulo: "2019 Canadian guideline for physical activity throughout pregnancy",
+    fonte: "British Journal of Sports Medicine, 52(21):1339-1346",
+    ano: 2018,
+    doi: "10.1136/bjsports-2018-100056",
+    pmid: "30337460",
+    nota: "Diretriz canadense de atividade física na gestação, construída com GRADE e AGREE II. O resumo indexado confirma o balanço: os benefícios da atividade física pré-natal são moderados e NENHUM dano foi identificado. A lista de sinais de alerta para interromper a sessão (sangramento vaginal, perda de líquido, contrações regulares dolorosas, dor no peito, tontura, dor de cabeça, falta de ar antes do esforço, dor ou inchaço na panturrilha) está no corpo da diretriz e NÃO é conferível pelo resumo do PubMed: o app a usa como checklist do dia, e o texto do item diz que a conduta é do obstetra.",
+  },
+  {
+    id: "acog-804-2020",
+    autores: "American College of Obstetricians and Gynecologists",
+    titulo: "Physical Activity and Exercise During Pregnancy and the Postpartum Period (Committee Opinion 804)",
+    fonte: "Obstetrics & Gynecology, 135(4):e178-e188",
+    ano: 2020,
+    doi: "10.1097/AOG.0000000000003772",
+    pmid: "32217980",
+    nota: "Parecer do ACOG. Na AUSÊNCIA de complicação obstétrica ou clínica, a atividade física na gestação é segura e desejável, e quem já era ativa antes pode continuar na gestação e no pós-parto. Sustenta o enquadramento do semáforo da gestante e do pós-parto: a liberação obstétrica existe para identificar a complicação, não para pôr o exercício em dúvida.",
+  },
+  {
+    id: "parsons-broncoespasmo-2013",
+    autores: "Parsons JP, Hallstrand TS, Mastronarde JG, Kaminsky DA, Rundell KW, Hull JH, et al.",
+    titulo: "An official American Thoracic Society clinical practice guideline: exercise-induced bronchoconstriction",
+    fonte: "American Journal of Respiratory and Critical Care Medicine, 187(9):1016-1027",
+    ano: 2013,
+    doi: "10.1164/rccm.201303-0437ST",
+    pmid: "23634861",
+    nota: "Diretriz da ATS sobre broncoconstrição induzida pelo exercício. Recomendação FORTE de uso de beta-2 agonista de curta ação ANTES do exercício em todos os pacientes com a condição; quem segue sintomático apesar disso tem recomendações fortes de tratamento diário adicional. Base do item de checklist que pergunta se a medicação prescrita está disponível: quem prescreve é o médico, o profissional de educação física só confere que ela está à mão antes de começar.",
+  },
+  {
+    id: "beck-essa-2017",
+    autores: "Beck BR, Daly RM, Singh MAF, Taaffe DR",
+    titulo:
+      "Exercise and Sports Science Australia (ESSA) position statement on exercise prescription for the prevention and management of osteoporosis",
+    fonte: "Journal of Science and Medicine in Sport, 20(5):438-445",
+    ano: 2017,
+    doi: "10.1016/j.jsams.2016.10.001",
+    pmid: "27840033",
+    nota: "Posicionamento da ESSA. O osso responde a impacto e a treino resistido progressivo de alta intensidade, e otimizar força, equilíbrio e mobilidade reduz o risco de queda e, por consequência, de fratura. A flexão de coluna CARREGADA não é recomendada, e o impacto pode precisar de adaptação diante de osteoartrite ou fragilidade. Base do item de coluna e do item de risco de queda no checklist de osteopenia e osteoporose.",
+  },
+  {
+    id: "giangregorio-2014",
+    autores:
+      "Giangregorio LM, Papaioannou A, Macintyre NJ, Ashe MC, Heinonen A, Shipp K, Wark J, McGill S, Keller H, Jain R, Laprade J, Cheung AM",
+    titulo: "Too Fit To Fracture: exercise recommendations for individuals with osteoporosis or osteoporotic vertebral fracture",
+    fonte: "Osteoporosis International, 25(3):821-835",
+    ano: 2014,
+    doi: "10.1007/s00198-013-2523-2",
+    pmid: "24281053",
+    nota: "Consenso internacional por GRADE. Recomendação FORTE de programa multicomponente com treino resistido e de equilíbrio para quem tem osteoporose ou fratura vertebral, e recomendação de não fazer só aeróbio. Declara também o limite honesto: NÃO há evidência suficiente para quantificar os riscos do exercício nessa população, e por isso as recomendações são condicionais. É por causa desse limite que o checklist pergunta por dor óssea nova em vez de prometer um teto de carga seguro.",
+  },
+  {
+    id: "tocci-emergencia-2018",
+    autores: "Tocci G, Figliuzzi I, Presta V, Miceli F, Citoni B, Coluccia R, Musumeci MB, Ferrucci A, Volpe M",
+    titulo: "Therapeutic Approach to Hypertension Urgencies and Emergencies During Acute Coronary Syndrome",
+    fonte: "High Blood Pressure & Cardiovascular Prevention, 25(3):253-259",
+    ano: 2018,
+    doi: "10.1007/s40292-018-0275-y",
+    pmid: "30066227",
+    nota: "Revisão sobre urgência e emergência hipertensiva. Pressão sustentada acima de 180 por 110 mmHg ASSOCIADA a lesão aguda de órgão-alvo caracteriza emergência hipertensiva e pede atendimento hospitalar. Sustenta o teto de 180 por 110 do semáforo como a faixa em que a sessão sai do campo do treino, junto com a classificação de estágio 3 da SBC. O trabalho não trata de sessão de treino: o que ele dá é a gravidade da faixa, e a decisão de adiar a sessão ali é prudencial da casa.",
+  },
+  {
+    id: "hansen-expert-2018",
+    autores: "Hansen D, Niebauer J, Cornelissen V, Barna O, Neunhäuserer D, Stettler C, et al.",
+    titulo:
+      "Exercise Prescription in Patients with Different Combinations of Cardiovascular Disease Risk Factors: A Consensus Statement from the EXPERT Working Group",
+    fonte: "Sports Medicine, 48(8):1781-1797",
+    ano: 2018,
+    doi: "10.1007/s40279-018-0930-4",
+    pmid: "29729003",
+    nota: "Consenso do grupo EXPERT, da European Association of Preventive Cardiology, sobre prescrição de exercício em quem acumula fatores de risco cardiovascular (obesidade, hipertensão, diabetes tipo 1 e 2, dislipidemia). Formula recomendações de intensidade, frequência, volume e tipo E precauções de segurança para cada fator, e trata explicitamente da COMBINAÇÃO deles, que é a situação do aluno com mais de uma condição declarada. Sustenta o enquadramento cardiometabólico dos checklists de pré-diabetes, síndrome metabólica, dislipidemia e esteatose hepática.",
+  },
+  {
+    id: "pescatello-pa-2019",
+    autores: "Pescatello LS, Buchner DM, Jakicic JM, Powell KE, Kraus WE, Bloodgood B, et al.",
+    titulo: "Physical Activity to Prevent and Treat Hypertension: A Systematic Review",
+    fonte: "Medicine & Science in Sports & Exercise, 51(6):1314-1323",
+    ano: 2019,
+    doi: "10.1249/MSS.0000000000001943",
+    pmid: "31095088",
+    nota: "Revisão guarda-chuva de 17 metanálises e 1 revisão sistemática, com 594.129 adultos, para o comitê científico das diretrizes de atividade física dos EUA. Evidência FORTE de que a atividade física reduz a pressão em quem tem pressão normal, pré-hipertensão e hipertensão, e de que reduz a progressão de doença cardiovascular em quem já é hipertenso, com benefício maior justamente em quem parte de pressão mais alta. É a base de o semáforo da hipertensão não tratar pressão alta habitual como motivo para cancelar a sessão.",
+  },
+  {
+    id: "iftikhar-apneia-2014",
+    autores: "Iftikhar IH, Kline CE, Youngstedt SD",
+    titulo: "Effects of exercise training on sleep apnea: a meta-analysis",
+    fonte: "Lung, 192(1):175-184",
+    ano: 2014,
+    doi: "10.1007/s00408-013-9511-3",
+    pmid: "24077936",
+    nota: "Metanálise de 5 estudos e 129 participantes. O treino supervisionado reduziu o índice de apneia e hipopneia em 6,27 eventos por hora, melhorou a eficiência do sono em 5,75%, reduziu a sonolência diurna na escala de Epworth em 3,3 pontos e elevou o VO₂ de pico em 3,93 mL/kg/min, com mudança mínima de peso. Sustenta o treino como parte do cuidado na apneia do sono; o tratamento da apneia continua sendo do profissional de saúde.",
+  },
+  {
+    id: "singh-saudemental-2023",
+    autores: "Singh B, Olds T, Curtis R, Dumuid D, Virgara R, Watson A, et al.",
+    titulo:
+      "Effectiveness of physical activity interventions for improving depression, anxiety and distress: an overview of systematic reviews",
+    fonte: "British Journal of Sports Medicine, 57(18):1203-1209",
+    ano: 2023,
+    doi: "10.1136/bjsports-2022-106195",
+    pmid: "36796860",
+    nota: "Revisão guarda-chuva de 97 revisões, 1.039 ensaios e 128.119 participantes. Efeito MÉDIO da atividade física sobre depressão (mediana -0,43), ansiedade (mediana -0,42) e sofrimento psicológico (-0,60) frente ao cuidado usual, com os maiores benefícios em quem tem depressão e em gestantes e puérperas. Os autores concluem que a atividade física deve ser abordagem central no manejo desses quadros. Sustenta o tom do checklist de ansiedade e sintomas depressivos: o gate é encaminhar diante de piora importante, não desencorajar o treino.",
   },
 ];
 

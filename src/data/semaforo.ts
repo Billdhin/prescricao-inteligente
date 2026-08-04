@@ -112,63 +112,107 @@ function mkObesidadeSemaforo(slug: string, grau: 1 | 2 | 3): ChecklistSemaforo {
   };
 }
 
-export const semaforos: ChecklistSemaforo[] = [
-  /* ------------------------- HIPERTENSÃO ESTÁGIO 1 ------------------------ */
-  {
-    grupoSlug: "hipertensao-estagio-1",
+/**
+ * CHECKLIST DA HIPERTENSÃO, NOS DOIS ESTÁGIOS.
+ *
+ * ## O que estava errado, e por quê
+ *
+ * A versão anterior pintava VERMELHO de 160/100 para cima e, no estágio 2, também quando não
+ * havia liberação médica e quando o aluno não tinha tomado a medicação do dia. Some as três: o
+ * hipertenso estágio 2 é, por definição, quem vive na faixa de 160/100 a 179/109. O produto
+ * cancelava a sessão da pessoa por ela ter exatamente a condição que ela declarou ter.
+ *
+ * E isso contraria a direção da própria evidência que o grupo cita. O position stand do ACSM
+ * (pescatello-2004) diz, com todas as letras, que ENQUANTO a avaliação formal e o manejo
+ * acontecem é razoável que a maioria dos pacientes comece exercício de intensidade moderada,
+ * como caminhada. A revisão guarda-chuva de 594 mil adultos (pescatello-pa-2019) mostra
+ * evidência forte de que a atividade física reduz a pressão e reduz a progressão de doença
+ * cardiovascular em quem já é hipertenso, com benefício MAIOR justamente em quem parte de
+ * pressão mais alta. Cancelar a sessão dessa pessoa não é cautela: é tirar dela o tratamento.
+ *
+ * ## O que passa a valer
+ *
+ * O vermelho fica reservado a duas coisas, e as duas são defensáveis:
+ *   1. SINTOMA ATIVO (dor no peito, tontura, dor de cabeça intensa, visão turva). Aí não é dia
+ *      de treinar, é dia de investigar, em qualquer pressão.
+ *   2. PRESSÃO A PARTIR DE 180/110, que é o estágio 3 da SBC e a faixa que, sustentada e com
+ *      lesão aguda de órgão-alvo, caracteriza emergência hipertensiva (tocci-emergencia-2018).
+ *
+ * Faltar liberação médica ou faltar a medicação do dia passa a ser AMARELO: a sessão acontece
+ * em intensidade moderada, sem esforço máximo e sem apneia, e o que fica condicionado à
+ * liberação é a PROGRESSÃO para intensidade vigorosa. É exatamente o desenho que o position
+ * stand descreve, e continua sendo mais conservador do que ele em um ponto de propósito: a
+ * casa mantém a recomendação de buscar a avaliação, só não usa a sessão como refém dela.
+ *
+ * A diferença entre estágio 1 e estágio 2 deixa de ser "quem trava" e passa a ser o TETO de
+ * esforço e a vigilância: o estágio 2 trabalha mais leve e remede a pressão depois do
+ * aquecimento. É o que a diferença de risco justifica, sem cancelar o cuidado.
+ */
+function mkHipertensaoSemaforo(estagio: 1 | 2): ChecklistSemaforo {
+  const pseTeto = estagio === 2 ? 4 : 5;
+  const vigia =
+    estagio === 2
+      ? " Remeça a PA depois do aquecimento e observe sintomas durante toda a sessão."
+      : "";
+  return {
+    grupoSlug: `hipertensao-estagio-${estagio}`,
     itens: [
       {
         id: "pa-repouso",
         pergunta: "Pressão arterial de repouso medida agora (após ~5 min sentado)",
         porque:
-          "O ponto de partida do dia define se o esforço é prudente. No estágio 1, subir de faixa em repouso pede adiar a sessão.",
+          estagio === 2
+            ? "A medida do dia calibra a dose, não decide se o aluno merece treinar. Quem tem estágio 2 vive na faixa de 160/100: é ali que o exercício de intensidade moderada é o tratamento, e o que muda com a pressão mais alta é o teto de esforço."
+            : "A medida do dia calibra a dose. Pressão dentro da faixa habitual do estágio não é motivo para cancelar: é a condição que o exercício trata.",
         opcoes: [
           { valor: "ok", rotulo: "Abaixo de 140/90 mmHg", cor: "verde" },
           {
             valor: "estagio1",
             rotulo: "140/90 a 159/99 mmHg (estágio 1)",
-            cor: "amarelo",
-            acao: "Sessão leve: reduza intensidade, evite isometrias e apneia, monitore PSE; remeça a PA após o aquecimento.",
+            cor: "verde",
+            acao: undefined,
           },
           {
             valor: "estagio2",
-            rotulo: "160/100 a 179/109 mmHg (acima do habitual)",
-            cor: "vermelho",
-            acao: "Não inicie a sessão hoje. Oriente remedir em repouso e, se persistir, procurar avaliação médica.",
+            rotulo: "160/100 a 179/109 mmHg (estágio 2)",
+            cor: "amarelo",
+            acao: `Sessão de intensidade moderada (PSE ≤${pseTeto}), respiração contínua, sem apneia, sem isometria sustentada e sem esforço máximo.${vigia} Se essa faixa for nova para este aluno, oriente remedir em repouso e procurar avaliação médica.`,
           },
           {
             valor: "crise",
-            rotulo: "180/110 mmHg ou acima",
+            rotulo: "180/110 mmHg ou acima (estágio 3)",
             cor: "vermelho",
-            acao: "Não inicie. Pressão muito elevada: oriente remedir em repouso e procurar avaliação ou liberação médica antes de retomar.",
+            acao: "Não inicie a sessão. Oriente remedir em repouso após alguns minutos e, se confirmar, procurar avaliação médica antes de retomar; com dor no peito, falta de ar, déficit neurológico ou visão turva junto, o encaminhamento é imediato.",
           },
           {
             valor: "sem-medida",
             rotulo: "Não foi possível medir",
             cor: "amarelo",
-            acao: "Sem medida do dia: mantenha esforço leve (PSE ≤4), sem apneia, e observe sinais durante toda a sessão.",
+            acao: `Sem medida do dia: mantenha esforço leve a moderado (PSE ≤${pseTeto}), sem apneia, e observe sinais durante toda a sessão.`,
           },
         ],
-        refs: ["sbc-2020", "acsm-getp11"],
+        refs: ["sbc-2020", "tocci-emergencia-2018", "pescatello-pa-2019"],
       },
       {
         id: "sintomas",
         pergunta: "Apresenta agora dor de cabeça intensa, tontura, dor no peito ou visão turva?",
-        porque: "Sintomas ativos mudam o dia: não é dia de treinar, é dia de investigar.",
+        porque:
+          "Este é o item que de fato trava a sessão, e trava em qualquer pressão: sintoma ativo deixa de ser caso de treino e passa a ser caso de investigação.",
         opcoes: simNao("vermelho", "verde", "Interrompa o atendimento e oriente avaliação médica antes de retomar."),
-        refs: ["sbc-2020"],
+        refs: ["sbc-2020", "acsm-getp11"],
       },
       {
         id: "medicacao",
         pergunta: "Tomou a medicação anti-hipertensiva habitual hoje (se prescrita)?",
-        porque: "Sem a medicação do dia, a resposta pressórica ao esforço fica menos previsível.",
+        porque:
+          "Sem a medicação do dia a resposta pressórica ao esforço fica menos previsível. Isso pede dose menor e vigilância, não cancelamento: a sessão perdida também tem custo.",
         opcoes: [
           { valor: "sim", rotulo: "Sim", cor: "verde" },
           {
             valor: "nao",
             rotulo: "Não",
             cor: "amarelo",
-            acao: "Reduza a intensidade (PSE ≤4), evite picos de esforço e priorize contínuo leve; registre no prontuário.",
+            acao: `Reduza a intensidade (PSE ≤${pseTeto}), evite picos de esforço e apneia, prefira contínuo leve e registre no prontuário. Oriente o aluno a alinhar o horário da medicação com quem a prescreveu.`,
           },
           { valor: "na", rotulo: "Não usa medicação", cor: "verde" },
         ],
@@ -177,113 +221,146 @@ export const semaforos: ChecklistSemaforo[] = [
       {
         id: "autorizacao",
         pergunta: "Há liberação/avaliação médica válida para exercício?",
-        porque: "Em hipertensão, a liberação médica formal é o lastro documental do trabalho do profissional.",
+        porque:
+          "A liberação é o lastro documental do profissional e a porta para progredir a intensidade. Enquanto ela não sai, o position stand do ACSM diz que é razoável começar em intensidade moderada, como caminhada: é isso que o app faz.",
         opcoes: [
           { valor: "sim", rotulo: "Sim, em dia", cor: "verde" },
           {
             valor: "vencida",
             rotulo: "Sim, mas antiga (>12 meses)",
             cor: "amarelo",
-            acao: "Prossiga com intensidade leve a moderada e oriente atualizar a avaliação médica.",
+            acao: "Prossiga em intensidade leve a moderada e oriente atualizar a avaliação médica antes de progredir para esforço vigoroso.",
           },
           {
             valor: "nao",
             rotulo: "Não",
             cor: "amarelo",
-            acao: "Trabalhe apenas em intensidade leve, sem esforços máximos, e condicione a progressão à liberação médica.",
+            acao: `Faça a sessão em intensidade moderada (PSE ≤${pseTeto}), sem esforço máximo e sem apneia, e condicione a PROGRESSÃO para intensidade vigorosa à liberação médica. Encaminhe para a avaliação e registre o encaminhamento.`,
           },
         ],
-        refs: ["acsm-getp11", "warburton-2011"],
+        refs: ["pescatello-2004", "warburton-2011", "acsm-getp11"],
       },
     ],
-  },
+  };
+}
 
-  /* ------------------------- HIPERTENSÃO ESTÁGIO 2 ------------------------ */
-  // Mesmo checklist, cortes de PA e liberação mais conservadores: a linha de base
-  // do estágio 2 já é mais alta e a liberação médica formal é gate (não apenas guia).
-  {
-    grupoSlug: "hipertensao-estagio-2",
+/**
+ * A FAMÍLIA CARDIOMETABÓLICA: pré-diabetes, síndrome metabólica, dislipidemia e esteatose
+ * hepática. São quatro condições que compartilham o mesmo risco de fundo e o mesmo gate de
+ * porta (sintoma em repouso), e diferem no ITEM DO MEIO, que é o que cada uma tem de próprio.
+ *
+ * O consenso do grupo EXPERT (hansen-expert-2018) trata justamente da COMBINAÇÃO desses
+ * fatores, que é a situação real do aluno: raramente eles vêm sozinhos. Por isso o checklist
+ * é o mesmo esqueleto, e não quatro checklists que se contradizem em três palavras.
+ */
+type FocoCardiometabolico = "glicemia" | "pressao" | "estatina" | "fadiga";
+
+function itemProprioCardiometabolico(foco: FocoCardiometabolico): ItemSemaforo {
+  switch (foco) {
+    case "glicemia":
+      return {
+        id: "glicemia",
+        pergunta: "Se mede a glicemia: o valor de hoje está dentro do habitual do aluno, e ele se alimentou nas últimas horas?",
+        porque:
+          "No pré-diabetes sem medicação hipoglicemiante o risco de hipoglicemia é baixo, mas jejum prolongado ainda derruba a sessão. A pergunta serve para calibrar a dose, não para assustar.",
+        opcoes: [
+          { valor: "ok", rotulo: "Sim, dentro do habitual", cor: "verde" },
+          {
+            valor: "fora",
+            rotulo: "Fora do habitual ou com mal-estar",
+            cor: "vermelho",
+            acao: "Não inicie a sessão. Oriente seguir o plano de saúde do aluno e retome quando estabilizar.",
+          },
+          {
+            valor: "jejum",
+            rotulo: "Não se alimentou",
+            cor: "amarelo",
+            acao: "Ofereça um lanche leve antes ou reduza volume e intensidade da sessão.",
+          },
+          { valor: "na", rotulo: "Não mede glicemia", cor: "verde" },
+        ],
+        refs: ["colberg-2016", "hansen-expert-2018"],
+      };
+    case "pressao":
+      return {
+        id: "pa-hoje",
+        pergunta: "Se foi possível medir: a pressão de repouso de hoje está abaixo de 180/110 mmHg?",
+        porque:
+          "Pressão alta faz parte do diagnóstico de síndrome metabólica, então medir é rotina aqui. O corte que tira a sessão do campo do treino é o mesmo do semáforo da hipertensão: 180 por 110.",
+        opcoes: [
+          { valor: "ok", rotulo: "Sim, abaixo de 180/110", cor: "verde" },
+          {
+            valor: "alta",
+            rotulo: "180/110 mmHg ou acima",
+            cor: "vermelho",
+            acao: "Não inicie a sessão. Oriente remedir em repouso e, se confirmar, procurar avaliação médica antes de retomar.",
+          },
+          { valor: "sem-medida", rotulo: "Não foi possível medir", cor: "verde" },
+        ],
+        refs: ["sbc-2020", "tocci-emergencia-2018"],
+      };
+    case "estatina":
+      return {
+        id: "queixa-muscular",
+        pergunta: "Há dor, fraqueza ou sensibilidade muscular DIFUSA, sem relação com o treino recente?",
+        porque:
+          "É a queixa muscular associada às estatinas, e a marca dela é não seguir o que foi treinado. Confundi-la com dor de treino troca um encaminhamento por um ajuste de série.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Registre a queixa com localização e intensidade, mantenha a sessão em intensidade leve e oriente conversar com quem prescreveu a medicação. Não sugira interromper medicação.",
+        ),
+        refs: ["parker-estatina-2013", "mikus-estatina-2013"],
+      };
+    case "fadiga":
+      return {
+        id: "fadiga-desproporcional",
+        pergunta: "A fadiga de hoje está desproporcional ao que a rotina explicaria?",
+        porque:
+          "Fadiga fora do padrão é o sinal que o aluno costuma normalizar e o profissional consegue notar. Não trava a sessão: muda o tamanho dela e entra no registro.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Reduza volume e intensidade, registre o padrão e, se ele se repetir por semanas, oriente reavaliação com quem acompanha o caso.",
+        ),
+        refs: ["hansen-expert-2018"],
+      };
+  }
+}
+
+function mkCardiometabolicoSemaforo(slug: string, foco: FocoCardiometabolico): ChecklistSemaforo {
+  return {
+    grupoSlug: slug,
     itens: [
       {
-        id: "pa-repouso",
-        pergunta: "Pressão arterial de repouso medida agora (após ~5 min sentado)",
+        id: "mal-estar",
+        pergunta: "Apresenta agora dor no peito, palpitação, tontura ou falta de ar em repouso?",
         porque:
-          "No estágio 2 a linha de base é mais alta: só treine com a PA mais baixa do dia; a própria faixa habitual do estágio pede adiar.",
-        opcoes: [
-          { valor: "ok", rotulo: "Abaixo de 140/90 mmHg (bem controlada hoje)", cor: "verde" },
-          {
-            valor: "estagio1",
-            rotulo: "140/90 a 159/99 mmHg",
-            cor: "amarelo",
-            acao: "Sessão leve e vigiada: reduza intensidade, evite isometrias e apneia, monitore PSE e sintomas; remeça a PA após o aquecimento.",
-          },
-          {
-            valor: "estagio2",
-            rotulo: "160/100 a 179/109 mmHg (estágio 2 habitual)",
-            cor: "vermelho",
-            acao: "Não inicie a sessão hoje. Na hipertensão estágio 2, remeça em repouso e só treine com a PA mais baixa; se persistir, avaliação médica.",
-          },
-          {
-            valor: "crise",
-            rotulo: "180/110 mmHg ou acima",
-            cor: "vermelho",
-            acao: "Não inicie. Pressão muito elevada: oriente remedir em repouso e procurar avaliação ou liberação médica antes de retomar.",
-          },
-          {
-            valor: "sem-medida",
-            rotulo: "Não foi possível medir",
-            cor: "amarelo",
-            acao: "Sem medida do dia no estágio 2: mantenha esforço leve (PSE ≤3), sem apneia, e observe sinais durante toda a sessão.",
-          },
-        ],
-        refs: ["sbc-2020", "acsm-getp11"],
+          "É o gate de porta desta família inteira: o risco cardiovascular está acumulado, e sintoma em repouso deixa de ser caso de treino e passa a ser caso de avaliação.",
+        opcoes: simNao("vermelho", "verde", "Não inicie a sessão hoje e oriente avaliação médica antes de retomar."),
+        refs: ["hansen-expert-2018", "acsm-getp11"],
       },
+      itemProprioCardiometabolico(foco),
       {
-        id: "sintomas",
-        pergunta: "Apresenta agora dor de cabeça intensa, tontura, dor no peito ou visão turva?",
-        porque: "Sintomas ativos mudam o dia: não é dia de treinar, é dia de investigar.",
-        opcoes: simNao("vermelho", "verde", "Interrompa o atendimento e oriente avaliação médica antes de retomar."),
-        refs: ["sbc-2020"],
-      },
-      {
-        id: "medicacao",
-        pergunta: "Tomou a medicação anti-hipertensiva habitual hoje (se prescrita)?",
-        porque: "Sem a medicação do dia, a resposta pressórica ao esforço fica menos previsível, ainda mais no estágio 2.",
-        opcoes: [
-          { valor: "sim", rotulo: "Sim", cor: "verde" },
-          {
-            valor: "nao",
-            rotulo: "Não",
-            cor: "vermelho",
-            acao: "No estágio 2, sem a medicação do dia não inicie: remarque ou trabalhe só após remedir a PA e confirmar que está mais baixa.",
-          },
-          { valor: "na", rotulo: "Não usa medicação", cor: "verde" },
-        ],
-        refs: ["pescatello-2004"],
-      },
-      {
-        id: "autorizacao",
-        pergunta: "Há liberação/avaliação médica válida para exercício?",
-        porque: "No estágio 2 a liberação médica formal é gate: a pressão de base mais alta pede lastro clínico antes de treinar.",
-        opcoes: [
-          { valor: "sim", rotulo: "Sim, em dia", cor: "verde" },
-          {
-            valor: "vencida",
-            rotulo: "Sim, mas antiga (>12 meses)",
-            cor: "amarelo",
-            acao: "Prossiga apenas em intensidade leve e oriente atualizar a avaliação médica com prioridade.",
-          },
-          {
-            valor: "nao",
-            rotulo: "Não",
-            cor: "vermelho",
-            acao: "Na hipertensão estágio 2, condicione a sessão à liberação médica formal; sem ela, não inicie hoje.",
-          },
-        ],
-        refs: ["acsm-getp11", "warburton-2011"],
+        id: "medicacao-alterada",
+        pergunta: "Começou medicação nova ou mudou dose nos últimos dias?",
+        porque:
+          "Medicações cardiometabólicas mexem em frequência cardíaca, pressão e disposição; a resposta ao esforço muda até o corpo se acomodar.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Sessão conservadora, atenção a tontura e fadiga, e registro da mudança no prontuário.",
+        ),
+        refs: ["acsm-getp11", "hansen-expert-2018"],
       },
     ],
-  },
+  };
+}
+
+export const semaforos: ChecklistSemaforo[] = [
+  /* --------------------- HIPERTENSÃO ESTÁGIO 1 · ESTÁGIO 2 ---------------- */
+  mkHipertensaoSemaforo(1),
+  mkHipertensaoSemaforo(2),
 
   /* ---------------------------- DIABETES TIPO 2 --------------------------- */
   {
@@ -523,6 +600,509 @@ export const semaforos: ChecklistSemaforo[] = [
       },
     ],
   },
+
+  /* ======================================================================
+   * AS CONDIÇÕES QUE NÃO TINHAM GATE PRÓPRIO (04/08/2026)
+   *
+   * Catorze condições do catálogo caíam no checklist geral. Cada uma delas já
+   * DECLARAVA os próprios sinais de alerta em `specialGroups.sinaisAlerta`, e
+   * esses sinais nunca eram perguntados: a gestante respondia sobre dor nova e
+   * sono, e nunca sobre sangramento ou contração. Era o mesmo defeito da escada
+   * de joelho que não disparava, só que num lugar onde custa mais caro: dado de
+   * segurança escrito no produto, sem caminho até a pergunta.
+   *
+   * Cada checklist abaixo tem no máximo quatro itens, para caber nos 30 a 60
+   * segundos de porta de sessão, e cada item que faz afirmação clínica cita a
+   * referência que a sustenta.
+   * ====================================================================== */
+
+  /* ------------------------------- GESTANTE ------------------------------- */
+  {
+    grupoSlug: "gestante",
+    itens: [
+      {
+        id: "contraindicacao-absoluta",
+        pergunta:
+          "O obstetra registrou alguma destas condições: descolamento prematuro da placenta, vasa prévia, insuficiência cervical, trabalho de parto prematuro em curso, pré-eclâmpsia grave, restrição de crescimento intrauterino, doença cardiorrespiratória grave ou diabetes tipo 1 descontrolado?",
+        porque:
+          "Esta é a lista curta que a revisão sistemática de Meah (2020) sustenta como contraindicação ABSOLUTA, por forte potencial de dano materno ou fetal. A mesma revisão mostrou que a maior parte das outras contraindicações que circulam vinha de opinião de especialista: hipertensão gestacional e gestação gemelar, por exemplo, são casos em que a gestante tende a se beneficiar da atividade regular. Por isso a pergunta é fechada nessas oito, e não numa lista maior.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Não conduza sessão de exercício. A conduta é do obstetra: registre, encaminhe e só retome com orientação escrita dele.",
+        ),
+        refs: ["meah-contraindicacoes-2020", "acog-804-2020"],
+      },
+      {
+        id: "sinais-obstetricos",
+        pergunta:
+          "Apresenta agora sangramento vaginal, perda de líquido, contrações regulares e dolorosas, dor no peito, tontura ou desmaio, dor de cabeça persistente, ou dor e inchaço na panturrilha?",
+        porque:
+          "São os sinais de alerta da diretriz canadense de atividade física na gestação. Nenhum deles é ajuste de sessão: qualquer um tira o caso do campo do treino e manda para avaliação obstétrica no mesmo dia.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Interrompa imediatamente e oriente procurar o serviço obstétrico hoje. Registre o sinal observado e a hora no prontuário.",
+        ),
+        refs: ["mottola-gestacao-2019"],
+      },
+      {
+        id: "liberacao-obstetrica",
+        pergunta: "Há liberação obstétrica válida para exercício nesta gestação?",
+        porque:
+          "Na ausência de complicação obstétrica ou clínica, a atividade física na gestação é segura e desejável (ACOG 804): a liberação existe para IDENTIFICAR a complicação, não para pôr o exercício em dúvida. Enquanto ela não existe, o profissional não tem como saber em qual dos dois cenários está.",
+        opcoes: [
+          { valor: "sim", rotulo: "Sim, em dia", cor: "verde" },
+          {
+            valor: "nao",
+            rotulo: "Não",
+            cor: "vermelho",
+            acao: "Não inicie a prescrição sem a liberação obstétrica. Encaminhe, explique que o exercício é recomendado na gestação sem complicação, e retome com o documento em mãos.",
+          },
+        ],
+        refs: ["acog-804-2020", "mottola-gestacao-2019"],
+      },
+      {
+        id: "calor-hidratacao",
+        pergunta: "O ambiente está fresco e arejado e a aluna está hidratada hoje?",
+        porque:
+          "Superaquecimento e desidratação são as cautelas de ambiente da gestação, e são as que o profissional controla dentro da sala.",
+        opcoes: [
+          { valor: "sim", rotulo: "Sim", cor: "verde" },
+          {
+            valor: "nao",
+            rotulo: "Não",
+            cor: "amarelo",
+            acao: "Reduza a duração e a intensidade, aumente as pausas, garanta água disponível e prefira o horário mais fresco do dia.",
+          },
+        ],
+        refs: ["mottola-gestacao-2019"],
+      },
+    ],
+  },
+
+  /* ------------------------------ PÓS-PARTO ------------------------------- */
+  {
+    grupoSlug: "pos-parto",
+    itens: [
+      {
+        id: "liberacao-pos-parto",
+        pergunta: "Há liberação do profissional de saúde para retomar exercício após este parto?",
+        porque:
+          "A retomada depende do tipo de parto e da recuperação, e quem tem esse dado é quem acompanhou o puerpério.",
+        opcoes: [
+          { valor: "sim", rotulo: "Sim", cor: "verde" },
+          {
+            valor: "nao",
+            rotulo: "Não",
+            cor: "vermelho",
+            acao: "Não inicie a progressão de carga sem a liberação. Encaminhe e registre.",
+          },
+        ],
+        refs: ["acog-804-2020"],
+      },
+      {
+        id: "sinais-puerperio",
+        pergunta: "Apresenta agora sangramento aumentado, dor pélvica nova, febre ou dor em cicatriz cirúrgica?",
+        porque: "São sinais de que a recuperação não está seguindo o curso esperado; a sessão não resolve nenhum deles.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Não inicie a sessão e oriente avaliação com o profissional que acompanha o puerpério.",
+        ),
+        refs: ["acog-804-2020"],
+      },
+      {
+        id: "assoalho-pelvico",
+        pergunta: "Tem perdas urinárias, sensação de peso vaginal ou desconforto ao esforço?",
+        porque:
+          "São queixas de assoalho pélvico. Não travam a sessão, mas mudam o que se faz nela e pedem encaminhamento para quem avalia a região.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Evite impacto e aumento de pressão intra-abdominal hoje, priorize respiração e força guiada, e encaminhe para avaliação de assoalho pélvico.",
+        ),
+        refs: ["acog-804-2020"],
+      },
+      {
+        id: "sono-puerperio",
+        pergunta: "A noite foi de sono muito fragmentado?",
+        porque:
+          "Sono picado é a regra no puerpério e derruba a tolerância ao esforço. Dose menor que se cumpre vale mais que a planejada que não acontece.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Reduza volume e intensidade, mantenha a sessão curta e priorize sair dela melhor do que entrou.",
+        ),
+        refs: ["singh-saudemental-2023"],
+      },
+    ],
+  },
+
+  /* --------------------- OSTEOPENIA E OSTEOPOROSE ------------------------- */
+  {
+    grupoSlug: "osteoporose",
+    itens: [
+      {
+        id: "dor-ossea-nova",
+        pergunta: "Há dor nova nas costas ou dor óssea localizada desde a última sessão?",
+        porque:
+          "Dor dorsal nova em quem tem osso frágil levanta a hipótese de fratura vertebral, que costuma acontecer sem trauma evidente. O consenso Too Fit To Fracture é explícito em que NÃO há evidência suficiente para quantificar o risco do exercício nessa população: por isso o caminho é perguntar e encaminhar, não estimar um teto de carga seguro.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Não carregue a coluna hoje e oriente avaliação médica antes de retomar a progressão.",
+        ),
+        refs: ["giangregorio-2014", "beck-essa-2017"],
+      },
+      {
+        id: "flexao-carregada",
+        pergunta: "A sessão de hoje tem flexão de coluna com carga (abdominal com peso, remada curvada, terra pesado)?",
+        porque:
+          "A flexão de coluna CARREGADA é o padrão que o posicionamento da ESSA não recomenda nessa população. O resto do programa continua: o osso responde a impacto e a treino resistido progressivo.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Troque o padrão por variação sem flexão carregada da coluna (dobradiça de quadril com coluna neutra, força guiada, apoio) e mantenha o restante do programa.",
+        ),
+        refs: ["beck-essa-2017"],
+      },
+      {
+        id: "risco-queda",
+        pergunta: "Teve tontura hoje, queda nos últimos 7 dias ou está em piso escorregadio ou calçado inadequado?",
+        porque:
+          "Otimizar força, equilíbrio e mobilidade reduz queda e, por consequência, fratura. O contrário também vale: o risco de queda do dia manda no formato da sessão.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Sessão com apoio constante e exercícios estáveis, sem tarefa de equilíbrio sem suporte; resolva calçado e piso antes de progredir.",
+        ),
+        refs: ["beck-essa-2017", "chodzko-2009"],
+      },
+    ],
+  },
+
+  /* --------------------------- ASMA CONTROLADA ---------------------------- */
+  {
+    grupoSlug: "asma-controlada",
+    itens: [
+      {
+        id: "sintomas-respiratorios",
+        pergunta: "Apresenta agora chiado, tosse, aperto no peito ou falta de ar em repouso?",
+        porque: "Sintoma respiratório em repouso não é ponto de partida de sessão: é sinal de que o controle escapou.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Não inicie. Siga a conduta prescrita pelo médico do aluno e oriente reavaliação se os sintomas persistirem.",
+        ),
+        refs: ["parsons-broncoespasmo-2013"],
+      },
+      {
+        id: "medicacao-resgate",
+        pergunta: "A medicação prescrita para antes do exercício e a de resgate estão disponíveis agora?",
+        porque:
+          "A diretriz da ATS faz recomendação FORTE de uso de broncodilatador de curta ação antes do exercício em quem tem broncoconstrição induzida pelo esforço. Quem prescreve é o médico; o profissional de educação física apenas confere que está à mão.",
+        opcoes: [
+          { valor: "sim", rotulo: "Sim", cor: "verde" },
+          {
+            valor: "nao",
+            rotulo: "Não",
+            cor: "amarelo",
+            acao: "Mantenha a sessão em intensidade leve a moderada, com aquecimento gradual e sem picos de esforço, e oriente trazer a medicação prescrita nas próximas sessões.",
+          },
+          { valor: "na", rotulo: "Não tem medicação prescrita", cor: "verde" },
+        ],
+        refs: ["parsons-broncoespasmo-2013"],
+      },
+      {
+        id: "ambiente",
+        pergunta: "O ar está muito frio ou muito seco no local da sessão?",
+        porque: "Ar frio e seco somado a esforço abrupto é o gatilho clássico do broncoespasmo do exercício.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Alongue o aquecimento, suba a intensidade em degraus pequenos e, quando possível, troque para ambiente coberto e mais úmido.",
+        ),
+        refs: ["parsons-broncoespasmo-2013"],
+      },
+    ],
+  },
+
+  /* --------------------- APNEIA OBSTRUTIVA DO SONO ------------------------ */
+  {
+    grupoSlug: "apneia-sono",
+    itens: [
+      {
+        id: "sonolencia",
+        pergunta: "Está com sonolência a ponto de cochilar sentado ou de perder atenção agora?",
+        porque:
+          "Sonolência diurna é a manifestação da apneia que vira risco DENTRO da sala: cochilar em esteira ou sob carga é acidente, não fadiga.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Não use esteira, escada ou carga livre hoje. Ofereça sessão curta sem risco de queda ou remarque, e reforce o acompanhamento do tratamento do sono.",
+        ),
+        refs: ["iftikhar-apneia-2014"],
+      },
+      {
+        id: "mal-estar-cardio",
+        pergunta: "Apresenta agora dor no peito, palpitação ou falta de ar desproporcional em repouso?",
+        porque: "A apneia anda junto com risco cardiometabólico; sintoma em repouso pede investigação, não treino.",
+        opcoes: simNao("vermelho", "verde", "Não inicie a sessão e oriente avaliação médica antes de retomar."),
+        refs: ["hansen-expert-2018", "acsm-getp11"],
+      },
+      {
+        id: "tratamento-sono",
+        pergunta: "Está usando o tratamento do sono prescrito (por exemplo CPAP), quando houver?",
+        porque:
+          "O treino reduz a gravidade da apneia (menos 6,27 eventos por hora na metanálise), mas soma ao tratamento e não substitui: noite sem tratamento significa sessão com menos reserva.",
+        opcoes: [
+          { valor: "sim", rotulo: "Sim", cor: "verde" },
+          {
+            valor: "nao",
+            rotulo: "Não / interrompeu",
+            cor: "amarelo",
+            acao: "Reduza volume e intensidade hoje e oriente retomar contato com quem acompanha o tratamento do sono.",
+          },
+          { valor: "na", rotulo: "Não tem tratamento prescrito", cor: "verde" },
+        ],
+        refs: ["iftikhar-apneia-2014"],
+      },
+    ],
+  },
+
+  /* ------------------ ANSIEDADE E SINTOMAS DEPRESSIVOS -------------------- */
+  {
+    grupoSlug: "ansiedade-depressao",
+    itens: [
+      {
+        id: "risco-seguranca",
+        pergunta:
+          "Houve piora importante do quadro, ou o aluno relatou pensamentos de se machucar, desde a última sessão?",
+        porque:
+          "Este é o único item aqui que tira o caso do campo do treino. A atividade física é abordagem central no manejo de depressão e ansiedade, com efeito médio sobre os sintomas; o que não é do profissional de educação física é o risco à segurança.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Acolha sem julgamento, não conduza a sessão como se fosse um dia comum e encaminhe ao profissional de saúde mental que acompanha o aluno no mesmo dia. Registre o encaminhamento.",
+        ),
+        refs: ["singh-saudemental-2023"],
+      },
+      {
+        id: "energia-hoje",
+        pergunta: "Como está a disposição hoje, de 0 a 10?",
+        porque:
+          "Nos dias ruins o objetivo muda: a meta passa a ser a sessão ACONTECER. Intensidade maior tende a dar mais benefício sintomático, mas só na sessão que o aluno faz.",
+        opcoes: [
+          { valor: "ok", rotulo: "6 a 10 (dá para o planejado)", cor: "verde" },
+          {
+            valor: "baixa",
+            rotulo: "3 a 5 (baixa)",
+            cor: "amarelo",
+            acao: "Reduza para a versão mínima da sessão e combine explicitamente que concluir já é a vitória do dia.",
+          },
+          {
+            valor: "muito-baixa",
+            rotulo: "0 a 2 (muito baixa)",
+            cor: "amarelo",
+            acao: "Troque por caminhada leve ou mobilidade, mantenha o vínculo e o horário, e não cobre desempenho hoje.",
+          },
+        ],
+        refs: ["singh-saudemental-2023"],
+      },
+      {
+        id: "medicacao-mudou",
+        pergunta: "Começou ou mudou medicação psiquiátrica nos últimos dias?",
+        porque: "Ajuste recente muda sono, disposição e tolerância ao esforço até o corpo se acomodar.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Sessão conservadora, atenção a tontura e sonolência, e registro da mudança no prontuário.",
+        ),
+        refs: ["acsm-getp11"],
+      },
+    ],
+  },
+
+  /* ------------------------------ SARCOPENIA ------------------------------ */
+  {
+    grupoSlug: "sarcopenia",
+    itens: [
+      {
+        id: "tontura-queda",
+        pergunta: "Teve tontura hoje ou queda nos últimos 7 dias?",
+        porque: "Massa e força baixas somadas a queda recente mudam a prioridade da sessão: estabilidade antes de carga.",
+        opcoes: [
+          { valor: "nao", rotulo: "Não", cor: "verde" },
+          {
+            valor: "queda",
+            rotulo: "Queda recente, sem lesão",
+            cor: "amarelo",
+            acao: "Sessão com apoio constante e exercícios estáveis; investigue o contexto da queda antes de voltar a progredir.",
+          },
+          {
+            valor: "tontura",
+            rotulo: "Tontura hoje",
+            cor: "vermelho",
+            acao: "Não inicie. Oriente avaliação (pressão, medicação, hidratação) antes de retomar.",
+          },
+        ],
+        refs: ["fragala-2019", "chodzko-2009"],
+      },
+      {
+        id: "dor-nova",
+        pergunta: "Alguma dor NOVA desde a última sessão?",
+        porque: "Dor nova aqui custa caro: uma semana parada em quem já perde massa não se recupera em uma semana.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Evite carregar a região dolorida, mantenha o resto do programa e reavalie; se persistir mais de uma semana, encaminhe.",
+        ),
+        refs: ["fragala-2019"],
+      },
+      {
+        id: "alimentacao",
+        pergunta: "Fez as refeições habituais nas últimas horas?",
+        porque:
+          "Treino de força sem aporte alimentar rende menos em quem já está em déficit de massa. O que é do profissional aqui é observar e encaminhar, não prescrever dieta.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Reduza o volume da sessão e encaminhe para avaliação nutricional; registre o padrão se ele se repetir.",
+        ),
+        refs: ["fragala-2019"],
+      },
+    ],
+  },
+
+  /* ------------------------ CLIMATÉRIO / MENOPAUSA ------------------------ */
+  {
+    grupoSlug: "climaterio",
+    itens: [
+      {
+        id: "mal-estar",
+        pergunta: "Apresenta agora palpitação, tontura, dor no peito ou falta de ar em repouso?",
+        porque:
+          "O risco cardiometabólico sobe na transição hormonal, e sintoma em repouso deixa de ser caso de treino em qualquer idade.",
+        opcoes: simNao("vermelho", "verde", "Não inicie a sessão e oriente avaliação médica antes de retomar."),
+        refs: ["acsm-getp11", "hansen-expert-2018"],
+      },
+      {
+        id: "sono-fogacho",
+        pergunta: "A noite foi ruim por fogachos ou insônia?",
+        porque:
+          "Sono ruim derruba a tolerância do dia. A força continua sendo a prioridade da fase: o que se ajusta é a dose, não o plano.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Reduza volume e mantenha a força do dia com carga menor; priorize concluir com técnica boa.",
+        ),
+        refs: ["foster-2001"],
+      },
+      {
+        id: "dor-articular",
+        pergunta: "Alguma dor articular nova ou persistente?",
+        porque: "Queixa articular é comum na transição e responde melhor a ajuste precoce que a insistência.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Ajuste amplitude e carga na articulação envolvida e reavalie ao fim da sessão; se persistir, encaminhe.",
+        ),
+        refs: ["oarsi-2019"],
+      },
+    ],
+  },
+
+  /* -------------------- INICIANTE SEDENTÁRIO · RETORNO -------------------- */
+  {
+    grupoSlug: "iniciante-sedentario",
+    itens: [
+      {
+        id: "sintomas-esforco",
+        pergunta:
+          "Já sentiu dor no peito, falta de ar desproporcional, palpitação ou desmaio ao fazer esforço, ou sente algum desses agora?",
+        porque:
+          "É a pergunta central da triagem pré-participação: sintoma no esforço é o achado que muda a conduta de quem nunca treinou, muito antes de qualquer teste.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Não inicie a sessão. Encaminhe para avaliação médica antes de começar o programa e registre o encaminhamento.",
+        ),
+        refs: ["warburton-2011", "acsm-getp11"],
+      },
+      {
+        id: "orientacao-medica",
+        pergunta: "Algum profissional de saúde já disse a este aluno para só fazer exercício sob supervisão médica?",
+        porque:
+          "Quando essa orientação existe, ela é anterior ao produto e vale mais que qualquer checklist. Perguntar é rápido e evita descobrir depois.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Não inicie sem alinhar com quem deu a orientação. Encaminhe e registre.",
+        ),
+        refs: ["warburton-2011"],
+      },
+      {
+        id: "expectativa",
+        pergunta: "A sessão de hoje cabe na rotina e na disposição do aluno?",
+        porque:
+          "Na largada, o inimigo não é a intensidade baixa demais, é a sessão que não acontece. Ajustar o tamanho é o que sustenta a adesão.",
+        opcoes: simNao(
+          "verde",
+          "amarelo",
+          "Reduza para a versão mínima da sessão e combine o próximo encontro antes de o aluno sair.",
+        ),
+        refs: ["oms-2020"],
+      },
+    ],
+  },
+  {
+    grupoSlug: "retorno-inatividade",
+    itens: [
+      {
+        id: "sintomas-esforco",
+        pergunta:
+          "Já sentiu dor no peito, falta de ar desproporcional, palpitação ou desmaio ao fazer esforço, ou sente algum desses agora?",
+        porque:
+          "Quem volta depois de muito tempo parado costuma comparar-se com quem foi um dia. A triagem por sintoma no esforço é a que separa cautela de suposição.",
+        opcoes: simNao(
+          "vermelho",
+          "verde",
+          "Não inicie a sessão. Encaminhe para avaliação médica antes de retomar o programa e registre o encaminhamento.",
+        ),
+        refs: ["warburton-2011", "acsm-getp11"],
+      },
+      {
+        id: "motivo-da-parada",
+        pergunta: "A parada teve como motivo uma lesão, cirurgia ou doença ainda em acompanhamento?",
+        porque:
+          "O motivo da interrupção manda no retorno. Voltar ao volume antigo em cima de uma questão ainda aberta é a recaída mais comum.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Retome bem abaixo do volume anterior, evite os padrões ligados ao motivo da parada e alinhe com quem acompanha o caso.",
+        ),
+        refs: ["acsm-getp11"],
+      },
+      {
+        id: "dor-nova",
+        pergunta: "Alguma dor nova desde a última sessão?",
+        porque: "Dor nova na retomada quase sempre é dose, não fragilidade: ajustar cedo mantém a sequência viva.",
+        opcoes: simNao(
+          "amarelo",
+          "verde",
+          "Reduza volume e amplitude nos padrões que provocam a dor e reavalie na próxima sessão.",
+        ),
+        refs: ["foster-2001"],
+      },
+    ],
+  },
+
+  /* ------- FAMÍLIA CARDIOMETABÓLICA (pré-diabetes · síndrome · lipídeos) --- */
+  mkCardiometabolicoSemaforo("pre-diabetes", "glicemia"),
+  mkCardiometabolicoSemaforo("sindrome-metabolica", "pressao"),
+  mkCardiometabolicoSemaforo("dislipidemia", "estatina"),
+  mkCardiometabolicoSemaforo("esteatose-hepatica", "fadiga"),
 
   /* --------------------------- CHECKLIST GERAL ---------------------------- */
   // Para aluno SEM grupo especial: o gate pré-sessão vale para qualquer pessoa

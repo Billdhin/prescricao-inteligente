@@ -129,10 +129,12 @@ export function SemaforoLiberacao({
         <SeloRCD compacto explicavel />
       </div>
 
-      {/* Sem esse aviso, o card anunciava a condição e servia o checklist geral, dando
-          a entender que havia um gate específico. Os sinais de alerta da própria
-          condição vêm junto: eram o único conteúdo de segurança que existia e ficavam
-          presos na tela de estudo. */}
+      {/* REDE DE SEGURANÇA, e não mais o caminho normal: desde a rodada de gates clínicos
+          toda condição do catálogo tem checklist próprio, e `check:semaforo` reprova o CI se
+          alguma voltar a cair no geral. Este bloco fica para o caso de uma condição NOVA
+          entrar sem gate antes de o guardrail rodar: em vez de anunciar a condição e servir
+          o checklist geral em silêncio, a tela diz o que está fazendo e lista os sinais de
+          alerta que aquela condição declara. */}
       {usaChecklistGeral && grupo && (
         <div className="mb-4 rounded-xl border border-warning/40 bg-warning-tint p-4">
           <div className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-warning">

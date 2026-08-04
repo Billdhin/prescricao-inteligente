@@ -4,7 +4,6 @@ import { TrafficCone, ShieldCheck, ArrowRight, Users, CheckCircle2, AlertTriangl
 import { Card, SectionHeader, Pill, buttonClasses, type PillTone } from "@/components/ui/primitives";
 import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
-import { getSemaforo } from "@/data/semaforo";
 import { useAlunos, useUser, isPremiumUnlocked } from "@/lib/store";
 import { estadoSemaforo, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 
@@ -145,13 +144,13 @@ export function Semaforo() {
             <span className="mb-1.5 block text-sm font-semibold text-ink">Grupo / condição</span>
             <select value={grupoSlug} onChange={(e) => setGrupoSlug(e.target.value)} className="input">
               <option value="geral">Sem condição especial (checklist geral)</option>
-              {/* Todas as condições aparecem; as sem gate próprio caem no checklist
-                  geral, e o próprio componente avisa isso na cara do profissional. */}
+              {/* Desde a rodada de gates clínicos, TODA condição tem checklist próprio, e
+                  `check:semaforo` trava a volta do "cai no geral". O aviso que existia aqui
+                  saiu junto com a causa dele. */}
               {specialGroups.map((g) => (
                 <option key={g.slug} value={g.slug}>
                   {g.nome}
                   {g.premium && !unlocked ? " (Premium)" : ""}
-                  {getSemaforo(g.slug) ? "" : " (checklist geral)"}
                 </option>
               ))}
             </select>
