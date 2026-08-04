@@ -24,7 +24,8 @@
  * Roda com `npm run check:core`.
  */
 import { gerarPlano, slugsClinicosDoPlano, metricaDoExercicio } from "../src/lib/gps/periodizacao";
-import { agregadoSemana } from "../src/lib/gps/progressao";
+import { agregadoSemana, serieSemanal } from "../src/lib/gps/progressao";
+import { classificarGrupos } from "../src/lib/gps/classificador";
 import { alvoSemana } from "../src/lib/gps/alvo";
 import { aplicarPrescricaoNoPlano, sessoesDaSemana } from "../src/lib/gps/semear";
 import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
@@ -645,6 +646,78 @@ for (const objetivo of OBJETIVOS) {
   }
 }
 
+/*
+ * (K) O GRÁFICO NÃO CONTRARIA A DOSE, E O CLASSIFICADOR ACERTA OS CORTES.
+ *
+ * Duas superfícies que nunca tinham sido testadas e que passaram limpas; a asserção entra
+ * para que continuem assim.
+ *
+ * O gráfico é a queixa que abriu esta obra toda ("disse linear e apareceu ondulatório") e o
+ * motor de dose mudou muito desde então. Ele é RELATIVO de propósito (a própria tela diz "sem
+ * unidade absoluta"), então o que se confere não é o valor e sim a ORDEM: se a semana A tem
+ * mais volume que a B na dose, tem que ter no gráfico também.
+ *
+ * O classificador é quem ESCREVE condição no aluno a partir da avaliação. Errar um corte aqui
+ * contamina tudo que vem depois: o gate do semáforo, a regra clínica fundida e o plano.
+ */
+{
+  for (const objetivo of OBJETIVOS) {
+    for (const modelo of ["linear", "ondulatoria", "blocos"] as const) {
+      const gK = gerarPlano({ objetivo, nivel: "Intermediário", semanas: 12, frequencia: 3, modeloPreferido: modelo });
+      const micros = gK.principal.mesociclos.flatMap((m) => m.microciclos);
+      const pontos = serieSemanal(gK.principal);
+      if (pontos.length !== micros.length) {
+        erro(`GRÁFICO COM SEMANAS A MENOS: ${objetivo}/${modelo} tem ${micros.length} semanas e ${pontos.length} pontos.`);
+        continue;
+      }
+      for (let i = 0; i < pontos.length; i++) {
+        if (pontos[i].semana !== micros[i].semana) {
+          erro(`GRÁFICO FORA DE ORDEM: ${objetivo}/${modelo} ponto ${i} diz semana ${pontos[i].semana} e a semana é ${micros[i].semana}.`);
+        }
+        for (let j = i + 1; j < pontos.length; j++) {
+          const va = agregadoSemana(micros[i]).volume;
+          const vb = agregadoSemana(micros[j]).volume;
+          if (Math.abs(va - vb) < 0.001) continue;
+          if (va > vb !== pontos[i].vol > pontos[j].vol) {
+            erro(
+              `GRÁFICO CONTRARIA A DOSE: ${objetivo}/${modelo}, semanas ${micros[i].semana} e ${micros[j].semana}: dose ${va} contra ${vb}, gráfico ${pontos[i].vol} contra ${pontos[j].vol}.`,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  const alunoK = { id: "a", nome: "T", iniciais: "T", status: "ativo", objetivo: "Emagrecimento", nivel: "Iniciante", restricoes: [], equipamentos: [], criadoEm: 1 } as never as Parameters<typeof classificarGrupos>[0];
+  const avK = (medidas: Record<string, number>) => [{ id: "av", alunoId: "a", data: 1, medidas }] as never as Parameters<typeof classificarGrupos>[1];
+  // Cortes da SBC 2020 e das faixas de IMC: o de baixo NÃO sugere, o de cima sugere.
+  const CORTES: { rot: string; medidas: Record<string, number>; esperado?: string }[] = [
+    { rot: "IMC 29,9", medidas: { imc: 29.9 } },
+    { rot: "IMC 30,1", medidas: { imc: 30.1 }, esperado: "obesidade-grau-1" },
+    { rot: "IMC 35,2", medidas: { imc: 35.2 }, esperado: "obesidade-grau-2" },
+    { rot: "IMC 41,0", medidas: { imc: 41 }, esperado: "obesidade-grau-3" },
+    { rot: "PA 138/88", medidas: { pressaoSistolica: 138, pressaoDiastolica: 88 } },
+    { rot: "PA 142/88", medidas: { pressaoSistolica: 142, pressaoDiastolica: 88 }, esperado: "hipertensao-estagio-1" },
+    { rot: "PA 138/92", medidas: { pressaoSistolica: 138, pressaoDiastolica: 92 }, esperado: "hipertensao-estagio-1" },
+    { rot: "PA 165/95", medidas: { pressaoSistolica: 165, pressaoDiastolica: 95 }, esperado: "hipertensao-estagio-2" },
+    { rot: "PA 145/105", medidas: { pressaoSistolica: 145, pressaoDiastolica: 105 }, esperado: "hipertensao-estagio-2" },
+  ];
+  let sugeriuAlgo = false;
+  for (const c of CORTES) {
+    const slugs = classificarGrupos(alunoK, avK(c.medidas)).map((s) => s.grupoSlug);
+    if (slugs.length) sugeriuAlgo = true;
+    if (c.esperado && !slugs.includes(c.esperado)) {
+      erro(`CLASSIFICADOR ERROU O CORTE: ${c.rot} deveria sugerir "${c.esperado}" e sugeriu [${slugs.join(", ") || "nada"}].`);
+    }
+    if (!c.esperado && slugs.length) {
+      erro(`CLASSIFICADOR SUGERIU DEMAIS: ${c.rot} está abaixo do corte e sugeriu [${slugs.join(", ")}].`);
+    }
+  }
+  if (!sugeriuAlgo) {
+    erro("AUTOVERIFICAÇÃO (K): o classificador não sugeriu NADA em nenhum caso; a verificação dos cortes passaria por vazio.");
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
@@ -654,5 +727,5 @@ if (problemas.length) {
   process.exit(1);
 }
 console.log(
-  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, o alvo da semana sobrevive ao "Aplicar no treino" a troca de exercicio segue as mesmas regras do gerador e travar variavel congela so aquela variavel.`,
+  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, o alvo da semana sobrevive ao "Aplicar no treino" a troca de exercicio segue as mesmas regras do gerador travar variavel congela so aquela variavel, o grafico nao contraria a dose e o classificador acerta os cortes.`,
 );
