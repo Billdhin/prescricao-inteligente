@@ -30,11 +30,15 @@ export interface Referencia {
 export const referencias: Referencia[] = [
   {
     id: "oms-2020",
-    autores: "World Health Organization",
-    titulo: "WHO guidelines on physical activity and sedentary behaviour",
-    fonte: "Genebra: WHO",
+    // A diretriz foi publicada também no BJSM e ESTÁ indexada: sem o DOI, esta era a única
+    // citação de número do motor que não fechava em um clique. Conferido no PubMed.
+    autores: "Bull FC, Al-Ansari SS, Biddle S, Borodulin K, Buman MP, Cardon G, et al. (World Health Organization)",
+    titulo: "World Health Organization 2020 guidelines on physical activity and sedentary behaviour",
+    fonte: "British Journal of Sports Medicine, 54(24):1451-1462",
     ano: 2020,
-    nota: "Base das metas semanais de atividade (150–300 min moderada) usadas como referência de volume nas jornadas.",
+    doi: "10.1136/bjsports-2020-102955",
+    pmid: "33239350",
+    nota: "Diretriz da OMS. O resumo indexado confirma a meta que o produto usa: todo adulto deve fazer 150 a 300 min de atividade de intensidade moderada, ou 75 a 150 min de vigorosa, ou combinação equivalente, por semana, mais atividade de fortalecimento muscular regular em todas as faixas etárias. Traz pela primeira vez recomendações específicas para gestantes e puérperas e para pessoas com condição crônica ou deficiência. Base das metas semanais usadas como referência de volume nas jornadas.",
   },
   {
     id: "acsm-getp11",

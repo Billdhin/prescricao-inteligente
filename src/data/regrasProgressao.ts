@@ -158,30 +158,43 @@ export const REGRAS_PROGRESSAO: RegraProgressao[] = [
     id: "objetivo-forca-prioriza-carga",
     variavel: "carga",
     criterios:
-      "Para força máxima, priorizar intensidade alta (acima de 60% de 1RM, tipicamente 80 a 90%); o volume é secundário.",
+      "Para força máxima, priorizar carga alta (acima de 60% de 1RM); o volume é secundário.",
     limites: { min: 60, unidade: "% de 1RM" },
     incremento: null,
     sinaisAlerta: [],
     aprovacao: "aprovada",
-    refId: ["schoenfeld-carga-2017"],
+    refId: ["schoenfeld-carga-2017", "acsm-progressao-2009"],
     ano: 2026,
-    versao: 1,
+    versao: 2,
     confianca: "forte",
+    // O "tipicamente 80 a 90%" que estava aqui NÃO existe na fonte: a metanálise citada só
+    // compara dois braços, carga baixa (até 60% de 1RM) e carga alta (acima de 60%), e nem
+    // estratificou o que acontece acima de 60%. Era número da casa dentro de uma regra marcada
+    // como evidência FORTE, que é exatamente o que o cabeçalho deste arquivo proíbe. O que
+    // sobra é o corte de 60%, esse sim da fonte. Para quem quiser a ponta pesada em número, o
+    // ACSM 2009 fala em 1 a 6 RM, e por isso ele entra no refId.
+    observacao:
+      "O corte de 60% de 1RM é da metanálise citada, que compara carga baixa (até 60%) com carga alta (acima de 60%) e conclui que a força máxima vem da carga pesada. A metanálise NÃO estratifica faixas acima de 60%: qualquer número mais fino que isso é escolha do profissional, não da fonte.",
   },
   {
     id: "taper-pico-forca",
     variavel: "volume",
+    // "a duração de fato testada nos ensaios citados", no plural, era falso: só Seppänen 2022
+    // testou 2 semanas. Izquierdo 2007 testou QUATRO, e o resumo dele nem informa a magnitude
+    // da redução de volume, então ele sustenta a DIREÇÃO (reduzir volume mantendo intensidade)
+    // e não a duração nem o multiplicador.
     criterios:
-      "Antes de um teste ou objetivo, cortar o volume para cerca de 0,5 (0,4 a 0,6) mantendo a carga, por 2 semanas (a duração de fato testada nos ensaios citados; 1 semana não foi testada por fonte nenhuma).",
+      "Antes de um teste ou objetivo, cortar o volume para cerca de 0,5 (0,4 a 0,6) mantendo a carga, por 2 semanas, que é a janela testada em Seppänen 2022.",
     limites: { min: 0.4, max: 0.6, unidade: "multiplicador de volume" },
     incremento: null,
     sinaisAlerta: [],
     aprovacao: "aprovada",
     refId: ["seppanen-hakkinen-2022", "izquierdo-tapering-2007"],
     ano: 2026,
-    versao: 1,
+    versao: 2,
     confianca: "moderada",
-    observacao: "Baseado em ensaios pequenos.",
+    observacao:
+      "A magnitude (multiplicador de 0,4 a 0,6) vem do braço em degrau de UM ensaio, com 14 homens de 21 a 30 anos, e não se transfere para o aluno de consultoria. Izquierdo 2007 testou 4 semanas e sustenta a direção, não a duração.",
     duracaoSemanas: { min: 2, max: 2 },
     intensidadeMantida: true,
   },
@@ -233,7 +246,7 @@ export const REGRAS_PROGRESSAO: RegraProgressao[] = [
     versao: 1,
     confianca: "fraca",
     observacao:
-      "ajuste prático/consenso NSCA, sem RCT comparando incrementos por segmento; não apresentar como evidência forte",
+      "convenção de campo, sem fonte primária anexada: a única parte citável é a faixa de 2 a 10% do position stand de 2009, que NÃO divide o incremento por segmento corporal. Não apresentar como evidência forte",
   },
 ];
 

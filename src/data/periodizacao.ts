@@ -572,7 +572,7 @@ export const MODELOS_PERIODIZACAO: ModeloPeriodizacao[] = [
     comoFunciona:
       "As faixas de carga e proximidade da falha são planejadas, mas a carga de cada série é ajustada no dia pela resposta do aluno (percepção de esforço, repetições de reserva, velocidade), respeitando um teto de esforço definido.",
     racionalCientifico:
-      "Ajustar a carga ao estado diário individualiza o estímulo e ajuda a manter a proximidade da falha desejada sem exigir sempre a carga máxima. A percepção de esforço e as repetições de reserva são ferramentas úteis de controle de carga; a evidência de superioridade é crescente e ainda não fechada.",
+      "Ajustar a carga ao estado diário individualiza o estímulo e ajuda a manter a proximidade da falha desejada sem exigir sempre a carga máxima. A percepção de esforço e as repetições de reserva são ferramentas úteis de controle de carga; a evidência de superioridade ainda é limitada, e a própria revisão que a mapeia aponta terminologia inconsistente entre os estudos.",
     perfisIndicados: [
       "Quem já entende e sabe usar percepção de esforço ou repetições de reserva",
       "Intermediários e avançados",
@@ -728,7 +728,11 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     capacidades: ["Hipertrofia", "Força de base", "Tolerância ao volume"],
     tiposExercicio: ["Multiarticulares primeiro", "Uniarticulares como complemento"],
     series: { valor: "3 a 4", nota: "por exercício; volume maior tende a favorecer, dentro da tolerância" },
-    reps: { valor: "6 a 12", nota: "a faixa útil se estende de 6 a 20 quando as séries chegam perto da falha (Schoenfeld, 2017)" },
+    // A nota é lida pelo conferidor de faixa como UNIÃO numérica (ver src/lib/gps/faixas.ts),
+    // então ela não pode conter dígito que não seja dose: ano de publicação aqui vira faixa.
+    // O nome do autor sozinho também não bastava, porque a bibliografia tem DOIS Schoenfeld de
+    // 2017 e a citação ficava ambígua; quem identifica o trabalho é o refId da faixa.
+    reps: { valor: "6 a 12", nota: "a zona de 6 a 12 RM é a do position stand citado; a metanálise de carga baixa contra alta mostra que a hipertrofia se iguala num amplo espectro de cargas quando as séries vão perto da falha, o que amplia a faixa útil para 6 a 20 repetições. A ponta superior é leitura prudente da casa, não número dos estudos" },
     intensidade: { valor: "moderada a alta", nota: "próxima da falha; a escala de repetições de reserva (Zourdos, 2016) é o instrumento de controle. A faixa de 1 a 3 de reserva é escolha prudente da casa, não número de diretriz" },
     intervalo: { valor: "1 a 2 min" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3 a 4x/sem", Avançado: "4 a 5x/sem" },
@@ -805,12 +809,15 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     capacidades: ["Tolerância à carga", "Amplitude confortável", "Controle e confiança"],
     tiposExercicio: ["Movimentos controlados e progressivos", "Baixo impacto no início"],
     series: { valor: "2 a 3", nota: "conforme tolerância" },
-    reps: { valor: "10 a 15", nota: "em amplitude confortável" },
+    // "10 a 15" NÃO está no ACSM 2009, cujo alvo para novato é 8 a 12 RM. O número vem da
+    // recomendação de força para adultos de meia idade e idosos iniciando, do Garber 2011, que
+    // por isso passa a constar nos refIds desta faixa.
+    reps: { valor: "10 a 15", nota: "em amplitude confortável; faixa de quem está reiniciando, do position stand de 2011, não do alvo de novato de 8 a 12 RM de 2009" },
     intensidade: { valor: "leve a moderada", nota: "guiada por dor e função" },
     intervalo: { valor: "confortável", nota: "sem pressa entre as séries" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3x/sem", Avançado: "3 a 4x/sem" },
     parametros: ["p-rpe"],
-    refIds: ["acsm-progressao-2009", "acsm-getp11"],
+    refIds: ["acsm-progressao-2009", "garber-2011", "acsm-getp11"],
     ressalva:
       "Retorno após lesão ou condição é conduta compartilhada com o profissional de saúde. A ferramenta apoia a progressão do treino; não substitui a liberação nem a conduta clínica do profissional de saúde.",
     complementoAerobio: complementoAerobioPadrao(1),
@@ -820,14 +827,20 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     objetivo: "Aprendizado técnico",
     capacidades: ["Qualidade de movimento", "Coordenação", "Consistência técnica"],
     tiposExercicio: ["Padrões fundamentais", "Carga leve com foco na execução"],
-    series: { valor: "2 a 4", nota: "de prática, com qualidade acima da carga" },
-    reps: { valor: "5 a 10", nota: "com boa execução" },
+    // APRENDIZADO MOTOR NÃO É OBJETIVO TRATADO PELO POSITION STAND CITADO. Séries de prática e
+    // a faixa de 5 a 10 repetições não aparecem nele, e a frequência de iniciante estava em
+    // "2 a 4x/sem", acima do teto de 2 a 3 dias por semana que o próprio documento recomenda
+    // para novato. A frequência foi alinhada à fonte; os outros dois números continuam, agora
+    // DECLARADOS como escolha prudente da casa na ressalva.
+    series: { valor: "2 a 4", nota: "de prática, com qualidade acima da carga; escolha prudente da casa" },
+    reps: { valor: "5 a 10", nota: "com boa execução; escolha prudente da casa, não faixa de diretriz" },
     intensidade: { valor: "leve a moderada", nota: "a técnica manda, não a carga" },
     intervalo: { valor: "suficiente para manter a qualidade" },
-    frequencia: { Iniciante: "2 a 4x/sem", Intermediário: "3 a 4x/sem", Avançado: "3 a 4x/sem" },
+    frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3 a 4x/sem", Avançado: "3 a 4x/sem" },
     parametros: ["p-rpe"],
     refIds: ["acsm-progressao-2009"],
-    ressalva: "Prática frequente com qualidade consolida o padrão; repetir com erro consolida o erro.",
+    ressalva:
+      "Prática frequente com qualidade consolida o padrão; repetir com erro consolida o erro. As séries de prática e a faixa de 5 a 10 repetições são escolha prudente da casa: o position stand citado sustenta a FREQUÊNCIA e a progressão de carga, e não trata aprendizado motor como objetivo próprio.",
     complementoAerobio: complementoAerobioPadrao(1),
     flexibilidade: FLEX_FECHO,
   },

@@ -118,7 +118,11 @@ const MATRIZ: Partial<Record<GpsObjetivo, Partial<Record<GpsObjetivo, Compatibil
       resumo:
         "São as duas pontas do mesmo eixo carga e repetição: perseguir as duas ao mesmo tempo divide a sessão em vez de somar.",
       condicao:
-        "Separar em blocos ou em dias diferentes, com a força ficando com a carga alta. Cargas até 50% de 1RM produzem ganho de força em destreinados, mas a carga alta levou vantagem na metanálise de Schoenfeld (2016).",
+        // "levou vantagem" afirmava desfecho que a própria fonte classifica como TENDÊNCIA:
+        // diferença de 1,07, intervalo de confiança de -0,18 a 2,32, p = 0,09, e os autores
+        // atribuem o achado nulo ao número pequeno de estudos. Esta frase vai impressa no PDF
+        // que o profissional assina, então ela carrega a ressalva junto.
+        "Separar em blocos ou em dias diferentes, com a força ficando com a carga alta. Cargas até 50% de 1RM produzem ganho de força em destreinados, e a carga alta mostrou TENDÊNCIA de vantagem na metanálise de Schoenfeld (2016), sem significância estatística (p = 0,09) e com poucos estudos.",
       refIds: ["schoenfeld-carga-2016"],
     },
   },

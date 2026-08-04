@@ -10,8 +10,12 @@
  * Regra de ouro respeitada:
  * - A DIREÇÃO do alvo vem da tendência do mesociclo (sobe/reduz/estável/varia), não de um
  *   palpite; o alvo nunca sai da faixa citada (check:faixas continua verde).
- * - A MAGNITUDE da descarga é a regra DECLARADA `deload-rotina-gestao-fadiga` (evidência
- *   fraca): reduz de forma honesta e modesta, sem vender a magnitude como ótima.
+ * - A DIREÇÃO da descarga é a regra DECLARADA `deload-rotina-gestao-fadiga`, que é "pendente"
+ *   e de evidência fraca justamente porque a literatura não fixa magnitude: uma das fontes é
+ *   levantamento de PRÁTICA em atletas e a outra não achou benefício. A MAGNITUDE aplicada
+ *   aqui (uma série a menos, uma repetição de reserva a mais e carga relativa a 60% do nível
+ *   da última semana de carga) é escolha prudente DA CASA, e não sai daquela regra. O bloco
+ *   grava `origemRegraId` para rastrear a direção; ele não transforma a casa em diretriz.
  * - Determinístico e puro: as mesmas entradas dão sempre o mesmo alvo.
  *
  * Este módulo é a fonte ÚNICA do alvo: `doseForca` (periodizacao.ts) delega a ele, e o
