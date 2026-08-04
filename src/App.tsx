@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/app/AppLayout";
 import { ThemeApplier } from "@/lib/theme/ThemeApplier";
 import { Landing } from "@/pages/Landing";
 import { Pricing } from "@/pages/Pricing";
+import { Termos, Privacidade } from "@/pages/DocumentoLegal";
 import { Dashboard } from "@/pages/Dashboard";
 import { Gps } from "@/pages/Gps";
 import { PrescreverTreino } from "@/pages/PrescreverTreino";
@@ -84,6 +85,11 @@ export default function App() {
         {/* Público */}
         <Route path="/" element={<Landing />} />
         <Route path="/pricing" element={<Pricing />} />
+        {/* Documentos legais. Rotas PÚBLICAS de propósito: quem ainda não criou conta
+            precisa poder ler os Termos e a Política ANTES de aceitar no cadastro. */}
+        <Route path="/termos" element={<Termos />} />
+        <Route path="/privacidade" element={<Privacidade />} />
+        <Route path="/lgpd" element={<Navigate to="/privacidade" replace />} />
         <Route path="/planos" element={<Navigate to="/pricing" replace />} />
         <Route path="/demo" element={<Navigate to="/movement-lab" replace />} />
         <Route path="/roi" element={<Roi />} />

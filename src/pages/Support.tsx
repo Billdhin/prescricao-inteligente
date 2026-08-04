@@ -38,7 +38,10 @@ const FAQ = [
   {
     id: "dados",
     q: "Meus dados ficam salvos?",
-    a: "Sim, no seu próprio navegador (armazenamento local). Você começa com o app vazio e pode “Carregar exemplos” para explorar. Conta com sincronização na nuvem está no roadmap.",
+    // A resposta antiga dizia que tudo ficava só no navegador e que a nuvem "está no
+    // roadmap". A sincronização com o Supabase já está NO AR desde a fase 5, então a
+    // FAQ negava o que o produto faz justamente na pergunta sobre dados.
+    a: "Sim, na sua conta. Alunos, avaliações (incluindo as fotos anexadas), prescrições, planos e liberações sincronizam com a nuvem e você acessa de qualquer aparelho ao entrar. A avaliação postural por visão computacional é a exceção: a imagem é processada no seu próprio navegador e não sai dele. Os detalhes estão na Política de Privacidade.",
   },
   {
     id: "pdf",

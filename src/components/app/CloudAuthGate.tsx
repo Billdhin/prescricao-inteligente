@@ -41,6 +41,11 @@ export function CloudAuthGate() {
   const [carregando, setCarregando] = React.useState(false);
   const [erro, setErro] = React.useState("");
   const [aviso, setAviso] = React.useState("");
+  // Aceite dos Termos e da Política. Só existe na aba "criar": quem já tem conta
+  // aceitou quando criou, e repetir o pedido a cada login vira ruído. O estado
+  // nasce FALSO e o botão fica travado até a marcação, porque aceite pré-marcado
+  // não é manifestação livre e informada do titular.
+  const [aceite, setAceite] = React.useState(false);
 
   const limpar = () => {
     setErro("");
@@ -53,6 +58,10 @@ export function CloudAuthGate() {
     limpar();
     if (!email || !senha || (aba === "criar" && !nome)) {
       setErro("Preencha todos os campos.");
+      return;
+    }
+    if (aba === "criar" && !aceite) {
+      setErro("Para criar a conta, é preciso aceitar os Termos de Uso e a Política de Privacidade.");
       return;
     }
     setCarregando(true);
@@ -152,6 +161,29 @@ export function CloudAuthGate() {
               />
             </label>
 
+            {aba === "criar" && (
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border bg-bg-2 p-3">
+                <input
+                  type="checkbox"
+                  checked={aceite}
+                  onChange={(e) => setAceite(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--primary-fill)]"
+                />
+                <span className="text-xs leading-relaxed text-ink-2">
+                  Li e aceito os{" "}
+                  <a href="/termos" target="_blank" rel="noreferrer" className="font-semibold text-primary hover:underline">
+                    Termos de Uso
+                  </a>{" "}
+                  e a{" "}
+                  <a href="/privacidade" target="_blank" rel="noreferrer" className="font-semibold text-primary hover:underline">
+                    Política de Privacidade
+                  </a>
+                  . Entendo que sou eu quem obtém o consentimento dos meus alunos para registrar
+                  aqui os dados de saúde deles.
+                </span>
+              </label>
+            )}
+
             {erro && (
               <p className="rounded-lg bg-danger-tint px-3 py-2 text-xs font-medium text-danger">{erro}</p>
             )}
@@ -163,8 +195,12 @@ export function CloudAuthGate() {
 
             <button
               type="submit"
-              disabled={carregando}
-              className={cn(buttonClasses("primary"), "w-full", carregando && "opacity-60")}
+              disabled={carregando || (aba === "criar" && !aceite)}
+              className={cn(
+                buttonClasses("primary"),
+                "w-full",
+                (carregando || (aba === "criar" && !aceite)) && "opacity-60",
+              )}
             >
               {aba === "entrar" ? (
                 <>

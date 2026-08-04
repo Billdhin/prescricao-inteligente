@@ -5,9 +5,9 @@ import { Logo } from "@/components/brand/Logo";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
 
-const PRECO_PRO = 59;
-const fmtBRL = (n: number) =>
-  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+// A calculadora de retorno usava um 59 escrito à mão, que divergia dos R$ 97 da
+// landing. Preço e formatador vêm da fonte única agora.
+import { PRECO_MENSAL as PRECO_PRO, fmtBRL } from "@/data/planos";
 
 /**
  * Campo numérico que aceita digitação livre. Corrigir o valor a cada tecla

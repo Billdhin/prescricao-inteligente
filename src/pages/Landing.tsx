@@ -9,6 +9,15 @@ import {
 } from "lucide-react";
 import { MarcaPino } from "@/components/brand/Logo";
 import { MonitorMockup, type MockupTela } from "@/components/landing/MockupApp";
+import {
+  NOME_PLANO,
+  PRECO_MENSAL,
+  PRECO_ANUAL_FUNDADOR,
+  PRECO_ANUAL_EQUIV_MES,
+  VAGAS_FUNDADOR,
+  ITENS_PLANO,
+  fmtBRL,
+} from "@/data/planos";
 
 /**
  * Landing "Redesign do Mapa da Prescrição".
@@ -115,7 +124,7 @@ export function Landing() {
       <Semaforo />
       <Respaldo />
       <Comparativo />
-      <Depoimentos />
+      <ParaQueServe />
       <Planos />
       <Faq />
       <CtaFinal />
@@ -745,31 +754,48 @@ function Comparativo() {
   );
 }
 
-/* ------------------------------ depoimentos ------------------------------ */
+/* ---------------------------- para que serve ----------------------------- */
 
-function Depoimentos() {
-  const deps = [
-    "Parei de acordar pensando em quem eu tinha esquecido de reavaliar.",
-    "Me formei há pouco tempo. O semáforo me deu segurança para conduzir aluno com comorbidade.",
-    "Abro a aba Ciência na frente do aluno. Mudou a forma como ele me enxerga.",
+/**
+ * Esta seção era "Quem já usa", com três frases entre aspas assinadas por
+ * "Nome do profissional · Personal · CREF 000000-G/UF". Eram DEPOIMENTOS
+ * INVENTADOS: nenhuma daquelas frases saiu da boca de um usuário, e o CREF
+ * era um placeholder de zeros. Prova social fabricada é publicidade enganosa
+ * (CDC, art. 37) e, num produto que se vende pela honestidade da base
+ * científica, é a contradição mais cara possível.
+ *
+ * As três frases descreviam bem o problema que o produto resolve, então
+ * continuam aqui: como AFIRMAÇÕES DA CASA sobre o que a ferramenta faz, sem
+ * aspas e sem assinatura de terceiro. Quando houver depoimento real, com
+ * nome e autorização do profissional, volta a ser depoimento.
+ */
+function ParaQueServe() {
+  const itens: [string, string][] = [
+    [
+      "Ninguém fica para trás",
+      "A reavaliação de cada aluno tem data, e o ciclo do cuidado mostra quem está vencido antes de você lembrar.",
+    ],
+    [
+      "Segurança para conduzir comorbidade",
+      "O semáforo pergunta o que importa naquela condição e registra a decisão do dia, com a faixa da diretriz ao lado.",
+    ],
+    [
+      "O porquê fica à vista",
+      "Cada escolha do motor vem com a justificativa e a referência, para você abrir na frente do aluno ou do médico dele.",
+    ],
   ];
   return (
     <section className="border-y border-[#EAE8E3] bg-[#FBFAF8]">
       <div className={`${WRAP} py-[72px]`}>
         <div className="flex justify-center">
-          <Eyebrow>Quem já usa</Eyebrow>
+          <Eyebrow>Para que serve no dia a dia</Eyebrow>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          {deps.map((q) => (
-            <figure key={q} className="rounded-[18px] border border-[#EAE8E3] bg-white p-6">
-              <blockquote className="font-display text-[17px] font-medium leading-snug text-[#10233A]">
-                "{q}"
-              </blockquote>
-              <figcaption className="mt-4 border-t border-[#EFEDE8] pt-3">
-                <div className="text-[14px] font-semibold text-[#10233A]">Nome do profissional</div>
-                <div className="text-[12.5px] text-[#8A97A6]">Personal · CREF 000000-G/UF</div>
-              </figcaption>
-            </figure>
+          {itens.map(([titulo, texto]) => (
+            <div key={titulo} className="rounded-[18px] border border-[#EAE8E3] bg-white p-6">
+              <div className="font-display text-[17px] font-bold leading-snug text-[#10233A]">{titulo}</div>
+              <p className="mt-2.5 text-[14px] leading-relaxed text-[#5A6B7E]">{texto}</p>
+            </div>
           ))}
         </div>
       </div>
@@ -779,35 +805,22 @@ function Depoimentos() {
 
 /* --------------------------------- planos -------------------------------- */
 
+/**
+ * A tabela de preços agora vem de `@/data/planos`, a fonte única. Aqui havia duas
+ * faixas escritas à mão, uma delas ("Essencial", R$ 59) prometendo um teto de 20
+ * alunos que o código nunca aplicou, enquanto a /pricing anunciava plano único por
+ * R$ 59 e a /roi calculava com 59. Três telas, três ofertas.
+ */
 function Planos() {
   const [anual, setAnual] = React.useState(false);
   const planos = [
     {
-      nome: "Essencial",
-      desc: "Para quem está começando a organizar a carteira.",
-      mensal: 59,
-      destaque: false,
-      itens: [
-        "Até 20 alunos ativos",
-        "Ciclo do cuidado completo e semáforo diário",
-        "Periodização e exportação em PDF",
-        "Histórico e evolução por data",
-      ],
-      cta: "Assinar Essencial",
-    },
-    {
-      nome: "Profissional",
-      desc: "Para quem vive disso e não pode perder o fio de nenhum aluno.",
-      mensal: 97,
+      nome: NOME_PLANO,
+      desc: "Um plano só, com tudo liberado. Sem versão limitada e sem recurso escondido atrás de upgrade.",
+      mensal: PRECO_MENSAL,
       destaque: true,
-      itens: [
-        "Alunos ilimitados",
-        "App do aluno e lembretes de reavaliação",
-        "Avaliação postural por visão computacional",
-        "Estudar, Protocolos e Laboratório Visual",
-        "Suporte com profissional de Educação Física",
-      ],
-      cta: "Assinar Profissional",
+      itens: ITENS_PLANO,
+      cta: `Assinar ${NOME_PLANO}`,
     },
   ];
   return (
@@ -836,14 +849,17 @@ function Planos() {
               onClick={() => setAnual(true)}
               className={"rounded-full px-3.5 py-1.5 " + (anual ? "bg-[#0D1A2B] text-white" : "text-[#5A6B7D]")}
             >
-              Anual · 2 meses grátis
+              Anual · fundador
             </button>
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
+        <div className="mx-auto mt-8 grid max-w-[460px] gap-4">
           {planos.map((p) => {
-            const preco = anual ? Math.round((p.mensal * 10) / 12) : p.mensal;
+            // O equivalente mensal da oferta anual sai do valor REAL do ano
+            // (`PRECO_ANUAL_FUNDADOR`), não de uma regra de "2 meses grátis"
+            // calculada aqui. Assim o número da tela e o número cobrado são o mesmo.
+            const preco = anual ? PRECO_ANUAL_EQUIV_MES : p.mensal;
             return (
               <div
                 key={p.nome}
@@ -852,11 +868,8 @@ function Planos() {
                   (p.destaque ? "border-2 border-[#0D1A2B] shadow-[0_20px_50px_-30px_rgba(16,35,58,0.4)]" : "border border-[#EAE8E3]")
                 }
               >
-                {p.destaque && (
-                  <span className="absolute -top-3 right-6 rounded-full bg-[#0D1A2B] px-3 py-0.5 text-[11.5px] font-bold text-white">
-                    Recomendado
-                  </span>
-                )}
+                {/* O selo "Recomendado" só fazia sentido quando havia duas faixas para
+                    comparar. Com plano único ele recomenda o quê, contra o quê? Sai. */}
                 <div className="font-display text-[19px] font-bold text-[#10233A]">{p.nome}</div>
                 <p className="mt-1 text-[13.5px] text-[#5A6B7D]">{p.desc}</p>
                 <div className="mt-4 flex items-end gap-1">
@@ -864,7 +877,11 @@ function Planos() {
                   <span className="font-display text-[40px] font-extrabold leading-none tabular-nums text-[#10233A]">{preco}</span>
                   <span className="mb-1 text-[14px] font-medium text-[#8A97A6]">/mês</span>
                 </div>
-                <div className="text-[12px] text-[#8A97A6]">{anual ? "cobrado anualmente" : "cobrado mensalmente"}</div>
+                <div className="text-[12px] text-[#8A97A6]">
+                  {anual
+                    ? `${fmtBRL(PRECO_ANUAL_FUNDADOR)} no ano, para as primeiras ${VAGAS_FUNDADOR} contas`
+                    : "cobrado mensalmente"}
+                </div>
                 <ul className="mt-4 flex-1 space-y-2.5">
                   {p.itens.map((it) => (
                     <li key={it} className="flex gap-2.5 text-[14px] text-[#10233A]">
@@ -914,7 +931,7 @@ const FAQ = [
   ],
   [
     "Meu aluno também tem acesso?",
-    "Sim, no plano Profissional. Ele recebe o app do aluno, onde vê o treino, consulta o semáforo e registra a execução, além do PDF com a sua marca.",
+    "Sim. Ele recebe o app do aluno, onde vê o treino, consulta o semáforo e registra a execução, além do PDF com a sua marca. Como o plano é único, isso já está incluído.",
   ],
   [
     "Consigo cancelar sem dor de cabeça?",
@@ -1002,15 +1019,17 @@ function Footer() {
         ["Protocolos ativos", "/protocols"],
       ],
     ],
-    // Termos, Privacidade, LGPD e Cookies ainda NÃO existem como página. Enquanto
-    // não existirem ficam fora daqui: o curinga de rota devolve o visitante à
-    // home, e um "Termos de uso" que não abre nada é pior que a ausência dele.
+    // Termos e Privacidade agora EXISTEM como página (`/termos` e `/privacidade`) e
+    // por isso entram aqui. Antes ficavam de fora de propósito, porque um "Termos de
+    // uso" que cai no curinga de rota e volta para a home é pior que a ausência dele.
+    // A regra continua valendo para qualquer link novo: só entra se abrir algo.
     [
-      "Suporte",
+      "Suporte e legal",
       [
         ["Falar com o suporte", "/suporte"],
         ["Tutoriais", "/tutorial"],
-        ["Entrar na conta", "/dashboard"],
+        ["Termos de uso", "/termos"],
+        ["Política de Privacidade", "/privacidade"],
       ],
     ],
   ];
@@ -1061,9 +1080,18 @@ function Footer() {
         </div>
 
         <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 text-[12.5px] text-[#7f93ab] md:flex-row md:items-center md:justify-between">
-          <span>© 2026 Mapa da Prescrição · CNPJ 00.000.000/0001-00</span>
+          {/* O CNPJ que estava aqui era o placeholder 00.000.000/0001-00, ou seja, um
+              dado de identificação FALSO no rodapé de um site que trata dado de saúde.
+              Sai até existir o número real. E "Dados hospedados no Brasil" era uma
+              promessa que o repositório não sustenta: a região do provedor não está
+              declarada em lugar nenhum do código. Fica o que é verificável (acesso
+              autenticado, tráfego criptografado) e o resto vai para a Política. */}
+          <span>© 2026 Mapa da Prescrição</span>
           <span className="inline-flex items-center gap-1.5">
-            <Lock className="h-3.5 w-3.5" /> Dados hospedados no Brasil, com criptografia
+            <Lock className="h-3.5 w-3.5" /> Acesso autenticado e tráfego criptografado ·{" "}
+            <Acao to="/privacidade" className="underline decoration-white/30 hover:text-white">
+              como tratamos os dados
+            </Acao>
           </span>
         </div>
       </div>

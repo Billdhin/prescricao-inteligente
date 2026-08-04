@@ -734,8 +734,16 @@ function FotosBloco({ fotos, setFotos }: { fotos: AvaliacaoFoto[]; setFotos: Rea
           <Camera className="h-4 w-4" /> Adicionar foto
         </button>
       </div>
+      {/* Este texto dizia "As fotos ficam privadas neste dispositivo", e era FALSO: a
+          foto entra em `Avaliacao.fotos` e o repositório grava a avaliação inteira na
+          coluna `avaliacoes.fotos` do Supabase (supabaseRepo.ts). Ou seja, a tela
+          prometia armazenamento local para o dado mais sensível que o produto guarda,
+          num contexto em que o profissional decide anexar a partir dessa promessa.
+          Quem processa no próprio navegador é a avaliação POSTURAL, que é outra tela. */}
       <p className="text-xs text-ink-3">
-        As fotos ficam privadas neste dispositivo. Não use as imagens em materiais externos sem autorização específica do aluno.
+        As fotos são enviadas para a sua conta na nuvem, junto com a avaliação, e ficam visíveis
+        somente para você. Anexe apenas com autorização específica do aluno e não use as imagens em
+        materiais externos.
       </p>
     </div>
   );

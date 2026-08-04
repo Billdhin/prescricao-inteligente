@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Check, Crown, Calculator } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { NOME_PLANO, PRECO_MENSAL, ITENS_PLANO, fmtBRL } from "@/data/planos";
 
 // FAQs reaproveitadas VERBATIM da landing (as mais objecionáveis): substituição
 // da avaliação profissional, acesso e celular. Nenhuma resposta nova de política
@@ -46,16 +47,10 @@ export function Pricing() {
         <div className="mt-10 text-left">
           <Plan
             destaque
-            nome="Profissional"
-            preco="R$ 59"
+            nome={NOME_PLANO}
+            preco={fmtBRL(PRECO_MENSAL)}
             desc="O Motor RCD completo: decisão documentada e assinável."
-            items={[
-              "Prontuário de Decisão exportável e assinável (PDF)",
-              "Semáforo de Liberação para todos os grupos",
-              "Prescrições ilimitadas + comparador + protocolos",
-              "Laboratório completo, todos os casos e trilhas",
-              "Portal do aluno com a sua marca, avaliação postural e gamificação",
-            ]}
+            items={ITENS_PLANO}
             cta="Começar agora"
           />
         </div>
