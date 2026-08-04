@@ -28,6 +28,7 @@ import { agregadoSemana } from "../src/lib/gps/progressao";
 import { alvoSemana } from "../src/lib/gps/alvo";
 import { aplicarPrescricaoNoPlano, sessoesDaSemana } from "../src/lib/gps/semear";
 import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
+import { recalcularAlvosDoMeso } from "../src/lib/gps/travas";
 import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
@@ -598,6 +599,52 @@ for (const objetivo of OBJETIVOS) {
   if (avaliadas === 0) erro("AUTOVERIFICAÇÃO (I): nenhuma troca avaliada; a asserção passaria por vazio.");
 }
 
+/*
+ * (J) TRAVAR UMA VARIÁVEL CONGELA AQUELA VARIÁVEL, E NÃO REESCREVE O BLOCO.
+ *
+ * `recalcularAlvosDoMeso` re-derivava o alvo de TODAS as semanas a partir dos textos-faixa, e
+ * o cabeçalho do módulo prometia que, sem trava, o resultado seria idêntico ao do gerador. A
+ * promessa quebrou quando o gerador ganhou contexto que aquele módulo não carrega (rampa no
+ * macrociclo, piso da onda de blocos, passo do perfil clínico). Medido: a fase de entrada de
+ * um plano de hipertensão estágio 2 com obesidade grau II saía do gerador como
+ * "4x12 RIR 3 · 4x12 RIR 3 · 4x11 RIR 3" e voltava como "4x12 RIR 3 · 4x9 RIR 2 · 3x6 RIR 1".
+ * Travar (ou destravar) uma variável reescrevia o bloco inteiro numa progressão bem mais
+ * agressiva, terminando a fase de ADAPTAÇÃO perto da falha.
+ */
+{
+  const ctxT = { objetivo: "Força" as const, nivel: "Avançado" as Nivel };
+  const gT = gerarPlano({ objetivo: "Força", nivel: "Avançado", semanas: 12, frequencia: 3, modeloPreferido: "blocos" });
+  const doseT = (m: Mesociclo) =>
+    m.microciclos.filter((w) => w.tipo === "carga").map((w) => {
+      const b = w.sessoes[0]?.blocos.find((x) => x.tipo !== "aerobio");
+      return { s: b?.seriesAlvo, r: b?.repsAlvo, i: b?.intervaloAlvoSeg };
+    });
+
+  let algumVariou = false;
+  for (const m of gT.principal.mesociclos) {
+    const orig = doseT(m);
+    if (new Set(orig.map((d) => JSON.stringify(d))).size > 1) algumVariou = true;
+
+    // Sem trava: idêntico ao gerador, byte a byte.
+    const sem = doseT(recalcularAlvosDoMeso({ ...m, variaveisTravadas: [] }, ctxT));
+    if (JSON.stringify(sem) !== JSON.stringify(orig)) {
+      erro(`TRAVA REESCREVEU SEM TRAVA: o meso "${m.nome}" voltou diferente do gerador (${JSON.stringify(orig)} -> ${JSON.stringify(sem)}).`);
+    }
+    // Travado: a variável para de mudar.
+    const tv = doseT(recalcularAlvosDoMeso({ ...m, variaveisTravadas: ["volume"] }, ctxT));
+    if (new Set(tv.map((d) => `${d.s}|${d.r}`)).size > 1) {
+      erro(`TRAVA DE VOLUME NÃO CONGELOU: "${m.nome}" segue com séries/repetições variando (${tv.map((d) => `${d.s}x${d.r}`).join(",")}).`);
+    }
+    const ti = doseT(recalcularAlvosDoMeso({ ...m, variaveisTravadas: ["intensidade"] }, ctxT));
+    if (new Set(ti.map((d) => `${d.r}|${d.i}`)).size > 1) {
+      erro(`TRAVA DE INTENSIDADE NÃO CONGELOU: "${m.nome}" segue com repetição/intervalo variando (${ti.map((d) => `${d.r}@${d.i}`).join(",")}).`);
+    }
+  }
+  if (!algumVariou) {
+    erro("AUTOVERIFICAÇÃO (J): nenhum mesociclo do plano de teste tem dose variável, então a verificação das travas passaria por vazio.");
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
@@ -607,5 +654,5 @@ if (problemas.length) {
   process.exit(1);
 }
 console.log(
-  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, o alvo da semana sobrevive ao "Aplicar no treino" e a troca de exercicio segue as mesmas regras do gerador.`,
+  `[check:core] ok: linear sai linear, o cardio varia, as condições chegam ao plano e a mais conservadora manda, ${HORIZONTES_PLANO.length} horizontes geram a duração pedida, o par de objetivos é único no sistema, nenhuma regra clínica é letra morta, o iniciante nunca recebe repetição abaixo da faixa dele, nenhuma estimativa devolve VO₂ impossível, nenhum aparelho de cardio entra em bloco de força, fundir condições nunca perde limitação, a posição que a condição evita não vai ao plano e a fase de entrada é a mais leve, com o passo do perfil clínico chegando ao alvo, o alvo da semana sobrevive ao "Aplicar no treino" a troca de exercicio segue as mesmas regras do gerador e travar variavel congela so aquela variavel.`,
 );
