@@ -468,10 +468,13 @@ export const referencias: Referencia[] = [
     autores: "Seppanen S, Hakkinen K",
     titulo:
       "Step vs. two-phase gradual volume reduction tapering protocols in strength training: effects on neuromuscular performance and serum hormone concentrations",
-    fonte: "Journal of Strength and Conditioning Research, 36(11):2936-2945",
+    // Fascículo e páginas estavam errados aqui (dizia 36(11):2936-2945) e por isso a referência
+    // não era localizável por citação, só pelo DOI. Conferido no PubMed: 36(10):2771-2779.
+    fonte: "Journal of Strength and Conditioning Research, 36(10):2771-2779",
     ano: 2022,
     doi: "10.1519/JSC.0000000000003939",
-    nota: "Ensaio pequeno em treinados recreativos: após 8 semanas, um taper de 2 semanas reduzindo o volume (grupo em degrau cortou 54%) e mantendo a carga aumentou o 1RM de agachamento (cerca de 3,4%). Reduzir volume mantendo intensidade é forma eficaz de pico de força. Amostra pequena.",
+    pmid: "33337705",
+    nota: "Ensaio pequeno (14 homens treinados recreacionalmente, 21 a 30 anos): após 8 semanas de treino, duas semanas de taper reduzindo o volume e mantendo a carga aumentaram o 1RM de agachamento nos dois grupos, e mais no grupo em DEGRAU (corte imediato de 54% do volume: 3,4% mais ou menos 2,1) do que no gradual (38% na primeira semana e 70% na segunda: 1,7% mais ou menos 0,9). Sustenta reduzir volume mantendo intensidade como forma de pico de força. Amostra pequena e só homens jovens: a magnitude não se transfere para o aluno de consultoria.",
   },
   {
     id: "izquierdo-tapering-2007",
