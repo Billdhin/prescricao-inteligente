@@ -31,6 +31,7 @@ import {
 } from "../src/data/aba-imagens";
 import { getExercicioRefs } from "../src/data/exercise-referencias";
 import { getReferencia } from "../src/data/referencias";
+import { specialGroups } from "../src/data/specialGroups";
 
 const PUBLIC = join(process.cwd(), "public");
 const problemas: string[] = [];
@@ -394,6 +395,40 @@ if (falhasDaAuto.length) {
 }
 console.log(`[check:catalogo] autoverificação OK: os 7 casos plantados reprovam e o exercício real passa.`);
 
+/*
+ * MODALIDADE PRESCRITA NA JORNADA, SEM UM ÚNICO EXERCÍCIO NO CATÁLOGO.
+ *
+ * As fases das jornadas nomeiam as modalidades em foco, e três delas não têm nenhum
+ * exercício correspondente:
+ *
+ *   m-mobilidade  prescrita em 21 das 23 jornadas, 0 exercícios
+ *   m-combinado   prescrita em  4 jornadas,        0 exercícios
+ *   m-natacao     prescrita em  1 jornada,         0 exercícios
+ *
+ * Isto NÃO quebra a prescrição: `modalidadePrincipal` só rotula o documento, e o
+ * ranqueamento de exercícios não é filtrado por modalidade. É uma lacuna de conteúdo, e
+ * fechá-la é autorar exercício com evidência, não mexer em código. Fica registrada aqui,
+ * com o número exato, para que ninguém a descubra de novo do zero.
+ *
+ * A asserção não reprova as três conhecidas: reprova se aparecer uma QUARTA (a lacuna
+ * cresceu em silêncio) ou se uma delas ganhar exercício e a lista ficar desatualizada.
+ */
+{
+  const LACUNAS_CONHECIDAS = ["m-combinado", "m-mobilidade", "m-natacao"];
+  const prescritas = new Set<string>();
+  for (const g of specialGroups) for (const f of g.fases ?? []) for (const m of f.modalidades ?? []) prescritas.add(m);
+  if (prescritas.size < 5)
+    problemas.push("controle positivo: quase nenhuma modalidade prescrita foi lida das jornadas; a asserção não testa nada.");
+  const vazias = [...prescritas].filter((m) => !exercises.some((e) => e.modalidade === m)).sort();
+  const esperado = LACUNAS_CONHECIDAS.join(", ");
+  if (vazias.join(", ") !== esperado)
+    problemas.push(
+      `modalidades prescritas sem exercício mudaram: agora "${vazias.join(", ") || "(nenhuma)"}", ` +
+        `antes "${esperado}". Se ganhou exercício, atualize LACUNAS_CONHECIDAS; se é modalidade nova sem ` +
+        `exercício, ou autore os exercícios ou tire a modalidade da jornada.`,
+    );
+}
+
 if (problemas.length) {
   console.error(`\n[check:catalogo] CATÁLOGO COM PROBLEMA DE INTEGRIDADE:\n`);
   for (const p of problemas) console.error(`  - ${p}`);
@@ -416,6 +451,7 @@ if (rasos.length) {
   console.log(`[check:catalogo] RASOS (existem, mas sem alternativa para o botão "Trocar"):`);
   for (const r of rasos) console.log(`    ${r.musculo}: ${contagem.get(r.musculo)} de ${r.minimo}`);
 }
+
 
 // Fila de imagem e de referência.
 const totalFaltas = fila.reduce((s, f) => s + f.faltas.length, 0);
