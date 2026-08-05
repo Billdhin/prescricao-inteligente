@@ -31,7 +31,15 @@ const falhas: string[] = [];
 const reprovar = (bloco: string, msg: string) => falhas.push(`[${bloco}] ${msg}`);
 
 const APP = lerCru("src/App.tsx");
-const LANDING = ler("src/pages/Landing.tsx");
+/*
+ * A landing passou a ser um PORTE FIEL do protótipo: a marcação vive em
+ * `src/pages/landing/prototipo.html` e o Landing.tsx só a injeta e liga o
+ * comportamento. Ler apenas o .tsx faria este guardrail perder de vista todo o texto que
+ * chega ao visitante, que é exatamente o que ele existe para vigiar. Ele leu por um
+ * instante, e reprovou de imediato: o rodapé do protótipo não linkava Termos nem
+ * Política, uma regressão de obrigação legal que teria ido ao ar em silêncio.
+ */
+const LANDING = ler("src/pages/Landing.tsx") + "\n" + ler("src/pages/landing/prototipo.html");
 const GATE = lerCru("src/components/app/CloudAuthGate.tsx");
 const DOC = lerCru("src/pages/DocumentoLegal.tsx");
 const PLANOS = lerCru("src/data/planos.ts");
