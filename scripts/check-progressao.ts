@@ -527,7 +527,58 @@ function verificarSupressaoDeFC(): string[] {
   return problemas;
 }
 
+/**
+ * A DESCARGA CHEGA A QUEM TEM CONDIÇÃO CLÍNICA.
+ *
+ * A regra antiga era `comDeload = dur >= 4`, com `dur` sendo a duração do mesociclo. No
+ * caminho de grupo especial o mesociclo é uma FASE DA JORNADA e o número de mesociclos é
+ * fixo no número de fases, então `dur = semanas / 4`, menor que 4 em todo horizonte
+ * abaixo de 16 semanas. O aluno sem condição recebia descarga a cada 4 semanas; o
+ * hipertenso estágio 2 e o obeso grau II não recebiam NENHUMA em 4, 8 e 12 semanas.
+ *
+ * A asserção compara os dois caminhos em vez de exigir um número: o plano clínico tem
+ * que receber, no mínimo, a mesma cadência de recuperação do plano sem condição. Assim
+ * ela continua válida se a casa mudar a cadência.
+ */
+function verificarDescargaClinica(): string[] {
+  const problemas: string[] = [];
+  const GRUPOS = ["hipertensao-estagio-2", "obesidade-grau-2", "gestante", "idoso-destreinado"];
+  const base = { objetivo: "Hipertrofia" as GpsObjetivo, nivel: "Iniciante" as Nivel, frequencia: FREQ };
+  const descargasDe = (p: ReturnType<typeof gerarPlano>) =>
+    p.principal.mesociclos.flatMap((m) => m.microciclos.filter((w) => w.tipo === "deload").map((w) => w.semana));
+
+  for (const semanas of [4, 8, 12, 24]) {
+    const generico = descargasDe(gerarPlano({ ...base, semanas }));
+    // Controle positivo: se o caminho genérico deixar de ter descarga, a comparação abaixo
+    // fica satisfeita por vacuidade e o teste passa a não proteger nada.
+    if (!generico.length) {
+      problemas.push(`controle positivo: o plano genérico de ${semanas} semanas não tem NENHUMA descarga; a comparação perdeu o sentido`);
+      continue;
+    }
+    for (const grupo of GRUPOS) {
+      const clinico = descargasDe(gerarPlano({ ...base, semanas, grupoEspecial: grupo }));
+      if (clinico.length < generico.length)
+        problemas.push(
+          `${semanas} semanas com "${grupo}": ${clinico.length} semana(s) de descarga contra ${generico.length} do plano sem condição ` +
+            `(genérico nas semanas ${generico.join(",")}; clínico ${clinico.length ? "nas " + clinico.join(",") : "NENHUMA"})`,
+        );
+    }
+  }
+  return problemas;
+}
+
 /* ----------------------------------- Execução ------------------------------------- */
+
+const falhaDescarga = verificarDescargaClinica();
+if (falhaDescarga.length) {
+  console.error("\n[check:progressao] DESCARGA AUSENTE NO PLANO CLÍNICO:\n");
+  for (const p of falhaDescarga) console.error(`  - ${p}`);
+  console.error(
+    "\n  Quem tem condição clínica não pode receber MENOS recuperação que quem não tem." +
+      " Se a cadência da casa mudar, mude nos dois caminhos: esta asserção compara um com o outro.\n",
+  );
+  process.exit(1);
+}
 
 const falhaSupressao = verificarSupressaoDeFC();
 if (falhaSupressao.length) {

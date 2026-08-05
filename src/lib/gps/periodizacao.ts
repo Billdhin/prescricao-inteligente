@@ -709,7 +709,10 @@ function montarMicrociclos(
   frequencia: number,
   semanaInicio: number,
   duracao: number,
-  comDeload: boolean,
+  // Semanas de descarga do MACROCICLO, por número absoluto. Antes isto era um booleano
+  // por mesociclo ("este bloco fecha com descarga?"), e era ele que sumia no caminho
+  // clínico, onde o bloco é uma fase da jornada e quase nunca chega a 4 semanas.
+  descargas: Set<number>,
   // Tendências do mesociclo dono destas semanas: mandam a DIREÇÃO do alvo semana a semana.
   tendenciaVolume: Tendencia,
   tendenciaIntensidade: Tendencia,
@@ -720,19 +723,26 @@ function montarMicrociclos(
 ): Microciclo[] {
   const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao } = dadosDoAluno;
   const semanas: Microciclo[] = [];
-  // Semanas de carga do meso (a descarga, quando existe, é a última e fica fora desta conta).
-  const semanasDeCargaNoMeso = comDeload ? Math.max(1, duracao - 1) : duracao;
+  // Semanas de carga do meso (as descargas ficam fora desta conta). Agora são contadas,
+  // e não deduzidas de "a última é descarga": com cadência absoluta, a descarga pode cair
+  // no meio de um mesociclo, e um mesociclo curto pode não ter nenhuma.
+  const semanasDeCargaNoMeso = Math.max(1, cargasDoMeso(semanaInicio, duracao, descargas));
+  // Posição da semana entre as semanas de CARGA deste meso: é ela que anda o alvo. Sem
+  // isto, uma descarga no meio do bloco empurraria o alvo da semana seguinte um degrau
+  // além do previsto, porque o índice bruto `s` conta a semana que não teve carga.
+  let cargasAntes = 0;
   for (let s = 0; s < duracao; s++) {
     const semana = semanaInicio + s;
-    const ehDeload = comDeload && s === duracao - 1;
+    const ehDeload = descargas.has(semana);
+    if (!ehDeload) cargasAntes++;
     const freqSemana = ehDeload ? Math.max(1, frequencia - 1) : frequencia;
     const ctx: CtxAlvo = {
       // A descarga se ancora no teto do meso (última carga) e reduz a partir dele.
-      semanaNoMeso: ehDeload ? semanasDeCargaNoMeso : s + 1,
+      semanaNoMeso: ehDeload ? semanasDeCargaNoMeso : cargasAntes,
       semanasDeCargaNoMeso,
       // Rampa no macro: a posição desta semana de carga contada desde o início do plano.
       semanaNoMacro:
-        cargaAntesDesteMeso != null ? cargaAntesDesteMeso + (ehDeload ? semanasDeCargaNoMeso : s + 1) : undefined,
+        cargaAntesDesteMeso != null ? cargaAntesDesteMeso + (ehDeload ? semanasDeCargaNoMeso : cargasAntes) : undefined,
       semanasDeCargaNoMacro,
       pisoDoCiclo,
       fatorProgressao,
@@ -857,11 +867,74 @@ function tendenciasDoModelo(
  * - **Blocos** fica de fora de propósito: ali o movimento é de bloco em bloco, pelas ondas de
  *   `focoDoMeso`, e é assim que o modelo se define.
  */
+/**
+ * CADÊNCIA DE DESCARGA, EM SEMANAS DE CALENDÁRIO.
+ *
+ * Quatro semanas é a escolha da casa que já vinha sendo aplicada no caminho genérico
+ * (blocos de ~4 semanas, a última de descarga). O que muda aqui é o ANCORAMENTO: a
+ * descarga passa a contar a partir do início do plano, e não do tamanho do bloco.
+ *
+ * ## Por que isso era um defeito de segurança, e invertido
+ *
+ * A regra antiga era `comDeload = dur >= 4`, com `dur` sendo a duração do mesociclo.
+ * No caminho genérico o mesociclo é montado com ~4 semanas por construção, então a
+ * descarga sempre acontecia. No caminho de GRUPO ESPECIAL o mesociclo é uma FASE DA
+ * JORNADA, e o número de mesociclos é fixo no número de fases (tipicamente 4). Logo
+ * `dur = semanas / 4`, que é menor que 4 em qualquer horizonte abaixo de 16 semanas.
+ *
+ * Medido antes da correção, com hipertensão estágio 2 e com obesidade grau II:
+ *
+ *   horizonte | sem condição       | com condição clínica
+ *   4 semanas | descarga na 4      | NENHUMA
+ *   8 semanas | descarga na 4 e 8  | NENHUMA
+ *   12 semanas| descarga 4, 8, 12  | NENHUMA
+ *
+ * Ou seja, exatamente quem tem mais motivo para recuperar era quem nunca recuperava, e
+ * em três dos cinco horizontes oferecidos, incluindo o trimestral, que é o mais usado.
+ * Não era uma regra clínica ausente: era uma regra de recuperação que existia e que a
+ * aritmética do caminho clínico desligava em silêncio.
+ *
+ * A correção não inventa cadência nova nem trata o aluno clínico de forma diferente:
+ * aplica a MESMA cadência que o aluno sem condição já recebia. Nos horizontes de
+ * catálogo (4, 8, 12, 24 e 48 semanas) o caminho genérico sai idêntico ao de antes,
+ * porque lá os blocos já eram de 4 semanas.
+ */
+const CADENCIA_DELOAD = 4;
+
+/** Semanas de descarga do macrociclo, por número ABSOLUTO da semana no plano. */
+function semanasDeDescarga(semanasTotais: number): Set<number> {
+  const set = new Set<number>();
+  for (let s = CADENCIA_DELOAD; s <= semanasTotais; s += CADENCIA_DELOAD) set.add(s);
+  return set;
+}
+
+/** Quantas semanas de CARGA (não descarga) o mesociclo que começa em `ini` contém. */
+function cargasDoMeso(ini: number, dur: number, descargas: Set<number>): number {
+  let n = 0;
+  for (let s = ini; s < ini + dur; s++) if (!descargas.has(s)) n++;
+  return n;
+}
+
+/**
+ * `duracoes` são as durações REAIS, sempre. Quem não progride entra por `progride`, e
+ * não zerando a duração: agora que a descarga é posicional no calendário, zerar um
+ * mesociclo deslocaria o número absoluto de todas as semanas seguintes, e a rampa
+ * passaria a olhar a semana errada para saber se ela é de carga.
+ */
 function rampaNoMacro(
   modelo: ModeloPeriodizacaoId,
   duracoes: number[],
+  descargas: Set<number>,
+  progride?: boolean[],
 ): { antes: number[]; total?: number } {
-  const cargas = duracoes.map((d) => (d >= 4 ? d - 1 : d));
+  // A contagem de semanas de carga usa a MESMA fonte que decide a descarga, senão a
+  // rampa acha que progrediu numa semana que o plano entregou como descarga.
+  let ini = 1;
+  const cargas = duracoes.map((d, m) => {
+    const c = progride && !progride[m] ? 0 : cargasDoMeso(ini, d, descargas);
+    ini += d;
+    return c;
+  });
   const antes: number[] = [];
   let acc = 0;
   for (const c of cargas) {
@@ -889,7 +962,8 @@ function montarMacrocicloGenerico(
   const resto = semanas - base * nMeso;
 
   const duracoes = Array.from({ length: nMeso }, (_, m) => base + (m < resto ? 1 : 0));
-  const rampa = rampaNoMacro(modelo, duracoes);
+  const descargas = semanasDeDescarga(semanas);
+  const rampa = rampaNoMacro(modelo, duracoes, descargas);
   // Ondas do modelo de blocos (acúmulo -> intensificação -> realização se repetem a cada 3
   // mesociclos). A onda seguinte lê a MESMA faixa a partir de um piso mais alto, senão o plano
   // de 24 semanas sai com as semanas 13 a 24 idênticas às 1 a 12. Ver CtxAlvo.pisoDoCiclo.
@@ -904,7 +978,10 @@ function montarMacrocicloGenerico(
     const fim = cursor + dur - 1;
     cursor = fim + 1;
     const foco = focoDoMeso(m);
-    const comDeload = dur >= 4;
+    // O selo de descarga do mesociclo agora diz se ELE CONTEM alguma semana de descarga,
+    // em vez de "este bloco tem 4 ou mais semanas", que era o que apagava a descarga do
+    // caminho clinico inteiro. Ver CADENCIA_DELOAD.
+    const comDeload = cargasDoMeso(ini, dur, descargas) < dur;
     // As tendências do meso mandam a direção do alvo; a mesma fonte alimenta o gráfico e o alvo.
     const { tv, ti } = tendenciasDoModelo(modelo, foco);
 
@@ -935,7 +1012,7 @@ function montarMacrocicloGenerico(
         "Baixa adesão ou sono ruim mantidos",
       ],
       parametros: faixa.parametros,
-      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, {
+      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, descargas, tv, ti, {
         idade: input.idade,
         fcRepouso: input.fcRepouso,
         parametrosInvalidos: input.parametrosInvalidos,
@@ -1083,10 +1160,10 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
    * "progride do meio da faixa para o meio da faixa".
    */
   const progride = sequencia.map(({ estendida }) => !estendida);
-  const rampa = rampaNoMacro(
-    modelo,
-    duracoes.map((d, m) => (progride[m] ? d : 0)),
-  );
+  // A descarga é do CALENDÁRIO do plano, não da fase: no caminho clínico o mesociclo é
+  // uma fase da jornada e quase nunca chega a 4 semanas, que era a condição antiga.
+  const descargas = semanasDeDescarga(semanas);
+  const rampa = rampaNoMacro(modelo, duracoes, descargas, progride);
   const mesociclos: Mesociclo[] = [];
   let cursor = 1;
   sequencia.forEach(({ fase, estendida }, m) => {
@@ -1094,7 +1171,10 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
     const ini = cursor;
     const fim = cursor + dur - 1;
     cursor = fim + 1;
-    const comDeload = dur >= 4;
+    // O selo de descarga do mesociclo agora diz se ELE CONTEM alguma semana de descarga,
+    // em vez de "este bloco tem 4 ou mais semanas", que era o que apagava a descarga do
+    // caminho clinico inteiro. Ver CADENCIA_DELOAD.
+    const comDeload = cargasDoMeso(ini, dur, descargas) < dur;
     // As repetições da última fase são MANUTENÇÃO: ficam estáveis por decisão clínica, e o
     // modelo não manda nisso. Em todas as demais, inclusive a de entrada, quem manda é o
     // MODELO escolhido, como no macrociclo genérico (ver o comentário da rampa acima).
@@ -1126,7 +1206,7 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       criteriosProgressao: fase.criteriosAvancar,
       criteriosRegressao: fase.criteriosRegredir,
       parametros: fase.parametros?.length ? fase.parametros : faixa.parametros,
-      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, comDeload, tv, ti, {
+      microciclos: montarMicrociclos(objetivo, nivel, modelo, frequencia, ini, dur, descargas, tv, ti, {
         idade: input.idade,
         fcRepouso: input.fcRepouso,
         parametrosInvalidos: input.parametrosInvalidos,
