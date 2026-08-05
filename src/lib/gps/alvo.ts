@@ -521,7 +521,41 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
    *   - realização (volume reduz, intensidade sobe): menos repetição e menos séries.
    * Nenhum número novo entra: a repetição continua dentro da mesma faixa citada.
    */
-  if (seriesIv) alvo.seriesAlvo = ponto(seriesIv, nivelVolume, true);
+  /*
+   * PERFIL COM CAUTELA DECLARADA COMEÇA NO PISO DAS SÉRIES E SOBE DE LÁ.
+   *
+   * Mesmo `partirDoPiso` que já valia para a duração do aeróbio, agora também no volume de
+   * força. Duas coisas se resolvem com isto, e as duas foram medidas.
+   *
+   * A primeira é a ESTAGNAÇÃO. Em 36 dos 432 planos do produto cartesiano, todos de
+   * Resistência muscular com iniciante e condição declarada, a dose de força saía
+   * "3x15, 90 s" em TODAS as 12 semanas de carga. A causa: a faixa cita repetições "acima
+   * de 15" e intervalo "até 90 s", que são pontas abertas e degeneram num valor único, então
+   * a única variável livre era a série, e ela já nascia no TETO de "2 a 3". Sem piso para
+   * subir, o plano prometia progressão e entregava a mesma semana doze vezes.
+   *
+   * A segunda é a DOSE INICIAL. Uma idosa de 72 anos com osteoporose, iniciante, recebia 5
+   * séries por exercício já na semana 1, que é o teto de "3 a 5". Começar no piso e caminhar
+   * até o teto é o que a própria condição declara em `cuidados` como progressão gradual.
+   *
+   * Nenhum número novo: o piso e o teto são os da faixa que o objetivo já cita.
+   */
+  /*
+   * SÓ QUANDO A TENDÊNCIA NÃO É "reduz".
+   *
+   * `partirDoPiso` multiplica o nível por `t`, o que para uma tendência que SOBE ou que fica
+   * estável significa "comece embaixo e chegue lá". Para a tendência "reduz", cujo nível já
+   * é `1 - t`, o produto vira `(1 - t) * t`: zero no começo, pico no meio, zero no fim. Uma
+   * CORCOVA. O check:core pegou na hora, em 12 planos: "LINEAR ONDULOU (grupo obesidade
+   * grau III): o bloco 3 tem MAIS volume (455,0) que o anterior (413,5)". O modelo linear
+   * anunciava rampa e entregava onda, que é exatamente o defeito que o Filipe apontou e que
+   * eu acabaria reintroduzindo por outra porta.
+   *
+   * Numa tendência que reduz, o bloco já termina no piso: forçar o início no piso não é
+   * cautela, é contradizer a própria tendência declarada.
+   */
+  const nvSeries = ctx.partirDoPiso && ctx.tendenciaVolume !== "reduz" ? nivelVolume * t : nivelVolume;
+  if (seriesIv) alvo.seriesAlvo = ponto(seriesIv, nvSeries, true);
   if (repsIv) alvo.repsAlvo = ponto(repsIv, 1 - nivelInt, true);
   if (pctIv) alvo.cargaRelativaAlvo = ponto(pctIv, nivelInt, false);
   // RIR anda ao contrário da intensidade: mais intensidade = menos reserva (mais perto da falha).

@@ -761,7 +761,25 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
       nota: "quem está começando fica em 8 a 12; carga alta vem depois da técnica consolidada",
     },
     intensidade: { valor: "alta", nota: "com boa técnica e margem de segurança" },
-    intervalo: { valor: "3 a 5 min", nota: "nas séries principais" },
+    intervalo: {
+      valor: "3 a 5 min",
+      // O NÍVEL JÁ MUDAVA AS REPETIÇÕES E NÃO MUDAVA O DESCANSO.
+      //
+      // O campo `reps` acima declara `porNivel` e move o iniciante de "1 a 6" para "8 a 12",
+      // que é a decisão certa e é o que a nota dele explica. O intervalo ficava em "3 a 5 min"
+      // para todo mundo, que é descanso de série de 1 a 6 repetições. O resultado medido, num
+      // plano de 12 semanas de Força para iniciante: 5 séries de 12 repetições com 180 s de
+      // descanso, em 720 blocos do produto cartesiano. Com condição que declara cautela o
+      // alvo vai a 240 s, e uma idosa com osteoporose recebia 5x12 com 4 minutos entre séries,
+      // o que estica a sessão para mais de uma hora e meia sem nenhum ganho.
+      //
+      // O intervalo do iniciante NÃO é número novo: é exatamente a faixa que este mesmo
+      // arquivo já cita para a zona de 8 a 12 repetições, no objetivo Hipertrofia. Reusar a
+      // faixa já citada para a zona de repetição que o aluno de fato vai executar é o que
+      // mantém a prescrição coerente sem inventar recomendação.
+      porNivel: { Iniciante: "1 a 2 min", Intermediário: "3 a 5 min", Avançado: "3 a 5 min" },
+      nota: "nas séries principais; quem está em 8 a 12 repetições descansa na faixa dessa zona, não na de carga máxima",
+    },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3 a 4x/sem", Avançado: "4 a 5x/sem" },
     enfases: [
       { rotulo: "pesado", reps: "3 a 5", intensidade: "alta, com técnica e margem" },

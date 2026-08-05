@@ -477,11 +477,15 @@ export function doseForca(
   enfase?: EnfaseSessao,
   ctx?: CtxAlvo,
 ): DoseForca & Partial<AlvoForca> {
+  // Todas as quatro variáveis passam pelo resolvedor de nível. `reps` já passava e as
+  // outras liam `.valor` direto, o que fazia o `porNivel` do intervalo ser código morto no
+  // dia em que alguém o declarasse. Foi o que aconteceu: a faixa de Força move o iniciante
+  // para 8 a 12 repetições e o descanso ficava em 3 a 5 min, que é de série de 1 a 6.
   const texto: DoseForca = {
-    series: faixa.series.valor,
+    series: valorFaixa(faixa.series, nivel),
     reps: enfase?.reps ?? valorFaixa(faixa.reps, nivel),
-    intensidade: enfase?.intensidade ?? faixa.intensidade.valor,
-    intervalo: faixa.intervalo.valor,
+    intensidade: enfase?.intensidade ?? valorFaixa(faixa.intensidade, nivel),
+    intervalo: valorFaixa(faixa.intervalo, nivel),
   };
   if (!ctx) return texto;
   const alvo = alvoSemana({ ...texto, intensidadeNota: faixa.intensidade.nota }, ctx);

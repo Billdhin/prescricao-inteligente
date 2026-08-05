@@ -731,7 +731,85 @@ function verificarDoseVemDoPerfil(): string[] {
   return problemas;
 }
 
+/**
+ * NENHUM PLANO ENTREGA A MESMA SEMANA DOZE VEZES, E O DESCANSO SEGUE O NÍVEL.
+ *
+ * Dois achados da bateria de 432 planos, ambos medidos:
+ *
+ * 1. ESTAGNAÇÃO em 36 planos, todos de Resistência muscular com iniciante e condição: a
+ *    dose de força saía "3x15, 90 s" em TODAS as semanas de carga. A faixa cita repetições
+ *    "acima de 15" e intervalo "até 90 s", pontas abertas que degeneram num valor único, e
+ *    a série já nascia no teto de "2 a 3". Sem piso, não havia para onde progredir.
+ *
+ * 2. DESCANSO QUE IGNORAVA O NÍVEL em 720 blocos: a faixa de Força move o iniciante para
+ *    "8 a 12" repetições via `porNivel` e o intervalo ficava em "3 a 5 min", que é descanso
+ *    de série de 1 a 6. Saía 5x12 com 180 s, e com cautela declarada 240 s. A causa era
+ *    `doseForca` ler `faixa.intervalo.valor` direto, ignorando o resolvedor `valorFaixa`
+ *    que já existia: o `porNivel` do intervalo era código morto esperando ser declarado.
+ */
+function verificarProgressaoEDescanso(): string[] {
+  const problemas: string[] = [];
+  const NIVEIS_T: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
+  let avaliados = 0;
+
+  for (const objetivo of OBJETIVOS as GpsObjetivo[])
+    for (const nivel of NIVEIS_T)
+      // TODOS os grupos, e não uma amostra: a primeira versão desta asserção testava cinco
+      // grupos e passava verde enquanto 12 planos de Resistência muscular ficavam parados,
+      // porque nenhum deles estava na amostra. Guardrail com amostra mente por omissão.
+      for (const grupo of [undefined, ...specialGroups.map((g) => g.slug)]) {
+        const p = gerarPlano({ objetivo, nivel, semanas: 12, frequencia: FREQ, grupoEspecial: grupo });
+        const cargas = p.principal.mesociclos.flatMap((m) => m.microciclos).filter((w) => w.tipo === "carga");
+        if (cargas.length < 4) continue;
+        avaliados++;
+        const id = `${objetivo}/${nivel}/${grupo ?? "sem condição"}`;
+        // A SESSÃO INTEIRA, força e aeróbio. Onde a faixa do objetivo tem ponta aberta
+        // ("acima de 15", "até 90 s") a dose de força degenera num valor único e, com cautela
+        // declarada, legitimamente se sustenta. O que NÃO pode acontecer é a sessão inteira
+        // ser idêntica nas doze semanas: aí o plano promete progressão e não entrega nada.
+        const dose = (w: (typeof cargas)[number]) =>
+          w.sessoes[0].blocos
+            .map((b) => (b.tipo === "aerobio" ? `AER${b.duracaoAlvoMin}/${b.rpeAlvo}` : ""))
+            .join(",") +
+          w.sessoes[0].blocos
+            .filter((b) => b.tipo !== "aerobio")
+            .map((b) => `${b.seriesAlvo}x${b.repsAlvo}/${b.rirAlvo ?? "-"}/${b.intervaloAlvoSeg}`)
+            .join(",");
+        if (new Set(cargas.map(dose)).size === 1)
+          problemas.push(`${id}: dose de força IDÊNTICA nas ${cargas.length} semanas de carga (${dose(cargas[0])})`);
+
+        // O descanso do bloco tem que sair da faixa que vale PARA ESTE NÍVEL.
+        for (const b of cargas[0].sessoes[0].blocos) {
+          if (b.tipo === "aerobio" || b.intervaloAlvoSeg == null) continue;
+          const iv = intervaloDe(b.intervalo ?? "");
+          const un = b.intervalo?.includes("min") ? 60 : 1;
+          if (!iv) continue;
+          const min = iv.min * un;
+          const max = (iv.max === Infinity ? iv.min : iv.max) * un;
+          if (b.intervaloAlvoSeg < min - 1 || b.intervaloAlvoSeg > max + 1)
+            problemas.push(`${id}: intervalo-alvo ${b.intervaloAlvoSeg}s fora da faixa exibida "${b.intervalo}"`);
+          // A incoerência concreta: muitas repetições com descanso de carga máxima.
+          if ((b.repsAlvo ?? 0) >= 10 && b.intervaloAlvoSeg >= 180)
+            problemas.push(`${id}: ${b.seriesAlvo}x${b.repsAlvo} com ${b.intervaloAlvoSeg}s de descanso (faixa "${b.intervalo}")`);
+        }
+      }
+  if (avaliados < 20) problemas.push(`controle positivo: só ${avaliados} planos avaliados; a asserção perdeu o sentido`);
+  return problemas;
+}
+
 /* ----------------------------------- Execução ------------------------------------- */
+
+const falhaProgDesc = verificarProgressaoEDescanso();
+if (falhaProgDesc.length) {
+  console.error("\n[check:progressao] PLANO QUE NÃO PROGRIDE OU DESCANSO FORA DO NÍVEL:\n");
+  for (const p of falhaProgDesc.slice(0, 12)) console.error(`  - ${p}`);
+  if (falhaProgDesc.length > 12) console.error(`  ... e mais ${falhaProgDesc.length - 12}`);
+  console.error(
+    "\n  Um plano de 12 semanas com a mesma dose em todas elas promete progressão e não entrega.\n" +
+      "  E o descanso tem que sair da faixa que vale para o NÍVEL, não da faixa base.\n",
+  );
+  process.exit(1);
+}
 
 const falhaPerfil = verificarDoseVemDoPerfil();
 if (falhaPerfil.length) {
