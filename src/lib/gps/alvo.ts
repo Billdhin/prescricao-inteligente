@@ -81,6 +81,20 @@ export interface CtxAlvo {
    * da faixa, e o sentido da tendência é preservado. Ausente = passo cheio, como sempre foi.
    */
   fatorProgressao?: number;
+  /**
+   * TETO DE PSE do perfil clínico, já fundido de todas as condições do aluno
+   * (`GroupGpsRule.modProgressao.pseTeto`, o menor entre elas).
+   *
+   * Era mais um caso da assinatura recorrente deste motor: a cautela declarada e nada
+   * a aplicando. O teto existia e chegava a DOIS lugares, o texto do semáforo e a
+   * autorregulação da execução (autorregulacao.ts), mas não ao alvo PRESCRITO. Medido
+   * num plano de 12 semanas para hipertensão estágio 2, cujo teto é 5: 15 dos 33 blocos
+   * aeróbios saíam com PSE-alvo 6. O semáforo do mesmo aluno, na mesma tela, dizia
+   * "intensidade moderada, PSE ≤5".
+   *
+   * Só REBAIXA, nunca levanta: um teto que aumentasse o esforço não seria um teto.
+   */
+  pseTeto?: number;
   tipoSemana: TipoMicrociclo;
   tendenciaVolume: Tendencia;
   tendenciaIntensidade: Tendencia;
@@ -516,6 +530,11 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
     if (durIv) alvo.duracaoAlvoMin = Math.round(ponto(durIv, nivelVolume, false));
     if (rpeIv) alvo.rpeAlvo = ponto(rpeIv, nivelInt, true);
   }
+
+  // O teto do perfil clínico entra DEPOIS de escolher o ponto na faixa, e só rebaixa. Fica
+  // aqui, e não dentro de cada ramo, para valer também na descarga: se o piso da faixa
+  // citada já estiver acima do teto do aluno, quem manda é o teto.
+  if (alvo.rpeAlvo != null && ctx.pseTeto != null) alvo.rpeAlvo = Math.min(alvo.rpeAlvo, ctx.pseTeto);
 
   /*
    * ZONA DE FC. Duas correções vieram da auditoria de evidência, e as duas eram de

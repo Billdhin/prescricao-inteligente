@@ -23,6 +23,7 @@ import { intervaloDe } from "../src/lib/gps/faixasParse";
 import { assinaturaCarga } from "../src/lib/gps/assinaturaSemana";
 import { OBJETIVOS } from "../src/lib/gps/engine";
 import { specialGroups } from "../src/data/specialGroups";
+import { groupGpsRules } from "../src/lib/gps/groupRules";
 import type { GpsObjetivo } from "../src/lib/gps/engine";
 import type { Nivel } from "../src/data/types";
 import type { Macrociclo, Microciclo, BlocoSessao, Tendencia } from "../src/data/periodizacao";
@@ -567,7 +568,64 @@ function verificarDescargaClinica(): string[] {
   return problemas;
 }
 
+/**
+ * O TETO DE PSE DO PERFIL CHEGA AO ALVO PRESCRITO.
+ *
+ * `modProgressao.pseTeto` existia e era consumido em dois lugares: o texto do semáforo e a
+ * autorregulação da execução. Não chegava ao alvo do plano. Medido antes da correção, num
+ * plano de 12 semanas para hipertensão estágio 2, cujo teto é 5: 15 dos 33 blocos aeróbios
+ * saíam com PSE-alvo 6, enquanto o semáforo do MESMO aluno dizia "PSE ≤5".
+ *
+ * A varredura cobre todos os grupos que declaram teto, e não só o caso encontrado.
+ */
+function verificarTetoDePSE(): string[] {
+  const problemas: string[] = [];
+  const comTeto = Object.entries(groupGpsRules).filter(([, r]) => r?.modProgressao?.pseTeto != null);
+
+  // Controle positivo: se nenhum grupo declarar teto, o laço abaixo não testa nada.
+  if (comTeto.length < 5)
+    problemas.push(`controle positivo: só ${comTeto.length} grupo(s) declaram pseTeto; a varredura perdeu o sentido`);
+
+  let blocosConferidos = 0;
+  for (const [grupo, regra] of comTeto) {
+    const teto = regra!.modProgressao!.pseTeto!;
+    // Emagrecimento tem aeróbio de base em toda sessão: é onde o PSE-alvo aparece.
+    const p = gerarPlano({
+      objetivo: "Emagrecimento" as GpsObjetivo, nivel: "Iniciante" as Nivel,
+      semanas: 12, frequencia: FREQ, grupoEspecial: grupo, idade: 55, fcRepouso: 72,
+    });
+    const acima: number[] = [];
+    for (const m of p.principal.mesociclos)
+      for (const w of m.microciclos)
+        for (const s of w.sessoes)
+          for (const b of s.blocos) {
+            if (b.rpeAlvo == null) continue;
+            blocosConferidos++;
+            if (b.rpeAlvo > teto) acima.push(b.rpeAlvo);
+          }
+    if (acima.length)
+      problemas.push(
+        `"${grupo}" declara pseTeto ${teto} e o plano prescreve PSE-alvo ${[...new Set(acima)].sort().join(",")} ` +
+          `em ${acima.length} bloco(s): a cautela está declarada e não é aplicada`,
+      );
+  }
+  if (blocosConferidos === 0)
+    problemas.push("controle positivo: nenhum bloco com PSE-alvo foi encontrado; a varredura não leu o plano");
+  return problemas;
+}
+
 /* ----------------------------------- Execução ------------------------------------- */
+
+const falhaTeto = verificarTetoDePSE();
+if (falhaTeto.length) {
+  console.error("\n[check:progressao] TETO DE PSE DECLARADO E NÃO APLICADO:\n");
+  for (const p of falhaTeto) console.error(`  - ${p}`);
+  console.error(
+    "\n  O teto do perfil clínico tem que rebaixar o alvo PRESCRITO, não só o texto do semáforo" +
+      " e a autorregulação da execução. Ver CtxAlvo.pseTeto.\n",
+  );
+  process.exit(1);
+}
 
 const falhaDescarga = verificarDescargaClinica();
 if (falhaDescarga.length) {

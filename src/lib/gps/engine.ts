@@ -227,20 +227,49 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
   //    assinável precisa poder afirmar que cada restrição declarada foi considerada.
   //    Cada tag tem um avaliador (src/lib/gps/restricoes.ts) que devolve a ação; o
   //    exercício claramente incompatível é EXCLUÍDO do ranking, com motivo.
+  /*
+   * OS CINCO NÍVEIS PRECISAM CABER NUMA ESCALA QUE TENHA ACIMA E ABAIXO DO NEUTRO.
+   *
+   * A tabela antiga era `preferir: 1` com `restRatio` começando em 1 e agregando por
+   * `Math.min`. Como o mínimo nunca sobe, `preferir` não podia levantar nota nenhuma: o
+   * exercício marcado como PREFERIDO para a restrição declarada do aluno pontuava
+   * exatamente igual a um exercício que não tem relação alguma com ela. O nível mais
+   * alto do vocabulário era inerte, e o motor de seleção do plano (PESO_ACAO, em
+   * periodizacao.ts) já tratava os mesmos cinco níveis numa escala com neutro no meio.
+   * O mesmo vocabulário, dois comportamentos.
+   *
+   * Agora o neutro tem um valor próprio, abaixo de `preferir`:
+   *
+   *   preferir 1.00  > NEUTRO 0.90 = adaptar 0.90 > moderado 0.55 > forte 0.15 > excluir 0
+   *
+   * `adaptar` fica NO neutro, e não abaixo: adaptar quer dizer que o exercício serve com
+   * ajuste, e o ajuste já é dito ao profissional na justificativa. Rebaixá-lo empurrava o
+   * exercício adequado-com-ajuste para trás de um exercício qualquer sem relação nenhuma
+   * com o caso, que é o contrário do que o produto se propõe a fazer.
+   *
+   * A razão segue limitada a 1, então `pontosPossiveis` do critério continua válido e o
+   * detalhamento na tela não muda de escala.
+   */
+  const NEUTRO = 0.9;
   const RATIO_ACAO: Record<AcaoRestricao, number> = {
     preferir: 1,
-    adaptar: 0.9,
+    adaptar: NEUTRO,
     penalizar_moderado: 0.55,
     penalizar_forte: 0.15,
     excluir: 0,
   };
-  let restRatio = 1;
+  let restRatio = NEUTRO;
   let restDetalhe = "Sem restrição declarada.";
   let excluido = false;
   let motivoExclusao: string | undefined;
   const ativas = restricoesAtivas(ans.restricoes ?? []);
   if (ativas.length > 0) {
     const partes: string[] = [];
+    // As razões DECLARADAS entram numa lista e o mínimo é tirado no fim. Agregar com
+    // `Math.min` a partir do neutro travaria `preferir` no neutro de novo, que é
+    // exatamente o defeito que esta mudança corrige. Entre efeitos declarados, a regra
+    // continua sendo a mais estrita manda.
+    const razoes: number[] = [];
     for (const sel of ativas) {
       const avaliar = EFEITO_POR_TAG[sel.tag];
       if (!avaliar) continue; // sem efeito no ranking (ex.: nenhuma/outra)
@@ -258,8 +287,9 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
         cautions.push(efeito.motivo);
       }
       if (efeito.motivo) partes.push(`${rotulo}: ${efeito.motivo}`);
-      restRatio = Math.min(restRatio, RATIO_ACAO[efeito.acao]); // a mais estrita manda
+      razoes.push(RATIO_ACAO[efeito.acao]);
     }
+    if (razoes.length) restRatio = Math.min(...razoes); // a mais estrita manda
     restDetalhe = partes.length ? partes.join(" ") : "Restrições declaradas sem conflito com este exercício.";
   }
   const restPts = restRatio * W_RESTRICAO;

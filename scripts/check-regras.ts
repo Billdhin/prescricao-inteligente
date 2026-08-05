@@ -17,6 +17,9 @@
  */
 import { REGRAS_PROGRESSAO } from "../src/data/regrasProgressao";
 import { getReferencia } from "../src/data/referencias";
+import { scoreExercise } from "../src/lib/gps/engine";
+import { EFEITO_POR_TAG, type AcaoRestricao } from "../src/lib/gps/restricoes";
+import { exercises } from "../src/data/exercises";
 
 const CONFIANCAS = ["forte", "moderada", "fraca"];
 const erros: string[] = [];
@@ -46,6 +49,58 @@ for (const regra of REGRAS_PROGRESSAO) {
   // 4. nenhuma regra aprovada com confiança fraca
   if (regra.aprovacao === "aprovada" && regra.confianca === "fraca") {
     erros.push(`aprovada com confiança fraca: "${regra.id}" deve ser declarada como "pendente" enquanto a evidência for fraca.`);
+  }
+}
+
+/*
+ * OS CINCO NÍVEIS DE AÇÃO DE RESTRIÇÃO PRECISAM SER DISTINGUÍVEIS NO RANQUEAMENTO.
+ *
+ * `preferir` era código morto no motor de ranqueamento: a razão começava em 1, o nível mais
+ * alto valia 1, e a agregação era `Math.min`, que nunca sobe. O exercício marcado como
+ * PREFERIDO para a restrição declarada do aluno pontuava exatamente igual a um exercício sem
+ * relação nenhuma com ela. E `adaptar` ficava ABAIXO do neutro, apesar de ser o próprio
+ * sentinela neutro dos avaliadores (restricoes.ts: `NEUTRO = { acao: "adaptar" }`).
+ *
+ * A asserção exige a ORDEM entre os níveis e não fixa valor nenhum, então ela continua
+ * valendo se a casa recalibrar a escala.
+ */
+{
+  const alvo = exercises[0];
+  if (!alvo) {
+    erros.push("controle positivo: o catálogo de exercícios está vazio; a asserção de restrição não testa nada.");
+  } else {
+    const TAG = "__teste_ordem__" as never;
+    const razaoCom = (acao: AcaoRestricao | null): number => {
+      if (acao) (EFEITO_POR_TAG as Record<string, unknown>)[TAG] = () => ({ acao, motivo: "caso de teste" });
+      const r = scoreExercise(alvo, {
+        objetivo: "Hipertrofia",
+        grupoMuscular: alvo.grupoMuscular,
+        nivel: alvo.nivel,
+        equipamentos: [alvo.equipamento],
+        restricoes: acao ? [{ tag: TAG } as never] : [],
+      });
+      const b = r.breakdown.find((c) => c.criterio === "Restrição")!;
+      return +(b.peso / b.pontosPossiveis).toFixed(4);
+    };
+
+    const semRestricao = razaoCom(null);
+    const ordem: AcaoRestricao[] = ["preferir", "adaptar", "penalizar_moderado", "penalizar_forte"];
+    const razoes = ordem.map((a) => razaoCom(a));
+
+    if (!(razoes[0] > semRestricao))
+      erros.push(
+        `"preferir" não levanta o ranqueamento: razão ${razoes[0]} contra ${semRestricao} sem restrição declarada. ` +
+          `O nível mais alto do vocabulário fica inerte.`,
+      );
+    if (razoes[1] !== semRestricao)
+      erros.push(
+        `"adaptar" não empata com o neutro: razão ${razoes[1]} contra ${semRestricao}. ` +
+          `adaptar é o próprio sentinela neutro dos avaliadores de restrição.`,
+      );
+    for (let i = 1; i < ordem.length - 1; i++)
+      if (!(razoes[i] > razoes[i + 1]))
+        erros.push(`"${ordem[i]}" não pontua acima de "${ordem[i + 1]}": ${razoes[i]} contra ${razoes[i + 1]}.`);
+    delete (EFEITO_POR_TAG as Record<string, unknown>)[TAG];
   }
 }
 

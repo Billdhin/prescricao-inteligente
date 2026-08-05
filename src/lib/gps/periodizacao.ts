@@ -700,6 +700,8 @@ interface DadosDoAlunoNoAlvo {
   pisoDoCiclo?: number;
   /** passo de progressao deste perfil clinico, ja fundido (ver CtxAlvo.fatorProgressao) */
   fatorProgressao?: number;
+  /** teto de PSE deste perfil clinico, ja fundido (ver CtxAlvo.pseTeto) */
+  pseTeto?: number;
 }
 
 function montarMicrociclos(
@@ -721,7 +723,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao, pseTeto } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (as descargas ficam fora desta conta). Agora são contadas,
   // e não deduzidas de "a última é descarga": com cadência absoluta, a descarga pode cair
@@ -746,6 +748,7 @@ function montarMicrociclos(
       semanasDeCargaNoMacro,
       pisoDoCiclo,
       fatorProgressao,
+      pseTeto,
       tipoSemana: ehDeload ? "deload" : "carga",
       tendenciaVolume,
       tendenciaIntensidade,
@@ -1021,6 +1024,9 @@ function montarMacrocicloGenerico(
         regraClinica: regraClinicaDoPlano(input),
         // O perfil clinico progride no passo dele: fundido pelo mais conservador (ver comPasso).
         fatorProgressao: regraClinicaDoPlano(input)?.modProgressao?.fatorIncremento,
+        // O teto de PSE do perfil chegava ao texto do semaforo e a autorregulacao da
+        // execucao, mas nunca ao alvo PRESCRITO. Ver CtxAlvo.pseTeto.
+        pseTeto: regraClinicaDoPlano(input)?.modProgressao?.pseTeto,
         cargaAntesDesteMeso: rampa.total != null ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: rampa.total,
         pisoDoCiclo: pisoDaOnda(m),
@@ -1215,6 +1221,9 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
         regraClinica: regraClinicaDoPlano(input),
         // O perfil clinico progride no passo dele: fundido pelo mais conservador (ver comPasso).
         fatorProgressao: regraClinicaDoPlano(input)?.modProgressao?.fatorIncremento,
+        // O teto de PSE do perfil chegava ao texto do semaforo e a autorregulacao da
+        // execucao, mas nunca ao alvo PRESCRITO. Ver CtxAlvo.pseTeto.
+        pseTeto: regraClinicaDoPlano(input)?.modProgressao?.pseTeto,
         cargaAntesDesteMeso: rampa.total != null && progride[m] ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: progride[m] ? rampa.total : undefined,
       }),
