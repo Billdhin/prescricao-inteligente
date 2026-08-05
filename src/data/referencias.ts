@@ -77,6 +77,16 @@ export const referencias: Referencia[] = [
     nota: "Clássico sobre exercício e hipertensão: cargas leves a moderadas, respiração contínua, resposta pressórica. Recomenda intensidade moderada (40 a menos de 60% do VO2R) na maioria dos dias da semana, 30 min ou mais por dia, predominantemente aeróbio com complemento de força. Sobre medicação em quem treina, estabelece os critérios de escolha (baixar a pressão em repouso e no esforço, baixar a resistência periférica total e não prejudicar a capacidade de exercício) e por isso aponta os inibidores da ECA, os bloqueadores do receptor de angiotensina e os bloqueadores de canal de cálcio como as escolhas para praticantes recreacionais e atletas com hipertensão. Base da declaração, no catálogo de fármacos, de que essas três famílias não retiram nenhum instrumento de monitoramento do plano.",
   },
   {
+    id: "lentini-1993",
+    autores: "Lentini AC, McKelvie RS, McCartney N, Tomlinson CW, MacDougall JD",
+    titulo: "Left ventricular response in healthy young men during heavy-intensity weight-lifting exercise",
+    fonte: "Journal of Applied Physiology, 75(6):2703-2710",
+    ano: 1993,
+    doi: "10.1152/jappl.1993.75.6.2703",
+    pmid: "8125893",
+    nota: "Mediu pressão INTRA-ARTERIAL, volumes cardíacos por ecocardiografia e pressão intratorácica em homens saudáveis fazendo LEG PRESS até a falha a 95% da força dinâmica máxima. Na fase concêntrica a sistólica foi de 160 para 270 mmHg e a diastólica de 91 para 183 mmHg, com a pressão intratorácica indo de 0,8 para 57,8 Torr, ou seja, um componente grande de manobra de Valsalva. É a fonte da magnitude da resposta pressórica no leg press. O LIMITE dela precisa ser dito onde ela é citada: a condição medida foi carga quase máxima até a falha, em jovens saudáveis, e o estudo NÃO compara o leg press com outros exercícios de membro inferior em intensidade equivalente. Por isso o produto usa esta referência para PREFERIR alternativas, e nunca para excluir o exercício.",
+  },
+  {
     id: "hanssen-2022",
     autores: "Hanssen H, Boardman H, Deiseroth A, Moholdt T, Simonenko M, Kränkel N, et al.",
     titulo:

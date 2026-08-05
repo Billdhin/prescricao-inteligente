@@ -192,6 +192,60 @@ for (const regra of REGRAS_PROGRESSAO) {
   }
 }
 
+/*
+ * LÓGICA DE INDICAÇÃO: PREFERIR O EQUIVALENTE MAIS SEGURO, E DIZER QUAL É.
+ *
+ * O leg press 45 graus era o primeiro bloco de força de um hipertenso estágio 2 iniciante.
+ * Ele não é contraindicado, e afirmar que é seria errado: `lentini-1993` mediu pressão
+ * intra-arterial de 270/183 mmHg com pressão intratorácica de 57,8 Torr, mas em carga quase
+ * máxima ATÉ A FALHA, em jovens saudáveis, e sem comparar com outros exercícios em
+ * intensidade equivalente.
+ *
+ * O que é verdade e é acionável: o catálogo tem, com Quadríceps também como primário e sem
+ * o encosto reclinado, leg press horizontal, cadeira extensora, agachamento goblet, sentar
+ * e levantar e subida no step. Então a indicação correta é PREFERIR o equivalente e NOMEAR
+ * qual é, deixando a decisão com o profissional.
+ *
+ * As três asserções cobrem as três formas de o mecanismo morrer: o fato sumir do catálogo,
+ * a preferência não mudar a ordem, e a alternativa não ser nomeada.
+ */
+{
+  const rule = groupGpsRules["hipertensao-estagio-2"];
+  const comFato = exercises.filter((e) => e.restricaoPerfil?.membrosAcimaDoCoracao);
+  if (!comFato.length)
+    erros.push("nenhum exercício está marcado com membros acima do coração: a regra de indicação não tem sobre o que agir.");
+  if (!rule?.evitarMembrosAcimaDoCoracao)
+    erros.push('hipertensão estágio 2 não prefere alternativa sem membros acima do coração (ver evitarMembrosAcimaDoCoracao).');
+
+  const ans = {
+    objetivo: "Emagrecimento" as const,
+    grupoMuscular: "Membros inferiores",
+    nivel: "Iniciante" as Nivel,
+    prioridade: "Força geral (corpo todo)" as const,
+    restricoes: [],
+    equipamentos: exercises.map((e) => e.equipamento),
+  };
+  const semCond = rankExercises(exercises, ans);
+  const comCond = rankExercises(exercises, ans, rule);
+  const pos = (rs: typeof semCond) => rs.findIndex((r) => r.exercise.slug === "leg-press-45");
+  const pA = pos(semCond);
+  const pB = pos(comCond);
+  if (pA < 0 || pB < 0) {
+    erros.push("controle positivo: o leg press 45 não está no ranking; a asserção de indicação não testa nada.");
+  } else {
+    if (!(pB > pA))
+      erros.push(
+        `a preferência não mudou a ordem: o leg press 45 está em #${pB + 1} para hipertensão estágio 2 e em #${pA + 1} sem condição.`,
+      );
+    // E NUNCA excluir: é preferência entre equivalentes, não contraindicação.
+    if (comCond[pB].excluido)
+      erros.push("o leg press 45 foi EXCLUÍDO para hipertensão: a evidência sustenta preferir alternativa, não proibir o exercício.");
+    const nomeou = comCond[pB].cautions.some((c) => c.includes("Alternativa equivalente"));
+    if (!nomeou)
+      erros.push("o motor rebaixa o leg press 45 e não diz qual é a alternativa equivalente: indicar é dizer o que usar no lugar.");
+  }
+}
+
 if (erros.length) {
   console.error(`\n[check:regras] ${erros.length} problema(s):\n`);
   for (const e of erros) console.error(`  - ${e}`);

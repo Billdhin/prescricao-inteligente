@@ -122,6 +122,17 @@ export interface RestricaoPerfilExercicio {
    * catálogo.
    */
   flexaoColunaCarregada: boolean;
+  /**
+   * OS MEMBROS TRABALHAM ACIMA DO NIVEL DO CORACAO, CONTRA CARGA EXTERNA.
+   *
+   * Fato OBSERVAVEL da execucao, nao afirmacao clinica: no leg press 45 graus o encosto
+   * e reclinado e os pes empurram a plataforma acima da linha do tronco. Na cadeira
+   * extensora, no leg press horizontal, no agachamento e na subida no step, nao.
+   *
+   * Existe porque a logica de INDICACAO precisa de um fato para comparar alternativas que
+   * treinam o mesmo musculo. Ver GroupGpsRule.evitarMembrosAcimaDoCoracao.
+   */
+  membrosAcimaDoCoracao: boolean;
 }
 
 export interface Exercise {

@@ -54,6 +54,8 @@ export interface GroupRuleInput {
   complexidadeMax?: number;
   /** a condição pede para evitar flexão de coluna sob carga (ver GroupGpsRule) */
   evitarFlexaoColunaCarregada?: boolean;
+  /** a condição prefere alternativa sem membros acima do coração (ver GroupGpsRule) */
+  evitarMembrosAcimaDoCoracao?: boolean;
 }
 
 export interface CriterioRacional {
@@ -335,6 +337,18 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
         "Enrolar o tronco contra carga é o padrão desaconselhado aqui; dobradiça de quadril com coluna neutra segue liberada.",
       );
     }
+    // Membros acima do coração, quando a condição prefere alternativa sem isso. Penalidade
+    // MENOR que a da flexão carregada de propósito: lá a fonte desaconselha o padrão
+    // nominalmente, aqui a fonte mede a magnitude da resposta pressórica num exercício e não
+    // compara com os outros em intensidade equivalente. É preferência, não contraindicação,
+    // e o tamanho da penalidade tem que dizer isso. Ver GroupGpsRule.evitarMembrosAcimaDoCoracao.
+    if (rule.evitarMembrosAcimaDoCoracao && ex.restricaoPerfil?.membrosAcimaDoCoracao) {
+      grupoCondPen -= 4;
+      motivos.push("Trabalha os membros acima do coração, o que tende a elevar mais a resposta pressórica.");
+      cautions.push(
+        "Dá para treinar o mesmo músculo sem o encosto reclinado: prefira a alternativa equivalente quando houver.",
+      );
+    }
     grupoCondPen = Math.max(grupoCondPen, -12);
     breakdown.push({
       // sem o rótulo clínico: este texto chega ao documento entregue ao aluno
@@ -411,8 +425,52 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
  * o fim, para que a lista principal (top N) não os ofereça; ficam disponíveis para uma
  * seção "retirados, e por quê". `excluirIncompatíveis` remove-os por completo.
  */
+/** Músculos em papel PRIMÁRIO do exercício. É a chave de equivalência da indicação. */
+function primarios(ex: Exercise): string[] {
+  return (ex.ativacao ?? []).filter((a) => a.papel === "primário").map((a) => a.musculo);
+}
+
+/**
+ * A INDICAÇÃO NÃO É SÓ ORDENAR: É DIZER QUAL É A ALTERNATIVA.
+ *
+ * O ranqueamento sabia rebaixar um exercício que carrega cautela para o perfil, e parava
+ * aí. O profissional via "este tem uma cautela" e tinha que descobrir sozinho o que usar no
+ * lugar. Mas o motor TEM essa informação: ele acabou de pontuar os 97, e sabe quais deles
+ * cobrem o mesmo músculo primário sem carregar a mesma cautela.
+ *
+ * O caso que originou isto: o leg press 45 graus para hipertenso. Ele não é proibido, e
+ * dizer que é seria errado. O que é verdade é que o catálogo tem leg press horizontal,
+ * cadeira extensora, agachamento goblet, sentar e levantar e subida no step, todos com
+ * Quadríceps como primário e sem o encosto reclinado. A decisão continua sendo do
+ * profissional; o que muda é que ela deixa de ser tomada às cegas.
+ *
+ * Só nomeia alternativa que de fato pontuou melhor: sugerir uma opção pior seria trocar um
+ * problema por outro, e o silêncio é melhor que a sugestão ruim.
+ */
+function nomearAlternativaEquivalente(recs: Recommendation[], rule?: GroupRuleInput): Recommendation[] {
+  if (!rule?.evitarMembrosAcimaDoCoracao) return recs;
+  const carrega = (r: Recommendation) => Boolean(r.exercise.restricaoPerfil?.membrosAcimaDoCoracao);
+  const candidatos = recs.filter((r) => !r.excluido && !carrega(r));
+  return recs.map((r) => {
+    if (r.excluido || !carrega(r)) return r;
+    const alvo = primarios(r.exercise);
+    if (!alvo.length) return r;
+    const melhor = candidatos.find(
+      (c) => c.equipDisponivel === r.equipDisponivel && primarios(c.exercise).some((m) => alvo.includes(m)) && c.scoreExato > r.scoreExato,
+    );
+    if (!melhor) return r;
+    return {
+      ...r,
+      cautions: [
+        ...r.cautions,
+        `Alternativa equivalente neste catálogo, para o mesmo músculo e sem o encosto reclinado: ${melhor.exercise.nome}.`,
+      ],
+    };
+  });
+}
+
 export function rankExercises(pool: Exercise[], ans: GpsAnswers, rule?: GroupRuleInput): Recommendation[] {
-  return pool
+  const ordenado = pool
     .map((ex) => scoreExercise(ex, ans, rule))
     .sort((a, b) => {
       if (a.excluido !== b.excluido) return a.excluido ? 1 : -1;
@@ -421,6 +479,9 @@ export function rankExercises(pool: Exercise[], ans: GpsAnswers, rule?: GroupRul
       // sumia no Math.round e a ordem virava a do array de dados.
       return b.scoreExato - a.scoreExato;
     });
+  // Depois de ordenar, de propósito: a alternativa nomeada é a MELHOR COLOCADA que serve,
+  // e isso só se sabe com a lista já em ordem.
+  return nomearAlternativaEquivalente(ordenado, rule);
 }
 
 export const GRUPOS_MUSCULARES = [

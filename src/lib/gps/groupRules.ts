@@ -154,6 +154,27 @@ export interface GroupGpsRule extends GroupRuleInput {
    * da fila e só aparece se o catálogo não tiver alternativa.
    */
   evitarFlexaoColunaCarregada?: boolean;
+  /**
+   * A CONDICAO PREFERE ALTERNATIVA QUE NAO TRABALHE OS MEMBROS ACIMA DO CORACAO.
+   *
+   * Este e o campo que existe para a LOGICA DE INDICACAO, e nao para a de exclusao. A
+   * diferenca importa: nao se trata de o exercicio ser proibido, e sim de existir, no
+   * proprio catalogo, outro que treina o MESMO musculo primario sem a caracteristica.
+   *
+   * Caso concreto. O leg press 45 graus era o primeiro bloco de forca de um hipertenso
+   * estagio 2 iniciante. Lentini 1993 mediu pressao intra-arterial no leg press ate a
+   * falha a 95% de 1RM: sistolica de 160 para 270 mmHg, diastolica de 91 para 183, com
+   * pressao intratoracica de 0,8 para 57,8 Torr. O catalogo tem, com Quadriceps tambem
+   * como primario e sem o encosto reclinado: leg press horizontal, cadeira extensora,
+   * agachamento goblet, sentar e levantar e subida no step.
+   *
+   * O LIMITE da evidencia entra na propria regra, porque e o que impede o exagero:
+   * Lentini mediu carga quase maxima ate a falha em jovens saudaveis e NAO comparou o
+   * leg press com outros exercicios em intensidade equivalente. Por isso o efeito e
+   * REBAIXAR e nomear a alternativa, jamais excluir. Quem decide continua sendo o
+   * profissional, e agora ele decide vendo o porque e a opcao.
+   */
+  evitarMembrosAcimaDoCoracao?: boolean;
   /** cuidados exibidos como "já considerados pelo grupo" */
   cuidados: string[];
   /** ids de referencias.ts que fundamentam as regras deste grupo (bibliografia do Prontuário) */
@@ -281,6 +302,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 
   "hipertensao-estagio-1": {
     slug: "hipertensao-estagio-1",
+    evitarMembrosAcimaDoCoracao: true,
     modDose: {
       // 80% de 1RM e o TETO da banda de 60 a 80% em que henkin-2023 mediu a queda de
       // 6,98 mmHg de sistolica e 3,64 de diastolica. Acima dela nao ha efeito medido.
@@ -320,6 +342,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 
   "hipertensao-estagio-2": {
     slug: "hipertensao-estagio-2",
+    evitarMembrosAcimaDoCoracao: true,
     modDose: {
       // 80% de 1RM e o TETO da banda de 60 a 80% em que henkin-2023 mediu a queda de
       // 6,98 mmHg de sistolica e 3,64 de diastolica. Acima dela nao ha efeito medido.
@@ -804,6 +827,7 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
     posicoesEvitar: posicoes.length ? posicoes : undefined,
     // Mesma lógica de união: basta UMA condição pedir para que a fusão peça.
     evitarFlexaoColunaCarregada: rules.some((r) => r.evitarFlexaoColunaCarregada) || undefined,
+    evitarMembrosAcimaDoCoracao: rules.some((r) => r.evitarMembrosAcimaDoCoracao) || undefined,
     modDose: fundirModDose(rules.map((r) => r.modDose).filter((m): m is ModDose => Boolean(m))),
     refs,
     modProgressao: fundirModProgressao(

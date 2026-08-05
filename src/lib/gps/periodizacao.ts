@@ -430,6 +430,9 @@ function selecionarExercicios(
     // Flexão de coluna carregada, quando a condição pede para evitar. Mesmo peso da posição,
     // porque é da mesma natureza: fato do exercício que a condição conhece.
     if (regraClinica.evitarFlexaoColunaCarregada && e.restricaoPerfil?.flexaoColunaCarregada) p += 10;
+    // Membros acima do coracao: peso MENOR que os outros dois de propósito. E preferencia
+    // entre equivalentes, nao contraindicacao, entao ele cede a vez sem sumir do plano.
+    if (regraClinica.evitarMembrosAcimaDoCoracao && e.restricaoPerfil?.membrosAcimaDoCoracao) p += 3;
     return p;
   };
 
