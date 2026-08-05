@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { MarcaPino } from "@/components/brand/Logo";
 import { MonitorMockup, type MockupTela } from "@/components/landing/MockupApp";
+import { MotorDecidindo } from "@/components/landing/MotorDecidindo";
 import {
   NOME_PLANO,
   PRECO_MENSAL,
@@ -119,6 +120,11 @@ export function Landing() {
       <Header />
       <Hero />
       <Problema />
+      {/* A demonstração vem LOGO DEPOIS da dor e ANTES de qualquer explicação de como o
+          produto funciona. Quem acabou de se reconhecer no problema quer ver a coisa
+          decidindo, não ler o mecanismo. É também o que tira a /casos-rcd do limbo: ela
+          existia, era auditável, e a home não a linkava de lugar nenhum. */}
+      <MotorDecidindo WRAP={WRAP} Eyebrow={Eyebrow} />
       <Ciclo />
       <PorDentro />
       <Semaforo />
@@ -137,6 +143,7 @@ export function Landing() {
 
 function Header() {
   const nav = [
+    ["Casos", "#casos"],
     ["O ciclo", "#ciclo"],
     ["Por dentro", "#por-dentro"],
     ["Ciência", "#ciencia"],
