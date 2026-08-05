@@ -17,9 +17,12 @@
  */
 import { REGRAS_PROGRESSAO } from "../src/data/regrasProgressao";
 import { getReferencia } from "../src/data/referencias";
-import { scoreExercise } from "../src/lib/gps/engine";
+import { scoreExercise, rankExercises } from "../src/lib/gps/engine";
 import { EFEITO_POR_TAG, type AcaoRestricao } from "../src/lib/gps/restricoes";
 import { exercises } from "../src/data/exercises";
+import { groupGpsRules } from "../src/lib/gps/groupRules";
+import { specialGroups } from "../src/data/specialGroups";
+import type { Nivel } from "../src/data/types";
 
 const CONFIANCAS = ["forte", "moderada", "fraca"];
 const erros: string[] = [];
@@ -101,6 +104,91 @@ for (const regra of REGRAS_PROGRESSAO) {
       if (!(razoes[i] > razoes[i + 1]))
         erros.push(`"${ordem[i]}" não pontua acima de "${ordem[i + 1]}": ${razoes[i]} contra ${razoes[i + 1]}.`);
     delete (EFEITO_POR_TAG as Record<string, unknown>)[TAG];
+  }
+}
+
+/*
+ * A REGRA CLÍNICA TEM QUE APLICAR O QUE A FONTE DIZ, E NÃO UM SUBSTITUTO PARECIDO.
+ *
+ * Caso concreto que originou este bloco, na osteoporose. O posicionamento da ESSA
+ * (`beck-essa-2017`) diz duas coisas no mesmo parágrafo: o osso responde a impacto e a
+ * treino resistido progressivo de ALTA INTENSIDADE, e a flexão de coluna CARREGADA não é
+ * recomendada. A regra do produto não tinha o fato "flexão carregada" e usava a métrica
+ * "Demanda lombar >= 60" como substituta. Medido no ranqueamento de Força para osteoporose,
+ * ANTES da correção:
+ *
+ *   abdominal na polia alta (flexão de tronco contra carga)  ....  #16
+ *   levantamento terra (dobradiça de quadril, coluna neutra)  ...  #47
+ *
+ * Ou seja, o exercício que a fonte desaconselha nominalmente vinha 31 posições À FRENTE do
+ * exercício que a fonte recomenda. O substituto não era impreciso: era invertido.
+ */
+{
+  const rule = groupGpsRules["osteoporose"];
+  if (!rule) {
+    erros.push("controle positivo: a regra de osteoporose sumiu; o bloco clínico não testa nada.");
+  } else {
+    if (!rule.evitarFlexaoColunaCarregada)
+      erros.push(
+        'osteoporose não aplica "evitar flexão de coluna carregada", que é o padrão que beck-essa-2017 desaconselha nominalmente.',
+      );
+    if (rule.penalidades.some((p) => p.metrica === "Demanda lombar"))
+      erros.push(
+        'osteoporose voltou a penalizar a métrica "Demanda lombar": ela rebaixa a dobradiça de quadril com coluna neutra, que é o treino resistido que a fonte RECOMENDA, e não alcança o abdominal na polia (demanda lombar 40).',
+      );
+    for (const ref of ["beck-essa-2017", "giangregorio-2014"])
+      if (!rule.refs?.includes(ref))
+        erros.push(`a regra de osteoporose não cita "${ref}", que é a fonte específica da condição e estava só no semáforo.`);
+
+    // O fato precisa existir no catálogo, senão a regra acima é decorativa.
+    const carregados = exercises.filter((e) => e.restricaoPerfil?.flexaoColunaCarregada);
+    if (carregados.length === 0)
+      erros.push("nenhum exercício do catálogo está marcado como flexão de coluna carregada: a regra da osteoporose não tem o que evitar.");
+
+    // E o ranqueamento tem que refletir: o padrão desaconselhado abaixo do recomendado.
+    const ans = {
+      objetivo: "Força" as const,
+      grupoMuscular: "Corpo todo",
+      nivel: "Intermediário" as Nivel,
+      restricoes: [],
+      equipamentos: exercises.map((e) => e.equipamento),
+    };
+    const rank = rankExercises(exercises, ans, rule);
+    const posDe = (slug: string) => rank.findIndex((r) => r.exercise.slug === slug);
+    const flexao = posDe("abdominal-polia-alta");
+    const resistido = posDe("levantamento-terra");
+    if (flexao < 0 || resistido < 0) {
+      erros.push("controle positivo: os exercícios de referência do teste de osteoporose não estão no ranking.");
+    } else if (flexao < resistido) {
+      erros.push(
+        `na osteoporose o abdominal na polia (flexão carregada, desaconselhado) aparece em #${flexao + 1}, à frente do levantamento terra (coluna neutra, recomendado) em #${resistido + 1}.`,
+      );
+    }
+  }
+}
+
+/*
+ * A APNEIA DO SONO NÃO PODE CONDICIONAR O BENEFÍCIO À PERDA DE PESO.
+ *
+ * `iftikhar-apneia-2014` conclui redução do índice de apneia e hipopneia de 6,27 eventos/h
+ * COM MUDANÇA MÍNIMA DE PESO: o IMC caiu 1,37 com IC 95% de -2,81 a 0,07 e p = 0,06, ou
+ * seja, não significativo. O produto dizia que "aeróbio + força apoiam a perda de peso, que
+ * reduz a gravidade" e listava como erro comum "programa sem componente de perda de peso",
+ * que é exatamente o contrário do que a metanálise que ele cita mostra.
+ */
+{
+  const rule = groupGpsRules["apneia-sono"];
+  const grupo = specialGroups.find((g) => g.slug === "apneia-sono");
+  if (!rule || !grupo) {
+    erros.push("controle positivo: a condição apneia-sono sumiu; o bloco não testa nada.");
+  } else {
+    if (!rule.refs?.includes("iftikhar-apneia-2014"))
+      erros.push('a regra de apneia do sono não cita "iftikhar-apneia-2014", que é a fonte do efeito na apneia.');
+    const textos = [...rule.cuidados, grupo.perfil, grupo.comoComecar, ...grupo.objetivos, ...grupo.errosComuns].join(" ");
+    if (/perda de peso, que reduz a gravidade|peso.{0,20}reduz a gravidade/i.test(textos))
+      erros.push("a apneia do sono volta a atribuir a redução da gravidade à perda de peso, que a metanálise citada não sustenta.");
+    if (/sem componente de perda de peso/i.test(textos))
+      erros.push('"programa sem componente de perda de peso" voltou como erro comum, e é o inverso do que a evidência mostra.');
   }
 }
 

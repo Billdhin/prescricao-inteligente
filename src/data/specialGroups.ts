@@ -971,16 +971,16 @@ const condicoesAdicionais: SpecialGroup[] = [
     rotuloAluno: "Fortalecimento com estímulo ósseo",
     descricaoCurta: "Força e impacto controlado para estimular o osso, com liberação de saúde.",
     perfil:
-      "Redução da densidade óssea, com maior risco de fratura. A força e o impacto controlado estimulam o osso; flexão brusca da coluna e alto risco de queda pedem cautela. Requer liberação e acompanhamento do profissional de saúde.",
+      "Redução da densidade óssea, com maior risco de fratura. O osso responde a impacto e a treino resistido progressivo de alta intensidade, e otimizar força, equilíbrio e mobilidade é o que reduz o risco de queda e de fratura. O que a evidência desaconselha é a flexão de coluna carregada, não a carga em si. Requer liberação e acompanhamento do profissional de saúde.",
     objetivos: ["Estimular o osso com força e impacto controlado", "Melhorar o equilíbrio e reduzir o risco de quedas", "Ganhar força funcional"],
-    riscosCautelas: ["Flexão brusca ou carga axial mal controlada da coluna: cautela", "Alto risco de queda: priorizar equilíbrio e apoio", "Liberação médica recomendada antes de progredir o impacto"],
+    riscosCautelas: ["Flexão de coluna sob carga (enrolar o tronco contra resistência): desaconselhada", "Alto risco de queda: priorizar equilíbrio e apoio", "Liberação médica recomendada antes de progredir o impacto"],
     sinaisAlerta: ["Dor óssea ou nas costas nova ou persistente, interromper e encaminhar", "Instabilidade ou risco de queda", "Sinais que fogem do esperado, reavaliar"],
     modIndicadas: ["m-musculacao", "m-caminhada", "m-funcional", "m-mobilidade"],
     modCautela: ["m-combinado", "m-hidro"],
     parametros: ["p-rpe", "p-volume", "p-dor", "p-adesao", "p-recuperacao"],
     comoComecar:
-      "Comece com força guiada e caminhada, evitando flexão brusca da coluna e movimentos de alto risco de queda. Progrida o impacto de forma gradual, com liberação e acompanhamento do profissional de saúde.",
-    errosComuns: ["Evitar toda carga por medo (o osso precisa de estímulo)", "Impacto alto sem progressão", "Ignorar o risco de queda"],
+      "Comece com força guiada e caminhada e mantenha o programa multicomponente, com resistido e equilíbrio, nunca só aeróbio. Evite flexão de coluna sob carga; a dobradiça de quadril com coluna neutra segue liberada. Progrida o impacto de forma gradual, com liberação e acompanhamento do profissional de saúde.",
+    errosComuns: ["Evitar toda carga por medo (o osso precisa de estímulo)", "Confundir dobradiça de quadril com flexão de coluna e tirar o resistido do programa", "Deixar o programa só no aeróbio, sem resistido nem equilíbrio"],
     complexidade: "Alta",
     premium: true,
   }),
@@ -1044,19 +1044,22 @@ const condicoesAdicionais: SpecialGroup[] = [
   mkCondicao({
     slug: "apneia-sono",
     nome: "Apneia obstrutiva do sono",
-    rotuloAluno: "Condicionamento e controle de peso",
-    descricaoCurta: "Aeróbio, força e perda de peso, com acompanhamento do tratamento.",
+    rotuloAluno: "Condicionamento, sono e disposição",
+    descricaoCurta: "Aeróbio e força com constância, acompanhando o tratamento de saúde.",
     perfil:
-      "Apneia obstrutiva do sono, com frequência associada a sobrepeso e sonolência diurna. Exercício e perda de peso podem reduzir a gravidade; o tratamento é conduzido pelo profissional de saúde.",
-    objetivos: ["Apoiar a perda de peso e a aptidão com aeróbio e força", "Melhorar a disposição e reduzir a sonolência", "Sustentar a adesão apesar da fadiga"],
+      "Apneia obstrutiva do sono, com frequência associada a sobrepeso e sonolência diurna. O treino supervisionado reduz a gravidade da apneia e melhora sono, disposição e aptidão cardiorrespiratória mesmo com pouca ou nenhuma mudança de peso; o tratamento é conduzido pelo profissional de saúde.",
+    objetivos: ["Reduzir a gravidade da apneia com aeróbio e força regulares", "Melhorar a disposição e reduzir a sonolência diurna", "Sustentar a adesão apesar da fadiga"],
     riscosCautelas: ["Sonolência e fadiga diurna afetam a sessão e a segurança", "Risco cardiometabólico associado", "O tratamento (por exemplo, CPAP) é do profissional de saúde"],
     sinaisAlerta: ["Sonolência excessiva ou risco de dormir em equipamento, interromper", "Dor torácica ou mal-estar, interromper", "Sinais fora do esperado, encaminhar"],
     modIndicadas: ["m-caminhada", "m-bike", "m-eliptico", "m-musculacao"],
     modCautela: ["m-funcional", "m-combinado"],
     parametros: ["p-rpe", "p-fala", "p-fc", "p-adesao"],
     comoComecar:
-      "Combine aeróbio moderado frequente com força, ajustando horário e intensidade à sonolência do dia. A perda de peso costuma reduzir a gravidade. Diante do risco cardiometabólico associado, considere a liberação do profissional de saúde antes de progredir a intensidade e mantenha o acompanhamento médico.",
-    errosComuns: ["Ignorar a sonolência na segurança", "Programa sem componente de perda de peso", "Substituir o tratamento médico pelo treino"],
+      "Combine aeróbio moderado frequente com força, ajustando horário e intensidade à sonolência do dia. O ganho vem da constância do treino e não depende de o peso cair. Diante do risco cardiometabólico associado, considere a liberação do profissional de saúde antes de progredir a intensidade e mantenha o acompanhamento médico.",
+    // "Programa sem componente de perda de peso" era o erro comum listado, e era o inverso
+    // do que a evidência mostra: o benefício apareceu COM mudança mínima de peso. O erro
+    // real é o oposto, desistir do programa porque a balança não andou.
+    errosComuns: ["Ignorar a sonolência na segurança", "Julgar o programa pela balança e abandonar o que está funcionando", "Substituir o tratamento médico pelo treino"],
     complexidade: "Moderada",
     premium: true,
   }),

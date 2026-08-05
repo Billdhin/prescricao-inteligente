@@ -22,7 +22,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Emagrecimento", "Resistência muscular", "Retorno ao treino"],
     nivel: "Iniciante",
     articulacaoPredominante: "Quadril e tornozelo",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Aeróbio acessível e dose-controlável: a inclinação leve aumenta o trabalho de glúteos e panturrilhas sem exigir corrida, preservando as articulações.",
@@ -126,7 +125,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Emagrecimento", "Resistência muscular", "Retorno ao treino"],
     nivel: "Iniciante",
     articulacaoPredominante: "Joelho e quadril",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Aeróbio de baixíssimo impacto com carga ajustável, em geral a melhor porta de entrada quando a caminhada incomoda joelhos ou lombar.",
@@ -230,7 +228,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Emagrecimento", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Quadril, joelho e ombro",
-    restricoes: [],
     premium: true,
     resumoPratico:
       "Aeróbio de baixo impacto que envolve membros superiores e inferiores, com gasto maior que a bicicleta para quem tolera ficar em pé.",
@@ -334,7 +331,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Emagrecimento", "Retorno ao treino", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Quadril e joelho",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Caminhada dentro da água: o empuxo reduz a carga articular e a resistência da água vira o 'peso'. A porta de entrada clássica para obesidade grave e dor articular.",
@@ -438,7 +434,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Retorno ao treino", "Aprendizado técnico", "Força", "Emagrecimento"],
     nivel: "Iniciante",
     articulacaoPredominante: "Quadril e joelho",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "O agachamento mais funcional que existe: levantar de uma cadeira. Base do treino de força para idosos e destreinados, com dose ajustável pela altura do assento.",
@@ -540,7 +535,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Retorno ao treino", "Hipertrofia", "Aprendizado técnico"],
     nivel: "Iniciante",
     articulacaoPredominante: "Quadril",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Extensão de quadril deitado no solo: ativa glúteos e posteriores com demanda lombar mínima. Amigo número um da dor lombar e a regressão natural do hip thrust.",
@@ -645,7 +639,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Resistência muscular", "Aprendizado técnico", "Retorno ao treino"],
     nivel: "Iniciante",
     articulacaoPredominante: "Coluna (isometria)",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Isometria de core que ensina o tronco a resistir ao movimento, a base da estabilidade que protege a coluna em todos os outros exercícios.",
@@ -747,7 +740,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Retorno ao treino", "Aprendizado técnico", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Coluna (estabilidade) + quadril e ombro",
-    restricoes: [],
     premium: true,
     resumoPratico:
       "Braços e pernas se movem enquanto a lombar permanece imóvel no chão. É o exercício-professor do controle de core, queridinho da dor lombar.",
@@ -848,7 +840,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Resistência muscular", "Aprendizado técnico", "Retorno ao treino"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e escápula",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Puxada horizontal com banda elástica: costas e postura treinadas em casa, sem academia. A resistência progressiva do elástico perdoa e ensina.",
@@ -950,7 +941,6 @@ export const extraExercises: Exercise[] = [
     objetivo: ["Hipertrofia", "Resistência muscular", "Retorno ao treino"],
     nivel: "Iniciante",
     articulacaoPredominante: "Tornozelo",
-    restricoes: [],
     premium: true,
     resumoPratico:
       "Flexão plantar em pé: a 'segunda bomba' circulatória do corpo. Simples, sem equipamento e decisiva para caminhada, equilíbrio e saúde vascular de membros inferiores.",

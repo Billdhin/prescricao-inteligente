@@ -38,7 +38,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Hipertrofia", "Força"],
     nivel: "Intermediário",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Banco a cerca de 30 graus: a inclinação desloca a ênfase para a porção superior do peitoral, que o supino horizontal alcança menos.",
@@ -120,7 +119,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Hipertrofia", "Aprendizado técnico"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Peitoral sem participação do tríceps: a máquina guia a trajetória e o cotovelo quase não se move.",
@@ -201,7 +199,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Hipertrofia"],
     nivel: "Intermediário",
     articulacaoPredominante: "Ombro",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Cabos cruzando à frente do corpo: tensão constante do começo ao fim, o que nem halter nem barra conseguem entregar.",
@@ -283,7 +280,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Retorno ao treino", "Resistência muscular", "Aprendizado técnico"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Flexão com as mãos numa bancada: o mesmo padrão de empurrar sem precisar descer ao chão nem levantar dele.",
@@ -365,7 +361,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Hipertrofia"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Puxada com as palmas voltadas para o rosto: mesma máquina, mais bíceps e uma linha de puxada mais confortável para muitos ombros.",
@@ -449,7 +444,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Hipertrofia"],
     nivel: "Intermediário",
     articulacaoPredominante: "Ombro",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Braços quase estendidos puxando de cima para baixo: o único exercício de dorsal do catálogo sem participação do bíceps.",
@@ -530,7 +524,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Hipertrofia", "Força"],
     nivel: "Intermediário",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Dor lombar"],
     premium: false,
     resumoPratico:
       "Remada com a barra presa num ponto fixo e o tronco apoiado: carga alta de costas com menos exigência da lombar do que a remada curvada.",
@@ -613,7 +606,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Força", "Hipertrofia"],
     nivel: "Avançado",
     articulacaoPredominante: "Quadril e coluna",
-    restricoes: ["Dor lombar", "Requer mobilidade de tornozelo e quadril"],
     premium: false,
     resumoPratico:
       "Tirar a barra do chão até ficar em pé: o padrão de dobradiça com maior carga possível, e o de maior custo técnico do catálogo.",
@@ -701,7 +693,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Emagrecimento", "Resistência muscular"],
     nivel: "Intermediário",
     articulacaoPredominante: "Quadril, joelho e ombro",
-    restricoes: ["Dor lombar"],
     premium: false,
     resumoPratico:
       "Aeróbio de corpo todo sentado: pernas, tronco e braços na mesma remada, com impacto baixo e gasto alto.",
@@ -786,7 +777,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Emagrecimento", "Resistência muscular"],
     nivel: "Intermediário",
     articulacaoPredominante: "Quadril e joelho",
-    restricoes: ["Dor no joelho"],
     premium: false,
     resumoPratico:
       "Subir degraus sem parar: gasto energético alto sem correr, com impacto menor que o da corrida.",
@@ -870,7 +860,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Emagrecimento", "Retorno ao treino", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Quadril, joelho e tornozelo",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Caminhar na rua ou no parque: a modalidade aeróbia com menor barreira de entrada e a única que não depende de academia nem de aparelho.",
@@ -954,7 +943,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Emagrecimento", "Retorno ao treino"],
     nivel: "Iniciante",
     articulacaoPredominante: "Quadril, joelho e tornozelo",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Correr no lugar dentro da água: o padrão da corrida sem nenhuma aterrissagem, com a água oferecendo resistência em todas as direções.",
@@ -1038,7 +1026,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Emagrecimento", "Retorno ao treino"],
     nivel: "Iniciante",
     articulacaoPredominante: "Quadril e joelho",
-    restricoes: ["Dor lombar"],
     premium: false,
     resumoPratico:
       "Bicicleta com encosto e assento largo: para quem não tolera ficar sentado sem apoio de tronco por 20 minutos.",
@@ -1121,7 +1108,6 @@ export const extraExercises6: Exercise[] = [
     objetivo: ["Hipertrofia", "Força"],
     nivel: "Intermediário",
     articulacaoPredominante: "Coluna",
-    restricoes: ["Dor lombar"],
     premium: false,
     resumoPratico:
       "Ajoelhado sob a polia, enrolando o tronco: o único exercício de abdômen do catálogo com carga que progride placa a placa.",

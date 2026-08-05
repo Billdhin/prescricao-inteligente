@@ -52,6 +52,8 @@ export interface GroupRuleInput {
   penalidades: { metrica: string; limite: number; motivo: string }[];
   /** complexidade técnica acima disso é penalizada para o perfil */
   complexidadeMax?: number;
+  /** a condição pede para evitar flexão de coluna sob carga (ver GroupGpsRule) */
+  evitarFlexaoColunaCarregada?: boolean;
 }
 
 export interface CriterioRacional {
@@ -322,6 +324,16 @@ export function scoreExercise(ex: Exercise, ans: GpsAnswers, rule?: GroupRuleInp
       grupoCondPen -= 3;
       motivos.push(`Complexidade técnica ${complexidade}/100 acima do recomendado para este perfil.`);
       cautions.push("Técnica exigente para este perfil: simplifique ou supervisione de perto.");
+    }
+    // Flexão de coluna sob carga, quando a condição pede para evitar. Penalidade maior que
+    // a de complexidade porque aqui não é "exige mais técnica": é o movimento que a fonte
+    // desaconselha nominalmente. Ver GroupGpsRule.evitarFlexaoColunaCarregada.
+    if (rule.evitarFlexaoColunaCarregada && ex.restricaoPerfil?.flexaoColunaCarregada) {
+      grupoCondPen -= 8;
+      motivos.push("Leva a coluna à flexão sob carga, desaconselhado para este perfil.");
+      cautions.push(
+        "Enrolar o tronco contra carga é o padrão desaconselhado aqui; dobradiça de quadril com coluna neutra segue liberada.",
+      );
     }
     grupoCondPen = Math.max(grupoCondPen, -12);
     breakdown.push({

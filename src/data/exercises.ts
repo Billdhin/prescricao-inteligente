@@ -19,7 +19,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Força", "Aprendizado técnico", "Retorno ao treino", "Emagrecimento"],
     nivel: "Iniciante",
     articulacaoPredominante: "Joelho e quadril",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Alternativa guiada ao agachamento. Em geral favorece aprendizado inicial e reduz demanda sobre a coluna lombar quando a execução respeita a amplitude confortável.",
@@ -136,7 +135,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Força", "Hipertrofia", "Aprendizado técnico", "Emagrecimento"],
     nivel: "Avançado",
     articulacaoPredominante: "Quadril, joelho e tornozelo",
-    restricoes: ["Requer mobilidade de tornozelo e quadril"],
     premium: true,
     resumoPratico:
       "Padrão global multiarticular. Em geral favorece força integrada e coordenação, exigindo mais controle técnico e mobilidade que variações guiadas.",
@@ -238,7 +236,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Força", "Hipertrofia", "Emagrecimento"],
     nivel: "Intermediário",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Ombro sensível"],
     premium: true,
     resumoPratico:
       "Empurrar horizontal com barra. Em geral favorece força de tronco superior, exigindo controle escapular e amplitude adaptada ao ombro.",
@@ -325,7 +322,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Retorno ao treino", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Joelho",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Isolamento de quadríceps guiado, em geral útil para volume localizado e para retorno progressivo com baixa demanda técnica.",
@@ -396,7 +392,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Joelho",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Isolamento de posteriores de coxa guiado, que em geral complementa o trabalho de membros inferiores com baixa demanda lombar.",
@@ -463,7 +458,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Força", "Hipertrofia", "Emagrecimento"],
     nivel: "Avançado",
     articulacaoPredominante: "Quadril",
-    restricoes: ["Dor lombar"],
     premium: true,
     resumoPratico:
       "Dobradiça de quadril com barra. Em geral desenvolve cadeia posterior, exigindo controle lombar e boa dissociação quadril-coluna.",
@@ -532,7 +526,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Força", "Emagrecimento"],
     nivel: "Intermediário",
     articulacaoPredominante: "Quadril",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Extensão de quadril com apoio. Em geral maximiza tensão no glúteo com baixa demanda de mobilidade.",
@@ -602,7 +595,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Força", "Aprendizado técnico", "Emagrecimento"],
     nivel: "Intermediário",
     articulacaoPredominante: "Quadril e joelho",
-    restricoes: ["Dor no joelho"],
     premium: false,
     resumoPratico:
       "Padrão unilateral que, em geral, trabalha força e estabilidade de forma funcional, expondo assimetrias.",
@@ -671,7 +663,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Aprendizado técnico", "Resistência muscular", "Emagrecimento"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Puxar vertical guiado, em geral porta de entrada para o trabalho de dorsais antes da barra fixa.",
@@ -739,7 +730,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Força", "Emagrecimento"],
     nivel: "Intermediário",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Dor lombar"],
     premium: true,
     resumoPratico:
       "Puxar horizontal sentado. Em geral desenvolve espessura de costas, exigindo tronco estável.",
@@ -807,7 +797,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Força"],
     nivel: "Intermediário",
     articulacaoPredominante: "Ombro",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Empurrar vertical. Em geral desenvolve deltoides, exigindo controle escapular e amplitude tolerável ao ombro.",
@@ -875,7 +864,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Cotovelo",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Isolamento de bíceps, em geral usado para volume localizado com baixa demanda técnica.",
@@ -942,7 +930,6 @@ const exercisesRaw: Exercise[] = [
     objetivo: ["Hipertrofia", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Cotovelo",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Isolamento de tríceps guiado, em geral usado para volume com tensão constante da polia.",

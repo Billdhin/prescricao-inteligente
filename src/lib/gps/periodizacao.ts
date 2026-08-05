@@ -427,6 +427,9 @@ function selecionarExercicios(
     // bastante para ir ao fim da fila atrás de QUALQUER alternativa, sem sumir do catálogo.
     const posicao = e.restricaoPerfil?.posicao;
     if (posicao && regraClinica.posicoesEvitar?.includes(posicao)) p += 10;
+    // Flexão de coluna carregada, quando a condição pede para evitar. Mesmo peso da posição,
+    // porque é da mesma natureza: fato do exercício que a condição conhece.
+    if (regraClinica.evitarFlexaoColunaCarregada && e.restricaoPerfil?.flexaoColunaCarregada) p += 10;
     return p;
   };
 

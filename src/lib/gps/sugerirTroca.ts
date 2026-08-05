@@ -92,12 +92,22 @@ export function sugerirTroca(ctx: ContextoTroca, alvo?: string): Recommendation[
  */
 function rebaixarInadequados(
   recs: Recommendation[],
-  rule?: { posicoesEvitar?: readonly string[]; nome?: string },
+  rule?: { posicoesEvitar?: readonly string[]; evitarFlexaoColunaCarregada?: boolean; nome?: string },
 ): Recommendation[] {
   const evitar = new Set(rule?.posicoesEvitar ?? []);
   const tratados = recs.map((r) => {
+    if (r.excluido) return r;
+    // Flexão de coluna carregada primeiro: o motivo é mais específico que o de posição e é
+    // o que o profissional precisa ler para decidir (ver GroupGpsRule.evitarFlexaoColunaCarregada).
+    if (rule?.evitarFlexaoColunaCarregada && r.exercise.restricaoPerfil?.flexaoColunaCarregada)
+      return {
+        ...r,
+        excluido: true,
+        motivoExclusao:
+          "Leva a coluna à flexão sob carga, que a condição declarada pede para evitar. A dobradiça de quadril com coluna neutra segue liberada.",
+      };
     const pos = r.exercise.restricaoPerfil?.posicao;
-    if (r.excluido || !pos || !evitar.has(pos)) return r;
+    if (!pos || !evitar.has(pos)) return r;
     return {
       ...r,
       excluido: true,

@@ -158,7 +158,8 @@ function textosDe(e: (typeof exercises)[number]): { campo: string; valor: string
       { campo: `hotspots[${i}].titulo`, valor: h.titulo },
       ...Object.entries(h.camadas).map(([k, v]) => ({ campo: `hotspots[${i}].${k}`, valor: v })),
     ]),
-    ...e.restricoes.map((r, i) => ({ campo: `restricoes[${i}]`, valor: r })),
+    // `restricoes` saiu do modelo: era rótulo livre sem consumidor e que misturava
+    // "indicado para" com "cuidado com". Ver o comentário em Exercise, em types.ts.
   ];
 }
 

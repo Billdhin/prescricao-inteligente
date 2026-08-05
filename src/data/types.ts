@@ -103,6 +103,25 @@ export interface RestricaoPerfilExercicio {
   amplitudeAjustavel: boolean;
   /** oferece apoio externo estável (encosto, banco, máquina, corrimão) */
   possuiApoio: boolean;
+  /**
+   * O MOVIMENTO LEVA A COLUNA À FLEXÃO SOB CARGA EXTERNA.
+   *
+   * Enrolar o tronco contra uma resistência que progride (abdominal na polia, abdominal
+   * com anilha no peito). NÃO é dobradiça de quadril com coluna neutra: levantamento
+   * terra, terra romeno, good morning, agachamento e remada curvada mantêm a coluna
+   * neutra e ficam FALSE, por mais que carreguem a região lombar.
+   *
+   * Existe porque a distinção é literalmente a que a fonte faz. O posicionamento da ESSA
+   * (Beck 2017) diz que a flexão de coluna CARREGADA não é recomendada na osteoporose, e
+   * no mesmo parágrafo diz que o osso responde a impacto e a treino resistido progressivo
+   * de ALTA INTENSIDADE. A regra do produto usava a métrica "Demanda lombar >= 60" como
+   * substituta, e ela erra nos dois sentidos: pegava os cinco levantamentos de coluna
+   * neutra (terra 70, terra romeno 70, good morning 65, agachamento livre 62, remada
+   * curvada 62), que são exatamente o estímulo recomendado, e NÃO pegava o abdominal na
+   * polia alta, que tem Demanda lombar 40 e é o único caso de flexão carregada do
+   * catálogo.
+   */
+  flexaoColunaCarregada: boolean;
 }
 
 export interface Exercise {
@@ -114,7 +133,26 @@ export interface Exercise {
   objetivo: string[];
   nivel: Nivel;
   articulacaoPredominante: string;
-  restricoes: string[];
+  /*
+   * REMOVIDO: `restricoes: string[]`.
+   *
+   * Era um rótulo livre em 58 dos 97 exercícios, com quatro valores ("Ombro sensível",
+   * "Dor lombar", "Dor no joelho", "Requer mobilidade de tornozelo e quadril"), e NENHUM
+   * consumidor: nenhuma tela, nenhum documento e nenhuma parte do motor o lia.
+   *
+   * Não foi removido só por ser morto, e sim porque MISTURAVA DOIS SENTIDOS OPOSTOS.
+   * Medido contra os avaliadores estruturados: dos 29 marcados "Ombro sensível", 10 o
+   * motor não acusa, e são as rotações externas, a rotação interna, o scaption, o face
+   * pull e o serratus punch, ou seja, exercícios INDICADOS para o ombro sensível. Dos 21
+   * marcados "Dor lombar", 11 são prancha lateral, pallof press, bird dog e companhia,
+   * que são o que se prescreve PARA dor lombar.
+   *
+   * Um campo chamado "restricoes" que às vezes quer dizer "indicado para" e às vezes
+   * "cuidado com" é pior que campo nenhum: a primeira funcionalidade que o lesse
+   * inverteria a conduta. O que o motor precisa saber sobre adequação já vem de
+   * `restricaoPerfil` (fatos estruturais) e das métricas de demanda por região, com
+   * avaliador declarado em src/lib/gps/restricoes.ts.
+   */
   premium: boolean;
   resumoPratico: string;
   anguloArticular?: string;

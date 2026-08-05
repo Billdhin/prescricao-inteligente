@@ -48,7 +48,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Hipertrofia", "Resistência muscular", "Aprendizado técnico", "Emagrecimento"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Empurrar horizontal com o peso do corpo: em geral a porta de entrada de peitorais em casa, com regressão fácil apoiando os joelhos ou elevando as mãos numa bancada.",
@@ -127,7 +126,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Hipertrofia", "Força"],
     nivel: "Intermediário",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Empurrar horizontal com trajetória livre: tende a acomodar melhor ombros sensíveis que a barra; sem banco, a versão no solo (floor press) limita a amplitude e preserva o ombro.",
@@ -206,7 +204,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Hipertrofia", "Retorno ao treino", "Aprendizado técnico", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Empurrar horizontal guiado: em geral a entrada mais segura para peitorais em iniciantes e retorno, com amplitude ajustável ao conforto do ombro.",
@@ -283,7 +280,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Hipertrofia", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Isolamento do deltoide médio com carga leve: em geral basta subir até a linha dos ombros, sem impulso de tronco.",
@@ -361,7 +357,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Hipertrofia", "Força", "Retorno ao treino"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Empurrar vertical guiado com apoio de tronco: tende a reduzir a exigência de estabilização frente aos halteres, útil para aprender o padrão.",
@@ -440,7 +435,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Força", "Hipertrofia"],
     nivel: "Intermediário",
     articulacaoPredominante: "Cotovelo e escápula",
-    restricoes: ["Dor lombar"],
     premium: false,
     resumoPratico:
       "Puxar horizontal com carga em casa ou na academia: exige dobradiça de quadril estável, o que em geral pede o padrão dominado antes de progredir carga.",
@@ -519,7 +513,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Hipertrofia", "Retorno ao treino", "Aprendizado técnico", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Cotovelo e escápula",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Puxar horizontal com o tronco apoiado: em geral a opção de costas mais amigável à lombar, boa para iniciantes e retorno.",
@@ -597,7 +590,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Hipertrofia", "Resistência muscular"],
     nivel: "Iniciante",
     articulacaoPredominante: "Cotovelo",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Extensão de cotovelo acima da cabeça: fecha o trabalho de braços em casa, respeitando a amplitude tolerável do ombro.",
@@ -675,7 +667,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Força", "Resistência muscular", "Aprendizado técnico"],
     nivel: "Intermediário",
     articulacaoPredominante: "Cotovelo e escápula",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Puxar horizontal com o peso do corpo sob um apoio firme: a carga se ajusta pelo ângulo do tronco, sem nenhum equipamento além de um ponto de pegada.",
@@ -754,7 +745,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Resistência muscular", "Retorno ao treino", "Aprendizado técnico"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e cotovelo",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Empurrar vertical contra a banda presa sob os pés: a resistência cresce no fim do arco, o que em geral perdoa o início do movimento e ensina o padrão.",
@@ -833,7 +823,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Hipertrofia", "Resistência muscular", "Aprendizado técnico"],
     nivel: "Iniciante",
     articulacaoPredominante: "Cotovelo e ombro",
-    restricoes: ["Ombro sensível"],
     premium: false,
     resumoPratico:
       "Extensão de cotovelo com o peso do corpo apoiado num banco ou cadeira firme: fecha o trabalho de tríceps em casa, com a carga ajustada pela posição dos pés.",
@@ -913,7 +902,6 @@ export const extraExercises2: Exercise[] = [
     objetivo: ["Resistência muscular", "Retorno ao treino", "Emagrecimento"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e tronco",
-    restricoes: [],
     premium: false,
     resumoPratico:
       "Trabalho de tronco superior contra a resistência da água: a velocidade do gesto define a carga, complementando a marcha aquática nos perfis que treinam só na piscina.",

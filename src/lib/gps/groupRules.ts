@@ -74,6 +74,26 @@ export interface GroupGpsRule extends GroupRuleInput {
    * de sumir e deixar o plano sem bloco.
    */
   posicoesEvitar?: NonNullable<Exercise["restricaoPerfil"]>["posicao"][];
+  /**
+   * A CONDIÇÃO PEDE PARA EVITAR FLEXÃO DE COLUNA SOB CARGA.
+   *
+   * Mesmo desenho de `posicoesEvitar`, e pela mesma razão: é um fato do EXERCÍCIO que a
+   * condição conhece, não uma restrição que o profissional deveria marcar à mão.
+   *
+   * Nasceu de um erro invertido. A osteoporose penalizava "Demanda lombar >= 60" como
+   * substituta da recomendação da fonte. O posicionamento da ESSA (Beck 2017) não fala de
+   * demanda lombar: fala de FLEXÃO DE COLUNA CARREGADA, e no mesmo parágrafo diz que o
+   * osso responde a impacto e a treino resistido progressivo de alta intensidade. O
+   * substituto errava dos dois lados, e dá para medir: penalizava terra (70), terra
+   * romeno (70), good morning (65), agachamento livre (62) e remada curvada (62), todos
+   * de coluna NEUTRA e todos o estímulo recomendado, e deixava passar o abdominal na
+   * polia alta, que enrola o tronco contra carga que progride placa a placa e tem Demanda
+   * lombar 40, abaixo do próprio corte.
+   *
+   * Rebaixamento forte, não exclusão, como em `posicoesEvitar`: o exercício vai para o fim
+   * da fila e só aparece se o catálogo não tiver alternativa.
+   */
+  evitarFlexaoColunaCarregada?: boolean;
   /** cuidados exibidos como "já considerados pelo grupo" */
   cuidados: string[];
   /** ids de referencias.ts que fundamentam as regras deste grupo (bibliografia do Prontuário) */
@@ -454,21 +474,35 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     slug: "osteoporose",
     nome: "Osteopenia / osteoporose",
     cuidados: [
-      "Força e impacto controlado estimulam o osso; evite flexão brusca da coluna e movimentos de alto risco de queda.",
-      "Priorize equilíbrio e apoio; liberação médica recomendada antes de progredir o impacto.",
+      // O primeiro cuidado dizia "força e impacto controlado estimulam o osso" e, na mesma
+      // frase, "evite flexão brusca da coluna". Estava certo no texto e errado no motor: a
+      // penalidade aplicada era "Demanda lombar >= 60", que rebaixava justamente os
+      // levantamentos de coluna neutra que estimulam o osso. Agora o texto e a regra dizem
+      // a mesma coisa, e é a coisa que a fonte diz.
+      "Treino resistido progressivo e impacto controlado estimulam o osso: manter carga de verdade é o objetivo, não evitá-la.",
+      "O que a evidência desaconselha é a flexão de coluna CARREGADA (enrolar o tronco contra carga), não a dobradiça de quadril com coluna neutra.",
+      "Força, equilíbrio e mobilidade são o que reduz o risco de queda e, por consequência, de fratura: o programa é multicomponente, nunca só aeróbio.",
+      "Liberação médica recomendada antes de progredir o impacto; a evidência não permite quantificar um teto de carga seguro para esta população.",
     ],
-    penalidades: [
-      { metrica: "Demanda lombar", limite: 60, motivo: "Alta demanda lombar sugere flexão/carga axial da coluna: cautela na osteoporose." },
-    ],
+    // Sem penalidade por métrica. A métrica "Demanda lombar" não é substituta da flexão
+    // carregada, e usá-la assim invertia a recomendação. O fato certo entra abaixo.
+    penalidades: [],
+    evitarFlexaoColunaCarregada: true,
+    // Mantido em 55, e mantido de propósito sem número novo: `complexidadeMax` só REBAIXA
+    // no ranqueamento (nunca exclui), e Giangregorio declara que não há evidência suficiente
+    // para quantificar os riscos do exercício nesta população. Preferir a variação guiada
+    // sem proibir a barra é o que cabe dizer com o que existe publicado.
     complexidadeMax: 55,
     modProgressao: {
       pseTeto: 7,
       fatorIncremento: 0.5,
-      motivo: "Estímulo ao osso sem esforço máximo nem flexão brusca da coluna; progressão do impacto só com liberação médica.",
+      motivo: "Estímulo ao osso com treino resistido progressivo, sem esforço máximo e sem flexão de coluna carregada; progressão do impacto só com liberação médica.",
       cautela: true,
-      refId: ["chodzko-2009", "acsm-getp11"],
+      refId: ["beck-essa-2017", "giangregorio-2014", "acsm-getp11"],
     },
-    refs: ["chodzko-2009", "acsm-getp11"],
+    // As duas fontes específicas da condição estavam apenas no semáforo, e o motor citava
+    // referências genéricas de idoso. Quem lê o prontuário via a bibliografia errada.
+    refs: ["beck-essa-2017", "giangregorio-2014", "chodzko-2009", "acsm-getp11"],
   },
   gestante: {
     slug: "gestante",
@@ -534,10 +568,20 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     nome: "Apneia obstrutiva do sono",
     cuidados: [
       "Sonolência e fadiga diurna afetam a segurança: ajuste horário e intensidade ao dia.",
-      "Aeróbio + força apoiam a perda de peso, que reduz a gravidade; o tratamento é do profissional de saúde.",
+      // O cuidado anterior dizia "aeróbio + força apoiam a perda de peso, QUE REDUZ A
+      // GRAVIDADE", atribuindo o benefício ao emagrecimento. A metanálise que o próprio
+      // produto cita conclui o contrário: a redução do índice de apneia e hipopneia
+      // aconteceu COM MUDANÇA MÍNIMA DE PESO (IMC -1,37; IC 95% -2,81 a 0,07; p = 0,06,
+      // ou seja, não significativo). Condicionar o benefício ao ponteiro da balança faz o
+      // profissional abandonar um programa que está funcionando.
+      "O treino reduz a gravidade por si, sem depender de perda de peso: manter a constância vale mais que o número da balança.",
+      "O tratamento da apneia (por exemplo, CPAP) é do profissional de saúde e não é substituído pelo treino.",
     ],
     penalidades: [],
-    refs: ["donnelly-2009", "acsm-getp11"],
+    // `donnelly-2009` é o posicionamento sobre PESO, e sustentava a afirmação errada.
+    // Continua útil para o componente de peso corporal, mas quem sustenta o efeito na
+    // apneia é a metanálise específica.
+    refs: ["iftikhar-apneia-2014", "donnelly-2009", "acsm-getp11"],
   },
   "asma-controlada": {
     slug: "asma-controlada",
@@ -634,6 +678,8 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
     restricaoSugerida: rules.find((r) => r.restricaoSugerida)?.restricaoSugerida,
     restricoesEstruturais: estruturais.length ? estruturais : undefined,
     posicoesEvitar: posicoes.length ? posicoes : undefined,
+    // Mesma lógica de união: basta UMA condição pedir para que a fusão peça.
+    evitarFlexaoColunaCarregada: rules.some((r) => r.evitarFlexaoColunaCarregada) || undefined,
     refs,
     modProgressao: fundirModProgressao(
       rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),
