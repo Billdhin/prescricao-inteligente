@@ -95,6 +95,23 @@ export interface CtxAlvo {
    * Só REBAIXA, nunca levanta: um teto que aumentasse o esforço não seria um teto.
    */
   pseTeto?: number;
+  /**
+   * DOSE MODIFICADA PELO PERFIL CLÍNICO (ver GroupGpsRule.modDose e doseDoPerfil).
+   *
+   * É o que faltava para a dose nascer do perfil e não só do objetivo. Antes disto, um
+   * hipertenso estágio 2 iniciante e um adulto sem condição nenhuma recebiam, no mesmo
+   * objetivo, exatamente 3x15 com intervalo de 30 s, que é o PISO da faixa citada e o
+   * extremo mais metabólico dela.
+   *
+   * Nenhum destes campos inventa faixa: `cargaRelativaMax` carrega número publicado
+   * (`henkin-2023`), e `intervaloFolgado` e `rirMinimo` só movem o alvo DENTRO da faixa
+   * que o objetivo já cita, por consistência com o teto de esforço já declarado.
+   */
+  cargaRelativaMax?: number;
+  intervaloFolgado?: boolean;
+  rirMinimo?: number;
+  /** a rampa parte do PISO da faixa citada (ver ModDose.partirDoPiso) */
+  partirDoPiso?: boolean;
   tipoSemana: TipoMicrociclo;
   tendenciaVolume: Tendencia;
   tendenciaIntensidade: Tendencia;
@@ -483,7 +500,7 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
       const seg = intervaloFechado({ min: intervaloIv.min * intervaloUn, max: (intervaloIv.max === Infinity ? intervaloIv.min : intervaloIv.max) * intervaloUn });
       alvo.intervaloAlvoSeg = arredonda5(ponto(seg, niUltima, false));
     }
-    return alvo;
+    return aplicarDoseDoPerfil(alvo, ctx, { rirIv, pctIv, intervaloIv, intervaloUn });
   }
 
   /*
@@ -513,6 +530,57 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
     const seg = intervaloFechado({ min: intervaloIv.min * intervaloUn, max: (intervaloIv.max === Infinity ? intervaloIv.min : intervaloIv.max) * intervaloUn });
     // Mais intensidade pede mais descanso: o intervalo-alvo acompanha a intensidade.
     alvo.intervaloAlvoSeg = arredonda5(ponto(seg, nivelInt, false));
+  }
+  return aplicarDoseDoPerfil(alvo, ctx, { rirIv, pctIv, intervaloIv, intervaloUn });
+}
+
+/**
+ * O PERFIL CLÍNICO ENTRA DEPOIS DE ESCOLHER O PONTO NA FAIXA, E SÓ APERTA.
+ *
+ * Roda no ramo de carga E no de descarga, de propósito: uma cautela que valesse só na
+ * semana de carga deixaria a descarga com o intervalo mais curto que a carga, que é o
+ * contrário do que descarga quer dizer.
+ *
+ * Todos os três limites são de UMA MÃO SÓ. `Math.min` no %1RM e `Math.max` no RIR e no
+ * intervalo garantem que o perfil clínico nunca torne a dose MAIS agressiva: no pior caso
+ * ele não muda nada. É a mesma regra do teto de PSE, e existe porque um "modificador" que
+ * pudesse subir carga seria uma porta para o motor endurecer a prescrição de quem tem
+ * condição, que é o inverso do produto.
+ */
+function aplicarDoseDoPerfil(
+  alvo: AlvoForca,
+  ctx: CtxAlvo,
+  faixas: {
+    rirIv: { min: number; max: number } | null;
+    pctIv: { min: number; max: number } | null;
+    intervaloIv: { min: number; max: number } | null;
+    intervaloUn: number | null;
+  },
+): AlvoForca {
+  // Carga relativa: teto do perfil, onde a faixa do objetivo expressa %1RM.
+  if (alvo.cargaRelativaAlvo != null && ctx.cargaRelativaMax != null)
+    alvo.cargaRelativaAlvo = Math.min(alvo.cargaRelativaAlvo, ctx.cargaRelativaMax);
+
+  // RIR mínimo: nunca mais perto da falha que o perfil admite, sem passar do teto da faixa.
+  if (alvo.rirAlvo != null && ctx.rirMinimo != null) {
+    const teto = faixas.rirIv ? Math.round(intervaloFechado(faixas.rirIv).max) : ctx.rirMinimo;
+    alvo.rirAlvo = Math.min(teto, Math.max(alvo.rirAlvo, ctx.rirMinimo));
+  }
+
+  // Intervalo: a metade SUPERIOR da faixa que o objetivo já cita. Não é número clínico
+  // novo, é consistência: quem declara teto de esforço não pode receber o descanso que
+  // maximiza o esforço para a mesma carga.
+  if (ctx.intervaloFolgado && faixas.intervaloIv && faixas.intervaloUn) {
+    const seg = intervaloFechado({
+      min: faixas.intervaloIv.min * faixas.intervaloUn,
+      max: (faixas.intervaloIv.max === Infinity ? faixas.intervaloIv.min : faixas.intervaloIv.max) * faixas.intervaloUn,
+    });
+    const meio = (seg.min + seg.max) / 2;
+    const atual = alvo.intervaloAlvoSeg ?? seg.min;
+    // Reescala o ponto atual para a metade de cima, preservando a progressão relativa que a
+    // tendência de intensidade já tinha imprimido nele.
+    const fracao = seg.max > seg.min ? (atual - seg.min) / (seg.max - seg.min) : 0;
+    alvo.intervaloAlvoSeg = Math.max(atual, arredonda5(meio + fracao * (seg.max - meio)));
   }
   return alvo;
 }
@@ -608,7 +676,11 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
     const travas = ctx.variaveisTravadas ?? [];
     const nivelVolume = comPiso(travas.includes("volume") ? nivelCongelado(ctx.tendenciaVolume) : nivelAerobio(ctx.tendenciaVolume, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
     const nivelInt = comPiso(travas.includes("intensidade") ? nivelCongelado(ctx.tendenciaIntensidade) : nivelAerobio(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
-    if (durIv) alvo.duracaoAlvoMin = Math.round(ponto(durIv, nivelVolume, false));
+    // Perfil com cautela declarada parte do PISO da faixa citada e sobe de la (ver
+    // ModDose.partirDoPiso). Sem isto, obesidade grau III recebia 40 min continuos na
+    // semana 1, o teto da faixa "20 a 40 min", igual a um adulto sem condicao nenhuma.
+    const nvDur = ctx.partirDoPiso ? nivelVolume * t : nivelVolume;
+    if (durIv) alvo.duracaoAlvoMin = Math.round(ponto(durIv, nvDur, false));
     if (rpeIv) alvo.rpeAlvo = ponto(rpeIv, nivelInt, true);
   }
 

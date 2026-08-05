@@ -684,7 +684,65 @@ function verificarDescargaNaSessao(): string[] {
   return problemas;
 }
 
+/**
+ * A DOSE NASCE DO PERFIL, NÃO SÓ DO OBJETIVO.
+ *
+ * Medido antes desta camada, na semana 1, mesmo objetivo (Emagrecimento) e mesmo nível
+ * (Iniciante): sem condição, obesidade grau I, obesidade grau III, hipertensão estágio 1 e
+ * hipertensão estágio 2 recebiam TODOS 3x15 com intervalo de 30 s, que é o piso da faixa e
+ * o extremo mais metabólico dela, e 40 min contínuos de aeróbio, que é o TETO da faixa
+ * "20 a 40 min". Cinco perfis clinicamente distintos, uma dose só.
+ *
+ * A asserção é comparativa e não fixa número: exige que o perfil com cautela declarada
+ * receba descanso não menor e volume aeróbio inicial não maior que o perfil sem condição.
+ */
+function verificarDoseVemDoPerfil(): string[] {
+  const problemas: string[] = [];
+  const base = { objetivo: "Emagrecimento" as GpsObjetivo, nivel: "Iniciante" as Nivel, semanas: 12, frequencia: FREQ, idade: 45, fcRepouso: 70 };
+  const doseDe = (grupo?: string) => {
+    const p = gerarPlano({ ...base, grupoEspecial: grupo });
+    const s = p.principal.mesociclos[0].microciclos[0].sessoes[0];
+    const forca = s.blocos.find((b) => b.tipo !== "aerobio");
+    const aer = s.blocos.find((b) => b.tipo === "aerobio");
+    return { intervalo: forca?.intervaloAlvoSeg ?? null, duracao: aer?.duracaoAlvoMin ?? null, pse: aer?.rpeAlvo ?? null };
+  };
+  const semCondicao = doseDe();
+  if (semCondicao.intervalo == null || semCondicao.duracao == null)
+    return ["controle positivo: o plano de referência não traz intervalo nem duração; a asserção não testa nada."];
+
+  const COM_CAUTELA = ["obesidade-grau-3", "hipertensao-estagio-1", "hipertensao-estagio-2", "idoso-destreinado"];
+  let diferiuAlgum = false;
+  for (const g of COM_CAUTELA) {
+    const regra = groupGpsRules[g];
+    if (!regra?.modProgressao?.cautela && !regra?.modDose) continue;
+    const d = doseDe(g);
+    if (d.intervalo != null && d.intervalo < semCondicao.intervalo)
+      problemas.push(`"${g}" recebe descanso MENOR que quem não tem condição (${d.intervalo}s contra ${semCondicao.intervalo}s)`);
+    if (d.duracao != null && d.duracao > semCondicao.duracao)
+      problemas.push(`"${g}" começa com volume aeróbio MAIOR que quem não tem condição (${d.duracao} min contra ${semCondicao.duracao} min)`);
+    if (d.intervalo !== semCondicao.intervalo || d.duracao !== semCondicao.duracao) diferiuAlgum = true;
+  }
+  // O coração da asserção: se NADA diferir, a dose voltou a nascer só do objetivo.
+  if (!diferiuAlgum)
+    problemas.push(
+      "nenhum perfil com cautela declarada recebeu dose diferente de quem não tem condição nenhuma: " +
+        "a dose voltou a nascer só do objetivo e do nível",
+    );
+  return problemas;
+}
+
 /* ----------------------------------- Execução ------------------------------------- */
+
+const falhaPerfil = verificarDoseVemDoPerfil();
+if (falhaPerfil.length) {
+  console.error("\n[check:progressao] A DOSE NÃO NASCE DO PERFIL:\n");
+  for (const p of falhaPerfil) console.error(`  - ${p}`);
+  console.error(
+    "\n  Perfil e condição pesam mais que o objetivo na construção das variáveis do treino.\n" +
+      "  Ver GroupGpsRule.modDose e doseDoPerfil.\n",
+  );
+  process.exit(1);
+}
 
 const falhaDescargaSessao = verificarDescargaNaSessao();
 if (falhaDescargaSessao.length) {

@@ -36,6 +36,66 @@ export interface ModProgressao {
   refId?: string[];
 }
 
+/**
+ * A DOSE DO TREINO NASCE DO PERFIL, NÃO SÓ DO OBJETIVO.
+ *
+ * Este é o modificador que faltava. Até aqui a condição clínica mudava QUAIS exercícios
+ * entravam, o teto de PSE do aeróbio e o PASSO da progressão, e não tocava em série,
+ * repetição, intervalo nem carga relativa. Medido, na semana 1, com o mesmo objetivo
+ * (Emagrecimento) e o mesmo nível (Iniciante):
+ *
+ *   sem condição ......... 3x15, intervalo 30 s
+ *   obesidade grau I ..... 3x15, intervalo 30 s
+ *   obesidade grau III ... 3x15, intervalo 30 s
+ *   hipertensão est. 1 ... 3x15, intervalo 30 s
+ *   hipertensão est. 2 ... 3x15, intervalo 30 s
+ *
+ * Cinco perfis clinicamente distintos recebendo a mesma dose, com o intervalo no PISO da
+ * faixa (30 s), que é o extremo mais metabólico dela. O consenso da EAPC com o Conselho de
+ * Hipertensão da ESC (`hanssen-2022`) conclui justamente o contrário: a resposta difere
+ * conforme o nível inicial de pressão, e há evidência para prescrever segundo ele.
+ *
+ * ## O que cada campo pode e não pode afirmar
+ *
+ * `cargaRelativaMax` carrega NÚMERO PUBLICADO. Só entra onde existe faixa medida: na
+ * hipertensão é 80% de 1RM, teto da banda de 60 a 80% em que `henkin-2023` demonstrou a
+ * queda de 6,98 mmHg de sistólica. Acima disso não há efeito medido, só risco.
+ *
+ * `intervaloFolgado` NÃO carrega número clínico novo, e é honesto sobre isso: é
+ * consistência interna. Um perfil que declara teto de esforço não pode, na mesma
+ * prescrição, receber o intervalo que MAXIMIZA o esforço para a mesma carga. Ele apenas
+ * move o alvo para a metade superior da faixa que o objetivo já cita, sem sair dela.
+ *
+ * `rirMinimo` é a mesma ideia na dimensão da proximidade da falha.
+ *
+ * O que este modificador deliberadamente NÃO faz: criar faixa distinta entre hipertensão
+ * estágio 1 e estágio 2. `hanssen-2022` sustenta personalizar pelo nível inicial mas
+ * declara lacunas de pesquisa consideráveis, e não fornece as duas bandas. A diferença
+ * entre os estágios continua vindo dos mecanismos que JÁ são diferenciados e citados:
+ * `pseTeto` (6 contra 5), `fatorIncremento` e as penalidades de ranqueamento. Inventar uma
+ * segunda banda para parecer mais preciso seria o oposto do que este produto promete.
+ */
+export interface ModDose {
+  /** teto de carga relativa em %1RM, onde a faixa do objetivo expressa %1RM */
+  cargaRelativaMax?: number;
+  /** o alvo de intervalo lê a metade SUPERIOR da faixa citada (descanso mais longo) */
+  intervaloFolgado?: boolean;
+  /** nunca chegar mais perto da falha do que este RIR */
+  rirMinimo?: number;
+  /**
+   * A rampa PARTE DO PISO da faixa citada, em vez de comecar no ponto que a tendencia
+   * daria. Nao e numero novo: e escolher o piso da faixa que o objetivo ja cita, que e o
+   * que "progressao gradual" quer dizer, e essa frase ja esta escrita nos cuidados de
+   * todas estas condicoes. Nasceu de um caso concreto: obesidade grau III recebia 40 min
+   * continuos na SEMANA 1, o teto da faixa "20 a 40 min", igual a um adulto sem condicao.
+   */
+  partirDoPiso?: boolean;
+  /** por que este perfil recebe outra dose (texto curto, sem travessão) */
+  motivo: string;
+  /** ids de referencias.ts que sustentam o modificador */
+  refId?: string[];
+}
+
 export interface GroupGpsRule extends GroupRuleInput {
   slug: string;
   /** pré-seleciona a etapa "Alguma restrição?" (o usuário pode trocar) */
@@ -100,6 +160,8 @@ export interface GroupGpsRule extends GroupRuleInput {
   refs?: string[];
   /** modificador de progressão do perfil (onda MP-6); ausente = progride no passo padrão */
   modProgressao?: ModProgressao;
+  /** dose do treino modificada pelo perfil clínico (ver ModDose) */
+  modDose?: ModDose;
   /**
    * Qual instrumento DEIXA de guiar a intensidade deste perfil e qual entra no lugar. Hoje
    * nenhum grupo especial declara isto (a condição em si não invalida um parâmetro); quem
@@ -219,6 +281,15 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 
   "hipertensao-estagio-1": {
     slug: "hipertensao-estagio-1",
+    modDose: {
+      // 80% de 1RM e o TETO da banda de 60 a 80% em que henkin-2023 mediu a queda de
+      // 6,98 mmHg de sistolica e 3,64 de diastolica. Acima dela nao ha efeito medido.
+      cargaRelativaMax: 80,
+      intervaloFolgado: true,
+      motivo: "Carga relativa no teto da faixa em que a queda de pressao foi demonstrada, e descanso na metade mais folgada da faixa citada, para nao elevar o esforco da mesma carga.",
+      refId: ["henkin-2023", "hanssen-2022", "sbc-2020"],
+    },
+
     nome: "Hipertensão estágio 1",
     cuidados: [
       "Evitar apneia (manobra de Valsalva) e isometrias pesadas: respiração contínua em todas as séries.",
@@ -249,6 +320,15 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
 
   "hipertensao-estagio-2": {
     slug: "hipertensao-estagio-2",
+    modDose: {
+      // 80% de 1RM e o TETO da banda de 60 a 80% em que henkin-2023 mediu a queda de
+      // 6,98 mmHg de sistolica e 3,64 de diastolica. Acima dela nao ha efeito medido.
+      cargaRelativaMax: 80,
+      intervaloFolgado: true,
+      motivo: "Carga relativa no teto da faixa em que a queda de pressao foi demonstrada, e descanso na metade mais folgada da faixa citada, para nao elevar o esforco da mesma carga.",
+      refId: ["henkin-2023", "hanssen-2022", "sbc-2020"],
+    },
+
     nome: "Hipertensão estágio 2",
     cuidados: [
       "Base de pressão mais alta que o estágio 1: respiração contínua obrigatória, sem isometrias pesadas nem apneia.",
@@ -630,6 +710,50 @@ export function combineRules(slugs: string[]): GroupGpsRule | undefined {
  * O atalho de uma regra só devolve a própria instância de propósito: é o que mantém o
  * caminho sem fusão byte-idêntico ao de antes desta extração.
  */
+/**
+ * Fusão de `modDose` pelo MAIS CONSERVADOR, na mesma régua do resto do arquivo: o menor
+ * teto de carga, o maior RIR mínimo, e intervalo folgado se QUALQUER condição pedir.
+ */
+function fundirModDose(mods: ModDose[]): ModDose | undefined {
+  if (!mods.length) return undefined;
+  if (mods.length === 1) return mods[0];
+  const tetos = mods.map((m) => m.cargaRelativaMax).filter((n): n is number => typeof n === "number");
+  const rirs = mods.map((m) => m.rirMinimo).filter((n): n is number => typeof n === "number");
+  const refId: string[] = [];
+  for (const m of mods) for (const r of m.refId ?? []) if (!refId.includes(r)) refId.push(r);
+  return {
+    cargaRelativaMax: tetos.length ? Math.min(...tetos) : undefined,
+    rirMinimo: rirs.length ? Math.max(...rirs) : undefined,
+    intervaloFolgado: mods.some((m) => m.intervaloFolgado) || undefined,
+    partirDoPiso: mods.some((m) => m.partirDoPiso) || undefined,
+    motivo: mods.map((m) => m.motivo).join(" "),
+    refId,
+  };
+}
+
+/**
+ * A dose do perfil, já resolvida, incluindo o que é DERIVADO em vez de declarado.
+ *
+ * `intervaloFolgado` é derivado de `modProgressao.cautela` quando a condição não declara
+ * `modDose` própria. É consistência interna, não número clínico novo: uma condição que já
+ * declarou cautela na progressão não pode receber, na mesma prescrição, o intervalo que
+ * maximiza o esforço para a mesma carga. Derivar em vez de listar à mão evita a tabela
+ * paralela que envelhece em silêncio, que é como quase todo defeito deste motor nasceu.
+ */
+export function doseDoPerfil(regra: GroupGpsRule | undefined): ModDose | undefined {
+  if (!regra) return undefined;
+  const base = regra.modDose;
+  const cautela = regra.modProgressao?.cautela === true;
+  if (base) return { ...base, intervaloFolgado: base.intervaloFolgado ?? (cautela || undefined), partirDoPiso: base.partirDoPiso ?? (cautela || undefined) };
+  if (!cautela) return undefined;
+  return {
+    intervaloFolgado: true,
+    partirDoPiso: true,
+    motivo: "Perfil com cautela declarada na progressão: o descanso entre séries lê a metade mais folgada da faixa citada, para não elevar o esforço da mesma carga.",
+    refId: regra.modProgressao?.refId ?? [],
+  };
+}
+
 export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
   if (rules.length === 0) return undefined;
   if (rules.length === 1) return rules[0];
@@ -680,6 +804,7 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
     posicoesEvitar: posicoes.length ? posicoes : undefined,
     // Mesma lógica de união: basta UMA condição pedir para que a fusão peça.
     evitarFlexaoColunaCarregada: rules.some((r) => r.evitarFlexaoColunaCarregada) || undefined,
+    modDose: fundirModDose(rules.map((r) => r.modDose).filter((m): m is ModDose => Boolean(m))),
     refs,
     modProgressao: fundirModProgressao(
       rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),

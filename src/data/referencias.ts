@@ -77,6 +77,38 @@ export const referencias: Referencia[] = [
     nota: "Clássico sobre exercício e hipertensão: cargas leves a moderadas, respiração contínua, resposta pressórica. Recomenda intensidade moderada (40 a menos de 60% do VO2R) na maioria dos dias da semana, 30 min ou mais por dia, predominantemente aeróbio com complemento de força. Sobre medicação em quem treina, estabelece os critérios de escolha (baixar a pressão em repouso e no esforço, baixar a resistência periférica total e não prejudicar a capacidade de exercício) e por isso aponta os inibidores da ECA, os bloqueadores do receptor de angiotensina e os bloqueadores de canal de cálcio como as escolhas para praticantes recreacionais e atletas com hipertensão. Base da declaração, no catálogo de fármacos, de que essas três famílias não retiram nenhum instrumento de monitoramento do plano.",
   },
   {
+    id: "hanssen-2022",
+    autores: "Hanssen H, Boardman H, Deiseroth A, Moholdt T, Simonenko M, Kränkel N, et al.",
+    titulo:
+      "Personalized exercise prescription in the prevention and treatment of arterial hypertension: a Consensus Document from the European Association of Preventive Cardiology (EAPC) and the ESC Council on Hypertension",
+    fonte: "European Journal of Preventive Cardiology, 29(1):205-215",
+    ano: 2022,
+    doi: "10.1093/eurjpc/zwaa141",
+    pmid: "33758927",
+    nota: "Revisão sistemática de 34 metanálises para consenso da EAPC com o Conselho de Hipertensão da ESC. A conclusão central é a que este produto precisava: as respostas fisiológicas DIFEREM conforme o nível inicial de pressão, e há evidência suficiente para propor que o tipo de exercício seja prescrito segundo esse nível inicial, em vez do conselho genérico de aumentar atividade aeróbia. É a base da decisão de a dose de treino nascer do perfil clínico e não só do objetivo. O documento também declara que restam lacunas de pesquisa consideráveis, e por isso o produto não crava faixa distinta por estágio onde a evidência não a fornece.",
+  },
+  {
+    id: "henkin-2023",
+    autores: "Henkin JS, Pinto RS, Machado CLF, Wilhelm EN",
+    titulo:
+      "Chronic effect of resistance training on blood pressure in older adults with prehypertension and hypertension: A systematic review and meta-analysis",
+    fonte: "Experimental Gerontology, 177:112193",
+    ano: 2023,
+    doi: "10.1016/j.exger.2023.112193",
+    pmid: "37121334",
+    nota: "Metanálise de 24 estudos e 835 participantes com 60 anos ou mais. O treino resistido reduziu a pressão sistólica em 6,88 mmHg (IC 95% -10,02 a -3,73) e a diastólica em 3,37 mmHg (IC 95% -4,71 a -2,22). Em quem já tinha hipertensão a queda de sistólica foi de 10,42 mmHg. O dado que o motor usa é o da análise por intensidade: o treino resistido em intensidade MODERADA, definida no estudo como 60 a 80% de 1RM, reduziu sistólica em 6,98 mmHg e diastólica em 3,64 mmHg. É a faixa em que o benefício foi demonstrado, e por isso o teto de carga relativa do perfil hipertenso é 80% de 1RM: acima disso não há o efeito medido, só o risco.",
+  },
+  {
+    id: "schoenfeld-carga-2014",
+    autores: "Schoenfeld BJ, Wilson JM, Lowery RP, Krieger JW",
+    titulo: "Muscular adaptations in low- versus high-load resistance training: A meta-analysis",
+    fonte: "European Journal of Sport Science, 16(1):1-10",
+    ano: 2014,
+    doi: "10.1080/17461391.2014.989922",
+    pmid: "25530577",
+    nota: "Metanálise comparando carga baixa (até 60% de 1RM) com carga alta (65% de 1RM ou mais). Duas leituras, e o produto usa as duas com o cuidado que elas pedem. Primeira: treinar com carga de até 50% de 1RM produziu aumentos SUBSTANCIAIS de força e de hipertrofia em INDIVÍDUOS NÃO TREINADOS, que é o respaldo de o iniciante não precisar de carga alta no primeiro bloco. Segunda: houve TENDÊNCIA de a força ser maior com carga alta (tamanho de efeito 2,30 contra 1,23), o que sustenta subir carga e reduzir repetição depois da adaptação inicial. As duas comparações foram TENDÊNCIA e não significância (p = 0,09 para força e p = 0,076 para hipertrofia), e os autores atribuem isso ao número pequeno de estudos. O produto declara isso onde cita, em vez de vender tendência como achado fechado.",
+  },
+  {
     id: "colberg-2016",
     autores: "Colberg SR, Sigal RJ, Yardley JE, et al.",
     titulo: "Physical Activity/Exercise and Diabetes: A Position Statement of the American Diabetes Association",

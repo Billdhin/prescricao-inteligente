@@ -27,7 +27,7 @@ import {
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { combineRules, groupGpsRules, type GroupGpsRule } from "@/lib/gps/groupRules";
+import { combineRules, doseDoPerfil, groupGpsRules, type GroupGpsRule } from "@/lib/gps/groupRules";
 import {
   restricoesAtivas,
   rotuloRestricao,
@@ -705,6 +705,11 @@ interface DadosDoAlunoNoAlvo {
   fatorProgressao?: number;
   /** teto de PSE deste perfil clinico, ja fundido (ver CtxAlvo.pseTeto) */
   pseTeto?: number;
+  /** dose modificada pelo perfil clinico, ja fundida (ver CtxAlvo e ModDose) */
+  cargaRelativaMax?: number;
+  intervaloFolgado?: boolean;
+  rirMinimo?: number;
+  partirDoPiso?: boolean;
 }
 
 function montarMicrociclos(
@@ -726,7 +731,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao, pseTeto } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao, pseTeto, cargaRelativaMax, intervaloFolgado, rirMinimo, partirDoPiso } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (as descargas ficam fora desta conta). Agora são contadas,
   // e não deduzidas de "a última é descarga": com cadência absoluta, a descarga pode cair
@@ -752,6 +757,10 @@ function montarMicrociclos(
       pisoDoCiclo,
       fatorProgressao,
       pseTeto,
+      cargaRelativaMax,
+      intervaloFolgado,
+      rirMinimo,
+      partirDoPiso,
       tipoSemana: ehDeload ? "deload" : "carga",
       tendenciaVolume,
       tendenciaIntensidade,
@@ -1030,6 +1039,11 @@ function montarMacrocicloGenerico(
         // O teto de PSE do perfil chegava ao texto do semaforo e a autorregulacao da
         // execucao, mas nunca ao alvo PRESCRITO. Ver CtxAlvo.pseTeto.
         pseTeto: regraClinicaDoPlano(input)?.modProgressao?.pseTeto,
+        // A dose nasce do PERFIL, nao so do objetivo. Ver ModDose e doseDoPerfil.
+        cargaRelativaMax: doseDoPerfil(regraClinicaDoPlano(input))?.cargaRelativaMax,
+        intervaloFolgado: doseDoPerfil(regraClinicaDoPlano(input))?.intervaloFolgado,
+        rirMinimo: doseDoPerfil(regraClinicaDoPlano(input))?.rirMinimo,
+        partirDoPiso: doseDoPerfil(regraClinicaDoPlano(input))?.partirDoPiso,
         cargaAntesDesteMeso: rampa.total != null ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: rampa.total,
         pisoDoCiclo: pisoDaOnda(m),
@@ -1227,6 +1241,11 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
         // O teto de PSE do perfil chegava ao texto do semaforo e a autorregulacao da
         // execucao, mas nunca ao alvo PRESCRITO. Ver CtxAlvo.pseTeto.
         pseTeto: regraClinicaDoPlano(input)?.modProgressao?.pseTeto,
+        // A dose nasce do PERFIL, nao so do objetivo. Ver ModDose e doseDoPerfil.
+        cargaRelativaMax: doseDoPerfil(regraClinicaDoPlano(input))?.cargaRelativaMax,
+        intervaloFolgado: doseDoPerfil(regraClinicaDoPlano(input))?.intervaloFolgado,
+        rirMinimo: doseDoPerfil(regraClinicaDoPlano(input))?.rirMinimo,
+        partirDoPiso: doseDoPerfil(regraClinicaDoPlano(input))?.partirDoPiso,
         cargaAntesDesteMeso: rampa.total != null && progride[m] ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: progride[m] ? rampa.total : undefined,
       }),
