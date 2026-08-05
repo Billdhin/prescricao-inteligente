@@ -247,6 +247,74 @@ function comPasso(nivel: number, inicial: number, fator?: number): number {
   return inicial + (nivel - inicial) * f;
 }
 
+/**
+ * MENOR NÍVEL QUE AS SEMANAS DE CARGA DESTE MESOCICLO ALCANÇAM.
+ *
+ * A descarga ancorava em `nivelDaTendencia(tend, 1, ...)`, ou seja, na suposição de que a
+ * ÚLTIMA semana de carga é o teto do mesociclo. Isso vale para "sobe" e "reduz", e NÃO vale
+ * para "varia": ali o nível oscila ±0,16 em torno de uma base, e a última semana pode ser
+ * justamente um vale. Medido num plano de 12 semanas de hipertrofia para intermediário, com
+ * o volume por sessão em séries x repetições:
+ *
+ *   ondulatória  96 112 84 [84] 84 112 84 [84] 84 96 112 [84]
+ *   flexível     96 112 84 [84] 84 112 84 [84] 84 96 112 [84]
+ *   linear      192 176 176 [72] 160 144 96 [72] 96 84 72 [72]
+ *   blocos      108 144 144 [108] 192 144 96 [72] 192 144 72 [72]
+ *
+ * Os colchetes são as descargas. Na ondulatória e na flexível a semana de descarga tem
+ * EXATAMENTE o mesmo volume de várias semanas de carga, e o mesmo de quem veio antes dela.
+ * "Descarga" virou rótulo do cartão, e não redução na dose que o aluno executa.
+ *
+ * Ancorar no MENOR nível de carga do próprio mesociclo resolve para qualquer formato de
+ * tendência, incluindo os que ainda não existem: seja qual for a onda, a descarga fica
+ * abaixo da semana mais leve do bloco.
+ */
+function niveisDaCargaMaisLeve(
+  ctx: CtxAlvo,
+  seriesIv: { min: number; max: number } | null,
+  repsIv: { min: number; max: number } | null,
+): { nv: number; ni: number } {
+  const n = Math.max(1, ctx.semanasDeCargaNoMeso);
+  // A fração precisa vir da MESMA fonte que as semanas de carga usam: quando a rampa é no
+  // macrociclo, a posição é a do macro, e não a do mesociclo. Reconstruir errado aqui faria
+  // a descarga do modelo linear mirar num nível que nenhuma semana daquele bloco teve.
+  const usaMacro = ctx.semanaNoMacro != null && ctx.semanasDeCargaNoMacro != null;
+  const totalM = ctx.semanasDeCargaNoMacro ?? 0;
+  const primeiraNoMacro = (ctx.semanaNoMacro ?? 0) - n;
+  const fracao = (s: number) =>
+    usaMacro
+      ? totalM <= 1
+        ? 0
+        : (Math.min(Math.max(primeiraNoMacro + s, 1), totalM) - 1) / (totalM - 1)
+      : n <= 1
+        ? 0
+        : (s - 1) / (n - 1);
+
+  let melhor = { nv: 0, ni: 0, vol: Infinity };
+  for (let s = 1; s <= n; s++) {
+    const t = fracao(s);
+    const nv = comPasso(
+      comPiso(nivelDaTendencia(ctx.tendenciaVolume, t, s), ctx.pisoDoCiclo),
+      comPiso(nivelDaTendencia(ctx.tendenciaVolume, 0, s), ctx.pisoDoCiclo),
+      ctx.fatorProgressao,
+    );
+    const ni = comPasso(
+      comPiso(nivelDaTendencia(ctx.tendenciaIntensidade, t, s), ctx.pisoDoCiclo),
+      comPiso(nivelDaTendencia(ctx.tendenciaIntensidade, 0, s), ctx.pisoDoCiclo),
+      ctx.fatorProgressao,
+    );
+    // O par (séries, repetições) desta semana de carga, calculado do mesmo jeito que o ramo
+    // de carga calcula. É por isso que o volume comparado aqui é o volume REAL da semana, e
+    // não uma aproximação: séries seguem o volume e repetições seguem a intensidade, e os
+    // dois mínimos caem em semanas DIFERENTES quando as tendências andam em sentidos opostos.
+    const series = seriesIv ? ponto(seriesIv, nv, true) : 1;
+    const reps = repsIv ? ponto(repsIv, 1 - ni, true) : 1;
+    const vol = series * reps;
+    if (vol < melhor.vol) melhor = { nv, ni, vol };
+  }
+  return { nv: melhor.nv, ni: melhor.ni };
+}
+
 function nivelDaTendencia(tend: Tendencia, t: number, semanaNoMeso: number): number {
   switch (tend) {
     case "sobe":
@@ -377,17 +445,30 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
   if (ctx.tipoSemana === "deload") {
     // A descarga parte do alvo da ÚLTIMA semana de carga (teto do meso) e reduz honestamente. Se a
     // variável está travada, o "teto" dela é o próprio nível congelado (a descarga reduz a partir daí).
-    const nvUltima = comPiso(volTravado ? nivelCongelado(ctx.tendenciaVolume) : nivelDaTendencia(ctx.tendenciaVolume, 1, ctx.semanaNoMeso), ctx.pisoDoCiclo);
-    const niUltima = comPiso(intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : nivelDaTendencia(ctx.tendenciaIntensidade, 1, ctx.semanaNoMeso), ctx.pisoDoCiclo);
+    // Ancoragem na semana de carga MAIS LEVE do bloco (ver nivelMinimoDeCarga), e não na
+    // última. Com a última, na ondulatória a descarga saía idêntica a semanas de carga.
+    const maisLeveDoBloco = niveisDaCargaMaisLeve(ctx, seriesIv, repsIv);
+    const nvUltima = comPiso(volTravado ? nivelCongelado(ctx.tendenciaVolume) : maisLeveDoBloco.nv, ctx.pisoDoCiclo);
+    const niUltima = comPiso(intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : maisLeveDoBloco.ni, ctx.pisoDoCiclo);
     if (seriesIv) {
-      const ultima = ponto(seriesIv, nvUltima, true);
+      const maisLeve = ponto(seriesIv, nvUltima, true);
       const piso = Math.round(intervaloFechado(seriesIv).min);
-      alvo.seriesAlvo = Math.max(piso, ultima - 1); // menos uma série que a última carga
+      alvo.seriesAlvo = Math.max(piso, maisLeve - 1); // menos uma série que a carga mais leve
     }
     // As repetições acompanham a última carga (a redução de volume vem das séries e da
     // frequência). Elas seguem a INTENSIDADE, como na semana de carga: a descarga mantém a
     // mesma repetição do fim do bloco e alivia por séries, RIR e carga relativa.
-    if (repsIv) alvo.repsAlvo = ponto(repsIv, 1 - niUltima, true);
+    if (repsIv) {
+      const acompanhando = ponto(repsIv, 1 - niUltima, true);
+      // Se as séries já estavam no piso da faixa, elas não tinham como cair, e a descarga
+      // sairia com o MESMO volume da semana de carga mais leve. Nesse caso a redução tem
+      // que vir das repetições, senão a semana de descarga não descarrega nada.
+      const seriesNaoCairam =
+        seriesIv != null && alvo.seriesAlvo === Math.round(intervaloFechado(seriesIv).min) &&
+        alvo.seriesAlvo === ponto(seriesIv, nvUltima, true);
+      const pisoReps = Math.round(intervaloFechado(repsIv).min);
+      alvo.repsAlvo = seriesNaoCairam ? Math.max(pisoReps, acompanhando - 1) : acompanhando;
+    }
     if (pctIv) {
       // Carga relativa mais baixa na descarga (esforço menor), sem sair da faixa.
       alvo.cargaRelativaAlvo = ponto(pctIv, Math.max(0, niUltima * 0.6), false);

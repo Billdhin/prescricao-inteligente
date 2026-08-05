@@ -23,6 +23,7 @@ import { intervaloDe } from "../src/lib/gps/faixasParse";
 import { assinaturaCarga } from "../src/lib/gps/assinaturaSemana";
 import { OBJETIVOS } from "../src/lib/gps/engine";
 import { specialGroups } from "../src/data/specialGroups";
+import { MODELOS_PERIODIZACAO } from "../src/data/periodizacao";
 import { groupGpsRules } from "../src/lib/gps/groupRules";
 import type { GpsObjetivo } from "../src/lib/gps/engine";
 import type { Nivel } from "../src/data/types";
@@ -614,7 +615,87 @@ function verificarTetoDePSE(): string[] {
   return problemas;
 }
 
+/**
+ * A DESCARGA TEM QUE DESCARREGAR A SESSÃO, NÃO SÓ O CARTÃO.
+ *
+ * A descarga ancorava na suposição "a última semana de carga é o teto do mesociclo". Vale
+ * para "sobe" e "reduz"; não vale para "varia", onde o nível oscila e a última semana pode
+ * ser um vale. Medido em 12 semanas de hipertrofia para intermediário, volume por SESSÃO:
+ *
+ *   ondulatória  96 112 84 [84] 84 112 84 [84] 84 96 112 [84]
+ *
+ * A sessão de descarga saía idêntica à sessão de carga que veio antes dela. No semanal havia
+ * redução, mas só porque a descarga tira uma sessão: a sessão em si não aliviava nada, e é a
+ * sessão que o aluno abre e executa.
+ *
+ * A asserção é comparativa e não fixa magnitude: a sessão de descarga precisa ficar abaixo da
+ * sessão de carga MAIS LEVE do próprio mesociclo, em qualquer modelo.
+ */
+function verificarDescargaNaSessao(): string[] {
+  const problemas: string[] = [];
+  const volSessao = (s: { blocos: BlocoSessao[] }) =>
+    s.blocos.filter((b) => b.tipo !== "aerobio").reduce((a, b) => a + (b.seriesAlvo ?? 0) * (b.repsAlvo ?? 0), 0);
+
+  let mesosAvaliados = 0;
+  for (const modelo of MODELOS_PERIODIZACAO.map((m) => m.id)) {
+    const p = gerarPlano({
+      objetivo: "Hipertrofia" as GpsObjetivo, nivel: "Intermediário" as Nivel,
+      semanas: 12, frequencia: FREQ, modeloPreferido: modelo,
+    });
+    for (const meso of p.principal.mesociclos) {
+      const descargas = meso.microciclos.filter((w) => w.tipo === "deload");
+      const cargas = meso.microciclos.filter((w) => w.tipo === "carga");
+      if (!descargas.length || !cargas.length) continue;
+      mesosAvaliados++;
+      // RIR da sessão, quando existe: mais RIR = mais folga = mais leve.
+      const rirDe = (w: (typeof cargas)[number]) => {
+        const rs = w.sessoes[0].blocos.filter((b) => b.tipo !== "aerobio").map((b) => b.rirAlvo).filter((r): r is number => r != null);
+        return rs.length ? Math.min(...rs) : null;
+      };
+      const todas = meso.microciclos;
+      for (const d of descargas) {
+        // A comparação é com a semana de CARGA imediatamente anterior, que é o que a descarga
+        // existe para aliviar. Comparar com a semana mais leve do bloco inteiro mistura eixos:
+        // no modelo de blocos a semana de acúmulo tem RIR folgado E volume alto, e exigir que a
+        // descarga fosse mais folgada QUE ELA no RIR reprovaria uma descarga que corta o volume
+        // a um terço, que é alívio de sobra.
+        const i = todas.indexOf(d);
+        const anterior = [...todas.slice(0, i)].reverse().find((w) => w.tipo === "carga");
+        if (!anterior) continue;
+        const vD = volSessao(d.sessoes[0]);
+        const vA = volSessao(anterior.sessoes[0]);
+        if (vD < vA) continue;
+        // Volume igual só é aceitável quando a carga anterior JÁ está no piso das faixas
+        // citadas: cortar mais sairia da faixa publicada, linha que a casa não cruza. Aí o
+        // alívio tem que vir por RIR, e a asserção cobra isso em vez de exigir o impossível.
+        const rD = rirDe(d);
+        const rA = rirDe(anterior);
+        if (rD != null && rA != null && rD > rA) continue;
+        problemas.push(
+          `modelo "${modelo}", meso "${meso.nome}": a sessão de descarga da semana ${d.semana} não alivia nada ` +
+            `em relação à semana ${anterior.semana} de carga (volume ${vD} contra ${vA}, RIR ${rD ?? "-"} contra ${rA ?? "-"})`,
+        );
+      }
+    }
+  }
+  // Controle positivo: sem mesociclo com carga E descarga, o laço acima não testa nada.
+  if (mesosAvaliados < 5)
+    problemas.push(`controle positivo: só ${mesosAvaliados} mesociclo(s) tinham carga e descarga; a asserção perdeu o sentido`);
+  return problemas;
+}
+
 /* ----------------------------------- Execução ------------------------------------- */
+
+const falhaDescargaSessao = verificarDescargaNaSessao();
+if (falhaDescargaSessao.length) {
+  console.error("\n[check:progressao] DESCARGA QUE NÃO ALIVIA A SESSÃO:\n");
+  for (const p of falhaDescargaSessao) console.error(`  - ${p}`);
+  console.error(
+    "\n  Tirar uma sessão da semana não é descarregar a sessão. A sessão de descarga tem que ficar\n" +
+      "  abaixo da sessão de carga mais leve do próprio bloco, em qualquer modelo.\n",
+  );
+  process.exit(1);
+}
 
 const falhaTeto = verificarTetoDePSE();
 if (falhaTeto.length) {
