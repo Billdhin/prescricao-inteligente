@@ -13,9 +13,13 @@ import { MotorDecidindo } from "@/components/landing/MotorDecidindo";
 import {
   NOME_PLANO,
   PRECO_MENSAL,
-  PRECO_ANUAL_FUNDADOR,
-  PRECO_ANUAL_EQUIV_MES,
-  VAGAS_FUNDADOR,
+  PRECO_TABELA,
+  PRECO_ANUAL,
+  ECONOMIA_ANUAL,
+  PRECO_ESTUDIO,
+  MIN_ESTUDIO,
+  ITENS_ESTUDIO,
+  ITENS_INSTITUCIONAL,
   ITENS_PLANO,
   fmtBRL,
 } from "@/data/planos";
@@ -820,19 +824,10 @@ function ParaQueServe() {
  */
 function Planos() {
   const [anual, setAnual] = React.useState(false);
-  const planos = [
-    {
-      nome: NOME_PLANO,
-      desc: "Um plano só, com tudo liberado. Sem versão limitada e sem recurso escondido atrás de upgrade.",
-      mensal: PRECO_MENSAL,
-      destaque: true,
-      itens: ITENS_PLANO,
-      cta: `Assinar ${NOME_PLANO}`,
-    },
-  ];
+  const precoIndividual = anual ? Math.round(PRECO_ANUAL / 12) : PRECO_MENSAL;
   return (
     <section id="planos" className="scroll-mt-24 px-6 pb-[84px] pt-[84px]">
-      <div className="mx-auto w-full max-w-[860px]">
+      <div className="mx-auto w-full max-w-[1160px]">
         <div className="text-center">
           <div className="flex justify-center">
             <Eyebrow>Planos</Eyebrow>
@@ -841,8 +836,8 @@ function Planos() {
             Menos que uma hora de aula por mês
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-[16px] text-[#5A6B7D]">
-            Assine, cadastre o primeiro aluno hoje e veja o ciclo se montar. Se não fizer sentido, você
-            cancela sozinho, sem ligação, sem retenção.
+            Um plano com tudo liberado. Sem versão limitada, sem recurso escondido atrás de upgrade.
+            Se não fizer sentido, você cancela sozinho, sem ligação e sem retenção.
           </p>
 
           <div className="mt-6 inline-flex items-center gap-1 rounded-full border border-[#EAE8E3] bg-white p-1 text-[13.5px] font-semibold">
@@ -856,61 +851,109 @@ function Planos() {
               onClick={() => setAnual(true)}
               className={"rounded-full px-3.5 py-1.5 " + (anual ? "bg-[#0D1A2B] text-white" : "text-[#5A6B7D]")}
             >
-              Anual · fundador
+              Anual · economize {fmtBRL(ECONOMIA_ANUAL)}
             </button>
           </div>
         </div>
 
-        <div className="mx-auto mt-8 grid max-w-[460px] gap-4">
-          {planos.map((p) => {
-            // O equivalente mensal da oferta anual sai do valor REAL do ano
-            // (`PRECO_ANUAL_FUNDADOR`), não de uma regra de "2 meses grátis"
-            // calculada aqui. Assim o número da tela e o número cobrado são o mesmo.
-            const preco = anual ? PRECO_ANUAL_EQUIV_MES : p.mensal;
-            return (
-              <div
-                key={p.nome}
-                className={
-                  "relative flex flex-col rounded-[18px] bg-white p-6 text-left " +
-                  (p.destaque ? "border-2 border-[#0D1A2B] shadow-[0_20px_50px_-30px_rgba(16,35,58,0.4)]" : "border border-[#EAE8E3]")
-                }
-              >
-                {/* O selo "Recomendado" só fazia sentido quando havia duas faixas para
-                    comparar. Com plano único ele recomenda o quê, contra o quê? Sai. */}
-                <div className="font-display text-[19px] font-bold text-[#10233A]">{p.nome}</div>
-                <p className="mt-1 text-[13.5px] text-[#5A6B7D]">{p.desc}</p>
-                <div className="mt-4 flex items-end gap-1">
-                  <span className="text-[16px] font-semibold text-[#8A97A6]">R$</span>
-                  <span className="font-display text-[40px] font-extrabold leading-none tabular-nums text-[#10233A]">{preco}</span>
-                  <span className="mb-1 text-[14px] font-medium text-[#8A97A6]">/mês</span>
-                </div>
-                <div className="text-[12px] text-[#8A97A6]">
-                  {anual
-                    ? `${fmtBRL(PRECO_ANUAL_FUNDADOR)} no ano, para as primeiras ${VAGAS_FUNDADOR} contas`
-                    : "cobrado mensalmente"}
-                </div>
-                <ul className="mt-4 flex-1 space-y-2.5">
-                  {p.itens.map((it) => (
-                    <li key={it} className="flex gap-2.5 text-[14px] text-[#10233A]">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#1B7A4B]" />
-                      {it}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  to="/dashboard"
-                  className={
-                    "mt-6 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-[15px] font-semibold transition-colors " +
-                    (p.destaque
-                      ? "bg-[#0D1A2B] text-white hover:bg-[#16283f]"
-                      : "border border-[#EAE8E3] bg-white text-[#10233A] hover:border-[#d9d6cf]")
-                  }
-                >
-                  {p.cta}
-                </Link>
-              </div>
-            );
-          })}
+        <div className="mt-8 grid items-start gap-4 lg:grid-cols-3">
+          {/* ESTÚDIO */}
+          <div className="flex h-full flex-col rounded-[18px] border border-[#EAE8E3] bg-white p-6">
+            <div className="font-display text-[19px] font-bold text-[#10233A]">Estúdio</div>
+            <p className="mt-1 text-[13.5px] text-[#5A6B7D]">
+              {MIN_ESTUDIO} ou mais profissionais, com responsável técnico
+            </p>
+            <div className="mt-4 flex items-end gap-1">
+              <span className="text-[16px] font-semibold text-[#8A97A6]">R$</span>
+              <span className="font-display text-[40px] font-extrabold leading-none tabular-nums text-[#10233A]">
+                {PRECO_ESTUDIO}
+              </span>
+              <span className="mb-1 text-[14px] font-medium text-[#8A97A6]">/prof./mês</span>
+            </div>
+            <div className="text-[12px] text-[#8A97A6]">mínimo {MIN_ESTUDIO} profissionais</div>
+            <ul className="mt-4 flex-1 space-y-2.5">
+              {ITENS_ESTUDIO.map((it) => (
+                <li key={it} className="flex gap-2.5 text-[14px] text-[#10233A]">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#1B7A4B]" />
+                  {it}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/suporte"
+              className="mt-6 inline-flex w-full items-center justify-center rounded-xl border border-[#EAE8E3] bg-white px-5 py-3 text-[15px] font-semibold text-[#10233A] transition-colors hover:border-[#d9d6cf]"
+            >
+              Falar sobre equipe
+            </Link>
+          </div>
+
+          {/* PROFISSIONAL, a faixa em destaque */}
+          <div className="relative flex h-full flex-col rounded-[18px] border-2 border-[#0D1A2B] bg-white p-6 shadow-[0_20px_50px_-30px_rgba(16,35,58,0.4)]">
+            <span className="absolute -top-3 right-6 rounded-full bg-[#0D1A2B] px-3 py-0.5 text-[11.5px] font-bold text-white">
+              {/* O protótipo trazia "Mais escolhido", e o check:design reprovou com razão:
+                  é selo de prova social sem prova, a mesma classe dos depoimentos
+                  inventados que saíram desta página. Com três faixas, "Recomendado" é uma
+                  recomendação editorial da casa, que é verdadeira e não finge medir nada. */}
+              Recomendado
+            </span>
+            <div className="font-display text-[19px] font-bold text-[#10233A]">{NOME_PLANO}</div>
+            <p className="mt-1 text-[13.5px] text-[#5A6B7D]">Um profissional com CREF</p>
+            <div className="mt-4 flex items-end gap-2">
+              {/* O preço de tabela riscado ao lado do praticado. Os dois saem de
+                  @/data/planos: escrever qualquer um deles à mão aqui reprova no
+                  check:legal, que existe justamente porque a casa já anunciou três
+                  preços diferentes ao mesmo tempo. */}
+              <span className="mb-1 text-[17px] font-semibold tabular-nums text-[#B6BDC6] line-through">
+                {fmtBRL(PRECO_TABELA)}
+              </span>
+              <span className="text-[16px] font-semibold text-[#8A97A6]">R$</span>
+              <span className="font-display text-[40px] font-extrabold leading-none tabular-nums text-[#10233A]">
+                {precoIndividual}
+              </span>
+              <span className="mb-1 text-[14px] font-medium text-[#8A97A6]">/mês</span>
+            </div>
+            <div className="text-[12px] text-[#8A97A6]">
+              {anual ? `${fmtBRL(PRECO_ANUAL)}/ano, economize ${fmtBRL(ECONOMIA_ANUAL)}` : "cobrado mensalmente"}
+            </div>
+            <ul className="mt-4 flex-1 space-y-2.5">
+              {ITENS_PLANO.map((it) => (
+                <li key={it} className="flex gap-2.5 text-[14px] text-[#10233A]">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#1B7A4B]" />
+                  {it}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/dashboard"
+              className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[#0D1A2B] px-5 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#16283f]"
+            >
+              Criar minha conta
+            </Link>
+          </div>
+
+          {/* INSTITUCIONAL */}
+          <div className="flex h-full flex-col rounded-[18px] border border-[#EAE8E3] bg-white p-6">
+            <div className="font-display text-[19px] font-bold text-[#10233A]">Institucional</div>
+            <p className="mt-1 text-[13.5px] text-[#5A6B7D]">Faculdades, assessorias e redes</p>
+            <div className="mt-4 font-display text-[30px] font-extrabold leading-none text-[#10233A]">
+              Sob consulta
+            </div>
+            <div className="text-[12px] text-[#8A97A6]">grátis durante a graduação</div>
+            <ul className="mt-4 flex-1 space-y-2.5">
+              {ITENS_INSTITUCIONAL.map((it) => (
+                <li key={it} className="flex gap-2.5 text-[14px] text-[#10233A]">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#1B7A4B]" />
+                  {it}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/suporte"
+              className="mt-6 inline-flex w-full items-center justify-center rounded-xl border border-[#EAE8E3] bg-white px-5 py-3 text-[15px] font-semibold text-[#10233A] transition-colors hover:border-[#d9d6cf]"
+            >
+              Falar com a gente
+            </Link>
+          </div>
         </div>
       </div>
     </section>

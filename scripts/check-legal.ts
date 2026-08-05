@@ -125,7 +125,7 @@ if (!precoNaFonte) reprovar("F", "planos.ts não define PRECO_MENSAL.");
 
 // Controle positivo: se a fonte única sumir ou ficar vazia, os testes acima passam
 // a validar nada. Esta asserção garante que há substância para conferir.
-if (!/PRECO_ANUAL_FUNDADOR/.test(PLANOS) || PLANOS.length < 400)
+if (!/PRECO_ANUAL\b/.test(PLANOS) || !/PRECO_ESTUDIO/.test(PLANOS) || PLANOS.length < 400)
   reprovar("F", "controle positivo: a fonte única de preço está vazia demais para o bloco F significar algo.");
 
 

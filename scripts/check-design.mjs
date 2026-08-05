@@ -153,7 +153,18 @@ const REGRAS = [
 ];
 
 for (const arquivo of files) {
-  const conteudo = readFileSync(arquivo, "utf8");
+  /*
+   * SEM COMENTÁRIOS.
+   *
+   * Este guardrail bane copy que não pode chegar ao usuário (selo sem prova, promessa
+   * vazia). Lendo o arquivo cru, ele reprovava o COMENTÁRIO que explica por que a copy
+   * banida saiu, e a única forma de deixá-lo verde seria apagar a explicação. Guardrail
+   * que pune a documentação da própria correção ensina a esconder o histórico. O
+   * `check:legal` já tinha aprendido isso; aqui é a mesma lição.
+   */
+  const conteudo = readFileSync(arquivo, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:"'`\\])\/\/[^\n]*/g, "$1");
   const arqRel = relative(root, arquivo);
   let svgRegs = null;
   for (const regra of REGRAS) {
