@@ -249,6 +249,16 @@ export const referencias: Referencia[] = [
     nota: "Revisão sistemática com metanálise de 19 estudos e 1.249 mulheres na pós-menopausa, comparando exercício SOMADO a medicamento ou suplemento contra medicamento ou suplemento sozinho. Dois achados, e o negativo importa tanto quanto o positivo. Acrescentar exercício NÃO melhorou de forma significativa a densidade mineral óssea de coluna lombar e quadril no conjunto; só a análise por subgrupo mostrou ganho na coluna lombar quando o programa COMBINA VÁRIOS TIPOS de treino (diferença padronizada 0,37). Já a função melhorou de forma consistente: força de membros inferiores, equilíbrio pela escala de Berg, teste de levantar e andar, medo de cair e qualidade de vida. A qualidade da evidência foi classificada de baixa a muito baixa, e o produto declara isso onde cita.",
   },
   {
+    id: "strauss-sedentario-2026",
+    autores: "Strauss JA, Kirwan R, Ranasinghe C, Schwingshackl L, Shepherd SO, Chaplin M, Sguassero Y, Petkovic J, Villanueva G, Dwan K",
+    titulo: "High-intensity interval training for reducing cardiometabolic syndrome in healthy but sedentary populations",
+    fonte: "Cochrane Database of Systematic Reviews, 3:CD013617",
+    ano: 2026,
+    doi: "10.1002/14651858.CD013617.pub2",
+    pmid: "41810896",
+    nota: "Revisão Cochrane de 58 ensaios randomizados e 2.075 adultos de 18 a 64 anos SAUDÁVEIS MAS SEDENTÁRIOS, comparando intervalado de alta intensidade com não exercitar e com contínuo moderado. Contra não exercitar, o intervalado provavelmente aumenta a aptidão cardiorrespiratória (5,98 mL/kg/min a mais, certeza moderada) e reduz a circunferência de cintura (3,56 cm, certeza ALTA). Contra o contínuo moderado, a diferença de aptidão é pequena e de baixa certeza, e não há diferença clara em pressão sistólica, cintura ou triglicerídeos. DUAS RESSALVAS que pesam mais que os números neste produto: nenhum estudo relatou eventos adversos e os autores dizem não ter certeza de que eles foram monitorados; e TODOS os estudos incluídos usaram intervalado SUPERVISIONADO, com os próprios autores pedindo pesquisa sobre viabilidade e segurança do intervalado sem supervisão.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",

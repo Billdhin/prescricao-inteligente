@@ -653,9 +653,30 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   "iniciante-sedentario": {
     slug: "iniciante-sedentario",
     nome: "Iniciante / sedentário",
+    /*
+     * Sai do débito com `strauss-sedentario-2026`, revisão Cochrane de 58 ensaios e 2.075
+     * adultos SEDENTÁRIOS, que é a população exata desta condição e não uma extrapolação.
+     *
+     * E ela produz uma decisão contra-intuitiva que vale registrar, porque é o oposto do que
+     * o resto desta rodada vinha fazendo. O intervalado tem, aqui, o melhor achado de
+     * CERTEZA ALTA da coleção inteira: 3,56 cm a menos de cintura contra não exercitar. Pela
+     * lógica das outras condições, isso viraria `intervaladoIndicado` na hora.
+     *
+     * NÃO VIRA, e o motivo está na própria revisão: TODOS os 58 estudos usaram intervalado
+     * SUPERVISIONADO, e os autores encerram pedindo pesquisa sobre viabilidade e segurança
+     * do intervalado sem supervisão. Além disso, nenhum estudo relatou eventos adversos e os
+     * revisores dizem não ter certeza de que eles foram monitorados.
+     *
+     * Este produto entrega plano que pode ser executado sozinho, por quem está começando.
+     * Transformar "eficaz sob supervisão" em "prescrito por padrão" seria ler a evidência
+     * ignorando a condição em que ela foi produzida, que é o mesmo tipo de salto que esta
+     * rodada existe para impedir. O achado fica no cuidado, à vista do profissional, que é
+     * quem decide se vai supervisionar.
+     */
     cuidados: [
       "Poucos exercícios simples e esforço leve a moderado: a adesão e a técnica vêm antes da carga.",
       "Progrida uma variável por vez; a dor tardia inicial é esperada, a lesão pela pressa não.",
+      "O intervalado tem efeito demonstrado neste perfil, inclusive em cintura, mas toda a evidência vem de programas supervisionados: só use se você for acompanhar a execução.",
     ],
     penalidades: [
       { metrica: "Complexidade técnica", limite: 65, motivo: "Exercícios muito técnicos cedo demais atrapalham a técnica e a adesão do iniciante." },
@@ -668,7 +689,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["acsm-getp11", "oms-2020"],
     },
-    refs: ["acsm-getp11", "oms-2020"],
+    refs: ["strauss-sedentario-2026", "acsm-getp11", "oms-2020"],
   },
   "retorno-inatividade": {
     slug: "retorno-inatividade",
