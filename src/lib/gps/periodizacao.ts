@@ -649,7 +649,20 @@ function montarSessoes(
     // força, reps na resistência) vem primeiro. Dose e frequência saem da faixa citada
     // (garber-2011), nunca inventadas.
     const comp = faixa.complementoAerobio;
-    if (comp && i < comp.sessoesPorSemana) {
+    /*
+     * ÊNFASE DE MODALIDADE. A condição pode acrescentar UMA sessão de complemento aeróbio na
+     * semana, e só isso. Ver `GroupGpsRule.enfaseModalidade` para por que este efeito é
+     * pequeno e de uma via só: ele nunca tira aeróbio nem tira força.
+     *
+     * O teto é a própria frequência do plano: se o aluno treina 2x e o objetivo já põe
+     * aeróbio nas 2, não há terceira sessão para acrescentar, e a ênfase simplesmente não
+     * tem efeito naquele horizonte, em vez de inventar uma sessão que o aluno não vai fazer.
+     */
+    const sessoesAerobias =
+      comp && regraClinica?.enfaseModalidade?.prioridade === "aerobio"
+        ? Math.min(frequencia, comp.sessoesPorSemana + 1)
+        : comp?.sessoesPorSemana;
+    if (comp && sessoesAerobias != null && i < sessoesAerobias) {
       const doseAero = { duracao: comp.duracao, intensidade: intensidadeDaBanda(comp.intensidade, regraClinica) };
       blocos.push({
         id: nid("blk"),

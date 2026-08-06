@@ -261,6 +261,30 @@ export interface GroupGpsRule extends GroupRuleInput {
    */
   horizonteMinimoSemanas?: number;
   /**
+   * ÊNFASE DE MODALIDADE: qual modalidade a evidência DESTA condição coloca na frente.
+   *
+   * Nasceu porque o mesmo buraco apareceu TRÊS vezes na rodada de evidência, em condições
+   * sem relação entre si. `yun-lipides-2023` mostra o aeróbio movendo os quatro marcadores
+   * lipídicos enquanto o resistido move dois; `mannucci-dm2-2021` mostra o combinado
+   * batendo aeróbio e resistido isolados na HbA1c; `peng-aos-2022` mostra o combinado
+   * reduzindo mais o índice de apneia que o aeróbio sozinho. Nenhuma dessas três frases
+   * cabia no motor, que montava força e aeróbio em proporção fixa por objetivo.
+   *
+   * O efeito é deliberadamente pequeno e de uma via só: `"aerobio"` acrescenta UMA sessão
+   * de complemento aeróbio na semana, dentro do que a frequência do plano comporta.
+   * `"combinado"` não muda nada, porque o plano JÁ é combinado por padrão, e serve para a
+   * evidência ficar citada onde ela foi lida em vez de virar folclore. `"forca"` também não
+   * muda a montagem hoje, pelo mesmo motivo.
+   *
+   * Ele NUNCA tira aeróbio nem tira força. Uma ênfase que subtrai viraria contraindicação
+   * disfarçada, e contraindicação neste produto passa pelo semáforo, não por aqui.
+   */
+  enfaseModalidade?: {
+    prioridade: "aerobio" | "forca" | "combinado";
+    motivo: string;
+    refId?: string[];
+  };
+  /**
    * Qual instrumento DEIXA de guiar a intensidade deste perfil e qual entra no lugar. Hoje
    * nenhum grupo especial declara isto (a condição em si não invalida um parâmetro); quem
    * declara são as classes de medicação, que produzem regras com esta mesma forma. O campo
@@ -571,6 +595,18 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       motivo: "Formato contínuo ou intervalado, sem superioridade demonstrada de um sobre o outro; o que muda o desfecho é o treino ser combinado.",
       refId: ["gajanand-dm2-2024", "wang-hiit-dm2-2026", "mannucci-dm2-2021"],
     },
+    /*
+     * "Combinado" NÃO muda a montagem, porque o plano já é combinado por padrão, e é isso
+     * que precisa ficar dito: `mannucci-dm2-2021` mostra o combinado batendo aeróbio e
+     * resistido isolados na HbA1c, ou seja, o padrão do motor já é o certo para o DM2. Sem
+     * este registro, a evidência ficaria só no comentário e ninguém saberia que a proporção
+     * padrão está respaldada em vez de ser acidente.
+     */
+    enfaseModalidade: {
+      prioridade: "combinado",
+      motivo: "O combinado, aeróbio mais resistido, reduziu mais a HbA1c que qualquer um dos dois isolados.",
+      refId: ["mannucci-dm2-2021"],
+    },
     cuidados: [
       "Atenção a sinais compatíveis com hipoglicemia (tontura, sudorese fria, confusão): pausar e reavaliar.",
       "Cuidado com os pés: calçado adequado e inspeção regular, especialmente com volume de caminhada.",
@@ -771,6 +807,17 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
      *
      * A ressalva de população anda junto onde a referência é citada: a amostra é de idosos.
      */
+    /*
+     * PRIMEIRA condição a usar a ênfase de modalidade, e é o caso que a criou.
+     * `yun-lipides-2023` compara quatro modalidades no mesmo desfecho e só o aeróbio move os
+     * quatro marcadores. Até aqui isso vivia como texto de cuidado e não chegava ao plano;
+     * agora acrescenta uma sessão aeróbia na semana, dentro do que a frequência comporta.
+     */
+    enfaseModalidade: {
+      prioridade: "aerobio",
+      motivo: "Entre as quatro modalidades comparadas, só o aeróbio moveu colesterol total, triglicerídeos, LDL e HDL.",
+      refId: ["yun-lipides-2023"],
+    },
     cuidados: [
       "O efeito no perfil lipídico vem do volume aeróbio regular ao longo das semanas, não de poucas sessões.",
       "Entre as modalidades, o aeróbio é o que move mais marcadores; o resistido soma em colesterol total e LDL.",
@@ -952,12 +999,24 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       // aeróbio combinado com resistido reduziu mais o índice (-7,36) que aeróbio isolado
       // (-4,36). Sem isso, a leitura natural de "apneia" seria mandar caminhar.
       "Aeróbio combinado com força reduz mais a gravidade que aeróbio isolado: não trocar a parte de força por mais caminhada.",
+      // (a ênfase declarada logo abaixo é o que impede essa troca de acontecer no plano)
       "O tratamento da apneia (por exemplo, CPAP) é do profissional de saúde e não é substituído pelo treino.",
     ],
     penalidades: [],
     // `donnelly-2009` é o posicionamento sobre PESO, e sustentava a afirmação errada.
     // Continua útil para o componente de peso corporal, mas quem sustenta o efeito na
     // apneia é a metanálise específica.
+    /*
+     * `peng-aos-2022` mediu, por subgrupo, o combinado reduzindo mais o índice de apneia e
+     * hipopneia (-7,36) que o aeróbio isolado (-4,36). É a mesma frase do DM2 vindo de outra
+     * literatura e de outro desfecho, e foi a terceira aparição dela que fez este campo
+     * existir.
+     */
+    enfaseModalidade: {
+      prioridade: "combinado",
+      motivo: "Aeróbio combinado com resistido reduziu mais o índice de apneia e hipopneia que o aeróbio isolado.",
+      refId: ["peng-aos-2022"],
+    },
     refs: ["iftikhar-apneia-2014", "peng-aos-2022", "donnelly-2009", "acsm-getp11"],
   },
   "asma-controlada": {
@@ -1191,6 +1250,24 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
     horizonteMinimoSemanas: (() => {
       const hs = rules.map((r) => r.horizonteMinimoSemanas).filter((n): n is number => typeof n === "number");
       return hs.length ? Math.max(...hs) : undefined;
+    })(),
+    /*
+     * Ênfase: quando duas condições do mesmo aluno pedem ênfases DIFERENTES, o resultado é
+     * "combinado". Não é meio-termo preguiçoso, é a única saída que não desatende nenhuma
+     * das duas: privilegiar o aeróbio de uma delas seria decidir contra a evidência da
+     * outra, e o plano combinado é justamente o que as duas literaturas aceitam.
+     */
+    enfaseModalidade: (() => {
+      const es = rules.map((r) => r.enfaseModalidade).filter((e): e is NonNullable<GroupGpsRule["enfaseModalidade"]> => Boolean(e));
+      if (!es.length) return undefined;
+      const unicas = new Set(es.map((e) => e.prioridade));
+      const refId: string[] = [];
+      for (const e of es) for (const r of e.refId ?? []) if (!refId.includes(r)) refId.push(r);
+      return {
+        prioridade: unicas.size === 1 ? es[0].prioridade : ("combinado" as const),
+        motivo: es.map((e) => e.motivo).join(" "),
+        refId,
+      };
     })(),
     refs,
     modProgressao: fundirModProgressao(
