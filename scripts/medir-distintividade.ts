@@ -28,10 +28,17 @@ interface Assinatura {
   aerobio: string;
 }
 
-const OBJETIVO = "Hipertrofia" as const;
-const NIVEL = "Iniciante" as const;
-const SEMANAS = 12;
-const FREQ = 3;
+/*
+ * Configurável por variável de ambiente, e isso não é conveniência: é correção de um ponto
+ * cego. Medindo só em Iniciante, a régua não enxergou o `rirMinimo` da hipertensão passar a
+ * valer, porque o iniciante já recebe o extremo conservador de toda faixa. Uma cautela
+ * clínica que só aparece em quem já treina fica invisível num corte de iniciante, e concluir
+ * dali que ela não funciona seria erro de medida, não de motor.
+ */
+const OBJETIVO = (process.env.MD_OBJETIVO ?? "Hipertrofia") as "Hipertrofia";
+const NIVEL = (process.env.MD_NIVEL ?? "Iniciante") as "Iniciante";
+const SEMANAS = Number(process.env.MD_SEMANAS ?? 12);
+const FREQ = Number(process.env.MD_FREQ ?? 3);
 
 /**
  * Reduz o plano a uma assinatura de dose. Só entram variáveis que chegam ao aluno; a

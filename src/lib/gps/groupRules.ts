@@ -68,12 +68,20 @@ export interface ModProgressao {
  *
  * `rirMinimo` é a mesma ideia na dimensão da proximidade da falha.
  *
- * O que este modificador deliberadamente NÃO faz: criar faixa distinta entre hipertensão
- * estágio 1 e estágio 2. `hanssen-2022` sustenta personalizar pelo nível inicial mas
- * declara lacunas de pesquisa consideráveis, e não fornece as duas bandas. A diferença
- * entre os estágios continua vindo dos mecanismos que JÁ são diferenciados e citados:
- * `pseTeto` (6 contra 5), `fatorIncremento` e as penalidades de ranqueamento. Inventar uma
- * segunda banda para parecer mais preciso seria o oposto do que este produto promete.
+ * O que este modificador deliberadamente NÃO faz: criar uma segunda banda de %1RM para
+ * separar hipertensão estágio 1 de estágio 2. `hanssen-2022` sustenta personalizar pelo
+ * nível inicial mas declara lacunas de pesquisa consideráveis, e não fornece as duas
+ * bandas. Inventar um percentual para parecer mais preciso seria o oposto do que este
+ * produto promete, e isso continua valendo.
+ *
+ * O que ele passou a fazer, e por quê: os dois estágios recebem reservas mínimas
+ * diferentes (2 e 3). Isso NÃO é uma banda inventada de carga; é a mesma prudência
+ * declarada, e no mesmo sentido, que este arquivo já aplicava ao separar `pseTeto` em 6 e
+ * 5. A régua de distintividade da rodada de evidência mostrou por que isso importava: as
+ * 23 condições produziam 5 doses distintas, e o estágio 2 diferia do estágio 1 apenas pelo
+ * teto de PSE do aeróbio, ou seja, na força os dois recebiam exatamente o mesmo treino.
+ * Números de prudência declarada continuam marcados como tal; o que mudou é que agora eles
+ * chegam à dose em vez de morrer no caminho.
  */
 export interface ModDose {
   /** teto de carga relativa em %1RM, onde a faixa do objetivo expressa %1RM */
@@ -312,8 +320,28 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       // 80% de 1RM e o TETO da banda de 60 a 80% em que henkin-2023 mediu a queda de
       // 6,98 mmHg de sistolica e 3,64 de diastolica. Acima dela nao ha efeito medido.
       cargaRelativaMax: 80,
+      /*
+       * O teto acima NUNCA MORDIA, e a rodada de evidencia mediu isso: `cargaRelativaAlvo`
+       * so e calculado quando a faixa do objetivo expressa %1RM, e a unica faixa do produto
+       * inteiro que expressa e a de Resistencia muscular, "40 a 60%", ja menor que 80. O
+       * unico numero publicado especifico de condicao do motor era letra morta.
+       *
+       * A tentacao era enfiar %1RM nas outras faixas para o teto passar a valer. Seria
+       * errado: esta casa controla esforco por REPETICOES DE RESERVA de proposito, e
+       * escrever "70 a 85% de 1RM" em hipertrofia inventaria precisao que a diretriz citada
+       * nao da (acsm-progressao-2009 fala em 6 a 12 RM, nao em percentual).
+       *
+       * Entao o teto passa a morder pelo instrumento que a casa de fato usa: reserva minima.
+       * ATENCAO ao que isto e e ao que nao e. A busca no PubMed nao encontrou trabalho
+       * medindo resposta pressorica de serie levada a falha contra serie interrompida antes,
+       * entao o NUMERO nao vem de estudo: e cautela da casa, marcada com `cautela` no
+       * modProgressao, que e o mecanismo criado neste arquivo para "a direcao vem da
+       * referencia e a magnitude e conservadora". A direcao vem de henkin-2023: o beneficio
+       * foi medido em intensidade moderada, e levar a serie ao maximo sai da banda medida.
+       */
+      rirMinimo: 2,
       intervaloFolgado: true,
-      motivo: "Carga relativa no teto da faixa em que a queda de pressao foi demonstrada, e descanso na metade mais folgada da faixa citada, para nao elevar o esforco da mesma carga.",
+      motivo: "Carga relativa no teto da faixa em que a queda de pressao foi demonstrada, esforco com reserva para a serie nao terminar no maximo, e descanso na metade mais folgada da faixa citada.",
       refId: ["henkin-2023", "hanssen-2022", "sbc-2020"],
     },
 
@@ -352,8 +380,21 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       // 80% de 1RM e o TETO da banda de 60 a 80% em que henkin-2023 mediu a queda de
       // 6,98 mmHg de sistolica e 3,64 de diastolica. Acima dela nao ha efeito medido.
       cargaRelativaMax: 80,
+      /*
+       * Reserva de 3, um degrau acima do estagio 1, pela mesma logica de cautela declarada
+       * explicada la (o numero e da casa, a direcao e de henkin-2023).
+       *
+       * Ate aqui o arquivo dizia, no cabecalho do modificador, que ele deliberadamente NAO
+       * criava faixa distinta entre os dois estagios. Isso deixava de pe o achado que abriu
+       * esta rodada: a regua mostrou 23 condicoes produzindo 5 doses, e o estagio 2 diferia
+       * do estagio 1 so pelo teto de PSE aerobio. Um estagio 2 e mais grave que um estagio
+       * 1, e o resto do proprio arquivo ja o trata assim (pseTeto 5 contra 6,
+       * complexidadeMax 60 contra nenhum). A escada de reserva alinha a dose de forca ao
+       * que o arquivo ja fazia nas outras variaveis.
+       */
+      rirMinimo: 3,
       intervaloFolgado: true,
-      motivo: "Carga relativa no teto da faixa em que a queda de pressao foi demonstrada, e descanso na metade mais folgada da faixa citada, para nao elevar o esforco da mesma carga.",
+      motivo: "Carga relativa no teto da faixa em que a queda de pressao foi demonstrada, reserva maior que a do estagio 1 para a serie ficar mais longe do maximo, e descanso na metade mais folgada da faixa citada.",
       refId: ["henkin-2023", "hanssen-2022", "sbc-2020"],
     },
 
