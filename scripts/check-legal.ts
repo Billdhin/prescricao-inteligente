@@ -204,6 +204,64 @@ if (!/PRECO_ANUAL\b/.test(PLANOS) || !/PRECO_ESTUDIO/.test(PLANOS) || PLANOS.len
     reprovar("G", "SpecialGroupDetail monta o link de caso para uma rota que não conhece os slugs de @/data/cases.");
 }
 
+/* --- H. Nenhuma contagem de acervo científico exposta ao público ---------- */
+
+/*
+ * A faixa de credibilidade anunciava "82 referências científicas conferidas no PubMed",
+ * "23 condições de saúde cobertas" e "100% das recomendações com fonte rastreável". Os
+ * três números eram LITERAIS na marcação: nenhum vinha de `referencias.length`, então a
+ * 83ª referência quebraria a frase em silêncio, do mesmo jeito que as três tabelas de
+ * preço divergiram antes do bloco F.
+ *
+ * Mas o motivo de banir, e não de amarrar à fonte única como se fez com o preço, é outro
+ * e é do fundador: contagem exposta é contagem contestável. Um acervo anunciado em voz
+ * alta convida a pergunta "só isso?", e a resposta honesta naquele momento era
+ * constrangedora, porque 12 das 82 entradas não tinham DOI nem PMID, ou seja, a palavra
+ * "conferidas" não se sustentava para elas.
+ *
+ * Então a regra é: a landing afirma a base científica sem nada mensurável ao lado. Anos
+ * de publicação (4 dígitos) continuam permitidos, porque citar "Garber e colegas, 2011"
+ * é o oposto de um placar: é rastreabilidade.
+ */
+{
+  const publico = LANDING.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+
+  /*
+   * A forma de uma alegação de acervo é NÚMERO SEGUIDO DO SUBSTANTIVO: "82 referências",
+   * "23 condições de saúde", "100% das recomendações". A primeira versão desta asserção
+   * procurava qualquer número numa janela em volta da palavra e reprovou oito vezes por
+   * engano, em "garantia de 14 dias", "Homem, 52 anos" e nas estatísticas de mercado do
+   * documento comercial. Proximidade não era o sinal; a ordem é.
+   */
+  const ALEGACAO =
+    /(?<!\d)(\d{1,4}\s?%|\d{1,3}\+?)\s+(?:mil\s+)?(?:d[aeo]s?\s+)?(refer[êe]ncias?|artigos?|estudos?|evid[êe]ncias?|recomenda[çc][õo]es|condi[çc][õo]es de sa[úu]de)/gi;
+
+  for (const m of publico.matchAll(ALEGACAO)) {
+    const i = m.index ?? 0;
+    reprovar(
+      "H",
+      `Landing anuncia "${m[0].trim()}": "...${publico.slice(Math.max(0, i - 60), i + 80).trim()}...". ` +
+        `Contagem de acervo científico não vai à página pública.`,
+    );
+  }
+
+  // Controle positivo: se a afirmação científica sumir por inteiro da landing, o varredor
+  // acima não teria o que varrer e o bloco H passaria por vazio.
+  const mencoes = (publico.match(/(refer[êe]ncia|evid[êe]ncia|cient[íi]fic|diretriz)/gi) ?? []).length;
+  if (mencoes < 4)
+    reprovar("H", `controle positivo: só ${mencoes} menção(ões) a evidência na landing; o bloco H não está lendo o texto público.`);
+
+  /*
+   * O documento comercial circula fora do produto e repetia as mesmas duas frases. Ele
+   * está cheio de estatística de mercado legítima ("250 homepages", "600 mil no CONFEF"),
+   * então aqui a asserção é nominal em vez de varredura, para não brigar com o resto.
+   */
+  const COMERCIAL = ler("docs/escopo-comercial-mapa-da-prescricao.md");
+  for (const frase of ["referências científicas conferidas no PubMed", "das faixas de treino** com referência rastreável"])
+    if (COMERCIAL.includes(frase))
+      reprovar("H", `o escopo comercial voltou a trazer "${frase}", que é a mesma alegação contável já retirada da landing.`);
+}
+
 /* ------------------------------- resultado ------------------------------- */
 
 if (falhas.length) {

@@ -115,9 +115,9 @@
 <!-- 3 · FAIXA DE CREDIBILIDADE -->
 <section data-screen-label="Faixa de credibilidade" style="background:#10233A;color:#fff;padding:38px 0">
   <div style="max-width:1160px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:22px;text-align:center">
-    <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:32px;font-weight:800;color:#7FE3D8;line-height:1">82</div><div style="font-size:14px;color:#B9C6D6;margin-top:7px">referências científicas conferidas no PubMed</div></div>
-    <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:32px;font-weight:800;color:#7FE3D8;line-height:1">23</div><div style="font-size:14px;color:#B9C6D6;margin-top:7px">condições de saúde cobertas, com regra e fonte</div></div>
-    <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:32px;font-weight:800;color:#7FE3D8;line-height:1">100%</div><div style="font-size:14px;color:#B9C6D6;margin-top:7px">das recomendações com fonte rastreável</div></div>
+    <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:#7FE3D8;line-height:1.25">Literatura indexada</div><div style="font-size:14px;color:#B9C6D6;margin-top:7px">As faixas de treino nascem de literatura científica publicada e rastreável, não de opinião</div></div>
+    <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:#7FE3D8;line-height:1.25">A condição no centro</div><div style="font-size:14px;color:#B9C6D6;margin-top:7px">A condição de saúde do aluno muda a prescrição, e o plano diz qual regra pesou</div></div>
+    <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:#7FE3D8;line-height:1.25">A fonte ao lado</div><div style="font-size:14px;color:#B9C6D6;margin-top:7px">Onde há afirmação empírica, a referência que a sustenta vem junto, pronta para conferência</div></div>
     
   </div>
   <div style="max-width:1160px;margin:0 auto;padding:0 24px">
@@ -491,13 +491,11 @@
 <!-- 13 · ISCA DE E-MAIL -->
 <section data-screen-label="Captura de e-mail" style="padding:72px 0;border-top:1px solid #E3E0D8;background:#fff">
   <div style="max-width:860px;margin:0 auto;padding:0 24px;text-align:center">
-    <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(24px,2.8vw,32px);line-height:1.15;letter-spacing:-.02em;font-weight:700;margin:0 0 10px">Ainda não é hora de assinar? Leve o guia dos 23 semáforos em PDF.</h2>
-    <p style="font-size:16.5px;color:#3F5168;margin:0 0 22px">Um semáforo para cada condição de saúde, com a regra e a fonte. De graça, no seu e-mail.</p>
-    <div style="display:{{ formDisp }};gap:10px;justify-content:center;flex-wrap:wrap">
-      <input type="email" placeholder="seu@email.com" style="height:54px;border-radius:13px;border:1.5px solid #D8D4CA;background:#fff;color:#10233A;padding:0 16px;font-size:16px;font-family:inherit;width:min(100%,320px);box-sizing:border-box" style-focus="border-color:#10233A;outline:none">
-      <button sc-camel-on-click="{{ enviarIsca }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 26px;border-radius:13px;font-weight:600;font-size:16px;color:#fff;background:#10233A;border:0;cursor:pointer;font-family:inherit" style-hover="background:#0C1826">Falar com o suporte</button>
+    <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(24px,2.8vw,32px);line-height:1.15;letter-spacing:-.02em;font-weight:700;margin:0 0 10px">Ainda não é hora de assinar? Fale com quem construiu.</h2>
+    <p style="font-size:16.5px;color:#3F5168;margin:0 0 22px">Dúvida sobre uma condição de saúde específica, sobre a base científica ou sobre o encaixe na sua rotina. A resposta vem de gente, não de robô.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <a href="/suporte" style="display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 26px;border-radius:13px;font-weight:600;font-size:16px;color:#fff;background:#10233A;border:0;cursor:pointer;font-family:inherit;text-decoration:none" style-hover="background:#0C1826">Falar com o suporte</a>
     </div>
-    <div style="display:{{ okDisp }};justify-content:center;align-items:center;gap:10px;background:#E8F6F3;border:1px solid #BFE5DF;color:#0B7C74;border-radius:13px;padding:16px;font-weight:600;font-size:16px;max-width:440px;margin:0 auto">✓ Enviado! Confira sua caixa de entrada.</div>
     
   </div>
 </section>
@@ -560,7 +558,6 @@
         <div style="color:#fff;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;font-weight:600">Ciência</div>
         <div style="display:flex;flex-direction:column;gap:2px">
           <a href="#ciencia" style="color:#8FA0B5;text-decoration:none;padding:5px 0" style-hover="color:#fff">Respaldo técnico</a>
-          <a href="/aprender/biblioteca" style="color:#8FA0B5;text-decoration:none;padding:5px 0" style-hover="color:#fff">Referências bibliográficas</a>
           <a href="/aprender" style="color:#8FA0B5;text-decoration:none;padding:5px 0" style-hover="color:#fff">Módulo Aprender</a>
           <a href="/protocols" style="color:#8FA0B5;text-decoration:none;padding:5px 0" style-hover="color:#fff">Protocolos ativos</a>
         </div>

@@ -33,9 +33,14 @@ import template from "./landing/prototipo.html?raw";
  * - "43 das 100 vagas preenchidas" conta vendas que não existem.
  * - "R$ 690 por ano" na barra do topo contradiz o R$ 1.164 da seção de planos do MESMO
  *   arquivo. Preço passa a vir da fonte única.
- * - O formulário do guia em PDF coleta e-mail e mostra "enviado" sem enviar nada, sem PDF
- *   existir e sem declarar tratamento de dado pessoal. Vira convite para falar com o
- *   suporte, que é o que de fato acontece hoje.
+ * - O formulário do guia em PDF coletava e-mail e mostrava "enviado" sem enviar nada, sem
+ *   PDF existir e sem declarar tratamento de dado pessoal. A seção virou um convite direto
+ *   ao suporte, sem campo de e-mail, que é o que de fato acontece hoje.
+ * - A faixa de credibilidade anunciava "82 referências científicas conferidas no PubMed".
+ *   O número era literal, não vinha de `referencias.length`, e a palavra "conferidas" não
+ *   se sustentava: 12 das 82 não têm DOI nem PMID. Contagem exposta é contagem contestável,
+ *   e ela também quebraria em silêncio na referência seguinte. As três afirmações da faixa
+ *   passaram a ser qualitativas, e `check:legal` agora reprova quem reintroduzir um número.
  */
 
 /** Vagas de fundador exibidas. Zero enquanto não houver contagem real de assinaturas. */
@@ -116,11 +121,6 @@ function construirValores(st: { sticky: boolean; mobile: boolean; menu: boolean;
     mesTxt: "+" + fmt(mes),
     anoTxt: "+" + fmt(mes * 12) + " por ano",
     mesesTxt: Math.max(1, Math.floor(mes / PRECO_MENSAL)) + " meses",
-    // O formulário do guia em PDF fingia envio. Fica só o estado inicial, e o botão dele
-    // passou a apontar para o suporte na marcação.
-    formDisp: "flex",
-    okDisp: "none",
-    enviarIsca: () => {},
   };
   for (const i of [0, 1, 2, 3]) {
     const on = st.tab === i;

@@ -21,7 +21,7 @@
 
 ## 1.1 O que você tem nas mãos
 
-O código conta uma história melhor que a landing page. São 97 exercícios catalogados, 23 condições de saúde com regra e fonte declaradas, 82 referências científicas conferidas no PubMed, 11 classes de fármacos com efeito sobre o instrumento de monitoramento, 20 protocolos, 5 modelos de periodização, e 24 guardrails automatizados que travam a publicação se qualquer regra ficar sem fonte. Isso não é um MVP. É um produto com rigor acima da média do setor.
+O código conta uma história melhor que a landing page. O catálogo de exercícios, as condições de saúde com regra e fonte declaradas, as classes de fármacos com efeito sobre o instrumento de monitoramento, os protocolos, os modelos de periodização e os guardrails automatizados que travam a publicação se qualquer regra ficar sem fonte. Isso não é um MVP. É um produto com rigor acima da média do setor.
 
 Mais importante: você tem um **mecanismo nomeado e proprietário** — o Motor RCD, Raciocínio Clínico Documentado — e três diferenciais que nenhum concorrente brasileiro tem:
 
@@ -340,7 +340,7 @@ Mudanças e por quê: o rótulo de categoria resolve o "o que é isso" em 2 segu
 
 Hero seguido de uma estatística única foi o padrão de maior ganho medido (+18%). Você tem números reais e verificáveis:
 
-> **82 referências científicas** conferidas no PubMed · **23 condições de saúde** com regra e fonte declaradas · **100% das faixas de treino** com referência rastreável · Responsável técnico **[Nome], CREF XXXXX-G/[UF]**
+> **Prescrição apoiada em literatura científica indexada** · **Condições de saúde com regra e fonte declaradas** · **A referência ao lado da recomendação** · Responsável técnico **[Nome], CREF XXXXX-G/[UF]**
 
 O CREF visível não é só credibilidade — é **obrigação**. O art. 4º, parágrafo único do Código de Ética exige nome e número de registro em publicidade de conteúdo de Educação Física, inclusive digital.
 
