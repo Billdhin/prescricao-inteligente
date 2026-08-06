@@ -874,6 +874,22 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   },
   "sindrome-metabolica": {
     slug: "sindrome-metabolica",
+    /*
+     * shen-sindrome-metabolica-2026, rede de 53 estudos e DEZ intervencoes, poe o combinado
+     * em primeiro para quatro dos componentes que DEFINEM a sindrome: IMC, circunferencia de
+     * cintura, LDL e glicemia de jejum.
+     *
+     * Mas o achado que os autores destacam e outro, e ele impede transformar isto em regra
+     * rigida: NENHUMA modalidade foi superior em todos os componentes, e a maior parte da
+     * evidencia e de certeza baixa ou muito baixa. Eles defendem prescricao orientada pela
+     * alteracao metabolica predominante de cada pessoa. Por isso a enfase aqui e combinado,
+     * que e o que cobre mais componentes, e nao uma modalidade unica eleita vencedora.
+     */
+    enfaseModalidade: {
+      prioridade: "combinado",
+      motivo: "O combinado ficou em primeiro para IMC, cintura, LDL e glicemia de jejum, quatro dos componentes que definem a sindrome.",
+      refId: ["shen-sindrome-metabolica-2026"],
+    },
     nome: "Síndrome metabólica",
     cuidados: [
       "Vários fatores de risco somados pedem respiração contínua (evitar apneia), progressão gradual e monitoramento.",
@@ -889,7 +905,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["pescatello-2004", "acsm-getp11"],
     },
-    refs: ["colberg-2016", "pescatello-2004", "acsm-getp11"],
+    refs: ["shen-sindrome-metabolica-2026", "colberg-2016", "pescatello-2004", "acsm-getp11"],
   },
   dislipidemia: {
     slug: "dislipidemia",

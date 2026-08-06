@@ -364,6 +364,16 @@ export const referencias: Referencia[] = [
     nota: "Metanálise em rede de 81 ensaios randomizados e 4.331 adultos com sobrepeso ou obesidade (59% mulheres, idade média 38,7 anos), comparando CINCO tipos de exercício: contínuo de resistência aeróbia, intervalado, resistido, combinado (aeróbio mais resistido) e híbrido. Os desfechos cobrem composição corporal, lipídios, glicemia, pressão arterial, aptidão cardiorrespiratória e força. O resultado é direto: o COMBINADO foi a modalidade mais efetiva e o híbrido a segunda, ambos superiores às modalidades de componente único, ou seja, ao aeróbio contínuo, ao intervalado e ao resistido isolados. A análise por subgrupo mostrou que o efeito das modalidades é mediado pelo sexo, o que os autores registram como limitação da generalização.",
   },
   {
+    id: "shen-sindrome-metabolica-2026",
+    autores: "Shen X, Xue Y, Dong Y, Li H, Wang Y, Liu N, Liu C, Wang H",
+    titulo: "Comparative efficacy of various exercise therapies for metabolic syndrome: a systematic review and network meta-analysis",
+    fonte: "iScience, 29(8):116801",
+    ano: 2026,
+    doi: "10.1016/j.isci.2026.116801",
+    pmid: "42495547",
+    nota: "Metanálise em rede de 53 estudos e 2.948 participantes com síndrome metabólica, comparando DEZ intervenções. O combinado, aeróbio mais resistido, ficou em primeiro para IMC, circunferência de cintura, LDL e glicemia de jejum, que são quatro dos componentes que definem a síndrome. Os demais primeiros lugares se espalham: intervalado de alto volume para percentual de gordura, intervalado de baixo volume para colesterol total, triglicerídeos e pressão diastólica, e exercício tradicional chinês para HDL e pressão sistólica. DUAS RESSALVAS que os autores fazem e que pesam: a maior parte da evidência foi classificada como de certeza BAIXA ou MUITO BAIXA, e NENHUMA modalidade foi superior em todos os componentes, o que os leva a defender prescrição orientada pela alteração metabólica predominante de cada pessoa. O registro no PubMed traz o tipo apenas como artigo, e não como metanálise.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",
