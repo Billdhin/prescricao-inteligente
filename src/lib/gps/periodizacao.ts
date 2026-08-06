@@ -614,7 +614,7 @@ function montarSessoes(
     // saia como "Caminhada" no app do aluno e como "Aerobio" no PDF e no editor.
     modalidade: "m-caminhada",
         nome: "Aeróbio",
-        formato: "Contínuo",
+        formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
         recuperacao: "-",
@@ -655,7 +655,7 @@ function montarSessoes(
         tipo: "aerobio",
         modalidade: comp.modalidade,
         nome: "Aeróbio complementar",
-        formato: "Contínuo",
+        formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
         recuperacao: "-",
@@ -921,6 +921,25 @@ function tendenciasDoModelo(
  * catálogo (4, 8, 12, 24 e 48 semanas) o caminho genérico sai idêntico ao de antes,
  * porque lá os blocos já eram de 4 semanas.
  */
+/**
+ * Formato do bloco aeróbio: contínuo por padrão, intervalado onde a CONDIÇÃO tem evidência
+ * de benefício nesse formato.
+ *
+ * Era a string fixa "Contínuo" nos dois pontos em que o motor monta bloco aeróbio, o que
+ * significa que o produto era INCAPAZ de prescrever intervalado para qualquer aluno. Pior
+ * que a ausência: o texto da observação já descrevia a alternativa intervalada ao
+ * profissional, ou seja, o sistema contava uma opção que ele mesmo nunca montava.
+ *
+ * A porta é estreita de propósito. Só vira intervalado quando a condição declara
+ * `intervaladoIndicado` com referência, e a fusão conservadora já derrubou o pedido se
+ * QUALQUER condição do aluno desaconselhar. Aluno sem condição continua recebendo contínuo,
+ * byte-idêntico ao de antes.
+ */
+function formatoAerobio(regraClinica?: GroupGpsRule): string {
+  const mod = regraClinica?.modAerobio;
+  return mod?.intervaladoIndicado && !mod.intervaladoEvitar ? "Intervalado" : "Contínuo";
+}
+
 const CADENCIA_DELOAD = 4;
 
 /**

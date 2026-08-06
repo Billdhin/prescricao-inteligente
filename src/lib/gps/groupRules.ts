@@ -83,6 +83,30 @@ export interface ModProgressao {
  * Números de prudência declarada continuam marcados como tal; o que mudou é que agora eles
  * chegam à dose em vez de morrer no caminho.
  */
+/**
+ * MODULAÇÃO DO BLOCO AERÓBIO PELA CONDIÇÃO.
+ *
+ * Nasceu de um buraco medido: o formato do bloco aeróbio era a string fixa "Contínuo" em
+ * `periodizacao.ts`, então o motor era INCAPAZ de prescrever intervalado, para qualquer
+ * aluno e qualquer condição. O produto até descrevia a alternativa intervalada no texto da
+ * observação, ou seja, contava ao profissional uma opção que ele mesmo nunca montava.
+ *
+ * Duas portas, e não uma, porque as duas direções existem na clínica: há condição com
+ * evidência de benefício no intervalado e há condição em que ele é desaconselhado. A fusão
+ * é conservadora como o resto do arquivo: `intervaladoEvitar` de QUALQUER condição vence
+ * `intervaladoIndicado` de todas as outras.
+ */
+export interface ModAerobio {
+  /** a condição tem evidência de benefício com formato intervalado */
+  intervaladoIndicado?: boolean;
+  /** a condição desaconselha intervalado; na fusão, isto vence */
+  intervaladoEvitar?: boolean;
+  /** por que, em uma linha, sem travessão */
+  motivo: string;
+  /** ids de referencias.ts que sustentam a direção */
+  refId?: string[];
+}
+
 export interface ModDose {
   /** teto de carga relativa em %1RM, onde a faixa do objetivo expressa %1RM */
   cargaRelativaMax?: number;
@@ -191,6 +215,7 @@ export interface GroupGpsRule extends GroupRuleInput {
   modProgressao?: ModProgressao;
   /** dose do treino modificada pelo perfil clínico (ver ModDose) */
   modDose?: ModDose;
+  modAerobio?: ModAerobio;
   /**
    * Qual instrumento DEIXA de guiar a intensidade deste perfil e qual entra no lugar. Hoje
    * nenhum grupo especial declara isto (a condição em si não invalida um parâmetro); quem
@@ -431,13 +456,41 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   "diabetes-tipo-2": {
     slug: "diabetes-tipo-2",
     nome: "Diabetes tipo 2",
+    /*
+     * Esta condição era um RÓTULO: penalidades vazias, sem teto, sem modificador de dose e
+     * sem modificador de progressão. A régua de distintividade mostrou o resultado disso
+     * sem margem para discussão: quem tem DM2 recebia o mesmo plano de quem tem asma
+     * controlada, de quem tem dislipidemia e de quem não tem condição nenhuma. Sete
+     * condições dividiam uma única dose.
+     *
+     * O motivo não era descuido: é que faltava SUPERFÍCIE. A evidência forte de DM2 não
+     * fala de teto de carga nem de penalidade por métrica, fala de COMPOSIÇÃO e de FORMATO,
+     * e o motor não tinha onde receber isso. `modAerobio` existe por causa deste caso.
+     */
+    modAerobio: {
+      /*
+       * wang-hiit-dm2-2026 mediu, em 20 ensaios e 981 participantes, melhora de HbA1c
+       * (-1,40), glicemia de jejum (-1,24) e HOMA-IR (-1,03) com intervalado contra
+       * tratamento farmacológico de rotina. E mediu também o que impede exagero: contra o
+       * contínuo moderado NÃO houve diferença significativa. Por isso "indicado", que aqui
+       * quer dizer com benefício demonstrado neste perfil, e não "superior ao contínuo".
+       *
+       * mannucci-dm2-2021 entra por outro motivo, e é o que mais muda o plano: na
+       * metanálise em rede de 25 ensaios, o combinado (aeróbio mais resistido) reduziu mais
+       * a HbA1c (-0,4) que o aeróbio sozinho ou o resistido sozinho (-0,2 cada). É o
+       * respaldo de o plano do aluno com DM2 nunca ser só força.
+       */
+      intervaladoIndicado: true,
+      motivo: "Formato intervalado com benefício glicêmico demonstrado neste perfil, sem superioridade sobre o contínuo, e treino combinado superior a aeróbio ou resistido isolados.",
+      refId: ["wang-hiit-dm2-2026", "mannucci-dm2-2021"],
+    },
     cuidados: [
       "Atenção a sinais compatíveis com hipoglicemia (tontura, sudorese fria, confusão): pausar e reavaliar.",
       "Cuidado com os pés: calçado adequado e inspeção regular, especialmente com volume de caminhada.",
       "Consistência semanal tende a valer mais que picos de intensidade.",
     ],
     penalidades: [],
-    refs: ["colberg-2016", "sbd-2023"],
+    refs: ["colberg-2016", "sbd-2023", "mannucci-dm2-2021", "wang-hiit-dm2-2026"],
   },
 
   "idoso-destreinado": {
@@ -783,6 +836,25 @@ export function combineRules(slugs: string[]): GroupGpsRule | undefined {
  * Fusão de `modDose` pelo MAIS CONSERVADOR, na mesma régua do resto do arquivo: o menor
  * teto de carga, o maior RIR mínimo, e intervalo folgado se QUALQUER condição pedir.
  */
+/**
+ * Fusão de `modAerobio` pelo mais conservador: basta UMA condição desaconselhar o
+ * intervalado para que a fusão o desaconselhe, e nesse caso o `intervaladoIndicado` das
+ * outras não vale. É a mesma lei do resto do arquivo, e ela existe porque a combinação de
+ * condições já perdeu limitação antes, por campo novo esquecido na fusão.
+ */
+function fundirModAerobio(mods: ModAerobio[]): ModAerobio | undefined {
+  if (!mods.length) return undefined;
+  const evitar = mods.some((m) => m.intervaladoEvitar);
+  const refId: string[] = [];
+  for (const m of mods) for (const r of m.refId ?? []) if (!refId.includes(r)) refId.push(r);
+  return {
+    intervaladoEvitar: evitar || undefined,
+    intervaladoIndicado: !evitar && mods.some((m) => m.intervaladoIndicado) ? true : undefined,
+    motivo: mods.map((m) => m.motivo).join(" "),
+    refId,
+  };
+}
+
 function fundirModDose(mods: ModDose[]): ModDose | undefined {
   if (!mods.length) return undefined;
   if (mods.length === 1) return mods[0];
@@ -875,6 +947,7 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
     evitarFlexaoColunaCarregada: rules.some((r) => r.evitarFlexaoColunaCarregada) || undefined,
     evitarMembrosAcimaDoCoracao: rules.some((r) => r.evitarMembrosAcimaDoCoracao) || undefined,
     modDose: fundirModDose(rules.map((r) => r.modDose).filter((m): m is ModDose => Boolean(m))),
+    modAerobio: fundirModAerobio(rules.map((r) => r.modAerobio).filter((m): m is ModAerobio => Boolean(m))),
     refs,
     modProgressao: fundirModProgressao(
       rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),

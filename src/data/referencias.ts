@@ -136,6 +136,28 @@ export const referencias: Referencia[] = [
     nota: "Referência nacional para os sinais de alerta glicêmicos e a progressão segura no DM2.",
   },
   {
+    id: "mannucci-dm2-2021",
+    autores: "Mannucci E, Bonifazi A, Monami M",
+    titulo:
+      "Comparison between different types of exercise training in patients with type 2 diabetes mellitus: A systematic review and network metanalysis of randomized controlled trials",
+    fonte: "Nutrition, Metabolism and Cardiovascular Diseases, 31(7):1985-1992",
+    ano: 2021,
+    doi: "10.1016/j.numecd.2021.02.030",
+    pmid: "33965297",
+    nota: "Metanálise em rede de 25 ensaios. Exercício contra nenhum exercício reduziu HbA1c em 0,3 ponto percentual, gordura corporal em 1,44 e sistólica em 5,6 mmHg. O achado que o motor usa é a COMPARAÇÃO ENTRE MODALIDADES: o treino combinado, aeróbio mais resistido e supervisionado, reduziu mais a HbA1c (diferença padronizada -0,4) que o aeróbio sozinho ou o resistido sozinho (-0,2 cada). É o que sustenta o plano de quem tem DM2 não ser só força nem só aeróbio. Os próprios autores registram que as diferenças são pequenas e que a evidência de apoio é limitada, e o produto declara isso onde cita.",
+  },
+  {
+    id: "wang-hiit-dm2-2026",
+    autores: "Wang Y, Su Y, Li X, Ji C",
+    titulo:
+      "Comparative Efficacy of High-Intensity Interval Training, Moderate-Intensity Continuous Training, and Routine Pharmacological Treatment on Glucolipid Metabolism in Patients With Type 2 Diabetes: A Meta-Analysis",
+    fonte: "Asia-Pacific Journal of Public Health",
+    ano: 2026,
+    doi: "10.1177/10105395261447325",
+    pmid: "42218635",
+    nota: "Metanálise de 20 ensaios e 981 participantes com DM2, idade média 58 anos, intervenções de 8 semanas ou mais. Contra tratamento farmacológico de rotina, o intervalado de alta intensidade melhorou glicemia de jejum (diferença padronizada -1,24), HbA1c (-1,40), HOMA-IR (-1,03) e insulina de jejum (-0,97). O dado que mais importa para a prescrição é o que NÃO deu diferença: intervalado contra contínuo moderado não diferiu de forma significativa. Por isso o motor trata o formato intervalado como OPÇÃO com benefício demonstrado neste perfil, e não como superior ao contínuo. O protocolo mais efetivo do conjunto foi de 12 semanas, 3 vezes por semana.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",
