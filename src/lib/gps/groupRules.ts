@@ -678,7 +678,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       "Consistência semanal tende a valer mais que picos de intensidade.",
     ],
     penalidades: [],
-    refs: ["colberg-2016", "sbd-2023", "mannucci-dm2-2021", "wang-hiit-dm2-2026", "gajanand-dm2-2024", "magalhaes-dm2-2018", "yu-dm2-modalidade-2026"],
+    refs: ["colberg-2016", "sbd-2023", "mannucci-dm2-2021", "wang-hiit-dm2-2026", "gajanand-dm2-2024", "magalhaes-dm2-2018", "yu-dm2-modalidade-2026", "zhao-exercicio-metformina-2024"],
   },
 
   "idoso-destreinado": {
@@ -864,13 +864,28 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
      * que picos de intensidade". A comparação não tem fonte aqui, e a evidência específica
      * desta condição não a faz. Ficou a parte afirmável.
      */
+    /*
+     * `zhao-exercicio-metformina-2024`, rede de 410 ensaios e 33.802 participantes, a maior
+     * desta base, compara EXERCÍCIO com METFORMINA e com a combinação dos dois. E entrega o
+     * achado mais forte que esta condição tem: no PRÉ-DIABETES o exercício foi MAIS eficaz
+     * que a metformina em HbA1c, glicemia de 2 horas e HOMA-IR.
+     *
+     * Isso importa porque é a inversão exata do que a mesma rede mostra no diabetes tipo 2,
+     * onde a metformina supera o exercício, e do que a rede da esteatose mostra, onde o
+     * fármaco lidera. Ou seja: o lugar do treino na hierarquia do cuidado MUDA conforme a
+     * condição, e agora o produto diz isso em vez de tratar exercício como igualmente
+     * central em todas.
+     *
+     * Aqui é onde o profissional de exercício mais pesa, e vale ele saber disso.
+     */
     cuidados: [
+      "Nesta fase, o exercício foi mais eficaz que a metformina em HbA1c, glicemia de 2 horas e resistência à insulina: é onde o seu trabalho mais pesa.",
       "A regularidade semanal (aeróbio quase diário mais força 2 a 3x) é o alvo do programa nesta fase.",
       "A atividade física favorece retardar a progressão para diabetes tipo 2, com efeito de direção consistente e precisão baixa nos estudos reunidos.",
       "Atenção a sinais compatíveis com hipoglicemia (tontura, sudorese fria, confusão): pausar e reavaliar.",
     ],
     penalidades: [],
-    refs: ["jadhav-pre-dm-2017", "colberg-2016", "acsm-getp11"],
+    refs: ["zhao-exercicio-metformina-2024", "jadhav-pre-dm-2017", "colberg-2016", "acsm-getp11"],
   },
   "sindrome-metabolica": {
     slug: "sindrome-metabolica",
