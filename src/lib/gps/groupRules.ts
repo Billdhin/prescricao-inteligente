@@ -621,12 +621,24 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   "pre-diabetes": {
     slug: "pre-diabetes",
     nome: "Pré-diabetes",
+    /*
+     * jadhav-pre-dm-2017 entra como a primeira referência específica de pré-diabetes deste
+     * arquivo, no lugar de duas genéricas. Ela NÃO vira número de dose, e o motivo está na
+     * própria metanálise: os intervalos de confiança dos dois desfechos glicêmicos
+     * principais cruzam o zero (glicemia de jejum -0,05, IC 95% -0,14 a 0,04). Direção
+     * favorável, precisão baixa. Sustenta orientar, não sustenta apertar parâmetro.
+     *
+     * O cuidado antigo afirmava que a regularidade melhora a sensibilidade à insulina "mais
+     * que picos de intensidade". A comparação não tem fonte aqui, e a evidência específica
+     * desta condição não a faz. Ficou a parte afirmável.
+     */
     cuidados: [
-      "A regularidade semanal (aeróbio quase diário + força 2 a 3x) melhora a sensibilidade à insulina mais que picos de intensidade.",
+      "A regularidade semanal (aeróbio quase diário mais força 2 a 3x) é o alvo do programa nesta fase.",
+      "A atividade física favorece retardar a progressão para diabetes tipo 2, com efeito de direção consistente e precisão baixa nos estudos reunidos.",
       "Atenção a sinais compatíveis com hipoglicemia (tontura, sudorese fria, confusão): pausar e reavaliar.",
     ],
     penalidades: [],
-    refs: ["colberg-2016", "acsm-getp11"],
+    refs: ["jadhav-pre-dm-2017", "colberg-2016", "acsm-getp11"],
   },
   "sindrome-metabolica": {
     slug: "sindrome-metabolica",
@@ -854,12 +866,36 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   "ansiedade-depressao": {
     slug: "ansiedade-depressao",
     nome: "Ansiedade / sintomas depressivos",
+    /*
+     * Esta condição se sustentava só em `oms-2020` e `acsm-getp11`, duas referências
+     * genéricas, e o cuidado escrito aqui dizia "a constância vale mais que a intensidade".
+     *
+     * A revisão guarda-chuva de Singh (2023), 97 revisões sistemáticas, 1.039 ensaios e
+     * 128.119 participantes, DESMENTE essa frase na parte que ela tinha de comparação:
+     * intensidade MAIOR associou-se a melhora maior, e a efetividade DIMINUIU em
+     * intervenções mais longas. Não era uma imprecisão pequena; era o produto orientando o
+     * profissional na direção oposta à do melhor conjunto de evidência que existe sobre o
+     * assunto, e orientando com a autoridade de quem cita fonte.
+     *
+     * A frase foi reescrita, e o que ela tinha de correto (adesão importa) ficou, sem a
+     * comparação que a evidência contraria.
+     *
+     * O `intervaladoIndicado` aqui é a consequência direta do achado de intensidade. Vem
+     * com a limitação declarada na própria referência: 77 das 97 revisões tiveram qualidade
+     * metodológica criticamente baixa, e por isso isto orienta uma opção, não uma regra.
+     */
+    modAerobio: {
+      intervaladoIndicado: true,
+      motivo: "Intensidade maior associou-se a melhora maior dos sintomas, num conjunto amplo de evidência de qualidade metodológica declaradamente baixa.",
+      refId: ["singh-saude-mental-2023"],
+    },
     cuidados: [
-      "A constância vale mais que a intensidade: metas pequenas e alcançáveis sustentam a adesão.",
+      "Metas pequenas e alcançáveis sustentam a adesão, que é o que faz o programa existir.",
+      "Intensidade maior associou-se a mais melhora dos sintomas, e o efeito tende a ser maior em ciclos mais curtos: reavaliar cedo em vez de esperar o fim de um bloco longo.",
       "O treino apoia o humor, mas não substitui o acompanhamento de saúde do aluno.",
     ],
     penalidades: [],
-    refs: ["oms-2020", "acsm-getp11"],
+    refs: ["singh-saude-mental-2023", "oms-2020", "acsm-getp11"],
   },
 };
 
