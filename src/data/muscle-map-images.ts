@@ -85,6 +85,7 @@ const SLUGS_COM_POSE: string[] = [
   "encolhimento-halteres",
   "agachamento-bulgaro",
   "agachamento-goblet",
+  "cadeira-abdutora",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
