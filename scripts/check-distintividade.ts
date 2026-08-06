@@ -57,8 +57,6 @@ const GENERICAS = new Set([
 const SEM_EVIDENCIA_PROPRIA = new Set([
   "iniciante-sedentario",
   "retorno-inatividade",
-  "dislipidemia",
-  "climaterio",
   "pos-parto",
 ]);
 

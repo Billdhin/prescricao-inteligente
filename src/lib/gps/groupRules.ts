@@ -733,12 +733,30 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   dislipidemia: {
     slug: "dislipidemia",
     nome: "Dislipidemia",
+    /*
+     * Sai do débito de "responde por diretriz genérica" com `yun-lipides-2023`, que é uma
+     * peça rara: metanálise de 20 ensaios comparando QUATRO modalidades no mesmo desfecho.
+     *
+     * Ela confirma o que o cuidado já dizia por intuição e acrescenta o que a intuição não
+     * tinha: o aeróbio foi o único a mover os quatro marcadores (baixou colesterol total,
+     * triglicerídeos e LDL, subiu HDL), enquanto o resistido e o combinado mexeram só em
+     * colesterol total e LDL.
+     *
+     * Isto é evidência de ÊNFASE DE MODALIDADE, e o motor ainda não tem onde recebê-la: ele
+     * monta força e aeróbio em proporção fixa por objetivo, sem uma condição poder dizer
+     * "aqui o aeróbio manda". É a terceira condição desta rodada a esbarrar no mesmo
+     * buraco, junto de diabetes tipo 2 e apneia do sono. Enquanto o campo não existe, a
+     * ênfase vive no texto de cuidado, e o débito fica nomeado em vez de escondido.
+     *
+     * A ressalva de população anda junto onde a referência é citada: a amostra é de idosos.
+     */
     cuidados: [
       "O efeito no perfil lipídico vem do volume aeróbio regular ao longo das semanas, não de poucas sessões.",
+      "Entre as modalidades, o aeróbio é o que move mais marcadores; o resistido soma em colesterol total e LDL.",
       "Some força para composição e metabolismo; a conduta medicamentosa é do profissional de saúde.",
     ],
     penalidades: [],
-    refs: ["acsm-getp11", "oms-2020"],
+    refs: ["yun-lipides-2023", "acsm-getp11", "oms-2020"],
   },
   "esteatose-hepatica": {
     slug: "esteatose-hepatica",
@@ -867,8 +885,23 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   climaterio: {
     slug: "climaterio",
     nome: "Climatério / menopausa",
+    /*
+     * Sai do débito com `hsu-menopausa-2024`, e o achado que mais muda a conversa com a
+     * aluna é o NEGATIVO: acrescentar exercício a medicamento ou suplemento NÃO melhorou de
+     * forma significativa a densidade óssea de coluna e quadril no conjunto dos 19 estudos.
+     * Só apareceu ganho na coluna lombar no subgrupo que COMBINA VÁRIOS TIPOS de treino.
+     *
+     * O que melhorou de forma consistente foi função: força de membros inferiores,
+     * equilíbrio, teste de levantar e andar, medo de cair e qualidade de vida.
+     *
+     * Isso corrige a promessa, não a dose. O cuidado antigo dizia que a força preserva osso,
+     * como se o desfecho ósseo fosse o carro-chefe; a evidência põe a função na frente e
+     * condiciona o ganho ósseo a um programa variado. A qualidade da evidência é declarada
+     * de baixa a muito baixa, e isso viaja junto com a citação.
+     */
     cuidados: [
-      "A força 2 a 3x/semana é prioridade (preserva músculo e osso); some aeróbio moderado.",
+      "A força 2 a 3x/semana é prioridade e o programa deve combinar vários tipos de treino; some aeróbio moderado.",
+      "O ganho mais consistente é de função: força de pernas, equilíbrio e confiança para não cair. O efeito no osso é modesto e aparece sobretudo em programas variados.",
       "Ajuste ao sono e aos sintomas do dia; atenção ao risco cardiometabólico da transição.",
     ],
     penalidades: [],
@@ -879,7 +912,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["chodzko-2009", "acsm-getp11"],
     },
-    refs: ["chodzko-2009", "acsm-getp11"],
+    refs: ["hsu-menopausa-2024", "chodzko-2009", "acsm-getp11"],
   },
   "apneia-sono": {
     slug: "apneia-sono",
