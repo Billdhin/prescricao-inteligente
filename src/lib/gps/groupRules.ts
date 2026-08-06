@@ -74,14 +74,18 @@ export interface ModProgressao {
  * bandas. Inventar um percentual para parecer mais preciso seria o oposto do que este
  * produto promete, e isso continua valendo.
  *
- * O que ele passou a fazer, e por quê: os dois estágios recebem reservas mínimas
- * diferentes (2 e 3). Isso NÃO é uma banda inventada de carga; é a mesma prudência
- * declarada, e no mesmo sentido, que este arquivo já aplicava ao separar `pseTeto` em 6 e
- * 5. A régua de distintividade da rodada de evidência mostrou por que isso importava: as
- * 23 condições produziam 5 doses distintas, e o estágio 2 diferia do estágio 1 apenas pelo
- * teto de PSE do aeróbio, ou seja, na força os dois recebiam exatamente o mesmo treino.
- * Números de prudência declarada continuam marcados como tal; o que mudou é que agora eles
- * chegam à dose em vez de morrer no caminho.
+ * O que ele passou a fazer: os dois estágios declaram reserva mínima de repetições, que é
+ * o instrumento com que esta casa controla esforço. Antes disso, o teto de carga da
+ * hipertensão era o único número publicado específico de condição do motor e não mordia em
+ * plano nenhum, porque só uma faixa do produto expressa %1RM.
+ *
+ * E uma tentativa que a medição derrubou, registrada porque a lição vale para o próximo
+ * campo: tentei reserva 3 no estágio 2, um degrau acima do estágio 1, para a escada de
+ * gravidade aparecer também na força. O `check:progressao` reprovou. A faixa de reserva vai
+ * de 1 a 3, então mínimo 3 prende o alvo no teto e a linha de intensidade do gráfico sai
+ * reta. O degrau a mais não deixava o treino mais cauteloso, deixava o treino sem
+ * progressão. **Reserva mínima só funciona como cautela enquanto sobra espaço de variação
+ * dentro da faixa citada**, e essa é a condição de uso do campo.
  */
 /**
  * MODULAÇÃO DO BLOCO AERÓBIO PELA CONDIÇÃO.
@@ -422,18 +426,20 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       // 6,98 mmHg de sistolica e 3,64 de diastolica. Acima dela nao ha efeito medido.
       cargaRelativaMax: 80,
       /*
-       * Reserva de 3, um degrau acima do estagio 1, pela mesma logica de cautela declarada
-       * explicada la (o numero e da casa, a direcao e de henkin-2023).
+       * MESMA reserva do estagio 1, e nao um degrau acima. Eu tentei 3, para a escada de
+       * gravidade aparecer tambem na forca, e o `check:progressao` reprovou: a faixa de
+       * reserva do produto vai de 1 a 3, entao exigir minimo 3 PRENDE o alvo no teto e a
+       * linha de intensidade do grafico sai reta, com 2 valores distintos em 24 semanas.
        *
-       * Ate aqui o arquivo dizia, no cabecalho do modificador, que ele deliberadamente NAO
-       * criava faixa distinta entre os dois estagios. Isso deixava de pe o achado que abriu
-       * esta rodada: a regua mostrou 23 condicoes produzindo 5 doses, e o estagio 2 diferia
-       * do estagio 1 so pelo teto de PSE aerobio. Um estagio 2 e mais grave que um estagio
-       * 1, e o resto do proprio arquivo ja o trata assim (pseTeto 5 contra 6,
-       * complexidadeMax 60 contra nenhum). A escada de reserva alinha a dose de forca ao
-       * que o arquivo ja fazia nas outras variaveis.
+       * Ou seja, o degrau a mais nao deixava o treino mais cauteloso, deixava o treino sem
+       * progressao, que e o defeito que o fundador reportou por captura de tela e que aquele
+       * guardrail existe para travar. Reserva minima so funciona como cautela enquanto sobra
+       * espaco de variacao dentro da faixa citada.
+       *
+       * A diferenca entre os dois estagios continua onde o arquivo ja a tinha: `pseTeto` 5
+       * contra 6 e `complexidadeMax` 60 contra nenhum. Nao ha terceira banda inventada aqui.
        */
-      rirMinimo: 3,
+      rirMinimo: 2,
       intervaloFolgado: true,
       motivo: "Carga relativa no teto da faixa em que a queda de pressao foi demonstrada, reserva maior que a do estagio 1 para a serie ficar mais longe do maximo, e descanso na metade mais folgada da faixa citada.",
       refId: ["henkin-2023", "hanssen-2022", "sbc-2020"],
