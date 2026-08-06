@@ -82,6 +82,7 @@ const SLUGS_COM_POSE: string[] = [
   "triceps-testa-barra",
   "elevacao-frontal",
   "face-pull-polia",
+  "encolhimento-halteres",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
