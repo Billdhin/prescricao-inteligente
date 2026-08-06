@@ -810,23 +810,46 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       // ou seja, não significativo). Condicionar o benefício ao ponteiro da balança faz o
       // profissional abandonar um programa que está funcionando.
       "O treino reduz a gravidade por si, sem depender de perda de peso: manter a constância vale mais que o número da balança.",
+      // peng-aos-2022 confirmou a correção acima por outro caminho (índice caiu sem mudança
+      // de IMC) e acrescentou o dado de COMPOSIÇÃO, que é o que muda a montagem do plano:
+      // aeróbio combinado com resistido reduziu mais o índice (-7,36) que aeróbio isolado
+      // (-4,36). Sem isso, a leitura natural de "apneia" seria mandar caminhar.
+      "Aeróbio combinado com força reduz mais a gravidade que aeróbio isolado: não trocar a parte de força por mais caminhada.",
       "O tratamento da apneia (por exemplo, CPAP) é do profissional de saúde e não é substituído pelo treino.",
     ],
     penalidades: [],
     // `donnelly-2009` é o posicionamento sobre PESO, e sustentava a afirmação errada.
     // Continua útil para o componente de peso corporal, mas quem sustenta o efeito na
     // apneia é a metanálise específica.
-    refs: ["iftikhar-apneia-2014", "donnelly-2009", "acsm-getp11"],
+    refs: ["iftikhar-apneia-2014", "peng-aos-2022", "donnelly-2009", "acsm-getp11"],
   },
   "asma-controlada": {
     slug: "asma-controlada",
     nome: "Asma controlada",
+    /*
+     * Esta condição se sustentava SÓ em referência genérica (`acsm-getp11` mais `oms-2020`),
+     * que é exatamente a crítica que abriu esta rodada: uma diretriz geral respondendo por
+     * uma realidade clínica específica.
+     *
+     * A revisão Cochrane de Osadnik (2022), 10 ensaios e 894 adultos com asma, entra aqui e
+     * traz uma correção de EXPECTATIVA, não de dose. Com certeza moderada, treinar melhora
+     * a capacidade funcional (79,8 m a mais na caminhada de 6 minutos, acima da diferença
+     * minimamente importante) e a qualidade de vida. Mas o efeito sobre o CONTROLE da asma
+     * foi pequeno e de baixa certeza.
+     *
+     * Por isso esta condição continua sem modificador de dose, e isso é resposta e não
+     * omissão: a evidência verificada não sustenta uma dose distinta para quem tem asma
+     * controlada, sustenta uma promessa distinta. Inventar aqui um teto ou uma penalidade
+     * só para a condição "aparecer diferente" na régua de distintividade seria cometer, ao
+     * contrário, o mesmo pecado de encaixar o aluno numa regra que ninguém mediu.
+     */
     cuidados: [
       "Aquecimento gradual e ambientes sem ar muito frio ou seco reduzem o broncoespasmo induzido pelo esforço.",
       "Medicação de resgate disponível conforme o médico; sintomas que não cedem com a pausa pedem interrupção.",
+      "O treino melhora condicionamento e qualidade de vida; o controle da asma em si melhora pouco e é assunto do tratamento médico.",
     ],
     penalidades: [],
-    refs: ["acsm-getp11", "oms-2020"],
+    refs: ["osadnik-asma-2022", "acsm-getp11", "oms-2020"],
   },
   "ansiedade-depressao": {
     slug: "ansiedade-depressao",
