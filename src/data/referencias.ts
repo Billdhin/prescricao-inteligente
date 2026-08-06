@@ -343,6 +343,16 @@ export const referencias: Referencia[] = [
     nota: "Metanálise em rede de 39 estudos e 2.646 participantes com osteoartrite de joelho, comparando CINCO modalidades: exercício aquático, ciclismo estacionário, treino resistido, exercício tradicional e ioga. Todas melhoraram a condição, e o ranking varia POR DESFECHO: o aquático foi o melhor para dor pela escala visual analógica e pelo KOOS de dor; o ciclismo, para dor pelo WOMAC e para o teste de caminhada de 6 minutos; a ioga, para rigidez, função, atividades diárias e qualidade de vida; e o resistido, para sintomas do KOOS. RESSALVAS declaradas pelos autores e repetidas aqui: o nível de evidência é 3, a maioria dos estudos não cegou participantes nem pesquisadores, com alto risco de viés de desempenho, e o registro do artigo no PubMed traz o tipo como revisão e não como metanálise.",
   },
   {
+    id: "devries-quedas-2022",
+    autores: "Devries MC, Giangregorio L",
+    titulo: "Using the specificity and overload principles to prevent sarcopenia, falls and fractures with exercise",
+    fonte: "Bone, 166:116573",
+    ano: 2022,
+    doi: "10.1016/j.bone.2022.116573",
+    pmid: "36208722",
+    nota: "REVISÃO NARRATIVA, e não metanálise: o registro no PubMed traz o tipo como revisão, e por isso ela entra com peso menor que as redes citadas nas outras condições. Os autores priorizaram ensaios randomizados e revisões sistemáticas. O ponto que o produto usa é de ESCOLHA DE MODALIDADE para prevenção de queda: os autores relatam que análises por subgrupo e em rede apontam ênfase em treino de EQUILÍBRIO e funcional para maximizar a eficácia, e não em força isolada. Parâmetros que eles descrevem: treino resistido dos grandes grupos numa intensidade de 6 a 12 repetições máximas e exercícios de equilíbrio desafiadores, ambos pelo menos duas vezes por semana, escolhendo exercícios alinhados às tarefas do dia a dia e progredindo volume e dificuldade.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",

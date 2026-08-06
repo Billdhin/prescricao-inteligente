@@ -656,6 +656,18 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     nome: "Idoso destreinado",
     cuidados: [
       "Equilíbrio e segurança primeiro: apoio disponível e ambiente livre de obstáculos.",
+      /*
+       * `devries-quedas-2022` sustenta a frase acima com um argumento de MODALIDADE: para
+       * prevenir queda, a ênfase que maximiza eficácia é treino de EQUILÍBRIO e funcional, e
+       * não força isolada. É contra-intuitivo num produto cujo reflexo é prescrever força
+       * para o idoso, e por isso vale escrito.
+       *
+       * Entra com peso menor e rotulada: é revisão NARRATIVA, não metanálise em rede como as
+       * usadas em diabetes, hipertensão, dor lombar e sarcopenia. Os parâmetros abaixo são
+       * os que os próprios autores descrevem.
+       */
+      "Para prevenir queda, o equilíbrio desafiador é a ênfase que mais aumenta a eficácia, não a força isolada: pelo menos 2x por semana, junto do resistido.",
+      "Escolha exercícios parecidos com as tarefas do dia a dia da pessoa, e progrida volume e dificuldade em vez de só carga.",
       "Técnica antes de carga; progressões pequenas e frequentes.",
     ],
     penalidades: [
@@ -674,7 +686,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["fragala-2019", "chodzko-2009"],
     },
-    refs: ["chodzko-2009", "fragala-2019"],
+    refs: ["devries-quedas-2022", "chodzko-2009", "fragala-2019"],
   },
 
   "dor-lombar-inespecifica": {
