@@ -409,6 +409,25 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   "hipertensao-estagio-1": {
     slug: "hipertensao-estagio-1",
     evitarMembrosAcimaDoCoracao: true,
+    /*
+     * `tian-has-modalidade-2025`, metanálise em rede de 19 ensaios e 1.590 adultos, separa o
+     * resultado POR DESFECHO, e é essa separação que justifica a ênfase aqui.
+     *
+     * Para a SISTÓLICA, que é o número que define o estágio e que o semáforo lê, o aeróbio
+     * de intensidade baixa a moderada foi superior a todas as outras estratégias (-8,08
+     * mmHg), à frente do aeróbio de alta intensidade; as duas modalidades de resistido não
+     * alcançaram significância. E, entre os fatores de risco cardiovascular, só o aeróbio de
+     * intensidade baixa a moderada melhorou IMC, colesterol total, triglicerídeos, HDL e LDL.
+     *
+     * O resistido NÃO é rebaixado por isso: na mesma rede, o resistido de alta intensidade
+     * foi um dos dois que reduziram a DIASTÓLICA. A ênfase acrescenta aeróbio, nunca subtrai
+     * força, e é justamente para isso que ela foi desenhada de uma via só.
+     */
+    enfaseModalidade: {
+      prioridade: "aerobio",
+      motivo: "Aeróbio de intensidade baixa a moderada foi superior às demais estratégias para pressão sistólica e o único a melhorar o conjunto de fatores de risco cardiovascular.",
+      refId: ["tian-has-modalidade-2025"],
+    },
     modDose: {
       // 80% de 1RM e o TETO da banda de 60 a 80% em que henkin-2023 mediu a queda de
       // 6,98 mmHg de sistolica e 3,64 de diastolica. Acima dela nao ha efeito medido.
@@ -463,12 +482,19 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["pescatello-2004", "sbc-2020"],
     },
-    refs: ["sbc-2020", "pescatello-2004", "acsm-getp11"],
+    refs: ["tian-has-modalidade-2025", "sbc-2020", "pescatello-2004", "acsm-getp11"],
   },
 
   "hipertensao-estagio-2": {
     slug: "hipertensao-estagio-2",
     evitarMembrosAcimaDoCoracao: true,
+    // Mesma leitura do estágio 1, e pela mesma rede: o aeróbio leve a moderado é o que move
+    // a sistólica e o conjunto de fatores de risco. Ver o comentário no estágio 1.
+    enfaseModalidade: {
+      prioridade: "aerobio",
+      motivo: "Aeróbio de intensidade baixa a moderada foi superior às demais estratégias para pressão sistólica e o único a melhorar o conjunto de fatores de risco cardiovascular.",
+      refId: ["tian-has-modalidade-2025"],
+    },
     modDose: {
       // 80% de 1RM e o TETO da banda de 60 a 80% em que henkin-2023 mediu a queda de
       // 6,98 mmHg de sistolica e 3,64 de diastolica. Acima dela nao ha efeito medido.
@@ -520,7 +546,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["pescatello-2004", "sbc-2020"],
     },
-    refs: ["sbc-2020", "pescatello-2004", "acsm-getp11"],
+    refs: ["tian-has-modalidade-2025", "sbc-2020", "pescatello-2004", "acsm-getp11"],
   },
 
   "diabetes-tipo-2": {
