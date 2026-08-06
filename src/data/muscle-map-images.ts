@@ -79,6 +79,8 @@ const SLUGS_COM_POSE: string[] = [
   "rosca-martelo",
   "rosca-banco-inclinado",
   "rosca-scott-maquina",
+  "triceps-testa-barra",
+  "elevacao-frontal",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
