@@ -55,7 +55,6 @@ const GENERICAS = new Set([
  * diretriz geral. A lista nasceu com 14 e só pode encolher.
  */
 const SEM_EVIDENCIA_PROPRIA = new Set([
-  "retorno-inatividade",
   "pos-parto",
 ]);
 

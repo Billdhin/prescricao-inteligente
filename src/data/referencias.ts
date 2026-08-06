@@ -259,6 +259,16 @@ export const referencias: Referencia[] = [
     nota: "Revisão Cochrane de 58 ensaios randomizados e 2.075 adultos de 18 a 64 anos SAUDÁVEIS MAS SEDENTÁRIOS, comparando intervalado de alta intensidade com não exercitar e com contínuo moderado. Contra não exercitar, o intervalado provavelmente aumenta a aptidão cardiorrespiratória (5,98 mL/kg/min a mais, certeza moderada) e reduz a circunferência de cintura (3,56 cm, certeza ALTA). Contra o contínuo moderado, a diferença de aptidão é pequena e de baixa certeza, e não há diferença clara em pressão sistólica, cintura ou triglicerídeos. DUAS RESSALVAS que pesam mais que os números neste produto: nenhum estudo relatou eventos adversos e os autores dizem não ter certeza de que eles foram monitorados; e TODOS os estudos incluídos usaram intervalado SUPERVISIONADO, com os próprios autores pedindo pesquisa sobre viabilidade e segurança do intervalado sem supervisão.",
   },
   {
+    id: "grgic-destreino-2022",
+    autores: "Grgic J",
+    titulo: "Use It or Lose It? A Meta-Analysis on the Effects of Resistance Training Cessation (Detraining) on Muscle Size in Older Adults",
+    fonte: "International Journal of Environmental Research and Public Health, 19(21):14048",
+    ano: 2022,
+    doi: "10.3390/ijerph192114048",
+    pmid: "36360927",
+    nota: "Metanálise sobre PARADA de treino resistido em pessoas mais velhas, com 6 estudos e 8 grupos, intervenções de 9 a 24 semanas e destreino de 12 a 52 semanas. O treino aumentou o tamanho muscular (d = 0,99) e a parada reduziu (d = -0,83). O achado que muda a conduta está no subgrupo por DURAÇÃO da parada: entre 12 e 24 semanas parado NÃO houve queda significativa de massa (d = -0,60, IC 95% -1,21 a 0,01), e a queda significativa apareceu só entre 31 e 52 semanas (d = -1,11). Sustenta não tratar todo retorno como recomeço do zero: parada curta preserva massa, e é o tempo longe que decide, não o fato de ter parado. O próprio autor registra que o curso temporal dessa perda ainda precisa ser estabelecido.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",

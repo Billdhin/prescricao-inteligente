@@ -731,8 +731,22 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     slug: "retorno-inatividade",
     restricoesEstruturais: ["fadiga_precoce"],
     nome: "Retorno após inatividade",
+    /*
+     * Sai do débito com `grgic-destreino-2022`, metanálise sobre PARADA de treino resistido,
+     * que é literalmente o assunto desta condição e não uma diretriz geral emprestada.
+     *
+     * Ela dá o número que o cuidado antigo não tinha: entre 12 e 24 semanas parado NÃO houve
+     * queda significativa de massa muscular; a queda significativa apareceu só entre 31 e 52
+     * semanas. Ou seja, quem parou por três ou quatro meses não perdeu o que achava que
+     * perdeu, e tratar todo retorno como recomeço do zero subestima o aluno.
+     *
+     * O "metade do volume anterior" continua, porque é prudência de reentrada e a metanálise
+     * fala de MASSA, não de tolerância à carga nem de risco de lesão na primeira semana. O
+     * que muda é a conversa: o tempo longe passa a ser o dado que orienta o quanto recuar.
+     */
     cuidados: [
       "Recomece com cerca de metade do volume e da carga anteriores e progrida ao longo de poucas semanas.",
+      "Pergunte HÁ QUANTO TEMPO parou: até cerca de 6 meses a massa muscular tende a estar preservada, e a perda relevante aparece em paradas próximas de um ano.",
       "Respeite a recuperação: a dor muscular tardia inicial é esperada.",
     ],
     penalidades: [],
@@ -744,7 +758,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["acsm-getp11", "oms-2020"],
     },
-    refs: ["acsm-getp11", "oms-2020"],
+    refs: ["grgic-destreino-2022", "acsm-getp11", "oms-2020"],
   },
   "pre-diabetes": {
     slug: "pre-diabetes",
