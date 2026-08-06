@@ -1088,6 +1088,30 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     // referências genéricas de idoso. Quem lê o prontuário via a bibliografia errada.
     refs: ["watson-liftmor-2017", "beck-essa-2017", "giangregorio-2014", "chodzko-2009", "acsm-getp11"],
   },
+  /*
+   * GESTANTE: a única condição sem evidência COMPARATIVA de modalidade, e isto é resposta
+   * final da rodada de evidência, não pendência.
+   *
+   * Cinco formulações de busca no PubMed, cinco resultados inúteis, e a lista importa porque
+   * ela mostra que o problema não era a formulação: rede comparando modalidades devolveu
+   * ZERO; diretriz pré-natal devolveu um trabalho de 2015; ganho de peso e cesárea devolveu
+   * um estudo de PREVALÊNCIA de prática na África; prevenção de diabetes gestacional
+   * devolveu intervenções PRÉ-CONCEPÇÃO; e programa supervisionado com desfecho materno
+   * devolveu suplementação de micronutrientes, que nem exercício é.
+   *
+   * A conclusão é sobre a literatura, não sobre a busca: **a produção científica da gestação
+   * se organiza por CONTRAINDICAÇÃO e por DESFECHO OBSTÉTRICO, não por comparação de
+   * modalidades de treino.** Não existe a rede "aeróbio contra resistido contra combinado em
+   * gestantes" que existe para diabetes, hipertensão, obesidade e dor lombar.
+   *
+   * E isso é coerente com o produto: a especificidade da gestante já vive na camada de
+   * SEGURANÇA, não na de dose. O semáforo pergunta a ela sobre as 8 contraindicações
+   * absolutas e sobre os sinais do dia, e esta regra evita a posição deitada. É ali que a
+   * condição se diferencia, e é ali que a evidência dela de fato está.
+   *
+   * Fica registrado para que ninguém gaste uma sexta busca atrás de algo que a literatura
+   * não produziu.
+   */
   gestante: {
     slug: "gestante",
     nome: "Gestante sem contraindicação",
