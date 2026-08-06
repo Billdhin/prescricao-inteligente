@@ -657,6 +657,12 @@ function montarSessoes(
      * O teto é a própria frequência do plano: se o aluno treina 2x e o objetivo já põe
      * aeróbio nas 2, não há terceira sessão para acrescentar, e a ênfase simplesmente não
      * tem efeito naquele horizonte, em vez de inventar uma sessão que o aluno não vai fazer.
+     *
+     * CASO QUE A BANCADA DE CENÁRIOS REVELOU e que vale escrito, porque parece defeito e não
+     * é: no objetivo EMAGRECIMENTO a ênfase aeróbia é inerte em qualquer frequência. O
+     * motivo é que ali o aeróbio é a BASE do objetivo e não um complemento, então toda
+     * sessão já nasce com um bloco aeróbio e não sobra espaço. Uma condição que pede ênfase
+     * aeróbia num plano de emagrecimento já está atendida antes de a ênfase existir.
      */
     const sessoesAerobias =
       comp && regraClinica?.enfaseModalidade?.prioridade === "aerobio"
