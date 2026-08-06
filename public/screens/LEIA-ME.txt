@@ -1,0 +1,14 @@
+CAPTURAS REAIS DO PRODUTO PARA A LANDING
+
+A secao "O sistema como ele e, tela por tela" e o bloco do fundador esperam estes
+arquivos. Enquanto nao existirem, a landing mostra o nome da tela num fundo
+listrado, em vez de caixa vazia ou icone de imagem quebrada.
+
+  tela-cadastro.webp      Cadastro do aluno, passo 3 de 6 (saude e restricoes)
+  tela-evolucao.webp      Evolucao do aluno, medidas por data e leitura
+  tela-semaforo.webp      Semaforo do dia, 4 perguntas e a conduta
+  tela-periodizacao.webp  Periodizacao, curva de volume e intensidade
+  foto-fundador.webp      Foto do Filipe
+
+Proporcao: a moldura tem 440px de altura e ocupa a largura do bloco. Capturar em
+tela larga (>=1440px) e salvar em webp da o melhor resultado.
