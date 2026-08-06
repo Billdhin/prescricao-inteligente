@@ -92,6 +92,8 @@ const SLUGS_COM_POSE: string[] = [
   "supino-inclinado-halteres",
   "leg-press-horizontal",
   "crucifixo-maquina",
+  "crossover-polia",
+  "flexao-apoio-elevado",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
