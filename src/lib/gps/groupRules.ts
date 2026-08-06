@@ -969,9 +969,16 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       "Aeróbio regular + força reduzem a gordura hepática junto da perda de peso gradual (encaminhar nutrição).",
       "Perda de peso agressiva não é o alvo do treino; priorize a consistência.",
       "A gordura hepática respondeu em acompanhamentos acima de 3 meses; abaixo disso o efeito não foi significativo.",
+      // `wang-esteatose-rede-2024`, rede de 174 ensaios e 10.183 pacientes comparando dieta,
+      // exercício e FÁRMACOS no mesmo modelo, põe os medicamentos nos primeiros lugares
+      // (GLP-1 lidera a gordura hepática com SUCRA 99,7%). Isso não desmente o efeito do
+      // treino, que `nam-nafld-2023` mede; desmente a tentação de vendê-lo como tratamento
+      // principal desta condição. É a única condição do catálogo em que a evidência coloca
+      // uma conduta médica claramente à frente do exercício, e isso precisa estar escrito.
+      "O maior efeito medido nesta condição vem de conduta medicamentosa, que é do médico: posicione o treino como parte do cuidado e mantenha o encaminhamento.",
     ],
     penalidades: [],
-    refs: ["donnelly-2009", "acsm-getp11", "nam-nafld-2023"],
+    refs: ["nam-nafld-2023", "wang-esteatose-rede-2024", "donnelly-2009", "acsm-getp11"],
   },
   sarcopenia: {
     slug: "sarcopenia",

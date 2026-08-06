@@ -374,6 +374,17 @@ export const referencias: Referencia[] = [
     nota: "Metanálise em rede de 53 estudos e 2.948 participantes com síndrome metabólica, comparando DEZ intervenções. O combinado, aeróbio mais resistido, ficou em primeiro para IMC, circunferência de cintura, LDL e glicemia de jejum, que são quatro dos componentes que definem a síndrome. Os demais primeiros lugares se espalham: intervalado de alto volume para percentual de gordura, intervalado de baixo volume para colesterol total, triglicerídeos e pressão diastólica, e exercício tradicional chinês para HDL e pressão sistólica. DUAS RESSALVAS que os autores fazem e que pesam: a maior parte da evidência foi classificada como de certeza BAIXA ou MUITO BAIXA, e NENHUMA modalidade foi superior em todos os componentes, o que os leva a defender prescrição orientada pela alteração metabólica predominante de cada pessoa. O registro no PubMed traz o tipo apenas como artigo, e não como metanálise.",
   },
   {
+    id: "wang-esteatose-rede-2024",
+    autores: "Wang H, Ma Q, Chen Y, Luo L, Ye J, Zhong B",
+    titulo:
+      "Optimized strategy among diet, exercise, and pharmacological interventions for nonalcoholic fatty liver disease: A network meta-analysis of randomized controlled trials",
+    fonte: "Obesity Reviews, 25(6):e13727",
+    ano: 2024,
+    doi: "10.1111/obr.13727",
+    pmid: "38509775",
+    nota: "Metanálise em rede de 174 ensaios randomizados e 10.183 pacientes com doença hepática gordurosa, comparando dieta, exercício e FÁRMACOS no mesmo modelo. O resultado é o que o profissional de exercício precisa saber para não prometer demais: os primeiros lugares são de medicamento. O pan-agonista de PPAR liderou a redução de IMC (SUCRA 84,8%) e o agonista de GLP-1 liderou a redução de gordura hepática medida por ressonância (SUCRA 99,7%). Isso NÃO diz que o exercício não funciona, e o produto cita nam-nafld-2023 para o efeito dele; diz que, nesta condição, o maior efeito medido vem de conduta que é do médico. Serve para posicionar o treino como parte do cuidado e reforçar o encaminhamento, em vez de vendê-lo como tratamento principal.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",
