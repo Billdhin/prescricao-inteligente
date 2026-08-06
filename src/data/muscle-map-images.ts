@@ -65,6 +65,8 @@ const SLUGS_COM_POSE: string[] = [
   "ponte-gluteos",
   "prancha-frontal",
   "prancha-lateral",
+  "prancha-apoio-banco",
+  "bird-dog",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
