@@ -269,6 +269,16 @@ export const referencias: Referencia[] = [
     nota: "Metanálise sobre PARADA de treino resistido em pessoas mais velhas, com 6 estudos e 8 grupos, intervenções de 9 a 24 semanas e destreino de 12 a 52 semanas. O treino aumentou o tamanho muscular (d = 0,99) e a parada reduziu (d = -0,83). O achado que muda a conduta está no subgrupo por DURAÇÃO da parada: entre 12 e 24 semanas parado NÃO houve queda significativa de massa (d = -0,60, IC 95% -1,21 a 0,01), e a queda significativa apareceu só entre 31 e 52 semanas (d = -1,11). Sustenta não tratar todo retorno como recomeço do zero: parada curta preserva massa, e é o tempo longe que decide, não o fato de ter parado. O próprio autor registra que o curso temporal dessa perda ainda precisa ser estabelecido.",
   },
   {
+    id: "lu-assoalho-2020",
+    autores: "Lu J, Zhang H, Liu L, Jin W, Gao J, Min M, Fan Y",
+    titulo: "Meta-analysis of Perinatal Pelvic Floor Muscle Training on Urinary Incontinence",
+    fonte: "Western Journal of Nursing Research, 43(6):597-605",
+    ano: 2020,
+    doi: "10.1177/0193945920960779",
+    pmid: "32988334",
+    nota: "Metanálise do treino da musculatura do assoalho pélvico em mulheres no período pré e pós-natal. Comparado ao cuidado de rotina, o treino reduziu a ocorrência de incontinência urinária (risco relativo 0,712, IC 95% 0,622 a 0,816), aumentou a força do assoalho pélvico (diferença média ponderada 8,448) e reduziu a perda de urina medida por absorvente (-1,699). É evidência de uma modalidade ESPECÍFICA deste período, que nenhuma diretriz geral de atividade física cobre, e por isso ela sustenta a inclusão do assoalho pélvico no plano em vez de tratá-lo como assunto de outro profissional.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",

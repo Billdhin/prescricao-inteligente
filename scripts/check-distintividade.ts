@@ -54,9 +54,7 @@ const GENERICAS = new Set([
  * Débito conhecido em 06/08/2026. Cada nome aqui é uma condição que ainda responde por
  * diretriz geral. A lista nasceu com 14 e só pode encolher.
  */
-const SEM_EVIDENCIA_PROPRIA = new Set([
-  "pos-parto",
-]);
+const SEM_EVIDENCIA_PROPRIA = new Set<string>([]);
 
 /* --- A. Toda condição cita ao menos uma referência específica dela ---------- */
 

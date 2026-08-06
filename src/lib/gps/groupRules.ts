@@ -949,8 +949,30 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     slug: "pos-parto",
     restricoesEstruturais: ["baixa_tolerancia_impacto"],
     nome: "Pós-parto com liberação",
+    /*
+     * ÚLTIMA condição a sair do débito de "responde por diretriz genérica", que começou esta
+     * rodada com 14 nomes.
+     *
+     * `lu-assoalho-2020` é metanálise do treino da musculatura do assoalho pélvico no período
+     * pré e pós-natal: reduziu a ocorrência de incontinência urinária (risco relativo 0,712),
+     * aumentou a força do assoalho (diferença média 8,448) e reduziu a perda medida por
+     * absorvente. É evidência de uma modalidade ESPECÍFICA deste período, que nenhuma
+     * diretriz geral de atividade física cobre.
+     *
+     * O cuidado antigo já citava o assoalho pélvico, mas como sinal de alerta: "sinais de
+     * perdas pedem encaminhamento". A metanálise inverte a ordem, e é isso que muda: o treino
+     * do assoalho é PARTE DO PLANO e reduz a chance de a perda aparecer, em vez de ser só o
+     * gatilho para mandar embora. O encaminhamento continua onde é devido.
+     *
+     * Três buscas foram necessárias aqui, e as duas primeiras trouxeram material que eu
+     * descartei em vez de forçar: um ensaio de Pilates PRÉ-NATAL com 42 mulheres sobre
+     * frouxidão ligamentar, e uma metanálise em rede de saúde mental perinatal em que o
+     * exercício sequer aparecia como a intervenção mais efetiva. Nenhuma das duas era regra
+     * de treino pós-parto.
+     */
     cuidados: [
-      "Com liberação: retomada gradual com atenção ao assoalho pélvico e ao core; sinais de perdas ou peso pedem encaminhamento.",
+      "Com liberação: retomada gradual, com o treino do assoalho pélvico fazendo parte do plano, e não apenas como sinal de alerta.",
+      "O treino do assoalho pélvico reduz a ocorrência de perda urinária e aumenta a força da musculatura; perdas que persistem pedem encaminhamento.",
       "Ajuste à recuperação e ao sono fragmentado; evite carga alta cedo demais.",
     ],
     penalidades: [],
@@ -962,7 +984,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["acsm-getp11"],
     },
-    refs: ["acsm-getp11"],
+    refs: ["lu-assoalho-2020", "acsm-getp11"],
   },
   climaterio: {
     slug: "climaterio",
