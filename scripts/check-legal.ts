@@ -90,6 +90,33 @@ for (const rota of ["/termos", "/privacidade"])
 
 /* --- D. Identificação e prova social inventadas não voltam ---------------- */
 
+/*
+ * PLACEHOLDER LITERAL NÃO VAI AO AR.
+ *
+ * O protótipo trazia "[Razão Social Ltda.] · CNPJ [XX.XXX.XXX/0001-XX]" no rodapé e
+ * "Filipe [Sobrenome]" na assinatura. São lembretes de quem desenhou, e iriam à página
+ * exatamente assim, entre colchetes. Colchete com maiúscula dentro é a forma que todos
+ * eles têm, e nenhuma copy real do produto usa isso.
+ */
+if (/\[[A-ZÀ-Ú][^\]\n]{2,40}\]/.test(LANDING))
+  reprovar("D", `placeholder literal na landing: ${LANDING.match(/\[[A-ZÀ-Ú][^\]\n]{2,40}\]/)?.[0]}`);
+
+/*
+ * O CREF É DO ASSINANTE, NUNCA DA CASA.
+ *
+ * Duas vezes um CREF falso chegou perto de ir ao ar: "Nome do profissional · CREF 000000"
+ * nos depoimentos inventados, e "Responsável técnico Filipe · CREF 000000-G/UF" no rodapé
+ * do protótipo. O Filipe NÃO tem CREF, e credencial profissional inventada numa página que
+ * vende apoio à decisão clínica é o pior tipo de afirmação falsa que este produto poderia
+ * fazer.
+ *
+ * A regra não bane a palavra: o produto fala do CREF DO PROFISSIONAL que assina o
+ * prontuário, e isso é correto. Bane a casa se ATRIBUIR um, que é o que "responsável
+ * técnico" seguido de CREF faz.
+ */
+if (/respons[áa]vel t[ée]cnico[^<>]{0,60}CREF/i.test(LANDING))
+  reprovar("D", 'a landing declara um "responsável técnico" com CREF: a casa não tem CREF para atribuir.');
+
 const PLACEHOLDERS: [RegExp, string][] = [
   [/00\.000\.000\/0001-00/, "CNPJ placeholder (00.000.000/0001-00) apresentado como identificação real"],
   [/CREF\s*000000/i, "CREF placeholder (000000) assinando conteúdo"],
