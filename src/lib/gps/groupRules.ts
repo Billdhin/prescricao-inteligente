@@ -904,8 +904,29 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   sarcopenia: {
     slug: "sarcopenia",
     nome: "Sarcopenia / baixa força muscular",
+    /*
+     * O cuidado já dizia que a força é o principal estímulo. `yu-sarcopenia-modalidade-2026`
+     * põe número nisso, numa rede de 24 ensaios e nove estratégias: o resistido ficou em
+     * PRIMEIRO para força de preensão (SUCRA 90,9%) e foi a ÚNICA estratégia a reduzir massa
+     * gorda de forma significativa.
+     *
+     * A ênfase fica declarada como "forca" mesmo sem mudar a montagem hoje (o campo só
+     * acrescenta sessão quando a prioridade é aeróbia). Serve para a evidência ficar citada
+     * onde foi lida, e para o dia em que o campo souber puxar volume de força.
+     *
+     * E a ressalva anda junto no cuidado, porque é do tipo que o profissional precisa saber
+     * antes de prometer: NENHUMA intervenção da rede mostrou vantagem significativa sobre o
+     * cuidado usual para o índice de massa muscular. Força e composição melhoram; ganho de
+     * MASSA segue incerto.
+     */
+    enfaseModalidade: {
+      prioridade: "forca",
+      motivo: "O resistido ficou em primeiro para força de preensão e foi a única estratégia a reduzir massa gorda de forma significativa.",
+      refId: ["yu-sarcopenia-modalidade-2026"],
+    },
     cuidados: [
       "A força é o principal estímulo: máquinas guiadas 2 a 3x/semana com progressão pequena e frequente.",
+      "Espere ganho de força e de composição corporal; ganho de massa muscular é incerto na evidência atual e não deve ser prometido.",
       "Técnica antes de carga; recuperação pode ser mais lenta. Encaminhe para avaliação nutricional (proteína).",
     ],
     penalidades: [
@@ -920,7 +941,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["fragala-2019", "chodzko-2009"],
     },
-    refs: ["fragala-2019", "chodzko-2009"],
+    refs: ["yu-sarcopenia-modalidade-2026", "fragala-2019", "chodzko-2009"],
   },
   osteoporose: {
     slug: "osteoporose",

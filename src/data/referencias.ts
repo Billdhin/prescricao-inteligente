@@ -311,6 +311,17 @@ export const referencias: Referencia[] = [
     nota: "Metanálise em rede de 19 ensaios randomizados e 1.590 adultos jovens e de meia idade com pré-hipertensão ou hipertensão, comparando CINCO modalidades. O achado é dividido por desfecho, e é isso que o motor usa. Para a SISTÓLICA, o aeróbio de intensidade baixa a moderada foi superior a todas as outras estratégias (diferença média -8,08 mmHg), à frente do aeróbio de alta intensidade (-6,53); as duas do resistido não alcançaram significância (intervalos cruzando o zero). Para a DIASTÓLICA, o resistido de alta intensidade (-4,75) e o aeróbio de alta intensidade (-4,27) foram os que reduziram. E, entre os fatores de risco cardiovascular, SÓ o aeróbio de intensidade baixa a moderada melhorou IMC, colesterol total, triglicerídeos, HDL e LDL. Nenhuma modalidade alterou a frequência cardíaca de repouso. RESSALVA: o registro do artigo no PubMed traz o tipo como revisão, e não como metanálise, embora título e método declarem rede; a amostra também é de adultos jovens e de meia idade, não de idosos.",
   },
   {
+    id: "yu-sarcopenia-modalidade-2026",
+    autores: "Yu J, Li X, Yu H, Huang Y",
+    titulo:
+      "Comparative effectiveness of exercise modalities and nutritional supplementation for sarcopenic obesity in older adults: a network meta-analysis based on randomized controlled trials",
+    fonte: "Frontiers in Public Health, 14:1775783",
+    ano: 2026,
+    doi: "10.3389/fpubh.2026.1775783",
+    pmid: "41810309",
+    nota: "Metanálise em rede de 24 ensaios randomizados, 1.298 participantes idosos com obesidade sarcopênica e NOVE estratégias distintas de reabilitação. Separa por desfecho: para força de preensão, o treino RESISTIDO ficou em primeiro (diferença média 3,96 kg, SUCRA 90,9%), à frente do multicomponente; para massa gorda, SÓ o resistido alcançou significância (-2,30 kg, SUCRA 79,0%); para IMC, só o multicomponente (-1,08); e para percentual de gordura os dois funcionaram, com o multicomponente à frente. RESSALVA que os autores fazem e que o produto repete: NENHUMA intervenção mostrou vantagem significativa sobre o cuidado usual para o índice de massa muscular esquelética, ou seja, força e composição melhoram mas a evidência de ganho de massa segue limitada e incerta.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",
