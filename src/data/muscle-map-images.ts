@@ -89,6 +89,7 @@ const SLUGS_COM_POSE: string[] = [
   "flexora-em-pe",
   "hip-thrust-unilateral",
   "good-morning",
+  "supino-inclinado-halteres",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
