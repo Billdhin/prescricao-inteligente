@@ -70,3 +70,18 @@ jobs:
       - name: Deploy no Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # 30 min em vez dos 10 do padrão.
+          #
+          # Em 06/08/2026 três deploys seguidos falharam com o build inteiro verde e o
+          # artefato já enviado. O log mostrou o que estava acontecendo: a action fica
+          # perguntando o status ao Pages, recebe "deployment_queued" por dez minutos, e
+          # então dispara "Timeout reached, aborting!" e CANCELA o deploy. Ou seja, não era
+          # o Pages recusando: era o relógio da action matando um deploy que o próprio
+          # GitHub já tinha movido para in_progress do lado dele.
+          #
+          # O artefato tem cerca de 50 MB em 906 arquivos, e a fila do Pages naquele dia
+          # estava demorando mais que o normal para esse volume. Dez minutos é apertado
+          # demais para um site deste tamanho quando a fila deles engasga, e o preço de
+          # esperar mais é zero: minuto de runner ocioso.
+          timeout: 1800000
