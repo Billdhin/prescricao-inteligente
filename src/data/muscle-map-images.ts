@@ -71,6 +71,7 @@ const SLUGS_COM_POSE: string[] = [
   "elevacao-joelhos-suspenso",
   "agachamento-elastico",
   "abducao-quadril-elastico",
+  "rosca-elastico",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
