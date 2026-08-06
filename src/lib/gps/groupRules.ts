@@ -562,9 +562,17 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
      * versão anterior desta regra, com base em UMA metanálise; com os quatro na mesa, isso
      * era forte demais e virou equivalência.
      *
-     * O que NÃO está escrito aqui, e não está porque não achei o trabalho: um teto de
-     * intensidade para o RESISTIDO neste perfil. Enquanto ele não aparecer, a força segue a
-     * faixa do objetivo, que é o que a ausência de `rirMinimo` significa.
+     * SOBRE A FORÇA, e aqui houve correção. Numa versão anterior deste comentário eu
+     * escrevi que não havia trabalho sobre intensidade do RESISTIDO neste perfil. Havia, e
+     * eu não tinha procurado com o ângulo certo: `yu-dm2-modalidade-2026` é metanálise em
+     * REDE de 29 ensaios com DEZ intervenções separadas por modalidade e por intensidade, e
+     * ela põe o resistido de ALTA intensidade em primeiro para HbA1c (-0,62, certeza
+     * moderada), à frente do aeróbio moderado. Para pressão sistólica, o resistido de alta
+     * intensidade foi a única modalidade com redução significativa.
+     *
+     * Ou seja, a ausência de `rirMinimo` aqui deixou de ser omissão e virou POSIÇÃO: neste
+     * perfil a força não recebe teto, porque a evidência específica desta condição aponta o
+     * contrário do reflexo conservador. O aeróbio segue contido, a força não.
      */
     /*
      * ATENÇÃO, DÉBITO CONHECIDO E MEDIDO: este teto NÃO MORDE hoje, e fica aqui declarado
@@ -613,7 +621,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       "Consistência semanal tende a valer mais que picos de intensidade.",
     ],
     penalidades: [],
-    refs: ["colberg-2016", "sbd-2023", "mannucci-dm2-2021", "wang-hiit-dm2-2026", "gajanand-dm2-2024", "magalhaes-dm2-2018"],
+    refs: ["colberg-2016", "sbd-2023", "mannucci-dm2-2021", "wang-hiit-dm2-2026", "gajanand-dm2-2024", "magalhaes-dm2-2018", "yu-dm2-modalidade-2026"],
   },
 
   "idoso-destreinado": {
@@ -898,6 +906,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       // levantamentos de coluna neutra que estimulam o osso. Agora o texto e a regra dizem
       // a mesma coisa, e é a coisa que a fonte diz.
       "Treino resistido progressivo e impacto controlado estimulam o osso: manter carga de verdade é o objetivo, não evitá-la.",
+      // `watson-liftmor-2017` põe número na frase acima. Ensaio randomizado com 101 mulheres
+      // na pós-menopausa com massa óssea baixa: 8 meses de resistido e impacto de ALTA
+      // intensidade, 5 séries de 5 acima de 85% de 1RM, ganharam 2,9% de densidade na coluna
+      // lombar contra perda de 1,2% do grupo de baixa intensidade, com UM único evento
+      // adverso. A ressalva viaja junto e é dos próprios autores: sob supervisão.
+      "Alta intensidade sob supervisão aumentou densidade óssea e função neste perfil, com um único evento adverso em 101 participantes: o reflexo de aliviar a carga é o que a evidência contraria.",
       "O que a evidência desaconselha é a flexão de coluna CARREGADA (enrolar o tronco contra carga), não a dobradiça de quadril com coluna neutra.",
       "Força, equilíbrio e mobilidade são o que reduz o risco de queda e, por consequência, de fratura: o programa é multicomponente, nunca só aeróbio.",
       "Liberação médica recomendada antes de progredir o impacto; a evidência não permite quantificar um teto de carga seguro para esta população.",
@@ -920,7 +934,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     },
     // As duas fontes específicas da condição estavam apenas no semáforo, e o motor citava
     // referências genéricas de idoso. Quem lê o prontuário via a bibliografia errada.
-    refs: ["beck-essa-2017", "giangregorio-2014", "chodzko-2009", "acsm-getp11"],
+    refs: ["watson-liftmor-2017", "beck-essa-2017", "giangregorio-2014", "chodzko-2009", "acsm-getp11"],
   },
   gestante: {
     slug: "gestante",

@@ -279,6 +279,28 @@ export const referencias: Referencia[] = [
     nota: "Metanálise do treino da musculatura do assoalho pélvico em mulheres no período pré e pós-natal. Comparado ao cuidado de rotina, o treino reduziu a ocorrência de incontinência urinária (risco relativo 0,712, IC 95% 0,622 a 0,816), aumentou a força do assoalho pélvico (diferença média ponderada 8,448) e reduziu a perda de urina medida por absorvente (-1,699). É evidência de uma modalidade ESPECÍFICA deste período, que nenhuma diretriz geral de atividade física cobre, e por isso ela sustenta a inclusão do assoalho pélvico no plano em vez de tratá-lo como assunto de outro profissional.",
   },
   {
+    id: "yu-dm2-modalidade-2026",
+    autores: "Yu J, Li X, Yu H, Huang Y",
+    titulo:
+      "Comparative effects of different intensities of aerobic and resistance exercise on glycemic control and cardiorespiratory fitness in middle-aged older patients with type 2 diabetes: a network meta-analysis",
+    fonte: "Frontiers in Public Health, 14:1818686",
+    ano: 2026,
+    doi: "10.3389/fpubh.2026.1818686",
+    pmid: "42267276",
+    nota: "Metanálise em REDE de 29 ensaios randomizados, 1.301 participantes e DEZ intervenções separadas por modalidade E por intensidade, em adultos de meia idade e idosos com diabetes tipo 2. É a peça que faltava para prescrever por modalidade nesta condição. Para HbA1c, o TREINO RESISTIDO DE ALTA INTENSIDADE foi o mais bem colocado (diferença média -0,62, certeza moderada, SUCRA 78,6%), à frente do aeróbio moderado (-0,58), do aeróbio de alta intensidade com resistido moderado (-0,54) e do resistido de baixa intensidade (-0,54). Para glicemia de jejum, só o resistido de intensidade moderada alcançou significância (-29,13 mg/dL). Para consumo de oxigênio de pico, as combinações com aeróbio de alta intensidade lideraram, com certeza alta. Para pressão sistólica, o resistido de alta intensidade foi a ÚNICA modalidade com redução significativa (-3,68 mmHg, certeza baixa). Os autores classificam boa parte das comparações de glicemia de jejum e pressão como certeza baixa ou muito baixa, e a rede de consumo de oxigênio como esparsa, e o produto declara isso onde cita.",
+  },
+  {
+    id: "watson-liftmor-2017",
+    autores: "Watson SL, Weeks BK, Weis LJ, Harding AT, Horan SA, Beck BR",
+    titulo:
+      "High-Intensity Resistance and Impact Training Improves Bone Mineral Density and Physical Function in Postmenopausal Women With Osteopenia and Osteoporosis: The LIFTMOR Randomized Controlled Trial",
+    fonte: "Journal of Bone and Mineral Research, 33(2):211-220",
+    ano: 2017,
+    doi: "10.1002/jbmr.3284",
+    pmid: "28975661",
+    nota: "Ensaio randomizado com 101 mulheres na pós-menopausa com massa óssea baixa (escore T abaixo de -1,0), comparando 8 meses de treino resistido e de impacto de ALTA INTENSIDADE, duas vezes por semana, 30 min, 5 séries de 5 repetições acima de 85% de 1RM e SUPERVISIONADO, contra programa domiciliar de baixa intensidade. O grupo de alta intensidade foi superior em densidade da coluna lombar (+2,9% contra -1,2%), do colo femoral (+0,3% contra -1,9%), espessura cortical do colo femoral, estatura e TODAS as medidas de função. Houve um único evento adverso, um espasmo lombar leve. Os autores escrevem que, ao contrário da opinião corrente, esse treino foi eficaz e não induziu eventos adversos SOB CONDIÇÕES ALTAMENTE SUPERVISIONADAS, e é essa ressalva que o produto carrega junto: a amostra era de mulheres no restante saudáveis, rastreadas para condições e medicações que afetam osso e função.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",
