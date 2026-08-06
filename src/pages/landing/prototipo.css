@@ -418,15 +418,15 @@ input::placeholder{color:#93A3B8}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 ::selection{background:#CDE3DF}
 
-#__claude_design_branding{position:fixed;right:16px;bottom:16px;z-index:2147483646;display:flex;align-items:center;gap:7px;height:30px;padding:0 5px 0 10px;border-radius:999px;font-family:"Anthropic Sans",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;font-size:12.5px;font-weight:400;line-height:1;letter-spacing:normal;text-transform:none;color:#141413;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);box-shadow:0 0 0 .5px rgba(31,30,29,.14),0 2px 10px rgba(0,0,0,.09)}
-#__claude_design_branding *{box-sizing:border-box;margin:0}
-#__claude_design_branding a{color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
-#__claude_design_branding a:hover span{text-decoration:underline}
-#__claude_design_branding svg{flex:none}
-#__claude_design_branding a svg{color:#D97757}
-#__claude_design_branding button{width:20px;height:20px;padding:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:currentColor;opacity:.55;border:0;background:none;cursor:pointer;flex:none;font:inherit;transition:opacity .14s}
-#__claude_design_branding button:hover{opacity:1;background:rgba(127,127,127,.22)}
-@media print{#__claude_design_branding{display:none}}
+
+
+
+
+
+
+
+
+@media print{}
 /*
  * Estado PENDENTE de uma captura de tela.
  *
@@ -452,4 +452,26 @@ input::placeholder{color:#93A3B8}
   color: #7C8A9C;
   background:
     repeating-linear-gradient(45deg, #F4F3EF 0 10px, #EFEEE9 10px 20px);
+}
+
+/*
+ * A BARRA FIXA NÃO PODE COBRIR O FIM DA PÁGINA.
+ *
+ * O protótipo põe a barra de ação em `position:fixed;bottom:0` e não reserva espaço para
+ * ela. Quem rola até o fim perde a última faixa do rodapé debaixo dela, que é justamente
+ * onde estão Termos, Política e Suporte. Numa página de marketing isso é um incômodo; numa
+ * que precisa dar acesso a documento legal, é um problema.
+ *
+ * O respiro fica na PÁGINA e não na barra, para o cálculo não depender da altura dela em
+ * cada quebra de linha do texto.
+ */
+.landing-prototipo {
+  padding-bottom: 96px;
+}
+
+@media (max-width: 700px) {
+  /* Em tela estreita a barra quebra em duas linhas e ocupa mais altura. */
+  .landing-prototipo {
+    padding-bottom: 132px;
+  }
 }
