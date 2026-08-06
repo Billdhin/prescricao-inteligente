@@ -22,7 +22,21 @@ import { fundirMonitoramento, type EfeitoMonitoramento } from "@/data/farmacos";
  * palavra final do profissional. Não há RCT cravando estes multiplicadores.
  */
 export interface ModProgressao {
-  /** teto de RPE na escala 0 a 10 do registro do aluno; acima dele, segura a progressão */
+  /**
+   * Teto de RPE (escala 0 a 10) **DO BLOCO AERÓBIO**. Só é aplicado dentro de
+   * `alvoAerobioSemana`; a dose de FORÇA é limitada por `modDose.rirMinimo` e
+   * `modDose.cargaRelativaMax`, que são outros campos.
+   *
+   * A precisão importa e faltava. O campo se documentava como "teto de RPE" sem dizer de
+   * qual modalidade, e o resultado foi que ninguém percebeu que este arquivo JÁ SABE
+   * separar as duas coisas. O fundador levantou justamente isso: existe condição em que o
+   * aeróbio pede intensidade contida e o resistido não pede, e ele achava que a plataforma
+   * não conseguia expressar. Conseguia; estava escondido atrás de um nome ambíguo.
+   *
+   * Então, na prática: condição que declara `pseTeto` e NÃO declara `rirMinimo` está
+   * dizendo "segure o aeróbio, deixe a força seguir a faixa do objetivo". É uma frase
+   * clínica legítima e agora ela é dizível de propósito, e não por acidente.
+   */
   pseTeto?: number;
   /** fração do incremento normal (0..1): perfil que progride num passo menor */
   fatorIncremento?: number;
@@ -489,22 +503,63 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
      * fala de teto de carga nem de penalidade por métrica, fala de COMPOSIÇÃO e de FORMATO,
      * e o motor não tinha onde receber isso. `modAerobio` existe por causa deste caso.
      */
+    /*
+     * A DOSE DESTA CONDIÇÃO É DIFERENTE POR MODALIDADE, e é o primeiro caso do arquivo a
+     * dizer isso de propósito.
+     *
+     * `pseTeto` só age no bloco AERÓBIO (ver a documentação do campo). Declarar teto aqui e
+     * NÃO declarar `rirMinimo` é a frase clínica "segure o aeróbio na faixa moderada e
+     * deixe a força seguir a faixa do objetivo". O motor sempre soube dizer isso; nenhuma
+     * condição usava.
+     *
+     * Por que moderado no aeróbio, com quatro trabalhos e não com um:
+     * - `gajanand-dm2-2024` (ensaio, 69 pessoas): intervalado combinado e contínuo moderado
+     *   combinado melhoraram a HbA1c de forma SEMELHANTE (-0,7 e -1,2).
+     * - `magalhaes-dm2-2018` (ensaio de UM ANO, 80 pessoas): nenhum dos dois alterou HbA1c,
+     *   e o contínuo moderado com resistido foi o único a melhorar composição corporal e
+     *   aptidão cardiorrespiratória.
+     * - `wang-hiit-dm2-2026` (metanálise, 20 ensaios): intervalado melhor que tratamento
+     *   farmacológico de rotina, e SEM diferença contra o contínuo.
+     * - `mannucci-dm2-2021` (metanálise em rede, 25 ensaios): o combinado supera aeróbio ou
+     *   resistido isolados.
+     *
+     * Ou seja, o formato do aeróbio não decide o desfecho e o contínuo moderado é o que tem
+     * o melhor lastro de duração. Eu tinha marcado o intervalado como "indicado" numa
+     * versão anterior desta regra, com base em UMA metanálise; com os quatro na mesa, isso
+     * era forte demais e virou equivalência.
+     *
+     * O que NÃO está escrito aqui, e não está porque não achei o trabalho: um teto de
+     * intensidade para o RESISTIDO neste perfil. Enquanto ele não aparecer, a força segue a
+     * faixa do objetivo, que é o que a ausência de `rirMinimo` significa.
+     */
+    /*
+     * ATENÇÃO, DÉBITO CONHECIDO E MEDIDO: este teto NÃO MORDE hoje, e fica aqui declarado
+     * com o aviso em vez de ser escondido.
+     *
+     * A faixa aeróbia do produto INTEIRO é uma só, "Moderada: cerca de 64 a 76% da FCmáx,
+     * RPE 5 a 6 de 10", igual para todos os objetivos e todas as condições. Um teto de 6 não
+     * corta nada porque 6 já é o máximo da banda, e um teto de 5 não seria cautela, seria
+     * achatamento: prenderia o RPE num valor único e produziria a linha reta de intensidade
+     * que o `check:progressao` reprova, exatamente como aconteceu com a reserva 3 da
+     * hipertensão nesta mesma rodada.
+     *
+     * Ou seja, a impossibilidade de dizer "aeróbio leve a moderado nesta condição e mais
+     * intenso naquela" não vem de falta de evidência: vem de o produto ter UMA banda
+     * aeróbia. Enquanto as faixas não expressarem leve, moderada e vigorosa com fonte,
+     * nenhuma condição consegue modular intensidade aeróbia, por mais artigo que se junte.
+     *
+     * O teto continua declarado porque as referências que o sustentam são reais e porque o
+     * dia em que a banda abrir ele passa a valer sozinho.
+     */
+    modProgressao: {
+      pseTeto: 6,
+      motivo: "Aeróbio na faixa moderada, que é onde está o lastro de maior duração, sem travar a intensidade do treino resistido.",
+      cautela: true,
+      refId: ["magalhaes-dm2-2018", "gajanand-dm2-2024", "mannucci-dm2-2021"],
+    },
     modAerobio: {
-      /*
-       * wang-hiit-dm2-2026 mediu, em 20 ensaios e 981 participantes, melhora de HbA1c
-       * (-1,40), glicemia de jejum (-1,24) e HOMA-IR (-1,03) com intervalado contra
-       * tratamento farmacológico de rotina. E mediu também o que impede exagero: contra o
-       * contínuo moderado NÃO houve diferença significativa. Por isso "indicado", que aqui
-       * quer dizer com benefício demonstrado neste perfil, e não "superior ao contínuo".
-       *
-       * mannucci-dm2-2021 entra por outro motivo, e é o que mais muda o plano: na
-       * metanálise em rede de 25 ensaios, o combinado (aeróbio mais resistido) reduziu mais
-       * a HbA1c (-0,4) que o aeróbio sozinho ou o resistido sozinho (-0,2 cada). É o
-       * respaldo de o plano do aluno com DM2 nunca ser só força.
-       */
-      intervaladoIndicado: true,
-      motivo: "Formato intervalado com benefício glicêmico demonstrado neste perfil, sem superioridade sobre o contínuo, e treino combinado superior a aeróbio ou resistido isolados.",
-      refId: ["wang-hiit-dm2-2026", "mannucci-dm2-2021"],
+      motivo: "Formato contínuo ou intervalado, sem superioridade demonstrada de um sobre o outro; o que muda o desfecho é o treino ser combinado.",
+      refId: ["gajanand-dm2-2024", "wang-hiit-dm2-2026", "mannucci-dm2-2021"],
     },
     cuidados: [
       "Atenção a sinais compatíveis com hipoglicemia (tontura, sudorese fria, confusão): pausar e reavaliar.",
@@ -512,7 +567,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       "Consistência semanal tende a valer mais que picos de intensidade.",
     ],
     penalidades: [],
-    refs: ["colberg-2016", "sbd-2023", "mannucci-dm2-2021", "wang-hiit-dm2-2026"],
+    refs: ["colberg-2016", "sbd-2023", "mannucci-dm2-2021", "wang-hiit-dm2-2026", "gajanand-dm2-2024", "magalhaes-dm2-2018"],
   },
 
   "idoso-destreinado": {

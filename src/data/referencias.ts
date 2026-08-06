@@ -208,6 +208,27 @@ export const referencias: Referencia[] = [
     nota: "Revisão sistemática com 19 estudos, dos quais 8 entraram na metanálise, em pessoas com pré-diabetes. Os autores relatam efeito favorável sobre tolerância oral à glicose, glicemia de jejum, HbA1c, consumo máximo de oxigênio e composição corporal, e concluem que a atividade física ajuda a retardar a progressão para diabetes tipo 2. RESSALVA que o produto faz questão de declarar: os intervalos de confiança reportados para os dois desfechos glicêmicos principais CRUZAM O ZERO (glicemia de jejum -0,05, IC 95% -0,14 a 0,04), ou seja, a direção é favorável mas a precisão é baixa. Por isso esta referência sustenta orientação, e não número de dose.",
   },
   {
+    id: "gajanand-dm2-2024",
+    autores: "Gajanand T, Cox ER, Keating SE, Brown WJ, Hordern MD, Burton NW, Chachay VS, Gomersall SR, Fassett RG, Coombes JS",
+    titulo: "Low-volume combined aerobic and resistance high-intensity interval training in type 2 diabetes: a randomised controlled trial",
+    fonte: "BMJ Open Sport & Exercise Medicine, 10(4):e002046",
+    ano: 2024,
+    doi: "10.1136/bmjsem-2024-002046",
+    pmid: "39381412",
+    nota: "Ensaio randomizado com 69 pessoas pouco ativas com diabetes tipo 2. Comparou intervalado COMBINADO (aeróbio mais resistido, 78 min por semana) com contínuo moderado COMBINADO (210 min por semana) e lista de espera. Em 8 semanas, os dois melhoraram a HbA1c de forma semelhante (-0,7 e -1,2 ponto percentual contra o controle), além de massa gorda, massa magra e capacidade de exercício. O que o motor tira daqui: o formato do aeróbio não decide o resultado, e o intervalado de baixo volume é uma opção de tempo, não de eficácia superior. Registra também um dado de adesão que vale citar: aos 12 meses, na fase autodirigida, quase todas as medidas voltaram ao ponto de partida.",
+  },
+  {
+    id: "magalhaes-dm2-2018",
+    autores: "Magalhães JP, Júdice PB, Ribeiro R, Andrade R, Raposo J, Dores H, Bicho M, Sardinha LB",
+    titulo:
+      "Effectiveness of high-intensity interval training combined with resistance training versus continuous moderate-intensity training combined with resistance training in patients with type 2 diabetes: A one-year randomized controlled trial",
+    fonte: "Diabetes, Obesity and Metabolism, 21(3):550-559",
+    ano: 2018,
+    doi: "10.1111/dom.13551",
+    pmid: "30284352",
+    nota: "Ensaio randomizado de UM ANO com 80 pessoas com diabetes tipo 2. Nem o intervalado com resistido nem o contínuo moderado com resistido alteraram a HbA1c. O contínuo moderado com resistido, porém, reduziu gordura corporal total, andróide e ginóide, e foi o único a aumentar a aptidão cardiorrespiratória. É o trabalho de maior duração da coleção sobre formato aeróbio no DM2, e ele empurra o padrão da casa para o contínuo moderado combinado, sem tratar o intervalado como risco.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",
