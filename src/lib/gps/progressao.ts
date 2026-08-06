@@ -61,6 +61,34 @@ function esforcoDoBloco(b: BlocoSessao): number | null {
   if (b.cargaRelativaAlvo != null) return b.cargaRelativaAlvo;
   if (b.rirAlvo != null) return Math.max(0, 100 - b.rirAlvo * 10);
   if (b.rpeAlvo != null) return b.rpeAlvo * 10;
+
+  /*
+   * REPETIÇÃO COMO SINAL DE INTENSIDADE, QUANDO A FAIXA NÃO DÁ NÚMERO.
+   *
+   * Emagrecimento e Força expressam intensidade como TEXTO ("moderada", "alta"), sem
+   * %1RM e sem RIR. `meioFaixa` não parseia isso e devolvia null, então os blocos de
+   * força saíam INTEIROS da conta e a linha de intensidade do gráfico virava o PSE do
+   * aeróbio sozinho. Medido num plano semestral de Emagrecimento para hipertensão
+   * estágio 2: intensidade 50 nas 24 semanas, uma reta. Sem condição, dois valores em 24
+   * semanas. E em Força, que é o objetivo definido POR intensidade, ela era invisível.
+   *
+   * O motor move a intensidade desses objetivos pelas REPETIÇÕES: dentro da mesma faixa
+   * citada, menos repetições é mais carga na barra. É o mesmo raciocínio que o
+   * check:progressao já usa como desempate. Então a posição de `repsAlvo` dentro da faixa
+   * exibida, invertida, é o sinal que existe, e ler esse sinal não inventa número nenhum:
+   * ele já está no alvo que o plano entrega.
+   *
+   * O índice é RELATIVO, como o resto deste agregado, e o gráfico já declara isso em tela
+   * ("volume, intensidade e complexidade relativos, sem unidade absoluta").
+   */
+  if (b.repsAlvo != null) {
+    const iv = intervaloDe(b.reps ?? "");
+    if (iv && Number.isFinite(iv.max) && iv.max > iv.min) {
+      const pos = (b.repsAlvo - iv.min) / (iv.max - iv.min);
+      // Invertido: no piso da faixa (menos repetições) o esforço é o mais alto dela.
+      return Math.round((1 - Math.min(1, Math.max(0, pos))) * 100);
+    }
+  }
   return meioFaixa(b.intensidade);
 }
 

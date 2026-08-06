@@ -20,6 +20,7 @@
 
 import { gerarPlano } from "../src/lib/gps/periodizacao";
 import { intervaloDe } from "../src/lib/gps/faixasParse";
+import { agregadoSemana } from "../src/lib/gps/progressao";
 import { assinaturaCarga } from "../src/lib/gps/assinaturaSemana";
 import { OBJETIVOS } from "../src/lib/gps/engine";
 import { specialGroups } from "../src/data/specialGroups";
@@ -797,7 +798,66 @@ function verificarProgressaoEDescanso(): string[] {
   return problemas;
 }
 
+/**
+ * A LINHA DE INTENSIDADE DO GRÁFICO NÃO PODE SER UMA RETA.
+ *
+ * O Filipe mandou o print: plano semestral de Emagrecimento para hipertensão estágio 2,
+ * periodização linear, e a barra de intensidade saía RETA nas 24 semanas.
+ *
+ * A causa não era o motor: era o AGREGADO que alimenta o gráfico. `esforcoDoBloco` lia
+ * %1RM, RIR e PSE, e devolvia null para intensidade em TEXTO. Emagrecimento e Força
+ * expressam intensidade como "moderada" e "alta", então os três blocos de força saíam
+ * inteiros da conta e a linha virava o PSE do aeróbio sozinho. Com o teto de PSE do perfil
+ * clínico prendendo esse PSE em 5, sobrava um único valor nas 24 semanas.
+ *
+ * Medido antes: Emagrecimento com hipertensão estágio 2 tinha UM valor distinto de
+ * intensidade em 24 semanas. Força, que é o objetivo definido POR intensidade, tinha dois.
+ *
+ * A asserção cobre o gráfico, não o motor: é sobre o que o profissional VÊ.
+ */
+function verificarCurvaDeIntensidade(): string[] {
+  const problemas: string[] = [];
+  const NIVEIS_T: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
+  let avaliados = 0;
+
+  for (const objetivo of OBJETIVOS as GpsObjetivo[])
+    for (const nivel of NIVEIS_T)
+      for (const grupo of [undefined, "hipertensao-estagio-2", "obesidade-grau-3"]) {
+        const p = gerarPlano({ objetivo, nivel, semanas: 24, frequencia: FREQ, grupoEspecial: grupo, modeloPreferido: "linear" });
+        const semanas = p.principal.mesociclos.flatMap((m) => m.microciclos);
+        if (semanas.length < 8) continue;
+        avaliados++;
+        const id = `${objetivo}/${nivel}/${grupo ?? "sem condição"}`;
+        const ints = semanas.map((w) => agregadoSemana(w).intensidade).filter((n): n is number => n != null);
+
+        if (!ints.length) {
+          problemas.push(`${id}: o gráfico não tem NENHUM valor de intensidade nas ${semanas.length} semanas`);
+          continue;
+        }
+        // Uma reta é o defeito exato do print. Duas casas em 24 semanas também não é curva.
+        const distintos = new Set(ints.map((n) => Math.round(n * 100) / 100)).size;
+        if (distintos < 3)
+          problemas.push(
+            `${id}: a linha de intensidade tem só ${distintos} valor(es) distinto(s) em ${semanas.length} semanas (${[...new Set(ints)].slice(0, 4).join(", ")})`,
+          );
+      }
+  if (avaliados < 20) problemas.push(`controle positivo: só ${avaliados} planos avaliados; a asserção perdeu o sentido`);
+  return problemas;
+}
+
 /* ----------------------------------- Execução ------------------------------------- */
+
+const falhaCurva = verificarCurvaDeIntensidade();
+if (falhaCurva.length) {
+  console.error("\n[check:progressao] LINHA DE INTENSIDADE CHAPADA NO GRÁFICO:\n");
+  for (const p of falhaCurva.slice(0, 10)) console.error(`  - ${p}`);
+  if (falhaCurva.length > 10) console.error(`  ... e mais ${falhaCurva.length - 10}`);
+  console.error(
+    "\n  O gráfico é a leitura que o profissional faz do plano. Intensidade reta ali significa\n" +
+      "  que o agregado não enxerga a variação que o motor produziu. Ver esforcoDoBloco.\n",
+  );
+  process.exit(1);
+}
 
 const falhaProgDesc = verificarProgressaoEDescanso();
 if (falhaProgDesc.length) {
