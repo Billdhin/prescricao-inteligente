@@ -322,6 +322,27 @@ export const referencias: Referencia[] = [
     nota: "Metanálise em rede de 24 ensaios randomizados, 1.298 participantes idosos com obesidade sarcopênica e NOVE estratégias distintas de reabilitação. Separa por desfecho: para força de preensão, o treino RESISTIDO ficou em primeiro (diferença média 3,96 kg, SUCRA 90,9%), à frente do multicomponente; para massa gorda, SÓ o resistido alcançou significância (-2,30 kg, SUCRA 79,0%); para IMC, só o multicomponente (-1,08); e para percentual de gordura os dois funcionaram, com o multicomponente à frente. RESSALVA que os autores fazem e que o produto repete: NENHUMA intervenção mostrou vantagem significativa sobre o cuidado usual para o índice de massa muscular esquelética, ou seja, força e composição melhoram mas a evidência de ganho de massa segue limitada e incerta.",
   },
   {
+    id: "fernandez-lombar-2022",
+    autores: "Fernández-Rodríguez R, Álvarez-Bueno C, Cavero-Redondo I, Torres-Costoso A, Pozuelo-Carrascosa DP, Reina-Gutiérrez S, Pascual-Morena C, Martínez-Vizcaíno V",
+    titulo:
+      "Best Exercise Options for Reducing Pain and Disability in Adults With Chronic Low Back Pain: Pilates, Strength, Core-Based, and Mind-Body. A Network Meta-analysis",
+    fonte: "Journal of Orthopaedic & Sports Physical Therapy, 52(8):505-521",
+    ano: 2022,
+    doi: "10.2519/jospt.2022.10671",
+    pmid: "35722759",
+    nota: "Metanálise em rede de 118 ensaios randomizados e 9.710 adultos de 18 a 65 anos com dor lombar crônica, a maior coleção desta base sobre uma única condição. Praticamente TODOS os tipos de exercício melhoraram dor e incapacidade, com DUAS exceções que valem tanto quanto os positivos: alongamento NÃO reduziu dor e o método McKenzie NÃO reduziu incapacidade. As mais efetivas para dor foram Pilates, mente e corpo e exercícios de core; para incapacidade, Pilates, força e core. O Pilates teve a maior probabilidade de ser o melhor (SUCRA 93% para dor e 98% para incapacidade). Os autores descrevem o formato dos programas mais benéficos: 1 a 2 sessões por semana de Pilates ou força, sessões abaixo de 60 min, e programas de 3 a 9 semanas.",
+  },
+  {
+    id: "mo-artrose-2023",
+    autores: "Mo L, Jiang B, Mei T, Zhou D",
+    titulo: "Exercise Therapy for Knee Osteoarthritis: A Systematic Review and Network Meta-analysis",
+    fonte: "Orthopaedic Journal of Sports Medicine, 11(5):23259671231172773",
+    ano: 2023,
+    doi: "10.1177/23259671231172773",
+    pmid: "37346776",
+    nota: "Metanálise em rede de 39 estudos e 2.646 participantes com osteoartrite de joelho, comparando CINCO modalidades: exercício aquático, ciclismo estacionário, treino resistido, exercício tradicional e ioga. Todas melhoraram a condição, e o ranking varia POR DESFECHO: o aquático foi o melhor para dor pela escala visual analógica e pelo KOOS de dor; o ciclismo, para dor pelo WOMAC e para o teste de caminhada de 6 minutos; a ioga, para rigidez, função, atividades diárias e qualidade de vida; e o resistido, para sintomas do KOOS. RESSALVAS declaradas pelos autores e repetidas aqui: o nível de evidência é 3, a maioria dos estudos não cegou participantes nem pesquisadores, com alto risco de viés de desempenho, e o registro do artigo no PubMed traz o tipo como revisão e não como metanálise.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",

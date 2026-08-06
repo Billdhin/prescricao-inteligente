@@ -684,6 +684,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     restricaoSugerida: "lombar_sensivel",
     cuidados: [
       "A restrição “Dor lombar” foi pré-selecionada: exercícios com alta demanda lombar são penalizados no ranking.",
+      // `fernandez-lombar-2022`, rede de 118 ensaios e 9.710 participantes, a maior coleção
+      // desta base sobre uma condição só. O achado NEGATIVO é o que mais muda a conduta:
+      // alongamento não reduziu dor e o método McKenzie não reduziu incapacidade, enquanto
+      // praticamente todo o resto funcionou. Alongar por causa de dor lombar é o reflexo
+      // mais comum do campo, e é o que a rede não sustenta.
+      "Força, core e Pilates estão entre os mais efetivos para dor e incapacidade; alongamento isolado NÃO reduziu dor nesta condição.",
+      "Programas de 1 a 2 sessões por semana, sessões abaixo de 60 min e blocos de 3 a 9 semanas descrevem os formatos mais benéficos.",
       "Dor leve que não piora ao longo da sessão costuma ser tolerável; dor crescente pede ajuste de amplitude/carga.",
     ],
     // a penalização vem da restrição pré-selecionada (evita punir duas vezes)
@@ -695,7 +702,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["nice-ng59"],
     },
-    refs: ["nice-ng59"],
+    refs: ["fernandez-lombar-2022", "nice-ng59"],
   },
 
   "osteoartrite-joelho": {
@@ -705,6 +712,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     restricaoSugerida: "joelho_dor",
     cuidados: [
       "A restrição “Dor no joelho” foi pré-selecionada: alta demanda de joelho é penalizada no ranking.",
+      // `mo-artrose-2023`, rede de 39 estudos comparando cinco modalidades. O ranking muda
+      // POR DESFECHO, e é isso que o profissional precisa para escolher: aquático e ciclismo
+      // lideram na dor, ioga na rigidez e na função, resistido nos sintomas. Nenhuma
+      // modalidade ganha em tudo, e por isso aqui a escolha não vira regra automática do
+      // motor: vira informação para quem conhece a queixa principal do aluno.
+      "As cinco modalidades estudadas melhoraram a condição; o melhor depende da queixa: aquático e bicicleta lideram na dor, ioga na rigidez e na função, resistido nos sintomas.",
       "Amplitude confortável; progrida guiado pela resposta de dor nas 24–48h seguintes.",
     ],
     penalidades: [],
@@ -715,7 +728,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["oarsi-2019", "acr-2019"],
     },
-    refs: ["oarsi-2019", "acr-2019"],
+    refs: ["mo-artrose-2023", "oarsi-2019", "acr-2019"],
   },
 
   /* --------- Condições adicionais (cuidados + adaptações do motor) --------- */
