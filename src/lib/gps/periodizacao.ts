@@ -923,10 +923,26 @@ function tendenciasDoModelo(
  */
 const CADENCIA_DELOAD = 4;
 
-/** Semanas de descarga do macrociclo, por número ABSOLUTO da semana no plano. */
-function semanasDeDescarga(semanasTotais: number): Set<number> {
+/**
+ * Semanas de descarga do macrociclo, por número ABSOLUTO da semana no plano.
+ *
+ * A cadência é 4 por padrão, e a CONDIÇÃO pode encurtá-la. Seis condições já declaravam
+ * `modProgressao.descargaCadaSemanas` (obesidade grau 3 pede a cada 3 semanas, grau 2 a
+ * cada 4, grau 1 a cada 5), e por muito tempo esse campo foi lido por ninguém: existia a
+ * declaração, a fusão pelo mínimo, e nenhum consumidor. Quem tinha obesidade grau 3
+ * descansava na mesma cadência de quem não tinha condição alguma.
+ *
+ * É o mesmo defeito que o cabeçalho de `alvo.ts` chama de o mais comum deste motor, a
+ * cautela declarada e não aplicada, e é a razão de a régua de distintividade encontrar
+ * dez condições com dose idêntica.
+ *
+ * Só encurta, nunca alonga: `Math.min` com o padrão. Uma condição não pode fazer o aluno
+ * descansar MENOS que o plano genérico, do mesmo jeito que a camada de fármacos só aperta.
+ */
+function semanasDeDescarga(semanasTotais: number, cadenciaDaCondicao?: number): Set<number> {
+  const passo = Math.max(2, Math.min(CADENCIA_DELOAD, cadenciaDaCondicao ?? CADENCIA_DELOAD));
   const set = new Set<number>();
-  for (let s = CADENCIA_DELOAD; s <= semanasTotais; s += CADENCIA_DELOAD) set.add(s);
+  for (let s = passo; s <= semanasTotais; s += passo) set.add(s);
   return set;
 }
 
@@ -984,7 +1000,7 @@ function montarMacrocicloGenerico(
   const resto = semanas - base * nMeso;
 
   const duracoes = Array.from({ length: nMeso }, (_, m) => base + (m < resto ? 1 : 0));
-  const descargas = semanasDeDescarga(semanas);
+  const descargas = semanasDeDescarga(semanas, regraClinicaDoPlano(input)?.modProgressao?.descargaCadaSemanas);
   const rampa = rampaNoMacro(modelo, duracoes, descargas);
   // Ondas do modelo de blocos (acúmulo -> intensificação -> realização se repetem a cada 3
   // mesociclos). A onda seguinte lê a MESMA faixa a partir de um piso mais alto, senão o plano
@@ -1192,7 +1208,7 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
   const progride = sequencia.map(({ estendida }) => !estendida);
   // A descarga é do CALENDÁRIO do plano, não da fase: no caminho clínico o mesociclo é
   // uma fase da jornada e quase nunca chega a 4 semanas, que era a condição antiga.
-  const descargas = semanasDeDescarga(semanas);
+  const descargas = semanasDeDescarga(semanas, regraClinicaDoPlano(input)?.modProgressao?.descargaCadaSemanas);
   const rampa = rampaNoMacro(modelo, duracoes, descargas, progride);
   const mesociclos: Mesociclo[] = [];
   let cursor = 1;

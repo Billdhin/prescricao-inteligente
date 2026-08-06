@@ -225,8 +225,13 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     complexidadeMax: 60,
     modProgressao: {
       pseTeto: 7,
+      // Estava 5, e 5 nunca poderia valer. O campo se documenta como "menor = mais
+      // frequente", a fusão é por mínimo e o plano genérico já descarrega a cada 4: pedir
+      // 5 significaria dar ao aluno com obesidade MENOS recuperação que ao aluno sem
+      // condição, que é o oposto da escada que os três graus desenham. Fica no padrão; a
+      // diferenciação real da escada mora no grau 3, que pede 3.
+      descargaCadaSemanas: 4,
       fatorIncremento: 0.6,
-      descargaCadaSemanas: 5,
       motivo: "Impacto controlado e adesão antes da intensidade: progride em passos pequenos, guiado por PSE.",
       cautela: true,
       refId: ["donnelly-2009", "acsm-getp11"],
