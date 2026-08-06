@@ -73,6 +73,7 @@ const SLUGS_COM_POSE: string[] = [
   "abducao-quadril-elastico",
   "rosca-elastico",
   "remada-unilateral-elastico",
+  "extensao-quadril-elastico",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
