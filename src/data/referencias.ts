@@ -158,6 +158,16 @@ export const referencias: Referencia[] = [
     nota: "Metanálise de 20 ensaios e 981 participantes com DM2, idade média 58 anos, intervenções de 8 semanas ou mais. Contra tratamento farmacológico de rotina, o intervalado de alta intensidade melhorou glicemia de jejum (diferença padronizada -1,24), HbA1c (-1,40), HOMA-IR (-1,03) e insulina de jejum (-0,97). O dado que mais importa para a prescrição é o que NÃO deu diferença: intervalado contra contínuo moderado não diferiu de forma significativa. Por isso o motor trata o formato intervalado como OPÇÃO com benefício demonstrado neste perfil, e não como superior ao contínuo. O protocolo mais efetivo do conjunto foi de 12 semanas, 3 vezes por semana.",
   },
   {
+    id: "nam-nafld-2023",
+    autores: "Nam H, Yoo JJ, Cho Y, Kang SH, Ahn SB, Lee HW, Jun DW, Song DS, Choi M",
+    titulo: "Effect of exercise-based interventions in nonalcoholic fatty liver disease: A systematic review with meta-analysis",
+    fonte: "Digestive and Liver Disease, 55(9):1178-1186",
+    ano: 2023,
+    doi: "10.1016/j.dld.2022.12.013",
+    pmid: "36653265",
+    nota: "Metanálise de 11 ensaios randomizados e 577 adultos com doença hepática gordurosa, com gordura hepática medida por ressonância. O exercício reduziu a gordura intra-hepática (diferença média -2,03) e a ALT (-4,17). O achado que o motor usa é de HORIZONTE, e não de dose: manter o exercício por MAIS DE 3 MESES melhorou a gordura hepática (-3,62), enquanto menos de 3 meses NÃO alcançou significância (-1,23, p = 0,11). Também registra o que não melhorou: IMC e resistência à insulina não mudaram de forma significativa, o que sustenta não prometer emagrecimento como desfecho desta condição.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",

@@ -1345,6 +1345,20 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
     // condição em lugar nenhum do plano; o motor de fato a ignorava, e mesmo depois de
     // passar a usá-la, um plano que a aplica em silêncio não é auditável.
     frasePerfilClinico(input),
+    /*
+     * Horizonte abaixo do que a evidência da jornada mediu.
+     *
+     * A frase NÃO nomeia a condição, porque este texto também é impresso para o aluno, e a
+     * regra da casa é que documento de aluno não carrega rótulo clínico. Ela também não
+     * muda o plano: quem decide o horizonte é o profissional, e alongar em silêncio seria
+     * decidir no lugar dele. O motor só avisa.
+     */
+    (() => {
+      const min = regraClinicaDoPlano(input)?.horizonteMinimoSemanas;
+      return min && input.semanas < min
+        ? `Sobre a duração: nesta jornada, o efeito no desfecho principal foi medido em acompanhamentos de ${min} semanas ou mais, e este plano tem ${input.semanas}. A dose continua correta; o que muda é o tempo de exposição, então considere encadear um novo ciclo ao fim deste.`
+        : "";
+    })(),
     `As faixas de séries, repetições, intensidade e intervalo seguem as diretrizes citadas, sempre como faixa e sob o seu critério. ${faixa.ressalva}`,
     alternativa
       ? `Uma alternativa (${getModelo(alternativa).nome}) é oferecida porque a evidência sustenta mais de uma estratégia; as diferenças costumam ser pequenas quando o volume é equiparado.`

@@ -217,6 +217,22 @@ export interface GroupGpsRule extends GroupRuleInput {
   modDose?: ModDose;
   modAerobio?: ModAerobio;
   /**
+   * Horizonte mínimo, em semanas, a partir do qual a evidência DESTA condição mediu efeito
+   * no desfecho que importa para ela.
+   *
+   * É um eixo que não existia. Todos os modificadores deste arquivo apertam a DOSE, e havia
+   * evidência específica de condição que não fala de dose nenhuma: em esteatose hepática, a
+   * metanálise de Nam (2023) mediu redução de gordura hepática em intervenções acima de 3
+   * meses e NÃO alcançou significância abaixo disso. Sem este campo, esse achado não teria
+   * onde entrar, que é exatamente o motivo de o acervo do produto ser pequeno: faltava
+   * superfície, não faltava artigo.
+   *
+   * Ele NÃO encurta nem alonga o plano por conta própria. Quem decide o horizonte é o
+   * profissional; o motor apenas DIZ, no raciocínio, quando o plano está abaixo do que a
+   * evidência da jornada mediu. Mudar o horizonte em silêncio seria decidir no lugar dele.
+   */
+  horizonteMinimoSemanas?: number;
+  /**
    * Qual instrumento DEIXA de guiar a intensidade deste perfil e qual entra no lugar. Hoje
    * nenhum grupo especial declara isto (a condição em si não invalida um parâmetro); quem
    * declara são as classes de medicação, que produzem regras com esta mesma forma. O campo
@@ -644,12 +660,29 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   "esteatose-hepatica": {
     slug: "esteatose-hepatica",
     nome: "Esteatose hepática metabólica",
+    /*
+     * Outra das sete condições que eram rótulo puro, e o caso que provou o argumento desta
+     * rodada: não faltava artigo, faltava onde encaixá-lo.
+     *
+     * nam-nafld-2023, metanálise de 11 ensaios randomizados e 577 adultos com gordura
+     * hepática medida por ressonância, não diz nada sobre teto de carga, penalidade por
+     * métrica ou passo de progressão, que era todo o vocabulário disponível aqui. O achado
+     * dela é de TEMPO: acima de 3 meses a gordura hepática caiu (-3,62) e abaixo de 3 meses
+     * não alcançou significância (-1,23, p = 0,11). Por isso `horizonteMinimoSemanas`
+     * existe, e por isso esta condição ficou anos sem parâmetro nenhum.
+     *
+     * O cuidado que já estava escrito aqui, "aeróbio regular mais força reduzem a gordura
+     * hepática", segue verdadeiro e agora tem a metanálise por trás dele em vez de só a
+     * diretriz geral de atividade física.
+     */
+    horizonteMinimoSemanas: 12,
     cuidados: [
       "Aeróbio regular + força reduzem a gordura hepática junto da perda de peso gradual (encaminhar nutrição).",
       "Perda de peso agressiva não é o alvo do treino; priorize a consistência.",
+      "A gordura hepática respondeu em acompanhamentos acima de 3 meses; abaixo disso o efeito não foi significativo.",
     ],
     penalidades: [],
-    refs: ["donnelly-2009", "acsm-getp11"],
+    refs: ["donnelly-2009", "acsm-getp11", "nam-nafld-2023"],
   },
   sarcopenia: {
     slug: "sarcopenia",
@@ -948,6 +981,12 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
     evitarMembrosAcimaDoCoracao: rules.some((r) => r.evitarMembrosAcimaDoCoracao) || undefined,
     modDose: fundirModDose(rules.map((r) => r.modDose).filter((m): m is ModDose => Boolean(m))),
     modAerobio: fundirModAerobio(rules.map((r) => r.modAerobio).filter((m): m is ModAerobio => Boolean(m))),
+    // Mais conservador aqui é o horizonte MAIOR: se uma condição precisa de 12 semanas e
+    // outra de 24, o aluno que tem as duas precisa das 24 para o segundo desfecho aparecer.
+    horizonteMinimoSemanas: (() => {
+      const hs = rules.map((r) => r.horizonteMinimoSemanas).filter((n): n is number => typeof n === "number");
+      return hs.length ? Math.max(...hs) : undefined;
+    })(),
     refs,
     modProgressao: fundirModProgressao(
       rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),
