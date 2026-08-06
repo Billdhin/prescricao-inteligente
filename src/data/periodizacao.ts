@@ -706,6 +706,46 @@ export const FLEX_FECHO: ComplementoFlexibilidade = {
  * (garber-2011); a divisão em uma dose menor por sessão é escolha prudente de complemento,
  * declarada como cautela, para somar ao foco do objetivo sem competir com ele.
  */
+/**
+ * AS TRÊS BANDAS DE INTENSIDADE AERÓBIA.
+ *
+ * Até aqui o produto INTEIRO tinha uma banda só, a moderada, escrita à mão em dois pontos
+ * do código e igual para todos os objetivos e todas as 23 condições. A consequência foi
+ * medida na rodada de evidência: nenhuma condição conseguia modular intensidade aeróbia,
+ * porque não havia para onde modular. Um teto de RPE 6 não cortava nada, já que 6 era o
+ * topo da única banda, e um teto de 5 não era cautela, era achatar a linha de intensidade
+ * do gráfico.
+ *
+ * Ou seja, a impossibilidade de dizer "aeróbio leve nesta condição e vigoroso naquela" não
+ * vinha de falta de evidência. Vinha da falta desta tabela.
+ *
+ * Os números são as três linhas da classificação de intensidade do position stand do ACSM
+ * (`garber-2011`), a mesma tabela de onde a banda moderada de "64 a 76% da FCmáx" já saía.
+ * Nada aqui é interpolado nem arredondado por conveniência: a linha do meio é literalmente
+ * a que já estava no código, e as outras duas são as vizinhas dela.
+ *
+ * A escala de 0 a 10 acompanha, porque é a que o aluno registra no app.
+ */
+export type BandaAerobia = "leve" | "moderada" | "vigorosa";
+
+export const BANDAS_AEROBIAS: Record<BandaAerobia, { intensidade: string; refIds: string[] }> = {
+  leve: {
+    intensidade: "Leve: cerca de 57 a 63% da FCmáx (dá para conversar e cantar; RPE 3 a 4 de 10)",
+    refIds: ["garber-2011"],
+  },
+  moderada: {
+    intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 5 a 6 de 10)",
+    refIds: ["garber-2011"],
+  },
+  vigorosa: {
+    intensidade: "Vigorosa: cerca de 77 a 95% da FCmáx (frases curtas, sem conversar; RPE 7 a 8 de 10)",
+    refIds: ["garber-2011"],
+  },
+};
+
+/** Ordem de severidade, para a fusão conservadora escolher a MENOR banda entre condições. */
+export const ORDEM_BANDA: Record<BandaAerobia, number> = { leve: 0, moderada: 1, vigorosa: 2 };
+
 export function complementoAerobioPadrao(sessoesPorSemana: 1 | 2): ComplementoAerobio {
   return {
     duracao: "15 a 25 min",

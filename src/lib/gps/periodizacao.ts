@@ -24,6 +24,7 @@ import {
   type Tendencia,
   type FaixaObjetivo,
   type EnfaseSessao,
+  BANDAS_AEROBIAS,
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -605,7 +606,7 @@ function montarSessoes(
       // no mesmo padrão da dose de força: alvo dentro da faixa citada, progredindo por posição.
       const doseAero = {
         duracao: "20 a 40 min",
-        intensidade: "Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 5 a 6 de 10)",
+        intensidade: intensidadeDaBanda("Moderada: cerca de 64 a 76% da FCmáx (teste da conversa; RPE 5 a 6 de 10)", regraClinica),
       };
       blocos.push({
         id: nid("blk"),
@@ -649,7 +650,7 @@ function montarSessoes(
     // (garber-2011), nunca inventadas.
     const comp = faixa.complementoAerobio;
     if (comp && i < comp.sessoesPorSemana) {
-      const doseAero = { duracao: comp.duracao, intensidade: comp.intensidade };
+      const doseAero = { duracao: comp.duracao, intensidade: intensidadeDaBanda(comp.intensidade, regraClinica) };
       blocos.push({
         id: nid("blk"),
         tipo: "aerobio",
@@ -938,6 +939,21 @@ function tendenciasDoModelo(
 function formatoAerobio(regraClinica?: GroupGpsRule): string {
   const mod = regraClinica?.modAerobio;
   return mod?.intervaladoIndicado && !mod.intervaladoEvitar ? "Intervalado" : "Contínuo";
+}
+
+/**
+ * Texto de intensidade do bloco aeróbio, pela banda que a condição admite.
+ *
+ * Sem condição, ou sem banda declarada, devolve o texto da banda MODERADA, que é
+ * literalmente a string que estava escrita à mão aqui antes de `BANDAS_AEROBIAS` existir.
+ * Por isso todo plano de aluno sem condição sai byte-idêntico ao de antes.
+ *
+ * O `padrao` é o que a faixa do objetivo já dizia. Ele só é usado quando não há banda
+ * clínica, para não atropelar um objetivo que autore a própria intensidade.
+ */
+function intensidadeDaBanda(padrao: string, regraClinica?: GroupGpsRule): string {
+  const banda = regraClinica?.modAerobio?.bandaMax;
+  return banda ? BANDAS_AEROBIAS[banda].intensidade : padrao;
 }
 
 const CADENCIA_DELOAD = 4;

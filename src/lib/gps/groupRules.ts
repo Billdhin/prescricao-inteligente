@@ -11,6 +11,7 @@ import type { GroupRuleInput } from "./engine";
 import type { RestricaoTag } from "./restricoes";
 import type { Exercise } from "@/data/types";
 import { fundirMonitoramento, type EfeitoMonitoramento } from "@/data/farmacos";
+import { ORDEM_BANDA, type BandaAerobia } from "@/data/periodizacao";
 
 /**
  * MODIFICADOR de progressão por perfil clínico (onda MP-6, critério 11): o quanto este grupo
@@ -119,6 +120,15 @@ export interface ModAerobio {
   intervaladoIndicado?: boolean;
   /** a condição desaconselha intervalado; na fusão, isto vence */
   intervaladoEvitar?: boolean;
+  /**
+   * Banda de intensidade aeróbia MÁXIMA que esta condição admite (`BANDAS_AEROBIAS`).
+   * Ausente = moderada, que é a banda única que o produto usava antes de existirem três, e
+   * por isso a ausência mantém o plano byte-idêntico ao de antes.
+   *
+   * Serve nas duas direções: condição que precisa segurar declara `leve`, condição em que a
+   * evidência mostra ganho com esforço maior declara `vigorosa`. Na fusão vence a MENOR.
+   */
+  bandaMax?: BandaAerobia;
   /** por que, em uma linha, sem travessão */
   motivo: string;
   /** ids de referencias.ts que sustentam a direção */
@@ -946,6 +956,20 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
      * metodológica criticamente baixa, e por isso isto orienta uma opção, não uma regra.
      */
     modAerobio: {
+      /*
+       * PRIMEIRA condição a subir de banda, e ela sobe porque a evidência manda.
+       *
+       * Enquanto o produto teve uma banda aeróbia só, este achado de singh-saude-mental-2023
+       * não tinha onde entrar: intensidade MAIOR associou-se a melhora maior dos sintomas.
+       * Com as três bandas abertas, a condição passa a admitir a vigorosa (77 a 95% da
+       * FCmáx), em vez de ficar presa na moderada como todo mundo.
+       *
+       * "Admitir" e não "obrigar": a banda é um TETO. A dose real continua progredindo de
+       * dentro da faixa, e o profissional continua mandando. E a limitação da referência
+       * anda junto onde ela é citada: 77 das 97 revisões tinham qualidade metodológica
+       * criticamente baixa pelo AMSTAR.
+       */
+      bandaMax: "vigorosa",
       intervaladoIndicado: true,
       motivo: "Intensidade maior associou-se a melhora maior dos sintomas, num conjunto amplo de evidência de qualidade metodológica declaradamente baixa.",
       refId: ["singh-saude-mental-2023"],
@@ -1000,9 +1024,16 @@ function fundirModAerobio(mods: ModAerobio[]): ModAerobio | undefined {
   const evitar = mods.some((m) => m.intervaladoEvitar);
   const refId: string[] = [];
   for (const m of mods) for (const r of m.refId ?? []) if (!refId.includes(r)) refId.push(r);
+  // Banda: vence a MENOR entre as condições. Quem tem duas condições recebe o teto da mais
+  // contida, pela mesma lei conservadora do resto do arquivo.
+  const bandas = mods.map((m) => m.bandaMax).filter((b): b is BandaAerobia => Boolean(b));
+  const bandaMax = bandas.length
+    ? bandas.reduce((a, b) => (ORDEM_BANDA[b] < ORDEM_BANDA[a] ? b : a))
+    : undefined;
   return {
     intervaladoEvitar: evitar || undefined,
     intervaladoIndicado: !evitar && mods.some((m) => m.intervaladoIndicado) ? true : undefined,
+    bandaMax,
     motivo: mods.map((m) => m.motivo).join(" "),
     refId,
   };
