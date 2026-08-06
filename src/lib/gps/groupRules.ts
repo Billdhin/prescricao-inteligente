@@ -837,6 +837,17 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     cuidados: [
       "Recomece com cerca de metade do volume e da carga anteriores e progrida ao longo de poucas semanas.",
       "Pergunte HÁ QUANTO TEMPO parou: até cerca de 6 meses a massa muscular tende a estar preservada, e a perda relevante aparece em paradas próximas de um ano.",
+      /*
+       * `tokmakidis-retreino-2014` fecha o par com `grgic-destreino-2022`: um mede o que se
+       * perde na parada, o outro o que se recupera na volta. Num ciclo de treino, parada e
+       * retomada, a retomada recuperou as adaptações e as levou ALÉM do primeiro bloco.
+       *
+       * É a entrada MAIS FRACA do acervo e está declarada assim na própria nota: grupo
+       * único, sem controle, 13 mulheres. Ela entra porque responde a pergunta exata desta
+       * condição, que nada mais nesta base cobre, e a frase abaixo foi escrita para não
+       * prometer mais do que 13 pessoas sustentam.
+       */
+      "Quem retoma tende a recuperar o que tinha, e há indício de que passe do ponto anterior; trate isso como expectativa animadora, não como promessa.",
       "Respeite a recuperação: a dor muscular tardia inicial é esperada.",
     ],
     penalidades: [],
@@ -848,7 +859,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["acsm-getp11", "oms-2020"],
     },
-    refs: ["grgic-destreino-2022", "acsm-getp11", "oms-2020"],
+    refs: ["grgic-destreino-2022", "tokmakidis-retreino-2014", "acsm-getp11", "oms-2020"],
   },
   "pre-diabetes": {
     slug: "pre-diabetes",

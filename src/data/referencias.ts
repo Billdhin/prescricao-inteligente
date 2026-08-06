@@ -396,6 +396,16 @@ export const referencias: Referencia[] = [
     nota: "Metanálise em rede de 410 ensaios randomizados e 33.802 participantes, a maior desta base, comparando EXERCÍCIO, METFORMINA e a combinação dos dois. O achado que o produto usa é a INVERSÃO entre as duas condições. No PRÉ-DIABETES, o exercício foi mais eficaz que a metformina em HbA1c (-0,16% contra -0,10%, com o intervalo da metformina cruzando o zero), em glicemia de 2 horas (-0,68 contra 0,01 mmol/L) e em HOMA-IR (-0,54 contra -0,23), com efeito comparável em glicemia de jejum. No DIABETES TIPO 2 a ordem se inverte: a metformina superou o exercício em HbA1c (-0,88% contra -0,48%), em glicemia de 2 horas e em glicemia de jejum, e a combinação dos dois superou cada um isolado. Os autores registram que as eficácias são moduladas pela modalidade de exercício e pela dose de metformina.",
   },
   {
+    id: "tokmakidis-retreino-2014",
+    autores: "Tokmakidis SP, Touvra AM, Douda HT, Smilios I, Kotsa K, Volaklis KA",
+    titulo: "Training, detraining, and retraining effects on glycemic control and physical fitness in women with type 2 diabetes",
+    fonte: "Hormone and Metabolic Research, 46(13):974-979",
+    ano: 2014,
+    doi: "10.1055/s-0034-1390483",
+    pmid: "25369073",
+    nota: "EVIDÊNCIA FRACA, e entra declarada assim: ensaio clínico de grupo único, sem controle, com apenas 13 mulheres na pós-menopausa com diabetes tipo 2. É citada porque responde a pergunta exata do retorno após inatividade, que nenhuma outra entrada desta base cobre. Desenho: 9 meses de treino combinado, 3 meses de parada, 9 meses de retomada. O treino melhorou composição, glicemia e aptidão; a parada reverteu glicemia pós-prandial, HbA1c e aptidão; e a RETOMADA recuperou todas as adaptações e as levou além do primeiro ciclo, com a força total subindo 48,2% em relação ao início contra os 33,8% do primeiro bloco. Serve para orientar a expectativa de quem volta, e NÃO como número de dose.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",
