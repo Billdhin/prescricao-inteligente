@@ -353,6 +353,17 @@ export const referencias: Referencia[] = [
     nota: "REVISÃO NARRATIVA, e não metanálise: o registro no PubMed traz o tipo como revisão, e por isso ela entra com peso menor que as redes citadas nas outras condições. Os autores priorizaram ensaios randomizados e revisões sistemáticas. O ponto que o produto usa é de ESCOLHA DE MODALIDADE para prevenção de queda: os autores relatam que análises por subgrupo e em rede apontam ênfase em treino de EQUILÍBRIO e funcional para maximizar a eficácia, e não em força isolada. Parâmetros que eles descrevem: treino resistido dos grandes grupos numa intensidade de 6 a 12 repetições máximas e exercícios de equilíbrio desafiadores, ambos pelo menos duas vezes por semana, escolhendo exercícios alinhados às tarefas do dia a dia e progredindo volume e dificuldade.",
   },
   {
+    id: "batrakoulis-obesidade-2022",
+    autores: "Batrakoulis A, Jamurtas AZ, Metsios GS, Perivoliotis K, Liguori G, Feito Y, Riebe D, Thompson WR, Angelopoulos TJ, Krustrup P, Mohr M, Draganidis D, Poulios A, Fatouros IG",
+    titulo:
+      "Comparative Efficacy of 5 Exercise Types on Cardiometabolic Health in Overweight and Obese Adults: A Systematic Review and Network Meta-Analysis of 81 Randomized Controlled Trials",
+    fonte: "Circulation: Cardiovascular Quality and Outcomes, 15(6):e008243",
+    ano: 2022,
+    doi: "10.1161/CIRCOUTCOMES.121.008243",
+    pmid: "35477256",
+    nota: "Metanálise em rede de 81 ensaios randomizados e 4.331 adultos com sobrepeso ou obesidade (59% mulheres, idade média 38,7 anos), comparando CINCO tipos de exercício: contínuo de resistência aeróbia, intervalado, resistido, combinado (aeróbio mais resistido) e híbrido. Os desfechos cobrem composição corporal, lipídios, glicemia, pressão arterial, aptidão cardiorrespiratória e força. O resultado é direto: o COMBINADO foi a modalidade mais efetiva e o híbrido a segunda, ambos superiores às modalidades de componente único, ou seja, ao aeróbio contínuo, ao intervalado e ao resistido isolados. A análise por subgrupo mostrou que o efeito das modalidades é mediado pelo sexo, o que os autores registram como limitação da generalização.",
+  },
+  {
     id: "chodzko-2009",
     autores: "Chodzko-Zajko WJ, Proctor DN, Fiatarone Singh MA, et al.",
     titulo: "Exercise and Physical Activity for Older Adults (ACSM Position Stand)",

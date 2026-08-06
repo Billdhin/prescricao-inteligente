@@ -295,8 +295,29 @@ export interface GroupGpsRule extends GroupRuleInput {
 }
 
 export const groupGpsRules: Record<string, GroupGpsRule> = {
+  /*
+   * OS TRÊS GRAUS DE OBESIDADE COMPARTILHAM A MESMA ÊNFASE, e a fonte é a mesma:
+   * `batrakoulis-obesidade-2022`, rede de 81 ensaios e 4.331 adultos comparando cinco tipos
+   * de exercício em desfechos cardiometabólicos. O COMBINADO foi o mais efetivo e o híbrido
+   * o segundo, os dois superiores às modalidades de componente único, ou seja, superiores ao
+   * aeróbio contínuo isolado, ao intervalado isolado e ao resistido isolado.
+   *
+   * A ênfase "combinado" não muda a montagem, porque o plano já é combinado por padrão. Ela
+   * fica declarada pelo mesmo motivo do diabetes: sem isso, o padrão do motor pareceria
+   * acidente em vez de decisão respaldada, e a primeira pessoa que quisesse "simplificar"
+   * tirando o aeróbio do plano de quem tem obesidade não encontraria nada escrito contra.
+   *
+   * A escada entre os graus continua onde sempre esteve, nas penalidades, no teto de
+   * complexidade, no passo de progressão e na cadência de descarga do grau 3. A evidência de
+   * modalidade não distingue os graus, e inventar distinção aqui seria fabricar precisão.
+   */
   "obesidade-grau-1": {
     slug: "obesidade-grau-1",
+    enfaseModalidade: {
+      prioridade: "combinado",
+      motivo: "Treino combinado foi a modalidade mais efetiva para desfechos cardiometabolicos, superior a aerobio, intervalado ou resistido isolados.",
+      refId: ["batrakoulis-obesidade-2022"],
+    },
     restricoesEstruturais: ["baixa_tolerancia_impacto"],
     nome: "Obesidade grau I",
     cuidados: [
@@ -337,11 +358,16 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["donnelly-2009", "acsm-getp11"],
     },
-    refs: ["donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997"],
+    refs: ["batrakoulis-obesidade-2022", "donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997"],
   },
 
   "obesidade-grau-2": {
     slug: "obesidade-grau-2",
+    enfaseModalidade: {
+      prioridade: "combinado",
+      motivo: "Treino combinado foi a modalidade mais efetiva para desfechos cardiometabolicos, superior a aerobio, intervalado ou resistido isolados.",
+      refId: ["batrakoulis-obesidade-2022"],
+    },
     restricoesEstruturais: ["baixa_tolerancia_impacto", "dificuldade_chao", "fadiga_precoce"],
     nome: "Obesidade grau II",
     cuidados: [
@@ -370,11 +396,16 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["donnelly-2009", "acsm-getp11"],
     },
-    refs: ["donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997", "who-imc-2004"],
+    refs: ["batrakoulis-obesidade-2022", "donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997", "who-imc-2004"],
   },
 
   "obesidade-grau-3": {
     slug: "obesidade-grau-3",
+    enfaseModalidade: {
+      prioridade: "combinado",
+      motivo: "Treino combinado foi a modalidade mais efetiva para desfechos cardiometabolicos, superior a aerobio, intervalado ou resistido isolados.",
+      refId: ["batrakoulis-obesidade-2022"],
+    },
     restricoesEstruturais: ["baixa_tolerancia_impacto", "dificuldade_chao", "dificuldade_sentar_levantar", "fadiga_precoce"],
     nome: "Obesidade grau III",
     cuidados: [
@@ -403,7 +434,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["donnelly-2009", "acsm-getp11"],
     },
-    refs: ["donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997", "who-imc-2004"],
+    refs: ["batrakoulis-obesidade-2022", "donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997", "who-imc-2004"],
   },
 
   "hipertensao-estagio-1": {
