@@ -810,6 +810,61 @@ for (const objetivo of OBJETIVOS) {
   }
 }
 
+/* ============================================================================
+ * A CAMADA CLÍNICA SÓ APERTA: declarar uma condição NUNCA deixa o plano mais pesado.
+ *
+ * É a lei escrita no topo de periodizacao.ts e de groupRules.ts, e ela foi quebrada em
+ * silêncio por um campo que se chama `bandaMax`, cuja fusão pega a MENOR e cujo comentário
+ * diz "admitir e não obrigar: a banda é um TETO". O consumidor devolvia a banda da condição
+ * direto, sem comparar com o padrão do objetivo, e o efeito medido em `ansiedade-depressao`
+ * era o aeróbio sair de "Moderada, RPE 5 a 6" para "Vigorosa, RPE 7 a 8": declarar a
+ * condição SUBIA o esforço prescrito, já na primeira semana.
+ *
+ * Nenhuma trava olhava para isso. As que existiam cobrem "a condição CHEGA ao plano" e "a
+ * mais conservadora manda entre duas condições"; nenhuma cobria a direção do efeito de UMA.
+ *
+ * A comparação é por EXTREMO do plano inteiro, e não semana a semana, de propósito: a
+ * cadência de descarga da condição muda quantas semanas de carga existem, então uma semana
+ * isolada pode cair em outro ponto da rampa sem que nada tenha afrouxado. O que não pode é
+ * o plano com condição alcançar um pico de esforço que o plano sem condição não alcança.
+ *
+ * Volume não entra aqui: `enfaseModalidade` pode ACRESCENTAR uma sessão aeróbia na semana,
+ * e isso é aumento de volume declarado e de via única, não de intensidade.
+ * ========================================================================== */
+{
+  const OBJ = OBJETIVOS;
+  const NIV: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
+  const blocosDe = (p: ReturnType<typeof gerarPlano>) =>
+    p.principal.mesociclos.flatMap((m) => m.microciclos.flatMap((mi) => mi.sessoes.flatMap((s) => s.blocos)));
+  /** Os três extremos de ESFORÇO do plano. RIR é invertido: menos reserva é mais esforço. */
+  const picos = (p: ReturnType<typeof gerarPlano>) => {
+    const bs = blocosDe(p);
+    const aer = bs.filter((b) => b.tipo === "aerobio");
+    const forca = bs.filter((b) => b.tipo === "forca");
+    return {
+      rpe: Math.max(-1, ...aer.map((b) => b.rpeAlvo ?? -1)),
+      rir: Math.min(99, ...forca.map((b) => b.rirAlvo ?? 99)),
+      carga: Math.max(-1, ...forca.map((b) => b.cargaRelativaAlvo ?? -1)),
+    };
+  };
+
+  for (const objetivo of OBJ)
+    for (const nivel of NIV)
+      for (const semanas of [8, 12, 24]) {
+        const base = picos(gerarPlano({ objetivo, nivel, semanas, frequencia: 3 }));
+        for (const g of specialGroups.map((s) => s.slug)) {
+          const com = picos(gerarPlano({ objetivo, nivel, semanas, frequencia: 3, grupoEspecial: g }));
+          const cen = `${g}/${objetivo}/${nivel}/${semanas}sem`;
+          if (com.rpe > base.rpe)
+            problemas.push(`A CONDIÇÃO AUMENTOU O ESFORÇO AERÓBIO em ${cen}: pico de RPE ${base.rpe} sem ela e ${com.rpe} com ela.`);
+          if (base.rir < 99 && com.rir < base.rir)
+            problemas.push(`A CONDIÇÃO REDUZIU A RESERVA DE REPETIÇÕES em ${cen}: RIR mínimo ${base.rir} sem ela e ${com.rir} com ela.`);
+          if (base.carga >= 0 && com.carga > base.carga)
+            problemas.push(`A CONDIÇÃO AUMENTOU A CARGA RELATIVA em ${cen}: pico ${base.carga}% sem ela e ${com.carga}% com ela.`);
+        }
+      }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {

@@ -24,7 +24,9 @@ import {
   type Tendencia,
   type FaixaObjetivo,
   type EnfaseSessao,
+  type BandaAerobia,
   BANDAS_AEROBIAS,
+  ORDEM_BANDA,
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -133,11 +135,26 @@ function escolherModelos(input: GerarPlanoInput): {
   // O profissional escolheu: a escolha dele manda, e a do motor vira a alternativa.
   // Trocar a escolha dele em silêncio seria decidir por ele; escondê-la seria pior.
   if (input.modeloPreferido) {
-    const { principal: doMotor } = escolherModelos({ ...input, modeloPreferido: undefined });
+    const doMotor = escolherModelos({ ...input, modeloPreferido: undefined });
     return {
       principal: input.modeloPreferido,
-      alternativa: doMotor !== input.modeloPreferido ? doMotor : undefined,
-      sugeridoPeloMotor: doMotor,
+      /*
+       * Concordar com o motor NÃO pode custar a alternativa.
+       *
+       * Aqui estava só `doMotor !== preferido ? doMotor : undefined`, e o efeito medido era
+       * perverso: o profissional que abre a tela e escolhe EXPLICITAMENTE o mesmo modelo que
+       * o motor escolheria perdia a alternativa autorregulada que a condição do aluno tinha
+       * aberto. Medido com hipertensão estágio 2 em hipertrofia/intermediário: no automático
+       * saía principal=ondulatoria e alternativa=flexivel; escolhendo "ondulatoria" à mão,
+       * a alternativa sumia.
+       *
+       * É a mesma família de "declarar mais deixa o sistema pior" que já apareceu na fusão de
+       * restrições e na de regras clínicas. Quando as escolhas coincidem, vale a alternativa
+       * que o próprio motor ofereceria.
+       */
+      alternativa:
+        doMotor.principal !== input.modeloPreferido ? doMotor.principal : doMotor.alternativa,
+      sugeridoPeloMotor: doMotor.principal,
     };
   }
 
@@ -230,7 +247,27 @@ export function regraClinicaDoPlano(input: GerarPlanoInput) {
  */
 function frasePerfilClinico(input: GerarPlanoInput): string {
   const slugs = slugsClinicosDoPlano(input);
-  if (slugs.length < 2) return "";
+  /*
+   * QUANTAS CONDIÇÕES PRECISAM EXISTIR PARA O PLANO DIZER QUE CONSIDEROU ALGUMA.
+   *
+   * O corte era 2, fixo, e isso abria um silêncio exato: o aluno cuja ÚNICA condição está em
+   * `condicoesAtencao`, e não em `grupoEspecial`. Ali a frase da jornada não sai (ela depende
+   * de `grupoEspecial`) e esta também não saía. Medido em hipertensão estágio 2 declarada só
+   * por atenção, hipertrofia/intermediário/12 semanas:
+   *
+   *   dose sem condição : 3x8 RIR2 | 4x7 RIR1 | 3x7 RIR2 | ...
+   *   dose só-atenção   : 3x8 RIR2 | 3x7 RIR2 | 3x8 RIR2 | ...   (a condição FOI aplicada)
+   *   raciocínio        : "Escolha por objetivo (Hipertrofia) e nível (Intermediário)."
+   *
+   * Ou seja, a condição mudava a dose e o documento não dizia que existia perfil de cuidado
+   * nenhum. É exatamente o que o comentário do chamador chama de não auditável, e a razão de
+   * `condicoesAtencao` ter sido ligada ao motor em primeiro lugar.
+   *
+   * Com `grupoEspecial`, a frase da jornada já anuncia o programa, e esta continua sendo a
+   * frase do CONJUNTO (2 ou mais). Sem ele, uma condição já basta para o plano se declarar.
+   */
+  const minimo = input.grupoEspecial ? 2 : 1;
+  if (slugs.length < minimo) return "";
   const rotulos = slugs
     .map((s) => getSpecialGroup(s)?.rotuloAluno)
     .filter((r): r is string => Boolean(r));
@@ -240,6 +277,9 @@ function frasePerfilClinico(input: GerarPlanoInput): string {
       ? ` O teto de complexidade técnica dos exercícios deste plano é ${regra.complexidadeMax} de 100.`
       : "";
   const lista = rotulos.length === slugs.length ? ` (${rotulos.join(", ")})` : "";
+  if (slugs.length === 1) {
+    return `Este plano considerou um perfil de cuidado${lista}, e as faixas de dose foram ajustadas por ele.${teto}`;
+  }
   return `Este plano considerou ${slugs.length} perfis de cuidado ao mesmo tempo${lista}, e onde eles divergem vale sempre o mais conservador.${teto}`;
 }
 
@@ -621,8 +661,8 @@ function montarSessoes(
         recuperacao: "-",
         observacao: notaAerobio(
           ctx,
-          "Ajuste a intensidade pelo recurso do equipamento: FCmáx na esteira, watts na bike ou pace na corrida. Alternativa intervalada: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total.",
-          "Ajuste a intensidade pelo recurso do equipamento: watts na bike ou pace na corrida. Alternativa intervalada: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total.",
+          `Ajuste a intensidade pelo recurso do equipamento: FCmáx na esteira, watts na bike ou pace na corrida. ${fraseDoFormato(regraClinica)}`,
+          `Ajuste a intensidade pelo recurso do equipamento: watts na bike ou pace na corrida. ${fraseDoFormato(regraClinica)}`,
         ),
         ...alvoAerobioSemana(doseAero, ctx),
       });
@@ -961,18 +1001,70 @@ function formatoAerobio(regraClinica?: GroupGpsRule): string {
 }
 
 /**
+ * A frase de formato da NOTA do bloco aeróbio, coerente com o formato que o bloco tem.
+ *
+ * A nota era uma constante que oferecia o intervalado como alternativa, escrita quando o
+ * motor só sabia montar contínuo. Depois que `formatoAerobio` passou a poder devolver
+ * "Intervalado", o bloco começou a se contradizer para quem tem a condição que o indica:
+ * o campo `formato` dizia Intervalado e a nota logo abaixo oferecia "alternativa
+ * intervalada", como se ainda não fosse. Medido em `ansiedade-depressao`.
+ *
+ * É a mesma classe do defeito que abriu a porta do intervalado (o produto descrevia uma
+ * opção que ele nunca montava), agora ao contrário: o produto monta e continua descrevendo
+ * como se não montasse. Quando o bloco JÁ é intervalado, a nota diz como executá-lo e
+ * oferece o contínuo como a alternativa que de fato sobrou.
+ */
+function fraseDoFormato(regraClinica?: GroupGpsRule): string {
+  return formatoAerobio(regraClinica) === "Intervalado"
+    ? "Formato intervalado: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total. Se preferir, o contínuo no mesmo tempo total é alternativa."
+    : "Alternativa intervalada: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total.";
+}
+
+/** A banda a que um texto de intensidade corresponde, quando ele é um dos textos canônicos. */
+function bandaDoTexto(texto: string): BandaAerobia | undefined {
+  return (Object.keys(BANDAS_AEROBIAS) as BandaAerobia[]).find(
+    (b) => BANDAS_AEROBIAS[b].intensidade === texto,
+  );
+}
+
+/**
  * Texto de intensidade do bloco aeróbio, pela banda que a condição admite.
  *
- * Sem condição, ou sem banda declarada, devolve o texto da banda MODERADA, que é
- * literalmente a string que estava escrita à mão aqui antes de `BANDAS_AEROBIAS` existir.
- * Por isso todo plano de aluno sem condição sai byte-idêntico ao de antes.
+ * ## `bandaMax` É TETO, E POR UM TEMPO ELE FOI VALOR
  *
- * O `padrao` é o que a faixa do objetivo já dizia. Ele só é usado quando não há banda
- * clínica, para não atropelar um objetivo que autore a própria intensidade.
+ * Esta função devolvia a banda da condição direto, sem comparar com o padrão do objetivo. O
+ * campo se chama `bandaMax`, a fusão entre condições pega a MENOR, e o comentário da
+ * declaração diz com todas as letras "admitir e não obrigar: a banda é um TETO". O código
+ * fazia o contrário do que os três diziam.
+ *
+ * Medido antes da correção, no único caso que existe hoje (`ansiedade-depressao`, que
+ * declara `vigorosa` porque a evidência associa intensidade maior a mais melhora dos
+ * sintomas):
+ *
+ *   sem a condição: "Moderada: cerca de 64 a 76% da FCmáx (...)"  rpeAlvo 5
+ *   com a condição: "Vigorosa: cerca de 77 a 95% da FCmáx (...)"  rpeAlvo 7
+ *
+ * Ou seja, DECLARAR uma condição de saúde deixava o plano mais pesado, e já na primeira
+ * semana. Isso quebra a lei que o motor inteiro segue e que está escrita no topo deste
+ * arquivo e no de groupRules: cada camada só APERTA, nenhuma afrouxa o que a anterior
+ * definiu. É a mesma família do defeito de "declarar mais sobre o aluno piora o resultado"
+ * que já apareceu na fusão de restrições.
+ *
+ * Agora vence a MENOR entre a banda da condição e a do objetivo. Consequência assumida: uma
+ * banda declarada ACIMA do padrão não muda a dose, porque um teto não levanta piso. A
+ * evidência que sustenta a intensidade maior não se perde: ela já vive em `cuidados`, que é
+ * a camada do PROFISSIONAL, e é ele quem decide subir, com o plano editável em tudo.
+ *
+ * Texto autorado pelo objetivo (que não casa com nenhuma banda canônica) não é atropelado:
+ * sem saber a que banda ele corresponde, a comparação não é possível e o padrão prevalece.
  */
 function intensidadeDaBanda(padrao: string, regraClinica?: GroupGpsRule): string {
   const banda = regraClinica?.modAerobio?.bandaMax;
-  return banda ? BANDAS_AEROBIAS[banda].intensidade : padrao;
+  if (!banda) return padrao;
+  const bandaPadrao = bandaDoTexto(padrao);
+  if (!bandaPadrao) return padrao;
+  const menor = ORDEM_BANDA[banda] < ORDEM_BANDA[bandaPadrao] ? banda : bandaPadrao;
+  return BANDAS_AEROBIAS[menor].intensidade;
 }
 
 const CADENCIA_DELOAD = 4;

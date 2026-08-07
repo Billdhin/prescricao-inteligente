@@ -75,12 +75,31 @@ for (const g of [undefined, ...specialGroups.map((s) => s.slug)]) {
           if (temIntervalado && !declarouIntervalado)
             anotar(cen, "INTERVALADO SEM RESPALDO", "plano traz bloco Intervalado e a condicao nao declara");
 
-          /* 4. Banda aeróbia declarada tem que aparecer no texto. */
+          /*
+           * 4. A banda aeróbia declarada é TETO, e o bloco não pode passar dela.
+           *
+           * Esta asserção já esteve invertida, e vale registrar porque a bancada errar é a
+           * pior classe de erro aqui. Ela cobrava que a banda declarada APARECESSE no texto,
+           * o que só faz sentido se `bandaMax` for um valor. Ele é um teto: o nome do campo
+           * diz, a fusão entre condições pega a menor e o comentário da declaração diz
+           * "admitir e não obrigar". Sob a semântica certa, uma condição que declara
+           * `vigorosa` num objetivo cuja faixa é moderada NÃO sobe para vigorosa, e a
+           * bancada acusava justamente o comportamento correto.
+           *
+           * O que ela cobra agora é a direção: nenhum bloco aeróbio pode ficar ACIMA do teto
+           * declarado. Uma condição que declara `leve` tem de puxar para baixo; uma que
+           * declara `vigorosa` no máximo mantém.
+           */
           const banda = regra?.modAerobio?.bandaMax;
           if (banda && aer.length) {
-            const rotulo = { leve: "Leve", moderada: "Moderada", vigorosa: "Vigorosa" }[banda];
-            if (!aer.some((b) => (b.intensidade ?? "").startsWith(rotulo)))
-              anotar(cen, "BANDA NAO CHEGOU", `condicao pede ${banda} e nenhum bloco aerobio diz "${rotulo}"`);
+            const ORD: Record<string, number> = { Leve: 0, Moderada: 1, Vigorosa: 2 };
+            const teto = { leve: 0, moderada: 1, vigorosa: 2 }[banda];
+            for (const b of aer) {
+              const rotulo = (b.intensidade ?? "").split(":")[0].trim();
+              const n = ORD[rotulo];
+              if (n != null && n > teto)
+                anotar(cen, "BANDA ESTOUROU O TETO", `condicao admite ate ${banda} e o bloco saiu "${rotulo}"`);
+            }
           }
 
           /*
