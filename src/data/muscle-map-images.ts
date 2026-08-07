@@ -100,6 +100,8 @@ const SLUGS_COM_POSE: string[] = [
   "escada-ergometrica",
   "caminhada-plana",
   "corrida-aquatica",
+  "bicicleta-reclinada",
+  "equilibrio-unipodal",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
