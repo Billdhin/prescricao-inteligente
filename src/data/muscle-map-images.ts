@@ -96,6 +96,8 @@ const SLUGS_COM_POSE: string[] = [
   "flexao-apoio-elevado",
   "pullover-polia",
   "remada-cavalinho",
+  "remo-ergometro",
+  "escada-ergometrica",
   "dead-bug",
   "remada-elastica",
   "panturrilha-em-pe",
