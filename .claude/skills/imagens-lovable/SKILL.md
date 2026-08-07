@@ -143,3 +143,77 @@ O agente do Lovable **avisa sozinho** quando erra ("a imagem 0 saiu parecendo um
 - Erros: **uma imagem por erro** (`erros/<slug>-<i>.webp`, i na ordem de `errosComuns`). Uma imagem por exercício não funciona: não dá para mostrar "joelho valgo" e "lombar em flexão" na mesma figura. Foi exatamente a reclamação do fundador.
 - Variações: uma por variação (`variacoes/<slug>-<i>.webp`), já funciona assim.
 - Prompts prontos dos 62 erros: `docs/prompts-erros-comuns.md`.
+
+## ADENDO de 07/08/2026: a receita do boneco posado, medida em 28 rodadas
+
+A fila do boneco na posição (`public/anatomy/mmp/<slug>.webp`) fechou em **77 exercícios**,
+com **20 excluídos por regra**. O que segue não é preferência, é o que 8 rodadas seguidas de
+conferência olho a olho mostraram. As três partes juntas renderam 5 aprovadas seguidas de
+primeira; separadas, não rendiam.
+
+### A receita
+
+1. **Semente que já tem a POSTURA, não o exercício parecido.** Para a bicicleta reclinada,
+   `leg-press-horizontal` (sentado recostado, pernas à frente) funciona e a bicicleta vertical
+   não. Para o remo, `remada-baixa`. Para o pullover, `elevacao-frontal`, porque nela o braço
+   já está reto e elevado.
+2. **Aparelho descrito pelas PEÇAS**, nunca pela postura que ele impõe. Remo: trilho no chão,
+   assento sem encosto sobre o trilho, tambor redondo na ponta, corrente, alça reta, pés em
+   placas inclinadas.
+3. **O negativo explícito.** Escrever o que NÃO desenhar. Sem "sem parede, sem corrimão curvo,
+   sem piso de degrau largo", a escada ergométrica tinha tudo para virar escada de casa.
+
+### Apagar antes de desenhar
+
+Apagar equipamento funciona (2 de 2), **desde que o substituto seja declarado**: "no lugar da
+esteira, só uma linha horizontal fina". Sem substituto, o gerador preenche o vazio com cenário.
+
+Mas há um limiar de tamanho. Quando a máquina da semente é **grande e envolve a figura**,
+dizer "troque o aparelho por" faz o gerador **somar em vez de trocar**: a bicicleta reclinada
+saiu como o leg press inteiro com um volante parafusado na frente. Nesse caso, escrever em
+**dois passos numerados**: passo 1, apagar, com a lista do que não pode sobrar (trilho,
+carrinho, placa, torre, cabo); passo 2, desenhar do zero. Resolveu na segunda tentativa.
+
+### Nunca semear com o vizinho do qual você precisa diferenciar
+
+O levantamento terra semeado com o terra romeno saiu **igual ao romeno**, duas vezes. A postura
+da semente é justamente a que tinha de mudar, e o gerador se ancora nela. Publicar seria dar a
+mesma figura a dois exercícios diferentes, que é a reclamação que o fundador já fez uma vez.
+
+### LATERALIDADE é uma família de limite, não um caso isolado
+
+O gerador **não coloca destaque na metade distante do tronco quando há um objeto do lado
+próximo**: ele puxa o destaque para o lado do objeto. Mediu-se 2 de 2 no suitcase carry, em que
+o oblíquo tem de ficar do lado SEM peso, e nomear o lado pela posição na tela não adiantou.
+Some-se ao valgo e às rotações já medidas.
+
+**Regra de triagem, antes de gastar crédito:** a afirmação depende de QUAL LADO está pintado?
+Se depender, é provável exclusão.
+
+### Fase de extremidade: o limite existe, mas a regra de exclusão estava errada
+
+A fase de extremidade falha, agora 4 de 4: cotovelo na rosca, calcanhar na panturrilha,
+tornozelo na dorsiflexão, punho na flexão de punho. Todos saíram parados no meio.
+
+**Mas isso sozinho não justifica excluir.** A dorsiflexão e a flexão de punho ficaram
+utilizáveis porque a **identidade** desses exercícios não mora na fase, mora no ARRANJO:
+elástico por cima do pé indo a um ponto fixo à frente, com o tibial anterior em azul; antebraço
+deitado na coxa com a mão passando do joelho e o halter na mão. Quem lê reconhece o exercício
+com o ângulo articular parado.
+
+Fase de extremidade só vira exclusão quando **a fase É a identidade**, como no valgo e na
+pegada supinada. Fora disso, gere e registre a fase como ressalva.
+
+### Critério de aceite
+
+Músculo errado reprova. Equipamento ilegível reprova. Equipamento imperfeito mas legível passa
+com a ressalva registrada no commit.
+
+### Duas armadilhas que são do operador, não do gerador
+
+- **Confira a sua própria descrição antes de culpar o gerador.** Pedi o halter como "barra
+  vertical com um disco em cima e outro embaixo", o que não é um halter. O gerador desenhou o
+  objeto certo apesar do pedido. No abdominal na polia pedi a figura de costas para a coluna e
+  ela saiu de frente, que é a execução mais comum: o pedido atípico era o meu.
+- **A avaliação do agente do Lovable erra nos dois sentidos.** Ele deu "parcial" em imagens
+  aprováveis e "✅" em imagens reprovadas. Continua valendo: olhe você mesmo, uma a uma.
