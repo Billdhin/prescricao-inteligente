@@ -777,6 +777,8 @@ interface DadosDoAlunoNoAlvo {
   intervaloFolgado?: boolean;
   rirMinimo?: number;
   partirDoPiso?: boolean;
+  /** fase de continuação: segura a dose no patamar alcançado (ver CtxAlvo.patamarCongelado) */
+  patamarCongelado?: boolean;
 }
 
 function montarMicrociclos(
@@ -798,7 +800,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao, pseTeto, cargaRelativaMax, intervaloFolgado, rirMinimo, partirDoPiso } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao, pseTeto, cargaRelativaMax, intervaloFolgado, rirMinimo, partirDoPiso, patamarCongelado } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (as descargas ficam fora desta conta). Agora são contadas,
   // e não deduzidas de "a última é descarga": com cadência absoluta, a descarga pode cair
@@ -828,6 +830,7 @@ function montarMicrociclos(
       intervaloFolgado,
       rirMinimo,
       partirDoPiso,
+      patamarCongelado,
       tipoSemana: ehDeload ? "deload" : "carga",
       tendenciaVolume,
       tendenciaIntensidade,
@@ -1367,13 +1370,42 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
     // em vez de "este bloco tem 4 ou mais semanas", que era o que apagava a descarga do
     // caminho clinico inteiro. Ver CADENCIA_DELOAD.
     const comDeload = cargasDoMeso(ini, dur, descargas) < dur;
-    // As repetições da última fase são MANUTENÇÃO: ficam estáveis por decisão clínica, e o
-    // modelo não manda nisso. Em todas as demais, inclusive a de entrada, quem manda é o
-    // MODELO escolhido, como no macrociclo genérico (ver o comentário da rampa acima).
-    const adaptativa = estendida;
+    /*
+     * MANUTENÇÃO É SEGURAR NO PATAMAR ALCANÇADO, E NÃO VOLTAR AO MEIO DA FAIXA.
+     *
+     * As repetições da última fase eram marcadas "estavel", e "estavel" lê o MEIO da faixa
+     * citada. Como o meio não tem relação nenhuma com o ponto a que a rampa das fases reais
+     * tinha chegado, a fase cujo cartão promete "sustentar os ganhos" entregava dose MENOR
+     * que a fase que ela continua: em 48 semanas de hipertrofia, obesidade grau 2 fechava a
+     * Fase 4 em 4x7 RIR 1 e terminava o plano em 4x7 RIR 2. E as duas continuações saíam
+     * idênticas entre si, semana a semana.
+     *
+     * Agora a continuação usa as MESMAS tendências das fases reais e congela a posição na
+     * rampa no fim dela (ver CtxAlvo.patamarCongelado). Duas consequências boas de graça:
+     * a ondulatória continua ondulando dentro da semana em torno do patamar, e o cartão se
+     * corrige sozinho, porque `sincronizarTendencias` mede a janela e rebaixa "sobe" que
+     * não sobe para "estavel". O rótulo passa a dizer o que a dose faz, sem prometer mais.
+     */
     const doModelo = tendenciasDoModelo(modelo, { tv: "sobe", ti: "sobe" });
-    const tv: Tendencia = adaptativa ? "estavel" : doModelo.tv;
-    const ti: Tendencia = adaptativa ? "estavel" : doModelo.ti;
+    const tv: Tendencia = doModelo.tv;
+    const ti: Tendencia = doModelo.ti;
+    /*
+     * O CARTÃO DA CONTINUAÇÃO NÃO PROMETE SUBIDA, PORQUE ELA NÃO SOBE.
+     *
+     * As tendências acima são o que o ALVO precisa saber para congelar no lugar certo da
+     * rampa (com "sobe" o topo, com "reduz" o piso). O que o CARTÃO descreve é outra coisa:
+     * o que a dose faz ao longo daquele bloco, e num patamar congelado ela não faz nada.
+     *
+     * `sincronizarTendencias` rebaixa sozinha o rótulo que não se cumpre, e cobriu quase
+     * tudo aqui. Não cobriu "Retorno ao treino", cuja faixa não expressa nem %1RM nem RIR:
+     * sem alvo numérico ela não tem o que medir, e por isso deixa passar. O cartão saía
+     * "intensidade sobe" sobre uma dose parada, que é a mesma classe do defeito que o
+     * fundador trouxe do campo ("diz linear e o gráfico sai ondulado"), ao contrário.
+     *
+     * "varia" é preservado: na ondulatória o movimento é DENTRO da semana, e ele continua
+     * acontecendo em torno do patamar.
+     */
+    const noCartao = (t: Tendencia): Tendencia => (estendida && t !== "varia" ? "estavel" : t);
     mesociclos.push({
       id: nid("mes"),
       // A repetição da última fase é nomeada com honestidade ("continuação"): não é uma
@@ -1389,9 +1421,10 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       // `faseJornada` autoriza a palavra "Fase" na tela e alimenta a reconciliação com a
       // fase clínica do aluno (o número real da fase, não a posição no macro recortado).
       faseJornada: fase.numero,
-      // As repetições da última fase são manutenção: a carga se estabiliza, não sobe sempre.
-      tendenciaVolume: tv,
-      tendenciaIntensidade: ti,
+      // As repetições da última fase são manutenção: a dose segura no patamar alcançado, e o
+      // cartão diz isso (ver `noCartao`), em vez de prometer uma subida que não acontece.
+      tendenciaVolume: noCartao(tv),
+      tendenciaIntensidade: noCartao(ti),
       tendenciaComplexidade: m === 0 || estendida ? "estavel" : "sobe",
       deload: comDeload,
       reavaliacao: true,
@@ -1417,6 +1450,9 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
         partirDoPiso: doseDoPerfil(regraClinicaDoPlano(input))?.partirDoPiso,
         cargaAntesDesteMeso: rampa.total != null && progride[m] ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: progride[m] ? rampa.total : undefined,
+        // A fase que não progride é a de continuação: ela não recomeça a rampa, segura onde
+        // a última fase real parou. É o mesmo `progride`, lido pela outra ponta.
+        patamarCongelado: !progride[m] || undefined,
       }),
     });
   });

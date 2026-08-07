@@ -231,10 +231,41 @@ linha("C2. FASE DE CONTINUAÇÃO: ela sustenta ou ela ALIVIA a fase que continua
       const b = conts[0].microciclos.filter((w) => w.tipo === "carga").map((w) => chave(doseDe(w))).join("|");
       return a === b;
     });
-    if (todasIguais) console.log(`    >>> ACHADO: as ${conts.length} continuações são IDÊNTICAS entre si, semana a semana.`);
+    /*
+     * Continuações idênticas entre si NÃO são mais achado, e isso é uma decisão, não um
+     * relaxamento. Segurar no patamar alcançado é o que o fundador pediu para "manutenção"
+     * significar: dois blocos de manutenção do mesmo tamanho, no mesmo patamar, saem iguais
+     * por definição. O que continua sendo achado é o plano TERMINAR mais leve do que estava
+     * quando a última fase real fechou, que era o defeito de verdade.
+     */
+    console.log(`    as ${conts.length} continuações são idênticas entre si? ${todasIguais ? "sim (esperado: é o patamar)" : "não"}`);
     const fimCont = doseDe(conts.at(-1)!.microciclos.filter((w) => w.tipo === "carga").at(-1)!);
     if (fimCont.rir != null && fimUltimaReal.rir != null && fimCont.rir > fimUltimaReal.rir)
       console.log(`    >>> ACHADO: o plano TERMINA mais leve (RIR ${fimUltimaReal.rir} -> ${fimCont.rir}) do que na semana em que a última fase real fechou.`);
+    if (chave(fimCont) === chave(fimUltimaReal)) console.log(`    patamar mantido: ${chave(fimCont)}`);
+  }
+}
+
+/* ------------------------------------------------------------------ C6 */
+linha("C6. PATAMAR CONGELADO: o cardio chapou? e o modelo linear segura onde chegou?");
+{
+  for (const [rotulo, entrada] of [
+    ["linear (iniciante)", { objetivo: "Hipertrofia", nivel: "Iniciante" }],
+    ["linear (retorno)", { objetivo: "Retorno ao treino", nivel: "Intermediário" }],
+    ["ondulatória", { objetivo: "Hipertrofia", nivel: "Intermediário" }],
+  ] as const) {
+    const p = gerarPlano({ ...(entrada as any), semanas: 48, frequencia: 3, grupoEspecial: "obesidade-grau-2" });
+    const conts = p.principal.mesociclos.filter((m) => m.nome.includes("continuação"));
+    const reais = p.principal.mesociclos.filter((m) => !m.nome.includes("continuação"));
+    if (!conts.length) { console.log(`  ${rotulo}: sem fase de continuação neste horizonte`); continue; }
+    const aerDe = (ms: typeof conts) =>
+      new Set(ms.flatMap((m) => m.microciclos.filter((w) => w.tipo === "carga")).flatMap((w) => w.sessoes).flatMap((s) => s.blocos).filter((b) => b.tipo === "aerobio").map((b) => `${b.duracaoAlvoMin}|${b.rpeAlvo}`));
+    const fimReal = doseDe(reais.at(-1)!.microciclos.filter((w) => w.tipo === "carga").at(-1)!);
+    const picoCont = conts.flatMap((m) => m.microciclos.filter((w) => w.tipo === "carga")).map(doseDe);
+    const melhor = picoCont.reduce((a, b) => ((b.rir ?? 99) < (a.rir ?? 99) ? b : a), picoCont[0]);
+    console.log(`  ${rotulo}: modelo=${p.modeloId} | fim da fase real ${chave(fimReal)} | melhor da continuação ${chave(melhor)}`);
+    console.log(`    doses aeróbias distintas na continuação: ${aerDe(conts).size} ${aerDe(conts).size <= 1 ? "<<< CARDIO CHAPADO" : ""}`);
+    console.log(`    rótulos dos cartões de continuação: ${conts.map((m) => `${m.tendenciaVolume}/${m.tendenciaIntensidade}`).join(", ")}`);
   }
 }
 

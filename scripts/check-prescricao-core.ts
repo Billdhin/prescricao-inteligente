@@ -865,6 +865,59 @@ for (const objetivo of OBJETIVOS) {
       }
 }
 
+/* ============================================================================
+ * A FASE DE CONTINUAÇÃO SUSTENTA O PATAMAR, NÃO ALIVIA.
+ *
+ * Em horizonte longo o caminho clínico repete a última fase da jornada, e o cartão dela diz
+ * "continuação da fase para sustentar os ganhos". Essas repetições eram marcadas "estavel", e
+ * "estavel" lê o MEIO da faixa citada, sem relação nenhuma com o ponto a que a rampa das
+ * fases reais tinha chegado. Medido em 48 semanas de hipertrofia para intermediário:
+ *
+ *   obesidade grau 2   fim da Fase 4: 4x7 RIR 1   fim da continuação: 4x7 RIR 2
+ *   diabetes tipo 2    fim da Fase 4: 4x6 RIR 1   fim da continuação: 4x7 RIR 2
+ *
+ * O plano terminava mais leve do que estava na semana 32, prometendo sustentação no cartão.
+ *
+ * A trava compara o PICO de esforço da continuação com a ÚLTIMA semana de carga da última
+ * fase real. Pico, e não a última semana da continuação, porque na ondulatória o movimento é
+ * dentro da semana e a última pode ser um vale legítimo da onda.
+ * ========================================================================== */
+{
+  const semanas = 48;
+  const cargasDe = (m: Mesociclo) => m.microciclos.filter((w) => w.tipo === "carga");
+  const forcaDe = (w: ReturnType<typeof cargasDe>[number]) =>
+    w.sessoes.flatMap((s) => s.blocos).filter((b) => b.tipo === "forca");
+
+  for (const grupo of specialGroups.filter((g) => g.fases?.length))
+    for (const objetivo of OBJETIVOS)
+      for (const nivel of ["Iniciante", "Intermediário"] as Nivel[]) {
+        const p = gerarPlano({ objetivo, nivel, semanas, frequencia: 3, grupoEspecial: grupo.slug });
+        const conts = p.principal.mesociclos.filter((m) => m.nome.includes("continuação"));
+        const reais = p.principal.mesociclos.filter((m) => !m.nome.includes("continuação"));
+        if (!conts.length || !reais.length) continue;
+        const ultima = cargasDe(reais[reais.length - 1]).at(-1);
+        if (!ultima) continue;
+        const cen = `${grupo.slug}/${objetivo}/${nivel}/${semanas}sem`;
+
+        const rirReal = Math.min(99, ...forcaDe(ultima).map((b) => b.rirAlvo ?? 99));
+        const cargaReal = Math.max(-1, ...forcaDe(ultima).map((b) => b.cargaRelativaAlvo ?? -1));
+        const semanasCont = conts.flatMap(cargasDe);
+        const rirCont = Math.min(99, ...semanasCont.flatMap((w) => forcaDe(w).map((b) => b.rirAlvo ?? 99)));
+        const cargaCont = Math.max(-1, ...semanasCont.flatMap((w) => forcaDe(w).map((b) => b.cargaRelativaAlvo ?? -1)));
+
+        if (rirReal < 99 && rirCont > rirReal)
+          erro(`CONTINUAÇÃO ALIVIOU em ${cen}: a última fase real fechou com RIR ${rirReal} e o pico da continuação é RIR ${rirCont} (mais folgado).`);
+        if (cargaReal >= 0 && cargaCont < cargaReal)
+          erro(`CONTINUAÇÃO ALIVIOU em ${cen}: a última fase real fechou com ${cargaReal}% de 1RM e o pico da continuação é ${cargaCont}%.`);
+
+        // O cartão da continuação não pode prometer subida sobre um patamar congelado.
+        for (const c of conts)
+          for (const campo of ["tendenciaVolume", "tendenciaIntensidade"] as const)
+            if (c[campo] === "sobe" || c[campo] === "reduz")
+              erro(`CARTÃO DA CONTINUAÇÃO PROMETE MOVIMENTO em ${cen}: ${campo}="${c[campo]}" numa fase que segura o patamar.`);
+      }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {

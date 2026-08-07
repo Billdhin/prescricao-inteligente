@@ -112,6 +112,32 @@ export interface CtxAlvo {
   rirMinimo?: number;
   /** a rampa parte do PISO da faixa citada (ver ModDose.partirDoPiso) */
   partirDoPiso?: boolean;
+  /**
+   * SEGURA A DOSE NO PATAMAR QUE A RAMPA ALCANÇOU, em vez de recomeçar.
+   *
+   * Existe para as fases de CONTINUAÇÃO do caminho clínico: quando o horizonte é longo
+   * demais para as fases autoradas da jornada, a última fase se repete para sustentar os
+   * ganhos. Essas repetições eram marcadas "estavel", e "estavel" lê o MEIO da faixa, que
+   * não tem relação nenhuma com o ponto a que o plano tinha chegado.
+   *
+   * Medido antes da correção, em 48 semanas de hipertrofia para intermediário:
+   *
+   *   obesidade grau 2   fim da Fase 4: 4x7 RIR 1   fim da continuação: 4x7 RIR 2
+   *   diabetes tipo 2    fim da Fase 4: 4x6 RIR 1   fim da continuação: 4x7 RIR 2
+   *
+   * Ou seja, a fase cujo cartão diz "sustentar os ganhos" entregava dose MENOR que a fase
+   * que ela continua, e o plano terminava mais leve do que estava na semana 32. De quebra,
+   * as duas continuações saíam idênticas entre si semana a semana: as semanas 33 a 40 se
+   * repetiam em 41 a 48.
+   *
+   * A correção não troca a dose por um número novo: ela CONGELA a posição na rampa no fim
+   * dela (`t = 1`), e deixa todo o resto do caminho igual. Assim "patamar alcançado" é
+   * literalmente onde o plano chegou, seja qual for o modelo e seja qual for a direção da
+   * tendência: com "sobe" o topo, com "reduz" o piso, com "varia" a base da última onda.
+   * A compressão do perfil clínico (`fatorProgressao`) continua valendo por cima, então
+   * quem progride devagar segura no patamar devagar que alcançou, e não no de outro aluno.
+   */
+  patamarCongelado?: boolean;
   tipoSemana: TipoMicrociclo;
   tendenciaVolume: Tendencia;
   tendenciaIntensidade: Tendencia;
@@ -218,6 +244,8 @@ export function lerFaixaRIR(intensidade: string, nota?: string): Intervalo | nul
  * fração deles continua por mesociclo, byte-idêntica.
  */
 function fracaoCarga(ctx: CtxAlvo): number {
+  // Fase de continuação: a rampa não recomeça, ela para onde parou. Ver CtxAlvo.patamarCongelado.
+  if (ctx.patamarCongelado) return 1;
   if (ctx.semanaNoMacro != null && ctx.semanasDeCargaNoMacro != null) {
     const totalM = ctx.semanasDeCargaNoMacro;
     if (totalM <= 1) return 0;
@@ -299,13 +327,19 @@ function niveisDaCargaMaisLeve(
   const totalM = ctx.semanasDeCargaNoMacro ?? 0;
   const primeiraNoMacro = (ctx.semanaNoMacro ?? 0) - n;
   const fracao = (s: number) =>
-    usaMacro
-      ? totalM <= 1
-        ? 0
-        : (Math.min(Math.max(primeiraNoMacro + s, 1), totalM) - 1) / (totalM - 1)
-      : n <= 1
-        ? 0
-        : (s - 1) / (n - 1);
+    // No patamar congelado todas as semanas de carga estão no mesmo ponto da rampa, então a
+    // busca pela mais leve tem que olhar esse ponto, e não reconstruir uma rampa que não
+    // existe naquele bloco. Sem isto a descarga ancoraria abaixo do patamar que ela deveria
+    // aliviar. Ver CtxAlvo.patamarCongelado.
+    ctx.patamarCongelado
+      ? 1
+      : usaMacro
+        ? totalM <= 1
+          ? 0
+          : (Math.min(Math.max(primeiraNoMacro + s, 1), totalM) - 1) / (totalM - 1)
+        : n <= 1
+          ? 0
+          : (s - 1) / (n - 1);
 
   let melhor = { nv: 0, ni: 0, vol: Infinity };
   for (let s = 1; s <= n; s++) {
@@ -370,7 +404,26 @@ function nivelDaTendencia(tend: Tendencia, t: number, semanaNoMeso: number): num
  * A força NÃO usa esta função: manter carga estável entre semanas é decisão clínica em fase
  * de adaptação, e mexer nela quebraria o `check:progressao`.
  */
-function nivelAerobio(tend: Tendencia, t: number, semanaNoMeso: number): number {
+function nivelAerobio(tend: Tendencia, t: number, semanaNoMeso: number, congelado?: boolean): number {
+  /*
+   * PATAMAR CONGELADO SEM CHAPAR O CARDIO.
+   *
+   * Congelar a rampa resolve a força, e sozinho reintroduziria no aeróbio exatamente o
+   * defeito que esta função existe para consertar: com `t` fixo em 1, uma tendência "sobe"
+   * ou "reduz" devolveria o mesmo número em todas as semanas da continuação, e o feedback de
+   * campo que abriu esta função foi literalmente "o cardio tava tudo igual pra ele".
+   *
+   * Então a continuação mantém a MESMA variabilidade de sempre, só que em torno do patamar
+   * alcançado em vez do meio da faixa. A amplitude é a mesma do ciclo estável (±0,12) e
+   * segue dentro da faixa citada. Com "varia" nada é somado: a ondulatória já oscila por
+   * conta própria, e empilhar as duas ondas só deixaria o número nervoso à toa.
+   */
+  if (congelado) {
+    const base = nivelDaTendencia(tend, 1, semanaNoMeso);
+    if (tend === "varia") return base;
+    const ondaDoPatamar = [-0.12, 0, 0.12, 0];
+    return Math.min(1, Math.max(0, base + ondaDoPatamar[(Math.max(1, semanaNoMeso) - 1) % ondaDoPatamar.length]));
+  }
   if (tend !== "estavel") return nivelDaTendencia(tend, t, semanaNoMeso);
   // Ciclo de 4 semanas em torno do meio: leve, médio, mais longo, médio.
   const passo = [0.38, 0.5, 0.62, 0.5];
@@ -708,8 +761,8 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
   } else {
     // Travas do profissional (onda MP-6): volume congela a duração; intensidade congela o PSE-alvo.
     const travas = ctx.variaveisTravadas ?? [];
-    const nivelVolume = comPiso(travas.includes("volume") ? nivelCongelado(ctx.tendenciaVolume) : nivelAerobio(ctx.tendenciaVolume, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
-    const nivelInt = comPiso(travas.includes("intensidade") ? nivelCongelado(ctx.tendenciaIntensidade) : nivelAerobio(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso), ctx.pisoDoCiclo);
+    const nivelVolume = comPiso(travas.includes("volume") ? nivelCongelado(ctx.tendenciaVolume) : nivelAerobio(ctx.tendenciaVolume, t, ctx.semanaNoMeso, ctx.patamarCongelado), ctx.pisoDoCiclo);
+    const nivelInt = comPiso(travas.includes("intensidade") ? nivelCongelado(ctx.tendenciaIntensidade) : nivelAerobio(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso, ctx.patamarCongelado), ctx.pisoDoCiclo);
     // Perfil com cautela declarada parte do PISO da faixa citada e sobe de la (ver
     // ModDose.partirDoPiso). Sem isto, obesidade grau III recebia 40 min continuos na
     // semana 1, o teto da faixa "20 a 40 min", igual a um adulto sem condicao nenhuma.
