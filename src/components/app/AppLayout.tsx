@@ -239,7 +239,7 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
 
   const chip = (ativo: boolean) =>
     cn(
-      "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+      "inline-flex min-h-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
       ativo ? "border-primary bg-primary-tint text-primary font-semibold" : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
     );
 

@@ -57,7 +57,7 @@ export function KnowledgeMap({ compact = false }: { compact?: boolean }) {
                     </>
                   );
                   const cls = cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                    "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
                     nodeTone[n.colorToken],
                     active?.id === n.id && "ring-2 ring-primary/40",
                   );

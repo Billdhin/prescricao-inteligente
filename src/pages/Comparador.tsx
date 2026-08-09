@@ -535,7 +535,7 @@ function Chips({
               disabled={full}
               aria-pressed={on}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
                 on
                   ? "border-primary bg-primary-tint text-primary"
                   : full

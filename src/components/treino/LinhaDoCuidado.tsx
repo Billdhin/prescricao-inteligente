@@ -103,7 +103,7 @@ export function LinhaDoCuidado({
               <span
                 aria-current={est === "atual" ? "step" : undefined}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold",
+                  "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold",
                   est === "feito" && "border-success/40 bg-success-tint text-success",
                   est === "atual" && "border-primary bg-primary-tint text-primary",
                   est === "pendente" && "border-dashed border-border text-ink-3",

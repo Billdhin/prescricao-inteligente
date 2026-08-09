@@ -55,7 +55,7 @@ export function Casos() {
             key={f}
             onClick={() => setFiltro(f)}
             aria-pressed={filtro === f}
-            className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", filtro === f ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft")}
+            className={cn("inline-flex min-h-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", filtro === f ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft")}
           >
             {f === "todos" ? "Todos" : f === "em-andamento" ? "Em andamento" : f === "concluido" ? "Concluídos" : nivelLabel[f as Nivel]}
           </button>

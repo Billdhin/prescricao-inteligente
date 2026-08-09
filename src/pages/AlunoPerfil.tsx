@@ -653,7 +653,7 @@ function RestricoesFisicas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
             <span
               key={r.tag}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold",
+                "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold",
                 r.tag === "nenhuma_restricao"
                   ? "border-success/40 bg-success-tint text-success-text"
                   : "border-warning/40 bg-warning-tint text-warning-text",

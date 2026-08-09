@@ -7,6 +7,7 @@ import { getMuscleMapImages, getMuscleMapPose } from "@/data/muscle-map-images";
 import { exercises } from "@/data/exercises";
 import { useUser, isPremiumUnlocked } from "@/lib/store";
 import { cn, withBase } from "@/lib/utils";
+import { useListaProgressiva, VerMais } from "@/components/ui/ListaProgressiva";
 
 const ALL = "Todos";
 
@@ -49,6 +50,9 @@ export function MovementLabList() {
       (objetivo === ALL || e.objetivo.includes(objetivo)) &&
       (nivel === ALL || e.nivel === nivel),
   );
+  // Os 97 exercícios de uma vez davam 52.900px de altura no celular, setenta e três telas
+  // numa rolagem só. A lista passa a abrir em lote. Ver ListaProgressiva.
+  const lista = useListaProgressiva(filtered);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -119,7 +123,7 @@ export function MovementLabList() {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((e) => {
+          {lista.visiveis.map((e) => {
             // Produto 100% pago: sem tranca por exercicio.
             const locked = false;
             return (
@@ -188,6 +192,14 @@ export function MovementLabList() {
           })}
         </div>
       )}
+
+      <VerMais
+        faltam={lista.faltam}
+        total={lista.total}
+        mostrando={lista.visiveis.length}
+        onVerMais={lista.verMais}
+        rotulo="exercícios"
+      />
 
       <p className="pt-2 text-xs text-ink-3">
         Conteúdo educacional; não substitui avaliação profissional individualizada.

@@ -5,10 +5,13 @@ import { ModalidadePills, ParametroPills } from "@/components/special/SpecialUI"
 import { specialGroups, complexidadeTone, AVISO_SEGURANCA } from "@/data/specialGroups";
 import { useUser, isPremiumUnlocked } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { useListaProgressiva, VerMais } from "@/components/ui/ListaProgressiva";
 
 export function SpecialGroups() {
   const plan = useUser((s) => s.plan);
   const unlocked = isPremiumUnlocked(plan);
+  // As 23 jornadas de uma vez davam 12.510px de altura no celular. Ver ListaProgressiva.
+  const lista = useListaProgressiva(specialGroups, 8);
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -25,7 +28,7 @@ export function SpecialGroups() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {specialGroups.map((g) => {
+        {lista.visiveis.map((g) => {
           const locked = g.premium && !unlocked;
           return (
             <Card key={g.slug} className="flex flex-col p-5">
@@ -70,6 +73,13 @@ export function SpecialGroups() {
           );
         })}
       </div>
+      <VerMais
+        faltam={lista.faltam}
+        total={lista.total}
+        mostrando={lista.visiveis.length}
+        onVerMais={lista.verMais}
+        rotulo="jornadas"
+      />
     </div>
   );
 }

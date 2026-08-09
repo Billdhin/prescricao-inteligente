@@ -59,7 +59,7 @@ export function Disciplinas() {
             onClick={() => setFiltro(f.id)}
             aria-pressed={filtro === f.id}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+              "inline-flex min-h-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
               filtro === f.id ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
             )}
           >

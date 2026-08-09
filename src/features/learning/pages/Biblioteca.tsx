@@ -8,6 +8,7 @@ import { EmptyState } from "../components/shared";
 import { useAprender } from "../store";
 import { normalizar } from "../utils";
 import type { ScientificReference } from "../types";
+import { useListaProgressiva, VerMais } from "@/components/ui/ListaProgressiva";
 
 const repo = getLearningRepository();
 
@@ -30,6 +31,8 @@ export function Biblioteca() {
     if (q && !normalizar(`${r.title} ${r.authors} ${r.topics.join(" ")} ${r.abstractSummary}`).includes(q)) return false;
     return true;
   });
+  // A biblioteca inteira de uma vez dava 23.066px de altura no celular. Ver ListaProgressiva.
+  const lista = useListaProgressiva(visiveis);
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -51,7 +54,7 @@ export function Biblioteca() {
             key={f}
             onClick={() => setFiltro(f)}
             aria-pressed={filtro === f}
-            className={cn("rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", filtro === f ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft")}
+            className={cn("inline-flex min-h-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", filtro === f ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft")}
           >
             {f === "todas" ? "Todas" : f === "aberto" ? "Acesso aberto" : f === "validadas" ? "Validadas" : f === "a-validar" ? "A validar" : "Salvas"}
           </button>
@@ -62,11 +65,18 @@ export function Biblioteca() {
         <EmptyState icon={<Library className="h-5 w-5" />} title="Nenhuma referência para este filtro" description="Ajuste a busca ou os filtros." />
       ) : (
         <div className="space-y-3">
-          {visiveis.map((r) => (
+          {lista.visiveis.map((r) => (
             <ReferenceCard key={r.id} r={r} saved={savedIds.has(r.id)} />
           ))}
         </div>
       )}
+      <VerMais
+        faltam={lista.faltam}
+        total={lista.total}
+        mostrando={lista.visiveis.length}
+        onVerMais={lista.verMais}
+        rotulo="referências"
+      />
     </div>
   );
 }

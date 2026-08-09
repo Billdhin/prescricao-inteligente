@@ -88,7 +88,7 @@ function FiltroChip({ ativo, onClick, children }: { ativo: boolean; onClick: () 
       onClick={onClick}
       aria-pressed={ativo}
       className={cn(
-        "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+        "inline-flex min-h-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
         ativo ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
       )}
     >

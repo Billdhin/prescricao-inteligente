@@ -555,7 +555,7 @@ export function PrescreverTreino() {
                           aria-pressed={semanas === h.semanas}
                           title={`${h.rotulo}: ${h.semanas} semanas`}
                           className={cn(
-                            "rounded-full border px-3 py-1.5 text-sm leading-tight transition-colors",
+                            "inline-flex min-h-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm leading-tight transition-colors",
                             semanas === h.semanas
                               ? "border-primary bg-primary-tint font-semibold text-primary"
                               : "border-border text-ink-2 hover:bg-surface-soft",
@@ -1492,7 +1492,7 @@ function Opcoes({ valor, opcoes, onSelect, sufixo }: { valor: string; opcoes: re
           onClick={() => onSelect(o)}
           aria-pressed={valor === o}
           className={cn(
-            "rounded-full border px-3 py-1.5 text-sm transition-colors",
+            "inline-flex min-h-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm transition-colors",
             valor === o ? "border-primary bg-primary-tint font-semibold text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
           )}
         >
