@@ -339,6 +339,34 @@ export function PrescreverTreino() {
               </Link>
               .
             </p>
+
+            {/*
+              QUANDO JÁ ESTÁ TUDO RESPONDIDO, A AÇÃO VEM ANTES DO FORMULÁRIO.
+
+              Medido no app a 320px de largura, com um aluno selecionado: a página tem 1737px
+              e o botão "Gerar periodização" fica a 1333px do topo, quase duas telas de
+              rolagem. E as seis perguntas do caminho já vêm TODAS preenchidas do perfil do
+              aluno (objetivo, nível, condição). O profissional rolava seis blocos de opções
+              para confirmar o que ele mesmo já tinha cadastrado.
+
+              Com aluno escolhido, o formulário deixa de ser um formulário e vira uma
+              confirmação: o resumo do que vai ser gerado e o botão, no alto. Os seis campos
+              continuam logo abaixo, inteiros, para quem quiser mudar algo nesta prescrição
+              sem mexer no perfil. Sem aluno (plano avulso) nada muda, porque ali as respostas
+              de fato começam vazias.
+            */}
+            {aluno && !plano && !bloquearPorPerfil && (
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border border-border bg-surface-soft p-3">
+                <p className="min-w-0 flex-1 text-sm text-ink-2">
+                  <span className="font-semibold text-ink">{aluno.nome.split(" ")[0]}</span>, {objetivo.toLowerCase()},{" "}
+                  {nivel.toLowerCase()}, {rotuloHorizonte(semanas) ?? `${semanas} semanas`}, {frequencia}x por semana
+                  {grupo ? `, ${getSpecialGroup(grupo)?.nome ?? ""}` : ""}. Dá para ajustar abaixo.
+                </p>
+                <button onClick={gerar} className={cn(buttonClasses("primary"), "shrink-0")}>
+                  <Sparkles className="h-4 w-4" /> Gerar periodização
+                </button>
+              </div>
+            )}
           </div>
 
           <Card variant="raised" className="p-5 md:p-6">

@@ -102,9 +102,41 @@ export function RestricoesSelector({
         />
       </label>
 
+      {/*
+        A SAÍDA "NÃO TEM" FICA FORA DOS ACORDEÕES.
+
+        Medido no app rodando, na etapa 4 do Treino do dia: o botão "Próximo" sai
+        DESABILITADO enquanto nada estiver marcado, e "Nenhuma restrição física" nem
+        aparecia no texto da página, porque mora no grupo "Histórico recente", que nasce
+        FECHADO. Ou seja, o único caminho adiante estava desligado e a chave estava dentro de
+        uma gaveta que ninguém tinha motivo para abrir. Para um aluno sem restrição alguma, a
+        etapa era um beco sem saída.
+
+        É o mesmo defeito que o Filipe encontrou na tela de perfil, e a correção é a mesma: a
+        resposta à pergunta inteira não é um item de um dos assuntos, ela vem antes de todos.
+      */}
+      {(() => {
+        const nenhuma = CATALOGO_RESTRICOES.find((it) => it.tag === "nenhuma_restricao");
+        if (!nenhuma || (q && !filtra(nenhuma))) return null;
+        return (
+          <div className="rounded-xl border border-border bg-surface p-3">
+            <RestricaoCard
+              item={nenhuma}
+              selecionado={selMap.has(nenhuma.tag)}
+              onToggle={() => toggle(nenhuma.tag)}
+            />
+            <p className="mt-2 px-1 text-xs text-ink-3">
+              Se este aluno não tem nada a declarar, um clique aqui responde a etapa inteira.
+            </p>
+          </div>
+        );
+      })()}
+
       {/* Grupos em accordion */}
       {GRUPOS_RESTRICAO.map((g) => {
-        const itens = CATALOGO_RESTRICOES.filter((it) => it.grupo === g.id && filtra(it));
+        const itens = CATALOGO_RESTRICOES.filter(
+          (it) => it.grupo === g.id && it.tag !== "nenhuma_restricao" && filtra(it),
+        );
         if (q && itens.length === 0) return null;
         const aberto = q ? true : abertos.has(g.id);
         const selecionadasNoGrupo = itens.filter((it) => selMap.has(it.tag)).length;

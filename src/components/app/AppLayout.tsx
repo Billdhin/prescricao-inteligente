@@ -75,6 +75,25 @@ export function AppLayout() {
   const [onboarding, setOnboarding] = React.useState(
     () => typeof window !== "undefined" && !localStorage.getItem("pi-onboarded"),
   );
+  /*
+   * O ONBOARDING DE PRIMEIRO ALUNO SÓ VALE PARA QUEM NÃO TEM ALUNO.
+   *
+   * A condição era só a marca `pi-onboarded` no localStorage, que é POR NAVEGADOR, enquanto
+   * a carteira de alunos vive na conta. As duas coisas se separam com facilidade: entrar num
+   * segundo aparelho, numa janela anônima, ou depois de limpar os dados do navegador. Em
+   * qualquer um desses casos o profissional recebia "Vamos começar pelo seu primeiro aluno"
+   * em tela cheia, por cima de uma carteira que já existe.
+   *
+   * E não é um cartaz que dá para ignorar: o diálogo é `fixed inset-0` e deixa todo o fundo
+   * `inert`, ou seja o app inteiro fica sem clique até ele sair. Medido no app rodando: com
+   * dois alunos cadastrados, o modal aparecia por cima de "Prescrever treino", que é a tela
+   * do core.
+   *
+   * A carteira chega depois da hidratação do store, então a checagem é feita no render e não
+   * no estado inicial: assim que os alunos aparecem, o convite some sozinho.
+   */
+  const totalAlunos = useAlunos((s) => s.alunos.length);
+  const mostrarOnboarding = onboarding && totalAlunos === 0;
 
   // Acesso local: com senha definida (Configurações > Acesso), o app pede a
   // senha uma vez por sessão do navegador. Páginas públicas (landing, /roi,
@@ -108,7 +127,7 @@ export function AppLayout() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-bg">
       {/* Fundo fica inerte enquanto o onboarding está aberto (foco/leitura presos no diálogo) */}
-      <div className="flex min-h-screen w-full" {...(onboarding ? ({ inert: "" } as any) : {})}>
+      <div className="flex min-h-screen w-full" {...(mostrarOnboarding ? ({ inert: "" } as any) : {})}>
         <Sidebar />
         {/* A coluna de conteúdo abre espaço para a barra fixa em lg+; no mobile a
             barra lateral não existe e o espaço é zero. */}
@@ -125,7 +144,7 @@ export function AppLayout() {
         </div>
       </div>
       <BottomBar />
-      {onboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
+      {mostrarOnboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
       <Toasts />
     </div>
   );

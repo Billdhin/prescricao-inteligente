@@ -448,6 +448,23 @@ const feita = (a: Aluno, id: string) => completudeAluno(a).secoes.find((s) => s.
     problemas.push("restrições: a opção exclusiva está declarada em todos os grupos, o que duplicaria o cartão.");
   // A gaveta fixa a exclusiva no topo, fora do recorte por grupo. Se alguém voltar a filtrá-la
   // por grupo, ela some de três dos quatro filtros, que é o defeito relatado.
+  /*
+   * C. O CONVITE DE PRIMEIRO ALUNO NÃO PODE COBRIR QUEM JÁ TEM ALUNOS.
+   *
+   * A condição era só a marca `pi-onboarded` no localStorage, que é por NAVEGADOR, enquanto
+   * a carteira vive na conta. Segundo aparelho, janela anônima ou dados limpos e o
+   * profissional recebia "Vamos começar pelo seu primeiro aluno" em tela cheia, com o fundo
+   * inteiro `inert`, por cima de uma carteira que já existe. Medido no app rodando: com dois
+   * alunos, o modal aparecia sobre a tela de Prescrever treino.
+   */
+  const fonteLayout = readFileSync("src/components/app/AppLayout.tsx", "utf8");
+  if (!/const mostrarOnboarding = onboarding && totalAlunos === 0;/.test(fonteLayout))
+    problemas.push(
+      "AppLayout: o onboarding de primeiro aluno voltou a depender só da marca do navegador. Ele tem de checar se a carteira está vazia, senão cobre o app de quem já tem alunos.",
+    );
+  if (/\{onboarding && <OnboardingGate/.test(fonteLayout))
+    problemas.push("AppLayout: o OnboardingGate está sendo montado pela flag crua, sem a checagem de carteira vazia.");
+
   const fonteGaveta = readFileSync("src/components/alunos/GavetaSelecao.tsx", "utf8");
   if (!/const exclusivo = achados\.find\(\(it\) => it\.exclusivo\)/.test(fonteGaveta))
     problemas.push(

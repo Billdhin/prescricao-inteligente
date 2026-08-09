@@ -1378,6 +1378,28 @@ function Wizard({
         )}
       </div>
 
+      {/*
+        BOTÃO DESLIGADO TEM QUE DIZER POR QUÊ.
+
+        O "Próximo" da etapa de restrições sai desabilitado em três situações diferentes e
+        não dizia nenhuma delas. Medido no app: com nada marcado, o único caminho adiante
+        estava cinza e a página não trazia uma linha de explicação. Um botão inerte sem
+        motivo é pior do que um erro, porque o usuário não sabe se é ele, se é o aluno ou se
+        é o sistema, e a leitura natural é "o sistema não me deixa avançar", que foi
+        exatamente a frase do Filipe.
+
+        A explicação fica colada ao botão, diz o que fazer e não o que falta.
+      */}
+      {step === 3 && !restricaoStepOk && (
+        <p role="status" className="mt-3 text-right text-xs text-ink-2">
+          {seguranca.bloqueado
+            ? "Há um item que pede liberação profissional antes de gerar. Ajuste a resposta acima ou trate como encaminhamento."
+            : condicionaisPendentes(answers.restricoes)
+              ? "Falta completar o detalhe de uma restrição já marcada (logo acima, em Detalhe das selecionadas)."
+              : "Marque ao menos uma opção. Se este aluno não tem nada a declarar, use “Nenhuma restrição física”, no topo da lista."}
+        </p>
+      )}
+
       {!last && (
         <button
           onClick={onFinish}
