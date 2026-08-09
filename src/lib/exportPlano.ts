@@ -286,6 +286,7 @@ export function exportPlanoPDF({
   profissional,
   cref,
   marca,
+  apenasHtml,
 }: {
   aluno: Aluno;
   plano: PlanoTreino;
@@ -293,7 +294,19 @@ export function exportPlanoPDF({
   cref?: string;
   /** logo, empresa e contato do profissional (Configurações > Sua marca) */
   marca?: MarcaDocumento;
-}) {
+  /**
+   * Só monta o HTML e devolve, sem abrir janela nem imprimir.
+   *
+   * Existe porque o documento que o profissional ASSINA não tinha como ser testado: a função
+   * terminava em `window.open`, e fora do navegador ela nem roda. As regras mais duras do
+   * produto vivem justamente aqui (o documento do aluno nunca carrega rótulo clínico, a dose
+   * impressa é a mesma do plano, nenhuma referência sai sem estar resolvida), e nenhuma delas
+   * era verificada contra a saída real, só contra o que o motor guarda antes de imprimir.
+   *
+   * A saída do caminho normal não muda em nada: o mesmo HTML segue para a janela.
+   */
+  apenasHtml?: boolean;
+}): string | void {
   const modelo = getModelo(plano.modeloId);
   // Documento que chega ao aluno: o título do plano já nasce com o nome de PROGRAMA do
   // grupo, nunca com o rótulo clínico, e o profissional pode reescrevê-lo. O que o grupo
@@ -445,6 +458,8 @@ export function exportPlanoPDF({
   </div>
   <script>window.onload = function () { window.print(); };</script>
   </body></html>`;
+
+  if (apenasHtml) return html;
 
   const w = window.open("", "_blank", "width=800,height=1000");
   if (!w) {
