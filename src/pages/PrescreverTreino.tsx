@@ -65,6 +65,46 @@ const FREQUENCIAS = [2, 3, 4, 5, 6];
 const fmtDataCurta = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(ts));
 
+/*
+ * RASCUNHO DE PLANO QUE SOBREVIVE À NAVEGAÇÃO.
+ *
+ * Fica na sessão do navegador, e não no armazenamento persistido do app, de propósito: um
+ * rascunho é do atendimento de agora, não da carteira. Fechou o navegador, ele vai embora,
+ * que é o que a palavra promete. Guardar por aluno evita o pior erro possível aqui, que seria
+ * devolver o rascunho de um aluno na tela de outro.
+ */
+const CHAVE_RASCUNHO = "pi-rascunho-plano";
+
+function lerRascunho(alunoId?: string): PlanoTreino | null {
+  if (typeof window === "undefined" || !alunoId) return null;
+  try {
+    const bruto = sessionStorage.getItem(CHAVE_RASCUNHO);
+    if (!bruto) return null;
+    const p = JSON.parse(bruto) as PlanoTreino;
+    return p?.alunoId === alunoId && p?.macrociclo ? p : null;
+  } catch {
+    return null;
+  }
+}
+
+function gravarRascunho(plano: PlanoTreino) {
+  if (typeof window === "undefined" || !plano.alunoId) return;
+  try {
+    sessionStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(plano));
+  } catch {
+    /* cota cheia ou sessão indisponível: o rascunho segue só em memória, como antes */
+  }
+}
+
+function limparRascunho() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(CHAVE_RASCUNHO);
+  } catch {
+    /* nada a fazer */
+  }
+}
+
 /* ------------------------------- Página ------------------------------- */
 
 export function PrescreverTreino() {
@@ -118,8 +158,31 @@ export function PrescreverTreino() {
 
   // O rascunho já nasce como o plano que vai ser salvo: editar, salvar e exportar
   // trabalham no mesmo objeto, então o PDF nunca mostra uma versão anterior da edição.
-  const [plano, setPlano] = React.useState<PlanoTreino | null>(planoPre ?? null);
+  const [plano, setPlano] = React.useState<PlanoTreino | null>(
+    () => planoPre ?? lerRascunho(params.get("aluno") ?? undefined),
+  );
   const [salvo, setSalvo] = React.useState(Boolean(planoPre));
+  const [rascunhoRecuperado, setRascunhoRecuperado] = React.useState(
+    () => !planoPre && Boolean(lerRascunho(params.get("aluno") ?? undefined)),
+  );
+
+  /*
+   * O PLANO NÃO PODE SUMIR SÓ PORQUE O PROFISSIONAL SAIU DA TELA.
+   *
+   * Medido no app: gerar a periodização, tocar em qualquer item do menu e voltar. O plano
+   * some, e `planos` no armazenamento segue em 0. Ele vivia SÓ no estado deste componente, e
+   * a pílula da tela dizia "Rascunho" o tempo todo, o que promete uma guarda que não existia.
+   * Quem editou meia dúzia de semanas na mão perdia o trabalho num toque, sem aviso nenhum.
+   *
+   * Isto NÃO decide o que "publicar" significa, que é uma decisão de produto ainda em aberto:
+   * o único botão que persiste de verdade continua sendo o de publicar no app do aluno. O que
+   * muda é que o rascunho passa a sobreviver à navegação, guardado na sessão do navegador e
+   * devolvido ao voltar, com um aviso dizendo que ele foi recuperado e ainda não está salvo.
+   */
+  React.useEffect(() => {
+    if (!plano || salvo) return;
+    gravarRascunho(plano);
+  }, [plano, salvo]);
 
   // `?modelo=` chega das aulas do Aprender ("aplicar no atendimento"): o profissional
   // acabou de estudar um modelo e quer montar um plano com ele.
@@ -282,9 +345,12 @@ export function PrescreverTreino() {
     if (jaExiste) {
       updatePlano(plano.id, plano);
       setSalvo(true);
+      limparRascunho();
+      setRascunhoRecuperado(false);
       toast("Plano atualizado no perfil do aluno.");
     } else {
       addPlano({ ...plano, alunoId: aluno.id });
+      limparRascunho();
       // Primeiro salvamento de um plano novo: leva ao perfil, onde o chip "Sem treino"
       // morre na frente do usuário, com o banner e a aba de treino aberta. Salvamentos
       // seguintes (updatePlano) ficam na tela, com o link "Ver no perfil de {nome}".
@@ -566,6 +632,30 @@ export function PrescreverTreino() {
       {/* Resultado */}
       {plano && (
         <div id="resultado-treino" className="scroll-mt-24">
+          {/* O rascunho voltou da sessão: o profissional precisa saber que é o trabalho dele
+              de volta, e que ele ainda não está guardado no perfil do aluno. */}
+          {rascunhoRecuperado && !salvo && (
+            <div
+              role="status"
+              className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-card border border-warning/40 bg-warning-tint px-4 py-3 text-sm text-warning-text"
+            >
+              <AlertTriangle aria-hidden className="h-4 w-4 shrink-0" />
+              <span className="min-w-0 flex-1">
+                Rascunho recuperado com as suas edições. Ele ainda não está no perfil do aluno.
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  limparRascunho();
+                  setRascunhoRecuperado(false);
+                  setPlano(null);
+                }}
+                className="shrink-0 font-semibold underline underline-offset-4"
+              >
+                Descartar e recomeçar
+              </button>
+            </div>
+          )}
           <ResultadoPlano
             plano={plano}
             onChange={(p) => {
@@ -581,7 +671,7 @@ export function PrescreverTreino() {
             salvo={salvo}
             onSalvar={salvar}
             onExportar={exportar}
-            onEditarContexto={() => setPlano(null)}
+            onEditarContexto={() => { limparRascunho(); setRascunhoRecuperado(false); setPlano(null); }}
           />
         </div>
       )}

@@ -465,6 +465,32 @@ const feita = (a: Aluno, id: string) => completudeAluno(a).secoes.find((s) => s.
   if (/\{onboarding && <OnboardingGate/.test(fonteLayout))
     problemas.push("AppLayout: o OnboardingGate está sendo montado pela flag crua, sem a checagem de carteira vazia.");
 
+  /*
+   * D. O PLANO GERADO NÃO PODE SUMIR AO SAIR DA TELA.
+   *
+   * Medido no app: gerar a periodização, tocar em qualquer item do menu e voltar. O plano
+   * sumia e o armazenamento seguia com zero planos, enquanto a pílula da tela dizia
+   * "Rascunho" o tempo todo, prometendo uma guarda que não existia. Quem editava semanas na
+   * mão perdia o trabalho num toque, sem aviso.
+   *
+   * O rascunho passou a viver na sessão do navegador, e a trava cobre as três partes que
+   * fazem isso ser seguro: ele é GRAVADO, é lido POR ALUNO (senão o rascunho de um apareceria
+   * na tela de outro, que seria muito pior que perder) e é APAGADO ao publicar.
+   */
+  const fontePrescrever = readFileSync("src/pages/PrescreverTreino.tsx", "utf8");
+  if (!/sessionStorage\.setItem\(CHAVE_RASCUNHO/.test(fontePrescrever))
+    problemas.push(
+      "PrescreverTreino: o rascunho do plano deixou de ser gravado. Sem isso, sair da tela apaga o trabalho do profissional sem aviso.",
+    );
+  if (!/p\?\.alunoId === alunoId/.test(fontePrescrever))
+    problemas.push(
+      "PrescreverTreino: o rascunho voltou a ser lido sem conferir o aluno. Devolver o rascunho de um aluno na tela de outro é pior do que perdê-lo.",
+    );
+  if ((fontePrescrever.match(/limparRascunho\(\)/g) ?? []).length < 3)
+    problemas.push(
+      "PrescreverTreino: faltou apagar o rascunho em algum caminho (publicar, atualizar ou editar contexto). Rascunho órfão reaparece por cima de um plano já salvo.",
+    );
+
   const fonteGaveta = readFileSync("src/components/alunos/GavetaSelecao.tsx", "utf8");
   if (!/const exclusivo = achados\.find\(\(it\) => it\.exclusivo\)/.test(fonteGaveta))
     problemas.push(
