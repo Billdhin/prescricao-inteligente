@@ -24,7 +24,7 @@ import { letraSessao } from "@/lib/gps/semear";
 import { exercises } from "@/data/exercises";
 import { cn } from "@/lib/utils";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
-import { gerarPlano, slugsClinicosDoPlano } from "@/lib/gps/periodizacao";
+import { gerarPlano, slugsClinicosDoPlano, consequenciasDoPlano } from "@/lib/gps/periodizacao";
 import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
 import {
   getModelo,
@@ -1137,6 +1137,15 @@ const REGIAO: Record<string, "Inferiores" | "Superiores" | "Core" | "Corpo todo"
  *  - o aviso só existe quando a contagem de fato dispara. Card de aviso vazio ensina
  *    o leitor a pular a seção justamente no dia em que ela tem conteúdo.
  */
+/**
+ * Uma lista de nomes que cabe numa frase: até três, e o resto vira contagem. O bloco de
+ * consequências pode receber dez exercícios, e dez nomes numa linha não se lê.
+ */
+function listaCurta(nomes: string[], max = 3): string {
+  if (nomes.length <= max) return nomes.join(", ");
+  return `${nomes.slice(0, max).join(", ")} e mais ${nomes.length - max}`;
+}
+
 function TrilhoDoPlano({
   plano,
   micro,
@@ -1153,6 +1162,28 @@ function TrilhoDoPlano({
   refIds: string[];
 }) {
   const faixa = getFaixa(plano.objetivo);
+
+  /*
+   * O que a condição e as restrições fizeram COM O CATÁLOGO deste aluno.
+   *
+   * A seleção de exercícios é determinística e idêntica em todas as semanas, então roda uma
+   * vez aqui, com as mesmas entradas com que o plano foi gerado. Sem aluno (plano avulso),
+   * só as restrições que a própria condição impõe entram, que é o mesmo que a geração faz.
+   */
+  const consequencias = React.useMemo(
+    () =>
+      consequenciasDoPlano({
+        objetivo: plano.objetivo,
+        nivel: plano.nivel,
+        semanas: plano.semanas,
+        frequencia: plano.frequenciaSemanal,
+        grupoEspecial: alunoObj?.grupoEspecial ?? plano.grupoEspecial,
+        condicoesAtencao: alunoObj?.condicoesAtencao,
+        objetivoSecundario: plano.objetivoSecundario,
+        restricoes: alunoObj?.restricoes,
+      }),
+    [plano, alunoObj],
+  );
 
   // Equilíbrio: séries de força por região, a partir dos blocos da semana em foco.
   const equilibrio = React.useMemo(() => {
@@ -1202,12 +1233,47 @@ function TrilhoDoPlano({
           {linhaObjetivos(plano.objetivo, plano.objetivoSecundario)}
         </ItemPorque>
       )}
-      {alunoObj?.restricoes.length ? (
-        <ItemPorque tom="warning" titulo={`Restrição de ${alunoObj.nome.split(" ")[0]}`}>
-          {alunoObj.restricoes.map((r) => rotuloRestricao(r.tag)).join(", ")}. Os exercícios incompatíveis
-          ficam fora do plano; os limítrofes entram rebaixados.
-        </ItemPorque>
-      ) : null}
+      {/*
+        O QUE ISTO MOSTRA MUDOU, E O FILIPE ESTAVA CERTO NAS DUAS CRÍTICAS.
+        Antes: `alunoObj.restricoes.map(rotuloRestricao)`, ou seja o ECO do campo que o
+        profissional preencheu. Para um aluno de 70 anos com obesidade, diabetes e
+        hipertensão estágio 2, e sem restrição física declarada, o bloco saía
+        "Restrição de Erbênio: Nenhuma restrição física. Os exercícios incompatíveis ficam
+        fora do plano; os limítrofes entram rebaixados". Duas coisas erradas ao mesmo tempo:
+        a frase afirmava exclusão e rebaixamento sem ter QUALQUER dado sobre isso, e o assunto
+        do bloco era o corpo do aluno quando o que interessa ali é o EXERCÍCIO, o que as
+        condições dele impedem ou pedem para evitar na hora de executar.
+        Agora sai o que o motor de fato fez com o catálogo (ver `consequenciasDoPlano`).
+      */}
+      <ItemPorque
+        tom={consequencias.foraDoPlano.length ? "warning" : "analysis"}
+        titulo={
+          consequencias.foraDoPlano.length
+            ? `${consequencias.foraDoPlano.length} exercício${consequencias.foraDoPlano.length === 1 ? "" : "s"} fora do plano`
+            : consequencias.rebaixados.length
+              ? `${consequencias.rebaixados.length} exercício${consequencias.rebaixados.length === 1 ? "" : "s"} entrou rebaixado`
+              : "Nenhum exercício foi excluído"
+        }
+      >
+        {consequencias.foraDoPlano.length > 0 && (
+          <>
+            {listaCurta(consequencias.foraDoPlano.map((x) => x.nome))}: {consequencias.foraDoPlano[0].motivo}
+            {" "}
+          </>
+        )}
+        {consequencias.rebaixados.length > 0 && (
+          <>
+            {consequencias.foraDoPlano.length ? "Entraram rebaixados, atrás de qualquer alternativa: " : "Entrou atrás de qualquer alternativa: "}
+            {listaCurta(consequencias.rebaixados.map((x) => x.nome))} ({consequencias.rebaixados[0].motivo}).{" "}
+          </>
+        )}
+        {!consequencias.foraDoPlano.length && !consequencias.rebaixados.length && (
+          <>Nada no catálogo deste aluno é incompatível com o que foi declarado. </>
+        )}
+        Sobram {consequencias.elegiveis} exercícios elegíveis.
+        {consequencias.faltouCatalogo &&
+          " O catálogo não tem exercícios seguros suficientes para esta frequência: o plano repete os que sobraram, e vale rever equipamentos ou restrições."}
+      </ItemPorque>
     </ul>
   );
 

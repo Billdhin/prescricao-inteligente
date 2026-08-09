@@ -451,11 +451,6 @@ function CondicaoDeSaude({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partia
   );
 
   const q = busca.trim().toLowerCase();
-  const lista = q
-    ? ordenadas.filter((g) => g.nome.toLowerCase().includes(q) || g.descricaoCurta.toLowerCase().includes(q))
-    : verTodas
-      ? ordenadas
-      : ordenadas.slice(0, CONDICOES_ATALHO);
 
   /**
    * Marcar e desmarcar condição, agora com MAIS DE UMA por aluno.
@@ -470,6 +465,40 @@ function CondicaoDeSaude({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partia
    * lista assume, para o aluno nunca ficar com atenção sem principal.
    */
   const selecionadas = [aluno.grupoEspecial, ...(aluno.condicoesAtencao ?? [])].filter(Boolean) as string[];
+
+  /*
+   * O QUE ESTÁ MARCADO APARECE SEMPRE, E PRIMEIRO.
+   *
+   * A lista era `ordenadas.slice(0, CONDICOES_ATALHO)`, ou seja seis atalhos por frequência
+   * de uso. Uma condição marcada que caísse fora desses seis simplesmente não era desenhada,
+   * e o profissional ficava sem ver a própria escolha. Foi o que o Filipe relatou: teve de
+   * BUSCAR "diabetes" para marcar, e depois de marcada ela sumia do quadro de novo, só
+   * reaparecendo quando ele digitava. Uma tela que esconde a seleção que ela mesma guardou
+   * faz o profissional duvidar do que gravou, e ele reabre, remarca, duplica.
+   *
+   * Agora as marcadas são fixadas no começo, inclusive durante a busca: filtrar é para achar
+   * o que falta, nunca para esconder o que já foi decidido. A principal vem antes das demais,
+   * porque é ela que dá o esqueleto de fases.
+   */
+  const naBusca = React.useMemo(
+    () =>
+      q
+        ? ordenadas.filter((g) => g.nome.toLowerCase().includes(q) || g.descricaoCurta.toLowerCase().includes(q))
+        : verTodas
+          ? ordenadas
+          : ordenadas.slice(0, CONDICOES_ATALHO),
+    [q, verTodas, ordenadas],
+  );
+  const marcadas = React.useMemo(
+    () =>
+      selecionadas
+        .map((slug) => ordenadas.find((g) => g.slug === slug))
+        .filter((g): g is (typeof ordenadas)[number] => Boolean(g)),
+    [selecionadas.join("|"), ordenadas],
+  );
+  const lista = [...marcadas, ...naBusca.filter((g) => !selecionadas.includes(g.slug))];
+  /** quantas das que a busca encontrou ainda NÃO estão marcadas (o que sobra para escolher) */
+  const naBuscaNaoMarcadas = naBusca.filter((g) => !selecionadas.includes(g.slug)).length;
 
   const alternar = (slug: string) => {
     const novas = selecionadas.includes(slug)
@@ -536,8 +565,19 @@ function CondicaoDeSaude({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partia
       </div>
 
       <p className="text-xs text-ink-3">
+        {/* O texto conta o que a pessoa vê: as marcadas primeiro, porque elas nunca somem, e
+            depois quantas restam para escolher. O contador antigo dizia "6 de 23" incluindo
+            as marcadas na conta, o que ficava errado assim que uma delas era fixada. */}
+        {selecionadas.length > 0 && (
+          <>
+            <span className="font-semibold text-ink-2">
+              {selecionadas.length} marcada{selecionadas.length === 1 ? "" : "s"}
+            </span>
+            , sempre à vista.{" "}
+          </>
+        )}
         {q
-          ? `${lista.length} de ${specialGroups.length} condições.`
+          ? `${naBuscaNaoMarcadas} outra${naBuscaNaoMarcadas === 1 ? "" : "s"} encontrada${naBuscaNaoMarcadas === 1 ? "" : "s"} de ${specialGroups.length}.`
           : temHistorico
             ? "Mais usadas por você. A busca abre a lista completa."
             : "A busca abre a lista completa."}{" "}
@@ -604,9 +644,12 @@ function RestricoesFisicas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
         </button>
       </div>
 
-      {(ativas.length > 0 || marcouNenhuma) && (
+      {/* As etiquetas removíveis são das restrições DE VERDADE. "Nenhuma" não entra aqui:
+          desde que ela virou um chip logo abaixo, com o próprio estado marcado, listá-la
+          também como etiqueta mostrava o mesmo rótulo duas vezes na mesma dobra. */}
+      {ativas.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {aluno.restricoes.map((r) => (
+          {aluno.restricoes.filter((r) => r.tag !== "nenhuma_restricao").map((r) => (
             <span
               key={r.tag}
               className={cn(
@@ -629,6 +672,37 @@ function RestricoesFisicas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
           ))}
         </div>
       )}
+
+      {/*
+        A RESPOSTA "NÃO TEM" MORA AQUI, E NÃO NO FIM DE UMA ABA.
+        "Nenhuma restrição física" existe no catálogo desde sempre, no grupo `historico`, o
+        quarto filtro da gaveta, abaixo de seis outros itens. Para dizer que o aluno não tem
+        restrição era preciso abrir a gaveta, adivinhar a aba "Histórico", rolar até o fim,
+        marcar e aplicar. O Filipe descreveu exatamente esse caminho, e a conclusão dele é a
+        regra: "essa opção deveria estar muito intuitiva e na aba já inicial". Enquanto ela
+        ficou escondida, a seção parecia travada, porque a única saída visível era declarar
+        uma restrição que não existe.
+        Agora é um clique, no mesmo lugar em que a pergunta é feita, no mesmo formato do
+        "Sem condição" do card de cima. As quatro portas continuam ali para quem tem o que
+        declarar.
+      */}
+      <div className="flex flex-wrap items-center gap-2">
+        <ChipEscolha
+          ativo={marcouNenhuma}
+          onClick={() =>
+            onPatch({
+              restricoes: marcouNenhuma ? [] : [criarRestricao("nenhuma_restricao")],
+            })
+          }
+        >
+          Nenhuma restrição física
+        </ChipEscolha>
+        <span className="text-xs text-ink-3">
+          {marcouNenhuma
+            ? "Respondido. Se aparecer alguma, é só marcar abaixo."
+            : "Se não houver nada a declarar, um clique resolve esta seção."}
+        </span>
+      </div>
 
       {/* As quatro portas do catálogo: cada uma abre a gaveta no seu filtro */}
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

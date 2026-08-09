@@ -324,6 +324,15 @@ export interface SelecaoExercicios {
   escolhidos: { slug: string; nome: string }[];
   /** exercícios retirados pela condição/restrição, com o motivo (para o Prontuário) */
   descartados: { slug: string; nome: string; motivo: string }[];
+  /**
+   * Exercícios que NÃO saíram do catálogo, mas foram para o fim da fila por peso da
+   * condição: posição que ela evita, flexão de coluna carregada, complexidade acima do teto
+   * ou métrica acima do limite declarado. É o "os limítrofes entram rebaixados" que a tela
+   * afirmava sem ter de onde tirar.
+   */
+  rebaixados: { slug: string; nome: string; motivo: string }[];
+  /** quantos exercícios de força sobraram elegíveis no total (a fila, não a fatia usada) */
+  elegiveis: number;
   /** true quando o catálogo não tinha exercícios seguros suficientes para o pedido */
   faltouCatalogo: boolean;
 }
@@ -453,41 +462,123 @@ function selecionarExercicios(
   // Entra como REBAIXAMENTO de ordem, nunca como exclusão: quem exclui é a restrição
   // estrutural, que já rodou acima. Assim o exercício exigente vai para o fim da fila e só
   // é escolhido se não houver alternativa, em vez de sumir do catálogo do aluno.
-  const pesoDaCondicao = (e: (typeof exercises)[number]) => {
-    if (!regraClinica) return 0;
+  /*
+   * O peso da condição, agora com o MOTIVO junto.
+   *
+   * O número já existia e ordenava a fila; o motivo não existia em lugar nenhum, e por isso
+   * a tela do plano afirmava "os limítrofes entram rebaixados" sem ter como dizer QUAIS nem
+   * POR QUÊ. Quem lê um plano assinado tem direito à segunda metade da frase.
+   */
+  const pesoDaCondicao = (e: (typeof exercises)[number]): { peso: number; motivos: string[] } => {
+    if (!regraClinica) return { peso: 0, motivos: [] };
     let p = 0;
+    const motivos: string[] = [];
     for (const pen of regraClinica.penalidades) {
       const val = metricaDoExercicio(e, pen.metrica);
-      if (val !== undefined && val >= pen.limite) p += 1;
+      if (val !== undefined && val >= pen.limite) {
+        p += 1;
+        motivos.push(`${pen.metrica.toLowerCase()} alta para o perfil`);
+      }
     }
     const complexidade = metricaDoExercicio(e, "Complexidade técnica");
     if (complexidade !== undefined && regraClinica.complexidadeMax !== undefined && complexidade > regraClinica.complexidadeMax) {
       p += 1;
+      motivos.push(`complexidade técnica acima do teto do perfil (${regraClinica.complexidadeMax} de 100)`);
     }
     // Posição que a condição pede para evitar (ver GroupGpsRule.posicoesEvitar): peso alto o
     // bastante para ir ao fim da fila atrás de QUALQUER alternativa, sem sumir do catálogo.
     const posicao = e.restricaoPerfil?.posicao;
-    if (posicao && regraClinica.posicoesEvitar?.includes(posicao)) p += 10;
+    if (posicao && regraClinica.posicoesEvitar?.includes(posicao)) {
+      p += 10;
+      motivos.push("posição que esta condição pede para evitar");
+    }
     // Flexão de coluna carregada, quando a condição pede para evitar. Mesmo peso da posição,
     // porque é da mesma natureza: fato do exercício que a condição conhece.
-    if (regraClinica.evitarFlexaoColunaCarregada && e.restricaoPerfil?.flexaoColunaCarregada) p += 10;
+    if (regraClinica.evitarFlexaoColunaCarregada && e.restricaoPerfil?.flexaoColunaCarregada) {
+      p += 10;
+      motivos.push("flexão de coluna sob carga");
+    }
     // Membros acima do coracao: peso MENOR que os outros dois de propósito. E preferencia
     // entre equivalentes, nao contraindicacao, entao ele cede a vez sem sumir do plano.
-    if (regraClinica.evitarMembrosAcimaDoCoracao && e.restricaoPerfil?.membrosAcimaDoCoracao) p += 3;
-    return p;
+    if (regraClinica.evitarMembrosAcimaDoCoracao && e.restricaoPerfil?.membrosAcimaDoCoracao) {
+      p += 3;
+      motivos.push("membros acima do coração");
+    }
+    return { peso: p, motivos };
   };
 
-  const seguros = avaliados
+  const comPeso = avaliados
     .filter((a) => a.nota > 0)
-    .map((a, i) => ({ ...a, i, bonus: bonusSecundario(a.e), pesoCond: pesoDaCondicao(a.e) }))
+    .map((a, i) => {
+      const cond = pesoDaCondicao(a.e);
+      return { ...a, i, bonus: bonusSecundario(a.e), pesoCond: cond.peso, motivosCond: cond.motivos };
+    })
     // Segurança, depois a condição, depois o objetivo secundário, depois a ordem do catálogo.
-    .sort((x, y) => y.nota - x.nota || x.pesoCond - y.pesoCond || y.bonus - x.bonus || x.i - y.i)
-    .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
+    .sort((x, y) => y.nota - x.nota || x.pesoCond - y.pesoCond || y.bonus - x.bonus || x.i - y.i);
+
+  const seguros = comPeso.map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
 
   return {
     escolhidos: seguros.slice(0, Math.max(n, 1)),
     descartados,
+    rebaixados: comPeso
+      .filter((a) => a.pesoCond > 0)
+      .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, motivo: a.motivosCond.join("; ") })),
+    elegiveis: seguros.length,
     faltouCatalogo: seguros.length < n,
+  };
+}
+
+/**
+ * O QUE A CONDIÇÃO FEZ COM O CATÁLOGO DESTE ALUNO.
+ *
+ * ## Por que isto existe
+ *
+ * `selecionarExercicios` sempre calculou quais exercícios saíram do plano, por qual motivo,
+ * e se o catálogo tinha exercícios seguros suficientes. Nada disso chegava a lugar nenhum:
+ * `montarSessoes` usava só a lista escolhida e jogava o resto fora, e uma varredura por
+ * consumidores não achou NENHUM. Era a assinatura de defeito mais comum deste motor, o dado
+ * declarado e inerte, agora do lado de fora do alvo.
+ *
+ * O efeito na tela foi o Filipe quem viu, e a frase dele vale inteira: o resumo do plano
+ * mostrava "Restrição de Erbênio: Nenhuma restrição física" para um aluno de 70 anos com
+ * obesidade, diabetes e hipertensão estágio 2. Ele estava certo em duas coisas de uma vez.
+ * Primeiro, o bloco ecoava o CAMPO que o profissional preencheu, e não o que o motor fez.
+ * Segundo, e mais importante, ali o que interessa não são as restrições do corpo do aluno:
+ * são as restrições AO EXECUTAR OS EXERCÍCIOS que as condições dele impõem.
+ *
+ * ## O que devolve
+ *
+ * A seleção é determinística e igual em todas as semanas (mesmo objetivo, nível, restrições
+ * e regra clínica), então roda UMA vez aqui em vez de ser costurada por toda a árvore de
+ * mesociclos. O `n` é o mesmo de `montarSessoes`, senão `faltouCatalogo` responderia sobre
+ * um pedido que o plano não faz.
+ */
+export interface ConsequenciasDoPlano {
+  /** exercícios que a condição ou a restrição declarada tirou do plano, com o motivo */
+  foraDoPlano: { slug: string; nome: string; motivo: string }[];
+  /** exercícios que entraram, mas atrás de qualquer alternativa, com o motivo */
+  rebaixados: { slug: string; nome: string; motivo: string }[];
+  /** quantos exercícios de força sobraram elegíveis para este aluno */
+  elegiveis: number;
+  /** o catálogo não tinha exercícios seguros suficientes para a frequência pedida */
+  faltouCatalogo: boolean;
+}
+
+export function consequenciasDoPlano(input: GerarPlanoInput): ConsequenciasDoPlano {
+  const sel = selecionarExercicios(
+    input.objetivo,
+    input.nivel,
+    Math.max(4, input.frequencia + 2),
+    restricoesDoPlano(input),
+    input.objetivoSecundario,
+    regraClinicaDoPlano(input),
+  );
+  return {
+    foraDoPlano: sel.descartados,
+    rebaixados: sel.rebaixados,
+    elegiveis: sel.elegiveis,
+    faltouCatalogo: sel.faltouCatalogo,
   };
 }
 

@@ -38,7 +38,8 @@ import {
   vizinhasDaSecao,
 } from "../src/lib/gps/perfilAluno";
 import { oQueIssoMuda } from "../src/lib/gps/oQueIssoMuda";
-import { CATALOGO_RESTRICOES, criarRestricao } from "../src/lib/gps/restricoes";
+import { CATALOGO_RESTRICOES, GRUPOS_RESTRICAO, criarRestricao } from "../src/lib/gps/restricoes";
+import { specialGroups } from "../src/data/specialGroups";
 import { CATALOGO_FARMACOS, criarFarmaco } from "../src/data/farmacos";
 import { groupGpsRules } from "../src/lib/gps/groupRules";
 import { montarChecklist } from "../src/data/semaforo";
@@ -375,6 +376,83 @@ const feita = (a: Aluno, id: string) => completudeAluno(a).secoes.find((s) => s.
       problemas.push(`${f}: travessao em texto visivel.`);
     }
   }
+}
+
+/* ============================================================================
+ * A TELA NÃO PODE ESCONDER O QUE ELA MESMA GUARDOU.
+ *
+ * Dois defeitos da mesma família, os dois relatados do campo pelo Filipe, os dois em listas
+ * que a tela recorta para caber:
+ *
+ *  A. CONDIÇÃO MARCADA SUMINDO. Os chips de condição mostravam os seis atalhos mais usados.
+ *     Uma condição marcada fora desses seis não era desenhada: ele teve de buscar "diabetes"
+ *     para marcar, e depois de marcada ela sumia do quadro, só reaparecendo ao digitar de
+ *     novo. Uma tela que esconde a seleção que ela guardou faz o profissional duvidar do que
+ *     gravou, reabrir e remarcar.
+ *
+ *  B. A RESPOSTA "NÃO TEM" ESCONDIDA. "Nenhuma restrição física" mora no grupo `historico`,
+ *     que é o quarto filtro da gaveta, abaixo de vários vizinhos. Para dizer que o aluno não
+ *     tem restrição era preciso adivinhar a aba e rolar até o fim, e enquanto isso a seção
+ *     parecia travada, porque a única saída visível era declarar uma restrição inexistente.
+ *
+ * A trava é sobre a REGRA das listas, não sobre pixel: as marcadas sempre presentes, e a
+ * resposta exclusiva sempre alcançável de qualquer filtro.
+ * ========================================================================== */
+{
+  const ATALHO = 6;
+  const ordenadas = [...specialGroups].sort((a, b) => a.nome.localeCompare(b.nome));
+
+  // A: a marcada aparece com busca vazia, com busca que casa e com busca que NÃO casa.
+  const foraDoAtalho = ordenadas.slice(ATALHO);
+  if (!foraDoAtalho.length) {
+    problemas.push("chips de condição: o catálogo encolheu abaixo do atalho e a trava perdeu o caso de teste.");
+  } else {
+    const marcada = foraDoAtalho[0].slug;
+    const selecionadas = [marcada];
+    const lista = (q: string) => {
+      const naBusca = q
+        ? ordenadas.filter((g) => g.nome.toLowerCase().includes(q) || g.descricaoCurta.toLowerCase().includes(q))
+        : ordenadas.slice(0, ATALHO);
+      const marcadas = selecionadas.map((s) => ordenadas.find((g) => g.slug === s)!).filter(Boolean);
+      return [...marcadas, ...naBusca.filter((g) => !selecionadas.includes(g.slug))];
+    };
+    for (const q of ["", "zzz-nao-casa-com-nada"])
+      if (!lista(q).some((g) => g.slug === marcada))
+        problemas.push(
+          `CONDIÇÃO MARCADA SUMIU da lista de chips com busca "${q}": a seleção do profissional tem de aparecer sempre.`,
+        );
+    /*
+     * E o teste acima, sozinho, NÃO guardaria nada: ele exercita uma reimplementação da regra
+     * aqui dentro, não o componente. Se alguém voltar `lista` para o recorte puro em
+     * AlunoPerfil.tsx, esta trava seguiria verde. É a mesma armadilha que a bancada de
+     * cenários já caiu uma vez, validando a semântica errada com cara de aprovação. Então a
+     * composição real da tela é lida da fonte.
+     */
+    const fontePerfil = readFileSync("src/pages/AlunoPerfil.tsx", "utf8");
+    if (!/const lista = \[\.\.\.marcadas, \.\.\.naBusca\.filter\(\(g\) => !selecionadas\.includes\(g\.slug\)\)\]/.test(fontePerfil))
+      problemas.push(
+        "AlunoPerfil: os chips de condição voltaram a ser só o recorte da busca. As marcadas têm de ser fixadas antes, senão a seleção some da tela.",
+      );
+    if (!/ativo=\{marcouNenhuma\}/.test(fontePerfil))
+      problemas.push(
+        'AlunoPerfil: sumiu o atalho de um clique para "Nenhuma restrição física" na própria seção. Sem ele, a única saída é achar o item no fim de uma aba da gaveta.',
+      );
+  }
+
+  // B: a opção exclusiva é alcançável a partir de QUALQUER filtro da gaveta.
+  const exclusivas = CATALOGO_RESTRICOES.filter((it) => it.tag === "nenhuma_restricao");
+  if (exclusivas.length !== 1)
+    problemas.push(`restrições: esperava exatamente uma opção exclusiva ("nenhuma"), achei ${exclusivas.length}.`);
+  const gruposComExclusiva = GRUPOS_RESTRICAO.filter((g) => exclusivas.some((it) => it.grupo === g.id));
+  if (gruposComExclusiva.length === GRUPOS_RESTRICAO.length)
+    problemas.push("restrições: a opção exclusiva está declarada em todos os grupos, o que duplicaria o cartão.");
+  // A gaveta fixa a exclusiva no topo, fora do recorte por grupo. Se alguém voltar a filtrá-la
+  // por grupo, ela some de três dos quatro filtros, que é o defeito relatado.
+  const fonteGaveta = readFileSync("src/components/alunos/GavetaSelecao.tsx", "utf8");
+  if (!/const exclusivo = achados\.find\(\(it\) => it\.exclusivo\)/.test(fonteGaveta))
+    problemas.push(
+      "GavetaSelecao: a opção exclusiva voltou a depender do filtro ativo. Ela é a resposta à pergunta inteira e tem de aparecer em qualquer aba.",
+    );
 }
 
 /* ------------------------------- veredito -------------------------------- */

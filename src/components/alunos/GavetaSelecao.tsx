@@ -77,8 +77,22 @@ export function GavetaSelecao({
     !q || it.titulo.toLowerCase().includes(q) || it.descricao.toLowerCase().includes(q);
 
   const achados = itens.filter(casa);
-  const noGrupo = achados.filter((it) => it.grupo === grupo);
-  const foraDoGrupo = achados.filter((it) => it.grupo !== grupo);
+  /*
+   * O ITEM EXCLUSIVO ("nenhuma") APARECE EM QUALQUER FILTRO, E NO TOPO.
+   *
+   * Ele mora num grupo como qualquer outro item do catálogo, e no de restrições esse grupo é
+   * "Histórico", o quarto filtro, com ele abaixo de seis vizinhos. Só que "não tenho nada a
+   * declarar" não é um item do assunto Histórico: é a resposta à pergunta inteira, e ela vale
+   * esteja o profissional em que aba estiver. Enquanto ficou dentro do grupo, a única forma
+   * de responder "não tem" era adivinhar a aba certa e rolar até o fim.
+   *
+   * Ele sai da lista comum para não aparecer duas vezes, e nunca é oferecido como "também em
+   * outros grupos", porque não é de outro grupo: é de todos.
+   */
+  const exclusivo = achados.find((it) => it.exclusivo);
+  const comuns = achados.filter((it) => !it.exclusivo);
+  const noGrupo = comuns.filter((it) => it.grupo === grupo);
+  const foraDoGrupo = comuns.filter((it) => it.grupo !== grupo);
 
   const alternar = (it: ItemGaveta) => {
     setDraft((prev) => {
@@ -165,10 +179,21 @@ export function GavetaSelecao({
 
         {/* Lista */}
         <div className="min-h-0 flex-1 space-y-3 overflow-auto p-5">
-          {noGrupo.length === 0 && foraDoGrupo.length === 0 && (
+          {noGrupo.length === 0 && foraDoGrupo.length === 0 && !exclusivo && (
             <p className="py-8 text-center text-sm text-ink-2">
               Nada encontrado para "{busca}". Tente outra palavra ou troque o filtro.
             </p>
+          )}
+
+          {/* A resposta "não tenho nada a declarar", fixa no topo de qualquer filtro. */}
+          {exclusivo && (
+            <div className="border-b border-dashed border-border pb-3">
+              <CartaoItem
+                item={exclusivo}
+                marcado={draft.includes(exclusivo.id)}
+                onToggle={() => alternar(exclusivo)}
+              />
+            </div>
           )}
 
           {noGrupo.map((it) => (
