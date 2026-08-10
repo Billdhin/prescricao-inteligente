@@ -552,6 +552,36 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     refs: ["tian-has-modalidade-2025", "sbc-2020", "pescatello-2004", "acsm-getp11"],
   },
 
+  /*
+   * HIPERTENSÃO TAMBÉM NÃO DECLARA MODALIDADE AERÓBIA PREFERIDA, E TAMBÉM É CONCLUSÃO.
+   *
+   * A rodada (09/08/2026) achou o trabalho mais forte que existe sobre pressão e exercício:
+   * Edwards e col., 2023, no British Journal of Sports Medicine, rede com 270 ensaios e
+   * 15.827 participantes (PMID 37491419, doi 10.1136/bjsports-2022-106503). O tipo está
+   * confirmado no registro como Network Meta-Analysis, não é falso positivo do filtro.
+   *
+   * Queda de pressão em repouso, sistólica sobre diastólica, em mmHg:
+   *
+   *   isométrico ............ -8,24 / -4,00   SUCRA 98,3% para sistólica
+   *   combinado ............. -6,04 / -2,54   75,7%
+   *   resistido dinâmico .... -4,55 / -3,04   46,1%
+   *   aeróbio ............... -4,49 / -2,53   40,5%
+   *   intervalado ........... -4,08 / -2,50   39,4%
+   *
+   * POR QUE ISSO NÃO VIRA `modalidadesPreferidas`, apesar de ser evidência de primeira:
+   *
+   * 1. o que a rede compara é MODO DE TREINO (isométrico, combinado, resistido, aeróbio,
+   *    intervalado), e não qual aparelho de cardio usar. A pergunta que este campo responde,
+   *    "esteira, bicicleta ou piscina", não é a pergunta daquele artigo;
+   * 2. a rede secundária de submodos aponta a CORRIDA como a mais efetiva para a diastólica
+   *    (91,3%), e corrida não existe no catálogo de cardio deste produto. Além disso,
+   *    prescrever corrida como padrão para hipertensão estágio 2 iniciante brigaria com a
+   *    banda de intensidade que esta mesma condição já impõe, que é a camada de segurança.
+   *
+   * O achado do isométrico é forte e vale uma decisão própria do profissional, mas é outra
+   * conversa: mexe no TIPO de trabalho, não na escolha do aeróbio, e o motor não prescreve
+   * isometria hoje. Fica registrado aqui para não se perder.
+   */
   "hipertensao-estagio-2": {
     slug: "hipertensao-estagio-2",
     evitarMembrosAcimaDoCoracao: true,
