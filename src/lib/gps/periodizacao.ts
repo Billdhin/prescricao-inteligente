@@ -29,6 +29,7 @@ import {
   ORDEM_BANDA,
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
+import { getModalidade } from "@/data/modalities";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { combineRules, doseDoPerfil, groupGpsRules, type GroupGpsRule } from "@/lib/gps/groupRules";
 import {
@@ -771,7 +772,19 @@ function montarSessoes(
         // Id CANONICO da modalidade. Sem o prefixo, getModalidade nao resolve, e o mesmo bloco
     // saia como "Caminhada" no app do aluno e como "Aerobio" no PDF e no editor.
     modalidade: "m-caminhada",
-        nome: "Aeróbio",
+        /*
+         * O BLOCO DIZ QUAL CARDIO E, e nao so que existe um.
+         *
+         * O nome era a palavra "Aerobio", e o Filipe leu um plano e perguntou: "no Cardio
+         * ele nao especifica se sera uma corrida, um ciclismo, uma natacao". A modalidade
+         * sempre esteve no bloco (m-caminhada), so nao chegava ao nome, entao o PDF a
+         * resolvia e a tela nao. Agora o nome vem da modalidade, fonte unica.
+         *
+         * Isto resolve METADE do que ele pediu: o profissional passa a ver o que vai ser
+         * feito. A outra metade, escolher a modalidade IDEAL para as condicoes do aluno,
+         * depende de evidencia por condicao e segue aberta.
+         */
+        nome: getModalidade("m-caminhada")?.nome ?? "Aeróbio",
         formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
@@ -831,7 +844,7 @@ function montarSessoes(
         id: nid("blk"),
         tipo: "aerobio",
         modalidade: comp.modalidade,
-        nome: "Aeróbio complementar",
+        nome: `${getModalidade(comp.modalidade)?.nome ?? "Aeróbio"} (complementar)`,
         formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
