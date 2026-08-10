@@ -129,6 +129,19 @@ export interface ModAerobio {
    * evidência mostra ganho com esforço maior declara `vigorosa`. Na fusão vence a MENOR.
    */
   bandaMax?: BandaAerobia;
+  /**
+   * Modalidades aerobias que a evidencia desta condicao coloca a frente, em ordem de
+   * preferencia, pelos ids de src/data/modalities.
+   *
+   * PREFERIR, e nunca EXCLUIR. A distincao e a licao que o `bandaMax` custou: um campo que
+   * parece teto e usado como valor vira prescricao que ninguem pediu. Aqui a condicao diz
+   * qual cardio comeca na frente da fila; quem tira exercicio do plano continua sendo a
+   * restricao estrutural, que e a camada de seguranca.
+   *
+   * Sem declaracao, o motor segue com a modalidade padrao do objetivo, byte-identico ao de
+   * antes.
+   */
+  modalidadesPreferidas?: string[];
   /** por que, em uma linha, sem travessão */
   motivo: string;
   /** ids de referencias.ts que sustentam a direção */
@@ -751,6 +764,28 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   "osteoartrite-joelho": {
     slug: "osteoartrite-joelho",
     restricoesEstruturais: ["baixa_tolerancia_impacto", "dificuldade_ajoelhar"],
+    modAerobio: {
+      /*
+       * O cardio da osteoartrite de joelho tem ordem, e ela e citavel.
+       *
+       * Rede de 39 ensaios e 2.646 participantes (mo-joelho-modalidade-2023): o aquatico
+       * lidera a dor pela escala visual (SUCRA 77,2%) e pelo KOOS (64,0%); o ciclismo lidera
+       * a dor pelo WOMAC (80,8%) e a caminhada de 6 minutos (76,1%). As duas ficam a frente,
+       * nesta ordem, porque a dor e o desfecho que traz o aluno ate a sala.
+       *
+       * E a caminhada NAO sai do plano: raposo-joelho-2021, revisao de 19 ensaios, mostra
+       * efeitos comparaveis entre programas aquaticos e terrestres. Por isso isto e
+       * preferencia e nao exclusao, que e a licao que o bandaMax deixou.
+       *
+       * As limitacoes viajam junto onde a referencia e citada: a maioria dos estudos da rede
+       * nao cegou participantes nem pesquisadores, e o proprio registro no PubMed tipa o
+       * artigo como Review, e nao como metanalise em rede.
+       */
+      modalidadesPreferidas: ["m-hidro", "m-bike"],
+      motivo:
+        "Numa rede de 39 ensaios, o aquático lidera a dor pela escala visual e o ciclismo pelo WOMAC; programas terrestres seguem comparáveis, então a caminhada continua valendo.",
+      refId: ["mo-joelho-modalidade-2023", "raposo-joelho-2021"],
+    },
     nome: "Osteoartrite de joelho",
     restricaoSugerida: "joelho_dor",
     cuidados: [
@@ -1369,7 +1404,16 @@ function fundirModAerobio(mods: ModAerobio[]): ModAerobio | undefined {
   const bandaMax = bandas.length
     ? bandas.reduce((a, b) => (ORDEM_BANDA[b] < ORDEM_BANDA[a] ? b : a))
     : undefined;
+  /*
+   * Modalidade preferida: INTERSEÇÃO entre as condições que declaram. Com duas condições, só
+   * segue na frente o cardio que as duas colocam na frente; se elas não concordam em nada,
+   * ninguém é preferido e vale o padrão do objetivo. União seria o contrário da lei deste
+   * arquivo: bastaria uma condição para arrastar a escolha das outras.
+   */
+  const listas = mods.map((m) => m.modalidadesPreferidas).filter((l): l is string[] => Boolean(l?.length));
+  const preferidas = listas.length ? listas.reduce((a, b) => a.filter((x) => b.includes(x))) : undefined;
   return {
+    modalidadesPreferidas: preferidas?.length ? preferidas : undefined,
     intervaladoEvitar: evitar || undefined,
     intervaladoIndicado: !evitar && mods.some((m) => m.intervaladoIndicado) ? true : undefined,
     bandaMax,

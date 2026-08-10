@@ -771,7 +771,7 @@ function montarSessoes(
         tipo: "aerobio",
         // Id CANONICO da modalidade. Sem o prefixo, getModalidade nao resolve, e o mesmo bloco
     // saia como "Caminhada" no app do aluno e como "Aerobio" no PDF e no editor.
-    modalidade: "m-caminhada",
+    modalidade: modalidadeAerobia("m-caminhada", regraClinica),
         /*
          * O BLOCO DIZ QUAL CARDIO E, e nao so que existe um.
          *
@@ -784,7 +784,7 @@ function montarSessoes(
          * feito. A outra metade, escolher a modalidade IDEAL para as condicoes do aluno,
          * depende de evidencia por condicao e segue aberta.
          */
-        nome: getModalidade("m-caminhada")?.nome ?? "Aeróbio",
+        nome: getModalidade(modalidadeAerobia("m-caminhada", regraClinica))?.nome ?? "Aeróbio",
         formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
@@ -843,8 +843,8 @@ function montarSessoes(
       blocos.push({
         id: nid("blk"),
         tipo: "aerobio",
-        modalidade: comp.modalidade,
-        nome: `${getModalidade(comp.modalidade)?.nome ?? "Aeróbio"} (complementar)`,
+        modalidade: modalidadeAerobia(comp.modalidade, regraClinica),
+        nome: `${getModalidade(modalidadeAerobia(comp.modalidade, regraClinica))?.nome ?? "Aeróbio"} (complementar)`,
         formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
@@ -1151,6 +1151,26 @@ function fraseDoFormato(regraClinica?: GroupGpsRule): string {
   return formatoAerobio(regraClinica) === "Intervalado"
     ? "Formato intervalado: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total. Se preferir, o contínuo no mesmo tempo total é alternativa."
     : "Alternativa intervalada: alterne 1 a 2 min mais forte com 2 a 3 min leves, mantendo o tempo total.";
+}
+
+/**
+ * A MODALIDADE AERÓBIA DESTE ALUNO.
+ *
+ * O bloco saía sempre em caminhada, e o Filipe perguntou, lendo o plano de alguém com três
+ * condições: "no Cardio ele não especifica se será uma corrida, um ciclismo, uma natação. O
+ * paciente tem 3 condições patológicas e o ideal seria indicar o cardio mais ideal".
+ *
+ * A condição agora declara quais modalidades a evidência coloca à frente
+ * (`ModAerobio.modalidadesPreferidas`, já fundida pela interseção). Aqui vence a primeira que
+ * existir de fato no catálogo de cardio. Sem declaração, ou sem exercício daquela modalidade
+ * no catálogo, fica o padrão do objetivo, byte-idêntico ao de antes.
+ */
+function modalidadeAerobia(padrao: string, regraClinica?: GroupGpsRule): string {
+  const preferidas = regraClinica?.modAerobio?.modalidadesPreferidas ?? [];
+  const noCatalogo = new Set(
+    exercises.filter((e) => e.doseAerobia && e.modalidade).map((e) => e.modalidade as string),
+  );
+  return preferidas.find((m) => noCatalogo.has(m)) ?? padrao;
 }
 
 /** A banda a que um texto de intensidade corresponde, quando ele é um dos textos canônicos. */
