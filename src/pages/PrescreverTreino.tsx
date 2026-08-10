@@ -776,8 +776,12 @@ function AvisoDoMotor({ aluno, grupoSlug }: { aluno?: Aluno; grupoSlug: string }
           <>
             {tags.length === 1 ? "A restrição" : "As restrições"} de {nome} já{" "}
             {tags.length === 1 ? "entra" : "entram"} como filtro:{" "}
-            {tags.map((t) => rotuloRestricao(t).toLowerCase()).join(", ")}. Os exercícios incompatíveis
-            ficam de fora do plano, e os limítrofes entram rebaixados.{" "}
+            {/* "Rebaixado" saiu daqui também. É palavra do motor (peso na ordenação da fila),
+                não do profissional, e o Filipe leu a versão anterior e perguntou, com razão,
+                por que um exercício rebaixado tinha entrado no plano. O que interessa dizer é
+                o efeito: o exercício incompatível não entra. */}
+            {tags.map((t) => rotuloRestricao(t).toLowerCase()).join(", ")}. Os exercícios
+            incompatíveis ficam de fora do plano, e os parecidos que sobram entram no lugar.{" "}
           </>
         )}
         {/* Com mais de uma condição, a tela diz qual é a lei da combinação. Sem isto, o
@@ -1364,33 +1368,33 @@ function TrilhoDoPlano({
         Agora sai o que o motor de fato fez com o catálogo (ver `consequenciasDoPlano`).
       */}
       <ItemPorque
-        tom={consequencias.foraDoPlano.length ? "warning" : "analysis"}
+        tom={consequencias.evitados.length ? "warning" : "analysis"}
         titulo={
-          consequencias.foraDoPlano.length
-            ? `${consequencias.foraDoPlano.length} exercício${consequencias.foraDoPlano.length === 1 ? "" : "s"} fora do plano`
-            : consequencias.rebaixados.length
-              ? `${consequencias.rebaixados.length} exercício${consequencias.rebaixados.length === 1 ? "" : "s"} entrou rebaixado`
-              : "Nenhum exercício foi excluído"
+          consequencias.evitados.length
+            ? `${consequencias.evitados.length} exercício${consequencias.evitados.length === 1 ? "" : "s"} evitado${consequencias.evitados.length === 1 ? "" : "s"}`
+            : "Nenhum exercício precisou ser evitado"
         }
       >
-        {consequencias.foraDoPlano.length > 0 && (
+        {consequencias.restricoes.length > 0 && (
           <>
-            {listaCurta(consequencias.foraDoPlano.map((x) => x.nome))}: {consequencias.foraDoPlano[0].motivo}
-            {" "}
+            <span className="font-semibold text-ink">Considerado:</span>{" "}
+            {listaCurta(consequencias.restricoes, 4)}.{" "}
           </>
         )}
-        {consequencias.rebaixados.length > 0 && (
+        {consequencias.evitados.length > 0 ? (
           <>
-            {consequencias.foraDoPlano.length ? "Entraram rebaixados, atrás de qualquer alternativa: " : "Entrou atrás de qualquer alternativa: "}
-            {listaCurta(consequencias.rebaixados.map((x) => x.nome))} ({consequencias.rebaixados[0].motivo}).{" "}
+            Ficaram fora do plano: {listaCurta(consequencias.evitados.map((x) => x.nome))}.{" "}
+            {/* O motivo do primeiro basta na linha: a lista completa vive no Prontuário, e
+                repetir seis motivos aqui viraria parágrafo que ninguém lê. */}
+            {consequencias.evitados[0].nome}, por exemplo, saiu por{" "}
+            {consequencias.evitados[0].motivo.replace(/^[^:]+:\s*/, "").toLowerCase()}{" "}
           </>
+        ) : (
+          <>Nada no catálogo deste aluno precisou ficar de fora. </>
         )}
-        {!consequencias.foraDoPlano.length && !consequencias.rebaixados.length && (
-          <>Nada no catálogo deste aluno é incompatível com o que foi declarado. </>
-        )}
-        Sobram {consequencias.elegiveis} exercícios elegíveis.
+        Sobram {consequencias.elegiveis} exercícios compatíveis.
         {consequencias.faltouCatalogo &&
-          " O catálogo não tem exercícios seguros suficientes para esta frequência: o plano repete os que sobraram, e vale rever equipamentos ou restrições."}
+          " O catálogo não tem exercícios seguros suficientes para esta frequência: vale rever equipamentos ou restrições."}
       </ItemPorque>
     </ul>
   );

@@ -555,16 +555,38 @@ function selecionarExercicios(
  * um pedido que o plano não faz.
  */
 export interface ConsequenciasDoPlano {
-  /** exercícios que a condição ou a restrição declarada tirou do plano, com o motivo */
-  foraDoPlano: { slug: string; nome: string; motivo: string }[];
-  /** exercícios que entraram, mas atrás de qualquer alternativa, com o motivo */
-  rebaixados: { slug: string; nome: string; motivo: string }[];
+  /** os rótulos das restrições que valeram para este plano (as do perfil e as da condição) */
+  restricoes: string[];
+  /**
+   * Os exercícios que NÃO entraram no plano por causa da condição ou da restrição, com o
+   * motivo. Junta as duas formas de ficar de fora, porque para quem lê elas são a mesma
+   * coisa: o exercício foi evitado.
+   */
+  evitados: { slug: string; nome: string; motivo: string }[];
   /** quantos exercícios de força sobraram elegíveis para este aluno */
   elegiveis: number;
   /** o catálogo não tinha exercícios seguros suficientes para a frequência pedida */
   faltouCatalogo: boolean;
 }
 
+/**
+ * ## Por que isto deixou de falar em "rebaixado"
+ *
+ * A primeira versão devolvia duas listas, `foraDoPlano` e `rebaixados`, e a tela imprimia
+ * "1 exercício entrou rebaixado". O Filipe leu e respondeu: "se ele é rebaixado, por que ele
+ * gerou então? A ideia seria só apontar as restrições do paciente e quais exercícios evitados
+ * pelo motivo da condição dele".
+ *
+ * Ele estava certo duas vezes. "Rebaixado" é vocabulário do MOTOR (peso na ordenação da
+ * fila), não do profissional, e não diz nada a quem lê. E a frase era FALSA na prática:
+ * rebaixar joga o exercício para o fim da fila, e o plano usa só os primeiros. Medido em
+ * obesidade grau III com resistência muscular: 34 elegíveis, 1 rebaixado (cadeira extensora,
+ * demanda de joelho) e o plano escolhe cerca de 5. O rebaixado estava na posição 34 de 34, ou
+ * seja NÃO entrou. A tela afirmava que tinha entrado.
+ *
+ * Agora existe uma lista só, `evitados`, com o que de fato ficou de fora, e as restrições
+ * consideradas ao lado. É o que ele pediu, e é o que é verdade.
+ */
 export function consequenciasDoPlano(input: GerarPlanoInput): ConsequenciasDoPlano {
   const sel = selecionarExercicios(
     input.objetivo,
@@ -574,9 +596,13 @@ export function consequenciasDoPlano(input: GerarPlanoInput): ConsequenciasDoPla
     input.objetivoSecundario,
     regraClinicaDoPlano(input),
   );
+  const entraram = new Set(sel.escolhidos.map((e) => e.slug));
+  // Penalizado que ENTROU mesmo assim não é "evitado": ele está no plano, e dizer o contrário
+  // seria o mesmo erro ao contrário. Só conta quem a condição de fato manteve de fora.
+  const penalizadosForaDoPlano = sel.rebaixados.filter((r) => !entraram.has(r.slug));
   return {
-    foraDoPlano: sel.descartados,
-    rebaixados: sel.rebaixados,
+    restricoes: restricoesDoPlano(input).map((r) => rotuloRestricao(r.tag)),
+    evitados: [...sel.descartados, ...penalizadosForaDoPlano],
     elegiveis: sel.elegiveis,
     faltouCatalogo: sel.faltouCatalogo,
   };
