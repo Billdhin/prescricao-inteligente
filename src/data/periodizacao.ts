@@ -800,7 +800,26 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
       porNivel: { Iniciante: "8 a 12", Intermediário: "1 a 6", Avançado: "1 a 6" },
       nota: "quem está começando fica em 8 a 12; carga alta vem depois da técnica consolidada",
     },
-    intensidade: { valor: "alta", nota: "com boa técnica e margem de segurança" },
+    /*
+     * A FORÇA ERA O ÚNICO OBJETIVO SEM INSTRUMENTO NUMÉRICO DE INTENSIDADE.
+     *
+     * Medido no motor: Hipertrofia controla por reserva de repetições (RIR), Resistência
+     * muscular por %1RM (40 a 60), e a Força só dizia "alta". Consequência dupla: o alvo
+     * semanal não tinha número de intensidade para progredir no objetivo de carga mais
+     * pesada do produto, e nenhum teto clínico (rirMinimo das condições) tinha onde morder
+     * aqui. Era o buraco central do vocabulário de intensidade.
+     *
+     * O instrumento entra pela mesma porta da Hipertrofia, a escala de reserva. A faixa de
+     * 2 a 4 de reserva é ESCOLHA PRUDENTE DA CASA, não número de diretriz, e fica um degrau
+     * mais longe da falha que a da Hipertrofia (1 a 3) de propósito: aqui a carga absoluta é
+     * maior e a própria nota sempre pediu "margem de segurança". O que a evidência sustenta
+     * é que essa folga não custa o ganho: em robinson-rir-2024, os ganhos de FORÇA foram
+     * semelhantes num intervalo amplo de proximidade da falha.
+     */
+    intensidade: {
+      valor: "alta",
+      nota: "com boa técnica e margem de segurança; a escala de repetições de reserva (Zourdos, 2016) é o instrumento de controle, com 2 a 4 de reserva nas séries principais. A faixa de reserva é escolha prudente da casa: os ganhos de força se mostram semelhantes num intervalo amplo de proximidade da falha",
+    },
     intervalo: {
       valor: "3 a 5 min",
       // O NÍVEL JÁ MUDAVA AS REPETIÇÕES E NÃO MUDAVA O DESCANSO.
@@ -827,7 +846,8 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
       { rotulo: "controlado", reps: "8 a 12", intensidade: "moderada, foco na execução" },
     ],
     parametros: ["p-rpe", "p-fadiga"],
-    refIds: ["acsm-progressao-2009", "moesgaard-periodizacao-2022"],
+    // robinson-rir-2024 sustenta o instrumento de reserva declarado na intensidade acima.
+    refIds: ["acsm-progressao-2009", "moesgaard-periodizacao-2022", "robinson-rir-2024", "zourdos-rir-2016"],
     ressalva:
       "Cargas altas pedem técnica consolidada e progressão gradual; a autorregulação ajuda a respeitar o dia.",
     complementoAerobio: complementoAerobioPadrao(1),

@@ -219,6 +219,18 @@ export function Support() {
                   Prefiro por e-mail
                 </a>
               </div>
+              {/* Botão desligado diz por quê: era o último da varredura de usabilidade que
+                  desabilitava sem uma linha de explicação, a mesma classe já corrigida na
+                  etapa de restrições do Treino do dia. A frase diz O QUE FALTA, não "inválido". */}
+              {!valido && (
+                <p role="status" className="mt-2 text-xs text-ink-2">
+                  {nome.trim().length <= 1
+                    ? "Falta o seu nome para enviar."
+                    : !/.+@.+\..+/.test(email)
+                      ? "Falta um e-mail válido para a resposta chegar até você."
+                      : "Escreva a mensagem para enviar."}
+                </p>
+              )}
               <p className="mt-3 text-xs text-ink-3">
                 Ao enviar, geramos um protocolo para acompanhamento. Não compartilhe senhas ou dados sensíveis.
               </p>

@@ -41,6 +41,28 @@ export const referencias: Referencia[] = [
     nota: "Diretriz da OMS. O resumo indexado confirma a meta que o produto usa: todo adulto deve fazer 150 a 300 min de atividade de intensidade moderada, ou 75 a 150 min de vigorosa, ou combinação equivalente, por semana, mais atividade de fortalecimento muscular regular em todas as faixas etárias. Traz pela primeira vez recomendações específicas para gestantes e puérperas e para pessoas com condição crônica ou deficiência. Base das metas semanais usadas como referência de volume nas jornadas.",
   },
   {
+    id: "robinson-rir-2024",
+    autores: "Robinson ZP, Pelland JC, Remmert JF, Refalo MC, Jukic I, Steele J, Zourdos MC",
+    titulo:
+      "Exploring the Dose-Response Relationship Between Estimated Resistance Training Proximity to Failure, Strength Gain, and Muscle Hypertrophy: A Series of Meta-Regressions",
+    fonte: "Sports Medicine, 54(9):2209-2231",
+    ano: 2024,
+    doi: "10.1007/s40279-024-02069-2",
+    pmid: "38970765",
+    nota: "Série de meta-regressões sobre proximidade da falha, com o RIR de cada estudo estimado a partir da descrição do treino. Para FORÇA, os intervalos de confiança das inclinações continham o nulo em todos os melhores modelos: os ganhos foram semelhantes num intervalo amplo de reserva de repetições, ou seja, não é preciso chegar perto da falha para ganhar força. Para hipertrofia a relação foi diferente: quanto mais perto da falha, maior o ganho de massa. LIMITAÇÕES DECLARADAS: o RIR foi estimado e não medido, os próprios autores classificam a análise como exploratória e pedem cautela na interpretação. É a referência que sustenta o instrumento de reserva no objetivo Força; a faixa exata usada é escolha prudente da casa, não número deste estudo.",
+  },
+  {
+    id: "borde-idoso-dose-2015",
+    autores: "Borde R, Hortobágyi T, Granacher U",
+    titulo:
+      "Dose-Response Relationships of Resistance Training in Healthy Old Adults: A Systematic Review and Meta-Analysis",
+    fonte: "Sports Medicine, 45(12):1693-1720",
+    ano: 2015,
+    doi: "10.1007/s40279-015-0385-9",
+    pmid: "26420238",
+    nota: "Revisão sistemática com metanálise de 25 ensaios randomizados em adultos saudáveis com média de 65 anos ou mais. Os valores com maior efeito sobre força, por variável isolada: intensidade de 70 a 79% de 1RM (SMD 1,89), 2 a 3 séries por exercício (2,99), 7 a 9 repetições por série (1,98) e 2 sessões por semana (2,13). LIMITAÇÕES DECLARADAS: qualidade metodológica baixa (PEDro médio 4,6), heterogeneidade alta (I² de 80%) e os autores escrevem que os resultados podem não representar uma única relação dose-resposta, porque as interações entre as variáveis não puderam ser estimadas. No produto, sustenta o aviso de dose por faixa etária no raciocínio do plano; não vira teto automático porque o vocabulário de %1RM não alcança os objetivos que treinam por reserva de repetições.",
+  },
+  {
     id: "garcia-dm2-rede-2025",
     autores: "Garcia SP, Cureau FV, Iorra FQ, Bottino LG, R C Monteiro LE, Leivas G, Umpierre D, Schaan BD",
     titulo:

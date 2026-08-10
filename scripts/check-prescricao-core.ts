@@ -918,6 +918,42 @@ for (const objetivo of OBJETIVOS) {
       }
 }
 
+/* ============================================================================
+ * FORÇA TEM INSTRUMENTO NUMÉRICO DE INTENSIDADE, E ELE PROGRIDE.
+ *
+ * A Força foi, até 09/08/2026, o único objetivo sem número de intensidade: Hipertrofia
+ * controlava por reserva de repetições, Resistência muscular por %1RM, e a Força só dizia
+ * "alta". Consequência dupla: o alvo semanal não progredia intensidade no objetivo de carga
+ * mais pesada do produto, e o rirMinimo das condições clínicas não tinha onde morder ali.
+ *
+ * O instrumento vive na NOTA da faixa ("2 a 4 de reserva", robinson-rir-2024), e o motor o
+ * lê por regex. É exatamente a classe de acoplamento que morre em silêncio: uma reescrita
+ * inocente do texto da nota desliga o parser e a Força volta a ficar sem número, sem nenhum
+ * erro de compilação. Esta trava transforma esse silêncio em reprovação.
+ * ========================================================================== */
+{
+  for (const nivel of ["Iniciante", "Intermediário", "Avançado"] as Nivel[]) {
+    const p = gerarPlano({ objetivo: "Força", nivel, semanas: 12, frequencia: 3 });
+    const blocos = p.principal.mesociclos
+      .flatMap((m) => m.microciclos.filter((w) => w.tipo === "carga"))
+      .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
+      .filter((b) => b.tipo === "forca");
+    const semRir = blocos.filter((b) => b.rirAlvo == null).length;
+    if (semRir > 0)
+      erro(
+        `FORÇA SEM INSTRUMENTO em ${nivel}: ${semRir} de ${blocos.length} blocos sem alvo de reserva. A nota da faixa deixou de declarar o RIR ou o parser deixou de lê-la.`,
+      );
+    const fora = blocos.filter((b) => b.rirAlvo != null && (b.rirAlvo < 2 || b.rirAlvo > 4)).length;
+    if (fora > 0)
+      erro(`FORÇA FORA DA RESERVA DECLARADA em ${nivel}: ${fora} blocos com RIR fora de 2 a 4.`);
+    const distintos = new Set(blocos.map((b) => b.rirAlvo).filter((v) => v != null));
+    if (blocos.length > 0 && distintos.size < 2)
+      erro(
+        `FORÇA COM INTENSIDADE CHAPADA em ${nivel}: um único valor de reserva (${[...distintos].join(",")}) em 12 semanas. O instrumento existe e não progride.`,
+      );
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {

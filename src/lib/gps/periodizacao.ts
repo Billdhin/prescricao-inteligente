@@ -1639,6 +1639,9 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
       // bibliografia do plano para a referência aparecer resolvida no PDF e na tela.
       ...(faixa.complementoAerobio?.refIds ?? []),
       ...(faixa.flexibilidade?.refIds ?? []),
+      // O aviso de dose por faixa etária cita a metanálise no raciocínio; a referência entra
+      // na bibliografia do plano para o PDF resolver, com as limitações na própria nota.
+      ...(input.idade != null && input.idade >= 65 ? ["borde-idoso-dose-2015"] : []),
     ]),
   );
 
@@ -1672,6 +1675,24 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
         ? `Sobre a duração: nesta jornada, o efeito no desfecho principal foi medido em acompanhamentos de ${min} semanas ou mais, e este plano tem ${input.semanas}. A dose continua correta; o que muda é o tempo de exposição, então considere encadear um novo ciclo ao fim deste.`
         : "";
     })(),
+    /*
+     * A FAIXA ETÁRIA CHEGA AO RACIOCÍNIO, do mesmo jeito que o horizonte: informa, cita e
+     * não muda a dose em silêncio.
+     *
+     * Até aqui a idade só entrava na zona de frequência cardíaca do aeróbio, e um plano para
+     * 70 anos saía com a mesma dose de força de um plano para 30. A rodada de evidência
+     * (borde-idoso-dose-2015) achou dose-resposta específica para 65 anos ou mais, mas o
+     * número dela fala %1RM, e os objetivos que treinam por reserva de repetições não têm
+     * onde receber um teto de %1RM sem inventar conversão. Então a evidência entra do único
+     * jeito honesto que o vocabulário atual permite: dita ao profissional, com a fonte na
+     * bibliografia do plano, e a decisão de calibrar fica com ele.
+     *
+     * O corte é 65 porque foi a população MEDIDA pelo estudo; a faixa "pessoa idosa" da tela
+     * começa aos 60, e esticar um achado para quem o estudo não cobriu seria outra invenção.
+     */
+    input.idade != null && input.idade >= 65
+      ? `Sobre a dose nesta faixa etária: numa metanálise de 25 ensaios com pessoas de 65 anos ou mais, o maior ganho de força veio com intensidade em torno de 70 a 79% de 1RM. Use essa referência ao calibrar as cargas, junto com a reserva de repetições prescrita; a decisão segue sua.`
+      : "",
     `As faixas de séries, repetições, intensidade e intervalo seguem as diretrizes citadas, sempre como faixa e sob o seu critério. ${faixa.ressalva}`,
     alternativa
       ? `Uma alternativa (${getModelo(alternativa).nome}) é oferecida porque a evidência sustenta mais de uma estratégia; as diferenças costumam ser pequenas quando o volume é equiparado.`
