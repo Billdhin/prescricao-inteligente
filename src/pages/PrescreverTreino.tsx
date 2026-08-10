@@ -1307,6 +1307,57 @@ function TrilhoDoPlano({
     [plano, alunoObj],
   );
 
+  /**
+   * A DIREÇÃO QUE ESTE PLANO DE FATO TOMOU, medida das semanas de CARGA.
+   *
+   * As descargas ficam de fora da conta de propósito: elas caem por desenho, e incluí-las
+   * faria qualquer plano parecer ondulado. O que se mede é o que acontece entre a primeira e
+   * a última semana em que o aluno carrega.
+   */
+  const direcaoReal = React.useMemo(() => {
+    const cargas = plano.macrociclo.mesociclos
+      .flatMap((m) => m.microciclos)
+      .filter((w) => w.tipo === "carga");
+    const soma = (w: (typeof cargas)[number]) => {
+      let vol = 0;
+      let carga = 0;
+      let n = 0;
+      for (const s of w.sessoes)
+        for (const b of s.blocos) {
+          if (b.tipo !== "forca") continue;
+          if (b.seriesAlvo != null && b.repsAlvo != null) vol += b.seriesAlvo * b.repsAlvo;
+          // Intensidade do jeito que o aluno sente: menos reserva é mais esforço.
+          if (b.rirAlvo != null) {
+            carga += -b.rirAlvo;
+            n++;
+          } else if (b.cargaRelativaAlvo != null) {
+            carga += b.cargaRelativaAlvo;
+            n++;
+          }
+        }
+      return { vol, int: n ? carga / n : null };
+    };
+    if (cargas.length < 2) return { frase: "" };
+    const a = soma(cargas[0]);
+    const z = soma(cargas[cargas.length - 1]);
+    const dir = (ini: number | null, fim: number | null) =>
+      ini == null || fim == null || Math.abs(fim - ini) < Math.max(1, Math.abs(ini) * 0.02)
+        ? "estavel"
+        : fim > ini
+          ? "sobe"
+          : "reduz";
+    const dv = dir(a.vol, z.vol);
+    const di = dir(a.int, z.int);
+    const rot: Record<string, string> = { sobe: "sobe", reduz: "reduz", estavel: "fica estável" };
+    if (dv === "estavel" && di === "estavel")
+      return { frase: "Neste plano, volume e intensidade ficam estáveis nas semanas de carga: a progressão acontece na carga que o aluno consegue levantar dentro da mesma faixa." };
+    if (dv === "estavel")
+      return { frase: `Neste plano, o volume fica estável e a intensidade ${rot[di]} ao longo das semanas de carga.` };
+    if (di === "estavel")
+      return { frase: `Neste plano, o volume ${rot[dv]} e a intensidade fica estável ao longo das semanas de carga.` };
+    return { frase: `Neste plano, o volume ${rot[dv]} e a intensidade ${rot[di]} ao longo das semanas de carga.` };
+  }, [plano]);
+
   // Equilíbrio: séries de força por região, a partir dos blocos da semana em foco.
   const equilibrio = React.useMemo(() => {
     const porRegiao = new Map<string, number>();
@@ -1347,8 +1398,30 @@ function TrilhoDoPlano({
         A faixa de {plano.objetivo.toLowerCase()} para nível {plano.nivel.toLowerCase()}. O alvo de cada
         semana sai de dentro dela, nunca fora.
       </ItemPorque>
+      {/*
+        O MODELO DIZ O QUE ELE FEZ NESTE PLANO, E NÃO O QUE ELE FAZ EM GERAL.
+
+        O `resumo` do catálogo é a definição do modelo ("progressão de mais volume e menos
+        intensidade para menos volume e mais intensidade"). Impresso cru, ele vira uma
+        promessa sobre ESTE plano, e o Filipe pegou a contradição no gráfico: cartão dizendo
+        linear e a curva sem descer volume nenhum.
+
+        Medido no plano do print (resistência muscular, iniciante, osteoartrite, 24 semanas),
+        olhando só as semanas de carga: a intensidade sobe de 40,5 para 50,5, monotônica, e o
+        volume fica em 570 a 576, ou seja parado. O que oscila no desenho são as descargas,
+        que derrubam o volume para 270 a cada quatro semanas.
+
+        E o volume parado NÃO é defeito do motor: é a faixa citada. Segundo o PubMed, o
+        posicionamento do ACSM sobre progressão (PMID 19204579) recomenda, para resistência
+        muscular local, "high repetitions (>15)" com carga de 40 a 60% de 1RM. A fonte não
+        fixa teto de repetição, e séries têm só dois valores (2 a 3). Não há onde o volume
+        descer sem inventar número, e inventar número é justamente o que este produto não faz.
+
+        Então quem se corrige é a FRASE: ela passa a descrever a direção que este plano de
+        fato tomou, medida das semanas de carga, e diz onde a progressão aconteceu.
+      */}
       <ItemPorque tom="primary" titulo={modelo.nome}>
-        {modelo.resumo}
+        {direcaoReal.frase} {modelo.resumo}
       </ItemPorque>
       {plano.objetivoSecundario && (
         <ItemPorque tom="analysis" titulo={`Dois objetivos: ${plano.objetivo} e ${plano.objetivoSecundario}`}>
