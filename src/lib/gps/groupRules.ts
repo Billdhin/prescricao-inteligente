@@ -722,9 +722,26 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
       cautela: true,
       refId: ["magalhaes-dm2-2018", "gajanand-dm2-2024", "mannucci-dm2-2021"],
     },
+    /*
+     * A REDE MAIS RECENTE CONFIRMA ESTA REGRA, E POR POUCO NÃO A DERRUBOU.
+     *
+     * `garcia-dm2-rede-2025` tem 158 ensaios e 17.059 participantes, muito acima das fontes
+     * que já sustentavam esta linha, e pelo SUCRA coloca o INTERVALADO em primeiro para a
+     * HbA1c (82%). Lido só pelo ranking, autorizaria declarar `intervaladoIndicado` aqui, e
+     * o motor sabe prescrever intervalado desde que a porta existe.
+     *
+     * Não autoriza, e o motivo está nos intervalos: intervalado -0,61% (IC 95% -0,84 a
+     * -0,37), combinado -0,58% (-0,73 a -0,42) e aeróbio -0,58% (-0,70 a -0,45). Os três se
+     * sobrepõem quase por inteiro. Ranking de SUCRA ordena mesmo quando a diferença não
+     * existe, e tomar ordem por superioridade é o erro que a rodada do joelho já tinha
+     * ensinado a evitar.
+     *
+     * A frase segue a mesma e ganha lastro. Esta rodada mediu e manteve, que é um resultado
+     * tão legítimo quanto mudar.
+     */
     modAerobio: {
       motivo: "Formato contínuo ou intervalado, sem superioridade demonstrada de um sobre o outro; o que muda o desfecho é o treino ser combinado.",
-      refId: ["gajanand-dm2-2024", "wang-hiit-dm2-2026", "mannucci-dm2-2021"],
+      refId: ["gajanand-dm2-2024", "wang-hiit-dm2-2026", "mannucci-dm2-2021", "garcia-dm2-rede-2025"],
     },
     /*
      * "Combinado" NÃO muda a montagem, porque o plano já é combinado por padrão, e é isso

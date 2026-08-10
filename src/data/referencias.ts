@@ -41,6 +41,17 @@ export const referencias: Referencia[] = [
     nota: "Diretriz da OMS. O resumo indexado confirma a meta que o produto usa: todo adulto deve fazer 150 a 300 min de atividade de intensidade moderada, ou 75 a 150 min de vigorosa, ou combinação equivalente, por semana, mais atividade de fortalecimento muscular regular em todas as faixas etárias. Traz pela primeira vez recomendações específicas para gestantes e puérperas e para pessoas com condição crônica ou deficiência. Base das metas semanais usadas como referência de volume nas jornadas.",
   },
   {
+    id: "garcia-dm2-rede-2025",
+    autores: "Garcia SP, Cureau FV, Iorra FQ, Bottino LG, R C Monteiro LE, Leivas G, Umpierre D, Schaan BD",
+    titulo:
+      "Effects of exercise training and physical activity advice on HbA1c in people with type 2 diabetes: A network meta-analysis of randomized controlled trials",
+    fonte: "Diabetes Research and Clinical Practice, 221:112027",
+    ano: 2025,
+    doi: "10.1016/j.diabres.2025.112027",
+    pmid: "39904457",
+    nota: "A maior rede sobre exercício e controle glicêmico no diabetes tipo 2: 158 ensaios e 17.059 participantes, só com intervenções de 12 semanas ou mais. Queda de HbA1c contra controle: intervalado -0,61% (IC 95% -0,84 a -0,37), combinado -0,58% (-0,73 a -0,42), aeróbio -0,58% (-0,70 a -0,45), resistido -0,40% (-0,59 a -0,21) e orientação de atividade física -0,35% (-0,53 a -0,16). Pelo SUCRA o intervalado fica em primeiro (82%), seguido de combinado (77%) e aeróbio (76%). A LEITURA QUE O PRODUTO FAZ: os intervalos de credibilidade dos três primeiros se sobrepõem quase por inteiro, então o ranking não demonstra superioridade do intervalado sobre o combinado nem sobre o aeróbio. Corrobora, com muito mais dados, a regra que o motor já aplicava. Registra também que orientar atividade física sem supervisão já reduz HbA1c, o que sustenta o valor do plano para quem não consegue frequentar a sala.",
+  },
+  {
     id: "mo-joelho-modalidade-2023",
     autores: "Mo L, Jiang B, Mei T, Zhou D",
     titulo: "Exercise Therapy for Knee Osteoarthritis: A Systematic Review and Network Meta-analysis",
