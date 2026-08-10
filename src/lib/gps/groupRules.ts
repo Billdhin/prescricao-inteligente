@@ -412,6 +412,29 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     refs: ["batrakoulis-obesidade-2022", "donnelly-2009", "acsm-getp11", "oms-2020", "seidell-flegal-1997", "who-imc-2004"],
   },
 
+  /*
+   * OBESIDADE NÃO DECLARA MODALIDADE PREFERIDA, E ISSO É CONCLUSÃO, NÃO LACUNA.
+   *
+   * Rodada de busca feita depois de a osteoartrite de joelho fechar por evidência
+   * (`modalidadesPreferidas`, ver mo-joelho-modalidade-2023). Três ângulos no PubMed, em
+   * 09/08/2026, todos sem resultado utilizável:
+   *
+   *   obesidade + modalidade + rede + composição corporal ....... 0 artigos
+   *   aquático + obesidade + metanálise ......................... 5 artigos, nenhum sobre
+   *      escolha de modalidade (um é HIIT contra contínuo, que é INTENSIDADE e não
+   *      modalidade; outro é DPOC com sobrepeso)
+   *   sem apoio de peso contra com apoio de peso + obesidade .... 0 artigos
+   *
+   * A literatura da obesidade se organiza por dose, intensidade e desfecho metabólico, não
+   * por comparação de modalidades como a do joelho. Declarar preferência aqui seria inventar
+   * ordem que ninguém mediu.
+   *
+   * E não faz falta: a especificidade da obesidade neste motor já vive na camada de
+   * SEGURANÇA, que é mais forte que preferência. As restrições estruturais declaradas abaixo
+   * (baixa tolerância ao impacto, dificuldade para deitar ou levantar do chão, dificuldade
+   * para sentar e levantar) já EXCLUEM exercício do plano, inclusive aeróbio. Medido: com
+   * obesidade grau III, 7 exercícios ficam fora do plano por essas restrições.
+   */
   "obesidade-grau-3": {
     slug: "obesidade-grau-3",
     enfaseModalidade: {
