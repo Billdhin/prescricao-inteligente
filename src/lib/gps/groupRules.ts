@@ -764,6 +764,44 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     refs: ["colberg-2016", "sbd-2023", "mannucci-dm2-2021", "wang-hiit-dm2-2026", "gajanand-dm2-2024", "magalhaes-dm2-2018", "yu-dm2-modalidade-2026", "zhao-exercicio-metformina-2024"],
   },
 
+  /*
+   * FAIXA ETÁRIA: A EVIDÊNCIA EXISTE, E O MOTOR AINDA NÃO TEM ONDE RECEBÊ-LA.
+   *
+   * Rodada de 09/08/2026, aberta porque hoje a idade só entra na zona de frequência
+   * cardíaca: um plano para 70 anos e um para 30, com a mesma condição e o mesmo objetivo,
+   * saem com a MESMA dose de força. Isso é lacuna, não decisão.
+   *
+   * Segundo o PubMed, existe dose-resposta específica para essa população: Borde,
+   * Hortobágyi e Granacher, 2015, na Sports Medicine (PMID 26420238,
+   * doi 10.1007/s40279-015-0385-9), revisão sistemática com metanálise de 25 ensaios
+   * randomizados em adultos saudáveis com média de 65 anos ou mais. Tipo confirmado no
+   * registro como Meta-Analysis e Systematic Review.
+   *
+   * Os valores com maior efeito sobre força, por variável isolada:
+   *
+   *   intensidade ......... 70 a 79% de 1RM        SMD 1,89
+   *   séries .............. 2 a 3 por exercício    SMD 2,99
+   *   repetições .......... 7 a 9 por série        SMD 1,98
+   *   frequência .......... 2 sessões por semana   SMD 2,13
+   *   tempo sob tensão .... 6,0 s                  SMD 3,61
+   *   duração do programa . 50 a 53 semanas        SMD 2,34
+   *
+   * LIMITAÇÕES DECLARADAS PELOS AUTORES, e elas pesam: qualidade metodológica baixa (PEDro
+   * médio 4,6), heterogeneidade alta (I² = 80%), e eles próprios escrevem que os resultados
+   * podem não representar UMA relação dose-resposta geral, porque as interações entre as
+   * variáveis não puderam ser estimadas. Sobre morfologia muscular são só nove estudos, e os
+   * autores chamam o achado de preliminar.
+   *
+   * POR QUE NÃO VIROU REGRA NESTA RODADA: aplicar isso exige uma camada nova, uma modulação
+   * por IDADE ao lado da modulação por condição, com a mesma lei de fusão conservadora. Não
+   * é dado que entra numa condição existente, porque idade não é condição: o aluno de 70
+   * anos pode não ter nenhuma. Enfiar esses números aqui, na regra do idoso destreinado,
+   * atingiria só quem for marcado com essa condição, e deixaria de fora exatamente o aluno
+   * de 70 anos saudável que motivou a busca.
+   *
+   * A evidência fica registrada aqui, com os números e as limitações, para a rodada que
+   * abrir essa camada não precisar refazer a busca.
+   */
   "idoso-destreinado": {
     slug: "idoso-destreinado",
     restricoesEstruturais: ["baixa_tolerancia_impacto", "equilibrio_reduzido", "dificuldade_chao"],
