@@ -898,15 +898,39 @@ function Comparador({ exercise }: { exercise: Exercise }) {
           // Ativação relativa é do PRÓPRIO músculo: se o alvo de cada exercício for
           // diferente, os dois números não medem a mesma coisa e isso precisa ser dito.
           const alvosDiferentes = Boolean(r.musculoA && r.musculoB && r.musculoA !== r.musculoB);
+          /*
+           * BARRA QUE NÃO COMPARA NÃO É DESENHADA.
+           *
+           * Esta tela admitia, na própria legenda, que os dois números não se comparam
+           * ("cada número é relativo ao próprio músculo") e desenhava as duas barras lado a
+           * lado assim mesmo. Desenho lado a lado É a afirmação de que se comparam, e a
+           * ressalva embaixo não desfaz: quem bate o olho lê 95 contra 88 e conclui que o
+           * primeiro é melhor. O Filipe já tinha dito duas vezes que esses marcadores não
+           * servem ao pessoal dele, e esta era a razão.
+           *
+           * A página /comparador já tinha tirado essa linha, pelo mesmo motivo e com o
+           * comentário escrito lá. Esta aba tinha ficado para trás.
+           *
+           * Com alvos diferentes, a linha vira uma frase que diz o valor de cada um sem
+           * confronto visual. Com o MESMO alvo, as barras continuam, porque aí a comparação
+           * é legítima e é justamente para isso que a tela existe.
+           */
+          if (alvosDiferentes)
+            return (
+              <div key={r.nome}>
+                <MetricaInfo nome={r.nome} valor={r.a} className="text-sm font-semibold text-ink" />
+                <p className="mt-1 text-sm leading-relaxed text-ink-2">
+                  Não dá para comparar: o alvo principal é outro em cada exercício.{" "}
+                  <span className="font-semibold text-ink">{exercise.nome}</span> mede{" "}
+                  {r.musculoA} e <span className="font-semibold text-ink">{other.nome}</span> mede{" "}
+                  {r.musculoB}. Cada número é relativo ao próprio músculo, então um não é maior
+                  que o outro, é de outra coisa.
+                </p>
+              </div>
+            );
           return (
             <div key={r.nome}>
               <MetricaInfo nome={r.nome} valor={r.a} className="text-sm font-semibold text-ink" />
-              {alvosDiferentes && (
-                <p className="mt-1 text-2xs leading-relaxed text-ink-3">
-                  Alvo principal diferente em cada exercício. Cada número é relativo ao próprio
-                  músculo, então aqui eles não se comparam entre si.
-                </p>
-              )}
               <div className="mt-2 space-y-2.5">
                 <MetricaBar
                   nome={r.nome}
