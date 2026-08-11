@@ -32,6 +32,14 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
   "dead-bug": { front: "/anatomy/mm/dead-bug-front.webp" },
   "remada-elastica": { front: "/anatomy/mm/remada-elastica-front.webp", back: "/anatomy/mm/remada-elastica-back.webp" },
   "panturrilha-em-pe": { front: "/anatomy/mm/panturrilha-em-pe-front.webp", back: "/anatomy/mm/panturrilha-em-pe-back.webp" },
+  "flexao-de-braco": { front: "/anatomy/mm/flexao-de-braco-front.webp", back: "/anatomy/mm/flexao-de-braco-back.webp" },
+  "supino-halteres": { front: "/anatomy/mm/supino-halteres-front.webp", back: "/anatomy/mm/supino-halteres-back.webp" },
+  "supino-maquina": { front: "/anatomy/mm/supino-maquina-front.webp", back: "/anatomy/mm/supino-maquina-back.webp" },
+  "remada-maquina": { front: "/anatomy/mm/remada-maquina-front.webp", back: "/anatomy/mm/remada-maquina-back.webp" },
+  "elevacao-lateral-halteres": { front: "/anatomy/mm/elevacao-lateral-halteres-front.webp" },
+  "agachamento-goblet": { front: "/anatomy/mm/agachamento-goblet-front.webp" },
+  "agachamento-bulgaro": { front: "/anatomy/mm/agachamento-bulgaro-front.webp" },
+  "subida-step": { front: "/anatomy/mm/subida-step-front.webp" },
 };
 
 export function getMuscleMapImages(slug?: string) {
