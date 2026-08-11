@@ -93,6 +93,31 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
   "extensao-quadril-elastico": { back: "/anatomy/mm/extensao-quadril-elastico-back.webp" },
   "levantamento-terra": { back: "/anatomy/mm/levantamento-terra-back.webp" },
   "remo-ergometro": { front: "/anatomy/mm/remo-ergometro-front.webp", back: "/anatomy/mm/remo-ergometro-back.webp" },
+  /*
+   * OMBRO PROFUNDO E POSTURA FINA. O manguito rotador e o serrátil não têm silhueta
+   * própria na superfície, então aqui a marcação segue a convenção da ilustração
+   * anatômica: a região onde o músculo se projeta (superfície da escápula para o
+   * infraespinal, axila anterior para o subescapular, topo do ombro para o supraespinal).
+   * Foi a exclusão por rotação que barrou o BONECO POSADO desses exercícios; o mapa é uma
+   * figura em pé, então não sofre do mesmo limite.
+   */
+  "rotacao-externa-elastico": { back: "/anatomy/mm/rotacao-externa-elastico-back.webp" },
+  "rotacao-externa-deitado": { back: "/anatomy/mm/rotacao-externa-deitado-back.webp" },
+  "rotacao-interna-elastico": { front: "/anatomy/mm/rotacao-interna-elastico-front.webp" },
+  "scaption": { front: "/anatomy/mm/scaption-front.webp" },
+  "serratus-punch": { front: "/anatomy/mm/serratus-punch-front.webp" },
+  "wall-slide": { front: "/anatomy/mm/wall-slide-front.webp" },
+  "y-raise-banco": { back: "/anatomy/mm/y-raise-banco-back.webp" },
+  "retracao-escapular-polia": { back: "/anatomy/mm/retracao-escapular-polia-back.webp" },
+  "pullover-polia": { back: "/anatomy/mm/pullover-polia-back.webp" },
+  "chop-elastico": { front: "/anatomy/mm/chop-elastico-front.webp" },
+  "bird-dog": { back: "/anatomy/mm/bird-dog-back.webp" },
+  "suitcase-carry": { front: "/anatomy/mm/suitcase-carry-front.webp" },
+  "dorsiflexao-elastico": { front: "/anatomy/mm/dorsiflexao-elastico-front.webp" },
+  "punho-halter": { front: "/anatomy/mm/punho-halter-front.webp" },
+  "farmer-walk": { front: "/anatomy/mm/farmer-walk-front.webp" },
+  "caminhada-plana": { front: "/anatomy/mm/caminhada-plana-front.webp", back: "/anatomy/mm/caminhada-plana-back.webp" },
+  "corrida-aquatica": { front: "/anatomy/mm/corrida-aquatica-front.webp" },
 };
 
 export function getMuscleMapImages(slug?: string) {
