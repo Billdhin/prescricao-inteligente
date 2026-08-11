@@ -107,6 +107,14 @@ export interface GerarPlanoInput {
    * Ausente = plano sem filtro por restrição (uso avulso e estudo).
    */
   restricoes?: RestricaoSelecionada[];
+  /**
+   * Equipamentos do local de treino do aluno. Hoje moldam SÓ a escolha da modalidade
+   * aeróbia: a preferida por evidência só vence se houver como executá-la (hidro exige
+   * Piscina, bike exige Bicicleta ergométrica). Ausente = sem filtro, como sempre foi.
+   * A seleção de FORÇA ainda não lê este campo; é dívida conhecida, registrada em
+   * `modalidadeAerobia`.
+   */
+  equipamentos?: string[];
 }
 
 export interface PlanoGerado {
@@ -719,6 +727,8 @@ function montarSessoes(
   objetivoSecundario?: GpsObjetivo,
   // Regra clínica fundida de TODAS as condições: rebaixa o exercício exigente demais.
   regraClinica?: GroupGpsRule,
+  // Equipamentos do aluno: moldam a escolha da modalidade aeróbia (ver modalidadeAerobia).
+  equipamentos?: string[],
 ): Sessao[] {
   const faixa = getFaixa(objetivo);
   const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2), restricoes, objetivoSecundario, regraClinica);
@@ -771,7 +781,7 @@ function montarSessoes(
         tipo: "aerobio",
         // Id CANONICO da modalidade. Sem o prefixo, getModalidade nao resolve, e o mesmo bloco
     // saia como "Caminhada" no app do aluno e como "Aerobio" no PDF e no editor.
-    modalidade: modalidadeAerobia("m-caminhada", regraClinica),
+    modalidade: modalidadeAerobia("m-caminhada", regraClinica, equipamentos),
         /*
          * O BLOCO DIZ QUAL CARDIO E, e nao so que existe um.
          *
@@ -784,7 +794,7 @@ function montarSessoes(
          * feito. A outra metade, escolher a modalidade IDEAL para as condicoes do aluno,
          * depende de evidencia por condicao e segue aberta.
          */
-        nome: getModalidade(modalidadeAerobia("m-caminhada", regraClinica))?.nome ?? "Aeróbio",
+        nome: getModalidade(modalidadeAerobia("m-caminhada", regraClinica, equipamentos))?.nome ?? "Aeróbio",
         formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
@@ -843,8 +853,8 @@ function montarSessoes(
       blocos.push({
         id: nid("blk"),
         tipo: "aerobio",
-        modalidade: modalidadeAerobia(comp.modalidade, regraClinica),
-        nome: `${getModalidade(modalidadeAerobia(comp.modalidade, regraClinica))?.nome ?? "Aeróbio"} (complementar)`,
+        modalidade: modalidadeAerobia(comp.modalidade, regraClinica, equipamentos),
+        nome: `${getModalidade(modalidadeAerobia(comp.modalidade, regraClinica, equipamentos))?.nome ?? "Aeróbio"} (complementar)`,
         formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
@@ -909,6 +919,8 @@ interface DadosDoAlunoNoAlvo {
   partirDoPiso?: boolean;
   /** fase de continuação: segura a dose no patamar alcançado (ver CtxAlvo.patamarCongelado) */
   patamarCongelado?: boolean;
+  /** equipamentos do aluno: moldam a escolha da modalidade aeróbia */
+  equipamentos?: string[];
 }
 
 function montarMicrociclos(
@@ -930,7 +942,7 @@ function montarMicrociclos(
   // clínico que decide qual parâmetro guia a intensidade. Ausente = comportamento de sempre.
   dadosDoAluno: DadosDoAlunoNoAlvo = {},
 ): Microciclo[] {
-  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao, pseTeto, cargaRelativaMax, intervaloFolgado, rirMinimo, partirDoPiso, patamarCongelado } = dadosDoAluno;
+  const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao, pseTeto, cargaRelativaMax, intervaloFolgado, rirMinimo, partirDoPiso, patamarCongelado, equipamentos } = dadosDoAluno;
   const semanas: Microciclo[] = [];
   // Semanas de carga do meso (as descargas ficam fora desta conta). Agora são contadas,
   // e não deduzidas de "a última é descarga": com cadência absoluta, a descarga pode cair
@@ -975,7 +987,7 @@ function montarMicrociclos(
       semana,
       tipo: ehDeload ? "deload" : "carga",
       frequencia: freqSemana,
-      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx, objetivoSecundario, regraClinica),
+      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx, objetivoSecundario, regraClinica, equipamentos),
       nota: ehDeload ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
       objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade),
     });
@@ -1184,12 +1196,38 @@ function fraseDoFormato(regraClinica?: GroupGpsRule): string {
  * existir de fato no catálogo de cardio. Sem declaração, ou sem exercício daquela modalidade
  * no catálogo, fica o padrão do objetivo, byte-idêntico ao de antes.
  */
-function modalidadeAerobia(padrao: string, regraClinica?: GroupGpsRule): string {
+function modalidadeAerobia(padrao: string, regraClinica?: GroupGpsRule, equipamentos?: string[]): string {
   const preferidas = regraClinica?.modAerobio?.modalidadesPreferidas ?? [];
-  const noCatalogo = new Set(
-    exercises.filter((e) => e.doseAerobia && e.modalidade).map((e) => e.modalidade as string),
+  /*
+   * A PREFERIDA SÓ VENCE SE O ALUNO TIVER COMO EXECUTÁ-LA.
+   *
+   * A primeira versão desta função filtrava só por "existe no catálogo", e "Piscina" está na
+   * lista de equipamentos do produto desde sempre: um aluno com osteoartrite SEM piscina
+   * declarada recebia um plano inteiro de hidroginástica que não tinha como fazer. É a
+   * mesma classe de impossibilidade técnica que a prontidão já trata na força (o bloqueio
+   * "sem-equipamento"), reintroduzida por mim na porta nova.
+   *
+   * Com a lista de equipamentos presente, a modalidade só se qualifica se AO MENOS UM
+   * exercício de cardio dela for executável com o que o aluno tem. Sem a lista (uso avulso,
+   * bancadas, chamadas antigas), o comportamento é o de antes. A lista de preferência segue
+   * em ordem: joelho sem piscina e com bicicleta cai para a bicicleta, que é a segunda que a
+   * mesma evidência coloca à frente.
+   *
+   * DÍVIDA CONHECIDA, para não parecer resolvida: a seleção de FORÇA ainda não lê
+   * equipamentos. Um plano pode prescrever barra para quem não declarou barra. Consertar
+   * isso muda a prescrição de todo mundo e pede rodada própria com as bancadas.
+   */
+  const executaveis = new Set(
+    exercises
+      .filter(
+        (e) =>
+          e.doseAerobia &&
+          e.modalidade &&
+          (!equipamentos?.length || !e.equipamento || equipamentos.includes(e.equipamento)),
+      )
+      .map((e) => e.modalidade as string),
   );
-  return preferidas.find((m) => noCatalogo.has(m)) ?? padrao;
+  return preferidas.find((m) => executaveis.has(m)) ?? padrao;
 }
 
 /** A banda a que um texto de intensidade corresponde, quando ele é um dos textos canônicos. */
@@ -1374,6 +1412,7 @@ function montarMacrocicloGenerico(
         fcRepouso: input.fcRepouso,
         parametrosInvalidos: input.parametrosInvalidos,
         restricoes: restricoesDoPlano(input),
+        equipamentos: input.equipamentos,
         objetivoSecundario: input.objetivoSecundario,
         regraClinica: regraClinicaDoPlano(input),
         // O perfil clinico progride no passo dele: fundido pelo mais conservador (ver comPasso).
@@ -1609,6 +1648,7 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
         fcRepouso: input.fcRepouso,
         parametrosInvalidos: input.parametrosInvalidos,
         restricoes: restricoesDoPlano(input),
+        equipamentos: input.equipamentos,
         objetivoSecundario: input.objetivoSecundario,
         regraClinica: regraClinicaDoPlano(input),
         // O perfil clinico progride no passo dele: fundido pelo mais conservador (ver comPasso).
@@ -1669,7 +1709,7 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
    * condição, porque o raciocínio é impresso no documento do aluno.
    */
   const regraDoPlano = regraClinicaDoPlano(input);
-  const modalidadeEscolhida = modalidadeAerobia("m-caminhada", regraDoPlano);
+  const modalidadeEscolhida = modalidadeAerobia("m-caminhada", regraDoPlano, input.equipamentos);
   const trocaDeCardio =
     modalidadeEscolhida !== "m-caminhada"
       ? slugsClinicosDoPlano(input)

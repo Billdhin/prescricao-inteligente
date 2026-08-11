@@ -238,6 +238,10 @@ export function PrescreverTreino() {
       modeloPreferido,
       faseInicial: ctx.alunoId ? aluno?.faseJornada : undefined,
       idade: ctx.alunoId ? aluno?.idade : undefined,
+      // Os equipamentos do aluno moldam a escolha do cardio: a modalidade que a evidência
+      // coloca à frente só vence se houver como executá-la (hidro exige Piscina). Sem aluno,
+      // sem filtro, e a preferida da condição escolhida à mão vale cheia.
+      equipamentos: ctx.alunoId ? aluno?.equipamentos : undefined,
       fcRepouso: ultimaAval?.medidas.fcRepouso,
       // As restrições do PERFIL do aluno entram na geração: elas somam com as que a
       // condição impõe e filtram a seleção de exercícios do plano inteiro. Sem aluno

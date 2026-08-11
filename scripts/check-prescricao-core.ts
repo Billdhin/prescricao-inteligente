@@ -982,6 +982,45 @@ for (const objetivo of OBJETIVOS) {
     }
 }
 
+/* ============================================================================
+ * O CARDIO PREFERIDO SÓ VENCE SE O ALUNO TIVER COMO EXECUTÁ-LO.
+ *
+ * "Piscina" está na lista de equipamentos do produto, e a primeira versão da escolha de
+ * modalidade ignorava equipamentos: um aluno com osteoartrite SEM piscina declarada recebia
+ * um plano inteiro de hidroginástica. É a mesma impossibilidade técnica que a prontidão já
+ * trata na força, reintroduzida pela porta nova.
+ *
+ * A trava percorre a lista de preferência do joelho degrau a degrau: com piscina vence o
+ * aquático; sem piscina e com bicicleta vence a bicicleta; sem as duas volta à caminhada, e
+ * aí a frase de auditoria NÃO pode aparecer, porque troca nenhuma aconteceu.
+ * ========================================================================== */
+{
+  const casos: [string[], string, boolean][] = [
+    [["Máquina", "Piscina"], "m-hidro", true],
+    [["Máquina", "Bicicleta ergométrica"], "m-bike", true],
+    [["Máquina", "Esteira"], "m-caminhada", false],
+  ];
+  for (const [equipamentos, esperada, comFrase] of casos) {
+    const p = gerarPlano({
+      objetivo: "Emagrecimento",
+      nivel: "Iniciante",
+      semanas: 12,
+      frequencia: 3,
+      grupoEspecial: "osteoartrite-joelho",
+      equipamentos,
+    });
+    const aer = p.principal.mesociclos[0]?.microciclos[0]?.sessoes[0]?.blocos.find((b) => b.tipo === "aerobio");
+    const cen = `joelho com [${equipamentos.join(", ")}]`;
+    if (aer?.modalidade !== esperada)
+      erro(`CARDIO SEM EQUIPAMENTO em ${cen}: saiu "${aer?.modalidade}" e o executável era "${esperada}".`);
+    const temFrase = /Sobre o cardio/.test(p.raciocinio);
+    if (temFrase !== comFrase)
+      erro(
+        `AUDITORIA DO CARDIO ERRADA em ${cen}: a frase "Sobre o cardio" ${temFrase ? "aparece sem troca" : "sumiu com troca"}.`,
+      );
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
