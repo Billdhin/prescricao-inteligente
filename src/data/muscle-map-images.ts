@@ -43,6 +43,22 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
   "desenvolvimento-maquina": { front: "/anatomy/mm/desenvolvimento-maquina-front.webp", back: "/anatomy/mm/desenvolvimento-maquina-back.webp" },
   "remada-curvada-halteres": { front: "/anatomy/mm/remada-curvada-halteres-front.webp", back: "/anatomy/mm/remada-curvada-halteres-back.webp" },
   "triceps-frances-halter": { back: "/anatomy/mm/triceps-frances-halter-back.webp" },
+  /*
+   * PADRÃO IDÊNTICO SE COPIA, NÃO SE GERA. Os pares abaixo têm a MESMA matriz de
+   * ativação (mesmos músculos, mesmos papéis) de um exercício já aprovado, então o
+   * arquivo é cópia byte a byte do mapa aprovado: determinístico, sem custo e sem risco
+   * de o gerador inventar. Quando a matriz difere em qualquer músculo, gera-se de novo.
+   */
+  "flexao-apoio-elevado": { front: "/anatomy/mm/flexao-apoio-elevado-front.webp", back: "/anatomy/mm/flexao-apoio-elevado-back.webp" },
+  "triceps-testa-barra": { back: "/anatomy/mm/triceps-testa-barra-back.webp" },
+  "supino-inclinado-halteres": { front: "/anatomy/mm/supino-inclinado-halteres-front.webp", back: "/anatomy/mm/supino-inclinado-halteres-back.webp" },
+  "leg-press-horizontal": { front: "/anatomy/mm/leg-press-horizontal-front.webp", back: "/anatomy/mm/leg-press-horizontal-back.webp" },
+  "agachamento-elastico": { front: "/anatomy/mm/agachamento-elastico-front.webp", back: "/anatomy/mm/agachamento-elastico-back.webp" },
+  // As três roscas dividem a mesma matriz (bíceps primário, braquial e braquiorradial
+  // sinergistas): gerada uma vez para a rosca com elástico e copiada para as irmãs.
+  "rosca-elastico": { front: "/anatomy/mm/rosca-elastico-front.webp" },
+  "rosca-scott-maquina": { front: "/anatomy/mm/rosca-scott-maquina-front.webp" },
+  "rosca-banco-inclinado": { front: "/anatomy/mm/rosca-banco-inclinado-front.webp" },
 };
 
 export function getMuscleMapImages(slug?: string) {
