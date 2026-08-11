@@ -1457,8 +1457,10 @@ function TrilhoDoPlano({
         {consequencias.evitados.length > 0 ? (
           <>
             Ficaram fora do plano: {listaCurta(consequencias.evitados.map((x) => x.nome))}.{" "}
-            {/* O motivo do primeiro basta na linha: a lista completa vive no Prontuário, e
-                repetir seis motivos aqui viraria parágrafo que ninguém lê. */}
+            {/* O motivo do primeiro basta na linha. A lista completa nao vive em lugar
+                nenhum ainda (a primeira versao deste comentario dizia "no Prontuario", e era
+                falso): repetir seis motivos aqui viraria paragrafo que ninguem le, entao os
+                demais ficam por trás do numero do titulo ate existir uma superficie propria. */}
             {consequencias.evitados[0].nome}, por exemplo, saiu por{" "}
             {consequencias.evitados[0].motivo.replace(/^[^:]+:\s*/, "").toLowerCase()}{" "}
           </>

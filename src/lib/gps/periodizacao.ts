@@ -1654,6 +1654,38 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
   const faixa = getFaixa(input.objetivo);
   const grupo = input.grupoEspecial ? getSpecialGroup(input.grupoEspecial) : undefined;
 
+  /*
+   * A ESCOLHA DA MODALIDADE DO CARDIO É AUDITÁVEL, como toda decisão deste motor.
+   *
+   * A primeira versão de `modalidadesPreferidas` trocava a caminhada pela modalidade que a
+   * evidência da condição coloca à frente e NÃO DIZIA NADA: o raciocínio não explicava a
+   * troca e a referência que a sustenta não entrava na bibliografia do plano. A frase que
+   * está escrita neste mesmo arquivo, "um plano que a aplica em silêncio não é auditável",
+   * valia contra a própria feature.
+   *
+   * O porquê vem da CONDIÇÃO QUE DECLAROU a modalidade vencedora, e não do motivo fundido de
+   * todas: a fusão concatena os motivos de quem declara qualquer campo aeróbio (formato,
+   * banda), e imprimir esse aglomerado explicaria a decisão errada. O texto não nomeia a
+   * condição, porque o raciocínio é impresso no documento do aluno.
+   */
+  const regraDoPlano = regraClinicaDoPlano(input);
+  const modalidadeEscolhida = modalidadeAerobia("m-caminhada", regraDoPlano);
+  const trocaDeCardio =
+    modalidadeEscolhida !== "m-caminhada"
+      ? slugsClinicosDoPlano(input)
+          .map((s) => groupGpsRules[s]?.modAerobio)
+          .find((m) => m?.modalidadesPreferidas?.includes(modalidadeEscolhida))
+      : undefined;
+  // O formato intervalado também é decisão com fonte: quando o bloco sai intervalado, quem
+  // indicou entra na bibliografia, pelo mesmo princípio.
+  const refsDoFormato =
+    formatoAerobio(regraDoPlano) === "Intervalado"
+      ? slugsClinicosDoPlano(input).flatMap((s) => {
+          const m = groupGpsRules[s]?.modAerobio;
+          return m?.intervaladoIndicado ? (m.refId ?? []) : [];
+        })
+      : [];
+
   const refIds = Array.from(
     new Set([
       ...modP.refIds,
@@ -1665,6 +1697,9 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
       // O aviso de dose por faixa etária cita a metanálise no raciocínio; a referência entra
       // na bibliografia do plano para o PDF resolver, com as limitações na própria nota.
       ...(input.idade != null && input.idade >= 65 ? ["borde-idoso-dose-2015"] : []),
+      // A evidencia que escolheu o cardio e o formato deste plano, resolvida no PDF.
+      ...(trocaDeCardio?.refId ?? []),
+      ...refsDoFormato,
     ]),
   );
 
@@ -1684,6 +1719,9 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
     // condição em lugar nenhum do plano; o motor de fato a ignorava, e mesmo depois de
     // passar a usá-la, um plano que a aplica em silêncio não é auditável.
     frasePerfilClinico(input),
+    trocaDeCardio
+      ? `Sobre o cardio: ${getModalidade(modalidadeEscolhida)?.nome ?? "a modalidade escolhida"} vem à frente neste perfil. ${trocaDeCardio.motivo}`
+      : "",
     /*
      * Horizonte abaixo do que a evidência da jornada mediu.
      *
@@ -1714,7 +1752,7 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
      * começa aos 60, e esticar um achado para quem o estudo não cobriu seria outra invenção.
      */
     input.idade != null && input.idade >= 65
-      ? `Sobre a dose nesta faixa etária: numa metanálise de 25 ensaios com pessoas de 65 anos ou mais, o maior ganho de força veio com intensidade em torno de 70 a 79% de 1RM. Use essa referência ao calibrar as cargas, junto com a reserva de repetições prescrita; a decisão segue sua.`
+      ? `Sobre a dose nesta faixa etária: numa metanálise de 25 ensaios com pessoas de 65 anos ou mais, o maior ganho de força veio com intensidade em torno de 70 a 79% de 1RM. Use essa referência ao calibrar as cargas, junto com a reserva de repetições prescrita; a decisão segue sendo sua.`
       : "",
     `As faixas de séries, repetições, intensidade e intervalo seguem as diretrizes citadas, sempre como faixa e sob o seu critério. ${faixa.ressalva}`,
     alternativa

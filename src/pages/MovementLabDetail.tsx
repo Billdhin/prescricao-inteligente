@@ -915,19 +915,44 @@ function Comparador({ exercise }: { exercise: Exercise }) {
            * confronto visual. Com o MESMO alvo, as barras continuam, porque aí a comparação
            * é legítima e é justamente para isso que a tela existe.
            */
-          if (alvosDiferentes)
+          if (alvosDiferentes) {
+            /*
+             * Os DOIS valores aparecem, cada um como dado do próprio exercício, sem barra.
+             *
+             * A primeira versão desta correção mostrava o valor do exercício A no cabeçalho e
+             * escondia o do B: meia informação com cara de dado, que é outra forma do mesmo
+             * defeito que ela veio corrigir. O que não pode existir é o CONFRONTO visual;
+             * o dado de cada um, no formato da casa (NN/100 · Faixa), continua sendo
+             * informação legítima.
+             */
+            const def = getMetrica("ativacao");
+            const dado = (v: number | undefined) =>
+              v == null ? null : `${v}/100${def && faixaDe(def, v)?.rotulo ? ` · ${faixaDe(def, v)?.rotulo}` : ""}`;
             return (
               <div key={r.nome}>
-                <MetricaInfo nome={r.nome} valor={r.a} className="text-sm font-semibold text-ink" />
-                <p className="mt-1 text-sm leading-relaxed text-ink-2">
-                  Não dá para comparar: o alvo principal é outro em cada exercício.{" "}
-                  <span className="font-semibold text-ink">{exercise.nome}</span> mede{" "}
-                  {r.musculoA} e <span className="font-semibold text-ink">{other.nome}</span> mede{" "}
-                  {r.musculoB}. Cada número é relativo ao próprio músculo, então um não é maior
-                  que o outro, é de outra coisa.
+                <MetricaInfo nome={r.nome} className="text-sm font-semibold text-ink" />
+                <div className="mt-2 space-y-1 text-sm text-ink">
+                  {dado(r.a) && (
+                    <p>
+                      <span className="font-semibold">{exercise.nome}</span> · {r.musculoA}:{" "}
+                      <span className="tabular">{dado(r.a)}</span>
+                    </p>
+                  )}
+                  {dado(r.b) && (
+                    <p>
+                      <span className="font-semibold">{other.nome}</span> · {r.musculoB}:{" "}
+                      <span className="tabular">{dado(r.b)}</span>
+                    </p>
+                  )}
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-ink-2">
+                  Aqui os números não se comparam: o alvo principal é outro em cada exercício, e
+                  cada valor é relativo ao próprio músculo. Um não é maior que o outro, é de
+                  outra coisa.
                 </p>
               </div>
             );
+          }
           return (
             <div key={r.nome}>
               <MetricaInfo nome={r.nome} valor={r.a} className="text-sm font-semibold text-ink" />
