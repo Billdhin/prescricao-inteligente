@@ -38,8 +38,11 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
   "remada-maquina": { front: "/anatomy/mm/remada-maquina-front.webp", back: "/anatomy/mm/remada-maquina-back.webp" },
   "elevacao-lateral-halteres": { front: "/anatomy/mm/elevacao-lateral-halteres-front.webp" },
   "agachamento-goblet": { front: "/anatomy/mm/agachamento-goblet-front.webp" },
-  "agachamento-bulgaro": { front: "/anatomy/mm/agachamento-bulgaro-front.webp" },
-  "subida-step": { front: "/anatomy/mm/subida-step-front.webp" },
+  "agachamento-bulgaro": { front: "/anatomy/mm/agachamento-bulgaro-front.webp", back: "/anatomy/mm/agachamento-bulgaro-back.webp" },
+  "subida-step": { front: "/anatomy/mm/subida-step-front.webp", back: "/anatomy/mm/subida-step-back.webp" },
+  "desenvolvimento-maquina": { front: "/anatomy/mm/desenvolvimento-maquina-front.webp", back: "/anatomy/mm/desenvolvimento-maquina-back.webp" },
+  "remada-curvada-halteres": { front: "/anatomy/mm/remada-curvada-halteres-front.webp", back: "/anatomy/mm/remada-curvada-halteres-back.webp" },
+  "triceps-frances-halter": { back: "/anatomy/mm/triceps-frances-halter-back.webp" },
 };
 
 export function getMuscleMapImages(slug?: string) {
