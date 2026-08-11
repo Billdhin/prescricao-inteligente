@@ -1049,6 +1049,49 @@ for (const objetivo of OBJETIVOS) {
   }
 }
 
+/* ============================================================================
+ * NO FALLBACK, O OBJETIVO DO ALUNO AINDA MANDA.
+ *
+ * Quando restam poucos exercícios do objetivo com o que o aluno tem, o pool cai para o
+ * catálogo inteiro no nível, e ali a ordem do catálogo decidia sozinha: medido, aluno só com
+ * Elástico e objetivo Força tinha 3 exercícios de Força executáveis no nível e o plano usava
+ * 1, preterindo os outros 2 por exercícios de outros objetivos. A trava exige que TODO
+ * exercício do objetivo, executável e no nível, entre no plano antes de qualquer um de fora
+ * do objetivo (respeitada a segurança, que continua na frente).
+ * ========================================================================== */
+{
+  const equipamentos = ["Elástico"];
+  const objetivo = "Força" as const;
+  const teto = { Iniciante: 0, Intermediário: 1, Avançado: 2 } as Record<string, number>;
+  const doObjetivo = exercises.filter(
+    (e) =>
+      e.objetivo?.includes(objetivo) &&
+      !e.doseAerobia &&
+      (e.equipamento === "Peso corporal" || equipamentos.includes(e.equipamento ?? "")) &&
+      teto[(e.nivel as string) ?? "Iniciante"] <= teto["Intermediário"],
+  );
+  if (doObjetivo.length < 2 || doObjetivo.length > 4) {
+    erro(
+      `AUTOVERIFICAÇÃO (fallback): o cenário precisa de um pool do objetivo pequeno (2 a 4) para forçar o fallback; achou ${doObjetivo.length}. O catálogo mudou; escolha outro equipamento.`,
+    );
+  } else {
+    const p = gerarPlano({ objetivo, nivel: "Intermediário", semanas: 8, frequencia: 3, equipamentos });
+    const usados = new Set(
+      p.principal.mesociclos
+        .flatMap((m) => m.microciclos.flatMap((w) => w.sessoes.flatMap((s) => s.blocos)))
+        .filter((b) => b.tipo === "forca")
+        .map((b) => b.exercicioSlug),
+    );
+    for (const e of doObjetivo) {
+      if (!usados.has(e.slug)) {
+        erro(
+          `FALLBACK ATROPELA O OBJETIVO: "${e.nome}" é de ${objetivo}, executável com [${equipamentos.join(", ")}], e ficou fora do plano enquanto exercícios de outros objetivos entraram.`,
+        );
+      }
+    }
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {

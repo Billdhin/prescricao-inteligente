@@ -479,6 +479,19 @@ function selecionarExercicios(
   const bonusSecundario = (e: (typeof exercises)[number]) =>
     objetivoSecundario && objetivoSecundario !== objetivo && e.objetivo?.includes(objetivoSecundario) ? 1 : 0;
 
+  /*
+   * O OBJETIVO PRIMÁRIO TAMBÉM DESEMPATA, e só importa quando o fallback entra.
+   *
+   * Quando `doObjetivo` basta, o pool inteiro é do objetivo e este bônus é constante: a ordem
+   * fica byte-idêntica. Mas quando o pool cai para o catálogo inteiro (poucos exercícios do
+   * objetivo com o que o aluno tem), a ordem do catálogo decidia sozinha e atropelava o
+   * objetivo. Medido: aluno só com Elástico, objetivo Força, existem 4 exercícios de Força
+   * executáveis e o plano usava 1, preterindo os outros 3 por exercícios de outros objetivos
+   * que aparecem antes no catálogo. Entra DEPOIS da segurança e da condição, nunca antes:
+   * objetivo nenhum sobe exercício que a restrição ou a regra clínica rebaixou.
+   */
+  const bonusPrimario = (e: (typeof exercises)[number]) => (e.objetivo?.includes(objetivo) ? 1 : 0);
+
   // PESO DA CONDIÇÃO no plano, o que faltava para o treino "nascer da condição".
   //
   // O Treino do dia já cobrava o teto de complexidade e as penalidades por métrica da regra
@@ -537,10 +550,17 @@ function selecionarExercicios(
     .filter((a) => a.nota > 0)
     .map((a, i) => {
       const cond = pesoDaCondicao(a.e);
-      return { ...a, i, bonus: bonusSecundario(a.e), pesoCond: cond.peso, motivosCond: cond.motivos };
+      return {
+        ...a,
+        i,
+        bonus: bonusSecundario(a.e),
+        primario: bonusPrimario(a.e),
+        pesoCond: cond.peso,
+        motivosCond: cond.motivos,
+      };
     })
-    // Segurança, depois a condição, depois o objetivo secundário, depois a ordem do catálogo.
-    .sort((x, y) => y.nota - x.nota || x.pesoCond - y.pesoCond || y.bonus - x.bonus || x.i - y.i);
+    // Segurança, depois a condição, depois o objetivo primário, o secundário e a ordem do catálogo.
+    .sort((x, y) => y.nota - x.nota || x.pesoCond - y.pesoCond || y.primario - x.primario || y.bonus - x.bonus || x.i - y.i);
 
   const seguros = comPeso.map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
 
@@ -1238,9 +1258,8 @@ function modalidadeAerobia(padrao: string, regraClinica?: GroupGpsRule, equipame
    * em ordem: joelho sem piscina e com bicicleta cai para a bicicleta, que é a segunda que a
    * mesma evidência coloca à frente.
    *
-   * DÍVIDA CONHECIDA, para não parecer resolvida: a seleção de FORÇA ainda não lê
-   * equipamentos. Um plano pode prescrever barra para quem não declarou barra. Consertar
-   * isso muda a prescrição de todo mundo e pede rodada própria com as bancadas.
+   * A seleção de FORÇA lê o mesmo campo desde a rodada seguinte (ver `selecionarExercicios`);
+   * a dívida que este comentário registrava está paga.
    */
   // A regra de disponibilidade é a MESMA do resto do produto (engine.ts e o seletor de
   // força): peso corporal sempre disponível, o resto precisa estar declarado. Como a
