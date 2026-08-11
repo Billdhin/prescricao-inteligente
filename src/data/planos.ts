@@ -10,6 +10,26 @@
  * Filipe (`docs/nova-landing-mapa-da-prescricao.html`). Mudar de preço é mudar aqui.
  */
 
+/**
+ * A COBRANÇA JÁ ESTÁ LIGADA?
+ *
+ * Hoje não: os preços abaixo são a tabela anunciada, mas nenhuma assinatura é cobrada e o
+ * acesso está liberado. O único dinheiro que o produto toca é o do profissional cobrando o
+ * ALUNO dele (`data/cobranca.ts`), e ali o app só registra, não movimenta.
+ *
+ * Este interruptor existe porque essa diferença gera obrigação legal, e não pode viver só
+ * na cabeça de quem escreveu. Ele tem DOIS consumidores, de propósito:
+ *
+ * 1. os Termos de Uso, cuja seção de assinatura muda de tempo verbal conforme o valor;
+ * 2. `check:legal`, que ao virar `true` passa a EXIGIR que os campos hoje marcados
+ *    "a definir" (razão social, CNPJ, encarregado, prazos de retenção) estejam preenchidos
+ *    e que o selo de versão preliminar tenha saído.
+ *
+ * Ou seja: ligar a cobrança sem resolver a pendência jurídica quebra o build. É esse o
+ * ponto. Ninguém precisa lembrar da lista na hora de faturar; o guardrail lembra.
+ */
+export const COBRANCA_ATIVA = false;
+
 /** Preço de TABELA do plano individual, por mês. É o valor riscado ao lado da oferta. */
 export const PRECO_TABELA = 129;
 

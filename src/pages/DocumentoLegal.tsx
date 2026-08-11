@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ShieldCheck, ScrollText } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Card, Pill } from "@/components/ui/primitives";
+import { COBRANCA_ATIVA } from "@/data/planos";
 
 /**
  * TERMOS DE USO E POLÍTICA DE PRIVACIDADE.
@@ -26,11 +27,35 @@ import { Card, Pill } from "@/components/ui/primitives";
  * controlador de cada parte. Os pontos que dependem de decisão do fundador estão marcados no
  * texto com "a definir", de propósito: melhor um espaço em branco visível que um número
  * inventado num documento que gera obrigação.
+ *
+ * ## Rodada de 11/08/2026: o que saiu de "a definir" e por quê
+ *
+ * Dois "a definir" eram FATO apurável, não decisão de ninguém, e viraram texto:
+ *
+ * 1. ONDE FICAM OS SERVIDORES. Apurado, não estimado: `db.<ref>.supabase.co` resolve para
+ *    2600:1f16:c40:6e00::/…, e esse IP cai em dois prefixos da lista oficial da Amazon
+ *    (ip-ranges.amazonaws.com), ambos com `region: us-east-2`. Ou seja, Ohio, Estados
+ *    Unidos. Dado de saúde de brasileiro sai do país, o que é transferência internacional
+ *    pelo Capítulo V da LGPD, e a Política não dizia. Agora diz, e diz também que a
+ *    salvaguarda do art. 33 está em formalização, em vez de afirmar uma garantia que ainda
+ *    não existe. Para reverificar a região basta refazer a consulta acima.
+ * 2. O INVENTÁRIO ESTAVA INCOMPLETO. Três coisas que o código grava não estavam
+ *    declaradas: o TELEFONE do aluno e os dados de COBRANÇA (valor, vencimento, situação e
+ *    o meio de pagamento que o profissional cola), ambos no blob `jornada` da tabela
+ *    `alunos`, e o PLANO da conta, em `profiles.plan`. Não é detalhe: uma Política que
+ *    omite categoria de dado descreve um produto que não é este. `check:legal` agora
+ *    reprova quando o código persiste um campo que o documento não lista, então o
+ *    inventário não pode mais envelhecer em silêncio.
+ *
+ * O que continua "a definir" depende de decisão do Filipe ou de advogado, e por isso segue
+ * em branco à vista: razão social, CNPJ e endereço; nome do encarregado (DPO); prazos de
+ * retenção de backup e de guarda legal. `COBRANCA_ATIVA` em `data/planos.ts` é o tripwire:
+ * ligar a cobrança com qualquer um desses em aberto reprova o build.
  */
 
 type Secao = { titulo: string; paragrafos: string[]; lista?: string[] };
 
-const ATUALIZADO_EM = "4 de agosto de 2026";
+const ATUALIZADO_EM = "11 de agosto de 2026";
 
 /* ============================== TERMOS DE USO ============================== */
 
@@ -72,7 +97,14 @@ const TERMOS: Secao[] = [
       "Valores, formas de pagamento, periodicidade e eventual período de teste são os informados na página de planos no momento da contratação.",
       "Você pode cancelar a qualquer momento, pela própria plataforma. O cancelamento encerra as cobranças seguintes e mantém o acesso até o fim do período já pago.",
       "Direito de arrependimento: em compras feitas pela internet, você pode desistir em até 7 dias corridos contados da contratação, com devolução integral do valor pago, conforme o art. 49 do Código de Defesa do Consumidor.",
-      "Enquanto a plataforma estiver em fase de acesso liberado, sem cobrança, esta seção descreve as regras que passarão a valer quando a cobrança for ativada, e você será avisado antes.",
+      // Este parágrafo é verdade enquanto ninguém for cobrado, e vira MENTIRA no dia em que
+      // for. Por isso ele não é texto fixo: sai sozinho quando o interruptor da cobrança
+      // virar, no mesmo commit em que a cobrança liga.
+      ...(COBRANCA_ATIVA
+        ? []
+        : [
+            "Enquanto a plataforma estiver em fase de acesso liberado, sem cobrança, esta seção descreve as regras que passarão a valer quando a cobrança for ativada, e você será avisado antes.",
+          ]),
     ],
   },
   {
@@ -140,6 +172,7 @@ const PRIVACIDADE: Secao[] = [
       "número de CREF, quando informado, para constar nos documentos que você assina",
       "dados da sua marca, quando preenchidos: logotipo, nome da empresa e contato",
       "seu progresso de estudo na seção Aprender e seu histórico de uso da plataforma",
+      "o plano vinculado à sua conta, que hoje define apenas o seu nível de acesso",
       "dados técnicos de acesso gerados pelo provedor de infraestrutura, como registros de autenticação",
     ],
   },
@@ -149,7 +182,7 @@ const PRIVACIDADE: Secao[] = [
       "Tudo abaixo é digitado por você. O aluno não preenche nada disto, e por isso é você quem precisa informá-lo e obter o consentimento dele.",
     ],
     lista: [
-      "identificação: nome, idade e sexo",
+      "identificação e contato: nome, idade, sexo e telefone, quando você o preenche",
       "condição de saúde declarada e condições adicionais de atenção (por exemplo hipertensão, diabetes, gestação)",
       "classes de medicação em uso, quando declaradas",
       "restrições físicas e limitações declaradas",
@@ -160,12 +193,13 @@ const PRIVACIDADE: Secao[] = [
       "FOTOS do corpo do aluno anexadas à avaliação",
       "respostas do checklist diário de liberação, que incluem sintomas do dia",
       "planos de treino, prescrições e registros de execução, incluindo carga, repetições e esforço percebido",
+      "controle financeiro da mensalidade, quando você usa a aba de cobrança: valor, dia de vencimento, situação de pago ou pendente, e o meio de pagamento que VOCÊ cola, como uma chave PIX ou um link de checkout seu",
     ],
   },
   {
     titulo: "5. Onde cada coisa fica, com honestidade",
     paragrafos: [
-      "SINCRONIZA COM A NUVEM, vinculado à sua conta: cadastro de alunos, avaliações (incluindo as FOTOS anexadas), prescrições, planos de treino, liberações do semáforo e registros de execução. Ficam no banco de dados do nosso provedor de infraestrutura, isolados por conta, e você os acessa de qualquer aparelho ao entrar na sua conta.",
+      "SINCRONIZA COM A NUVEM, vinculado à sua conta: cadastro de alunos (com telefone e controle de mensalidade, quando preenchidos), avaliações (incluindo as FOTOS anexadas), prescrições, planos de treino, liberações do semáforo e registros de execução. Ficam no banco de dados do nosso provedor de infraestrutura, isolados por conta, e você os acessa de qualquer aparelho ao entrar na sua conta. Sobre o país onde esse banco fica, veja a seção 8.",
       "FICA SOMENTE NO SEU APARELHO, sem cópia na nuvem: a avaliação postural por visão computacional. A imagem é processada no seu próprio navegador e não é enviada para nenhum servidor.",
       "Se em algum ponto da plataforma você ler algo diferente disto, o correto é este documento, e o texto divergente é erro nosso: avise pelo suporte.",
     ],
@@ -194,7 +228,8 @@ const PRIVACIDADE: Secao[] = [
       "Com a infraestrutura que hospeda o banco de dados e a autenticação, que atua como suboperador e não usa os dados para finalidade própria.",
       "Com autoridade pública, quando houver obrigação legal ou ordem judicial.",
       "Com mais ninguém. Não vendemos, não alugamos e não cedemos dados para publicidade.",
-      "Localização dos servidores: a definir e confirmar antes do lançamento comercial. Se houver transferência internacional, ela será informada aqui com as salvaguardas aplicáveis.",
+      "ONDE FICAM OS SERVIDORES: nos Estados Unidos. O banco de dados roda na região us-east-2 (Ohio) da Amazon Web Services, contratada através do nosso provedor de infraestrutura. Isso significa que os dados que você registra, inclusive os dados de saúde dos seus alunos, são armazenados fora do Brasil.",
+      "Como isso é uma transferência internacional de dados na forma do Capítulo V da LGPD, você precisa saber disto antes de cadastrar alguém, e o seu aluno precisa saber antes de consentir. Estamos formalizando com o provedor de infraestrutura o contrato de tratamento com as cláusulas padrão que dão a garantia exigida pelo art. 33 da LGPD. Enquanto essa formalização não estiver concluída, este parágrafo permanece aqui dizendo exatamente em que pé está, em vez de afirmar uma salvaguarda que ainda não temos.",
     ],
   },
   {

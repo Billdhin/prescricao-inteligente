@@ -142,6 +142,103 @@ if (!/FOTOS do corpo/i.test(DOC))
 if (!/art\. 11/.test(DOC))
   reprovar("E", "a Política não cita a base legal de dado sensível (LGPD art. 11).");
 
+/**
+ * INVENTÁRIO: o que o código PERSISTE, a Política DECLARA.
+ *
+ * A Política se apresenta como "a descrição honesta do que o sistema de fato faz hoje". Uma
+ * frase dessas envelhece mal sozinha: em 11/08/2026 o código já gravava três categorias que
+ * o documento não listava (telefone do aluno, controle de mensalidade e plano da conta),
+ * todas acrescentadas ao código depois que o texto foi escrito, nenhuma por má fé. Omitir
+ * categoria de dado numa Política de Privacidade não é lapso de redação, é descrever um
+ * produto diferente do que está no ar.
+ *
+ * Por isso a checagem parte do CÓDIGO e cobra o TEXTO, e não o contrário: cada linha abaixo
+ * só é exigida enquanto a evidência de persistência existir. Se um campo deixar de ser
+ * gravado, a exigência cai sozinha, sem ninguém precisar lembrar de afrouxar o guardrail.
+ *
+ * Detalhe que decide se isto funciona ou é teatro: a conferência usa DOC_VISIVEL, o arquivo
+ * SEM comentários. O docstring do DocumentoLegal.tsx explica por extenso que o telefone e a
+ * cobrança passaram a ser declarados, e com `lerCru` essa própria explicação satisfaria o
+ * teste. Só vale o que chega à tela.
+ */
+const DOC_VISIVEL = ler("src/pages/DocumentoLegal.tsx");
+const REPO = lerCru("src/lib/backend/supabaseRepo.ts");
+
+const INVENTARIO: { oque: string; gravado: boolean; declarado: RegExp; onde: string }[] = [
+  {
+    oque: "o telefone do aluno",
+    gravado: /telefone:\s*a\.telefone/.test(REPO),
+    declarado: /telefone/i,
+    onde: "supabaseRepo grava `telefone` no blob `jornada` da tabela alunos",
+  },
+  {
+    oque: "o controle de mensalidade do aluno (valor, vencimento, situação e meio de pagamento)",
+    gravado: /cobranca:\s*a\.cobranca/.test(REPO),
+    // "mensalidade", e NÃO "cobrança": a segunda palavra aparece nos Termos falando da
+    // assinatura da plataforma, assunto diferente, e com ela no padrão este teste passava
+    // liso mesmo com o inventário do aluno apagado. Foi assim que a falsificação o pegou.
+    declarado: /mensalidade/i,
+    onde: "supabaseRepo grava `cobranca` no blob `jornada` da tabela alunos",
+  },
+  {
+    oque: "as classes de medicação declaradas",
+    gravado: /farmacos:\s*a\.farmacos/.test(REPO),
+    declarado: /medica[çc][ãa]o/i,
+    onde: "supabaseRepo grava `farmacos` no blob `jornada` da tabela alunos",
+  },
+];
+for (const item of INVENTARIO) {
+  if (item.gravado && !item.declarado.test(DOC_VISIVEL))
+    reprovar("E", `a Política não declara ${item.oque}, mas o código guarda: ${item.onde}.`);
+}
+
+/**
+ * TRANSFERÊNCIA INTERNACIONAL.
+ *
+ * O banco fica na região us-east-2 da AWS, nos Estados Unidos. Isso foi APURADO, não
+ * suposto: o IPv6 de `db.<ref>.supabase.co` cai em prefixo da lista oficial da Amazon
+ * marcado `us-east-2`. Um script de CI não resolve DNS de forma confiável, então o guardrail
+ * não reapura a região; ele garante que, enquanto o backend for o provedor hospedado, a
+ * Política continue dizendo ao usuário que o dado sai do país. A regressão que ele impede é
+ * alguém "limpar" o parágrafo por achá-lo feio, que é exatamente como esse tipo de
+ * informação some.
+ */
+const BACKEND_HOSPEDADO = /supabase/i.test(REPO);
+if (BACKEND_HOSPEDADO) {
+  if (!/Estados Unidos/i.test(DOC_VISIVEL))
+    reprovar("E", "a Política não diz que os servidores ficam nos Estados Unidos, e ficam (AWS us-east-2).");
+  if (!/transfer[êe]ncia internacional/i.test(DOC_VISIVEL))
+    reprovar("E", "a Política não trata a hospedagem fora do país como transferência internacional (LGPD, Capítulo V).");
+  if (/Localiza[çc][ãa]o dos servidores:\s*a definir/i.test(DOC_VISIVEL))
+    reprovar("E", 'a Política voltou a dizer "localização dos servidores: a definir", e a localização é conhecida.');
+}
+
+/* --- E2. Ligar a cobrança exige a pendência jurídica resolvida ------------ */
+
+/**
+ * O tripwire. Hoje ninguém é cobrado, e por isso é aceitável publicar um documento com
+ * lacunas à vista e um selo de versão preliminar: é honesto sobre o próprio estado.
+ *
+ * No dia em que a cobrança ligar, esse mesmo documento passa a reger uma relação de
+ * consumo, e aí "razão social a definir" deixa de ser franqueza e vira fornecedor não
+ * identificado, contra o art. 6º, III do Código de Defesa do Consumidor, e encarregado não
+ * indicado, contra o art. 41 da LGPD.
+ *
+ * Ninguém vai lembrar dessa lista na semana de faturar. O build lembra.
+ */
+const COBRANCA_ATIVA = /COBRANCA_ATIVA\s*=\s*true/.test(PLANOS);
+if (COBRANCA_ATIVA) {
+  const pendencias = DOC_VISIVEL.match(/[^".]*a definir[^".]*/gi) ?? [];
+  for (const p of pendencias)
+    reprovar("E2", `a cobrança está ligada e o documento ainda tem lacuna à vista: "${p.trim()}".`);
+  if (/Vers[ãa]o preliminar/i.test(DOC_VISIVEL))
+    reprovar("E2", "a cobrança está ligada e os documentos ainda se anunciam como versão preliminar, sem revisão jurídica.");
+}
+
+// Controle positivo: se o interruptor sumir de planos.ts, o bloco E2 vira decoração.
+if (!/COBRANCA_ATIVA/.test(PLANOS))
+  reprovar("E2", "controle positivo: planos.ts não define COBRANCA_ATIVA, então o tripwire da cobrança não protege nada.");
+
 /* --- F. Preço tem UMA fonte ---------------------------------------------- */
 
 for (const [arq, nome] of [
