@@ -81,6 +81,18 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
   "elevacao-frontal": { front: "/anatomy/mm/elevacao-frontal-front.webp" },
   "puxada-supinada": { front: "/anatomy/mm/puxada-supinada-front.webp", back: "/anatomy/mm/puxada-supinada-back.webp" },
   "remada-cavalinho": { front: "/anatomy/mm/remada-cavalinho-front.webp", back: "/anatomy/mm/remada-cavalinho-back.webp" },
+  "abdominal-polia-alta": { front: "/anatomy/mm/abdominal-polia-alta-front.webp" },
+  "prancha-lateral": { front: "/anatomy/mm/prancha-lateral-front.webp" },
+  "prancha-apoio-banco": { front: "/anatomy/mm/prancha-apoio-banco-front.webp" },
+  "elevacao-joelhos-suspenso": { front: "/anatomy/mm/elevacao-joelhos-suspenso-front.webp" },
+  "pallof-press-polia": { front: "/anatomy/mm/pallof-press-polia-front.webp" },
+  "pallof-press-elastico": { front: "/anatomy/mm/pallof-press-elastico-front.webp" },
+  "clam-shell": { back: "/anatomy/mm/clam-shell-back.webp" },
+  "abducao-quadril-elastico": { back: "/anatomy/mm/abducao-quadril-elastico-back.webp" },
+  "caminhada-lateral-elastico": { back: "/anatomy/mm/caminhada-lateral-elastico-back.webp" },
+  "extensao-quadril-elastico": { back: "/anatomy/mm/extensao-quadril-elastico-back.webp" },
+  "levantamento-terra": { back: "/anatomy/mm/levantamento-terra-back.webp" },
+  "remo-ergometro": { front: "/anatomy/mm/remo-ergometro-front.webp", back: "/anatomy/mm/remo-ergometro-back.webp" },
 };
 
 export function getMuscleMapImages(slug?: string) {
