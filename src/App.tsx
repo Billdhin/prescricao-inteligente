@@ -1,50 +1,92 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect, type ComponentType } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
-import { AppLayout } from "@/components/app/AppLayout";
-import { ThemeApplier } from "@/lib/theme/ThemeApplier";
 import { Landing } from "@/pages/Landing";
-import { Pricing } from "@/pages/Pricing";
-import { Termos, Privacidade } from "@/pages/DocumentoLegal";
-import { CasoPratico } from "@/pages/CasoPratico";
-import { Dashboard } from "@/pages/Dashboard";
-import { Gps } from "@/pages/Gps";
-import { PrescreverTreino } from "@/pages/PrescreverTreino";
-import { MovementLabList } from "@/pages/MovementLabList";
-import { MovementLabDetail } from "@/pages/MovementLabDetail";
-import { TracksList } from "@/pages/TracksList";
-import { TrackDetail } from "@/pages/TrackDetail";
-import { Consultar } from "@/pages/Consultar";
-import { Account } from "@/pages/Account";
-import { Alunos } from "@/pages/Alunos";
-import { AlunoDetail } from "@/pages/AlunoDetail";
-import { AlunoPreview } from "@/pages/AlunoPreview";
-import { AlunoPerfil } from "@/pages/AlunoPerfil";
-import { AlunoPortal } from "@/pages/AlunoPortal";
-import { Avaliacoes } from "@/pages/Avaliacoes";
-import { Protocolos } from "@/pages/Protocolos";
-import { Comparador } from "@/pages/Comparador";
-import { SpecialGroups } from "@/pages/SpecialGroups";
-import { SpecialGroupDetail } from "@/pages/SpecialGroupDetail";
-import { Tutorial } from "@/pages/Tutorial";
-import { TutorialDetail } from "@/pages/TutorialDetail";
-import { Support } from "@/pages/Support";
-import { Semaforo } from "@/pages/Semaforo";
-import { Roi } from "@/pages/Roi";
-import { CasosRcd } from "@/pages/CasosRcd";
-import { CasoRcdDetail } from "@/pages/CasoRcdDetail";
-import {
-  AprenderHome,
-  MapaConhecimento,
-  Disciplinas as AprenderDisciplinas,
-  DisciplinaDetail,
-  ModuloDetail,
-  Conteudo as AprenderConteudo,
-  Casos as AprenderCasos,
-  CasoDetail as AprenderCasoDetail,
-  Biblioteca as AprenderBiblioteca,
-  Salvos as AprenderSalvos,
-  Progresso as AprenderProgresso,
-} from "@/features/learning/pages";
+
+/*
+ * SÓ A LANDING É EAGER. TODO O RESTO DO APP CHEGA SOB DEMANDA.
+ *
+ * Todas as páginas eram importadas estaticamente, então a rota "/" (a página de VENDAS)
+ * baixava o aplicativo inteiro num bundle de 3,0 MB antes de pintar. Quem chegava por um
+ * anúncio no celular pagava o preço do Prescrever, do Aprender e do laboratório de
+ * movimento sem nunca ter clicado em nada. Com o lazy por página o Vite corta um chunk
+ * por rota, e a entrada fica com a landing, o roteador e o React.
+ *
+ * As páginas exportam por NOME e React.lazy exige default: o helper adapta. O barrel do
+ * Aprender vira um chunk único (todas as suas páginas compartilham o módulo), o que é
+ * intencional: melhor um chunk do Aprender do que ele inteiro na entrada.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function pagina<M extends Record<string, any>>(carregar: () => Promise<M>, nome: keyof M) {
+  return lazy(async () => ({ default: (await carregar())[nome] as ComponentType }));
+}
+
+/*
+ * Até o ThemeApplier é lazy, e o motivo é a CADEIA dele: ele lê a store, a store puxa o
+ * cloudSync (cliente Supabase), os seeds e o motor de restrições, e tudo isso entrava no
+ * bundle de ENTRADA da página de vendas. O flash de tema escuro já é evitado pelo script
+ * inline do index.html, que pinta os neutros essenciais antes do primeiro paint; o
+ * ThemeApplier chega dezenas de ms depois e completa a paleta, como sempre fez.
+ */
+const ThemeApplier = pagina(() => import("@/lib/theme/ThemeApplier"), "ThemeApplier");
+const AppLayout = pagina(() => import("@/components/app/AppLayout"), "AppLayout");
+const Pricing = pagina(() => import("@/pages/Pricing"), "Pricing");
+const Termos = pagina(() => import("@/pages/DocumentoLegal"), "Termos");
+const Privacidade = pagina(() => import("@/pages/DocumentoLegal"), "Privacidade");
+const CasoPratico = pagina(() => import("@/pages/CasoPratico"), "CasoPratico");
+const Dashboard = pagina(() => import("@/pages/Dashboard"), "Dashboard");
+const Gps = pagina(() => import("@/pages/Gps"), "Gps");
+const PrescreverTreino = pagina(() => import("@/pages/PrescreverTreino"), "PrescreverTreino");
+const MovementLabList = pagina(() => import("@/pages/MovementLabList"), "MovementLabList");
+const MovementLabDetail = pagina(() => import("@/pages/MovementLabDetail"), "MovementLabDetail");
+const TracksList = pagina(() => import("@/pages/TracksList"), "TracksList");
+const TrackDetail = pagina(() => import("@/pages/TrackDetail"), "TrackDetail");
+const Consultar = pagina(() => import("@/pages/Consultar"), "Consultar");
+const Account = pagina(() => import("@/pages/Account"), "Account");
+const Alunos = pagina(() => import("@/pages/Alunos"), "Alunos");
+const AlunoDetail = pagina(() => import("@/pages/AlunoDetail"), "AlunoDetail");
+const AlunoPreview = pagina(() => import("@/pages/AlunoPreview"), "AlunoPreview");
+const AlunoPerfil = pagina(() => import("@/pages/AlunoPerfil"), "AlunoPerfil");
+const AlunoPortal = pagina(() => import("@/pages/AlunoPortal"), "AlunoPortal");
+const Avaliacoes = pagina(() => import("@/pages/Avaliacoes"), "Avaliacoes");
+const Protocolos = pagina(() => import("@/pages/Protocolos"), "Protocolos");
+const Comparador = pagina(() => import("@/pages/Comparador"), "Comparador");
+const SpecialGroups = pagina(() => import("@/pages/SpecialGroups"), "SpecialGroups");
+const SpecialGroupDetail = pagina(() => import("@/pages/SpecialGroupDetail"), "SpecialGroupDetail");
+const Tutorial = pagina(() => import("@/pages/Tutorial"), "Tutorial");
+const TutorialDetail = pagina(() => import("@/pages/TutorialDetail"), "TutorialDetail");
+const Support = pagina(() => import("@/pages/Support"), "Support");
+const Semaforo = pagina(() => import("@/pages/Semaforo"), "Semaforo");
+const Roi = pagina(() => import("@/pages/Roi"), "Roi");
+const CasosRcd = pagina(() => import("@/pages/CasosRcd"), "CasosRcd");
+const CasoRcdDetail = pagina(() => import("@/pages/CasoRcdDetail"), "CasoRcdDetail");
+const AprenderHome = pagina(() => import("@/features/learning/pages"), "AprenderHome");
+const MapaConhecimento = pagina(() => import("@/features/learning/pages"), "MapaConhecimento");
+const AprenderDisciplinas = pagina(() => import("@/features/learning/pages"), "Disciplinas");
+const DisciplinaDetail = pagina(() => import("@/features/learning/pages"), "DisciplinaDetail");
+const ModuloDetail = pagina(() => import("@/features/learning/pages"), "ModuloDetail");
+const AprenderConteudo = pagina(() => import("@/features/learning/pages"), "Conteudo");
+const AprenderCasos = pagina(() => import("@/features/learning/pages"), "Casos");
+const AprenderCasoDetail = pagina(() => import("@/features/learning/pages"), "CasoDetail");
+const AprenderBiblioteca = pagina(() => import("@/features/learning/pages"), "Biblioteca");
+const AprenderSalvos = pagina(() => import("@/features/learning/pages"), "Salvos");
+const AprenderProgresso = pagina(() => import("@/features/learning/pages"), "Progresso");
+
+/*
+ * O TEMA NÃO MONTA NA LANDING. A cadeia do ThemeApplier (store -> cloudSync -> Supabase,
+ * seeds e motor) é ~585 KB que a página de VENDAS baixava depois do paint sem usar: a
+ * landing tem paleta própria fixa (fundo claro do protótipo) e não lê token de tema. O
+ * flash escuro de quem entra direto numa rota do app segue coberto pelo script inline do
+ * index.html; ao navegar da landing para dentro, isto monta e completa a paleta.
+ */
+function TemaForaDaLanding() {
+  const { pathname } = useLocation();
+  if (pathname === "/") return null;
+  return (
+    <Suspense fallback={null}>
+      <ThemeApplier />
+    </Suspense>
+  );
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -81,7 +123,11 @@ export default function App() {
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
       <ScrollToTop />
-      <ThemeApplier />
+      <TemaForaDaLanding />
+      {/* Fallback NEUTRO de propósito: o chunk de uma página chega em dezenas de ms no
+          segundo acesso (cache) e um spinner piscando a cada navegação seria pior que o
+          vazio. O fundo segue o tema, então não há flash branco no escuro. */}
+      <Suspense fallback={<div style={{ minHeight: "100vh", background: "rgb(var(--bg-rgb, 247 246 243))" }} />}>
       <Routes>
         {/* Público */}
         <Route path="/" element={<Landing />} />
@@ -162,6 +208,7 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

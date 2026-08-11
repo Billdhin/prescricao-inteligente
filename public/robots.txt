@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+# O aplicativo em si não tem conteúdo indexável sem login.
+Disallow: /dashboard
+Disallow: /alunos
+Disallow: /account
+Disallow: /aluno
+
+Sitemap: https://mapadaprescricao.com.br/sitemap.xml

@@ -122,7 +122,9 @@ function useRevelarPorScroll(ref: React.RefObject<HTMLDivElement | null>, html: 
           obs.unobserve(ent.target);
         }
       },
-      { threshold: 0.12 },
+      // 0.05 e não mais: o rodapé é alto e divide a última dobra com a barra fixa, então
+      // exigir 12% dele visível deixava os links legais invisíveis numa rolagem rápida.
+      { threshold: 0.05 },
     );
     for (const sec of raiz.querySelectorAll<HTMLElement>("[data-screen-label]")) {
       const rotulo = sec.dataset.screenLabel ?? "";
