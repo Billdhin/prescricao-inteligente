@@ -63,6 +63,19 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
   "hip-thrust-unilateral": { back: "/anatomy/mm/hip-thrust-unilateral-back.webp" },
   "good-morning": { back: "/anatomy/mm/good-morning-back.webp" },
   "mergulho-no-banco": { front: "/anatomy/mm/mergulho-no-banco-front.webp", back: "/anatomy/mm/mergulho-no-banco-back.webp" },
+  // Os dois abaixo REUSAM de propósito o `back` de outro exercício, e são os únicos dois
+  // arquivos compartilhados do índice. Registrado aqui porque um ponteiro cruzado sem
+  // explicação parece defeito na próxima leitura:
+  //
+  // - desenvolvimento-elastico: o back do desenvolvimento na máquina pinta SÓ o tríceps em
+  //   azul médio, e o tríceps é sinergista nos dois (55 e 52). Serve igual aos dois.
+  // - remada-invertida: o back da remada na máquina pinta latíssimo escuro (primário nos
+  //   dois) mais a região superior das costas. Só que a matriz da remada invertida NÃO
+  //   lista trapézio médio, e a da remada na máquina lista. A diferença provavelmente está
+  //   na MATRIZ, não na imagem (remada invertida é retração escapular, o trapézio médio
+  //   trabalha), mas incluir o músculo exige valor de ativação com referência verificada.
+  //   Pendente de decisão do Filipe; até lá o mapa fica como está, que erra por mostrar de
+  //   mais e não por mostrar errado.
   "desenvolvimento-elastico": { front: "/anatomy/mm/desenvolvimento-elastico-front.webp", back: "/anatomy/mm/desenvolvimento-maquina-back.webp" },
   "remada-invertida": { front: "/anatomy/mm/remada-invertida-front.webp", back: "/anatomy/mm/remada-maquina-back.webp" },
   "crossover-polia": { front: "/anatomy/mm/crossover-polia-front.webp" },
