@@ -606,6 +606,13 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
    *
    * Numa tendência que reduz, o bloco já termina no piso: forçar o início no piso não é
    * cautela, é contradizer a própria tendência declarada.
+   *
+   * CONSEQUÊNCIA HONESTA, para o parágrafo da idosa acima não parecer mais do que é: nas
+   * jornadas cujo modelo é o LINEAR (tendência de volume "reduz"), este `partirDoPiso` das
+   * séries NÃO age, e a semana 1 continua no teto de séries da faixa (5 de "3 a 5" para a
+   * osteoporose), com a cautela expressa só pela intensidade (RIR alto). Fazer a cautela
+   * vencer a direção do modelo é decisão de produto, escalada ao Filipe, porque muda a
+   * identidade do modelo prescrito.
    */
   const nvSeries = ctx.partirDoPiso && ctx.tendenciaVolume !== "reduz" ? nivelVolume * t : nivelVolume;
   if (seriesIv) alvo.seriesAlvo = ponto(seriesIv, nvSeries, true);
@@ -759,9 +766,31 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
     if (durIv) alvo.duracaoAlvoMin = Math.round(intervaloFechado(durIv).min);
     if (rpeIv) alvo.rpeAlvo = Math.round(intervaloFechado(rpeIv).min);
   } else {
+    /*
+     * A DURAÇÃO DO CARDIO NUNCA HERDA O "reduz" DA FORÇA.
+     *
+     * Na força, "reduz volume + sobe intensidade" é o linear clássico: menos repetições com
+     * a mesma reserva é mais carga na barra, uma coisa compensa a outra. No cardio não
+     * existe essa compensação: a variável de dose é a própria duração, e a regra que este
+     * bloco cita (aerobio-progressao-fittvp: duração progride ANTES da intensidade) manda a
+     * rampa partir do piso e subir. O código fazia o contrário, medido em dois sabores:
+     *
+     *   - sem partirDoPiso (ansiedade/depressão, linear): 40 min na SEMANA 1 de um
+     *     iniciante, o teto da faixa "20 a 40", caindo para 20 no fim. Um plano de
+     *     emagrecimento cuja dose aeróbia só encolhe, contradizendo o próprio raciocínio
+     *     impresso ("a meta semanal de atividade pesa mais que qualquer detalhe").
+     *   - com partirDoPiso (hipertensão estágio 2, linear): (1 - t) * t, a CORCOVA que o
+     *     check:core já tinha flagrado nas séries de força: 20, 25, 20. O plano "linear"
+     *     começava e terminava na mesma duração.
+     *
+     * "reduz" vira "sobe" SÓ para a duração; o PSE segue a tendência de intensidade, a
+     * ondulatória segue variando e a continuação congela no patamar (agora o teto real
+     * alcançado, coerente com "manutenção sustenta o pico").
+     */
+    const tendDuracao = ctx.tendenciaVolume === "reduz" ? "sobe" : ctx.tendenciaVolume;
     // Travas do profissional (onda MP-6): volume congela a duração; intensidade congela o PSE-alvo.
     const travas = ctx.variaveisTravadas ?? [];
-    const nivelVolume = comPiso(travas.includes("volume") ? nivelCongelado(ctx.tendenciaVolume) : nivelAerobio(ctx.tendenciaVolume, t, ctx.semanaNoMeso, ctx.patamarCongelado), ctx.pisoDoCiclo);
+    const nivelVolume = comPiso(travas.includes("volume") ? nivelCongelado(tendDuracao) : nivelAerobio(tendDuracao, t, ctx.semanaNoMeso, ctx.patamarCongelado), ctx.pisoDoCiclo);
     const nivelInt = comPiso(travas.includes("intensidade") ? nivelCongelado(ctx.tendenciaIntensidade) : nivelAerobio(ctx.tendenciaIntensidade, t, ctx.semanaNoMeso, ctx.patamarCongelado), ctx.pisoDoCiclo);
     // Perfil com cautela declarada parte do PISO da faixa citada e sobe de la (ver
     // ModDose.partirDoPiso). Sem isto, obesidade grau III recebia 40 min continuos na

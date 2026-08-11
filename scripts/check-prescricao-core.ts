@@ -23,7 +23,7 @@
  *
  * Roda com `npm run check:core`.
  */
-import { gerarPlano, slugsClinicosDoPlano, metricaDoExercicio } from "../src/lib/gps/periodizacao";
+import { gerarPlano, slugsClinicosDoPlano, metricaDoExercicio, consequenciasDoPlano } from "../src/lib/gps/periodizacao";
 import { agregadoSemana, serieSemanal } from "../src/lib/gps/progressao";
 import { classificarGrupos } from "../src/lib/gps/classificador";
 import { alvoSemana } from "../src/lib/gps/alvo";
@@ -1088,6 +1088,95 @@ for (const objetivo of OBJETIVOS) {
           `FALLBACK ATROPELA O OBJETIVO: "${e.nome}" é de ${objetivo}, executável com [${equipamentos.join(", ")}], e ficou fora do plano enquanto exercícios de outros objetivos entraram.`,
         );
       }
+    }
+  }
+}
+
+/* ============================================================================
+ * A DESCARGA REDUZ DOSE, NÃO TROCA EXERCÍCIO. E O "EVITADOS" NÃO MENTE.
+ *
+ * A frequência menor da semana de descarga encolhia o `n` da seleção, o pool virava de
+ * "catálogo inteiro" para "só do objetivo", e a descarga saía com exercícios diferentes das
+ * semanas de carga. Medido no pior sabor possível: o resumo declarava "Leg press 45° evitado
+ * (membros acima do coração)" e a semana 12 o prescrevia. Aqui: a lista de exercícios de
+ * força é a MESMA em toda semana do plano, e nenhum exercício da lista de evitados aparece
+ * em semana nenhuma.
+ * ========================================================================== */
+{
+  const input = {
+    objetivo: "Emagrecimento",
+    nivel: "Iniciante",
+    semanas: 12,
+    frequencia: 3,
+    grupoEspecial: "hipertensao-estagio-1",
+    condicoesAtencao: ["diabetes-tipo-2", "osteoartrite-joelho"],
+    idade: 60,
+    equipamentos: ["Máquina", "Piscina", "Peso corporal"],
+  } as const;
+  const p = gerarPlano({ ...input, condicoesAtencao: [...input.condicoesAtencao], equipamentos: [...input.equipamentos] });
+  const porSemana = p.principal.mesociclos.flatMap((m) =>
+    m.microciclos.map((w) => ({
+      semana: w.semana,
+      tipo: w.tipo,
+      slugs: new Set(w.sessoes.flatMap((s) => s.blocos.filter((b) => b.tipo === "forca").map((b) => b.exercicioSlug))),
+    })),
+  );
+  const base = porSemana[0];
+  for (const w of porSemana) {
+    for (const slug of w.slugs) {
+      if (!base.slugs.has(slug)) {
+        erro(
+          `DESCARGA TROCOU EXERCÍCIO: a semana ${w.semana} (${w.tipo}) usa "${slug}", que não existe na semana 1. Descarga reduz dose, não muda a seleção.`,
+        );
+      }
+    }
+  }
+  const cons = consequenciasDoPlano({ ...input, condicoesAtencao: [...input.condicoesAtencao], equipamentos: [...input.equipamentos] });
+  const evitados = new Set(cons.evitados.map((e) => e.slug));
+  for (const w of porSemana) {
+    for (const slug of w.slugs) {
+      if (slug && evitados.has(slug)) {
+        erro(`O RESUMO MENTE: "${slug}" está na lista de evitados e a semana ${w.semana} o prescreve.`);
+      }
+    }
+  }
+  if (!evitados.size) {
+    erro("AUTOVERIFICAÇÃO (descarga): o cenário deveria produzir evitados (joelho + hipertensão); a segunda asserção passaria por vazio.");
+  }
+}
+
+/* ============================================================================
+ * A DURAÇÃO DO CARDIO PARTE DO PISO E PROGRIDE, COMO A REGRA FITT-VP CITADA MANDA.
+ *
+ * A duração herdava a tendência de volume da força, e no linear ("reduz") o cardio nascia
+ * no TETO da faixa e encolhia: 40 min na semana 1 de um iniciante com ansiedade/depressão,
+ * caindo para 20 no fim de um plano de emagrecimento. Com partirDoPiso (hipertensão), o
+ * produto (1 - t) * t fazia a corcova: 20, 25, 20. Aqui: primeira semana de carga no piso
+ * citado, rampa que nunca desce entre semanas de carga, última semana de carga acima da
+ * primeira, e descarga no piso.
+ * ========================================================================== */
+for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
+  const p = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo });
+  const cargas = p.principal.mesociclos
+    .flatMap((m) => m.microciclos)
+    .filter((w) => w.tipo !== "deload")
+    .map((w) => ({ semana: w.semana, dur: w.sessoes[0]?.blocos.find((b) => b.tipo === "aerobio")?.duracaoAlvoMin }));
+  if (cargas.some((c) => c.dur == null)) {
+    erro(`AUTOVERIFICAÇÃO (cardio-rampa, ${grupo}): semana de carga sem alvo de duração; a asserção passaria por vazio.`);
+    continue;
+  }
+  const primeira = cargas[0].dur as number;
+  const ultima = cargas[cargas.length - 1].dur as number;
+  if (primeira !== 20)
+    erro(`CARDIO NASCE FORA DO PISO em ${grupo}: a primeira semana de carga tem ${primeira} min e a faixa citada começa em 20.`);
+  if (ultima <= primeira)
+    erro(`CARDIO NÃO PROGRIDE em ${grupo}: a última semana de carga (${ultima} min) não passa da primeira (${primeira} min).`);
+  for (let i = 1; i < cargas.length; i++) {
+    if ((cargas[i].dur as number) < (cargas[i - 1].dur as number)) {
+      erro(
+        `CORCOVA NO CARDIO em ${grupo}: a semana ${cargas[i].semana} (${cargas[i].dur} min) cai abaixo da semana de carga anterior (${cargas[i - 1].dur} min).`,
+      );
+      break;
     }
   }
 }

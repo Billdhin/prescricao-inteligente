@@ -767,9 +767,22 @@ function montarSessoes(
   regraClinica?: GroupGpsRule,
   // Equipamentos do aluno: moldam a escolha da modalidade aeróbia (ver modalidadeAerobia).
   equipamentos?: string[],
+  /*
+   * DESCARGA REDUZ DOSE, NÃO TROCA EXERCÍCIO.
+   *
+   * A frequência da semana de descarga é menor (frequencia - 1), e o `n` da seleção era
+   * derivado DELA: com `n` menor, o pool podia virar de "catálogo inteiro" para "só do
+   * objetivo", e a semana de descarga saía com exercícios DIFERENTES das semanas de carga.
+   * Medido: hipertenso + diabetes + joelho com piscina tinha Cadeira extensora nas semanas
+   * de carga e Leg press 45° na descarga, sendo que o resumo do plano declarava o Leg press
+   * EVITADO (membros acima do coração). O documento afirmava uma coisa e a semana 12 fazia
+   * outra. A seleção agora usa sempre a frequência DO PLANO, a mesma de
+   * `consequenciasDoPlano`; a frequência reduzida segue valendo só para o número de sessões.
+   */
+  frequenciaDoPlano?: number,
 ): Sessao[] {
   const faixa = getFaixa(objetivo);
-  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2), restricoes, objetivoSecundario, regraClinica, equipamentos);
+  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, (frequenciaDoPlano ?? frequencia) + 2), restricoes, objetivoSecundario, regraClinica, equipamentos);
   const escolhidos = selecao.escolhidos;
   const sessoes: Sessao[] = [];
 
@@ -1032,7 +1045,7 @@ function montarMicrociclos(
       semana,
       tipo: ehDeload ? "deload" : "carga",
       frequencia: freqSemana,
-      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx, objetivoSecundario, regraClinica, equipamentos),
+      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx, objetivoSecundario, regraClinica, equipamentos, frequencia),
       nota: ehDeload ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
       objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade),
     });
