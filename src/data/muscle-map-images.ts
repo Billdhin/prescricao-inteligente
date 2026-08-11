@@ -70,6 +70,17 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
   "escada-ergometrica": { front: "/anatomy/mm/escada-ergometrica-front.webp", back: "/anatomy/mm/escada-ergometrica-back.webp" },
   "puxada-elastico": { front: "/anatomy/mm/puxada-elastico-front.webp", back: "/anatomy/mm/puxada-elastico-back.webp" },
   "remada-unilateral-elastico": { front: "/anatomy/mm/remada-unilateral-elastico-front.webp", back: "/anatomy/mm/remada-unilateral-elastico-back.webp" },
+  "rosca-martelo": { front: "/anatomy/mm/rosca-martelo-front.webp" },
+  "face-pull-polia": { back: "/anatomy/mm/face-pull-polia-back.webp" },
+  "crucifixo-inverso": { back: "/anatomy/mm/crucifixo-inverso-back.webp" },
+  "encolhimento-halteres": { back: "/anatomy/mm/encolhimento-halteres-back.webp" },
+  "panturrilha-sentado": { back: "/anatomy/mm/panturrilha-sentado-back.webp" },
+  "flexora-em-pe": { back: "/anatomy/mm/flexora-em-pe-back.webp" },
+  "cadeira-abdutora": { back: "/anatomy/mm/cadeira-abdutora-back.webp" },
+  "cadeira-adutora": { front: "/anatomy/mm/cadeira-adutora-front.webp" },
+  "elevacao-frontal": { front: "/anatomy/mm/elevacao-frontal-front.webp" },
+  "puxada-supinada": { front: "/anatomy/mm/puxada-supinada-front.webp", back: "/anatomy/mm/puxada-supinada-back.webp" },
+  "remada-cavalinho": { front: "/anatomy/mm/remada-cavalinho-front.webp", back: "/anatomy/mm/remada-cavalinho-back.webp" },
 };
 
 export function getMuscleMapImages(slug?: string) {
