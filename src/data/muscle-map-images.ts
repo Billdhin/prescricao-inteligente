@@ -59,6 +59,17 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
   "rosca-elastico": { front: "/anatomy/mm/rosca-elastico-front.webp" },
   "rosca-scott-maquina": { front: "/anatomy/mm/rosca-scott-maquina-front.webp" },
   "rosca-banco-inclinado": { front: "/anatomy/mm/rosca-banco-inclinado-front.webp" },
+  "bicicleta-reclinada": { front: "/anatomy/mm/bicicleta-reclinada-front.webp", back: "/anatomy/mm/bicicleta-reclinada-back.webp" },
+  "hip-thrust-unilateral": { back: "/anatomy/mm/hip-thrust-unilateral-back.webp" },
+  "good-morning": { back: "/anatomy/mm/good-morning-back.webp" },
+  "mergulho-no-banco": { front: "/anatomy/mm/mergulho-no-banco-front.webp", back: "/anatomy/mm/mergulho-no-banco-back.webp" },
+  "desenvolvimento-elastico": { front: "/anatomy/mm/desenvolvimento-elastico-front.webp", back: "/anatomy/mm/desenvolvimento-maquina-back.webp" },
+  "remada-invertida": { front: "/anatomy/mm/remada-invertida-front.webp", back: "/anatomy/mm/remada-maquina-back.webp" },
+  "crossover-polia": { front: "/anatomy/mm/crossover-polia-front.webp" },
+  "crucifixo-maquina": { front: "/anatomy/mm/crucifixo-maquina-front.webp" },
+  "escada-ergometrica": { front: "/anatomy/mm/escada-ergometrica-front.webp", back: "/anatomy/mm/escada-ergometrica-back.webp" },
+  "puxada-elastico": { front: "/anatomy/mm/puxada-elastico-front.webp", back: "/anatomy/mm/puxada-elastico-back.webp" },
+  "remada-unilateral-elastico": { front: "/anatomy/mm/remada-unilateral-elastico-front.webp", back: "/anatomy/mm/remada-unilateral-elastico-back.webp" },
 };
 
 export function getMuscleMapImages(slug?: string) {
