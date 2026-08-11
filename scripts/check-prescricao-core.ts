@@ -1021,6 +1021,34 @@ for (const objetivo of OBJETIVOS) {
   }
 }
 
+/* ============================================================================
+ * A FORÇA DO PLANO SÓ PRESCREVE O QUE O ALUNO TEM COMO EXECUTAR.
+ *
+ * A seleção do plano nunca tinha olhado equipamentos (o Treino do dia sim): medido, um
+ * plano prescrevia Máquina, Polia e Halter sem saber o que o aluno declarou. A regra agora
+ * é a mesma do engine: peso corporal sempre disponível, o resto precisa estar declarado.
+ * Sem lista, sem filtro, para o uso avulso seguir byte-idêntico.
+ * ========================================================================== */
+{
+  const equipamentos = ["Halter", "Peso corporal"];
+  for (const objetivo of ["Hipertrofia", "Emagrecimento"] as const) {
+    const p = gerarPlano({ objetivo, nivel: "Iniciante", semanas: 8, frequencia: 3, equipamentos });
+    const blocos = p.principal.mesociclos
+      .flatMap((m) => m.microciclos.flatMap((w) => w.sessoes.flatMap((s) => s.blocos)))
+      .filter((b) => b.tipo === "forca");
+    if (!blocos.length) erro(`FORÇA SUMIU com equipamentos parciais em ${objetivo}: nenhum bloco gerado.`);
+    for (const b of blocos) {
+      const eq = exercises.find((e) => e.slug === b.exercicioSlug)?.equipamento;
+      if (eq && eq !== "Peso corporal" && !equipamentos.includes(eq)) {
+        erro(
+          `PLANO PRESCREVE EQUIPAMENTO AUSENTE em ${objetivo}: "${b.nome}" exige ${eq} e o aluno declarou só [${equipamentos.join(", ")}].`,
+        );
+        break;
+      }
+    }
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {

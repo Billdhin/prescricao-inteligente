@@ -1307,6 +1307,9 @@ function TrilhoDoPlano({
         condicoesAtencao: alunoObj?.condicoesAtencao,
         objetivoSecundario: plano.objetivoSecundario,
         restricoes: alunoObj?.restricoes,
+        // O mesmo filtro de equipamentos da geração, senão o bloco "Sobram N compatíveis"
+        // contaria exercícios que o plano não tem como usar.
+        equipamentos: alunoObj?.equipamentos,
       }),
     [plano, alunoObj],
   );

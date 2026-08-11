@@ -108,11 +108,11 @@ export interface GerarPlanoInput {
    */
   restricoes?: RestricaoSelecionada[];
   /**
-   * Equipamentos do local de treino do aluno. Hoje moldam SÓ a escolha da modalidade
-   * aeróbia: a preferida por evidência só vence se houver como executá-la (hidro exige
-   * Piscina, bike exige Bicicleta ergométrica). Ausente = sem filtro, como sempre foi.
-   * A seleção de FORÇA ainda não lê este campo; é dívida conhecida, registrada em
-   * `modalidadeAerobia`.
+   * Equipamentos do local de treino do aluno. Moldam a modalidade aeróbia (a preferida
+   * por evidência só vence se houver como executá-la) e a seleção de FORÇA (exercício
+   * cujo equipamento o aluno não declarou não entra no plano). A regra de disponibilidade
+   * é a mesma do engine: peso corporal está sempre disponível. Ausente = sem filtro,
+   * para o uso avulso e as bancadas seguirem como sempre foram.
    */
   equipamentos?: string[];
 }
@@ -359,6 +359,8 @@ function selecionarExercicios(
   objetivoSecundario?: GpsObjetivo,
   /** regra clínica FUNDIDA de todas as condições do aluno; ausente = sem peso de condição */
   regraClinica?: GroupGpsRule,
+  /** equipamentos do aluno; ausente = sem filtro (uso avulso, estudo e bancadas) */
+  equipamentos?: string[],
 ): SelecaoExercicios {
   const teto = NIVEL_ORDEM[nivel];
   const noNivel = (e: (typeof exercises)[number]) => NIVEL_ORDEM[(e.nivel as Nivel) ?? "Iniciante"] <= teto;
@@ -379,9 +381,24 @@ function selecionarExercicios(
    */
   const ehForca = (e: (typeof exercises)[number]) => !e.doseAerobia;
 
+  /*
+   * EXERCÍCIO QUE O ALUNO NÃO TEM COMO EXECUTAR NÃO ENTRA NO PLANO.
+   *
+   * A seleção do plano nunca tinha olhado equipamentos: medido, um plano prescrevia
+   * Máquina, Polia e Halter sem saber o que o aluno declarou. O Treino do dia já filtrava
+   * (engine.ts), e a regra daqui é a MESMA de lá, copiada e não reinventada: peso corporal
+   * está sempre disponível, todo o resto precisa estar declarado. Sem lista, sem filtro,
+   * que é o caminho do uso avulso e das bancadas, byte-idêntico ao de antes.
+   *
+   * É EXCLUSÃO, não rebaixamento, de propósito: indisponível não é "menos preferido", é
+   * impossível, e rebaixar deixaria o exercício entrar quando o resto da fila acabasse.
+   */
+  const equipOk = (e: (typeof exercises)[number]) =>
+    !equipamentos?.length || e.equipamento === "Peso corporal" || equipamentos.includes(e.equipamento);
+
   // Pool base: do objetivo quando houver o bastante; senão, todo o catálogo no nível.
-  const doObjetivo = exercises.filter((e) => e.objetivo?.includes(objetivo) && noNivel(e) && ehForca(e));
-  const pool = doObjetivo.length >= n ? doObjetivo : exercises.filter((e) => noNivel(e) && ehForca(e));
+  const doObjetivo = exercises.filter((e) => e.objetivo?.includes(objetivo) && noNivel(e) && ehForca(e) && equipOk(e));
+  const pool = doObjetivo.length >= n ? doObjetivo : exercises.filter((e) => noNivel(e) && ehForca(e) && equipOk(e));
 
   const ativas = restricoesAtivas(restricoes);
   const descartados: SelecaoExercicios["descartados"] = [];
@@ -604,6 +621,7 @@ export function consequenciasDoPlano(input: GerarPlanoInput): ConsequenciasDoPla
     restricoesDoPlano(input),
     input.objetivoSecundario,
     regraClinicaDoPlano(input),
+    input.equipamentos,
   );
   const entraram = new Set(sel.escolhidos.map((e) => e.slug));
   // Penalizado que ENTROU mesmo assim não é "evitado": ele está no plano, e dizer o contrário
@@ -731,7 +749,7 @@ function montarSessoes(
   equipamentos?: string[],
 ): Sessao[] {
   const faixa = getFaixa(objetivo);
-  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2), restricoes, objetivoSecundario, regraClinica);
+  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, frequencia + 2), restricoes, objetivoSecundario, regraClinica, equipamentos);
   const escolhidos = selecao.escolhidos;
   const sessoes: Sessao[] = [];
 
@@ -810,7 +828,14 @@ function montarSessoes(
 
     // 3 a 4 exercícios de força por sessão, girando a lista de escolhidos.
     const porSessao = objetivo === "Emagrecimento" ? 3 : 4;
-    for (let j = 0; j < porSessao; j++) {
+    /*
+     * Pool vazio não pode derrubar a geração. Antes do filtro de equipamentos isso era
+     * inalcançável (o catálogo inteiro no nível sempre sobrava); com ele, uma lista
+     * excêntrica (só Piscina, por exemplo) zera a força. O plano sai com o aeróbio que
+     * couber e `faltouCatalogo` acende, que é o sinal que a tela usa para mandar rever
+     * equipamentos, em vez de um índice por zero estourar aqui.
+     */
+    for (let j = 0; j < porSessao && escolhidos.length > 0; j++) {
       const ex = escolhidos[(i * porSessao + j) % escolhidos.length];
       blocos.push({
         id: nid("blk"),
@@ -1217,13 +1242,16 @@ function modalidadeAerobia(padrao: string, regraClinica?: GroupGpsRule, equipame
    * equipamentos. Um plano pode prescrever barra para quem não declarou barra. Consertar
    * isso muda a prescrição de todo mundo e pede rodada própria com as bancadas.
    */
+  // A regra de disponibilidade é a MESMA do resto do produto (engine.ts e o seletor de
+  // força): peso corporal sempre disponível, o resto precisa estar declarado. Como a
+  // caminhada em piso plano é de peso corporal, o padrão nunca fica inexequível.
   const executaveis = new Set(
     exercises
       .filter(
         (e) =>
           e.doseAerobia &&
           e.modalidade &&
-          (!equipamentos?.length || !e.equipamento || equipamentos.includes(e.equipamento)),
+          (!equipamentos?.length || e.equipamento === "Peso corporal" || equipamentos.includes(e.equipamento)),
       )
       .map((e) => e.modalidade as string),
   );
