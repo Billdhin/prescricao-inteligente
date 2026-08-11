@@ -56,9 +56,9 @@
 <section data-screen-label="Hero" style="position:relative;overflow:hidden">
   <div style="position:absolute;top:-180px;right:-140px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(14,158,147,.10),rgba(32,100,236,.05) 55%,transparent 70%);pointer-events:none"></div>
   <div style="max-width:1160px;margin:0 auto;padding:76px 24px 84px;display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:clamp(32px,4.5vw,56px);align-items:center">
-    <div>
+    <div class="lp-entrada">
       <span style="display:inline-block;font-size:13px;font-weight:600;color:#1A55C8;background:rgba(32,100,236,.08);border:1px solid rgba(32,100,236,.22);padding:7px 14px;border-radius:999px;margin-bottom:22px">Sistema de decisão e prontuário para Profissionais de Educação Física</span>
-      <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(34px,4.6vw,56px);line-height:1.06;letter-spacing:-.02em;font-weight:800;margin:0 0 20px">Você é profissional. <em style="font-style:normal;background:linear-gradient(92deg,#0E9E93,#2064EC);-webkit-background-clip:text;background-clip:text;color:transparent">Sua prescrição também precisa ser.</em></h1>
+      <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(34px,4.6vw,56px);line-height:1.06;letter-spacing:-.02em;font-weight:800;margin:0 0 20px">Você é profissional. <em class="lp-brilho" style="font-style:normal;background:linear-gradient(92deg,#0E9E93,#2064EC);-webkit-background-clip:text;background-clip:text;color:transparent">Sua prescrição também precisa ser.</em></h1>
       <p style="font-size:19px;color:#3F5168;max-width:56ch;margin:0 0 28px">Avaliação, semáforo de saúde e treino conectados, com o porquê de cada decisão escrito, referenciado e assinado. Se alguém perguntar por que você prescreveu, a resposta está pronta.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
         <a href="#planos" style="display:inline-flex;align-items:center;justify-content:center;min-height:54px;padding:0 28px;border-radius:13px;font-weight:600;font-size:16.5px;text-decoration:none;color:#fff;background:#10233A;box-shadow:0 10px 24px rgba(16,35,58,.18)" style-hover="background:#0C1826;transform:translateY(-1px)">Criar minha conta</a>
@@ -71,7 +71,7 @@
       </div>
       
     </div>
-    <div style="position:relative;padding:14px 0">
+    <div class="lp-entrada lp-entrada-2" style="position:relative;padding:14px 0">
       <div style="background:#fff;border:1px solid #E3E0D8;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(16,35,58,.16)">
         <div style="background:#EEEDE8;padding:10px 16px;font-size:12.5px;color:#5C6D84;border-bottom:1px solid #E3E0D8;display:flex;align-items:center;gap:8px">
           <span style="width:8px;height:8px;border-radius:50%;background:#D8D4CA"></span>
@@ -89,14 +89,14 @@
           </div>
           <div style="display:flex;align-items:center;justify-content:center;gap:18px;padding:24px 0 12px">
             <span style="width:16px;height:16px;border-radius:50%;background:#2ECC71;opacity:.22"></span>
-            <span style="width:36px;height:36px;border-radius:50%;background:#F0B429;box-shadow:0 0 0 8px rgba(240,180,41,.16),0 8px 22px rgba(240,180,41,.5)"></span>
+            <span class="lp-luz" style="width:36px;height:36px;border-radius:50%;background:#F0B429;box-shadow:0 0 0 8px rgba(240,180,41,.16),0 8px 22px rgba(240,180,41,.5)"></span>
             <span style="width:16px;height:16px;border-radius:50%;background:#E4573D;opacity:.22"></span>
           </div>
           <div style="text-align:center;font-family:'Bricolage Grotesque',sans-serif;font-size:32px;font-weight:800;letter-spacing:.01em">Com ajuste</div>
           <div style="text-align:center;font-size:13.5px;color:#5C6D84;margin:7px auto 0;line-height:1.5">Carga moderada, sem prender a respiração.</div>
         </div>
       </div>
-      <div style="position:relative;width:min(92%,396px);margin:-26px -6px 0 auto;background:#fff;border:1px solid #E3E0D8;border-radius:14px;padding:16px 18px;box-shadow:0 26px 56px rgba(16,35,58,.24);transform:rotate(1.4deg)">
+      <div class="lp-flutuar" style="position:relative;width:min(92%,396px);margin:-26px -6px 0 auto;background:#fff;border:1px solid #E3E0D8;border-radius:14px;padding:16px 18px;box-shadow:0 26px 56px rgba(16,35,58,.24);transform:rotate(1.4deg)">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
           <span style="font-family:ui-monospace,monospace;font-size:10.5px;letter-spacing:.09em;color:#5C6D84;font-weight:600">PRONTUÁRIO DE DECISÃO TÉCNICA</span>
           <span style="font-family:ui-monospace,monospace;font-size:10.5px;color:#0B7C74;background:rgba(14,158,147,.1);border:1px solid rgba(14,158,147,.25);padding:3px 8px;border-radius:6px">Nº RCD‑0147</span>
@@ -246,19 +246,19 @@
       <button sc-camel-on-click="{{ setTab2 }}" style="border:0;padding:11px 20px;border-radius:999px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;min-height:44px;background:{{ t2Bg }};color:{{ t2Fg }}">Semáforo</button>
       <button sc-camel-on-click="{{ setTab3 }}" style="border:0;padding:11px 20px;border-radius:999px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;min-height:44px;background:{{ t3Bg }};color:{{ t3Fg }}">Periodização</button>
     </div>
-    <div style="display:{{ p0Disp }}">
+    <div class="lp-pop" style="display:{{ p0Disp }}">
       <div style="height:440px;border-radius:18px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 14px 40px rgba(16,35,58,.08)"><img src="/screens/tela-cadastro.webp" alt="Cadastro do aluno, passo 3 de 6 (saúde e restrições)" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'tela-pendente',textContent:'Cadastro do aluno, passo 3 de 6 (saúde e restrições)'}))"></div>
       <p style="font-size:15.5px;color:#3F5168;margin:14px 0 0"><b>Cadastro que só pergunta o que muda a prescrição.</b></p>
     </div>
-    <div style="display:{{ p1Disp }}">
+    <div class="lp-pop" style="display:{{ p1Disp }}">
       <div style="height:440px;border-radius:18px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 14px 40px rgba(16,35,58,.08)"><img src="/screens/tela-evolucao.webp" alt="Evolução do aluno, medidas por data e leitura automática" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'tela-pendente',textContent:'Evolução do aluno, medidas por data e leitura automática'}))"></div>
       <p style="font-size:15.5px;color:#3F5168;margin:14px 0 0"><b>Evolução que vira argumento.</b> Medidas por data e PDF para mostrar ao aluno.</p>
     </div>
-    <div style="display:{{ p2Disp }}">
+    <div class="lp-pop" style="display:{{ p2Disp }}">
       <div style="height:440px;border-radius:18px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 14px 40px rgba(16,35,58,.08)"><img src="/screens/tela-semaforo.webp" alt="Semáforo do dia, 4 perguntas e a conduta com fonte" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'tela-pendente',textContent:'Semáforo do dia, 4 perguntas e a conduta com fonte'}))"></div>
       <p style="font-size:15.5px;color:#3F5168;margin:14px 0 0"><b>A decisão do dia, com o porquê.</b> Cada resposta fica registrada.</p>
     </div>
-    <div style="display:{{ p3Disp }}">
+    <div class="lp-pop" style="display:{{ p3Disp }}">
       <div style="height:440px;border-radius:18px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 14px 40px rgba(16,35,58,.08)"><img src="/screens/tela-periodizacao.webp" alt="Periodização, curva de volume e intensidade" style="width:100%;height:100%;object-fit:cover;object-position:top center;display:block" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'tela-pendente',textContent:'Periodização, curva de volume e intensidade'}))"></div>
       <p style="font-size:15.5px;color:#3F5168;margin:14px 0 0"><b>A curva que responde à edição.</b> Editar uma sessão move a curva na hora.</p>
     </div>
@@ -400,7 +400,7 @@
           <div style="margin-bottom:14px"><label style="display:block;font-size:13.5px;color:#B9C6D6;margin-bottom:6px">Sessões por semana, por aluno</label><input type="number" value="{{ sVal }}" sc-camel-on-change="{{ mudaS }}" style="width:100%;height:48px;border-radius:11px;border:1px solid #33455E;background:#16293F;color:#fff;padding:0 14px;font-size:16px;font-family:inherit;box-sizing:border-box" style-focus="border-color:#7FE3D8;outline:none"></div>
           <div><label style="display:block;font-size:13.5px;color:#B9C6D6;margin-bottom:6px">Quanto a mais você cobra (%)</label><input type="number" value="{{ pVal }}" sc-camel-on-change="{{ mudaP }}" style="width:100%;height:48px;border-radius:11px;border:1px solid #33455E;background:#16293F;color:#fff;padding:0 14px;font-size:16px;font-family:inherit;box-sizing:border-box" style-focus="border-color:#7FE3D8;outline:none"></div>
         </div>
-        <div style="background:#16293F;border:1px solid #33455E;border-radius:18px;padding:30px;text-align:center">
+        <div class="lp-pop" style="background:#16293F;border:1px solid #33455E;border-radius:18px;padding:30px;text-align:center">
           <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(36px,4vw,46px);font-weight:800;color:#7FE3D8;line-height:1">{{ mesTxt }}</div>
           <div style="color:#B9C6D6;font-size:14.5px;margin-top:8px">a mais por mês</div>
           <div style="font-size:19px;color:#fff;margin-top:14px;font-weight:600">{{ anoTxt }}</div>
@@ -587,11 +587,6 @@
   <div style="font-size:14px;line-height:1.35;color:#B9C6D6"><b style="font-size:15.5px;display:block;color:#fff">{{ proMesTxt }} no plano anual</b>Acesso completo, sem versão limitada</div>
   <a href="#planos" style="display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 22px;border-radius:12px;font-weight:600;font-size:15.5px;text-decoration:none;color:#10233A;background:#fff" style-hover="background:#E8F6F3">Testar agora</a>
 </div>
-
-<!-- TOGGLE DE ANOTAÇÕES -->
-<button sc-camel-on-click="{{ toggleNotas }}" style="position:fixed;left:18px;bottom:18px;z-index:70;display:inline-flex;align-items:center;gap:9px;background:#10233A;color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:11px 18px;font-family:'Instrument Sans',sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;box-shadow:0 12px 32px rgba(16,35,58,.35)" style-hover="background:#0C1826">
-  <span style="width:9px;height:9px;border-radius:50%;background:#F0B429"></span>{{ notasLabel }}
-</button>
 
 
 

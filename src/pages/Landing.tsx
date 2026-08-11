@@ -8,9 +8,12 @@ import {
   PRECO_ESTUDIO,
   fmtBRL,
 } from "@/data/planos";
-import { renderizar, ATTR_ACAO, type Valores } from "./landing/renderizar";
+import { renderizarComEstados, cssDosEstados, ATTR_ACAO, type Valores } from "./landing/renderizar";
 import "./landing/prototipo.css";
 import template from "./landing/prototipo.html?raw";
+
+// O CSS dos hovers/focus autorados no template depende SÓ do template: uma vez por módulo.
+const CSS_ESTADOS = cssDosEstados(template);
 
 /**
  * LANDING: PORTE DO PROTÓTIPO DO ARTIFACT.
@@ -64,12 +67,75 @@ export function Landing() {
   useJanela(mudar);
 
   const vals = React.useMemo<Valores>(() => construirValores(st, mudar), [st, mudar]);
-  const html = React.useMemo(() => renderizar(template, vals), [vals]);
+  const html = React.useMemo(() => renderizarComEstados(template, vals), [vals]);
 
   useDelegacao(ref, vals);
   useNavegacaoInterna(ref);
+  useRevelarPorScroll(ref, html);
 
-  return <div ref={ref} className="landing-prototipo" dangerouslySetInnerHTML={{ __html: html }} />;
+  // Porta das animações de load (hero, brilho do H1): depois do primeiro segundo, a raiz
+  // ganha `lp-carregada` e as entradas não replayam quando o DOM for recriado por estado
+  // (abrir o menu mobile no topo era o caso visível). A classe vai na RAIZ porque ela é o
+  // único nó que o dangerouslySetInnerHTML não destrói.
+  React.useEffect(() => {
+    const raiz = ref.current;
+    if (!raiz) return;
+    const t = window.setTimeout(() => raiz.classList.add("lp-carregada"), 1100);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  return (
+    <>
+      <style>{CSS_ESTADOS}</style>
+      <div ref={ref} className="landing-prototipo" dangerouslySetInnerHTML={{ __html: html }} />
+    </>
+  );
+}
+
+/**
+ * REVEAL POR SCROLL QUE SOBREVIVE À RECRIAÇÃO DO DOM.
+ *
+ * Cada mudança de estado (tecla na calculadora, aba, limiar da barra fixa) re-injeta o
+ * HTML inteiro e destrói o DOM anterior, então o observer não pode guardar estado em nó
+ * nenhum. O que já foi revelado vive num Set de rótulos (`data-screen-label`) num ref, e
+ * a cada render: seção já vista recebe `lp-visto` direto (sem re-animar, sem piscar);
+ * seção nova entra oculta e é observada. Quem esconde é o JS, não o CSS: se nada disto
+ * rodar, a página fica inteira visível, que é o fallback certo.
+ *
+ * Header, barra de anúncio e hero ficam fora: os dois primeiros são a casca, e o hero
+ * está acima da dobra com entrada própria no load (ver `lp-entrada` no CSS).
+ */
+const SEM_REVEAL = new Set(["Barra de anúncio", "Header", "Hero"]);
+function useRevelarPorScroll(ref: React.RefObject<HTMLDivElement | null>, html: string) {
+  const vistos = React.useRef(new Set<string>());
+  React.useEffect(() => {
+    const raiz = ref.current;
+    if (!raiz || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      (entradas) => {
+        for (const ent of entradas) {
+          if (!ent.isIntersecting) continue;
+          const rotulo = (ent.target as HTMLElement).dataset.screenLabel ?? "";
+          vistos.current.add(rotulo);
+          ent.target.classList.remove("lp-oculto");
+          ent.target.classList.add("lp-visto");
+          obs.unobserve(ent.target);
+        }
+      },
+      { threshold: 0.12 },
+    );
+    for (const sec of raiz.querySelectorAll<HTMLElement>("[data-screen-label]")) {
+      const rotulo = sec.dataset.screenLabel ?? "";
+      if (SEM_REVEAL.has(rotulo)) continue;
+      if (vistos.current.has(rotulo)) {
+        sec.classList.add("lp-visto");
+      } else {
+        sec.classList.add("lp-oculto");
+        obs.observe(sec);
+      }
+    }
+    return () => obs.disconnect();
+  }, [ref, html]);
 }
 
 /** Os valores que o template consome, espelhando o `renderVals` do protótipo. */
@@ -85,9 +151,6 @@ function construirValores(st: { sticky: boolean; mobile: boolean; menu: boolean;
     // contar, e barra de progresso de escassez inventada é publicidade enganosa.
     vagas: VAGAS_REAIS,
     vagasPct: VAGAS_REAIS + "%",
-    notasDisp: "none", // as notas de especificação do protótipo não vão ao ar
-    notasLabel: "",
-    toggleNotas: () => {},
     stickyT: st.sticky ? "translateY(0)" : "translateY(120%)",
     isMobile: st.mobile,
     isDesktop: !st.mobile,

@@ -65,7 +65,71 @@ function resolverValores(html: string, vals: Valores): string {
   });
 }
 
+/**
+ * Liga `style-hover` e `style-focus`, que o artifact autora e o navegador ignora.
+ *
+ * A marcação veio do editor com 34 hovers e 4 focus desenhados (botão que afunda, cartão
+ * que sobe, CTA que escurece) e NENHUM funcionava: atributo custom não é estado de CSS, e
+ * este interpretador nunca os processou. A página inteira ficou estática sem ninguém
+ * decidir isso.
+ *
+ * Estilo inline não expressa `:hover`, então cada valor DISTINTO vira uma classe
+ * determinística (`lh-N`/`lf-N`, na ordem de primeira aparição) e o CSS correspondente sai
+ * como string para a página injetar num `<style>`. Duas aparições do mesmo estilo dividem
+ * a mesma classe, e o seletor é escopado em `.landing-prototipo` porque o CSS da landing
+ * é global. `style-focus` vira `:focus-visible`: o realce é do teclado, não do clique.
+ */
+function resolverEstadosVisuais(html: string): { html: string; cssEstados: string } {
+  const classes = new Map<string, string>();
+  const regras: string[] = [];
+  const virarClasse = (prefixo: "lh" | "lf", pseudo: string, estilo: string): string => {
+    const chave = `${prefixo}|${estilo}`;
+    let classe = classes.get(chave);
+    if (!classe) {
+      classe = `${prefixo}-${classes.size}`;
+      classes.set(chave, classe);
+      // `!important` declaração a declaração, e não é capricho: a base dos elementos é
+      // toda estilo INLINE, que vence qualquer seletor, inclusive com pseudo-classe. Sem
+      // isto as regras existem, o devtools as mostra e o hover não muda nada (medido no
+      // CTA do hero). O escopo do !important é só o estado, então nada além do
+      // hover/focus é atropelado.
+      const comForca = estilo
+        .split(";")
+        .map((d) => d.trim())
+        .filter(Boolean)
+        .map((d) => `${d} !important`)
+        .join(";");
+      regras.push(`.landing-prototipo .${classe}${pseudo}{${comForca}}`);
+    }
+    return classe;
+  };
+  const saida = html.replace(
+    /\sstyle-(hover|focus)="([^"]*)"/g,
+    (_, tipo: "hover" | "focus", estilo: string) =>
+      ` data-classe-estado="${tipo === "hover" ? virarClasse("lh", ":hover", estilo) : virarClasse("lf", ":focus-visible", estilo)}"`,
+  );
+  // O atributo intermediário vira classe de verdade, fundindo com `class` existente quando
+  // houver. Dois replaces porque um elemento pode ter hover E focus.
+  const comClasses = saida
+    .replace(/class="([^"]*)"([^>]*?)\sdata-classe-estado="([^"]+)"/g, 'class="$1 $3"$2')
+    .replace(/\sdata-classe-estado="([^"]+)"/g, ' class="$1"');
+  return { html: comClasses, cssEstados: regras.join("\n") };
+}
+
 /** Marcação pronta para injetar: condicionais resolvidas, eventos marcados, valores trocados. */
 export function renderizar(template: string, vals: Valores): string {
   return resolverValores(resolverEventos(resolverCondicionais(template, vals)), vals);
+}
+
+/**
+ * O CSS dos estados visuais do template (hover/focus autorados na marcação). Derivado só
+ * do TEMPLATE, não dos valores: calcula uma vez por arquivo, não por render.
+ */
+export function cssDosEstados(template: string): string {
+  return resolverEstadosVisuais(template).cssEstados;
+}
+
+/** `renderizar` + classes de estado no lugar dos atributos inertes. */
+export function renderizarComEstados(template: string, vals: Valores): string {
+  return renderizar(resolverEstadosVisuais(template).html, vals);
 }

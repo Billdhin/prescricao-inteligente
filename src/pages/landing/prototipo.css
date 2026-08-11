@@ -331,14 +331,7 @@ input::placeholder{color:#93A3B8}
 }
 
 
-html{scroll-behavior:smooth}
-body{margin:0;background:#F7F6F3;color:#10233A;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-a{color:#2064EC}a:hover{color:#10233A}
-summary{list-style:none}summary::-webkit-details-marker{display:none}
-input::placeholder{color:#93A3B8}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-::selection{background:#CDE3DF}
-
+/* O bloco de regras base vive uma vez só, mais acima; aqui ficava uma cópia idêntica. */
 
 
 
@@ -388,6 +381,10 @@ input::placeholder{color:#93A3B8}
  */
 .landing-prototipo {
   padding-bottom: 96px;
+  /* Já existia em produção: no celular a página rolava ~44px para o lado, porque o grid
+   * do hero pede colunas de no mínimo 360px e os círculos decorativos vazam. O corte é
+   * na raiz da landing, onde o vazamento horizontal nunca é conteúdo. */
+  overflow-x: hidden;
 }
 
 @media (max-width: 700px) {
@@ -396,3 +393,101 @@ input::placeholder{color:#93A3B8}
     padding-bottom: 132px;
   }
 }
+
+/*
+ * VIDA DA PÁGINA (classes lp-*).
+ *
+ * Três regras de casa antes de qualquer efeito novo:
+ *
+ * 1. Tudo escopado em `.landing-prototipo`: este arquivo é CSS global e vaza para o app.
+ * 2. O `prefers-reduced-motion` do reset global (src/index.css) zera animação e transição
+ *    com !important; nada aqui contorna isso.
+ * 3. O DOM da landing é recriado a cada mudança de estado (ver Landing.tsx). Animação de
+ *    ENTRADA replay de graça quando o nó volta (aba, resultado da calculadora), e é isso
+ *    que o `lp-pop` explora de propósito. Efeito que dependa de estado acumulado no nó
+ *    não sobrevive e não entra.
+ *
+ * Os hovers autorados no template (`style-hover` -> classes lh-N geradas em renderizar.ts)
+ * ganham a transição aqui, porque estilo inline não declara transition sem repetir em 34
+ * lugares.
+ */
+
+/* Suporte aos estados visuais autorados: a reação é instantânea sem transição. */
+.landing-prototipo [class*="lh-"],
+.landing-prototipo [class*="lf-"] {
+  transition: transform .18s ease, background .18s ease, background-color .18s ease,
+    box-shadow .18s ease, color .18s ease, border-color .18s ease, opacity .18s ease;
+}
+
+/* Reveal por scroll: o JS esconde e o observer revela; sem JS a página fica visível. */
+.landing-prototipo .lp-oculto {
+  opacity: 0;
+  transform: translateY(22px);
+}
+.landing-prototipo .lp-visto {
+  opacity: 1;
+  transform: none;
+  transition: opacity .55s ease, transform .55s ease;
+}
+
+/* Escada sutil dentro das seções reveladas: colunas e cartões chegam um após o outro.
+ * O atraso é no FILHO direto das grades internas, via nth-child, sem JS. */
+.landing-prototipo .lp-visto > div > div:nth-child(2) { animation: lp-subir .5s ease .1s backwards; }
+.landing-prototipo .lp-visto > div > div:nth-child(3) { animation: lp-subir .5s ease .2s backwards; }
+@keyframes lp-subir {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Entrada do hero no load: texto primeiro, mockup meio passo depois. Só ANTES de
+ * `lp-carregada` (o Landing marca a raiz ~1s após montar): o DOM é recriado a cada
+ * estado, e sem a porta abrir o menu mobile faria o hero re-entrar do nada. */
+.landing-prototipo:not(.lp-carregada) .lp-entrada { animation: lp-subir .55s ease backwards; }
+.landing-prototipo:not(.lp-carregada) .lp-entrada-2 { animation-delay: .18s; }
+
+/* O cartão de prontuário flutua de leve: a dobra nunca parece uma imagem parada.
+ * O rotate(1.4deg) vem do style inline; a animação precisa repeti-lo para não apagá-lo. */
+.landing-prototipo .lp-flutuar { animation: lp-flutuar 6s ease-in-out infinite alternate; }
+@keyframes lp-flutuar {
+  from { transform: rotate(1.4deg) translateY(0); }
+  to { transform: rotate(1.4deg) translateY(-6px); }
+}
+
+/* A luz acesa do semáforo respira: o sistema está decidindo, não posando. */
+.landing-prototipo .lp-luz { animation: lp-respirar 2.4s ease-in-out infinite; }
+@keyframes lp-respirar {
+  0%, 100% { box-shadow: 0 0 0 8px rgba(240,180,41,.16), 0 8px 22px rgba(240,180,41,.5); }
+  50% { box-shadow: 0 0 0 13px rgba(240,180,41,.09), 0 8px 26px rgba(240,180,41,.62); }
+}
+
+/* Pop de recálculo/troca: replay automático porque o nó é recriado a cada estado. */
+.landing-prototipo .lp-pop { animation: lp-pop .28s ease; }
+@keyframes lp-pop {
+  from { opacity: .35; transform: scale(.985); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Brilho único no gradiente do H1, no load. O gradiente é o inline (92deg, turquesa ->
+ * azul); aqui só se alarga o fundo e anda a posição, uma vez, sem loop. */
+.landing-prototipo:not(.lp-carregada) .lp-brilho {
+  background-size: 200% 100%;
+  animation: lp-brilho 1.4s ease .3s backwards;
+}
+@keyframes lp-brilho {
+  from { background-position: 120% 0; }
+  to { background-position: 0 0; }
+}
+
+/* O marcador "+" do FAQ, autorado como `style-after` (atributo do editor que o navegador
+ * ignora) e morto desde sempre. Vive aqui, com o giro para X quando a pergunta abre. */
+.landing-prototipo details summary::after {
+  content: "+";
+  margin-left: auto;
+  font-size: 22px;
+  color: #5C6D84;
+  font-weight: 400;
+  line-height: 1;
+  transition: transform .25s ease;
+}
+.landing-prototipo details[open] summary::after { transform: rotate(45deg); }
+.landing-prototipo details p { animation: lp-pop .28s ease; }
