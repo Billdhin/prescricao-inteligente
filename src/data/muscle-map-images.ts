@@ -118,6 +118,14 @@ export const muscleMapImages: Record<string, { front?: string; back?: string }> 
   "farmer-walk": { front: "/anatomy/mm/farmer-walk-front.webp" },
   "caminhada-plana": { front: "/anatomy/mm/caminhada-plana-front.webp", back: "/anatomy/mm/caminhada-plana-back.webp" },
   "corrida-aquatica": { front: "/anatomy/mm/corrida-aquatica-front.webp" },
+  "empurra-puxa-aquatico": { front: "/anatomy/mm/empurra-puxa-aquatico-front.webp", back: "/anatomy/mm/empurra-puxa-aquatico-back.webp" },
+  "equilibrio-unipodal": { front: "/anatomy/mm/equilibrio-unipodal-front.webp" },
+  /*
+   * O diafragma é interno e não tem projeção na pele. A convenção da ilustração
+   * anatômica resolve isso marcando a borda inferior das costelas, que é onde ele se
+   * insere e o único lugar onde uma figura de superfície pode apontá-lo com honestidade.
+   */
+  "respiracao-360": { front: "/anatomy/mm/respiracao-360-front.webp" },
 };
 
 export function getMuscleMapImages(slug?: string) {
