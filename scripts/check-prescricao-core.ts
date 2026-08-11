@@ -954,6 +954,34 @@ for (const objetivo of OBJETIVOS) {
   }
 }
 
+/* ============================================================================
+ * O CARTÃO DE MODALIDADES DO MESOCICLO DESCREVE O QUE O PLANO CONTÉM.
+ *
+ * Existiam duas fontes paralelas (uma função por objetivo e a lista autorada da fase da
+ * jornada) e nenhuma olhava o plano montado. Quando a osteoartrite de joelho passou a
+ * receber hidroginástica por evidência, o cartão seguiu prometendo caminhada: com joelho em
+ * atenção, cartão [m-musculacao, m-caminhada] e blocos [m-hidro]. É a mesma classe do "diz
+ * linear e o gráfico ondula", e a trava cobre a mesma direção: nenhuma modalidade prometida
+ * pode estar ausente dos blocos, e o cartão nunca sai vazio.
+ * ========================================================================== */
+{
+  for (const grupo of [undefined, "osteoartrite-joelho", "obesidade-grau-3"])
+    for (const objetivo of ["Emagrecimento", "Hipertrofia"] as const) {
+      const p = gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo });
+      for (const meso of p.principal.mesociclos) {
+        const nosBlocos = new Set<string>(["m-musculacao"]);
+        for (const w of meso.microciclos)
+          for (const s of w.sessoes)
+            for (const b of s.blocos) if (b.tipo === "aerobio" && b.modalidade) nosBlocos.add(b.modalidade);
+        const cen = `${grupo ?? "sem"}/${objetivo}/${meso.nome}`;
+        if (meso.modalidades.length === 0) erro(`CARTÃO DE MODALIDADES VAZIO em ${cen}.`);
+        for (const m of meso.modalidades)
+          if (!nosBlocos.has(m))
+            erro(`CARTÃO PROMETE MODALIDADE AUSENTE em ${cen}: "${m}" não existe em nenhum bloco do mesociclo.`);
+      }
+    }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {

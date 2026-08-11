@@ -1030,12 +1030,31 @@ function focoDoMeso(m: number): {
   return { nome, foco, tv: arq.tv, ti: arq.ti, tc, ciclo };
 }
 
-// As modalidades em foco do plano genérico refletem o que `montarSessoes` de fato monta:
-// musculação em todo plano; caminhada entra no Emagrecimento (aeróbio base) e nos demais
-// objetivos que agora recebem o aeróbio COMPLEMENTAR (princípio da variabilidade).
-function modalidadesDoObjetivo(objetivo: GpsObjetivo): string[] {
-  if (objetivo === "Emagrecimento") return ["m-musculacao", "m-caminhada"];
-  return getFaixa(objetivo).complementoAerobio ? ["m-musculacao", "m-caminhada"] : ["m-musculacao"];
+/*
+ * AS MODALIDADES DO CARTÃO SÃO DERIVADAS DOS BLOCOS, não declaradas à parte.
+ *
+ * Existiam duas fontes paralelas dizendo quais modalidades o mesociclo tem: uma função que
+ * respondia pelo objetivo (musculação mais caminhada, fixa) e, no caminho clínico, a lista
+ * autorada da fase da jornada. Nenhuma das duas olhava o plano montado. Enquanto o cardio
+ * foi sempre caminhada, a mentira não aparecia; no dia em que a osteoartrite de joelho
+ * passou a receber hidroginástica por evidência, o cartão continuou prometendo caminhada.
+ * Medido: com joelho em atenção, cartão [m-musculacao, m-caminhada] e blocos [m-hidro].
+ *
+ * É a mesma classe do "diz linear e o gráfico ondula" que o Filipe pegou duas vezes, e o
+ * conserto é o mesmo de lá: o cartão descreve o que o plano FAZ. A derivação vive em
+ * `sincronizarTendencias`, que já existe exatamente para esse contrato. A lista autorada da
+ * jornada continua nos dados do grupo, intacta, para as telas da própria jornada.
+ */
+function modalidadesReaisDoMeso(meso: Mesociclo): string[] {
+  const aerobias = new Set<string>();
+  let temForca = false;
+  for (const w of meso.microciclos)
+    for (const s of w.sessoes)
+      for (const b of s.blocos) {
+        if (b.tipo === "forca") temForca = true;
+        else if (b.modalidade) aerobias.add(b.modalidade);
+      }
+  return [...(temForca ? ["m-musculacao"] : []), ...aerobias];
 }
 
 /**
@@ -1330,7 +1349,8 @@ function montarMacrocicloGenerico(
       semanaFim: fim,
       capacidades: faixa.capacidades,
       tiposExercicio: faixa.tiposExercicio,
-      modalidades: modalidadesDoObjetivo(objetivo),
+      // Valor provisorio: a lista final e derivada dos blocos em sincronizarTendencias.
+      modalidades: [],
       tendenciaVolume: tv,
       tendenciaIntensidade: ti,
       // A complexidade sobe a cada onda do ano (ver focoDoMeso): é parte do que faz o anual
@@ -1433,6 +1453,8 @@ function sincronizarTendencias(macro: Macrociclo): Macrociclo {
   const cargasDo = (m: Mesociclo) => m.microciclos.filter((w) => w.tipo === "carga");
 
   for (const meso of mesos) {
+    // O cartão de modalidades descreve o que o mesociclo CONTÉM (ver modalidadesReaisDoMeso).
+    meso.modalidades = modalidadesReaisDoMeso(meso);
     const c = cargasDo(meso);
     if (c.length < 2) continue;
     // A janela é o próprio mesociclo, porque é dele que o cartão fala: da primeira à última
@@ -1566,8 +1588,9 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
       semanaFim: fim,
       capacidades: [fase.objetivo, ...faixa.capacidades].slice(0, 4),
       tiposExercicio: faixa.tiposExercicio,
-      // As modalidades em foco vêm da jornada já autorada do grupo, que varia por fase.
-      modalidades: fase.modalidades,
+      // Valor provisorio: a lista final e derivada dos blocos em sincronizarTendencias. A
+      // lista autorada da fase (fase.modalidades) segue nos dados da jornada, intacta.
+      modalidades: [],
       // `faseJornada` autoriza a palavra "Fase" na tela e alimenta a reconciliação com a
       // fase clínica do aluno (o número real da fase, não a posição no macro recortado).
       faseJornada: fase.numero,

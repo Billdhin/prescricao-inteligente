@@ -599,7 +599,7 @@ function TelaCadastro() {
 
           {[
             { fonte: "Hipertensão estágio 1", cor: T.danger, efeitos: ["Sem apneia (Valsalva) nas séries", "Intensidade moderada guiada por esforço"] },
-            { fonte: "Desconforto lombar", cor: T.warning, efeitos: ["Exercícios com carga axial entram rebaixados", "Prefere tronco apoiado e cadeia fechada"] },
+            { fonte: "Desconforto lombar", cor: T.warning, efeitos: ["Exercícios com carga axial cedem a vez aos equivalentes", "Prefere tronco apoiado e cadeia fechada"] },
           ].map((it) => (
             <div key={it.fonte} className="flex gap-3">
               <span className="w-1 shrink-0 rounded-full" style={{ background: it.cor }} />
@@ -1116,7 +1116,7 @@ function TelaPeriodizacao() {
                 },
                 {
                   t: "Restrição de Mariana",
-                  d: "Desconforto lombar. Os exercícios incompatíveis ficam fora do plano; os limítrofes entram rebaixados.",
+                  d: "Desconforto lombar. Os exercícios incompatíveis ficam fora do plano; os parecidos que sobram entram no lugar.",
                   c: T.warning,
                 },
               ].map((it) => (
