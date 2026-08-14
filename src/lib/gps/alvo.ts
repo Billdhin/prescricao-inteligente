@@ -314,6 +314,27 @@ function comPasso(nivel: number, inicial: number, fator?: number): number {
  * tendência, incluindo os que ainda não existem: seja qual for a onda, a descarga fica
  * abaixo da semana mais leve do bloco.
  */
+/**
+ * Quanto a cautela do perfil baixa o nível das SÉRIES. Ver a decisão do Filipe registrada
+ * em `alvoSemana`.
+ *
+ * Existe como função, e não como expressão solta, porque DOIS ramos precisam do mesmo
+ * número: o de carga e a âncora da descarga (`niveisDaCargaMaisLeve`, que se declara "do
+ * mesmo jeito que o ramo de carga calcula"). Enquanto a regra viveu só no ramo de carga, a
+ * descarga mirava num teto que nenhuma semana de carga tinha mais, e saía com MAIS séries
+ * que a carga.
+ *
+ * MEDIDO na falsificação, para não creditar mais do que é: desfazer só esta escala, ou só o
+ * arredondamento para baixo da descarga, NÃO reproduz a inversão, porque uma peça compensa a
+ * outra. Ela só volta com as duas desfeitas, e aí em 18 combinações. As duas ficam porque
+ * juntas expressam uma regra só, e não porque cada uma seja isoladamente necessária.
+ */
+const TETO_CAUTELA = 0.5;
+function nivelDeSeries(ctx: CtxAlvo, nivelVolume: number, t: number): number {
+  if (!ctx.partirDoPiso) return nivelVolume;
+  return ctx.tendenciaVolume === "reduz" ? nivelVolume * TETO_CAUTELA : nivelVolume * t;
+}
+
 function niveisDaCargaMaisLeve(
   ctx: CtxAlvo,
   seriesIv: { min: number; max: number } | null,
@@ -358,10 +379,13 @@ function niveisDaCargaMaisLeve(
     // de carga calcula. É por isso que o volume comparado aqui é o volume REAL da semana, e
     // não uma aproximação: séries seguem o volume e repetições seguem a intensidade, e os
     // dois mínimos caem em semanas DIFERENTES quando as tendências andam em sentidos opostos.
-    const series = seriesIv ? ponto(seriesIv, nv, true) : 1;
+    const nvSeries = nivelDeSeries(ctx, nv, t);
+    const series = seriesIv ? ponto(seriesIv, nvSeries, true, ctx.partirDoPiso === true) : 1;
     const reps = repsIv ? ponto(repsIv, 1 - ni, true) : 1;
     const vol = series * reps;
-    if (vol < melhor.vol) melhor = { nv, ni, vol };
+    // Guarda o nível JÁ com a cautela aplicada: quem consome isto (a descarga) posiciona o
+    // ponto na mesma escala em que as semanas de carga foram posicionadas.
+    if (vol < melhor.vol) melhor = { nv: nvSeries, ni, vol };
   }
   return { nv: melhor.nv, ni: melhor.ni };
 }
@@ -446,11 +470,26 @@ function intervaloFechado(iv: Intervalo): Intervalo {
   return { min: Math.min(min, max), max: Math.max(min, max) };
 }
 
-/** Posiciona um ponto dentro de [min,max] pela fração `frac`, arredondando (inteiro ou 1 casa). */
-function ponto(iv: Intervalo, frac: number, inteiro: boolean): number {
+/**
+ * Posiciona um ponto dentro de [min,max] pela fração `frac`, arredondando (inteiro ou 1 casa).
+ *
+ * `paraBaixo` existe por um caso medido: numa faixa estreita, o meio arredonda PARA CIMA e
+ * cai no teto de novo. Escalar o nível pelo meio tirava a osteoporose de 5 séries para 4 em
+ * "3 a 5", mas deixava a hipertrofia em 4 de "3 a 4" (3,5 arredonda para 4) e a resistência
+ * muscular em 3 de "2 a 3" (2,5 arredonda para 3), ou seja, no teto, que é exatamente o que
+ * a decisão do Filipe proíbe. O guardrail pegou em 34 combinações.
+ *
+ * A regra que resolve cabe numa frase: **a cautela arredonda para baixo**. Continua sem
+ * número novo, porque o piso continua sendo o piso da faixa citada, e preserva a
+ * monotonicidade, porque truncar uma sequência monótona não a faz oscilar.
+ */
+function ponto(iv: Intervalo, frac: number, inteiro: boolean, paraBaixo = false): number {
   const { min, max } = intervaloFechado(iv);
   const v = min + Math.min(Math.max(frac, 0), 1) * (max - min);
-  if (inteiro) return Math.min(Math.max(Math.round(v), Math.round(min)), Math.round(max));
+  if (inteiro) {
+    const arredondado = paraBaixo ? Math.floor(v) : Math.round(v);
+    return Math.min(Math.max(arredondado, Math.round(min)), Math.round(max));
+  }
   return Math.round(v * 10) / 10;
 }
 
@@ -521,7 +560,12 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
     const nvUltima = comPiso(volTravado ? nivelCongelado(ctx.tendenciaVolume) : maisLeveDoBloco.nv, ctx.pisoDoCiclo);
     const niUltima = comPiso(intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : maisLeveDoBloco.ni, ctx.pisoDoCiclo);
     if (seriesIv) {
-      const maisLeve = ponto(seriesIv, nvUltima, true);
+      // MESMO arredondamento das semanas de carga, de propósito. A descarga se ancora na
+      // carga mais leve do bloco e tira uma série dela; se ela arredondasse para o mais
+      // próximo enquanto a carga arredonda para baixo, a âncora sairia numa escala
+      // diferente da realidade do bloco. Foi o que aconteceu quando liguei a cautela: a
+      // osteoporose ficou com semanas de carga de 3 séries e DESCARGA de 4.
+      const maisLeve = ponto(seriesIv, nvUltima, true, ctx.partirDoPiso === true);
       const piso = Math.round(intervaloFechado(seriesIv).min);
       alvo.seriesAlvo = Math.max(piso, maisLeve - 1); // menos uma série que a carga mais leve
     }
@@ -535,7 +579,7 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
       // que vir das repetições, senão a semana de descarga não descarrega nada.
       const seriesNaoCairam =
         seriesIv != null && alvo.seriesAlvo === Math.round(intervaloFechado(seriesIv).min) &&
-        alvo.seriesAlvo === ponto(seriesIv, nvUltima, true);
+        alvo.seriesAlvo === ponto(seriesIv, nvUltima, true, ctx.partirDoPiso === true);
       const pisoReps = Math.round(intervaloFechado(repsIv).min);
       alvo.repsAlvo = seriesNaoCairam ? Math.max(pisoReps, acompanhando - 1) : acompanhando;
     }
@@ -594,28 +638,40 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
    * Nenhum número novo: o piso e o teto são os da faixa que o objetivo já cita.
    */
   /*
-   * SÓ QUANDO A TENDÊNCIA NÃO É "reduz".
+   * A CAUTELA VENCE A DIREÇÃO DO MODELO. DECISÃO DO FILIPE, 14/08/2026.
    *
-   * `partirDoPiso` multiplica o nível por `t`, o que para uma tendência que SOBE ou que fica
-   * estável significa "comece embaixo e chegue lá". Para a tendência "reduz", cujo nível já
-   * é `1 - t`, o produto vira `(1 - t) * t`: zero no começo, pico no meio, zero no fim. Uma
-   * CORCOVA. O check:core pegou na hora, em 12 planos: "LINEAR ONDULOU (grupo obesidade
-   * grau III): o bloco 3 tem MAIS volume (455,0) que o anterior (413,5)". O modelo linear
-   * anunciava rampa e entregava onda, que é exatamente o defeito que o Filipe apontou e que
-   * eu acabaria reintroduzindo por outra porta.
+   * A pergunta foi escalada assim: numa jornada LINEAR (tendência de volume "reduz"), o
+   * `partirDoPiso` não agia, e uma iniciante de 72 anos com osteoporose abria a semana 1 em
+   * 5 séries, que é o TETO de "3 a 5", com a cautela expressa só pelo RIR alto. A resposta
+   * dele não deixa margem: *"a cautela deve sempre vencer a direção, porque o foco da
+   * plataforma é direcionamento seguro para condições clínicas delicadas; a direção deve
+   * acompanhar a cautela em qualquer prescrição"*.
    *
-   * Numa tendência que reduz, o bloco já termina no piso: forçar o início no piso não é
-   * cautela, é contradizer a própria tendência declarada.
+   * ## Por que não basta ligar o `partirDoPiso` no "reduz"
    *
-   * CONSEQUÊNCIA HONESTA, para o parágrafo da idosa acima não parecer mais do que é: nas
-   * jornadas cujo modelo é o LINEAR (tendência de volume "reduz"), este `partirDoPiso` das
-   * séries NÃO age, e a semana 1 continua no teto de séries da faixa (5 de "3 a 5" para a
-   * osteoporose), com a cautela expressa só pela intensidade (RIR alto). Fazer a cautela
-   * vencer a direção do modelo é decisão de produto, escalada ao Filipe, porque muda a
-   * identidade do modelo prescrito.
+   * Ele multiplica o nível por `t`. Numa tendência que já é `1 - t`, o produto vira
+   * `(1 - t) * t`: zero no começo, PICO NO MEIO, zero no fim. Uma corcova. O `check:core`
+   * pegou isso em 12 planos quando tentei: "LINEAR ONDULOU (grupo obesidade grau III): o
+   * bloco 3 tem MAIS volume (455,0) que o anterior (413,5)". Modelo que anuncia rampa e
+   * entrega onda é o defeito que o próprio Filipe já tinha apontado antes.
+   *
+   * ## O que fazer a cautela vencer significa aqui
+   *
+   * Baixar o COMEÇO sem inverter a DIREÇÃO. Numa tendência que reduz, o nível cai de 1 a 0;
+   * escalá-lo pelo meio faz cair de 0,5 a 0, que continua monotonicamente decrescente, e
+   * portanto continua sendo linear, só que partindo do MEIO da faixa citada em vez do teto.
+   * A osteoporose sai de "5 séries na semana 1" para 4, caminhando até 3.
+   *
+   * Começar no PISO seria a leitura mais extrema de "cautela vence", e é pior: numa
+   * tendência que reduz não sobra para onde descer, o bloco vira uma linha reta e o modelo
+   * deixa de existir. Meio da faixa é o ponto que respeita as duas coisas.
+   *
+   * NENHUM NÚMERO NOVO ENTRA. O meio é uma propriedade da faixa que o objetivo já cita,
+   * mesmo precedente do `intervaloFolgado` logo abaixo, que usa "a metade superior da faixa
+   * que o objetivo já cita" e pela mesma razão: consistência, não número clínico inventado.
    */
-  const nvSeries = ctx.partirDoPiso && ctx.tendenciaVolume !== "reduz" ? nivelVolume * t : nivelVolume;
-  if (seriesIv) alvo.seriesAlvo = ponto(seriesIv, nvSeries, true);
+  const nvSeries = nivelDeSeries(ctx, nivelVolume, t);
+  if (seriesIv) alvo.seriesAlvo = ponto(seriesIv, nvSeries, true, ctx.partirDoPiso === true);
   if (repsIv) alvo.repsAlvo = ponto(repsIv, 1 - nivelInt, true);
   if (pctIv) alvo.cargaRelativaAlvo = ponto(pctIv, nivelInt, false);
   // RIR anda ao contrário da intensidade: mais intensidade = menos reserva (mais perto da falha).

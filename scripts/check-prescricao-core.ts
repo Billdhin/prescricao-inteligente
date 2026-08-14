@@ -1181,6 +1181,90 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
   }
 }
 
+/* ==========================================================================
+ * A CAUTELA VENCE A DIREÇÃO DO MODELO (decisão do Filipe, 14/08/2026)
+ *
+ * "A cautela deve sempre vencer a direção, porque o foco da plataforma é
+ * direcionamento seguro para condições clínicas delicadas."
+ *
+ * A regressão verdadeira: um perfil com cautela declarada abrindo o plano no
+ * TETO das séries. Foi o que a bancada de leitura mostrou na osteoporose de 72
+ * anos, iniciante: 5 séries de 12 na semana 1, numa fase chamada "Entrada ·
+ * segurança · adaptação", porque nas jornadas LINEARES o partirDoPiso não agia.
+ *
+ * Vale para TODA condição que declara cautela, não só a osteoporose, e nos dois
+ * sentidos: nunca abrir no teto, e nunca subir depois num modelo que reduz (que
+ * é a corcova que a correção ingênua reintroduziria).
+ * ========================================================================== */
+{
+  const COM_CAUTELA = specialGroups.filter((g) => combineRules([g.slug])?.modProgressao?.cautela === true);
+  const tetoDaFaixa = (texto: string): number | null => {
+    const ns = texto.match(/\d+/g);
+    return ns?.length ? Math.max(...ns.map(Number)) : null;
+  };
+  let conferidos = 0;
+  for (const g of COM_CAUTELA) {
+    for (const objetivo of ["Força", "Hipertrofia", "Resistência muscular"] as const) {
+      const p = gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: g.slug });
+      const semanasCarga = p.principal.mesociclos.flatMap((m) => m.microciclos).filter((w) => w.tipo !== "deload");
+      const serie = semanasCarga
+        .map((w) => {
+          const b = w.sessoes[0]?.blocos.find((x) => x.tipo !== "aerobio") as { series?: string; seriesAlvo?: number } | undefined;
+          return b?.seriesAlvo != null && b.series ? { alvo: b.seriesAlvo, teto: tetoDaFaixa(b.series), semana: w.semana } : null;
+        })
+        .filter(Boolean) as { alvo: number; teto: number | null; semana: number }[];
+      if (!serie.length) continue;
+      const teto = serie[0].teto;
+      // Faixa degenerada ("3 a 3") não tem teto de onde sair: a asserção não se aplica.
+      if (teto == null || serie.every((s) => s.alvo === teto && s.teto === teto && teto === Math.min(...serie.map((x) => x.alvo)))) continue;
+      conferidos++;
+      if (serie[0].alvo >= teto)
+        erro(
+          `CAUTELA PERDEU DA DIREÇÃO (${g.slug}, ${objetivo}): a semana 1 abre em ${serie[0].alvo} séries, que é o teto da faixa citada. Perfil com cautela declarada não começa no teto.`,
+        );
+      for (let i = 1; i < serie.length; i++)
+        if (serie[i].alvo > serie[i - 1].alvo && p.modeloId === "linear") {
+          erro(
+            `CORCOVA NAS SÉRIES (${g.slug}, ${objetivo}): a semana ${serie[i].semana} sobe para ${serie[i].alvo} séries depois de ${serie[i - 1].alvo}, num modelo linear que declara volume decrescente.`,
+          );
+          break;
+        }
+    }
+  }
+  /*
+   * DESCARGA NUNCA PESA MAIS QUE A CARGA.
+   *
+   * Não veio de teoria: eu introduzi essa regressão nesta mesma rodada. Ao fazer a carga
+   * arredondar para baixo esqueci que o ramo da descarga se ancora na carga mais leve do
+   * bloco com o arredondamento ANTIGO, e a osteoporose passou a ter semanas de carga de 3
+   * séries e semana de DESCARGA de 4. Achei lendo a sonda, não pelo guardrail, e é por isso
+   * que a asserção passa a existir.
+   */
+  for (const g of COM_CAUTELA) {
+    for (const objetivo of ["Força", "Hipertrofia", "Resistência muscular"] as const) {
+      const p = gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: g.slug });
+      for (const m of p.principal.mesociclos) {
+        const series = (w: (typeof m.microciclos)[number]) =>
+          (w.sessoes[0]?.blocos.find((x) => x.tipo !== "aerobio") as { seriesAlvo?: number } | undefined)?.seriesAlvo;
+        const cargas = m.microciclos.filter((w) => w.tipo !== "deload").map(series).filter((s): s is number => s != null);
+        const descargas = m.microciclos.filter((w) => w.tipo === "deload").map(series).filter((s): s is number => s != null);
+        if (!cargas.length || !descargas.length) continue;
+        const maisLeveDaCarga = Math.min(...cargas);
+        const maisPesadaDaDescarga = Math.max(...descargas);
+        if (maisPesadaDaDescarga > maisLeveDaCarga)
+          erro(
+            `DESCARGA MAIS PESADA QUE A CARGA (${g.slug}, ${objetivo}, ${m.nome.slice(0, 30)}): descarga com ${maisPesadaDaDescarga} séries contra ${maisLeveDaCarga} da semana de carga mais leve.`,
+          );
+      }
+    }
+  }
+
+  // Controle positivo: sem condição cautelosa com faixa de séries que tenha folga, as duas
+  // asserções acima não conferem nada e passariam por vazio.
+  if (conferidos < 3)
+    erro(`AUTOVERIFICAÇÃO (cautela vence direção): só ${conferidos} combinações tinham faixa de séries com folga; a asserção está passando por vazio.`);
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
