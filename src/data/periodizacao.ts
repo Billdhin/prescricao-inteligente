@@ -859,7 +859,33 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     tiposExercicio: ["Multiarticulares e uniarticulares", "Circuitos quando fizer sentido"],
     series: { valor: "2 a 3" },
     reps: { valor: "acima de 15" },
-    intensidade: { valor: "leve a moderada", nota: "cerca de 40 a 60% de 1RM" },
+    /*
+     * O ÚLTIMO OBJETIVO SEM RESERVA DE REPETIÇÕES.
+     *
+     * A Força ganhou o instrumento numa rodada anterior, pelo mesmo motivo que está escrito
+     * lá em cima. Sobrava a Resistência muscular, que controlava intensidade SÓ por %1RM (40
+     * a 60). Duas consequências, e a segunda é a que decide:
+     *
+     * 1. o teto clínico de reserva (`rirMinimo`) não tinha onde morder aqui, e agora tem,
+     *    inclusive o da camada de IDADE (ver `lib/gps/esforco.ts`);
+     * 2. %1RM exige 1RM TESTADO. Numa gestante iniciante ou numa pós-parto, que são
+     *    exatamente o público típico deste objetivo no produto, esse teste não existe, então
+     *    o único instrumento de intensidade declarado era inutilizável em campo. A reserva
+     *    de repetições é usável por qualquer pessoa, na série que ela está fazendo.
+     *
+     * A faixa de 3 a 5 é ESCOLHA PRUDENTE DA CASA, não número de diretriz, e segue a escada
+     * que os outros dois objetivos já declaram (Hipertrofia 1 a 3, Força 2 a 4), um degrau
+     * mais longe da falha a cada vez que a carga fica mais leve e a série mais longa.
+     *
+     * Aqui há uma razão a mais, e ela é medida: Zourdos 2021 mostra que a precisão do RIR
+     * PIORA com mais repetições na série, com erro de 5,15 ± 2,92 repetições no RPE 5 contra
+     * 2,05 ± 1,73 no RPE 9. Num objetivo cuja série passa de 15 repetições, ficar longe da
+     * falha é o que a imprecisão do próprio instrumento recomenda.
+     */
+    intensidade: {
+      valor: "leve a moderada",
+      nota: "cerca de 40 a 60% de 1RM; quando o 1RM não foi testado, a escala de repetições de reserva (Zourdos, 2016) é o instrumento de controle, com 3 a 5 de reserva. A faixa de reserva é escolha prudente da casa, não número de diretriz: em séries longas a estimativa de reserva é menos precisa, e a folga maior é a resposta a essa imprecisão",
+    },
     intervalo: { valor: "até 90 s", nota: "intervalo curto sustenta a densidade da sessão" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3x/sem", Avançado: "3 a 4x/sem" },
     parametros: ["p-rpe"],

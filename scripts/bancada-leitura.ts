@@ -76,10 +76,31 @@ const CENARIOS: { rotulo: string; input: GerarPlanoInput }[] = [
   },
 ];
 
+/*
+ * IMPRIMA TODO EIXO DE DOSE, INCLUSIVE OS QUE O SEU OBJETIVO NÃO USA.
+ *
+ * Esta linha já mentiu uma vez, em 14/08/2026, e a mentira chegou ao Filipe. Ela omitia
+ * `cargaRelativaAlvo`, e a leitura da gestante e da pós-parto saiu "3x15 em todas as 12
+ * semanas", do que eu concluí, e reportei, que a Resistência muscular não progredia. Ela
+ * progride: a carga relativa vai de 40% a 50% de 1RM ao longo das semanas de carga, e o app
+ * exibe isso no token "Carga". Quem estava cego era a bancada.
+ *
+ * A regra que fica: uma ferramenta de LEITURA não filtra campo. Objetivo que progride por
+ * um eixo diferente do seu é exatamente o caso que ela existe para revelar, e um campo
+ * ausente vira "não progride" na cabeça de quem lê.
+ */
 const fmtBloco = (b: Record<string, unknown>) => {
   if (b.tipo === "aerobio")
-    return `    [AER] ${b.nome} | ${b.formato} | ${b.duracao} (alvo ${b.duracaoAlvoMin ?? "?"}min) | ${String(b.intensidade).slice(0, 60)}${b.zonaFC ? " | FC " + b.zonaFC : ""}`;
-  return `    [FOR] ${b.nome} | ${b.series} x ${b.reps} | ${String(b.intensidade).slice(0, 46)} | alvo ${b.seriesAlvo}x${b.repsAlvo}${b.rirAlvo != null ? " RIR " + b.rirAlvo : ""}`;
+    return `    [AER] ${b.nome} | ${b.formato} | ${b.duracao} (alvo ${b.duracaoAlvoMin ?? "?"}min)${b.rpeAlvo != null ? " PSE " + b.rpeAlvo : ""} | ${String(b.intensidade).slice(0, 56)}${b.zonaFC ? " | FC " + b.zonaFC : ""}`;
+  const alvo = [
+    b.seriesAlvo != null && b.repsAlvo != null ? `${b.seriesAlvo}x${b.repsAlvo}` : null,
+    b.cargaRelativaAlvo != null ? `${b.cargaRelativaAlvo}% 1RM` : null,
+    b.rirAlvo != null ? `RIR ${b.rirAlvo}` : null,
+    b.intervaloAlvoSeg != null ? `${b.intervaloAlvoSeg}s` : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return `    [FOR] ${b.nome} | ${b.series} x ${b.reps} | ${String(b.intensidade).slice(0, 40)} | alvo ${alvo}`;
 };
 
 for (const { rotulo, input } of CENARIOS) {

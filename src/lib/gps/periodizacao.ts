@@ -31,7 +31,8 @@ import {
 import { exercises } from "@/data/exercises";
 import { getModalidade } from "@/data/modalities";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { combineRules, doseDoPerfil, groupGpsRules, type GroupGpsRule } from "@/lib/gps/groupRules";
+import { combineRules, groupGpsRules, type GroupGpsRule } from "@/lib/gps/groupRules";
+import { doseDoPerfilComIdade } from "@/lib/gps/esforco";
 import {
   restricoesAtivas,
   rotuloRestricao,
@@ -1480,11 +1481,12 @@ function montarMacrocicloGenerico(
         // O teto de PSE do perfil chegava ao texto do semaforo e a autorregulacao da
         // execucao, mas nunca ao alvo PRESCRITO. Ver CtxAlvo.pseTeto.
         pseTeto: regraClinicaDoPlano(input)?.modProgressao?.pseTeto,
-        // A dose nasce do PERFIL, nao so do objetivo. Ver ModDose e doseDoPerfil.
-        cargaRelativaMax: doseDoPerfil(regraClinicaDoPlano(input))?.cargaRelativaMax,
-        intervaloFolgado: doseDoPerfil(regraClinicaDoPlano(input))?.intervaloFolgado,
-        rirMinimo: doseDoPerfil(regraClinicaDoPlano(input))?.rirMinimo,
-        partirDoPiso: doseDoPerfil(regraClinicaDoPlano(input))?.partirDoPiso,
+        // A dose nasce do PERFIL e da IDADE, nao so do objetivo. Ver ModDose, doseDoPerfil e
+        // doseDoPerfilComIdade: idade nao e condicao, mas funde pela mesma lei conservadora.
+        cargaRelativaMax: doseDoPerfilComIdade(regraClinicaDoPlano(input), input.idade)?.cargaRelativaMax,
+        intervaloFolgado: doseDoPerfilComIdade(regraClinicaDoPlano(input), input.idade)?.intervaloFolgado,
+        rirMinimo: doseDoPerfilComIdade(regraClinicaDoPlano(input), input.idade)?.rirMinimo,
+        partirDoPiso: doseDoPerfilComIdade(regraClinicaDoPlano(input), input.idade)?.partirDoPiso,
         cargaAntesDesteMeso: rampa.total != null ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: rampa.total,
         pisoDoCiclo: pisoDaOnda(m),
@@ -1716,11 +1718,12 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
         // O teto de PSE do perfil chegava ao texto do semaforo e a autorregulacao da
         // execucao, mas nunca ao alvo PRESCRITO. Ver CtxAlvo.pseTeto.
         pseTeto: regraClinicaDoPlano(input)?.modProgressao?.pseTeto,
-        // A dose nasce do PERFIL, nao so do objetivo. Ver ModDose e doseDoPerfil.
-        cargaRelativaMax: doseDoPerfil(regraClinicaDoPlano(input))?.cargaRelativaMax,
-        intervaloFolgado: doseDoPerfil(regraClinicaDoPlano(input))?.intervaloFolgado,
-        rirMinimo: doseDoPerfil(regraClinicaDoPlano(input))?.rirMinimo,
-        partirDoPiso: doseDoPerfil(regraClinicaDoPlano(input))?.partirDoPiso,
+        // A dose nasce do PERFIL e da IDADE, nao so do objetivo. Ver ModDose, doseDoPerfil e
+        // doseDoPerfilComIdade: idade nao e condicao, mas funde pela mesma lei conservadora.
+        cargaRelativaMax: doseDoPerfilComIdade(regraClinicaDoPlano(input), input.idade)?.cargaRelativaMax,
+        intervaloFolgado: doseDoPerfilComIdade(regraClinicaDoPlano(input), input.idade)?.intervaloFolgado,
+        rirMinimo: doseDoPerfilComIdade(regraClinicaDoPlano(input), input.idade)?.rirMinimo,
+        partirDoPiso: doseDoPerfilComIdade(regraClinicaDoPlano(input), input.idade)?.partirDoPiso,
         cargaAntesDesteMeso: rampa.total != null && progride[m] ? rampa.antes[m] : undefined,
         semanasDeCargaNoMacro: progride[m] ? rampa.total : undefined,
         // A fase que não progride é a de continuação: ela não recomeça a rampa, segura onde

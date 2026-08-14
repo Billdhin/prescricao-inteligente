@@ -1530,7 +1530,15 @@ function fundirModAerobio(mods: ModAerobio[]): ModAerobio | undefined {
   };
 }
 
-function fundirModDose(mods: ModDose[]): ModDose | undefined {
+/**
+ * A LEI DE FUSÃO DA DOSE, EXPORTADA porque a camada de IDADE precisa da mesma.
+ *
+ * Teto de carga funde por `Math.min` e piso de reserva por `Math.max`: o resultado nunca é
+ * mais agressivo que o mais conservador dos modificadores. Idade não é condição (o aluno de
+ * 70 anos pode não ter nenhuma), mas obedece à mesma lei, e reescrevê-la em `esforco.ts`
+ * criaria a tabela paralela que envelhece em silêncio.
+ */
+export function fundirModDose(mods: ModDose[]): ModDose | undefined {
   if (!mods.length) return undefined;
   if (mods.length === 1) return mods[0];
   const tetos = mods.map((m) => m.cargaRelativaMax).filter((n): n is number => typeof n === "number");

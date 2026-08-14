@@ -1265,6 +1265,88 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
     erro(`AUTOVERIFICAÇÃO (cautela vence direção): só ${conferidos} combinações tinham faixa de séries com folga; a asserção está passando por vazio.`);
 }
 
+/* ==========================================================================
+ * ESCALA DE ESFORÇO UNIFICADA E DOSE POR IDADE (decisão do Filipe, 14/08/2026)
+ *
+ * "Você deve montar uma escala de esforço unificada para o motor poder reduzir
+ * a dose sozinho por idade."
+ * ========================================================================== */
+{
+  const OBJ_FORCA = ["Força", "Hipertrofia", "Resistência muscular"] as const;
+  const blocosForca = (p: ReturnType<typeof gerarPlano>) =>
+    p.principal.mesociclos.flatMap((m) => m.microciclos).flatMap((w) => w.sessoes.flatMap((s) => s.blocos)).filter((b) => b.tipo !== "aerobio");
+
+  /*
+   * 1. UNIFICADA quer dizer que NENHUM objetivo fica sem o instrumento.
+   *
+   * Esta é a asserção que teria pego o defeito real: a Resistência muscular controlava
+   * intensidade só por %1RM, que exige 1RM testado, coisa que a gestante iniciante do
+   * cenário 4 da bancada não tem. Na prática o objetivo não tinha instrumento usável em
+   * campo, e nenhum teto clínico de reserva tinha onde morder nele.
+   */
+  for (const objetivo of OBJ_FORCA) {
+    for (const nivel of NIVEIS) {
+      const p = gerarPlano({ objetivo, nivel, semanas: 12, frequencia: 3 });
+      const bs = blocosForca(p);
+      if (!bs.length) {
+        erro(`AUTOVERIFICAÇÃO (esforço unificado): ${objetivo}/${nivel} não gerou bloco de força; a asserção passaria por vazio.`);
+        continue;
+      }
+      const semInstrumento = bs.filter((b) => (b as { rirAlvo?: number }).rirAlvo == null);
+      if (semInstrumento.length)
+        erro(
+          `OBJETIVO SEM INSTRUMENTO DE ESFORÇO (${objetivo}, ${nivel}): ${semInstrumento.length} de ${bs.length} blocos sem RIR-alvo. A escala de esforço é unificada: quem não tem reserva não recebe teto clínico nem dose por idade.`,
+        );
+    }
+  }
+
+  /*
+   * 2. A IDADE APERTA SOZINHA, sem condição declarada.
+   *
+   * Era a lacuna que `groupRules.ts` registrava por escrito: "um plano para 70 anos e um
+   * para 30, com a mesma condição e o mesmo objetivo, saem com a MESMA dose de força".
+   */
+  let apertou = 0;
+  for (const objetivo of OBJ_FORCA) {
+    const jovem = blocosForca(gerarPlano({ objetivo, nivel: "Intermediário", semanas: 12, frequencia: 3, idade: 40 }));
+    const idoso = blocosForca(gerarPlano({ objetivo, nivel: "Intermediário", semanas: 12, frequencia: 3, idade: 70 }));
+    if (jovem.length !== idoso.length) {
+      erro(`AUTOVERIFICAÇÃO (dose por idade, ${objetivo}): os dois planos têm número de blocos diferente; a comparação não é par a par.`);
+      continue;
+    }
+    for (let i = 0; i < idoso.length; i++) {
+      const rIdoso = (idoso[i] as { rirAlvo?: number }).rirAlvo;
+      const rJovem = (jovem[i] as { rirAlvo?: number }).rirAlvo;
+      if (rIdoso == null || rJovem == null) continue;
+      // Uma mão só: a idade nunca pode aproximar da falha.
+      if (rIdoso < rJovem)
+        erro(`IDADE DEIXOU A DOSE MAIS AGRESSIVA (${objetivo}): aos 70 anos o alvo é RIR ${rIdoso} contra ${rJovem} aos 40, no mesmo bloco.`);
+      if (rIdoso > rJovem) apertou++;
+    }
+  }
+  if (!apertou)
+    erro("AUTOVERIFICAÇÃO (dose por idade): nenhum bloco ficou mais conservador aos 70 anos; a camada de idade é inerte e a asserção acima não prova nada.");
+
+  /*
+   * 3. A FUSÃO CONTINUA CONSERVADORA quando idade e condição se encontram.
+   *
+   * Idade não é condição, mas obedece à mesma lei: no encontro das duas, vale a mais
+   * conservadora, e nunca o contrário.
+   */
+  for (const g of ["osteoporose", "hipertensao-estagio-2", "gestante"]) {
+    for (const objetivo of OBJ_FORCA) {
+      const so = blocosForca(gerarPlano({ objetivo, nivel: "Intermediário", semanas: 12, frequencia: 3, grupoEspecial: g }));
+      const com = blocosForca(gerarPlano({ objetivo, nivel: "Intermediário", semanas: 12, frequencia: 3, grupoEspecial: g, idade: 70 }));
+      for (let i = 0; i < Math.min(so.length, com.length); i++) {
+        const a = (so[i] as { rirAlvo?: number }).rirAlvo;
+        const b = (com[i] as { rirAlvo?: number }).rirAlvo;
+        if (a != null && b != null && b < a)
+          erro(`IDADE AFROUXOU A CONDIÇÃO (${g}, ${objetivo}): com 70 anos o alvo é RIR ${b}, mais perto da falha que os ${a} da condição sozinha.`);
+      }
+    }
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
