@@ -374,8 +374,26 @@ for (const est of estimativas.filter((e) => e.unidade === "mL/kg/min")) {
  * emagrecimento de um hipertenso estágio 2 com obesidade grau II saía com "Bicicleta
  * ergométrica 3 séries de 13 repetições". Quanto mais frágil o aluno, mais absurda a sessão.
  */
-const AEROBIOS = new Set(exercises.filter((e) => e.doseAerobia).map((e) => e.slug));
-if (AEROBIOS.size === 0) erro("Nenhum exercício marcado com doseAerobia: esta verificação passaria por vazio.");
+/*
+ * O ISOMÉTRICO ENTROU NA MESMA ASSERÇÃO, e não numa asserção nova, porque o defeito é o
+ * mesmo: exercício cuja dose é TEMPO recebendo série e repetição. O agachamento isométrico
+ * na parede é peso corporal e tem métricas de segurança boas, ou seja, é exatamente o
+ * perfil que sobe na fila do seletor de força quando a regra clínica aperta, que foi como a
+ * bicicleta chegou lá.
+ *
+ * HONESTIDADE SOBRE O QUE ESTA METADE PROTEGE HOJE, medido na falsificação: desligar
+ * `!e.doseIsometrica` do `ehForca` NÃO faz nenhum plano prescrever isométrico como força,
+ * porque os dois entram na lista de elegíveis (41 e 59 conforme o objetivo) e não alcançam
+ * o topo da fila do seletor. Ou seja, a metade AERÓBIA desta asserção é a que sustenta peso
+ * hoje, e a metade isométrica é TRIPWIRE para a rodada que integrar o isométrico à seleção
+ * do plano, quando ele passará a ser escolhido de propósito. O controle positivo abaixo
+ * (`ISOMETRICOS.length === 0`) é o que garante que ela está ligada a dado real, e esse
+ * dispara.
+ */
+const DOSE_POR_TEMPO = new Set(exercises.filter((e) => e.doseAerobia || e.doseIsometrica).map((e) => e.slug));
+const ISOMETRICOS = exercises.filter((e) => e.doseIsometrica);
+if (!exercises.some((e) => e.doseAerobia)) erro("Nenhum exercício marcado com doseAerobia: esta verificação passaria por vazio.");
+if (ISOMETRICOS.length === 0) erro("Nenhum exercício marcado com doseIsometrica: a metade isométrica desta verificação passaria por vazio.");
 for (const objetivo of OBJETIVOS) {
   for (const grupo of [undefined, "hipertensao-estagio-2", "obesidade-grau-3", "dor-lombar-inespecifica"]) {
     const p = gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo });
@@ -385,14 +403,38 @@ for (const objetivo of OBJETIVOS) {
           for (const s of w.sessoes)
             for (const b of s.blocos) {
               if (b.tipo === "aerobio" || !b.exercicioSlug) continue;
-              if (AEROBIOS.has(b.exercicioSlug)) {
+              if (DOSE_POR_TEMPO.has(b.exercicioSlug)) {
                 erro(
-                  `CARDIO COMO FORÇA: ${objetivo}/${grupo ?? "sem grupo"} prescreveu "${b.nome}" em bloco de força, com ${b.series} séries de ${b.reps}. A dose desse exercício é tempo.`,
+                  `DOSE DE TEMPO COMO FORÇA: ${objetivo}/${grupo ?? "sem grupo"} prescreveu "${b.nome}" em bloco de força, com ${b.series} séries de ${b.reps}. A dose desse exercício é tempo.`,
                 );
               }
             }
     }
   }
+}
+
+/*
+ * A CAUTELA DO ISOMÉTRICO VEM ESCRITA, e antes do benefício.
+ *
+ * Decisão do Filipe: "treinos isométricos são os que mais elevam a pressão arterial também
+ * [...] a cautela tem que vir antes do foco apenas no que gera mais adaptações". A elevação
+ * aguda é medida, não folclore, então todo isométrico do catálogo precisa dizer isso onde o
+ * profissional lê antes de prescrever, e precisa citar de onde vem.
+ */
+for (const e of ISOMETRICOS) {
+  const evitar = e.blocos.quandoEvitar ?? [];
+  if (!evitar.length) {
+    erro(`ISOMÉTRICO SEM CAUTELA (${e.slug}): nenhum item em quandoEvitar.`);
+    continue;
+  }
+  if (!/press[ãa]o/i.test(evitar[0]))
+    erro(
+      `CAUTELA DO ISOMÉTRICO FORA DE ORDEM (${e.slug}): o primeiro "quando evitar" é "${evitar[0].slice(0, 60)}", e a pressão arterial é a razão que precisa vir primeiro.`,
+    );
+  if (!/ELEVA|sobe/i.test(evitar.join(" ")))
+    erro(`ISOMÉTRICO SEM O FATO AGUDO (${e.slug}): não diz em lugar nenhum que a contração sustentada ELEVA a pressão durante o esforço.`);
+  if (!/valsalva|respira/i.test(evitar.join(" ") + e.blocos.errosComuns.join(" ")))
+    erro(`ISOMÉTRICO SEM A REGRA DA RESPIRAÇÃO (${e.slug}): prender a respiração soma a Valsalva à elevação que o exercício já causa.`);
 }
 
 /*

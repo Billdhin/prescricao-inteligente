@@ -60,7 +60,56 @@ export const referencias: Referencia[] = [
     ano: 2015,
     doi: "10.1007/s40279-015-0385-9",
     pmid: "26420238",
-    nota: "Revisão sistemática com metanálise de 25 ensaios randomizados em adultos saudáveis com média de 65 anos ou mais. Os valores com maior efeito sobre força, por variável isolada: intensidade de 70 a 79% de 1RM (SMD 1,89), 2 a 3 séries por exercício (2,99), 7 a 9 repetições por série (1,98) e 2 sessões por semana (2,13). LIMITAÇÕES DECLARADAS: qualidade metodológica baixa (PEDro médio 4,6), heterogeneidade alta (I² de 80%) e os autores escrevem que os resultados podem não representar uma única relação dose-resposta, porque as interações entre as variáveis não puderam ser estimadas. No produto, sustenta o aviso de dose por faixa etária no raciocínio do plano; não vira teto automático porque o vocabulário de %1RM não alcança os objetivos que treinam por reserva de repetições.",
+    nota: "Revisão sistemática com metanálise de 25 ensaios randomizados em adultos saudáveis com média de 65 anos ou mais. Os valores com maior efeito sobre força, por variável isolada: intensidade de 70 a 79% de 1RM (SMD 1,89), 2 a 3 séries por exercício (2,99), 7 a 9 repetições por série (1,98) e 2 sessões por semana (2,13). LIMITAÇÕES DECLARADAS: qualidade metodológica baixa (PEDro médio 4,6), heterogeneidade alta (I² de 80%) e os autores escrevem que os resultados podem não representar uma única relação dose-resposta, porque as interações entre as variáveis não puderam ser estimadas. No produto, sustenta o aviso de dose por faixa etária no raciocínio do plano e, desde 14/08/2026, a DIREÇÃO da camada de dose por idade (`lib/gps/esforco.ts`): a partir dos 65 anos, que é o corte da população deste estudo, o plano guarda pelo menos 3 repetições de reserva. O que vem daqui é a direção, intensidade moderada a alta e não máxima; o número de reserva é escolha prudente da casa. Os 70 a 79% de 1RM NÃO viraram teto de carga, porque nenhum objetivo do produto declara faixa de %1RM acima de 79 e o teto não morderia em lugar nenhum.",
+  },
+  /*
+   * ISOMÉTRICO PARA PRESSÃO ARTERIAL. Quatro referências, e a ordem importa: as duas
+   * primeiras dizem QUANTO baixa, a terceira diz COM QUE PROTOCOLO, e a quarta é a que
+   * torna o protocolo executável fora do laboratório. Sem a quarta, a dose exigiria teste
+   * incremental com monitor de FC, e o produto estaria prescrevendo o que o usuário não tem
+   * como controlar.
+   */
+  {
+    id: "edwards-exercicio-pa-2023",
+    autores: "Edwards JJ, Deenmamode AHP, Griffiths M, Arnold O, Cooper NJ, Wiles JD, O'Driscoll JM",
+    titulo:
+      "Exercise training and resting blood pressure: a large-scale pairwise and network meta-analysis of randomised controlled trials",
+    fonte: "British Journal of Sports Medicine, 57(20):1317-1326",
+    ano: 2023,
+    doi: "10.1136/bjsports-2022-106503",
+    pmid: "37491419",
+    nota: "Metanálise em rede com 270 ensaios randomizados e 15.827 participantes. Reduções de pressão de repouso por modo: isométrico −8,24/−4,00 mmHg, combinado −6,04/−2,54, resistido dinâmico −4,55/−3,04, aeróbio −4,49/−2,53 e intervalado de alta intensidade −4,08/−2,50. No ranqueamento SUCRA para sistólica o isométrico fica em 98,3%, e o submodo mais efetivo é o AGACHAMENTO ISOMÉTRICO NA PAREDE (90,4%); para diastólica, a corrida (91,3%). No produto, é o que sustenta a existência da família isométrica no catálogo.",
+  },
+  {
+    id: "baffour-isometrico-hipertensos-2023",
+    autores: "Baffour-Awuah B, Pearson MJ, Dieberg G, Smart NA",
+    titulo: "Isometric Resistance Training to Manage Hypertension: Systematic Review and Meta-analysis",
+    fonte: "Current Hypertension Reports, 25(4):35-49",
+    ano: 2023,
+    doi: "10.1007/s11906-023-01232-w",
+    pmid: "36853479",
+    nota: "Metanálise restrita a pessoas JÁ HIPERTENSAS: 12 estudos e 415 participantes. Sistólica −7,47 mmHg (IC 95% −10,10 a −4,84), diastólica −3,17 (−5,29 a −1,04) e pressão arterial média −7,19. RESSALVA QUE PESA E PRECISA APARECER AO USUÁRIO: a pressão ambulatorial de 24 horas e a diurna NÃO caíram de forma significativa; só a noturna (sistólica −4,28). Ou seja, o efeito é claro na medida de consultório e não se confirma nas 24 horas.",
+  },
+  {
+    id: "wiles-agachamento-parede-2016",
+    autores: "Wiles JD, Goldring N, Coleman D",
+    titulo: "Home-based isometric exercise training induced reductions resting blood pressure",
+    fonte: "European Journal of Applied Physiology, 117(1):83-93",
+    ano: 2016,
+    doi: "10.1007/s00421-016-3501-0",
+    pmid: "27853886",
+    nota: "É a fonte do PROTOCOLO, e por isso a dose do agachamento isométrico na parede não é interpolada pelo motor: 4 séries de 2 minutos de contração, com 2 minutos de descanso entre elas, 3 vezes por semana, com pelo menos 48 h entre sessões. A intensidade é dada pelo ÂNGULO DE JOELHO individualizado para uma frequência cardíaca-alvo de 95% do pico. Ensaio cruzado randomizado em 28 homens NORMOTENSOS, com quedas de −4 na sistólica e −3 na diastólica, menores que as das metanálises em hipertensos, o que é coerente com quem já tem pressão normal. Decaux 2022 (doi 10.14814/phy2.15112) repetiu o protocolo com grupo SHAM a menos de 75% da FC de pico e mostrou que o sham não funciona, o que afasta efeito inespecífico.",
+  },
+  {
+    id: "lea-escala-isometrica-2021",
+    autores: "Lea JWD, O'Driscoll JM, Coleman DA, Wiles JD",
+    titulo:
+      "Validity and reliability of the 'Isometric Exercise Scale' (IES) for measuring ratings of perceived exertion during continuous isometric exercise",
+    fonte: "Scientific Reports, 11:5334",
+    ano: 2021,
+    doi: "10.1038/s41598-021-84803-8",
+    pmid: "33674722",
+    nota: "É o que torna o protocolo executável sem laboratório: a percepção de esforço é medida válida da intensidade do agachamento isométrico na parede, com correlação de 0,967 contra a escala de Borg CR-10 e relações fortes com duração (0,849), frequência cardíaca (0,819) e pressão arterial (0,841). No estudo irmão dos mesmos autores (PMID 34104828) a percepção distingue ângulos de joelho a cada 10 graus e se correlaciona com a pressão sistólica MEDIDA DURANTE o esforço (r = 0,77), o que é ao mesmo tempo o instrumento e o alerta: a pressão sobe durante a contração, de forma proporcional à carga. LIMITAÇÃO DECLARADA: a confiabilidade é melhor nas cargas altas, com coeficiente de variação indo de 4,5% a 54%.",
   },
   {
     id: "garcia-dm2-rede-2025",

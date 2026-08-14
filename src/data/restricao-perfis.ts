@@ -33,6 +33,15 @@ export const RESTRICAO_PERFIS: Record<string, RestricaoPerfilExercicio> = {
   "marcha-aquatica": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false, flexaoColunaCarregada: false, membrosAcimaDoCoracao: false },
   "sentar-levantar": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true, flexaoColunaCarregada: false, membrosAcimaDoCoracao: false },
   "ponte-gluteos": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: true, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false, flexaoColunaCarregada: false, membrosAcimaDoCoracao: false },
+  /*
+   * ISOMÉTRICOS. O agachamento na parede fica EM PÉ e tem apoio (a parede), o que é o fato
+   * estrutural que interessa: não exige ir ao chão nem ajoelhar, e a amplitude é ajustável
+   * pelo ângulo de joelho, que é justamente como se regula a carga. A preensão é sentada e
+   * praticamente não tem demanda estrutural nenhuma, que é o motivo de ela servir a quem
+   * não pode carregar membro inferior.
+   */
+  "agachamento-isometrico-parede": { posicao: "em pé", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true, flexaoColunaCarregada: false, membrosAcimaDoCoracao: false },
+  "preensao-isometrica-handgrip": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: true, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: true, flexaoColunaCarregada: false, membrosAcimaDoCoracao: false },
   "prancha-frontal": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: true, unilateral: false, apoioNasMaos: true, amplitudeAjustavel: false, possuiApoio: false, flexaoColunaCarregada: false, membrosAcimaDoCoracao: false },
   "dead-bug": { posicao: "deitado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: true, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false, flexaoColunaCarregada: false, membrosAcimaDoCoracao: false },
   "remada-elastica": { posicao: "sentado", impacto: "baixo", movimentoAcimaCabeca: false, exigeAjoelhar: false, exigeIrAoChao: false, unilateral: false, apoioNasMaos: false, amplitudeAjustavel: true, possuiApoio: false, flexaoColunaCarregada: false, membrosAcimaDoCoracao: false },

@@ -380,7 +380,17 @@ function selecionarExercicios(
    *
    * O aeróbio continua no plano, no bloco dele, prescrito em minutos, como sempre esteve.
    */
-  const ehForca = (e: (typeof exercises)[number]) => !e.doseAerobia;
+  /*
+   * O ISOMÉTRICO ENTRA PELA MESMA PORTA, E PELO MESMO MOTIVO.
+   *
+   * A regra acima nasceu do aeróbio, mas o que ela de fato afirma é mais geral: só entra na
+   * seleção de FORÇA quem se prescreve em SÉRIE E REPETIÇÃO. O isométrico não tem
+   * repetição, e um agachamento isométrico na parede prescrito como "3 x 12" seria a mesma
+   * classe de absurdo que a bicicleta com 13 repetições. A marca foi criada antes do
+   * primeiro isométrico entrar no catálogo, exatamente para que essa regressão nunca chegue
+   * a existir.
+   */
+  const ehForca = (e: (typeof exercises)[number]) => !e.doseAerobia && !e.doseIsometrica;
 
   /*
    * EXERCÍCIO QUE O ALUNO NÃO TEM COMO EXECUTAR NÃO ENTRA NO PLANO.

@@ -187,6 +187,24 @@ export interface Exercise {
    * escada: todos se prescrevem em minutos. `ehDoseAerobia` é a leitura única desta marca.
    */
   doseAerobia?: boolean;
+  /**
+   * A DOSE DESTE EXERCÍCIO É TEMPO DE CONTRAÇÃO SUSTENTADA, EM SEGUNDOS.
+   *
+   * Mesma ideia de `doseAerobia`, terceira família de dose do produto: o isométrico não tem
+   * repetição, porque não há fase concêntrica nem excêntrica para contar. Prescrever "3 x 12"
+   * num agachamento isométrico na parede é o mesmo tipo de absurdo que "Bicicleta ergométrica
+   * 3 séries de 13 repetições" era, e por isso a marca existe ANTES do primeiro isométrico
+   * entrar no catálogo, e não depois.
+   *
+   * Quem lê esta marca é `ehExercicioDeSerie` em `lib/gps/periodizacao.ts`, leitura única:
+   * exercício marcado aqui nunca entra na seleção de força, do mesmo jeito que o aeróbio não
+   * entra. O `check:core` trava a regressão.
+   *
+   * A dose própria (séries, duração da contração e descanso) vive em `doseIsometrica` nos
+   * dados do exercício, com a referência ao lado, porque protocolo isométrico é PROTOCOLO
+   * publicado, não faixa que o motor possa interpolar.
+   */
+  doseIsometrica?: boolean;
   ativacao: MuscleActivation[];
   indiceEficiencia: IndiceEficiencia;
   fases: Fase[];
