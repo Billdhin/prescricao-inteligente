@@ -85,11 +85,11 @@ export const exerciciosIsometricos: Exercise[] = [
       "Contração sustentada com as costas apoiadas na parede e os joelhos dobrados, mantida por tempo. É o submodo isométrico com maior efeito sobre a pressão sistólica na metanálise em rede, e não precisa de nenhum equipamento.",
     modalidade: "m-musculacao",
     ativacao: [
-      { musculo: "Quadríceps femoral", percentual: 72, papel: "primário" },
+      { musculo: "Quadríceps", percentual: 72, papel: "primário" },
       { musculo: "Glúteo máximo", percentual: 45, papel: "sinergista" },
       { musculo: "Eretores da espinha", percentual: 32, papel: "estabilizador" },
     ],
-    indiceEficiencia: { score: 78, metrics: m("Quadríceps femoral", 72, 20, 25, 40, 10, 30) },
+    indiceEficiencia: { score: 78, metrics: m("Quadríceps", 72, 20, 25, 40, 10, 30) },
     /*
      * O guardrail do catálogo diz "um movimento tem pelo menos início e fim", e num
      * isométrico isso continua valendo, só que as fases não são do movimento e sim da
@@ -172,10 +172,12 @@ export const exerciciosIsometricos: Exercise[] = [
       "Apertar e sustentar um dinamômetro ou aparelho de preensão por tempo. É o formato isométrico mais estudado para pressão arterial e o mais fácil de fazer sentado, sem carga sobre articulação de membro inferior.",
     modalidade: "m-musculacao",
     ativacao: [
-      { musculo: "Flexores dos dedos", percentual: 70, papel: "primário" },
-      { musculo: "Flexores do punho", percentual: 55, papel: "sinergista" },
+      // UM músculo só, e é honesto: a preensão sustentada é o exercício mais isolado do
+      // catálogo. O glossário de métricas não tem entrada separada para os flexores dos
+      // dedos, e inventar uma para preencher a lista seria anatomia decorativa.
+      { musculo: "Flexores do punho", percentual: 70, papel: "primário" },
     ],
-    indiceEficiencia: { score: 74, metrics: m("Flexores dos dedos", 70, 15, 5, 5, 15, 10) },
+    indiceEficiencia: { score: 74, metrics: m("Flexores do punho", 70, 15, 5, 5, 15, 10) },
     fases: [
       { nome: "Entrada", descricao: "Sentado, cotovelo apoiado e confortável, pega firme no aparelho de preensão." },
       { nome: "Sustentação", descricao: "Aperta e mantém a força pelo tempo prescrito, respiração solta, sem contrair o resto do corpo." },
