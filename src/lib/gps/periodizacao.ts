@@ -761,6 +761,41 @@ function intensidadeAerobia(ctx: CtxAlvo, texto: string): string {
     .trim();
 }
 
+/**
+ * O PROTOCOLO ISOMÉTRICO, LITERAL.
+ *
+ * Números de `wiles-agachamento-parede-2016`, não interpolados e não progressivos: 4
+ * contrações de 2 minutos, 2 minutos de descanso entre elas, 3 vezes por semana. É o que foi
+ * testado, e mexer em qualquer um dos quatro números produz um protocolo sem estudo atrás.
+ */
+const ISO_PROTOCOLO = { series: 4, contracao: "2 min", descanso: "2 min" } as const;
+const ISO_SESSOES_POR_SEMANA = 3;
+
+/**
+ * Qual isométrico oferecer, se algum sobreviver aos filtros de sempre.
+ *
+ * Não há atalho: equipamento precisa estar declarado (peso corporal sempre está) e a posição
+ * do exercício não pode ser uma das que a condição pede para evitar. Entre os que passam,
+ * vence o AGACHAMENTO NA PAREDE quando ele estiver entre eles, porque é o submodo que a rede
+ * de `edwards-exercicio-pa-2023` aponta como mais efetivo para a sistólica; os demais são
+ * alternativa quando ele não passa (por exemplo, condição que evita a posição em pé).
+ */
+function exercicioIsometrico(
+  equipamentos: string[] | undefined,
+  regraClinica: GroupGpsRule | undefined,
+): (typeof exercises)[number] | undefined {
+  const elegiveis = exercises.filter((e) => {
+    if (!e.doseIsometrica) return false;
+    const equipOk = !equipamentos?.length || e.equipamento === "Peso corporal" || equipamentos.includes(e.equipamento);
+    if (!equipOk) return false;
+    const posicao = e.restricaoPerfil?.posicao;
+    if (posicao && regraClinica?.posicoesEvitar?.includes(posicao)) return false;
+    if (regraClinica?.evitarMembrosAcimaDoCoracao && e.restricaoPerfil?.membrosAcimaDoCoracao) return false;
+    return true;
+  });
+  return elegiveis.find((e) => e.slug === "agachamento-isometrico-parede") ?? elegiveis[0];
+}
+
 function montarSessoes(
   objetivo: GpsObjetivo,
   nivel: Nivel,
@@ -934,6 +969,54 @@ function montarSessoes(
         ),
         ...alvoAerobioSemana(doseAero, ctx),
       });
+    }
+
+    /*
+     * ISOMÉTRICO PARA PRESSÃO ARTERIAL, e a cautela vem antes do benefício.
+     *
+     * Entra por CONDIÇÃO (`GroupGpsRule.isometrico`), nunca por objetivo, porque a evidência
+     * é específica de pressão arterial. Fica no FIM da sessão, somando ao que o objetivo já
+     * mandou, do mesmo jeito que a ênfase de modalidade soma sem tirar nada.
+     *
+     * ## Por que a dose é literal e não passa pelo motor de alvo
+     *
+     * Todo o resto do plano recebe faixa e o motor escolhe o ponto da semana. Aqui não:
+     * `wiles-agachamento-parede-2016` publicou um protocolo FECHADO (4 contrações de 2 min,
+     * 2 min de descanso, 3 vezes por semana, 48 h entre sessões) e interpolar dentro dele
+     * inventaria um protocolo que ninguém testou. Por isso o bloco não chama `alvoSemana` e
+     * não progride: ele repete o protocolo, que é o que foi medido.
+     *
+     * ## As três portas de segurança, nesta ordem
+     *
+     * 1. A condição precisa DECLARAR indicação, e o `evitar` de qualquer condição fundida
+     *    derruba (a fusão já resolveu isso antes de chegar aqui).
+     * 2. O exercício precisa sobreviver aos MESMOS filtros de todo mundo: equipamento
+     *    declarado e restrição do perfil. Não há atalho para o isométrico.
+     * 3. O texto do bloco diz que a pressão SOBE durante a contração e que a respiração fica
+     *    solta, porque é o que a medida mostra e é o que o profissional precisa ler antes de
+     *    aplicar.
+     *
+     * A frequência do protocolo (3x/semana) é o teto: num plano de 5 sessões ele entra em 3.
+     */
+    const iso = regraClinica?.isometrico;
+    if (iso?.indicado && !iso.evitar && i < ISO_SESSOES_POR_SEMANA) {
+      const ex = exercicioIsometrico(equipamentos, regraClinica);
+      if (ex) {
+        blocos.push({
+          id: nid("blk"),
+          tipo: "isometrico",
+          exercicioSlug: ex.slug,
+          nome: ex.nome,
+          series: String(ISO_PROTOCOLO.series),
+          duracao: ISO_PROTOCOLO.contracao,
+          intervalo: ISO_PROTOCOLO.descanso,
+          intensidade:
+            "Pela percepção de esforço: a contração inteira precisa fechar sem queda visível de força no fim. Ajuste o ângulo (ou a pega) em vez de encurtar o tempo.",
+          recuperacao: ISO_PROTOCOLO.descanso,
+          observacao:
+            "A pressão arterial SOBE durante a contração sustentada, proporcional à carga: respiração solta do começo ao fim, sem prender o ar. Só aplique com a liberação do dia em ordem. O protocolo foi testado como sessão própria, então ele também pode ser feito em separado, 3 vezes por semana, com 48 h entre as sessões.",
+        });
+      }
     }
 
     sessoes.push({

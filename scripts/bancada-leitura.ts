@@ -90,6 +90,11 @@ const CENARIOS: { rotulo: string; input: GerarPlanoInput }[] = [
  * ausente vira "não progride" na cabeça de quem lê.
  */
 const fmtBloco = (b: Record<string, unknown>) => {
+  // Terceira família de dose: séries e TEMPO de contração, sem repetição. Ganhou linha
+  // própria pelo mesmo motivo do parágrafo acima: bloco que a bancada não sabe imprimir vira
+  // bloco que ninguém revisa.
+  if (b.tipo === "isometrico")
+    return `    [ISO] ${b.nome} | ${b.series} x ${b.duracao} de contração | descanso ${b.intervalo} | ${String(b.intensidade).slice(0, 50)}`;
   if (b.tipo === "aerobio")
     return `    [AER] ${b.nome} | ${b.formato} | ${b.duracao} (alvo ${b.duracaoAlvoMin ?? "?"}min)${b.rpeAlvo != null ? " PSE " + b.rpeAlvo : ""} | ${String(b.intensidade).slice(0, 56)}${b.zonaFC ? " | FC " + b.zonaFC : ""}`;
   const alvo = [

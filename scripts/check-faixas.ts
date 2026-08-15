@@ -40,6 +40,16 @@ for (const objetivo of OBJETIVOS as readonly GpsObjetivo[]) {
                 for (const bloco of sessao.blocos) {
                   // O bloco aeróbio guarda minutos em `reps`; a faixa fala de repetições.
                   if (bloco.tipo === "aerobio") continue;
+                  /*
+                   * O bloco ISOMÉTRICO também sai, e por um motivo diferente do aeróbio: a
+                   * dose dele não vem do objetivo, vem de um PROTOCOLO publicado fechado
+                   * (4 contrações de 2 min, `wiles-agachamento-parede-2016`). Conferi-lo
+                   * contra a faixa do objetivo acusava "series = 4 fora de 2 a 3", que é
+                   * verdade e é irrelevante: o protocolo não foi desenhado dentro da faixa
+                   * de nenhum objetivo, e ajustá-lo para caber inventaria um protocolo sem
+                   * estudo atrás. Ver `ISO_PROTOCOLO` em lib/gps/periodizacao.ts.
+                   */
+                  if (bloco.tipo === "isometrico") continue;
                   blocos++;
                   for (const campo of CAMPOS) {
                     const valor = bloco[campo];

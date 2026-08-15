@@ -305,6 +305,30 @@ export interface GroupGpsRule extends GroupRuleInput {
    * de monitoramento sejam a MESMA operação, e a ordem das fontes nunca mude o resultado.
    */
   monitoramento?: EfeitoMonitoramento;
+  /**
+   * A condição tem evidência de benefício com EXERCÍCIO ISOMÉTRICO, e o plano pode oferecer
+   * o protocolo publicado.
+   *
+   * Duas portas e fusão conservadora, copiadas de `ModAerobio.intervalado*` em vez de
+   * reinventadas: `evitar` de QUALQUER condição vence `indicado` de todas as outras. Hoje
+   * nenhuma condição declara `evitar`, exatamente como acontece com o intervalado, e a porta
+   * existe pelo mesmo motivo: as duas direções existem na clínica e a que protege precisa
+   * estar pronta antes de precisarem dela.
+   *
+   * ATENÇÃO À LEITURA DA EVIDÊNCIA, porque duas redes diferentes falam de hipertensão neste
+   * arquivo e elas NÃO se contradizem: `tian-has-modalidade-2025` compara CINCO modalidades
+   * e o isométrico não está entre elas, então dizer que o aeróbio "vence" o isométrico com
+   * base nela seria comparar coisas que nunca foram comparadas. Por isso o isométrico entra
+   * SOMANDO ao `enfaseModalidade` aeróbio, nunca no lugar dele, que é a mesma regra de via
+   * única que a ênfase já segue.
+   */
+  isometrico?: {
+    indicado?: boolean;
+    /** desaconselha o isométrico nesta condição; na fusão, isto vence */
+    evitar?: boolean;
+    motivo: string;
+    refId?: string[];
+  };
 }
 
 export const groupGpsRules: Record<string, GroupGpsRule> = {
@@ -474,6 +498,11 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   },
 
   "hipertensao-estagio-1": {
+    isometrico: {
+      indicado: true,
+      motivo: "O exercicio isometrico e o modo com maior reducao de pressao de repouso na maior rede disponivel, e o agachamento na parede e o submodo mais efetivo para a sistolica. SOMA ao aerobio, nao substitui: a rede que sustenta a enfase aerobia deste perfil nao comparou isometrico.",
+      refId: ["edwards-exercicio-pa-2023", "baffour-isometrico-hipertensos-2023", "wiles-agachamento-parede-2016", "lea-escala-isometrica-2021"],
+    },
     slug: "hipertensao-estagio-1",
     evitarMembrosAcimaDoCoracao: true,
     /*
@@ -583,6 +612,11 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
    * isometria hoje. Fica registrado aqui para não se perder.
    */
   "hipertensao-estagio-2": {
+    isometrico: {
+      indicado: true,
+      motivo: "O exercicio isometrico e o modo com maior reducao de pressao de repouso na maior rede disponivel, e o agachamento na parede e o submodo mais efetivo para a sistolica. SOMA ao aerobio, nao substitui: a rede que sustenta a enfase aerobia deste perfil nao comparou isometrico.",
+      refId: ["edwards-exercicio-pa-2023", "baffour-isometrico-hipertensos-2023", "wiles-agachamento-parede-2016", "lea-escala-isometrica-2021"],
+    },
     slug: "hipertensao-estagio-2",
     evitarMembrosAcimaDoCoracao: true,
     // Mesma leitura do estágio 1, e pela mesma rede: o aeróbio leve a moderado é o que move
@@ -1656,6 +1690,25 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
       };
     })(),
     refs,
+    /*
+     * Mesma lei de duas portas do intervalado: o `evitar` de QUALQUER condição derruba o
+     * `indicado` de todas as outras. Um hipertenso que também tenha condição que
+     * desaconselhe contração sustentada não recebe o isométrico, e não é preciso listar
+     * pares de condições em lugar nenhum para isso valer.
+     */
+    isometrico: (() => {
+      const is = rules.map((r) => r.isometrico).filter((i): i is NonNullable<GroupGpsRule["isometrico"]> => Boolean(i));
+      if (!is.length) return undefined;
+      const evitar = is.some((i) => i.evitar);
+      const refs: string[] = [];
+      for (const i of is) for (const r of i.refId ?? []) if (!refs.includes(r)) refs.push(r);
+      return {
+        indicado: !evitar && is.some((i) => i.indicado) ? true : undefined,
+        evitar: evitar || undefined,
+        motivo: is.map((i) => i.motivo).join(" "),
+        refId: refs.length ? refs : undefined,
+      };
+    })(),
     modProgressao: fundirModProgressao(
       rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),
     ),

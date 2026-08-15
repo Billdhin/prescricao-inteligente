@@ -381,14 +381,9 @@ for (const est of estimativas.filter((e) => e.unidade === "mL/kg/min")) {
  * perfil que sobe na fila do seletor de força quando a regra clínica aperta, que foi como a
  * bicicleta chegou lá.
  *
- * HONESTIDADE SOBRE O QUE ESTA METADE PROTEGE HOJE, medido na falsificação: desligar
- * `!e.doseIsometrica` do `ehForca` NÃO faz nenhum plano prescrever isométrico como força,
- * porque os dois entram na lista de elegíveis (41 e 59 conforme o objetivo) e não alcançam
- * o topo da fila do seletor. Ou seja, a metade AERÓBIA desta asserção é a que sustenta peso
- * hoje, e a metade isométrica é TRIPWIRE para a rodada que integrar o isométrico à seleção
- * do plano, quando ele passará a ser escolhido de propósito. O controle positivo abaixo
- * (`ISOMETRICOS.length === 0`) é o que garante que ela está ligada a dado real, e esse
- * dispara.
+ * A partir da integração ao motor, o isométrico É prescrito de propósito, no bloco próprio
+ * (`tipo: "isometrico"`), e por isso a asserção passou a olhar só o bloco de FORÇA: o que
+ * ela proíbe é o exercício de dose por tempo aparecer onde se conta série e repetição.
  */
 const DOSE_POR_TEMPO = new Set(exercises.filter((e) => e.doseAerobia || e.doseIsometrica).map((e) => e.slug));
 const ISOMETRICOS = exercises.filter((e) => e.doseIsometrica);
@@ -402,7 +397,7 @@ for (const objetivo of OBJETIVOS) {
         for (const w of m.microciclos)
           for (const s of w.sessoes)
             for (const b of s.blocos) {
-              if (b.tipo === "aerobio" || !b.exercicioSlug) continue;
+              if (b.tipo === "aerobio" || b.tipo === "isometrico" || !b.exercicioSlug) continue;
               if (DOSE_POR_TEMPO.has(b.exercicioSlug)) {
                 erro(
                   `DOSE DE TEMPO COMO FORÇA: ${objetivo}/${grupo ?? "sem grupo"} prescreveu "${b.nome}" em bloco de força, com ${b.series} séries de ${b.reps}. A dose desse exercício é tempo.`,
@@ -421,6 +416,44 @@ for (const objetivo of OBJETIVOS) {
  * aguda é medida, não folclore, então todo isométrico do catálogo precisa dizer isso onde o
  * profissional lê antes de prescrever, e precisa citar de onde vem.
  */
+/*
+ * A INTEGRAÇÃO AO MOTOR: quem declara indicação recebe, quem não declara não recebe, e o
+ * bloco nunca vira série e repetição.
+ *
+ * Três coisas de uma vez, porque as três falham por caminhos diferentes: a regra pode não
+ * chegar ao plano (era a lacuna de sempre neste motor), pode chegar em quem não pediu (que
+ * seria prescrever contração sustentada para quem não tem indicação nenhuma), e o bloco
+ * pode nascer com repetição (que é a marca de dose que este arquivo já protege).
+ */
+{
+  const comIndicacao = specialGroups.filter((g) => combineRules([g.slug])?.isometrico?.indicado === true).map((g) => g.slug);
+  if (!comIndicacao.length) erro("AUTOVERIFICAÇÃO (isométrico): nenhuma condição declara isometrico.indicado; a integração não teria como ser conferida.");
+  const blocosIso = (grupo?: string) => {
+    const p = gerarPlano({ objetivo: "Resistência muscular", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo });
+    return p.principal.mesociclos.flatMap((m) => m.microciclos).flatMap((w) => w.sessoes.flatMap((s) => s.blocos)).filter((b) => b.tipo === "isometrico");
+  };
+  for (const slug of comIndicacao) {
+    const bs = blocosIso(slug);
+    if (!bs.length) {
+      erro(`ISOMÉTRICO NÃO CHEGOU AO PLANO (${slug}): a condição declara indicação e nenhum bloco isométrico foi prescrito. Regra que não alcança o plano é letra morta.`);
+      continue;
+    }
+    for (const b of bs) {
+      if (b.reps != null || (b as { repsAlvo?: number }).repsAlvo != null)
+        erro(`ISOMÉTRICO COM REPETIÇÃO (${slug}): o bloco "${b.nome}" saiu com reps="${b.reps}". A dose dele é tempo de contração.`);
+      if (!b.duracao) erro(`ISOMÉTRICO SEM TEMPO (${slug}): o bloco "${b.nome}" não declara duração da contração.`);
+      if (!/press[ãa]o/i.test(b.observacao ?? ""))
+        erro(`ISOMÉTRICO SEM A CAUTELA NO BLOCO (${slug}): a observação não fala da pressão arterial, e ela precisa vir antes do benefício.`);
+    }
+  }
+  // Quem não declara indicação não pode receber: a evidência é específica de pressão arterial.
+  for (const grupo of [undefined, "osteoporose", "gestante", "diabetes-tipo-2"]) {
+    if (grupo && comIndicacao.includes(grupo)) continue;
+    if (blocosIso(grupo).length)
+      erro(`ISOMÉTRICO EM QUEM NÃO PEDIU (${grupo ?? "sem condição"}): bloco isométrico prescrito sem a condição declarar indicação.`);
+  }
+}
+
 for (const e of ISOMETRICOS) {
   const evitar = e.blocos.quandoEvitar ?? [];
   if (!evitar.length) {

@@ -69,7 +69,7 @@ export interface BlocoSessao {
    * duração e intensidade (percentual da FCmáx, watts ou pace). Por isso cada tipo usa o
    * seu conjunto de campos abaixo, e não os da musculação para tudo.
    */
-  tipo?: "forca" | "aerobio";
+  tipo?: "forca" | "aerobio" | "isometrico";
   /** slug de exercício (src/data/exercises) OU id de modalidade (src/data/modalities) */
   exercicioSlug?: string;
   modalidade?: string;
