@@ -997,54 +997,6 @@ function montarSessoes(
       });
     }
 
-    /*
-     * ISOMÉTRICO PARA PRESSÃO ARTERIAL, e a cautela vem antes do benefício.
-     *
-     * Entra por CONDIÇÃO (`GroupGpsRule.isometrico`), nunca por objetivo, porque a evidência
-     * é específica de pressão arterial. Fica no FIM da sessão, somando ao que o objetivo já
-     * mandou, do mesmo jeito que a ênfase de modalidade soma sem tirar nada.
-     *
-     * ## Por que a dose é literal e não passa pelo motor de alvo
-     *
-     * Todo o resto do plano recebe faixa e o motor escolhe o ponto da semana. Aqui não:
-     * `wiles-agachamento-parede-2016` publicou um protocolo FECHADO (4 contrações de 2 min,
-     * 2 min de descanso, 3 vezes por semana, 48 h entre sessões) e interpolar dentro dele
-     * inventaria um protocolo que ninguém testou. Por isso o bloco não chama `alvoSemana` e
-     * não progride: ele repete o protocolo, que é o que foi medido.
-     *
-     * ## As três portas de segurança, nesta ordem
-     *
-     * 1. A condição precisa DECLARAR indicação, e o `evitar` de qualquer condição fundida
-     *    derruba (a fusão já resolveu isso antes de chegar aqui).
-     * 2. O exercício precisa sobreviver aos MESMOS filtros de todo mundo: equipamento
-     *    declarado e restrição do perfil. Não há atalho para o isométrico.
-     * 3. O texto do bloco diz que a pressão SOBE durante a contração e que a respiração fica
-     *    solta, porque é o que a medida mostra e é o que o profissional precisa ler antes de
-     *    aplicar.
-     *
-     * A frequência do protocolo (3x/semana) é o teto: num plano de 5 sessões ele entra em 3.
-     */
-    const iso = regraClinica?.isometrico;
-    if (iso?.indicado && !iso.evitar && i < ISO_SESSOES_POR_SEMANA) {
-      const ex = exercicioIsometrico(equipamentos, regraClinica);
-      if (ex) {
-        blocos.push({
-          id: nid("blk"),
-          tipo: "isometrico",
-          exercicioSlug: ex.slug,
-          nome: ex.nome,
-          series: String(ISO_PROTOCOLO.series),
-          duracao: ISO_PROTOCOLO.contracao,
-          intervalo: ISO_PROTOCOLO.descanso,
-          intensidade:
-            "Pela percepção de esforço: a contração inteira precisa fechar sem queda visível de força no fim. Ajuste o ângulo (ou a pega) em vez de encurtar o tempo.",
-          recuperacao: ISO_PROTOCOLO.descanso,
-          observacao:
-            "A pressão arterial SOBE durante a contração sustentada, proporcional à carga: respiração solta do começo ao fim, sem prender o ar. Só aplique com a liberação do dia em ordem. O protocolo foi testado como sessão própria, então ele também pode ser feito em separado, 3 vezes por semana, com 48 h entre as sessões.",
-        });
-      }
-    }
-
     sessoes.push({
       id: nid("ses"),
       nome: enfase ? `Sessão ${i + 1} (${enfase.rotulo})` : `Sessão ${i + 1}`,
@@ -1053,6 +1005,76 @@ function montarSessoes(
       // Fecho de flexibilidade da sessão (variabilidade), citado; o texto vem do objetivo.
       fecho: faixa.flexibilidade?.texto,
     });
+  }
+
+  /*
+   * ISOMÉTRICO PARA PRESSÃO ARTERIAL: SESSÃO PRÓPRIA, e não um bloco no fim do treino.
+   *
+   * Entra por CONDIÇÃO (`GroupGpsRule.isometrico`), nunca por objetivo, porque a evidência é
+   * específica de pressão arterial.
+   *
+   * ## Por que separado, e não anexado
+   *
+   * Primeiro porque é assim que ele foi testado: `wiles-agachamento-parede-2016` aplicou o
+   * protocolo como sessão isolada, 3 vezes por semana, com 48 h entre elas. Anexá-lo ao fim
+   * de um treino mudava o contexto do que a evidência mediu.
+   *
+   * Segundo porque a conta é grande e ficava escondida: 4 contrações de 2 min mais 3
+   * descansos de 2 min somam 14 MINUTOS, empilhados sobre o aeróbio e os exercícios de
+   * força. A varredura de consistência mediu isso e o Filipe decidiu separar.
+   *
+   * Terceiro porque separado ele fica honesto no calendário: o profissional vê uma sessão a
+   * mais na semana, que é o que o aluno de fato vai fazer, em vez de um treino que ficou 14
+   * minutos mais longo sem avisar.
+   *
+   * ## Por que a dose é literal e não passa pelo motor de alvo
+   *
+   * Todo o resto do plano recebe faixa e o motor escolhe o ponto da semana. Aqui não: o
+   * protocolo é FECHADO, e interpolar dentro dele inventaria um protocolo que ninguém
+   * testou. Por isso o bloco não chama `alvoSemana` e não progride: ele repete o protocolo.
+   *
+   * ## As três portas de segurança, nesta ordem
+   *
+   * 1. A condição precisa DECLARAR indicação, e o `evitar` de qualquer condição fundida
+   *    derruba (a fusão já resolveu isso antes de chegar aqui).
+   * 2. O exercício precisa sobreviver aos MESMOS filtros de todo mundo: equipamento
+   *    declarado e restrição do perfil. Não há atalho para o isométrico.
+   * 3. O texto do bloco diz que a pressão SOBE durante a contração e que a respiração fica
+   *    solta, porque é o que a medida mostra e é o que o profissional precisa ler antes de
+   *    aplicar.
+   *
+   * A frequência do protocolo (3x/semana) é o teto, e a do plano é o outro: quem treina 2x
+   * não recebe 3 sessões isométricas, porque a semana dele não comporta.
+   */
+  const iso = regraClinica?.isometrico;
+  if (iso?.indicado && !iso.evitar) {
+    const ex = exercicioIsometrico(equipamentos, regraClinica);
+    if (ex) {
+      const quantas = Math.min(ISO_SESSOES_POR_SEMANA, frequencia);
+      for (let k = 0; k < quantas; k++) {
+        sessoes.push({
+          id: nid("ses"),
+          nome: `Sessão isométrica ${k + 1}`,
+          foco: "Protocolo isométrico para pressão arterial",
+          blocos: [
+            {
+              id: nid("blk"),
+              tipo: "isometrico",
+              exercicioSlug: ex.slug,
+              nome: ex.nome,
+              series: String(ISO_PROTOCOLO.series),
+              duracao: ISO_PROTOCOLO.contracao,
+              intervalo: ISO_PROTOCOLO.descanso,
+              intensidade:
+                "Pela percepção de esforço: a contração inteira precisa fechar sem queda visível de força no fim. Ajuste o ângulo (ou a pega) em vez de encurtar o tempo.",
+              recuperacao: ISO_PROTOCOLO.descanso,
+              observacao:
+                "A pressão arterial SOBE durante a contração sustentada, proporcional à carga: respiração solta do começo ao fim, sem prender o ar. Só aplique com a liberação do dia em ordem. Sessão curta e separada do treino, como o protocolo foi testado: deixe pelo menos 48 h entre duas sessões isométricas.",
+            },
+          ],
+        });
+      }
+    }
   }
   return sessoes;
 }
@@ -1160,12 +1182,29 @@ function montarMicrociclos(
       fcRepouso,
       parametrosInvalidos,
     };
+    const sessoesDaSemana = montarSessoes(
+      objetivo,
+      nivel,
+      freqSemana,
+      modelo,
+      restricoesPlano,
+      ctx,
+      objetivoSecundario,
+      regraClinica,
+      equipamentos,
+      frequencia,
+    );
     semanas.push({
       id: nid("mic"),
       semana,
       tipo: ehDeload ? "deload" : "carga",
-      frequencia: freqSemana,
-      sessoes: montarSessoes(objetivo, nivel, freqSemana, modelo, restricoesPlano, ctx, objetivoSecundario, regraClinica, equipamentos, frequencia),
+      // `frequencia` do microciclo é a CONTAGEM DE SESSÕES da semana, e não a frequência de
+      // treino que o aluno declarou. As duas eram o mesmo número até o isométrico virar
+      // sessão própria; agora não são, e o editor já tratava este campo como contagem
+      // (ele o reescreve como `sessoes.length` a cada edição). Deixar a frequência de treino
+      // aqui faria o editor mostrar "3 sessões" numa semana com 6.
+      frequencia: sessoesDaSemana.length,
+      sessoes: sessoesDaSemana,
       nota: ehDeload ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
       objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade),
     });

@@ -347,6 +347,26 @@ export function rotuloHorizonte(semanas: number): string | undefined {
   return HORIZONTES_PLANO.find((h) => h.semanas === semanas)?.rotulo;
 }
 
+/**
+ * "3x por semana", ou "3x por semana + 3 sessões isométricas" quando a condição do aluno
+ * acrescentou o protocolo.
+ *
+ * Existe como FUNÇÃO ÚNICA porque três telas imprimem essa frase (o portal do aluno, o PDF
+ * do plano e a ficha do aluno) e, no dia em que o isométrico virou sessão própria, as três
+ * passaram a mentir juntas: diziam "3x por semana" numa semana com SEIS sessões. Três
+ * lugares com o mesmo texto escrito à mão é a tabela paralela que envelhece em silêncio.
+ *
+ * `frequenciaSemanal` continua sendo a frequência de TREINO que o aluno declarou, e não
+ * vira 6: o que muda é a frase, que passa a contar a parte que estava escondida.
+ */
+export function rotuloFrequencia(plano: PlanoTreino): string {
+  const base = `${plano.frequenciaSemanal}x por semana`;
+  const primeira = plano.macrociclo?.mesociclos?.[0]?.microciclos?.[0];
+  const iso = primeira?.sessoes.filter((s) => s.blocos.some((b) => b.tipo === "isometrico")).length ?? 0;
+  if (!iso) return base;
+  return `${base} + ${iso} ${iso === 1 ? "sessão isométrica" : "sessões isométricas"}`;
+}
+
 export function semanaAtual(plano: PlanoTreino, agora = Date.now()): number {
   const passadas = Math.floor((agora - plano.data) / SEMANA_MS);
   return Math.min(plano.semanas, Math.max(1, passadas + 1));

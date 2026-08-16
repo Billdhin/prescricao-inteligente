@@ -3,7 +3,7 @@ import { rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import type { MarcaDocumento } from "@/lib/store";
 import type { Macrociclo, Mesociclo, Microciclo, PlanoTreino, Sessao } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
-import { getModelo, getMetodo, rotuloHorizonte, TEND_LABEL, agruparBlocosPorMetodo } from "@/data/periodizacao";
+import { getModelo, getMetodo, rotuloHorizonte, rotuloFrequencia, TEND_LABEL, agruparBlocosPorMetodo } from "@/data/periodizacao";
 import { getModalidade } from "@/data/modalities";
 import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -442,7 +442,7 @@ export function exportPlanoPDF({
     })}
 
     <h1>${esc(tituloDoc)}</h1>
-    <div class="meta">${rotuloHorizonte(plano.semanas) ? esc(rotuloHorizonte(plano.semanas)!) + " · " : ""}${plano.semanas} semanas · ${plano.frequenciaSemanal}x por semana · ${esc(modelo.nome)}</div>
+    <div class="meta">${rotuloHorizonte(plano.semanas) ? esc(rotuloHorizonte(plano.semanas)!) + " · " : ""}${plano.semanas} semanas · ${esc(rotuloFrequencia(plano))} · ${esc(modelo.nome)}</div>
 
     <div class="aluno">
       <strong>${esc(aluno.nome)}</strong>${aluno.idade ? ` · ${aluno.idade} anos` : ""}<br>

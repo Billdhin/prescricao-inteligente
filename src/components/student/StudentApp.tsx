@@ -56,6 +56,7 @@ import {
   getMetodo,
   agruparBlocosPorMetodo,
   sessaoDeHojeIndex,
+  rotuloFrequencia,
 } from "@/data/periodizacao";
 
 // A sessão tem algum bloco com intensidade prescrita? Governa a nota educacional
@@ -1463,7 +1464,7 @@ function AbaPerfil({
             <div className="min-w-0">
               <div className="truncate font-semibold text-ink">{plano.titulo}</div>
               <div className="text-xs text-ink-2">
-                {plano.semanas} semanas · {plano.frequenciaSemanal}x por semana
+                {plano.semanas} semanas · {rotuloFrequencia(plano)}
               </div>
             </div>
           </div>

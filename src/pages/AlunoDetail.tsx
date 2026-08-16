@@ -64,7 +64,7 @@ import { nomeDoBloco, tokensDoBloco } from "@/components/student/blocoRegistro";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { ROTULO_STATUS_COBRANCA, formatBRL, statusEfetivo } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { getModelo, rotuloMeso, semanaAtual, mesocicloAtual, proximaReavaliacao, sessoesDeHoje, sessaoDeHojeIndex, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
+import { getModelo, rotuloMeso, rotuloFrequencia, semanaAtual, mesocicloAtual, proximaReavaliacao, sessoesDeHoje, sessaoDeHojeIndex, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
@@ -247,7 +247,7 @@ function LinhaDoTempo({
       ts: p.data,
       dot: "bg-primary",
       titulo: "Treino publicado no app",
-      sub: `Plano de ${p.semanas} semanas · ${p.frequenciaSemanal}× por semana`,
+      sub: `Plano de ${p.semanas} semanas · ${rotuloFrequencia(p)}`,
     });
   }
   for (const a of avaliacoes) {

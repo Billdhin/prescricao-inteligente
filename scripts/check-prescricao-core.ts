@@ -30,6 +30,7 @@ import { alvoSemana } from "../src/lib/gps/alvo";
 import { aplicarPrescricaoNoPlano, sessoesDaSemana } from "../src/lib/gps/semear";
 import { doseCurta, tokensDoBloco } from "../src/components/student/blocoRegistro";
 import { RIR_MINIMO_IDADE } from "../src/lib/gps/esforco";
+import { rotuloFrequencia } from "../src/data/periodizacao";
 import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
 import { recalcularAlvosDoMeso } from "../src/lib/gps/travas";
 import { doseCurta, tokensDoBloco } from "../src/components/student/blocoRegistro";
@@ -440,6 +441,24 @@ for (const objetivo of OBJETIVOS) {
       erro(`ISOMÉTRICO NÃO CHEGOU AO PLANO (${slug}): a condição declara indicação e nenhum bloco isométrico foi prescrito. Regra que não alcança o plano é letra morta.`);
       continue;
     }
+    /*
+     * SESSÃO PRÓPRIA, e não um bloco no fim do treino. Decisão do Filipe depois que a
+     * varredura mediu a conta escondida: o protocolo soma 14 minutos (4 contrações de 2 min
+     * mais 3 descansos de 2 min) e eles vinham empilhados sobre o aeróbio e a musculação,
+     * sem aparecer em lugar nenhum. Além disso é assim que ele foi testado, como sessão
+     * isolada. A asserção é simples e dura: sessão que tem isométrico não tem mais nada.
+     */
+    const p = gerarPlano({ objetivo: "Resistência muscular", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: slug });
+    for (const w of p.principal.mesociclos.flatMap((m) => m.microciclos))
+      for (const s of w.sessoes) {
+        const temIso = s.blocos.some((b) => b.tipo === "isometrico");
+        const temOutro = s.blocos.some((b) => b.tipo !== "isometrico");
+        if (temIso && temOutro)
+          erro(
+            `ISOMÉTRICO MISTURADO NA SESSÃO DE TREINO (${slug}, "${s.nome}"): a sessão tem bloco isométrico e ${s.blocos.filter((b) => b.tipo !== "isometrico").length} bloco(s) de outro tipo. O protocolo é sessão separada.`,
+          );
+      }
+
     for (const b of bs) {
       if (b.reps != null || (b as { repsAlvo?: number }).repsAlvo != null)
         erro(`ISOMÉTRICO COM REPETIÇÃO (${slug}): o bloco "${b.nome}" saiu com reps="${b.reps}". A dose dele é tempo de contração.`);
@@ -464,6 +483,26 @@ for (const objetivo of OBJETIVOS) {
    * exercitada. Agora a gestante declara `evitar` por escopo de evidência, e este teste
    * garante que a fusão respeita isso mesmo quando a outra condição pede o contrário.
    */
+  /*
+   * A FRASE DA TELA PRECISA CONTAR AS SESSÕES QUE EXISTEM.
+   *
+   * Ao virar sessão própria, uma semana de plano 3x passou a ter SEIS sessões, e três telas
+   * (portal do aluno, PDF e ficha) imprimiam "3x por semana" a partir de
+   * `frequenciaSemanal`. Passariam a mentir juntas. `rotuloFrequencia` é a fonte única
+   * dessa frase, e aqui se garante que ela conta a parte que estava escondida.
+   */
+  {
+    const comIso = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: "hipertensao-estagio-2" });
+    const semIso = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3 });
+    const plano = (g: typeof comIso) => ({ semanas: 12, frequenciaSemanal: 3, macrociclo: g.principal }) as never;
+    const rotComIso = rotuloFrequencia(plano(comIso));
+    const rotSemIso = rotuloFrequencia(plano(semIso));
+    if (!/isom[ée]tric/i.test(rotComIso))
+      erro(`RÓTULO DE FREQUÊNCIA ESCONDE AS SESSÕES ISOMÉTRICAS: com o protocolo no plano a frase é "${rotComIso}", e a semana tem sessões isométricas que ela não conta.`);
+    if (/isom[ée]tric/i.test(rotSemIso))
+      erro(`RÓTULO DE FREQUÊNCIA INVENTA SESSÃO: sem o protocolo no plano a frase é "${rotSemIso}".`);
+  }
+
   const comVeto = specialGroups.filter((g) => combineRules([g.slug])?.isometrico?.evitar === true).map((g) => g.slug);
   if (!comVeto.length) {
     erro("AUTOVERIFICAÇÃO (veto do isométrico): nenhuma condição declara isometrico.evitar; a porta de veto nunca é exercitada e a fusão não está sendo testada.");
