@@ -28,6 +28,7 @@ import { agregadoSemana, serieSemanal } from "../src/lib/gps/progressao";
 import { classificarGrupos } from "../src/lib/gps/classificador";
 import { alvoSemana } from "../src/lib/gps/alvo";
 import { aplicarPrescricaoNoPlano, sessoesDaSemana } from "../src/lib/gps/semear";
+import { doseCurta, tokensDoBloco } from "../src/components/student/blocoRegistro";
 import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
 import { recalcularAlvosDoMeso } from "../src/lib/gps/travas";
 import { doseCurta, tokensDoBloco } from "../src/components/student/blocoRegistro";
@@ -451,6 +452,37 @@ for (const objetivo of OBJETIVOS) {
     if (grupo && comIndicacao.includes(grupo)) continue;
     if (blocosIso(grupo).length)
       erro(`ISOMÉTRICO EM QUEM NÃO PEDIU (${grupo ?? "sem condição"}): bloco isométrico prescrito sem a condição declarar indicação.`);
+  }
+}
+
+/*
+ * A LINHA QUE O ALUNO LÊ PRECISA TER O TEMPO DE SEGURAR.
+ *
+ * Medido no dia da integração, antes de existir esta asserção: `doseCurta` caía no ramo da
+ * força e devolvia **"4 · 2 min"** para o agachamento na parede, em que "2 min" é o
+ * DESCANSO. O tempo de contração, que é o exercício inteiro, não aparecia em lugar nenhum
+ * da tela. Quem executa lia um "4" sem unidade e um tempo que não era o de segurar.
+ *
+ * A asserção olha a saída da função de exibição, e não o bloco: o defeito vivia inteiramente
+ * na camada de apresentação, e um teste sobre o bloco teria passado verde.
+ */
+{
+  const p = gerarPlano({ objetivo: "Resistência muscular", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: "hipertensao-estagio-2" });
+  const bloco = p.principal.mesociclos
+    .flatMap((m) => m.microciclos)
+    .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
+    .find((b) => b.tipo === "isometrico");
+  if (!bloco) {
+    erro("AUTOVERIFICAÇÃO (linha do isométrico): nenhum bloco isométrico no plano de hipertensão; a asserção passaria por vazio.");
+  } else {
+    const linha = doseCurta(bloco);
+    const rotulos = tokensDoBloco(bloco).map((t) => t.label);
+    if (bloco.duracao && !linha.includes(bloco.duracao))
+      erro(`LINHA DO ISOMÉTRICO SEM O TEMPO DE CONTRAÇÃO: doseCurta devolveu "${linha}", e o tempo de contração é "${bloco.duracao}".`);
+    if (!/descanso/i.test(linha))
+      erro(`LINHA DO ISOMÉTRICO SEM ROTULAR O DESCANSO: doseCurta devolveu "${linha}". Sem o rótulo, os dois tempos ficam lado a lado e o aluno não sabe qual é o de segurar.`);
+    if (!rotulos.includes("Contração"))
+      erro(`TOKENS DO ISOMÉTRICO SEM "Contração": vieram [${rotulos.join(", ")}]. A dose isométrica tem três números e os três precisam de rótulo.`);
   }
 }
 

@@ -51,8 +51,18 @@ const rotuloSemanas = (semanas: number[]) =>
  * FCmáx, watts ou pace), não por séries e carga, então não cabe na mesma tabela da força.
  */
 function sessaoHtml(s: Sessao) {
-  const forca = s.blocos.filter((b) => b.tipo !== "aerobio");
+  /*
+   * TRÊS QUADROS, E NÃO DOIS, desde que existe a família isométrica.
+   *
+   * O filtro era `tipo !== "aerobio"`, então o bloco isométrico caía na tabela de Musculação,
+   * cujas colunas são Séries / Repetições / Intensidade / Intervalo. O resultado, medido: a
+   * coluna Repetições saía VAZIA e o tempo de contração, que é o protocolo inteiro, não
+   * aparecia em coluna nenhuma. Num documento que o profissional ASSINA, isso é a mesma
+   * classe de defeito que "Bicicleta ergométrica 3 séries de 13 repetições" foi na tela.
+   */
+  const forca = s.blocos.filter((b) => b.tipo !== "aerobio" && b.tipo !== "isometrico");
   const cardio = s.blocos.filter((b) => b.tipo === "aerobio");
+  const isometrico = s.blocos.filter((b) => b.tipo === "isometrico");
 
   // Linha de um exercício. `comSufixo` mostra o método entre parênteses só nos blocos SOLTOS;
   // num grupo, o método já vem na linha-cabeçalho, então a linha do bloco fica limpa.
@@ -133,11 +143,40 @@ function sessaoHtml(s: Sessao) {
       </div>`
     : "";
 
+  /*
+   * Reusa a MESMA ficha do cardio (rótulo colado ao valor), e não a tabela da musculação,
+   * porque a dose isométrica se lê como a do cardio: por tempo, com rótulo em cada número.
+   * A observação entra sempre que existir, e é onde mora a cautela da pressão arterial.
+   */
+  const fichaIsometrico = isometrico.length
+    ? `<div class="quadro">
+        <p class="quadro-tit">Isométrico</p>
+        ${isometrico
+          .map((b) => {
+            const linhas: [string, string | undefined][] = [
+              ["Contrações", b.series],
+              ["Tempo de contração", b.duracao],
+              ["Descanso entre contrações", b.intervalo && b.intervalo !== "-" ? b.intervalo : b.recuperacao],
+              ["Intensidade", b.intensidade],
+            ];
+            return `<div class="cardio">
+              <p class="cardio-nome">${esc(b.nome ?? "Isométrico")}</p>
+              ${linhas
+                .filter(([, v]) => v && v !== "-")
+                .map(([rot, v]) => `<p class="cardio-linha"><span class="cardio-rot">${rot}</span> ${esc(v as string)}</p>`)
+                .join("")}
+              ${b.observacao ? `<p class="cardio-obs">${esc(b.observacao)}</p>` : ""}
+            </div>`;
+          })
+          .join("")}
+      </div>`
+    : "";
+
   const fechoHtml = s.fecho ? `<p class="fecho">${esc(s.fecho)}</p>` : "";
   return `
     <div class="sessao">
       <p class="sessao-nome">${esc(s.nome)}${s.foco ? ` <span class="foco">${esc(s.foco)}</span>` : ""}</p>
-      ${s.blocos.length ? `<div class="quadros">${tabelaForca}${fichaCardio}</div>` : `<p class="vazio">Sessão sem exercícios definidos.</p>`}
+      ${s.blocos.length ? `<div class="quadros">${tabelaForca}${fichaIsometrico}${fichaCardio}</div>` : `<p class="vazio">Sessão sem exercícios definidos.</p>`}
       ${fechoHtml}
     </div>`;
 }

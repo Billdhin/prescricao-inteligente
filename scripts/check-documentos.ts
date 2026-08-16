@@ -20,6 +20,7 @@ import type { GpsObjetivo } from "../src/lib/gps/engine";
 import type { Macrociclo } from "../src/data/periodizacao";
 import type { Nivel } from "../src/data/types";
 import { montarEvolucaoHtml } from "../src/lib/exportEvolucao";
+import { exportPlanoPDF } from "../src/lib/exportPlano";
 import type { Aluno, Avaliacao } from "../src/data/alunos";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
@@ -107,6 +108,80 @@ for (const grupo of specialGroups) {
     erros.push(
       `a tabela de evolução deixou de imprimir o programa ("${grupo.rotuloAluno}") do grupo ${grupo.slug}; a checagem acima ficaria vazia.`,
     );
+  }
+}
+
+/* ==========================================================================
+ * O DOCUMENTO ASSINADO PRECISA IMPRIMIR O TEMPO DE CONTRAÇÃO.
+ *
+ * Achado ao conferir o PDF depois de integrar o isométrico ao motor: o filtro da tabela de
+ * musculação era `tipo !== "aerobio"`, então o bloco isométrico caía lá, a coluna
+ * "Repetições" saía VAZIA e o tempo de contração, que é o protocolo inteiro, não aparecia em
+ * coluna nenhuma. O profissional assinaria um plano sem o número que define o exercício.
+ *
+ * Por isso a asserção olha a SAÍDA REAL do PDF (`apenasHtml`), e não o que o motor guarda
+ * antes de imprimir: o defeito vivia inteiramente na camada de impressão.
+ * ========================================================================== */
+{
+  const gIso = gerarPlano({ objetivo: "Resistência muscular", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: "hipertensao-estagio-2" });
+  const blocosIso = gIso.principal.mesociclos
+    .flatMap((m) => m.microciclos)
+    .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
+    .filter((b) => b.tipo === "isometrico");
+  if (!blocosIso.length) {
+    erros.push("AUTOVERIFICAÇÃO (isométrico no PDF): o plano de hipertensão não trouxe bloco isométrico; a checagem abaixo passaria por vazio.");
+  } else {
+    const planoIso = {
+      id: "p-iso",
+      alunoId: "a",
+      data: Date.parse("2026-08-01"),
+      titulo: gIso.titulo,
+      objetivo: "Resistência muscular" as GpsObjetivo,
+      nivel: "Iniciante" as Nivel,
+      semanas: 12,
+      frequenciaSemanal: 3,
+      modeloId: gIso.modeloId,
+      macrociclo: gIso.principal,
+      refIds: gIso.refIds,
+      raciocinio: gIso.raciocinio,
+      grupoEspecial: "hipertensao-estagio-2",
+    };
+    const alunoIso = {
+      id: "a",
+      nome: "Aluno de Teste",
+      iniciais: "AT",
+      idade: 60,
+      objetivo: "Resistência muscular",
+      nivel: "Iniciante",
+      restricoes: [],
+      equipamentos: ["Máquina", "Peso corporal"],
+      status: "ativo",
+      criadoEm: 0,
+      nivelDesde: 0,
+      grupoEspecial: "hipertensao-estagio-2",
+    } as unknown as Aluno;
+    const html = exportPlanoPDF({ aluno: alunoIso, plano: planoIso as never, profissional: "Profissional de Teste", apenasHtml: true }) as string;
+    const nome = blocosIso[0].nome ?? "";
+    if (!html.includes("Isométrico")) erros.push("o PDF do plano não tem quadro próprio de Isométrico; o bloco cai na tabela de Musculação, que não tem coluna para tempo de contração.");
+    if (!html.includes("Tempo de contração"))
+      erros.push("o PDF do plano não imprime o TEMPO DE CONTRAÇÃO do isométrico, que é o número que define o exercício.");
+    if (!html.includes("Descanso entre contrações")) erros.push("o PDF do plano não imprime o descanso entre contrações do isométrico.");
+    /*
+     * A cautela da pressão precisa chegar ao PAPEL, e dentro do quadro do isométrico.
+     *
+     * A primeira versão desta linha testava do nome do exercício até o FIM do documento, e
+     * passava lisa mesmo com a observação removida, porque a palavra "pressão" aparece
+     * adiante por outros motivos. Guardrail com janela larga demais é guardrail que não
+     * protege: a janela agora é só o quadro isométrico, do título dele até o quadro seguinte.
+     */
+    const iIso = html.indexOf("Isométrico");
+    const iDepois = html.indexOf("Cardio", iIso);
+    const quadroIso = html.slice(iIso, iDepois > iIso ? iDepois : iIso + 2000);
+    if (!/press[ãa]o/i.test(quadroIso))
+      erros.push("o PDF do plano não imprime a cautela de pressão arterial DENTRO do quadro isométrico.");
+    // E ele não pode continuar aparecendo na tabela de musculação.
+    const tabela = html.slice(html.indexOf("<th>Repetições</th>"), html.indexOf("Isométrico"));
+    if (nome && tabela.includes(nome)) erros.push(`o isométrico "${nome}" continua listado na tabela de Musculação, onde a coluna Repetições fica vazia.`);
   }
 }
 

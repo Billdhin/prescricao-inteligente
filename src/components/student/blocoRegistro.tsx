@@ -43,12 +43,39 @@ const abrevDose = (v: string): string => v.replace(/moderada a alta/gi, "mod. a 
  *
  * Bloco sem alvo (plano antigo, ou sessão montada à mão) cai na faixa, como antes.
  */
+/**
+ * O ISOMÉTRICO PRECISA DE ROTULAGEM PRÓPRIA, e a falta dela era um defeito de verdade.
+ *
+ * Medido antes de existir esta função: o bloco isométrico caía no ramo da força, e como ele
+ * não tem repetição nem alvo de série, a linha saía **"4 · 2 min"**, em que o "2 min" é o
+ * DESCANSO. O tempo de contração, que é o protocolo inteiro, não aparecia em lugar nenhum,
+ * nem na linha curta, nem nos tokens, nem no PDF. Quem executa lia "4" e um tempo que não
+ * era o tempo de segurar.
+ *
+ * A dose isométrica tem três números e os três precisam de rótulo: quantas contrações,
+ * quanto tempo cada uma, e quanto se descansa entre elas.
+ */
+const ehIsometrico = (b: BlocoSessao) => b.tipo === "isometrico";
+/** "4 x 2 min" (contrações × tempo sustentado). Nunca inventa: sai dos campos do bloco. */
+function contracaoDoBloco(b: BlocoSessao): string {
+  const series = b.series?.trim();
+  const tempo = b.duracao?.trim();
+  if (series && tempo) return `${series} x ${tempo}`;
+  return tempo || series || "";
+}
+
 export function tokensDoBloco(bloco: BlocoSessao): { label: string; value: string }[] {
   const aerobio = bloco.tipo === "aerobio";
   const limpo = (v?: string | number | null) =>
     v != null && String(v).trim() && String(v).trim() !== "-" ? String(v) : "";
   const faixaSerie =
     bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : limpo(bloco.series) || limpo(bloco.reps);
+  if (ehIsometrico(bloco))
+    return [
+      { label: "Contração", value: contracaoDoBloco(bloco) },
+      { label: "Descanso", value: limpo(bloco.intervalo) || limpo(bloco.recuperacao) },
+      { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
+    ].filter((t) => t.value);
   return (
     aerobio
       ? [
@@ -81,6 +108,15 @@ export function doseCurta(bloco: BlocoSessao): string {
   const limpo = (v?: string | number | null) =>
     v != null && String(v).trim() && String(v).trim() !== "-" ? String(v).trim() : "";
   const partes: string[] = [];
+  if (ehIsometrico(bloco)) {
+    // "4 x 2 min · descanso 2 min". O rótulo "descanso" é obrigatório: sem ele os dois
+    // tempos ficam lado a lado e o aluno não sabe qual é o de segurar.
+    const contracao = contracaoDoBloco(bloco);
+    if (contracao) partes.push(contracao);
+    const descanso = limpo(bloco.intervalo) || limpo(bloco.recuperacao);
+    if (descanso) partes.push(`descanso ${descanso}`);
+    return partes.join(" · ");
+  }
   if (bloco.tipo === "aerobio") {
     // Duração + formato. A intensidade do aeróbio é uma FRASE inteira ("cerca de
     // 64 a 76% da FCmáx, teste da conversa...") e não cabe numa linha de resumo;
@@ -108,7 +144,12 @@ export function doseCurta(bloco: BlocoSessao): string {
  */
 const NA_LINHA_CURTA = new Set(["Série", "Intervalo", "Duração"]);
 export function tokensExtras(bloco: BlocoSessao): { label: string; value: string }[] {
-  const naCurta = bloco.tipo === "aerobio" ? new Set(["Duração", "Formato"]) : NA_LINHA_CURTA;
+  const naCurta =
+    bloco.tipo === "aerobio"
+      ? new Set(["Duração", "Formato"])
+      : bloco.tipo === "isometrico"
+        ? new Set(["Contração", "Descanso"])
+        : NA_LINHA_CURTA;
   return tokensDoBloco(bloco).filter((t) => !naCurta.has(t.label));
 }
 
