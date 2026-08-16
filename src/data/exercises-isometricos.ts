@@ -43,11 +43,28 @@
  * já sabe disso, ver a camada de fármacos), e nesse caso a percepção de esforço deixa de ser
  * um atalho e passa a ser o único instrumento.
  *
- * ## Sem imagem, de propósito, por enquanto
+ * ## As fotos, e o que ficou fora do alvo numa delas
  *
- * Nenhum dos dois declara `imagem`. A regra do projeto é que ausência é melhor que imagem
- * que ensina o movimento errado, e o cartão assume a ausência em palavras. As fotos entram
- * na rodada de imagens, com verificação olho a olho.
+ * As duas nasceram por img2img sobre fotos que já estavam no catálogo: o agachamento livre
+ * virou o agachamento na parede, e a rosca de punho sentada virou a preensão (só o
+ * implemento mudou). Ambas conferidas com zoom no detalhe que decide.
+ *
+ * A PREENSÃO saiu certa: aparelho de dois cabos com mola espiral, mão fechada apertando,
+ * antebraço apoiado ao longo da coxa, punho neutro. Precisou de uma correção, porque na
+ * primeira o antebraço ficou no ar.
+ *
+ * O AGACHAMENTO NA PAREDE tem uma ressalva declarada: a foto mostra o quadril um pouco
+ * ABAIXO da linha do joelho, ou seja, um pouco mais fundo que a coxa paralela que o texto
+ * descreve. Foram TRÊS tentativas pedindo a subida do quadril, inclusive descrevendo o
+ * resultado visual em vez do ângulo, e a profundidade não se moveu: é o mesmo padrão que a
+ * skill de imagens já registra para detalhe geométrico teimoso (valgo de joelho, pegada
+ * supinada, plano da escápula), cuja saída é TROCAR DE MOTOR, o que exige a chave da API
+ * que não está acessível aqui.
+ *
+ * Ela ficou porque não ensina o movimento errado: é um agachamento na parede legítimo, na
+ * ponta mais pesada da faixa, e o próprio hotspot desta ficha diz que o ângulo É a carga e
+ * que abrir o ângulo é a regressão. Se o Filipe preferir a paralela exata, a foto sai ou é
+ * refeita por outro motor; a decisão do ângulo é clínica e é dele.
  */
 import type { Exercise, EficMetric } from "./types";
 
@@ -81,6 +98,7 @@ export const exerciciosIsometricos: Exercise[] = [
     articulacaoPredominante: "Joelho e quadril",
     premium: false,
     doseIsometrica: true,
+    imagem: "/exercises/agachamento-isometrico-parede.webp",
     resumoPratico:
       "Contração sustentada com as costas apoiadas na parede e os joelhos dobrados, mantida por tempo. É o submodo isométrico com maior efeito sobre a pressão sistólica na metanálise em rede, e não precisa de nenhum equipamento.",
     modalidade: "m-musculacao",
@@ -168,6 +186,7 @@ export const exerciciosIsometricos: Exercise[] = [
     articulacaoPredominante: "Punho e dedos",
     premium: false,
     doseIsometrica: true,
+    imagem: "/exercises/preensao-isometrica-handgrip.webp",
     resumoPratico:
       "Apertar e sustentar um dinamômetro ou aparelho de preensão por tempo. É o formato isométrico mais estudado para pressão arterial e o mais fácil de fazer sentado, sem carga sobre articulação de membro inferior.",
     modalidade: "m-musculacao",
