@@ -475,6 +475,32 @@ for (const objetivo of OBJETIVOS) {
   }
 
   /*
+   * O OBJETIVO TAMBÉM É PORTA, e esta faltava.
+   *
+   * A indicação vem da CONDIÇÃO, então sem esta porta o protocolo entrava em qualquer plano
+   * daquele aluno, inclusive no de Aprendizado técnico, cujo propósito declarado é o oposto:
+   * ali a dose serve à execução ("a técnica manda, não a carga"), e contração sustentada sem
+   * movimento não ensina padrão motor nenhum. Decisão do Filipe, por coerência do plano.
+   *
+   * A asserção é dos dois lados: o objetivo excluído não recebe, e os outros continuam
+   * recebendo, senão bastaria excluir todo mundo para o teste ficar verde.
+   */
+  {
+    const FORA = ["Aprendizado técnico"];
+    for (const objetivo of OBJETIVOS) {
+      const p = gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: comIndicacao[0] });
+      const tem = p.principal.mesociclos
+        .flatMap((m) => m.microciclos)
+        .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
+        .some((b) => b.tipo === "isometrico");
+      if (FORA.includes(objetivo) && tem)
+        erro(`ISOMÉTRICO EM OBJETIVO QUE NÃO O COMPORTA (${objetivo}): o protocolo entrou num plano cujo propósito é a execução, não a carga.`);
+      if (!FORA.includes(objetivo) && !tem)
+        erro(`ISOMÉTRICO SUMIU DE ${objetivo}: a condição indica e o objetivo não está na lista de exclusão, mas nenhum bloco foi prescrito.`);
+    }
+  }
+
+  /*
    * O VETO VENCE A INDICAÇÃO NA FUSÃO, e este é o teste que faltava.
    *
    * A varredura mostrou que uma GESTANTE com hipertensão recebia o protocolo isométrico:

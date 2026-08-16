@@ -798,6 +798,23 @@ const ISO_PROTOCOLO = { series: 4, contracao: "2 min", descanso: "2 min" } as co
 const ISO_SESSOES_POR_SEMANA = 3;
 
 /**
+ * Objetivos que NÃO recebem o protocolo isométrico, mesmo com a condição indicando.
+ *
+ * A indicação vem da condição e não do objetivo, e é por isso que o isométrico aparecia até
+ * num plano de Aprendizado técnico, cujo propósito declarado é o oposto do protocolo: ali a
+ * dose existe para servir à execução ("a técnica manda, não a carga"), e o isométrico é
+ * tempo sob tensão sem movimento, que não ensina padrão motor nenhum.
+ *
+ * Decisão do Filipe. Não é questão de segurança, e sim de coerência do plano: um horizonte
+ * de aprendizado que abre com 14 minutos de contração sustentada contradiz o que a própria
+ * tela promete àquele aluno.
+ *
+ * Fica como LISTA declarada, e não como `if` no meio do gerador, para o dia em que outro
+ * objetivo entrar aqui não virar mais uma condição escondida no fluxo.
+ */
+const ISO_OBJETIVOS_FORA: readonly GpsObjetivo[] = ["Aprendizado técnico"];
+
+/**
  * Qual isométrico oferecer, se algum sobreviver aos filtros de sempre.
  *
  * Não há atalho: equipamento precisa estar declarado (peso corporal sempre está) e a posição
@@ -1033,13 +1050,16 @@ function montarSessoes(
    * protocolo é FECHADO, e interpolar dentro dele inventaria um protocolo que ninguém
    * testou. Por isso o bloco não chama `alvoSemana` e não progride: ele repete o protocolo.
    *
-   * ## As três portas de segurança, nesta ordem
+   * ## As portas, nesta ordem
    *
    * 1. A condição precisa DECLARAR indicação, e o `evitar` de qualquer condição fundida
    *    derruba (a fusão já resolveu isso antes de chegar aqui).
-   * 2. O exercício precisa sobreviver aos MESMOS filtros de todo mundo: equipamento
+   * 2. O OBJETIVO precisa comportar o protocolo. Ver `ISO_OBJETIVOS_FORA`: a indicação vem
+   *    da condição, então sem esta porta o isométrico entrava até onde ele contradiz o
+   *    propósito do plano.
+   * 3. O exercício precisa sobreviver aos MESMOS filtros de todo mundo: equipamento
    *    declarado e restrição do perfil. Não há atalho para o isométrico.
-   * 3. O texto do bloco diz que a pressão SOBE durante a contração e que a respiração fica
+   * 4. O texto do bloco diz que a pressão SOBE durante a contração e que a respiração fica
    *    solta, porque é o que a medida mostra e é o que o profissional precisa ler antes de
    *    aplicar.
    *
@@ -1047,7 +1067,7 @@ function montarSessoes(
    * não recebe 3 sessões isométricas, porque a semana dele não comporta.
    */
   const iso = regraClinica?.isometrico;
-  if (iso?.indicado && !iso.evitar) {
+  if (iso?.indicado && !iso.evitar && !ISO_OBJETIVOS_FORA.includes(objetivo)) {
     const ex = exercicioIsometrico(equipamentos, regraClinica);
     if (ex) {
       const quantas = Math.min(ISO_SESSOES_POR_SEMANA, frequencia);
