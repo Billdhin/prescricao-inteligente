@@ -529,6 +529,62 @@ for (const objetivo of OBJETIVOS) {
       erro(`RÓTULO DE FREQUÊNCIA INVENTA SESSÃO: sem o protocolo no plano a frase é "${rotSemIso}".`);
   }
 
+  /*
+   * O RACIOCÍNIO PRECISA CONTAR O QUE O PLANO FAZ.
+   *
+   * Achado na segunda varredura: o protocolo entrava com três sessões por semana, dose
+   * fechada e cautela de pressão, e o raciocínio (que é o que o profissional lê para
+   * assinar, e que também vai impresso ao aluno) não dizia uma palavra. A maior mudança
+   * estrutural do plano era a única que o texto não explicava.
+   *
+   * Nos dois sentidos: quem tem o protocolo precisa ver a frase, e quem NÃO tem não pode
+   * receber um texto falando de sessão que não existe.
+   */
+  for (const grupo of [...comIndicacao, undefined]) {
+    const p = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo });
+    const tem = p.principal.mesociclos
+      .flatMap((m) => m.microciclos)
+      .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
+      .some((b) => b.tipo === "isometrico");
+    const cita = /isom[ée]tric/i.test(p.raciocinio);
+    if (tem && !cita)
+      erro(`RACIOCÍNIO OMITE O PROTOCOLO ISOMÉTRICO (${grupo ?? "sem condição"}): o plano tem sessões isométricas e o texto que o profissional assina não as menciona.`);
+    if (!tem && cita)
+      erro(`RACIOCÍNIO INVENTA O PROTOCOLO ISOMÉTRICO (${grupo ?? "sem condição"}): o texto fala de isométrico num plano que não tem nenhum.`);
+    /*
+     * A janela é a FRASE do protocolo, e não o raciocínio inteiro.
+     *
+     * A primeira versão testava "pressão" no texto todo e passava lisa com a cautela
+     * removida, porque a palavra aparece adiante por outros motivos (o nome do programa do
+     * aluno, por exemplo, é "Condicionamento com monitoramento da pressão"). É o mesmo erro
+     * de janela que já tinha custado uma asserção decorativa no PDF.
+     */
+    if (tem) {
+      const i = p.raciocinio.indexOf("Sobre o protocolo isométrico");
+      const frase = i >= 0 ? p.raciocinio.slice(i, p.raciocinio.indexOf(".", p.raciocinio.indexOf("liberação do dia", i)) + 1) : "";
+      if (!frase) erro(`RACIOCÍNIO SEM A FRASE DO PROTOCOLO (${grupo ?? "sem condição"}): o plano tem sessões isométricas e o parágrafo próprio não foi encontrado.`);
+      else if (!/ELEVA a press[ãa]o/i.test(frase))
+        erro(`RACIOCÍNIO CITA O PROTOCOLO SEM A CAUTELA (${grupo ?? "sem condição"}): a frase do isométrico não diz que a contração ELEVA a pressão durante o esforço.`);
+    }
+  }
+
+  /*
+   * E O TEXTO DA IDADE NÃO PODE PEDIR O QUE O MOTOR JÁ FEZ.
+   *
+   * A frase nasceu como AVISO, quando a idade não tocava a dose ("use essa referência ao
+   * calibrar as cargas; a decisão segue sendo sua"). Depois da camada de dose por idade o
+   * plano já aperta sozinho, e manter o aviso antigo pedia ao profissional uma redução que
+   * ele poderia aplicar DUAS vezes.
+   */
+  {
+    const p = gerarPlano({ objetivo: "Força", nivel: "Intermediário", semanas: 12, frequencia: 3, idade: 70 });
+    if (!/j[áa] entra mais conservador|j[áa] vem ajustada/i.test(p.raciocinio))
+      erro("RACIOCÍNIO DA IDADE NÃO DIZ QUE A DOSE JÁ FOI AJUSTADA: o motor aperta a reserva sozinho aos 65+, e o texto precisa relatar isso antes de falar do que o profissional decide.");
+    const semIdade = gerarPlano({ objetivo: "Força", nivel: "Intermediário", semanas: 12, frequencia: 3, idade: 40 });
+    if (/faixa et[áa]ria/i.test(semIdade.raciocinio))
+      erro("RACIOCÍNIO DA IDADE APARECE EM QUEM NÃO TEM A IDADE: o parágrafo saiu num plano de 40 anos.");
+  }
+
   const comVeto = specialGroups.filter((g) => combineRules([g.slug])?.isometrico?.evitar === true).map((g) => g.slug);
   if (!comVeto.length) {
     erro("AUTOVERIFICAÇÃO (veto do isométrico): nenhuma condição declara isometrico.evitar; a porta de veto nunca é exercitada e a fusão não está sendo testada.");

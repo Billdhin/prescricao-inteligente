@@ -32,7 +32,7 @@ import { exercises } from "@/data/exercises";
 import { getModalidade } from "@/data/modalities";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { combineRules, groupGpsRules, type GroupGpsRule } from "@/lib/gps/groupRules";
-import { doseDoPerfilComIdade } from "@/lib/gps/esforco";
+import { doseDoPerfilComIdade, IDADE_DOSE_PROPRIA, RIR_MINIMO_IDADE } from "@/lib/gps/esforco";
 import {
   restricoesAtivas,
   rotuloRestricao,
@@ -2004,6 +2004,35 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
       ? `Sobre o cardio: ${getModalidade(modalidadeEscolhida)?.nome ?? "a modalidade escolhida"} vem à frente neste perfil. ${trocaDeCardio.motivo}`
       : "",
     /*
+     * O PLANO ACRESCENTOU SESSÕES E O TEXTO NÃO CONTAVA.
+     *
+     * Achado na segunda varredura de consistência: o protocolo isométrico entrava com três
+     * sessões por semana, com dose fechada e uma cautela de pressão arterial, e o raciocínio
+     * (que é o que o profissional lê para entender e assinar o plano, e que também vai
+     * impresso ao aluno) não dizia uma palavra sobre ele. A maior mudança estrutural do
+     * plano era a única que o texto não explicava.
+     *
+     * A frase conta o número REAL de sessões, lido do macrociclo já construído, e não a
+     * intenção do gerador: é a mesma disciplina do resto deste raciocínio.
+     *
+     * Não nomeia a condição, porque este texto também chega ao aluno, e a regra da casa é
+     * que documento de aluno não carrega rótulo clínico. Falar de pressão arterial é
+     * necessário para a segurança e não é rótulo: é o que o aluno precisa saber para
+     * executar.
+     */
+    (() => {
+      const porSemana = macroPrincipal.mesociclos[0]?.microciclos[0]?.sessoes.filter((s) =>
+        s.blocos.some((b) => b.tipo === "isometrico"),
+      ).length;
+      if (!porSemana) return "";
+      return (
+        `Sobre o protocolo isométrico: ele entra em ${porSemana} ${porSemana === 1 ? "sessão própria" : "sessões próprias"} por semana, ` +
+        `separadas do treino, com ${ISO_PROTOCOLO.series} contrações de ${ISO_PROTOCOLO.contracao} e ${ISO_PROTOCOLO.descanso} de descanso entre elas, ` +
+        `porque foi assim que ele foi testado. A intensidade se guia pela percepção de esforço. ` +
+        `A contração sustentada ELEVA a pressão arterial durante o esforço, então a respiração fica solta do começo ao fim e vale a liberação do dia, como no resto do plano.`
+      );
+    })(),
+    /*
      * Horizonte abaixo do que a evidência da jornada mediu.
      *
      * A frase NÃO nomeia a condição, porque este texto também é impresso para o aluno, e a
@@ -2021,19 +2050,24 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
      * A FAIXA ETÁRIA CHEGA AO RACIOCÍNIO, do mesmo jeito que o horizonte: informa, cita e
      * não muda a dose em silêncio.
      *
-     * Até aqui a idade só entrava na zona de frequência cardíaca do aeróbio, e um plano para
-     * 70 anos saía com a mesma dose de força de um plano para 30. A rodada de evidência
-     * (borde-idoso-dose-2015) achou dose-resposta específica para 65 anos ou mais, mas o
-     * número dela fala %1RM, e os objetivos que treinam por reserva de repetições não têm
-     * onde receber um teto de %1RM sem inventar conversão. Então a evidência entra do único
-     * jeito honesto que o vocabulário atual permite: dita ao profissional, com a fonte na
-     * bibliografia do plano, e a decisão de calibrar fica com ele.
+     * Este parágrafo ERA um aviso, e virou um RELATO, porque o motor mudou embaixo dele.
+     *
+     * Quando foi escrito, a idade não tocava a dose de força: a evidência
+     * (`borde-idoso-dose-2015`) entrava "ditada ao profissional", e a decisão de calibrar
+     * ficava com ele. Desde a camada de dose por idade (`lib/gps/esforco.ts`), o plano JÁ
+     * aperta sozinho: a partir dos 65 ele guarda pelo menos 3 repetições de reserva, e a
+     * varredura mediu o efeito (Força de intermediário sai RIR 3 a 4 aos 70 anos contra 2 a
+     * 4 aos 40).
+     *
+     * Manter o texto antigo seria pedir ao profissional que fizesse uma redução que o motor
+     * já fez, e ele poderia aplicá-la duas vezes. Agora a frase diz o que aconteceu ANTES de
+     * dizer o que ele decide, que é a ordem honesta.
      *
      * O corte é 65 porque foi a população MEDIDA pelo estudo; a faixa "pessoa idosa" da tela
      * começa aos 60, e esticar um achado para quem o estudo não cobriu seria outra invenção.
      */
-    input.idade != null && input.idade >= 65
-      ? `Sobre a dose nesta faixa etária: numa metanálise de 25 ensaios com pessoas de 65 anos ou mais, o maior ganho de força veio com intensidade em torno de 70 a 79% de 1RM. Use essa referência ao calibrar as cargas, junto com a reserva de repetições prescrita; a decisão segue sendo sua.`
+    input.idade != null && input.idade >= IDADE_DOSE_PROPRIA
+      ? `Sobre a dose nesta faixa etária: o plano já entra mais conservador, guardando pelo menos ${RIR_MINIMO_IDADE} repetições de reserva nas séries principais, porque a partir de ${IDADE_DOSE_PROPRIA} anos essa faixa tem dose própria na literatura. Numa metanálise de 25 ensaios com pessoas de 65 anos ou mais, o maior ganho de força veio com intensidade em torno de 70 a 79% de 1RM, ou seja, moderada a alta e não máxima. A reserva já vem ajustada; a calibragem da carga dentro dela segue sendo sua.`
       : "",
     `As faixas de séries, repetições, intensidade e intervalo seguem as diretrizes citadas, sempre como faixa e sob o seu critério. ${faixa.ressalva}`,
     alternativa
