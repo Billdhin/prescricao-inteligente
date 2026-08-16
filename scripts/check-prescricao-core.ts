@@ -585,6 +585,38 @@ for (const objetivo of OBJETIVOS) {
       erro("RACIOCÍNIO DA IDADE APARECE EM QUEM NÃO TEM A IDADE: o parágrafo saiu num plano de 40 anos.");
   }
 
+  /*
+   * QUANDO O PLANO SAI DO OBJETIVO, ELE PRECISA DIZER.
+   *
+   * Achado na terceira varredura: quando o pool específico do objetivo não alcança a
+   * frequência pedida, a seleção cai para o catálogo do nível. A queda é certa (melhor um
+   * exercício seguro fora do objetivo que sessão vazia), mas era SILENCIOSA: `faltouCatalogo`
+   * só olha o pool FINAL, que o próprio fallback infla, então ficava `false` exatamente
+   * quando a troca acontecia. Medido: 6 de 18 combinações de objetivo e equipamento, e no
+   * pior caso quatro dos cinco exercícios de um plano de Força não eram de força.
+   */
+  {
+    const casos: { objetivo: (typeof OBJETIVOS)[number]; equipamentos?: string[] }[] = [];
+    for (const objetivo of OBJETIVOS)
+      for (const equipamentos of [undefined, ["Elástico"], ["Piscina"]]) casos.push({ objetivo, equipamentos });
+
+    let comTroca = 0;
+    for (const caso of casos) {
+      const input = { ...caso, nivel: "Iniciante" as Nivel, semanas: 12, frequencia: 3 };
+      const fora = consequenciasDoPlano(input).foraDoObjetivo;
+      const cita = /Sobre a seleção/.test(gerarPlano(input).raciocinio);
+      if (fora.length) comTroca++;
+      if (fora.length && !cita)
+        erro(
+          `PLANO SAIU DO OBJETIVO EM SILÊNCIO (${caso.objetivo}, ${caso.equipamentos?.join("+") ?? "sem restrição"}): ${fora.length} exercício(s) fora do objetivo e o raciocínio não avisa.`,
+        );
+      if (!fora.length && cita)
+        erro(`RACIOCÍNIO INVENTA TROCA DE OBJETIVO (${caso.objetivo}, ${caso.equipamentos?.join("+") ?? "sem restrição"}): avisa sobre seleção sem nenhum exercício fora do objetivo.`);
+    }
+    if (!comTroca)
+      erro("AUTOVERIFICAÇÃO (fora do objetivo): nenhuma combinação produziu troca de objetivo; a asserção acima passaria por vazio.");
+  }
+
   const comVeto = specialGroups.filter((g) => combineRules([g.slug])?.isometrico?.evitar === true).map((g) => g.slug);
   if (!comVeto.length) {
     erro("AUTOVERIFICAÇÃO (veto do isométrico): nenhuma condição declara isometrico.evitar; a porta de veto nunca é exercitada e a fusão não está sendo testada.");

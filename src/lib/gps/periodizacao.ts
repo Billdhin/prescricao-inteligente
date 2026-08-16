@@ -345,6 +345,14 @@ export interface SelecaoExercicios {
   elegiveis: number;
   /** true quando o catálogo não tinha exercícios seguros suficientes para o pedido */
   faltouCatalogo: boolean;
+  /**
+   * Nomes dos exercícios ESCOLHIDOS que não são do objetivo pedido.
+   *
+   * Não vazio significa que o pool específico do objetivo era pequeno demais e a seleção
+   * caiu para o catálogo do nível. É diferente de `faltouCatalogo`, que olha o pool FINAL e
+   * fica `false` justamente nesse caso, porque o fallback o infla.
+   */
+  foraDoObjetivo: string[];
 }
 
 /** Valor de uma métrica do índice de eficiência, pelo nome. Mesmo acesso do engine. */
@@ -574,15 +582,40 @@ function selecionarExercicios(
     .sort((x, y) => y.nota - x.nota || x.pesoCond - y.pesoCond || y.primario - x.primario || y.bonus - x.bonus || x.i - y.i);
 
   const seguros = comPeso.map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
+  const escolhidos = seguros.slice(0, Math.max(n, 1));
+
+  /*
+   * O FALLBACK DO POOL TROCAVA O OBJETIVO EM SILÊNCIO.
+   *
+   * Duas linhas acima, quando o pool específico do objetivo não alcança `n`, a seleção cai
+   * para o catálogo inteiro do nível. A queda é certa: plano tem que ser gerado, e é melhor
+   * um exercício seguro fora do objetivo que uma sessão vazia.
+   *
+   * O que estava errado era o SILÊNCIO. `faltouCatalogo` só olha o tamanho do pool FINAL, e
+   * o fallback justamente o infla, então ele ficava `false` exatamente quando a troca tinha
+   * acontecido. Medido na varredura: em 6 de 18 combinações de objetivo e equipamento o
+   * plano prescrevia exercício fora do objetivo sem sinal nenhum, e no pior caso (Força só
+   * com elástico) eram 4 dos 5 exercícios, num plano intitulado Força.
+   *
+   * Agora a troca é declarada. Quem consome é o raciocínio do plano, que já é o lugar onde
+   * o motor diz o que considerou.
+   */
+  const foraDoObjetivo = escolhidos
+    .filter((s) => {
+      const ex = exercises.find((e) => e.slug === s.slug);
+      return ex != null && !ex.objetivo?.includes(objetivo);
+    })
+    .map((s) => s.nome);
 
   return {
-    escolhidos: seguros.slice(0, Math.max(n, 1)),
+    escolhidos,
     descartados,
     rebaixados: comPeso
       .filter((a) => a.pesoCond > 0)
       .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, motivo: a.motivosCond.join("; ") })),
     elegiveis: seguros.length,
     faltouCatalogo: seguros.length < n,
+    foraDoObjetivo,
   };
 }
 
@@ -624,6 +657,14 @@ export interface ConsequenciasDoPlano {
   elegiveis: number;
   /** o catálogo não tinha exercícios seguros suficientes para a frequência pedida */
   faltouCatalogo: boolean;
+  /**
+   * Exercícios que entraram no plano SEM serem do objetivo pedido.
+   *
+   * Acontece quando o pool específico do objetivo é pequeno demais para a frequência e a
+   * seleção cai para o catálogo do nível. É diferente de `faltouCatalogo`: aquele olha o
+   * pool FINAL, que o próprio fallback infla, e por isso fica `false` justamente aqui.
+   */
+  foraDoObjetivo: string[];
 }
 
 /**
@@ -663,6 +704,7 @@ export function consequenciasDoPlano(input: GerarPlanoInput): ConsequenciasDoPla
     evitados: [...sel.descartados, ...penalizadosForaDoPlano],
     elegiveis: sel.elegiveis,
     faltouCatalogo: sel.faltouCatalogo,
+    foraDoObjetivo: sel.foraDoObjetivo,
   };
 }
 
@@ -2003,6 +2045,27 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
     trocaDeCardio
       ? `Sobre o cardio: ${getModalidade(modalidadeEscolhida)?.nome ?? "a modalidade escolhida"} vem à frente neste perfil. ${trocaDeCardio.motivo}`
       : "",
+    /*
+     * O PLANO DIZ QUANDO SAIU DO OBJETIVO, porque antes ele saía calado.
+     *
+     * Quando o pool específico do objetivo não alcança a frequência pedida, a seleção cai
+     * para o catálogo do nível (ver `foraDoObjetivo` na seleção). Medido na varredura: em 6
+     * de 18 combinações de objetivo e equipamento isso acontecia sem sinal nenhum, e no pior
+     * caso quatro dos cinco exercícios de um plano de Força não eram de força.
+     *
+     * A frase não muda o plano, e é de propósito: a alternativa seria gerar sessão vazia. O
+     * que ela faz é devolver a decisão a quem assina, dizendo o que faltou e por quê, na
+     * mesma linha do aviso de horizonte curto logo abaixo.
+     */
+    (() => {
+      const fora = consequenciasDoPlano(input).foraDoObjetivo;
+      if (!fora.length) return "";
+      return (
+        `Sobre a seleção: ${fora.length === 1 ? "um exercício não é específico" : `${fora.length} exercícios não são específicos`} do objetivo ` +
+        `(${fora.join(", ")}). O catálogo disponível para este objetivo, neste nível e com os equipamentos declarados não alcançava a frequência pedida, ` +
+        `então entraram exercícios seguros do nível para completar a sessão. Ampliar os equipamentos declarados costuma resolver.`
+      );
+    })(),
     /*
      * O PLANO ACRESCENTOU SESSÕES E O TEXTO NÃO CONTAVA.
      *
