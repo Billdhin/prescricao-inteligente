@@ -59,7 +59,30 @@ const blocosDe = (m: Microciclo) => m.sessoes.flatMap((s) => s.blocos);
  */
 function esforcoDoBloco(b: BlocoSessao): number | null {
   if (b.cargaRelativaAlvo != null) return b.cargaRelativaAlvo;
-  if (b.rirAlvo != null) return Math.max(0, 100 - b.rirAlvo * 10);
+  /*
+   * O RIR DIZ A FAIXA, AS REPETIÇÕES DIZEM ONDE DENTRO DELA.
+   *
+   * O `return` daqui era seco (`100 - rir*10`) e isso bastava enquanto só Hipertrofia e
+   * Força tinham reserva. Quando a escala de esforço foi estendida aos outros objetivos,
+   * o RIR passou a EXISTIR onde antes não existia, e como ele é lido ANTES das repetições
+   * (abaixo), ele mascarou o sinal fino que o parágrafo seguinte tinha sido criado para
+   * dar. O `check:progressao` pegou na hora: a linha de intensidade de um plano semestral
+   * de Emagrecimento com hipertensão caiu para DOIS valores distintos em 24 semanas.
+   *
+   * A causa é que a reserva é um inteiro curto e o perfil clínico ainda a comprime: sobram
+   * dois ou três degraus para o semestre inteiro. Mas o motor continua movendo a
+   * intensidade pelas repetições dentro da mesma faixa citada, e esse movimento é real.
+   *
+   * Então os dois sinais entram, sem que um apague o outro: a reserva define a faixa (10
+   * pontos por degrau) e a posição das repetições refina DENTRO dela (até 4 pontos). A
+   * ordenação por reserva é preservada, porque o refino nunca alcança o degrau seguinte, e
+   * nenhum número novo entra: os dois já estão no alvo que o plano entrega.
+   */
+  if (b.rirAlvo != null) {
+    const base = Math.max(0, 100 - b.rirAlvo * 10);
+    const fino = posicaoNaFaixaDeReps(b);
+    return fino == null ? base : Math.round(base - 2 + fino * 4);
+  }
   if (b.rpeAlvo != null) return b.rpeAlvo * 10;
 
   /*
@@ -81,15 +104,26 @@ function esforcoDoBloco(b: BlocoSessao): number | null {
    * O índice é RELATIVO, como o resto deste agregado, e o gráfico já declara isso em tela
    * ("volume, intensidade e complexidade relativos, sem unidade absoluta").
    */
-  if (b.repsAlvo != null) {
-    const iv = intervaloDe(b.reps ?? "");
-    if (iv && Number.isFinite(iv.max) && iv.max > iv.min) {
-      const pos = (b.repsAlvo - iv.min) / (iv.max - iv.min);
-      // Invertido: no piso da faixa (menos repetições) o esforço é o mais alto dela.
-      return Math.round((1 - Math.min(1, Math.max(0, pos))) * 100);
-    }
-  }
+  const pos = posicaoNaFaixaDeReps(b);
+  if (pos != null) return Math.round(pos * 100);
   return meioFaixa(b.intensidade);
+}
+
+/**
+ * Onde o alvo de repetições está dentro da faixa citada, já INVERTIDO: 1 no piso da faixa
+ * (menos repetições, mais carga na barra) e 0 no teto. `null` quando a faixa não tem duas
+ * pontas finitas e distintas, que é quando a posição não significa nada.
+ *
+ * Virou função própria porque passou a ter DOIS consumidores: o bloco sem reserva, que usa
+ * a posição como o sinal inteiro de intensidade, e o bloco COM reserva, que a usa como
+ * refino dentro do degrau da reserva.
+ */
+function posicaoNaFaixaDeReps(b: BlocoSessao): number | null {
+  if (b.repsAlvo == null) return null;
+  const iv = intervaloDe(b.reps ?? "");
+  if (!iv || !Number.isFinite(iv.max) || iv.max <= iv.min) return null;
+  const pos = (b.repsAlvo - iv.min) / (iv.max - iv.min);
+  return 1 - Math.min(1, Math.max(0, pos));
 }
 
 /** O agregado de uma semana: volume (dose total) e intensidade (esforço médio) reais. */

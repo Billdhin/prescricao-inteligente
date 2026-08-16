@@ -900,7 +900,25 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     tiposExercicio: ["Aeróbio contínuo ou intervalado", "Força de corpo todo"],
     series: { valor: "2 a 3", nota: "na força de corpo todo" },
     reps: { valor: "10 a 15", nota: "na força; o aeróbio é contado em minutos, não em repetições" },
-    intensidade: { valor: "moderada", nota: "no aeróbio, guie pela conversa e pela percepção de esforço" },
+    /*
+     * A NOTA SÓ FALAVA DO AERÓBIO, e a musculação deste objetivo ficava sem instrumento.
+     *
+     * Medido na varredura de consistência: nos blocos de FORÇA de um plano de Emagrecimento
+     * não havia RIR nem %1RM, em nenhuma semana. Consequência que só aparece cruzando as
+     * camadas: o piso de reserva da condição (hipertensão pede 2) e o da idade (3 a partir
+     * dos 65) não tinham onde morder, e ficavam INERTES justamente no objetivo mais
+     * prescrito para o público clínico do produto.
+     *
+     * A faixa de 2 a 4 é escolha prudente da casa, não número de diretriz, e segue a mesma
+     * escada dos outros objetivos: mais margem que a Hipertrofia (1 a 3) porque aqui a série
+     * é mais longa e a carga é moderada, menos que a Resistência muscular (3 a 5) porque lá
+     * a carga é leve e a série passa de 15 repetições. Não inventa vocabulário: este
+     * objetivo já declara `p-rpe` entre os parâmetros que monitora.
+     */
+    intensidade: {
+      valor: "moderada",
+      nota: "no aeróbio, guie pela conversa e pela percepção de esforço; na musculação, a escala de repetições de reserva (Zourdos, 2016) é o instrumento, com 2 a 4 de reserva. A faixa de reserva é escolha prudente da casa, não número de diretriz",
+    },
     intervalo: { valor: "30 a 90 s", nota: "curto a moderado, para manter a densidade" },
     frequencia: { Iniciante: "3x/sem", Intermediário: "3 a 5x/sem", Avançado: "4 a 5x/sem" },
     parametros: ["p-fc", "p-rpe", "p-adesao"],
@@ -919,7 +937,16 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     // recomendação de força para adultos de meia idade e idosos iniciando, do Garber 2011, que
     // por isso passa a constar nos refIds desta faixa.
     reps: { valor: "10 a 15", nota: "em amplitude confortável; faixa de quem está reiniciando, do position stand de 2011, não do alvo de novato de 8 a 12 RM de 2009" },
-    intensidade: { valor: "leve a moderada", nota: "guiada por dor e função" },
+    /*
+     * Mesmo buraco do Emagrecimento: sem instrumento, nenhum teto clínico morde aqui. A
+     * faixa é a mais folgada da casa (3 a 5), e a razão está na própria nota deste objetivo:
+     * quem volta de uma parada guia a dose por dor e função, não por proximidade da falha.
+     * Escolha prudente da casa, não número de diretriz.
+     */
+    intensidade: {
+      valor: "leve a moderada",
+      nota: "guiada por dor e função; a escala de repetições de reserva (Zourdos, 2016) é o instrumento de controle, com 3 a 5 de reserva. A faixa de reserva é escolha prudente da casa, não número de diretriz",
+    },
     intervalo: { valor: "confortável", nota: "sem pressa entre as séries" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3x/sem", Avançado: "3 a 4x/sem" },
     parametros: ["p-rpe"],
@@ -940,7 +967,15 @@ export const FAIXAS_TREINO: Record<GpsObjetivo, FaixaObjetivo> = {
     // DECLARADOS como escolha prudente da casa na ressalva.
     series: { valor: "2 a 4", nota: "de prática, com qualidade acima da carga; escolha prudente da casa" },
     reps: { valor: "5 a 10", nota: "com boa execução; escolha prudente da casa, não faixa de diretriz" },
-    intensidade: { valor: "leve a moderada", nota: "a técnica manda, não a carga" },
+    /*
+     * Mesmo buraco, e aqui a faixa mais folgada (3 a 5) é quase uma tradução literal da nota
+     * que já existia: se a técnica manda e não a carga, a série não termina perto da falha,
+     * porque é lá que a técnica se perde. Escolha prudente da casa, não número de diretriz.
+     */
+    intensidade: {
+      valor: "leve a moderada",
+      nota: "a técnica manda, não a carga; a escala de repetições de reserva (Zourdos, 2016) é o instrumento de controle, com 3 a 5 de reserva. A faixa de reserva é escolha prudente da casa, não número de diretriz",
+    },
     intervalo: { valor: "suficiente para manter a qualidade" },
     frequencia: { Iniciante: "2 a 3x/sem", Intermediário: "3 a 4x/sem", Avançado: "3 a 4x/sem" },
     parametros: ["p-rpe"],

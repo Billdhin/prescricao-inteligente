@@ -43,7 +43,7 @@ import {
   type AcaoRestricao,
 } from "@/lib/gps/restricoes";
 import type { ParamMonitorId } from "@/data/monitoringParameters";
-import { alvoSemana, alvoAerobioSemana, objetivoDaSemana, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
+import { alvoSemana, alvoAerobioSemana, objetivoDaSemana, lerFaixaRIR, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
 
 export interface GerarPlanoInput {
   objetivo: GpsObjetivo;
@@ -697,10 +697,36 @@ export function doseForca(
   // outras liam `.valor` direto, o que fazia o `porNivel` do intervalo ser código morto no
   // dia em que alguém o declarasse. Foi o que aconteceu: a faixa de Força move o iniciante
   // para 8 a 12 repetições e o descanso ficava em 3 a 5 min, que é de série de 1 a 6.
+  /*
+   * A ÊNFASE NÃO PODE ENGOLIR O PISO DE RESERVA DO PERFIL.
+   *
+   * Medido na varredura de consistência: na Hipertrofia de nível intermediário e avançado a
+   * ênfase "pesado" estreita a intensidade para "alta, 1 a 2 repetições de reserva". O
+   * `aplicarDoseDoPerfil` fecha o alvo dentro do TETO da faixa vigente, e com teto 2 o piso
+   * de 3 pedido pela camada de idade era silenciosamente reduzido a 2. Em 48 blocos de um
+   * único plano, um aluno de 70 anos recebia exatamente a dose de um de 40.
+   *
+   * O piso continua sem furar a faixa citada, porque a saída não é prescrever 3 embaixo de
+   * um texto que diz "1 a 2": isso faria o bloco dizer uma coisa e o alvo fazer outra, que é
+   * o defeito que este motor mais paga caro. A saída é DESCARTAR A ÊNFASE naquele bloco e
+   * voltar à faixa do próprio objetivo (1 a 3 na Hipertrofia), que comporta o piso e
+   * continua sendo texto citado.
+   *
+   * Descarta a ênfase INTEIRA, e não só a intensidade dela, porque ela é um pacote: "pesado"
+   * é menos repetição COM mais intensidade, e ficar com metade produziria uma combinação que
+   * nenhuma faixa declarou.
+   */
+  const enfaseCabeNoPiso = (() => {
+    if (!enfase || ctx?.rirMinimo == null) return true;
+    const iv = lerFaixaRIR(enfase.intensidade, faixa.intensidade.nota);
+    return !iv || Math.round(iv.max) >= ctx.rirMinimo;
+  })();
+  const enfaseUsada = enfaseCabeNoPiso ? enfase : undefined;
+
   const texto: DoseForca = {
     series: valorFaixa(faixa.series, nivel),
-    reps: enfase?.reps ?? valorFaixa(faixa.reps, nivel),
-    intensidade: enfase?.intensidade ?? valorFaixa(faixa.intensidade, nivel),
+    reps: enfaseUsada?.reps ?? valorFaixa(faixa.reps, nivel),
+    intensidade: enfaseUsada?.intensidade ?? valorFaixa(faixa.intensidade, nivel),
     intervalo: valorFaixa(faixa.intervalo, nivel),
   };
   if (!ctx) return texto;

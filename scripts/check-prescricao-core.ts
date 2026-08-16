@@ -29,6 +29,7 @@ import { classificarGrupos } from "../src/lib/gps/classificador";
 import { alvoSemana } from "../src/lib/gps/alvo";
 import { aplicarPrescricaoNoPlano, sessoesDaSemana } from "../src/lib/gps/semear";
 import { doseCurta, tokensDoBloco } from "../src/components/student/blocoRegistro";
+import { RIR_MINIMO_IDADE } from "../src/lib/gps/esforco";
 import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
 import { recalcularAlvosDoMeso } from "../src/lib/gps/travas";
 import { doseCurta, tokensDoBloco } from "../src/components/student/blocoRegistro";
@@ -452,6 +453,34 @@ for (const objetivo of OBJETIVOS) {
     if (grupo && comIndicacao.includes(grupo)) continue;
     if (blocosIso(grupo).length)
       erro(`ISOMÉTRICO EM QUEM NÃO PEDIU (${grupo ?? "sem condição"}): bloco isométrico prescrito sem a condição declarar indicação.`);
+  }
+
+  /*
+   * O VETO VENCE A INDICAÇÃO NA FUSÃO, e este é o teste que faltava.
+   *
+   * A varredura mostrou que uma GESTANTE com hipertensão recebia o protocolo isométrico:
+   * a indicação vinha da hipertensão e nada a barrava. A porta de veto existia desde o
+   * começo, copiada do intervalado, mas nenhuma condição a usava, então ela nunca tinha sido
+   * exercitada. Agora a gestante declara `evitar` por escopo de evidência, e este teste
+   * garante que a fusão respeita isso mesmo quando a outra condição pede o contrário.
+   */
+  const comVeto = specialGroups.filter((g) => combineRules([g.slug])?.isometrico?.evitar === true).map((g) => g.slug);
+  if (!comVeto.length) {
+    erro("AUTOVERIFICAÇÃO (veto do isométrico): nenhuma condição declara isometrico.evitar; a porta de veto nunca é exercitada e a fusão não está sendo testada.");
+  } else {
+    for (const veto of comVeto) {
+      for (const indicada of comIndicacao) {
+        const p = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: indicada, condicoesAtencao: [veto] });
+        const tem = p.principal.mesociclos
+          .flatMap((m) => m.microciclos)
+          .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
+          .some((b) => b.tipo === "isometrico");
+        if (tem)
+          erro(
+            `VETO DO ISOMÉTRICO PERDEU DA INDICAÇÃO (${indicada} + ${veto}): a condição que veta foi fundida e o bloco isométrico foi prescrito assim mesmo.`,
+          );
+      }
+    }
   }
 }
 
@@ -1391,10 +1420,20 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
    * cenário 4 da bancada não tem. Na prática o objetivo não tinha instrumento usável em
    * campo, e nenhum teto clínico de reserva tinha onde morder nele.
    */
-  for (const objetivo of OBJ_FORCA) {
+  /*
+   * TODOS os objetivos, e não só os três de musculação clássica.
+   *
+   * A primeira versão desta asserção olhava só Força, Hipertrofia e Resistência muscular, e
+   * foi por isso que o buraco sobreviveu: Emagrecimento, Retorno ao treino e Aprendizado
+   * técnico não tinham reserva nenhuma, e neles o piso da condição e o da idade ficavam
+   * inertes. Emagrecimento é o objetivo mais prescrito para o público clínico do produto,
+   * ou seja, a lacuna estava exatamente onde mais importa. Guardrail que escolhe a dedo
+   * quem conferir só protege quem foi escolhido.
+   */
+  for (const objetivo of OBJETIVOS) {
     for (const nivel of NIVEIS) {
       const p = gerarPlano({ objetivo, nivel, semanas: 12, frequencia: 3 });
-      const bs = blocosForca(p);
+      const bs = blocosForca(p).filter((b) => b.tipo === "forca");
       if (!bs.length) {
         erro(`AUTOVERIFICAÇÃO (esforço unificado): ${objetivo}/${nivel} não gerou bloco de força; a asserção passaria por vazio.`);
         continue;
@@ -1403,6 +1442,31 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
       if (semInstrumento.length)
         erro(
           `OBJETIVO SEM INSTRUMENTO DE ESFORÇO (${objetivo}, ${nivel}): ${semInstrumento.length} de ${bs.length} blocos sem RIR-alvo. A escala de esforço é unificada: quem não tem reserva não recebe teto clínico nem dose por idade.`,
+        );
+    }
+  }
+
+  /*
+   * E O PISO PRECISA CHEGAR AO ALVO, em todo objetivo e em todo nível.
+   *
+   * Achado na mesma varredura: na Hipertrofia de nível intermediário e avançado a ênfase
+   * "pesado" estreita a faixa para "1 a 2 de reserva", e o teto dessa faixa reduzia o piso
+   * de 3 pedido pela idade para 2, em 48 blocos de um único plano. Um aluno de 70 anos
+   * recebia a dose de um de 40, e nenhum guardrail via, porque cada peça isolada estava
+   * certa.
+   */
+  for (const objetivo of OBJETIVOS) {
+    for (const nivel of NIVEIS) {
+      const p = gerarPlano({ objetivo, nivel, semanas: 12, frequencia: 3, idade: 70 });
+      const abaixo = blocosForca(p)
+        .filter((b) => b.tipo === "forca")
+        .filter((b) => {
+          const r = (b as { rirAlvo?: number }).rirAlvo;
+          return r != null && r < RIR_MINIMO_IDADE;
+        });
+      if (abaixo.length)
+        erro(
+          `PISO DE RESERVA DA IDADE ENGOLIDO (${objetivo}, ${nivel}): ${abaixo.length} blocos com reserva abaixo de ${RIR_MINIMO_IDADE} num aluno de 70 anos. Alguma faixa mais estreita está capando o piso do perfil.`,
         );
     }
   }

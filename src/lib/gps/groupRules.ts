@@ -1290,6 +1290,31 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
    * não produziu.
    */
   gestante: {
+    /*
+     * A PORTA DE VETO DO ISOMÉTRICO, e o argumento NÃO é contraindicação inventada.
+     *
+     * A varredura de consistência mostrou que uma gestante com hipertensão recebia o
+     * protocolo isométrico automaticamente, porque a indicação vem da condição hipertensão e
+     * nenhuma outra condição a barrava.
+     *
+     * O que sustenta o veto é ESCOPO DE EVIDÊNCIA, não fisiologia que eu não conferi: as
+     * duas fontes que colocam o isométrico no plano (`edwards-exercicio-pa-2023` e
+     * `baffour-isometrico-hipertensos-2023`) mediram adultos hipertensos, e não gestantes.
+     * Uma indicação automática não pode ser mais larga que a população em que ela foi
+     * medida, ainda mais quando o que se prescreve é uma manobra que ELEVA a pressão durante
+     * o esforço. Procurei referência específica sobre isométrico na gestação e não encontrei;
+     * na dúvida, o produto não oferece sozinho.
+     *
+     * Isto NÃO diz que gestante não pode fazer isométrico: diz que o motor não prescreve por
+     * conta própria. O profissional segue livre para incluir manualmente, com a avaliação
+     * dele, que é exatamente a divisão de responsabilidade que os Termos declaram.
+     */
+    isometrico: {
+      evitar: true,
+      motivo:
+        "A evidência que sustenta o protocolo isométrico foi medida em adultos hipertensos, não em gestantes. O motor não oferece sozinho o que não foi estudado nesta população; a inclusão fica a critério do profissional.",
+      refId: ["edwards-exercicio-pa-2023", "baffour-isometrico-hipertensos-2023"],
+    },
     slug: "gestante",
     nome: "Gestante sem contraindicação",
     cuidados: [
