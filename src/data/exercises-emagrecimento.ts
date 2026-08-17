@@ -46,10 +46,28 @@
  * `trustLevel` é "princípio biomecânico" nos dois: eles não afirmam desfecho clínico nem
  * citam número de estudo. A dose continua vindo da faixa do objetivo, como em todo o resto.
  *
- * ## Sem imagem, por enquanto
+ * ## As fotos, e o que deu para verificar em cada uma
  *
- * Nenhum dos dois declara `imagem`, e o `check:catalogo` já os imprime na fila de imagem
- * pendente. Ausência é melhor que imagem que ensina o movimento errado.
+ * As duas nasceram por img2img sobre fotos que já estavam no catálogo, e as duas foram
+ * conferidas com zoom no detalhe que decide.
+ *
+ * A REMADA veio da própria remada invertida, subindo a barra no rack e levantando o tronco.
+ * Confere nos quatro pontos: barra na altura do quadril, tronco em diagonal por volta de 50
+ * graus, corpo reto do ombro ao calcanhar e pés sob o corpo. Ela precisou de duas correções,
+ * porque nas primeiras o corpo continuava quase deitado, e aí ela seria uma cópia da foto
+ * que já existe.
+ *
+ * O AGACHAMENTO NA ÁGUA veio da marcha aquática, aprofundando a linha d'água e trocando a
+ * marcha pelo agachamento. Confere no que ensina: água na altura do peito, os dois joelhos
+ * dobrados, tronco ereto, pés afastados.
+ *
+ * O QUE NÃO CONSEGUI VERIFICAR, e fica declarado em vez de afirmado: o CONTATO DO PÉ MAIS
+ * DISTANTE com o fundo da piscina. Ele aparece mais alto que o outro no quadro, pedi
+ * correção e o gerador não moveu em duas tentativas. Reavaliando, isso provavelmente é
+ * PROJEÇÃO e não erro: numa vista em três quartos o pé mais longe da câmera sobe no
+ * enquadramento, e a água ondulada apaga a sombra de contato. Como não dá para afirmar nem
+ * o contrário, fica registrado aqui: se o Filipe olhar e achar que o pé está flutuando, a
+ * foto sai, porque "deixar os pés flutuarem" é justamente um dos erros comuns desta ficha.
  */
 import type { Exercise, EficMetric } from "./types";
 
@@ -82,6 +100,7 @@ export const exerciciosEmagrecimento: Exercise[] = [
     nivel: "Iniciante",
     articulacaoPredominante: "Cotovelo e escápula",
     premium: false,
+    imagem: "/exercises/remada-invertida-apoio-alto.webp",
     resumoPratico:
       "Puxar horizontal com o peso do corpo numa barra ou bancada na altura do quadril: quanto mais alto o apoio, mais em pé fica o tronco e mais leve fica a puxada. É a porta de entrada do padrão de puxar para quem treina em casa.",
     modalidade: "m-musculacao",
@@ -160,6 +179,7 @@ export const exerciciosEmagrecimento: Exercise[] = [
     nivel: "Iniciante",
     articulacaoPredominante: "Joelho e quadril",
     premium: false,
+    imagem: "/exercises/agachamento-aquatico.webp",
     resumoPratico:
       "Agachar dentro da piscina, com a água na altura do peito: o empuxo tira parte do peso na descida e a resistência da água cobra na subida. É o padrão de agachar para quem só tem a piscina como ambiente.",
     modalidade: "m-hidro",
