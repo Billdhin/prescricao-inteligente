@@ -1349,8 +1349,19 @@ for (const objetivo of OBJETIVOS) {
  * do objetivo (respeitada a segurança, que continua na frente).
  * ========================================================================== */
 {
+  /*
+   * O CENÁRIO MUDOU DE OBJETIVO PORQUE O CATÁLOGO MELHOROU, e a autoverificação avisou.
+   *
+   * O caso original era Elástico + Força, que tinha 3 exercícios do objetivo no nível. Ao
+   * revisar a marcação dos exercícios de peso corporal e elástico, o pool de Força subiu
+   * para 13 e o cenário deixou de forçar o fallback: a asserção continuaria verde sem
+   * testar nada. A própria autoverificação apontou isso e mandou trocar de equipamento.
+   *
+   * Emagrecimento + Elástico é o substituto, com pool 4, e a regra testada é a mesma: todo
+   * exercício do objetivo, executável e no nível, entra antes de qualquer um de fora.
+   */
   const equipamentos = ["Elástico"];
-  const objetivo = "Força" as const;
+  const objetivo = "Emagrecimento" as const;
   const teto = { Iniciante: 0, Intermediário: 1, Avançado: 2 } as Record<string, number>;
   const doObjetivo = exercises.filter(
     (e) =>

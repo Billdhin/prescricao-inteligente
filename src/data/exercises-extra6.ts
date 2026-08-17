@@ -277,7 +277,7 @@ export const extraExercises6: Exercise[] = [
     nome: "Flexão de braço com apoio elevado",
     grupoMuscular: "Peitorais",
     equipamento: "Peso corporal",
-    objetivo: ["Retorno ao treino", "Resistência muscular", "Aprendizado técnico"],
+    objetivo: ["Retorno ao treino", "Resistência muscular", "Aprendizado técnico", "Força"],
     nivel: "Iniciante",
     articulacaoPredominante: "Ombro e cotovelo",
     premium: false,

@@ -433,7 +433,7 @@ export const extraExercises5: Exercise[] = [
     nome: "Elevação pélvica unilateral",
     grupoMuscular: "Membros inferiores",
     equipamento: "Peso corporal",
-    objetivo: ["Hipertrofia", "Resistência muscular"],
+    objetivo: ["Hipertrofia", "Resistência muscular", "Força"],
     nivel: "Intermediário",
     articulacaoPredominante: "Quadril",    premium: false,
     resumoPratico:
