@@ -624,6 +624,47 @@ for (const objetivo of OBJETIVOS) {
       erro("AUTOVERIFICAÇÃO (fora do objetivo): nenhuma combinação produziu troca de objetivo; a asserção acima passaria por vazio.");
   }
 
+  /*
+   * A RESTRIÇÃO DO ALUNO PRECISA APARECER NO PAINEL DE CONSEQUÊNCIAS.
+   *
+   * Achado na quarta varredura: `rebaixados` só coletava quem a CONDIÇÃO penalizou, e a
+   * restrição física da etapa 4 age por outro caminho. Medido: declarar "dor de joelho" num
+   * plano de Hipertrofia tirava Leg press, Cadeira extensora, Mesa flexora e Hip thrust, e o
+   * painel dizia "nenhum exercício evitado". Esse painel nasceu de um pedido do Filipe para
+   * mostrar "quais exercícios evitados pelo motivo da condição dele", e respondia metade.
+   *
+   * Nos dois sentidos: quem declara restrição vê o motivo, e quem não declara nada não
+   * recebe lista inventada.
+   */
+  {
+    const base = { objetivo: "Hipertrofia" as const, nivel: "Intermediário" as Nivel, semanas: 12, frequencia: 3 };
+    const semRestricao = consequenciasDoPlano(base);
+    if (semRestricao.evitados.length)
+      erro(`PAINEL INVENTA EVITADOS: sem condição e sem restrição declarada, o painel listou ${semRestricao.evitados.length} exercício(s) evitado(s).`);
+
+    for (const tag of ["joelho_dor", "lombar_sensivel", "ombro_sensivel"] as const) {
+      const input = { ...base, restricoes: [{ tag, gravidade: "moderada" as const }] };
+      const usados = new Set(
+        gerarPlano(input)
+          .principal.mesociclos[0].microciclos[0].sessoes.flatMap((s) => s.blocos)
+          .filter((b) => b.tipo === "forca")
+          .map((b) => b.nome),
+      );
+      const semUso = new Set(
+        gerarPlano(base)
+          .principal.mesociclos[0].microciclos[0].sessoes.flatMap((s) => s.blocos)
+          .filter((b) => b.tipo === "forca")
+          .map((b) => b.nome),
+      );
+      const mudou = [...semUso].some((n) => !usados.has(n));
+      const c = consequenciasDoPlano(input);
+      if (mudou && !c.evitados.length)
+        erro(`RESTRIÇÃO REBAIXA EM SILÊNCIO (${tag}): a restrição mudou os exercícios do plano e o painel não lista nenhum evitado.`);
+      const semMotivo = c.evitados.filter((e) => !e.motivo?.trim());
+      if (semMotivo.length) erro(`EVITADO SEM MOTIVO (${tag}): ${semMotivo.length} exercício(s) na lista de evitados sem o porquê escrito.`);
+    }
+  }
+
   const comVeto = specialGroups.filter((g) => combineRules([g.slug])?.isometrico?.evitar === true).map((g) => g.slug);
   if (!comVeto.length) {
     erro("AUTOVERIFICAÇÃO (veto do isométrico): nenhuma condição declara isometrico.evitar; a porta de veto nunca é exercitada e a fusão não está sendo testada.");

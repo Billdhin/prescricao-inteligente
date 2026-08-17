@@ -585,6 +585,26 @@ function selecionarExercicios(
   const escolhidos = seguros.slice(0, Math.max(n, 1));
 
   /*
+   * A RESTRIÇÃO DO ALUNO REBAIXAVA EM SILÊNCIO.
+   *
+   * `rebaixados` só coletava quem a CONDIÇÃO penalizou (`pesoCond > 0`). A restrição física
+   * da etapa 4 age por outro caminho, baixando a `nota` acima, e ninguém a coletava. O painel
+   * de consequências ficava mudo sobre ela.
+   *
+   * Medido na varredura: num plano de Hipertrofia intermediário, declarar "dor de joelho"
+   * tirava Leg press, Cadeira extensora, Mesa flexora e Hip thrust, e o painel dizia
+   * "nenhum exercício evitado". O painel existe exatamente para responder o que a restrição
+   * fez com o catálogo deste aluno, e nasceu de um pedido do Filipe: "a ideia seria só
+   * apontar as restrições do paciente e quais exercícios evitados pelo motivo da condição
+   * dele". Ele respondia metade.
+   *
+   * O motivo já era calculado ali em cima; o que faltava era guardá-lo.
+   */
+  const rebaixadosPorRestricao = comPeso
+    .filter((a) => a.nota < NEUTRO && a.motivo)
+    .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, motivo: a.motivo }));
+
+  /*
    * O FALLBACK DO POOL TROCAVA O OBJETIVO EM SILÊNCIO.
    *
    * Duas linhas acima, quando o pool específico do objetivo não alcança `n`, a seleção cai
@@ -610,9 +630,12 @@ function selecionarExercicios(
   return {
     escolhidos,
     descartados,
-    rebaixados: comPeso
-      .filter((a) => a.pesoCond > 0)
-      .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, motivo: a.motivosCond.join("; ") })),
+    rebaixados: [
+      ...comPeso.filter((a) => a.pesoCond > 0).map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, motivo: a.motivosCond.join("; ") })),
+      // A restrição do aluno entra na MESMA lista da condição, porque para quem lê as duas
+      // são a mesma coisa: o exercício foi evitado e existe um motivo escrito.
+      ...rebaixadosPorRestricao,
+    ],
     elegiveis: seguros.length,
     faltouCatalogo: seguros.length < n,
     foraDoObjetivo,
