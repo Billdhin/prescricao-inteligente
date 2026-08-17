@@ -596,19 +596,26 @@ for (const objetivo of OBJETIVOS) {
    * pior caso quatro dos cinco exercícios de um plano de Força não eram de força.
    */
   {
-    const casos: { objetivo: (typeof OBJETIVOS)[number]; equipamentos?: string[] }[] = [];
+    /*
+     * A frequência 5 entra na matriz porque o catálogo melhorou: na frequência 3 o motor
+     * pede 5 exercícios e nenhuma combinação fica abaixo disso, então a troca de objetivo
+     * deixou de acontecer e a asserção passaria por vazio. Com 7 pedidos ela volta a
+     * acontecer, e o aviso continua sob teste.
+     */
+    const casos: { objetivo: (typeof OBJETIVOS)[number]; equipamentos?: string[]; frequencia: number }[] = [];
     for (const objetivo of OBJETIVOS)
-      for (const equipamentos of [undefined, ["Elástico"], ["Piscina"]]) casos.push({ objetivo, equipamentos });
+      for (const equipamentos of [undefined, ["Elástico"], ["Piscina"], ["Peso corporal"]])
+        for (const frequencia of [3, 5]) casos.push({ objetivo, equipamentos, frequencia });
 
     let comTroca = 0;
     for (const caso of casos) {
-      const input = { ...caso, nivel: "Iniciante" as Nivel, semanas: 12, frequencia: 3 };
+      const input = { ...caso, nivel: "Iniciante" as Nivel, semanas: 12 };
       const fora = consequenciasDoPlano(input).foraDoObjetivo;
       const cita = /Sobre a seleção/.test(gerarPlano(input).raciocinio);
       if (fora.length) comTroca++;
       if (fora.length && !cita)
         erro(
-          `PLANO SAIU DO OBJETIVO EM SILÊNCIO (${caso.objetivo}, ${caso.equipamentos?.join("+") ?? "sem restrição"}): ${fora.length} exercício(s) fora do objetivo e o raciocínio não avisa.`,
+          `PLANO SAIU DO OBJETIVO EM SILÊNCIO (${caso.objetivo}, ${caso.equipamentos?.join("+") ?? "sem restrição"}, freq ${caso.frequencia}): ${fora.length} exercício(s) fora do objetivo e o raciocínio não avisa.`,
         );
       if (!fora.length && cita)
         erro(`RACIOCÍNIO INVENTA TROCA DE OBJETIVO (${caso.objetivo}, ${caso.equipamentos?.join("+") ?? "sem restrição"}): avisa sobre seleção sem nenhum exercício fora do objetivo.`);
@@ -1360,7 +1367,9 @@ for (const objetivo of OBJETIVOS) {
    * Emagrecimento + Elástico é o substituto, com pool 4, e a regra testada é a mesma: todo
    * exercício do objetivo, executável e no nível, entra antes de qualquer um de fora.
    */
-  const equipamentos = ["Elástico"];
+  // Emagrecimento + Peso corporal: pool 6 contra pedido 7, o que ainda força o fallback
+  // depois de o catálogo ter fechado os buracos da frequência 3.
+  const equipamentos = ["Peso corporal"];
   const objetivo = "Emagrecimento" as const;
   const teto = { Iniciante: 0, Intermediário: 1, Avançado: 2 } as Record<string, number>;
   const doObjetivo = exercises.filter(
@@ -1370,12 +1379,25 @@ for (const objetivo of OBJETIVOS) {
       (e.equipamento === "Peso corporal" || equipamentos.includes(e.equipamento ?? "")) &&
       teto[(e.nivel as string) ?? "Iniciante"] <= teto["Intermediário"],
   );
-  if (doObjetivo.length < 2 || doObjetivo.length > 4) {
+  /*
+   * A FREQUÊNCIA SUBIU PARA 5 PORQUE O CATÁLOGO MELHOROU DE NOVO.
+   *
+   * Na frequência 3 o motor pede 5 exercícios, e depois de fechar os buracos do catálogo
+   * NENHUMA combinação de objetivo e equipamento tem pool menor que isso: o fallback deixou
+   * de existir naquele pedido, e a asserção ficaria verde sem testar nada. Na frequência 5 o
+   * pedido sobe para 7, o fallback volta a acontecer e a regra continua sob teste.
+   *
+   * É a segunda vez que este cenário precisa ser refeito por melhora do catálogo, e as duas
+   * vezes quem apontou foi a própria autoverificação. Ela vale mais que a asserção.
+   */
+  const FREQ = 5;
+  const pedido = Math.max(4, FREQ + 2);
+  if (doObjetivo.length < 2 || doObjetivo.length >= pedido) {
     erro(
-      `AUTOVERIFICAÇÃO (fallback): o cenário precisa de um pool do objetivo pequeno (2 a 4) para forçar o fallback; achou ${doObjetivo.length}. O catálogo mudou; escolha outro equipamento.`,
+      `AUTOVERIFICAÇÃO (fallback): o cenário precisa de um pool do objetivo menor que o pedido (${pedido}) para forçar o fallback; achou ${doObjetivo.length}. O catálogo mudou; suba a frequência ou escolha outro equipamento.`,
     );
   } else {
-    const p = gerarPlano({ objetivo, nivel: "Intermediário", semanas: 8, frequencia: 3, equipamentos });
+    const p = gerarPlano({ objetivo, nivel: "Intermediário", semanas: 8, frequencia: FREQ, equipamentos });
     const usados = new Set(
       p.principal.mesociclos
         .flatMap((m) => m.microciclos.flatMap((w) => w.sessoes.flatMap((s) => s.blocos)))

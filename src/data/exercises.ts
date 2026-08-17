@@ -7,6 +7,7 @@ import { extraExercises5 } from "./exercises-extra5";
 import { extraExercises6 } from "./exercises-extra6";
 import { extraExercises7 } from "./exercises-extra7";
 import { exerciciosIsometricos } from "./exercises-isometricos";
+import { exerciciosEmagrecimento } from "./exercises-emagrecimento";
 import { RESTRICAO_PERFIS } from "./restricao-perfis";
 
 const exercisesRaw: Exercise[] = [
@@ -993,6 +994,8 @@ const exercisesRaw: Exercise[] = [
   ...extraExercises7,
   // Terceira familia de dose (segundos de contracao). Ver exercises-isometricos.ts.
   ...exerciciosIsometricos,
+  // Fecham os buracos que a bancada do catalogo mediu. Ver exercises-emagrecimento.ts.
+  ...exerciciosEmagrecimento,
 ];
 
 // Anexa o perfil de restrição (fatos estruturais autorados por inspeção) por slug,

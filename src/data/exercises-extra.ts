@@ -532,7 +532,7 @@ export const extraExercises: Exercise[] = [
     nome: "Ponte de glúteos (solo)",
     grupoMuscular: "Membros inferiores",
     equipamento: "Peso corporal",
-    objetivo: ["Retorno ao treino", "Hipertrofia", "Aprendizado técnico", "Força"],
+    objetivo: ["Retorno ao treino", "Hipertrofia", "Aprendizado técnico", "Força", "Emagrecimento"],
     nivel: "Iniciante",
     articulacaoPredominante: "Quadril",
     premium: false,

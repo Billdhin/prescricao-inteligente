@@ -664,7 +664,7 @@ export const extraExercises2: Exercise[] = [
     nome: "Remada invertida (barra baixa ou mesa firme)",
     grupoMuscular: "Costas",
     equipamento: "Peso corporal",
-    objetivo: ["Força", "Resistência muscular", "Aprendizado técnico"],
+    objetivo: ["Força", "Resistência muscular", "Aprendizado técnico", "Emagrecimento"],
     nivel: "Intermediário",
     articulacaoPredominante: "Cotovelo e escápula",
     premium: false,
