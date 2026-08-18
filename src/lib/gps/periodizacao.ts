@@ -255,6 +255,33 @@ export function regraClinicaDoPlano(input: GerarPlanoInput) {
  * Um programa só já era declarado na frase anterior; esta existe para o caso de DOIS ou
  * mais, que era exatamente o silêncio que o Filipe encontrou.
  */
+/*
+ * PISO DE RESERVA QUE O PRÓPRIO OBJETIVO JÁ PEDE, lido do texto citado (nunca um número
+ * cravado aqui).
+ *
+ * Existe por causa de um defeito de honestidade medido em 18/08/2026: o parágrafo de faixa
+ * etária afirmava "o plano já entra mais conservador" para todo aluno de 65 anos ou mais, e
+ * em Resistência muscular, Retorno ao treino e Aprendizado técnico o plano saía
+ * BYTE-IDÊNTICO ao de um aluno de 40. Nesses três a faixa citada já é "3 a 5 de reserva",
+ * ou seja, o piso de reserva da faixa etária não tem o que apertar. Afirmar mudança
+ * onde não houve mudança é a mesma assinatura que este motor já pagou caro: a tela dizendo
+ * uma coisa e o motor fazendo outra.
+ *
+ * Lê a menor reserva alcançável pelo objetivo (a base e as ênfases da semana ondulatória),
+ * porque é o piso alcançável que decide se a camada de idade morde.
+ */
+function pisoDeReservaDoObjetivo(faixa: FaixaObjetivo): number | null {
+  const textos = [
+    faixa.intensidade.valor,
+    faixa.intensidade.nota ?? "",
+    ...(faixa.enfases ?? []).map((e) => e.intensidade),
+  ];
+  const minimos = textos
+    .map((t) => lerFaixaRIR(t)?.min)
+    .filter((n): n is number => typeof n === "number");
+  return minimos.length ? Math.min(...minimos) : null;
+}
+
 function frasePerfilClinico(input: GerarPlanoInput): string {
   const slugs = slugsClinicosDoPlano(input);
   /*
@@ -2152,9 +2179,14 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
      * O corte é 65 porque foi a população MEDIDA pelo estudo; a faixa "pessoa idosa" da tela
      * começa aos 60, e esticar um achado para quem o estudo não cobriu seria outra invenção.
      */
-    input.idade != null && input.idade >= IDADE_DOSE_PROPRIA
-      ? `Sobre a dose nesta faixa etária: o plano já entra mais conservador, guardando pelo menos ${RIR_MINIMO_IDADE} repetições de reserva nas séries principais, porque a partir de ${IDADE_DOSE_PROPRIA} anos essa faixa tem dose própria na literatura. Numa metanálise de 25 ensaios com pessoas de 65 anos ou mais, o maior ganho de força veio com intensidade em torno de 70 a 79% de 1RM, ou seja, moderada a alta e não máxima. A reserva já vem ajustada; a calibragem da carga dentro dela segue sendo sua.`
-      : "",
+    (() => {
+      if (input.idade == null || input.idade < IDADE_DOSE_PROPRIA) return "";
+      const evidencia = `Numa metanálise de 25 ensaios com pessoas de ${IDADE_DOSE_PROPRIA} anos ou mais, o maior ganho de força veio com intensidade em torno de 70 a 79% de 1RM, ou seja, moderada a alta e não máxima.`;
+      const piso = pisoDeReservaDoObjetivo(faixa);
+      return piso != null && piso >= RIR_MINIMO_IDADE
+        ? `Sobre a dose nesta faixa etária: a faixa citada deste objetivo já pede pelo menos ${piso} repetições de reserva nas séries principais, ou seja, já cumpre o piso de ${RIR_MINIMO_IDADE} da faixa etária, então o piso da idade não teve o que apertar e esta dose é a mesma que sairia para um aluno mais novo. ${evidencia} A folga já está na faixa; a calibragem da carga dentro dela segue sendo sua.`
+        : `Sobre a dose nesta faixa etária: o plano já entra mais conservador, guardando pelo menos ${RIR_MINIMO_IDADE} repetições de reserva nas séries principais, porque a partir de ${IDADE_DOSE_PROPRIA} anos essa faixa tem dose própria na literatura. ${evidencia} A reserva já vem ajustada; a calibragem da carga dentro dela segue sendo sua.`;
+    })(),
     `As faixas de séries, repetições, intensidade e intervalo seguem as diretrizes citadas, sempre como faixa e sob o seu critério. ${faixa.ressalva}`,
     alternativa
       ? `Uma alternativa (${getModelo(alternativa).nome}) é oferecida porque a evidência sustenta mais de uma estratégia; as diferenças costumam ser pequenas quando o volume é equiparado.`

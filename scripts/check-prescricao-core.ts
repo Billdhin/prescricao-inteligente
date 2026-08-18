@@ -1744,6 +1744,50 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
   }
 }
 
+/* ------------- 18. A frase da faixa etária só afirma mudança quando houve mudança ------------- */
+/*
+ * Achado da varredura de 18/08/2026: o raciocínio impresso ao profissional E AO ALUNO dizia
+ * "o plano já entra mais conservador" para todo aluno de 65 anos ou mais, e em Resistência
+ * muscular, Retorno ao treino e Aprendizado técnico o plano saía IDÊNTICO ao de um aluno de
+ * 40, porque a faixa citada desses objetivos já pede 3 a 5 de reserva e o piso da idade não
+ * tinha o que apertar.
+ *
+ * O teste não confere texto contra texto: ele MEDE a dose dos dois planos e cobra que a
+ * frase concorde com a medição, nos dois sentidos. Afirmar mudança que não houve é a
+ * assinatura que este motor já pagou caro; deixar de afirmar a que houve faria o
+ * profissional aplicar a redução duas vezes.
+ */
+{
+  const forcaDo = (pl: ReturnType<typeof gerarPlano>) =>
+    pl.principal.mesociclos
+      .flatMap((m) => m.microciclos)
+      .flatMap((w) => w.sessoes.flatMap((se) => se.blocos))
+      .filter((bl) => bl.tipo !== "aerobio");
+  const doseDoPlano = (pl: ReturnType<typeof gerarPlano>) =>
+    forcaDo(pl)
+      .map((b) => {
+        const x = b as { seriesAlvo?: number; repsAlvo?: number; rirAlvo?: number; cargaRelativaAlvo?: number };
+        return `${x.seriesAlvo}x${x.repsAlvo}r${x.rirAlvo}c${x.cargaRelativaAlvo}`;
+      })
+      .join("|");
+
+  for (const objetivo of OBJETIVOS) {
+    const base = { objetivo, nivel: "Intermediário" as Nivel, semanas: 12, frequencia: 3 };
+    const jovem = gerarPlano({ ...base, idade: 40 });
+    const idoso = gerarPlano({ ...base, idade: 70 });
+    const mudou = doseDoPlano(jovem) !== doseDoPlano(idoso);
+    const afirma = /entra mais conservador/.test(idoso.raciocinio);
+    if (afirma && !mudou)
+      erro(
+        `FRASE DE IDADE AFIRMA O QUE O MOTOR NÃO FEZ (${objetivo}): o raciocínio diz "entra mais conservador" aos 70 anos e a dose de força é idêntica à de 40.`,
+      );
+    if (mudou && !afirma)
+      erro(
+        `FRASE DE IDADE CALA A MUDANÇA (${objetivo}): a dose aos 70 anos é diferente da de 40 e o raciocínio não diz que o plano já entrou mais conservador.`,
+      );
+  }
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {
