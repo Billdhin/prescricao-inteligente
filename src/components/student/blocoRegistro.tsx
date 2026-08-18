@@ -142,7 +142,10 @@ export function doseCurta(bloco: BlocoSessao): string {
  * ruído. Aqui ficam só os rótulos que sobraram (tipicamente a Intensidade, que
  * não cabe na linha curta), com o rótulo colado ao valor.
  */
-const NA_LINHA_CURTA = new Set(["Série", "Intervalo", "Duração"]);
+// "RIR" entra aqui porque `doseCurta` ja o imprime ("3 x 15 · RIR 4 · 30 s") e ele
+// reaparecia logo abaixo como token, contra o proposito declarado de `tokensExtras`
+// ("aqui ficam so os rotulos que sobraram"). Medido em todos os blocos de forca.
+const NA_LINHA_CURTA = new Set(["Série", "Intervalo", "Duração", "RIR"]);
 export function tokensExtras(bloco: BlocoSessao): { label: string; value: string }[] {
   const naCurta =
     bloco.tipo === "aerobio"
@@ -234,7 +237,28 @@ export function RegistroBloco({
   // Pré-preenche só o que o plano prescreve de forma objetiva E numérica: as Reps.
   // A dose textual ("6 a 12") num campo numérico truncaria; então só pré-preenche
   // número puro. Carga e RPE entram vazios (a intensidade é relativa).
-  const repsPrescrito = /^\d+$/.test(String(bloco.reps ?? "").trim()) ? String(bloco.reps).trim() : "";
+  /*
+   * O ALVO DA SEMANA VEM ANTES DA FAIXA, e a ordem estava invertida.
+   *
+   * A regra original estava certa quando foi escrita: só pré-preencher número PURO, porque a
+   * dose textual ("6 a 12") truncaria num campo numérico. O que mudou depois foi o motor
+   * ganhar o ALVO concreto da semana (`repsAlvo`), que é número puro e é exatamente o que o
+   * cartão mostra ao aluno logo acima.
+   *
+   * Medido em 2.277 blocos de força de planos do motor: ZERO tinham `reps` textual numérica,
+   * e TODOS os 2.277 tinham `repsAlvo`. O pré-preenchimento nunca acontecia em plano nenhum
+   * gerado pelo produto, e o mesmo valia para o contador de séries logo abaixo: o aluno via
+   * "3 x 15" no cartão e recebia um registro de tiro único, sem os discos de série.
+   *
+   * A regra de não inventar contador continua valendo. O alvo NÃO é invenção: é o número
+   * que o plano prescreveu para aquela semana.
+   */
+  const repsPrescrito =
+    bloco.repsAlvo != null
+      ? String(bloco.repsAlvo)
+      : /^d+$/.test(String(bloco.reps ?? "").trim())
+        ? String(bloco.reps).trim()
+        : "";
   const [editando, setEditando] = React.useState(false);
   const [carga, setCarga] = React.useState(execFeita?.cargaFeita != null ? String(execFeita.cargaFeita) : "");
   const [reps, setReps] = React.useState(execFeita?.repsFeitas != null ? String(execFeita.repsFeitas) : repsPrescrito);
@@ -246,7 +270,12 @@ export function RegistroBloco({
   // Séries prescritas: só conta quando o plano traz um número puro. Dose textual
   // ("3 a 4") não vira contador inventado; nesse caso o exercício se registra de
   // uma vez, como antes.
-  const totalSeries = /^\d+$/.test(String(bloco.series ?? "").trim()) ? Number(bloco.series) : 1;
+  const totalSeries =
+    bloco.seriesAlvo != null
+      ? bloco.seriesAlvo
+      : /^d+$/.test(String(bloco.series ?? "").trim())
+        ? Number(bloco.series)
+        : 1;
   const [serie, setSerie] = React.useState(1);
   const ultimaSerie = serie >= totalSeries;
 

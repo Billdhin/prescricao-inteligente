@@ -70,7 +70,7 @@ function sessaoHtml(s: Sessao) {
   const alvoForcaHtml = (b: (typeof forca)[number]) =>
     temAlvoForca(b)
       ? `<div class="alvo-forca">Alvo: ${tokensAlvoForca(b)
-          .map((t) => `${esc(t.label)} ${esc(t.value)}`)
+          .map((t) => `${t.label === "Alvo" ? "" : esc(t.label) + " "}${esc(t.value)}`)
           .join(" · ")}</div>`
       : "";
 
@@ -126,7 +126,7 @@ function sessaoHtml(s: Sessao) {
             ];
             const alvoCardio = temAlvoAerobio(b)
               ? `<p class="cardio-linha"><span class="cardio-rot">Alvo</span> ${tokensAlvoAerobio(b)
-                  .map((t) => `${esc(t.label)} ${esc(t.value)}`)
+                  .map((t) => `${t.label === "Alvo" ? "" : esc(t.label) + " "}${esc(t.value)}`)
                   .join(" · ")}</p>`
               : "";
             return `<div class="cardio">

@@ -33,7 +33,6 @@ import { RIR_MINIMO_IDADE } from "../src/lib/gps/esforco";
 import { rotuloFrequencia } from "../src/data/periodizacao";
 import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
 import { recalcularAlvosDoMeso } from "../src/lib/gps/travas";
-import { doseCurta, tokensDoBloco } from "../src/components/student/blocoRegistro";
 import { EFEITO_POR_TAG, criarRestricao, rotuloRestricao } from "../src/lib/gps/restricoes";
 import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
