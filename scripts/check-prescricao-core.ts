@@ -1788,6 +1788,71 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
   }
 }
 
+/* --------- 19. A semana de descarga nunca sai mais pesada que a carga que ela alivia --------- */
+/*
+ * Achado da varredura de 18/08/2026, o de maior alcance da rodada: a descarga tirava uma
+ * REPETIÇÃO quando as séries já estavam no piso, e neste motor repetição é dose de
+ * INTENSIDADE. Com a mesma reserva, menos repetição é MAIS carga na barra: 54.164 blocos em
+ * 2.847 planos do cartesiano saíam assim, e em 2.387 planos a linha de intensidade do
+ * gráfico SUBIA na semana rotulada como alívio. No modelo de blocos a descarga ainda herdava
+ * a intensidade do pico do mesociclo e saía MAIS PERTO DA FALHA que a carga anterior
+ * (Força: sem7 3x6 RIR 4 seguida de sem8 4x1 RIR 3).
+ *
+ * A asserção compara bloco a bloco, casando SESSÃO PELA ÊNFASE e bloco pelo exercício, para
+ * não confundir "a semana tem menos sessões" com "a sessão ficou mais leve". Ela cobra as
+ * duas direções do dano: nunca menos repetição com reserva não maior, e nunca menos reserva.
+ */
+{
+  type BlocoAlvo = {
+    tipo?: string;
+    nome?: string;
+    seriesAlvo?: number;
+    repsAlvo?: number;
+    rirAlvo?: number;
+  };
+  const forcaDaSessao = (se: { blocos: BlocoAlvo[] }) =>
+    se.blocos.filter((b) => b.tipo !== "aerobio" && b.tipo !== "isometrico");
+
+  let comparados = 0;
+  for (const objetivo of OBJETIVOS)
+    for (const nivel of ["Iniciante", "Intermediário", "Avançado"] as Nivel[])
+      for (const modeloPreferido of [undefined, "linear", "ondulatoria", "blocos"] as (string | undefined)[])
+        for (const grupoEspecial of [undefined, "obesidade-grau-3", "hipertensao-estagio-2", "diabetes-tipo-2"])
+          // Frequência 2 entra porque é nela que a descarga do modelo de blocos herdava a
+          // intensidade do pico e saía MAIS PERTO DA FALHA; com 3 sessões o caso não aparece.
+          for (const frequencia of [2, 3]) {
+          const caso = `${objetivo}/${nivel}/${modeloPreferido ?? "modelo do motor"}/${grupoEspecial ?? "sem condição"}/${frequencia}x`;
+          const plano = gerarPlano({ objetivo, nivel, semanas: 12, frequencia, grupoEspecial, modeloPreferido } as never);
+          const semanas = plano.principal.mesociclos.flatMap((m) => m.microciclos);
+          for (let i = 1; i < semanas.length; i++) {
+            const d = semanas[i];
+            const c = semanas[i - 1];
+            if (d.tipo !== "deload" || c.tipo === "deload") continue;
+            for (const sd of d.sessoes) {
+              const sc = c.sessoes.find((x) => x.foco === sd.foco);
+              if (!sc) continue;
+              for (const bd of forcaDaSessao(sd) as BlocoAlvo[]) {
+                const bc = (forcaDaSessao(sc) as BlocoAlvo[]).find((x) => x.nome === bd.nome);
+                if (!bc || bd.repsAlvo == null || bc.repsAlvo == null) continue;
+                comparados++;
+                const rd = bd.rirAlvo;
+                const rc = bc.rirAlvo;
+                if (bd.repsAlvo < bc.repsAlvo && !(rd != null && rc != null && rd > rc))
+                  erro(
+                    `DESCARGA MAIS PESADA QUE A CARGA (${caso}, semana ${d.semana}, ${bd.nome}): carga ${bc.seriesAlvo}x${bc.repsAlvo} RIR ${rc ?? "-"} e descarga ${bd.seriesAlvo}x${bd.repsAlvo} RIR ${rd ?? "-"}. Menos repetição com a mesma reserva é mais carga na barra.`,
+                  );
+                if (rd != null && rc != null && rd < rc)
+                  erro(
+                    `DESCARGA MAIS PERTO DA FALHA (${caso}, semana ${d.semana}, ${bd.nome}): a carga pedia RIR ${rc} e a descarga pede RIR ${rd}.`,
+                  );
+              }
+            }
+          }
+        }
+  // Controle positivo: sem pares comparados a asserção acima passa por vacuidade.
+  if (comparados < 500) erro(`CONTROLE POSITIVO DA DESCARGA: só ${comparados} blocos comparados; a asserção perdeu o sentido.`);
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {

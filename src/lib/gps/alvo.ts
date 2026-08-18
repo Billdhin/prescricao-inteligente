@@ -337,8 +337,6 @@ function nivelDeSeries(ctx: CtxAlvo, nivelVolume: number, t: number): number {
 
 function niveisDaCargaMaisLeve(
   ctx: CtxAlvo,
-  seriesIv: { min: number; max: number } | null,
-  repsIv: { min: number; max: number } | null,
 ): { nv: number; ni: number } {
   const n = Math.max(1, ctx.semanasDeCargaNoMeso);
   // A fração precisa vir da MESMA fonte que as semanas de carga usam: quando a rampa é no
@@ -362,7 +360,8 @@ function niveisDaCargaMaisLeve(
           ? 0
           : (s - 1) / (n - 1);
 
-  let melhor = { nv: 0, ni: 0, vol: Infinity };
+  let minNv = Infinity;
+  let minNi = Infinity;
   for (let s = 1; s <= n; s++) {
     const t = fracao(s);
     const nv = comPasso(
@@ -375,19 +374,27 @@ function niveisDaCargaMaisLeve(
       comPiso(nivelDaTendencia(ctx.tendenciaIntensidade, 0, s), ctx.pisoDoCiclo),
       ctx.fatorProgressao,
     );
-    // O par (séries, repetições) desta semana de carga, calculado do mesmo jeito que o ramo
-    // de carga calcula. É por isso que o volume comparado aqui é o volume REAL da semana, e
-    // não uma aproximação: séries seguem o volume e repetições seguem a intensidade, e os
-    // dois mínimos caem em semanas DIFERENTES quando as tendências andam em sentidos opostos.
+    /*
+     * MENOR NÍVEL DE CADA EIXO, MEDIDO SEPARADAMENTE, e não o par da semana de menor volume.
+     *
+     * A versão anterior escolhia a semana de MENOR VOLUME e devolvia o par (volume,
+     * intensidade) DELA. Num mesociclo de intensificação (blocos) ou numa rampa (linear) a
+     * semana de menor volume é justamente a MAIS INTENSA do bloco, então a descarga herdava
+     * a intensidade do pico. Medido em 18/08/2026: em 420 blocos do cartesiano a descarga
+     * saía com RIR MENOR que a semana de carga anterior, e em Força a sequência era
+     * sem7 3x6 RIR 4 seguida de sem8 4x1 RIR 3, que é teste de carga máxima com rótulo de
+     * alívio.
+     *
+     * Tomar o mínimo de cada eixo é a mesma lei de fusão do resto do motor (teto por
+     * Math.min, piso por Math.max): a descarga se ancora no MENOS exigente que aquele bloco
+     * de fato prescreveu, nos dois eixos, e nunca acima. Os dois níveis existiram em semanas
+     * reais do bloco, então nenhum número novo entra aqui.
+     */
     const nvSeries = nivelDeSeries(ctx, nv, t);
-    const series = seriesIv ? ponto(seriesIv, nvSeries, true, ctx.partirDoPiso === true) : 1;
-    const reps = repsIv ? ponto(repsIv, 1 - ni, true) : 1;
-    const vol = series * reps;
-    // Guarda o nível JÁ com a cautela aplicada: quem consome isto (a descarga) posiciona o
-    // ponto na mesma escala em que as semanas de carga foram posicionadas.
-    if (vol < melhor.vol) melhor = { nv: nvSeries, ni, vol };
+    if (nvSeries < minNv) minNv = nvSeries;
+    if (ni < minNi) minNi = ni;
   }
-  return { nv: melhor.nv, ni: melhor.ni };
+  return { nv: minNv === Infinity ? 0 : minNv, ni: minNi === Infinity ? 0 : minNi };
 }
 
 function nivelDaTendencia(tend: Tendencia, t: number, semanaNoMeso: number): number {
@@ -556,7 +563,7 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
     // variável está travada, o "teto" dela é o próprio nível congelado (a descarga reduz a partir daí).
     // Ancoragem na semana de carga MAIS LEVE do bloco (ver nivelMinimoDeCarga), e não na
     // última. Com a última, na ondulatória a descarga saía idêntica a semanas de carga.
-    const maisLeveDoBloco = niveisDaCargaMaisLeve(ctx, seriesIv, repsIv);
+    const maisLeveDoBloco = niveisDaCargaMaisLeve(ctx);
     const nvUltima = comPiso(volTravado ? nivelCongelado(ctx.tendenciaVolume) : maisLeveDoBloco.nv, ctx.pisoDoCiclo);
     const niUltima = comPiso(intTravado ? nivelCongelado(ctx.tendenciaIntensidade) : maisLeveDoBloco.ni, ctx.pisoDoCiclo);
     if (seriesIv) {
@@ -573,15 +580,30 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
     // frequência). Elas seguem a INTENSIDADE, como na semana de carga: a descarga mantém a
     // mesma repetição do fim do bloco e alivia por séries, RIR e carga relativa.
     if (repsIv) {
-      const acompanhando = ponto(repsIv, 1 - niUltima, true);
-      // Se as séries já estavam no piso da faixa, elas não tinham como cair, e a descarga
-      // sairia com o MESMO volume da semana de carga mais leve. Nesse caso a redução tem
-      // que vir das repetições, senão a semana de descarga não descarrega nada.
-      const seriesNaoCairam =
-        seriesIv != null && alvo.seriesAlvo === Math.round(intervaloFechado(seriesIv).min) &&
-        alvo.seriesAlvo === ponto(seriesIv, nvUltima, true, ctx.partirDoPiso === true);
-      const pisoReps = Math.round(intervaloFechado(repsIv).min);
-      alvo.repsAlvo = seriesNaoCairam ? Math.max(pisoReps, acompanhando - 1) : acompanhando;
+      /*
+       * TIRAR UMA REPETIÇÃO NÃO É DESCARREGAR: NESTE MOTOR É CARREGAR.
+       *
+       * Aqui existia uma rede de segurança: quando as séries já estavam no piso da faixa e
+       * não tinham como cair, a descarga tirava uma REPETIÇÃO "senão a semana de descarga
+       * não descarrega nada". A intenção estava certa e o instrumento estava trocado.
+       * Repetição, neste motor, é dose de INTENSIDADE e não de volume, e isso está escrito
+       * em três outros lugares do código (periodizacao.ts, progressao.ts e
+       * check-progressao.ts): com a mesma reserva, 3x8 é carga de 11RM e 3x11 é carga de
+       * 14RM. A rede pedia a carga MAIS PESADA das duas na semana rotulada como alívio.
+       *
+       * Medido em 18/08/2026, antes da correção: 54.164 blocos em 2.847 planos do
+       * cartesiano saíam com menos repetição e reserva não maior, ou seja, mais carga na
+       * barra, e em 2.387 planos a linha de intensidade do gráfico SUBIA justamente na
+       * semana de descarga.
+       *
+       * A descarga continua descarregando, e pelos eixos que de fato reduzem a exigência:
+       * uma série a menos, uma reserva a mais, carga relativa em 60% do nível da âncora,
+       * intervalo mais longo e uma sessão a menos na semana. Quando nenhum desses eixos
+       * consegue se mover (faixa de repetições de ponto único, reserva já no teto da faixa,
+       * séries no piso), a semana sai igual à carga mais leve do bloco e a redução é a da
+       * frequência. Isso é honesto; inventar um alívio que é aperto não era.
+       */
+      alvo.repsAlvo = ponto(repsIv, 1 - niUltima, true);
     }
     if (pctIv) {
       // Carga relativa mais baixa na descarga (esforço menor), sem sair da faixa.
@@ -595,7 +617,18 @@ export function alvoSemana(dose: DoseTextos, ctx: CtxAlvo): AlvoForca {
     }
     if (intervaloIv && intervaloUn) {
       const seg = intervaloFechado({ min: intervaloIv.min * intervaloUn, max: (intervaloIv.max === Infinity ? intervaloIv.min : intervaloIv.max) * intervaloUn });
-      alvo.intervaloAlvoSeg = arredonda5(ponto(seg, niUltima, false));
+      /*
+       * INTERVALO NO TOPO DA FAIXA CITADA na semana de descarga.
+       *
+       * Ele seguia o nível de intensidade da âncora, o que na descarga devolvia o intervalo
+       * MAIS CURTO do bloco: menos descanso é mais densidade e mais fadiga acumulada, o
+       * oposto do que a semana promete. E é o único eixo que ainda tem para onde andar
+       * quando as séries já estão no piso da faixa e a reserva já está no teto dela, que é
+       * exatamente o caso em que a descarga saía idêntica à carga.
+       *
+       * O topo é o da faixa CITADA do próprio exercício, então nenhum número novo entra.
+       */
+      alvo.intervaloAlvoSeg = arredonda5(ponto(seg, 1, false));
     }
     return aplicarDoseDoPerfil(alvo, ctx, { rirIv, pctIv, intervaloIv, intervaloUn });
   }
@@ -905,8 +938,26 @@ export function alvoAerobioSemana(dose: DoseAerobioTextos, ctx: CtxAlvo): AlvoAe
  * Frase curta do objetivo da semana, derivada do tipo (carga/descarga) e das tendências do
  * mesociclo. Texto de exibição, sem travessão, sob o critério do profissional.
  */
-export function objetivoDaSemana(tipo: TipoMicrociclo, tv: Tendencia, ti: Tendencia): string {
-  if (tipo === "deload") return "Semana de descarga: aliviar a dose para recuperar e assimilar o estímulo.";
+export function objetivoDaSemana(
+  tipo: TipoMicrociclo,
+  tv: Tendencia,
+  ti: Tendencia,
+  /*
+   * A descarga entregou a MESMA dose por sessão da semana de carga anterior, e o alívio veio
+   * só da sessão a menos. Acontece quando séries, repetições, reserva, carga relativa e
+   * intervalo já estão todos na ponta mais leve da faixa citada e não têm para onde ceder.
+   *
+   * A frase precisa dizer isso porque a genérica ("aliviar a dose") afirmaria uma redução que
+   * não houve, que é a assinatura de defeito que este motor já pagou caro. Medido em
+   * 18/08/2026: 936 de 10.152 descargas do cartesiano estão nesse caso, e TODAS elas perdem
+   * uma sessão, então a redução existe, ela só não está na dose.
+   */
+  soFrequencia?: boolean,
+): string {
+  if (tipo === "deload")
+    return soFrequencia
+      ? "Semana de descarga: a dose por sessão já está na ponta mais leve da faixa citada, então o alívio desta semana vem da sessão a menos."
+      : "Semana de descarga: aliviar a dose para recuperar e assimilar o estímulo.";
   if (tipo === "teste") return "Semana de teste: aferir o progresso com o volume mais enxuto.";
   if (tv === "varia" || ti === "varia") return "Alternar as ênfases ao longo da semana, dentro da faixa.";
   const sobeVol = tv === "sobe";

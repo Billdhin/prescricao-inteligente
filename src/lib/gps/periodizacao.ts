@@ -44,6 +44,7 @@ import {
 } from "@/lib/gps/restricoes";
 import type { ParamMonitorId } from "@/data/monitoringParameters";
 import { alvoSemana, alvoAerobioSemana, objetivoDaSemana, lerFaixaRIR, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
+import { intervaloDe } from "@/lib/gps/faixasParse";
 
 export interface GerarPlanoInput {
   objetivo: GpsObjetivo;
@@ -993,8 +994,29 @@ function montarSessoes(
    */
   const enfases = ondula && nivel !== "Iniciante" ? faixa.enfases : undefined;
 
+  /*
+   * NA SEMANA DE DESCARGA, A ÊNFASE MAIS LEVE VEM PRIMEIRO.
+   *
+   * A rotação é `i % enfases.length` e a descarga roda com `frequencia - 1` sessões, então a
+   * sessão que SEMPRE sobrevive ao corte é a de índice 0, que é a "pesado". A semana rotulada
+   * como alívio era justamente a composta pela ênfase mais pesada do objetivo, e o efeito
+   * ficava medível: na ondulatória de Hipertrofia a descarga saía "3x8 com 2 de reserva"
+   * contra "3x7 com 2 de reserva" da carga anterior, ou seja, sem folga nenhuma a mais.
+   *
+   * Invertendo a ordem só na descarga, quem sobrevive ao corte é a ênfase mais controlada
+   * (mais repetição, carga mais leve, mais reserva). Nenhuma ênfase nova entra: são as mesmas
+   * do objetivo, na ordem que a semana pede. A leitura de "mais leve" é o PISO de repetições
+   * da própria ênfase, porque com a mesma reserva mais repetição é menos carga, que é a
+   * mesma leitura que o resto do motor usa.
+   */
+  const enfasesDaSemana = (() => {
+    if (!enfases || ctx?.tipoSemana !== "deload") return enfases;
+    const pisoReps = (e: EnfaseSessao) => intervaloDe(e.reps)?.min ?? 0;
+    return [...enfases].sort((a, b) => pisoReps(b) - pisoReps(a));
+  })();
+
   for (let i = 0; i < frequencia; i++) {
-    const enfase = enfases?.[i % enfases.length];
+    const enfase = enfasesDaSemana?.[i % enfasesDaSemana.length];
     const blocos: BlocoSessao[] = [];
 
     // Aeróbio entra quando o objetivo é emagrecimento (força de corpo todo + cardio).
@@ -1306,6 +1328,27 @@ function montarMicrociclos(
       equipamentos,
       frequencia,
     );
+    /*
+     * A descarga alivia a DOSE ou só a FREQUÊNCIA? A frase da semana precisa saber.
+     *
+     * Compara a assinatura de cada bloco de força desta descarga com a da semana de carga
+     * imediatamente anterior. Se todos os blocos aparecem lá idênticos (séries, repetições,
+     * reserva, carga relativa e intervalo), a dose por sessão não mudou e o alívio é a sessão
+     * a menos, que o motor sempre aplica. Sem semana anterior visível neste mesociclo, não
+     * afirma nada e cai na frase genérica.
+     */
+    const anterior = semanas[semanas.length - 1];
+    const soFrequencia = (() => {
+      if (!ehDeload || !anterior || anterior.tipo === "deload") return false;
+      const assina = (b: BlocoSessao) =>
+        `${b.nome}::${b.seriesAlvo}x${b.repsAlvo}|rir${b.rirAlvo}|pct${b.cargaRelativaAlvo}|int${b.intervaloAlvoSeg}`;
+      const forcaDe = (ss: Sessao[]) => ss.flatMap((se) => se.blocos.filter((b) => b.tipo !== "aerobio" && b.tipo !== "isometrico"));
+      const agora = forcaDe(sessoesDaSemana).map(assina);
+      if (!agora.length) return false;
+      const antes = new Set(forcaDe(anterior.sessoes).map(assina));
+      return agora.every((x) => antes.has(x));
+    })();
+
     semanas.push({
       id: nid("mic"),
       semana,
@@ -1317,8 +1360,12 @@ function montarMicrociclos(
       // aqui faria o editor mostrar "3 sessões" numa semana com 6.
       frequencia: sessoesDaSemana.length,
       sessoes: sessoesDaSemana,
-      nota: ehDeload ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
-      objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade),
+      nota: ehDeload
+        ? soFrequencia
+          ? "Semana de descarga: a sessão sai igual à da semana anterior porque a faixa citada já está na ponta mais leve; o que alivia é a sessão a menos."
+          : "Semana de descarga: reduza volume e intensidade para recuperar."
+        : undefined,
+      objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade, soFrequencia),
     });
   }
   return semanas;
@@ -1633,6 +1680,43 @@ function semanasDeDescarga(semanasTotais: number, cadenciaDaCondicao?: number): 
   return set;
 }
 
+/*
+ * A DESCARGA FECHA UM BLOCO, ELA NÃO ABRE UM.
+ *
+ * `semanasDeDescarga` posiciona pelo CALENDÁRIO (a cada 3 ou 4 semanas, conforme a
+ * `descargaCadaSemanas` da condição), enquanto no caminho clínico o mesociclo é uma fase da
+ * jornada e dura `semanas / nFases`. Quando as duas cadências não fecham, a descarga nasce
+ * como PRIMEIRA semana de um mesociclo, e aí ela se ancora em semanas de carga que ainda não
+ * aconteceram: medido em 18/08/2026, 4.320 descargas caíam nessa posição e 222 delas saíam
+ * com dose por bloco MAIOR que a semana de carga anterior. Um alívio que ainda não viu
+ * esforço nenhum não é alívio.
+ *
+ * O ajuste puxa essa descarga uma semana para TRÁS, onde ela fecha o bloco anterior. Puxar
+ * para trás e nunca para frente é a escolha conservadora: a descarga chega no máximo na
+ * cadência que a condição declarou, nunca depois dela.
+ *
+ * Não mexe quando a semana 1 do plano seria a descarga, quando a anterior já é descarga (não
+ * empilha duas) e quando o bloco anterior tem uma única semana (ele ficaria sem nenhuma
+ * semana de carga).
+ */
+function descargaFechaOBloco(descargas: Set<number>, duracoes: number[]): Set<number> {
+  const inicio = new Map<number, number>(); // semana inicial do meso -> duração do meso ANTERIOR
+  let cursor = 1;
+  duracoes.forEach((d, m) => {
+    inicio.set(cursor, m === 0 ? 0 : duracoes[m - 1]);
+    cursor += d;
+  });
+  const ajustado = new Set(descargas);
+  for (const s of [...descargas].sort((a, b) => a - b)) {
+    const durAnterior = inicio.get(s);
+    if (durAnterior == null || durAnterior < 2) continue; // não é abertura de bloco, ou o bloco anterior é curto demais
+    if (s === 1 || ajustado.has(s - 1)) continue;
+    ajustado.delete(s);
+    ajustado.add(s - 1);
+  }
+  return ajustado;
+}
+
 /** Quantas semanas de CARGA (não descarga) o mesociclo que começa em `ini` contém. */
 function cargasDoMeso(ini: number, dur: number, descargas: Set<number>): number {
   let n = 0;
@@ -1687,7 +1771,10 @@ function montarMacrocicloGenerico(
   const resto = semanas - base * nMeso;
 
   const duracoes = Array.from({ length: nMeso }, (_, m) => base + (m < resto ? 1 : 0));
-  const descargas = semanasDeDescarga(semanas, regraClinicaDoPlano(input)?.modProgressao?.descargaCadaSemanas);
+  const descargas = descargaFechaOBloco(
+    semanasDeDescarga(semanas, regraClinicaDoPlano(input)?.modProgressao?.descargaCadaSemanas),
+    duracoes,
+  );
   const rampa = rampaNoMacro(modelo, duracoes, descargas);
   // Ondas do modelo de blocos (acúmulo -> intensificação -> realização se repetem a cada 3
   // mesociclos). A onda seguinte lê a MESMA faixa a partir de um piso mais alto, senão o plano
@@ -1900,7 +1987,10 @@ function montarMacrocicloGrupo(input: GerarPlanoInput, modelo: ModeloPeriodizaca
   const progride = sequencia.map(({ estendida }) => !estendida);
   // A descarga é do CALENDÁRIO do plano, não da fase: no caminho clínico o mesociclo é
   // uma fase da jornada e quase nunca chega a 4 semanas, que era a condição antiga.
-  const descargas = semanasDeDescarga(semanas, regraClinicaDoPlano(input)?.modProgressao?.descargaCadaSemanas);
+  const descargas = descargaFechaOBloco(
+    semanasDeDescarga(semanas, regraClinicaDoPlano(input)?.modProgressao?.descargaCadaSemanas),
+    duracoes,
+  );
   const rampa = rampaNoMacro(modelo, duracoes, descargas, progride);
   const mesociclos: Mesociclo[] = [];
   let cursor = 1;
