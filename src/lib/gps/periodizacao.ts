@@ -27,6 +27,7 @@ import {
   type BandaAerobia,
   BANDAS_AEROBIAS,
   ORDEM_BANDA,
+  MODELOS_PERIODIZACAO,
 } from "@/data/periodizacao";
 import { exercises } from "@/data/exercises";
 import { getModalidade } from "@/data/modalities";
@@ -2109,9 +2110,59 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
 
   const macroPrincipal =
     montarMacrocicloGrupo(input, principal) ?? montarMacrocicloGenerico(input, principal);
-  const macroAlt = alternativa
-    ? (montarMacrocicloGrupo(input, alternativa) ?? montarMacrocicloGenerico(input, alternativa))
-    : undefined;
+  /*
+   * A ALTERNATIVA SÓ EXISTE SE ELA FOR OUTRO PLANO.
+   *
+   * O Filipe trocou para a alternativa, viu o título, o resumo e a explicação mudarem, e o
+   * GRÁFICO continuar igual. O gráfico estava certo: o plano é que era o mesmo. Medido em
+   * 18/08/2026, no cartesiano de objetivo x nível x condição, 138 de 540 pares de modelos
+   * saem BYTE-IDÊNTICOS, e todos os 138 estão dentro do trio ondulatória, flexível e
+   * autorregulada, que hoje recebem as mesmas tendências e a mesma rotação de ênfase. Como
+   * "flexivel" é a alternativa padrão de quem tem condição clínica e "ondulatoria" é a
+   * principal de força e hipertrofia em treinados, o par que o Filipe viu era exatamente
+   * esse.
+   *
+   * Oferecer como "uma alternativa que a evidência sustenta" um plano idêntico ao principal é
+   * afirmar uma escolha que não existe. Enquanto os três modelos não forem diferenciados de
+   * verdade (decisão clínica, não de código), a alternativa cai para o próximo modelo que
+   * PRODUZA outro plano, e some quando nenhum produzir.
+   */
+  const assinaturaDoMacro = (m: Macrociclo) =>
+    m.mesociclos
+      .flatMap((me) => me.microciclos)
+      .map(
+        (w) =>
+          `${w.semana}:${w.tipo}:` +
+          w.sessoes
+            .map((se) =>
+              se.blocos
+                .map(
+                  (b) =>
+                    `${b.nome}|${b.seriesAlvo}x${b.repsAlvo}r${b.rirAlvo}i${b.intervaloAlvoSeg}d${b.duracaoAlvoMin}p${b.rpeAlvo}`,
+                )
+                .join(","),
+            )
+            .join(";"),
+      )
+      .join(String.fromCharCode(10));
+
+  const alternativaQueDifere = (() => {
+    if (!alternativa) return undefined;
+    const daPrincipal = assinaturaDoMacro(macroPrincipal);
+    // Ordem de tentativa: a escolhida primeiro, depois os demais modelos na ordem do catálogo,
+    // sem repetir a principal. Determinístico, como todo o resto do motor.
+    const candidatos = [alternativa, ...MODELOS_PERIODIZACAO.map((m) => m.id)].filter(
+      (id, i, arr) => id !== principal && arr.indexOf(id) === i,
+    );
+    for (const id of candidatos) {
+      const macro = montarMacrocicloGrupo(input, id) ?? montarMacrocicloGenerico(input, id);
+      if (assinaturaDoMacro(macro) !== daPrincipal) return { id, macro };
+    }
+    return undefined;
+  })();
+
+  const macroAlt = alternativaQueDifere?.macro;
+  const modeloAlternativo = alternativaQueDifere?.id;
 
   const modP = getModelo(principal);
   const faixa = getFaixa(input.objetivo);
@@ -2289,7 +2340,7 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
     principal: macroPrincipal,
     alternativa: macroAlt,
     modeloId: principal,
-    modeloAltId: alternativa,
+    modeloAltId: modeloAlternativo,
     // O título vive aqui, junto do resto do texto que vai impresso, para que a regra de
     // linguagem do documento (programa, nunca diagnóstico) seja verificável num lugar só.
     titulo: grupo

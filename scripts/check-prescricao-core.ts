@@ -37,6 +37,8 @@ import { EFEITO_POR_TAG, criarRestricao, rotuloRestricao } from "../src/lib/gps/
 import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
+import { BANDAS_AEROBIAS } from "../src/data/periodizacao";
+import { FORMATOS_AEROBIOS, FORMATOS_AEROBIOS_LISTA, aplicarFormatoAerobio } from "../src/lib/gps/formatoAerobio";
 import { specialGroups } from "../src/data/specialGroups";
 import { exercises } from "../src/data/exercises";
 import { estimativas } from "../src/lib/avaliacao/estimativas";
@@ -1851,6 +1853,86 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
         }
   // Controle positivo: sem pares comparados a asserção acima passa por vacuidade.
   if (comparados < 500) erro(`CONTROLE POSITIVO DA DESCARGA: só ${comparados} blocos comparados; a asserção perdeu o sentido.`);
+}
+
+/* --------- 20. A alternativa oferecida é OUTRO plano, e o formato do cardio muda a dose --------- */
+/*
+ * Dois achados do Filipe em 18/08/2026, na mesma tela.
+ *
+ * (a) Ele trocou para a alternativa, viu título, resumo e explicação mudarem, e o GRÁFICO
+ *     continuar igual. O gráfico estava certo: ondulatória, flexível e autorregulada recebem
+ *     as mesmas tendências e a mesma rotação de ênfase, então 138 de 540 pares de modelos
+ *     saem byte-idênticos. Como "flexivel" era a alternativa padrão de quem tem condição
+ *     clínica, o par que ele viu era exatamente esse.
+ *
+ * (b) Trocar o formato do cardio para HIIT mudava só o rótulo: seguia "15 a 25 min,
+ *     moderada, recuperação -", que é a prescrição do contínuo com outro nome.
+ */
+{
+  const assinaturaDoMacro = (m: { mesociclos: { microciclos: { semana: number; tipo: string; sessoes: { blocos: { nome?: string; seriesAlvo?: number; repsAlvo?: number; rirAlvo?: number; intervaloAlvoSeg?: number; duracaoAlvoMin?: number; rpeAlvo?: number }[] }[] }[] }[] }) =>
+    m.mesociclos
+      .flatMap((me) => me.microciclos)
+      .map(
+        (w) =>
+          `${w.semana}:${w.tipo}:` +
+          w.sessoes
+            .map((se) => se.blocos.map((b) => `${b.nome}|${b.seriesAlvo}x${b.repsAlvo}r${b.rirAlvo}i${b.intervaloAlvoSeg}d${b.duracaoAlvoMin}p${b.rpeAlvo}`).join(","))
+            .join(";"),
+      )
+      .join(String.fromCharCode(10));
+
+  let comAlternativa = 0;
+  for (const objetivo of OBJETIVOS)
+    for (const nivel of ["Iniciante", "Intermediário", "Avançado"] as Nivel[])
+      for (const grupoEspecial of [undefined, "obesidade-grau-3", "hipertensao-estagio-2", "gestante"]) {
+        const plano = gerarPlano({ objetivo, nivel, semanas: 12, frequencia: 3, grupoEspecial } as never);
+        if (!plano.alternativa) continue;
+        comAlternativa++;
+        if (assinaturaDoMacro(plano.alternativa) === assinaturaDoMacro(plano.principal))
+          erro(
+            `ALTERNATIVA IDÊNTICA À PRINCIPAL (${objetivo}/${nivel}/${grupoEspecial ?? "sem condição"}): o plano oferece "${plano.modeloAltId}" ao lado de "${plano.modeloId}" e os dois macrociclos são iguais semana a semana. O gráfico não muda porque o plano não muda.`,
+          );
+      }
+  if (comAlternativa < 20) erro(`CONTROLE POSITIVO DA ALTERNATIVA: só ${comAlternativa} planos tinham alternativa; a asserção perdeu o sentido.`);
+
+  /*
+   * O formato do cardio precisa mudar a dose, e não só o rótulo. Cada formato declara a banda
+   * de intensidade e a recuperação; a asserção cobra que aplicá-lo de fato reescreva o bloco.
+   */
+  // "15 a 25" é o caso que importa: a metade arredondada para baixo dá "5 a 10", e DOBRAR isso
+  // devolveria "10 a 20". Sem ele, a asserção de ida e volta passaria com a reconstrução errada.
+  for (const faixaContinua of ["20 a 40 min", "15 a 25 min"]) {
+  const blocoCardio = {
+    tipo: "aerobio" as const,
+    id: "b",
+    nome: "Caminhada",
+    formato: "Contínuo",
+    duracao: faixaContinua,
+    intensidade: BANDAS_AEROBIAS.moderada.intensidade,
+    recuperacao: "-",
+    duracaoAlvoMin: 20,
+    rpeAlvo: 5,
+    zonaFC: "129 a 153 bpm",
+  };
+  for (const f of FORMATOS_AEROBIOS_LISTA) {
+    const depois = aplicarFormatoAerobio(blocoCardio as never, f);
+    if (depois.formato !== f.nome) erro(`FORMATO NÃO GRAVADO (${f.nome}).`);
+    if (depois.intensidade !== BANDAS_AEROBIAS[f.banda].intensidade)
+      erro(`FORMATO SEM BANDA (${f.nome}): a intensidade não virou a banda "${f.banda}" que o formato declara.`);
+    if (depois.recuperacao !== f.recuperacao)
+      erro(`FORMATO SEM RECUPERAÇÃO (${f.nome}): o campo continuou "${depois.recuperacao}".`);
+    if (f.metadeDoTempo) {
+      if (depois.duracao === blocoCardio.duracao)
+        erro(`FORMATO SEM TEMPO PRÓPRIO (${f.nome}): o tempo total de trabalho continuou "${depois.duracao}", igual ao do contínuo.`);
+      if (depois.zonaFC != null)
+        erro(`ZONA DE FC DA BANDA ANTIGA (${f.nome}): a zona foi derivada da banda moderada e ficou ao lado de um texto vigoroso.`);
+    }
+    // Ida e volta: voltar ao contínuo devolve o tempo cheio, e não metade da metade.
+    const volta = aplicarFormatoAerobio(depois, FORMATOS_AEROBIOS.continuo);
+    if (volta.duracao !== blocoCardio.duracao)
+      erro(`IDA E VOLTA DO FORMATO (${f.nome}, faixa "${faixaContinua}"): voltar para Contínuo devolveu "${volta.duracao}" em vez de "${blocoCardio.duracao}".`);
+  }
+  }
 }
 
 /* --------------------------------- veredito --------------------------------- */

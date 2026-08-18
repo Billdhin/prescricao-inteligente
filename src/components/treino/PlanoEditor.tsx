@@ -1,3 +1,4 @@
+import { FORMATOS_AEROBIOS_LISTA, aplicarFormatoAerobio, formatoPeloNome } from "@/lib/gps/formatoAerobio";
 import * as React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -743,17 +744,33 @@ const CAMPOS_AEROBIO: CampoBloco[] = [
   { chave: "recuperacao", rotulo: "Recuperação" },
 ];
 
-/** Formatos de cardio que o profissional escolhe (o campo `formato` é texto livre;
- *  o motor gera "Contínuo", e aqui ele passa a poder trocar por um formato padrão).
- *  A recuperação entre tiros só faz sentido fora do contínuo. */
-const FORMATOS_CARDIO = [
-  "Contínuo",
-  "Intervalado",
-  "Intervalado de alta intensidade (HIIT)",
-  "Fartlek",
-  "Circuito",
-] as const;
-const camposDoBloco = (b: BlocoSessao): CampoBloco[] => (b.tipo === "aerobio" ? CAMPOS_AEROBIO : CAMPOS_FORCA);
+/*
+ * Os formatos de cardio saem de FORMATOS_AEROBIOS (lib/gps/formatoAerobio), e não de uma
+ * lista de rótulos.
+ *
+ * Aqui existia um array de cinco strings, e trocar o formato gravava só a string: o cartão
+ * passava a dizer "Intervalado de alta intensidade (HIIT)" e seguia prescrevendo "15 a 25
+ * min, moderada, recuperação -", que é a prescrição do contínuo. Agora o formato traz junto a
+ * banda de intensidade, o tempo total de trabalho, a recuperação e o aviso, e o editor aplica
+ * tudo de uma vez.
+ */
+const FORMATOS_CARDIO = FORMATOS_AEROBIOS_LISTA.map((f) => f.nome);
+/*
+ * O ISOMÉTRICO TEM VARIÁVEIS PRÓPRIAS, e o editor precisava saber disso.
+ *
+ * O bloco isométrico caía em CAMPOS_FORCA. O resultado: o campo "Repetições" saía VAZIO (o
+ * protocolo não tem repetição), o tempo de contração, que é a variável central dele, não
+ * aparecia em lugar nenhum, e o aviso de "fora da faixa" disparava contra faixas de força que
+ * não valem aqui. O profissional abria a sessão isométrica e não reconhecia o que era.
+ */
+const CAMPOS_ISOMETRICO: CampoBloco[] = [
+  { chave: "series", rotulo: "Séries" },
+  { chave: "duracao", rotulo: "Contração" },
+  { chave: "intervalo", rotulo: "Intervalo" },
+  { chave: "intensidade", rotulo: "Intensidade" },
+];
+const camposDoBloco = (b: BlocoSessao): CampoBloco[] =>
+  b.tipo === "aerobio" ? CAMPOS_AEROBIO : b.tipo === "isometrico" ? CAMPOS_ISOMETRICO : CAMPOS_FORCA;
 
 /* ============================ Quadro da sessão (leitura) ============================ */
 
@@ -1227,7 +1244,10 @@ function BlocoRow({
                 key={chave}
                 rotulo={rotulo}
                 valor={valor}
-                onChange={(v) => onChange({ ...bloco, formato: v })}
+                onChange={(v) => {
+                  const f = formatoPeloNome(v);
+                  onChange(f ? aplicarFormatoAerobio(bloco, f) : { ...bloco, formato: v });
+                }}
               />
             );
           }
@@ -1243,7 +1263,9 @@ function BlocoRow({
           );
         })}
       </div>
-      {!aerobio && !ocultarMetodo && (
+      {/* Bi-set e drop-set são métodos de série dinâmica; num protocolo isométrico fechado
+          não existe a série para agrupar, então o seletor não é oferecido. */}
+      {!aerobio && bloco.tipo !== "isometrico" && !ocultarMetodo && (
         <div className="mt-1.5">
           <label className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3">Método de série</label>
           <select
@@ -1314,7 +1336,7 @@ function CampoInline({
  *  (plano antigo ou texto do motor) mostrando-o como primeira opção, para não perdê-lo. */
 function CampoFormatoInline({ rotulo, valor, onChange }: { rotulo: string; valor: string; onChange: (v: string) => void }) {
   const id = React.useId();
-  const foraDaLista = valor && !FORMATOS_CARDIO.includes(valor as (typeof FORMATOS_CARDIO)[number]);
+  const foraDaLista = Boolean(valor) && !FORMATOS_CARDIO.includes(valor);
   return (
     <div>
       <label htmlFor={id} className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3">

@@ -112,6 +112,16 @@ export interface BlocoSessao {
   duracao?: string;
   /** recuperação entre tiros no intervalado ("2 min em ritmo leve"); "-" no contínuo */
   recuperacao?: string;
+  /**
+   * A faixa de duração do formato CONTÍNUO, guardada quando o bloco passa para um formato que
+   * corta o tempo total pela metade (intervalado e HIIT).
+   *
+   * Existe porque reconstruir a faixa cheia DOBRANDO perde informação: "15 a 25 min" vira
+   * "5 a 10 min" (metade arredondada para baixo em passos de 5) e voltaria como "10 a 20 min".
+   * O profissional trocaria o formato duas vezes e receberia de volta um plano que não é o
+   * dele. Aditivo e opcional: bloco antigo fica sem, e aí a função dobra, como fazia.
+   */
+  duracaoBase?: string;
   observacao?: string;
   /**
    * ALVO CONCRETO do aeróbio na semana (onda MP-4), sempre DENTRO das faixas-texto acima
