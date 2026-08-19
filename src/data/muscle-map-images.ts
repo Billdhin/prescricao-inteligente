@@ -228,6 +228,42 @@ const SLUGS_COM_POSE: string[] = [
   "remada-invertida",
   "triceps-frances-halter",
   "mergulho-no-banco",
+  /*
+   * Fechamento da varredura de imagens de 19/08/2026: estes 24 eram os unicos exercicios do
+   * catalogo sem boneco na posicao, e o buraco tinha passado batido na varredura da camada de
+   * analise porque as duas familias sao indices diferentes. Gerados no mesmo estilo (figura
+   * cinza, fundo branco, equipamento em contorno, musculo em azul com o principal em
+   * azul-marinho) e conferidos um a um.
+   *
+   * Dois deles usam a convencao da ilustracao anatomica para MUSCULO PROFUNDO, que e janela
+   * recortada no musculo superficial: o SUPRAESPINAL do scaption, que corre por baixo do
+   * trapezio, e os FLEXORES PROFUNDOS DO PESCOCO do chin-tuck. E a mesma solucao que a nota do
+   * respiracao-360 ja usava para o diafragma.
+   */
+  "rotacao-externa-elastico",
+  "rotacao-externa-deitado",
+  "rotacao-interna-elastico",
+  "scaption",
+  "clam-shell",
+  "caminhada-lateral-elastico",
+  "pallof-press-polia",
+  "pallof-press-elastico",
+  "chop-elastico",
+  "crucifixo-inverso",
+  "cadeira-adutora",
+  "puxada-supinada",
+  "levantamento-terra",
+  "serratus-punch",
+  "wall-slide",
+  "y-raise-banco",
+  "retracao-escapular-polia",
+  "suitcase-carry",
+  "chin-tuck",
+  "respiracao-360",
+  "agachamento-isometrico-parede",
+  "preensao-isometrica-handgrip",
+  "remada-invertida-apoio-alto",
+  "agachamento-aquatico",
 ];
 
 export function getMuscleMapPose(slug?: string): string | undefined {

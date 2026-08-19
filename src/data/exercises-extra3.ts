@@ -298,9 +298,19 @@ imagem: "/exercises/rotacao-interna-elastico.webp",
     resumoPratico:
       "Elevar o braço a cerca de 30 graus à frente do corpo, polegar para cima: a posição em que o supraespinal trabalha com a menor participação do deltoide.",
     anguloArticular: "Elevação até a altura do ombro, cerca de 30 graus à frente do plano frontal",
-    // Sem `imagemAnalise` de propósito: o primário é o supraespinal, que corre
-    // por baixo do deltoide e do trapézio e não aparece em superfície nenhuma.
+    /*
+     * A camada de análise deste exercício ficou anos ausente por um motivo real: o primário é
+     * o SUPRAESPINAL, que corre por baixo do deltoide e do trapézio e não aparece em
+     * superfície nenhuma, e pintar o deltoide de vermelho mostraria o músculo errado como se
+     * fosse o principal.
+     *
+     * Resolvida em 19/08/2026 com a convenção da ilustração anatômica para músculo profundo,
+     * a mesma que o mapa muscular já usava para o diafragma: vista de TRÁS e o supraespinal em
+     * vermelho mais escuro dentro da fossa supraespinhal, desenhado como JANELA RECORTADA no
+     * trapézio. A vista frontal foi tentada antes e recusada, porque ali nada disso aparece.
+     */
     imagem: "/exercises/scaption.webp",
+    imagemAnalise: "/exercises/scaption-analysis.webp",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Supraespinal", percentual: 60, papel: "primário" },

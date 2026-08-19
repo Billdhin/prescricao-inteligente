@@ -262,20 +262,28 @@ for (const e of exercises) {
  * pessoa VESTIDA com uma mancha vermelha por cima do tecido, que não mostra músculo nenhum).
  * As 36 que dava para refazer foram refeitas.
  *
- * As DUAS que sobraram não são esquecimento, são decisão anatômica, e por isso ficam nomeadas
- * aqui em vez de sumirem numa contagem:
+ * As DUAS que tinham ficado de fora por motivo anatômico foram fechadas no mesmo dia, e o
+ * caminho vale registrar porque não foi mais prompt: foi TROCAR A SEMENTE DE POSE.
  *
- * - `scaption`: o primário é o SUPRAESPINAL, que corre por baixo do deltoide e do trapézio.
- *   Ele não aparece em superfície nenhuma, então uma camada de análise que pintasse o deltoide
- *   de vermelho estaria mostrando o músculo ERRADO como se fosse o principal.
- * - `puxada-supinada`: o primário é o LATÍSSIMO DO DORSO, que fica nas COSTAS, e a foto de
- *   execução é uma vista FRONTAL.
+ * - `scaption`: o primário é o SUPRAESPINAL, que corre por baixo do trapézio e não aparece em
+ *   superfície. Resolvido com a convenção da ilustração anatômica para músculo profundo, a
+ *   mesma que o mapa muscular já usava para o diafragma: vista de trás e o músculo em janela
+ *   RECORTADA no trapézio.
+ * - `puxada-supinada`: o primário é o LATÍSSIMO DO DORSO, que fica nas costas, e a foto de
+ *   execução é FRONTAL. Resolvido gerando a análise numa vista de TRÁS.
+ *
+ * Nas duas, pedir "mude a câmera para trás" ao gerador NÃO funcionou: ele devolveu vista
+ * frontal as duas vezes. O que funcionou foi usar como semente de pose o BONECO na posição,
+ * que já estava na vista certa. Fica registrado para a próxima vez que a câmera teimar.
+ *
+ * A lista de exceções está VAZIA hoje, e é para continuar assim. Ela existe como porta de
+ * saída declarada, não como gaveta: quem precisar usá-la escreve o motivo anatômico aqui.
  *
  * A lista é fechada de propósito: exercício novo que nascer sem análise reprova aqui e obriga
  * quem o criou a gerar a imagem ou a escrever por que ela não pode existir. Ausência com
  * motivo é honestidade; ausência silenciosa é buraco.
  */
-const SEM_ANALISE_COM_MOTIVO = new Set(["scaption", "puxada-supinada"]);
+const SEM_ANALISE_COM_MOTIVO = new Set<string>([]);
 
 for (const e of exercises) {
   const temAnalise = Boolean(e.imagemAnalise);
@@ -288,6 +296,30 @@ for (const e of exercises) {
     problemas.push(
       `[${e.slug}]: está na lista de exceções por motivo anatômico e mesmo assim declara imagem de análise. Uma das duas coisas está errada.`,
     );
+}
+
+/* ------------- O BONECO NA POSIÇÃO TAMBÉM É COBRADO, e por que ele faltava ------------- */
+/*
+ * A varredura de 19/08/2026 cobriu a camada de análise e deu por encerrado. Estava errado: o
+ * Filipe perguntou se ainda havia treino sem imagem, e a conta refeita achou 24 exercícios sem
+ * BONECO NA POSIÇÃO. O buraco passou batido porque são ÍNDICES DIFERENTES, cada um com a sua
+ * lista, e conferir um não diz nada sobre o outro.
+ *
+ * Por isso a regra nasce ao lado da regra da análise, e não como uma verificação avulsa: as
+ * duas famílias de imagem passam a ser cobradas na mesma passada, com a mesma porta de exceção
+ * declarada. Quem criar exercício novo agora reprova nas duas até gerar as duas imagens.
+ */
+const SEM_BONECO_COM_MOTIVO = new Set<string>([]);
+
+for (const e of exercises) {
+  const temBoneco = Boolean(getMuscleMapPose(e.slug));
+  const ehExcecao = SEM_BONECO_COM_MOTIVO.has(e.slug);
+  if (!temBoneco && !ehExcecao)
+    problemas.push(
+      `[${e.slug}]: sem boneco na posição (mmp) e sem estar na lista de exceções com motivo. Gere a imagem ou declare por que ela não pode existir.`,
+    );
+  if (temBoneco && ehExcecao)
+    problemas.push(`[${e.slug}]: está na lista de exceções do boneco e mesmo assim declara um. Uma das duas coisas está errada.`);
 }
 
 /* ------------- Regra dura: imagem declarada existe mesmo no disco ------------- */
