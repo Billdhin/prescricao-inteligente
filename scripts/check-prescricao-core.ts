@@ -468,11 +468,44 @@ for (const objetivo of OBJETIVOS) {
         erro(`ISOMÉTRICO SEM A CAUTELA NO BLOCO (${slug}): a observação não fala da pressão arterial, e ela precisa vir antes do benefício.`);
     }
   }
-  // Quem não declara indicação não pode receber: a evidência é específica de pressão arterial.
-  for (const grupo of [undefined, "osteoporose", "gestante", "diabetes-tipo-2"]) {
-    if (grupo && comIndicacao.includes(grupo)) continue;
-    if (blocosIso(grupo).length)
-      erro(`ISOMÉTRICO EM QUEM NÃO PEDIU (${grupo ?? "sem condição"}): bloco isométrico prescrito sem a condição declarar indicação.`);
+  /*
+   * A REGRA MUDOU EM 19/08/2026, E A ASSERÇÃO MUDA COM ELA.
+   *
+   * Antes: só recebia o protocolo quem tinha condição declarando indicação, o que na prática
+   * era hipertensão estágio 1 e 2. O Filipe cobrou que contração sustentada não é conduta
+   * exclusiva de hipertenso, e o PubMed sustenta: duas metanálises medem queda de pressão em
+   * NORMOTENSOS (`loaiza-isometrico-normotensos-2020`, `carlson-isometrico-pa-2014`), com a
+   * primeira concluindo por PREVENÇÃO da hipertensão.
+   *
+   * A asserção agora cobra as três coisas que a regra nova promete, e não a antiga:
+   *   1. o VETO continua vencendo tudo (gestante não recebe, com ou sem outra condição);
+   *   2. quem não tem veto RECEBE, na dose de prevenção;
+   *   3. a dose de tratamento é MAIOR que a de prevenção, porque a evidência é mais forte.
+   *
+   * A porta 1 é a que protege; sem ela, abrir a indicação viraria abrir a exceção junto.
+   */
+  const sessoesIso = (grupo?: string, objetivo: GpsObjetivo = "Resistência muscular") =>
+    gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo } as never)
+      .principal.mesociclos[0].microciclos[0].sessoes.filter((se) => se.blocos.some((b) => b.tipo === "isometrico")).length;
+
+  for (const grupo of ["gestante"]) {
+    if (sessoesIso(grupo)) erro(`VETO DO ISOMÉTRICO IGNORADO (${grupo}): a condição declara evitar e o plano prescreveu o protocolo mesmo assim.`);
+  }
+  for (const grupo of [undefined, "osteoporose", "diabetes-tipo-2"]) {
+    if (!sessoesIso(grupo))
+      erro(
+        `ISOMÉTRICO NEGADO A QUEM PODE RECEBER (${grupo ?? "sem condição"}): nenhuma sessão isométrica no plano, e a indicação de prevenção não tem veto neste perfil.`,
+      );
+  }
+  // O objetivo que está fora da lista continua fora, com ou sem a abertura da indicação.
+  if (sessoesIso(undefined, "Aprendizado técnico"))
+    erro("ISOMÉTRICO EM OBJETIVO FORA DA LISTA: Aprendizado técnico recebeu o protocolo.");
+  // Tratamento pesa mais que prevenção, e isso tem que aparecer na dose.
+  if (sessoesIso("hipertensao-estagio-2") <= sessoesIso(undefined))
+    erro(
+      `DOSE DE TRATAMENTO NÃO SUPERA A DE PREVENÇÃO: hipertensão estágio 2 recebeu ${sessoesIso("hipertensao-estagio-2")} sessões e o perfil sem condição recebeu ${sessoesIso(undefined)}.`,
+    );
+  {
   }
 
   /*
@@ -520,7 +553,11 @@ for (const objetivo of OBJETIVOS) {
    */
   {
     const comIso = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: "hipertensao-estagio-2" });
-    const semIso = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3 });
+    // O plano SEM isométrico agora é o de Aprendizado técnico, que é o objetivo fora da lista.
+    // Antes bastava não declarar condição; desde a abertura da indicação para prevenção
+    // (19/08/2026), perfil sem condição RECEBE o protocolo, e o fixture antigo virou um plano
+    // com isométrico testando a ausência dele.
+    const semIso = gerarPlano({ objetivo: "Aprendizado técnico", nivel: "Iniciante", semanas: 12, frequencia: 3 });
     const plano = (g: typeof comIso) => ({ semanas: 12, frequenciaSemanal: 3, macrociclo: g.principal }) as never;
     const rotComIso = rotuloFrequencia(plano(comIso));
     const rotSemIso = rotuloFrequencia(plano(semIso));

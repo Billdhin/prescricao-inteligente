@@ -890,6 +890,50 @@ function intensidadeAerobia(ctx: CtxAlvo, texto: string): string {
  */
 const ISO_PROTOCOLO = { series: 4, contracao: "2 min", descanso: "2 min" } as const;
 const ISO_SESSOES_POR_SEMANA = 3;
+const ISO_SESSOES_PREVENCAO = 2;
+
+/*
+ * O ISOMÉTRICO NÃO É CONDUTA EXCLUSIVA DE HIPERTENSO.
+ *
+ * Ele nascia SÓ em hipertensão estágio 1 e 2, porque foi por ali que entrou no produto, e o
+ * Filipe cobrou: contração sustentada se aplica em contextos diferentes, e quem decide isso é
+ * a literatura, não o histórico de implementação. Fui ao PubMed e o que sustenta a abertura é
+ * o próprio desfecho de pressão, medido em quem NÃO tem hipertensão:
+ *
+ * - `loaiza-isometrico-normotensos-2020`: metanálise de 6 ensaios em adultos NORMOTENSOS,
+ *   com queda de 2,83 mmHg na sistólica, 2,73 na diastólica e 3,07 na média, e conclusão
+ *   explícita de que serve à PREVENÇÃO da hipertensão.
+ * - `carlson-isometrico-pa-2014`: metanálise de 9 ensaios, SEIS deles em normotensos, com
+ *   queda de 6,77 na sistólica, e o registro de que a magnitude supera a do aeróbio dinâmico.
+ * - `barbosa-isometrico-normotensos-2025`: revisão sistemática que descreve o protocolo nessa
+ *   população (20 a 34% da CVM, 4 séries de 2 a 3 min, 2 a 5 vezes por semana).
+ *
+ * DUAS PORTAS DE FORÇA DIFERENTE, e a diferença aparece na dose:
+ *
+ * - TRATAMENTO: a condição declara a indicação (hoje, hipertensão). Dose de 3 sessões, que é
+ *   a de `wiles-agachamento-parede-2016`, o ensaio do protocolo.
+ * - PREVENÇÃO: qualquer perfil que não tenha veto. Dose de 2 sessões, que é a PONTA BAIXA da
+ *   faixa de 2 a 5 relatada na revisão sistemática. Ponta baixa porque a indicação é de
+ *   prevenção e não de tratamento, e porque a contração sustentada eleva a pressão durante a
+ *   execução: onde o benefício esperado é menor, a exposição também tem que ser.
+ *
+ * O QUE NÃO ENTROU, e por quê. Procurei sustentação para outros contextos e ela não apareceu:
+ * na rede de 217 ensaios sobre exercício em osteoartrite de joelho (`yan-artrose-joelho-2025`)
+ * o aeróbio é o mais efetivo e o isométrico não é sequer um nó da rede; na síntese do NIHR com
+ * 555 estudos sobre exercício em tendinopatia (`cooper-tendinopatia-2023`) o que se sustenta é
+ * combinar concêntrico e excêntrico. Indicação sem evidência seria regra morta com cara de
+ * segurança, que é o defeito que este motor já pagou caro.
+ *
+ * O veto de qualquer condição fundida continua vencendo tudo (gestante, hoje).
+ */
+type IndicacaoIsometrica = { tipo: "tratamento" | "prevencao"; sessoes: number };
+
+function indicacaoIsometrica(regraClinica?: GroupGpsRule): IndicacaoIsometrica | undefined {
+  const iso = regraClinica?.isometrico;
+  if (iso?.evitar) return undefined;
+  if (iso?.indicado) return { tipo: "tratamento", sessoes: ISO_SESSOES_POR_SEMANA };
+  return { tipo: "prevencao", sessoes: ISO_SESSOES_PREVENCAO };
+}
 
 /**
  * Objetivos que NÃO recebem o protocolo isométrico, mesmo com a condição indicando.
@@ -1181,16 +1225,19 @@ function montarSessoes(
    * A frequência do protocolo (3x/semana) é o teto, e a do plano é o outro: quem treina 2x
    * não recebe 3 sessões isométricas, porque a semana dele não comporta.
    */
-  const iso = regraClinica?.isometrico;
-  if (iso?.indicado && !iso.evitar && !ISO_OBJETIVOS_FORA.includes(objetivo)) {
+  const indicacaoIso = ISO_OBJETIVOS_FORA.includes(objetivo) ? undefined : indicacaoIsometrica(regraClinica);
+  if (indicacaoIso) {
     const ex = exercicioIsometrico(equipamentos, regraClinica);
     if (ex) {
-      const quantas = Math.min(ISO_SESSOES_POR_SEMANA, frequencia);
+      const quantas = Math.min(indicacaoIso.sessoes, frequencia);
       for (let k = 0; k < quantas; k++) {
         sessoes.push({
           id: nid("ses"),
           nome: `Sessão isométrica ${k + 1}`,
-          foco: "Protocolo isométrico para pressão arterial",
+          foco:
+            indicacaoIso.tipo === "tratamento"
+              ? "Protocolo isométrico para pressão arterial"
+              : "Protocolo isométrico para prevenção da pressão arterial",
           blocos: [
             {
               id: nid("blk"),
@@ -1204,7 +1251,10 @@ function montarSessoes(
                 "Pela percepção de esforço: a contração inteira precisa fechar sem queda visível de força no fim. Ajuste o ângulo (ou a pega) em vez de encurtar o tempo.",
               recuperacao: ISO_PROTOCOLO.descanso,
               observacao:
-                "A pressão arterial SOBE durante a contração sustentada, proporcional à carga: respiração solta do começo ao fim, sem prender o ar. Só aplique com a liberação do dia em ordem. Sessão curta e separada do treino, como o protocolo foi testado: deixe pelo menos 48 h entre duas sessões isométricas.",
+                "A pressão arterial SOBE durante a contração sustentada, proporcional à carga: respiração solta do começo ao fim, sem prender o ar. Só aplique com a liberação do dia em ordem. Sessão curta e separada do treino, como o protocolo foi testado: deixe pelo menos 48 h entre duas sessões isométricas." +
+                (indicacaoIso.tipo === "prevencao"
+                  ? " Aqui a indicação é de PREVENÇÃO, e não de tratamento: em adultos sem hipertensão a queda medida é de cerca de 3 mmHg na sistólica, menor que a de quem já tem pressão alta, e por isso a dose entra na ponta baixa da faixa relatada, com 2 sessões por semana. Um ensaio com hipertensos tratados não achou efeito nenhum da preensão isométrica, então trate o benefício como plausível e não como garantido."
+                  : ""),
             },
           ],
         });
@@ -2214,6 +2264,22 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
       // A evidencia que escolheu o cardio e o formato deste plano, resolvida no PDF.
       ...(trocaDeCardio?.refId ?? []),
       ...refsDoFormato,
+      /*
+       * As referências do isométrico entram na bibliografia do plano SEMPRE que houver sessão
+       * isométrica, e não só quando a condição as declarou. Na indicação de prevenção quem
+       * sustenta são as metanálises de normotensos, e o contrapeso negativo entra junto: um
+       * plano que cita só o que confirma não é auditável.
+       */
+      ...(macroPrincipal.mesociclos[0]?.microciclos[0]?.sessoes.some((se) =>
+        se.blocos.some((bl) => bl.tipo === "isometrico"),
+      )
+        ? [
+            "loaiza-isometrico-normotensos-2020",
+            "carlson-isometrico-pa-2014",
+            "barbosa-isometrico-normotensos-2025",
+            "fecchio-handgrip-2023",
+          ]
+        : []),
     ]),
   );
 
@@ -2283,6 +2349,9 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
         `Sobre o protocolo isométrico: ele entra em ${porSemana} ${porSemana === 1 ? "sessão própria" : "sessões próprias"} por semana, ` +
         `separadas do treino, com ${ISO_PROTOCOLO.series} contrações de ${ISO_PROTOCOLO.contracao} e ${ISO_PROTOCOLO.descanso} de descanso entre elas, ` +
         `porque foi assim que ele foi testado. A intensidade se guia pela percepção de esforço. ` +
+        (porSemana <= ISO_SESSOES_PREVENCAO
+          ? `A indicação aqui é de PREVENÇÃO: em adultos sem hipertensão as metanálises medem queda de cerca de 3 mmHg na pressão sistólica de repouso, menor que a de quem já tem pressão alta, e por isso a dose entra em ${ISO_SESSOES_PREVENCAO} sessões, a ponta baixa da faixa de 2 a 5 relatada. Um ensaio com hipertensos tratados não encontrou efeito da preensão isométrica, então o benefício é plausível e não garantido. `
+          : "") +
         `A contração sustentada ELEVA a pressão arterial durante o esforço, então a respiração fica solta do começo ao fim e vale a liberação do dia, como no resto do plano.`
       );
     })(),
