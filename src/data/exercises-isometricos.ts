@@ -99,6 +99,7 @@ export const exerciciosIsometricos: Exercise[] = [
     premium: false,
     doseIsometrica: true,
     imagem: "/exercises/agachamento-isometrico-parede.webp",
+    imagemAnalise: "/exercises/agachamento-isometrico-parede-analysis.webp",
     resumoPratico:
       "Contração sustentada com as costas apoiadas na parede e os joelhos dobrados, mantida por tempo. É o submodo isométrico com maior efeito sobre a pressão sistólica na metanálise em rede, e não precisa de nenhum equipamento.",
     modalidade: "m-musculacao",
@@ -187,6 +188,7 @@ export const exerciciosIsometricos: Exercise[] = [
     premium: false,
     doseIsometrica: true,
     imagem: "/exercises/preensao-isometrica-handgrip.webp",
+    imagemAnalise: "/exercises/preensao-isometrica-handgrip-analysis.webp",
     resumoPratico:
       "Apertar e sustentar um dinamômetro ou aparelho de preensão por tempo. É o formato isométrico mais estudado para pressão arterial e o mais fácil de fazer sentado, sem carga sobre articulação de membro inferior.",
     modalidade: "m-musculacao",

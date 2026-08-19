@@ -255,6 +255,41 @@ for (const e of exercises) {
   }
 }
 
+/* ------------- A CAMADA DE ANÁLISE OU EXISTE OU É EXCEÇÃO DECLARADA ------------- */
+/*
+ * A varredura de imagens de 19/08/2026 achou 10 exercícios sem `imagemAnalise` e 28 com uma
+ * imagem que não servia (rosto sem pele, vísceras à mostra, boneco azul de outro estilo, ou a
+ * pessoa VESTIDA com uma mancha vermelha por cima do tecido, que não mostra músculo nenhum).
+ * As 36 que dava para refazer foram refeitas.
+ *
+ * As DUAS que sobraram não são esquecimento, são decisão anatômica, e por isso ficam nomeadas
+ * aqui em vez de sumirem numa contagem:
+ *
+ * - `scaption`: o primário é o SUPRAESPINAL, que corre por baixo do deltoide e do trapézio.
+ *   Ele não aparece em superfície nenhuma, então uma camada de análise que pintasse o deltoide
+ *   de vermelho estaria mostrando o músculo ERRADO como se fosse o principal.
+ * - `puxada-supinada`: o primário é o LATÍSSIMO DO DORSO, que fica nas COSTAS, e a foto de
+ *   execução é uma vista FRONTAL.
+ *
+ * A lista é fechada de propósito: exercício novo que nascer sem análise reprova aqui e obriga
+ * quem o criou a gerar a imagem ou a escrever por que ela não pode existir. Ausência com
+ * motivo é honestidade; ausência silenciosa é buraco.
+ */
+const SEM_ANALISE_COM_MOTIVO = new Set(["scaption", "puxada-supinada"]);
+
+for (const e of exercises) {
+  const temAnalise = Boolean(e.imagemAnalise);
+  const ehExcecao = SEM_ANALISE_COM_MOTIVO.has(e.slug);
+  if (!temAnalise && !ehExcecao)
+    problemas.push(
+      `[${e.slug}]: sem imagem de análise e sem estar na lista de exceções com motivo anatômico. Gere a imagem ou declare por que ela não pode existir.`,
+    );
+  if (temAnalise && ehExcecao)
+    problemas.push(
+      `[${e.slug}]: está na lista de exceções por motivo anatômico e mesmo assim declara imagem de análise. Uma das duas coisas está errada.`,
+    );
+}
+
 /* ------------- Regra dura: imagem declarada existe mesmo no disco ------------- */
 /*
  * O TypeScript compila feliz com "/exercises/erros/scaption-0.webp" mesmo que o

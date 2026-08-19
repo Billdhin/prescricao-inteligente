@@ -101,6 +101,7 @@ export const exerciciosEmagrecimento: Exercise[] = [
     articulacaoPredominante: "Cotovelo e escápula",
     premium: false,
     imagem: "/exercises/remada-invertida-apoio-alto.webp",
+    imagemAnalise: "/exercises/remada-invertida-apoio-alto-analysis.webp",
     resumoPratico:
       "Puxar horizontal com o peso do corpo numa barra ou bancada na altura do quadril: quanto mais alto o apoio, mais em pé fica o tronco e mais leve fica a puxada. É a porta de entrada do padrão de puxar para quem treina em casa.",
     modalidade: "m-musculacao",
@@ -180,6 +181,7 @@ export const exerciciosEmagrecimento: Exercise[] = [
     articulacaoPredominante: "Joelho e quadril",
     premium: false,
     imagem: "/exercises/agachamento-aquatico.webp",
+    imagemAnalise: "/exercises/agachamento-aquatico-analysis.webp",
     resumoPratico:
       "Agachar dentro da piscina, com a água na altura do peito: o empuxo tira parte do peso na descida e a resistência da água cobra na subida. É o padrão de agachar para quem só tem a piscina como ambiente.",
     modalidade: "m-hidro",
