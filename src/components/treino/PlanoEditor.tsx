@@ -192,10 +192,31 @@ export function GraficoProgressao({
       <p className="mb-3 text-xs text-ink-3">
         Volume, intensidade e complexidade relativos, calculados das sessões (sem unidade absoluta). Editar uma
         sessão move a curva. As faixas ao pé mostram cada fase e quantas semanas ela dura.
-        {ordemAberta
-          ? " Neste modelo a ordem das sessões dentro da semana é escolhida no dia, então a marca de cada semana vem vazada: a dose da semana está fechada, a sequência dela não."
-          : ""}
       </p>
+      {/*
+        POR QUE A CURVA NÃO MUDOU, dito antes de o profissional olhar para ela.
+        O Filipe: "se deixa só o mesmo gráfico para o profissional é como se você não alterou
+        nada". A curva é a mesma DE PROPÓSITO, e uma nota de rodapé não sustenta essa
+        afirmação. O aviso vem antes do gráfico, com o achado do ensaio que a justifica, e
+        aponta onde a diferença ESTÁ para ser conferida.
+      */}
+      {ordemAberta && (
+        <div className="mb-3 rounded-lg border border-border bg-surface-soft p-3">
+          <p className="text-xs font-semibold text-ink">Por que esta curva é igual à da periodização ondulatória</p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-2">
+            Porque neste modelo ela tem que ser. O volume e a intensidade da semana são os mesmos; o que muda é a ORDEM
+            das sessões dentro da semana, escolhida no dia conforme a agenda e a resposta do aluno. No ensaio que
+            compara os dois modelos de frente (Colquhoun, 2017), intensidade e volume não diferiram entre os grupos, e
+            os ganhos foram semelhantes. Uma curva diferente aqui seria um modelo que ninguém estudou.
+          </p>
+          <p className="mt-1.5 text-xs leading-relaxed text-ink-2">
+            A diferença está em outros dois lugares, e é neles que vale comparar: as sessões vêm por LETRA (A, B, C) e
+            não por número, porque a semana é um conjunto e não uma sequência; e a marca de cada semana no gráfico vem
+            tracejada, para lembrar que a dose da semana está fechada e a sequência dela não. Quando um dia cair, a
+            escolha de qual sessão manter é sua.
+          </p>
+        </div>
+      )}
       <div className="relative overflow-x-auto">
         <svg
           viewBox={`0 0 ${g.largura} ${g.altura}`}
@@ -300,12 +321,7 @@ export function GraficoProgressao({
           </span>
         ))}
       </div>
-      {ordemAberta && (
-        <p className="mt-1.5 text-2xs text-ink-3">
-          Marca da semana vazada: a ordem das sessões é escolhida no dia. As sessões vêm por letra (A, B, C) e não por
-          número, porque a semana é um conjunto e não uma sequência.
-        </p>
-      )}
+
       {tiposSemana.length > 0 && (
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semanas</span>

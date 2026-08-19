@@ -2018,6 +2018,41 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
     if (/ordem aberta/i.test(w.nota ?? ""))
       erro(`MODELO DE ORDEM FIXA DIZENDO QUE É ABERTA (${modelo}): a nota da semana promete escolha no dia num modelo de sequência fechada.`);
   }
+  /*
+   * A CURVA IGUAL PRECISA VIR EXPLICADA, e esta é a asserção que o Filipe pediu.
+   *
+   * "Se deixa só o mesmo gráfico para o profissional é como se você não alterou nada." A
+   * igualdade é deliberada e citada, mas igualdade que ninguém explica se lê como troca que
+   * não aconteceu. O raciocínio vai para o PDF assinado, então é nele que a explicação tem
+   * que estar, e não só na tela.
+   */
+  for (const modelo of ["flexivel", "autorregulada"]) {
+    const r = gerarPlano({
+      objetivo: "Hipertrofia" as GpsObjetivo,
+      nivel: "Intermediário" as Nivel,
+      semanas: 12,
+      frequencia: 3,
+      modeloPreferido: modelo,
+    } as never).raciocinio;
+    if (!/curva semanal de volume e intensidade é a MESMA/.test(r))
+      erro(
+        `CURVA IGUAL SEM EXPLICAÇÃO (${modelo}): o raciocínio não diz ao profissional que a curva semanal é a mesma da ondulatória de propósito, e o gráfico sozinho se lê como se nada tivesse mudado.`,
+      );
+    if (!/ORDEM das sessões dentro da semana/.test(r))
+      erro(`CURVA IGUAL SEM DIZER ONDE ESTÁ A DIFERENÇA (${modelo}): o raciocínio não aponta a ordem das sessões como o que muda.`);
+  }
+  for (const modelo of ["ondulatoria", "linear"]) {
+    const r = gerarPlano({
+      objetivo: "Hipertrofia" as GpsObjetivo,
+      nivel: "Intermediário" as Nivel,
+      semanas: 12,
+      frequencia: 3,
+      modeloPreferido: modelo,
+    } as never).raciocinio;
+    if (/curva semanal de volume e intensidade é a MESMA/.test(r))
+      erro(`EXPLICAÇÃO DE ORDEM ABERTA EM MODELO FIXO (${modelo}): o raciocínio explica uma igualdade de curva que não se aplica aqui.`);
+  }
+
   // A dose semanal É equiparada entre flexível e ondulatória, e o teste registra isso em vez de
   // esconder: se um dia elas divergirem, alguém inventou um modelo e precisa justificar.
   const doseDaSemana = (modelo: string) => {

@@ -2322,6 +2322,21 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
 
   const raciocinio = [
     `Modelo principal: ${modP.nome}. ${modP.resumo}`,
+    /*
+     * O MODELO DE ORDEM ABERTA EXPLICA POR QUE O GRÁFICO NÃO MUDA.
+     *
+     * O Filipe: "se deixa só o mesmo gráfico para o profissional é como se você não alterou
+     * nada". Ele tem razão. A curva semanal da flexível é igual à da ondulatória de PROPÓSITO,
+     * porque no ensaio que compara os dois de frente (`colquhoun-flexivel-2017`) intensidade
+     * e volume não diferiram entre os grupos: é isso que a flexível é. Mas uma igualdade
+     * deliberada que ninguém explica se lê como uma troca que não aconteceu.
+     *
+     * A frase entra no RACIOCÍNIO, e não só na tela, porque é ele que vai para o PDF assinado
+     * e para o documento do aluno. O gráfico tem o mesmo aviso ao lado dele.
+     */
+    principal === "flexivel" || principal === "autorregulada"
+      ? `Sobre a leitura do gráfico neste modelo: a curva semanal de volume e intensidade é a MESMA da periodização ondulatória, e isso é do modelo, não uma troca que faltou. O que muda aqui é a ORDEM das sessões dentro da semana, escolhida no dia conforme a agenda e a resposta do aluno; no ensaio que compara os dois de frente, intensidade e volume não diferiram entre os grupos e os ganhos foram semelhantes. A diferença aparece nas sessões, que vêm por letra em vez de número porque a semana é um conjunto e não uma sequência, e na nota de cada semana. Se um dia cair, a escolha de qual sessão manter é sua, pela ênfase que mais protege o resultado deste aluno.`
+      : "",
     // Quando a escolha foi do profissional e difere da do motor, o plano diz as duas.
     // Silenciar a divergência transformaria a ferramenta em carimbo da escolha dele.
     sugeridoPeloMotor && sugeridoPeloMotor !== principal
