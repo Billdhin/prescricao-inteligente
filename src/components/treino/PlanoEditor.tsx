@@ -1,4 +1,5 @@
 import { FORMATOS_AEROBIOS_LISTA, aplicarFormatoAerobio, formatoPeloNome } from "@/lib/gps/formatoAerobio";
+import type { ModeloPeriodizacaoId } from "@/data/periodizacao";
 import * as React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -151,7 +152,30 @@ function SeloOrigem({ ctx, bloco }: { ctx: ContextoFaixa; bloco: BlocoSessao }) 
 
 /* ================================ Gráfico ================================ */
 
-export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?: Nivel }) {
+/*
+ * O GRÁFICO PRECISA DIZER DE QUE MODELO ELE É.
+ *
+ * O Filipe trocou o plano para "Periodização flexível", leu ao lado a explicação da flexível,
+ * e o gráfico continuou o da ondulatória. A curva SEMANAL está certa e não podia mudar: no
+ * único ensaio que compara os dois de frente (`colquhoun-flexivel-2017`) a flexível é a mesma
+ * sessão com o aluno escolhendo a ORDEM, e o estudo mede que não há diferença de volume nem de
+ * intensidade entre elas. Inventar uma curva diferente seria inventar um modelo.
+ *
+ * O que estava errado era o gráfico AFIRMAR uma ordem que a flexível não tem: cada semana
+ * aparecia como uma sequência fechada, igual à da ondulatória. Agora, quando a ordem é aberta,
+ * a marca da semana é vazada em vez de sólida e a legenda diz por quê. A leitura muda porque a
+ * promessa mudou, e não porque o número mudou.
+ */
+export function GraficoProgressao({
+  macro,
+  nivel,
+  modeloId,
+}: {
+  macro: Macrociclo;
+  nivel?: Nivel;
+  modeloId?: ModeloPeriodizacaoId;
+}) {
+  const ordemAberta = modeloId === "flexivel" || modeloId === "autorregulada";
   const g = desenharProgressao(macro, undefined, undefined, nivel);
   const gid = React.useId().replace(/:/g, "");
   // Só os tipos de semana que aparecem no plano entram na legenda (nunca "Teste" quando
@@ -168,6 +192,9 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
       <p className="mb-3 text-xs text-ink-3">
         Volume, intensidade e complexidade relativos, calculados das sessões (sem unidade absoluta). Editar uma
         sessão move a curva. As faixas ao pé mostram cada fase e quantas semanas ela dura.
+        {ordemAberta
+          ? " Neste modelo a ordem das sessões dentro da semana é escolhida no dia, então a marca de cada semana vem vazada: a dose da semana está fechada, a sequência dela não."
+          : ""}
       </p>
       <div className="relative overflow-x-auto">
         <svg
@@ -251,6 +278,9 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
                 stroke={t.tipo === "deload" ? "var(--warning)" : t.tipo === "teste" ? "var(--analysis)" : "var(--primary)"}
                 strokeWidth={t.tipo === "carga" ? 1.5 : 2.5}
                 strokeLinecap="round"
+                // Marca VAZADA quando a ordem da semana é escolhida no dia: o tracejado é a
+                // leitura de "sequência não fechada", e não um estado de erro.
+                strokeDasharray={ordemAberta ? "2 2" : undefined}
               />
               {t.rotular && (
                 <text x={t.x} y={g.weekLabelY} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 9 }}>
@@ -270,6 +300,12 @@ export function GraficoProgressao({ macro, nivel }: { macro: Macrociclo; nivel?:
           </span>
         ))}
       </div>
+      {ordemAberta && (
+        <p className="mt-1.5 text-2xs text-ink-3">
+          Marca da semana vazada: a ordem das sessões é escolhida no dia. As sessões vêm por letra (A, B, C) e não por
+          número, porque a semana é um conjunto e não uma sequência.
+        </p>
+      )}
       {tiposSemana.length > 0 && (
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semanas</span>

@@ -1972,6 +1972,66 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
   }
 }
 
+/* --------- 21. O modelo de ordem aberta ENTREGA ordem aberta, e não só o texto ao lado --------- */
+/*
+ * O Filipe trocou o plano para "Periodização flexível", leu ao lado a explicação da flexível,
+ * e o treino continuou o da ondulatória: mesmas sessões numeradas, mesma semana, mesmo
+ * gráfico. O modelo dizia uma coisa e o plano entregava outra.
+ *
+ * A curva SEMANAL não podia mudar, e isso está citado: no único ensaio que compara os dois de
+ * frente (`colquhoun-flexivel-2017`, 25 homens treinados, 9 semanas) a flexível é a MESMA
+ * sessão com o aluno escolhendo a ORDEM, e o estudo mede que não houve diferença de volume nem
+ * de intensidade. Inventar curva diferente seria inventar um modelo.
+ *
+ * O que o plano passa a entregar é a ordem aberta de verdade: sessão por LETRA, porque numerar
+ * afirma uma sequência que este modelo não tem, e nota da semana dizendo que a ordem é
+ * escolhida no dia. A asserção cobra os dois lados, senão bastaria marcar todo mundo como
+ * aberto para ficar verde.
+ */
+{
+  const semanaDe = (modeloPreferido: string) =>
+    gerarPlano({
+      objetivo: "Hipertrofia" as GpsObjetivo,
+      nivel: "Intermediário" as Nivel,
+      semanas: 12,
+      frequencia: 3,
+      modeloPreferido,
+    } as never).principal.mesociclos[0].microciclos[0];
+
+  for (const modelo of ["flexivel", "autorregulada"]) {
+    const w = semanaDe(modelo);
+    // Só as sessões de TREINO entram na conta: a sessão isométrica é protocolo fechado à parte,
+    // não participa da rotação de ênfase e segue numerada em qualquer modelo.
+    const deTreino = w.sessoes.filter((se) => !se.blocos.some((b) => b.tipo === "isometrico"));
+    const porLetra = deTreino.filter((se) => /^Sessão [A-G]/.test(se.nome)).length;
+    if (porLetra !== deTreino.length)
+      erro(
+        `MODELO DE ORDEM ABERTA COM SESSÃO NUMERADA (${modelo}): ${deTreino.length - porLetra} de ${deTreino.length} sessões de treino saíram como "Sessão N". Numerar afirma uma sequência que este modelo não tem.`,
+      );
+    if (!/ordem aberta/i.test(w.nota ?? ""))
+      erro(`MODELO DE ORDEM ABERTA SEM DIZER (${modelo}): a nota da semana é "${w.nota ?? "(vazia)"}" e não declara que a ordem é escolhida no dia.`);
+  }
+  for (const modelo of ["ondulatoria", "linear", "blocos"]) {
+    const w = semanaDe(modelo);
+    if (w.sessoes.some((se) => /^Sessão [A-G]/.test(se.nome)))
+      erro(`MODELO DE ORDEM FIXA COM SESSÃO POR LETRA (${modelo}): a letra é a marca da ordem aberta e não pode aparecer aqui.`);
+    if (/ordem aberta/i.test(w.nota ?? ""))
+      erro(`MODELO DE ORDEM FIXA DIZENDO QUE É ABERTA (${modelo}): a nota da semana promete escolha no dia num modelo de sequência fechada.`);
+  }
+  // A dose semanal É equiparada entre flexível e ondulatória, e o teste registra isso em vez de
+  // esconder: se um dia elas divergirem, alguém inventou um modelo e precisa justificar.
+  const doseDaSemana = (modelo: string) => {
+    const w = semanaDe(modelo);
+    return w.sessoes
+      .flatMap((se) => se.blocos.filter((b) => b.tipo !== "aerobio" && b.tipo !== "isometrico"))
+      .reduce((a, b) => a + (b.seriesAlvo ?? 0) * (b.repsAlvo ?? 0), 0);
+  };
+  if (doseDaSemana("flexivel") !== doseDaSemana("ondulatoria"))
+    erro(
+      `FLEXÍVEL DEIXOU DE SER EQUIPARADA À ONDULATÓRIA: volume semanal ${doseDaSemana("flexivel")} contra ${doseDaSemana("ondulatoria")}. O ensaio que define a flexível (colquhoun-flexivel-2017) mede as duas com volume e intensidade IGUAIS; divergir aqui é inventar um modelo.`,
+    );
+}
+
 /* --------------------------------- veredito --------------------------------- */
 
 if (problemas.length) {

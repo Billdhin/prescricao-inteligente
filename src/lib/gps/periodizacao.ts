@@ -892,6 +892,9 @@ const ISO_PROTOCOLO = { series: 4, contracao: "2 min", descanso: "2 min" } as co
 const ISO_SESSOES_POR_SEMANA = 3;
 const ISO_SESSOES_PREVENCAO = 2;
 
+/** Letras das sessões quando a semana não tem ordem fixa (flexível e autorregulada). */
+const LETRAS_SESSAO = ["A", "B", "C", "D", "E", "F", "G"] as const;
+
 /*
  * O ISOMÉTRICO NÃO É CONDUTA EXCLUSIVA DE HIPERTENSO.
  *
@@ -1038,6 +1041,9 @@ function montarSessoes(
    * que a diretriz recomenda para quem está começando.
    */
   const enfases = ondula && nivel !== "Iniciante" ? faixa.enfases : undefined;
+  // A ordem da semana é ABERTA na flexível e na autorregulada: nas duas quem decide o que fazer
+  // no dia é a leitura do dia, e não o calendário. Ver o comentário no nome da sessão.
+  const ordemAberta = modelo === "flexivel" || modelo === "autorregulada";
 
   /*
    * NA SEMANA DE DESCARGA, A ÊNFASE MAIS LEVE VEM PRIMEIRO.
@@ -1175,7 +1181,30 @@ function montarSessoes(
 
     sessoes.push({
       id: nid("ses"),
-      nome: enfase ? `Sessão ${i + 1} (${enfase.rotulo})` : `Sessão ${i + 1}`,
+      /*
+       * NA FLEXÍVEL A SESSÃO NÃO TEM DIA, TEM LETRA.
+       *
+       * O Filipe trocou o plano para "Periodização flexível", leu ao lado a explicação do que
+       * é a flexível, e o treino continuou o mesmo da ondulatória. Ele estava certo: o modelo
+       * dizia uma coisa e o plano entregava outra.
+       *
+       * O que a flexível É, segundo o único ensaio que compara os dois de frente
+       * (`colquhoun-flexivel-2017`, 25 homens treinados, 9 semanas): as MESMAS sessões, com o
+       * aluno escolhendo a ORDEM. O estudo registra, com todas as letras, que não houve
+       * diferença de intensidade nem de volume entre os grupos. Ou seja, a dose semanal é
+       * equiparada POR DEFINIÇÃO, e inventar uma diferença nela seria inventar um modelo que
+       * ninguém estudou.
+       *
+       * O que muda, então, é o que o plano PROMETE: numerar as sessões de 1 a N afirma uma
+       * ordem que a flexível não tem. Com letra, a semana vira um conjunto, que é o que ela é.
+       */
+      nome: enfase
+        ? ordemAberta
+          ? `Sessão ${LETRAS_SESSAO[i] ?? i + 1} (${enfase.rotulo})`
+          : `Sessão ${i + 1} (${enfase.rotulo})`
+        : ordemAberta
+          ? `Sessão ${LETRAS_SESSAO[i] ?? i + 1}`
+          : `Sessão ${i + 1}`,
       foco: enfase ? `Ênfase ${enfase.rotulo}` : faixa.capacidades[0],
       blocos,
       // Fecho de flexibilidade da sessão (variabilidade), citado; o texto vem do objetivo.
@@ -1329,6 +1358,7 @@ function montarMicrociclos(
 ): Microciclo[] {
   const { idade, fcRepouso, parametrosInvalidos, restricoes: restricoesPlano = [], objetivoSecundario, regraClinica, cargaAntesDesteMeso, semanasDeCargaNoMacro, pisoDoCiclo, fatorProgressao, pseTeto, cargaRelativaMax, intervaloFolgado, rirMinimo, partirDoPiso, patamarCongelado, equipamentos } = dadosDoAluno;
   const semanas: Microciclo[] = [];
+  const ordemAbertaNaSemana = modelo === "flexivel" || modelo === "autorregulada";
   // Semanas de carga do meso (as descargas ficam fora desta conta). Agora são contadas,
   // e não deduzidas de "a última é descarga": com cadência absoluta, a descarga pode cair
   // no meio de um mesociclo, e um mesociclo curto pode não ter nenhuma.
@@ -1415,7 +1445,9 @@ function montarMicrociclos(
         ? soFrequencia
           ? "Semana de descarga: a sessão sai igual à da semana anterior porque a faixa citada já está na ponta mais leve; o que alivia é a sessão a menos."
           : "Semana de descarga: reduza volume e intensidade para recuperar."
-        : undefined,
+        : ordemAbertaNaSemana
+          ? "Ordem aberta: as sessões desta semana podem ser feitas em qualquer ordem, conforme o dia do aluno. Se um dia cair, a escolha de qual manter é sua, pela ênfase que mais protege o resultado deste aluno."
+          : undefined,
       objetivo: objetivoDaSemana(ctx.tipoSemana, tendenciaVolume, tendenciaIntensidade, soFrequencia),
     });
   }
@@ -2264,6 +2296,11 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
       // A evidencia que escolheu o cardio e o formato deste plano, resolvida no PDF.
       ...(trocaDeCardio?.refId ?? []),
       ...refsDoFormato,
+      // O ensaio que define a flexível entra na bibliografia dos modelos de ordem aberta: é ele
+      // que sustenta que a dose semanal é equiparada e que o que muda é quem escolhe a ordem.
+      ...(principal === "flexivel" || principal === "autorregulada" || alternativa === "flexivel" || alternativa === "autorregulada"
+        ? ["colquhoun-flexivel-2017"]
+        : []),
       /*
        * As referências do isométrico entram na bibliografia do plano SEMPRE que houver sessão
        * isométrica, e não só quando a condição as declarou. Na indicação de prevenção quem

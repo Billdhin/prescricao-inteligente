@@ -351,6 +351,16 @@ export const referencias: Referencia[] = [
     nota: "Revisão sistemática com metanálise de 19 estudos e 1.249 mulheres na pós-menopausa, comparando exercício SOMADO a medicamento ou suplemento contra medicamento ou suplemento sozinho. Dois achados, e o negativo importa tanto quanto o positivo. Acrescentar exercício NÃO melhorou de forma significativa a densidade mineral óssea de coluna lombar e quadril no conjunto; só a análise por subgrupo mostrou ganho na coluna lombar quando o programa COMBINA VÁRIOS TIPOS de treino (diferença padronizada 0,37). Já a função melhorou de forma consistente: força de membros inferiores, equilíbrio pela escala de Berg, teste de levantar e andar, medo de cair e qualidade de vida. A qualidade da evidência foi classificada de baixa a muito baixa, e o produto declara isso onde cita.",
   },
   {
+    id: "colquhoun-flexivel-2017",
+    autores: "Colquhoun RJ, Gai CM, Walters J, Brannon AR, Kilpatrick MW, D Agostino DP, Campbell WI",
+    titulo: "Comparison of Powerlifting Performance in Trained Men Using Traditional and Flexible Daily Undulating Periodization",
+    fonte: "Journal of Strength and Conditioning Research, 31(2)",
+    ano: 2017,
+    doi: "10.1519/JSC.0000000000001500",
+    pmid: "28129275",
+    nota: "É o ensaio que DEFINE o que a periodização flexível é, e por isso ele decide o desenho da tela. Randomizado, 25 homens treinados, 9 semanas, comparando ondulatória diária tradicional com a versão FLEXÍVEL, em que o aluno escolhe a ORDEM das sessões. Os autores registram que, ao fim do programa, NÃO houve diferença de intensidade nem de volume entre os grupos, e os ganhos foram semelhantes em supino, agachamento, levantamento terra, total, coeficiente de Wilks e massa livre de gordura, sem diferença em motivação, PSE da sessão ou satisfação. A LEITURA QUE O PRODUTO FAZ: a dose semanal da flexível é equiparada à da ondulatória POR DEFINIÇÃO, então a curva semanal do gráfico não pode diferir sem inventar um modelo que ninguém estudou. O que muda é a ORDEM dentro da semana, e é isso que o plano e o gráfico passam a declarar (sessões por letra, marca da semana vazada). RESSALVA de população: homens treinados de powerlifting, amostra pequena.",
+  },
+  {
     id: "yan-artrose-joelho-2025",
     autores: "Yan L, Li D, Xing D, Fan Z, Du G, Jiu J, et al.",
     titulo: "Comparative efficacy and safety of exercise modalities in knee osteoarthritis: systematic review and network meta-analysis",

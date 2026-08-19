@@ -1006,7 +1006,7 @@ function ResultadoPlano({
       {/* Duas colunas: o plano à esquerda, o porquê à direita. Empilha no mobile. */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
-          <GraficoProgressao macro={macro} nivel={plano.nivel} />
+          <GraficoProgressao macro={macro} nivel={plano.nivel} modeloId={naAlternativa ? plano.modeloAltId : plano.modeloId} />
 
           {/* Régua de semanas: o mapa do plano vira navegação. */}
           <ReguaDeSemanas
