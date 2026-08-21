@@ -132,7 +132,18 @@ const ERRO_IMGS: Record<string, number[]> = {
   "suitcase-carry": [0, 1, 2],
   "farmer-walk": [0, 1, 2],
   "punho-halter": [0, 1, 2],
-  "equilibrio-unipodal": [0, 1, 2],
+  /*
+   * O indice 1 SAIU, e a ausencia aqui e a resposta certa.
+   *
+   * O erro 1 deste exercicio e "progredir so o tempo em vez da dificuldade da tarefa". Isso e
+   * um erro de PROGRAMACAO, nao de postura: nao existe desvio corporal para desenhar. A imagem
+   * que estava aqui tentava preencher esse vazio com um halo vermelho difuso em volta do corpo
+   * inteiro, que nao marca musculo nenhum e nao ensina nada.
+   *
+   * A regra da casa vale aqui como vale para a foto de execucao: ausencia e melhor que imagem
+   * que nao diz a verdade. A aba cai no texto do erro, que e onde ele de fato se explica.
+   */
+  "equilibrio-unipodal": [0, 2],
   "dorsiflexao-elastico": [0, 1, 2],
   "retracao-escapular-polia": [0, 1, 2],
   "y-raise-banco": [0, 1, 2],
