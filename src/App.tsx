@@ -1,6 +1,19 @@
 import { lazy, Suspense, useEffect, type ComponentType } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { Landing } from "@/pages/Landing";
+import {
+  AprenderHome,
+  MapaConhecimento,
+  Disciplinas as AprenderDisciplinas,
+  DisciplinaDetail,
+  ModuloDetail,
+  Conteudo as AprenderConteudo,
+  Casos as AprenderCasos,
+  CasoDetail as AprenderCasoDetail,
+  Biblioteca as AprenderBiblioteca,
+  Salvos as AprenderSalvos,
+  Progresso as AprenderProgresso,
+} from "@/features/learning/pages";
 
 /*
  * SÓ A LANDING É EAGER. TODO O RESTO DO APP CHEGA SOB DEMANDA.
@@ -59,17 +72,23 @@ const Semaforo = pagina(() => import("@/pages/Semaforo"), "Semaforo");
 const Roi = pagina(() => import("@/pages/Roi"), "Roi");
 const CasosRcd = pagina(() => import("@/pages/CasosRcd"), "CasosRcd");
 const CasoRcdDetail = pagina(() => import("@/pages/CasoRcdDetail"), "CasoRcdDetail");
-const AprenderHome = pagina(() => import("@/features/learning/pages"), "AprenderHome");
-const MapaConhecimento = pagina(() => import("@/features/learning/pages"), "MapaConhecimento");
-const AprenderDisciplinas = pagina(() => import("@/features/learning/pages"), "Disciplinas");
-const DisciplinaDetail = pagina(() => import("@/features/learning/pages"), "DisciplinaDetail");
-const ModuloDetail = pagina(() => import("@/features/learning/pages"), "ModuloDetail");
-const AprenderConteudo = pagina(() => import("@/features/learning/pages"), "Conteudo");
-const AprenderCasos = pagina(() => import("@/features/learning/pages"), "Casos");
-const AprenderCasoDetail = pagina(() => import("@/features/learning/pages"), "CasoDetail");
-const AprenderBiblioteca = pagina(() => import("@/features/learning/pages"), "Biblioteca");
-const AprenderSalvos = pagina(() => import("@/features/learning/pages"), "Salvos");
-const AprenderProgresso = pagina(() => import("@/features/learning/pages"), "Progresso");
+/*
+ * O APRENDER NÃO PASSA PELO `pagina()`, E ISSO NÃO É INCONSISTÊNCIA: É A CORREÇÃO DE UM BUG.
+ *
+ * As onze rotas do Aprender ficaram MORTAS por passarem: o barrel
+ * `features/learning/pages` já entrega cada página embrulhada em `lazy()`, e o `pagina()`
+ * embrulhava de novo. React.lazy resolvido para outro lazy não é componente, é objeto, e a
+ * tela inteira caía com "Element type is invalid... Did you wrap a component in React.lazy()
+ * more than once?". Clicar em Aprender dava página em branco.
+ *
+ * O import estático custa quase nada na entrada: o barrel são doze chamadas de `lazy()`, e o
+ * código de cada página continua chegando sob demanda, pelo dynamic import de dentro dele.
+ * Na prática o corte é MELHOR do que era a intenção do `pagina()` aqui, que juntava as doze
+ * páginas do Aprender num chunk só.
+ *
+ * `check:rotas` cobra os dois lados: nenhum destino de `pagina()` pode ser um lazy, e toda
+ * rota precisa de um componente que exista.
+ */
 
 /*
  * O TEMA NÃO MONTA NA LANDING. A cadeia do ThemeApplier (store -> cloudSync -> Supabase,
