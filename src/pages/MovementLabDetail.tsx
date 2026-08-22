@@ -17,6 +17,7 @@ import {
 import { Card, Pill, ScoreRing, buttonClasses, type PillTone } from "@/components/ui/primitives";
 import { MetricaInfo } from "@/components/metrica/MetricaInfo";
 import { MetricaBar } from "@/components/metrica/MetricaBar";
+import { compararMusculos, LIMIAR_ATIVA_MAIS, type LinhaMusculo } from "@/lib/movement-lab/compararMusculos";
 import { getMetrica, faixaDe } from "@/data/metricasGlossario";
 import { Tabs, Accordion } from "@/components/ui/disclosure";
 import { VisualCompareSlider } from "@/components/movement-lab/VisualCompareSlider";
@@ -843,36 +844,64 @@ function PopulacoesCautelaCard({ slug }: { slug: string }) {
   );
 }
 
+/**
+ * A aba Comparar responde "qual dos dois ativa mais CADA músculo", e não mais três parâmetros.
+ *
+ * Ela mostrava ativação relativa do alvo principal, índice de eficiência e complexidade
+ * técnica. O Filipe pediu duas vezes a lista de MÚSCULOS no lugar disso, com a pergunta que
+ * define o desenho: "será que essa marcha aquática ativa mais o glúteo máximo do que o leg
+ * press 45°?". Nenhum dos três parâmetros respondia, e o pior deles fingia responder: a linha
+ * "Ativação relativa" confrontava o alvo principal de um com o alvo principal do OUTRO, que
+ * costuma ser um músculo diferente.
+ *
+ * Os três parâmetros não sumiram do produto: continuam no comparador completo, cujo link segue
+ * no fim desta aba, e onde cabe comparar até 3 exercícios.
+ *
+ * A lógica vive em lib/movement-lab/compararMusculos.ts, travada por check:metricas;
+ * aqui fica só o desenho.
+ */
 function Comparador({ exercise }: { exercise: Exercise }) {
   const candidatos = exercises.filter((e) => e.slug !== exercise.slug);
-  const inicial =
-    candidatos.find((e) => e.grupoMuscular === exercise.grupoMuscular) ?? candidatos[0];
+  const inicial = candidatos.find((e) => e.grupoMuscular === exercise.grupoMuscular) ?? candidatos[0];
   const [otherSlug, setOtherSlug] = React.useState(inicial.slug);
   const other = exercises.find((e) => e.slug === otherSlug) ?? inicial;
-  // Sem fallback: métrica ausente vira `undefined` e a linha diz que não há dado medido.
-  // Chutar 50 aqui era o mesmo bug já removido do Comparador (comparar em cima do chute).
-  const metricaDe = (e: Exercise, nome: string) =>
-    e.indiceEficiencia.metrics.find((m) => m.nome === nome)?.valor;
+  const { nosDois, soEmUm } = compararMusculos(exercise, other);
 
-  const rows: { nome: string; a?: number; b?: number; musculoA?: string; musculoB?: string }[] = [
-    {
-      nome: "Ativação relativa",
-      a: exercise.ativacao[0]?.percentual,
-      b: other.ativacao[0]?.percentual,
-      musculoA: exercise.ativacao[0]?.musculo,
-      musculoB: other.ativacao[0]?.musculo,
-    },
-    {
-      nome: "Índice de eficiência",
-      a: exercise.indiceEficiencia.score,
-      b: other.indiceEficiencia.score,
-    },
-    {
-      nome: "Complexidade técnica",
-      a: metricaDe(exercise, "Complexidade técnica"),
-      b: metricaDe(other, "Complexidade técnica"),
-    },
-  ];
+  /*
+   * Uma linha por músculo, e os DOIS números da linha são sempre do mesmo músculo. É o que
+   * torna a comparação legítima por construção: não existe mais o caso de confrontar o
+   * quadríceps de um com o peitoral do outro e explicar embaixo que não dá para comparar.
+   *
+   * O papel (primário, sinergista, estabilizador) entra colado ao nome do exercício porque um
+   * mesmo músculo muda de função entre os dois, e isso decide tanto quanto o número.
+   */
+  const linhaMusculo = (l: LinhaMusculo) => (
+    <div key={l.musculo}>
+      <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="text-sm font-semibold text-ink">{l.musculo}</span>
+        {l.maisAtivado && l.diferenca != null ? (
+          <Pill tone="success">
+            {l.maisAtivado === "a" ? exercise.nome : other.nome} ativa mais (+{l.diferenca})
+          </Pill>
+        ) : null}
+      </div>
+      <div className="space-y-2.5">
+        <MetricaBar
+          nome="Ativação relativa"
+          valor={l.a?.valor}
+          tone="primary"
+          rotuloTexto={l.a ? `${exercise.nome} · ${l.a.papel}` : exercise.nome}
+        />
+        <MetricaBar
+          nome="Ativação relativa"
+          valor={l.b?.valor}
+          tone="analysis"
+          rotuloTexto={l.b ? `${other.nome} · ${l.b.papel}` : other.nome}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <div>
       <div className="mb-3 flex items-center gap-2 text-sm">
@@ -893,87 +922,38 @@ function Comparador({ exercise }: { exercise: Exercise }) {
           </select>
         </label>
       </div>
-      <div className="space-y-5">
-        {rows.map((r) => {
-          // Ativação relativa é do PRÓPRIO músculo: se o alvo de cada exercício for
-          // diferente, os dois números não medem a mesma coisa e isso precisa ser dito.
-          const alvosDiferentes = Boolean(r.musculoA && r.musculoB && r.musculoA !== r.musculoB);
-          /*
-           * BARRA QUE NÃO COMPARA NÃO É DESENHADA.
-           *
-           * Esta tela admitia, na própria legenda, que os dois números não se comparam
-           * ("cada número é relativo ao próprio músculo") e desenhava as duas barras lado a
-           * lado assim mesmo. Desenho lado a lado É a afirmação de que se comparam, e a
-           * ressalva embaixo não desfaz: quem bate o olho lê 95 contra 88 e conclui que o
-           * primeiro é melhor. O Filipe já tinha dito duas vezes que esses marcadores não
-           * servem ao pessoal dele, e esta era a razão.
-           *
-           * A página /comparador já tinha tirado essa linha, pelo mesmo motivo e com o
-           * comentário escrito lá. Esta aba tinha ficado para trás.
-           *
-           * Com alvos diferentes, a linha vira uma frase que diz o valor de cada um sem
-           * confronto visual. Com o MESMO alvo, as barras continuam, porque aí a comparação
-           * é legítima e é justamente para isso que a tela existe.
-           */
-          if (alvosDiferentes) {
-            /*
-             * Os DOIS valores aparecem, cada um como dado do próprio exercício, sem barra.
-             *
-             * A primeira versão desta correção mostrava o valor do exercício A no cabeçalho e
-             * escondia o do B: meia informação com cara de dado, que é outra forma do mesmo
-             * defeito que ela veio corrigir. O que não pode existir é o CONFRONTO visual;
-             * o dado de cada um, no formato da casa (NN/100 · Faixa), continua sendo
-             * informação legítima.
-             */
-            const def = getMetrica("ativacao");
-            const dado = (v: number | undefined) =>
-              v == null ? null : `${v}/100${def && faixaDe(def, v)?.rotulo ? ` · ${faixaDe(def, v)?.rotulo}` : ""}`;
-            return (
-              <div key={r.nome}>
-                <MetricaInfo nome={r.nome} className="text-sm font-semibold text-ink" />
-                <div className="mt-2 space-y-1 text-sm text-ink">
-                  {dado(r.a) && (
-                    <p>
-                      <span className="font-semibold">{exercise.nome}</span> · {r.musculoA}:{" "}
-                      <span className="tabular">{dado(r.a)}</span>
-                    </p>
-                  )}
-                  {dado(r.b) && (
-                    <p>
-                      <span className="font-semibold">{other.nome}</span> · {r.musculoB}:{" "}
-                      <span className="tabular">{dado(r.b)}</span>
-                    </p>
-                  )}
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-ink-2">
-                  Aqui os números não se comparam: o alvo principal é outro em cada exercício, e
-                  cada valor é relativo ao próprio músculo. Um não é maior que o outro, é de
-                  outra coisa.
-                </p>
-              </div>
-            );
-          }
-          return (
-            <div key={r.nome}>
-              <MetricaInfo nome={r.nome} valor={r.a} className="text-sm font-semibold text-ink" />
-              <div className="mt-2 space-y-2.5">
-                <MetricaBar
-                  nome={r.nome}
-                  valor={r.a}
-                  tone="primary"
-                  rotuloTexto={r.musculoA ? `${exercise.nome} · ${r.musculoA}` : exercise.nome}
-                />
-                <MetricaBar
-                  nome={r.nome}
-                  valor={r.b}
-                  tone="analysis"
-                  rotuloTexto={r.musculoB ? `${other.nome} · ${r.musculoB}` : other.nome}
-                />
-              </div>
-            </div>
-          );
-        })}
+
+      <div className="mb-4">
+        <MetricaInfo nome="Ativação relativa" className="text-sm font-semibold text-ink" />
+        <p className="mt-1 text-xs leading-relaxed text-ink-2">
+          Cada valor é relativo ao PRÓPRIO músculo, então os dois números de uma mesma linha se
+          comparam. Os músculos de um exercício não somam 100: não são fatias do esforço total.
+          O selo só aparece quando a diferença passa de {LIMIAR_ATIVA_MAIS} pontos, porque os
+          valores são estimativa de literatura e diferença menor que isso não decide nada.
+        </p>
       </div>
+
+      {nosDois.length > 0 ? (
+        <div className="space-y-5">{nosDois.map(linhaMusculo)}</div>
+      ) : (
+        <p className="rounded-lg border border-border bg-surface-soft p-3 text-sm text-ink-2">
+          Estes dois exercícios não têm nenhum músculo medido em comum, então não há o que
+          comparar linha a linha. Os músculos de cada um aparecem abaixo.
+        </p>
+      )}
+
+      {soEmUm.length > 0 && (
+        <div className="mt-6 border-t border-border pt-4">
+          <p className="text-sm font-semibold text-ink">Medidos em só um dos dois</p>
+          <p className="mb-3 mt-1 text-xs leading-relaxed text-ink-2">
+            Aqui não há confronto: o outro exercício não declara este músculo entre os alvos
+            dele. Isso NÃO quer dizer ativação zero, quer dizer que não há medida publicada
+            para aquele par.
+          </p>
+          <div className="space-y-5">{soEmUm.map(linhaMusculo)}</div>
+        </div>
+      )}
+
       <Link
         to={`/comparador?base=${exercise.slug}`}
         className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
@@ -982,7 +962,8 @@ function Comparador({ exercise }: { exercise: Exercise }) {
       </Link>
       <p className="mt-3 text-2xs leading-relaxed text-ink-3">
         Valores relativos estimados da literatura de EMG/biomecânica: comparam exercícios, não
-        medem o aluno. Fontes na aba Biomecânica de cada exercício.
+        medem o aluno. Índice de eficiência e complexidade técnica ficam no comparador completo.
+        Fontes na aba Biomecânica de cada exercício.
       </p>
     </div>
   );
