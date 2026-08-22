@@ -925,7 +925,7 @@ function ConcluidaHoje({ feedback, cor }: { feedback?: SessaoFeedback; cor: stri
           <ParDado layout="inline" label="Seu esforço" value={`${feedback.pse}${rotuloPse(feedback.pse) ? ` · ${rotuloPse(feedback.pse)}` : ""}`} />
         )}
         {feedback.duracaoMin != null && <ParDado layout="inline" label="Duração" value={`${feedback.duracaoMin} min`} />}
-        {feedback.observacao && <p className="text-xs text-ink-2">Recado enviado ao seu professor.</p>}
+        {feedback.observacao && <p className="text-xs text-ink-2">Recado registrado. Seu professor vê no próximo acesso.</p>}
       </div>
     </Card>
   );

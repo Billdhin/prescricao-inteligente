@@ -92,9 +92,15 @@ export function SemaforoLiberacao({
     : grupo?.nome ?? "Checklist geral do dia";
   const nomeDocumento = grupo?.rotuloAluno ?? "Checklist geral do dia";
   const addLiberacao = useAlunos((s) => s.addLiberacao);
+  const registrarDecisaoContraria = useAlunos((s) => s.registrarDecisaoContraria);
   const { name: profNome, cref, logoDataUrl } = useUser();
   const [respostas, setRespostas] = React.useState<Record<string, string>>({});
   const [registrado, setRegistrado] = React.useState(false);
+  // Id da liberação que acabou de ser gravada: é nela que a conduta divergente se pendura.
+  const [liberacaoId, setLiberacaoId] = React.useState<string | null>(null);
+  const [abrindoConduta, setAbrindoConduta] = React.useState(false);
+  const [justificativa, setJustificativa] = React.useState("");
+  const [condutaGravada, setCondutaGravada] = React.useState(false);
 
   if (!checklist) return null;
 
@@ -103,8 +109,10 @@ export function SemaforoLiberacao({
 
   const registrar = () => {
     if (!resultado) return;
+    const id = uid();
+    setLiberacaoId(id);
     addLiberacao({
-      id: uid(),
+      id,
       alunoId,
       grupoSlug,
       data: Date.now(),
@@ -285,6 +293,69 @@ export function SemaforoLiberacao({
                   )
                 )}
               </div>
+              {/* ---------------------------------------------------------------------
+                  A DECISÃO É DE QUEM ASSINA, E ELA PRECISA CABER NO PRONTUÁRIO.
+
+                  Antes, um resultado vermelho tinha um caminho só ("Registrar no perfil e
+                  reavaliar"), e mesmo assim nada impedia o profissional de ir prescrever.
+                  O prontuário ficava com "não liberado" e um treino feito no mesmo dia,
+                  sem nada explicando a distância entre os dois: omissão, num documento que
+                  existe para provar como se decidiu.
+
+                  Isto NÃO é uma permissão nova: ele já podia. É o registro do que ele de
+                  fato decidiu, com o porquê, datado.
+                  --------------------------------------------------------------------- */}
+              {resultado.cor !== "verde" && liberacaoId && (
+                <div className="rounded-card border border-border bg-surface-soft p-3">
+                  {condutaGravada ? (
+                    <p className="text-sm text-ink-2">
+                      <span className="font-semibold text-ink">Conduta registrada.</span> O prontuário
+                      agora mostra o resultado do dia e a sua decisão diante dele, com data.
+                    </p>
+                  ) : !abrindoConduta ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="min-w-0 flex-1 text-sm text-ink-2">
+                        Decidiu diferente do que o semáforo indicou? A decisão é sua. Registre o
+                        motivo para ele ficar no prontuário junto com o resultado.
+                      </span>
+                      <button onClick={() => setAbrindoConduta(true)} className={buttonClasses("secondary", "sm")}>
+                        Registrar a minha conduta
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <label htmlFor="conduta-justificativa" className="block text-sm font-semibold text-ink">
+                        Por que você decidiu diferente?
+                      </label>
+                      <textarea
+                        id="conduta-justificativa"
+                        value={justificativa}
+                        onChange={(e) => setJustificativa(e.target.value)}
+                        rows={3}
+                        placeholder="Ex.: pressão aferida de novo após 10 min de repouso, 138/86; mantive a sessão com carga reduzida e sem apneia."
+                        className="w-full rounded-control border border-border bg-surface p-2.5 text-sm text-ink placeholder:text-ink-3"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          disabled={!justificativa.trim()}
+                          onClick={() => {
+                            registrarDecisaoContraria(liberacaoId, justificativa);
+                            setCondutaGravada(true);
+                            setAbrindoConduta(false);
+                          }}
+                          className={buttonClasses("primary", "sm")}
+                        >
+                          Registrar no prontuário
+                        </button>
+                        <button onClick={() => setAbrindoConduta(false)} className={buttonClasses("ghost", "sm")}>
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center gap-2">
                 <Pill tone="success">Registrado no histórico, entra no prontuário</Pill>
                 <button

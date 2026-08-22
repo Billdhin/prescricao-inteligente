@@ -6,8 +6,19 @@ import { reivindicarConvite, salvarExecucao, apagarExecucao, salvarSessaoFeedbac
 import { useAlunos } from "@/lib/store";
 import { StudentApp } from "@/components/student/StudentApp";
 import { Logo } from "@/components/brand/Logo";
+import { Toasts } from "@/components/app/Toasts";
+import { toast, toastFalha } from "@/lib/toast";
 import { buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
+
+/**
+ * Confirmação tátil. Um toque curto no celular é o sinal que atravessa a academia
+ * barulhenta e a tela cheia de sol, e é o único que chega sem o aluno estar olhando.
+ * Guardado atrás do suporte porque o desktop e o iOS não têm.
+ */
+const vibrar = (ms: number | number[]) => {
+  if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") navigator.vibrate(ms);
+};
 
 /**
  * Portal do aluno (/aluno). Entrada única do lado do aluno: gate de cadastro/login
@@ -61,17 +72,28 @@ function PortalApp() {
   }
   const plano = planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
 
+  // O aviso de falha diz as duas coisas que importam: o registro NÃO se perdeu (está no
+  // aparelho) e ele ainda não chegou ao professor. Sem isso, o aluno ou acha que perdeu
+  // tudo, ou acha que chegou. As duas leituras erradas custam caro.
+  const AVISO_SEM_REDE = "Registrei aqui no seu aparelho, mas ainda não consegui enviar ao seu professor.";
+
   const registrar = (e: Parameters<typeof addExecucao>[0]) => {
     addExecucao(e);
-    if (professionalId) void salvarExecucao(e, professionalId).catch(() => {});
+    vibrar(18);
+    toast(e.cargaFeita != null || e.repsFeitas != null ? "Série registrada." : "Exercício concluído.");
+    if (professionalId) void salvarExecucao(e, professionalId).catch(() => toastFalha(AVISO_SEM_REDE));
   };
   const desfazer = (execId: string) => {
     removeExecucao(execId);
-    void apagarExecucao(execId).catch(() => {});
+    vibrar(12);
+    toast("Registro desfeito.");
+    void apagarExecucao(execId).catch(() => toastFalha("Desfiz aqui, mas ainda não consegui avisar o seu professor."));
   };
   const registrarFeedback = (f: Parameters<typeof addSessaoFeedback>[0]) => {
     addSessaoFeedback(f);
-    if (professionalId) void salvarSessaoFeedback(f, professionalId).catch(() => {});
+    vibrar([18, 60, 18]);
+    toast("Treino registrado. Bom trabalho.");
+    if (professionalId) void salvarSessaoFeedback(f, professionalId).catch(() => toastFalha(AVISO_SEM_REDE));
   };
   // Selo "Personalizado em DD/MM" nas sessões que nasceram de uma prescrição. Se a
   // conta do aluno não carregou as prescrições, o selo aparece sem a data (ainda útil).
@@ -81,22 +103,27 @@ function PortalApp() {
   };
 
   return (
-    <StudentApp
-      aluno={aluno}
-      plano={plano}
-      // Fallback de marca NEUTRO: nunca o nome do aluno (seria estranho o app do
-      // aluno se chamar como ele). Sem marca do profissional, um rótulo genérico.
-      marca={marca ?? { nome: "Seu treino" }}
-      avaliacoes={avaliacoes}
-      execucoes={execucoes}
-      sessaoFeedbacks={sessaoFeedbacks}
-      liberacoes={liberacoes}
-      dataDaPrescricao={dataDaPrescricao}
-      onRegistrar={registrar}
-      onDesfazer={desfazer}
-      onFeedback={registrarFeedback}
-      onSair={() => void signOut()}
-    />
+    <>
+      <StudentApp
+        aluno={aluno}
+        plano={plano}
+        // Fallback de marca NEUTRO: nunca o nome do aluno (seria estranho o app do
+        // aluno se chamar como ele). Sem marca do profissional, um rótulo genérico.
+        marca={marca ?? { nome: "Seu treino" }}
+        avaliacoes={avaliacoes}
+        execucoes={execucoes}
+        sessaoFeedbacks={sessaoFeedbacks}
+        liberacoes={liberacoes}
+        dataDaPrescricao={dataDaPrescricao}
+        onRegistrar={registrar}
+        onDesfazer={desfazer}
+        onFeedback={registrarFeedback}
+        onSair={() => void signOut()}
+      />
+      {/* O app do aluno nao tinha canal de confirmacao nenhum. Reaproveita o toast do
+          produto, que ja tem aria-live e sobe para role="alert" quando e falha. */}
+      <Toasts />
+    </>
   );
 }
 

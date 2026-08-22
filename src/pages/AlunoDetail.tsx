@@ -1628,6 +1628,17 @@ function SemaforoAba({
                         ))}
                       </ul>
                     )}
+                    {/* A conduta divergente fica LADO A LADO com o resultado, e não numa aba
+                        separada: é a distância entre os dois que documenta a decisão. */}
+                    {l.decisaoContraria && (
+                      <div className="mt-2 rounded-control border border-border bg-surface-soft p-2.5">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-ink-3">
+                          Conduta do profissional
+                        </p>
+                        <p className="mt-1 text-sm text-ink">{l.decisaoContraria.justificativa}</p>
+                        <p className="mt-1 text-xs text-ink-3">Registrada em {fmtData(l.decisaoContraria.em)}</p>
+                      </div>
+                    )}
                   </li>
                 );
               })}

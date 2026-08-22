@@ -1337,12 +1337,16 @@ function BlocoRow({
             );
           }
           const aviso = confere ? conferirFaixa(confere, valor, faixa, ctx.nivel) : null;
+          // A faixa citada vem da MESMA fonte do aviso, então pista e repreensão nunca
+          // divergem. Só nos campos que a diretriz de fato dosa.
+          const pista = confere ? faixaSugerida(faixa[confere], ctx.nivel) : undefined;
           return (
             <CampoInline
               key={chave}
               rotulo={rotulo}
               valor={valor}
               aviso={aviso}
+              pista={pista}
               onChange={(v) => onChange({ ...bloco, [chave]: v })}
             />
           );
@@ -1383,18 +1387,22 @@ function CampoInline({
   rotulo,
   valor,
   aviso,
+  pista,
   onChange,
 }: {
   rotulo: string;
   valor: string;
   aviso: string | null;
+  /** A faixa citada pela diretriz para este campo. Pista, não trava. */
+  pista?: string;
   onChange: (v: string) => void;
 }) {
   const id = React.useId();
   return (
     <div>
-      <label htmlFor={id} className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3">
-        {rotulo}
+      <label htmlFor={id} className="mb-0.5 flex flex-wrap items-baseline gap-x-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+        <span>{rotulo}</span>
+        {pista && <span className="font-normal normal-case tracking-normal text-ink-3">faixa citada: {pista}</span>}
       </label>
       <input
         id={id}

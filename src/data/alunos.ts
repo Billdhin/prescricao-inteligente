@@ -187,6 +187,15 @@ export interface Liberacao {
   resultado: "verde" | "amarelo" | "vermelho";
   /** ações sugeridas registradas no momento (amarelo/vermelho) */
   ajustes: { pergunta: string; acao: string }[];
+  /**
+   * A CONDUTA DO PROFISSIONAL QUANDO ELA DIVERGE DO SEMÁFORO.
+   *
+   * O semáforo é apoio à decisão, e a decisão é de quem assina, por lei. Sem este campo o
+   * prontuário registrava "não liberado" e o treino acontecia mesmo assim, sem nada
+   * explicando a distância entre os dois: omissão, num documento que existe justamente
+   * para provar como se decidiu. Ausente = ele seguiu o que o semáforo indicou.
+   */
+  decisaoContraria?: { justificativa: string; em: number };
 }
 
 /** Critério do breakdown do motor (espelha CriterioRacional do engine). */

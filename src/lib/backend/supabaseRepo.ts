@@ -348,6 +348,11 @@ export async function salvarLiberacao(l: Liberacao): Promise<void> {
     respostas: l.respostas,
     resultado: l.resultado,
     ajustes: l.ajustes,
+    // A coluna `decisao_contraria` (migração 0008) só entra no payload quando existe
+    // conduta divergente, que é o caso raro. Assim, enquanto a migração não roda, as
+    // liberações comuns continuam subindo exatamente como antes, e só o registro de
+    // divergência ficaria retido no aparelho, com o aviso de falha que o toast já dá.
+    ...(l.decisaoContraria ? { decisao_contraria: l.decisaoContraria } : {}),
   });
   if (error) throw error;
 }
@@ -363,6 +368,7 @@ export async function listarLiberacoes(): Promise<Liberacao[]> {
     respostas: r.respostas ?? {},
     resultado: r.resultado,
     ajustes: r.ajustes ?? [],
+    decisaoContraria: r.decisao_contraria ?? undefined,
   }));
 }
 

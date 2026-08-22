@@ -1124,6 +1124,17 @@ function ReguaDeSemanas({
   corrente?: number;
   onFocar: (n: number) => void;
 }) {
+  // Agrupa preservando a ordem de chegada: a régua espelha o plano, não reordena nada.
+  const porBloco = React.useMemo(() => {
+    const grupos: { meso: Mesociclo; itens: Microciclo[] }[] = [];
+    for (const { micro, meso } of semanas) {
+      const ultimo = grupos[grupos.length - 1];
+      if (ultimo && ultimo.meso.id === meso.id) ultimo.itens.push(micro);
+      else grupos.push({ meso, itens: [micro] });
+    }
+    return grupos;
+  }, [semanas]);
+
   return (
     <Card className="p-4">
       <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -1132,30 +1143,40 @@ function ReguaDeSemanas({
           Clique numa semana para editar. Âmbar = descarga, anel = semana de hoje.
         </p>
       </div>
-      <div className="flex flex-wrap gap-1.5">
-        {semanas.map(({ micro }) => {
-          const ativo = micro.semana === foco;
-          const descarga = micro.tipo === "deload";
-          return (
-            <button
-              key={micro.id}
-              onClick={() => onFocar(micro.semana)}
-              aria-pressed={ativo}
-              aria-label={`Semana ${micro.semana}${descarga ? ", descarga" : ""}`}
-              className={cn(
-                "tabular grid h-9 w-9 place-items-center rounded-full border text-sm font-semibold transition-colors",
-                ativo
-                  ? "border-ink bg-ink text-surface"
-                  : descarga
-                    ? "border-warning/40 bg-warning-tint text-warning"
-                    : "border-border text-ink-2 hover:bg-surface-soft",
-                micro.semana === corrente && !ativo && "ring-2 ring-primary",
-              )}
-            >
-              {micro.semana}
-            </button>
-          );
-        })}
+      <div className="space-y-2.5">
+        {porBloco.map(({ meso, itens }) => (
+          <div key={meso.id}>
+            <p className="mb-1 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+              {rotuloMeso(meso)}
+              {meso.foco ? <span className="font-normal normal-case tracking-normal"> · {meso.foco}</span> : null}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {itens.map((micro) => {
+                const ativo = micro.semana === foco;
+                const descarga = micro.tipo === "deload";
+                return (
+                  <button
+                    key={micro.id}
+                    onClick={() => onFocar(micro.semana)}
+                    aria-pressed={ativo}
+                    aria-label={`Semana ${micro.semana}, ${rotuloMeso(meso)}${descarga ? ", descarga" : ""}`}
+                    className={cn(
+                      "tabular grid h-9 w-9 place-items-center rounded-full border text-sm font-semibold transition-colors",
+                      ativo
+                        ? "border-ink bg-ink text-surface"
+                        : descarga
+                          ? "border-warning/40 bg-warning-tint text-warning"
+                          : "border-border text-ink-2 hover:bg-surface-soft",
+                      micro.semana === corrente && !ativo && "ring-2 ring-primary",
+                    )}
+                  >
+                    {micro.semana}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
     </Card>
   );

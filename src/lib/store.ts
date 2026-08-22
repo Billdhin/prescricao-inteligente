@@ -356,6 +356,8 @@ interface AlunosState {
   updatePlano: (id: string, patch: Partial<PlanoTreino>) => void;
   removePlano: (id: string) => void;
   addLiberacao: (l: Liberacao) => void;
+  /** registra a conduta do profissional quando ela diverge do semáforo (com justificativa) */
+  registrarDecisaoContraria: (liberacaoId: string, justificativa: string) => void;
   /** registra uma execução do aluno (uma série concluída de um bloco); faz upsert */
   addExecucao: (e: Execucao) => void;
   /** desfaz uma execução registrada pelo id */
@@ -487,6 +489,21 @@ export const useAlunos = create<AlunosState>()(
       addLiberacao: (l) => {
         set((s) => ({ liberacoes: [l, ...s.liberacoes].slice(0, 200) }));
         cloudSaveLiberacao(l);
+      },
+      // A conduta do profissional quando ela diverge do semáforo. Não altera o RESULTADO
+      // do checklist, que é o fato medido; acrescenta o que ele decidiu diante dele, que é
+      // o fato clínico. Os dois convivem no prontuário, e é a distância entre eles que
+      // documenta a decisão.
+      registrarDecisaoContraria: (liberacaoId, justificativa) => {
+        const texto = justificativa.trim();
+        if (!texto) return;
+        set((s) => ({
+          liberacoes: s.liberacoes.map((l) =>
+            l.id === liberacaoId ? { ...l, decisaoContraria: { justificativa: texto, em: Date.now() } } : l,
+          ),
+        }));
+        const alvo = get().liberacoes.find((l) => l.id === liberacaoId);
+        if (alvo) cloudSaveLiberacao(alvo);
       },
       // Execução do aluno. Espelho na nuvem entra com a conta do aluno (fase de
       // auth do portal); por ora persiste local, base da autorregulação.
