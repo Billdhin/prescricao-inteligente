@@ -23,7 +23,13 @@
  *
  * Roda com `npm run check:core`.
  */
-import { gerarPlano, slugsClinicosDoPlano, metricaDoExercicio, consequenciasDoPlano } from "../src/lib/gps/periodizacao";
+import {
+  gerarPlano,
+  slugsClinicosDoPlano,
+  metricaDoExercicio,
+  consequenciasDoPlano,
+  INDICACOES_ISOMETRICAS,
+} from "../src/lib/gps/periodizacao";
 import { agregadoSemana, serieSemanal } from "../src/lib/gps/progressao";
 import { classificarGrupos } from "../src/lib/gps/classificador";
 import { alvoSemana } from "../src/lib/gps/alvo";
@@ -476,20 +482,25 @@ for (const objetivo of OBJETIVOS) {
     }
   }
   /*
-   * A REGRA MUDOU EM 19/08/2026, E A ASSERÇÃO MUDA COM ELA.
+   * A REGRA MUDOU DUAS VEZES, E A ASSERÇÃO MUDA COM ELA. A segunda mudança é a que vale hoje.
    *
-   * Antes: só recebia o protocolo quem tinha condição declarando indicação, o que na prática
-   * era hipertensão estágio 1 e 2. O Filipe cobrou que contração sustentada não é conduta
-   * exclusiva de hipertenso, e o PubMed sustenta: duas metanálises medem queda de pressão em
-   * NORMOTENSOS (`loaiza-isometrico-normotensos-2020`, `carlson-isometrico-pa-2014`), com a
-   * primeira concluindo por PREVENÇÃO da hipertensão.
+   * Em 19/08/2026 a indicação abriu: deixou de ser exclusiva de hipertenso e passou a valer
+   * como PREVENÇÃO para quem não tivesse veto. Esta asserção então cobrava "quem não tem veto
+   * RECEBE", e era ela que congelava o defeito seguinte no lugar.
    *
-   * A asserção agora cobra as três coisas que a regra nova promete, e não a antiga:
+   * Em 22/08/2026 o Filipe montou um atleta avançado de Força, sem condição nenhuma, e leu na
+   * tela "Protocolo isométrico para prevenção da pressão arterial". "Quem não tem veto recebe"
+   * é o mesmo que "todo mundo recebe": a prevenção era o `else` da camada, e o rótulo de
+   * pressão arterial ia junto para quem não tinha nada a ver com pressão.
+   *
+   * O que a asserção cobra AGORA:
    *   1. o VETO continua vencendo tudo (gestante não recebe, com ou sem outra condição);
-   *   2. quem não tem veto RECEBE, na dose de prevenção;
+   *   2. quem DECLARA risco cardiometabólico recebe a prevenção, e quem não declara NÃO recebe
+   *      esta indicação (pode receber outra, por objetivo, e a seção 22 cobra o rótulo);
    *   3. a dose de tratamento é MAIOR que a de prevenção, porque a evidência é mais forte.
    *
-   * A porta 1 é a que protege; sem ela, abrir a indicação viraria abrir a exceção junto.
+   * A porta 1 é a que protege; a porta 2 é a que impede a camada de voltar a entrar por
+   * descarte. A seção 22 cobre o resto: rótulo, dose, bibliografia e raciocínio.
    */
   const sessoesIso = (grupo?: string, objetivo: GpsObjetivo = "Resistência muscular") =>
     gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo } as never)
@@ -498,19 +509,33 @@ for (const objetivo of OBJETIVOS) {
   for (const grupo of ["gestante"]) {
     if (sessoesIso(grupo)) erro(`VETO DO ISOMÉTRICO IGNORADO (${grupo}): a condição declara evitar e o plano prescreveu o protocolo mesmo assim.`);
   }
-  for (const grupo of [undefined, "osteoporose", "diabetes-tipo-2"]) {
+  // Quem DECLARA risco cardiometabólico recebe a prevenção.
+  for (const grupo of ["diabetes-tipo-2", "obesidade-grau-2", "sindrome-metabolica"]) {
     if (!sessoesIso(grupo))
       erro(
-        `ISOMÉTRICO NEGADO A QUEM PODE RECEBER (${grupo ?? "sem condição"}): nenhuma sessão isométrica no plano, e a indicação de prevenção não tem veto neste perfil.`,
+        `PREVENÇÃO NEGADA A QUEM DECLARA RISCO (${grupo}): a condição declara \`isometrico.prevencao\` e o plano não trouxe sessão isométrica nenhuma.`,
+      );
+  }
+  /*
+   * E quem NÃO declara risco não recebe a prevenção. É o caso do Filipe, invertido em
+   * asserção: sem esta linha, voltar a prevenção para o `else` da camada passaria verde.
+   *
+   * O objetivo aqui é Resistência muscular de propósito, porque ele não abre a porta de
+   * desempenho (que é de Força): o que se mede é a ausência da PREVENÇÃO, não a da camada.
+   */
+  for (const grupo of [undefined, "osteoporose"]) {
+    if (sessoesIso(grupo))
+      erro(
+        `PREVENÇÃO POR DESCARTE (${grupo ?? "sem condição"}): o perfil não declara risco cardiometabólico e recebeu sessão isométrica de prevenção assim mesmo. Era exatamente este o defeito de 22/08.`,
       );
   }
   // O objetivo que está fora da lista continua fora, com ou sem a abertura da indicação.
   if (sessoesIso(undefined, "Aprendizado técnico"))
     erro("ISOMÉTRICO EM OBJETIVO FORA DA LISTA: Aprendizado técnico recebeu o protocolo.");
   // Tratamento pesa mais que prevenção, e isso tem que aparecer na dose.
-  if (sessoesIso("hipertensao-estagio-2") <= sessoesIso(undefined))
+  if (sessoesIso("hipertensao-estagio-2") <= sessoesIso("diabetes-tipo-2"))
     erro(
-      `DOSE DE TRATAMENTO NÃO SUPERA A DE PREVENÇÃO: hipertensão estágio 2 recebeu ${sessoesIso("hipertensao-estagio-2")} sessões e o perfil sem condição recebeu ${sessoesIso(undefined)}.`,
+      `DOSE DE TRATAMENTO NÃO SUPERA A DE PREVENÇÃO: hipertensão estágio 2 recebeu ${sessoesIso("hipertensao-estagio-2")} sessões e o perfil de prevenção recebeu ${sessoesIso("diabetes-tipo-2")}.`,
     );
   {
   }
@@ -605,7 +630,7 @@ for (const objetivo of OBJETIVOS) {
      * de janela que já tinha custado uma asserção decorativa no PDF.
      */
     if (tem) {
-      const i = p.raciocinio.indexOf("Sobre o protocolo isométrico");
+      const i = p.raciocinio.indexOf("Sobre a sessão isométrica");
       const frase = i >= 0 ? p.raciocinio.slice(i, p.raciocinio.indexOf(".", p.raciocinio.indexOf("liberação do dia", i)) + 1) : "";
       if (!frase) erro(`RACIOCÍNIO SEM A FRASE DO PROTOCOLO (${grupo ?? "sem condição"}): o plano tem sessões isométricas e o parágrafo próprio não foi encontrado.`);
       else if (!/ELEVA a press[ãa]o/i.test(frase))
@@ -2191,6 +2216,127 @@ function minutosNoTexto(texto: string): { min: number; max: number } | null {
 }
 
 /* --------------------------------- veredito --------------------------------- */
+
+
+/* --------- 22. A sessão isométrica diz PARA QUE ela está ali, e a dose acompanha --------- */
+/*
+ * Achado do Filipe em 22/08/2026. Ele montou um atleta AVANÇADO de Força, sem condição nenhuma,
+ * e o plano abriu com duas sessões chamadas "Protocolo isométrico para prevenção da pressão
+ * arterial". O motivo estava no código: a camada tinha duas portas, tratamento por condição e
+ * PREVENÇÃO PARA TODO O RESTO, aplicada por descarte, sem passar por regra nenhuma.
+ *
+ * A correção não foi tirar a prevenção, que tem evidência citada, e sim tirar o `else`:
+ * prevenção passou a exigir uma condição que DECLARE risco cardiometabólico, e a camada ganhou
+ * a porta que faltava, de tendão e produção rápida de força, que entra por OBJETIVO.
+ *
+ * Esta asserção cobra os dois lados da mesma moeda, porque cada um sozinho seria fácil de
+ * satisfazer errado: (a) o rótulo de pressão não pode aparecer em quem não tem motivo de
+ * pressão, e (b) a DOSE tem que ser a da indicação que apareceu no rótulo. Trocar só o texto e
+ * seguir prescrevendo 4 contrações de 2 minutos seria repetir o defeito original com outro
+ * nome, que é exatamente o que este arquivo existe para impedir.
+ */
+{
+  const CONDICOES_ISO = [undefined, "hipertensao-estagio-2", "obesidade-grau-2", "diabetes-tipo-2", "gestante", "iniciante-sedentario"];
+  const vistas = new Set<string>();
+  let planosComIso = 0;
+  let planosSemIso = 0;
+
+  /*
+   * O ACERVO SEM MÁQUINA É PARTE DO CRUZAMENTO, e não um detalhe.
+   *
+   * A indicação de desempenho só tem veículo em máquina: contração máxima com o peso do
+   * corpo não existe. Sem esta segunda perna, a asserção do veículo nunca era exercida,
+   * porque o leg press sempre passava, e reabrir o fallback para "qualquer isométrico do
+   * acervo" passaria verde entregando agachamento na parede sob o rótulo de tendão.
+   */
+  for (const equipamentos of [["Máquina", "Halter", "Barra"], ["Halter", "Barra"]])
+    for (const objetivo of OBJETIVOS)
+      for (const nivel of ["Iniciante", "Intermediário", "Avançado"] as Nivel[])
+        for (const grupoEspecial of CONDICOES_ISO) {
+        const plano = gerarPlano({ objetivo, nivel, semanas: 12, frequencia: 4, grupoEspecial, equipamentos } as never);
+        const quem = `${objetivo}/${nivel}/${grupoEspecial ?? "sem condição"}/${equipamentos.includes("Máquina") ? "com máquina" : "sem máquina"}`;
+        const sessoesIso = (plano.principal.mesociclos[0]?.microciclos[0]?.sessoes ?? []).filter((se) =>
+          se.blocos.some((bl) => bl.tipo === "isometrico"),
+        );
+        if (!sessoesIso.length) {
+          planosSemIso++;
+          continue;
+        }
+        planosComIso++;
+
+        const ind = INDICACOES_ISOMETRICAS.find((i) => i.foco === sessoesIso[0].foco);
+        if (!ind) {
+          erro(`SESSÃO ISOMÉTRICA SEM INDICAÇÃO (${quem}): o foco "${sessoesIso[0].foco}" não é de nenhuma indicação declarada. Rótulo escrito à mão volta a ser rótulo solto.`);
+          continue;
+        }
+        vistas.add(ind.id);
+
+        /*
+         * (a) O RÓTULO DE PRESSÃO SÓ APARECE COM MOTIVO DE PRESSÃO. Este é o defeito literal
+         * que o Filipe viu: sem condição declarada, nada no plano justifica falar de pressão
+         * arterial ao aluno.
+         */
+        const falaDePressao = /press[ãa]o arterial/i.test(sessoesIso[0].foco ?? "");
+        const temMotivoDePressao = ind.id === "pressao-controle" || ind.id === "pressao-prevencao";
+        if (falaDePressao !== temMotivoDePressao)
+          erro(
+            `RÓTULO DE PRESSÃO SEM MOTIVO DE PRESSÃO (${quem}): a sessão se chama "${sessoesIso[0].foco}" e a indicação que disparou foi "${ind.id}".`,
+          );
+        if (!grupoEspecial && falaDePressao)
+          erro(
+            `PRESSÃO ARTERIAL EM ALUNO SEM CONDIÇÃO (${quem}): o plano não tem condição declarada e mesmo assim a sessão se chama "${sessoesIso[0].foco}".`,
+          );
+
+        /* (b) A DOSE É A DA INDICAÇÃO QUE ESTÁ NO RÓTULO, e não a de outra. */
+        for (const se of sessoesIso) {
+          const b = se.blocos.find((bl) => bl.tipo === "isometrico");
+          if (!b) continue;
+          if (b.series !== ind.protocolo.series || b.duracao !== ind.protocolo.contracao || b.intervalo !== ind.protocolo.descanso)
+            erro(
+              `DOSE NÃO É A DA INDICAÇÃO (${quem}, "${ind.id}"): o bloco prescreve ${b.series} x ${b.duracao} com ${b.intervalo} e a indicação declara ${ind.protocolo.series} x ${ind.protocolo.contracao} com ${ind.protocolo.descanso}.`,
+            );
+          if (b.observacao !== ind.nota)
+            erro(`OBSERVAÇÃO FORA DA INDICAÇÃO (${quem}, "${ind.id}"): o texto do bloco não é o que a indicação declara.`);
+          if (!ind.exerciciosAceitos.includes(b.exercicioSlug ?? ""))
+            erro(
+              `VEÍCULO FORA DA LISTA (${quem}, "${ind.id}"): a sessão usa "${b.exercicioSlug}" e a indicação aceita ${ind.exerciciosAceitos.join(", ")}. Contração máxima com peso do corpo não existe.`,
+            );
+        }
+        if (sessoesIso.length !== Math.min(ind.protocolo.sessoes, 4))
+          erro(`FREQUÊNCIA FORA DA INDICAÇÃO (${quem}, "${ind.id}"): ${sessoesIso.length} sessões na semana e a indicação declara ${ind.protocolo.sessoes}.`);
+
+        /* (c) A BIBLIOGRAFIA E O RACIOCÍNIO SEGUEM A MESMA INDICAÇÃO. */
+        for (const r of ind.refIds)
+          if (!plano.refIds?.includes(r))
+            erro(`BIBLIOGRAFIA SEM A REFERÊNCIA DA INDICAÇÃO (${quem}, "${ind.id}"): falta "${r}" no plano.`);
+        const outras = INDICACOES_ISOMETRICAS.filter((i) => i.id !== ind.id);
+        for (const o of outras)
+          for (const r of o.refIds)
+            if (!ind.refIds.includes(r) && plano.refIds?.includes(r))
+              erro(
+                `BIBLIOGRAFIA DE OUTRA INDICAÇÃO (${quem}, "${ind.id}"): o plano cita "${r}", que sustenta "${o.id}". Citar metanálise de pressão embaixo de uma sessão de tendão é o mesmo defeito de antes.`,
+              );
+        if (!String(plano.raciocinio ?? "").includes(ind.raciocinio))
+          erro(`RACIOCÍNIO FORA DA INDICAÇÃO (${quem}, "${ind.id}"): o texto do plano não traz a explicação que a indicação declara.`);
+
+        /* (d) O VETO DE CONDIÇÃO VENCE TUDO, inclusive a porta de desempenho. */
+        if (grupoEspecial && groupGpsRules[grupoEspecial]?.isometrico?.evitar)
+          erro(`VETO IGNORADO (${quem}): a condição desaconselha contração sustentada e a sessão nasceu assim mesmo.`);
+      }
+
+  /*
+   * CONTROLES POSITIVOS. Sem eles a asserção inteira passa com a camada desligada: zero sessão
+   * isométrica satisfaz todas as regras acima de forma vazia.
+   */
+  for (const i of INDICACOES_ISOMETRICAS)
+    if (!vistas.has(i.id))
+      erro(`CONTROLE POSITIVO DA INDICAÇÃO: nenhum plano do cruzamento disparou "${i.id}"; as asserções sobre ela não foram exercidas.`);
+  if (planosComIso < 20) erro(`CONTROLE POSITIVO DO ISOMÉTRICO: só ${planosComIso} planos tinham sessão isométrica.`);
+  if (planosSemIso < 10)
+    erro(
+      `CONTROLE POSITIVO DA AUSÊNCIA: só ${planosSemIso} planos ficaram SEM sessão isométrica. A camada voltou a entrar por descarte, que era o defeito.`,
+    );
+}
 
 if (problemas.length) {
   console.error(`\n[check:core] REPROVOU (${problemas.length}):`);

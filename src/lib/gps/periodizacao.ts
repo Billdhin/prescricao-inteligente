@@ -888,9 +888,6 @@ function intensidadeAerobia(ctx: CtxAlvo, texto: string): string {
  * contrações de 2 minutos, 2 minutos de descanso entre elas, 3 vezes por semana. É o que foi
  * testado, e mexer em qualquer um dos quatro números produz um protocolo sem estudo atrás.
  */
-const ISO_PROTOCOLO = { series: 4, contracao: "2 min", descanso: "2 min" } as const;
-const ISO_SESSOES_POR_SEMANA = 3;
-const ISO_SESSOES_PREVENCAO = 2;
 
 /** Letras das sessões quando a semana não tem ordem fixa (flexível e autorregulada). */
 const LETRAS_SESSAO = ["A", "B", "C", "D", "E", "F", "G"] as const;
@@ -911,14 +908,22 @@ const LETRAS_SESSAO = ["A", "B", "C", "D", "E", "F", "G"] as const;
  * - `barbosa-isometrico-normotensos-2025`: revisão sistemática que descreve o protocolo nessa
  *   população (20 a 34% da CVM, 4 séries de 2 a 3 min, 2 a 5 vezes por semana).
  *
- * DUAS PORTAS DE FORÇA DIFERENTE, e a diferença aparece na dose:
+ * TRÊS PORTAS DE FORÇA DIFERENTE, e a diferença aparece na dose (ver INDICACOES_ISOMETRICAS):
  *
  * - TRATAMENTO: a condição declara a indicação (hoje, hipertensão). Dose de 3 sessões, que é
  *   a de `wiles-agachamento-parede-2016`, o ensaio do protocolo.
- * - PREVENÇÃO: qualquer perfil que não tenha veto. Dose de 2 sessões, que é a PONTA BAIXA da
- *   faixa de 2 a 5 relatada na revisão sistemática. Ponta baixa porque a indicação é de
- *   prevenção e não de tratamento, e porque a contração sustentada eleva a pressão durante a
- *   execução: onde o benefício esperado é menor, a exposição também tem que ser.
+ * - PREVENÇÃO: perfil que DECLARA risco cardiometabólico (`isometrico.prevencao` na regra da
+ *   condição). Dose de 2 sessões, que é a PONTA BAIXA da faixa de 2 a 5 relatada na revisão
+ *   sistemática. Ponta baixa porque a indicação é de prevenção e não de tratamento, e porque a
+ *   contração sustentada eleva a pressão durante a execução: onde o benefício esperado é
+ *   menor, a exposição também tem que ser.
+ * - DESEMPENHO: objetivo Força, do Intermediário para cima. Nada a ver com pressão: aqui o
+ *   alvo é tendão e produção rápida de força, e a dose é o OPOSTO da de pressão, curta e
+ *   máxima (`bogdanis-isometrico-angulo-2018`, `kubo-isometrico-tendao-2017`).
+ *
+ * E QUEM NÃO CASA COM NENHUMA NÃO RECEBE SESSÃO. Antes a prevenção era o `else` de todo mundo,
+ * e um atleta de Força sem condição alguma abria o plano com duas sessões rotuladas "para
+ * prevenção da pressão arterial". Ausência com critério é resposta; `else` não é.
  *
  * O QUE NÃO ENTROU, e por quê. Procurei sustentação para outros contextos e ela não apareceu:
  * na rede de 217 ensaios sobre exercício em osteoartrite de joelho (`yan-artrose-joelho-2025`)
@@ -929,13 +934,177 @@ const LETRAS_SESSAO = ["A", "B", "C", "D", "E", "F", "G"] as const;
  *
  * O veto de qualquer condição fundida continua vencendo tudo (gestante, hoje).
  */
-type IndicacaoIsometrica = { tipo: "tratamento" | "prevencao"; sessoes: number };
+/**
+ * QUEM RECEBE A SESSÃO ISOMÉTRICA, POR QUÊ, E COM QUE DOSE.
+ *
+ * Aqui existia um if de duas linhas cujo último caso era `return prevencao` para TODO MUNDO.
+ * O Filipe montou um atleta avançado de Força, sem condição nenhuma, e o plano abriu com duas
+ * sessões chamadas "Protocolo isométrico para prevenção da pressão arterial". Nem o rótulo nem
+ * a dose tinham qualquer relação com aquele aluno.
+ *
+ * O erro não era a evidência de prevenção, que existe e está citada. Era o desenho: uma camada
+ * inteira com UM propósito só, aplicada por descarte. Contração sustentada é um MEIO, e o meio
+ * serve a alvos diferentes com protocolos diferentes.
+ *
+ * Cada indicação carrega o pacote fechado: o motivo (que vira o nome da sessão na tela), a
+ * dose, a intensidade, o exercício que consegue entregar aquela dose e o que a evidência NÃO
+ * garante. A ordem é de força decrescente, e a PRIMEIRA que casar manda: tratar uma condição
+ * vem antes de prevenir, e prevenir vem antes de desempenho. Nenhuma casou? NÃO HÁ SESSÃO
+ * ISOMÉTRICA, e isso é resposta legítima, não buraco.
+ *
+ * A DOSE MUDA JUNTO COM O ALVO, e é esse o ponto que faltava. O protocolo de pressão é
+ * contração LONGA e SUBMÁXIMA (4 x 2 min); o de desempenho é o oposto, contração CURTA e
+ * MÁXIMA (5 a 7 x 3 s). Prescrever 2 minutos de agachamento na parede e chamar de trabalho de
+ * tendão seria a doença de sempre desta casa: a tela dizendo uma coisa e a dose fazendo outra.
+ */
+interface CtxIsometrico {
+  objetivo: GpsObjetivo;
+  nivel: Nivel;
+  regraClinica?: GroupGpsRule;
+}
 
-function indicacaoIsometrica(regraClinica?: GroupGpsRule): IndicacaoIsometrica | undefined {
-  const iso = regraClinica?.isometrico;
-  if (iso?.evitar) return undefined;
-  if (iso?.indicado) return { tipo: "tratamento", sessoes: ISO_SESSOES_POR_SEMANA };
-  return { tipo: "prevencao", sessoes: ISO_SESSOES_PREVENCAO };
+export interface IndicacaoIsometrica {
+  id: "pressao-controle" | "pressao-prevencao" | "tendao-forca-rapida";
+  /** vira o `foco` da sessão: diz, na tela, para que ESTE aluno recebeu ESTA sessão */
+  foco: string;
+  protocolo: { series: string; contracao: string; descanso: string; sessoes: number };
+  intensidade: string;
+  /**
+   * Exercícios que conseguem entregar ESTA dose, em ordem de preferência. A seleção ainda
+   * filtra por equipamento e por posição que a condição evita, e quando NENHUM passa a sessão
+   * não nasce. Nada de cair num exercício qualquer: um agachamento na parede com o peso do
+   * corpo não tem como ser uma contração máxima, então servi-lo sob o rótulo de desempenho
+   * seria entregar o protocolo errado com o nome certo.
+   */
+  exerciciosAceitos: readonly string[];
+  /** o que o profissional precisa ler antes de assinar, inclusive o que a evidência não sustenta */
+  nota: string;
+  /**
+   * A frase desta indicação no RACIOCÍNIO do plano.
+   *
+   * Vive aqui, e não num if do gerador de texto, pelo mesmo motivo do resto: o raciocínio
+   * imprimia a explicação de PREVENÇÃO sempre que a semana tivesse 2 sessões isométricas, e a
+   * sessão de desempenho também tem 2. O texto acertava por coincidência aritmética.
+   *
+   * Não nomeia a condição, porque este texto também é impresso ao aluno e documento de aluno
+   * não carrega rótulo clínico. Falar de pressão arterial onde ela é o alvo não é rótulo: é o
+   * que o aluno precisa saber para executar com segurança.
+   */
+  raciocinio: string;
+  refIds: readonly string[];
+  quando: (c: CtxIsometrico) => boolean;
+}
+
+const ISO_AVISO_PRESSAO =
+  "A pressão arterial SOBE durante a contração sustentada, proporcional à carga: respiração solta do começo ao fim, sem prender o ar. Só aplique com a liberação do dia em ordem. Sessão curta e separada do treino, como o protocolo foi testado: deixe pelo menos 48 h entre duas sessões isométricas.";
+
+export const INDICACOES_ISOMETRICAS: readonly IndicacaoIsometrica[] = [
+  {
+    id: "pressao-controle",
+    foco: "Isométrico para o controle da pressão arterial",
+    protocolo: { series: "4", contracao: "2 min", descanso: "2 min", sessoes: 3 },
+    intensidade:
+      "Pela percepção de esforço: a contração inteira precisa fechar sem queda visível de força no fim. Ajuste o ângulo (ou a pega) em vez de encurtar o tempo.",
+    exerciciosAceitos: ["agachamento-isometrico-parede", "preensao-isometrica-handgrip"],
+    nota: ISO_AVISO_PRESSAO,
+    raciocinio:
+      "A indicação aqui é de CONTROLE da pressão arterial, e a dose é a do ensaio que testou o protocolo: 3 sessões por semana. A contração sustentada ELEVA a pressão durante o esforço, então a respiração fica solta do começo ao fim e vale a liberação do dia, como no resto do plano.",
+    refIds: [
+      "wiles-agachamento-parede-2016",
+      "edwards-exercicio-pa-2023",
+      "baffour-isometrico-hipertensos-2023",
+      "fecchio-handgrip-2023",
+    ],
+    quando: (c) => Boolean(c.regraClinica?.isometrico?.indicado),
+  },
+  {
+    id: "pressao-prevencao",
+    foco: "Isométrico para prevenção da pressão arterial",
+    protocolo: { series: "4", contracao: "2 min", descanso: "2 min", sessoes: 2 },
+    intensidade:
+      "Pela percepção de esforço: a contração inteira precisa fechar sem queda visível de força no fim. Ajuste o ângulo (ou a pega) em vez de encurtar o tempo.",
+    exerciciosAceitos: ["agachamento-isometrico-parede", "preensao-isometrica-handgrip"],
+    nota:
+      ISO_AVISO_PRESSAO +
+      " Aqui a indicação é de PREVENÇÃO, e não de tratamento: ela entra porque a condição declarada deste aluno carrega risco cardiometabólico, e não porque ele tenha pressão alta. Em adultos sem hipertensão a queda medida é de cerca de 3 mmHg na sistólica, menor que a de quem já tem pressão alta, e por isso a dose entra na ponta baixa da faixa relatada, com 2 sessões por semana. Um ensaio com hipertensos tratados não achou efeito nenhum da preensão isométrica, então trate o benefício como plausível e não como garantido.",
+    raciocinio:
+      "A indicação aqui é de PREVENÇÃO da pressão arterial, e não de tratamento: ela entra pelo perfil deste aluno, e não porque ele tenha pressão alta. Em adultos sem hipertensão as metanálises medem queda de cerca de 3 mmHg na sistólica de repouso, menor que a de quem já tem pressão alta, e por isso a dose entra em 2 sessões, a ponta baixa da faixa de 2 a 5 relatada. Um ensaio com hipertensos tratados não encontrou efeito da preensão isométrica, então o benefício é plausível e não garantido. A contração sustentada ELEVA a pressão durante o esforço, então a respiração fica solta do começo ao fim e vale a liberação do dia.",
+    refIds: [
+      "yan-isometrico-pa-2026",
+      "loaiza-isometrico-normotensos-2020",
+      "carlson-isometrico-pa-2014",
+      "barbosa-isometrico-normotensos-2025",
+      "wiles-agachamento-parede-2016",
+      "fecchio-handgrip-2023",
+    ],
+    quando: (c) => Boolean(c.regraClinica?.isometrico?.prevencao),
+  },
+  {
+    /*
+     * A PORTA QUE FALTAVA, e a razão de a camada existir fora da hipertensão.
+     *
+     * Entra por OBJETIVO, não por condição, e só a partir do Intermediário: contração máxima
+     * exige que o aluno já saiba produzir força com técnica estável, e no Iniciante o que falta
+     * não é rigidez de tendão.
+     */
+    id: "tendao-forca-rapida",
+    foco: "Isométrico máximo para tendão e produção rápida de força",
+    protocolo: { series: "5 a 7", contracao: "3 s", descanso: "4 min", sessoes: 2 },
+    intensidade:
+      "MÁXIMA, com intenção de acelerar: trave a plataforma no ângulo escolhido (ou use uma carga acima do que o aluno consegue mover) e peça para empurrar o mais forte e o mais rápido possível desde o primeiro instante, mesmo que nada se mova. São 3 segundos, não é para segurar a posição. O ângulo é variável da prescrição: escolha o mais parecido com o do exercício principal deste aluno, porque a adaptação é específica ao ângulo treinado.",
+    /*
+     * O VEÍCULO É O PRÓPRIO LEG PRESS, e não um exercício isométrico novo.
+     *
+     * Bogdanis (2018) mediu exatamente isto: leg press isométrico máximo. E Blazevich (2020)
+     * mostra que o padrão de movimento ESPECÍFICO ao que se quer melhorar é uma das três
+     * condições que de fato subiram a produção rápida de força. Criar um exercício separado
+     * seria afastar a sessão do movimento do aluno justo onde a evidência pede aproximação.
+     *
+     * A cadeira extensora entra como alternativa por ser a outra máquina em que dá para travar
+     * o ângulo e empurrar contra resistência que não cede. Sem nenhuma das duas no acervo do
+     * aluno, a sessão não nasce: contração máxima com peso do corpo não existe.
+     */
+    exerciciosAceitos: ["leg-press-45", "leg-press-horizontal", "cadeira-extensora"],
+    nota:
+      "POR QUE ESTA SESSÃO EXISTE: no desenho unilateral de Kubo (2017), 12 semanas, a rigidez do TENDÃO subiu na perna que treinou isométrico e não na que treinou pliometria, e Oranchuk (2019) registra que contrações de 70% ou mais são NECESSÁRIAS para mudar estrutura e função do tendão. Os números da dose são os de Bogdanis (2018): 5 a 7 séries de 3 s de contração máxima com 4 min de recuperação. " +
+      "POR QUE CURTA E MÁXIMA, e não sustentada: na metanálise de 54 estudos de Blazevich (2020), o que subiu a produção rápida de força foi velocidade alta, ou velocidade lenta COM A INTENÇÃO de acelerar, ou padrão de movimento específico ao testado; contração lenta SEM intenção de acelerar e exercício NÃO específico não tiveram efeito claro. Segurar posição sem intenção de acelerar é justamente o que a evidência não sustenta aqui. " +
+      "O QUE NÃO ESTÁ PROMETIDO: Saeterbakken (2025), 43 estudos e 1.660 participantes, conclui que força dinâmica e força isométrica são DOMÍNIOS NEUROMUSCULARES DIFERENTES, com transferência pequena entre elas. Esta sessão trabalha tendão e taxa de produção de força, e não é um atalho para o 1RM. " +
+      "DOSE DA CASA: o ensaio usou 3 sessões por semana; o plano entra com 2, porque aqui o isométrico é COMPLEMENTO de um programa de força completo e não o programa. Subir para 3 é decisão sua. " +
+      "A pressão arterial também sobe na contração máxima, e ela é breve mas intensa: respiração solta, sem prender o ar, e nunca com a liberação do dia em aberto.",
+    raciocinio:
+      "Esta sessão isométrica NÃO é de pressão arterial: ela entra pelo objetivo deste plano. O alvo é a rigidez do TENDÃO e a produção rápida de força, que num desenho de 12 semanas subiram com contração isométrica e não com pliometria. Por isso a dose é curta e máxima, de 3 segundos com intenção de acelerar, e não uma posição segurada por minutos. O que ela não promete é força dinâmica: a maior revisão sobre o assunto trata força isométrica e força dinâmica como domínios diferentes, com transferência pequena entre eles. A contração máxima também eleva a pressão, e por isso a respiração fica solta e vale a liberação do dia.",
+    refIds: [
+      "kubo-isometrico-tendao-2017",
+      "oranchuk-isometrico-2019",
+      "bogdanis-isometrico-angulo-2018",
+      "blazevich-rfd-2020",
+      "saeterbakken-especificidade-2025",
+    ],
+    quando: (c) => c.objetivo === "Força" && c.nivel !== "Iniciante",
+  },
+];
+
+/**
+ * A indicação que DE FATO disparou neste plano, lida de volta do macrociclo montado.
+ *
+ * Recalcular a indicação aqui a partir das entradas duplicaria a decisão, e duas cópias da
+ * mesma regra é como esta camada errou da primeira vez. O foco da sessão é escrito pela
+ * indicação, então ele é a assinatura dela: basta procurar quem o escreveu.
+ */
+function indicacaoDoMacro(m: Macrociclo): IndicacaoIsometrica | undefined {
+  const focos = new Set(
+    (m.mesociclos[0]?.microciclos[0]?.sessoes ?? [])
+      .filter((se) => se.blocos.some((bl) => bl.tipo === "isometrico"))
+      .map((se) => se.foco)
+      .filter((f): f is string => Boolean(f)),
+  );
+  return focos.size ? INDICACOES_ISOMETRICAS.find((i) => focos.has(i.foco)) : undefined;
+}
+
+function indicacaoIsometrica(c: CtxIsometrico): IndicacaoIsometrica | undefined {
+  // O veto de qualquer condição fundida vence todas as portas, inclusive a de desempenho.
+  if (c.regraClinica?.isometrico?.evitar) return undefined;
+  return INDICACOES_ISOMETRICAS.find((i) => i.quando(c));
 }
 
 /**
@@ -960,24 +1129,41 @@ const ISO_OBJETIVOS_FORA: readonly GpsObjetivo[] = ["Aprendizado técnico"];
  *
  * Não há atalho: equipamento precisa estar declarado (peso corporal sempre está) e a posição
  * do exercício não pode ser uma das que a condição pede para evitar. Entre os que passam,
- * vence o AGACHAMENTO NA PAREDE quando ele estiver entre eles, porque é o submodo que a rede
- * de `edwards-exercicio-pa-2023` aponta como mais efetivo para a sistólica; os demais são
- * alternativa quando ele não passa (por exemplo, condição que evita a posição em pé).
+ * vence a ORDEM DA PRÓPRIA INDICAÇÃO, e não uma preferência global: para pressão arterial o
+ * primeiro da lista é o AGACHAMENTO NA PAREDE, porque é o submodo que a rede de
+ * `edwards-exercicio-pa-2023` aponta como mais efetivo para a sistólica, com a preensão como
+ * alternativa quando ele não passa (condição que evita a posição em pé, por exemplo).
+ *
+ * A LISTA É FECHADA, e essa é a mudança que importa. Antes a função caía em `elegiveis[0]`,
+ * qualquer isométrico do acervo. Isso funcionava enquanto a camada tinha um propósito só;
+ * com a porta de desempenho passa a ser um erro, porque o agachamento na parede com o peso do
+ * corpo NÃO consegue ser uma contração máxima. Servi-lo ali entregaria o protocolo de pressão
+ * sob o rótulo de tendão. Sem exercício capaz, a sessão não nasce.
  */
 function exercicioIsometrico(
+  aceitos: readonly string[],
   equipamentos: string[] | undefined,
   regraClinica: GroupGpsRule | undefined,
 ): (typeof exercises)[number] | undefined {
-  const elegiveis = exercises.filter((e) => {
-    if (!e.doseIsometrica) return false;
+  /*
+   * A MARCA `doseIsometrica` NÃO É MAIS O FILTRO. Ela diz "este exercício nunca entra na
+   * seleção de força", que é uma propriedade do agachamento na parede e da preensão, e não um
+   * requisito para servir de veículo a um bloco isométrico. Quem decide o veículo é a lista da
+   * indicação; aqui só se confere se o aluno tem o equipamento e se a posição está liberada.
+   */
+  const passa = (e: (typeof exercises)[number]) => {
     const equipOk = !equipamentos?.length || e.equipamento === "Peso corporal" || equipamentos.includes(e.equipamento);
     if (!equipOk) return false;
     const posicao = e.restricaoPerfil?.posicao;
     if (posicao && regraClinica?.posicoesEvitar?.includes(posicao)) return false;
     if (regraClinica?.evitarMembrosAcimaDoCoracao && e.restricaoPerfil?.membrosAcimaDoCoracao) return false;
     return true;
-  });
-  return elegiveis.find((e) => e.slug === "agachamento-isometrico-parede") ?? elegiveis[0];
+  };
+  for (const slug of aceitos) {
+    const ex = exercises.find((e) => e.slug === slug);
+    if (ex && passa(ex)) return ex;
+  }
+  return undefined;
 }
 
 function montarSessoes(
@@ -1254,36 +1440,32 @@ function montarSessoes(
    * A frequência do protocolo (3x/semana) é o teto, e a do plano é o outro: quem treina 2x
    * não recebe 3 sessões isométricas, porque a semana dele não comporta.
    */
-  const indicacaoIso = ISO_OBJETIVOS_FORA.includes(objetivo) ? undefined : indicacaoIsometrica(regraClinica);
+  const indicacaoIso = ISO_OBJETIVOS_FORA.includes(objetivo)
+    ? undefined
+    : indicacaoIsometrica({ objetivo, nivel, regraClinica });
   if (indicacaoIso) {
-    const ex = exercicioIsometrico(equipamentos, regraClinica);
+    const ex = exercicioIsometrico(indicacaoIso.exerciciosAceitos, equipamentos, regraClinica);
     if (ex) {
-      const quantas = Math.min(indicacaoIso.sessoes, frequencia);
+      const quantas = Math.min(indicacaoIso.protocolo.sessoes, frequencia);
       for (let k = 0; k < quantas; k++) {
         sessoes.push({
           id: nid("ses"),
           nome: `Sessão isométrica ${k + 1}`,
-          foco:
-            indicacaoIso.tipo === "tratamento"
-              ? "Protocolo isométrico para pressão arterial"
-              : "Protocolo isométrico para prevenção da pressão arterial",
+          // O foco sai da INDICAÇÃO que de fato disparou, e não de um texto fixo da camada:
+          // é ele que responde, na tela, por que este aluno recebeu esta sessão.
+          foco: indicacaoIso.foco,
           blocos: [
             {
               id: nid("blk"),
               tipo: "isometrico",
               exercicioSlug: ex.slug,
               nome: ex.nome,
-              series: String(ISO_PROTOCOLO.series),
-              duracao: ISO_PROTOCOLO.contracao,
-              intervalo: ISO_PROTOCOLO.descanso,
-              intensidade:
-                "Pela percepção de esforço: a contração inteira precisa fechar sem queda visível de força no fim. Ajuste o ângulo (ou a pega) em vez de encurtar o tempo.",
-              recuperacao: ISO_PROTOCOLO.descanso,
-              observacao:
-                "A pressão arterial SOBE durante a contração sustentada, proporcional à carga: respiração solta do começo ao fim, sem prender o ar. Só aplique com a liberação do dia em ordem. Sessão curta e separada do treino, como o protocolo foi testado: deixe pelo menos 48 h entre duas sessões isométricas." +
-                (indicacaoIso.tipo === "prevencao"
-                  ? " Aqui a indicação é de PREVENÇÃO, e não de tratamento: em adultos sem hipertensão a queda medida é de cerca de 3 mmHg na sistólica, menor que a de quem já tem pressão alta, e por isso a dose entra na ponta baixa da faixa relatada, com 2 sessões por semana. Um ensaio com hipertensos tratados não achou efeito nenhum da preensão isométrica, então trate o benefício como plausível e não como garantido."
-                  : ""),
+              series: indicacaoIso.protocolo.series,
+              duracao: indicacaoIso.protocolo.contracao,
+              intervalo: indicacaoIso.protocolo.descanso,
+              intensidade: indicacaoIso.intensidade,
+              recuperacao: indicacaoIso.protocolo.descanso,
+              observacao: indicacaoIso.nota,
             },
           ],
         });
@@ -2265,6 +2447,8 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
    * condição, porque o raciocínio é impresso no documento do aluno.
    */
   const regraDoPlano = regraClinicaDoPlano(input);
+  // Uma leitura só, usada pela bibliografia e pelo raciocínio: as duas precisam concordar.
+  const indicacaoIsoDoPlano = indicacaoDoMacro(macroPrincipal);
   const modalidadeEscolhida = modalidadeAerobia("m-caminhada", regraDoPlano, input.equipamentos);
   const trocaDeCardio =
     modalidadeEscolhida !== "m-caminhada"
@@ -2302,21 +2486,14 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
         ? ["colquhoun-flexivel-2017"]
         : []),
       /*
-       * As referências do isométrico entram na bibliografia do plano SEMPRE que houver sessão
-       * isométrica, e não só quando a condição as declarou. Na indicação de prevenção quem
-       * sustenta são as metanálises de normotensos, e o contrapeso negativo entra junto: um
-       * plano que cita só o que confirma não é auditável.
+       * As referências do isométrico vêm da INDICAÇÃO que disparou, e não de uma lista fixa.
+       *
+       * Aqui havia as quatro referências de pressão arterial, cravadas, para qualquer sessão
+       * isométrica. Com a porta de desempenho isso passaria a citar metanálise de pressão
+       * embaixo de uma sessão de tendão. Cada indicação já declara o que a sustenta, incluindo
+       * o contrapeso negativo: um plano que cita só o que confirma não é auditável.
        */
-      ...(macroPrincipal.mesociclos[0]?.microciclos[0]?.sessoes.some((se) =>
-        se.blocos.some((bl) => bl.tipo === "isometrico"),
-      )
-        ? [
-            "loaiza-isometrico-normotensos-2020",
-            "carlson-isometrico-pa-2014",
-            "barbosa-isometrico-normotensos-2025",
-            "fecchio-handgrip-2023",
-          ]
-        : []),
+      ...(indicacaoIsoDoPlano?.refIds ?? []),
     ]),
   );
 
@@ -2397,14 +2574,13 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
         s.blocos.some((b) => b.tipo === "isometrico"),
       ).length;
       if (!porSemana) return "";
+      const ind = indicacaoIsoDoPlano;
+      if (!ind) return "";
       return (
-        `Sobre o protocolo isométrico: ele entra em ${porSemana} ${porSemana === 1 ? "sessão própria" : "sessões próprias"} por semana, ` +
-        `separadas do treino, com ${ISO_PROTOCOLO.series} contrações de ${ISO_PROTOCOLO.contracao} e ${ISO_PROTOCOLO.descanso} de descanso entre elas, ` +
-        `porque foi assim que ele foi testado. A intensidade se guia pela percepção de esforço. ` +
-        (porSemana <= ISO_SESSOES_PREVENCAO
-          ? `A indicação aqui é de PREVENÇÃO: em adultos sem hipertensão as metanálises medem queda de cerca de 3 mmHg na pressão sistólica de repouso, menor que a de quem já tem pressão alta, e por isso a dose entra em ${ISO_SESSOES_PREVENCAO} sessões, a ponta baixa da faixa de 2 a 5 relatada. Um ensaio com hipertensos tratados não encontrou efeito da preensão isométrica, então o benefício é plausível e não garantido. `
-          : "") +
-        `A contração sustentada ELEVA a pressão arterial durante o esforço, então a respiração fica solta do começo ao fim e vale a liberação do dia, como no resto do plano.`
+        `Sobre a sessão isométrica: ela entra em ${porSemana} ${porSemana === 1 ? "sessão própria" : "sessões próprias"} por semana, ` +
+        `separadas do treino, com ${ind.protocolo.series} contrações de ${ind.protocolo.contracao} e ${ind.protocolo.descanso} de descanso entre elas, ` +
+        `porque foi assim que o protocolo foi testado. ` +
+        ind.raciocinio
       );
     })(),
     /*

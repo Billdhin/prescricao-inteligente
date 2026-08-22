@@ -323,7 +323,21 @@ export interface GroupGpsRule extends GroupRuleInput {
    * única que a ênfase já segue.
    */
   isometrico?: {
+    /** TRATAMENTO: esta condição é o alvo do protocolo (hoje, hipertensão) */
     indicado?: boolean;
+    /**
+     * PREVENÇÃO: esta condição não é o alvo do protocolo, mas carrega risco cardiometabólico
+     * que justifica prevenir a hipertensão.
+     *
+     * Existe porque a prevenção era APLICADA A TODO MUNDO no gerador, sem passar por regra
+     * nenhuma: um atleta avançado de força, sem condição alguma, abria o plano e recebia duas
+     * sessões rotuladas "para prevenção da pressão arterial". Foi o Filipe quem pegou. O
+     * defeito não era a evidência, era o LUGAR DA DECISÃO: prevenção sem critério declarado é
+     * um else escondido no meio do motor, e esta casa inteira funciona ao contrário disso.
+     *
+     * Agora quem tem risco cardiometabólico DIZ que tem, aqui, com motivo e referência.
+     */
+    prevencao?: boolean;
     /** desaconselha o isométrico nesta condição; na fusão, isto vence */
     evitar?: boolean;
     motivo: string;
@@ -349,6 +363,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
    * modalidade não distingue os graus, e inventar distinção aqui seria fabricar precisão.
    */
   "obesidade-grau-1": {
+    isometrico: {
+      prevencao: true,
+      motivo:
+        "Perfil de RISCO CARDIOMETABÓLICO: a hipertensão caminha junto desta condição, e o isométrico entra aqui para PREVENIR, não para tratar. Na metanálise de 40 ensaios em população geral (Yan, 2026) a queda medida é de 6,72 mmHg na sistólica, com o agachamento na parede 3 vezes por semana e por mais de 8 semanas como o subgrupo de maior efeito; os próprios autores registram que o efeito é MAIOR em hipertensos, e é essa a razão de a dose de prevenção entrar mais baixa que a de tratamento.",
+      refId: ["yan-isometrico-pa-2026", "loaiza-isometrico-normotensos-2020", "carlson-isometrico-pa-2014", "barbosa-isometrico-normotensos-2025"],
+    },
     slug: "obesidade-grau-1",
     enfaseModalidade: {
       prioridade: "combinado",
@@ -399,6 +419,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   },
 
   "obesidade-grau-2": {
+    isometrico: {
+      prevencao: true,
+      motivo:
+        "Perfil de RISCO CARDIOMETABÓLICO: a hipertensão caminha junto desta condição, e o isométrico entra aqui para PREVENIR, não para tratar. Na metanálise de 40 ensaios em população geral (Yan, 2026) a queda medida é de 6,72 mmHg na sistólica, com o agachamento na parede 3 vezes por semana e por mais de 8 semanas como o subgrupo de maior efeito; os próprios autores registram que o efeito é MAIOR em hipertensos, e é essa a razão de a dose de prevenção entrar mais baixa que a de tratamento.",
+      refId: ["yan-isometrico-pa-2026", "loaiza-isometrico-normotensos-2020", "carlson-isometrico-pa-2014", "barbosa-isometrico-normotensos-2025"],
+    },
     slug: "obesidade-grau-2",
     enfaseModalidade: {
       prioridade: "combinado",
@@ -460,6 +486,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
    * obesidade grau III, 7 exercícios ficam fora do plano por essas restrições.
    */
   "obesidade-grau-3": {
+    isometrico: {
+      prevencao: true,
+      motivo:
+        "Perfil de RISCO CARDIOMETABÓLICO: a hipertensão caminha junto desta condição, e o isométrico entra aqui para PREVENIR, não para tratar. Na metanálise de 40 ensaios em população geral (Yan, 2026) a queda medida é de 6,72 mmHg na sistólica, com o agachamento na parede 3 vezes por semana e por mais de 8 semanas como o subgrupo de maior efeito; os próprios autores registram que o efeito é MAIOR em hipertensos, e é essa a razão de a dose de prevenção entrar mais baixa que a de tratamento.",
+      refId: ["yan-isometrico-pa-2026", "loaiza-isometrico-normotensos-2020", "carlson-isometrico-pa-2014", "barbosa-isometrico-normotensos-2025"],
+    },
     slug: "obesidade-grau-3",
     enfaseModalidade: {
       prioridade: "combinado",
@@ -681,6 +713,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   },
 
   "diabetes-tipo-2": {
+    isometrico: {
+      prevencao: true,
+      motivo:
+        "Perfil de RISCO CARDIOMETABÓLICO: a hipertensão caminha junto desta condição, e o isométrico entra aqui para PREVENIR, não para tratar. Na metanálise de 40 ensaios em população geral (Yan, 2026) a queda medida é de 6,72 mmHg na sistólica, com o agachamento na parede 3 vezes por semana e por mais de 8 semanas como o subgrupo de maior efeito; os próprios autores registram que o efeito é MAIOR em hipertensos, e é essa a razão de a dose de prevenção entrar mais baixa que a de tratamento.",
+      refId: ["yan-isometrico-pa-2026", "loaiza-isometrico-normotensos-2020", "carlson-isometrico-pa-2014", "barbosa-isometrico-normotensos-2025"],
+    },
     slug: "diabetes-tipo-2",
     nome: "Diabetes tipo 2",
     /*
@@ -1039,6 +1077,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     refs: ["grgic-destreino-2022", "tokmakidis-retreino-2014", "acsm-getp11", "oms-2020"],
   },
   "pre-diabetes": {
+    isometrico: {
+      prevencao: true,
+      motivo:
+        "Perfil de RISCO CARDIOMETABÓLICO: a hipertensão caminha junto desta condição, e o isométrico entra aqui para PREVENIR, não para tratar. Na metanálise de 40 ensaios em população geral (Yan, 2026) a queda medida é de 6,72 mmHg na sistólica, com o agachamento na parede 3 vezes por semana e por mais de 8 semanas como o subgrupo de maior efeito; os próprios autores registram que o efeito é MAIOR em hipertensos, e é essa a razão de a dose de prevenção entrar mais baixa que a de tratamento.",
+      refId: ["yan-isometrico-pa-2026", "loaiza-isometrico-normotensos-2020", "carlson-isometrico-pa-2014", "barbosa-isometrico-normotensos-2025"],
+    },
     slug: "pre-diabetes",
     nome: "Pré-diabetes",
     /*
@@ -1076,6 +1120,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     refs: ["zhao-exercicio-metformina-2024", "jadhav-pre-dm-2017", "colberg-2016", "acsm-getp11"],
   },
   "sindrome-metabolica": {
+    isometrico: {
+      prevencao: true,
+      motivo:
+        "Perfil de RISCO CARDIOMETABÓLICO: a hipertensão caminha junto desta condição, e o isométrico entra aqui para PREVENIR, não para tratar. Na metanálise de 40 ensaios em população geral (Yan, 2026) a queda medida é de 6,72 mmHg na sistólica, com o agachamento na parede 3 vezes por semana e por mais de 8 semanas como o subgrupo de maior efeito; os próprios autores registram que o efeito é MAIOR em hipertensos, e é essa a razão de a dose de prevenção entrar mais baixa que a de tratamento.",
+      refId: ["yan-isometrico-pa-2026", "loaiza-isometrico-normotensos-2020", "carlson-isometrico-pa-2014", "barbosa-isometrico-normotensos-2025"],
+    },
     slug: "sindrome-metabolica",
     /*
      * shen-sindrome-metabolica-2026, rede de 53 estudos e DEZ intervencoes, poe o combinado
@@ -1150,6 +1200,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     refs: ["yun-lipides-2023", "acsm-getp11", "oms-2020"],
   },
   "esteatose-hepatica": {
+    isometrico: {
+      prevencao: true,
+      motivo:
+        "Perfil de RISCO CARDIOMETABÓLICO: a hipertensão caminha junto desta condição, e o isométrico entra aqui para PREVENIR, não para tratar. Na metanálise de 40 ensaios em população geral (Yan, 2026) a queda medida é de 6,72 mmHg na sistólica, com o agachamento na parede 3 vezes por semana e por mais de 8 semanas como o subgrupo de maior efeito; os próprios autores registram que o efeito é MAIOR em hipertensos, e é essa a razão de a dose de prevenção entrar mais baixa que a de tratamento.",
+      refId: ["yan-isometrico-pa-2026", "loaiza-isometrico-normotensos-2020", "carlson-isometrico-pa-2014", "barbosa-isometrico-normotensos-2025"],
+    },
     slug: "esteatose-hepatica",
     nome: "Esteatose hepática metabólica",
     /*
@@ -1411,6 +1467,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     refs: ["hsu-menopausa-2024", "chodzko-2009", "acsm-getp11"],
   },
   "apneia-sono": {
+    isometrico: {
+      prevencao: true,
+      motivo:
+        "Perfil de RISCO CARDIOMETABÓLICO: a hipertensão caminha junto desta condição, e o isométrico entra aqui para PREVENIR, não para tratar. Na metanálise de 40 ensaios em população geral (Yan, 2026) a queda medida é de 6,72 mmHg na sistólica, com o agachamento na parede 3 vezes por semana e por mais de 8 semanas como o subgrupo de maior efeito; os próprios autores registram que o efeito é MAIOR em hipertensos, e é essa a razão de a dose de prevenção entrar mais baixa que a de tratamento.",
+      refId: ["yan-isometrico-pa-2026", "loaiza-isometrico-normotensos-2020", "carlson-isometrico-pa-2014", "barbosa-isometrico-normotensos-2025"],
+    },
     slug: "apneia-sono",
     nome: "Apneia obstrutiva do sono",
     cuidados: [
@@ -1729,6 +1791,7 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
       for (const i of is) for (const r of i.refId ?? []) if (!refs.includes(r)) refs.push(r);
       return {
         indicado: !evitar && is.some((i) => i.indicado) ? true : undefined,
+        prevencao: !evitar && is.some((i) => i.prevencao) ? true : undefined,
         evitar: evitar || undefined,
         motivo: is.map((i) => i.motivo).join(" "),
         refId: refs.length ? refs : undefined,
