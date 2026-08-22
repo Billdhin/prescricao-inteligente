@@ -38,7 +38,14 @@ import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
 import { BANDAS_AEROBIAS } from "../src/data/periodizacao";
-import { FORMATOS_AEROBIOS, FORMATOS_AEROBIOS_LISTA, aplicarFormatoAerobio } from "../src/lib/gps/formatoAerobio";
+import {
+  FORMATOS_AEROBIOS,
+  FORMATOS_AEROBIOS_LISTA,
+  aplicarFormatoAerobio,
+  formatoPeloNome,
+  textoDeSegundos,
+  tirosDaSemana,
+} from "../src/lib/gps/formatoAerobio";
 import { specialGroups } from "../src/data/specialGroups";
 import { exercises } from "../src/data/exercises";
 import { estimativas } from "../src/lib/avaliacao/estimativas";
@@ -1892,6 +1899,22 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
   if (comparados < 500) erro(`CONTROLE POSITIVO DA DESCARGA: só ${comparados} blocos comparados; a asserção perdeu o sentido.`);
 }
 
+/** "10 a 20 tiros de 30 s" -> {min:10,max:20}. Lê o que o cartão MOSTRA, não o que o motor calculou. */
+function contarNoTexto(texto: string): { min: number; max: number } {
+  const faixa = texto.match(/(\d+)\s+a\s+(\d+)\s+tiros/i);
+  if (faixa) return { min: Number(faixa[1]), max: Number(faixa[2]) };
+  const solo = texto.match(/(\d+)\s+tiros/i);
+  return solo ? { min: Number(solo[1]), max: Number(solo[1]) } : { min: 0, max: 0 };
+}
+
+/** "16 a 20 min" -> {min:16,max:20}. */
+function minutosNoTexto(texto: string): { min: number; max: number } | null {
+  const faixa = texto.match(/(\d+)\s*a\s*(\d+)/);
+  if (faixa) return { min: Number(faixa[1]), max: Number(faixa[2]) };
+  const solo = texto.match(/(\d+)/);
+  return solo ? { min: Number(solo[1]), max: Number(solo[1]) } : null;
+}
+
 /* --------- 20. A alternativa oferecida é OUTRO plano, e o formato do cardio muda a dose --------- */
 /*
  * Dois achados do Filipe em 18/08/2026, na mesma tela.
@@ -1968,8 +1991,97 @@ for (const grupo of ["ansiedade-depressao", "hipertensao-estagio-2"]) {
     const volta = aplicarFormatoAerobio(depois, FORMATOS_AEROBIOS.continuo);
     if (volta.duracao !== blocoCardio.duracao)
       erro(`IDA E VOLTA DO FORMATO (${f.nome}, faixa "${faixaContinua}"): voltar para Contínuo devolveu "${volta.duracao}" em vez de "${blocoCardio.duracao}".`);
+
+    /*
+     * A ANATOMIA DO TIRO. Segundo achado do Filipe na mesma tela, em 22/08/2026: o formato já
+     * mudava banda e recuperação, mas a Duração seguia dizendo só o tempo total. "5 a 10 min"
+     * de HIIT pode ser um tiro de 10 min ou vinte de 30 s, que são sessões diferentes.
+     */
+    if (f.tiro) {
+      if (!depois.tiros)
+        erro(`INTERVALADO SEM TIROS (${f.nome}): o bloco saiu sem o número e o tempo de cada tiro, só com o tempo total "${depois.duracao}".`);
+      if (depois.tiroSeg !== f.tiro.trabalhoSeg)
+        erro(`TIRO SEM DURAÇÃO GRAVADA (${f.nome}): tiroSeg saiu "${depois.tiroSeg}" e o formato declara ${f.tiro.trabalhoSeg} s.`);
+      if (!depois.recuperacao?.includes(textoDeSegundos(f.tiro.recuperacaoSeg)))
+        erro(`RECUPERAÇÃO SEM TEMPO (${f.nome}): o campo diz "${depois.recuperacao}" e não traz os ${textoDeSegundos(f.tiro.recuperacaoSeg)} que o formato declara.`);
+      if (depois.tiros && contarNoTexto(depois.tiros).min < f.tiro.minTiros)
+        erro(`PISO DE TIROS FURADO (${f.nome}): saiu "${depois.tiros}" e o formato declara piso de ${f.tiro.minTiros}.`);
+
+      /*
+       * OS DOIS CAMPOS NÃO PODEM SE CONTRADIZER. Número de tiros vezes duração do tiro tem que
+       * dar exatamente o tempo de trabalho escrito ao lado. É a mesma doença de sempre: a tela
+       * dizendo uma coisa e a dose fazendo outra, agora dentro do mesmo cartão.
+       */
+      const conta = contarNoTexto(depois.tiros ?? "");
+      const escrito = minutosNoTexto(depois.duracao ?? "");
+      const esperado = { min: (conta.min * f.tiro.trabalhoSeg) / 60, max: (conta.max * f.tiro.trabalhoSeg) / 60 };
+      if (!escrito || escrito.min !== esperado.min || escrito.max !== esperado.max)
+        erro(
+          `TIROS E TEMPO SE CONTRADIZEM (${f.nome}, faixa "${faixaContinua}"): o cartão diz "${depois.tiros}", que dá ${esperado.min} a ${esperado.max} min, e ao lado escreve "${depois.duracao}".`,
+        );
+
+      // O alvo da semana precisa virar número de tiros, senão o aluno recebe minutos e a conta.
+      const daSemana = tirosDaSemana(depois);
+      if (!daSemana)
+        erro(`ALVO DA SEMANA SEM TIROS (${f.nome}): duracaoAlvoMin=${depois.duracaoAlvoMin} e tiroSeg=${depois.tiroSeg} não viraram número de tiros.`);
+      else if ((daSemana.quantos * f.tiro.trabalhoSeg) / 60 !== depois.duracaoAlvoMin)
+        erro(
+          `ALVO DA SEMANA INCOERENTE (${f.nome}): ${daSemana.texto} dá ${(daSemana.quantos * f.tiro.trabalhoSeg) / 60} min e o alvo escrito é ${depois.duracaoAlvoMin} min.`,
+        );
+    } else {
+      /*
+       * Formato SEM tiro tem que LIMPAR os campos de tiro. Sem isto, ir para HIIT e voltar para
+       * Contínuo deixaria "4 tiros de 4 min" pendurado num bloco de ritmo sustentado.
+       */
+      if (depois.tiros != null || depois.tiroSeg != null)
+        erro(`TIRO FANTASMA (${f.nome}): o formato não tem tiro cronometrado e o bloco saiu com "${depois.tiros}" / tiroSeg=${depois.tiroSeg}.`);
+    }
+    if (volta.tiros != null || volta.tiroSeg != null)
+      erro(`TIRO FANTASMA NA VOLTA (${f.nome}): voltar para Contínuo deixou "${volta.tiros}" no bloco.`);
   }
   }
+
+  /*
+   * O HIIT tinha UMA porta só, e o Filipe pediu duas: o curto (tiros bem curtos com descanso
+   * curto) e o longo (tiros de 4 min com descanso maior). A divisão é de Buchheit e Laursen
+   * (2013), que definem o tiro CURTO como o de menos de 45 s e o LONGO como o de 2 a 4 min, e
+   * os números concretos são os dois protocolos de Helgerud (2007), o 15/15 e o 4 x 4 min.
+   *
+   * Se as duas portas devolverem a mesma prescrição, elas são um rótulo duplicado, que é
+   * exatamente o defeito que esta seção inteira existe para impedir.
+   */
+  {
+    const base = {
+      tipo: "aerobio" as const,
+      id: "b",
+      nome: "Caminhada",
+      formato: "Contínuo",
+      duracao: "20 a 40 min",
+      intensidade: BANDAS_AEROBIAS.moderada.intensidade,
+      recuperacao: "-",
+      duracaoAlvoMin: 20,
+      rpeAlvo: 5,
+    };
+    const curto = aplicarFormatoAerobio(base as never, FORMATOS_AEROBIOS.hiitCurto);
+    const longo = aplicarFormatoAerobio(base as never, FORMATOS_AEROBIOS.hiitLongo);
+    if (curto.tiros === longo.tiros)
+      erro(`HIIT CURTO E LONGO IDÊNTICOS: os dois formatos prescrevem "${curto.tiros}". Duas portas para a mesma dose é rótulo duplicado.`);
+    if (curto.recuperacao === longo.recuperacao)
+      erro(`HIIT CURTO E LONGO COM A MESMA RECUPERAÇÃO: "${curto.recuperacao}".`);
+    const curtoSeg = FORMATOS_AEROBIOS.hiitCurto.tiro?.trabalhoSeg ?? 0;
+    if (curtoSeg <= 0 || curtoSeg >= 45)
+      erro(`HIIT CURTO FORA DA DEFINIÇÃO: o tiro tem ${curtoSeg} s e Buchheit e Laursen (2013) definem o CURTO como o de menos de 45 s.`);
+    const longoSeg = FORMATOS_AEROBIOS.hiitLongo.tiro?.trabalhoSeg ?? 0;
+    if (longoSeg < 120 || longoSeg > 240)
+      erro(`HIIT LONGO FORA DA DEFINIÇÃO: o tiro tem ${longoSeg} s e a faixa LONGA citada é de 2 a 4 min (120 a 240 s).`);
+    // Plano já salvo com o nome antigo do HIIT continua achando o formato; sem isto o seletor
+    // do editor mostra texto solto e a ida e volta devolve outra prescrição.
+    if (!formatoPeloNome("Intervalado de alta intensidade (HIIT)"))
+      erro("NOME ANTIGO DO HIIT ÓRFÃO: planos já salvos deixam de casar com a lista de formatos.");
+  }
+
+  const comTiro = FORMATOS_AEROBIOS_LISTA.filter((f) => f.tiro).length;
+  if (comTiro < 3) erro(`CONTROLE POSITIVO DOS TIROS: só ${comTiro} formatos declaram tiro; a asserção perdeu o sentido.`);
 }
 
 /* --------- 21. O modelo de ordem aberta ENTREGA ordem aberta, e não só o texto ao lado --------- */

@@ -779,7 +779,7 @@ function FaixaReferencia({ ctx }: { ctx: ContextoFaixa }) {
 // Força e aeróbio se editam por variáveis diferentes. `confere` liga o aviso de fora da
 // faixa só nos campos de força que a diretriz cobre (séries, repetições, intervalo).
 type CampoBloco = {
-  chave: "series" | "reps" | "intensidade" | "intervalo" | "formato" | "duracao" | "recuperacao";
+  chave: "series" | "reps" | "intensidade" | "intervalo" | "formato" | "duracao" | "recuperacao" | "tiros";
   rotulo: string;
   confere?: CampoFaixa;
 };
@@ -789,9 +789,26 @@ const CAMPOS_FORCA: CampoBloco[] = [
   { chave: "intensidade", rotulo: "Intensidade" },
   { chave: "intervalo", rotulo: "Intervalo", confere: "intervalo" },
 ];
+/*
+ * "Tiros" só aparece nos formatos que TÊM tiro cronometrado, e por isso a lista é montada por
+ * função em vez de ser uma constante.
+ *
+ * Um campo "Tiros" vazio no Contínuo seria pior que não ter campo: sugere que falta preencher
+ * uma coisa que aquele formato não tem. E "Tempo de trabalho" substitui "Duração" no
+ * intervalado porque lá o número NÃO é o tempo da sessão: é a soma dos tiros, sem as
+ * recuperações. Chamar os dois de "Duração" foi o que fez o Filipe ler 5 a 10 min e entender
+ * sessão inteira.
+ */
 const CAMPOS_AEROBIO: CampoBloco[] = [
   { chave: "formato", rotulo: "Formato" },
   { chave: "duracao", rotulo: "Duração" },
+  { chave: "intensidade", rotulo: "Intensidade" },
+  { chave: "recuperacao", rotulo: "Recuperação" },
+];
+const CAMPOS_AEROBIO_COM_TIROS: CampoBloco[] = [
+  { chave: "formato", rotulo: "Formato" },
+  { chave: "tiros", rotulo: "Tiros" },
+  { chave: "duracao", rotulo: "Tempo de trabalho" },
   { chave: "intensidade", rotulo: "Intensidade" },
   { chave: "recuperacao", rotulo: "Recuperação" },
 ];
@@ -822,7 +839,13 @@ const CAMPOS_ISOMETRICO: CampoBloco[] = [
   { chave: "intensidade", rotulo: "Intensidade" },
 ];
 const camposDoBloco = (b: BlocoSessao): CampoBloco[] =>
-  b.tipo === "aerobio" ? CAMPOS_AEROBIO : b.tipo === "isometrico" ? CAMPOS_ISOMETRICO : CAMPOS_FORCA;
+  b.tipo === "aerobio"
+    ? b.tiros
+      ? CAMPOS_AEROBIO_COM_TIROS
+      : CAMPOS_AEROBIO
+    : b.tipo === "isometrico"
+      ? CAMPOS_ISOMETRICO
+      : CAMPOS_FORCA;
 
 /* ============================ Quadro da sessão (leitura) ============================ */
 
@@ -899,7 +922,8 @@ function QuadroCardio({ blocos }: { blocos: BlocoSessao[] }) {
           const atividade = b.modalidade ? getModalidade(b.modalidade)?.nome : undefined;
           const linhas: [string, string | undefined][] = [
             ["Formato", b.formato],
-            ["Duração", b.duracao],
+            ["Tiros", b.tiros],
+            [b.tiros ? "Tempo de trabalho" : "Duração", b.duracao],
             ["Intensidade", b.intensidade],
             ["Recuperação", b.recuperacao && b.recuperacao !== "-" ? b.recuperacao : undefined],
           ];

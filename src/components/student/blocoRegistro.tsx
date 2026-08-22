@@ -7,6 +7,7 @@ import { getMuscleMapPose } from "@/data/muscle-map-images";
 import { getModalidade } from "@/data/modalities";
 import type { BlocoSessao, Sessao } from "@/data/periodizacao";
 import { tokensAlvoForca, temAlvoForca, fmtIntervalo } from "@/lib/gps/alvoResumo";
+import { tirosDaSemana } from "@/lib/gps/formatoAerobio";
 import type { Execucao } from "@/data/execucao";
 
 /**
@@ -80,8 +81,13 @@ export function tokensDoBloco(bloco: BlocoSessao): { label: string; value: strin
     aerobio
       ? [
           { label: "Formato", value: limpo(bloco.formato) },
-          // Duração-alvo da semana quando existe; a faixa citada fica na linha de referência.
-          { label: "Duração", value: bloco.duracaoAlvoMin != null ? `${bloco.duracaoAlvoMin} min` : limpo(bloco.duracao) },
+          // Num bloco de tiros, o que o aluno executa é o NÚMERO DE TIROS da semana; o tempo
+          // total de trabalho fica ao lado como conferência, e a faixa como referência.
+          { label: "Tiros", value: tirosDaSemana(bloco)?.texto ?? limpo(bloco.tiros) },
+          {
+            label: bloco.tiros ? "Trabalho" : "Duração",
+            value: bloco.duracaoAlvoMin != null ? `${bloco.duracaoAlvoMin} min` : limpo(bloco.duracao),
+          },
           { label: "Referência", value: bloco.duracaoAlvoMin != null ? limpo(bloco.duracao) : "" },
           { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
           { label: "Recuperação", value: limpo(bloco.recuperacao) },
@@ -121,7 +127,11 @@ export function doseCurta(bloco: BlocoSessao): string {
     // Duração + formato. A intensidade do aeróbio é uma FRASE inteira ("cerca de
     // 64 a 76% da FCmáx, teste da conversa...") e não cabe numa linha de resumo;
     // ela fica nos tokens abaixo, com o rótulo colado.
-    if (bloco.duracaoAlvoMin != null) partes.push(`${bloco.duracaoAlvoMin} min`);
+    // Num intervalado a linha curta abre pelos tiros: "8 tiros de 30 s" diz o que fazer,
+    // "4 min" sozinho não diz.
+    const tiros = tirosDaSemana(bloco);
+    if (tiros) partes.push(tiros.texto);
+    else if (bloco.duracaoAlvoMin != null) partes.push(`${bloco.duracaoAlvoMin} min`);
     else if (limpo(bloco.duracao)) partes.push(limpo(bloco.duracao));
     if (limpo(bloco.formato)) partes.push(limpo(bloco.formato).toLowerCase());
   } else {

@@ -113,6 +113,28 @@ export interface BlocoSessao {
   /** recuperação entre tiros no intervalado ("2 min em ritmo leve"); "-" no contínuo */
   recuperacao?: string;
   /**
+   * A ESTRUTURA DOS TIROS: "4 tiros de 4 min", "10 a 20 tiros de 30 s".
+   *
+   * Existe porque prescrever intervalado só com o tempo total não prescreve nada. O cartão
+   * dizia "HIIT" e "5 a 10 min", e o profissional não tinha como saber se era um tiro de 10
+   * min ou vinte de 30 s, que são sessões completamente diferentes. Buchheit e Laursen (2013)
+   * listam a duração e o número do tiro entre as nove variáveis que mudam a resposta aguda.
+   *
+   * É DERIVADO, não digitado: aplicarFormatoAerobio calcula o número de tiros a partir do
+   * tempo de trabalho e da duração do tiro do formato, e recalcula `duracao` como número de
+   * tiros vezes duração do tiro, para que os dois campos não possam se contradizer. Fica
+   * editável como todo campo do editor, porque quem assina o plano é o profissional.
+   *
+   * Ausente nos formatos sem tiro cronometrado (contínuo, fartlek, circuito).
+   */
+  tiros?: string;
+  /**
+   * A duração de UM tiro, em segundos. É o que permite converter a duração-alvo da semana em
+   * número de tiros daquela semana, em vez de deixar o aluno com a faixa e a conta na cabeça.
+   * Anda sempre junto de `tiros`, escrito pela mesma função.
+   */
+  tiroSeg?: number;
+  /**
    * A faixa de duração do formato CONTÍNUO, guardada quando o bloco passa para um formato que
    * corta o tempo total pela metade (intervalado e HIIT).
    *

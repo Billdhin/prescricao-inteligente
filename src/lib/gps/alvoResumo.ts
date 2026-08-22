@@ -8,6 +8,7 @@
 import type { BlocoSessao, Microciclo } from "@/data/periodizacao";
 import { getRegra } from "@/data/regrasProgressao";
 import { refCurta } from "@/data/referencias";
+import { tirosDaSemana } from "@/lib/gps/formatoAerobio";
 
 /** Par rótulo -> valor de um pedaço do alvo, para virar TokenRotulado na tela e span no PDF. */
 export interface TokenAlvo {
@@ -57,7 +58,12 @@ export function temAlvoAerobio(b: BlocoSessao): boolean {
 /** Tokens do alvo do AERÓBIO da semana: duração-alvo, PSE (RPE) e zona de FC (quando houver). */
 export function tokensAlvoAerobio(b: BlocoSessao): TokenAlvo[] {
   const t: TokenAlvo[] = [];
-  if (b.duracaoAlvoMin != null) t.push({ label: "Alvo", value: `${b.duracaoAlvoMin} min` });
+  // Num bloco de tiros, o alvo da semana é o NÚMERO DE TIROS; os minutos viram o total de
+  // trabalho ao lado. Mostrar só "14 min" num HIIT deixa a conta para quem vai treinar.
+  const daSemana = tirosDaSemana(b);
+  if (daSemana) t.push({ label: "Alvo", value: daSemana.texto });
+  if (b.duracaoAlvoMin != null)
+    t.push(daSemana ? { label: "Trabalho", value: `${b.duracaoAlvoMin} min` } : { label: "Alvo", value: `${b.duracaoAlvoMin} min` });
   if (b.rpeAlvo != null) t.push({ label: "RPE", value: `${b.rpeAlvo}` });
   if (b.zonaFC != null) t.push({ label: "Zona", value: b.zonaFC });
   return t;
