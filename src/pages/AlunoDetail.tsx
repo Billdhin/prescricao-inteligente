@@ -1137,146 +1137,6 @@ export function AlunoDetail() {
   );
 }
 
-/**
- * Cabeçalho do aluno: identidade + KPIs + ações, em zonas empilhadas.
- * Empilha no mobile (flex-col) e só vira linha no desktop, com as ações em
- * `shrink-0`, para o nome nunca ser espremido e as restrições fluírem numa
- * linha própria (com colapso +N) em vez de empilhar uma por linha.
- */
-function AlunoHeader({
-  aluno,
-  planoAtivo,
-  passo,
-  reav,
-  reavaliacaoVencida,
-  temAvaliacao,
-  onEditar,
-  onAvaliar,
-  onAcompanhar,
-  onLiberar,
-  onConvidar,
-  onToggleStatus,
-}: {
-  aluno: Aluno;
-  planoAtivo?: PlanoTreino;
-  passo: ProximoPasso;
-  reav: { em: number; semana?: number } | null;
-  reavaliacaoVencida: boolean;
-  /** aluno já tem ao menos uma avaliação: o botão vira "Reavaliar" */
-  temAvaliacao: boolean;
-  onEditar: () => void;
-  onAvaliar: () => void;
-  onAcompanhar: () => void;
-  onLiberar: () => void;
-  /** abre o ciclo de acesso ao app (link, senha do aluno, status) */
-  onConvidar: () => void;
-  onToggleStatus: () => void;
-}) {
-  const ativo = aluno.status === "ativo";
-  const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
-  const restr = aluno.restricoes;
-  const planoTxt = planoAtivo ? `Semana ${semanaAtual(planoAtivo)} de ${planoAtivo.semanas}` : "Sem plano";
-  const reavTxt = reav ? (reavaliacaoVencida ? "Vencida" : `em ${Math.max(0, diasAte(reav.em))} dias`) : "A definir";
-  const financeiroTxt = aluno.cobranca ? ROTULO_STATUS_COBRANCA[aluno.cobranca.statusAtual] : "Sem cobrança";
-
-  return (
-    <Card variant="raised" className="p-5 md:p-6">
-      {/* Zona 1: identidade | ações */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex min-w-0 items-start gap-4">
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-card gradient-brand font-display text-xl font-bold text-white">
-            {aluno.iniciais}
-          </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-2xl font-bold text-ink md:text-3xl">{aluno.nome}</h1>
-              <Pill tone={ativo ? "success" : "neutral"}>{ativo ? "Ativo" : "Inativo"}</Pill>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <Pill tone="primary">{aluno.objetivo}</Pill>
-              {aluno.objetivoSecundario && (
-                <Pill tone="neutral">2º: {aluno.objetivoSecundario}</Pill>
-              )}
-              <Pill tone="neutral">{aluno.nivel}</Pill>
-              {aluno.idade ? <Pill tone="neutral">{aluno.idade} anos</Pill> : null}
-              {grupo && (
-                <Pill tone="analysis">
-                  {grupo.nome} · Fase {aluno.faseJornada ?? 1}
-                </Pill>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-end gap-2 md:justify-end">
-          <button onClick={onEditar} className={buttonClasses("outline")}>
-            Editar
-          </button>
-          {/* "Convidar para o app" vive no cabeçalho, como no design: é a ação que
-              coloca o aluno dentro do produto, não um detalhe de uma aba. */}
-          <button onClick={onConvidar} className={buttonClasses("outline")}>
-            <Smartphone className="h-4 w-4" /> Convidar para o app
-          </button>
-          {/* Avaliar/Reavaliar como affordance permanente do cabeçalho, MENOS quando o
-              próximo passo já é avaliar/reavaliar: aí a ação é o primário da Linha do
-              cuidado e repetir aqui seria a mesma ação duas vezes na mesma dobra. */}
-          {passo.cta.kind !== "avaliar" && passo.cta.kind !== "reavaliar" && (
-            <button onClick={onAvaliar} className={buttonClasses("secondary")}>
-              <CalendarPlus className="h-4 w-4" /> {temAvaliacao ? "Reavaliar" : "Registrar avaliação"}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Zona 2: restrições fluem em linha própria, com colapso +N */}
-      {restr.length > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-1.5">
-          <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Restrições</span>
-          {restr.slice(0, 4).map((r) => (
-            <Pill key={r.tag} tone="warning" icon={<AlertTriangle className="h-3 w-3" />}>
-              {rotuloRestricao(r.tag)}
-            </Pill>
-          ))}
-          {restr.length > 4 && (
-            <Pill tone="warning" className="cursor-default">
-              <span title={restr.map((r) => rotuloRestricao(r.tag)).join(", ")}>+{restr.length - 4}</span>
-            </Pill>
-          )}
-        </div>
-      )}
-
-      {/* Zona 3: KPIs preenchem o espaço, absorvem o antigo card de Acompanhamento */}
-      <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
-        <MiniStat icon={<CalendarClock className="h-4 w-4" />} rotulo="Na casa" valor={tempoDesde(aluno.criadoEm).texto} />
-        <MiniStat icon={<CalendarRange className="h-4 w-4" />} rotulo="Plano" valor={planoTxt} />
-        <MiniStat
-          icon={<CalendarCheck className="h-4 w-4" />}
-          rotulo="Próxima reavaliação"
-          valor={reavTxt}
-          tone={reavaliacaoVencida ? "warning" : undefined}
-        />
-        <MiniStat icon={<Wallet className="h-4 w-4" />} rotulo="Financeiro" valor={financeiroTxt} />
-      </dl>
-
-      {/* Ficha completa recolhida: perfil de treino + situação */}
-      <details className="mt-3">
-        <summary className="cursor-pointer list-none text-sm font-semibold text-primary hover:underline">
-          Ver ficha completa
-        </summary>
-        <div className="mt-3 space-y-3">
-          <PerfilTreinoCard aluno={aluno} reavaliacaoVencida={reavaliacaoVencida} />
-          <div className="flex justify-end">
-            <button onClick={onToggleStatus} className={buttonClasses("secondary", "sm")}>
-              {ativo ? <UserMinus className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-              {ativo ? "Inativar aluno" : "Reativar aluno"}
-            </button>
-          </div>
-        </div>
-      </details>
-    </Card>
-  );
-}
-
 /** Sugestão de avançar de nível (a decisão é do profissional). Vive no topo do plano. */
 function SugestaoNivel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Partial<Aluno>) => void }) {
   const [confirmarNivel, setConfirmarNivel] = React.useState(false);
@@ -1317,96 +1177,6 @@ function SugestaoNivel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Pa
         />
       )}
     </Card>
-  );
-}
-
-/**
- * "App do aluno": um só lugar responde "é isto que o aluno vê, e é assim que você
- * dá acesso". A prévia é local e sempre funciona; o convite depende do Supabase
- * configurado (sem ele, explica o que falta, nunca promete acesso que não existe).
- */
-function AppDoAlunoPanel({
-  aluno,
-  ultimoFeedback,
-  onVerExecucao,
-  onConvidar,
-  onUpdate,
-}: {
-  aluno: Aluno;
-  /** feedback mais recente do aluno (se houver): motivo para abrir o painel de execução */
-  ultimoFeedback?: SessaoFeedback;
-  onVerExecucao: () => void;
-  /** abre o modal com o ciclo de acesso (link, senha do aluno, status) */
-  onConvidar: () => void;
-  onUpdate: (patch: Partial<Aluno>) => void;
-}) {
-  const configured = useCloudAuth((s) => s.configured);
-  return (
-    <div className="space-y-4">
-      <Card className="p-5 md:p-6">
-        <div className="mb-1 flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary-tint text-primary">
-            <Smartphone className="h-5 w-5" />
-          </span>
-          <h2 className="font-display text-lg font-bold text-ink">Como o aluno acompanha</h2>
-        </div>
-        <p className="text-sm text-ink-2">
-          É esta a tela que abre no celular do aluno, com a sua marca. Ele registra as séries e a periodização se ajusta
-          pela execução.
-        </p>
-
-        {/* Último feedback em UMA linha (data + PSE) + link. O recado completo e o
-            histórico de PSE vivem no ExecucaoPanel da aba Plano e treino. */}
-        {ultimoFeedback && (
-          <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-border bg-surface-soft px-3 py-2.5">
-            <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Último feedback</span>
-            <span className="tabular text-xs text-ink-3">{fmtData(ultimoFeedback.concluidaEm)}</span>
-            {ultimoFeedback.pse != null && <PseBadge pse={ultimoFeedback.pse} />}
-            <button
-              type="button"
-              onClick={onVerExecucao}
-              className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
-            >
-              Ver execução <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          {/* 1) Prévia: render local, funciona mesmo sem conta online */}
-          <div className="rounded-xl border border-border bg-surface-soft p-4">
-            <div className="text-sm font-semibold text-ink">Ver a prévia</div>
-            <p className="mt-1 text-sm text-ink-2">
-              Abra a mesma tela que o aluno vê, aqui no seu aparelho. Funciona mesmo sem conta online.
-            </p>
-            <Link to={`/alunos/${aluno.id}/preview`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
-              <Smartphone className="h-4 w-4" /> Ver como o aluno vê
-            </Link>
-          </div>
-
-          {/* 2) Acesso real: o estado de agora (entrou, convite pendente ou nada
-              ainda) e uma porta só para o ciclo inteiro. */}
-          <div className="rounded-xl border border-border bg-surface-soft p-4">
-            <div className="text-sm font-semibold text-ink">Dar acesso ao aluno</div>
-            {configured ? (
-              <>
-                <AcessoStatusLinha aluno={aluno} />
-                <button onClick={onConvidar} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
-                  <Smartphone className="h-4 w-4" /> Convidar para o app
-                </button>
-              </>
-            ) : (
-              <p className="mt-1 text-sm text-ink-2">
-                O acesso online ainda não está ligado neste aparelho. Use a prévia ao lado para ver
-                exatamente o que o aluno verá.
-              </p>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      <FinanceiroCard aluno={aluno} onUpdate={onUpdate} />
-    </div>
   );
 }
 
@@ -1953,59 +1723,6 @@ function ConfirmarExclusaoModal({
   );
 }
 
-/** Perfil de treino (objetivo, nível, equipamentos, reavaliação). Vive na Visão geral. */
-function PerfilTreinoCard({ aluno, reavaliacaoVencida }: { aluno: Aluno; reavaliacaoVencida: boolean }) {
-  return (
-    <Card className="p-5 md:p-6">
-      <h2 className="mb-3 font-display text-lg font-bold text-ink">Perfil de treino</h2>
-      <dl className="grid gap-3 text-sm sm:grid-cols-2">
-        <Info icon={<Target className="h-4 w-4 text-primary" />} label="Objetivo" value={aluno.objetivo} />
-        {/* Dois objetivos: o par e o que ele implica, com a mesma frase que vai ao prontuário. */}
-        {aluno.objetivoSecundario && (
-          <div className="sm:col-span-2">
-            <dt className="mb-1 flex items-center gap-2 text-ink-3">
-              <Target className="h-4 w-4" /> Objetivo secundário
-            </dt>
-            <dd className="text-ink-2">
-              <span className="font-semibold text-ink">{aluno.objetivoSecundario}.</span>{" "}
-              {linhaObjetivos(aluno.objetivo, aluno.objetivoSecundario)}
-            </dd>
-          </div>
-        )}
-        <Info icon={<Activity className="h-4 w-4 text-analysis" />} label="Nível" value={aluno.nivel} />
-        <div className="sm:col-span-2">
-          <dt className="mb-1 flex items-center gap-2 text-ink-3">
-            <Dumbbell className="h-4 w-4" /> Equipamentos
-          </dt>
-          <dd className="flex flex-wrap gap-1.5">
-            {aluno.equipamentos.map((eq) => (
-              <Pill key={eq} tone="neutral">
-                {eq}
-              </Pill>
-            ))}
-          </dd>
-        </div>
-        {aluno.proximaReavaliacaoEm && (
-          <Info
-            icon={<CalendarPlus className={cn("h-4 w-4", reavaliacaoVencida ? "text-warning" : "text-ink-3")} />}
-            label="Reavaliação"
-            value={
-              reavaliacaoVencida
-                ? `vencida (${fmtData(aluno.proximaReavaliacaoEm)})`
-                : `em ${diasAte(aluno.proximaReavaliacaoEm)} dias`
-            }
-          />
-        )}
-      </dl>
-      {aluno.observacoes && (
-        <p className="mt-3 rounded-xl border border-border bg-surface-soft p-3 text-sm text-ink-2">
-          {aluno.observacoes}
-        </p>
-      )}
-    </Card>
-  );
-}
-
 function JornadaCard({
   aluno,
   planoAtivo,
@@ -2387,46 +2104,6 @@ function RotuloJ({ children }: { children: React.ReactNode }) {
   return <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">{children}</div>;
 }
 
-/**
- * Uma linha honesta sobre o acesso deste aluno, consultada na hora: já entrou,
- * tem convite pendente, ou ainda não recebeu nada. O botão de convidar fica ao
- * lado; aqui é só o estado, porque "gerar link" sem saber se o aluno já entrou é
- * o que fazia o profissional gerar link atrás de link sem entender o ciclo.
- */
-function AcessoStatusLinha({ aluno }: { aluno: Aluno }) {
-  const [st, setSt] = React.useState<{ vinculado: boolean; vinculadoEm?: number; convite?: ConviteAluno } | null>(null);
-  const [falhou, setFalhou] = React.useState(false);
-  React.useEffect(() => {
-    let vivo = true;
-    statusAcessoAluno(aluno.id)
-      .then((r) => vivo && setSt(r))
-      .catch(() => vivo && setFalhou(true));
-    return () => {
-      vivo = false;
-    };
-  }, [aluno.id]);
-
-  if (falhou) return <p className="mt-1 text-sm text-ink-2">Não consegui consultar o acesso agora.</p>;
-  if (!st) return <p className="mt-1 text-sm text-ink-3">Consultando o acesso...</p>;
-  if (st.vinculado)
-    return (
-      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-ink-2">
-        <Pill tone="success" icon={<CheckCircle2 className="h-3.5 w-3.5" />}>
-          Já está no app
-        </Pill>
-        {st.vinculadoEm ? `desde ${fmtData(st.vinculadoEm)}` : null}
-      </p>
-    );
-  if (st.convite)
-    return (
-      <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-ink-2">
-        <Pill tone="warning">Convite enviado</Pill>
-        vale até {fmtData(st.convite.expiraEm)}, ainda não usado
-      </p>
-    );
-  return <p className="mt-1 text-sm text-ink-2">Ainda sem acesso. Gere o link e envie pelo WhatsApp.</p>;
-}
-
 function MiniStat({
   icon,
   rotulo,
@@ -2494,70 +2171,6 @@ function Info({ icon, label, value }: { icon: React.ReactNode; label: string; va
  * clique nenhum, "como ele está hoje". Cada cartão é RESUMO do que já existe nas
  * outras abas e leva para lá; nenhum deles calcula nada por conta própria.
  */
-
-/** 1) Semáforo de hoje: o estado do dia e os últimos 7 dias em uma linha. */
-function VisaoSemaforo({
-  estado,
-  historico,
-  onFazer,
-}: {
-  estado: EstadoSemaforo;
-  /** liberações do aluno, da mais recente para a mais antiga */
-  historico: Liberacao[];
-  onFazer: () => void;
-}) {
-  const DIA = 86_400_000;
-  const seteDias = historico.filter((l) => Date.now() - l.data <= 7 * DIA);
-  const conta = (r: Liberacao["resultado"]) => seteDias.filter((l) => l.resultado === r).length;
-  const pendente = estado.vermelhoPendente;
-
-  return (
-    <Card className="flex flex-col p-5">
-      <Eyebrow>Semáforo · hoje</Eyebrow>
-      {estado.hoje ? (
-        <>
-          <div className="mt-1 font-display text-lg font-bold text-ink">
-            {estado.hoje.resultado === "verde"
-              ? "Liberado hoje"
-              : estado.hoje.resultado === "amarelo"
-                ? "Liberado com ajuste"
-                : "Não liberado hoje"}
-          </div>
-          <p className="mt-0.5 text-sm text-ink-2">
-            Registrado às{" "}
-            {new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date(estado.hoje.data))}.
-          </p>
-        </>
-      ) : pendente ? (
-        <>
-          <div className="mt-1 font-display text-lg font-bold text-danger">
-            Não liberado em {fmtData(pendente.data)}
-          </div>
-          <p className="mt-0.5 text-sm text-ink-2">Refaça o semáforo hoje antes da sessão.</p>
-        </>
-      ) : (
-        <>
-          <div className="mt-1 font-display text-lg font-bold text-ink">Sem semáforo hoje</div>
-          <p className="mt-0.5 text-sm text-ink-2">Faça antes da sessão para liberar, ajustar ou segurar o treino.</p>
-        </>
-      )}
-
-      {seteDias.length > 0 && (
-        <p className="mt-3 border-t border-border pt-3 text-xs text-ink-2">
-          <span className="font-semibold uppercase tracking-wide text-ink-3">Últimos 7 dias</span>{" "}
-          <span className="tabular">
-            {conta("verde")} liberado{conta("verde") === 1 ? "" : "s"} · {conta("amarelo")} com ajuste ·{" "}
-            {conta("vermelho")} não liberado{conta("vermelho") === 1 ? "" : "s"}
-          </span>
-        </p>
-      )}
-
-      <button onClick={onFazer} className={cn(buttonClasses("primary", "sm"), "mt-4 self-start")}>
-        <ShieldCheck className="h-4 w-4" /> {estado.hoje ? "Refazer o semáforo" : "Fazer semáforo agora"}
-      </button>
-    </Card>
-  );
-}
 
 /** 2) Treino ativo: plano, fase, sessões da semana e o atalho para o plano. */
 /** Próximo vencimento (DD/MM) a partir do dia do mês, para a linha de mensalidade. */
@@ -2639,9 +2252,9 @@ function VisaoTreino({
   return (
     <Card className="flex flex-col p-5">
       <Eyebrow>Estado atual</Eyebrow>
-      <div className="mt-1.5 flex items-baseline justify-between gap-2">
+      <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="font-display text-lg font-bold text-ink">Treino ativo</span>
-        <span className="tabular shrink-0 text-sm text-ink-2">
+        <span className="tabular text-sm text-ink-2">
           semana {semana} de {total}
         </span>
       </div>
@@ -2791,7 +2404,7 @@ function VisaoNoApp({
   const notas = feedbacks.map((f) => f.pse).filter((n): n is number => n != null);
   const media = notas.length ? Math.round(notas.reduce((s, n) => s + n, 0) / notas.length) : null;
   const ultimoTs = execucoes.length ? Math.max(...execucoes.map((e) => e.concluidoEm)) : null;
-  const ultimoAcesso = ultimoTs != null ? rotuloDiaTempo(ultimoTs).dia : "—";
+  const ultimoAcesso = ultimoTs != null ? rotuloDiaTempo(ultimoTs).dia : "sem registro";
   const recado = feedbacks.find((f) => f.observacao);
   const semNada = execucoes.length === 0 && feedbacks.length === 0;
   const primeiro = aluno.nome.split(" ")[0];
@@ -2817,7 +2430,7 @@ function VisaoNoApp({
         <>
           <div className="mt-3 grid grid-cols-3 gap-3">
             <StatApp valor={`${naSemana}/${meta}`} rotulo="treinos da semana" />
-            <StatApp valor={media != null ? String(media) : "—"} rotulo="esforço médio" />
+            <StatApp valor={media != null ? String(media) : "sem dado"} rotulo="esforço médio" />
             <StatApp valor={ultimoAcesso} rotulo="último acesso" />
           </div>
           {recado?.observacao && (

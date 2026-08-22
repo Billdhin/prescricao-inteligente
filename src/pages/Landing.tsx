@@ -143,8 +143,17 @@ function useRevelarPorScroll(ref: React.RefObject<HTMLDivElement | null>, html: 
 /** Os valores que o template consome, espelhando o `renderVals` do protótipo. */
 function construirValores(st: { sticky: boolean; mobile: boolean; menu: boolean; anual: boolean; tab: number; a: string; v: string; s: string; p: string }, mudar: (p: Partial<typeof st>) => void): Valores {
   const num = (x: string) => parseFloat(String(x).replace(",", ".")) || 0;
+  // Trava a leitura na mesma faixa que o input declara. O `min`/`max` do HTML segura o
+  // stepper, não o teclado: sem clampe aqui, "-50 alunos" imprimia "+R$ -10.392 a mais por
+  // mês" (sinal de mais na frente de negativo) e um valor alto imprimia bilhões. Numa página
+  // cuja tese é que todo número tem procedência, esse era o único lugar que se deixava pegar.
+  const preso = (x: string, min: number, max: number) => Math.min(max, Math.max(min, num(x)));
+  const nAlunos = preso(st.a, 0, 200);
+  const vSessao = preso(st.v, 0, 600);
+  const nSessoes = preso(st.s, 0, 7);
+  const pctExtra = preso(st.p, 0, 50);
   // 4,33 é a média de semanas por mês, como no protótipo.
-  const mes = num(st.a) * num(st.v) * num(st.s) * 4.33 * (num(st.p) / 100);
+  const mes = nAlunos * vSessao * nSessoes * 4.33 * (pctExtra / 100);
   const fmt = (n: number) => "R$ " + Math.round(n).toLocaleString("pt-BR");
   const { anual } = st;
 
@@ -185,7 +194,10 @@ function construirValores(st: { sticky: boolean; mobile: boolean; menu: boolean;
     proMesTxt: `${fmtBRL(PRECO_MENSAL)}/mês`,
     mesTxt: "+" + fmt(mes),
     anoTxt: "+" + fmt(mes * 12) + " por ano",
-    mesesTxt: Math.max(1, Math.floor(mes / PRECO_MENSAL)) + " meses",
+    mesesTxt: (() => {
+      const n = Math.max(1, Math.floor(mes / PRECO_MENSAL));
+      return n === 1 ? "1 mês" : `${n} meses`;
+    })(),
   };
   for (const i of [0, 1, 2, 3]) {
     const on = st.tab === i;

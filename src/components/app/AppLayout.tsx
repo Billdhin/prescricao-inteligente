@@ -476,90 +476,6 @@ function Sidebar() {
   );
 }
 
-/**
- * "ESTE ALUNO": o contexto da lateral quando o profissional está dentro de um.
- *
- * Ele é DERIVADO da rota (`/alunos/:id`), não de um estado que alguma página
- * precise lembrar de setar e de limpar. Estado paralelo para dizer "onde estou"
- * é a receita conhecida do bloco que fica aceso na tela errada.
- *
- * O que ele mostra é a régua única do perfil (`completudeAluno`), a mesma que o
- * trilho de seções usa, e o que falta em palavras. E ele diz, em toda visita, que
- * perfil incompleto não impede avaliar: o gate duro é a avaliação, não o cadastro.
- */
-function CardAlunoLateral({ alunos, pathname }: { alunos: Aluno[]; pathname: string }) {
-  const id = pathname.match(/^\/alunos\/([^/]+)/)?.[1];
-  const aluno = id ? alunos.find((a) => a.id === id) : undefined;
-  if (!aluno) return null;
-
-  const { pct, faltaTexto } = completudeAluno(aluno);
-  const completo = !faltaTexto;
-  const noPerfil = pathname.endsWith("/perfil");
-
-  return (
-    <div className="px-3 pb-1 pt-6">
-      <div className="px-3 pb-2 text-2xs font-bold uppercase tracking-[0.14em]" style={{ color: CASCA.tinta2 }}>
-        Este aluno
-      </div>
-      <Link
-        to={noPerfil ? `/alunos/${aluno.id}` : `/alunos/${aluno.id}/perfil`}
-        className="block rounded-card p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        style={{ background: "rgba(148,170,210,.08)", border: `1px solid ${CASCA.borda}` }}
-      >
-        <div className="flex items-center gap-2.5">
-          <span
-            aria-hidden
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold"
-            style={{ background: "var(--primary)", color: "var(--on-primary)" }}
-          >
-            {aluno.iniciais}
-          </span>
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-bold" style={{ color: CASCA.tinta }}>
-              {aluno.nome}
-            </span>
-            <span className="block truncate text-2xs" style={{ color: CASCA.tinta2 }}>
-              {[aluno.idade ? `${aluno.idade} anos` : null, aluno.nivel.toLowerCase()].filter(Boolean).join(" · ")}
-            </span>
-          </span>
-        </div>
-
-        <div className="mt-3 flex items-baseline justify-between gap-2">
-          <span className="text-2xs font-semibold" style={{ color: CASCA.tinta2 }}>
-            Perfil
-          </span>
-          <span className="tabular text-xs font-bold" style={{ color: completo ? "#14B3BA" : CASCA.tinta }}>
-            {pct}%
-          </span>
-        </div>
-        <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: "rgba(148,170,210,.16)" }}>
-          <div
-            className="h-full rounded-full transition-[width] duration-300"
-            style={{ width: `${pct}%`, background: completo ? "#14B3BA" : "var(--primary)" }}
-          />
-        </div>
-        <p className="mt-2 text-2xs leading-relaxed" style={{ color: CASCA.tinta2 }}>
-          {completo ? (
-            noPerfil ? (
-              "Perfil completo. Voltar para o aluno."
-            ) : (
-              "Perfil completo. Abrir para editar."
-            )
-          ) : (
-            <>
-              Falta: {faltaTexto}. Dá para{" "}
-              <span className="font-bold" style={{ color: CASCA.tinta }}>
-                avaliar já
-              </span>
-              .
-            </>
-          )}
-        </p>
-      </Link>
-    </div>
-  );
-}
-
 /** Uma linha da lateral: ícone, rótulo e o contador. O ATIVO é papel sólido com
  *  tinta escura, o inverso da lateral, que é a forma mais legível de dizer
  *  "você está aqui" numa superfície escura. */
@@ -640,44 +556,6 @@ function BadgeLateral({
       {n}
       <span className="sr-only"> em {rotulo}</span>
     </span>
-  );
-}
-
-/**
- * O cartão de ação no pé da lateral: quantos alunos ainda não têm o semáforo de
- * hoje e o botão para resolver. Some quando não há ninguém pendente, porque o
- * card existe para pedir uma ação, não para ocupar espaço.
- */
-function CardSemaforoLateral({ quantos }: { quantos: number }) {
-  if (quantos === 0) return null;
-  return (
-    <div className="px-3 pb-3">
-      <div
-        className="rounded-card p-4"
-        style={{ background: "rgba(148,170,210,.08)", border: `1px solid ${CASCA.borda}` }}
-      >
-        <div className="flex items-center gap-1.5">
-          <span aria-hidden className="flex gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-success" />
-            <span className="h-1.5 w-1.5 rounded-full bg-warning" />
-            <span className="h-1.5 w-1.5 rounded-full bg-danger-fill" />
-          </span>
-          <span className="text-2xs font-semibold" style={{ color: CASCA.tinta2 }}>
-            Semáforo do dia
-          </span>
-        </div>
-        <div className="tabular mt-1 font-display text-lg font-bold" style={{ color: CASCA.tinta }}>
-          {quantos} para liberar
-        </div>
-        <Link
-          to="/semaforo"
-          className="mt-3 grid h-10 place-items-center rounded-full text-sm font-bold"
-          style={{ background: "var(--analysis-fill)", color: "var(--on-analysis-fill)" }}
-        >
-          Liberar agora
-        </Link>
-      </div>
-    </div>
   );
 }
 
@@ -1098,7 +976,7 @@ function NotificationsMenu() {
 
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-[336px] max-w-[calc(100vw-1.5rem)] rounded-card border border-border bg-surface p-1.5 shadow-overlay">
-          <div className="flex items-center justify-between px-2 py-1.5">
+          <div data-par-dado="cabecalho-com-escopo" className="flex items-center justify-between px-2 py-1.5">
             <span className="text-sm font-semibold text-ink">O que aconteceu</span>
             <span className="text-xs text-ink-2">Últimos 7 dias</span>
           </div>
@@ -1132,86 +1010,6 @@ function NotificationsMenu() {
               ))
             )}
           </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function UserMenu() {
-  const { name, plan, setPlan, fotoDataUrl, senhaHash } = useUser();
-  const cloudConfigured = useCloudAuth((s) => s.configured);
-  const [open, setOpen] = React.useState(false);
-  const ref = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  const initials = name.split(" ").map((n) => n[0]).slice(0, 2).join("");
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Menu do usuário"
-        aria-expanded={open}
-        className="ml-1 flex min-h-[44px] items-center gap-2 rounded-full py-1 pl-1 pr-2 hover:bg-surface-soft md:pr-3"
-      >
-        {fotoDataUrl ? (
-          <img src={fotoDataUrl} alt="" className="h-9 w-9 rounded-full object-cover" />
-        ) : (
-          <span className="grid h-9 w-9 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
-            {initials}
-          </span>
-        )}
-        <span className="hidden text-left leading-tight md:block">
-          <span className="block text-sm font-semibold text-ink">{name}</span>
-          <span className="block text-xs text-ink-2">{planLabel[plan]}</span>
-        </span>
-        <ChevronDown className="hidden h-4 w-4 text-ink-3 md:block" />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 z-50 mt-2 w-56 rounded-card border border-border bg-surface p-1.5 shadow-elevated">
-          <Link to="/account" className="block rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-surface-soft">
-            Configurações
-          </Link>
-          {cloudConfigured ? (
-            <button
-              onClick={async () => {
-                await signOut();
-                window.location.reload();
-              }}
-              className="block w-full rounded-full px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
-            >
-              Sair da conta
-            </button>
-          ) : senhaHash ? (
-            <button
-              onClick={() => {
-                encerrarSessao();
-                window.location.reload();
-              }}
-              className="block w-full rounded-full px-2 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
-            >
-              Sair (bloquear acesso)
-            </button>
-          ) : (
-            <Link to="/" className="block rounded-lg px-2 py-1.5 text-sm text-ink hover:bg-surface-soft">
-              Sair
-            </Link>
-          )}
         </div>
       )}
     </div>

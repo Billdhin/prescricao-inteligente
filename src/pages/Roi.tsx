@@ -129,7 +129,7 @@ export function Roi() {
           </div>
 
           <div className="mt-6">
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-baseline gap-2 text-sm">
               <span className="font-semibold text-ink">Prêmio de especialista</span>
               <span className="tabular font-bold text-primary">+{premio}%</span>
             </div>
@@ -143,7 +143,7 @@ export function Roi() {
               className="mt-2 w-full accent-primary"
               aria-label="Prêmio de especialista (15 a 30%)"
             />
-            <div className="flex justify-between text-xs text-ink-3">
+            <div data-par-dado="extremos-da-faixa" className="flex justify-between text-xs text-ink-3">
               <span>15% (conservador)</span>
               <span>30% (consolidado)</span>
             </div>
@@ -165,7 +165,7 @@ export function Roi() {
             </div>
             <div>
               <div className="tabular font-display text-3xl font-bold text-success">
-                {mesesPagos >= 1 ? `${Math.floor(mesesPagos)}×` : "–"}
+                {mesesPagos >= 1 ? `${Math.floor(mesesPagos)}×` : "sem dado"}
               </div>
               <div className="mt-1 text-sm text-ink-2">
                 {mesesPagos >= 1
@@ -189,8 +189,8 @@ export function Roi() {
             Começar agora <ArrowRight className="h-4 w-4" />
           </Link>
           <p className="mt-6 text-xs text-ink-3">
-            Estimativa educacional baseada na sua carteira e no padrão de mercado (15–30% de
-            prêmio por especialização em públicos específicos). Não é promessa de resultado.
+            Estimativa educacional. A conta usa a sua carteira e o percentual que VOCÊ informou
+            acima; nenhum dos dois é sugerido pelo sistema. Não é promessa de resultado.
           </p>
         </div>
       </div>

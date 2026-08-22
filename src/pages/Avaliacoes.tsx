@@ -1,8 +1,11 @@
+import * as React from "react";
 import { Link } from "react-router-dom";
-import { BarChart3, CalendarClock, Clock, ArrowRight, CheckCircle2, TrendingDown, TrendingUp } from "lucide-react";
+import { BarChart3, CalendarClock, Clock, ArrowRight, CheckCircle2, Plus, TrendingDown, TrendingUp } from "lucide-react";
 import { Card, Pill, SectionHeader, TokenRotulado, buttonClasses } from "@/components/ui/primitives";
+import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
 import { useAlunos } from "@/lib/store";
 import { dataReavaliacao } from "@/lib/gps/proximoPasso";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
@@ -12,8 +15,19 @@ const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
 const fmtDelta = (n: number, unidade: string) => `${n > 0 ? "+" : ""}${n.toFixed(1)} ${unidade}`;
 
 export function Avaliacoes() {
-  const { alunos, avaliacoes, planos } = useAlunos();
-  const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "–";
+  const { alunos, avaliacoes, planos, addAvaliacao } = useAlunos();
+  // null = fechado. String vazia = escolhendo o aluno. Id = modal aberto naquele aluno.
+  const [avaliando, setAvaliando] = React.useState<string | null>(null);
+  const ativos = alunos.filter((a) => a.status === "ativo");
+  const alunoEmAvaliacao = ativos.find((a) => a.id === avaliando);
+  const avalsDoAluno = React.useMemo(
+    () =>
+      alunoEmAvaliacao
+        ? avaliacoes.filter((av) => av.alunoId === alunoEmAvaliacao.id).sort((x, y) => x.data - y.data)
+        : [],
+    [avaliacoes, alunoEmAvaliacao],
+  );
+  const nomeAluno = (id: string) => alunos.find((a) => a.id === id)?.nome ?? "aluno removido";
   const iniciais = (id: string) => alunos.find((a) => a.id === id)?.iniciais ?? "?";
 
   /**
@@ -73,8 +87,51 @@ export function Avaliacoes() {
         eyebrow="Atendimento"
         icon={<BarChart3 className="h-3 w-3" />}
         title="Avaliar e reavaliar"
-        subtitle="Acompanhe reavaliações e o histórico de medidas dos seus alunos. Registre novas avaliações no perfil de cada aluno."
+        subtitle="Acompanhe as reavaliações, veja o histórico de medidas e registre uma avaliação nova aqui mesmo."
+        right={
+          ativos.length > 0 ? (
+            <button onClick={() => setAvaliando("")} className={buttonClasses("primary", "sm")}>
+              <Plus className="h-4 w-4" /> Registrar avaliação
+            </button>
+          ) : undefined
+        }
       />
+
+      {avaliando === "" && (
+        <Card className="p-5">
+          <h2 className="font-display text-base font-bold text-ink">De qual aluno?</h2>
+          <p className="mt-1 text-sm text-ink-2">
+            A avaliação entra no perfil dele e passa a valer como gate para a próxima prescrição.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {ativos.map((a) => (
+              <button key={a.id} onClick={() => setAvaliando(a.id)} className={buttonClasses("secondary", "sm")}>
+                {a.nome}
+              </button>
+            ))}
+            <button onClick={() => setAvaliando(null)} className={buttonClasses("ghost", "sm")}>
+              Cancelar
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {alunoEmAvaliacao && (
+        <AvaliacaoModal
+          onClose={() => setAvaliando(null)}
+          onSave={(av) => {
+            addAvaliacao(av);
+            setAvaliando(null);
+            toast(`Avaliação registrada para ${alunoEmAvaliacao.nome}`);
+          }}
+          alunoId={alunoEmAvaliacao.id}
+          alunoNome={alunoEmAvaliacao.nome}
+          alunoSexo={alunoEmAvaliacao.sexo}
+          alunoIdade={alunoEmAvaliacao.idade}
+          anterior={avalsDoAluno[avalsDoAluno.length - 1]}
+          historico={avalsDoAluno}
+        />
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Quem precisa agora */}
@@ -86,9 +143,19 @@ export function Avaliacoes() {
             <h2 className="font-display text-lg font-bold text-ink">Quem precisa agora</h2>
           </div>
           {precisamAgora.length === 0 ? (
-            <p className="py-6 text-center text-sm text-ink-2">
-              Ninguém com avaliação pendente ou reavaliação nas próximas duas semanas.
-            </p>
+            <div className="py-6 text-center">
+              <p className="text-sm text-ink-2">
+                Ninguém com avaliação pendente ou reavaliação nas próximas duas semanas.
+              </p>
+              {ativos.length > 0 && (
+                <button
+                  onClick={() => setAvaliando("")}
+                  className={cn(buttonClasses("secondary", "sm"), "mt-3")}
+                >
+                  Registrar uma avaliação assim mesmo
+                </button>
+              )}
+            </div>
           ) : (
             <div className="space-y-2.5">
               {precisamAgora.map(({ aluno: a, tipo, em, acao }) => {

@@ -520,9 +520,11 @@ function Chips({
 }) {
   return (
     <Card className="p-5">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="text-sm font-semibold text-ink">Escolha para comparar</span>
-        <span className="text-xs text-ink-3">{sel.length}/{MAX} selecionados</span>
+        <span className="text-xs text-ink-3">
+          {sel.length} de {MAX} selecionados
+        </span>
       </div>
       <div className="flex flex-wrap gap-2">
         {pool.map((it) => {

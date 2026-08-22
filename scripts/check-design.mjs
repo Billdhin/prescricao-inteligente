@@ -15,6 +15,13 @@
 //      (controle) ou rounded-card (opção em forma de cartão).
 //   8. REGRA DURA do repo: modificador /NN sobre classe de cor-token NÃO compila
 //      (tailwind.config sem <alpha-value>); alpha só como hex literal [#...]/NN.
+//   9. TRAVESSÃO em texto visível. Regra do fundador: ele lê travessão como "cara de
+//      IA". A meia-risca ENTRE DÍGITOS é poupada de propósito, porque "0–10" e
+//      "24–48h" são intervalo numérico, não pontuação, e o produto usa isso em 50
+//      lugares legítimos (escalas de dor, faixas de série, janelas de horas).
+//  10. PAR DADO SEPARADO. Rótulo e valor colados é padrão da casa (ParDado /
+//      TokenRotulado). Um container que empurra o rótulo para uma borda e o valor
+//      para a outra obriga o olho a atravessar a linha para ligar as duas metades.
 //
 // Lê o arquivo inteiro (multiline) porque className quebra linha em JSX.
 import { readdirSync, readFileSync, statSync } from "node:fs";
@@ -64,6 +71,32 @@ const PREFIXOS =
   "bg|text|border|ring-offset|ring|fill|stroke|from|via|to|decoration|outline|divide|placeholder|caret|accent|shadow";
 
 const REGRAS = [
+  {
+    id: "travessao",
+    desc: 'travessão em texto visível; a casa não usa. Troque por vírgula, dois-pontos ou frase separada.',
+    // O runner já apaga comentários antes de varrer, então explicação em bloco não é punida.
+    // A meia-risca só cai quando NÃO está entre dígitos: "0–10" é intervalo, "– " é pontuação.
+    // `}` e `{` contam como vizinhan\u00e7a num\u00e9rica: `sem {a}\u2013{b}` e `${ini}\u2013${fim}` s\u00e3o
+    // intervalo interpolado, n\u00e3o pontua\u00e7\u00e3o. Foram os dois falsos positivos da 1\u00aa vers\u00e3o.
+    re: /\u2014|(?<![\d}])\u2013|\u2013(?![\d{$])/g,
+  },
+  {
+    id: "par-dado-separado",
+    desc: "rótulo e valor separados pelas bordas; use ParDado/TokenRotulado, com o valor colado ao rótulo.",
+    varrer: (conteudo, push) => {
+      // Só o caso estreito que a auditoria encontrou: um container justify-between cujos
+      // DOIS filhos diretos são <span> de texto. Cabeçalho com título e botão, que é o uso
+      // legítimo e maioritário de justify-between, não casa, porque o segundo filho não é
+      // um span de texto.
+      const re = /<(?:div|dl|dt|p)\b[^>]*justify-between[^>]*>\s*<span\b[^>]*>[^<>{}]{1,60}<\/span>\s*<span\b[^>]*>[^<>]{1,60}<\/span>\s*<\/(?:div|dl|dt|p)>/g;
+      let m;
+      while ((m = re.exec(conteudo))) {
+        // Exceção declarada no próprio elemento, com motivo. Ver o comentário da regra.
+        if (/data-par-dado=/.test(m[0])) continue;
+        push(m.index);
+      }
+    },
+  },
   {
     id: "rounded-2xl",
     desc: "rounded-2xl aposentado; use rounded-card (16px).",

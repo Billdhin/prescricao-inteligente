@@ -679,7 +679,11 @@ export function Gps() {
         </Card>
       )}
 
-      {/* Foco agora — a decisão rápida, inline (quando há grupo em contexto) */}
+      {/* O semáforo do dia, para TODO aluno. Fora do FocoAgora de propósito: ele só
+          existe quando há grupo especial, e a pendência de liberação não depende disso. */}
+      {aluno && <LinhaSemaforoDoDia liberacao={liberacaoDoDia} alunoId={aluno.id} />}
+
+      {/* Foco agora: a decisão rápida, inline (quando há grupo em contexto) */}
       {grupo && faseObj && !grupoLocked && (
         <FocoAgora
           grupo={grupo}
@@ -1065,6 +1069,55 @@ function FaixaEtariaCard({ id }: { id: string }) {
 
 /* Foco agora — resumo de decisão condensado (substitui a antiga Decisão rápida
    e o painel de jornada gigante que existia nos resultados). */
+/**
+ * Uma linha, três estados: liberado, liberado com ajuste, não liberado. Mais o estado de
+ * quem ainda não fez o semáforo hoje, que é o mais comum e o que estava invisível.
+ */
+function LinhaSemaforoDoDia({
+  liberacao,
+  alunoId,
+}: {
+  liberacao?: { resultado: "verde" | "amarelo" | "vermelho" };
+  alunoId: string;
+}) {
+  const cores = {
+    verde: { bg: "bg-success-tint", borda: "border-success", texto: "text-success", rotulo: "Liberado hoje" },
+    amarelo: { bg: "bg-warning-tint", borda: "border-warning", texto: "text-warning", rotulo: "Liberado com ajuste hoje" },
+    vermelho: { bg: "bg-danger-tint", borda: "border-danger", texto: "text-danger", rotulo: "Não liberado hoje" },
+  } as const;
+
+  if (!liberacao) {
+    return (
+      <Card variant="soft" className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3 text-sm">
+        <ShieldCheck className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
+        <span className="min-w-0 flex-1 text-ink-2">
+          Sem semáforo registrado hoje para este aluno. Você pode prescrever assim mesmo; a decisão é
+          sua, e sem o registro ela não fica documentada.
+        </span>
+        <Link to={`/semaforo?aluno=${alunoId}`} className={buttonClasses("secondary", "sm")}>
+          Fazer o semáforo
+        </Link>
+      </Card>
+    );
+  }
+
+  const c = cores[liberacao.resultado];
+  return (
+    <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border p-3 text-sm", c.bg, c.borda)}>
+      <ShieldCheck className={cn("h-4 w-4 shrink-0", c.texto)} aria-hidden />
+      <span className={cn("font-semibold", c.texto)}>{c.rotulo}</span>
+      <span className="min-w-0 flex-1 text-ink-2">
+        {liberacao.resultado === "vermelho"
+          ? "O semáforo de hoje não liberou. Se ainda assim for prescrever, registre o motivo no perfil."
+          : "Registrado no histórico e no prontuário."}
+      </span>
+      <Link to={`/semaforo?aluno=${alunoId}`} className="shrink-0 text-sm font-semibold text-primary hover:underline">
+        Ver o semáforo
+      </Link>
+    </div>
+  );
+}
+
 function FocoAgora({
   grupo,
   faseObj,
