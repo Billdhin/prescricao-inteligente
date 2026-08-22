@@ -55,7 +55,7 @@ import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
 import { parValido, linhaObjetivos } from "@/lib/gps/objetivos";
 import { useDialog } from "@/lib/useDialog";
-import { toast } from "@/lib/toast";
+import { toast, toastDesfazer } from "@/lib/toast";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
 // A lista vive em src/data/periodizacao.ts: o PDF e o cabeçalho do plano nomeiam o mesmo
@@ -1028,6 +1028,9 @@ function ResultadoPlano({
                 // Copia as sessões desta semana para as demais semanas de CARGA do
                 // mesmo bloco (ids novos, senão duas semanas apontariam para o mesmo
                 // bloco e a execução do aluno grudaria nas duas).
+                // O meso ANTES vai inteiro para o desfazer: esta ação reescreve várias
+                // semanas de ajuste manual de uma vez, e é a mais cara de refazer à mão.
+                const mesoAntes = emFoco.meso;
                 trocarMeso({
                   ...emFoco.meso,
                   microciclos: emFoco.meso.microciclos.map((w) =>
@@ -1043,7 +1046,15 @@ function ResultadoPlano({
                         },
                   ),
                 });
-                toast(`Sessões da semana ${emFoco.micro.semana} aplicadas às demais semanas de carga do bloco.`);
+                const nReescritas = emFoco.meso.microciclos.filter(
+                  (w) => w.id !== emFoco.micro.id && w.tipo !== "deload",
+                ).length;
+                toastDesfazer(
+                  nReescritas === 1
+                    ? `Semana ${emFoco.micro.semana} copiada para 1 semana de carga do bloco.`
+                    : `Semana ${emFoco.micro.semana} copiada para ${nReescritas} semanas de carga do bloco.`,
+                  () => trocarMeso(mesoAntes),
+                );
               }}
             />
           )}
@@ -1228,7 +1239,11 @@ function SemanaEmFoco({
                 ctx={ctx}
                 editavel={editavel}
                 onChange={trocarSessao}
-                onRemover={() => onChange({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) })}
+                onRemover={() => {
+                  const antes = micro;
+                  onChange({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) });
+                  toastDesfazer(`${sessao.nome} removida da semana ${micro.semana}.`, () => onChange(antes));
+                }}
               />
             </div>
           )}

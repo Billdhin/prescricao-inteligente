@@ -5,7 +5,7 @@ import { onAuthChange, getSession } from "./supabaseAuth";
 import * as repo from "./supabaseRepo";
 import { setCloudOn } from "./cloudSync";
 import { useAlunos, useUser } from "@/lib/store";
-import { toast } from "@/lib/toast";
+import { toast, toastFalha } from "@/lib/toast";
 
 // Marcador de "dono" dos stores locais: a conta a que os dados neste navegador
 // pertencem. Impede que a base de um profissional suba para a conta de outro que
@@ -155,7 +155,11 @@ async function hydrate(userId: string) {
       for (const p of local.planos) await subir(() => repo.salvarPlano(p));
       for (const l of local.liberacoes) await subir(() => repo.salvarLiberacao(l));
       if (falhas > 0) {
-        toast(`${falhas} registro(s) não subiram para a nuvem; seguem salvos neste aparelho e tentaremos de novo.`);
+        toastFalha(
+          falhas === 1
+            ? "1 registro não subiu para a nuvem. Segue salvo neste aparelho e tentamos de novo."
+            : `${falhas} registros não subiram para a nuvem. Seguem salvos neste aparelho e tentamos de novo.`,
+        );
       }
       // mantém o store local como está (já é a fonte que acabou de subir)
     } else if (!localEhDesteUsuario) {

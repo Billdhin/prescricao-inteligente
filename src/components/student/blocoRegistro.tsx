@@ -266,7 +266,7 @@ export function RegistroBloco({
   const repsPrescrito =
     bloco.repsAlvo != null
       ? String(bloco.repsAlvo)
-      : /^d+$/.test(String(bloco.reps ?? "").trim())
+      : /^\d+$/.test(String(bloco.reps ?? "").trim())
         ? String(bloco.reps).trim()
         : "";
   const [editando, setEditando] = React.useState(false);
@@ -283,7 +283,7 @@ export function RegistroBloco({
   const totalSeries =
     bloco.seriesAlvo != null
       ? bloco.seriesAlvo
-      : /^d+$/.test(String(bloco.series ?? "").trim())
+      : /^\d+$/.test(String(bloco.series ?? "").trim())
         ? Number(bloco.series)
         : 1;
   const [serie, setSerie] = React.useState(1);

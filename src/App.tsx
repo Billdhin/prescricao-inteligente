@@ -14,6 +14,7 @@ import {
   Salvos as AprenderSalvos,
   Progresso as AprenderProgresso,
 } from "@/features/learning/pages";
+import NaoEncontrado from "@/pages/NaoEncontrado";
 
 /*
  * SÓ A LANDING É EAGER. TODO O RESTO DO APP CHEGA SOB DEMANDA.
@@ -219,10 +220,11 @@ export default function App() {
           <Route path="/aprender/salvos" element={<AprenderSalvos />} />
           <Route path="/aprender/progresso" element={<AprenderProgresso />} />
           <Route path="/aprender/trilhas" element={<Navigate to="/tracks" replace />} />
-          {/* Beco de rota DENTRO do shell: uma URL desconhecida de quem já está no app
-              volta ao painel, em vez de expulsar para a Landing. Não há predicado
-              "logado"; o * externo abaixo segue servindo os links externos. */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Rota desconhecida DENTRO do shell: diz que não achou e oferece as portas,
+              em vez de redirecionar em silêncio para o painel (o que se lê como "perdi o
+              caminho" ou, pior, "o dado sumiu"). Não há predicado "logado"; o * externo
+              abaixo segue servindo os links externos. */}
+          <Route path="*" element={<NaoEncontrado />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

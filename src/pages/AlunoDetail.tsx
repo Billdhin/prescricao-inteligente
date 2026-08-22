@@ -73,7 +73,8 @@ import { TresCamadas } from "@/components/ui/camadas";
 import { montarChecklist } from "@/data/semaforo";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
 import { useDialog } from "@/lib/useDialog";
-import { toast } from "@/lib/toast";
+import { ConfirmarAcao } from "@/components/app/ConfirmarAcao";
+import { toast, toastDesfazer } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
@@ -374,7 +375,7 @@ function AlunoTabs({ aba, onAba, contagens }: { aba: Aba; onAba: (a: Aba) => voi
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao } =
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao, unarchivePrescricao } =
     useAlunos();
   const navigate = useNavigate();
   const [confirmarExclusao, setConfirmarExclusao] = React.useState(false);
@@ -1011,11 +1012,13 @@ export function AlunoDetail() {
                         <button
                           onClick={() => {
                             archivePrescricao(p.id);
-                            toast("Prescrição arquivada");
+                            // Arquivar tira um documento da lista com um clique. O par
+                            // desfazer é o que separa "organizei" de "perdi".
+                            toastDesfazer("Prescrição arquivada", () => unarchivePrescricao(p.id));
                           }}
                           className="ml-auto text-sm font-medium text-ink-3 hover:text-ink"
                         >
-                          Arquivar
+                          Arquivar esta prescrição
                         </button>
                       )}
                     </div>
@@ -1276,6 +1279,7 @@ function AlunoHeader({
 
 /** Sugestão de avançar de nível (a decisão é do profissional). Vive no topo do plano. */
 function SugestaoNivel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Partial<Aluno>) => void }) {
+  const [confirmarNivel, setConfirmarNivel] = React.useState(false);
   const sug = aluno.status === "ativo" ? sugestaoProgressao(aluno) : null;
   if (!sug) return null;
   return (
@@ -1290,15 +1294,28 @@ function SugestaoNivel({ aluno, onUpdate }: { aluno: Aluno; onUpdate: (patch: Pa
           resposta ao treino indicarem.
         </p>
       </div>
-      <button
-        onClick={() => {
-          onUpdate({ nivel: sug.proximo, nivelDesde: Date.now() });
-          toast(`${aluno.nome} avançou para ${sug.proximo}. Revise a prescrição.`);
-        }}
-        className={buttonClasses("secondary", "sm")}
-      >
+      <button onClick={() => setConfirmarNivel(true)} className={buttonClasses("secondary", "sm")}>
         Avançar para {sug.proximo}
       </button>
+      {confirmarNivel && (
+        <ConfirmarAcao
+          titulo={`Avançar ${aluno.nome.split(" ")[0]} para ${sug.proximo}?`}
+          descricao={
+            <>
+              O nível muda as faixas de série, repetição e esforço que o motor usa, então a
+              prescrição atual passa a ser revisada com outra régua. A contagem de tempo no nível
+              recomeça hoje.
+            </>
+          }
+          rotuloConfirmar={`Avançar para ${sug.proximo}`}
+          onCancelar={() => setConfirmarNivel(false)}
+          onConfirmar={() => {
+            setConfirmarNivel(false);
+            onUpdate({ nivel: sug.proximo, nivelDesde: Date.now() });
+            toast(`${aluno.nome} avançou para ${sug.proximo}. Revise a prescrição.`);
+          }}
+        />
+      )}
     </Card>
   );
 }
@@ -1565,6 +1582,7 @@ function BannerSemaforo({
   grupoNome?: string;
   onFazer: () => void;
 }) {
+  const [confirmarRefazer, setConfirmarRefazer] = React.useState(false);
   if (estado.hoje) {
     const c = COR_SEMAFORO[estado.hoje.resultado];
     return (
@@ -1574,9 +1592,28 @@ function BannerSemaforo({
           <div className={cn("font-display text-base font-bold", c.text)}>{rotuloResultado(estado.hoje.resultado)} hoje</div>
           <p className="text-sm text-ink-2">Semáforo de hoje já registrado. Refazer substitui o registro do dia.</p>
         </div>
-        <button onClick={onFazer} className={buttonClasses("secondary", "sm")}>
-          <ShieldCheck className="h-4 w-4" /> Refazer
+        <button onClick={() => setConfirmarRefazer(true)} className={buttonClasses("secondary", "sm")}>
+          <ShieldCheck className="h-4 w-4" /> Refazer o semáforo de hoje
         </button>
+        {confirmarRefazer && (
+          <ConfirmarAcao
+            titulo="Refazer o semáforo de hoje?"
+            descricao={
+              <>
+                O resultado de hoje ({rotuloResultado(estado.hoje.resultado).toLowerCase()}) sai do
+                histórico e é substituído pelo novo. O semáforo entra no prontuário, então o registro
+                anterior não fica guardado em lugar nenhum.
+              </>
+            }
+            rotuloConfirmar="Refazer o semáforo"
+            tom="destrutivo"
+            onCancelar={() => setConfirmarRefazer(false)}
+            onConfirmar={() => {
+              setConfirmarRefazer(false);
+              onFazer();
+            }}
+          />
+        )}
       </div>
     );
   }

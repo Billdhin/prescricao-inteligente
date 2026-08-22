@@ -350,6 +350,8 @@ interface AlunosState {
   addAvaliacao: (av: Avaliacao) => void;
   addPrescricao: (p: Prescricao) => void;
   archivePrescricao: (id: string) => void;
+  /** volta uma prescrição arquivada para ativa; existe para o "Desfazer" do toast */
+  unarchivePrescricao: (id: string) => void;
   addPlano: (p: PlanoTreino) => void;
   updatePlano: (id: string, patch: Partial<PlanoTreino>) => void;
   removePlano: (id: string) => void;
@@ -528,6 +530,18 @@ export const useAlunos = create<AlunosState>()(
         set((s) => ({
           prescricoes: s.prescricoes.map((p) =>
             p.id === id ? { ...p, status: "arquivada" as const } : p,
+          ),
+        }));
+        const x = get().prescricoes.find((p) => p.id === id);
+        if (x) cloudSavePrescricao(x);
+      },
+      // Arquivar é um clique só, sem diálogo, e some com a prescrição da lista. Sem volta,
+      // isso é perda de documento num produto de prontuário. O desfazer do toast precisa
+      // deste par para existir.
+      unarchivePrescricao: (id) => {
+        set((s) => ({
+          prescricoes: s.prescricoes.map((p) =>
+            p.id === id ? { ...p, status: "ativa" as const } : p,
           ),
         }));
         const x = get().prescricoes.find((p) => p.id === id);

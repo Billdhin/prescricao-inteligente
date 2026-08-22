@@ -1,4 +1,5 @@
 import { FORMATOS_AEROBIOS_LISTA, aplicarFormatoAerobio, formatoPeloNome } from "@/lib/gps/formatoAerobio";
+import { toastDesfazer } from "@/lib/toast";
 import type { ModeloPeriodizacaoId } from "@/data/periodizacao";
 import * as React from "react";
 import { Link } from "react-router-dom";
@@ -1062,7 +1063,15 @@ export function SessaoBloco({
   };
 
   const trocarBloco = (nb: BlocoSessao) => onChange({ ...sessao, blocos: sessao.blocos.map((x) => (x.id === nb.id ? nb : x)) });
-  const removerBloco = (id: string) => onChange({ ...sessao, blocos: sessao.blocos.filter((x) => x.id !== id) });
+  // Remover exercício era sumiço instantâneo, sem sinal nenhum. O desfazer devolve o
+  // bloco na POSIÇÃO original: recolocar no fim mudaria a ordem da sessão, e a ordem é
+  // parte da prescrição (aquecimento, principal, acessório).
+  const removerBloco = (id: string) => {
+    const antes = sessao.blocos;
+    const alvo = antes.find((x) => x.id === id);
+    onChange({ ...sessao, blocos: antes.filter((x) => x.id !== id) });
+    if (alvo) toastDesfazer(`${alvo.nome} removido da sessão.`, () => onChange({ ...sessao, blocos: antes }));
+  };
 
   // Agrupar marca 2-3 blocos de FORÇA consecutivos com o mesmo grupoMetodo (id gerado) e o
   // método correspondente; desagrupar limpa o grupo e o método de bi/tri/super daqueles blocos.

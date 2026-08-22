@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, CheckCheck, MoreHorizontal, Search, Eye, Plus } from "lucide-react";
+import { Bell, ChevronDown, CheckCheck, MoreHorizontal, Search, Eye, Plus, LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { PRIMARIOS, MAIS, BOTTOM, CONTA, itemAtivo } from "@/components/app/nav";
@@ -11,6 +11,7 @@ import type { CicloCtx } from "@/lib/gps/proximoPasso";
 import { LoginGate } from "@/components/app/LoginGate";
 import { CloudAuthGate } from "@/components/app/CloudAuthGate";
 import { Toasts } from "@/components/app/Toasts";
+import { ErrorBoundary } from "@/components/app/ErrorBoundary";
 import { sessaoAtiva, encerrarSessao } from "@/lib/auth";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { signOut } from "@/lib/backend/supabaseAuth";
@@ -115,7 +116,11 @@ export function AppLayout() {
 
   // depois de TODOS os hooks (regras de hooks): o gate substitui o shell inteiro
   if (cloud.configured) {
-    if (cloud.status === "loading") return <SplashCarregando />;
+    // Espera TAMBÉM a hidratação, e não só o auth. Sem isso, o primeiro frame de todo
+    // login mostrava o estado vazio ("Comece resolvendo um caso de verdade") e a lateral
+    // zerada por cima de uma carteira cheia: a primeira coisa que o produto dizia a um
+    // cliente pagante, todos os dias, era falsa. O portal do aluno já esperava.
+    if (cloud.status === "loading" || cloud.hydrating) return <SplashCarregando />;
     if (cloud.status === "signed-out") return <CloudAuthGate />;
     // Conta de aluno: o portal do aluno é o lugar dela, não o shell do profissional.
     if (cloud.role === "aluno") return <Navigate to="/aluno" replace />;
@@ -137,9 +142,11 @@ export function AppLayout() {
               página é dona do próprio cabeçalho, como no desenho da tela do aluno. */}
           {pathname === "/dashboard" && <Topbar />}
           <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-10">
-            <React.Suspense fallback={<RouteFallback />}>
-              <Outlet />
-            </React.Suspense>
+            <ErrorBoundary chaveDeReset={pathname}>
+              <React.Suspense fallback={<RouteFallback />}>
+                <Outlet />
+              </React.Suspense>
+            </ErrorBoundary>
           </main>
         </div>
       </div>
@@ -833,10 +840,25 @@ function Topbar() {
  * "Mais" no MOBILE: folha de baixo com os destinos que não cabem na barra
  * inferior de 5. No desktop ele não existe, porque a lateral já lista tudo.
  */
-function MaisMenu() {
+/**
+ * "Mais" existe em duas superfícies porque o gatilho vivia SÓ dentro da Topbar, e a Topbar
+ * só renderiza no Meu dia. Fora dele, no celular, ficavam inalcançáveis Estudar, Laboratório
+ * Visual, Protocolos, Comparador, Consultar, Grupos Especiais, Ajuda, Configurações e o
+ * próprio SAIR. Num produto usado entre atendimentos, isso é a maior parte das sessões.
+ * A folha é a mesma; o que muda é só a casca do botão.
+ */
+function MaisMenu({ variante = "topbar" }: { variante?: "topbar" | "barra-inferior" }) {
   const [open, setOpen] = React.useState(false);
   const { pathname } = useLocation();
   const botaoRef = React.useRef<HTMLButtonElement>(null);
+  const cloud = useCloudAuth();
+  const sairDaConta = async () => {
+    if (cloud.configured) await signOut();
+    else {
+      encerrarSessao();
+      window.location.reload();
+    }
+  };
 
   // Fecha ao trocar de rota (o destino já foi alcançado).
   React.useEffect(() => setOpen(false), [pathname]);
@@ -863,12 +885,32 @@ function MaisMenu() {
         aria-expanded={open}
         aria-haspopup="menu"
         className={cn(
-          "inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition-colors lg:hidden",
-          algumAtivo ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft hover:text-ink",
+          "transition-colors lg:hidden",
+          variante === "barra-inferior"
+            ? "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-2xs font-medium leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary " +
+              (algumAtivo || open ? "text-ink" : "text-ink-2 hover:text-ink")
+            : "inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold " +
+              (algumAtivo ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft hover:text-ink"),
         )}
       >
-        <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden />
-        <span className="hidden sm:inline">Mais</span>
+        {variante === "barra-inferior" ? (
+          <>
+            <span
+              className={cn(
+                "grid h-6 w-12 place-items-center rounded-full transition-colors",
+                (algumAtivo || open) && "bg-ink text-surface",
+              )}
+            >
+              <MoreHorizontal className="h-5 w-5 shrink-0" aria-hidden />
+            </span>
+            <span className="max-w-full">Mais</span>
+          </>
+        ) : (
+          <>
+            <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden />
+            <span className="hidden sm:inline">Mais</span>
+          </>
+        )}
       </button>
 
       {/* Folha de baixo POR PORTAL. A barra superior tem backdrop-blur, e um
@@ -923,6 +965,22 @@ function MaisMenu() {
                     </li>
                   );
                 })}
+                <li>
+                  <button
+                    onClick={() => void sairDaConta()}
+                    className="flex min-h-[44px] w-full items-start gap-3 rounded-card px-2.5 py-2 text-left transition-colors hover:bg-surface-soft"
+                  >
+                    <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-mute text-ink-2">
+                      <LogOut className="h-[18px] w-[18px]" aria-hidden />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold text-ink">Sair</span>
+                      <span className="block text-xs leading-tight text-ink-2">
+                        Encerra a sessão neste aparelho.
+                      </span>
+                    </span>
+                  </button>
+                </li>
               </ul>
             </div>
           </>,
@@ -966,6 +1024,9 @@ function BottomBar() {
           </Link>
         );
       })}
+      {/* Sexto item: o desenho da casca sempre foi "5 pílulas mais Mais", e no celular
+          era justamente o "Mais" que faltava fora do Meu dia. */}
+      <MaisMenu variante="barra-inferior" />
     </nav>
   );
 }

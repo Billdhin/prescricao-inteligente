@@ -2,7 +2,7 @@ import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
 import type { PerfilRemoto } from "./supabaseRepo";
 import * as repo from "./supabaseRepo";
-import { toast } from "@/lib/toast";
+import { toastFalha } from "@/lib/toast";
 
 /**
  * Ponte de sincronização com a nuvem (Fase 5 — login real).
@@ -35,7 +35,7 @@ export function isCloudOn() {
 function mirror(promise: Promise<unknown>, oQue: string) {
   promise.catch((e) => {
     console.warn(`[sync] falha ao salvar ${oQue} na nuvem:`, e?.message ?? e);
-    toast(`Salvo neste aparelho. Não consegui sincronizar ${oQue} agora.`);
+    toastFalha(`Salvo neste aparelho. Não consegui sincronizar ${oQue} agora.`);
   });
 }
 
