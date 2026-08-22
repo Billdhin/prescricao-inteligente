@@ -190,7 +190,7 @@ function CabecalhoPerfil({ aluno, feitas, total }: { aluno: Aluno; feitas: numbe
         </p>
       </div>
       <span className="inline-flex items-center gap-1.5 rounded-full bg-success-tint px-3 py-1.5 text-xs font-bold text-success-text">
-        <CheckCheck aria-hidden className="h-3.5 w-3.5" /> Salvo automaticamente
+        <CheckCheck aria-hidden className="h-3.5 w-3.5" /> Salva a cada resposta, neste aparelho
       </span>
       <Link to={`/alunos/${aluno.id}?avaliar=1`} className={buttonClasses("primary", "sm")}>
         Registrar avaliação <ChevronRight aria-hidden className="h-4 w-4" />
@@ -859,7 +859,7 @@ function SecaoNotas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Alu
           disabled={confirmado}
           className={buttonClasses(confirmado ? "ghost" : "primary", "sm")}
         >
-          {confirmado ? "Concluído" : "Nada mais a declarar"}
+          {confirmado ? "Perfil de saúde concluído" : "Concluir o perfil de saúde"}
         </button>
       </div>
     </Card>

@@ -123,13 +123,19 @@ export function SemanaStrip({
             <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
             Treino
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="inline-flex items-center gap-0.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" />
-              <span className="h-1.5 w-1.5 rounded-full bg-warning" />
-              <span className="h-1.5 w-1.5 rounded-full bg-danger-fill" />
+          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="inline-flex items-center gap-1">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-success" />
+              treino liberado
             </span>
-            Semáforo
+            <span className="inline-flex items-center gap-1">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning" />
+              liberado com ajuste
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-danger-fill" />
+              não liberado
+            </span>
           </span>
         </div>
       )}

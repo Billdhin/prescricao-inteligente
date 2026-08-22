@@ -1151,8 +1151,16 @@ for (const objetivo of OBJETIVOS) {
         if (!linha.includes(`${b.seriesAlvo} x ${b.repsAlvo}`)) {
           erro(`APP DO ALUNO SEM O ALVO: semana ${w.semana}, "${b.nome}" tem alvo ${b.seriesAlvo}x${b.repsAlvo} e o aluno lê "${linha}".`);
         }
-        if (b.rirAlvo != null && !linha.includes(`RIR ${b.rirAlvo}`)) {
-          erro(`APP DO ALUNO SEM O RIR: semana ${w.semana}, "${b.nome}" tem RIR ${b.rirAlvo} e o aluno lê "${linha}".`);
+        // NÃO cobra a sigla, cobra o esforço. O app do aluno escreve "pare com 3 repetições
+        // de sobra" porque "RIR" não é expandido em canto nenhum do app dele; o que não pode
+        // é o número do esforço-alvo da semana não chegar.
+        const esforcoNaLinha =
+          b.rirAlvo === 0
+            ? /não conseguir mais/.test(linha)
+            : new RegExp(`\\b${b.rirAlvo}\\b`).test(linha.replace(`${b.seriesAlvo} x ${b.repsAlvo}`, "")) &&
+              /de sobra/.test(linha);
+        if (b.rirAlvo != null && !esforcoNaLinha) {
+          erro(`APP DO ALUNO SEM O ESFORÇO-ALVO: semana ${w.semana}, "${b.nome}" tem RIR ${b.rirAlvo} e o aluno lê "${linha}".`);
         }
         for (const t of tokensDoBloco(b)) {
           if (!t.value || t.value.includes("undefined") || t.value.includes("NaN")) {

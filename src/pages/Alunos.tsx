@@ -356,7 +356,9 @@ function EmptyAlunos({ onNovo, onExemplos }: { onNovo: () => void; onExemplos: (
           Carregar exemplos
         </button>
       </div>
-      <p className="text-xs text-ink-3">Os exemplos são dados de demonstração; você pode removê-los depois.</p>
+      <p className="text-xs text-ink-3">
+        Os exemplos são dados de demonstração. Você apaga cada um pelo menu do próprio aluno.
+      </p>
     </Card>
   );
 }

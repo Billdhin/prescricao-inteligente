@@ -139,7 +139,16 @@ export function doseCurta(bloco: BlocoSessao): string {
     if (bloco.seriesAlvo != null && bloco.repsAlvo != null) partes.push(`${bloco.seriesAlvo} x ${bloco.repsAlvo}`);
     else if (bloco.series && bloco.reps) partes.push(`${bloco.series} x ${bloco.reps}`);
     else if (limpo(bloco.series) || limpo(bloco.reps)) partes.push(limpo(bloco.series) || limpo(bloco.reps));
-    if (bloco.rirAlvo != null) partes.push(`RIR ${bloco.rirAlvo}`);
+    // A sigla nunca foi explicada em lugar nenhum do app do aluno. Em vez de criar um
+    // glossário para uma linha só, a linha diz o que a sigla quer dizer.
+    if (bloco.rirAlvo != null)
+      partes.push(
+        bloco.rirAlvo === 0
+          ? "vá até não conseguir mais"
+          : bloco.rirAlvo === 1
+            ? "pare com 1 repetição de sobra"
+            : `pare com ${bloco.rirAlvo} repetições de sobra`,
+      );
     if (bloco.intervaloAlvoSeg != null) partes.push(fmtIntervalo(bloco.intervaloAlvoSeg));
     else if (limpo(bloco.intervalo)) partes.push(limpo(bloco.intervalo));
   }
@@ -152,9 +161,10 @@ export function doseCurta(bloco: BlocoSessao): string {
  * ruído. Aqui ficam só os rótulos que sobraram (tipicamente a Intensidade, que
  * não cabe na linha curta), com o rótulo colado ao valor.
  */
-// "RIR" entra aqui porque `doseCurta` ja o imprime ("3 x 15 · RIR 4 · 30 s") e ele
-// reaparecia logo abaixo como token, contra o proposito declarado de `tokensExtras`
-// ("aqui ficam so os rotulos que sobraram"). Medido em todos os blocos de forca.
+// "RIR" entra aqui porque `doseCurta` ja carrega a informacao dele, agora por extenso
+// ("3 x 15 · pare com 4 repeticoes de sobra · 30 s"), e o token cru reaparecia logo abaixo
+// contra o proposito declarado de `tokensExtras` ("aqui ficam so os rotulos que sobraram").
+// A sigla continua no lado do profissional, onde ela e o vocabulario certo.
 const NA_LINHA_CURTA = new Set(["Série", "Intervalo", "Duração", "RIR"]);
 export function tokensExtras(bloco: BlocoSessao): { label: string; value: string }[] {
   const naCurta =

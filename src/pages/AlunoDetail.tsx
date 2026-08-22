@@ -1395,7 +1395,7 @@ function BannerSemaforo({
           <span className="relative h-2.5 w-2.5 rounded-full" style={{ background: "var(--danger-fill)" }} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold" style={{ color: "#F2F6FC" }}>Hoje ainda não avaliado</p>
+          <p className="text-sm font-semibold" style={{ color: "#F2F6FC" }}>Você ainda não avaliou hoje</p>
           <p className="mt-0.5 text-2xs" style={{ color: "#8FA1BD" }}>
             {nItens} pergunta{nItens === 1 ? "" : "s"} · cerca de 40 segundos · checklist{" "}
             {grupoNome ? `de ${grupoNome.toLowerCase()}` : "geral"}
@@ -1705,7 +1705,8 @@ function ConfirmarExclusaoModal({
         <h2 className="font-display text-lg font-bold text-ink">Excluir {nome}?</h2>
         <p className="mt-2 text-sm text-ink-2">
           Isso apaga o aluno com todas as avaliações, prescrições e liberações registradas. Esta ação
-          não pode ser desfeita. Se quiser só tirar da lista ativa, prefira arquivar.
+          não pode ser desfeita. Se quiser só tirar da lista ativa, use "Marcar como inativo",
+          no menu do aluno.
         </p>
         <div className="mt-5 flex justify-center gap-2">
           <button onClick={onClose} className={buttonClasses("secondary", "sm")}>
@@ -1948,7 +1949,7 @@ function PlanoCard({
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-display text-lg font-bold text-ink">Treino do aluno</h2>
         <Link to={`/prescrever-treino?aluno=${aluno.id}`} className="text-sm font-semibold text-primary hover:underline">
-          Novo
+          Gerar outro plano
         </Link>
       </div>
 
@@ -2059,7 +2060,7 @@ function PlanoCard({
             <span className="min-w-0 flex-1 text-ink-2">
               {chegou ? (
                 <>
-                  <span className="font-semibold text-ink">Reavaliação da semana {reav.semana} chegou.</span> Registre
+                  <span className="font-semibold text-ink">Reavaliação da semana {reav.semana}.</span> Registre
                   as medidas para decidir entre progredir, manter ou ajustar.
                 </>
               ) : (

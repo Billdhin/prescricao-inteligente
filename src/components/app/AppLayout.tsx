@@ -501,8 +501,10 @@ function ItemLateral({
       }
     >
       <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
-      <span className="min-w-0 flex-1 truncate">{item.short ?? item.label}</span>
-      {badge && <BadgeLateral n={badge.n} tom={badge.tom} rotulo={item.short ?? item.label} />}
+      {/* A lateral tem 248px: cabe o rótulo inteiro, que é o que nav.ts declara. O
+          `short` é da barra de 320px e continua lá embaixo, onde faz sentido. */}
+      <span className="min-w-0 flex-1 truncate">{item.label}</span>
+      {badge && <BadgeLateral n={badge.n} tom={badge.tom} rotulo={item.label} />}
     </Link>
   );
 }

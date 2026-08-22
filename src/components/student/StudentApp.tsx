@@ -77,9 +77,15 @@ const PSE_ROTULOS: [number, number, string][] = [
 ];
 const rotuloPse = (n: number): string => PSE_ROTULOS.find(([a, b]) => n >= a && n <= b)?.[2] ?? "";
 
+/**
+ * O nome da semana NA LÍNGUA DO ALUNO. "Carga" e "descarga" são vocabulário de
+ * periodização: para quem treina, o que importa é se a semana pede o de sempre, se ela
+ * vem mais leve de propósito, ou se é semana de medir. Mesmo espírito do `rotuloAluno`
+ * que o produto já usa nos documentos.
+ */
 const TIPO_SEMANA: Record<Microciclo["tipo"], { label: string; tone: "neutral" | "warning" | "success" }> = {
-  carga: { label: "Semana de carga", tone: "success" },
-  deload: { label: "Semana de descarga", tone: "warning" },
+  carga: { label: "Semana normal", tone: "success" },
+  deload: { label: "Semana mais leve", tone: "warning" },
   teste: { label: "Semana de teste", tone: "neutral" },
 };
 

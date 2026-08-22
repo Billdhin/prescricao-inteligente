@@ -72,6 +72,7 @@ export function Landing() {
   useDelegacao(ref, vals);
   useNavegacaoInterna(ref);
   useRevelarPorScroll(ref, html);
+  usePreservarFaq(ref, html);
 
   // Porta das animações de load (hero, brilho do H1): depois do primeiro segundo, a raiz
   // ganha `lp-carregada` e as entradas não replayam quando o DOM for recriado por estado
@@ -126,17 +127,80 @@ function useRevelarPorScroll(ref: React.RefObject<HTMLDivElement | null>, html: 
       // exigir 12% dele visível deixava os links legais invisíveis numa rolagem rápida.
       { threshold: 0.05 },
     );
+    const alvos: HTMLElement[] = [];
     for (const sec of raiz.querySelectorAll<HTMLElement>("[data-screen-label]")) {
       const rotulo = sec.dataset.screenLabel ?? "";
       if (SEM_REVEAL.has(rotulo)) continue;
-      if (vistos.current.has(rotulo)) {
+      if (vistos.current.has(rotulo)) sec.classList.add("lp-visto");
+      else alvos.push(sec);
+    }
+
+    const revelarTudo = () => {
+      for (const sec of alvos) {
+        sec.classList.remove("lp-oculto");
         sec.classList.add("lp-visto");
-      } else {
+        vistos.current.add(sec.dataset.screenLabel ?? "");
+      }
+      obs.disconnect();
+    };
+
+    // Só esconde no PRÓXIMO QUADRO. Numa aba que não compõe, o quadro não vem, e a página
+    // simplesmente nunca some. Esconder de forma síncrona era o que criava a janela em que
+    // "invisível" virava estado final.
+    let socorro = 0;
+    const quadro = requestAnimationFrame(() => {
+      for (const sec of alvos) {
         sec.classList.add("lp-oculto");
         obs.observe(sec);
       }
+      // Rede de segurança: sem nenhuma entrega em 2 s, a animação é abandonada e o
+      // conteúdo aparece. Página legível vale mais que fade.
+      socorro = window.setTimeout(() => {
+        if (!raiz.querySelector(".lp-visto")) revelarTudo();
+      }, 2000);
+    });
+
+    return () => {
+      cancelAnimationFrame(quadro);
+      if (socorro) clearTimeout(socorro);
+      obs.disconnect();
+    };
+  }, [ref, html]);
+}
+
+/**
+ * Mantém abertas as respostas do FAQ que o visitante abriu, através das recriações do DOM.
+ *
+ * A chave é o texto da pergunta, não o índice: se a ordem do template mudar, o índice
+ * abriria a resposta errada, que é pior que fechar todas.
+ */
+function usePreservarFaq(ref: React.RefObject<HTMLDivElement | null>, html: string) {
+  const abertos = React.useRef(new Set<string>());
+  React.useEffect(() => {
+    const raiz = ref.current;
+    if (!raiz) return;
+    const chave = (d: HTMLDetailsElement) => d.querySelector("summary")?.textContent?.trim() ?? "";
+    const lista = [...raiz.querySelectorAll<HTMLDetailsElement>("details")];
+
+    // Reaplica o que já estava aberto antes desta recriação.
+    for (const d of lista) {
+      const k = chave(d);
+      if (!k) continue;
+      if (abertos.current.has(k)) d.open = true;
+      else if (d.open) abertos.current.add(k);
     }
-    return () => obs.disconnect();
+
+    const onToggle = (e: Event) => {
+      const d = e.target as HTMLDetailsElement;
+      const k = chave(d);
+      if (!k) return;
+      if (d.open) abertos.current.add(k);
+      else abertos.current.delete(k);
+    };
+    for (const d of lista) d.addEventListener("toggle", onToggle);
+    return () => {
+      for (const d of lista) d.removeEventListener("toggle", onToggle);
+    };
   }, [ref, html]);
 }
 
