@@ -320,10 +320,22 @@ export function aplicarFormatoAerobio(bloco: BlocoSessao, formato: FormatoAerobi
   const rpe = pisoRPE(intensidade);
   const guardaBase = cheia != null && (formato.metadeDoTempo || tiro != null);
 
+  /*
+   * O CAMPO DA RECUPERAÇÃO É UM INPUT, e input não é lugar de citação.
+   *
+   * A primeira versão colava a origem do protocolo dentro dele, e o profissional recebia uma
+   * caixa de edição com três linhas de referência para atravessar antes de trocar um número. O
+   * campo fica com a DOSE, aberto pelo tempo, e a origem desce para a observação, que é onde
+   * as citações deste produto já moram.
+   */
   const recuperacao =
     tiro != null
-      ? `${textoDeSegundos(tiro.recuperacaoSeg)} de recuperação ATIVA em ritmo leve entre os tiros (${tiro.origem})`
+      ? `${textoDeSegundos(tiro.recuperacaoSeg)} de recuperação ATIVA em ritmo leve entre os tiros`
       : formato.recuperacao;
+
+  const origemDoTiro = tiro
+    ? ` DE ONDE VÊM OS NÚMEROS DO TIRO: tiro de ${textoDeSegundos(tiro.trabalhoSeg)} e recuperação de ${textoDeSegundos(tiro.recuperacaoSeg)}, porque ${tiro.origem}.`
+    : "";
 
   const avisoDoPiso =
     contagem?.pisou && tiro
@@ -339,7 +351,7 @@ export function aplicarFormatoAerobio(bloco: BlocoSessao, formato: FormatoAerobi
     tiroSeg: contagem && tiro ? tiro.trabalhoSeg : undefined,
     intensidade,
     recuperacao,
-    observacao: formato.nota + avisoDoPiso,
+    observacao: formato.nota + origemDoTiro + avisoDoPiso,
     // Os alvos concretos seguem a faixa nova, senão o alvo contradiz o texto ao lado dele.
     duracaoAlvoMin: alvoIv ? alvoIv.min : bloco.duracaoAlvoMin,
     rpeAlvo: rpe ?? bloco.rpeAlvo,

@@ -1979,7 +1979,9 @@ function minutosNoTexto(texto: string): { min: number; max: number } | null {
     if (depois.formato !== f.nome) erro(`FORMATO NÃO GRAVADO (${f.nome}).`);
     if (depois.intensidade !== BANDAS_AEROBIAS[f.banda].intensidade)
       erro(`FORMATO SEM BANDA (${f.nome}): a intensidade não virou a banda "${f.banda}" que o formato declara.`);
-    if (depois.recuperacao !== f.recuperacao)
+    // Sem tiro cronometrado a recuperação é o texto fixo do formato; com tiro ela é DERIVADA
+    // dos segundos declarados, e quem cobra o conteúdo dela é a asserção da anatomia, abaixo.
+    if (!f.tiro && depois.recuperacao !== f.recuperacao)
       erro(`FORMATO SEM RECUPERAÇÃO (${f.nome}): o campo continuou "${depois.recuperacao}".`);
     if (f.metadeDoTempo) {
       if (depois.duracao === blocoCardio.duracao)
@@ -2002,8 +2004,17 @@ function minutosNoTexto(texto: string): { min: number; max: number } | null {
         erro(`INTERVALADO SEM TIROS (${f.nome}): o bloco saiu sem o número e o tempo de cada tiro, só com o tempo total "${depois.duracao}".`);
       if (depois.tiroSeg !== f.tiro.trabalhoSeg)
         erro(`TIRO SEM DURAÇÃO GRAVADA (${f.nome}): tiroSeg saiu "${depois.tiroSeg}" e o formato declara ${f.tiro.trabalhoSeg} s.`);
-      if (!depois.recuperacao?.includes(textoDeSegundos(f.tiro.recuperacaoSeg)))
-        erro(`RECUPERAÇÃO SEM TEMPO (${f.nome}): o campo diz "${depois.recuperacao}" e não traz os ${textoDeSegundos(f.tiro.recuperacaoSeg)} que o formato declara.`);
+      // ABRE pelo tempo, não só o contém: o texto de origem de cada formato já cita minutos e
+      // segundos do protocolo, então um includes passaria mesmo com a recuperação sem número.
+      const abertura = `${textoDeSegundos(f.tiro.recuperacaoSeg)} de recuperação`;
+      if (!depois.recuperacao?.startsWith(abertura))
+        erro(`RECUPERAÇÃO SEM TEMPO (${f.nome}): o campo precisa abrir com "${abertura}" e diz "${depois.recuperacao}".`);
+      // A origem dos números sai do input e vai para a observação; ela não pode sumir no caminho,
+      // senão o profissional assina um tiro de 4 min sem saber de onde os 4 min vieram.
+      if (!depois.observacao?.includes(f.tiro.origem))
+        erro(`TIRO SEM PROCEDÊNCIA (${f.nome}): a observação do bloco não diz de onde vêm o tiro e a recuperação.`);
+      if (depois.recuperacao?.includes(f.tiro.origem))
+        erro(`CITAÇÃO DENTRO DO INPUT (${f.nome}): a origem do protocolo voltou para o campo editável da recuperação.`);
       if (depois.tiros && contarNoTexto(depois.tiros).min < f.tiro.minTiros)
         erro(`PISO DE TIROS FURADO (${f.nome}): saiu "${depois.tiros}" e o formato declara piso de ${f.tiro.minTiros}.`);
 
