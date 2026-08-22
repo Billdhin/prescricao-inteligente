@@ -11,6 +11,7 @@ import { bibliografia } from "@/data/referencias";
 import { desenharProgressao, posicoesFocos, estadoSemana, ESTADO_LABEL, agregadoSemana } from "@/lib/gps/progressao";
 import { temAlvoForca, tokensAlvoForca, temAlvoAerobio, tokensAlvoAerobio } from "@/lib/gps/alvoResumo";
 import { assinaturaSemana } from "@/lib/gps/assinaturaSemana";
+import { topicosDoRaciocinio } from "@/lib/gps/raciocinioTopicos";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 import { CORES_PDF as C } from "@/lib/pdfCores";
 
@@ -120,7 +121,10 @@ function sessaoHtml(s: Sessao) {
             const atividade = b.modalidade ? getModalidade(b.modalidade)?.nome : undefined;
             const linhas: [string, string | undefined][] = [
               ["Formato", b.formato],
-              ["Duração", b.duracao],
+              // O intervalado precisa sair no PDF com a estrutura dos tiros: sem ela, o aluno
+              // recebe "5 a 10 min" e não sabe se é um tiro só ou vinte.
+              ["Tiros", b.tiros],
+              [b.tiros ? "Tempo de trabalho" : "Duração", b.duracao],
               ["Intensidade", b.intensidade],
               ["Recuperação", b.recuperacao && b.recuperacao !== "-" ? b.recuperacao : undefined],
             ];
@@ -454,7 +458,18 @@ export function exportPlanoPDF({
 
     <section class="bloco">
       <h2>Por que este plano</h2>
-      <p style="font-size:13px">${esc(plano.raciocinio)}</p>
+      ${/*
+        O raciocínio impresso segue os mesmos tópicos da tela. Um parágrafo de vinte linhas
+        num PDF assinado é ainda pior que na tela: no papel não há aba nem rolagem para
+        recuperar o assunto que se perdeu no meio.
+      */ ""}
+      ${topicosDoRaciocinio(plano.raciocinio)
+        .map((t) =>
+          t.titulo
+            ? `<p class="rot">${esc(t.titulo)}</p><p style="font-size:13px;margin:0">${esc(t.texto)}</p>`
+            : `<p style="font-size:13px">${esc(t.texto)}</p>`,
+        )
+        .join("")}
       <p class="rot">Como o modelo funciona</p>
       <p style="font-size:13px;color:${C.ink2}">${esc(modelo.comoFunciona)}</p>
       <p class="rot">Racional científico</p>

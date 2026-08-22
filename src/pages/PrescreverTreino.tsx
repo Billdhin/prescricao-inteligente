@@ -25,6 +25,7 @@ import { exercises } from "@/data/exercises";
 import { cn } from "@/lib/utils";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { gerarPlano, slugsClinicosDoPlano, consequenciasDoPlano } from "@/lib/gps/periodizacao";
+import { topicosDoRaciocinio } from "@/lib/gps/raciocinioTopicos";
 import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
 import {
   getModelo,
@@ -1481,15 +1482,38 @@ function TrilhoDoPlano({
     </ul>
   );
 
+  /*
+   * O RACIOCÍNIO SAI EM TÓPICOS, NÃO EM BLOCO CORRIDO.
+   *
+   * O texto sempre foi uma lista de assuntos independentes (o modelo, o perfil de cuidado, o
+   * cardio, o isométrico, a duração, a dose por idade), mas chegava aqui como um parágrafo
+   * único de vinte linhas. O Filipe pegou: "está tudo correto, mas texto corridão". Conteúdo
+   * certo que ninguém consegue varrer com o olho é conteúdo que não chega.
+   *
+   * Nenhuma palavra muda. O que muda é que cada assunto ganha a mesma marca de tópico da aba
+   * Resumo ao lado (`ItemPorque`), para as duas camadas se lerem do mesmo jeito.
+   */
+  const topicos = React.useMemo(() => topicosDoRaciocinio(plano.raciocinio), [plano.raciocinio]);
+
   const pratica = (
     <div className="space-y-3 text-sm text-ink-2">
-      <p>{plano.raciocinio}</p>
-      {meso && (
-        <p>
-          <span className="font-semibold text-ink">Este bloco:</span> {rotuloMeso(meso)}
-          {meso.foco ? `, ${meso.foco}` : ""}.
-        </p>
-      )}
+      <ul className="space-y-2.5">
+        {topicos.map((t, i) => (
+          <li key={i} className="border-l-2 border-analysis pl-3">
+            {t.titulo && <p className="text-sm font-semibold text-ink">{t.titulo}</p>}
+            <p className="text-sm text-ink-2">{t.texto}</p>
+          </li>
+        ))}
+        {meso && (
+          <li className="border-l-2 border-primary pl-3">
+            <p className="text-sm font-semibold text-ink">Este bloco</p>
+            <p className="text-sm text-ink-2">
+              {rotuloMeso(meso)}
+              {meso.foco ? `, ${meso.foco}` : ""}.
+            </p>
+          </li>
+        )}
+      </ul>
       <p className="text-xs text-ink-3">
         O que você editar aqui vale para a semana escolhida. Para mexer na tendência do bloco inteiro,
         use o plano bloco a bloco.

@@ -317,9 +317,9 @@ function frasePerfilClinico(input: GerarPlanoInput): string {
       : "";
   const lista = rotulos.length === slugs.length ? ` (${rotulos.join(", ")})` : "";
   if (slugs.length === 1) {
-    return `Este plano considerou um perfil de cuidado${lista}, e as faixas de dose foram ajustadas por ele.${teto}`;
+    return `Sobre os perfis de cuidado: este plano considerou um perfil de cuidado${lista}, e as faixas de dose foram ajustadas por ele.${teto}`;
   }
-  return `Este plano considerou ${slugs.length} perfis de cuidado ao mesmo tempo${lista}, e onde eles divergem vale sempre o mais conservador.${teto}`;
+  return `Sobre os perfis de cuidado: este plano considerou ${slugs.length} perfis de cuidado ao mesmo tempo${lista}, e onde eles divergem vale sempre o mais conservador.${teto}`;
 }
 
 /* ------------------------------ Seleção de exercícios ------------------------------ */
@@ -2340,13 +2340,13 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
     // Quando a escolha foi do profissional e difere da do motor, o plano diz as duas.
     // Silenciar a divergência transformaria a ferramenta em carimbo da escolha dele.
     sugeridoPeloMotor && sugeridoPeloMotor !== principal
-      ? `Este modelo foi escolhido por você. Pelo objetivo, nível e condição, o ponto de partida do sistema seria ${getModelo(sugeridoPeloMotor).nome}, que fica como alternativa para comparar.`
+      ? `Sobre a escolha do modelo: este modelo foi escolhido por você. Pelo objetivo, nível e condição, o ponto de partida do sistema seria ${getModelo(sugeridoPeloMotor).nome}, que fica como alternativa para comparar.`
       : "",
     grupo
       ? // O raciocínio também é impresso para o aluno, então ele nomeia o programa, não a
         // condição. A condição segue à vista do profissional no selo do plano e no perfil.
-        `A jornada de fases do programa ${grupo.rotuloAluno} é o esqueleto do macrociclo, e os cuidados e parâmetros dessa jornada são sobrepostos.`
-      : `Escolha por objetivo (${input.objetivo}) e nível (${input.nivel}).`,
+        `Sobre a base do plano: a jornada de fases do programa ${grupo.rotuloAluno} é o esqueleto do macrociclo, e os cuidados e parâmetros dessa jornada são sobrepostos.`
+      : `Sobre a base do plano: escolha por objetivo (${input.objetivo}) e nível (${input.nivel}).`,
     // O plano DIZ o que considerou. O Filipe cadastrou hipertensão estágio 2 e não achou a
     // condição em lugar nenhum do plano; o motor de fato a ignorava, e mesmo depois de
     // passar a usá-la, um plano que a aplica em silêncio não é auditável.
@@ -2449,13 +2449,26 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
         ? `Sobre a dose nesta faixa etária: a faixa citada deste objetivo já pede pelo menos ${piso} repetições de reserva nas séries principais, ou seja, já cumpre o piso de ${RIR_MINIMO_IDADE} da faixa etária, então o piso da idade não teve o que apertar e esta dose é a mesma que sairia para um aluno mais novo. ${evidencia} A folga já está na faixa; a calibragem da carga dentro dela segue sendo sua.`
         : `Sobre a dose nesta faixa etária: o plano já entra mais conservador, guardando pelo menos ${RIR_MINIMO_IDADE} repetições de reserva nas séries principais, porque a partir de ${IDADE_DOSE_PROPRIA} anos essa faixa tem dose própria na literatura. ${evidencia} A reserva já vem ajustada; a calibragem da carga dentro dela segue sendo sua.`;
     })(),
-    `As faixas de séries, repetições, intensidade e intervalo seguem as diretrizes citadas, sempre como faixa e sob o seu critério. ${faixa.ressalva}`,
+    `Sobre os números do plano: as faixas de séries, repetições, intensidade e intervalo seguem as diretrizes citadas, sempre como faixa e sob o seu critério. ${faixa.ressalva}`,
     alternativa
-      ? `Uma alternativa (${getModelo(alternativa).nome}) é oferecida porque a evidência sustenta mais de uma estratégia; as diferenças costumam ser pequenas quando o volume é equiparado.`
+      ? `Sobre a alternativa: ${getModelo(alternativa).nome} é oferecida como segunda estratégia porque a evidência sustenta mais de uma; as diferenças costumam ser pequenas quando o volume é equiparado.`
       : "",
   ]
     .filter(Boolean)
-    .join(" ");
+    /*
+     * CADA PARTE É UM TÓPICO, E O SEPARADOR É QUEM DIZ ISSO.
+     *
+     * O raciocínio sempre foi uma LISTA de assuntos independentes (o modelo, o perfil de
+     * cuidado, o cardio, o isométrico, a duração, a dose por idade). Coladas por um espaço,
+     * as doze viravam um bloco corrido de vinte linhas na aba "Na prática", e o Filipe pegou:
+     * o conteúdo estava certo e ninguém achava nada dentro dele.
+     *
+     * A linha em branco entre as partes não muda uma palavra do texto: ela só devolve ao
+     * leitor a estrutura que o gerador já tinha. Quem imprime (PDF do plano, prontuário) e a
+     * tela quebram nela, e cada parte já começa pelo próprio assunto ("Sobre o cardio:",
+     * "Sobre a duração:"), que vira o título do tópico. Ver `topicosDoRaciocinio`.
+     */
+    .join("\n\n");
 
   return {
     principal: macroPrincipal,
