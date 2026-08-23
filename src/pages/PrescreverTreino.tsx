@@ -49,6 +49,8 @@ import type { Aluno } from "@/data/alunos";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { bibliografia } from "@/data/referencias";
 import { exportPlanoPDF } from "@/lib/exportPlano";
+import { diferencaDePlano } from "@/lib/gps/diffPlano";
+import { ConfirmarPublicacao } from "@/components/treino/ConfirmarPublicacao";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, uid } from "@/lib/store";
 import { prontidaoParaPrescrever } from "@/lib/gps/prontidao";
 import { ProntidaoAviso } from "@/components/alunos/ProntidaoAviso";
@@ -123,6 +125,7 @@ export function PrescreverTreino() {
   const user = useUser();
   const premium = isPremiumUnlocked(user.plan);
   const [confirmarRegenerar, setConfirmarRegenerar] = React.useState(false);
+  const [confirmarPublicacao, setConfirmarPublicacao] = React.useState(false);
 
   // `?plano=` abre um plano salvo para continuar de onde parou; `?aluno=` começa um novo
   // já com o perfil dele. Sem retomar, "abrir plano" no perfil do aluno geraria um plano
@@ -373,6 +376,24 @@ export function PrescreverTreino() {
     irParaResultado();
   };
 
+  /*
+   * PUBLICAR PASSA POR UMA ANTESSALA quando o aluno JÁ TEM treino.
+   *
+   * O Filipe: "o sistema deveria apresentar um modal indicando o que muda do plano anterior...
+   * para que o professor não fique totalmente no escuro sobre o que está prescrevendo". O
+   * diálogo só existe quando há com o que comparar: na primeira publicação não há diferença a
+   * mostrar, e confirmação sem conteúdo é o que ensina alguém a clicar sem ler a próxima.
+   */
+  const diferenca = React.useMemo(() => {
+    if (!plano || !planoAtivoDoAluno || planoAtivoDoAluno.id === plano.id) return undefined;
+    return diferencaDePlano(planoAtivoDoAluno, plano);
+  }, [plano, planoAtivoDoAluno]);
+
+  const publicar = () => {
+    if (diferenca) setConfirmarPublicacao(true);
+    else salvar();
+  };
+
   const salvar = () => {
     if (!plano || !aluno) return;
     const jaExiste = planosSalvos.some((p) => p.id === plano.id);
@@ -405,7 +426,15 @@ export function PrescreverTreino() {
     [prescricoes],
   );
 
-  const exportar = () => {
+  /*
+   * Dois documentos do mesmo plano, e a diferença é de uso, não de conteúdo.
+   *
+   * O PLANO COMPLETO é o que se assina e arquiva, e segue sendo o padrão do botão. A FOLHA DA
+   * SEMANA é o que vai à academia: uma semana só, com a coluna de carga em branco para o
+   * aluno anotar. Medido no arquivo gerado, o plano de 12 semanas imprimia 180 linhas de
+   * exercício; a folha imprime as da semana.
+   */
+  const exportar = (somenteSemana?: number) => {
     if (!plano || !aluno) return;
     exportPlanoPDF({
       aluno,
@@ -413,6 +442,7 @@ export function PrescreverTreino() {
       profissional: user.name,
       cref: user.cref,
       marca: marcaDoUsuario(user),
+      somenteSemana,
     });
   };
 
@@ -769,9 +799,22 @@ export function PrescreverTreino() {
             salvo={salvo}
             onSalvar={salvar}
             onExportar={exportar}
+            onPublicar={publicar}
             onEditarContexto={() => { limparRascunho(); setRascunhoRecuperado(false); setPlano(null); }}
           />
         </div>
+      )}
+
+      {confirmarPublicacao && diferenca && aluno && (
+        <ConfirmarPublicacao
+          nomeAluno={aluno.nome}
+          diferenca={diferenca}
+          onCancelar={() => setConfirmarPublicacao(false)}
+          onConfirmar={() => {
+            setConfirmarPublicacao(false);
+            salvar();
+          }}
+        />
       )}
 
       {confirmarRegenerar && (
@@ -908,6 +951,7 @@ function ResultadoPlano({
   podeSalvar,
   salvo,
   onSalvar,
+  onPublicar,
   onExportar,
   onEditarContexto,
 }: {
@@ -923,7 +967,9 @@ function ResultadoPlano({
   podeSalvar: boolean;
   salvo: boolean;
   onSalvar: () => void;
-  onExportar: () => void;
+  /** publicar passa pela antessala de diferencas quando ha plano anterior */
+  onPublicar: () => void;
+  onExportar: (somenteSemana?: number) => void;
   /** Volta ao formulário preservando as respostas (o plano salvo segue no perfil). */
   onEditarContexto: () => void;
 }) {
@@ -1055,17 +1101,25 @@ function ResultadoPlano({
         <div className="flex flex-wrap items-center gap-2">
           {salvo && <span className="text-xs text-ink-3">Salvo no perfil</span>}
           <button
-            onClick={onExportar}
+            onClick={() => onExportar()}
             disabled={!podeSalvar}
             className={cn(buttonClasses("secondary", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}
           >
-            <FileDown className="h-4 w-4" /> Exportar PDF
+            <FileDown className="h-4 w-4" /> Plano completo
+          </button>
+          <button
+            onClick={() => onExportar(semanaFoco)}
+            disabled={!podeSalvar}
+            className={cn(buttonClasses("secondary", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}
+            title="Uma pagina com a semana aberta, com espaco para o aluno anotar a carga"
+          >
+            <FileDown className="h-4 w-4" /> Folha da semana {semanaFoco}
           </button>
           {/* O ÚNICO gradiente do produto, por regra do Design System: publicar é o
               momento em que o plano deixa de ser rascunho do profissional e vira o
               treino que o aluno vê. */}
           <button
-            onClick={onSalvar}
+            onClick={onPublicar}
             disabled={!podeSalvar}
             className={cn(
               buttonClasses("primary", "sm"),

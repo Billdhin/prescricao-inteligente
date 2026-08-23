@@ -5,6 +5,7 @@ import type { Macrociclo, Mesociclo, Microciclo, PlanoTreino, Sessao } from "@/d
 import type { Nivel } from "@/data/types";
 import { getModelo, getMetodo, rotuloHorizonte, rotuloFrequencia, TEND_LABEL, agruparBlocosPorMetodo } from "@/data/periodizacao";
 import { getModalidade } from "@/data/modalities";
+import { exercises } from "@/data/exercises";
 import { getParam } from "@/data/monitoringParameters";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { bibliografia } from "@/data/referencias";
@@ -75,16 +76,75 @@ function sessaoHtml(s: Sessao) {
           .join(" · ")}</div>`
       : "";
 
-  const linhaForca = (b: (typeof forca)[number], comSufixo: boolean) => `
+  /*
+   * A FAIXA CITADA É DITA UMA VEZ, E A DOSE DA SEMANA GANHA COLUNA.
+   *
+   * Medido no PDF gerado de um plano de 12 semanas: 180 linhas de exercício, e nelas a coluna
+   * "Séries" tinha UM valor distinto e "Intervalo" também UM. "Repetições" e "Intensidade",
+   * três cada. Ou seja, quatro das cinco colunas ocupavam a largura da folha sem carregar
+   * informação, enquanto o alvo da semana, o único número que muda de semana para semana (17
+   * valores distintos), era uma sublinha de 10px embaixo do nome do exercício. O Filipe:
+   * "a exportação em PDF do plano também está bem feia, meio quebrada, sem usar a página
+   * toda". A folha usa 178 dos 210 mm da A4; o que não usava a página era o CONTEÚDO.
+   *
+   * A regra é auto-limitada: a faixa só sobe para o cabeçalho quando ela é a MESMA em todos os
+   * exercícios da sessão. Havendo mais de uma (objetivos misturados), as colunas voltam, porque
+   * aí elas de fato distinguem linhas.
+   */
+  const assinaturaFaixa = (b: (typeof forca)[number]) =>
+    [b.series ?? "", b.reps ?? "", b.intensidade ?? "", b.intervalo ?? ""].join("|");
+  const faixaUnica = forca.length > 0 && new Set(forca.map(assinaturaFaixa)).size === 1;
+  const faixaNoCabecalho = faixaUnica
+    ? [
+        forca[0].series ? `${esc(forca[0].series)} séries` : "",
+        forca[0].reps ? `${esc(forca[0].reps)} repetições` : "",
+        forca[0].intensidade ? esc(forca[0].intensidade) : "",
+        forca[0].intervalo && forca[0].intervalo !== "-" ? `intervalo ${esc(forca[0].intervalo)}` : "",
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
+
+  /** O grupo muscular do exercício, do catálogo. Ausente para bloco sem slug (avulso). */
+  const grupoDe = (b: (typeof forca)[number]) =>
+    b.exercicioSlug ? (exercises.find((e) => e.slug === b.exercicioSlug)?.grupoMuscular ?? "") : "";
+
+  /** A dose CONCRETA da semana, em coluna própria e em negrito: é o que muda semana a semana. */
+  const doseDaSemana = (b: (typeof forca)[number]) =>
+    temAlvoForca(b)
+      ? tokensAlvoForca(b)
+          .map((t) => `${t.label === "Alvo" ? "" : esc(t.label) + " "}${esc(t.value)}`)
+          .join(" · ")
+      : "";
+
+  let ordem = 0;
+  const linhaForca = (b: (typeof forca)[number], comSufixo: boolean) => {
+    const nome =
+      esc(b.nome ?? "") +
+      (comSufixo && b.metodo && b.metodo !== "tradicional" ? ` <b>(${esc(getMetodo(b.metodo)?.nome ?? "")})</b>` : "");
+    if (!faixaUnica) {
+      // Sessão com faixas diferentes entre exercícios: as colunas voltam, porque aí elas
+      // distinguem linhas de verdade. O alvo segue como sublinha, como sempre foi.
+      return `
             <tr>
-              <td class="ex">${esc(b.nome ?? "")}${
-                comSufixo && b.metodo && b.metodo !== "tradicional" ? ` <b>(${esc(getMetodo(b.metodo)?.nome ?? "")})</b>` : ""
-              }${alvoForcaHtml(b)}</td>
+              <td class="ex">${nome}${alvoForcaHtml(b)}</td>
               <td>${esc(b.series ?? "")}</td>
               <td>${esc(b.reps ?? "")}</td>
               <td>${esc(b.intensidade ?? "")}</td>
               <td>${esc(b.intervalo && b.intervalo !== "-" ? b.intervalo : "")}</td>
             </tr>`;
+    }
+    ordem += 1;
+    const dose = doseDaSemana(b);
+    return `
+            <tr>
+              <td class="c-num">${ordem}</td>
+              <td class="ex">${nome}</td>
+              <td class="c-grupo">${esc(grupoDe(b))}</td>
+              <td class="c-dose">${dose || "&mdash;"}</td>
+              <td class="c-carga"></td>
+            </tr>`;
+  };
 
   const corpoForca = agruparBlocosPorMetodo(forca)
     .map((seg) => {
@@ -106,8 +166,13 @@ function sessaoHtml(s: Sessao) {
   const tabelaForca = forca.length
     ? `<div class="quadro">
         <p class="quadro-tit">Musculação</p>
+        ${faixaNoCabecalho ? `<p class="faixa-sessao"><b>Faixa citada, igual para todos os exercícios desta sessão:</b> ${faixaNoCabecalho}</p>` : ""}
         <table class="blocos">
-          <thead><tr><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Intensidade</th><th>Intervalo</th></tr></thead>
+          <thead><tr>${
+            faixaUnica
+              ? `<th class="c-num">#</th><th>Exercício</th><th>Grupo</th><th class="c-dose">Dose desta semana</th><th class="c-carga">Carga usada</th>`
+              : `<th>Exercício</th><th>Séries</th><th>Repetições</th><th>Intensidade</th><th>Intervalo</th>`
+          }</tr></thead>
           <tbody>${corpoForca}</tbody>
         </table>
       </div>`
@@ -330,6 +395,7 @@ export function exportPlanoPDF({
   cref,
   marca,
   apenasHtml,
+  somenteSemana,
 }: {
   aluno: Aluno;
   plano: PlanoTreino;
@@ -349,6 +415,19 @@ export function exportPlanoPDF({
    * A saída do caminho normal não muda em nada: o mesmo HTML segue para a janela.
    */
   apenasHtml?: boolean;
+  /**
+   * FOLHA DA SEMANA: imprime só a semana pedida, em vez do plano inteiro.
+   *
+   * O plano completo é o documento que o profissional ASSINA e arquiva, e continua sendo o
+   * padrão do botão. Mas um plano de 12 semanas vira um calhamaço, e o que vai à academia é
+   * uma semana só. São dois usos diferentes do mesmo dado, e forçar um a servir o outro é o
+   * que deixava o PDF, nas palavras do Filipe, "meio quebrado".
+   *
+   * O que a folha corta é a REPETIÇÃO das outras semanas, nunca a procedência: o cabeçalho
+   * assinável, o raciocínio, os cuidados e a bibliografia continuam nela, porque um documento
+   * que sai da mão de um profissional não pode sair sem eles.
+   */
+  somenteSemana?: number;
 }): string | void {
   const modelo = getModelo(plano.modeloId);
   // Documento que chega ao aluno: o título do plano já nasce com o nome de PROGRAMA do
@@ -360,11 +439,23 @@ export function exportPlanoPDF({
   const biblio = bibliografia(plano.refIds);
   const reavaliacoes = plano.macrociclo.mesociclos.filter((m) => m.reavaliacao).map((m) => m.semanaFim);
 
+  /*
+   * Na folha da semana, o macrociclo impresso é o mesmo objeto com os microciclos filtrados.
+   * Filtrar aqui, e não em cada lugar que imprime, garante que folha e plano completo saiam
+   * do MESMO caminho de renderização: o que valer num vale no outro.
+   */
+  const mesosImpressos =
+    somenteSemana == null
+      ? plano.macrociclo.mesociclos
+      : plano.macrociclo.mesociclos
+          .map((m) => ({ ...m, microciclos: m.microciclos.filter((w) => w.semana === somenteSemana) }))
+          .filter((m) => m.microciclos.length > 0);
+
     // Acento do documento: a cor da marca do profissional, senão a do produto.
   const corMarca = marca?.corPrimaria || C.marca;
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-  <title>Plano de treino · ${esc(aluno.nome)}</title>
+  <title>${somenteSemana != null ? "Semana " + somenteSemana : "Plano de treino"} · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
@@ -416,6 +507,17 @@ export function exportPlanoPDF({
     .quadros { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
     .quadro { flex: 1 1 260px; min-width: 240px; border: 1px solid ${C.borda}; border-radius: 6px; overflow: hidden; }
     .quadro-tit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; background: ${C.papelSuave}; margin: 0; padding: 4px 8px; border-bottom: 1px solid ${C.borda}; }
+    /* A faixa citada, dita uma vez por sessão quando ela é a mesma em todos os exercícios. */
+    .faixa-sessao { font-size: 10.5px; color: ${C.ink2}; margin: 0; padding: 5px 8px; border-bottom: 1px solid ${C.borda}; }
+    .faixa-sessao b { color: ${C.ink}; font-weight: 600; }
+    .blocos td.c-num { width: 18px; color: ${C.ink2}; text-align: right; padding-right: 2px; }
+    .blocos th.c-num { width: 18px; }
+    .blocos .c-grupo { color: ${C.ink2}; white-space: nowrap; }
+    .blocos .c-dose { font-weight: 700; white-space: nowrap; }
+    /* A coluna de carga sai VAZIA de propósito: é a linha em que o aluno anota o peso que
+       usou. O papel existe para ir à academia, e essa era a única coisa que ele não tinha. */
+    .blocos th.c-carga { width: 88px; }
+    .blocos td.c-carga { border-bottom: 1px solid ${C.borda}; }
     .quadro table.blocos { padding: 2px 6px 4px; }
     .quadro table.blocos th, .quadro table.blocos td { padding: 3px 6px; }
     .cardio { padding: 5px 8px; border-bottom: 1px solid ${C.linha}; }
@@ -483,7 +585,7 @@ export function exportPlanoPDF({
 
     <section class="bloco">
       <h2>Macrociclo: ${esc(plano.macrociclo.objetivoGeral)}</h2>
-      ${plano.macrociclo.mesociclos.map(mesoHtml).join("")}
+      ${mesosImpressos.map(mesoHtml).join("")}
     </section>
 
     ${
