@@ -31,7 +31,7 @@
  *   3. Troque `CSP_MODO` abaixo de "report" para "bloquear" e publique.
  */
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 const raiz = join(import.meta.dirname, "..");
@@ -138,3 +138,28 @@ writeFileSync(join(dist, "_headers"), conteudo, "utf8");
 console.log(
   `[headers] dist/_headers escrito · CSP em modo ${CSP_MODO} · ${hashes.length} script(s) inline autorizado(s) por hash.`,
 );
+
+/*
+ * O 404.html SAI quando o destino é o Cloudflare, e isso não é detalhe.
+ *
+ * Descoberto testando o primeiro deploy de verdade: com _redirects no lugar e tudo
+ * enviado, /pricing e /casos-rcd continuavam devolvendo 404. O motivo é que o Cloudflare
+ * Pages, ao encontrar um 404.html no diretório publicado, o adota como página de erro, e
+ * isso tem precedência sobre a reescrita `/* /index.html 200`. Ou seja: o truque que
+ * existia para contornar a limitação do GitHub Pages estava, sozinho, anulando a correção
+ * que motivou a migração.
+ *
+ * Ele não pode simplesmente ser apagado do repositório ainda: enquanto o domínio servir
+ * pelo GitHub Pages, é ele que faz rota profunda funcionar lá. Então quem decide é o
+ * destino do build.
+ *
+ * Quando a virada terminar (passo 6 do deploy-cloudflare.yml), o public/404.html e este
+ * bloco somem juntos.
+ */
+if (process.env.DEPLOY_ALVO === "cloudflare") {
+  const alvo = join(dist, "404.html");
+  if (existsSync(alvo)) {
+    rmSync(alvo);
+    console.log("[headers] 404.html removido do dist: no Cloudflare ele sequestraria a reescrita do _redirects.");
+  }
+}

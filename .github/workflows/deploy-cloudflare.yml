@@ -90,6 +90,10 @@ jobs:
 
       - name: Build
         env:
+          # Sem isto o 404.html (truque do GitHub Pages) vai junto para o dist e o
+          # Cloudflare o adota como página de erro, anulando a reescrita do _redirects.
+          # Descoberto no primeiro deploy real: /pricing continuava 404 com tudo no lugar.
+          DEPLOY_ALVO: cloudflare
           VITE_BASE: /
           # A chave PUBLICÁVEL (anon/public) vai para o bundle do cliente por design e é
           # protegida por RLS. NUNCA a secreta (sb_secret_).
