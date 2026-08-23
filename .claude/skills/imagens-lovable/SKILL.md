@@ -188,6 +188,18 @@ estava por cima do nariz e da boca. A correção que funcionou também foi geom�
 pontas da corda passam pelos LADOS do rosto, na altura das orelhas; o mosquetão fica ABAIXO da
 linha do queixo".
 
+**AS VARIAÇÕES E OS ERROS HERDAM O DEFEITO DA IMAGEM PRINCIPAL, porque nasceram no mesmo lote.**
+Consertei o dead-bug principal e dei por encerrado; a variação `dead-bug-2` tinha exatamente o
+mesmo defeito, os dois braços no mesmo ombro. Óbvio depois de ver: elas foram geradas juntas, do
+mesmo prompt. **Achou defeito numa imagem? Olhe imediatamente as outras famílias DAQUELE slug**
+(`variacoes/<slug>-*`, `erros/<slug>-*`, `mmp/<slug>`) antes de fechar o caso.
+
+**E a passada de anatomia vale para o EQUIPAMENTO também.** No `leg-press-45-0` o aparelho não
+era um leg press: sem trilho, sem plataforma, pernas soltas no ar sem empurrar nada, e texto
+alucinado no encosto. É a mesma classe do defeito que abriu esta rodada (a puxada alta com barra
+solta). A pergunta a fazer é: **o que empurra o quê? dá para ver a mecânica?** Se não der, a
+imagem ensina um aparelho que não existe.
+
 **Não dá para transformar isso em guardrail, e está declarado:** plausibilidade anatômica não é
 medível por script. O `check:pares` mede cena e proporção porque essas têm número; anatomia não
 tem. Aqui o método é o olho, e o que fica registrado é a PERGUNTA a fazer, não uma asserção.
