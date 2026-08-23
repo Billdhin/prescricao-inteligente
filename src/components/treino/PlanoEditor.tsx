@@ -1640,7 +1640,7 @@ export function CriterioLista({
   onChange?: (itens: string[]) => void;
 }) {
   if (!itens.length && !editavel) return null;
-  const dot = tone === "success" ? "bg-success" : "bg-warning";
+  const dot = tone === "success" ? "bg-success" : "bg-warning-fill";
 
   if (!editavel) {
     return (

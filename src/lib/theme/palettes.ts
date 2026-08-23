@@ -49,6 +49,19 @@ export interface Compartilhado {
   analysisFill?: string;
   /** o que vai POR CIMA do turquesa vivo (ink na Rota; branco daria 2,57) */
   onAnalysisFill?: string;
+  /**
+   * AMARELO VIVO da sinalização: a luz do semáforo, o ponto de alerta.
+   *
+   * Existe porque `warning` foi escurecido até #8E6009 para passar 4,5:1 como
+   * TEXTO sobre a tinta, e nessa profundidade ele já não é amarelo, é marrom.
+   * O fundador viu isso no semáforo: "o amarelo está marrom". É o mesmo par que
+   * o vermelho já tinha (`danger` escreve, `dangerFill` preenche).
+   *
+   * Ausente = cai em `warning`, e nada muda de aparência.
+   */
+  warningFill?: string;
+  /** o que vai POR CIMA do amarelo vivo. Ausente = cai em `onPrimary`. */
+  onWarningFill?: string;
   /** cores fixas do logo, para o gradiente da marca. Não seguem a paleta. */
   brandBlue?: string;
   brandTurquesa?: string;
@@ -90,6 +103,7 @@ const COMPART_CLARO: Compartilhado = {
   onPrimary: "#ffffff", onAnalysis: "#ffffff",
   analysis: "#0e7c8a", analysisText: "#0c6b77", cta: "#e0663b", ctaText: "#b24a28",
   success: "#147a3a", warning: "#b45309", danger: "#b91c1c", dangerFill: "#ef4444",
+  warningFill: "#E0A12A", onWarningFill: "#12151b",
   successTint: "#e7f8ed", warningTint: "#fef4e2", ctaTint: "#fff1e6", analysisTint: "#e0f7f9", dangerTint: "#fdecec",
   dataIntensidade: "#9a4f2e",
 };
@@ -97,6 +111,7 @@ const COMPART_ESCURO: Compartilhado = {
   onPrimary: "#12151b", onAnalysis: "#12151b",
   analysis: "#45b6c6", analysisText: "#63c6d4", cta: "#ef7a50", ctaText: "#f2895f",
   success: "#3bbf6d", warning: "#e2952f", danger: "#f07070", dangerFill: "#ef4444",
+  warningFill: "#F0B429", onWarningFill: "#12151b",
   successTint: "#123020", warningTint: "#322510", ctaTint: "#331d13", analysisTint: "#123239", dangerTint: "#331717",
   dataIntensidade: "#d9926a",
 };
@@ -127,7 +142,12 @@ const ROTA_CLARO: PaletaCore = {
   ink3: "#616874",
   // o #9AA1AC do design dá 2,56 como texto: é cinza decorativo, e vive aqui.
   ink4: "#9AA1AC",
-  primary: "#2064EC",
+  // O literal da marca (#2064EC) dá 4,45 sobre surface-soft e 4,34 sobre
+  // surface-mute, e `hover:bg-surface-soft` aparece 116 vezes no produto: um link
+  // primário que o mouse toca cairia abaixo de AA. Escurecer 3% resolve os quatro
+  // pares (pior fica 4,56) e é imperceptível. O azul EXATO da marca continua em
+  // `brandBlue`, que é quem pinta o logo.
+  primary: "#1F61E5",
   primaryTint: "#EEF3FE",
 };
 
@@ -162,9 +182,12 @@ const ROTA_COMPART_CLARO: Compartilhado = {
   ctaTint: "#FBF1DC",
   success: "#177A4C",
   successTint: "#E3F4EA",
-  // #96650A sobre a tint dá 4,4999 e reprovaria por arredondamento.
+  // #96650A sobre a tint dá 4,4999 e reprovaria por arredondamento. Este tom
+  // escreve; quem acende a luz do semáforo é o warningFill logo abaixo.
   warning: "#8E6009",
   warningTint: "#FBF1DC",
+  warningFill: "#E8A317",
+  onWarningFill: "#17202E",
   danger: "#C0361F",
   dangerTint: "#FCEAE6",
   dangerFill: "#E2543E",
@@ -188,6 +211,8 @@ const ROTA_COMPART_ESCURO: Compartilhado = {
   successTint: "#10301F",
   warning: "#E6B03C",
   warningTint: "#322510",
+  warningFill: "#F0B429",
+  onWarningFill: "#0A0D14",
   danger: "#FF9D8C",
   dangerTint: "#331717",
   dangerFill: "#E2543E",
@@ -337,6 +362,8 @@ export function tokensDe(paleta: Paleta, escuro: boolean): Record<string, string
     "brand-turquesa": comp.brandTurquesa ?? comp.analysis,
     cta: comp.cta, "cta-text": comp.ctaText,
     success: comp.success, warning: comp.warning, danger: comp.danger, "danger-fill": comp.dangerFill,
+    "warning-fill": comp.warningFill ?? comp.warning,
+    "on-warning-fill": comp.onWarningFill ?? comp.onPrimary,
     "success-tint": comp.successTint, "warning-tint": comp.warningTint,
     "cta-tint": comp.ctaTint, "analysis-tint": comp.analysisTint, "danger-tint": comp.dangerTint,
     "data-intensidade": comp.dataIntensidade,

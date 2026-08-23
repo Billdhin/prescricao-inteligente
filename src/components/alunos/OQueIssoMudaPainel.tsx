@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  *  item também traz a fonte escrita. */
 const BARRA: Record<OrigemMudanca, string> = {
   condicao: "bg-danger",
-  restricao: "bg-warning",
+  restricao: "bg-warning-fill",
   medicacao: "bg-primary",
 };
 

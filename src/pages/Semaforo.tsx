@@ -173,7 +173,7 @@ function Marcador({ estado }: { estado: EstadoSemaforo }) {
     : estado.hoje?.resultado === "verde"
       ? "bg-success"
       : estado.hoje?.resultado === "amarelo"
-        ? "bg-warning"
+        ? "bg-warning-fill"
         : null;
   return (
     <span

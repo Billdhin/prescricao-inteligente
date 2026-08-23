@@ -624,7 +624,7 @@ function MechanismAccordion({ title, steps }: { title?: string; steps: NucleoSte
 /** Célula rotulada da tabela do núcleo (aplicação, como medir, erro frequente). */
 function AtlasCell({ icon: Icon, label, text, tone = "neutral" }: { icon: LucideIcon; label: string; text: string; tone?: "neutral" | "warning" }) {
   return (
-    <div className={cn("rounded-lg border p-3", tone === "warning" ? "border-warning/40 bg-warning/5" : "border-border bg-surface")}>
+    <div className={cn("rounded-lg border p-3", tone === "warning" ? "border-warning/40 bg-warning-fill/5" : "border-border bg-surface")}>
       <div className={cn("mb-1 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide", tone === "warning" ? "text-warning" : "text-ink-3")}>
         <Icon className="h-3.5 w-3.5" aria-hidden />
         {label}

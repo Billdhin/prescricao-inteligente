@@ -409,7 +409,16 @@ function Sidebar() {
     <aside
       aria-label="Menu principal"
       className="fixed inset-y-0 left-0 z-30 hidden w-[248px] flex-col overflow-y-auto lg:flex"
-      style={{ background: CASCA.fundo, borderRight: `1px solid ${CASCA.borda}` }}
+      style={
+        {
+          background: CASCA.fundo,
+          borderRight: `1px solid ${CASCA.borda}`,
+          // A casca publica os próprios valores como variáveis para o hover dos
+          // itens ler daqui, e não de um hex repetido na classe. Fonte única.
+          "--casca-tinta": CASCA.tinta,
+          "--casca-hover": "rgba(148,170,210,.14)",
+        } as React.CSSProperties
+      }
     >
       <Link
         to="/dashboard"
@@ -493,7 +502,17 @@ function ItemLateral({
     <Link
       to={item.to}
       aria-current={ativo ? "page" : undefined}
-      className="flex min-h-[44px] items-center gap-3 rounded-card px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      // O realce de hover deste item vinha, até 23/08/2026, de uma regra GLOBAL
+      // que vazava do CSS da landing (`a:hover{color:#10233A}`). Aquele hex é quase
+      // preto e a casca tem fundo #0D1524: passar o mouse deixava a palavra em
+      // 1,15:1 contra o próprio fundo, ou seja, sumia. Escopar a landing consertou
+      // o defeito e apagou o efeito junto, então o efeito nasce aqui, com os
+      // valores da própria casca: a tinta sobe de #9DB2D6 (8,5:1) para #F2F6FC
+      // (15,1:1) e o fundo ganha um véu claro. Hover que AUMENTA o contraste.
+      className={cn(
+        "flex min-h-[44px] items-center gap-3 rounded-card px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        !ativo && "hover:bg-[var(--casca-hover)] hover:text-[var(--casca-tinta)]",
+      )}
       style={
         ativo
           ? { background: CASCA.ativoFundo, color: CASCA.ativoTinta, boxShadow: "0 1px 3px rgba(13,21,36,.28)" }
@@ -1001,7 +1020,7 @@ function NotificationsMenu() {
                   <span
                     className={cn(
                       "mt-0.5 w-1 shrink-0 self-stretch rounded-full",
-                      n.tone === "danger" ? "bg-danger-fill" : n.tone === "warning" ? "bg-warning" : "bg-analysis-fill",
+                      n.tone === "danger" ? "bg-danger-fill" : n.tone === "warning" ? "bg-warning-fill" : "bg-analysis-fill",
                     )}
                   />
                   <div className="min-w-0">

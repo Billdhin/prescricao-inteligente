@@ -39,7 +39,7 @@ const COR_UI: Record<
     bg: "bg-warning-tint",
     border: "border-warning/40",
     text: "text-warning",
-    dot: "bg-warning",
+    dot: "bg-warning-fill",
     icon: <AlertTriangle className="h-6 w-6 text-warning" />,
   },
   vermelho: {
@@ -156,7 +156,7 @@ export function SemaforoLiberacao({
             <ul className="mt-2 space-y-1">
               {grupo.sinaisAlerta.map((s) => (
                 <li key={s} className="flex gap-2 text-xs text-ink">
-                  <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
+                  <span aria-hidden className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning-fill" />
                   {s}
                 </li>
               ))}

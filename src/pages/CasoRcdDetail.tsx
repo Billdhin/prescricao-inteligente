@@ -174,7 +174,7 @@ export function CasoRcdDetail() {
             <ul className="space-y-1.5 text-sm text-ink-2">
               {semaforo.itens.slice(0, 3).map((item) => (
                 <li key={item.id} className="flex gap-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning-fill" />
                   {item.pergunta}
                 </li>
               ))}

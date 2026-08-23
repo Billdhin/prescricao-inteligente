@@ -1981,7 +1981,7 @@ function Results({
                 <ul className="mt-3 space-y-1">
                   {best.cautions.map((c) => (
                     <li key={c} className="flex gap-2 text-xs text-warning">
-                      <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-warning" />
+                      <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-warning-fill" />
                       {c}
                     </li>
                   ))}

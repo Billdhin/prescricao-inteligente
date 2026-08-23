@@ -85,7 +85,7 @@
   --ink-2: #616874;           --ink-2-rgb: 97 104 116;
   --ink-3: #616874;           --ink-3-rgb: 97 104 116;
   --ink-4: #9AA1AC;           --ink-4-rgb: 154 161 172;
-  --primary: #2064EC;         --primary-rgb: 32 100 236;
+  --primary: #1F61E5;         --primary-rgb: 31 97 229;
   --primary-tint: #EEF3FE;    --primary-tint-rgb: 238 243 254;
   --on-primary: #ffffff;      --on-primary-rgb: 255 255 255;
   --on-analysis: #ffffff;     --on-analysis-rgb: 255 255 255;
@@ -101,6 +101,8 @@
   --warning: #8E6009;         --warning-rgb: 142 96 9;
   --danger: #C0361F;          --danger-rgb: 192 54 31;
   --danger-fill: #E2543E;     --danger-fill-rgb: 226 84 62;
+  --warning-fill: #E8A317;    --warning-fill-rgb: 232 163 23;
+  --on-warning-fill: #17202E; --on-warning-fill-rgb: 23 32 46;
   --success-tint: #E3F4EA;    --success-tint-rgb: 227 244 234;
   --warning-tint: #FBF1DC;    --warning-tint-rgb: 251 241 220;
   --cta-tint: #FBF1DC;        --cta-tint-rgb: 251 241 220;

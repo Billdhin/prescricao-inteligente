@@ -33,6 +33,8 @@ export default {
         danger: "rgb(var(--danger-rgb) / <alpha-value>)",
         "danger-tint": "rgb(var(--danger-tint-rgb) / <alpha-value>)",
         "danger-fill": "rgb(var(--danger-fill-rgb) / <alpha-value>)",
+        "warning-fill": "rgb(var(--warning-fill-rgb) / <alpha-value>)",
+        "on-warning-fill": "rgb(var(--on-warning-fill-rgb) / <alpha-value>)",
         // Direção "1c Rota". Os dois primeiros são de PREENCHIMENTO e o
         // guardrail token-nao-textual proíbe usá-los como cor de texto: o
         // turquesa vivo dá 2,52:1 sobre papel e o cinza decorativo, 2,56.

@@ -128,7 +128,7 @@ function TrustDialog({ level, ex, onClose }: { level: TrustLevel; ex?: Exercise;
               <ul className="space-y-1.5">
                 {ex.blocos.errosComuns.map((c) => (
                   <li key={c} className="flex gap-2 text-sm text-ink">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning-fill" />
                     {c}
                   </li>
                 ))}
@@ -705,7 +705,7 @@ function Bullets({
         <ul className="min-w-0 flex-1 grid gap-2 md:grid-cols-2">
           {items.map((it) => (
             <li key={it} className="flex gap-2 rounded-xl border border-border bg-surface p-3 text-sm text-ink">
-              <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", tone === "warning" ? "bg-warning" : "bg-primary")} />
+              <span className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", tone === "warning" ? "bg-warning-fill" : "bg-primary")} />
               <span>{it}</span>
             </li>
           ))}

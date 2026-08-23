@@ -106,7 +106,7 @@ export function ProntuarioView({
                 <ul className="mt-1.5 space-y-1 text-sm text-ink-2">
                   {prontuario.semaforo.ajustes.map((a) => (
                     <li key={a} className="flex gap-2">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning-fill" />
                       {a}
                     </li>
                   ))}

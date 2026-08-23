@@ -9,17 +9,34 @@
  * Já foi removido uma vez (06/08/2026) e voltou junto com um porte novo do protótipo:
  * se trocar o protótipo de novo, apague os @font-face de novo.
  *
- * Este arquivo é GLOBAL (não scoped): regra nova sempre prefixada com .landing-prototipo,
- * exceto o bloco base abaixo, que é herdado do protótipo e vaza de propósito.
+ * Este arquivo é GLOBAL (não scoped): TODA regra vai prefixada com .landing-prototipo.
+ *
+ * O bloco base já foi global "de propósito", e o propósito estava errado. Ele
+ * carregava `a:hover{color:#10233A}`, um hex fixo quase preto, e a barra lateral
+ * do app tem fundo #0D1524: passar o mouse num item do menu deixava o texto em
+ * 1,15:1 contra o próprio fundo, ou seja, a palavra sumia. O fundador viu e
+ * reportou em 23/08/2026 ("algumas palavras somem ao passar o mouse... o
+ * contraste fica com a cor quase igual da cor do botão").
+ *
+ * A regra do produto é: **cor de estado vem de TOKEN, nunca de hex fixo**, porque
+ * o hex não sabe em que superfície vai cair e o app tem claro, escuro e uma barra
+ * escura dentro do tema claro. Aqui o hex fica porque a landing é uma peça
+ * autoral de superfície fixa, e por isso ele fica PRESO a ela.
+ *
+ * `check:contraste` mede os estados de hover e trava se algum par cair abaixo de
+ * AA; `check:design` proíbe regra global neste arquivo.
  */
 
 html{scroll-behavior:smooth}
-body{margin:0;background:#F7F6F3;color:#10233A;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-a{color:#2064EC}a:hover{color:#10233A}
-summary{list-style:none}summary::-webkit-details-marker{display:none}
-input::placeholder{color:#93A3B8}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-::selection{background:#CDE3DF}
+
+.landing-prototipo{min-height:100dvh;background:#F7F6F3;color:#10233A;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.landing-prototipo a{color:#2064EC}
+.landing-prototipo a:hover{color:#10233A}
+.landing-prototipo summary{list-style:none}
+.landing-prototipo summary::-webkit-details-marker{display:none}
+.landing-prototipo input::placeholder{color:#93A3B8}
+.landing-prototipo ::selection{background:#CDE3DF}
 
 @media print{}
 /*
@@ -33,7 +50,7 @@ input::placeholder{color:#93A3B8}
  * Declarar o que vai naquele espaço é honesto; caixa vazia ou ícone de imagem quebrada,
  * não.
  */
-.tela-pendente {
+.landing-prototipo .tela-pendente {
   width: 100%;
   height: 100%;
   display: flex;

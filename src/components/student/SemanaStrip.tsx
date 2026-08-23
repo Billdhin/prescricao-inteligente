@@ -12,7 +12,7 @@ const DIAS_LONGO = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado",
 // profissional (COR_SEMAFORO em AlunoDetail): verde/amarelo/vermelho por token.
 const SEMAFORO_DOT: Record<Liberacao["resultado"], string> = {
   verde: "bg-success",
-  amarelo: "bg-warning",
+  amarelo: "bg-warning-fill",
   vermelho: "bg-danger-fill",
 };
 const SEMAFORO_ROTULO: Record<Liberacao["resultado"], string> = {
@@ -129,7 +129,7 @@ export function SemanaStrip({
               treino liberado
             </span>
             <span className="inline-flex items-center gap-1">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning" />
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning-fill" />
               liberado com ajuste
             </span>
             <span className="inline-flex items-center gap-1">
