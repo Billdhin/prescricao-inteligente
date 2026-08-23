@@ -30,11 +30,31 @@ function prioridade(chip: ProximoPasso["chip"]): number {
   return 2;
 }
 
+/** Os valores que o `?filtro=` aceita. Qualquer outro cai em "todos", para uma URL
+ *  digitada errado não quebrar a lista nem esconder aluno sem explicação. */
+const FILTROS_VALIDOS = new Set<string>(["todos", "pausados", ...ETAPAS]);
+
 export function Alunos() {
   const { alunos, addAluno, loadExamples, avaliacoes, prescricoes, planos, liberacoes, execucoes } = useAlunos();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const [q, setQ] = React.useState("");
+  // Busca e filtro na URL: ver o bloco de comentário acima do componente.
+  const q = params.get("busca") ?? "";
+  const trocarParam = React.useCallback(
+    (chave: string, valor: string, padrao: string) => {
+      setParams(
+        (atuais) => {
+          const p = new URLSearchParams(atuais);
+          if (!valor || valor === padrao) p.delete(chave);
+          else p.set(chave, valor);
+          return p;
+        },
+        { replace: true },
+      );
+    },
+    [setParams],
+  );
+  const setQ = React.useCallback((v: string) => trocarParam("busca", v, ""), [trocarParam]);
   const [novo, setNovo] = React.useState(params.get("novo") === "1");
 
   // Reage a MUDANÇA de params (não só ao mount): clicar em "Cadastrar aluno" no
@@ -69,7 +89,12 @@ export function Alunos() {
   // contagem que discorde da linha correspondente.
   // "pausados" é o aluno INATIVO: não é etapa do ciclo (ele saiu do ciclo), mas
   // o mockup lista o chip junto, e é onde o profissional procura por ele.
-  const [filtro, setFiltro] = React.useState<EtapaCiclo | "todos" | "pausados">("todos");
+  const filtroBruto = params.get("filtro") ?? "todos";
+  const filtro = (FILTROS_VALIDOS.has(filtroBruto) ? filtroBruto : "todos") as EtapaCiclo | "todos" | "pausados";
+  const setFiltro = React.useCallback(
+    (v: EtapaCiclo | "todos" | "pausados") => trocarParam("filtro", v, "todos"),
+    [trocarParam],
+  );
   const pausados = comPasso.filter((x) => x.aluno.status !== "ativo").length;
   const contagem = React.useMemo(() => {
     const m = new Map<EtapaCiclo, number>();

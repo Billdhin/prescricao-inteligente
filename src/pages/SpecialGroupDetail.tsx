@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Target,
@@ -18,6 +18,8 @@ import {
   Users,
 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { associarGrupoAoAluno, textoDaAssociacao } from "@/lib/gps/associarGrupo";
+import { toast } from "@/lib/toast";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { Accordion } from "@/components/ui/disclosure";
 import { getTeoriaGrupo, type TeoriaGrupo } from "@/data/specialGroups";
@@ -40,7 +42,8 @@ export function SpecialGroupDetail() {
   const [sp] = useSearchParams();
   const plan = useUser((s) => s.plan);
   const unlocked = isPremiumUnlocked(plan);
-  const { alunos } = useAlunos();
+  const { alunos, updateAluno } = useAlunos();
+  const navigate = useNavigate();
 
   // Contexto vindo do fluxo Prescrever: preserva o aluno e a fase já escolhidos,
   // para não perder o caminho nem pedir de novo o aluno.
@@ -105,14 +108,34 @@ export function SpecialGroupDetail() {
             <span className="font-semibold text-ink">{alunoDoFluxo.nome}</span>
             {faseCtx && <Pill tone="primary">Fase {faseCtx}</Pill>}
           </div>
-          <Link to={voltarPrescricao} className={buttonClasses("primary", "sm")}>
-            <ArrowLeft className="h-4 w-4" />{" "}
-            {voltandoParaAluno
-              ? `Voltar ao perfil de ${primeiroNome}`
-              : voltandoParaGps
-                ? "Voltar ao Prescrever exercício"
-                : "Voltar e continuar a prescrição"}
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {voltandoParaAluno && !locked && (
+              <button
+                onClick={() => {
+                  const r = associarGrupoAoAluno(alunoDoFluxo, g.slug);
+                  if (r.tipo !== "ja-associado") updateAluno(alunoDoFluxo.id, r.patch);
+                  toast(textoDaAssociacao(r, g.nome, primeiroNome));
+                  // Volta para a aba de onde o botão saiu, com a jornada já associada:
+                  // o profissional vê o efeito da própria escolha sem procurar.
+                  navigate(`/alunos/${alunoDoFluxo.id}?aba=treino`);
+                }}
+                className={buttonClasses("primary", "sm")}
+              >
+                <Sparkles className="h-4 w-4" /> Associar esta jornada a {primeiroNome}
+              </button>
+            )}
+            <Link
+              to={voltarPrescricao}
+              className={buttonClasses(voltandoParaAluno && !locked ? "secondary" : "primary", "sm")}
+            >
+              <ArrowLeft className="h-4 w-4" />{" "}
+              {voltandoParaAluno
+                ? "Voltar sem escolher"
+                : voltandoParaGps
+                  ? "Voltar ao Prescrever exercício"
+                  : "Voltar e continuar a prescrição"}
+            </Link>
+          </div>
         </Card>
       )}
 

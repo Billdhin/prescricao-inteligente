@@ -63,20 +63,25 @@ export function AlunoPerfil() {
   const updateAluno = useAlunos((s) => s.updateAluno);
   const aluno = alunos.find((a) => a.id === id);
 
-  const [secao, setSecao] = React.useState<SecaoPerfilId>(() => {
-    const p = params.get("secao");
-    if (p && ehSecaoPerfil(p)) return p;
-    return aluno ? secaoInicial(aluno) : "basicos";
-  });
-
-  // O deep-link `?secao=` abre a seção pedida e some da barra de endereço, para não
-  // fixar a seção quando o profissional navegar dentro da própria página.
-  React.useEffect(() => {
-    if (params.get("secao")) {
-      params.delete("secao");
-      setParams(params, { replace: true });
-    }
-  }, [params, setParams]);
+  // A SEÇÃO VIVE NA URL, pelo mesmo motivo da aba do aluno: guardada só em estado local,
+  // ela se perdia toda vez que o profissional saía e voltava, no meio de um formulário de
+  // saúde que ele estava preenchendo.
+  const secaoNaUrl = params.get("secao");
+  const secaoPadrao: SecaoPerfilId = aluno ? secaoInicial(aluno) : "basicos";
+  const secao: SecaoPerfilId = secaoNaUrl && ehSecaoPerfil(secaoNaUrl) ? secaoNaUrl : secaoPadrao;
+  const setSecao = React.useCallback(
+    (nova: SecaoPerfilId) => {
+      setParams(
+        (atuais) => {
+          const p = new URLSearchParams(atuais);
+          p.set("secao", nova);
+          return p;
+        },
+        { replace: true },
+      );
+    },
+    [setParams],
+  );
 
   if (!aluno) return <Navigate to="/alunos" replace />;
 

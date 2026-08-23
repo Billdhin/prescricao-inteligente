@@ -392,13 +392,28 @@ export function AlunoDetail() {
   const planoSalvo = Boolean((location.state as { planoSalvo?: boolean } | null)?.planoSalvo);
   // Retorno do tubo "Aplicar no treino": {n} exercícios aplicados na Sessão X até o fim do bloco.
   const aplicado = (location.state as { aplicado?: { n: number; sessao: string; bloco: number; semanas: number } } | null)?.aplicado;
-  // A aba "Plano e treino" é o core e abre por padrão (o retorno do plano/aplicado cai
-  // nela). O deep-link `?aba=semaforo` (ex.: do aviso "não liberado" no Painel) abre a
-  // aba pedida; o param é limpo logo em seguida para não fixar a aba ao navegar.
-  const [aba, setAba] = React.useState<Aba>(() => {
-    const p = new URLSearchParams(window.location.search).get("aba");
-    return p && ABA_IDS.has(p) ? (p as Aba) : "visao";
-  });
+  const [params, setParams] = useSearchParams();
+  // A ABA VIVE NA URL. Ver o bloco de comentário do efeito abaixo: guardá-la só em
+  // estado local fazia o profissional perder o lugar toda vez que saía e voltava.
+  const abaNaUrl = params.get("aba");
+  const aba: Aba = abaNaUrl && ABA_IDS.has(abaNaUrl) ? (abaNaUrl as Aba) : "visao";
+  const setAba = React.useCallback(
+    (nova: Aba) => {
+      setParams(
+        (atuais) => {
+          const p = new URLSearchParams(atuais);
+          // A aba padrão não suja a barra de endereço.
+          if (nova === "visao") p.delete("aba");
+          else p.set("aba", nova);
+          return p;
+        },
+        // Substituição, não passo novo: o "voltar" do navegador sai da tela do aluno em
+        // vez de desfazer cliques de aba um a um.
+        { replace: true },
+      );
+    },
+    [setParams],
+  );
   // "Acompanhar" do próximo passo: garante a aba do treino e ancora na execução.
   const irParaExecucao = React.useCallback(() => {
     setAba("treino");
@@ -437,7 +452,6 @@ export function AlunoDetail() {
   const [aplicarPresc, setAplicarPresc] = React.useState<Prescricao | null>(null);
   // Modal de convite: o ciclo de acesso do aluno (link, senha dele, status) num só lugar.
   const [convidar, setConvidar] = React.useState(false);
-  const [params, setParams] = useSearchParams();
 
   // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação; ?aba= troca
   // a aba. O estado inicial já consome ambos no primeiro paint, mas o efeito depende de
@@ -445,20 +459,15 @@ export function AlunoDetail() {
   // pelo sino, já estando na ficha dele. O React Router reusa a instância montada, então
   // um efeito só-de-mount ignorava a nova query e o clique parecia não fazer nada. Ambos
   // os params são limpos depois de aplicados.
+  // `?avaliar=1` é ORDEM, não estado: consome e apaga, senão o modal reabre a cada
+  // recarga. `?aba=` é ESTADO e fica, que é o que faz voltar, recarregar e compartilhar
+  // caírem no lugar certo.
   React.useEffect(() => {
-    let mudou = false;
-    const abaParam = params.get("aba");
-    if (abaParam) {
-      if (ABA_IDS.has(abaParam)) setAba(abaParam as Aba);
-      params.delete("aba");
-      mudou = true;
-    }
-    if (params.get("avaliar") === "1") {
-      setAvaliar(true);
-      params.delete("avaliar");
-      mudou = true;
-    }
-    if (mudou) setParams(params, { replace: true });
+    if (params.get("avaliar") !== "1") return;
+    setAvaliar(true);
+    const p = new URLSearchParams(params);
+    p.delete("avaliar");
+    setParams(p, { replace: true });
   }, [params, setParams]);
 
   const aluno = alunos.find((a) => a.id === id);
@@ -510,6 +519,8 @@ export function AlunoDetail() {
   const idxAluno = alunos.findIndex((a) => a.id === aluno.id);
   const prevAlunoId = idxAluno > 0 ? alunos[idxAluno - 1].id : undefined;
   const nextAlunoId = idxAluno >= 0 && idxAluno < alunos.length - 1 ? alunos[idxAluno + 1].id : undefined;
+  // A aba viaja junto na troca de aluno (ver o pager abaixo).
+  const sufixoDaAba = aba === "visao" ? "" : `?aba=${aba}`;
   const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
 
   return (
@@ -519,7 +530,7 @@ export function AlunoDetail() {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <button
           type="button"
-          onClick={() => navigate("/alunos")}
+          onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/alunos"))}
           aria-label="Voltar para Alunos"
           className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-ink-2 transition-colors hover:text-ink"
         >
@@ -535,7 +546,7 @@ export function AlunoDetail() {
             <button
               type="button"
               disabled={!prevAlunoId}
-              onClick={() => prevAlunoId && navigate(`/alunos/${prevAlunoId}`)}
+              onClick={() => prevAlunoId && navigate(`/alunos/${prevAlunoId}${sufixoDaAba}`)}
               aria-label="Aluno anterior"
               className="grid h-6 w-6 place-items-center rounded-full hover:bg-surface-soft disabled:opacity-30"
             >
@@ -545,7 +556,7 @@ export function AlunoDetail() {
             <button
               type="button"
               disabled={!nextAlunoId}
-              onClick={() => nextAlunoId && navigate(`/alunos/${nextAlunoId}`)}
+              onClick={() => nextAlunoId && navigate(`/alunos/${nextAlunoId}${sufixoDaAba}`)}
               aria-label="Próximo aluno"
               className="grid h-6 w-6 place-items-center rounded-full hover:bg-surface-soft disabled:opacity-30"
             >
@@ -1758,7 +1769,10 @@ function JornadaCard({
             Associe um grupo especial para guiar modalidades, parâmetros e progressão deste aluno.
           </p>
         </div>
-        <Link to="/special-groups" className={buttonClasses("secondary", "sm")}>
+        <Link
+          to={`/special-groups?aluno=${aluno.id}&origem=aluno`}
+          className={buttonClasses("secondary", "sm")}
+        >
           Escolher grupo <ArrowRight className="h-4 w-4" />
         </Link>
       </Card>

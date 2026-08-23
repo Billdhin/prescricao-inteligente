@@ -1094,7 +1094,7 @@ function LinhaSemaforoDoDia({
           Sem semáforo registrado hoje para este aluno. Você pode prescrever assim mesmo; a decisão é
           sua, e sem o registro ela não fica documentada.
         </span>
-        <Link to={`/semaforo?aluno=${alunoId}`} className={buttonClasses("secondary", "sm")}>
+        <Link to={`/alunos/${alunoId}?aba=semaforo`} className={buttonClasses("secondary", "sm")}>
           Fazer o semáforo
         </Link>
       </Card>
@@ -1111,7 +1111,7 @@ function LinhaSemaforoDoDia({
           ? "O semáforo de hoje não liberou. Se ainda assim for prescrever, registre o motivo no perfil."
           : "Registrado no histórico e no prontuário."}
       </span>
-      <Link to={`/semaforo?aluno=${alunoId}`} className="shrink-0 text-sm font-semibold text-primary hover:underline">
+      <Link to={`/alunos/${alunoId}?aba=semaforo`} className="shrink-0 text-sm font-semibold text-primary hover:underline">
         Ver o semáforo
       </Link>
     </div>

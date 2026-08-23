@@ -15,9 +15,9 @@ import * as React from "react";
 import { Sparkles, Check, X, BookOpen } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { classificarGrupos, type SugestaoGrupo } from "@/lib/gps/classificador";
-import { getSpecialGroup } from "@/data/specialGroups";
 import { getReferencia, refCurta } from "@/data/referencias";
 import { toast } from "@/lib/toast";
+import { associarGrupoAoAluno, textoDaAssociacao } from "@/lib/gps/associarGrupo";
 import { cn } from "@/lib/utils";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 
@@ -42,24 +42,13 @@ export function SugestaoGrupoCard({
     // Encaminhamento (ex.: PA >= 180/110) NÃO vira grupo de treino: é recomendação
     // de conduta de saúde. A UI só informa; não há o que "aplicar" ao aluno.
     if (s.encaminhamento) return;
-    const g = getSpecialGroup(s.grupoSlug);
-    if (!aluno.grupoEspecial) {
-      // Primeiro direcionamento: vira o grupo principal e semeia a jornada.
-      onUpdate({
-        grupoEspecial: s.grupoSlug,
-        faseJornada: 1,
-        modalidadesPreferenciais: g?.modalidadesIndicadas,
-        parametrosPrioritarios: g?.parametros.slice(0, 4),
-        criterioProgressao: g?.fases[0]?.criteriosAvancar[0],
-      });
-      toast(`Direcionamento aplicado: ${s.rotulo}. Revise a prescrição de ${primeiroNome}.`);
-    } else {
-      // Já há um principal: entra como condição de atenção adicional (multi-grupo).
-      const atuais = aluno.condicoesAtencao ?? [];
-      if (atuais.includes(s.grupoSlug) || aluno.grupoEspecial === s.grupoSlug) return;
-      onUpdate({ condicoesAtencao: [...atuais, s.grupoSlug] });
-      toast(`${s.rotulo} somado às condições de atenção. O motor combina os cuidados.`);
-    }
+    // A regra dos dois ramos (vira principal e semeia a jornada, ou entra como condição
+    // de atenção) mora em @/lib/gps/associarGrupo, porque o catálogo de grupos usa a
+    // mesma. Duas cópias divergiriam no primeiro campo novo.
+    const r = associarGrupoAoAluno(aluno, s.grupoSlug);
+    if (r.tipo === "ja-associado") return;
+    onUpdate(r.patch);
+    toast(textoDaAssociacao(r, s.rotulo, primeiroNome));
   };
 
   const dispensar = (s: SugestaoGrupo) => {
