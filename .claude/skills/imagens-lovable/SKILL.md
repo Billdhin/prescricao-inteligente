@@ -134,6 +134,20 @@ tinha, e que se pagou aqui).
   já na pose final.
 - **Marcação de direção de desvio**: overlay SVG autorado, como antes.
 
+### ADENDO de 22/08/2026: a TERCEIRA falha de troca de câmera, e o que fazer com o lado
+
+Pedir "gere esta mesma cena vista DE COSTAS" falhou de novo, agora no `suitcase-carry`, duas
+tentativas seguidas. Na segunda o gerador devolveu a imagem ANTERIOR sem mudar nada. Já são três
+registros nesta skill: o custo de insistir é crédito gasto e nenhuma imagem. **Troca de câmera
+não se pede em texto; troca-se a SEMENTE por uma que já esteja na vista certa.**
+
+**E um erro novo, que vale para todo exercício assimétrico:** no suitcase carry o músculo que
+trabalha é o do lado OPOSTO à carga, e o gerador pintou o mesmo lado do halter. Pior, numa vista
+de PERFIL os dois lados se sobrepõem, então nem dá para conferir qual foi pintado. Antes de
+pedir uma imagem de exercício com carga em um lado só, pergunte **se o ângulo escolhido deixa
+distinguir esquerda de direita**. Se não deixar, a imagem não pode ser verificada, e imagem que
+não dá para verificar não entra.
+
 ## Verificação é obrigatória
 
 O agente do Lovable **avisa sozinho** quando erra ("a imagem 0 saiu parecendo uma máquina de cabos"). Leia a resposta dele. Mas não confie só nisso: olhe as imagens. Nunca salve lote sem inspecionar item a item.
