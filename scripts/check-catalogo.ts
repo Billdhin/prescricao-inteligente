@@ -293,10 +293,22 @@ const SEM_ANALISE_COM_MOTIVO = new Set<string>([
    * direção do halter; marcar o lado errado ensinaria o contrário do certo. Segundo, numa vista
    * de perfil os dois lados do tronco se sobrepõem, então nem dá para CONFERIR qual foi pintado.
    *
-   * Duas gerações tentaram, em 22 e 23/08/2026. A primeira pintou o lado do peso e duplicou o
-   * halter. Na segunda pedi vista de costas, que desfaria a ambiguidade, e o gerador devolveu a
-   * imagem anterior sem mudar nada: é o terceiro registro do mesmo limite na skill
-   * imagens-lovable, onde troca de câmera não se pede em texto.
+   * Duas gerações tentaram, em 22 e 23/08/2026, e as duas pintaram o lado ERRADO.
+   *
+   * A primeira, de perfil, pintou o lado do peso e ainda duplicou o halter. Na segunda pedi
+   * vista de COSTAS para desfazer a ambiguidade, e o gerador entregou: mesma academia, mesmo
+   * fundo, um halter só, janela recortada limpa nos músculos superficiais. Só que pintou de
+   * novo o lado do halter, e não o oposto.
+   *
+   * CORREÇÃO DE UM ERRO MEU, registrada porque ela mudaria a conclusão de quem ler depois:
+   * na hora eu escrevi que o gerador tinha ignorado o pedido de câmera e devolvido a imagem
+   * anterior. Não foi isso. Meu laço de download só conferia se o arquivo baixado era uma
+   * imagem, não se era NOVO, então ele pegou o arquivo da rodada anterior que já estava em
+   * disco e eu culpei o gerador por um defeito da minha ferramenta. A vista de costas sempre
+   * esteve lá.
+   *
+   * O que de fato fecha a porta é o LADO: duas tentativas, dois acertos de cena e dois erros
+   * de lado. Num exercício assimétrico o lado É a informação.
    *
    * Imagem que não dá para verificar não entra. A tela já tem a frase honesta para este caso, e
    * os músculos envolvidos seguem listados abaixo dela.

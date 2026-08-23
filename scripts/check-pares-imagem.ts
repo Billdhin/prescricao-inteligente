@@ -80,7 +80,6 @@ const LIMITE = 33;
  * execução, e a asserção do fim do arquivo impede que a lista cresça ou fique desatualizada.
  */
 const PENDENTES: Record<string, number> = {
-  "preensao-isometrica-handgrip": 49.5,
 };
 
 /**
@@ -101,7 +100,6 @@ const PENDENTES: Record<string, number> = {
 const TOLERANCIA_PROPORCAO = 0.02;
 
 const PENDENTES_PROPORCAO: Record<string, number> = {
-  "agachamento-aquatico": 25.3,
 };
 
 const N = 96;

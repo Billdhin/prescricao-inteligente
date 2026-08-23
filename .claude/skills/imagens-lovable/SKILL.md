@@ -134,19 +134,26 @@ tinha, e que se pagou aqui).
   já na pose final.
 - **Marcação de direção de desvio**: overlay SVG autorado, como antes.
 
-### ADENDO de 22/08/2026: a TERCEIRA falha de troca de câmera, e o que fazer com o lado
+### ADENDO de 23/08/2026: o LADO em exercício assimétrico, e um erro de ferramenta que quase virou lição falsa
 
-Pedir "gere esta mesma cena vista DE COSTAS" falhou de novo, agora no `suitcase-carry`, duas
-tentativas seguidas. Na segunda o gerador devolveu a imagem ANTERIOR sem mudar nada. Já são três
-registros nesta skill: o custo de insistir é crédito gasto e nenhuma imagem. **Troca de câmera
-não se pede em texto; troca-se a SEMENTE por uma que já esteja na vista certa.**
+**O lado é a informação, e o gerador erra o lado.** No `suitcase-carry` o músculo que trabalha é
+o quadrado lombar do lado OPOSTO à carga, porque é ele que impede o tronco de tombar na direção
+do halter. Duas gerações, dois erros: as duas pintaram o mesmo lado do peso. Antes de pedir
+imagem de exercício com carga em um lado só, pergunte **se o ângulo escolhido deixa distinguir
+esquerda de direita**; e depois de gerar, AMPLIE e confira o lado antes de aceitar. Imagem que
+não dá para verificar não entra, e imagem com o lado trocado ensina o oposto do certo.
 
-**E um erro novo, que vale para todo exercício assimétrico:** no suitcase carry o músculo que
-trabalha é o do lado OPOSTO à carga, e o gerador pintou o mesmo lado do halter. Pior, numa vista
-de PERFIL os dois lados se sobrepõem, então nem dá para conferir qual foi pintado. Antes de
-pedir uma imagem de exercício com carga em um lado só, pergunte **se o ângulo escolhido deixa
-distinguir esquerda de direita**. Se não deixar, a imagem não pode ser verificada, e imagem que
-não dá para verificar não entra.
+**AQUI A TROCA DE CÂMERA FUNCIONOU, ao contrário do que escrevi primeiro.** Pedi a mesma cena
+vista DE COSTAS e o gerador entregou: mesma academia, mesmo fundo, um halter só, janela recortada
+limpa. Eu tinha registrado que ele havia devolvido a imagem anterior sem mudar nada, e isso era
+falso: **meu laço de download só conferia se o arquivo era uma imagem, não se era NOVO**, então
+pegou o arquivo da rodada anterior que já estava em disco. Culpei o gerador por um defeito da
+minha ferramenta, e quase deixei uma lição errada escrita aqui.
+
+**Regra de download, então:** ao regerar um arquivo que você JÁ baixou antes, apague o local
+primeiro e busque com `?v=<timestamp>` e `Cache-Control: no-cache`. Comparar só "é imagem?" não
+distingue a nova da velha. O aviso original sobre troca de câmera segue valendo pelos casos que
+de fato falharam (manguito, puxada-supinada), mas ele NÃO tem um terceiro registro.
 
 ## Verificação é obrigatória
 
