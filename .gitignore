@@ -25,3 +25,26 @@ npm-debug.log*
 
 # Bundles de skills do agente (ferramental, não faz parte do app)
 .agents/
+
+# Impeccable: instalado por "npx impeccable install" em 22/08/2026, e usado na auditoria
+# das duas superfícies. Fica de FORA do repositório por três motivos, e nenhum deles é
+# desprezo pela ferramenta (ela achou 25 anti-padrões no protótipo da landing, incluindo
+# as 5 falhas de contraste que a revisão humana não pegou):
+#
+#   1. São cerca de 7 MB em 304 arquivos, num repositório PÚBLICO, de ferramental que não
+#      faz parte do produto e que cada um instala com um comando.
+#   2. .claude/skills/impeccable e .github/skills/impeccable são o MESMO conteúdo em dois
+#      caminhos: o instalador escreve nos dois para atender dois harnesses. Versionar os
+#      dois é pagar o peso em dobro.
+#   3. settings.local.json é configuração de máquina, e o próprio nome diz local.
+#
+# O que a auditoria produziu de durável não está aqui: está nas mensagens de commit, nos
+# guardrails novos (bloco I do check:legal, travessão e par-dado no check:design) e no
+# relatório publicado. Para reverter, basta apagar este bloco; nada aqui é destrutivo.
+.claude/settings.local.json
+.claude/skills/impeccable/
+.github/skills/
+.github/agents/
+.github/hooks/
+.codex/
+.impeccable/
