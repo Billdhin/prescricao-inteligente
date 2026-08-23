@@ -108,7 +108,33 @@ export function AvaliacaoModal({
     : "Registrar avaliação";
   const hoje = new Date().toISOString().slice(0, 10);
   const [data, setData] = React.useState(hoje);
-  const [tipo, setTipo] = React.useState<TipoAvaliacao>(anterior ? "reavaliacao" : "inicial");
+  /*
+   * AVALIAÇÃO INICIAL SÓ EXISTE UMA VEZ, E O CAMPO PRECISA DIZER ISSO.
+   *
+   * O Filipe: "é possível alterar o tipo de avaliação para avaliação inicial mesmo já tendo
+   * avaliação... o correto seria já bloquear essa opção". Está certo, e o motivo é de
+   * definição, não de preferência: inicial é a PRIMEIRA. Um registro feito hoje, depois de
+   * já existir histórico, não é a primeira coisa nenhuma, e marcá-lo assim quebra tudo que
+   * lê a linha do tempo (o delta do período, a régua de reavaliação, o "antes" do gráfico).
+   *
+   * A opção fica VISÍVEL e desabilitada, com o motivo ao lado, em vez de sumir da lista.
+   * Opção que some deixa o profissional procurando o que ele viu ontem; opção travada com
+   * motivo ensina a regra.
+   *
+   * O corte é a existência de QUALQUER avaliação anterior, e não a de uma já marcada como
+   * inicial. Registro antigo pode estar sem tipo (o campo é opcional no modelo), e nesse
+   * caso a primeira avaliação continua sendo a primeira, tipada ou não.
+   */
+  const anteriores = historico ?? (anterior ? [anterior] : []);
+  const jaTemInicial = anteriores.length > 0;
+  const primeiraEm = jaTemInicial ? Math.min(...anteriores.map((a) => a.data)) : undefined;
+  const avisoInicial = jaTemInicial ? (
+    <span className="text-xs font-normal text-ink-2">
+      A inicial deste aluno é a de {fmtData(primeiraEm!)}
+    </span>
+  ) : undefined;
+
+  const [tipo, setTipo] = React.useState<TipoAvaliacao>(jaTemInicial ? "reavaliacao" : "inicial");
   const [condicao, setCondicao] = React.useState("");
   // medidas numéricas em string (uma chave por medida). Reavaliação de verdade: os
   // campos nascem preenchidos com a última avaliação, e o profissional digita por cima
@@ -250,10 +276,13 @@ export function AvaliacaoModal({
             <Campo label="Data da avaliação" className="sm:col-span-1">
               <input type="date" value={data} max={hoje} onChange={(e) => setData(e.target.value)} className="input" />
             </Campo>
-            <Campo label="Tipo de avaliação">
+            <Campo label="Tipo de avaliação" hint={avisoInicial}>
               <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoAvaliacao)} className="input">
                 {TIPOS.map((t) => (
-                  <option key={t.v} value={t.v}>{t.label}</option>
+                  <option key={t.v} value={t.v} disabled={t.v === "inicial" && jaTemInicial}>
+                    {t.label}
+                    {t.v === "inicial" && jaTemInicial ? " (já registrada)" : ""}
+                  </option>
                 ))}
               </select>
             </Campo>

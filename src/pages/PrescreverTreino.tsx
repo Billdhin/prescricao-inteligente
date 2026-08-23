@@ -14,6 +14,7 @@ import {
   Check,
   AlertTriangle,
   MapPin,
+  ArrowLeft,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
@@ -203,15 +204,40 @@ export function PrescreverTreino() {
     [alunoId, avaliacoes],
   );
 
+  /*
+   * DUAS PERGUNTAS DIFERENTES, QUE ESTAVAM COLADAS NA MESMA VARIÁVEL.
+   *
+   *   "sobre qual plano eu escrevo?"  -> `planoSalvoDoAluno`, e a resposta só pode vir de
+   *   uma intenção explícita de editar (`?plano=`). É ela que reaproveita o id, e reaproveitar
+   *   id sem ser pedido é sobrescrever plano alheio.
+   *
+   *   "este aluno já tem treino?"     -> `planoAtivoDoAluno`, que é um fato do aluno e não
+   *   depende de como se chegou aqui.
+   *
+   * As duas eram a mesma linha, e o efeito foi o que o Filipe descreveu: escolhendo o aluno
+   * pela lista, sem vir de um link de plano, o sistema não sabia que ele já tinha treino.
+   * Gerava um plano novo em silêncio, e o antigo só era arquivado no momento de salvar, sem
+   * ninguém nunca ter dito que existia.
+   */
   const planoSalvoDoAluno = planoPre && planoPre.alunoId === alunoId ? planoPre : undefined;
+  const planoAtivoDoAluno = React.useMemo(
+    () =>
+      alunoId
+        ? planosSalvos.filter((x) => x.alunoId === alunoId && x.status === "ativo").sort((a, b) => b.data - a.data)[0]
+        : undefined,
+    [alunoId, planosSalvos],
+  );
+  /** O aluno tem treino, e o profissional NÃO disse que veio editar justamente esse. */
+  const treinoNaoAnunciado = Boolean(planoAtivoDoAluno) && planoAtivoDoAluno?.id !== planoPre?.id;
+  const planoEmRisco = planoSalvoDoAluno ?? planoAtivoDoAluno;
   const execucoesEmRisco = React.useMemo(() => {
-    if (!planoSalvoDoAluno) return false;
+    if (!planoEmRisco) return false;
     const ids = new Set<string>();
-    planoSalvoDoAluno.macrociclo.mesociclos.forEach((m) =>
+    planoEmRisco.macrociclo.mesociclos.forEach((m) =>
       m.microciclos.forEach((w) => w.sessoes.forEach((s) => s.blocos.forEach((b) => ids.add(b.id)))),
     );
     return execucoes.some((e) => ids.has(e.blocoRef));
-  }, [planoSalvoDoAluno, execucoes]);
+  }, [planoEmRisco, execucoes]);
 
   const montar = (
     ctx: {
@@ -327,7 +353,9 @@ export function PrescreverTreino() {
 
   const gerar = () => {
     // Regenerar por cima de um plano salvo confirma antes; caso contrário, gera direto.
-    if (planoSalvoDoAluno) setConfirmarRegenerar(true);
+    // Confirma antes de gerar por cima de qualquer treino existente, e não só do que veio
+    // por link: era essa a diferença que deixava o plano do aluno ser trocado em silêncio.
+    if (planoSalvoDoAluno || treinoNaoAnunciado) setConfirmarRegenerar(true);
     else gerarAgora();
   };
 
@@ -359,7 +387,10 @@ export function PrescreverTreino() {
       // Primeiro salvamento de um plano novo: leva ao perfil, onde o chip "Sem treino"
       // morre na frente do usuário, com o banner e a aba de treino aberta. Salvamentos
       // seguintes (updatePlano) ficam na tela, com o link "Ver no perfil de {nome}".
-      navigate(`/alunos/${aluno.id}`, { state: { planoSalvo: true } });
+      // A aba vai junto: quem acabou de montar o treino quer VER o treino. Sem `?aba=`, o
+      // destino abre na Visão e o plano recém-salvo fica a mais um clique, atrás de um
+      // banner. É a mesma classe do link de avaliação que caía na Visão.
+      navigate(`/alunos/${aluno.id}?aba=treino`, { state: { planoSalvo: true } });
     }
   };
 
@@ -399,6 +430,21 @@ export function PrescreverTreino() {
       {!plano && (
         <>
           <div>
+            {/*
+              DE ONDE EU VIM. O Filipe: "eu entrei em prescrever treino atraves de um aluno,
+              agora nao tenho um botao voltar... nao consigo mais voltar". Quando a tela é
+              aberta a partir de um aluno (por `?aluno=` ou por `?plano=`), a volta é a ficha
+              dele, e ela precisa estar escrita. `navigate(-1)` não serve: recarregar a página
+              ou chegar por link colado deixa o histórico vazio, e o botão vira um beco.
+            */}
+            {aluno && (
+              <Link
+                to={`/alunos/${aluno.id}?aba=treino`}
+                className="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-2 hover:text-ink"
+              >
+                <ArrowLeft className="h-4 w-4" /> Voltar para {aluno.nome.split(" ")[0]}
+              </Link>
+            )}
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <SeloRCD compacto explicavel />
             </div>
@@ -426,6 +472,49 @@ export function PrescreverTreino() {
               sem mexer no perfil. Sem aluno (plano avulso) nada muda, porque ali as respostas
               de fato começam vazias.
             */}
+            {/*
+              ESTE ALUNO JÁ TEM TREINO, E O SISTEMA PRECISA DIZER ISSO ANTES DE GERAR OUTRO.
+
+              O Filipe: "ao selecionar prescrever treino e selecionar um aluno que ja possui
+              treino, deveria ser dado um indicativo deixando claro que o aluno ja possui um
+              treino e se quer editar esse treino ou continuar para gerar um novo".
+
+              O aviso existia, mas só para quem chegava por um link de plano. Escolhendo o
+              aluno pela lista, o sistema não sabia de nada: gerava plano novo em silêncio, e
+              o treino que estava rodando só era arquivado lá na hora de salvar.
+
+              O cartão diz em que semana o treino está, porque é isso que decide: arquivar um
+              plano na semana 2 é diferente de arquivar um na semana 11. E os dois caminhos
+              ficam escritos, sem esconder nenhum: editar o que existe, ou seguir e gerar novo.
+            */}
+            {treinoNaoAnunciado && planoAtivoDoAluno && !plano && (
+              <Card tone="warning" className="mt-4 p-4">
+                <div className="flex flex-wrap items-start gap-3">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-warning">
+                    <AlertTriangle className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-ink">
+                      {aluno?.nome.split(" ")[0]} já tem um treino em andamento.
+                    </p>
+                    <p className="mt-0.5 text-sm text-ink-2">
+                      {planoAtivoDoAluno.titulo}, na semana {semanaAtual(planoAtivoDoAluno)} de{" "}
+                      {planoAtivoDoAluno.semanas}. Gerar um novo aqui arquiva este, e o aluno passa a ver o
+                      plano novo no app dele.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link to={`/prescrever-treino?plano=${planoAtivoDoAluno.id}`} className={buttonClasses("primary", "sm")}>
+                        <Pencil className="h-4 w-4" /> Editar este treino
+                      </Link>
+                      <Link to={`/alunos/${aluno?.id}?aba=treino`} className={buttonClasses("secondary", "sm")}>
+                        Ver no perfil
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {aluno && !plano && !bloquearPorPerfil && (
               <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border border-border bg-surface-soft p-3">
                 <p className="min-w-0 flex-1 text-sm text-ink-2">
@@ -434,7 +523,10 @@ export function PrescreverTreino() {
                   {grupo ? `, ${getSpecialGroup(grupo)?.nome ?? ""}` : ""}. Dá para ajustar abaixo.
                 </p>
                 <button onClick={gerar} className={cn(buttonClasses("primary"), "shrink-0")}>
-                  <Sparkles className="h-4 w-4" /> Gerar periodização
+                  <Sparkles className="h-4 w-4" />{" "}
+                  {/* Mesmo rótulo do botão de baixo: dois botões que fazem a mesma coisa não
+                      podem prometer coisas diferentes na mesma tela. */}
+                  {planoSalvoDoAluno || treinoNaoAnunciado ? "Gerar de novo" : "Gerar periodização"}
                 </button>
               </div>
             )}
@@ -601,7 +693,7 @@ export function PrescreverTreino() {
                       </button>
                       <button onClick={gerar} className={buttonClasses("primary")}>
                         <Sparkles className="h-4 w-4" />
-                        {planoSalvoDoAluno ? "Gerar de novo" : "Gerar periodização"}
+                        {planoSalvoDoAluno || treinoNaoAnunciado ? "Gerar de novo" : "Gerar periodização"}
                       </button>
                     </div>
                   )}
@@ -609,7 +701,7 @@ export function PrescreverTreino() {
                     <div className="mt-4 flex justify-end">
                       <button onClick={gerar} className={buttonClasses("primary")}>
                         <Sparkles className="h-4 w-4" />
-                        {planoSalvoDoAluno ? "Gerar de novo" : "Gerar periodização"}
+                        {planoSalvoDoAluno || treinoNaoAnunciado ? "Gerar de novo" : "Gerar periodização"}
                       </button>
                     </div>
                   )}
