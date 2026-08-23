@@ -28,6 +28,7 @@ import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { gerarPlano, slugsClinicosDoPlano, consequenciasDoPlano } from "@/lib/gps/periodizacao";
 import { topicosDoRaciocinio } from "@/lib/gps/raciocinioTopicos";
 import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
+import { agregadoSemana } from "@/lib/gps/progressao";
 import {
   getModelo,
   MODELOS_PERIODIZACAO,
@@ -1199,11 +1200,24 @@ function ResultadoPlano({
 /* --------------------------- Régua de semanas --------------------------- */
 
 /**
- * O mapa do plano vira navegação: um chip por semana, com a descarga marcada em
- * âmbar e a semana corrente com anel. Clicar troca a semana em foco.
+ * A FITA DAS SEMANAS MOSTRA A DOSE, e não só o número da semana.
  *
- * A descarga vem do TIPO do microciclo (dado do plano), não de uma convenção
- * visual inventada aqui: se um dia o motor mudar onde ela cai, o chip acompanha.
+ * O Filipe: "a visualização das edições das semanas na prescrição do treino está bem ruim e
+ * confusa". Estava: eram círculos idênticos, um por semana, e nenhum deles dizia o que a
+ * semana prescrevia. Num plano de 24 semanas isso vira uma parede de vinte e quatro
+ * bolinhas. A progressão, que é a razão de existir de uma periodização, não aparecia em
+ * lugar nenhum do instrumento com que se navega o plano.
+ *
+ * Agora a altura da barra é o VOLUME RELATIVO da semana, lido de `agregadoSemana`, que é a
+ * MESMA função de onde sai a curva do gráfico logo acima. Fonte única de propósito: fita e
+ * gráfico não têm como se contradizer, que é a armadilha clássica deste produto.
+ *
+ * A descarga ganhou HACHURA além da cor âmbar. Cor sozinha não sobrevive ao daltonismo nem à
+ * impressão em preto e branco, e a legenda em texto ("âmbar = descarga") era a confissão de
+ * que a forma não estava dizendo nada.
+ *
+ * A descarga vem do TIPO do microciclo (dado do plano), não de uma convenção visual
+ * inventada aqui: se um dia o motor mudar onde ela cai, a barra acompanha.
  */
 function ReguaDeSemanas({
   semanas,
@@ -1227,42 +1241,84 @@ function ReguaDeSemanas({
     return grupos;
   }, [semanas]);
 
+  /*
+   * O teto da escala é o maior volume do plano inteiro, e não o do bloco: barra alta num
+   * bloco tem que significar a mesma coisa que barra alta em outro, senão a fita compara
+   * cada bloco consigo mesmo e some justamente a progressão entre blocos.
+   */
+  const volumes = React.useMemo(
+    () => new Map(semanas.map(({ micro }) => [micro.id, agregadoSemana(micro).volume])),
+    [semanas],
+  );
+  const teto = Math.max(1, ...volumes.values());
+  const ALTURA = 60;
+  const PISO = 10; // barra de volume zero ainda precisa ser clicável e visível
+
   return (
     <Card className="p-4">
-      <div className="mb-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semanas do plano</p>
-        <p className="text-xs text-ink-3">
-          Clique numa semana para editar. Âmbar = descarga, anel = semana de hoje.
-        </p>
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <div>
+          <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semanas do plano</p>
+          <p className="text-xs text-ink-3">A altura é o volume relativo da semana. Clique para editar.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-ink-2">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-3.5 rounded-sm bg-primary" /> Carga
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-3.5 rounded-sm border border-warning/45 bg-warning-tint [background-image:repeating-linear-gradient(135deg,transparent,transparent_3px,rgb(var(--warning-rgb)/0.3)_3px,rgb(var(--warning-rgb)/0.3)_6px)]" />{" "}
+            Descarga
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-3.5 rounded-sm bg-primary ring-2 ring-ink ring-offset-1 ring-offset-surface" /> Em edição
+          </span>
+        </div>
       </div>
-      <div className="space-y-2.5">
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {porBloco.map(({ meso, itens }) => (
-          <div key={meso.id}>
-            <p className="mb-1 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+          <div key={meso.id} className="rounded-control border border-border p-3">
+            <p className="mb-2 text-2xs font-semibold uppercase tracking-wide text-ink-3">
               {rotuloMeso(meso)}
               {meso.foco ? <span className="font-normal normal-case tracking-normal"> · {meso.foco}</span> : null}
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex items-end gap-1.5" style={{ height: ALTURA + 22 }}>
               {itens.map((micro) => {
                 const ativo = micro.semana === foco;
                 const descarga = micro.tipo === "deload";
+                const vol = volumes.get(micro.id) ?? 0;
+                const h = Math.max(PISO, Math.round((vol / teto) * ALTURA));
                 return (
                   <button
                     key={micro.id}
                     onClick={() => onFocar(micro.semana)}
                     aria-pressed={ativo}
                     aria-label={`Semana ${micro.semana}, ${rotuloMeso(meso)}${descarga ? ", descarga" : ""}`}
-                    className={cn(
-                      "tabular grid h-9 w-9 place-items-center rounded-full border text-sm font-semibold transition-colors",
-                      ativo
-                        ? "border-ink bg-ink text-surface"
-                        : descarga
-                          ? "border-warning/40 bg-warning-tint text-warning"
-                          : "border-border text-ink-2 hover:bg-surface-soft",
-                      micro.semana === corrente && !ativo && "ring-2 ring-primary",
-                    )}
+                    className="group flex flex-1 flex-col items-center justify-end gap-1"
+                    style={{ height: ALTURA + 22 }}
                   >
-                    {micro.semana}
+                    <span
+                      style={{ height: h }}
+                      className={cn(
+                        "w-full rounded-t-md rounded-b-sm transition-colors",
+                        descarga
+                          ? "border border-warning/45 bg-warning-tint [background-image:repeating-linear-gradient(135deg,transparent,transparent_3px,rgb(var(--warning-rgb)/0.3)_3px,rgb(var(--warning-rgb)/0.3)_6px)]"
+                          : "bg-primary group-hover:brightness-110",
+                        !descarga && !ativo && "opacity-70",
+                        ativo && "ring-2 ring-ink ring-offset-1 ring-offset-surface",
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "tabular text-xs",
+                        ativo ? "font-bold text-ink" : descarga ? "font-semibold text-warning" : "font-semibold text-ink-2",
+                      )}
+                    >
+                      {micro.semana}
+                      {micro.semana === corrente && (
+                        <span aria-hidden className="ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle" />
+                      )}
+                    </span>
                   </button>
                 );
               })}
@@ -1270,6 +1326,12 @@ function ReguaDeSemanas({
           </div>
         ))}
       </div>
+      {corrente != null && (
+        <p className="mt-2.5 text-2xs text-ink-3">
+          <span aria-hidden className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle" />
+          O ponto marca a semana de hoje.
+        </p>
+      )}
     </Card>
   );
 }

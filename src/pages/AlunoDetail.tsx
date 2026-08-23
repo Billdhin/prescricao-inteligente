@@ -118,7 +118,7 @@ const COR_SEMAFORO: Record<
   { bg: string; border: string; text: string; dot: string; Icon: typeof CheckCircle2 }
 > = {
   verde: { bg: "bg-success-tint", border: "border-success/40", text: "text-success", dot: "bg-success", Icon: CheckCircle2 },
-  amarelo: { bg: "bg-warning-tint", border: "border-warning/40", text: "text-warning", dot: "bg-warning", Icon: AlertTriangle },
+  amarelo: { bg: "bg-warning-tint", border: "border-warning/40", text: "text-warning", dot: "bg-warning-fill", Icon: AlertTriangle },
   vermelho: { bg: "bg-danger-tint", border: "border-danger/40", text: "text-danger", dot: "bg-danger-fill", Icon: XCircle },
 };
 
@@ -229,7 +229,7 @@ function LinhaDoTempo({
   for (const l of liberacoes) {
     eventos.push({
       ts: l.data,
-      dot: l.resultado === "verde" ? "bg-success" : l.resultado === "amarelo" ? "bg-warning" : "bg-danger-fill",
+      dot: l.resultado === "verde" ? "bg-success" : l.resultado === "amarelo" ? "bg-warning-fill" : "bg-danger-fill",
       destaque: l.resultado === "vermelho",
       titulo: `Semáforo: ${rotuloResultado(l.resultado)}`,
       sub: l.ajustes.length ? l.ajustes[0].acao : undefined,
@@ -825,7 +825,7 @@ export function AlunoDetail() {
             {reav && (
               <Card tone="warning" className="p-4">
                 <div className="flex items-start gap-3">
-                  <span aria-hidden className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-warning" />
+                  <span aria-hidden className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-warning-fill" />
                   <div className="min-w-0">
                     <p className="font-semibold text-ink">
                       {reavaliacaoVencida ? "Reavaliação vencida" : `Reavaliar em ${fmtDiaMes(reav.em)}`}
@@ -860,15 +860,21 @@ export function AlunoDetail() {
       {/* PLANO E TREINO: o core, na ordem do ciclo. Fase, periodização, prescrição, execução. */}
       {aba === "treino" && (
         <div role="tabpanel" id="aba-painel-treino" aria-labelledby="aba-tab-treino" className="space-y-4">
-          {/* Direcionamento sugerido: perto da Linha do cuidado, no topo do core. */}
-          <SugestaoGrupoCard aluno={aluno} avaliacoes={avals} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+          {/*
+            A ABA TREINO ABRE NO TREINO.
 
+            O Filipe: "na aba de treino, o foco tem que ser a criacao do plano ou para gerar
+            outro plano, e nao a jornada de prescricao". Estava certo, e dava para contar: o
+            cartao do plano era o QUARTO da aba. Antes dele vinham sugestao de grupo, sugestao
+            de nivel e a jornada, ou seja duas sugestoes (opcionais por natureza) e um
+            planejamento de medio prazo, todos na frente do objeto da aba.
+
+            A ordem agora e: o plano, o que esta acontecendo nesta semana, as prescricoes
+            avulsas, e so entao o planejamento. Nada sumiu, e ele pediu isso: "pode ter a
+            jornada, mas com menos foco, mais abaixo".
+          */}
           <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
-            <SugestaoNivel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
-
-            <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
-
             <PlanoCard aluno={aluno} planos={planosDoAluno} execucoes={execucoesDoAluno} podeTreino={podeTreino} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} />
 
             <div id="execucao-card" className="scroll-mt-24">
@@ -1028,6 +1034,24 @@ export function AlunoDetail() {
               </div>
             )}
           </Card>
+
+            {/*
+              PLANEJAMENTO E SUGESTOES, depois do treino e nao antes dele.
+
+              Nada some: a jornada continua na aba, com a fase atual e o mesmo card de
+              sempre, e as duas sugestoes tambem. O que muda e a ordem, que era o pedido.
+              As duas sugestoes ja devolvem null quando nao ha o que sugerir, entao esta
+              secao so ocupa espaco quando tem conteudo de verdade.
+            */}
+            <div className="space-y-4 border-t border-border pt-4">
+              <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Planejamento e sugestões</p>
+
+              <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
+
+              <SugestaoGrupoCard aluno={aluno} avaliacoes={avals} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+
+              <SugestaoNivel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -1684,7 +1708,7 @@ function Ultimos30DiasCard({ dias }: { dias: (Liberacao["resultado"] | undefined
 function RegistrosCard({ dist }: { dist: ReturnType<typeof distribuicaoSemaforo> }) {
   const linhas = [
     { label: "Liberada", n: dist.verde, dot: COR_SEMAFORO.verde.dot, bar: "bg-success" },
-    { label: "Com ajuste", n: dist.amarelo, dot: COR_SEMAFORO.amarelo.dot, bar: "bg-warning" },
+    { label: "Com ajuste", n: dist.amarelo, dot: COR_SEMAFORO.amarelo.dot, bar: "bg-warning-fill" },
     { label: "Não liberada", n: dist.vermelho, dot: COR_SEMAFORO.vermelho.dot, bar: "bg-danger-fill" },
   ];
   const max = Math.max(1, dist.total);
@@ -2052,7 +2076,7 @@ function JornadaCard({
             <ul className="space-y-1">
               {grupo.riscosCautelas.slice(0, 3).map((c) => (
                 <li key={c} className="flex gap-2 text-sm text-ink-2">
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-warning-fill" />
                   {c}
                 </li>
               ))}
