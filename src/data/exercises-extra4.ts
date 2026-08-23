@@ -129,6 +129,8 @@ export const extraExercises4: Exercise[] = [
     anguloArticular: "Ombro da elevação até a altura do peito",
     imagem: "/exercises/puxada-elastico.webp",
     imagemAnalise: "/exercises/puxada-elastico-analysis.webp",
+    analiseOutraVista:
+      "A análise é mostrada DE COSTAS porque o músculo principal deste exercício, o latíssimo do dorso, fica nas costas e não aparece na foto de execução, que é frontal.",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 70, papel: "primário" },

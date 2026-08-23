@@ -171,6 +171,20 @@ export interface Exercise {
   imagem?: string;
   /** Render anatômico opcional (músculos destacados) para a camada de análise. */
   imagemAnalise?: string;
+  /**
+   * PREENCHIDO SÓ QUANDO A ANÁLISE É OUTRA TOMADA, e diz POR QUÊ.
+   *
+   * O revelador do Laboratório é um divisor deslizante, e a legenda dele promete que a análise
+   * aparece sobre "a mesma imagem". Em alguns exercícios isso não pode ser verdade: o músculo
+   * alvo fica nas COSTAS e a foto de execução é frontal, então a camada de análise foi gerada
+   * de propósito numa vista de trás. Arrastar o divisor trocava o cenário no meio e o produto
+   * parecia quebrado, quando na verdade a decisão anatômica estava certa e era a APRESENTAÇÃO
+   * que mentia.
+   *
+   * Com este campo preenchido, a tela para de fingir sobreposição: mostra as duas lado a lado e
+   * escreve o motivo. O texto vai para o usuário, então descreve a vista e a razão, sem jargão.
+   */
+  analiseOutraVista?: string;
   /** id da modalidade (src/data/modalities.ts) a que o exercício pertence */
   modalidade?: string;
   /**

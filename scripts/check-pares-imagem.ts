@@ -1,0 +1,176 @@
+/**
+ * O PAR FOTO + ANÁLISE PRECISA SER A MESMA TOMADA.
+ *
+ * O Laboratório mostra os dois com um divisor deslizante, e a legenda promete que a análise é
+ * revelada sobre "a MESMA imagem". Em 22/08/2026 o Filipe abriu a puxada alta e viu duas fotos
+ * que não se encaixavam: na de execução o sujeito segurava uma barra solta, sem cabo nenhum, e
+ * na de análise havia uma máquina de pulldown completa, com pilha de pesos e outro fundo.
+ * Arrastar o divisor trocava o cenário no meio.
+ *
+ * A varredura de 19/08 tinha olhado imagem por imagem e dado por encerrado. Estava certa e
+ * incompleta: cada imagem, sozinha, estava boa. O defeito só existe no PAR, e conferir um lado
+ * não diz nada sobre o outro. É a mesma lição do boneco que faltava em 24 exercícios.
+ *
+ * COMO A DIVERGÊNCIA É MEDIDA, e por que assim:
+ *
+ * O corpo muda de propósito (pele vira musculatura), então comparar a imagem inteira acusaria
+ * todo par correto. O que NÃO pode mudar é o cenário: parede, piso, aparelho, luz e sombra. E o
+ * cenário vive na MOLDURA do quadro, porque a figura fica no meio. Então a medida é a diferença
+ * média absoluta, em tons de cinza, só na faixa externa das duas miniaturas.
+ *
+ * O LIMIAR NÃO FOI CHUTADO, foi medido. Depois de regerar sete pares por img2img a partir da
+ * própria foto de execução, os sete caíram para uma divergência de 1,2 a 7,3. Os pares que são
+ * cena REGERADA, e não edição da foto original, ficam de 40 para cima. A distribuição é bimodal
+ * com um vale largo no meio, e o corte fica em 20: acima disso não é sobreposição, é outra foto.
+ *
+ * O QUE ESTA MEDIDA NÃO PEGA, declarado porque medir e calar seria pior que não medir:
+ *
+ * Ela compara o cenário pixel a pixel na moldura, então enxerga bem uma troca de fundo CLARO
+ * por ESCURO, que é a assinatura da rodada que ela veio consertar. Mas duas academias escuras
+ * DIFERENTES têm molduras parecidas: trocando a análise da puxada alta pela do crucifixo, as
+ * duas escuras, a divergência foi só 10,9, abaixo do corte. Testei normalizar o brilho e passar
+ * um filtro de borda antes de comparar, e os dois PIORARAM a separação (com filtro de borda o
+ * pior par cai para 16,9 e o melhor sobe para 8,5, e o vale desaparece).
+ *
+ * Então este guardrail é uma rede, não uma prova: ele trava a regressão de fundo, que é a que
+ * de fato aconteceu 34 vezes, e não substitui olhar par a par. A varredura visual continua
+ * sendo o método; a medida é o que impede a regressão silenciosa entre uma varredura e outra.
+ *
+ * DUAS PORTAS DE SAÍDA, as duas declaradas:
+ *
+ * - `analiseOutraVista` no exercício: a análise é outra vista DE PROPÓSITO, porque o músculo
+ *   alvo fica nas costas e a execução é frontal. Nesses a tela nem usa o divisor, mostra as duas
+ *   lado a lado e escreve o motivo. Divergência alta ali é esperada.
+ * - `PENDENTES` aqui embaixo: pares que ainda não foram regerados, cada um com o número que
+ *   tinha quando entrou na lista. A lista só pode ENCOLHER, e o guardrail cobra isso: par que
+ *   melhorou e saiu do limite tem que sair da lista também, senão a fila fica mentindo.
+ */
+import { exercises } from "../src/data/exercises";
+import sharp from "sharp";
+import path from "path";
+import fs from "fs";
+
+const problemas: string[] = [];
+const erro = (msg: string) => {
+  problemas.push(msg);
+};
+
+/** Acima disto o par não é a mesma tomada. Medido, não arbitrado (ver cabeçalho). */
+const LIMITE = 20;
+
+/**
+ * Fila declarada de pares que ainda são cena regerada, com a divergência medida em 22/08/2026.
+ *
+ * Não é uma gaveta: cada linha é trabalho pendente de img2img a partir da própria foto de
+ * execução, e a asserção do fim do arquivo impede que a lista cresça ou fique desatualizada.
+ */
+const PENDENTES: Record<string, number> = {
+  "crucifixo-maquina": 143.6,
+  "desenvolvimento-maquina": 126.2,
+  "rosca-direta": 121.3,
+  "supino-reto-barra": 109.9,
+  "agachamento-isometrico-parede": 105.6,
+  "desenvolvimento-elastico": 103,
+  "elevacao-frontal": 101.9,
+  "supino-halteres": 100.6,
+  "suitcase-carry": 99.7,
+  "rotacao-externa-deitado": 95.5,
+  "equilibrio-unipodal": 86.1,
+  "mergulho-no-banco": 83.1,
+  "extensao-quadril-elastico": 82.7,
+  "subida-step": 80.2,
+  "agachamento-livre": 79.5,
+  "clam-shell": 70.8,
+  "elevacao-lateral-halteres": 67.2,
+  "remada-elastica": 65.5,
+  "remada-invertida": 64.8,
+  "mesa-flexora": 64.6,
+  "rotacao-interna-elastico": 62.7,
+  "remada-maquina": 57.7,
+  "levantamento-terra-romeno": 54.6,
+  "triceps-frances-halter": 54.1,
+  "prancha-lateral": 53.3,
+  "triceps-testa-barra": 49.1,
+  "rosca-martelo": 46.8,
+  "prancha-frontal": 44.6,
+  "triceps-polia": 43.7,
+  "sentar-levantar": 40.8,
+  "remada-baixa": 40.7,
+  "cadeira-extensora": 26.6,
+  "afundo-passada": 25.9,
+  "rosca-elastico": 25.9,
+};
+
+const N = 96;
+const BORDA = 14;
+
+async function cinza(arq: string): Promise<Buffer> {
+  const { data } = await sharp(arq).resize(N, N, { fit: "fill" }).greyscale().raw().toBuffer({ resolveWithObject: true });
+  return data;
+}
+
+function divergenciaDaMoldura(a: Buffer, b: Buffer): number {
+  let soma = 0;
+  let n = 0;
+  for (let y = 0; y < N; y++)
+    for (let x = 0; x < N; x++) {
+      const naBorda = x < BORDA || x >= N - BORDA || y < BORDA || y >= N - BORDA;
+      if (!naBorda) continue;
+      soma += Math.abs(a[y * N + x] - b[y * N + x]);
+      n++;
+    }
+  return Number((soma / n).toFixed(1));
+}
+
+const RAIZ = path.join(process.cwd(), "public");
+
+const pares = exercises.filter((e) => e.imagem && e.imagemAnalise);
+if (pares.length < 80) erro(`CONTROLE POSITIVO: só ${pares.length} exercícios têm o par foto + análise; a varredura perdeu o sentido.`);
+
+const medidos: { slug: string; div: number }[] = [];
+for (const e of pares) {
+  const fa = path.join(RAIZ, e.imagem!);
+  const fb = path.join(RAIZ, e.imagemAnalise!);
+  if (!fs.existsSync(fa) || !fs.existsSync(fb)) continue; // a existência é cobrada em check:catalogo
+  const [a, b] = await Promise.all([cinza(fa), cinza(fb)]);
+  const div = divergenciaDaMoldura(a, b);
+  medidos.push({ slug: e.slug, div });
+
+  // A análise em outra vista é decisão declarada, e ali a tela nem usa o divisor.
+  if (e.analiseOutraVista) {
+    if (div < LIMITE)
+      erro(
+        `OUTRA VISTA QUE NÃO É OUTRA VISTA (${e.slug}): o exercício declara \`analiseOutraVista\` e a divergência é ${div}, ou seja, as duas SÃO a mesma tomada. Apague a declaração e deixe o divisor voltar.`,
+      );
+    continue;
+  }
+
+  const pendente = PENDENTES[e.slug];
+  if (div >= LIMITE && pendente == null)
+    erro(
+      `PAR QUE NÃO É A MESMA TOMADA (${e.slug}): divergência de cenário ${div}, acima do limite de ${LIMITE}. O divisor promete revelar a análise sobre a MESMA imagem e trocaria o cenário no meio. Regere a análise por img2img A PARTIR da foto de execução, ou declare \`analiseOutraVista\` com o motivo.`,
+    );
+  if (div < LIMITE && pendente != null)
+    erro(
+      `PENDÊNCIA JÁ RESOLVIDA (${e.slug}): a divergência caiu para ${div} e o par saiu do limite, mas ele continua na fila de PENDENTES com ${pendente}. Tire-o da lista: fila desatualizada esconde o que já foi feito e o que falta.`,
+    );
+}
+
+// A fila não pode citar exercício que não existe mais nem que perdeu o par.
+const comPar = new Set(medidos.map((m) => m.slug));
+for (const slug of Object.keys(PENDENTES))
+  if (!comPar.has(slug)) erro(`FILA COM SLUG ÓRFÃO (${slug}): está em PENDENTES e não é mais um exercício com par de imagens.`);
+
+if (problemas.length) {
+  console.error(`\n[check:pares] REPROVOU (${problemas.length}):`);
+  for (const p of problemas) console.error("  - " + p);
+  console.error("");
+  process.exit(1);
+}
+
+const ok = medidos.filter((m) => m.div < LIMITE).length;
+const fila = Object.keys(PENDENTES).length;
+const outraVista = pares.filter((e) => e.analiseOutraVista).length;
+console.log(
+  `[check:pares] ok: ${medidos.length} pares medidos, ${ok} são a MESMA tomada (divergência abaixo de ${LIMITE}), ${outraVista} são outra vista declarada e mostrada lado a lado, ${fila} ainda na fila de regeração.`,
+);

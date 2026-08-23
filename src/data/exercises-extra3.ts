@@ -56,6 +56,8 @@ export const extraExercises3: Exercise[] = [
     anguloArticular: "0 graus de abdução, cotovelo a 90 graus",
 imagem: "/exercises/rotacao-externa-elastico.webp",
     imagemAnalise: "/exercises/rotacao-externa-elastico-analysis.webp",
+    analiseOutraVista:
+      "A análise é mostrada DE COSTAS porque os rotadores externos ficam atrás da escápula e não aparecem na vista frontal da execução.",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Infraespinal", percentual: 55, papel: "primário" },
@@ -311,6 +313,8 @@ imagem: "/exercises/rotacao-interna-elastico.webp",
      */
     imagem: "/exercises/scaption.webp",
     imagemAnalise: "/exercises/scaption-analysis.webp",
+    analiseOutraVista:
+      "A análise é mostrada DE COSTAS porque o supraespinal fica sob o trapézio, na parte de trás do ombro, e não tem como aparecer na vista frontal da execução.",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Supraespinal", percentual: 60, papel: "primário" },
@@ -475,6 +479,8 @@ imagem: "/exercises/rotacao-interna-elastico.webp",
     anguloArticular: "Quadril e joelho em semiflexão",
     imagem: "/exercises/caminhada-lateral-elastico.webp",
     imagemAnalise: "/exercises/caminhada-lateral-elastico-analysis.webp",
+    analiseOutraVista:
+      "A análise é mostrada DE COSTAS porque o glúteo médio fica na lateral e atrás do quadril, fora de vista na foto frontal da execução.",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Glúteo médio", percentual: 38, papel: "primário" },

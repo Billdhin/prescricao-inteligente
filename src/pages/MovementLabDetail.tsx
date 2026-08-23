@@ -252,7 +252,41 @@ function Detail({ exercise }: { exercise: Exercise }) {
         <div className="space-y-4">
           <div className="relative">
             <div className={cn(locked && "pointer-events-none blur-[6px] saturate-50")}>
-              {exercise.imagem && exercise.imagemAnalise ? (
+              {exercise.imagem && exercise.imagemAnalise && exercise.analiseOutraVista ? (
+                /*
+                 * A ANÁLISE É OUTRA TOMADA, e aqui a tela para de fingir que não é.
+                 *
+                 * O divisor deslizante promete revelar a análise sobre a MESMA imagem. Em alguns
+                 * exercícios o músculo alvo fica nas costas e a foto de execução é frontal, então
+                 * a camada de análise foi gerada de propósito numa vista de trás. Arrastando o
+                 * divisor, o cenário trocava no meio do caminho e o produto parecia quebrado.
+                 *
+                 * A decisão anatômica estava certa; era a APRESENTAÇÃO que mentia. Nestes casos as
+                 * duas ficam lado a lado, e o motivo vai escrito embaixo.
+                 */
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <figure className="min-w-0">
+                    <img
+                      src={withBase(exercise.imagem)}
+                      alt={`Execução: ${exercise.nome}`}
+                      className="w-full rounded-card border border-border object-cover"
+                    />
+                    <figcaption className="mt-1 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+                      Execução
+                    </figcaption>
+                  </figure>
+                  <figure className="min-w-0">
+                    <img
+                      src={withBase(exercise.imagemAnalise)}
+                      alt={`Análise anatômica: ${exercise.nome}`}
+                      className="w-full rounded-card border border-border object-cover"
+                    />
+                    <figcaption className="mt-1 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+                      Análise, em outra vista
+                    </figcaption>
+                  </figure>
+                </div>
+              ) : exercise.imagem && exercise.imagemAnalise ? (
                 <BiomechanicsComparisonSlider
                   baseSrc={withBase(exercise.imagem)}
                   analysisSrc={withBase(exercise.imagemAnalise)}
@@ -283,7 +317,9 @@ function Detail({ exercise }: { exercise: Exercise }) {
           </div>
 
           <p className="px-1 text-xs text-ink-3">
-            {exercise.imagem && !exercise.imagemAnalise ? (
+            {exercise.imagem && exercise.imagemAnalise && exercise.analiseOutraVista ? (
+              <>{exercise.analiseOutraVista}</>
+            ) : exercise.imagem && !exercise.imagemAnalise ? (
               <>
                 Este exercício não tem a camada de análise: o músculo principal dele não aparece
                 nesta vista, e destacá-lo aqui seria adivinhar. Os músculos envolvidos estão
