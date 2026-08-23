@@ -82,13 +82,7 @@ const LIMITE = 33;
 const PENDENTES: Record<string, number> = {
   "suitcase-carry": 99.7,
   "remada-elastica": 65.5,
-  "prancha-lateral": 53.3,
-  "triceps-testa-barra": 49.1,
-  "rosca-martelo": 46.8,
-  "prancha-frontal": 44.6,
-  "triceps-polia": 43.7,
   "sentar-levantar": 40.8,
-  "remada-baixa": 40.7,
 };
 
 /**
@@ -115,13 +109,7 @@ const PENDENTES_PROPORCAO: Record<string, number> = {
   "respiracao-360": 33.3,
   "agachamento-aquatico": 25.3,
   "sentar-levantar": 25,
-  "rotacao-externa-elastico": 25,
-  "scaption": 25,
-  "triceps-testa-barra": 25,
-  "puxada-supinada": 25,
   "suitcase-carry": 25,
-  "prancha-lateral": 24.1,
-  "rosca-martelo": 24.1,
 };
 
 const N = 96;
@@ -160,19 +148,23 @@ for (const e of pares) {
   medidos.push({ slug: e.slug, div });
 
   // A análise em outra vista é decisão declarada, e ali a tela nem usa o divisor.
-  if (e.analiseOutraVista) {
-    if (div < LIMITE)
-      erro(
-        `OUTRA VISTA QUE NÃO É OUTRA VISTA (${e.slug}): o exercício declara \`analiseOutraVista\` e a divergência é ${div}, ou seja, as duas SÃO a mesma tomada. Apague a declaração e deixe o divisor voltar.`,
-      );
-    continue;
-  }
+  if (e.analiseOutraVista && div < LIMITE)
+    erro(
+      `OUTRA VISTA QUE NÃO É OUTRA VISTA (${e.slug}): o exercício declara \`analiseOutraVista\` e a divergência é ${div}, ou seja, as duas SÃO a mesma tomada. Apague a declaração e deixe o divisor voltar.`,
+    );
 
   /*
-   * PROPORÇÃO: cobrada em TODO par, inclusive nos de outra vista. Lá as duas ficam lado a lado
-   * e não sobrepostas, mas duas fotos de formato diferente uma ao lado da outra também ficam
-   * feias; e, sobretudo, formato igual é o sinal de que a análise saiu DAQUELA foto.
+   * PROPORÇÃO: cobrada em todo par que o divisor SOBREPÕE, e não nos de outra vista.
+   *
+   * A primeira versão desta regra cobrava também os de `analiseOutraVista`, com o argumento de
+   * que "formato igual é o sinal de que a análise saiu DAQUELA foto". O argumento se contradiz:
+   * nesses pares a análise NÃO sai daquela foto, e não sair é justamente o que eles declaram.
+   * Lá as duas ficam lado a lado numa grade, cada uma no seu quadro, e formato diferente é
+   * questão de arrumação, não de correção. Cobrar ali era criar trabalho para satisfazer uma
+   * regra que não tinha o que proteger.
    */
+  if (e.analiseOutraVista) continue;
+
   const ma = await sharp(fa).metadata();
   const mb = await sharp(fb).metadata();
   const razaoA = ma.width! / ma.height!;
@@ -204,9 +196,16 @@ for (const e of pares) {
 const comPar = new Set(medidos.map((m) => m.slug));
 for (const slug of Object.keys(PENDENTES))
   if (!comPar.has(slug)) erro(`FILA COM SLUG ÓRFÃO (${slug}): está em PENDENTES e não é mais um exercício com par de imagens.`);
-for (const slug of Object.keys(PENDENTES_PROPORCAO))
+for (const slug of Object.keys(PENDENTES_PROPORCAO)) {
   if (!comPar.has(slug))
     erro(`FILA DE PROPORÇÃO COM SLUG ÓRFÃO (${slug}): está em PENDENTES_PROPORCAO e não é mais um exercício com par de imagens.`);
+  // Par de outra vista é ISENTO da regra de proporção, então não pode ficar na fila dela: a
+  // entrada nunca seria avaliada, e a fila passaria a contar trabalho que ninguém vai fazer.
+  else if (exercises.find((e) => e.slug === slug)?.analiseOutraVista)
+    erro(
+      `FILA DE PROPORÇÃO COM PAR ISENTO (${slug}): o exercício declara \`analiseOutraVista\`, que não é sobreposto pelo divisor e por isso não responde à regra de proporção. Tire-o da fila.`,
+    );
+}
 
 if (problemas.length) {
   console.error(`\n[check:pares] REPROVOU (${problemas.length}):`);
