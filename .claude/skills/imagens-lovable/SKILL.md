@@ -323,6 +323,76 @@ BORDA do quadro. Quando eu troquei só o ângulo dos braços do scaption, manten
 academia, a borda não mudou e ele NÃO acusou o par desatualizado. Ele pega troca de cena, não
 troca de pose. Pose continua sendo olho.
 
+### ADENDO de 23/08/2026 (noite): varredura das 101 fotos de execução, fechada
+
+O Filipe mandou 11 prints e disse "revise tudo". Fechei as 101: **11 refeitas pelos prints,
+90 lidas uma a uma, 18 refeitas na varredura, 65 limpas.** O que ficou de método:
+
+#### O melhor detector é o PRÓPRIO CATÁLOGO
+
+Cinco defeitos só ficaram PROVADOS comparando a foto com as `fases` e o `resumoPratico` que
+o exercício declara. Sem isso eu teria deixado passar, porque a foto "parecia certa":
+
+| Exercício | O que o texto diz | O que a foto mostrava |
+|---|---|---|
+| `chop-elastico` | "elástico preso **ALTO** de um lado" | ancorado embaixo: virava um lift |
+| `panturrilha-em-pe` | "até o alongamento completo (**no degrau**, além da linha)" | descalço no chão plano |
+| `rosca-scott-maquina` | equipamento **"Máquina"** | barra livre com anilhas soltas |
+| `supino-maquina` | manoplas "na **linha do peito**", empurra "à frente" | manoplas em CORRENTES, empurradas para cima |
+| `face-pull-polia` | "de frente para a polia **ALTA**" | cabo descendo até o chão |
+
+**Antes de aprovar qualquer foto, leia as fases do exercício e confira item por item.** É mais
+barato e mais confiável que olhar a foto procurando "o que parece estranho".
+
+#### Duas classes de defeito que eu não tinha na lista
+
+- **MARCA DE TERCEIRO.** Três fotos tinham logotipo Nike visível na roupa. Num produto pago,
+  marca registrada de terceiro numa imagem distribuída é risco jurídico, além de destoar. Peça
+  sempre "roupa lisa, sem símbolo, sem risco, sem texto" e **confira o calçado também**, que é
+  onde o gerador mais insiste em pôr logo.
+- **ENQUADRAMENTO QUE ESCONDE O EXERCÍCIO.** No elíptico, na escada ergométrica e na bicicleta
+  reclinada a foto mostrava só tronco e guidão: dava para ver a pessoa, não o exercício. A foto
+  existia e não ensinava. O conserto é pedir a **câmera mais afastada**, com a pessoa da cabeça
+  aos pés e o aparelho do chão ao topo. Vale como critério de aceite: *se você não consegue
+  nomear o exercício olhando só a foto, ela não serve.*
+
+#### Contagem: objeto e membro
+
+A classe mais comum continua sendo a mão. Peça sempre **a contagem explícita**: "EXATAMENTE
+dois halteres, UM EM CADA MÃO, cada um pendurado AO LADO do corpo". Foi assim que sumiram o
+terceiro haltere flutuante do `farmer-walk` e as três cabeças de haltere em volta de uma mão
+só do `agachamento-bulgaro`. Diga também **onde o objeto NÃO pode estar** ("nada na frente do
+corpo"), porque é lá que o gerador põe o objeto sobrando.
+
+#### Quando o agente troca img2img por text-to-image, o que quebra é a LIGAÇÃO
+
+Num lote o agente usou `generate_image` em vez de `edit_image` a partir do painel. Cinco das
+seis saíram bem. A única que falhou foi a `flexora-em-pe`, e falhou exatamente na peça que
+LIGA duas partes: o coxim ficou como um cilindro solto no ar, sem braço de alavanca chegando
+até a máquina. **Pose e cenário o text-to-image acerta; articulação mecânica ele não acerta.**
+Em aparelho com braço de alavanca, exija `edit_image` e escreva que **o braço precisa ser
+visível ligando a peça móvel ao corpo da máquina e à pilha de placas.**
+
+#### A janela recortada erra POSIÇÃO, não vazamento, e isso se conserta com marco visível
+
+Confirmação do que foi descoberto de manhã: o overlay translúcido errou 5 de 11; a janela
+recortada errou **3 de 18**, e as três foram erro de LUGAR, não de vazamento. O conserto não é
+mais anatomia, é **referência visível**: para o deltoide, "a bola arredondada do ombro, onde a
+alça de uma mochila passaria" acertou de primeira, depois de "deltoide" ter caído no peito.
+Para músculo em membro dobrado, diga QUAL perna pelo que ela está fazendo ("a que está com o
+joelho dobrado empurrando o coxim"), não por lado.
+
+#### Dois FALSOS POSITIVOS meus, que valem tanto quanto os defeitos
+
+- Reprovei `elevacao-joelhos-suspenso` duas vezes por uma "segunda cabeça". Ampliando de
+  verdade, era **o cabelo dele visto de trás**.
+- Marquei `elevacao-frontal` e `rosca-banco-inclinado` como "dois braços e um haltere só".
+  Ampliando, eram **dois halteres sobrepostos na vista de perfil**, que é o esperado.
+
+**Numa vista de perfil, membro e implemento do lado oposto FICAM ESCONDIDOS por trás.** Não
+conte isso como defeito sem ampliar. Regra: **suspeita levantada em folha de contato não é
+achado; achado é o que sobrevive ao zoom.**
+
 ## Verificação é obrigatória
 
 O agente do Lovable **avisa sozinho** quando erra ("a imagem 0 saiu parecendo uma máquina de cabos"). Leia a resposta dele. Mas não confie só nisso: olhe as imagens. Nunca salve lote sem inspecionar item a item.
