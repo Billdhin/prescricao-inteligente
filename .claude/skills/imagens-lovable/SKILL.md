@@ -255,6 +255,74 @@ ou seja, nunca teve chance de ser verdadeiro. É a mesma classe de erro que a re
 código de saída, nunca por grep" já cobre: **uma verificação que não pode falhar não verifica
 nada.** Antes de confiar num laço de espera, imprima o valor que ele está comparando.
 
+### ADENDO de 23/08/2026 (tarde): a JANELA não vaza, o overlay vaza, e nomeie o exercício
+
+Rodada das 11 fotos de execução que o Filipe reprovou de uma vez, dizendo que não era só o
+corpo, era a composição: o equipamento, as mãos, o movimento. Ele estava certo, e os defeitos
+caem em quatro classes que vale procurar em qualquer foto de execução:
+
+1. **A mão não fecha no que segura.** Punho fechado VAZIO com o haltere flutuando ao lado
+   (scaption), borrão cinza no lugar da pegada (remada invertida), corda encostando no
+   antebraço com a mão aberta na cabeça (abdominal na polia). É a classe mais comum.
+2. **Aparelho inventado ou trocado.** A cadeira adutora era a ABdutora, com os coxins por fora
+   e as pernas abrindo: a imagem ensinava o exercício OPOSTO. O leg press tinha um haltere no
+   peito e o pé empurrando uma pilha de placas solta. O tríceps testa tinha anilhas em forma
+   de tubo numa barra pendurada na diagonal.
+3. **Movimento errado.** O y-raise estava deitado de barriga para CIMA quando o primário é o
+   trapézio inferior, que só trabalha de bruços: a foto tornava o exercício impossível.
+4. **Implemento sem função.** A alça elástica no chão em volta da perna PARADA, deixando a
+   perna que trabalha fora dela, ou seja, resistência nenhuma.
+
+**Confira sempre contra o que o PRÓPRIO PRODUTO define.** As `fases` e o `resumoPratico` de
+cada exercício dizem a posição, o ângulo e o implemento. Foi lendo `fases` que descobri que o
+y-raise é de bruços, e a foto estava contra a definição do catálogo.
+
+#### A descoberta que mais rende: JANELA RECORTADA em vez de overlay
+
+Ao refazer as 11 camadas de análise, pedir "o músculo em vermelho translúcido por cima da
+região" falhou em 5 de forma sistemática: **o vermelho VAZA e acaba cobrindo o segmento
+inteiro do membro.** O adutor virou quadríceps, o glúteo médio desceu até o joelho, o tibial
+anterior engoliu a panturrilha. E duas foram além, transformando a pessoa numa figura
+anatômica sem roupa.
+
+**Pedir JANELA RECORTADA acertou as cinco.** A foto continua foto, a pessoa continua vestida
+com pele normal, e só um pedaço bem delimitado parece aberto, com borda de corte visível, com
+o músculo em vermelho LÁ DENTRO. **A janela tem borda por construção, então o vermelho não tem
+para onde escorrer.** Já era a convenção para músculo PROFUNDO (supraespinal, diafragma);
+agora é a convenção para QUALQUER músculo que o overlay não consiga conter.
+
+E acrescente sempre onde o vermelho PARA, com marco visível: "para onde começa a coxa", "para
+exatamente no cotovelo", "a panturrilha atrás continua com pele normal".
+
+#### Quando o detalhe teimar, NOMEIE o exercício em vez de descrever a anatomia
+
+A `puxada-supinada` saiu pronada pela oitava vez entre sessões. Descrever palma, polegar,
+nós dos dedos e rotação de antebraço nunca funcionou. **O que funcionou foi nomear:** "gere um
+REVERSE-GRIP LAT PULLDOWN, também chamado underhand ou supinated lat pulldown; a mão é a mesma
+de quem segura a barra para fazer ROSCA DIRETA, e a mesma da barra fixa supinada". O gerador
+conhece o exercício pelo nome e acerta a mão inteira de uma vez.
+
+Vale o par: dê o **nome do exercício** e um **exercício-âncora com a mesma mão**. E dê um
+critério de conferência que não dependa da mão: "se os cotovelos estiverem abertos para os
+LADOS, está errado; na supinada eles apontam para o chão, rentes ao tronco".
+
+#### Trocar a foto de execução ÓRFA a camada de análise
+
+Isso não é opcional e não é sutil: a camada de análise É a foto com o músculo desenhado, e o
+produto a revela com um divisor deslizante por cima da foto. Trocada a foto, a análise passa a
+mostrar outra cena por baixo. O `check:pares` cobrou em 8 pontos assim que instalei as fotos
+novas, com a mensagem certa. **Refazer uma foto de execução é sempre um trabalho de PAR.**
+
+Corolário que também apareceu: uma declaração de `analiseOutraVista` pode deixar de ser
+VERDADE quando a foto muda. `puxada-supinada` e `scaption` diziam que a análise era de costas
+por causa de músculo posterior ou profundo; com a foto nova em três quartos e com a janela no
+próprio ombro, as duas passaram a ser a mesma tomada, e as declarações saíram.
+
+**Limite medido do `check:pares`, para não confiar demais:** ele mede divergência de cena na
+BORDA do quadro. Quando eu troquei só o ângulo dos braços do scaption, mantendo a mesma
+academia, a borda não mudou e ele NÃO acusou o par desatualizado. Ele pega troca de cena, não
+troca de pose. Pose continua sendo olho.
+
 ## Verificação é obrigatória
 
 O agente do Lovable **avisa sozinho** quando erra ("a imagem 0 saiu parecendo uma máquina de cabos"). Leia a resposta dele. Mas não confie só nisso: olhe as imagens. Nunca salve lote sem inspecionar item a item.
