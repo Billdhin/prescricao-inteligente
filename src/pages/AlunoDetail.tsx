@@ -32,6 +32,7 @@ import {
   MoreHorizontal,
   Plus,
   ClipboardList,
+  ChevronDown,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, LinhaDeTokens, TokenRotulado, Eyebrow, type PillTone } from "@/components/ui/primitives";
 import { TokenDose } from "@/components/gps/TermoDoseInfo";
@@ -68,7 +69,7 @@ import { getModelo, rotuloMeso, rotuloFrequencia, semanaAtual, mesocicloAtual, p
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
-import { EvolucaoMini, TabelaEvolucao } from "@/components/app/EvolucaoMini";
+import { EvolucaoMini, TabelaEvolucao, comUnidade, type DirMetrica } from "@/components/app/EvolucaoMini";
 import { TresCamadas } from "@/components/ui/camadas";
 import { montarChecklist } from "@/data/semaforo";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
@@ -484,9 +485,18 @@ export function AlunoDetail() {
    */
   const avAlvo = params.get("av") ?? undefined;
   const [realce, setRealce] = React.useState<string | undefined>(avAlvo);
+  /*
+   * Qual avaliacao do historico esta aberta. Nasce na que veio pelo link; quando nao veio
+   * nenhuma, e a mais recente que abre, porque e nela que se decide. O null e o estado
+   * "fechei todas na mao", e precisa ser distinguivel de undefined ("ainda nao escolhi"),
+   * senao o padrao reabriria a mais recente a cada renderizacao e o clique de fechar nao
+   * teria efeito nenhum.
+   */
+  const [avEscolhida, setAvEscolhida] = React.useState<string | null | undefined>(avAlvo);
   React.useEffect(() => {
     if (!avAlvo) return;
     setRealce(avAlvo);
+    setAvEscolhida(avAlvo);
     // no quadro seguinte, para o painel da aba já estar montado quando a rolagem acontecer
     const r = requestAnimationFrame(() =>
       document.getElementById(`av-${avAlvo}`)?.scrollIntoView({ behavior: "smooth", block: "center" }),
@@ -512,6 +522,7 @@ export function AlunoDetail() {
 
   const avals = avaliacoes.filter((a) => a.alunoId === id).sort((a, b) => a.data - b.data);
   const avalsDesc = [...avals].reverse();
+  const avAberta = avEscolhida === undefined ? avalsDesc[0]?.id : (avEscolhida ?? undefined);
   const prescs = prescricoes.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
   const planosDoAluno = planos.filter((p) => p.alunoId === id).sort((a, b) => b.data - a.data);
   const planoAtivo = planosDoAluno.find((p) => p.status === "ativo");
@@ -768,7 +779,7 @@ export function AlunoDetail() {
                 </span>
                 <h2 className="font-display text-lg font-bold text-ink">Evolução</h2>
               </div>
-              <EvolucaoMini avals={avals} />
+              <EvolucaoMini avals={avals} sexo={aluno.sexo} />
             </Card>
 
             {avals.length > 0 && (
@@ -790,69 +801,12 @@ export function AlunoDetail() {
 
             <Card className="p-5 md:p-6">
               <h2 className="mb-4 font-display text-lg font-bold text-ink">Histórico de avaliações</h2>
-              {avalsDesc.length === 0 ? (
-                <p className="py-6 text-center text-sm text-ink-2">Nenhuma avaliação registrada ainda.</p>
-              ) : (
-                <ol className="space-y-3">
-                  {avalsDesc.map((av) => (
-                    <li
-                      key={av.id}
-                      id={`av-${av.id}`}
-                      className={cn(
-                        "flex gap-3 rounded-xl border p-3 transition-colors duration-500",
-                        realce === av.id ? "border-primary bg-primary-tint" : "border-border",
-                      )}
-                    >
-                      <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-2">
-                        <Clock className="h-4 w-4" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                          <span className="font-semibold text-ink">{fmtData(av.data)}</span>
-                          {av.tipo && <Pill tone="neutral">{TIPO_AVAL_LABEL[av.tipo]}</Pill>}
-                          {av.medidas.peso != null && <Medida label="Peso" value={`${av.medidas.peso} kg`} />}
-                          {av.medidas.percentualGordura != null && (
-                            <Medida label="% gordura" value={`${av.medidas.percentualGordura}%`} />
-                          )}
-                          {av.medidas.cintura != null && <Medida label="Cintura" value={`${av.medidas.cintura} cm`} />}
-                          {av.dorEscala != null && <Medida label="Dor" value={`${av.dorEscala}/10`} />}
-                        </div>
-                        {(av.testes?.length || av.fotos?.length || av.regioesDor?.length) && (
-                          <div className="mt-1 flex flex-wrap gap-1.5">
-                            {av.testes?.length ? (
-                              <Pill tone="analysis">{av.testes.length} teste{av.testes.length > 1 ? "s" : ""}</Pill>
-                            ) : null}
-                            {av.fotos?.length ? <Pill tone="primary">{av.fotos.length} foto{av.fotos.length > 1 ? "s" : ""}</Pill> : null}
-                            {av.regioesDor?.length ? (
-                              <Pill tone="warning">dor: {av.regioesDor.slice(0, 2).join(", ")}{av.regioesDor.length > 2 ? "..." : ""}</Pill>
-                            ) : null}
-                          </div>
-                        )}
-                        {/* Os testes por extenso, e não só a contagem. Um 1RM estimado
-                            que vira a pílula "1 teste" é um dado que o profissional
-                            registrou e não consegue mais ler. A observação carrega a
-                            memória de cálculo das estimativas, então fica junto. */}
-                        {av.testes?.length ? (
-                          <ul className="mt-1.5 space-y-1">
-                            {av.testes.map((t, i) => (
-                              <li key={i} className="border-l-2 border-border pl-2.5">
-                                <span className="tabular text-sm text-ink-2">
-                                  {t.nome}
-                                  {t.lado && t.lado !== "NA" ? ` (${t.lado})` : ""}:{" "}
-                                  <span className="font-semibold text-ink">{t.resultado}</span>
-                                  {t.unidade ? ` ${t.unidade}` : ""}
-                                </span>
-                                {t.obs && <span className="block text-2xs text-ink-3">{t.obs}</span>}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : null}
-                        {av.observacoes && <p className="mt-1 text-sm text-ink-2">{av.observacoes}</p>}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
+              <HistoricoAvaliacoes
+                avalsDesc={avalsDesc}
+                realce={realce}
+                aberta={avAberta}
+                onAbrir={(id) => setAvEscolhida(avAberta === id ? null : id)}
+              />
             </Card>
 
             {/* Análise postural por foto: é um tipo de avaliação, então vive aqui. */}
@@ -1319,6 +1273,216 @@ function leituraEvolucao(avals: Avaliacao[]): { itens: LeituraItem[]; refs: stri
   }
 
   return { itens, refs: [...new Set(refs)] };
+}
+
+/* --------------------------- Histórico de avaliações --------------------------- */
+
+/** As medidas que abrem o cartão da avaliação, na ordem em que se lê uma avaliação. */
+const MEDIDAS_DESTAQUE: { key: string; label: string; unidade: string; dir: DirMetrica }[] = [
+  { key: "peso", label: "Peso", unidade: "kg", dir: "neutro" },
+  { key: "percentualGordura", label: "Gordura", unidade: "%", dir: "menor" },
+  { key: "cintura", label: "Cintura", unidade: "cm", dir: "menor" },
+  { key: "massaMuscular", label: "Massa muscular", unidade: "kg", dir: "maior" },
+  { key: "pressaoSistolica", label: "PA sistólica", unidade: "mmHg", dir: "menor" },
+  { key: "fcRepouso", label: "FC repouso", unidade: "bpm", dir: "menor" },
+];
+
+const fmtMedida = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ","));
+
+/** "3 meses depois", "40 dias depois". O intervalo é parte da leitura de uma evolução. */
+function intervaloEntre(atual: number, anterior?: number): string | null {
+  if (anterior == null) return null;
+  const dias = Math.max(0, Math.round((atual - anterior) / 86_400_000));
+  if (dias === 0) return "no mesmo dia da anterior";
+  if (dias < 45) return `${dias} ${dias === 1 ? "dia" : "dias"} depois da anterior`;
+  const meses = Math.round(dias / 30);
+  return `${meses} ${meses === 1 ? "mês" : "meses"} depois da anterior`;
+}
+
+/**
+ * O HISTÓRICO COMO LINHA DO TEMPO, com a variação escrita.
+ *
+ * O Filipe: "a visualização do histórico de avaliação do aluno não está legal". O que havia
+ * era uma pilha de cartões iguais, cada um uma fila de pílulas de mesmo peso, com a data
+ * competindo com as medidas. E a pergunta que se faz ao abrir um histórico, O QUE MUDOU desde
+ * a anterior, ficava por conta do profissional subtrair de cabeça, linha por linha.
+ *
+ * Três decisões de desenho, cada uma respondendo a um defeito:
+ *
+ *  - TRILHO. Os registros são uma sequência, e o intervalo entre eles muda a leitura: cair
+ *    2 kg em 3 semanas não é cair 2 kg em 6 meses. O trilho mostra a sequência e o intervalo
+ *    vira texto.
+ *  - UMA ABERTA, AS OUTRAS EM UMA LINHA. É na mais recente que se decide. As anteriores
+ *    continuam legíveis numa linha e abrem ao clique, em vez de somarem seis cartões cheios.
+ *  - A VARIAÇÃO POR EXTENSO, contra a avaliação imediatamente anterior. "1,4 kg abaixo" e não
+ *    só a cor do número: cor sozinha não é dado para quem não distingue verde de vermelho.
+ */
+function HistoricoAvaliacoes({
+  avalsDesc,
+  realce,
+  aberta,
+  onAbrir,
+}: {
+  /** avaliações em ordem decrescente (a mais recente primeiro) */
+  avalsDesc: Avaliacao[];
+  /** id da avaliação que chegou por ?av=, para o realce temporário */
+  realce?: string;
+  /** id da avaliação expandida */
+  aberta?: string;
+  onAbrir: (id: string) => void;
+}) {
+  if (avalsDesc.length === 0) {
+    return <p className="py-6 text-center text-sm text-ink-2">Nenhuma avaliação registrada ainda.</p>;
+  }
+  return (
+    <ol className="mt-1">
+      {avalsDesc.map((av, i) => {
+        const anterior = avalsDesc[i + 1];
+        const ultimo = i === avalsDesc.length - 1;
+        const expandida = aberta === av.id;
+        const intervalo = intervaloEntre(av.data, anterior?.data);
+        const medidas = MEDIDAS_DESTAQUE.filter((m) => av.medidas[m.key] != null);
+        const resumo = medidas.slice(0, 3);
+        return (
+          <li
+            key={av.id}
+            id={`av-${av.id}`}
+            className={cn(
+              "flex gap-3.5 rounded-xl transition-colors duration-500",
+              realce === av.id && "bg-primary-tint",
+            )}
+          >
+            {/* Trilho: bolinha do registro e a linha que liga ao próximo. */}
+            <div className="flex w-3 shrink-0 flex-col items-center pt-2">
+              <span
+                className={cn(
+                  "shrink-0 rounded-full",
+                  expandida
+                    ? "h-2.5 w-2.5 bg-primary ring-4 ring-primary-tint"
+                    : "h-2 w-2 bg-surface ring-2 ring-border",
+                )}
+              />
+              {!ultimo && <span className="mt-1 w-0.5 flex-1 bg-border" />}
+            </div>
+
+            <div className={cn("min-w-0 flex-1", ultimo ? "pb-1" : "pb-5")}>
+              <button
+                onClick={() => onAbrir(av.id)}
+                aria-expanded={expandida}
+                className="group flex w-full flex-wrap items-center gap-x-2.5 gap-y-1 text-left"
+              >
+                <span
+                  className={cn(
+                    "font-display text-base font-bold",
+                    expandida ? "text-ink" : "text-ink-2 group-hover:text-ink",
+                  )}
+                >
+                  {fmtData(av.data)}
+                </span>
+                {i === 0 && <Pill tone="primary">Mais recente</Pill>}
+                {av.tipo && <Pill tone={av.tipo === "inicial" ? "analysis" : "neutral"}>{TIPO_AVAL_LABEL[av.tipo]}</Pill>}
+                <ChevronDown
+                  className={cn("h-4 w-4 shrink-0 text-ink-3 transition-transform", expandida && "rotate-180")}
+                />
+              </button>
+              <p className="mt-0.5 text-xs text-ink-3">
+                {intervalo ?? "o ponto de partida deste aluno"}
+              </p>
+
+              {expandida ? (
+                <div className="mt-2.5">
+                  {medidas.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {medidas.map((m) => {
+                        const v = av.medidas[m.key] as number;
+                        const ant = anterior?.medidas[m.key];
+                        const d = ant != null ? +(v - ant).toFixed(1) : null;
+                        const bom = d == null || d === 0 || m.dir === "neutro" ? null : m.dir === "menor" ? d < 0 : d > 0;
+                        return (
+                          <div key={m.key} className="rounded-xl bg-surface-soft px-3 py-2">
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">{m.label}</p>
+                            <p className="tabular font-display text-lg font-bold leading-tight text-ink">
+                              {fmtMedida(v)}
+                              <span className={cn("text-2xs font-semibold text-ink-2", m.unidade !== "%" && "ml-0.5")}>
+                                {m.unidade}
+                              </span>
+                            </p>
+                            <p
+                              className={cn(
+                                "tabular mt-0.5 text-2xs font-semibold",
+                                bom == null ? "text-ink-3" : bom ? "text-success" : "text-warning",
+                              )}
+                            >
+                              {d == null
+                                ? "primeira medida"
+                                : d === 0
+                                  ? "sem mudança"
+                                  : `${comUnidade(Math.abs(d), m.unidade)} ${d < 0 ? "abaixo" : "acima"}`}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {(av.dorEscala != null || av.regioesDor?.length || av.fotos?.length) && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {av.dorEscala != null && (
+                        <Pill tone={av.dorEscala >= 4 ? "warning" : "neutral"}>Dor {av.dorEscala}/10</Pill>
+                      )}
+                      {av.regioesDor?.length ? (
+                        <Pill tone="warning">
+                          dor: {av.regioesDor.slice(0, 2).join(", ")}
+                          {av.regioesDor.length > 2 ? "..." : ""}
+                        </Pill>
+                      ) : null}
+                      {av.fotos?.length ? (
+                        <Pill tone="primary">
+                          {av.fotos.length} foto{av.fotos.length > 1 ? "s" : ""}
+                        </Pill>
+                      ) : null}
+                    </div>
+                  )}
+
+                  {/* Os testes por extenso, e não só a contagem. Um 1RM estimado que vira a
+                      pílula "1 teste" é um dado que o profissional registrou e não consegue
+                      mais ler. A observação carrega a memória de cálculo das estimativas. */}
+                  {av.testes?.length ? (
+                    <ul className="mt-2.5 space-y-1">
+                      {av.testes.map((t, k) => (
+                        <li key={k} className="border-l-2 border-analysis pl-2.5">
+                          <span className="tabular text-sm text-ink-2">
+                            {t.nome}
+                            {t.lado && t.lado !== "NA" ? ` (${t.lado})` : ""}:{" "}
+                            <span className="font-semibold text-ink">{t.resultado}</span>
+                            {t.unidade ? ` ${t.unidade}` : ""}
+                          </span>
+                          {t.obs && <span className="block text-2xs text-ink-3">{t.obs}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {av.observacoes && <p className="mt-2 text-sm text-ink-2">{av.observacoes}</p>}
+                </div>
+              ) : (
+                <p className="tabular mt-1 text-sm text-ink-2">
+                  {resumo.length > 0
+                    ? resumo.map((m, k) => (
+                        <React.Fragment key={m.key}>
+                          {k > 0 && " · "}
+                          {m.label} <span className="font-semibold text-ink">{comUnidade(av.medidas[m.key] as number, m.unidade)}</span>
+                        </React.Fragment>
+                      ))
+                    : "Sem medidas de composição neste registro."}
+                </p>
+              )}
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
 }
 
 /** Cartão de apoio "Leitura da evolução" (Resumo/Na prática/Ciência). */

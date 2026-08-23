@@ -267,7 +267,7 @@ export function AvaliacaoModal({
                   </p>
                 </div>
               </div>
-              <EvolucaoMini avals={historico} metricas={METRICAS_CHAVE} valorUnico />
+              <EvolucaoMini avals={historico} metricas={METRICAS_CHAVE} valorUnico sexo={alunoSexo} />
             </div>
           )}
 

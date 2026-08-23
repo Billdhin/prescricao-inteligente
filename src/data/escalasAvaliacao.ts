@@ -156,14 +156,19 @@ export function getEscala(id: string): EscalaAvaliacao | undefined {
  * Devolve `undefined` quando a escala exige sexo e o aluno não o declarou: dizer
  * "bom" com o corte errado é pior do que não dizer nada.
  */
+export function faixasDe(escala: EscalaAvaliacao, sexo?: Sexo): FaixaEscala[] | undefined {
+  return (
+    escala.faixas.geral ??
+    (sexo === "M" ? escala.faixas.masculino : sexo === "F" ? escala.faixas.feminino : undefined)
+  );
+}
+
 export function classificarNaEscala(
   escala: EscalaAvaliacao,
   valor: number,
   sexo?: Sexo,
 ): FaixaEscala | undefined {
-  const porSexo =
-    escala.faixas.geral ??
-    (sexo === "M" ? escala.faixas.masculino : sexo === "F" ? escala.faixas.feminino : undefined);
+  const porSexo = faixasDe(escala, sexo);
   if (!porSexo) return undefined;
   return porSexo.find((f) => valor >= f.de && valor < f.ate);
 }
