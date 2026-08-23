@@ -80,9 +80,7 @@ const LIMITE = 33;
  * execução, e a asserção do fim do arquivo impede que a lista cresça ou fique desatualizada.
  */
 const PENDENTES: Record<string, number> = {
-  "suitcase-carry": 99.7,
-  "remada-elastica": 65.5,
-  "sentar-levantar": 40.8,
+  "preensao-isometrica-handgrip": 49.5,
 };
 
 /**
@@ -103,13 +101,7 @@ const PENDENTES: Record<string, number> = {
 const TOLERANCIA_PROPORCAO = 0.02;
 
 const PENDENTES_PROPORCAO: Record<string, number> = {
-  "abdominal-polia-alta": 66.3,
-  "panturrilha-em-pe": 50,
-  "preensao-isometrica-handgrip": 33.9,
-  "respiracao-360": 33.3,
   "agachamento-aquatico": 25.3,
-  "sentar-levantar": 25,
-  "suitcase-carry": 25,
 };
 
 const N = 96;

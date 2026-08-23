@@ -283,7 +283,26 @@ for (const e of exercises) {
  * quem o criou a gerar a imagem ou a escrever por que ela não pode existir. Ausência com
  * motivo é honestidade; ausência silenciosa é buraco.
  */
-const SEM_ANALISE_COM_MOTIVO = new Set<string>([]);
+const SEM_ANALISE_COM_MOTIVO = new Set<string>([
+  /*
+   * suitcase-carry: o primário é o QUADRADO LOMBAR, que é profundo, fica de um lado só da
+   * coluna, e a foto de execução é de PERFIL.
+   *
+   * Duas coisas se somam e fecham a porta. Primeiro, quem resiste ao suitcase carry é o
+   * quadrado lombar do lado OPOSTO à carga, porque é ele que impede o tronco de tombar na
+   * direção do halter; marcar o lado errado ensinaria o contrário do certo. Segundo, numa vista
+   * de perfil os dois lados do tronco se sobrepõem, então nem dá para CONFERIR qual foi pintado.
+   *
+   * Duas gerações tentaram, em 22 e 23/08/2026. A primeira pintou o lado do peso e duplicou o
+   * halter. Na segunda pedi vista de costas, que desfaria a ambiguidade, e o gerador devolveu a
+   * imagem anterior sem mudar nada: é o terceiro registro do mesmo limite na skill
+   * imagens-lovable, onde troca de câmera não se pede em texto.
+   *
+   * Imagem que não dá para verificar não entra. A tela já tem a frase honesta para este caso, e
+   * os músculos envolvidos seguem listados abaixo dela.
+   */
+  "suitcase-carry",
+]);
 
 for (const e of exercises) {
   const temAnalise = Boolean(e.imagemAnalise);

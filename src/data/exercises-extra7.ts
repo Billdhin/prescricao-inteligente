@@ -692,7 +692,6 @@ imagem: "/exercises/punho-halter.webp",
       "Caminhar com peso em uma mão só: o quadrado lombar do lado oposto trabalha o percurso inteiro para o tronco não tombar.",
     anguloArticular: "Postura ereta com carga assimétrica",
     imagem: "/exercises/suitcase-carry.webp",
-    imagemAnalise: "/exercises/suitcase-carry-analysis.webp",
     modalidade: "m-funcional",
     ativacao: [
       { musculo: "Quadrado lombar", percentual: 60, papel: "primário" },
