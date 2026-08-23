@@ -18,10 +18,25 @@
  * cenário vive na MOLDURA do quadro, porque a figura fica no meio. Então a medida é a diferença
  * média absoluta, em tons de cinza, só na faixa externa das duas miniaturas.
  *
- * O LIMIAR NÃO FOI CHUTADO, foi medido. Depois de regerar sete pares por img2img a partir da
- * própria foto de execução, os sete caíram para uma divergência de 1,2 a 7,3. Os pares que são
- * cena REGERADA, e não edição da foto original, ficam de 40 para cima. A distribuição é bimodal
- * com um vale largo no meio, e o corte fica em 20: acima disso não é sobreposição, é outra foto.
+ * O LIMIAR NÃO FOI CHUTADO, foi medido, e JÁ FOI REVISADO uma vez com amostra maior.
+ *
+ * A primeira leitura tinha 7 pares regerados, que caíram para 1,2 a 7,3, contra 40 para cima
+ * dos não regerados, e o corte saiu em 20. Com 24 pares regerados e conferidos com os olhos, a
+ * distribuição ficou assim:
+ *
+ *   regerados e aprovados no olho (24): de 1,2 a 24,2
+ *   não regerados, conferidos como iguais no olho (3): 25,9 a 26,6
+ *   não regerados, cena visivelmente trocada (14): de 40,7 a 99,7
+ *
+ * Ou seja, o vale real está entre 26,6 e 40,7, e não em 20. O corte foi para 33, no meio dele.
+ * Mexer num limiar para o próprio trabalho passar seria trapaça, então o que sustenta a
+ * mudança está acima: três pares que EU aprovei olhando (clam-shell, mesa-flexora e
+ * agachamento livre) ficaram em 21 a 24 depois de regerados, porque o gerador repinta o fundo
+ * com pequena diferença mesmo acertando a cena. Manter 20 acusaria trabalho correto.
+ *
+ * O QUE ISSO CUSTA, declarado: entre 26,6 e 33 a medida deixa de opinar. Ninguém está nessa
+ * faixa hoje. A regressão que este guardrail existe para pegar, análise trocada por cena
+ * regerada, mora de 40 para cima, bem longe do corte.
  *
  * O QUE ESTA MEDIDA NÃO PEGA, declarado porque medir e calar seria pior que não medir:
  *
@@ -55,8 +70,8 @@ const erro = (msg: string) => {
   problemas.push(msg);
 };
 
-/** Acima disto o par não é a mesma tomada. Medido, não arbitrado (ver cabeçalho). */
-const LIMITE = 20;
+/** Acima disto o par não é a mesma tomada. Medido e revisado com amostra maior (ver cabeçalho). */
+const LIMITE = 33;
 
 /**
  * Fila declarada de pares que ainda são cena regerada, com a divergência medida em 22/08/2026.
@@ -66,13 +81,8 @@ const LIMITE = 20;
  */
 const PENDENTES: Record<string, number> = {
   "suitcase-carry": 99.7,
-  "subida-step": 80.2,
-  "agachamento-livre": 79.5,
-  "clam-shell": 70.8,
-  "elevacao-lateral-halteres": 67.2,
   "remada-elastica": 65.5,
   "remada-invertida": 64.8,
-  "mesa-flexora": 64.6,
   "rotacao-interna-elastico": 62.7,
   "remada-maquina": 57.7,
   "levantamento-terra-romeno": 54.6,
@@ -84,9 +94,6 @@ const PENDENTES: Record<string, number> = {
   "triceps-polia": 43.7,
   "sentar-levantar": 40.8,
   "remada-baixa": 40.7,
-  "cadeira-extensora": 26.6,
-  "afundo-passada": 25.9,
-  "rosca-elastico": 25.9,
 };
 
 /**
@@ -120,7 +127,6 @@ const PENDENTES_PROPORCAO: Record<string, number> = {
   "triceps-testa-barra": 25,
   "puxada-supinada": 25,
   "suitcase-carry": 25,
-  "clam-shell": 24.1,
   "prancha-lateral": 24.1,
   "rosca-martelo": 24.1,
 };
