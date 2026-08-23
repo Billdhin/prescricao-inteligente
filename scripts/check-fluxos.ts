@@ -42,7 +42,7 @@ function varrer(dir: string, acc: string[] = []): string[] {
 }
 
 /** Os parâmetros que carregam CONTEXTO (identidade), não configuração de tela. */
-const PARAMS_DE_CONTEXTO = ["aluno", "origem", "fase", "plano", "grupo", "aba", "avaliar", "secao"];
+const PARAMS_DE_CONTEXTO = ["aluno", "origem", "fase", "plano", "grupo", "aba", "avaliar", "secao", "av"];
 
 /**
  * Que arquivo atende cada rota. Escrito à mão de propósito: o App.tsx carrega quase tudo
@@ -172,6 +172,42 @@ function arquivoDaRota(caminho: string): string | null {
     reprovar(
       "src/pages/Alunos.tsx: busca ou filtro voltaram a ser estado local. Voltar de uma ficha joga fora " +
         "o que o profissional tinha filtrado, e com carteira grande isso é refazer o trabalho toda vez.",
+    );
+}
+
+/* ------- 4 · a tela de Avaliações não pode largar o profissional na Visão ------- */
+{
+  /*
+   * O CONTRÁRIO DA PROMESSA VAZIA: link que manda contexto DE MENOS.
+   *
+   * A asserção 1 pega quem envia um parâmetro que o destino ignora. Este caso é o oposto e
+   * passava por ela: o link não mandava nada. Clicar numa avaliação na tela de Avaliações
+   * caía na Visão do aluno, que é a aba padrão, e a avaliação clicada ficava duas ações
+   * adiante. O Filipe: "se eu cliquei para ver a última avaliação quero ver os detalhes
+   * dessa última avaliação".
+   *
+   * A regra: uma tela DE AVALIAÇÕES que manda para a ficha do aluno chega na aba de
+   * avaliações, ou vai direto registrar (`?avaliar=1`, que é ação e não leitura).
+   */
+  const av = ler("src/pages/Avaliacoes.tsx");
+  const semContexto: number[] = [];
+  for (const m of av.matchAll(/to=\{`\/alunos\/\$\{[^}]+\}([^`]*)`\}/g)) {
+    const query = m[1];
+    if (/aba=avaliacoes/.test(query) || /avaliar=1/.test(query)) continue;
+    semContexto.push(av.slice(0, m.index).split("\n").length);
+  }
+  if (semContexto.length)
+    reprovar(
+      `src/pages/Avaliacoes.tsx:${semContexto.join(", ")} manda para a ficha do aluno sem dizer a que veio. ` +
+        "Sem ?aba=avaliacoes o destino abre na Visão, e quem clicou numa avaliação não vê avaliação nenhuma.",
+    );
+
+  // E o destino precisa de fato levar o olho até o registro clicado, não só até a aba.
+  const detalhe = ler("src/pages/AlunoDetail.tsx");
+  if (!/params\.get\(["'`]av["'`]\)/.test(detalhe) || !/id=\{`av-\$\{av\.id\}`\}/.test(detalhe))
+    reprovar(
+      "src/pages/AlunoDetail.tsx: o histórico parou de ancorar em ?av=. Com dez avaliações na lista, " +
+        "abrir a aba certa ainda deixa o profissional procurando qual delas ele clicou.",
     );
 }
 

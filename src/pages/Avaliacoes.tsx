@@ -176,7 +176,7 @@ export function Avaliacoes() {
                       borderLeftColor: tipo === "chegando" ? "var(--border)" : "var(--warning)",
                     }}
                   >
-                    <Link to={`/alunos/${a.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                    <Link to={`/alunos/${a.id}?aba=avaliacoes`} className="flex min-w-0 flex-1 items-center gap-3">
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-xs font-bold text-white">
                         {a.iniciais}
                       </span>
@@ -214,7 +214,12 @@ export function Avaliacoes() {
               {recentes.map((av) => (
                 <Link
                   key={av.id}
-                  to={`/alunos/${av.alunoId}`}
+                  /* A AVALIAÇÃO CLICADA É O DESTINO, e não a ficha do aluno.
+                     O Filipe: "se eu cliquei para ver a última avaliação quero ver os detalhes
+                     dessa última avaliação". Sem `?aba=`, o destino caía na Visão, que é o
+                     padrão, e a avaliação que ele acabou de clicar ficava duas ações adiante.
+                     `?av=` leva o link até o registro exato, não só até a aba dele. */
+                  to={`/alunos/${av.alunoId}?aba=avaliacoes&av=${av.id}`}
                   className="flex items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:bg-surface-soft"
                 >
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-surface-soft text-xs font-bold text-ink-2">
@@ -260,7 +265,7 @@ export function Avaliacoes() {
             {evolucao.map(({ aluno: a, dPeso, dGord, dias, n }) => (
               <Link
                 key={a.id}
-                to={`/alunos/${a.id}`}
+                to={`/alunos/${a.id}?aba=avaliacoes`}
                 className="flex flex-wrap items-center gap-3 rounded-xl border border-border p-3 transition-colors hover:bg-surface-soft"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full gradient-brand text-xs font-bold text-white">

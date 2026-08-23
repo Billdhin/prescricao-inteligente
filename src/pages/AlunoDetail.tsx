@@ -470,6 +470,34 @@ export function AlunoDetail() {
     setParams(p, { replace: true });
   }, [params, setParams]);
 
+  /*
+   * ?av=<id> LEVA ATÉ A AVALIAÇÃO, e não só até a aba dela.
+   *
+   * O Filipe clicou numa avaliação na tela de Avaliações e caiu na Visão do aluno: "se eu
+   * cliquei para ver a última avaliação quero ver os detalhes dessa última avaliação". O
+   * `?aba=avaliacoes` resolve metade, porque a aba do histórico pode ter dez registros e o
+   * que ele clicou não é necessariamente o primeiro da lista.
+   *
+   * O id fica na URL como ESTADO (recarregar e compartilhar continuam caindo no mesmo
+   * registro), e o realce é temporário: ele serve para o olho achar a linha na chegada, não
+   * para marcá-la para sempre.
+   */
+  const avAlvo = params.get("av") ?? undefined;
+  const [realce, setRealce] = React.useState<string | undefined>(avAlvo);
+  React.useEffect(() => {
+    if (!avAlvo) return;
+    setRealce(avAlvo);
+    // no quadro seguinte, para o painel da aba já estar montado quando a rolagem acontecer
+    const r = requestAnimationFrame(() =>
+      document.getElementById(`av-${avAlvo}`)?.scrollIntoView({ behavior: "smooth", block: "center" }),
+    );
+    const t = setTimeout(() => setRealce(undefined), 2600);
+    return () => {
+      cancelAnimationFrame(r);
+      clearTimeout(t);
+    };
+  }, [avAlvo]);
+
   const aluno = alunos.find((a) => a.id === id);
   if (!aluno) {
     return (
@@ -767,7 +795,14 @@ export function AlunoDetail() {
               ) : (
                 <ol className="space-y-3">
                   {avalsDesc.map((av) => (
-                    <li key={av.id} className="flex gap-3 rounded-xl border border-border p-3">
+                    <li
+                      key={av.id}
+                      id={`av-${av.id}`}
+                      className={cn(
+                        "flex gap-3 rounded-xl border p-3 transition-colors duration-500",
+                        realce === av.id ? "border-primary bg-primary-tint" : "border-border",
+                      )}
+                    >
                       <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-surface-soft text-ink-2">
                         <Clock className="h-4 w-4" />
                       </span>
