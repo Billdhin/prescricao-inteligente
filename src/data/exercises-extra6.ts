@@ -373,8 +373,6 @@ export const extraExercises6: Exercise[] = [
      */
     imagem: "/exercises/puxada-supinada.webp",
     imagemAnalise: "/exercises/puxada-supinada-analysis.webp",
-    analiseOutraVista:
-      "A análise é mostrada DE COSTAS porque o músculo principal deste exercício, o latíssimo do dorso, fica nas costas e não aparece na foto de execução, que é frontal.",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Latíssimo do dorso", percentual: 72, papel: "primário" },

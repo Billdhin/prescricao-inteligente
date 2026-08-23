@@ -313,8 +313,6 @@ imagem: "/exercises/rotacao-interna-elastico.webp",
      */
     imagem: "/exercises/scaption.webp",
     imagemAnalise: "/exercises/scaption-analysis.webp",
-    analiseOutraVista:
-      "A análise é mostrada DE COSTAS porque o supraespinal fica sob o trapézio, na parte de trás do ombro, e não tem como aparecer na vista frontal da execução.",
     modalidade: "m-musculacao",
     ativacao: [
       { musculo: "Supraespinal", percentual: 60, papel: "primário" },
