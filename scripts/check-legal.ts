@@ -359,6 +359,34 @@ if (!/PRECO_ANUAL\b/.test(PLANOS) || !/PRECO_ESTUDIO/.test(PLANOS) || PLANOS.len
       reprovar("H", `o escopo comercial voltou a trazer "${frase}", que é a mesma alegação contável já retirada da landing.`);
 }
 
+/* -------- I · reembolso e cancelamento sem cobrança que os sustente -------- */
+{
+  const cobrancaAtiva = /export const COBRANCA_ATIVA\s*=\s*true/.test(PLANOS);
+  if (!cobrancaAtiva) {
+    // Cada padrão é uma promessa que exige uma transação para existir. Sem cobrança, não
+    // há valor a devolver nem assinatura a cancelar, e afirmar isso é o tipo de frase que
+    // um comprador atento usa para desqualificar todo o resto da página.
+    const PROMESSAS: [RegExp, string][] = [
+      [/garantia (?:total )?de \d+ dias/i, "garantia de reembolso por prazo"],
+      [/devolvemos 100%|devolvemos o valor|reembolso integral/i, "promessa de devolução do valor"],
+      [/cancela em \d+ cliques?/i, "promessa de cancelamento em N cliques"],
+    ];
+    for (const [re, oQue] of PROMESSAS) {
+      const achado = LANDING.match(re) ?? PRICING.match(re);
+      if (achado)
+        reprovar(
+          "I",
+          `a página promete "${achado[0]}" (${oQue}), e COBRANCA_ATIVA é false: não há pagamento ` +
+            `a devolver nem assinatura a cancelar. Ou a frase muda, ou a cobrança entra no ar.`,
+        );
+    }
+    // Controle positivo: se a landing parar de falar de preço, esta trava vira decorativa
+    // e ninguém percebe. A mesma disciplina do bloco H.
+    if (!/R\$/.test(LANDING))
+      reprovar("I", "controle positivo: a landing não menciona preço nenhum; o bloco I não está lendo o texto público.");
+  }
+}
+
 /* ------------------------------- resultado ------------------------------- */
 
 if (falhas.length) {
