@@ -204,6 +204,57 @@ imagem ensina um aparelho que não existe.
 medível por script. O `check:pares` mede cena e proporção porque essas têm número; anatomia não
 tem. Aqui o método é o olho, e o que fica registrado é a PERGUNTA a fazer, não uma asserção.
 
+### ADENDO de 23/08/2026: as 5 formas de corpo impossível, e o download que mente duas vezes
+
+Varredura de anatomia fechada nas cinco famílias de imagem: 101 execuções, 100 análises, 101
+bonecos, 191 variações e **283 imagens de erro**. Nas variações e nos bonecos, zero defeitos
+novos. Nas imagens de erro, **9 defeitos em 283**, e eles NÃO são todos "membro no lugar errado".
+São cinco formas diferentes de corpo impossível, e vale procurar as cinco:
+
+1. **Membro solto flutuando.** Uma mão no ar, desligada de qualquer braço (`bird-dog-2`).
+2. **Membro amputado.** Os dois braços terminando no deltoide, sem antebraço nem mão
+   (`equilibrio-unipodal-0`); ou um vão entre o ombro e a mão (`wall-slide-1`).
+3. **Corpo duplicado.** Duas cabeças e dois troncos fundidos no mesmo quadril (`dead-bug-2`).
+4. **Objeto duplicado.** Três halteres para duas mãos, um deles sem braço nenhum segurando
+   (`crucifixo-inverso-0`). O contador de objetos é tão importante quanto o de membros.
+5. **Cabeça errada.** Crânio esquelético com órbitas e dentes no lugar do rosto
+   (`puxada-supinada-0`, `elevacao-joelhos-suspenso-1`), ou esfera branca lisa sem rosto
+   nenhum (`puxada-supinada-2`). Esta é a pendência de "rosto esfolado" que o projeto já
+   registrava, agora com caso concreto e com correção.
+
+**Uma família limpa não diz nada sobre a outra.** As 191 variações passaram inteiras e as 283
+imagens de erro tinham 9 defeitos. São pipelines diferentes (foto de difusão contra render 3D
+posado), e o erro de um não aparece no outro. Varra família por família.
+
+**No prompt, continue descrevendo a geometria, e acrescente a CONTAGEM.** "Exatamente DOIS
+halteres, um em cada mão, e cada haltere fechado dentro de uma mão que se liga a um antebraço,
+a um braço e a um ombro" resolveu de primeira. "Conserte os halteres" não resolveria.
+
+**Para a cabeça, descreva o que ela É, não o que ela não é.** O que funcionou: "cabeça humana
+íntegra, coberta de pele, com testa, olhos, nariz, boca, queixo e uma orelha de cada lado",
+seguido do que está proibido. Só o "não pode ser caveira" não basta.
+
+#### O download mente de dois jeitos, e os dois aconteceram aqui
+
+Ontem a regra virou "apague o local antes e busque com `?v=<timestamp>`". **Não basta.** Hoje:
+
+- **`deploy_project` devolve `status: pending` e o domínio continua servindo o build ANTERIOR,
+  por mais de dez minutos.** Baixei 9 arquivos e 8 vieram 404. O nono, `dead-bug-2.webp`, veio
+  200 e era **o arquivo de um lote anterior**, exatamente a armadilha de ontem. Só que desta vez
+  a comparação de md5 com o arquivo antigo pegou.
+- **Publicar sob um NOME NOVO destrava, mas nem sempre na hora.** O primeiro nome novo serviu o
+  build fresco na primeira tentativa; o segundo serviu o build velho e demorou.
+
+**Então a verificação de frescor é por md5, sempre.** Guarde o md5 do arquivo antigo ANTES de
+gerar, e só aceite o download quando o md5 mudar. Conferir "é imagem?" não distingue nada, e
+conferir HTTP 200 também não.
+
+**E não tente medir frescor por `Content-Length`:** `lovable.app` não responde HEAD com esse
+cabeçalho. Montei um laço de espera baseado nele e ele rodou **840 vezes com a variável vazia**,
+ou seja, nunca teve chance de ser verdadeiro. É a mesma classe de erro que a regra "verificar por
+código de saída, nunca por grep" já cobre: **uma verificação que não pode falhar não verifica
+nada.** Antes de confiar num laço de espera, imprima o valor que ele está comparando.
+
 ## Verificação é obrigatória
 
 O agente do Lovable **avisa sozinho** quando erra ("a imagem 0 saiu parecendo uma máquina de cabos"). Leia a resposta dele. Mas não confie só nisso: olhe as imagens. Nunca salve lote sem inspecionar item a item.
