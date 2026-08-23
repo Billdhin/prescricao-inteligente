@@ -1,0 +1,19 @@
+# Fallback de SPA no Cloudflare Pages.
+#
+# Este arquivo é o motivo técnico mais direto da migração. No GitHub Pages,
+# /pricing e /casos-rcd respondiam HTTP 404 (medido em produção em 22/08/2026):
+# o roteador do React salvava a navegação no navegador, mas buscador, prévia de
+# link do WhatsApp e qualquer bot viam 404. Na prática, a página de preço não era
+# indexável e a melhor prova pública do produto, os 6 casos que rodam o motor ao
+# vivo, quebrava ao ser compartilhada.
+#
+# O GitHub Pages não tem como consertar isso: ele não aceita regra de reescrita.
+# Por isso existia o truque do 404.html (rafgraph/spa-github-pages), que converte
+# a rota em querystring e recarrega. Funciona para o usuário e não resolve nada
+# para o crawler, porque a primeira resposta continua sendo 404.
+#
+# Aqui a resposta é 200 com o index.html, que é o que o roteador precisa e o que
+# o buscador entende.
+#
+# O 200 no fim é obrigatório: sem ele o Cloudflare devolveria 404 também.
+/*    /index.html   200

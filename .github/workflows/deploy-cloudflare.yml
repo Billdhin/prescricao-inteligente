@@ -1,0 +1,117 @@
+# Publicação no Cloudflare Pages.
+#
+# POR QUE ESTE ARQUIVO EXISTE, ao lado do deploy.yml que já funciona.
+#
+# O termo de uso do GitHub Pages exclui este produto de forma explícita: ele "is not
+# intended for or allowed to be used as a free web-hosting service to run your online
+# business, e-commerce site, or any other website that is primarily directed at either
+# facilitating commercial transactions or providing commercial software as a service
+# (SaaS)". O Mapa da Prescrição é SaaS comercial, com tabela de preço publicada, e vai
+# processar pagamento. O mesmo documento ainda proíbe "sensitive transactions like sending
+# passwords", e a tela de login coleta senha.
+#
+# Junto vem o motivo técnico, medido em produção em 22/08/2026: /pricing e /casos-rcd
+# respondiam HTTP 404. O roteador salvava a navegação no navegador, mas buscador e prévia
+# de link viam 404. O GitHub Pages não aceita regra de reescrita; o Cloudflare resolve com
+# uma linha (ver public/_redirects).
+#
+# POR QUE ELE É MANUAL POR ENQUANTO (workflow_dispatch e nada mais)
+#
+# Migração de domínio se faz sem apagar a ponte antes de atravessar. Enquanto este arquivo
+# só roda a pedido, o deploy.yml segue publicando no GitHub Pages e o site no ar não corre
+# risco nenhum. A sequência é:
+#
+#   1. Criar a conta e o projeto no Cloudflare Pages (só o Filipe faz: conta é dele).
+#   2. Gravar os dois segredos em Settings > Secrets and variables > Actions:
+#        CLOUDFLARE_API_TOKEN     (permissão "Cloudflare Pages: Edit")
+#        CLOUDFLARE_ACCOUNT_ID
+#   3. Rodar este workflow à mão (aba Actions > Deploy no Cloudflare Pages > Run workflow).
+#   4. Conferir no endereço *.pages.dev, que ainda não é o domínio de verdade.
+#      O que olhar: abrir /pricing e /casos-rcd DIRETO na barra de endereço e ver 200 em vez
+#      de 404, e fazer uma avaliação postural com foto conferindo o console (a CSP está em
+#      modo relatório justamente para isso; ver scripts/gerar-headers.mjs).
+#   5. Só então apontar o DNS do mapadaprescricao.com.br para o Cloudflare.
+#   6. Depois que o domínio estiver servindo pelo Cloudflare e estável, aí sim:
+#        · trocar o gatilho abaixo para `push: branches: [main]`;
+#        · apagar .github/workflows/deploy.yml e public/CNAME;
+#        · apagar public/404.html e o restaurador de rota no index.html, que são o truque
+#          específico do GitHub Pages e deixam de ter função.
+#      Enquanto o passo 6 não acontece, esses arquivos PRECISAM ficar: são eles que fazem
+#      as rotas profundas funcionarem no host atual.
+
+name: Deploy no Cloudflare Pages
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: cloudflare-pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Falha cedo e em português, em vez de deixar o wrangler morrer com erro de
+      # autenticação três minutos depois do build.
+      - name: Conferir os segredos do Cloudflare
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CONTA: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          faltando=""
+          [ -z "$TOKEN" ] && faltando="$faltando CLOUDFLARE_API_TOKEN"
+          [ -z "$CONTA" ] && faltando="$faltando CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$faltando" ]; then
+            echo "::error::Faltam os segredos:$faltando"
+            echo "Grave em Settings > Secrets and variables > Actions."
+            echo "O token precisa da permissão 'Cloudflare Pages: Edit'."
+            exit 1
+          fi
+          echo "Segredos presentes."
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # O MESMO portão de sempre. A migração troca quem serve o arquivo, não a régua que
+      # decide se o arquivo pode subir: os guardrails continuam sendo o que impede uma
+      # prescrição errada de chegar ao profissional.
+      - name: Guardrails (o mesmo portão do deploy atual)
+        run: npm run check
+
+      - name: Build
+        env:
+          VITE_BASE: /
+          # A chave PUBLICÁVEL (anon/public) vai para o bundle do cliente por design e é
+          # protegida por RLS. NUNCA a secreta (sb_secret_).
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://asbaydbxujgsnowmfmbe.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_9qlzoZgQeRe__8kbVQVDfQ_aHlgOb6H' }}
+        run: npm run build
+
+      # Confere que os dois arquivos que fazem a migração valer a pena chegaram ao dist.
+      # Sem eles o Cloudflare serviria o site com os mesmos 404 do GitHub Pages, e a
+      # migração teria custo sem retorno.
+      - name: Conferir _redirects e _headers
+        run: |
+          for f in dist/_redirects dist/_headers; do
+            [ -f "$f" ] || { echo "::error::$f não foi para o dist"; exit 1; }
+          done
+          grep -q "/index.html   200" dist/_redirects || {
+            echo "::error::dist/_redirects perdeu o fallback de SPA com status 200"; exit 1; }
+          echo "Fallback de SPA e cabeçalhos presentes."
+
+      - name: Publicar no Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=mapa-da-prescricao --branch=main
