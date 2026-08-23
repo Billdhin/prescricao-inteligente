@@ -155,6 +155,43 @@ primeiro e busque com `?v=<timestamp>` e `Cache-Control: no-cache`. Comparar só
 distingue a nova da velha. O aviso original sobre troca de câmera segue valendo pelos casos que
 de fato falharam (manguito, puxada-supinada), mas ele NÃO tem um terceiro registro.
 
+### ADENDO de 23/08/2026: CADA VARREDURA SÓ RESPONDE A PERGUNTA QUE ELA FEZ
+
+O Filipe abriu o dead-bug e viu **os dois braços saindo do mesmo ombro**, com o ombro do outro
+lado vazio. Corpo impossível, na foto de execução, herdado pela camada de análise.
+
+O que dói é que essa imagem passou por TRÊS varreduras minhas antes: a de 19/08 (camada de
+análise), a de 22/08 (boneco na posição) e a de 22 e 23/08 (par foto + análise). Nenhuma pegou,
+e não por desatenção: **nenhuma delas estava perguntando isso**. A de análise olhava se o
+músculo certo estava vermelho. A do par olhava se as duas metades eram a mesma cena. Nas duas o
+dead-bug passou, porque nos dois critérios ele estava certo.
+
+É a mesma lição que este projeto já aprendeu duas vezes com outra roupa: "conferir um lado não
+diz nada sobre o outro" (o boneco que faltava em 24 exercícios), e depois "cada imagem sozinha
+estava boa, o defeito só existe no PAR". Agora: **par certo e músculo certo não dizem nada sobre
+o CORPO estar possível.**
+
+**Então a varredura de anatomia é uma passada PRÓPRIA, com pergunta própria:** para cada figura,
+os membros nascem cada um no seu lugar? O número de braços, pernas, mãos e dedos fecha? Um
+membro que deveria estar escondido está escondido, ou brotou do lugar errado? Faça essa passada
+em folha de contato de 2 colunas com célula grande (390 px ou mais); a 300 px o defeito do
+dead-bug não aparece.
+
+**No prompt de correção, descreva a GEOMETRIA, não o defeito.** "Conserte a anatomia" não
+funciona. O que funcionou foi: "o braço mais PRÓXIMO da câmera aponta para o teto e sai do ombro
+próximo; o braço mais LONGE está estendido no chão acima da cabeça, sai do ombro do OUTRO LADO
+do tronco e aparece PARCIALMENTE ESCONDIDO atrás da cabeça". Saiu certo de primeira, e o braço
+de baixo passou por trás da cabeça, que é exatamente onde ele tinha que passar.
+
+**Objeto na frente do rosto também conta como estranheza.** No face-pull o mosquetão do cabo
+estava por cima do nariz e da boca. A correção que funcionou também foi geométrica: "as duas
+pontas da corda passam pelos LADOS do rosto, na altura das orelhas; o mosquetão fica ABAIXO da
+linha do queixo".
+
+**Não dá para transformar isso em guardrail, e está declarado:** plausibilidade anatômica não é
+medível por script. O `check:pares` mede cena e proporção porque essas têm número; anatomia não
+tem. Aqui o método é o olho, e o que fica registrado é a PERGUNTA a fazer, não uma asserção.
+
 ## Verificação é obrigatória
 
 O agente do Lovable **avisa sozinho** quando erra ("a imagem 0 saiu parecendo uma máquina de cabos"). Leia a resposta dele. Mas não confie só nisso: olhe as imagens. Nunca salve lote sem inspecionar item a item.
