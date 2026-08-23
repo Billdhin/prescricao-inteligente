@@ -65,12 +65,6 @@ const LIMITE = 20;
  * execução, e a asserção do fim do arquivo impede que a lista cresça ou fique desatualizada.
  */
 const PENDENTES: Record<string, number> = {
-  "crucifixo-maquina": 143.6,
-  "desenvolvimento-maquina": 126.2,
-  "rosca-direta": 121.3,
-  "supino-reto-barra": 109.9,
-  "agachamento-isometrico-parede": 105.6,
-  "desenvolvimento-elastico": 103,
   "elevacao-frontal": 101.9,
   "supino-halteres": 100.6,
   "suitcase-carry": 99.7,
@@ -99,6 +93,47 @@ const PENDENTES: Record<string, number> = {
   "cadeira-extensora": 26.6,
   "afundo-passada": 25.9,
   "rosca-elastico": 25.9,
+};
+
+/**
+ * SEGUNDA COISA QUE QUEBRA O DIVISOR, e é independente da primeira.
+ *
+ * As camadas de análise antigas foram geradas QUADRADAS (1024 x 1024) enquanto as fotos de
+ * execução são 4:3 ou 4:5. Mesmo com a cena certa, o divisor sobrepõe duas imagens de formato
+ * diferente: o navegador estica uma das duas, e a revelação sai desalinhada do corpo. Dá para
+ * ver na tela como um "pulo" da figura quando o divisor passa.
+ *
+ * Não dá para consertar redimensionando: uma análise quadrada de uma cena 4:3 não é a mesma
+ * cena cortada, é outro enquadramento, e esticar de volta deformaria o corpo. O conserto é
+ * regerar, e por isso esta fila anda junto com a outra.
+ *
+ * A tolerância de 2% existe porque o recorte do gerador às vezes tira uma ou duas linhas de
+ * pixel; acima disso é enquadramento diferente.
+ */
+const TOLERANCIA_PROPORCAO = 0.02;
+
+const PENDENTES_PROPORCAO: Record<string, number> = {
+  "abdominal-polia-alta": 66.3,
+  "panturrilha-em-pe": 50,
+  "preensao-isometrica-handgrip": 33.9,
+  "respiracao-360": 33.3,
+  "agachamento-aquatico": 25.3,
+  "sentar-levantar": 25,
+  "supino-halteres": 25,
+  "remada-invertida": 25,
+  "rotacao-externa-elastico": 25,
+  "rotacao-externa-deitado": 25,
+  "rotacao-interna-elastico": 25,
+  "scaption": 25,
+  "triceps-testa-barra": 25,
+  "puxada-supinada": 25,
+  "suitcase-carry": 25,
+  "clam-shell": 24.1,
+  "prancha-lateral": 24.1,
+  "rosca-martelo": 24.1,
+  "elevacao-frontal": 24.1,
+  "equilibrio-unipodal": 24.1,
+  "extensao-quadril-elastico": 6.9,
 };
 
 const N = 96;
@@ -145,6 +180,27 @@ for (const e of pares) {
     continue;
   }
 
+  /*
+   * PROPORÇÃO: cobrada em TODO par, inclusive nos de outra vista. Lá as duas ficam lado a lado
+   * e não sobrepostas, mas duas fotos de formato diferente uma ao lado da outra também ficam
+   * feias; e, sobretudo, formato igual é o sinal de que a análise saiu DAQUELA foto.
+   */
+  const ma = await sharp(fa).metadata();
+  const mb = await sharp(fb).metadata();
+  const razaoA = ma.width! / ma.height!;
+  const razaoB = mb.width! / mb.height!;
+  const desvio = Math.abs(razaoA - razaoB) / razaoA;
+  const pctDesvio = Number((desvio * 100).toFixed(1));
+  const pendenteProp = PENDENTES_PROPORCAO[e.slug];
+  if (desvio > TOLERANCIA_PROPORCAO && pendenteProp == null)
+    erro(
+      `PROPORÇÃO DIFERENTE (${e.slug}): a execução é ${ma.width}x${ma.height} e a análise é ${mb.width}x${mb.height}, ${pctDesvio}% de desvio. O divisor sobrepõe as duas, então o navegador estica uma e a revelação sai fora do corpo. Regere a análise no mesmo enquadramento da foto.`,
+    );
+  if (desvio <= TOLERANCIA_PROPORCAO && pendenteProp != null)
+    erro(
+      `PENDÊNCIA DE PROPORÇÃO JÁ RESOLVIDA (${e.slug}): o desvio caiu para ${pctDesvio}% e o par saiu do limite, mas ele continua na fila. Tire-o de PENDENTES_PROPORCAO.`,
+    );
+
   const pendente = PENDENTES[e.slug];
   if (div >= LIMITE && pendente == null)
     erro(
@@ -160,6 +216,9 @@ for (const e of pares) {
 const comPar = new Set(medidos.map((m) => m.slug));
 for (const slug of Object.keys(PENDENTES))
   if (!comPar.has(slug)) erro(`FILA COM SLUG ÓRFÃO (${slug}): está em PENDENTES e não é mais um exercício com par de imagens.`);
+for (const slug of Object.keys(PENDENTES_PROPORCAO))
+  if (!comPar.has(slug))
+    erro(`FILA DE PROPORÇÃO COM SLUG ÓRFÃO (${slug}): está em PENDENTES_PROPORCAO e não é mais um exercício com par de imagens.`);
 
 if (problemas.length) {
   console.error(`\n[check:pares] REPROVOU (${problemas.length}):`);
@@ -170,7 +229,8 @@ if (problemas.length) {
 
 const ok = medidos.filter((m) => m.div < LIMITE).length;
 const fila = Object.keys(PENDENTES).length;
+const filaProp = Object.keys(PENDENTES_PROPORCAO).length;
 const outraVista = pares.filter((e) => e.analiseOutraVista).length;
 console.log(
-  `[check:pares] ok: ${medidos.length} pares medidos, ${ok} são a MESMA tomada (divergência abaixo de ${LIMITE}), ${outraVista} são outra vista declarada e mostrada lado a lado, ${fila} ainda na fila de regeração.`,
+  `[check:pares] ok: ${medidos.length} pares medidos, ${ok} são a MESMA tomada (divergência abaixo de ${LIMITE}), ${outraVista} são outra vista declarada e mostrada lado a lado. Fila de regeração: ${fila} por cena e ${filaProp} por proporção.`,
 );
