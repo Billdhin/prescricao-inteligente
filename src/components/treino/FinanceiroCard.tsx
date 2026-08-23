@@ -11,6 +11,7 @@ import {
   competenciaDe,
   statusEfetivo,
 } from "@/data/cobranca";
+import { soNumero } from "@/lib/numeroDigitado";
 
 const TONE: Record<StatusCobranca, "success" | "warning" | "neutral"> = {
   pago: "success",
@@ -153,7 +154,7 @@ function FinanceiroForm({
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
             <span className="mb-1 block text-sm font-semibold text-ink">Mensalidade (R$)</span>
-            <input value={valor} onChange={(e) => setValor(e.target.value)} inputMode="decimal" placeholder="Ex.: 150,00" className="input" />
+            <input value={valor} onChange={(e) => setValor(soNumero(e.target.value))} inputMode="decimal" placeholder="Ex.: 150,00" className="input" />
           </label>
           <label className="block">
             <span className="mb-1 block text-sm font-semibold text-ink">Vence dia</span>

@@ -1,4 +1,6 @@
 import * as React from "react";
+import { soNumero, numeroOuAusente } from "@/lib/numeroDigitado";
+import { EntradaNumero } from "@/components/ui/EntradaNumero";
 import { X, Plus, Trash2, Camera, Info, ChevronDown, Loader2, TrendingUp } from "lucide-react";
 import { buttonClasses, Pill } from "@/components/ui/primitives";
 import { EvolucaoMini, METRICAS_CHAVE } from "@/components/app/EvolucaoMini";
@@ -66,8 +68,9 @@ const CATEGORIAS_PERSONALIZADA = ["Composição corporal", "Perímetro", "Sinal 
 
 const fmtData = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
-const num = (s: string) => (s.trim() === "" ? undefined : Number(s.replace(",", ".")));
+const num = (s: string) => numeroOuAusente(s);
 const fmtNum = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(".", ","));
+
 
 /* ------------------------------- componente ------------------------------- */
 
@@ -473,11 +476,7 @@ function NumInput({
     <Campo label={label} hint={hint}>
       <input
         value={val}
-        onChange={(e) => {
-          let v = e.target.value;
-          if (max10) v = v.replace(/[^\d]/g, "").slice(0, 2);
-          setM(mkey, v);
-        }}
+        onChange={(e) => setM(mkey, soNumero(e.target.value, max10))}
         inputMode={max10 ? "numeric" : "decimal"}
         placeholder={placeholder}
         className="input"
@@ -588,19 +587,17 @@ function PerimetroRow({ p, onChange, onRemove }: { p: AvaliacaoPerimetro; onChan
         <BotaoRemover onClick={onRemove} label="Remover perímetro" />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <input
-          inputMode="decimal"
+        <EntradaNumero
           placeholder={ambos ? "Direito (cm)" : "Valor (cm)"}
-          value={p.valor != null ? String(p.valor) : ""}
-          onChange={(e) => onChange({ valor: num(e.target.value) })}
+          valor={p.valor}
+          onValor={(v) => onChange({ valor: v })}
           className="input"
         />
         {ambos && (
-          <input
-            inputMode="decimal"
+          <EntradaNumero
             placeholder="Esquerdo (cm)"
-            value={p.valorEsq != null ? String(p.valorEsq) : ""}
-            onChange={(e) => onChange({ valorEsq: num(e.target.value) })}
+            valor={p.valorEsq}
+            onValor={(v) => onChange({ valorEsq: v })}
             className="input"
           />
         )}

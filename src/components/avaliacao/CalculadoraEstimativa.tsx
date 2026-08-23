@@ -1,4 +1,5 @@
 import * as React from "react";
+import { soNumero } from "@/lib/numeroDigitado";
 import { Calculator, Check } from "lucide-react";
 import { buttonClasses } from "@/components/ui/primitives";
 import { estimativas, memoriaDeCalculo, type Estimativa } from "@/lib/avaliacao/estimativas";
@@ -66,7 +67,16 @@ export function CalculadoraEstimativa({
   const valores: Record<string, number> = {};
   for (const c of est.campos) {
     const t = (bruto[c.chave] ?? "").trim();
-    if (t !== "") valores[c.chave] = Number(t.replace(",", "."));
+    /*
+     * Campo em branco e campo com lixo dão a MESMA coisa: ausência. Antes, `Number("abc")`
+     * entrava como NaN em `valores` e a estimativa saía NaN adiante, registrada como
+     * resultado de teste no prontuário do aluno. Estimativa de 1RM e de VO₂ é número
+     * clínico; melhor a calculadora dizer que falta dado do que devolver um não-número.
+     */
+    if (t !== "") {
+      const n = Number(t.replace(",", "."));
+      if (Number.isFinite(n)) valores[c.chave] = n;
+    }
   }
   const r = est.calcular(valores);
   const refs = bibliografia(est.refIds);
@@ -147,7 +157,7 @@ export function CalculadoraEstimativa({
               </span>
               <input
                 value={bruto[c.chave] ?? ""}
-                onChange={(e) => setBruto((b) => ({ ...b, [c.chave]: e.target.value }))}
+                onChange={(e) => setBruto((b) => ({ ...b, [c.chave]: soNumero(e.target.value) }))}
                 inputMode="decimal"
                 placeholder={c.placeholder}
                 className="input"

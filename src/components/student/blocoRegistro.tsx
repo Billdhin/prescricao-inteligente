@@ -9,6 +9,7 @@ import type { BlocoSessao, Sessao } from "@/data/periodizacao";
 import { tokensAlvoForca, temAlvoForca, fmtIntervalo } from "@/lib/gps/alvoResumo";
 import { tirosDaSemana } from "@/lib/gps/formatoAerobio";
 import type { Execucao } from "@/data/execucao";
+import { soNumero } from "@/lib/numeroDigitado";
 
 /**
  * Núcleo compartilhado do bloco do app do aluno: os helpers de apresentação (nome,
@@ -512,7 +513,7 @@ function Stepper({
           inputMode="decimal"
           value={value}
           placeholder="0"
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(soNumero(e.target.value))}
           aria-label={label}
           className="tabular w-full bg-transparent text-center font-display text-xl font-bold text-ink placeholder:text-ink-2 focus:outline-none"
         />
