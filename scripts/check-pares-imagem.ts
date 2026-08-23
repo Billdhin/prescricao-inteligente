@@ -65,13 +65,7 @@ const LIMITE = 20;
  * execução, e a asserção do fim do arquivo impede que a lista cresça ou fique desatualizada.
  */
 const PENDENTES: Record<string, number> = {
-  "elevacao-frontal": 101.9,
-  "supino-halteres": 100.6,
   "suitcase-carry": 99.7,
-  "rotacao-externa-deitado": 95.5,
-  "equilibrio-unipodal": 86.1,
-  "mergulho-no-banco": 83.1,
-  "extensao-quadril-elastico": 82.7,
   "subida-step": 80.2,
   "agachamento-livre": 79.5,
   "clam-shell": 70.8,
@@ -119,10 +113,8 @@ const PENDENTES_PROPORCAO: Record<string, number> = {
   "respiracao-360": 33.3,
   "agachamento-aquatico": 25.3,
   "sentar-levantar": 25,
-  "supino-halteres": 25,
   "remada-invertida": 25,
   "rotacao-externa-elastico": 25,
-  "rotacao-externa-deitado": 25,
   "rotacao-interna-elastico": 25,
   "scaption": 25,
   "triceps-testa-barra": 25,
@@ -131,9 +123,6 @@ const PENDENTES_PROPORCAO: Record<string, number> = {
   "clam-shell": 24.1,
   "prancha-lateral": 24.1,
   "rosca-martelo": 24.1,
-  "elevacao-frontal": 24.1,
-  "equilibrio-unipodal": 24.1,
-  "extensao-quadril-elastico": 6.9,
 };
 
 const N = 96;
