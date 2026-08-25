@@ -238,6 +238,31 @@ export const iconeModalidade = (raw?: string, ambiente?: string) => {
 export const modalidadeDoBloco = (b: BlocoSessao) =>
   b.modalidade ? getModalidade(b.modalidade) ?? getModalidade(`m-${b.modalidade}`) : undefined;
 
+/**
+ * A modalidade que REPRESENTA a sessão, para a figura do cartão de hoje.
+ *
+ * Os blocos VOTAM. A modalidade aeróbia mais frequente só vence se tiver mais blocos que a
+ * força, e empate fica com a força. Sem isso, uma sessão de hipertrofia com cinco
+ * exercícios e uma caminhada complementar no fim aparecia com uma esteira desenhada: a
+ * primeira modalidade aeróbia da lista não é a representativa, a dominante é.
+ *
+ * Não inventa: só devolve chave que o catálogo de modalidades reconhece.
+ */
+export const modalidadeDaSessao = (sessao: Sessao): string => {
+  const votos = new Map<string, number>();
+  let forca = 0;
+  for (const b of sessao.blocos) {
+    const m = b.tipo === "aerobio" ? modalidadeDoBloco(b) : undefined;
+    // Aeróbio sem modalidade nomeada não tem equipamento a desenhar, então não vota.
+    if (m) votos.set(m.id, (votos.get(m.id) ?? 0) + 1);
+    else if (b.tipo !== "aerobio") forca++;
+  }
+  let campeao = "";
+  let melhor = 0;
+  for (const [id, n] of votos) if (n > melhor) [campeao, melhor] = [id, n];
+  return melhor > forca ? campeao : "m-musculacao";
+};
+
 // A sessão está concluída na semana dada? Todos os blocos com uma Execucao daquela
 // semana batendo o blocoRef. Mesma regra que sessaoDeHojeIndex usa para a semana atual.
 export const sessaoConcluida = (sessao: Sessao, semana: number, execucoes: Execucao[]): boolean =>

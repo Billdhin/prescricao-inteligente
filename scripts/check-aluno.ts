@@ -197,6 +197,46 @@ for (const { f, texto } of FONTES) {
   });
 }
 
+/* ------------------------------------------------------------------ F ---- */
+/**
+ * F: toda modalidade do catálogo tem figura própria no cartão de hoje.
+ *
+ * MotivoModalidade cai no halter quando não conhece a chave, o que é a queda certa para um
+ * plano antigo com id estranho e a queda ERRADA para uma modalidade nova do catálogo: a
+ * natação passaria a aparecer desenhada como halter, e ninguém veria, porque não quebra
+ * nada. Acrescentar modalidade e esquecer a figura tem que doer aqui.
+ */
+{
+  const cat = fs.readFileSync(path.resolve(process.cwd(), "src/data/modalities.ts"), "utf8");
+  const doCatalogo = [...cat.matchAll(/^\s*id: "(m-[\w-]+)"/gm)].map((m) => m[1]);
+  const motivo = fs.readFileSync(path.resolve(process.cwd(), RAIZ, "MotivoModalidade.tsx"), "utf8");
+  const comFigura = new Set([...motivo.matchAll(/"(m-[\w-]+)":\s*\w+,/g)].map((m) => m[1]));
+  if (!doCatalogo.length) falhas.push("F: não achei nenhum id de modalidade em src/data/modalities.ts.");
+  for (const id of doCatalogo)
+    if (!comFigura.has(id))
+      falhas.push(`F: a modalidade ${id} não tem figura em MotivoModalidade e cairia calada no halter.`);
+}
+
+/* ------------------------------------------------------------------ G ---- */
+/**
+ * G: o trilho de semanas sempre mostra o número.
+ *
+ * A régua antiga era "número até 8 semanas, bolinha lisa daí para cima", e o Filipe abriu um
+ * plano de 12 e viu doze bolinhas idênticas. Era o inverso do que o problema pede: quanto
+ * mais longo o plano, mais o aluno precisa do número para se localizar nele. O que cede à
+ * falta de espaço é o tamanho do disco, e depois o fio contínuo, nunca o número.
+ */
+{
+  const alvo = acharCorpo("TrilhoDeSemanas");
+  if (!alvo) falhas.push("G: não achei o componente TrilhoDeSemanas (renomeado? mova a regra junto).");
+  else {
+    if (!/\{n\}\s*<\/span>/.test(alvo.corpo))
+      falhas.push(`G: ${rel(alvo.f)} · o disco do trilho não imprime mais o número da semana.`);
+    if (/:\s*null\s*\}/.test(alvo.corpo))
+      falhas.push(`G: ${rel(alvo.f)} · voltou um ramo que apaga o número da semana em vez de encolher o disco.`);
+  }
+}
+
 /* --------------------------------------------------------------------------- */
 if (falhas.length) {
   console.error(`\n[check:aluno] FALHOU: ${falhas.length} problema(s).\n`);
@@ -205,5 +245,5 @@ if (falhas.length) {
   process.exit(1);
 }
 console.log(
-  "[check:aluno] ok: a sessão diz quantos faltam, a lista do dia nasce fechada, o nome da sessão toca, número e substantivo concordam e par de dado inline não se cola.",
+  "[check:aluno] ok: a sessão diz quantos faltam, a lista do dia nasce fechada, o nome da sessão toca, número e substantivo concordam, par de dado inline não se cola, toda modalidade tem figura própria e o trilho sempre mostra a semana.",
 );

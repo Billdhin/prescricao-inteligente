@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useNavegacaoAluno } from "@/components/student/navegacaoAluno";
+import { MotivoModalidade } from "@/components/student/MotivoModalidade";
 import { rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import {
   Home,
@@ -34,6 +35,7 @@ import {
   iconeModalidade,
   modalidadeDoBloco,
   sessaoConcluida,
+  modalidadeDaSessao,
   doseCurta,
   tokensExtras,
   minutosDeclarados,
@@ -463,41 +465,62 @@ function CabecalhoAluno({
 function TrilhoDeSemanas({ plano, cor, tinta }: { plano: PlanoTreino; cor: string; tinta: string }) {
   const total = Math.max(1, plano.semanas);
   const atual = Math.min(semanaAtual(plano), total);
-  const comNumero = total <= 8;
   const semanas = Array.from({ length: total }, (_, i) => i + 1);
 
-  return (
-    <div
-      className="mt-3 flex items-center"
-      role="img"
-      aria-label={`Semana ${atual} de ${total} do plano.`}
+  // Medidas apertadas contra 320px de tela (288px úteis dentro do px-4 do cabeçalho), e
+  // MEDIDAS no navegador, não estimadas: 12 discos de 20px mais 11 fios de 3px dão 273px e
+  // cabem; 13 dariam 296px e estouram. Até 10 semanas o disco fica no tamanho maior
+  // (10 x 24 + 9 x 3 = 267px); de 11 a 12 ele encolhe; de 13 em diante o trilho quebra.
+  const emLinha = total <= 12;
+  const grande = total <= 10;
+  const classeDisco = grande ? "h-6 w-6 text-2xs" : "h-5 w-5 text-[0.625rem]";
+
+  // O estado de cada semana. Passada: contorno. Atual: sólido. Futura: apagada.
+  const disco = (n: number) => (
+    <span
+      aria-hidden
+      className={cn(
+        "tabular grid shrink-0 place-items-center rounded-full font-bold leading-none",
+        classeDisco,
+        n > atual && "bg-surface-mute text-ink-3",
+      )}
+      style={
+        n === atual
+          ? { background: cor, color: tinta }
+          : n < atual
+            ? { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }
+            : undefined
+      }
     >
+      {n}
+    </span>
+  );
+
+  const rotulo = `Semana ${atual} de ${total} do plano.`;
+
+  // Plano longo: sem o fio, em linhas que quebram. O número é o que não se abre mão.
+  if (!emLinha) {
+    return (
+      <div className="mt-3 flex flex-wrap gap-1" role="img" aria-label={rotulo}>
+        {semanas.map((n) => (
+          <React.Fragment key={n}>{disco(n)}</React.Fragment>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 flex items-center" role="img" aria-label={rotulo}>
       {semanas.map((n, i) => (
         <React.Fragment key={n}>
           {i > 0 && (
             <span
               aria-hidden
-              className="h-0.5 flex-1 bg-surface-mute"
+              className="h-0.5 min-w-[3px] flex-1 bg-surface-mute"
               style={n <= atual ? { background: cor, opacity: 0.55 } : undefined}
             />
           )}
-          <span
-            aria-hidden
-            className={cn(
-              "tabular grid shrink-0 place-items-center rounded-full font-bold",
-              comNumero ? "h-6 w-6 text-2xs" : "h-2.5 w-2.5",
-              n > atual && "bg-surface-mute text-ink-3",
-            )}
-            style={
-              n === atual
-                ? { background: cor, color: tinta }
-                : n < atual
-                  ? { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }
-                  : undefined
-            }
-          >
-            {comNumero ? n : null}
-          </span>
+          {disco(n)}
         </React.Fragment>
       ))}
     </div>
@@ -741,6 +764,17 @@ function VisaoSessao({
  * sessão, três números e o botão claro de começar. É a única superfície com
  * gradiente do app do aluno, exatamente como o design reserva.
  */
+/**
+ * A forma CURTA do rótulo de fase, para a pílula do cartão de hoje.
+ *
+ * Mesociclo nascido de fase da jornada traz "Fase N: nome longo"; o prefixo já é o
+ * identificador e cabe na pílula. Bloco genérico não tem prefixo (rotuloMeso o remove de
+ * propósito, porque a palavra "Fase" ali não seria verdadeira) e vai inteiro.
+ */
+function faseCurta(rotulo: string): string {
+  return rotulo.match(/^(Fase \d+)\s*:/)?.[1] ?? rotulo;
+}
+
 function HeroTreinoDeHoje({
   sessao,
   plano,
@@ -775,14 +809,42 @@ function HeroTreinoDeHoje({
 
   return (
     <div
-      className="rounded-card p-5 text-white"
+      className="relative isolate overflow-hidden rounded-card p-5 text-white"
       style={{ backgroundImage: `linear-gradient(135deg, ${cor} 0%, var(--brand-turquesa) 100%)` }}
     >
-      <div className="text-2xs font-bold uppercase tracking-wider text-white/80">
-        {concluida ? "Treino de hoje · feito" : "Treino de hoje"}
+      {/* Brilho e figura do equipamento: decoração, atrás de tudo e sem alcançar o texto.
+          O conteúdo reserva a faixa da figura com o padding à direita do cabeçalho. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-10 -top-14 -z-10 h-56 w-56 rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 68%)" }}
+      />
+      <MotivoModalidade
+        modalidade={modalidadeDaSessao(sessao)}
+        className="pointer-events-none absolute -right-3 -top-3 -z-10 h-44 w-44 text-white/30"
+      />
+
+{/* Todo o bloco superior reserva a faixa da figura, não só o cabeçalho. */}
+      <div className="pr-24">
+        <div className="text-2xs font-bold uppercase tracking-wider text-white/80">
+          {concluida ? "Treino de hoje · feito" : "Treino de hoje"}
+        </div>
+        <h2 className="mt-0.5 font-display text-2xl font-bold leading-tight">{sessao.nome}</h2>
+        {sessao.foco && <p className="mt-1 text-sm text-white/85">{sessao.foco}</p>}
+        {/* A fase do plano em pílula, na forma CURTA. O nome inteiro tem linha própria na
+            aba Treinos; aqui em caixa alta ele viraria o elemento mais pesado de um cartão
+            cujo assunto é o treino de hoje. */}
+        {meso && (
+          <span
+            className="mt-2.5 inline-flex rounded-full bg-white/20 px-2.5 py-1 text-2xs font-bold uppercase tracking-wider"
+            title={rotuloMeso(meso)}
+          >
+            {faseCurta(rotuloMeso(meso))}
+          </span>
+        )}
       </div>
-      <h2 className="mt-0.5 font-display text-2xl font-bold leading-tight">{sessao.nome}</h2>
-      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/90">
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/90">
         <span>
           <span className="tabular font-bold">{nExercicios}</span> {nExercicios === 1 ? "exercício" : "exercícios"}
         </span>
@@ -803,10 +865,11 @@ function HeroTreinoDeHoje({
           </>
         )}
       </div>
+
       {/* QUANTOS JÁ FORAM E QUANTOS FALTAM, dito de uma vez. A barra é a mesma
           informação em forma, para responder de relance no meio do treino. */}
       {nExercicios > 0 && (
-        <div className="mt-3">
+        <div className="mt-2">
           <div className="flex items-baseline justify-between gap-2 text-sm">
             <span className="font-semibold">
               <span className="tabular">{nFeitos}</span> de <span className="tabular">{nExercicios}</span> feitos
@@ -825,13 +888,11 @@ function HeroTreinoDeHoje({
           </div>
         </div>
       )}
-      {sessao.foco && <p className="mt-3 text-sm text-white/80">{sessao.foco}</p>}
-      {meso && <p className="mt-1 text-xs text-white/70">{rotuloMeso(meso)}</p>}
 
       {onIniciar && (
         <button
           onClick={onIniciar}
-          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-base font-bold"
+          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-base font-bold shadow-lg shadow-black/10"
           style={{ color: "#17202E" }}
         >
           {concluida ? (
