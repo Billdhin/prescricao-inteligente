@@ -45,9 +45,10 @@ O projeto do Filipe já existe:
    ```
 3. `npm run dev` — a partir daí `isSupabaseConfigured()` fica true e as camadas de
    auth/repo podem ler e gravar no banco.
-4. Para publicar no GitHub Pages com o backend ligado, guarde a anon key como
-   **secret** do repositório (Settings > Secrets and variables > Actions) e injete
-   `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` no passo de build do workflow.
+4. Na publicação, quem injeta `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` no build é
+   o `.github/workflows/deploy-cloudflare.yml`. Ele lê os secrets do repositório quando
+   existem e, quando não existem, cai num valor padrão escrito no próprio arquivo (a URL
+   do projeto e a chave **publicável**, que é pública por definição).
 
 ## Passo 3 — login em nuvem (JÁ LIGADO no código)
 
@@ -64,10 +65,11 @@ Notas de operação:
   desligue em **Authentication > Providers > Email > Confirm email**.
 - **Primeiro login:** se a nuvem estiver vazia e houver dados só neste aparelho, eles são
   enviados para a conta automaticamente; nos próximos logins, a nuvem é a fonte.
-- **Site publicado:** para ligar o login no GitHub Pages, cadastre os secrets
-  `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (a chave **publicável**) em
-  Settings > Secrets and variables > Actions. Enquanto não cadastrar, o site publicado
-  continua 100% local.
+- **Site publicado:** o login em nuvem JÁ ESTÁ ligado em produção. O workflow de deploy
+  injeta URL e chave publicável no build com valor padrão próprio, então não depende de
+  secret nenhum para funcionar. Cadastrar `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`
+  em Settings > Secrets and variables > Actions serve para APONTAR PARA OUTRO PROJETO
+  Supabase sem editar o repositório; os secrets têm precedência sobre o padrão.
 
 ## Decisões
 
