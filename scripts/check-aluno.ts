@@ -237,6 +237,29 @@ for (const { f, texto } of FONTES) {
   }
 }
 
+/* ------------------------------------------------------------------ H ---- */
+/**
+ * H: na faixa da semana, o treino e o semáforo não usam a mesma marca.
+ *
+ * A legenda listava "Treino" e "treino liberado" com o mesmo ponto verde, um ao lado do
+ * outro, e no mesmo dia os dois aparecem juntos: não havia como saber qual era qual. São
+ * famílias diferentes (o que o ALUNO fez x a decisão do PROFESSOR), então a FORMA separa as
+ * famílias e a cor só separa dentro do semáforo. Voltar o treino a ser ponto verde recria
+ * a colisão sem quebrar nada, que é como ela passou despercebida da primeira vez.
+ */
+{
+  const arq = path.resolve(process.cwd(), RAIZ, "SemanaStrip.tsx");
+  const texto = fs.readFileSync(arq, "utf8");
+  const verdeDoSemaforo = /verde:\s*"bg-success"/.test(texto);
+  // O trecho que desenha a marca do treino no dia.
+  const marca = texto.match(/\{treino &&[\s\S]{0,220}?\}/)?.[0] ?? "";
+  if (!marca) falhas.push("H: não achei a marca de treino na faixa da semana (mova a regra junto).");
+  else if (verdeDoSemaforo && /bg-success/.test(marca))
+    falhas.push(
+      `H: ${rel(arq)} · o treino e o semáforo liberado voltaram a usar o mesmo verde; a legenda fica ambígua.`,
+    );
+}
+
 /* --------------------------------------------------------------------------- */
 if (falhas.length) {
   console.error(`\n[check:aluno] FALHOU: ${falhas.length} problema(s).\n`);
@@ -245,5 +268,5 @@ if (falhas.length) {
   process.exit(1);
 }
 console.log(
-  "[check:aluno] ok: a sessão diz quantos faltam, a lista do dia nasce fechada, o nome da sessão toca, número e substantivo concordam, par de dado inline não se cola, toda modalidade tem figura própria e o trilho sempre mostra a semana.",
+  "[check:aluno] ok: a sessão diz quantos faltam, a lista do dia nasce fechada, o nome da sessão toca, número e substantivo concordam, par de dado inline não se cola, toda modalidade tem figura própria, o trilho sempre mostra a semana e treino não se confunde com semáforo na faixa.",
 );

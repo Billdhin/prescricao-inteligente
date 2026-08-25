@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Execucao } from "@/data/execucao";
 import type { Liberacao } from "@/data/alunos";
@@ -108,8 +109,10 @@ export function SemanaStrip({
               <span aria-hidden className={cn("tabular font-bold text-ink", compacto ? "text-xs" : "text-sm")}>
                 {diaNum}
               </span>
-              <div aria-hidden className={cn("flex items-center gap-1", compacto ? "mt-0.5 h-1.5" : "mt-1 h-2")}>
-                {treino && <span className={cn("shrink-0 rounded-full bg-success", dot)} />}
+              {/* O treino é TIQUE e o semáforo é PONTO. Antes os dois eram ponto verde, e
+                  no mesmo dia apareciam lado a lado sem como distinguir um do outro. */}
+              <div aria-hidden className={cn("flex items-center gap-1", compacto ? "mt-0.5 h-2.5" : "mt-1 h-3")}>
+                {treino && <Check className={cn("shrink-0", compacto ? "h-2.5 w-2.5" : "h-3 w-3")} style={{ color: cor }} />}
                 {sem && <span className={cn("shrink-0 rounded-full", dot, SEMAFORO_DOT[sem])} />}
               </div>
             </div>
@@ -118,25 +121,26 @@ export function SemanaStrip({
       </div>
 
       {!compacto && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-2xs text-ink-3">
+        <div className="mt-2 space-y-1 text-2xs text-ink-3">
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
-            Treino
+            <Check aria-hidden className="h-3 w-3 shrink-0" style={{ color: cor }} />
+            treino registrado
           </span>
-          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-ink-3">Semáforo do dia:</span>
             <span className="inline-flex items-center gap-1">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-success" />
-              treino liberado
+              liberado
             </span>
             <span className="inline-flex items-center gap-1">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning-fill" />
-              liberado com ajuste
+              com ajuste
             </span>
             <span className="inline-flex items-center gap-1">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-danger-fill" />
               não liberado
             </span>
-          </span>
+          </div>
         </div>
       )}
     </div>

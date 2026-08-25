@@ -18,6 +18,7 @@ import {
   Flame,
   MessageCircle,
   CalendarDays,
+  Info,
 } from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
@@ -382,16 +383,16 @@ function CabecalhoAluno({
   preview?: boolean;
 }) {
   const semana = plano ? semanaAtual(plano) : undefined;
-  // DIAS distintos com alguma execução na semana civil, que é o que a faixa de
-  // segmentos acima desenha. Não é contagem de sessão completa, e a frase diz isso.
-  const diasTreinadosNaSemana = React.useMemo(() => {
-    const diaMs = 86_400_000;
-    const diaSemana = (new Date().getDay() + 6) % 7;
-    const inicio = new Date().setHours(0, 0, 0, 0) - diaSemana * diaMs;
-    return new Set(
-      execucoes.filter((e) => e.concluidoEm >= inicio).map((e) => Math.floor(e.concluidoEm / diaMs)),
-    ).size;
-  }, [execucoes]);
+
+  // As SESSÕES da semana corrente e quantas já fecharam. Mesma regra da aba Treinos
+  // (`sessaoConcluida`), para as duas telas nunca discordarem sobre o que é treino feito.
+  const treinosDaSemana = React.useMemo(() => {
+    if (!plano || semana == null) return null;
+    const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
+    const sessoes = micro?.sessoes ?? [];
+    if (!sessoes.length) return null;
+    return { total: sessoes.length, feitos: sessoes.filter((s) => sessaoConcluida(s, semana, execucoes)).length };
+  }, [plano, semana, execucoes]);
 
   return (
     <header className="px-4 pb-2 pt-4">
@@ -444,13 +445,17 @@ function CabecalhoAluno({
         </button>
       )}
 
-      {/* Trilho do PLANO: uma semana por segmento, a atual em destaque. A leitura por
+      <p className="mt-1 text-sm text-ink-2">
+        {semana && plano ? `Semana ${semana} de ${plano.semanas}` : ""}
+        {semana && plano && treinosDaSemana ? " · " : ""}
+        {treinosDaSemana
+          ? `${treinosDaSemana.feitos} de ${treinosDaSemana.total} ${treinosDaSemana.total === 1 ? "treino concluído" : "treinos concluídos"}`
+          : ""}
+      </p>
+      {/* Trilho do PLANO: uma semana por parada, a atual em destaque. Vem DEPOIS da frase
+          que o descreve, para o desenho confirmar o que se acabou de ler. A leitura por
           DIA vive na seção "Seus dias" desta mesma tela e não se repete aqui. */}
       {plano && <TrilhoDeSemanas plano={plano} cor={cor} tinta={tinta} />}
-      <p className="mt-2 text-sm text-ink-2">
-        {semana ? `Semana ${semana} · ` : ""}
-        {diasTreinadosNaSemana} {diasTreinadosNaSemana === 1 ? "dia treinado" : "dias treinados"}
-      </p>
     </header>
   );
 }
@@ -475,24 +480,31 @@ function TrilhoDeSemanas({ plano, cor, tinta }: { plano: PlanoTreino; cor: strin
   const grande = total <= 10;
   const classeDisco = grande ? "h-6 w-6 text-2xs" : "h-5 w-5 text-[0.625rem]";
 
-  // O estado de cada semana. Passada: contorno. Atual: sólido. Futura: apagada.
+  // O estado de cada semana. Passada: contorno. Atual: sólido MAIS o traço embaixo.
+  // O traço existe porque estado não pode depender só de cor (regra do Design System),
+  // e porque num trilho de 12 paradas a atual precisa saltar sem precisar comparar tons.
   const disco = (n: number) => (
-    <span
-      aria-hidden
-      className={cn(
-        "tabular grid shrink-0 place-items-center rounded-full font-bold leading-none",
-        classeDisco,
-        n > atual && "bg-surface-mute text-ink-3",
+    <span className="relative flex shrink-0 flex-col items-center">
+      <span
+        aria-hidden
+        className={cn(
+          "tabular grid shrink-0 place-items-center rounded-full font-bold leading-none",
+          classeDisco,
+          n > atual && "bg-surface-mute text-ink-3",
+        )}
+        style={
+          n === atual
+            ? { background: cor, color: tinta }
+            : n < atual
+              ? { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }
+              : undefined
+        }
+      >
+        {n}
+      </span>
+      {n === atual && (
+        <span aria-hidden className="mt-1 h-0.5 w-4 rounded-full" style={{ background: cor }} />
       )}
-      style={
-        n === atual
-          ? { background: cor, color: tinta }
-          : n < atual
-            ? { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }
-            : undefined
-      }
-    >
-      {n}
     </span>
   );
 
@@ -653,13 +665,25 @@ function AbaHoje({
         <Card className="p-6 text-center text-sm text-ink-2">Sem sessões nesta semana.</Card>
       )}
 
-      <FalarComProfessor marca={marca} cor={cor} />
+      {/* O par de portas do rodapé da sessão: a orientação escrita e o canal com o
+          professor. Substitui o parágrafo solto que ficava no meio da lista e o cartão de
+          contato de largura inteira. */}
+      <PortasDaSessao
+        fecho={sessaoHoje?.fecho}
+        notaIntensidade={
+          sessaoHoje && temIntensidadeNaSessao(sessaoHoje)
+            ? "Intensidade é a porcentagem da sua carga máxima estimada para cada exercício."
+            : undefined
+        }
+        marca={marca}
+        cor={cor}
+      />
 
-      {/* Faixa completa da semana (treino + semáforo por dia) e as próximas
-          sessões ficam abaixo da dobra: o topo pertence ao treino de hoje. */}
+      {/* A semana e o que vem depois ficam abaixo da dobra: o topo pertence ao
+          treino de hoje. */}
       {outras.length > 0 && (
         <section>
-          <h2 className="mb-2 text-2xs font-bold uppercase tracking-wider text-analysis-text">Também nesta semana</h2>
+          <h2 className="mb-2 text-2xs font-bold uppercase tracking-wider text-analysis-text">Próximos treinos</h2>
           <div className="space-y-2">
             {outras.map((s) => (
               <LinhaSessao
@@ -676,7 +700,7 @@ function AbaHoje({
       )}
 
       <Card className="p-4">
-        <h2 className="mb-2.5 text-2xs font-bold uppercase tracking-wider text-analysis-text">Seus dias</h2>
+        <h2 className="mb-2.5 text-2xs font-bold uppercase tracking-wider text-analysis-text">Sua semana</h2>
         <SemanaStrip alunoId={aluno.id} execucoes={execucoes} liberacoes={liberacoes} cor={cor} />
       </Card>
     </div>
@@ -735,6 +759,9 @@ function VisaoSessao({
         dataDaPrescricao={dataDaPrescricao}
         onIniciar={onIniciar}
       />
+      {/* A lista começava colada no cartão de hoje, sem nome. O título separa as duas
+          coisas e dá ao olho onde voltar depois de rolar. */}
+      <h2 className="pt-1 text-2xs font-bold uppercase tracking-wider text-analysis-text">Sua sessão</h2>
       <ListaExerciciosDoDia
         sessao={sessao}
         semana={semana}
@@ -831,20 +858,11 @@ function HeroTreinoDeHoje({
         </div>
         <h2 className="mt-0.5 font-display text-2xl font-bold leading-tight">{sessao.nome}</h2>
         {sessao.foco && <p className="mt-1 text-sm text-white/85">{sessao.foco}</p>}
-        {/* A fase do plano em pílula, na forma CURTA. O nome inteiro tem linha própria na
-            aba Treinos; aqui em caixa alta ele viraria o elemento mais pesado de um cartão
-            cujo assunto é o treino de hoje. */}
-        {meso && (
-          <span
-            className="mt-2.5 inline-flex rounded-full bg-white/20 px-2.5 py-1 text-2xs font-bold uppercase tracking-wider"
-            title={rotuloMeso(meso)}
-          >
-            {faseCurta(rotuloMeso(meso))}
-          </span>
-        )}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-white/90">
+      {/* A linha dos FATOS da sessão: quanto tem, quanto dura, e em que fase do plano ela
+          cai. A fase é fato como os outros e não precisa de linha própria. */}
+      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-white/90">
         <span>
           <span className="tabular font-bold">{nExercicios}</span> {nExercicios === 1 ? "exercício" : "exercícios"}
         </span>
@@ -863,6 +881,17 @@ function HeroTreinoDeHoje({
               <Sparkles className="h-3.5 w-3.5" aria-hidden /> feito pra você {personalizadoData}
             </span>
           </>
+        )}
+        {/* A fase na forma CURTA. O nome inteiro tem linha própria na aba Treinos; aqui
+            inteiro ele viraria o elemento mais pesado de um cartão cujo assunto é o
+            treino de hoje. */}
+        {meso && (
+          <span
+            className="rounded-full bg-white/20 px-2.5 py-0.5 text-2xs font-bold uppercase tracking-wider"
+            title={rotuloMeso(meso)}
+          >
+            {faseCurta(rotuloMeso(meso))}
+          </span>
         )}
       </div>
 
@@ -911,7 +940,7 @@ function HeroTreinoDeHoje({
 }
 
 /**
- * Lista de exercícios do dia no formato do mockup: foto 56px, nome, dose curta e
+ * Lista de exercícios do dia: linha fechada com estado, ordem, foto, nome, dose e
  * o número da ordem à direita (feito = disco cheio na cor da marca). Tocar abre
  * a folha do exercício; o registro fica dentro do bloco expandido.
  */
@@ -977,18 +1006,99 @@ function ListaExerciciosDoDia({
         return linha(seg.bloco);
       })}
 
-      <FechoFlex fecho={sessao.fecho} cor={cor} />
+      {preview && <p className="px-1 text-xs text-ink-2">Aqui o seu aluno registra carga, repetições e esforço.</p>}
+    </div>
+  );
+}
 
-      {(temIntensidadeNaSessao(sessao) || preview) && (
-        <div className="space-y-1 px-1 pt-0.5">
-          {temIntensidadeNaSessao(sessao) && (
-            <p className="text-2xs text-ink-2">
-              Intensidade é a porcentagem da sua carga máxima estimada para cada exercício.
-            </p>
-          )}
-          {preview && <p className="text-xs text-ink-2">Aqui o seu aluno registra carga, repetições e esforço.</p>}
-        </div>
-      )}
+/**
+ * O par de portas do rodapé da sessão: a orientação escrita e o canal com o professor.
+ *
+ * As duas eram tratadas de formas diferentes, e nenhuma delas certa. A orientação era um
+ * parágrafo solto no meio da lista, que empurra tudo para baixo e ninguém lê no meio do
+ * treino; o contato era um cartão de largura inteira para uma ação só. Lado a lado, cada
+ * uma cabe numa linha, e o texto longo só aparece quando o aluno pede.
+ */
+function PortasDaSessao({
+  fecho,
+  notaIntensidade,
+  marca,
+  cor,
+}: {
+  fecho?: string;
+  notaIntensidade?: string;
+  marca: Marca;
+  cor: string;
+}) {
+  const [orientacaoAberta, setOrientacaoAberta] = React.useState(false);
+  const temOrientacao = !!fecho || !!notaIntensidade;
+  const primeiro = apelidoProfissional(marca);
+  const digitos = (marca.telefone ?? "").replace(/\D/g, "");
+  const numero = digitos.length >= 10 ? (digitos.startsWith("55") ? digitos : `55${digitos}`) : "";
+  const texto = encodeURIComponent(`Oi, ${primeiro}! Falando pelo meu app de treino.`);
+
+  if (!temOrientacao && !numero) return null;
+
+  const molde =
+    "flex min-h-[60px] w-full items-center gap-2.5 rounded-card border border-border bg-surface p-3 text-left transition-colors hover:bg-surface-soft";
+  const selo = (Icone: typeof MessageCircle) => (
+    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-surface-soft" style={{ color: cor }}>
+      <Icone className="h-4 w-4" aria-hidden />
+    </span>
+  );
+
+  return (
+    <div className="space-y-2">
+      <div className="space-y-2">
+        {temOrientacao && (
+          <button
+            type="button"
+            onClick={() => setOrientacaoAberta((v) => !v)}
+            aria-expanded={orientacaoAberta}
+            className={molde}
+          >
+            {selo(Info)}
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold text-ink">Orientações da sessão</span>
+              <span className="block truncate text-2xs text-ink-2">Diretrizes e informações</span>
+            </span>
+            <ChevronRight
+              className={cn("h-4 w-4 shrink-0 text-ink-3 transition-transform", orientacaoAberta && "rotate-90")}
+              aria-hidden
+            />
+          </button>
+        )}
+        {/* Colado no botão que o abre: painel que flutua longe do gatilho faz o leitor
+            conferir de onde aquele texto saiu. */}
+        {orientacaoAberta && (
+          <div
+            className="rounded-card border border-border bg-surface-soft p-3.5"
+            style={{ borderLeftColor: cor, borderLeftWidth: 3 }}
+          >
+            {fecho && <p className="text-sm leading-relaxed text-ink-2">{fecho}</p>}
+            {notaIntensidade && (
+              <p className={cn("text-sm leading-relaxed text-ink-2", fecho && "mt-3")}>{notaIntensidade}</p>
+            )}
+          </div>
+        )}
+        {/* A APARÊNCIA ACOMPANHA A DISPONIBILIDADE: sem telefone cadastrado não existe porta
+            nenhuma aqui, em vez de um cartão que não faz nada ao ser tocado. */}
+        {numero && (
+          <a
+            href={`https://wa.me/${numero}?text=${texto}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={molde}
+          >
+            {selo(MessageCircle)}
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold text-ink">Falar com {primeiro}</span>
+              <span className="block truncate text-2xs text-ink-2">Tire dúvidas e receba apoio</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
+          </a>
+        )}
+      </div>
     </div>
   );
 }
@@ -1209,6 +1319,19 @@ function BlocoRow({
   // toca uma vez. O padrão serve à leitura da lista, que é para o que ela existe.
   const [aberto, setAberto] = React.useState(false);
   const extras = tokensExtras(bloco);
+  // A pílula de intensidade preenche a LACUNA da linha fechada, não duplica o que ela já
+  // diz. Bloco de força com RIR já carrega o esforço por extenso ("pare com 3 repetições de
+  // sobra"), e ali a pílula só roubaria largura de uma linha que já trunca. Onde a dose é
+  // curta e não fala de esforço (aeróbio, isométrico, força sem RIR), ela é o dado que
+  // falta: "20 min · contínuo" não diz se é leve ou pesado.
+  const intensidadeCrua = bloco.rirAlvo == null ? (bloco.intensidade ?? "").trim() : "";
+  // A CABEÇA da frase é o rótulo ("Moderada: cerca de 64 a 76% da FCmáx..." vira
+  // "Moderada"). Cabeça que não cabe numa pílula não vira pílula nenhuma.
+  const rotuloIntensidade = intensidadeCrua.split(":")[0].trim();
+  const intensidade =
+    rotuloIntensidade && rotuloIntensidade !== "-" && rotuloIntensidade.length <= 16
+      ? rotuloIntensidade.charAt(0).toUpperCase() + rotuloIntensidade.slice(1)
+      : undefined;
 
   return (
     <div className="overflow-hidden rounded-card border border-border bg-surface">
@@ -1239,6 +1362,17 @@ function BlocoRow({
             </span>
           )}
         </span>
+        {/* A intensidade é o terceiro fato da dose, ao lado de série e repetição, e decide
+            COMO fazer. Fechar a linha não pode escondê-la: sem ela, "3 x 15" não diz se é
+            leve ou pesado, e o aluno teria de abrir só para descobrir. */}
+        {intensidade && (
+          <span
+            title={intensidadeCrua}
+            className="shrink-0 rounded-full bg-surface-soft px-2 py-0.5 text-2xs font-semibold text-ink-2"
+          >
+            {intensidade}
+          </span>
+        )}
         <ChevronRight
           className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform", aberto && "rotate-90")}
           aria-hidden
@@ -1690,20 +1824,6 @@ function AbaPerfil({
 function selo(sessao: Sessao, ordem: number): string {
   const letra = sessao.nome.match(/([A-Z])/)?.[1];
   return letra ? letra.toUpperCase() : String(ordem);
-}
-
-// Fecho de flexibilidade da sessão (onda F, princípio da variabilidade): nota curta ao final
-// da sessão, com um acento da marca à esquerda. Só aparece quando o plano traz o fecho.
-function FechoFlex({ fecho, cor }: { fecho?: string; cor: string }) {
-  if (!fecho) return null;
-  return (
-    <div
-      className="rounded-card border border-border bg-surface-soft p-3"
-      style={{ borderLeftColor: cor, borderLeftWidth: 3 }}
-    >
-      <p className="text-xs text-ink-2">{fecho}</p>
-    </div>
-  );
 }
 
 // Fases do plano (mesociclos) recolhidas: rótulo, posição, semanas e foco.
