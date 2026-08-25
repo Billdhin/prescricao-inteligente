@@ -37,6 +37,7 @@
     "check:legal": "tsx scripts/check-legal.ts",
     "check:distintividade": "tsx scripts/check-distintividade.ts",
     "check:rotas": "tsx scripts/check-rotas.ts",
+    "publicado": "node scripts/conferir-publicado.mjs",
     "check:aluno": "tsx scripts/check-aluno.ts",
     "check:fluxos": "tsx scripts/check-fluxos.ts",
     "check:numeros": "tsx scripts/check-numeros.ts",

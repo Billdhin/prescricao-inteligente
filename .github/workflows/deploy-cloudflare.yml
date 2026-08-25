@@ -114,3 +114,10 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=mapa-da-prescricao --branch=main
+
+      # "Deploy concluído" não é a mesma coisa que "está no ar no endereço de verdade".
+      # Em 25/08/2026 a produção passou dois dias servindo um build velho justamente porque
+      # havia um caminho de publicação verde e ninguém comparava com o domínio real. Este
+      # passo busca os DOIS hosts e exige que sirvam o bundle que este build acabou de gerar.
+      - name: Conferir que o endereço de verdade recebeu este build
+        run: npm run publicado
