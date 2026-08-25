@@ -15,33 +15,28 @@
 # de link viam 404. O GitHub Pages não aceita regra de reescrita; o Cloudflare resolve com
 # uma linha (ver public/_redirects).
 #
-# POR QUE ELE É MANUAL POR ENQUANTO (workflow_dispatch e nada mais)
+# ESTE É O ÚNICO CAMINHO DE PUBLICAÇÃO DO PROJETO (25/08/2026)
 #
-# Migração de domínio se faz sem apagar a ponte antes de atravessar. Enquanto este arquivo
-# só roda a pedido, o deploy.yml segue publicando no GitHub Pages e o site no ar não corre
-# risco nenhum. A sequência é:
+# A migração terminou e foi conferida na rede pública: apex e www são CNAME proxied para
+# mapa-da-prescricao.pages.dev, /pricing, /termos, /privacidade e /login respondem 200 nos
+# dois hosts, e os cabeçalhos deste repositório (CSP em relatório, HSTS, permissions-policy)
+# chegam ao cliente. O deploy.yml do GitHub Pages foi apagado junto com public/CNAME,
+# public/404.html e o restaurador de rota do index.html.
 #
-#   1. Criar a conta e o projeto no Cloudflare Pages (só o Filipe faz: conta é dele).
-#   2. Gravar os dois segredos em Settings > Secrets and variables > Actions:
-#        CLOUDFLARE_API_TOKEN     (permissão "Cloudflare Pages: Edit")
-#        CLOUDFLARE_ACCOUNT_ID
-#   3. Rodar este workflow à mão (aba Actions > Deploy no Cloudflare Pages > Run workflow).
-#   4. Conferir no endereço *.pages.dev, que ainda não é o domínio de verdade.
-#      O que olhar: abrir /pricing e /casos-rcd DIRETO na barra de endereço e ver 200 em vez
-#      de 404, e fazer uma avaliação postural com foto conferindo o console (a CSP está em
-#      modo relatório justamente para isso; ver scripts/gerar-headers.mjs).
-#   5. Só então apontar o DNS do mapadaprescricao.com.br para o Cloudflare.
-#   6. Depois que o domínio estiver servindo pelo Cloudflare e estável, aí sim:
-#        · trocar o gatilho abaixo para `push: branches: [main]`;
-#        · apagar .github/workflows/deploy.yml e public/CNAME;
-#        · apagar public/404.html e o restaurador de rota no index.html, que são o truque
-#          específico do GitHub Pages e deixam de ter função.
-#      Enquanto o passo 6 não acontece, esses arquivos PRECISAM ficar: são eles que fazem
-#      as rotas profundas funcionarem no host atual.
+# A LIÇÃO QUE JUSTIFICA O GATILHO AUTOMÁTICO. Enquanto este arquivo era manual, o deploy.yml
+# continuou publicando no GitHub Pages a cada push e deu a impressão de que tudo subia. Não
+# subia: o domínio já apontava para o Cloudflare, e a produção passou dois dias servindo um
+# build velho sem ninguém perceber. Caminho de publicação que não é o mesmo do endereço de
+# verdade é um jeito silencioso de mentir sobre o que está no ar.
+#
+# Se um dia isto precisar rodar à mão de novo (rollback, republicar sem commit), a aba
+# Actions continua oferecendo "Run workflow" por causa do workflow_dispatch abaixo.
 
 name: Deploy no Cloudflare Pages
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
