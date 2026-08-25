@@ -13,6 +13,8 @@ export interface Marca {
   /** paleta + aparência do profissional; o portal do aluno herda ambas. */
   paleta?: string;
   modo?: import("@/lib/theme/palettes").Modo;
+  /** telefone do profissional; sem ele o app do aluno não oferece "falar com" */
+  telefone?: string;
 }
 
 const BrandContext = React.createContext<Marca | null>(null);

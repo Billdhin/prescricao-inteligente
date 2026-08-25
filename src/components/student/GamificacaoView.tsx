@@ -84,7 +84,9 @@ export function GamificacaoView({
           </span>
           <div className="min-w-0 flex-1">
             <div className="font-display text-lg font-bold text-ink">Seu histórico</div>
-            <div className="text-xs text-ink-2">{r.totalTreinos} exercícios registrados</div>
+            <div className="text-xs text-ink-2">
+              {r.totalTreinos} {r.totalTreinos === 1 ? "exercício registrado" : "exercícios registrados"}
+            </div>
           </div>
         </div>
 
@@ -161,7 +163,9 @@ function GraficoSemanas({ dados, cor }: { dados: { rotulo: string; treinos: numb
       <div
         className="flex h-24 items-end gap-2"
         role="img"
-        aria-label={dados.map((d, i) => `semana ${i + 1}: ${d.treinos} treinos`).join(", ")}
+        aria-label={dados
+          .map((d, i) => `semana ${i + 1}: ${d.treinos} ${d.treinos === 1 ? "treino" : "treinos"}`)
+          .join(", ")}
       >
         {dados.map((d, i) => {
           const atual = i === dados.length - 1;

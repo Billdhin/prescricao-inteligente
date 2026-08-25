@@ -65,7 +65,7 @@ interface CloudAuthState {
   /** para o aluno logado: id do registro de aluno e a marca do profissional dele */
   alunoId: string | null;
   professionalId: string | null;
-  marca: { nome: string; logoDataUrl?: string; corPrimaria?: string } | null;
+  marca: { nome: string; logoDataUrl?: string; corPrimaria?: string; telefone?: string } | null;
 }
 
 export const useCloudAuth = create<CloudAuthState>(() => ({

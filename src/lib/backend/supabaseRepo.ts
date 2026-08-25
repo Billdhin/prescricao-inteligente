@@ -464,16 +464,19 @@ export async function reivindicarConvite(token: string): Promise<void> {
 /** Marca do profissional (nome, logo, cor) para o portal do aluno. */
 export async function carregarMarcaProfissional(
   professionalId: string,
-): Promise<{ nome: string; logoDataUrl?: string; corPrimaria?: string }> {
+): Promise<{ nome: string; logoDataUrl?: string; corPrimaria?: string; telefone?: string }> {
   const { data } = await getSupabase()
     .from("profiles")
-    .select("name,empresa,logo_url,cor_primaria")
+    .select("name,empresa,logo_url,cor_primaria,telefone")
     .eq("id", professionalId)
     .single();
   return {
     nome: (data?.empresa || data?.name || "Seu treino") as string,
     logoDataUrl: data?.logo_url || undefined,
     corPrimaria: data?.cor_primaria || undefined,
+    // O canal real de conversa. Sem ele, o app do aluno não oferece o toque (ver
+    // FalarComProfessor em StudentApp).
+    telefone: data?.telefone || undefined,
   };
 }
 

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useNavegacaoAluno } from "@/components/student/navegacaoAluno";
 import { rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import {
   Home,
@@ -155,17 +156,31 @@ export function StudentApp({
   preview?: boolean;
   onSair?: () => void;
 }) {
-  const [aba, setAba] = React.useState<Aba>("hoje");
+  // A navegação vive na URL: ver @/components/student/navegacaoAluno. Antes eram três
+  // `useState` e o voltar do navegador (e o gesto do Android) saía do app.
+  const nav = useNavegacaoAluno();
+  const aba = nav.aba;
   const cor = marca.corPrimaria || "#2064EC";
   const tintaDaMarca = corDeContraste(cor);
 
-  // Modo guiado ("Começar treino"): quando ativo, ocupa o app inteiro no lugar
-  // das abas. Guarda a sessão-alvo; a semana é sempre a atual.
-  const [guiado, setGuiado] = React.useState<Sessao | null>(null);
-  // Sessão aberta a partir da lista de treinos: mostra a visão da sessão (a mesma
-  // da de hoje) antes de começar, em vez de pular para o guiado.
-  const [sessaoAberta, setSessaoAberta] = React.useState<Sessao | null>(null);
   const semanaGuiado = plano ? semanaAtual(plano) : 1;
+
+  // As sessões vêm da URL, não de estado: o id é o que sobrevive ao voltar e ao recarregar.
+  // Um id que não existe mais (plano trocado, link velho) simplesmente não resolve, e a
+  // tela cai na aba, em vez de quebrar.
+  const sessoesDaSemana = React.useMemo(() => {
+    if (!plano) return [] as Sessao[];
+    const mesos = plano.macrociclo?.mesociclos ?? [];
+    return mesos.flatMap((m) => m.microciclos.flatMap((w) => w.sessoes));
+  }, [plano]);
+  const acharSessao = React.useCallback(
+    (id: string | null) => (id ? sessoesDaSemana.find((s) => s.id === id) ?? null : null),
+    [sessoesDaSemana],
+  );
+  const guiado = acharSessao(nav.guiadoId);
+  const sessaoAberta = acharSessao(nav.sessaoId);
+  const setGuiado = (s: Sessao | null) => (s ? nav.comecarGuiado(s.id) : nav.sairDoGuiado());
+  const setSessaoAberta = (s: Sessao | null) => (s ? nav.abrirSessao(s.id) : nav.fecharSessao());
   const feedbackGuiado = guiado
     ? sessaoFeedbacks.find(
         (f) => f.alunoId === aluno.id && f.planoId === plano?.id && f.semana === semanaGuiado && f.sessaoRef === guiado.id,
@@ -222,7 +237,7 @@ export function StudentApp({
               plano={plano}
               execucoes={execucoesDoAluno}
               cobrancaPendente={cobrancaPendente}
-              onCobranca={() => setAba("perfil")}
+              onCobranca={() => nav.irParaAba("perfil")}
               onSair={onSair}
               preview={preview}
             />
@@ -318,10 +333,7 @@ export function StudentApp({
                 tela por cima da aba escolhida. */}
             <BarraDeAbas
               aba={aba}
-              onAba={(a) => {
-                setAba(a);
-                setSessaoAberta(null);
-              }}
+              onAba={nav.irParaAba}
               cor={cor}
               tinta={tintaDaMarca}
             />
@@ -337,10 +349,10 @@ export function StudentApp({
 /**
  * Cabeçalho do design: o disco com as iniciais do PROFISSIONAL, o nome dele como
  * sobrenome da tela, a saudação em display e o streak em pílula âmbar. Abaixo, a
- * faixa da semana em segmentos e a linha "Semana N · X treinos feitos".
+ * faixa da semana em segmentos e a linha "Semana N · X dias treinados".
  *
  * Nada aqui é inventado: o streak vem de `sequenciaDias`, a semana vem do plano e
- * a contagem de treinos vem das execuções registradas.
+ * a contagem de dias treinados vem das execuções registradas.
  */
 function CabecalhoAluno({
   aluno,
@@ -368,7 +380,9 @@ function CabecalhoAluno({
   preview?: boolean;
 }) {
   const semana = plano ? semanaAtual(plano) : undefined;
-  const feitosNaSemana = React.useMemo(() => {
+  // DIAS distintos com alguma execução na semana civil, que é o que a faixa de
+  // segmentos acima desenha. Não é contagem de sessão completa, e a frase diz isso.
+  const diasTreinadosNaSemana = React.useMemo(() => {
     const diaMs = 86_400_000;
     const diaSemana = (new Date().getDay() + 6) % 7;
     const inicio = new Date().setHours(0, 0, 0, 0) - diaSemana * diaMs;
@@ -428,45 +442,63 @@ function CabecalhoAluno({
         </button>
       )}
 
-      {/* Faixa da semana em segmentos, como no mockup: um traço por dia, aceso no
-          que aconteceu. É a mesma leitura da SemanaStrip, em forma compacta. */}
-      <FaixaSegmentos execucoes={execucoes} cor={cor} />
+      {/* Trilho do PLANO: uma semana por segmento, a atual em destaque. A leitura por
+          DIA vive na seção "Seus dias" desta mesma tela e não se repete aqui. */}
+      {plano && <TrilhoDeSemanas plano={plano} cor={cor} tinta={tinta} />}
       <p className="mt-2 text-sm text-ink-2">
         {semana ? `Semana ${semana} · ` : ""}
-        {feitosNaSemana} {feitosNaSemana === 1 ? "treino feito" : "treinos feitos"}
+        {diasTreinadosNaSemana} {diasTreinadosNaSemana === 1 ? "dia treinado" : "dias treinados"}
       </p>
     </header>
   );
 }
 
-/** Sete segmentos SEG a DOM: dia treinado acende na cor da marca, hoje pulsa em
- *  contorno, futuro fica apagado. Decorativo com rótulo acessível único. */
-function FaixaSegmentos({ execucoes, cor }: { execucoes: Execucao[]; cor: string }) {
-  const DIA_MS = 86_400_000;
-  const DIAS = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"];
-  const hojeIdx = (new Date().getDay() + 6) % 7;
-  const inicio = new Date().setHours(0, 0, 0, 0) - hojeIdx * DIA_MS;
-  const treinou = (i: number) => {
-    const ini = inicio + i * DIA_MS;
-    return execucoes.some((e) => e.concluidoEm >= ini && e.concluidoEm < ini + DIA_MS);
-  };
-  const feitos = DIAS.map((_, i) => treinou(i));
-  const rotulo = `Semana: treino em ${feitos.filter(Boolean).length} de 7 dias. Hoje é ${DIAS[hojeIdx]}.`;
+/**
+ * O TRILHO DO PLANO: uma semana por parada, a de hoje em destaque.
+ *
+ * O número aparece quando cabe (até 8 semanas a 320px de tela); acima disso o trilho vira
+ * só segmento, porque número ilegível não é número. Em ambos os casos o rótulo acessível
+ * diz a mesma frase por extenso, e a linha logo abaixo do trilho já escreve "Semana N".
+ */
+function TrilhoDeSemanas({ plano, cor, tinta }: { plano: PlanoTreino; cor: string; tinta: string }) {
+  const total = Math.max(1, plano.semanas);
+  const atual = Math.min(semanaAtual(plano), total);
+  const comNumero = total <= 8;
+  const semanas = Array.from({ length: total }, (_, i) => i + 1);
+
   return (
-    <div className="mt-3 flex gap-1.5" role="img" aria-label={rotulo}>
-      {DIAS.map((_, i) => (
-        <span
-          key={i}
-          aria-hidden
-          className={cn("h-1.5 flex-1 rounded-full", !feitos[i] && i !== hojeIdx && "bg-surface-mute")}
-          style={
-            feitos[i]
-              ? { background: cor }
-              : i === hojeIdx
-                ? { boxShadow: `inset 0 0 0 1.5px ${cor}` }
-                : undefined
-          }
-        />
+    <div
+      className="mt-3 flex items-center"
+      role="img"
+      aria-label={`Semana ${atual} de ${total} do plano.`}
+    >
+      {semanas.map((n, i) => (
+        <React.Fragment key={n}>
+          {i > 0 && (
+            <span
+              aria-hidden
+              className="h-0.5 flex-1 bg-surface-mute"
+              style={n <= atual ? { background: cor, opacity: 0.55 } : undefined}
+            />
+          )}
+          <span
+            aria-hidden
+            className={cn(
+              "tabular grid shrink-0 place-items-center rounded-full font-bold",
+              comNumero ? "h-6 w-6 text-2xs" : "h-2.5 w-2.5",
+              n > atual && "bg-surface-mute text-ink-3",
+            )}
+            style={
+              n === atual
+                ? { background: cor, color: tinta }
+                : n < atual
+                  ? { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }
+                  : undefined
+            }
+          >
+            {comNumero ? n : null}
+          </span>
+        </React.Fragment>
       ))}
     </div>
   );
@@ -675,6 +707,8 @@ function VisaoSessao({
         plano={plano}
         cor={cor}
         concluida={concluida}
+        semana={semana}
+        execucoes={execucoes}
         dataDaPrescricao={dataDaPrescricao}
         onIniciar={onIniciar}
       />
@@ -712,6 +746,8 @@ function HeroTreinoDeHoje({
   plano,
   cor,
   concluida,
+  semana,
+  execucoes,
   dataDaPrescricao,
   onIniciar,
 }: {
@@ -719,10 +755,17 @@ function HeroTreinoDeHoje({
   plano: PlanoTreino;
   cor: string;
   concluida: boolean;
+  /** semana e execuções: sem elas não dá para dizer QUANTOS já foram feitos */
+  semana: number;
+  execucoes: Execucao[];
   dataDaPrescricao?: (id: string) => string | undefined;
   onIniciar?: () => void;
 }) {
   const nExercicios = sessao.blocos.length;
+  const nFeitos = sessao.blocos.filter((b) =>
+    execucoes.some((e) => e.semana === semana && e.blocoRef === b.id),
+  ).length;
+  const pctFeito = nExercicios ? Math.round((nFeitos / nExercicios) * 100) : 0;
   // Minutos DECLARADOS (soma do alvo aeróbio). Sem aeróbio com alvo, não há
   // minuto nenhum a mostrar: somar tempo de musculação seria número inventado.
   const minutos = minutosDeclarados(sessao);
@@ -760,7 +803,29 @@ function HeroTreinoDeHoje({
           </>
         )}
       </div>
-      {sessao.foco && <p className="mt-1 text-sm text-white/80">{sessao.foco}</p>}
+      {/* QUANTOS JÁ FORAM E QUANTOS FALTAM, dito de uma vez. A barra é a mesma
+          informação em forma, para responder de relance no meio do treino. */}
+      {nExercicios > 0 && (
+        <div className="mt-3">
+          <div className="flex items-baseline justify-between gap-2 text-sm">
+            <span className="font-semibold">
+              <span className="tabular">{nFeitos}</span> de <span className="tabular">{nExercicios}</span> feitos
+            </span>
+            {nFeitos > 0 && nFeitos < nExercicios && (
+              <span className="text-xs text-white/80">
+                {nExercicios - nFeitos} {nExercicios - nFeitos === 1 ? "restante" : "restantes"}
+              </span>
+            )}
+          </div>
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/25">
+            <div
+              className="h-full rounded-full bg-white transition-[width] duration-500"
+              style={{ width: `${pctFeito}%` }}
+            />
+          </div>
+        </div>
+      )}
+      {sessao.foco && <p className="mt-3 text-sm text-white/80">{sessao.foco}</p>}
       {meso && <p className="mt-1 text-xs text-white/70">{rotuloMeso(meso)}</p>}
 
       {onIniciar && (
@@ -920,31 +985,65 @@ function ConcluidaHoje({ feedback, cor }: { feedback?: SessaoFeedback; cor: stri
         <CheckCircle2 className="h-5 w-5 shrink-0" style={{ color: cor }} aria-hidden />
         <span className="font-display font-bold text-ink">Treino concluído</span>
       </div>
-      <div className="mt-2 space-y-1 text-sm text-ink-2">
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm text-ink-2">
         {feedback.pse != null && (
           <ParDado layout="inline" label="Seu esforço" value={`${feedback.pse}${rotuloPse(feedback.pse) ? ` · ${rotuloPse(feedback.pse)}` : ""}`} />
         )}
         {feedback.duracaoMin != null && <ParDado layout="inline" label="Duração" value={`${feedback.duracaoMin} min`} />}
-        {feedback.observacao && <p className="text-xs text-ink-2">Recado registrado. Seu professor vê no próximo acesso.</p>}
+        {feedback.observacao && (
+          <p className="w-full text-xs text-ink-2">Recado registrado. Seu professor vê no próximo acesso.</p>
+        )}
       </div>
     </Card>
   );
 }
 
-/** "Falar com o {professor}": a linha de contato do mockup. Só vira link quando
- *  existe um canal real; sem canal, não finge que dá para mandar mensagem. */
+/**
+ * "Falar com o {professor}".
+ *
+ * A APARÊNCIA ACOMPANHA A DISPONIBILIDADE. Antes isto era um `<div>` sem ação nenhuma
+ * com cara de cartão tocável, e o Filipe reportou exatamente isso: clicou e não aconteceu
+ * nada. Agora, com telefone cadastrado, é um link de verdade para o WhatsApp, com seta.
+ * Sem telefone, some a seta e some o realce: vira linha de informação, que é o que ele é.
+ */
 function FalarComProfessor({ marca, cor }: { marca: Marca; cor: string }) {
   const primeiro = apelidoProfissional(marca);
-  return (
-    <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5">
+  // Só dígitos: o número pode vir com máscara do perfil ("(61) 99999-0000").
+  const digitos = (marca.telefone ?? "").replace(/\D/g, "");
+  // O wa.me exige o país. Número brasileiro sem o 55 não abre conversa nenhuma.
+  const numero = digitos.length >= 10 ? (digitos.startsWith("55") ? digitos : `55${digitos}`) : "";
+  const texto = encodeURIComponent(`Oi, ${primeiro}! Falando pelo meu app de treino.`);
+
+  const miolo = (
+    <>
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-surface-soft" style={{ color: cor }}>
         <MessageCircle className="h-5 w-5" aria-hidden />
       </span>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 text-left">
         <div className="truncate font-semibold text-ink">Falar com {primeiro}</div>
-        <div className="text-xs text-ink-2">Ao terminar o treino você registra o esforço e manda um recado.</div>
+        <div className="text-xs text-ink-2">
+          {numero
+            ? "Tire dúvidas, peça ajustes e mantenha seu treino no caminho certo."
+            : "Ao terminar o treino você registra o esforço e manda um recado."}
+        </div>
       </div>
-    </div>
+    </>
+  );
+
+  if (!numero) {
+    return <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5">{miolo}</div>;
+  }
+
+  return (
+    <a
+      href={`https://wa.me/${numero}?text=${texto}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex min-h-[56px] items-center gap-3 rounded-card border border-border bg-surface p-3.5 transition-colors hover:bg-surface-soft"
+    >
+      {miolo}
+      <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" aria-hidden />
+    </a>
   );
 }
 
@@ -1014,7 +1113,7 @@ function BlocoRow({
   const [modImgOk, setModImgOk] = React.useState(true);
   const IconeAerobio = iconeModalidade(bloco.modalidade, modalidade?.ambiente);
 
-  // Miniatura 56px, como o mockup: foto real do exercício, foto da modalidade no
+  // Miniatura 48px: foto real do exercício, foto da modalidade no
   // aeróbio, ou o selo de ícone quando não há imagem (nunca empresta a foto de
   // outro exercício).
   const leading =
@@ -1024,7 +1123,7 @@ function BlocoRow({
         alt=""
         loading="lazy"
         onError={() => setThumbOk(false)}
-        className="h-14 w-14 shrink-0 rounded-control border border-border object-cover"
+        className="h-12 w-12 shrink-0 rounded-control border border-border object-cover"
       />
     ) : aerobio && modalidade && modImgOk ? (
       <img
@@ -1032,11 +1131,11 @@ function BlocoRow({
         alt=""
         loading="lazy"
         onError={() => setModImgOk(false)}
-        className="h-14 w-14 shrink-0 rounded-control border border-border object-cover"
+        className="h-12 w-12 shrink-0 rounded-control border border-border object-cover"
       />
     ) : (
       <span
-        className="grid h-14 w-14 shrink-0 place-items-center rounded-control bg-surface-soft"
+        className="grid h-12 w-12 shrink-0 place-items-center rounded-control bg-surface-soft"
         style={{ color: cor }}
       >
         {aerobio ? <IconeAerobio className="h-6 w-6" /> : <Dumbbell className="h-6 w-6" />}
@@ -1045,80 +1144,99 @@ function BlocoRow({
 
   const feito = !!execFeita;
   const dose = doseCurta(bloco);
+  // Fechada por padrão. Quem já registrou não precisa reabrir; quem vai registrar
+  // toca uma vez. O padrão serve à leitura da lista, que é para o que ela existe.
+  const [aberto, setAberto] = React.useState(false);
+  const extras = tokensExtras(bloco);
 
   return (
-    <div className="rounded-card border border-border bg-surface p-3">
-      <div className="flex items-center gap-3">
-        {temFolha || (aerobio && modalidade) ? (
-          <button
-            ref={gatilhoRef}
-            type="button"
-            onClick={() => temFolha && setSheetAberto(true)}
-            disabled={!temFolha}
-            aria-haspopup={temFolha ? "dialog" : undefined}
-            aria-label={temFolha ? `Ver o exercício ${nomeDoBloco(bloco)}` : undefined}
-            className="group flex min-h-[56px] min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
-          >
-            {leading}
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-semibold text-ink underline-offset-2 group-enabled:group-hover:underline">
-                {nomeDoBloco(bloco)}
-              </span>
-              {dose && <span className="tabular block truncate text-xs text-ink-2">{dose}</span>}
-            </span>
-          </button>
-        ) : (
-          <>
-            {leading}
-            <span className="min-w-0 flex-1">
-              <span className="block truncate font-semibold text-ink">{nomeDoBloco(bloco)}</span>
-              {dose && <span className="tabular block truncate text-xs text-ink-2">{dose}</span>}
-            </span>
-          </>
-        )}
-
-        {/* O disco de ordem do mockup: contorno quando falta, cheio quando feito. */}
+    <div className="overflow-hidden rounded-card border border-border bg-surface">
+      {/* A LINHA FECHADA. Estado e ordem à esquerda (o disco responde "este já foi?"
+          sem precisar abrir nada), nome e dose no meio, seta à direita. */}
+      <button
+        type="button"
+        onClick={() => setAberto((v) => !v)}
+        aria-expanded={aberto}
+        className="flex min-h-[64px] w-full items-center gap-3 p-3 text-left transition-colors hover:bg-surface-soft"
+      >
         <span
           aria-hidden
-          className="tabular grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold"
+          className="tabular grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold"
           style={feito ? { background: cor, color: tinta } : { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }}
         >
-          {feito ? <CheckCircle2 className="h-4.5 w-4.5" /> : ordem}
+          {feito ? <CheckCircle2 className="h-4 w-4" /> : ordem}
         </span>
-      </div>
-
-      {metodoVisivel && (
-        <span
-          className="mt-2 inline-block rounded-full px-2 py-0.5 text-2xs font-bold"
-          style={{ background: cor, color: tinta }}
-        >
-          {metodoVisivel.nome}
+        {leading}
+        <span className="min-w-0 flex-1">
+          <span className={cn("block truncate font-semibold", feito ? "text-ink-2" : "text-ink")}>
+            {nomeDoBloco(bloco)}
+          </span>
+          {dose && <span className="tabular block truncate text-xs text-ink-2">{dose}</span>}
+          {feito && (
+            <span className="block text-2xs font-bold uppercase tracking-wider" style={{ color: cor }}>
+              Feito
+            </span>
+          )}
         </span>
-      )}
-      {/* Só o que a linha curta NÃO disse (tipicamente a Intensidade). Repetir a
-          dose inteira logo abaixo do resumo é ruído, não informação. */}
-      {tokensExtras(bloco).length > 0 && (
-        <LinhaDeTokens className="mt-2">
-          {tokensExtras(bloco).map((t) => (
-            <TokenRotulado key={t.label} label={t.label} value={t.value} />
-          ))}
-        </LinhaDeTokens>
-      )}
-      {metodoVisivel && <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>}
-      {bloco.observacao && <p className="mt-1 text-xs text-ink-2">{bloco.observacao}</p>}
+        <ChevronRight
+          className={cn("h-5 w-5 shrink-0 text-ink-3 transition-transform", aberto && "rotate-90")}
+          aria-hidden
+        />
+      </button>
 
-      <RegistroBloco
-        bloco={bloco}
-        cor={cor}
-        semana={semana}
-        planoId={planoId}
-        alunoId={alunoId}
-        sessaoRef={sessaoRef}
-        execFeita={execFeita}
-        onRegistrar={onRegistrar}
-        onDesfazer={onDesfazer}
-        preview={preview}
-      />
+      {aberto && (
+        <div className="border-t border-border p-3">
+          {metodoVisivel && (
+            <span
+              className="inline-block rounded-full px-2 py-0.5 text-2xs font-bold"
+              style={{ background: cor, color: tinta }}
+            >
+              {metodoVisivel.nome}
+            </span>
+          )}
+          {/* Só o que a linha curta NÃO disse (tipicamente a Intensidade). Repetir a
+              dose inteira logo abaixo do resumo é ruído, não informação. */}
+          {extras.length > 0 && (
+            <LinhaDeTokens className={metodoVisivel ? "mt-2" : undefined}>
+              {extras.map((t) => (
+                <TokenRotulado key={t.label} label={t.label} value={t.value} />
+              ))}
+            </LinhaDeTokens>
+          )}
+          {metodoVisivel && (
+            <p className="mt-1.5 text-xs font-medium text-ink-2">Como fazer: {metodoVisivel.descricao}</p>
+          )}
+          {bloco.observacao && <p className="mt-1 text-xs text-ink-2">{bloco.observacao}</p>}
+
+          {/* A folha do exercício era alcançada tocando o nome, gesto que agora é o de
+              abrir a linha. Aqui ela vira porta declarada, com nome em vez de adivinhação. */}
+          {temFolha && (
+            <button
+              ref={gatilhoRef}
+              type="button"
+              onClick={() => setSheetAberto(true)}
+              aria-haspopup="dialog"
+              className="mt-2.5 inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-border px-4 text-sm font-semibold text-ink transition-colors hover:bg-surface-soft"
+            >
+              <Sparkles className="h-4 w-4" aria-hidden style={{ color: cor }} />
+              Como executar
+            </button>
+          )}
+
+          <RegistroBloco
+            bloco={bloco}
+            cor={cor}
+            semana={semana}
+            planoId={planoId}
+            alunoId={alunoId}
+            sessaoRef={sessaoRef}
+            execFeita={execFeita}
+            onRegistrar={onRegistrar}
+            onDesfazer={onDesfazer}
+            preview={preview}
+          />
+        </div>
+      )}
 
       {sheetAberto && ex && (
         <ExercicioSheet
@@ -1177,35 +1295,40 @@ function AbaTreinos({
       <div>
         <h2 className="font-display text-xl font-bold text-ink">Seus treinos</h2>
         <p className="mt-0.5 text-sm text-ink-2">
-          Plano de {plano.semanas} semanas
-          {meso ? ` · ${rotuloMeso(meso)}` : ""} · semana {semana}
+          Plano de {plano.semanas} {plano.semanas === 1 ? "semana" : "semanas"} · semana {semana}
         </p>
       </div>
 
-      {/* Trilho de fases: a fase atual em sólido, as outras em contorno. */}
-      <div className="flex gap-1.5">
-        {mesos.map((m) => {
-          const atual = semana >= m.semanaInicio && semana <= m.semanaFim;
-          const passada = semana > m.semanaFim;
-          return (
-            <span
-              key={m.id}
-              className={cn(
-                "min-w-0 flex-1 truncate rounded-full px-2.5 py-1.5 text-center text-2xs font-bold",
-                !atual && !passada && "bg-surface-soft text-ink-2",
-              )}
-              style={
-                atual
-                  ? { background: cor, color: tinta }
-                  : passada
-                    ? { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }
-                    : undefined
-              }
-            >
-              {rotuloMeso(m)}
-            </span>
-          );
-        })}
+      {/* Trilho de fases: a POSIÇÃO em cada parada, a atual em sólido, as passadas em
+          contorno. O nome por extenso vem embaixo, porque é lá que ele cabe. */}
+      <div>
+        <div className="flex gap-1.5">
+          {mesos.map((m, i) => {
+            const atual = semana >= m.semanaInicio && semana <= m.semanaFim;
+            const passada = semana > m.semanaFim;
+            return (
+              <span
+                key={m.id}
+                title={rotuloMeso(m)}
+                aria-label={`${rotuloMeso(m)}, semanas ${m.semanaInicio} a ${m.semanaFim}${atual ? " (a atual)" : ""}`}
+                className={cn(
+                  "tabular min-w-0 flex-1 rounded-full py-1.5 text-center text-2xs font-bold",
+                  !atual && !passada && "bg-surface-soft text-ink-2",
+                )}
+                style={
+                  atual
+                    ? { background: cor, color: tinta }
+                    : passada
+                      ? { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }
+                      : undefined
+                }
+              >
+                {i + 1}
+              </span>
+            );
+          })}
+        </div>
+        {meso && <p className="mt-1.5 text-sm font-semibold text-ink">{rotuloMeso(meso)}</p>}
       </div>
 
       {micro && (
@@ -1276,44 +1399,51 @@ function CardSessaoPlano({
 }) {
   const letra = selo(sessao, ordem);
   const n = sessao.blocos.length;
+  const comecarAgora = hoje && !concluida;
+
+
   return (
     <div
       className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5"
       style={hoje ? { borderColor: cor, borderWidth: 2 } : undefined}
     >
-      <span
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-base font-bold"
-        style={concluida ? { background: cor, color: tinta } : { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }}
+      <button
+        type="button"
+        onClick={onIniciar}
+        disabled={!onIniciar}
+        aria-label={onIniciar ? `Abrir ${sessao.nome}` : undefined}
+        className="flex min-h-[44px] min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
       >
-        {concluida ? <CheckCircle2 className="h-5 w-5" /> : letra}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="truncate font-semibold text-ink">{sessao.nome}</div>
-        <div className="truncate text-xs text-ink-2">
-          {sessao.foco ? `${sessao.foco} · ` : ""}
-          {n} {n === 1 ? "exercício" : "exercícios"}
-          {minutosDeclarados(sessao) ? ` · ${minutosDeclarados(sessao)} min` : ""}
-          {hoje ? " · hoje" : ""}
-        </div>
-      </div>
-      {onIniciar &&
-        (hoje && !concluida ? (
-          <button
-            onClick={onIniciar}
-            className="inline-flex h-10 shrink-0 items-center rounded-full px-4 text-sm font-bold"
-            style={{ background: cor, color: tinta }}
-          >
-            Começar
-          </button>
-        ) : (
-          <button
-            onClick={onIniciar}
-            aria-label={`Abrir ${sessao.nome}`}
-            className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-soft hover:text-ink"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        ))}
+        {/* Selo + nome + dose: UM alvo só, do tamanho do cartão. */}
+        <span
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-base font-bold"
+          style={concluida ? { background: cor, color: tinta } : { boxShadow: `inset 0 0 0 1.5px ${cor}`, color: cor }}
+        >
+          {concluida ? <CheckCircle2 className="h-5 w-5" /> : letra}
+        </span>
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block truncate font-semibold text-ink">{sessao.nome}</span>
+          <span className="block truncate text-xs text-ink-2">
+            {sessao.foco ? `${sessao.foco} · ` : ""}
+            {n} {n === 1 ? "exercício" : "exercícios"}
+            {minutosDeclarados(sessao) ? ` · ${minutosDeclarados(sessao)} min` : ""}
+            {hoje ? " · hoje" : ""}
+          </span>
+        </span>
+        {/* Sem "Começar" ao lado, a seta é a marca de que o cartão abre. Com ele, a
+            seta sairia competindo com a ação principal. */}
+        {onIniciar && !comecarAgora && <ChevronRight className="h-5 w-5 shrink-0 text-ink-2" aria-hidden />}
+      </button>
+      {onIniciar && comecarAgora && (
+        <button
+          type="button"
+          onClick={onIniciar}
+          className="inline-flex h-10 shrink-0 items-center rounded-full px-4 text-sm font-bold"
+          style={{ background: cor, color: tinta }}
+        >
+          Começar
+        </button>
+      )}
     </div>
   );
 }
@@ -1452,7 +1582,7 @@ function AbaPerfil({
           </div>
         </div>
         {ultima && (
-          <div className="mt-3 border-t border-border pt-3">
+          <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-border pt-3">
             <ParDado layout="inline" label="Última avaliação" value={fmt(ultima.data)} />
             {ultima.medidas.peso != null && <ParDado layout="inline" label="Peso" value={`${ultima.medidas.peso} kg`} />}
           </div>
@@ -1470,7 +1600,7 @@ function AbaPerfil({
             <div className="min-w-0">
               <div className="truncate font-semibold text-ink">{plano.titulo}</div>
               <div className="text-xs text-ink-2">
-                {plano.semanas} semanas · {rotuloFrequencia(plano)}
+                {plano.semanas} {plano.semanas === 1 ? "semana" : "semanas"} · {rotuloFrequencia(plano)}
               </div>
             </div>
           </div>

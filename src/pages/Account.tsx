@@ -130,7 +130,9 @@ export function Account() {
         </div>
         <p className="mt-3 text-xs text-ink-3">
           Nome e CREF assinam o Prontuário de Decisão; e-mail e telefone entram no rodapé dos
-          documentos como canal de contato do aluno com você.
+          documentos como canal de contato do aluno com você. O telefone é também o que faz
+          o botão "Falar com" aparecer no app do aluno: sem ele, o aluno não tem por onde
+          chamar você ali.
         </p>
       </Card>
 

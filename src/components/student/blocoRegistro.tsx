@@ -104,6 +104,38 @@ export function tokensDoBloco(bloco: BlocoSessao): { label: string; value: strin
 }
 
 /**
+ * O RIR na VOZ DO ALUNO.
+ *
+ * Fonte única: a linha curta da lista e o chip do modo guiado dizem a mesma frase. Existe
+ * porque a sigla nunca foi explicada em lugar nenhum do app do aluno, e a decisão do
+ * projeto é que ela fique do lado do profissional (ver NA_LINHA_CURTA logo abaixo).
+ */
+export function esforcoPorExtenso(rirAlvo: number): string {
+  return rirAlvo === 0
+    ? "vá até não conseguir mais"
+    : rirAlvo === 1
+      ? "pare com 1 repetição de sobra"
+      : `pare com ${rirAlvo} repetições de sobra`;
+}
+
+/**
+ * O texto de um chip de dose na voz do aluno.
+ *
+ * `principal` é o primeiro chip, que aparece sem rótulo por ser a dose central ("3 x 12").
+ * Rótulo que o valor NÃO dispensa volta mesmo sendo o primeiro: um chip escrito só "3" não
+ * diz coisa nenhuma.
+ */
+export function textoDeChipDoAluno(t: { label: string; value: string }, principal: boolean): string {
+  if (t.label === "RIR") {
+    const n = Number(t.value);
+    return Number.isFinite(n) ? esforcoPorExtenso(n) : `esforço ${t.value}`;
+  }
+  // Mesma escala que o rodapé do registro explica ("esforço de 0 a 10").
+  if (t.label === "RPE") return `esforço ${t.value} de 10`;
+  return principal ? t.value : `${t.label.toLowerCase()} ${t.value}`;
+}
+
+/**
  * A dose em UMA linha, do jeito que o app do aluno mostra sob o nome do
  * exercício na lista do dia: "3 x 12 · 60s" na força, "25 min · zona 2" no
  * aeróbio. É o resumo; a dose completa com rótulo colado (TokenRotulado) segue
@@ -142,14 +174,7 @@ export function doseCurta(bloco: BlocoSessao): string {
     else if (limpo(bloco.series) || limpo(bloco.reps)) partes.push(limpo(bloco.series) || limpo(bloco.reps));
     // A sigla nunca foi explicada em lugar nenhum do app do aluno. Em vez de criar um
     // glossário para uma linha só, a linha diz o que a sigla quer dizer.
-    if (bloco.rirAlvo != null)
-      partes.push(
-        bloco.rirAlvo === 0
-          ? "vá até não conseguir mais"
-          : bloco.rirAlvo === 1
-            ? "pare com 1 repetição de sobra"
-            : `pare com ${bloco.rirAlvo} repetições de sobra`,
-      );
+    if (bloco.rirAlvo != null) partes.push(esforcoPorExtenso(bloco.rirAlvo));
     if (bloco.intervaloAlvoSeg != null) partes.push(fmtIntervalo(bloco.intervaloAlvoSeg));
     else if (limpo(bloco.intervalo)) partes.push(limpo(bloco.intervalo));
   }

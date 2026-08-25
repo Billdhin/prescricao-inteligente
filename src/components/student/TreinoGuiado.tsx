@@ -10,6 +10,7 @@ import {
   iconeModalidade,
   modalidadeDoBloco,
   RegistroBloco,
+  textoDeChipDoAluno,
 } from "@/components/student/blocoRegistro";
 import { modalidadeImagem } from "@/data/modalities";
 import { refCurta } from "@/data/referencias";
@@ -452,7 +453,7 @@ function BlocoGuiado({
               )}
               title={t.label}
             >
-              {i === 0 ? t.value : `${t.label.toLowerCase()} ${t.value}`}
+              {textoDeChipDoAluno(t, i === 0)}
             </span>
           ))}
         </div>
