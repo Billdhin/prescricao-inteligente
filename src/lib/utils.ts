@@ -12,7 +12,8 @@ export function fmt(n: number) {
 
 /**
  * Prefixa um caminho de asset em `public/` com o base do Vite, para funcionar
- * tanto em "/" (dev/host na raiz) quanto em "/<repo>/" (GitHub Pages). Use em
+ * tanto em "/" (o caso de hoje: Cloudflare Pages serve na raiz do domínio) quanto num
+ * host que sirva o app em subcaminho. Use em
  * `<img src>` de imagens vindas dos dados (que guardam caminho root-absoluto).
  */
 export function withBase(path: string) {
