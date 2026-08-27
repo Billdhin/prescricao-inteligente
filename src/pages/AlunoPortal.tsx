@@ -10,6 +10,7 @@ import { Toasts } from "@/components/app/Toasts";
 import { toast, toastFalha } from "@/lib/toast";
 import { buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
+import { AlternarEspaco } from "@/components/app/AlternarEspaco";
 
 /**
  * Confirmação tátil. Um toque curto no celular é o sinal que atravessa a academia
@@ -105,6 +106,9 @@ function PortalApp() {
   return (
     <>
       <StudentApp
+        // A troca de espaço entra por PROP: assim a prévia do profissional (AlunoPreview)
+        // não herda a conta dele dentro da simulação do aluno.
+        rodapeDoPerfil={<AlternarEspaco />}
         aluno={aluno}
         plano={plano}
         // Fallback de marca NEUTRO: nunca o nome do aluno (seria estranho o app do

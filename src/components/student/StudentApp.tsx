@@ -137,6 +137,7 @@ export function StudentApp({
   dataDaPrescricao,
   preview = false,
   onSair,
+  rodapeDoPerfil,
 }: {
   aluno: Aluno;
   plano?: PlanoTreino;
@@ -157,6 +158,8 @@ export function StudentApp({
   /** resolve a data de exibição de uma prescrição pela id (selo "Personalizado em …") */
   dataDaPrescricao?: (id: string) => string | undefined;
   preview?: boolean;
+  /** peça extra no fim do Perfil (a troca de espaço da conta). Ver AlternarEspaco. */
+  rodapeDoPerfil?: React.ReactNode;
   onSair?: () => void;
 }) {
   // A navegação vive na URL: ver @/components/student/navegacaoAluno. Antes eram três
@@ -325,6 +328,7 @@ export function StudentApp({
                   plano={plano}
                   avaliacoes={avaliacoes}
                   onSair={onSair}
+                  rodapeDoPerfil={rodapeDoPerfil}
                   preview={preview}
                 />
               )}
@@ -1740,6 +1744,7 @@ function AbaPerfil({
   plano,
   avaliacoes,
   onSair,
+  rodapeDoPerfil,
   preview,
 }: {
   aluno: Aluno;
@@ -1749,6 +1754,9 @@ function AbaPerfil({
   plano?: PlanoTreino;
   avaliacoes: Avaliacao[];
   onSair?: () => void;
+  /** peça extra no fim do Perfil (a troca de espaço). Vem por PROP para a prévia do
+   *  profissional não herdar a conta dele dentro da simulação do aluno. */
+  rodapeDoPerfil?: React.ReactNode;
   preview?: boolean;
 }) {
   const ultima = avaliacoes
@@ -1803,6 +1811,8 @@ function AbaPerfil({
       )}
 
       <MensalidadeCard aluno={aluno} cor={cor} tinta={tinta} />
+
+      {rodapeDoPerfil}
 
       {onSair && (
         <button onClick={onSair} className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-border text-sm font-semibold text-ink-2 hover:text-ink">

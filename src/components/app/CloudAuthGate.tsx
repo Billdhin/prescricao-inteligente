@@ -36,6 +36,7 @@ function traduzErro(msg: string | undefined): string {
 export function CloudAuthGate() {
   const [aba, setAba] = React.useState<Aba>("entrar");
   const [nome, setNome] = React.useState("");
+  const [cref, setCref] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [senha, setSenha] = React.useState("");
   const [carregando, setCarregando] = React.useState(false);
@@ -71,7 +72,7 @@ export function CloudAuthGate() {
         if (r.error) setErro(traduzErro(r.error));
         // sucesso: onAuthChange fecha o portão automaticamente
       } else {
-        const r = await signUp(email.trim(), senha, nome.trim());
+        const r = await signUp(email.trim(), senha, nome.trim(), cref.trim());
         if (r.error) {
           setErro(traduzErro(r.error));
         } else if (!r.session) {
@@ -136,6 +137,22 @@ export function CloudAuthGate() {
                   autoComplete="name"
                   placeholder="Como aparece nos documentos"
                 />
+              </label>
+            )}
+            {aba === "criar" && (
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-semibold text-ink">
+                  CREF <span className="font-normal text-ink-3">(opcional, dá para preencher depois)</span>
+                </span>
+                <input
+                  value={cref}
+                  onChange={(e) => setCref(e.target.value)}
+                  className="input"
+                  placeholder="ex.: 012345-G/SP"
+                />
+                <span className="mt-1 block text-xs text-ink-3">
+                  Junto com o seu nome, é o que assina o Prontuário de Decisão entregue ao aluno.
+                </span>
               </label>
             )}
             <label className="block">

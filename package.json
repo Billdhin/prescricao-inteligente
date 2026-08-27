@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build && node scripts/gerar-headers.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "check": "npm run check:rotas && npm run check:numeros && npm run check:fluxos && npm run check:aluno && npm run check:continuidade && npm run check:metricas && npm run check:faixas && npm run check:progressao && npm run check:regras && npm run check:farmacos && npm run check:documentos && npm run check:nucleos && npm run check:aprender && npm run check:consulta && npm run check:legibilidade && npm run check:postura && npm run check:design && npm run check:contraste && npm run check:menu && npm run check:condicao && npm run check:objetivos && npm run check:escalas && npm run check:perfil && npm run check:catalogo && npm run check:pares && npm run check:estimativas && npm run check:semaforo && npm run check:legal && npm run check:distintividade && npm run check:core",
+    "check": "npm run check:rotas && npm run check:numeros && npm run check:fluxos && npm run check:aluno && npm run check:conta && npm run check:continuidade && npm run check:metricas && npm run check:faixas && npm run check:progressao && npm run check:regras && npm run check:farmacos && npm run check:documentos && npm run check:nucleos && npm run check:aprender && npm run check:consulta && npm run check:legibilidade && npm run check:postura && npm run check:design && npm run check:contraste && npm run check:menu && npm run check:condicao && npm run check:objetivos && npm run check:escalas && npm run check:perfil && npm run check:catalogo && npm run check:pares && npm run check:estimativas && npm run check:semaforo && npm run check:legal && npm run check:distintividade && npm run check:core",
     "gen:seed": "tsx scripts/gen-seed-sql.ts",
     "check:supabase": "node scripts/check-supabase.mjs",
     "check:metricas": "tsx scripts/check-metricas.ts",
@@ -39,6 +39,7 @@
     "check:rotas": "tsx scripts/check-rotas.ts",
     "publicado": "node scripts/conferir-publicado.mjs",
     "check:aluno": "tsx scripts/check-aluno.ts",
+    "check:conta": "tsx scripts/check-conta.ts",
     "check:fluxos": "tsx scripts/check-fluxos.ts",
     "check:numeros": "tsx scripts/check-numeros.ts",
     "check:continuidade": "tsx scripts/check-continuidade.ts"

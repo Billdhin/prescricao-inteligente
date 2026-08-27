@@ -10,6 +10,7 @@ import { SeletorTema } from "@/components/theme/SeletorTema";
 import { CORES_DE_MARCA, corDeContraste } from "@/lib/theme/palettes";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { AlternarEspaco } from "@/components/app/AlternarEspaco";
 
 export function Account() {
   const user = useUser();
@@ -52,6 +53,10 @@ export function Account() {
         title="Sua conta"
         subtitle="Perfil, marca, acesso e plano. O que você preencher aqui assina os documentos entregues aos alunos."
       />
+
+      {/* Volta para o espaço do aluno. Só aparece quando alguém de fato atende esta conta:
+          sem vínculo, não há treino a ver, e o botão seria uma porta para lugar nenhum. */}
+      <AlternarEspaco />
 
       {/* Perfil profissional */}
       <Card className="p-6">

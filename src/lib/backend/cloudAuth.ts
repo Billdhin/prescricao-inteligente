@@ -6,6 +6,7 @@ import * as repo from "./supabaseRepo";
 import { setCloudOn } from "./cloudSync";
 import { useAlunos, useUser } from "@/lib/store";
 import { toast, toastFalha } from "@/lib/toast";
+import type { Aluno } from "@/data/alunos";
 
 // Marcador de "dono" dos stores locais: a conta a que os dados neste navegador
 // pertencem. Impede que a base de um profissional suba para a conta de outro que
@@ -60,8 +61,15 @@ interface CloudAuthState {
   user: User | null;
   /** true enquanto hidrata os dados do usuário logo após o login */
   hydrating: boolean;
-  /** papel da conta logada; define qual app renderizar (profissional x aluno) */
+  /**
+   * O ESPAÇO EM USO, não a identidade da conta: define qual app renderizar. A mesma conta
+   * pode ter os dois vínculos e alternar entre eles sem perder nenhum (ver alternarEspaco).
+   */
   role: "profissional" | "aluno" | null;
+  /** alguém prescreve para mim: existe ficha de aluno com `auth_user_id` = esta conta */
+  temVinculoDeAluno: boolean;
+  /** eu prescrevo para alguém: existem fichas com `user_id` = esta conta */
+  temCarteiraPropria: boolean;
   /** para o aluno logado: id do registro de aluno e a marca do profissional dele */
   alunoId: string | null;
   professionalId: string | null;
@@ -75,6 +83,8 @@ export const useCloudAuth = create<CloudAuthState>(() => ({
   user: null,
   hydrating: false,
   role: null,
+  temVinculoDeAluno: false,
+  temCarteiraPropria: false,
   alunoId: null,
   professionalId: null,
   marca: null,
@@ -87,7 +97,7 @@ let hydratedFor: string | null = null;
  *  destes stores. */
 async function hydrateAluno(professionalId: string | null) {
   const [alunos, planos, avaliacoes, execucoes, sessaoFeedbacks] = await Promise.all([
-    repo.listarAlunos(),
+    repo.listarAlunos("meuTreino"),
     repo.listarPlanos(),
     repo.listarAvaliacoes(),
     repo.listarExecucoes(),
@@ -114,6 +124,26 @@ async function hydrate(userId: string) {
   try {
     const perfil = await repo.carregarPerfil();
 
+    // As capacidades da conta são DERIVADAS dos dados, nunca declaradas: a carteira são as
+    // fichas que eu atendo, o vínculo é a ficha que sou eu. As duas consultas são pequenas
+    // e resolvem, de uma vez, quais espaços esta conta pode usar.
+    const [carteira, minhaFicha] = await Promise.all([
+      repo.listarAlunos("carteira").catch(() => [] as Aluno[]),
+      repo.listarAlunos("meuTreino").catch(() => [] as Aluno[]),
+    ]);
+    useCloudAuth.setState({
+      temCarteiraPropria: carteira.length > 0,
+      temVinculoDeAluno: minhaFicha.length > 0 || !!perfil?.professionalId,
+    });
+
+    // O CREF digitado no cadastro fica nos metadados da conta até aqui, porque o gatilho
+    // que cria o perfil (migração 0001) só copia o nome. Só grava quando o perfil ainda não
+    // tem CREF: quem já preencheu em Conta manda sobre o que foi digitado uma vez.
+    const crefDoCadastro = String(useCloudAuth.getState().user?.user_metadata?.cref ?? "").trim();
+    if (crefDoCadastro && !perfil?.cref) {
+      await repo.salvarPerfil({ cref: crefDoCadastro }).catch(() => undefined);
+    }
+
     if (perfil?.role === "aluno") {
       await hydrateAluno(perfil.professionalId ?? null);
       setDonoLocal(userId);
@@ -122,7 +152,7 @@ async function hydrate(userId: string) {
     useCloudAuth.setState({ role: "profissional", alunoId: null, professionalId: null, marca: null });
 
     const [alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks] = await Promise.all([
-      repo.listarAlunos(),
+      repo.listarAlunos("carteira"),
       repo.listarAvaliacoes(),
       repo.listarPrescricoes(),
       repo.listarPlanos(),
@@ -224,6 +254,35 @@ async function hydrate(userId: string) {
   } finally {
     useCloudAuth.setState({ hydrating: false });
   }
+}
+
+/**
+ * ALTERNA O ESPAÇO EM USO da conta (atender alunos x ver o meu treino).
+ *
+ * A operação inteira é UMA gravação: `profiles.role`. Nada mais é tocado, e isso é
+ * deliberado. `profiles.professional_id` continua apontando para quem me atende, e
+ * `alunos.auth_user_id` continua apontando para mim: os dois vínculos sobrevivem à troca,
+ * nos dois sentidos, quantas vezes for. Por isso alternar não é uma decisão de risco e não
+ * pede confirmação dramática.
+ *
+ * Quem entra na carteira própria pela primeira vez cai num espaço VAZIO, que é o certo: são
+ * os alunos dele, não os de quem o atende. Nenhum dado atravessa de um espaço para o outro.
+ *
+ * Cadastrar-se como profissional aqui é imediato de propósito. Quando a cobrança entrar no
+ * ar (COBRANCA_ATIVA em src/data/planos.ts), este é o ponto onde a trava de plano entra:
+ * decidir se ativar a carteira exige assinatura é decisão comercial do Filipe, e o gancho
+ * fica aqui em vez de espalhado pela interface.
+ */
+export async function alternarEspaco(destino: "profissional" | "aluno"): Promise<void> {
+  const st = useCloudAuth.getState();
+  const userId = st.user?.id;
+  if (!userId || st.role === destino) return;
+  // Não deixa cair num espaço que não existe: sem vínculo não há "meu treino" a ver.
+  if (destino === "aluno" && !st.temVinculoDeAluno) return;
+
+  await repo.salvarPerfil({ role: destino });
+  hydratedFor = null;
+  await hydrate(userId);
 }
 
 /** Re-hidrata a sessão atual do zero. Usado após o aluno reivindicar o convite

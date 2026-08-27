@@ -14,11 +14,20 @@ export interface AuthResult {
   error?: string;
 }
 
-export async function signUp(email: string, password: string, name?: string): Promise<AuthResult> {
+/**
+ * Cria a conta. `name` e `cref` viajam nos METADADOS da conta porque o gatilho que cria a
+ * linha de perfil (migração 0001) roda antes de existir sessão e só sabe ler dali. O nome é
+ * copiado pelo próprio gatilho; o CREF é gravado no perfil pelo cloudAuth na primeira
+ * hidratação, que é quando já existe sessão para escrever em `profiles`.
+ */
+export async function signUp(email: string, password: string, name?: string, cref?: string): Promise<AuthResult> {
+  const meta: Record<string, string> = {};
+  if (name) meta.name = name;
+  if (cref) meta.cref = cref;
   const { data, error } = await getSupabase().auth.signUp({
     email,
     password,
-    options: { data: name ? { name } : undefined },
+    options: { data: Object.keys(meta).length ? meta : undefined },
   });
   return { user: data.user, session: data.session, error: error?.message };
 }

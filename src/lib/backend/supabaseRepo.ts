@@ -73,6 +73,10 @@ export async function salvarPerfil(patch: Partial<PerfilRemoto>): Promise<void> 
   if (patch.corPrimaria !== undefined) row.cor_primaria = patch.corPrimaria;
   if (patch.plan !== undefined) row.plan = patch.plan;
   if (patch.mode !== undefined) row.mode = patch.mode;
+  // O papel é PREFERÊNCIA de uso (qual espaço estou usando agora), não identidade. Trocar
+  // não mexe em `professional_id` nem em `alunos.auth_user_id`, então nenhum vínculo se
+  // perde e a volta é sempre possível. Ver alternarEspaco em cloudAuth.
+  if (patch.role !== undefined) row.role = patch.role;
   const { error } = await getSupabase().from("profiles").upsert(row);
   if (error) throw error;
 }
@@ -156,8 +160,22 @@ function rowToAluno(r: Record<string, any>): Aluno {
   };
 }
 
-export async function listarAlunos(): Promise<Aluno[]> {
-  const { data, error } = await getSupabase().from("alunos").select("*").order("criado_em", { ascending: false });
+/**
+ * As fichas de aluno visíveis para a conta logada, num ESCOPO declarado.
+ *
+ * - "carteira": as fichas que eu atendo (`user_id` = eu).
+ * - "meuTreino": a ficha que sou eu, atendida por outra pessoa (`auth_user_id` = eu).
+ *
+ * O filtro é explícito de propósito. Sem ele a consulta devolve a união das duas policies,
+ * e uma conta que atende E é atendida se veria dentro da própria carteira.
+ */
+export async function listarAlunos(escopo: "carteira" | "meuTreino"): Promise<Aluno[]> {
+  const coluna = escopo === "carteira" ? "user_id" : "auth_user_id";
+  const { data, error } = await getSupabase()
+    .from("alunos")
+    .select("*")
+    .eq(coluna, await uid())
+    .order("criado_em", { ascending: false });
   if (error) throw error;
   return (data ?? []).map(rowToAluno);
 }
