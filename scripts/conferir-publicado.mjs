@@ -29,21 +29,38 @@ function bundleDe(html) {
 }
 
 /**
- * Busca com cache-buster e com tentativas. A propagação para o domínio personalizado leva
- * alguns segundos depois de um deploy, e falhar por pressa seria um alarme falso.
+ * Busca o bundle servido, esperando a propagação quando se sabe o que esperar.
+ *
+ * A PRIMEIRA VERSÃO REPROVAVA O PRÓPRIO DEPLOY, e o erro foi meu: ela só repetia a busca
+ * quando o host dava ERRO. Depois de um deploy o host responde 200 normalmente, só que ainda
+ * com o build anterior por alguns instantes. Sem erro, não havia repetição nenhuma, e a
+ * conferência reprovava na primeira tentativa. O deploy tinha funcionado; o alarme é que era
+ * falso. Guardrail que grita lobo ensina a ignorar build vermelho, que é pior que não ter.
+ *
+ * Agora ela repete enquanto o bundle DIVERGE do esperado, e não só quando a rede falha. Sem
+ * `esperado` (o modo `--so-hosts`), uma resposta boa já encerra.
  */
-async function buscar(url, tentativas = 6) {
+async function buscar(url, esperado, tentativas = 12, esperaMs = 10000) {
   let ultimoErro = "";
+  let ultimoHtml = null;
   for (let i = 0; i < tentativas; i++) {
     try {
       const r = await fetch(`${url}/?cb=${Date.now()}-${i}`, { redirect: "follow" });
-      if (r.ok) return await r.text();
-      ultimoErro = `HTTP ${r.status}`;
+      if (r.ok) {
+        ultimoHtml = await r.text();
+        // Sem alvo, ou já batendo: pronto. Divergindo: é propagação, vale esperar.
+        if (!esperado || bundleDe(ultimoHtml) === esperado) return ultimoHtml;
+        ultimoErro = `ainda servindo ${bundleDe(ultimoHtml) ?? "sem bundle"}`;
+      } else {
+        ultimoErro = `HTTP ${r.status}`;
+      }
     } catch (e) {
       ultimoErro = String(e?.message ?? e);
     }
-    if (i < tentativas - 1) await new Promise((r) => setTimeout(r, 5000));
+    if (i < tentativas - 1) await new Promise((r) => setTimeout(r, esperaMs));
   }
+  // Esgotou o orçamento: devolve o que veio, para a comparação lá embaixo dizer o que houve.
+  if (ultimoHtml) return ultimoHtml;
   throw new Error(`${url}: ${ultimoErro}`);
 }
 
@@ -70,7 +87,7 @@ const servidos = [];
 for (const host of HOSTS) {
   let bundle;
   try {
-    bundle = bundleDe(await buscar(host));
+    bundle = bundleDe(await buscar(host, esperado));
   } catch (e) {
     problemas.push(`${host} não respondeu: ${e.message}`);
     console.log(`  ${host.padEnd(34)} SEM RESPOSTA`);
