@@ -631,6 +631,27 @@ function selecionarExercicios(
    * entrava na frente de um do objetivo do aluno só por ser de um grupo ainda não coberto.
    * Cobertura é desempate, e desempate não promove quem já tinha perdido antes.
    */
+  /*
+   * COTA POR RODADA, e por que ela não é 1 para todo mundo.
+   *
+   * O rodízio em cota igual corrigiu o excesso de perna e criou o excesso contrário: uma
+   * sessão de hipertrofia com quatro exercícios saía com UM de membro inferior. Um professor
+   * criticaria isso tanto quanto criticou o inverso.
+   *
+   * A causa não é princípio de treino, é GRANULARIDADE DO CATÁLOGO. `grupoMuscular` divide o
+   * tronco e os braços em quatro rótulos (Peitorais, Costas, Ombros, Braços) e junta a perna
+   * inteira em um só. Cota igual por rótulo dá 1/5 das vagas ao segmento que, no corpo, tem
+   * pelo menos dois padrões distintos de movimento: dominante de joelho e dominante de
+   * quadril. Duas vagas por rodada apenas devolvem a proporção que o rótulo único escondia.
+   *
+   * Por que não subdividir de verdade: `articulacaoPredominante` existe, mas dentro de
+   * membros inferiores ela traz "Joelho e quadril" e "Quadril e joelho" como rótulos
+   * separados para a mesma ideia. Inferir dominância da ORDEM das palavras seria adivinhar
+   * num motor clínico. Enquanto o catálogo não tiver o padrão de movimento como campo
+   * próprio, a cota é a aproximação honesta.
+   */
+  const COTA_POR_RODADA: Record<string, number> = { "Membros inferiores": 2 };
+
   const rodizioDe = (lista: typeof limpos) => {
     const porGrupo = new Map<string, typeof limpos>();
     for (const a of lista) {
@@ -640,13 +661,17 @@ function selecionarExercicios(
       else porGrupo.set(g, [a]);
     }
     const saida: typeof limpos = [];
+    const cursor = new Map<string, number>();
     for (let volta = 0; saida.length < lista.length; volta++) {
       let entrouAlgum = false;
-      for (const grupo of porGrupo.values()) {
-        const item = grupo[volta];
-        if (!item) continue;
-        saida.push(item);
-        entrouAlgum = true;
+      for (const [nome, grupo] of porGrupo) {
+        const cota = COTA_POR_RODADA[nome] ?? 1;
+        let i = cursor.get(nome) ?? 0;
+        for (let k = 0; k < cota && i < grupo.length; k++, i++) {
+          saida.push(grupo[i]);
+          entrouAlgum = true;
+        }
+        cursor.set(nome, i);
       }
       // Cinto de segurança contra laço infinito se algum grupo vier vazio.
       if (!entrouAlgum) break;

@@ -49,8 +49,21 @@ const PERFIS: Perfil[] = [
   { rotulo: "Só peso do corpo, homem 33", objetivo: "Hipertrofia", nivel: "Iniciante", idade: 33, equipamentos: ["Peso do corpo"] },
 ];
 
-/** Teto de participação de UM grupo muscular nos blocos de força da semana. */
-const TETO_POR_GRUPO = 0.5;
+/**
+ * Teto de participação de UM grupo muscular na semana. O defeito original media 67% a 75%.
+ * O teto fica acima do que o motor hoje produz (51% no agregado) para nao reprovar variacao
+ * legitima, e bem abaixo do defeito, que e o que ele existe para pegar.
+ */
+const TETO_POR_GRUPO = 0.6;
+
+/**
+ * PISO de membros inferiores, e por que ele tambem precisa existir.
+ *
+ * A primeira versao desta correcao so tinha teto, e a consequencia foi o excesso contrario:
+ * uma sessao de hipertrofia com quatro exercicios e UM de perna. Um professor critica os
+ * dois desvios. Guardrail que so trava um lado do erro convida a corrigir demais.
+ */
+const PISO_INFERIORES = 0.3;
 /** Mínimo de grupos musculares distintos numa semana de força. */
 const MIN_GRUPOS = 3;
 
@@ -103,18 +116,26 @@ for (const p of PERFIS) {
         `${p.rotulo}: ${grupo} ocupa ${Math.round((100 * n) / forca)}% dos ${forca} blocos de força (teto ${TETO_POR_GRUPO * 100}%).`,
       );
 
-  // 2) A semana precisa tocar em mais de dois grupos, ou não é um treino, é um bloco só.
+  // 2) Perna nao pode sumir. Toda sessao de corpo inteiro tem trabalho de membro inferior,
+  //    e um plano que ficou so com tronco esta tao errado quanto o que so tinha perna.
+  const inferiores = grupos["Membros inferiores"] ?? 0;
+  if (inferiores / forca < PISO_INFERIORES)
+    falhas.push(
+      `${p.rotulo}: membros inferiores ficaram com ${Math.round((100 * inferiores) / forca)}% da semana (piso ${PISO_INFERIORES * 100}%).`,
+    );
+
+  // 3) A semana precisa tocar em mais de dois grupos, ou não é um treino, é um bloco só.
   const distintos = Object.keys(grupos).length;
   if (distintos < MIN_GRUPOS)
     falhas.push(`${p.rotulo}: a semana toca em só ${distintos} grupo(s) muscular(es); o mínimo é ${MIN_GRUPOS}.`);
 
-  // 3) Todo plano com acesso a superiores precisa ter ao menos um. Era literalmente o que
+  // 4) Todo plano com acesso a superiores precisa ter ao menos um. Era literalmente o que
   //    faltava: semana de hipertrofia sem costas, sem ombro e sem braço.
   const temSuperior = SUPERIORES.some((s) => grupos[s]);
   if (!temSuperior)
     falhas.push(`${p.rotulo}: a semana não tem NENHUM exercício de membros superiores.`);
 
-  // 4) Quem tem acesso ao catálogo cheio precisa de um PUXAR. Empurrar sem puxar é o
+  // 5) Quem tem acesso ao catálogo cheio precisa de um PUXAR. Empurrar sem puxar é o
   //    desequilíbrio clássico, e era o que o motor entregava.
   if (p.exigePuxar && !grupos["Costas"])
     falhas.push(`${p.rotulo}: a semana não tem exercício de puxar (nenhum de Costas).`);
@@ -131,5 +152,5 @@ if (falhas.length) {
 }
 
 console.log(
-  `[check:cobertura] ok: ${PERFIS.length} perfis, nenhum grupo muscular passa de ${TETO_POR_GRUPO * 100}% da semana, todos tocam ao menos ${MIN_GRUPOS} grupos e nenhum plano fica sem membros superiores.`,
+  `[check:cobertura] ok: ${PERFIS.length} perfis, nenhum grupo passa de ${TETO_POR_GRUPO * 100}% nem membros inferiores caem abaixo de ${PISO_INFERIORES * 100}%, todos tocam ao menos ${MIN_GRUPOS} grupos e nenhum plano fica sem membros superiores.`,
 );
