@@ -611,7 +611,59 @@ function selecionarExercicios(
     .sort((x, y) => y.nota - x.nota || x.pesoCond - y.pesoCond || y.primario - x.primario || y.bonus - x.bonus || x.i - y.i);
 
   const seguros = comPeso.map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
-  const escolhidos = seguros.slice(0, Math.max(n, 1));
+
+  /*
+   * COBERTURA MUSCULAR: rodízio entre grupos, em vez de cortar o topo da fila.
+   *
+   * "Limpo" é o exercício que nenhuma restrição rebaixou e que a condição não penalizou.
+   * Só entre eles há rodízio, para a cobertura nunca custar segurança. Os grupos entram na
+   * ordem em que aparecem na fila de mérito, então o primeiro de cada grupo continua sendo
+   * o melhor daquele grupo para este aluno.
+   */
+  const limpos = comPeso.filter((a) => a.nota >= NEUTRO && a.pesoCond === 0);
+
+  /*
+   * O rodízio roda DENTRO da faixa do objetivo, nunca por cima dela.
+   *
+   * A primeira versão desta correção ignorava isso e o `check:core` reprovou na hora, com a
+   * mensagem certa: "FALLBACK ATROPELA O OBJETIVO". Quando o pool cai no catálogo inteiro
+   * (porque só o objetivo não tinha exercícios suficientes), um exercício de outro objetivo
+   * entrava na frente de um do objetivo do aluno só por ser de um grupo ainda não coberto.
+   * Cobertura é desempate, e desempate não promove quem já tinha perdido antes.
+   */
+  const rodizioDe = (lista: typeof limpos) => {
+    const porGrupo = new Map<string, typeof limpos>();
+    for (const a of lista) {
+      const g = a.e.grupoMuscular ?? "sem grupo";
+      const atual = porGrupo.get(g);
+      if (atual) atual.push(a);
+      else porGrupo.set(g, [a]);
+    }
+    const saida: typeof limpos = [];
+    for (let volta = 0; saida.length < lista.length; volta++) {
+      let entrouAlgum = false;
+      for (const grupo of porGrupo.values()) {
+        const item = grupo[volta];
+        if (!item) continue;
+        saida.push(item);
+        entrouAlgum = true;
+      }
+      // Cinto de segurança contra laço infinito se algum grupo vier vazio.
+      if (!entrouAlgum) break;
+    }
+    return saida;
+  };
+  const rodizio = [
+    ...rodizioDe(limpos.filter((a) => a.primario === 1)),
+    ...rodizioDe(limpos.filter((a) => a.primario !== 1)),
+  ];
+  // O rodízio primeiro; o resto da fila de mérito depois, para as vagas fecharem mesmo
+  // quando não há exercício limpo suficiente (perfil muito restrito, pouco equipamento).
+  const jaNoRodizio = new Set(rodizio.map((a) => a.e.slug));
+  const ordemFinal = [...rodizio, ...comPeso.filter((a) => !jaNoRodizio.has(a.e.slug))];
+  const escolhidos = ordemFinal
+    .slice(0, Math.max(n, 1))
+    .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
 
   /*
    * A RESTRIÇÃO DO ALUNO REBAIXAVA EM SILÊNCIO.

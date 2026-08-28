@@ -190,9 +190,22 @@ export function GraficoProgressao({
         <TrendingUp className="h-4 w-4 text-ink-3" />
         <h3 className="font-display text-base font-bold text-ink">Progressão ao longo das semanas</h3>
       </div>
+      {/*
+        AS TRÊS LINHAS NÃO SÃO A MESMA CONTA, e omitir isso já enganou um professor testando
+        a plataforma. Ele acrescentou quatro exercícios de membro superior numa sessão e viu
+        a intensidade mexer 2,3%, e concluiu, com razão do ponto de vista dele, que o gráfico
+        não estava acompanhando a edição. Estava: o VOLUME daquela semana subiu 23% no mesmo
+        teste. A intensidade é uma MÉDIA de esforço, e média não sobe porque você acrescentou
+        mais trabalho no mesmo esforço.
+
+        Dizer "editar uma sessão move a curva" sem dizer QUAL curva e por quê é o que produz
+        essa leitura. Soma e média reagem de formas opostas ao mesmo gesto, e quem lê precisa
+        saber disso antes de olhar.
+      */}
       <p className="mb-3 text-xs text-ink-3">
-        Volume, intensidade e complexidade relativos, calculados das sessões (sem unidade absoluta). Editar uma
-        sessão move a curva. As faixas ao pé mostram cada fase e quantas semanas ela dura.
+        Valores relativos, calculados das sessões (sem unidade absoluta). <b>Volume é soma</b>: acrescentar
+        exercício ou série sobe a linha. <b>Intensidade é média do esforço</b>: ela sobe quando o treino fica
+        mais pesado, não quando fica mais longo. As faixas ao pé mostram cada fase e quantas semanas ela dura.
       </p>
       {/*
         POR QUE A CURVA NÃO MUDOU, dito antes de o profissional olhar para ela.
