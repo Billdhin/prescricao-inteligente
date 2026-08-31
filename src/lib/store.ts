@@ -393,15 +393,26 @@ export const useAlunos = create<AlunosState>()(
          * demo mostra o comportamento ATUAL do motor (ver src/data/semearDemo.ts).
          */
         const demo = semearDemoVSL();
-        set({
-          alunos: [...demo.alunos, ...seedAlunos],
-          avaliacoes: [...demo.avaliacoes, ...seedAvaliacoes],
-          prescricoes: seedPrescricoes,
-          planos: demo.planos,
-          liberacoes: demo.liberacoes,
-          execucoes: demo.execucoes,
-          sessaoFeedbacks: demo.feedbacks,
-        });
+        /*
+         * MESCLA, nunca substitui. O botão nasceu na carteira vazia, onde trocar a lista
+         * inteira era inofensivo; agora ele também existe para carteiras com alunos reais
+         * (o estúdio carrega a demo na conta de verdade), e apagar dados reais para exibir
+         * exemplo seria o pior negócio possível. A regra: o que já existe com o mesmo id
+         * fica como está; ids são fixos, então clicar duas vezes não duplica nada.
+         */
+        const mesclar = <T extends { id: string }>(novos: T[], atuais: T[]): T[] => {
+          const ids = new Set(atuais.map((x) => x.id));
+          return [...novos.filter((n) => !ids.has(n.id)), ...atuais];
+        };
+        set((s) => ({
+          alunos: mesclar([...demo.alunos, ...seedAlunos], s.alunos),
+          avaliacoes: mesclar([...demo.avaliacoes, ...seedAvaliacoes], s.avaliacoes),
+          prescricoes: mesclar(seedPrescricoes, s.prescricoes),
+          planos: mesclar(demo.planos, s.planos),
+          liberacoes: mesclar(demo.liberacoes, s.liberacoes),
+          execucoes: mesclar(demo.execucoes, s.execucoes),
+          sessaoFeedbacks: mesclar(demo.feedbacks, s.sessaoFeedbacks),
+        }));
         // sobe os exemplos p/ a nuvem quando há sessão (no-op no modo local)
         [...demo.alunos, ...seedAlunos].forEach(cloudSaveAluno);
         [...demo.avaliacoes, ...seedAvaliacoes].forEach(cloudSaveAvaliacao);

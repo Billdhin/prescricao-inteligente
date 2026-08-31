@@ -219,6 +219,18 @@ export function Alunos() {
                   <span className="block text-sm text-ink-2">Nome, idade, nível e objetivo. Leva 20 segundos.</span>
                 </span>
               </button>
+              {/* A porta dos exemplos fora da carteira vazia: quem já tem alunos reais
+                  também precisa dos dois casos de demonstração (gravação, apresentação).
+                  Carregar MESCLA sem tocar no que existe, e a linha some quando os
+                  exemplos já estão aqui, porque botão que não faz nada é ruído. */}
+              {!alunos.some((a) => a.id.startsWith("al-vsl-")) && (
+                <button
+                  onClick={loadExamples}
+                  className="mx-auto block text-sm text-ink-2 underline decoration-border underline-offset-4 transition-colors hover:text-primary"
+                >
+                  Carregar alunos de exemplo
+                </button>
+              )}
             </div>
           )}
         </>
