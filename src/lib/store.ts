@@ -6,6 +6,7 @@ import type { Execucao, SessaoFeedback } from "@/data/execucao";
 import type { AvaliacaoPostural } from "@/data/postural";
 import type { Modo } from "@/lib/theme/palettes";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
+import { semearDemoVSL } from "@/data/semearDemo";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 import {
   cloudSaveAluno,
@@ -385,11 +386,30 @@ export const useAlunos = create<AlunosState>()(
       sessaoFeedbacks: [],
       posturais: [],
       loadExamples: () => {
-        set({ alunos: seedAlunos, avaliacoes: seedAvaliacoes, prescricoes: seedPrescricoes });
+        /*
+         * Os exemplos incluem os DOIS CASOS DO VSL com a história inteira (plano de 12
+         * semanas gerado pelo motor na hora, execuções série a série, PSE, semáforos e
+         * avaliações em série). Gerar na hora, e não de um literal, é o que garante que a
+         * demo mostra o comportamento ATUAL do motor (ver src/data/semearDemo.ts).
+         */
+        const demo = semearDemoVSL();
+        set({
+          alunos: [...demo.alunos, ...seedAlunos],
+          avaliacoes: [...demo.avaliacoes, ...seedAvaliacoes],
+          prescricoes: seedPrescricoes,
+          planos: demo.planos,
+          liberacoes: demo.liberacoes,
+          execucoes: demo.execucoes,
+          sessaoFeedbacks: demo.feedbacks,
+        });
         // sobe os exemplos p/ a nuvem quando há sessão (no-op no modo local)
-        seedAlunos.forEach(cloudSaveAluno);
-        seedAvaliacoes.forEach(cloudSaveAvaliacao);
+        [...demo.alunos, ...seedAlunos].forEach(cloudSaveAluno);
+        [...demo.avaliacoes, ...seedAvaliacoes].forEach(cloudSaveAvaliacao);
         seedPrescricoes.forEach(cloudSavePrescricao);
+        demo.planos.forEach(cloudSavePlano);
+        demo.liberacoes.forEach(cloudSaveLiberacao);
+        // Execuções e PSE ficam locais de propósito: o espelho deles na nuvem entra pela
+        // conta do ALUNO (portal), que um aluno de demonstração não tem.
       },
       addAluno: (a) => {
         set((s) => ({ alunos: [a, ...s.alunos] }));
