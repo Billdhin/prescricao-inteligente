@@ -617,10 +617,25 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
     largura,
     altura,
     plot: { top, bottom, left, right },
+    /*
+     * O RÓTULO CARREGA A AGREGAÇÃO, e isso não é preciosismo de nomenclatura.
+     *
+     * Um professor de campo acrescentou quatro exercícios de membro superior numa sessão,
+     * olhou a linha "Intensidade" mexer 2,3% e concluiu que o gráfico não acompanhava a
+     * edição. O gráfico estava certo: o VOLUME daquela semana subiu 23%. Ele leu "intensidade"
+     * como "quanto de treino tem aqui", que é a leitura natural da palavra sozinha.
+     *
+     * A explicação existia, numa legenda abaixo do gráfico. Legenda se lê uma vez; rótulo se
+     * lê toda vez. Por isso a agregação passou para dentro do nome da série: soma e média
+     * reagem de formas OPOSTAS ao mesmo gesto, e quem olha precisa saber disso antes de olhar,
+     * não depois de se confundir.
+     *
+     * "Complexidade" fica como está: é um nível, não um agregado que compita com o volume.
+     */
     series: [
-      { id: "vol", nome: "Volume", cor: "var(--primary)", d: caminhoSuave(volPts) },
+      { id: "vol", nome: "Volume (soma)", cor: "var(--primary)", d: caminhoSuave(volPts) },
       // Terracota de DADO: o coral --cta é a ação primária e não pode virar cor de série.
-      { id: "int", nome: "Intensidade", cor: "var(--data-intensidade)", d: caminhoSuave(pontosDe((p) => p.int)) },
+      { id: "int", nome: "Esforço médio", cor: "var(--data-intensidade)", d: caminhoSuave(pontosDe((p) => p.int)) },
       { id: "cpx", nome: "Complexidade", cor: "var(--analysis)", d: caminhoSuave(pontosDe((p) => p.cpx)) },
     ],
     areaVolume,

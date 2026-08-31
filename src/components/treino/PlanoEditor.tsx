@@ -46,6 +46,7 @@ import {
 } from "@/data/periodizacao";
 import { recalcularAlvosDoMeso } from "@/lib/gps/travas";
 import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
+import { efeitoDaEdicao, formatarDelta, type EfeitoDaEdicao } from "@/lib/gps/efeitoDaEdicao";
 import type { FarmacoSelecionado } from "@/data/farmacos";
 import { conferirFaixa, faixaSugerida, type CampoFaixa } from "@/lib/gps/faixas";
 import { desenharProgressao, posicoesFocos, estadoSemana, ESTADO_LABEL, type EstadoSemana } from "@/lib/gps/progressao";
@@ -203,9 +204,10 @@ export function GraficoProgressao({
         saber disso antes de olhar.
       */}
       <p className="mb-3 text-xs text-ink-3">
-        Valores relativos, calculados das sessões (sem unidade absoluta). <b>Volume é soma</b>: acrescentar
-        exercício ou série sobe a linha. <b>Intensidade é média do esforço</b>: ela sobe quando o treino fica
-        mais pesado, não quando fica mais longo. As faixas ao pé mostram cada fase e quantas semanas ela dura.
+        Valores relativos, calculados das sessões (sem unidade absoluta). O nome de cada linha já diz como
+        ela é calculada: <b>volume é soma</b>, então acrescentar exercício ou série sobe a linha;{" "}
+        <b>esforço médio é média</b>, então ele sobe quando o treino fica mais pesado, e não quando fica mais
+        longo. As faixas ao pé mostram cada fase e quantas semanas ela dura.
       </p>
       {/*
         POR QUE A CURVA NÃO MUDOU, dito antes de o profissional olhar para ela.
@@ -381,9 +383,20 @@ export function MesocicloCard({
   // O bloco corrente abre por padrão ("você está aqui"); sem essa informação, o primeiro.
   const [aberto, setAberto] = React.useState(atual ?? indice === 0);
 
+  /*
+   * O EFEITO DA ÚLTIMA EDIÇÃO, guardado para ser mostrado em número.
+   *
+   * Sem isto, a única resposta ao gesto era a curva se redesenhar, e ninguém guarda de
+   * memória onde ela estava dois segundos atrás. Foi assim que um professor concluiu que a
+   * edição dele não tinha pegado (ver efeitoDaEdicao.ts).
+   */
+  const [efeito, setEfeito] = React.useState<EfeitoDaEdicao | null>(null);
+
   // A descarga vive na semana (`tipo`), não num campo à parte: mover a descarga de semana
   // tem que mudar o selo do bloco junto, senão o card diz uma coisa e o plano faz outra.
   const trocarMicro = (m: Microciclo) => {
+    const anterior = meso.microciclos.find((w) => w.id === m.id);
+    if (anterior) setEfeito(efeitoDaEdicao(anterior, m));
     const microciclos = meso.microciclos.map((w) => (w.id === m.id ? m : w));
     onChange?.({ ...meso, microciclos, deload: microciclos.some((w) => w.tipo === "deload") });
   };
@@ -445,6 +458,40 @@ export function MesocicloCard({
 
       {aberto && (
         <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
+          {/*
+            O EFEITO DA EDIÇÃO, na hora e em número.
+            Aparece acima das semanas porque é resposta ao gesto que a pessoa acabou de fazer,
+            e some sozinho quando ela edita outra coisa que não muda nada mensurável.
+          */}
+          {efeito && (
+            <div className="rounded-xl border border-analysis/30 bg-analysis-tint/40 p-3">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs font-semibold text-ink">O que a sua edição mudou na semana {efeito.semana}</p>
+                <button
+                  onClick={() => setEfeito(null)}
+                  className="rounded p-0.5 text-ink-3 hover:bg-surface hover:text-ink"
+                  aria-label="Dispensar o resumo da edição"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden />
+                </button>
+              </div>
+              <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
+                {efeito.exerciciosAntes !== efeito.exerciciosDepois && (
+                  <span>
+                    <b className="text-ink">Exercícios</b> {efeito.exerciciosAntes} para {efeito.exerciciosDepois}
+                  </span>
+                )}
+                <span>
+                  <b className="text-ink">Volume (soma)</b> {formatarDelta(efeito.deltaVolume)}
+                </span>
+                <span>
+                  <b className="text-ink">Esforço médio</b> {formatarDelta(efeito.deltaEsforco)}
+                </span>
+              </div>
+              {efeito.leitura && <p className="mt-1.5 text-xs leading-relaxed text-ink-2">{efeito.leitura}</p>}
+            </div>
+          )}
+
           {/* (1) Semanas primeiro: é o que decide o que fazer AGORA para o professor com pressa. */}
           <div>
             <Eyebrow className="mb-1.5">Semanas</Eyebrow>
@@ -468,7 +515,8 @@ export function MesocicloCard({
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="mr-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Dinâmica</span>
               <Pill tone={meso.tendenciaVolume === "sobe" ? "analysis" : "neutral"}>Volume {TEND_LABEL[meso.tendenciaVolume]}</Pill>
-              <Pill tone={meso.tendenciaIntensidade === "sobe" ? "analysis" : "neutral"}>Intensidade {TEND_LABEL[meso.tendenciaIntensidade]}</Pill>
+              {/* Mesmo vocabulário da série do gráfico: aqui é a MÉDIA do esforço da fase. */}
+              <Pill tone={meso.tendenciaIntensidade === "sobe" ? "analysis" : "neutral"}>Esforço médio {TEND_LABEL[meso.tendenciaIntensidade]}</Pill>
               <Pill tone={meso.tendenciaComplexidade === "sobe" ? "analysis" : "neutral"}>Complexidade {TEND_LABEL[meso.tendenciaComplexidade]}</Pill>
             </div>
             {editavel ? (

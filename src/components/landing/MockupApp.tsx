@@ -1034,15 +1034,23 @@ function TelaPeriodizacao() {
                 Progressão ao longo das semanas
               </h3>
             </div>
+            {/*
+              MESMO VOCABULÁRIO DO PRODUTO. Aqui dizia "volume, intensidade e complexidade" e
+              "editar uma sessão move a curva", que é a frase ambígua que fez um professor de
+              campo concluir que a edição dele não tinha pegado (ver check:agregacao). A
+              landing não pode prometer uma leitura que a tela desmente: soma e média reagem de
+              formas opostas ao mesmo gesto, e o mockup diz isso desde a vitrine.
+            */}
             <p className="mb-3 text-xs" style={{ color: T.ink2 }}>
-              Volume, intensidade e complexidade relativos, calculados das sessões (sem unidade absoluta). Editar uma
-              sessão move a curva. As faixas ao pé mostram cada fase e quantas semanas ela dura.
+              Valores relativos, calculados das sessões (sem unidade absoluta). Volume é soma, então acrescentar
+              exercício sobe a linha; esforço é média, então ele sobe quando o treino fica mais pesado. As faixas ao pé
+              mostram cada fase e quantas semanas ela dura.
             </p>
             <GraficoProgressao />
             <div className="mt-2 flex flex-wrap gap-3 text-xs" style={{ color: T.ink2 }}>
               {[
-                ["Volume", T.primary],
-                ["Intensidade", "#8E6009"],
+                ["Volume (soma)", T.primary],
+                ["Esforço médio", "#8E6009"],
                 ["Complexidade", T.analysis],
               ].map(([l, c]) => (
                 <span key={l} className="inline-flex items-center gap-1.5">

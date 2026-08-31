@@ -351,7 +351,7 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
   return `
   <section class="bloco">
     <h2>Progressão ao longo das semanas</h2>
-    <p class="legenda-nota">Volume, intensidade e complexidade relativos, calculados das sessões (sem unidade absoluta). As faixas ao pé mostram cada fase e quantas semanas ela dura.</p>
+    <p class="legenda-nota">Valores relativos, calculados das sessões (sem unidade absoluta). Volume é soma das séries e dos minutos; esforço é média ponderada. As faixas ao pé mostram cada fase e quantas semanas ela dura.</p>
     <svg viewBox="0 0 ${g.largura} ${g.altura}" width="100%" height="230">
       <defs><linearGradient id="volpdf" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${cor.area}" stop-opacity="0.16" /><stop offset="100%" stop-color="${cor.area}" stop-opacity="0" />
