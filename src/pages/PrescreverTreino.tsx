@@ -20,6 +20,7 @@ import { Card, Pill, buttonClasses, SectionHeader, LinhaDeTokens, TokenRotulado 
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
 import { GraficoProgressao, MesocicloCard, ModeloExplicacao, SessaoBloco, type ContextoFaixa } from "@/components/treino/PlanoEditor";
+import { DeOndeVemOLimite } from "@/components/treino/DeOndeVemOLimite";
 import { TresCamadas } from "@/components/ui/camadas";
 import { letraSessao } from "@/lib/gps/semear";
 import { exercises } from "@/data/exercises";
@@ -1769,6 +1770,20 @@ function TrilhoDoPlano({
     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
       <Card className="p-4">
         <TresCamadas resumo={resumo} pratica={pratica} refs={refIds} ariaLabel="Por que estes números" />
+      </Card>
+
+      {/*
+        DE ONDE VEM CADA LIMITE. Vive aqui, colado em "Por que estes números", porque é a
+        resposta mais literal a essa pergunta: o teto de carga e a reserva de repetições eram
+        aplicados pelo motor e não apareciam em tela nenhuma do produto. O componente some
+        sozinho quando o aluno não tem condição nem idade declarada.
+      */}
+      <Card className="p-4">
+        <DeOndeVemOLimite
+          grupoEspecial={alunoObj?.grupoEspecial ?? plano.grupoEspecial}
+          condicoesAtencao={alunoObj?.condicoesAtencao}
+          idade={alunoObj?.idade}
+        />
       </Card>
 
       {equilibrio.series > 0 && (

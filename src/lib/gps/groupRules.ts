@@ -167,6 +167,45 @@ export interface ModDose {
   motivo: string;
   /** ids de referencias.ts que sustentam o modificador */
   refId?: string[];
+  /**
+   * QUEM DECLAROU ESTA DOSE. Slug do grupo clínico, ou "idade" quando vem da camada etária.
+   *
+   * Carimbado por `doseDoPerfil` e por `doseDoPerfilComIdade`, e não escrito à mão em cada
+   * literal deste arquivo: a chave do mapa já é a verdade, e repeti-la abriria a porta para
+   * as duas divergirem.
+   */
+  de?: string;
+  /** de onde veio cada número depois da fusão. Preenchido só por `fundirModDose`. */
+  procedencia?: ProcedenciaDose;
+}
+
+/**
+ * DE ONDE VEIO CADA NÚMERO, incluindo quem PERDEU a disputa.
+ *
+ * O motor sempre fundiu certo (teto pelo menor, reserva pela maior), mas a fusão era um
+ * `Math.min` que devolvia um número órfão: no instante em que ele era calculado, a informação
+ * de qual condição o impôs ia embora. Nenhuma tela pode mostrar o que o motor não guardou, e
+ * era por isso que "qual condição impôs qual teto" não existia em lugar nenhum do produto.
+ *
+ * O campo `preteridos` é o que transforma um painel de regras em raciocínio. Mostrar só a
+ * regra que valeu é uma lista; mostrar a que perdeu, com o número que ela pedia, é a decisão
+ * inteira. É a diferença que este produto vende, e ela não custa nada além de não jogar fora
+ * o que a fusão já sabia.
+ */
+export interface OrigemDoNumero {
+  /** o valor que prevaleceu */
+  valor: number;
+  /** slug do grupo (ou "idade") que impôs este valor */
+  de: string;
+  /** referências que sustentam o valor vencedor */
+  refId: string[];
+  /** quem pedia outra coisa e foi preterido pela regra mais conservadora */
+  preteridos: { de: string; valorPedido: number }[];
+}
+
+export interface ProcedenciaDose {
+  cargaRelativaMax?: OrigemDoNumero;
+  rirMinimo?: OrigemDoNumero;
 }
 
 export interface GroupGpsRule extends GroupRuleInput {
@@ -1661,18 +1700,75 @@ function fundirModAerobio(mods: ModAerobio[]): ModAerobio | undefined {
  */
 export function fundirModDose(mods: ModDose[]): ModDose | undefined {
   if (!mods.length) return undefined;
-  if (mods.length === 1) return mods[0];
-  const tetos = mods.map((m) => m.cargaRelativaMax).filter((n): n is number => typeof n === "number");
-  const rirs = mods.map((m) => m.rirMinimo).filter((n): n is number => typeof n === "number");
+
+  /*
+   * A PROCEDÊNCIA É CALCULADA MESMO COM UM MODIFICADOR SÓ.
+   *
+   * A versão anterior devolvia `mods[0]` inteiro nesse caso, e o atalho tinha uma
+   * consequência que não era óbvia: o aluno com UMA condição, que é a maioria da carteira,
+   * nunca ganhava procedência. A tela só saberia dizer de onde veio o número quando houvesse
+   * disputa, e é justamente no caso simples que o profissional aprende a confiar nela.
+   */
+  /*
+   * A PROCEDÊNCIA COMPÕE ATRAVÉS DE FUSÕES ANINHADAS.
+   *
+   * Este merge é chamado em cadeia: `combineRules` funde as condições entre si, e depois
+   * `doseDoPerfilComIdade` funde o resultado com a idade. Se o segundo merge só olhasse o
+   * campo `de` do primeiro, a origem se perderia no meio do caminho e a tela diria "imposto
+   * por hipertensao-estagio-1+osteoartrite-joelho", que é o slug concatenado da fusão e não
+   * responde a pergunta de ninguém.
+   *
+   * Por isso um modificador que JÁ traz procedência entra na disputa com o vencedor e os
+   * preteridos dele abertos, como candidatos individuais. Assim a origem que sobrevive é
+   * sempre a condição que de fato declarou o número, por mais fusões que ele atravesse.
+   */
+  const candidatosDe = (m: ModDose, campo: "cargaRelativaMax" | "rirMinimo") => {
+    const jaFundido = m.procedencia?.[campo];
+    if (jaFundido)
+      return [
+        { de: jaFundido.de, valor: jaFundido.valor, refId: jaFundido.refId },
+        ...jaFundido.preteridos.map((p) => ({ de: p.de, valor: p.valorPedido, refId: [] as string[] })),
+      ];
+    const v = m[campo];
+    return typeof v === "number" ? [{ de: m.de ?? "não declarado", valor: v, refId: m.refId ?? [] }] : [];
+  };
+
+  const origem = (
+    campo: "cargaRelativaMax" | "rirMinimo",
+    vence: (a: number, b: number) => number,
+  ): OrigemDoNumero | undefined => {
+    const candidatos = mods.flatMap((m) => candidatosDe(m, campo));
+    if (!candidatos.length) return undefined;
+    // `reduce(vence)` direto NÃO serve: reduce passa (acc, valor, índice, array), e Math.min
+    // com quatro argumentos devolve NaN por causa do array. A lambda corta os extras.
+    const valor = candidatos.map((c) => c.valor).reduce((a, b) => vence(a, b));
+    const vencedor = candidatos.find((c) => c.valor === valor)!;
+    return {
+      valor,
+      de: vencedor.de,
+      refId: vencedor.refId,
+      // Empate não é preterição: quem pediu o mesmo número não perdeu nada.
+      preteridos: candidatos.filter((c) => c.valor !== valor).map((c) => ({ de: c.de, valorPedido: c.valor })),
+    };
+  };
+
+  const carga = origem("cargaRelativaMax", Math.min);
+  const rir = origem("rirMinimo", Math.max);
+  const procedencia: ProcedenciaDose | undefined =
+    carga || rir ? { cargaRelativaMax: carga, rirMinimo: rir } : undefined;
+
+  if (mods.length === 1) return { ...mods[0], procedencia };
+
   const refId: string[] = [];
   for (const m of mods) for (const r of m.refId ?? []) if (!refId.includes(r)) refId.push(r);
   return {
-    cargaRelativaMax: tetos.length ? Math.min(...tetos) : undefined,
-    rirMinimo: rirs.length ? Math.max(...rirs) : undefined,
+    cargaRelativaMax: carga?.valor,
+    rirMinimo: rir?.valor,
     intervaloFolgado: mods.some((m) => m.intervaloFolgado) || undefined,
     partirDoPiso: mods.some((m) => m.partirDoPiso) || undefined,
     motivo: mods.map((m) => m.motivo).join(" "),
     refId,
+    procedencia,
   };
 }
 
@@ -1689,9 +1785,35 @@ export function doseDoPerfil(regra: GroupGpsRule | undefined): ModDose | undefin
   if (!regra) return undefined;
   const base = regra.modDose;
   const cautela = regra.modProgressao?.cautela === true;
-  if (base) return { ...base, intervaloFolgado: base.intervaloFolgado ?? (cautela || undefined), partirDoPiso: base.partirDoPiso ?? (cautela || undefined) };
+  /*
+   * O CARIMBO DA ORIGEM (`de`) sai daqui, e não dos literais lá em cima.
+   *
+   * A chave do mapa `groupGpsRules` já é a verdade sobre quem declarou a regra. Repetir o
+   * slug dentro de cada `modDose` criaria duas fontes para o mesmo fato, e uma delas ia
+   * envelhecer em silêncio no dia em que alguém renomeasse uma condição.
+   */
+  if (base) {
+    const carimbada: ModDose = {
+      ...base,
+      // Regra FUNDIDA já traz a procedência resolvida; carimbar o slug concatenado da fusão
+      // por cima apagaria a condição que de fato declarou cada número.
+      de: base.procedencia ? base.de : regra.slug,
+      intervaloFolgado: base.intervaloFolgado ?? (cautela || undefined),
+      partirDoPiso: base.partirDoPiso ?? (cautela || undefined),
+    };
+    /*
+     * A PROCEDÊNCIA É PROPRIEDADE DA DOSE, NÃO DO CAMINHO PELO QUAL ELA FOI PEDIDA.
+     *
+     * Antes ela só nascia dentro de `fundirModDose`, então a dose de UMA condição, lida por
+     * esta porta, chegava com o número e sem a origem. O guardrail pegou: um teto que parece
+     * rastreável e não é fica pior do que um teto que não promete nada. Passar pela mesma lei
+     * de fusão, mesmo com um modificador só, mantém a fonte única.
+     */
+    return carimbada.procedencia ? carimbada : fundirModDose([carimbada]) ?? carimbada;
+  }
   if (!cautela) return undefined;
   return {
+    de: regra.slug,
     intervaloFolgado: true,
     partirDoPiso: true,
     motivo: "Perfil com cautela declarada na progressão: o descanso entre séries lê a metade mais folgada da faixa citada, para não elevar o esforço da mesma carga.",
@@ -1750,7 +1872,14 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
     // Mesma lógica de união: basta UMA condição pedir para que a fusão peça.
     evitarFlexaoColunaCarregada: rules.some((r) => r.evitarFlexaoColunaCarregada) || undefined,
     evitarMembrosAcimaDoCoracao: rules.some((r) => r.evitarMembrosAcimaDoCoracao) || undefined,
-    modDose: fundirModDose(rules.map((r) => r.modDose).filter((m): m is ModDose => Boolean(m))),
+    /*
+     * O CARIMBO ENTRA AQUI TAMBÉM, e não só em `doseDoPerfil`.
+     *
+     * `r.modDose` é o literal cru lá de cima, que não sabe de qual chave do mapa ele veio.
+     * Sem o carimbo, a fusão de duas condições produzia procedência "não declarado" justo no
+     * caso de duas condições, que é exatamente o caso em que a origem importa.
+     */
+    modDose: fundirModDose(rules.flatMap((r): ModDose[] => (r.modDose ? [{ ...r.modDose, de: r.slug }] : []))),
     modAerobio: fundirModAerobio(rules.map((r) => r.modAerobio).filter((m): m is ModAerobio => Boolean(m))),
     // Mais conservador aqui é o horizonte MAIOR: se uma condição precisa de 12 semanas e
     // outra de 24, o aluno que tem as duas precisa das 24 para o segundo desfecho aparecer.

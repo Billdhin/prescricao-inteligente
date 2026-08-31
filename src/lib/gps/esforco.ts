@@ -116,8 +116,11 @@ export function modDosePorIdade(idade?: number): ModDose | undefined {
  */
 export function doseDoPerfilComIdade(regra: GroupGpsRule | undefined, idade?: number): ModDose | undefined {
   const daCondicao = doseDoPerfil(regra);
-  const daIdade = modDosePorIdade(idade);
-  if (!daCondicao) return daIdade;
-  if (!daIdade) return daCondicao;
-  return fundirModDose([daCondicao, daIdade]);
+  // "idade" é uma origem legítima e precisa se identificar como as outras: o profissional
+  // que lê "teto de 80%" merece saber quando quem pediu foi a idade, e não uma condição.
+  const bruta = modDosePorIdade(idade);
+  const daIdade = bruta ? { ...bruta, de: "idade" } : undefined;
+  if (!daCondicao && !daIdade) return undefined;
+  // Passa pela fusão mesmo com um só: é ela que calcula a procedência (ver fundirModDose).
+  return fundirModDose([daCondicao, daIdade].filter((m): m is ModDose => Boolean(m)));
 }
