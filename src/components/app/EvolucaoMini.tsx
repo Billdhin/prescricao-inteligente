@@ -217,16 +217,74 @@ const TEXTO_FAIXA: Record<TomFaixa, string> = {
 };
 
 /**
+ * Marcas "redondas" para o eixo y: passo 1, 2 ou 5 vezes potência de 10, o clássico dos
+ * eixos legíveis. Mostrar o teto e o piso crus da janela (138,7 / 127,3) era exatamente o
+ * que dava cara de improviso ao gráfico: número de eixo se lê de relance ou atrapalha.
+ */
+function ticksBonitos(min: number, max: number, alvo = 4): number[] {
+  const bruto = (max - min) / alvo;
+  if (!(bruto > 0)) return [];
+  const mag = Math.pow(10, Math.floor(Math.log10(bruto)));
+  const norm = bruto / mag;
+  const passo = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+  const out: number[] = [];
+  for (let v = Math.ceil(min / passo) * passo; v <= max + passo * 1e-6; v += passo) out.push(+v.toFixed(6));
+  return out;
+}
+
+/**
+ * Interpolação cúbica MONÓTONA (Fritsch-Carlson): suaviza a linha sem nunca passar acima ou
+ * abaixo dos valores medidos. Spline comum "enfeita" com overshoot, e num gráfico clínico um
+ * vale que a medida não teve é dado inventado.
+ */
+function caminhoSuave(pts: { x: number; y: number }[]): string {
+  if (pts.length < 3) return `M ${pts.map((p) => `${p.x} ${p.y}`).join(" L ")}`;
+  const n = pts.length;
+  const dx: number[] = [], m: number[] = [];
+  for (let i = 0; i < n - 1; i++) {
+    dx.push(pts[i + 1].x - pts[i].x);
+    m.push((pts[i + 1].y - pts[i].y) / (dx[i] || 1));
+  }
+  const t: number[] = [m[0]];
+  for (let i = 1; i < n - 1; i++) t.push(m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2);
+  t.push(m[n - 2]);
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) { t[i] = 0; t[i + 1] = 0; continue; }
+    const a = t[i] / m[i], b = t[i + 1] / m[i], s = a * a + b * b;
+    if (s > 9) { const f = 3 / Math.sqrt(s); t[i] = f * a * m[i]; t[i + 1] = f * b * m[i]; }
+  }
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = dx[i] / 3;
+    d += ` C ${pts[i].x + h} ${pts[i].y + t[i] * h} ${pts[i + 1].x - h} ${pts[i + 1].y - t[i + 1] * h} ${pts[i + 1].x} ${pts[i + 1].y}`;
+  }
+  return d;
+}
+
+/**
  * A curva em si. Coordenadas em px do próprio viewBox, com `preserveAspectRatio` no padrão:
  * o SVG escala igual nos dois eixos, então ponto é ponto e ângulo é ângulo.
+ *
+ * As decisões de desenho desta versão, cada uma matando um defeito medido na tela:
+ *
+ *  - EIXO X PROPORCIONAL AO TEMPO. O comentário lá em cima sempre disse que o intervalo
+ *    entre avaliações é parte da leitura, mas o desenho espaçava por índice, então 4 semanas
+ *    e 6 meses ocupavam o mesmo vão. Agora a distância horizontal É o intervalo.
+ *  - Grade horizontal em marcas redondas, no lugar do teto/piso crus da janela.
+ *  - Linha suave por interpolação monótona, sem overshoot (não desenha valor que não houve).
+ *  - Faixa clínica mais discreta (opacidade menor) e SEM o degradê da área por cima: era a
+ *    sobreposição dos dois que dava o tom barrento. O degradê só existe em medida sem escala.
+ *  - Rótulos com defesa de colisão: valor e data somem quando ficariam um sobre o outro, e
+ *    todo texto é grampeado na área útil (a última data saía cortada na borda direita).
  */
 function Curva({ pontos, escala, sexo }: { pontos: { data: number; valor: number }[]; escala?: EscalaAvaliacao; sexo?: Sexo }) {
+  const uid = React.useId().replace(/:/g, "");
   const L = 46; // gutter do eixo y
-  const R = 12;
-  const T = 20; // espaço para o rótulo de valor acima do primeiro ponto
-  const B = 34; // espaço para as datas
+  const R = 14;
+  const T = 22; // espaço para o rótulo de valor acima do ponto mais alto
+  const B = 32; // espaço para as datas
   const W = 520;
-  const H = 210;
+  const H = 216;
   const x0 = L;
   const x1 = W - R;
   const y0 = T;
@@ -242,8 +300,14 @@ function Curva({ pontos, escala, sexo }: { pontos: { data: number; valor: number
   const dmin = vmin - folga;
   const dmax = vmax + folga;
 
-  const px = (i: number) => x0 + (i / (pontos.length - 1)) * (x1 - x0);
+  const t0 = pontos[0].data;
+  const tN = pontos[pontos.length - 1].data;
+  const px = (p: { data: number }, i: number) =>
+    tN === t0 ? x0 + (i / Math.max(pontos.length - 1, 1)) * (x1 - x0) : x0 + ((p.data - t0) / (tN - t0)) * (x1 - x0);
   const py = (v: number) => y1 - ((v - dmin) / (dmax - dmin)) * (y1 - y0);
+  const xs = pontos.map((p, i) => px(p, i));
+  // Texto grampeado na área útil: rótulo centrado num ponto da borda sairia cortado.
+  const grampo = (x: number, margem: number) => Math.min(Math.max(x, x0 + margem), x1 - margem);
 
   const faixas = escala ? faixasDe(escala, sexo) : undefined;
   // Só as faixas que aparecem na janela visível, recortadas nela. Faixa fora do domínio
@@ -255,14 +319,40 @@ function Curva({ pontos, escala, sexo }: { pontos: { data: number; valor: number
       return { f, y: topo, h: base - topo };
     })
     .filter((b) => b.h > 1);
+  const temBanda = bandas.length > 0;
+  const cortes = bandas.filter((b) => b.f.de > dmin && b.f.de < dmax);
 
-  const linha = pontos.map((p, i) => `${px(i)} ${py(p.valor)}`).join(" L ");
-  const area = `M ${linha} L ${px(pontos.length - 1)} ${y1} L ${x0} ${y1} Z`;
+  // Marca redonda que cair em cima de um corte de faixa cede a vez: o corte é o número
+  // que carrega significado clínico, a marca é só régua.
+  const ticks = ticksBonitos(dmin, dmax).filter((v) => cortes.every((c) => Math.abs(py(c.f.de) - py(v)) > 11));
+
+  const ultimoI = pontos.length - 1;
+  // Defesa de colisão dos rótulos: o de hoje sempre aparece; os demais só quando têm ar
+  // em relação ao vizinho já mostrado e ao próprio hoje. Sem isso, duas avaliações na
+  // mesma quinzena viram números um sobre o outro.
+  const visiveis = (folgaMin: number): boolean[] => {
+    const v = new Array<boolean>(pontos.length).fill(false);
+    let xAnterior = -Infinity;
+    for (let i = 0; i < pontos.length; i++) {
+      if (i === ultimoI) { v[i] = true; continue; }
+      if (xs[i] - xAnterior >= folgaMin && xs[ultimoI] - xs[i] >= folgaMin) {
+        v[i] = true;
+        xAnterior = xs[i];
+      }
+    }
+    return v;
+  };
+  const mostraValor = visiveis(42);
+  const mostraData = visiveis(60);
+
+  const pts = pontos.map((p, i) => ({ x: xs[i], y: py(p.valor) }));
+  const linha = caminhoSuave(pts);
+  const area = `${linha} L ${xs[ultimoI]} ${y1} L ${xs[0]} ${y1} Z`;
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Curva da medida ao longo das avaliações">
       <defs>
-        <linearGradient id="sob-curva" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={`sob-curva-${uid}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.16" />
           <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
         </linearGradient>
@@ -270,62 +360,71 @@ function Curva({ pontos, escala, sexo }: { pontos: { data: number; valor: number
 
       {bandas.map((b, i) => (
         <g key={i}>
-          <rect x={x0} y={b.y} width={x1 - x0} height={b.h} fill={FUNDO_FAIXA[b.f.tom]} />
+          <rect x={x0} y={b.y} width={x1 - x0} height={b.h} fill={FUNDO_FAIXA[b.f.tom]} opacity="0.45" />
           {/* O rótulo só entra quando a faixa tem altura para ele; senão vira texto
               atravessando a borda de outra faixa. */}
-          {b.h >= 18 && (
+          {b.h >= 20 && (
             <text
-              x={x1 - 4}
-              y={b.y + 13}
+              x={x1 - 6}
+              y={b.y + 14}
               textAnchor="end"
-              fontSize="10"
+              fontSize="9.5"
               fontWeight="600"
+              letterSpacing="0.5"
+              opacity="0.85"
               fill={TEXTO_FAIXA[b.f.tom]}
             >
               {b.f.rotulo.toUpperCase()}
             </text>
           )}
-          {b.f.de > dmin && (
-            <line x1={x0} y1={py(b.f.de)} x2={x1} y2={py(b.f.de)} stroke={TEXTO_FAIXA[b.f.tom]} strokeWidth="1" strokeDasharray="4 3" opacity="0.6" />
-          )}
         </g>
       ))}
 
-      {/* Referências do eixo y: o teto, o piso e todo corte de faixa que caia dentro. */}
-      {[dmax, dmin].map((v, i) => (
-        <text key={`e${i}`} x={x0 - 6} y={py(v) + (i === 0 ? 9 : 0)} textAnchor="end" fontSize="10.5" fill="var(--ink-3)" className="tabular">
-          {fmtValor(+v.toFixed(1))}
-        </text>
+      {/* A grade fica entre a faixa e a curva: régua atrás do dado, nunca por cima dele. */}
+      {ticks.map((v) => (
+        <g key={`t${v}`}>
+          <line x1={x0} y1={py(v)} x2={x1} y2={py(v)} stroke="var(--ink-3)" strokeWidth="1" opacity="0.14" />
+          <text x={x0 - 8} y={py(v) + 3.5} textAnchor="end" fontSize="10.5" fill="var(--ink-3)" className="tabular">
+            {fmtValor(v)}
+          </text>
+        </g>
       ))}
-      {bandas
-        .filter((b) => b.f.de > dmin && b.f.de < dmax)
-        .map((b, i) => (
-          <text key={`c${i}`} x={x0 - 6} y={py(b.f.de) + 3.5} textAnchor="end" fontSize="10.5" fontWeight="600" fill={TEXTO_FAIXA[b.f.tom]} className="tabular">
+      {cortes.map((b, i) => (
+        <g key={`c${i}`}>
+          <line x1={x0} y1={py(b.f.de)} x2={x1} y2={py(b.f.de)} stroke={TEXTO_FAIXA[b.f.tom]} strokeWidth="1" strokeDasharray="4 3" opacity="0.55" />
+          <text x={x0 - 8} y={py(b.f.de) + 3.5} textAnchor="end" fontSize="10.5" fontWeight="600" fill={TEXTO_FAIXA[b.f.tom]} className="tabular">
             {b.f.de}
           </text>
-        ))}
+        </g>
+      ))}
 
-      <path d={area} fill="url(#sob-curva)" />
-      <path d={`M ${linha}`} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+      {/* O degradê sob a curva só em medida sem escala: sobreposto à faixa clínica ele
+          barrenta as duas camadas, e a faixa é a que informa. */}
+      {!temBanda && <path d={area} fill={`url(#sob-curva-${uid})`} />}
+      <path d={linha} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
 
       {pontos.map((p, i) => {
-        const atual = i === pontos.length - 1;
+        const atual = i === ultimoI;
         return (
           <g key={i}>
             {atual ? (
               <>
-                <circle cx={px(i)} cy={py(p.valor)} r="10.5" fill="none" stroke="var(--primary)" strokeWidth="1.5" opacity="0.28" />
-                <circle cx={px(i)} cy={py(p.valor)} r="5.5" fill="var(--primary)" />
+                <circle cx={xs[i]} cy={py(p.valor)} r="10.5" fill="none" stroke="var(--primary)" strokeWidth="1.5" opacity="0.28" />
+                <circle cx={xs[i]} cy={py(p.valor)} r="6" fill="var(--primary)" stroke="var(--surface)" strokeWidth="2" />
               </>
             ) : (
-              <circle cx={px(i)} cy={py(p.valor)} r="4" fill="var(--surface)" stroke="var(--primary)" strokeWidth="2.5" />
+              <circle cx={xs[i]} cy={py(p.valor)} r="4" fill="var(--surface)" stroke="var(--primary)" strokeWidth="2.5" />
             )}
-            <text x={px(i)} y={py(p.valor) - 12} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)" className="tabular">
-              {fmtValor(p.valor)}
-            </text>
-            <text x={px(i)} y={y1 + 20} textAnchor="middle" fontSize="10.5" fill="var(--ink-3)">
-              {fmtEixoData(p.data)}
-            </text>
+            {mostraValor[i] && (
+              <text x={grampo(xs[i], 16)} y={py(p.valor) - (atual ? 15 : 12)} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)" className="tabular">
+                {fmtValor(p.valor)}
+              </text>
+            )}
+            {mostraData[i] && (
+              <text x={grampo(xs[i], 22)} y={y1 + 20} textAnchor="middle" fontSize="10.5" fill="var(--ink-3)">
+                {fmtEixoData(p.data)}
+              </text>
+            )}
           </g>
         );
       })}
