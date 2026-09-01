@@ -11,6 +11,7 @@ import {
   modalidadeDoBloco,
   RegistroBloco,
   textoDeChipDoAluno,
+  seriesFeitas,
 } from "@/components/student/blocoRegistro";
 import { modalidadeImagem } from "@/data/modalities";
 import { refCurta } from "@/data/referencias";
@@ -374,7 +375,7 @@ function BlocoGuiado({
   const modalidade = aerobio ? modalidadeDoBloco(bloco) : undefined;
   const [modOk, setModOk] = React.useState(true);
   const IconeAerobio = iconeModalidade(bloco.modalidade, modalidade?.ambiente);
-  const execFeita = execucoes.find((e) => e.semana === semana && e.blocoRef === bloco.id);
+  const feitas = seriesFeitas(execucoes, semana, bloco.id);
 
   const temFotoForca = !aerobio && !!ex?.imagem && imgOk;
   const temFotoModalidade = aerobio && !!modalidade && modOk;
@@ -466,7 +467,7 @@ function BlocoGuiado({
         planoId={planoId}
         alunoId={alunoId}
         sessaoRef={sessaoRef}
-        execFeita={execFeita}
+        feitas={feitas}
         onRegistrar={onRegistrar}
         onDesfazer={onDesfazer}
         preview={preview}

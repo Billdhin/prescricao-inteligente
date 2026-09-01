@@ -544,8 +544,19 @@ export const useAlunos = create<AlunosState>()(
         set((s) => ({
           execucoes: [
             e,
+            // UPSERT por (aluno, plano, semana, bloco, SÉRIE). A série entrou na chave em
+            // 01/09/2026: sem ela, gravar a segunda série apagava a primeira, e o exercício
+            // inteiro guardava só os valores que estivessem nos campos na última. Registro
+            // antigo (sem série) e registro novo convivem porque `?? null` iguala os lados.
             ...s.execucoes.filter(
-              (x) => !(x.alunoId === e.alunoId && x.planoId === e.planoId && x.semana === e.semana && x.blocoRef === e.blocoRef),
+              (x) =>
+                !(
+                  x.alunoId === e.alunoId &&
+                  x.planoId === e.planoId &&
+                  x.semana === e.semana &&
+                  x.blocoRef === e.blocoRef &&
+                  (x.serie ?? null) === (e.serie ?? null)
+                ),
             ),
           ].slice(0, 2000),
         }));

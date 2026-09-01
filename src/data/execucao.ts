@@ -13,6 +13,21 @@ export interface Execucao {
   sessaoRef: string;
   blocoRef: string;
   exercicioSlug?: string;
+  /**
+   * Número da série dentro do bloco, de 1 até o total prescrito.
+   *
+   * Existe desde 01/09/2026. Antes disso o modelo guardava UMA execução por exercício e o
+   * contador de séries da tela era só estado da sessão em curso: o aluno tocava "Registrar
+   * série 2" e nada era gravado até a última, quando os valores que estivessem nos campos
+   * viravam o registro do exercício inteiro. Quem baixasse a carga na última série apagava
+   * as duas primeiras, e essa é exatamente a cena que o produto se propõe a resolver
+   * (prescrito x executado só tem sentido se o executado for o que aconteceu em cada série).
+   *
+   * Ausente = registro de exercício inteiro: todo dado gravado antes desta data, e os blocos
+   * sem contagem de séries (aeróbio, e força com dose textual do tipo "3 a 4", onde contar
+   * série seria inventar número que o plano não deu).
+   */
+  serie?: number;
   /** carga levantada, em kg (ausente em bloco sem carga) */
   cargaFeita?: number;
   repsFeitas?: number;

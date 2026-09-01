@@ -15,6 +15,13 @@ export interface Marca {
   modo?: import("@/lib/theme/palettes").Modo;
   /** telefone do profissional; sem ele o app do aluno não oferece "falar com" */
   telefone?: string;
+  /**
+   * CREF do profissional. Chega ao portal para o documento de evolução que o ALUNO baixa
+   * sair identificado como qualquer documento do produto: nome, CREF e data. Sem ele o
+   * aluno teria em mãos um papel sem responsável, que é o oposto do que o documento serve
+   * para provar.
+   */
+  cref?: string;
 }
 
 const BrandContext = React.createContext<Marca | null>(null);

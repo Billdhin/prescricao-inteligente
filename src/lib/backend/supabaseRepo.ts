@@ -482,10 +482,10 @@ export async function reivindicarConvite(token: string): Promise<void> {
 /** Marca do profissional (nome, logo, cor) para o portal do aluno. */
 export async function carregarMarcaProfissional(
   professionalId: string,
-): Promise<{ nome: string; logoDataUrl?: string; corPrimaria?: string; telefone?: string }> {
+): Promise<{ nome: string; logoDataUrl?: string; corPrimaria?: string; telefone?: string; cref?: string }> {
   const { data } = await getSupabase()
     .from("profiles")
-    .select("name,empresa,logo_url,cor_primaria,telefone")
+    .select("name,empresa,logo_url,cor_primaria,telefone,cref")
     .eq("id", professionalId)
     .single();
   return {
@@ -495,6 +495,9 @@ export async function carregarMarcaProfissional(
     // O canal real de conversa. Sem ele, o app do aluno não oferece o toque (ver
     // FalarComProfessor em StudentApp).
     telefone: data?.telefone || undefined,
+    // Identifica o documento de evolução que o ALUNO baixa no portal: nome, CREF e data,
+    // o mesmo cabeçalho de qualquer documento do produto.
+    cref: data?.cref || undefined,
   };
 }
 
@@ -515,6 +518,20 @@ function execToRow(e: Execucao, professionalId: string) {
   };
 }
 
+/**
+ * A SÉRIE VIAJA NO ID, e não numa coluna.
+ *
+ * O id da execução sempre foi chave composta (`ex-<bloco>-s<semana>`) e ganhou `-r<n>` ao
+ * virar um registro por série. Cada série é uma linha própria na tabela, com id próprio,
+ * então o dado está inteiro na nuvem sem depender de migração: o `serie` volta daqui na
+ * leitura. Id antigo, sem `-r`, devolve `undefined`, que é exatamente o que significa
+ * (registro de exercício inteiro, do modelo anterior).
+ */
+const serieDoId = (id: string): number | undefined => {
+  const m = /-r(\d+)$/.exec(String(id ?? ""));
+  return m ? Number(m[1]) : undefined;
+};
+
 function execFromRow(r: Record<string, any>): Execucao {
   return {
     id: r.id,
@@ -524,6 +541,7 @@ function execFromRow(r: Record<string, any>): Execucao {
     sessaoRef: r.sessao_ref ?? "",
     blocoRef: r.bloco_ref ?? "",
     exercicioSlug: r.exercicio_slug ?? undefined,
+    serie: serieDoId(r.id),
     cargaFeita: r.carga_feita != null ? Number(r.carga_feita) : undefined,
     repsFeitas: r.reps_feitas ?? undefined,
     rpe: r.rpe ?? undefined,

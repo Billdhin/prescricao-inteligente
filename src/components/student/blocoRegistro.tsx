@@ -263,10 +263,73 @@ export const modalidadeDaSessao = (sessao: Sessao): string => {
   return melhor > forca ? campeao : "m-musculacao";
 };
 
-// A sessão está concluída na semana dada? Todos os blocos com uma Execucao daquela
-// semana batendo o blocoRef. Mesma regra que sessaoDeHojeIndex usa para a semana atual.
+/**
+ * Quantas séries este bloco pede.
+ *
+ * Só conta quando o plano dá um número: o alvo da semana (`seriesAlvo`) ou uma série
+ * textual que seja número puro. Dose em faixa ("3 a 4") devolve 1, e o exercício se
+ * registra de uma vez, porque contar série que o plano não prescreveu seria inventar
+ * número. Aeróbio também é 1: ele se conclui, não se dosa por série.
+ */
+export const totalSeriesDe = (bloco: BlocoSessao): number => {
+  if (bloco.tipo === "aerobio") return 1;
+  if (bloco.seriesAlvo != null) return Math.max(1, bloco.seriesAlvo);
+  const puro = String(bloco.series ?? "").trim();
+  return /^\d+$/.test(puro) ? Math.max(1, Number(puro)) : 1;
+};
+
+/**
+ * O que o aluno fez, série por série, na linha de resumo do bloco fechado.
+ *
+ * Séries iguais se agrupam ("3x 60 kg x 12"), porque repetir a mesma linha três vezes só
+ * gasta a tela. Diferentes aparecem inteiras ("60 kg x 12 · 60 kg x 10 · 55 kg x 8"), que
+ * é a informação que o modelo por série existe para guardar.
+ */
+export const resumoDasSeries = (feitas: Execucao[]): string => {
+  const linha = (e: Execucao) =>
+    `${e.cargaFeita != null ? `${e.cargaFeita} kg` : "sem carga"}${e.repsFeitas != null ? ` x ${e.repsFeitas}` : ""}`;
+  if (!feitas.length) return "sem registro";
+  const partes: string[] = [];
+  let atual = linha(feitas[0]);
+  let n = 1;
+  for (const e of feitas.slice(1)) {
+    const t = linha(e);
+    if (t === atual) n++;
+    else {
+      partes.push(n > 1 ? `${n}x ${atual}` : atual);
+      atual = t;
+      n = 1;
+    }
+  }
+  partes.push(n > 1 ? `${n}x ${atual}` : atual);
+  const rpes = feitas.map((e) => e.rpe).filter((r): r is number => r != null);
+  const sufixoRpe = rpes.length ? ` · RPE ${rpes.every((r) => r === rpes[0]) ? rpes[0] : rpes.join("/")}` : "";
+  return partes.join(" · ") + sufixoRpe;
+};
+
+/** As séries já registradas de um bloco naquela semana, da primeira para a última. */
+export const seriesFeitas = (execucoes: Execucao[], semana: number, blocoId: string): Execucao[] =>
+  execucoes
+    .filter((e) => e.semana === semana && e.blocoRef === blocoId)
+    .sort((a, b) => (a.serie ?? 1) - (b.serie ?? 1) || a.concluidoEm - b.concluidoEm);
+
+/**
+ * O bloco está fechado? Todas as séries prescritas registradas.
+ *
+ * Registro antigo (um por exercício, sem série) fecha o bloco sozinho: ele nasceu de um
+ * modelo em que a última série era o exercício inteiro, e reabrir esses blocos agora
+ * transformaria histórico concluído em pendência.
+ */
+export const blocoCompleto = (bloco: BlocoSessao, execucoes: Execucao[], semana: number): boolean => {
+  const feitas = seriesFeitas(execucoes, semana, bloco.id);
+  if (feitas.some((e) => e.serie == null)) return true;
+  return feitas.length >= totalSeriesDe(bloco);
+};
+
+// A sessão está concluída na semana dada? Todos os blocos com as séries prescritas
+// registradas. Mesma regra que sessaoDeHojeIndex usa para a semana atual.
 export const sessaoConcluida = (sessao: Sessao, semana: number, execucoes: Execucao[]): boolean =>
-  sessao.blocos.length > 0 && sessao.blocos.every((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id));
+  sessao.blocos.length > 0 && sessao.blocos.every((b) => blocoCompleto(b, execucoes, semana));
 
 /**
  * O miolo de registro de um bloco: os mesmos campos e a mesma gravação do BlocoRow,
@@ -285,7 +348,7 @@ export function RegistroBloco({
   planoId,
   alunoId,
   sessaoRef,
-  execFeita,
+  feitas = [],
   onRegistrar,
   onDesfazer,
   preview,
@@ -297,7 +360,8 @@ export function RegistroBloco({
   planoId: string;
   alunoId: string;
   sessaoRef: string;
-  execFeita?: Execucao;
+  /** as séries deste bloco já registradas nesta semana, em ordem (ver seriesFeitas) */
+  feitas?: Execucao[];
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
   preview?: boolean;
@@ -330,25 +394,38 @@ export function RegistroBloco({
       : /^\d+$/.test(String(bloco.reps ?? "").trim())
         ? String(bloco.reps).trim()
         : "";
+  const totalSeries = totalSeriesDe(bloco);
+  const ultimaFeita = feitas[feitas.length - 1];
+  const completo = blocoCompleto(bloco, feitas, semana);
   const [editando, setEditando] = React.useState(false);
-  const [carga, setCarga] = React.useState(execFeita?.cargaFeita != null ? String(execFeita.cargaFeita) : "");
-  const [reps, setReps] = React.useState(execFeita?.repsFeitas != null ? String(execFeita.repsFeitas) : repsPrescrito);
-  const [rpe, setRpe] = React.useState(execFeita?.rpe != null ? String(execFeita.rpe) : "");
-  const podeRegistrar = !!onRegistrar;
-  const execId = `ex-${bloco.id}-s${semana}`;
-  const tintaDaCor = corDeContraste(cor);
 
-  // Séries prescritas: só conta quando o plano traz um número puro. Dose textual
-  // ("3 a 4") não vira contador inventado; nesse caso o exercício se registra de
-  // uma vez, como antes.
-  const totalSeries =
-    bloco.seriesAlvo != null
-      ? bloco.seriesAlvo
-      : /^\d+$/.test(String(bloco.series ?? "").trim())
-        ? Number(bloco.series)
-        : 1;
-  const [serie, setSerie] = React.useState(1);
-  const ultimaSerie = serie >= totalSeries;
+  /*
+   * A SÉRIE QUE ESTÁ SENDO REGISTRADA é a primeira que ainda não tem registro, e não um
+   * contador de tela. Assim o aluno que fecha o app no meio do exercício volta na série
+   * certa, e o professor recebe as três linhas do que aconteceu em vez de uma média
+   * involuntária. Editando, o alvo é a última série gravada (é ela que se corrige).
+   */
+  const serieAtual = editando ? (ultimaFeita?.serie ?? 1) : Math.min(feitas.length + 1, totalSeries);
+  const base = editando ? ultimaFeita : undefined;
+
+  /*
+   * A carga da série anterior fica no campo de propósito: quem faz três séries costuma
+   * repetir a carga, e quem baixa no fim corrige um número. O oposto (campo vazio a cada
+   * série) cobraria digitação três vezes e empurraria o aluno a fechar tudo de uma vez,
+   * que é justamente o comportamento que este modelo veio desfazer.
+   */
+  const [carga, setCarga] = React.useState(base?.cargaFeita != null ? String(base.cargaFeita) : "");
+  const [reps, setReps] = React.useState(base?.repsFeitas != null ? String(base.repsFeitas) : repsPrescrito);
+  const [rpe, setRpe] = React.useState(base?.rpe != null ? String(base.rpe) : "");
+  const podeRegistrar = !!onRegistrar;
+  /*
+   * O id carrega a série. É chave composta desde sempre (bloco + semana) e ganhou o
+   * sufixo `-r<n>` em 01/09/2026, o que faz cada série virar uma linha própria na nuvem
+   * SEM depender de coluna nova: `execFromRow` lê a série de volta daqui. Bloco de série
+   * única mantém o id antigo, então nada do que já foi gravado muda de identidade.
+   */
+  const execId = `ex-${bloco.id}-s${semana}` + (totalSeries > 1 ? `-r${serieAtual}` : "");
+  const tintaDaCor = corDeContraste(cor);
 
   // Só grava número quando é número de verdade; texto ("6 a 12") vira undefined
   // em vez de piso truncado ou NaN, que envenenaria o histórico do aluno.
@@ -366,20 +443,25 @@ export function RegistroBloco({
       sessaoRef,
       blocoRef: bloco.id,
       exercicioSlug: bloco.exercicioSlug,
+      serie: totalSeries > 1 ? serieAtual : undefined,
       cargaFeita: carga ? numOuUndef(carga, parseFloat) : undefined,
       repsFeitas: reps ? numOuUndef(reps, (s) => parseInt(s, 10)) : undefined,
       rpe: rpe ? numOuUndef(rpe, (s) => parseInt(s, 10)) : undefined,
       concluidoEm: Date.now(),
     });
+    // A carga fica no campo para a próxima série; o RPE não, porque ele é a leitura
+    // daquela série e repetir o número anterior seria responder pelo aluno.
+    setRpe("");
     setEditando(false);
-    setSerie(1);
   };
   const concluirAerobio = () => {
     if (!onRegistrar) return;
     onRegistrar({ id: execId, alunoId, planoId, semana, sessaoRef, blocoRef: bloco.id, exercicioSlug: bloco.exercicioSlug, concluidoEm: Date.now() });
   };
   const desfazer = () => {
-    if (execFeita && onDesfazer) onDesfazer(execFeita.id);
+    // Desfaz a ÚLTIMA série registrada, não o exercício inteiro: o aluno que errou o
+    // número da terceira série não deveria perder as duas primeiras.
+    if (ultimaFeita && onDesfazer) onDesfazer(ultimaFeita.id);
     setEditando(false);
   };
 
@@ -388,13 +470,11 @@ export function RegistroBloco({
 
   return (
     <div className="mt-2">
-      {execFeita && !editando ? (
+      {completo && !editando ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: cor }}>
             <CheckCircle2 className="h-4 w-4" />
-            {aerobio
-              ? "Concluído"
-              : `Feito: ${execFeita.cargaFeita != null ? `${execFeita.cargaFeita} kg` : "sem carga"}${execFeita.repsFeitas != null ? ` x ${execFeita.repsFeitas}` : ""}${execFeita.rpe != null ? ` · RPE ${execFeita.rpe}` : ""}`}
+            {aerobio ? "Concluído" : `Feito: ${resumoDasSeries(feitas)}`}
           </span>
           {!aerobio && (
             <button
@@ -423,20 +503,18 @@ export function RegistroBloco({
         </button>
       ) : (
         <div className="space-y-3">
-          {/* SÉRIES: um disco por série prescrita, marcando onde o aluno está.
-              É estado da SESSÃO em curso, não dado persistido: o modelo grava uma
-              execução por exercício (carga, reps, RPE), e é a última série que
-              fecha o exercício. Marcar cada série no banco seria outro modelo de
-              dados; contar as séries na tela é o que o aluno precisa para não se
-              perder no meio do exercício. */}
+          {/* SÉRIES: um disco por série prescrita, e cada disco aceso é uma série que
+              JÁ ESTÁ GRAVADA, não um contador de tela. Era o contrário até 01/09/2026,
+              e por isso a carga da segunda série morria: só a última chegava ao banco.
+              Agora o disco é o espelho do dado. */}
           {totalSeries > 1 && (
             <div className="flex items-center gap-2">
               <span className="text-2xs font-bold uppercase tracking-wider text-ink-2">Séries</span>
-              <div className="flex flex-wrap gap-1.5" role="img" aria-label={`Série ${serie} de ${totalSeries}`}>
+              <div className="flex flex-wrap gap-1.5" role="img" aria-label={`Série ${serieAtual} de ${totalSeries}`}>
                 {Array.from({ length: totalSeries }, (_, i) => {
                   const n = i + 1;
-                  const feita = n < serie;
-                  const atual = n === serie;
+                  const feita = n < serieAtual;
+                  const atual = n === serieAtual;
                   return (
                     <span
                       key={n}
@@ -466,12 +544,22 @@ export function RegistroBloco({
           <RpeSelect value={rpe} onChange={setRpe} />
 
           <button
-            onClick={ultimaSerie ? registrar : () => setSerie((s) => s + 1)}
+            onClick={registrar}
             className="inline-flex h-12 w-full items-center justify-center rounded-full px-4 text-base font-bold"
             style={{ background: cor, color: tintaDaCor }}
           >
-            {editando ? "Salvar" : totalSeries > 1 ? `Registrar série ${serie}` : "Registrar"}
+            {editando ? "Salvar" : totalSeries > 1 ? `Registrar série ${serieAtual}` : "Registrar"}
           </button>
+          {/* Corrigir no meio do exercício: sem isto, quem errou a série 1 só teria como
+              consertar depois de gravar as outras duas por cima do erro. */}
+          {!editando && feitas.length > 0 && onDesfazer && (
+            <button
+              onClick={desfazer}
+              className="inline-flex min-h-[44px] w-full items-center justify-center text-xs font-medium text-ink-3 underline-offset-2 hover:underline"
+            >
+              Desfazer a série {ultimaFeita?.serie ?? feitas.length}
+            </button>
+          )}
           {editando && (
             <button
               onClick={() => setEditando(false)}

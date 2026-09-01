@@ -76,7 +76,18 @@ export function rotaDoDia(alunos: Aluno[], ctx: CicloCtx): RotaDoDia {
 
   for (const aluno of ativos) {
     const passo = proximoPasso(aluno, ctx);
-    if (!ETAPAS_PENDENTES.has(passo.etapa)) {
+    /*
+     * PENDENTE É A ETAPA DO CICLO **OU** O CHIP DE ATENÇÃO.
+     *
+     * A etapa sozinha bastava enquanto "acompanhar" significava só "em dia". Desde que o
+     * silêncio de registro virou sinal (01/09/2026), existe aluno em "acompanhar" que NÃO
+     * está em dia, e ele precisa entrar na fila. O chip é o discriminador certo porque
+     * ele já é, por definição, "null quando o aluno está em dia".
+     *
+     * O caminho inverso continua valendo: a etapa "liberar" do semáforo de hoje é parada
+     * mesmo sem chip, e por isso a etapa continua na conta.
+     */
+    if (!ETAPAS_PENDENTES.has(passo.etapa) && !passo.chip) {
       feitas += 1;
       continue;
     }

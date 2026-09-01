@@ -4,7 +4,7 @@ import { Card, Pill, LinhaDeDose, LinhaDeTokens, TokenRotulado, buttonClasses } 
 import { TokenDose } from "@/components/gps/TermoDoseInfo";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
 import { exercises } from "@/data/exercises";
-import type { Macrociclo, PlanoTreino, VariavelTravavel } from "@/data/periodizacao";
+import type { BlocoSessao, Macrociclo, PlanoTreino, VariavelTravavel } from "@/data/periodizacao";
 import type { Execucao, SessaoFeedback } from "@/data/execucao";
 import type { Aluno, Avaliacao, Liberacao } from "@/data/alunos";
 import { ajustarCarga, faixaDeReps, incrementoDoExercicio, type AcaoCarga, type CtxSeguranca, type ModProgressaoAjuste } from "@/lib/gps/autorregulacao";
@@ -53,6 +53,36 @@ function mapaSessoes(plano?: PlanoTreino): Map<string, string> {
       if (!m.has(s.id)) m.set(s.id, s.nome);
     });
   return m;
+}
+
+/**
+ * O BLOCO PRESCRITO de cada registro, para o executado ter com o que ser comparado.
+ *
+ * Sem isto, "Últimos registros" mostrava 60 kg x 9 sem dizer que a prescrição pedia 12, e a
+ * diferença entre planejado e feito, que é o dado que decide a progressão da semana
+ * seguinte, ficava na cabeça de quem lembrasse do plano.
+ */
+function mapaBlocos(plano?: PlanoTreino): Map<string, BlocoSessao> {
+  const m = new Map<string, BlocoSessao>();
+  plano?.macrociclo.mesociclos
+    .flatMap((mc) => mc.microciclos)
+    .flatMap((mic) => mic.sessoes)
+    .flatMap((s) => s.blocos)
+    .forEach((b) => {
+      if (!m.has(b.id)) m.set(b.id, b);
+    });
+  return m;
+}
+
+/** A dose prescrita do bloco, na ordem em que o plano a escreve. */
+function dosePrescrita(b?: BlocoSessao): string | null {
+  if (!b) return null;
+  const partes: string[] = [];
+  if (b.seriesAlvo != null && b.repsAlvo != null) partes.push(`${b.seriesAlvo} x ${b.repsAlvo}`);
+  else if (b.series && b.reps) partes.push(`${b.series} x ${b.reps}`);
+  if (b.rirAlvo != null) partes.push(`${b.rirAlvo} de reserva`);
+  if (b.intervaloAlvoSeg != null) partes.push(`${b.intervaloAlvoSeg}s`);
+  return partes.length ? partes.join(" · ") : null;
 }
 
 /** Contexto de segurança do aluno (semáforo do dia + dor/sinais da última avaliação). */
@@ -156,6 +186,7 @@ export function ExecucaoPanel({
   const recentes = [...execucoes].sort((a, b) => b.concluidoEm - a.concluidoEm).slice(0, 8);
   const feedbacks = [...sessaoFeedbacks].sort((a, b) => b.concluidaEm - a.concluidaEm).slice(0, 5);
   const nomePorSessao = mapaSessoes(plano);
+  const blocoPorId = mapaBlocos(plano);
 
   const aplicar = () => {
     if (!plano || !renovacao || !onAplicarPlano) return;
@@ -291,27 +322,40 @@ export function ExecucaoPanel({
 
       {recentes.length > 0 && (
         <>
-          <div className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Últimos registros</div>
-          {/* Nome + data no bloco; carga, reps e RPE viram tokens rotulados abaixo,
-              cada número com o próprio nome, em vez de "40 kg x 12 · RPE 8" solto na borda. */}
+          <div className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Prescrito e executado</div>
+          {/* A linha PRESCRITO vem antes da EXECUTADO, na ordem em que o trabalho
+              aconteceu, porque é essa comparação que decide a dose da semana seguinte.
+              Antes só existia o executado, e a diferença ficava na memória de quem
+              lembrasse do plano. Cada número com o rótulo colado, nunca "40 kg x 12" solto. */}
           <ul className="overflow-hidden rounded-lg border border-border">
-            {recentes.map((e) => (
-              <LinhaDeDose
-                key={e.id}
-                nome={
-                  <span className="flex flex-wrap items-baseline gap-x-2">
-                    {nomeEx(e.exercicioSlug)}
-                    <span className="text-xs font-normal text-ink-3">{fmtData(e.concluidoEm)}</span>
-                  </span>
-                }
-              >
-                <LinhaDeTokens>
-                  {e.cargaFeita != null && <TokenDose label="Carga" value={`${e.cargaFeita} kg`} />}
-                  {e.repsFeitas != null && <TokenRotulado label="Reps" value={e.repsFeitas} />}
-                  {e.rpe != null && <TokenDose label="PSE" value={e.rpe} />}
-                </LinhaDeTokens>
-              </LinhaDeDose>
-            ))}
+            {recentes.map((e) => {
+              const prescrita = dosePrescrita(blocoPorId.get(e.blocoRef));
+              return (
+                <LinhaDeDose
+                  key={e.id}
+                  nome={
+                    <span className="flex flex-wrap items-baseline gap-x-2">
+                      {nomeEx(e.exercicioSlug)}
+                      {e.serie != null && <span className="text-xs font-semibold text-ink-2">série {e.serie}</span>}
+                      <span className="text-xs font-normal text-ink-3">{fmtData(e.concluidoEm)}</span>
+                    </span>
+                  }
+                >
+                  <div className="space-y-1">
+                    {prescrita && (
+                      <LinhaDeTokens>
+                        <TokenRotulado label="Prescrito" value={prescrita} />
+                      </LinhaDeTokens>
+                    )}
+                    <LinhaDeTokens>
+                      <TokenRotulado label="Executado" value={e.cargaFeita != null ? `${e.cargaFeita} kg` : "sem carga"} />
+                      {e.repsFeitas != null && <TokenRotulado label="Reps" value={e.repsFeitas} />}
+                      {e.rpe != null && <TokenDose label="PSE" value={e.rpe} />}
+                    </LinhaDeTokens>
+                  </div>
+                </LinhaDeDose>
+              );
+            })}
           </ul>
         </>
       )}

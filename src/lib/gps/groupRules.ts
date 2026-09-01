@@ -493,8 +493,12 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     modProgressao: {
       pseTeto: 7,
       fatorIncremento: 0.5,
+      // Fica no padrão, como o grau 1 e pelo mesmo motivo. O texto dizia "com descarga mais
+      // frequente" e o número era 4, que é exatamente o padrão do motor: prometia uma
+      // diferença que nenhum plano entregava. A diferenciação real deste grau mora no passo
+      // e no teto de esforço, e é isso que o motivo passou a dizer.
       descargaCadaSemanas: 4,
-      motivo: "Baixa tolerância inicial e sobrecarga articular: progride em passos pequenos, guiado por PSE, com descarga mais frequente.",
+      motivo: "Baixa tolerância inicial e sobrecarga articular: progride em passos pequenos e com teto de esforço mais baixo, guiado por PSE.",
       cautela: true,
       refId: ["donnelly-2009", "acsm-getp11"],
     },
@@ -645,7 +649,20 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     modProgressao: {
       pseTeto: 6,
       fatorIncremento: 0.6,
-      motivo: "Evitar esforços máximos e apneia (Valsalva): progride devagar e com teto de esforço mais baixo.",
+      /*
+       * A CADÊNCIA DO ALÍVIO É CAUTELA DA CASA, e está escrito assim de propósito.
+       *
+       * A diretriz citada sustenta a intensidade moderada e a progressão prudente; ela não
+       * diz de quantas em quantas semanas aliviar. Quem decide isso aqui é a casa, e o
+       * motivo abaixo declara a autoria em vez de emprestá-la ao artigo.
+       *
+       * Até 01/09/2026 esta regra não declarava cadência nenhuma e a do estágio 2 declarava
+       * 4, que é exatamente o padrão do motor: o texto prometia "descarga frequente" e o
+       * número não entregava diferença nenhuma.
+       */
+      descargaCadaSemanas: 3,
+      motivo:
+        "Evitar esforços máximos e apneia (Valsalva): progride devagar, com teto de esforço mais baixo e uma semana de alívio a cada três, em vez das quatro do padrão. A cadência do alívio é cautela declarada da casa, ao lado da diretriz citada.",
       cautela: true,
       refId: ["pescatello-2004", "sbc-2020"],
     },
@@ -743,8 +760,9 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     modProgressao: {
       pseTeto: 5,
       fatorIncremento: 0.5,
-      descargaCadaSemanas: 4,
-      motivo: "Pressão de base mais alta e resposta mais reativa: progride nos menores passos, com teto de esforço mais baixo e descarga frequente.",
+      descargaCadaSemanas: 3,
+      motivo:
+        "Pressão de base mais alta e resposta mais reativa: progride nos menores passos, com teto de esforço mais baixo e uma semana de alívio a cada três. A cadência do alívio é cautela declarada da casa, ao lado da diretriz citada.",
       cautela: true,
       refId: ["pescatello-2004", "sbc-2020"],
     },

@@ -19,10 +19,12 @@ import {
   MessageCircle,
   CalendarDays,
   Info,
+  FileText,
 } from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
+import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
 import { aplicarPaleta, PALETA_ALUNO, corDeContraste } from "@/lib/theme/palettes";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
@@ -41,6 +43,8 @@ import {
   tokensExtras,
   minutosDeclarados,
   RegistroBloco,
+  seriesFeitas,
+  blocoCompleto,
 } from "@/components/student/blocoRegistro";
 import { estadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { modalidadeImagem } from "@/data/modalities";
@@ -317,6 +321,7 @@ export function StudentApp({
                   execucoes={execucoesDoAluno}
                   feedbacks={sessaoFeedbacks.filter((f) => f.alunoId === aluno.id)}
                   cor={cor}
+                  marca={marca}
                 />
               )}
               {aba === "perfil" && (
@@ -986,7 +991,7 @@ function ListaExerciciosDoDia({
             planoId={plano.id}
             alunoId={aluno.id}
             sessaoRef={sessao.id}
-            execFeita={execucoes.find((e) => e.semana === semana && e.blocoRef === b.id)}
+            feitas={seriesFeitas(execucoes, semana, b.id)}
             onRegistrar={onRegistrar}
             onDesfazer={onDesfazer}
             preview={preview}
@@ -1248,7 +1253,7 @@ function BlocoRow({
   planoId,
   alunoId,
   sessaoRef,
-  execFeita,
+  feitas,
   onRegistrar,
   onDesfazer,
   preview,
@@ -1263,7 +1268,7 @@ function BlocoRow({
   planoId: string;
   alunoId: string;
   sessaoRef: string;
-  execFeita?: Execucao;
+  feitas: Execucao[];
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
   preview?: boolean;
@@ -1317,7 +1322,7 @@ function BlocoRow({
       </span>
     );
 
-  const feito = !!execFeita;
+  const feito = blocoCompleto(bloco, feitas, semana);
   const dose = doseCurta(bloco);
   // Fechada por padrão. Quem já registrou não precisa reabrir; quem vai registrar
   // toca uma vez. O padrão serve à leitura da lista, que é para o que ela existe.
@@ -1429,7 +1434,7 @@ function BlocoRow({
             planoId={planoId}
             alunoId={alunoId}
             sessaoRef={sessaoRef}
-            execFeita={execFeita}
+            feitas={feitas}
             onRegistrar={onRegistrar}
             onDesfazer={onDesfazer}
             preview={preview}
@@ -1679,6 +1684,7 @@ function AbaProgresso({
   execucoes,
   feedbacks,
   cor,
+  marca,
 }: {
   aluno: Aluno;
   avaliacoes: Avaliacao[];
@@ -1686,6 +1692,8 @@ function AbaProgresso({
   /** feedbacks de sessão do aluno: alimentam o esforço médio */
   feedbacks: SessaoFeedback[];
   cor: string;
+  /** marca do profissional: identifica o documento que o aluno leva daqui */
+  marca: Marca;
 }) {
   const doAluno = avaliacoes.filter((a) => a.alunoId === aluno.id).sort((a, b) => b.data - a.data);
   const fmt = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
@@ -1703,6 +1711,39 @@ function AbaProgresso({
         avaliacoes={doAluno}
         feedbacks={feedbacks}
       />
+
+      {/*
+        O DOCUMENTO DE EVOLUÇÃO NA MÃO DO ALUNO.
+        Ele já existia, mas só o profissional conseguia emitir, e o aluno que quisesse
+        mostrar a alguém o que mudou dependia de pedir. Com duas avaliações registradas há
+        o que comparar, e o papel sai identificado com o nome e o CREF de quem acompanha.
+        Com uma só, o botão não aparece: não existe evolução de um ponto.
+      */}
+      {doAluno.length >= 2 && (
+        <button
+          onClick={() =>
+            exportEvolucaoPDF({
+              aluno,
+              avaliacoes: doAluno,
+              profissional: marca.nome,
+              cref: marca.cref,
+              marca: { nome: marca.nome, cref: marca.cref, logoDataUrl: marca.logoDataUrl, corPrimaria: marca.corPrimaria },
+            })
+          }
+          className="flex w-full items-center gap-3 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:bg-surface-soft"
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-card" style={{ background: `${cor}1a`, color: cor }}>
+            <FileText className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-ink">Meu documento de evolução</span>
+            <span className="block text-xs text-ink-2">
+              O que mudou entre {fmt(doAluno[doAluno.length - 1].data)} e {fmt(doAluno[0].data)}, com o nome e o CREF de quem acompanha.
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
+        </button>
+      )}
 
       <section className="space-y-2">
         <h3 className="font-display text-base font-bold text-ink">Avaliações</h3>

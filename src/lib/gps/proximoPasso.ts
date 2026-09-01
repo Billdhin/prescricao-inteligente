@@ -67,7 +67,29 @@ export interface CicloCtx {
   planos: PlanoTreino[];
   /** liberações completas (com `resultado`): o semáforo diário deriva daqui */
   liberacoes: Liberacao[];
-  execucoes: { alunoId?: string }[];
+  /**
+   * Execuções registradas pelos alunos. `concluidoEm` entrou em 01/09/2026: até então o
+   * campo chegava aqui e NUNCA era lido, e o aluno que parava de registrar não gerava
+   * sinal nenhum na carteira. O produto anuncia que esse silêncio aparece antes de virar
+   * cancelamento, e é aqui que ele passa a aparecer.
+   */
+  execucoes: { alunoId?: string; concluidoEm?: number }[];
+}
+
+/**
+ * Quantos dias de silêncio já são sinal, para este plano.
+ *
+ * Três sessões prescritas sem nenhum registro, e nunca menos de uma semana. A conta sai da
+ * frequência do próprio plano porque silêncio não significa a mesma coisa para quem treina
+ * cinco vezes por semana e para quem treina duas. O piso de sete dias existe para uma
+ * viagem curta ou uma semana ruim não virarem alarme.
+ *
+ * É limiar operacional, não clínico: ele decide quando o aluno aparece na sua fila, e nada
+ * mais. Quem lê o caso e decide o que fazer continua sendo o profissional.
+ */
+export function diasDeSilencioQueAvisam(frequenciaSemanal?: number): number {
+  const freq = frequenciaSemanal && frequenciaSemanal > 0 ? frequenciaSemanal : 3;
+  return Math.max(7, Math.ceil(21 / freq));
 }
 
 /** Data única de reavaliação: com plano ativo, o macrociclo manda; senão o calendário. */
@@ -167,7 +189,35 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
     };
   }
 
-  // 4) Plano ativo, e o semáforo de hoje ainda não foi feito. É recomendação, não
+  /*
+   * 4) O ALUNO PAROU DE REGISTRAR.
+   *
+   * Vem antes do semáforo de propósito: o semáforo de hoje fica pendente quase todo dia e
+   * mascararia o silêncio, que é o sinal mais raro e mais caro dos dois. Um aluno some
+   * antes de cancelar, e some em silêncio.
+   *
+   * O relógio começa no último registro; se nunca houve nenhum, começa na data do plano,
+   * para um plano recém-publicado não nascer alarmado. E o passo não diz o que aconteceu
+   * nem promete adivinhar: diz há quantos dias não chega registro, que é o fato.
+   */
+  const doAluno = ctx.execucoes.filter((e) => e.alunoId === aluno.id && e.concluidoEm != null);
+  const ultimoRegistro = doAluno.length ? Math.max(...doAluno.map((e) => e.concluidoEm as number)) : null;
+  const desde = ultimoRegistro ?? planoAtivo.data;
+  const diasEmSilencio = Math.floor((agora - desde) / DIA);
+  const limite = diasDeSilencioQueAvisam(planoAtivo.frequenciaSemanal);
+  if (diasEmSilencio >= limite) {
+    return {
+      etapa: "acompanhar",
+      tone: "warning",
+      frase: ultimoRegistro
+        ? `Sem registro de treino há ${diasEmSilencio} dias. Vale olhar o caso antes que ele esfrie.`
+        : `O plano foi publicado há ${diasEmSilencio} dias e ainda não chegou nenhum registro.`,
+      cta: { label: "Ver execução", kind: "acompanhar" },
+      chip: { label: "Parou de registrar", tone: "warning" },
+    };
+  }
+
+  // 5) Plano ativo, e o semáforo de hoje ainda não foi feito. É recomendação, não
   //    bloqueio: o treino já está pronto e visível; o semáforo confirma que hoje é um
   //    bom dia para treinar. O texto diz isso, para não soar obrigatório.
   const liberadoHoje = libs.some((l) => mesmoDia(l.data, agora));
@@ -181,7 +231,7 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
     };
   }
 
-  // 5) Tudo em dia: acompanhar a execução.
+  // 6) Tudo em dia: acompanhar a execução.
   return {
     etapa: "acompanhar",
     tone: "success",
