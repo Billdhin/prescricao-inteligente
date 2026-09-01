@@ -5,7 +5,7 @@
  * inventado nem conquista fictícia: cada número sai da contagem dos treinos que
  * o próprio aluno lançou. É motivação honesta, não teatro.
  */
-import type { Execucao } from "@/data/execucao";
+import { porExercicio, type Execucao } from "@/data/execucao";
 
 const DIA = 86_400_000;
 const SEMANA = 7 * DIA;
@@ -243,7 +243,9 @@ export interface ResumoGamificacao {
 }
 
 export function resumoGamificacao(alunoId: string, execucoes: Execucao[]): ResumoGamificacao {
-  const execs = execucoes.filter((e) => e.alunoId === alunoId);
+  // Um registro por EXERCÍCIO: pontos, treinos e feed nasceram nessa granularidade, e
+  // com o registro por série (01/09/2026) o mesmo trabalho passaria a valer o triplo.
+  const execs = porExercicio(execucoes.filter((e) => e.alunoId === alunoId));
   const pontos = execs.length * PONTOS_POR_REGISTRO;
   const conquistadas = badgesConquistadas(execs);
   return {

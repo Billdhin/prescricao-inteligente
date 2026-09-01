@@ -12,7 +12,7 @@
 
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
-import type { Execucao } from "@/data/execucao";
+import { blocoCompleto, type Execucao } from "@/data/execucao";
 
 /* ============================ Árvore do plano (persistida) ============================ */
 
@@ -427,8 +427,9 @@ export function sessoesDeHoje(plano: PlanoTreino, agora = Date.now()): Sessao[] 
 export function sessaoDeHojeIndex(plano: PlanoTreino, execucoes: Execucao[], agora = Date.now()): number {
   const semana = semanaAtual(plano, agora);
   const sessoes = sessoesDeHoje(plano, agora);
-  const concluida = (s: Sessao) =>
-    s.blocos.length > 0 && s.blocos.every((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id));
+  // "Registrado" aqui é bloco COMPLETO (todas as séries), não "tem algum registro":
+  // com o registro por série, a primeira série de três não pode fechar a sessão de hoje.
+  const concluida = (s: Sessao) => s.blocos.length > 0 && s.blocos.every((b) => blocoCompleto(b, execucoes, semana));
   const i = sessoes.findIndex((s) => !concluida(s));
   return i === -1 ? 0 : i;
 }

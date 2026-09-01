@@ -263,20 +263,14 @@ export const modalidadeDaSessao = (sessao: Sessao): string => {
   return melhor > forca ? campeao : "m-musculacao";
 };
 
-/**
- * Quantas séries este bloco pede.
- *
- * Só conta quando o plano dá um número: o alvo da semana (`seriesAlvo`) ou uma série
- * textual que seja número puro. Dose em faixa ("3 a 4") devolve 1, e o exercício se
- * registra de uma vez, porque contar série que o plano não prescreveu seria inventar
- * número. Aeróbio também é 1: ele se conclui, não se dosa por série.
+/*
+ * A regra de "quantas séries", "quais já foram" e "o bloco fechou?" mora em
+ * src/data/execucao.ts, porque a periodização (sessão de hoje) e a gamificação precisam
+ * da MESMA resposta que esta tela. Reexportada daqui para o registro inline, o modo guiado
+ * e o guardrail continuarem importando do mesmo lugar.
  */
-export const totalSeriesDe = (bloco: BlocoSessao): number => {
-  if (bloco.tipo === "aerobio") return 1;
-  if (bloco.seriesAlvo != null) return Math.max(1, bloco.seriesAlvo);
-  const puro = String(bloco.series ?? "").trim();
-  return /^\d+$/.test(puro) ? Math.max(1, Number(puro)) : 1;
-};
+export { totalSeriesDe, seriesFeitas, blocoCompleto } from "@/data/execucao";
+import { totalSeriesDe, seriesFeitas, blocoCompleto } from "@/data/execucao";
 
 /**
  * O que o aluno fez, série por série, na linha de resumo do bloco fechado.
@@ -305,25 +299,6 @@ export const resumoDasSeries = (feitas: Execucao[]): string => {
   const rpes = feitas.map((e) => e.rpe).filter((r): r is number => r != null);
   const sufixoRpe = rpes.length ? ` · RPE ${rpes.every((r) => r === rpes[0]) ? rpes[0] : rpes.join("/")}` : "";
   return partes.join(" · ") + sufixoRpe;
-};
-
-/** As séries já registradas de um bloco naquela semana, da primeira para a última. */
-export const seriesFeitas = (execucoes: Execucao[], semana: number, blocoId: string): Execucao[] =>
-  execucoes
-    .filter((e) => e.semana === semana && e.blocoRef === blocoId)
-    .sort((a, b) => (a.serie ?? 1) - (b.serie ?? 1) || a.concluidoEm - b.concluidoEm);
-
-/**
- * O bloco está fechado? Todas as séries prescritas registradas.
- *
- * Registro antigo (um por exercício, sem série) fecha o bloco sozinho: ele nasceu de um
- * modelo em que a última série era o exercício inteiro, e reabrir esses blocos agora
- * transformaria histórico concluído em pendência.
- */
-export const blocoCompleto = (bloco: BlocoSessao, execucoes: Execucao[], semana: number): boolean => {
-  const feitas = seriesFeitas(execucoes, semana, bloco.id);
-  if (feitas.some((e) => e.serie == null)) return true;
-  return feitas.length >= totalSeriesDe(bloco);
 };
 
 // A sessão está concluída na semana dada? Todos os blocos com as séries prescritas

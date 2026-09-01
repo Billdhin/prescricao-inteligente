@@ -92,7 +92,9 @@ export interface GerarPlanoInput {
    * Dados do aluno usados SÓ para personalizar a zona de FC do aeróbio (MP-4): idade estima
    * a FCmax (208 - 0.7*idade) e a FCrep MEDIDA fecha a zona de Karvonen. Ambos opcionais: o
    * uso avulso/estudo e os guardrails não os passam, e aí o aeróbio guia por duração + PSE,
-   * sem inventar zona. Não alteram a força nem o restante da geração (determinismo mantido).
+   * sem inventar zona. Não alteram a força nem o restante da geração A idade TAMBÉM entra na dose de força desde 30/08/2026, pela fusão
+   * conservadora de `doseDoPerfilComIdade` (reserva mínima a partir de 65 anos); o que segue
+   * determinístico é o resto da geração.
    */
   idade?: number;
   fcRepouso?: number;

@@ -832,9 +832,8 @@ function HeroTreinoDeHoje({
   onIniciar?: () => void;
 }) {
   const nExercicios = sessao.blocos.length;
-  const nFeitos = sessao.blocos.filter((b) =>
-    execucoes.some((e) => e.semana === semana && e.blocoRef === b.id),
-  ).length;
+  // Feito = todas as séries registradas (blocoCompleto), não "tem algum registro".
+  const nFeitos = sessao.blocos.filter((b) => blocoCompleto(b, execucoes, semana)).length;
   const pctFeito = nExercicios ? Math.round((nFeitos / nExercicios) * 100) : 0;
   // Minutos DECLARADOS (soma do alvo aeróbio). Sem aeróbio com alvo, não há
   // minuto nenhum a mostrar: somar tempo de musculação seria número inventado.

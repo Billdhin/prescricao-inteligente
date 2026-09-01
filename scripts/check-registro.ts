@@ -125,7 +125,40 @@ const DIA = 86_400_000;
     if (!blocoCompleto(bloco, legado, 1))
       falha("registro antigo (sem série) deixou de fechar o bloco: histórico concluído virou pendência");
     else ok("registro anterior ao modelo por série continua fechando o bloco");
+
+    /*
+     * O MESMO TRABALHO VALE OS MESMOS PONTOS. Três séries registradas de um exercício e um
+     * registro antigo do exercício inteiro são o mesmo treino feito; a gamificação contava
+     * registros e passou a dar o triplo a quem usa o modelo novo (achado da avaliação de
+     * 01/09/2026, poucas horas depois de o modelo entrar).
+     */
+    const { resumoGamificacao } = await import("@/lib/gamificacao");
+    const pNovo = resumoGamificacao("a1", todas).pontos;
+    const pLegado = resumoGamificacao("a1", legado).pontos;
+    if (pNovo !== pLegado) falha(`três séries valem ${pNovo} pontos e o registro antigo do mesmo exercício vale ${pLegado}`);
+    else ok(`três séries e um registro antigo do mesmo exercício valem os mesmos ${pNovo} pontos`);
+
+    /* A sessão de hoje não avança com uma série de três: "começou" não é "terminou". */
+    const { sessaoDeHojeIndex } = await import("@/data/periodizacao");
+    const planoTreino = {
+      id: "pt", alunoId: "a1", status: "ativo", data: Date.now(), semanas: 4, frequenciaSemanal: 3,
+      macrociclo: plano.principal,
+    } as unknown as import("@/data/periodizacao").PlanoTreino;
+    const sessao1 = plano.principal.mesociclos[0].microciclos[0].sessoes[0];
+    const umaSerieDeCada = sessao1.blocos.map((b) => ({ ...serieEm(1, 60), id: `ex-${b.id}-s1-r1`, blocoRef: b.id }));
+    const idxParcial = sessaoDeHojeIndex(planoTreino, umaSerieDeCada);
+    if (idxParcial !== 0) falha(`uma série de cada exercício já fechou a sessão 1 (índice de hoje foi para ${idxParcial})`);
+    else ok("uma série de cada exercício não fecha a sessão de hoje");
   }
+}
+
+/* -------- Nenhuma tela pode voltar a tratar "tem um registro" como "está feito" -------- */
+{
+  const alvos = ["src/components/student/StudentApp.tsx", "src/components/student/TreinoGuiado.tsx", "src/data/periodizacao.ts"];
+  const padrao = /\.every\(\(b\) => execucoes\.some\(\(e\) => e\.semana === semana && e\.blocoRef === b\.id\)\)|filter\(\(b\) =>\s*execucoes\.some\(\(e\) => e\.semana === semana && e\.blocoRef === b\.id\)/;
+  const reincidentes = alvos.filter((a) => padrao.test(fs.readFileSync(path.resolve(process.cwd(), a), "utf8")));
+  if (reincidentes.length) falha(`voltou a contar "feito" por "algum registro" em: ${reincidentes.join(", ")} (use blocoCompleto)`);
+  else ok("feito, sessão de hoje e progresso da sessão respondem por blocoCompleto");
 }
 
 /* ======================== 2. O silêncio do aluno aparece ======================== */

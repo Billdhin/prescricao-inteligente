@@ -12,6 +12,7 @@ import {
   RegistroBloco,
   textoDeChipDoAluno,
   seriesFeitas,
+  blocoCompleto,
 } from "@/components/student/blocoRegistro";
 import { modalidadeImagem } from "@/data/modalities";
 import { refCurta } from "@/data/referencias";
@@ -116,7 +117,7 @@ export function TreinoGuiado({
   const voltar = () => setIdx((i) => Math.max(0, i - 1));
 
   if (fase === "conclusao") {
-    const registrados = sessao.blocos.filter((b) => execucoes.some((e) => e.semana === semana && e.blocoRef === b.id)).length;
+    const registrados = sessao.blocos.filter((b) => blocoCompleto(b, execucoes, semana)).length;
     const total = sessao.blocos.length;
     const duracaoMin = Math.max(1, Math.round(((fimMs ?? Date.now()) - inicioRef.current) / 60000));
     const faixaSel = pse != null ? rotuloFaixaPse(pse) : null;

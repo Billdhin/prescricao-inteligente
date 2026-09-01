@@ -1,3 +1,5 @@
+import type { BlocoSessao } from "@/data/periodizacao";
+
 /**
  * O que o aluno REALMENTE executou numa sessão. É o dado que faltava para a
  * periodização deixar de ser estática: o aluno registra carga, repetições e
@@ -62,3 +64,68 @@ export interface SessaoFeedback {
   observacao?: string;
   concluidaEm: number;
 }
+
+/* ----------------------- Leitura do registro por série ----------------------- */
+/*
+ * Estas quatro funções são a ÚNICA resposta do produto para "este exercício está feito?"
+ * depois que o registro passou a ser por série (01/09/2026). Antes, cinco lugares
+ * respondiam com `execucoes.some(blocoRef)`, que com o modelo novo significa "começou",
+ * não "terminou": o cartão dizia "1 de 4 feitos" com uma série de três registrada, e a
+ * gamificação dava três vezes os pontos de antes. Vivem em `data/` porque a periodização
+ * (sessão de hoje) e o app do aluno precisam da mesma regra, e `data/` não pode importar
+ * componente.
+ */
+
+/**
+ * Quantas séries este bloco pede. Só conta quando o plano dá número: o alvo da semana
+ * (`seriesAlvo`) ou uma série textual que seja número puro. Dose em faixa ("3 a 4")
+ * devolve 1, e o exercício se registra de uma vez, porque contar série que o plano não
+ * prescreveu seria inventar número. Aeróbio também é 1: ele se conclui, não se dosa.
+ */
+export const totalSeriesDe = (bloco: Pick<BlocoSessao, "tipo" | "seriesAlvo" | "series">): number => {
+  if (bloco.tipo === "aerobio") return 1;
+  if (bloco.seriesAlvo != null) return Math.max(1, bloco.seriesAlvo);
+  const puro = String(bloco.series ?? "").trim();
+  return /^\d+$/.test(puro) ? Math.max(1, Number(puro)) : 1;
+};
+
+/** As séries já registradas de um bloco naquela semana, da primeira para a última. */
+export const seriesFeitas = (execucoes: Execucao[], semana: number, blocoId: string): Execucao[] =>
+  execucoes
+    .filter((e) => e.semana === semana && e.blocoRef === blocoId)
+    .sort((a, b) => (a.serie ?? 1) - (b.serie ?? 1) || a.concluidoEm - b.concluidoEm);
+
+/**
+ * O bloco está fechado? Todas as séries prescritas registradas. Registro antigo (sem
+ * série) fecha o bloco sozinho: ele nasceu de um modelo em que a última série era o
+ * exercício inteiro, e reabrir esses blocos transformaria histórico em pendência.
+ */
+export const blocoCompleto = (
+  bloco: Pick<BlocoSessao, "id" | "tipo" | "seriesAlvo" | "series">,
+  execucoes: Execucao[],
+  semana: number,
+): boolean => {
+  const feitas = seriesFeitas(execucoes, semana, bloco.id);
+  if (feitas.some((e) => e.serie == null)) return true;
+  return feitas.length >= totalSeriesDe(bloco);
+};
+
+/**
+ * Um registro por EXERCÍCIO (bloco + semana), ficando a última série de cada um.
+ *
+ * É a lente para quem conta "treinos", "pontos" e "itens do feed": essas contagens
+ * nasceram com um registro por exercício, e com o modelo por série passariam a valer o
+ * triplo para o mesmo trabalho. Um aluno com histórico antigo e novo veria os dois pesos
+ * misturados. Esta função devolve a granularidade de antes sem apagar as séries de onde
+ * elas importam (prescrito x executado, autorregulação).
+ */
+export const porExercicio = (execucoes: Execucao[]): Execucao[] => {
+  const ultimo = new Map<string, Execucao>();
+  for (const e of execucoes) {
+    const k = `${e.planoId ?? ""}|${e.semana}|${e.blocoRef}`;
+    const atual = ultimo.get(k);
+    if (!atual || (e.serie ?? 0) > (atual.serie ?? 0) || ((e.serie ?? 0) === (atual.serie ?? 0) && e.concluidoEm > atual.concluidoEm))
+      ultimo.set(k, e);
+  }
+  return [...ultimo.values()];
+};

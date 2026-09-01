@@ -44,7 +44,7 @@ for (const g of [undefined, ...specialGroups.map((s) => s.slug)]) {
           const blocos = plano.principal.mesociclos.flatMap((m) =>
             m.microciclos.flatMap((mi) => mi.sessoes.flatMap((s) => s.blocos)),
           );
-          const aer = blocos.filter((b) => b.duracaoAlvo != null || b.formato);
+          const aer = blocos.filter((b) => b.tipo === "aerobio");
           const forca = blocos.filter((b) => b.seriesAlvo != null);
 
           /* 1. Alvo impossível: número que o aluno não consegue executar. */
@@ -121,13 +121,31 @@ for (const g of [undefined, ...specialGroups.map((s) => s.slug)]) {
             const bb = base.principal.mesociclos.flatMap((m) => m.microciclos.flatMap((mi) => mi.sessoes.flatMap((s) => s.blocos)));
             const sessoesBase = base.principal.mesociclos.flatMap((m) => m.microciclos.flatMap((mi) => mi.sessoes)).length;
             const sessoes = plano.principal.mesociclos.flatMap((m) => m.microciclos.flatMap((mi) => mi.sessoes)).length;
-            const aerBase = bb.filter((b) => b.duracaoAlvo != null || b.formato).length;
+            const aerBase = bb.filter((b) => b.tipo === "aerobio").length;
             const forcaBase = bb.filter((b) => b.seriesAlvo != null).length;
 
-            // Por sessão, para a cadência de descarga não contaminar a leitura.
-            const porSessao = (n: number, s: number) => (s ? n / s : 0);
-            if (porSessao(forca.length, sessoes) < porSessao(forcaBase, sessoesBase) - 1e-9)
-              anotar(cen, "ENFASE SUBTRAIU FORCA", `${porSessao(forca.length, sessoes).toFixed(2)} contra ${porSessao(forcaBase, sessoesBase).toFixed(2)} blocos de forca por sessao`);
+            /*
+             * TOTAL, não por sessão. A versão por sessão acusou 872 planos em 01/09/2026, e
+             * todos eram falso positivo: a condição ACRESCENTA sessões (isométricas e
+             * aeróbias) sem tirar um bloco de força sequer, e dividir os mesmos 88 blocos por
+             * mais sessões só faz a média cair. A pergunta certa é se algum bloco de força
+             * sumiu, e a resposta está no total. As sessões extras viram achado próprio.
+             */
+            /*
+             * E o total também engana: quem descarrega a cada 3 semanas (obesidade grau 3,
+             * hipertensão) tem mais semanas de descarga, e a descarga tem uma sessão a menos.
+             * A comparação honesta é por sessão DE CARGA: ali, se a ênfase tirou força, sobra.
+             */
+            const forcaPorSessaoDeCarga = (m: typeof plano.principal) => {
+              const ss = m.mesociclos.flatMap((me) => me.microciclos.filter((mi) => mi.tipo === "carga").flatMap((mi) => mi.sessoes));
+              const comForca = ss.filter((x) => x.blocos.some((b) => b.seriesAlvo != null));
+              return comForca.length ? comForca.reduce((a, x) => a + x.blocos.filter((b) => b.seriesAlvo != null).length, 0) / comForca.length : 0;
+            };
+            const fpc = forcaPorSessaoDeCarga(plano.principal), fpcBase = forcaPorSessaoDeCarga(base.principal);
+            if (fpc < fpcBase - 1e-9)
+              anotar(cen, "ENFASE SUBTRAIU FORCA", `${fpc.toFixed(2)} contra ${fpcBase.toFixed(2)} blocos de forca por sessao de carga`);
+            if (sessoes > sessoesBase)
+              anotar(cen, "SESSOES ALEM DA FREQUENCIA", `${sessoes} sessoes contra ${sessoesBase} do plano sem condicao (frequencia declarada ${frequencia}x)`);
 
             // Só cobra acréscimo se havia espaço: base com aeróbio em TODA sessão está cheia.
             const havia = aerBase < sessoesBase;

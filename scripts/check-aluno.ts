@@ -81,7 +81,13 @@ const acharCorpo = (nome: string) => {
   const alvo = acharCorpo("HeroTreinoDeHoje");
   if (!alvo) falhas.push("A: não achei o componente HeroTreinoDeHoje (renomeado? mova a regra junto).");
   else {
-    const derivaDasExecucoes = /execucoes\.some\(\s*\(e\)\s*=>[^)]*blocoRef/.test(alvo.corpo);
+    // Derivar das execuções, desde 01/09/2026, é perguntar a `blocoCompleto` (todas as
+    // séries registradas), a fonte única em src/data/execucao.ts. O `execucoes.some(blocoRef)`
+    // de antes continua aceito só como forma, porque com o registro por série ele significa
+    // "começou", e é check:registro quem proíbe essa leitura nas telas.
+    const derivaDasExecucoes =
+      /blocoCompleto\(\s*b,\s*execucoes,\s*semana\s*\)/.test(alvo.corpo) ||
+      /execucoes\.some\(\s*\(e\)\s*=>[^)]*blocoRef/.test(alvo.corpo);
     const imprimeOPar = /\{nFeitos\}[\s\S]{0,60}\{nExercicios\}/.test(alvo.corpo);
     if (!derivaDasExecucoes)
       falhas.push(`A: ${rel(alvo.f)} · o cabeçalho da sessão não conta os feitos a partir das execuções.`);
