@@ -60,6 +60,7 @@ import {
   regrasDaSessao,
 } from "@/lib/gps/alvoResumo";
 import { adequacaoLabel, EQUIPAMENTOS, type GpsObjetivo, type Recommendation } from "@/lib/gps/engine";
+import { acervoRanqueadoAgrupado, acervoAlfabeticoAgrupado } from "@/lib/gps/acervoAgrupado";
 import { sugerirTroca, type ContextoTroca } from "@/lib/gps/sugerirTroca";
 import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
 import type { Nivel } from "@/data/types";
@@ -1072,13 +1073,19 @@ export function SessaoBloco({
 }) {
   const faixa = getFaixa(ctx.objetivo);
 
-  // Com perfil de aluno, o "Adicionar" segue o mesmo ranking seguro do Prescrever exercício;
-  // sem perfil, a ordem alfabética é a mais previsível para o plano avulso.
-  const opcoesAdicionar = React.useMemo(
+  /*
+   * O acervo AGRUPADO POR MÚSCULO, com o ranking preservado dentro de cada grupo.
+   *
+   * Era uma lista corrida de 101 itens sem cabeçalho, e o personal que pediu isto estava
+   * rolando às cegas atrás de um exercício de costas. A ordem nunca foi aleatória (é o
+   * ranking de segurança daquele aluno), então agrupar sem reordenar mantém as duas coisas:
+   * a seção que ele procura, e o item mais indicado no topo dela. Ver acervoAgrupado.ts.
+   */
+  const gruposDoAcervo = React.useMemo(
     () =>
       temContextoDeAluno(ctx)
-        ? sugerirTroca(ctxTrocaDe(ctx)).map((r) => r.exercise)
-        : [...exercises].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")),
+        ? acervoRanqueadoAgrupado(sugerirTroca(ctxTrocaDe(ctx)))
+        : acervoAlfabeticoAgrupado(exercises),
     [ctx],
   );
 
@@ -1250,10 +1257,14 @@ export function SessaoBloco({
               className="input h-8 max-w-[220px] py-0 text-xs"
             >
               <option value="">Escolher do acervo</option>
-              {opcoesAdicionar.map((e) => (
-                <option key={e.slug} value={e.slug}>
-                  {e.nome}
-                </option>
+              {gruposDoAcervo.map((g) => (
+                <optgroup key={g.rotulo} label={g.rotulo}>
+                  {g.exercicios.map((e) => (
+                    <option key={e.slug} value={e.slug}>
+                      {e.nome}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
             <button
