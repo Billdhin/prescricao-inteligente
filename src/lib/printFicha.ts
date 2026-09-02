@@ -7,6 +7,7 @@
  */
 
 import type { MonitoringParameter } from "@/data/monitoringParameters";
+import { abrirDocumento } from "@/lib/abrirDocumento";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 import { CORES_PDF as C } from "@/lib/pdfCores";
 
@@ -40,13 +41,7 @@ const CSS = `
 `;
 
 function abrir(html: string) {
-  const w = window.open("", "_blank", "width=800,height=1000");
-  if (!w) {
-    alert("Permita pop-ups para imprimir/baixar a ficha.");
-    return;
-  }
-  w.document.write(html);
-  w.document.close();
+  abrirDocumento(html);
 }
 
 function shell(titulo: string, corpo: string, ident?: IdentProf) {

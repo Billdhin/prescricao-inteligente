@@ -227,7 +227,17 @@ export function ajustarCarga(
   const ultimaSemana = Math.max(...comCarga.map((e) => e.semana ?? 0));
   const doMicro = comCarga.filter((e) => (e.semana ?? 0) === ultimaSemana);
 
-  const cargaBase = doMicro[doMicro.length - 1].cargaFeita as number;
+  /*
+   * A BASE É A CARGA PRINCIPAL DA SEMANA, não a da última série.
+   *
+   * Com o registro por série (01/09/2026), a última série é justamente a que o aluno costuma
+   * baixar quando cansa. Partir dela faria a sugestão progredir a partir da carga reduzida, e
+   * o aluno que fez 60, 60 e 55 receberia a próxima semana calculada sobre 55. A carga que
+   * representa o trabalho é a mais frequente do microciclo; no empate, a maior.
+   */
+  const contagem = new Map<number, number>();
+  for (const e of doMicro) contagem.set(e.cargaFeita as number, (contagem.get(e.cargaFeita as number) ?? 0) + 1);
+  const cargaBase = [...contagem.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
   const cumpriuTopo = doMicro.every((e) => (e.repsFeitas ?? 0) >= faixa.max);
   // RPE alvo é o teto: acima dele (não "acima+1") já é esforço alto demais.
   const rpeAlto = doMicro.some((e) => (e.rpe ?? 0) > rpeAlvoMax);

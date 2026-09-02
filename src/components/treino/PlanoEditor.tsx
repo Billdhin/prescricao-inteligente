@@ -43,6 +43,7 @@ import {
   METODOS_SERIE,
   getMetodo,
   agruparBlocosPorMetodo,
+  fraseDeSessoes,
 } from "@/data/periodizacao";
 import { recalcularAlvosDoMeso } from "@/lib/gps/travas";
 import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
@@ -701,9 +702,7 @@ function MicrocicloRow({
               Semana {micro.semana}
               {micro.tipo !== "carga" ? ` · ${TIPO_LABEL[micro.tipo]}` : ""}
             </Pill>
-            <span className="text-ink-2">
-              {micro.sessoes.length} {micro.sessoes.length === 1 ? "sessão" : "sessões"}
-            </span>
+            <span className="text-ink-2">{fraseDeSessoes(micro.sessoes)}</span>
             {mostrarSeloEstado && <Pill tone={ESTADO_TONE[estado]}>{ESTADO_LABEL[estado]}</Pill>}
           </div>
           {micro.sessoes.length > 0 && (

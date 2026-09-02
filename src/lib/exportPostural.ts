@@ -1,4 +1,5 @@
 import type { MarcaDocumento } from "@/lib/store";
+import { abrirDocumento } from "@/lib/abrirDocumento";
 import type { Aluno } from "@/data/alunos";
 import {
   type AvaliacaoPostural,
@@ -105,11 +106,5 @@ export function exportPosturalPDF({
   <script>window.onload = function () { window.print(); };</script>
   </body></html>`;
 
-  const w = window.open("", "_blank", "width=800,height=1000");
-  if (!w) {
-    alert("Permita pop-ups para exportar o laudo em PDF.");
-    return;
-  }
-  w.document.write(html);
-  w.document.close();
+  abrirDocumento(html);
 }

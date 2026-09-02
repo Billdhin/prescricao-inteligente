@@ -191,6 +191,16 @@ export interface Sessao {
    * app do aluno, ao lado dos blocos.
    */
   fecho?: string;
+  /**
+   * Sessão COMPLEMENTAR: acontece no mesmo dia de uma sessão principal, não num dia a mais.
+   *
+   * Nasceu para a camada isométrica (01/09/2026). O motor já limitava as sessões isométricas
+   * à frequência declarada ("quem treina 2x não recebe 3"), ou seja, sempre as desenhou para
+   * caber nos dias que o aluno tem. Mas o app listava cada uma como sessão a mais, e o aluno
+   * que declarou 3 dias lia "6 treinos" na semana. Com este campo, as telas contam e rotulam
+   * o complemento como complemento. Aditivo e opcional: plano antigo fica sem, e é sessão.
+   */
+  complemento?: boolean;
 }
 
 /**
@@ -415,6 +425,23 @@ export function sessoesDeHoje(plano: PlanoTreino, agora = Date.now()): Sessao[] 
   const semana = semanaAtual(plano, agora);
   const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
   return micro?.sessoes ?? [];
+}
+
+/** As sessões que ocupam um dia de treino (tudo que não é complemento). */
+export const sessoesPrincipais = (sessoes: Sessao[]): Sessao[] => sessoes.filter((s) => !s.complemento);
+/** Os complementos da semana (isométricos), que cabem no dia de uma sessão principal. */
+export const complementosDe = (sessoes: Sessao[]): Sessao[] => sessoes.filter((s) => !!s.complemento);
+
+/**
+ * "3 sessões" ou "3 sessões + 3 complementos": a frase de contagem de uma semana, única para
+ * o editor, o PDF e o app do aluno. Sem ela, cada tela somava tudo e o aluno que declarou 3
+ * dias lia "6 sessões".
+ */
+export function fraseDeSessoes(sessoes: Sessao[]): string {
+  const p = sessoesPrincipais(sessoes).length;
+  const c = complementosDe(sessoes).length;
+  const base = `${p} ${p === 1 ? "sessão" : "sessões"}`;
+  return c ? `${base} + ${c} ${c === 1 ? "complemento" : "complementos"}` : base;
 }
 
 /**

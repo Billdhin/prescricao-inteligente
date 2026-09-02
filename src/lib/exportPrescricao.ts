@@ -1,4 +1,5 @@
 import type { Aluno, Prescricao } from "@/data/alunos";
+import { abrirDocumento } from "@/lib/abrirDocumento";
 import { rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import type { MarcaDocumento } from "@/lib/store";
 import { exercises } from "@/data/exercises";
@@ -168,11 +169,5 @@ export function exportPrescricaoPDF({
   <script>window.onload = function () { window.print(); };</script>
   </body></html>`;
 
-  const w = window.open("", "_blank", "width=800,height=1000");
-  if (!w) {
-    alert("Permita pop-ups para exportar a prescrição em PDF.");
-    return;
-  }
-  w.document.write(html);
-  w.document.close();
+  abrirDocumento(html);
 }

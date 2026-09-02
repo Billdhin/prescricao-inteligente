@@ -5,6 +5,7 @@
  */
 
 import type { ChecklistSemaforo, ResultadoSemaforo } from "@/data/semaforo";
+import { abrirDocumento } from "@/lib/abrirDocumento";
 import { getReferencia } from "@/data/referencias";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 import { CORES_PDF as C } from "@/lib/pdfCores";
@@ -126,11 +127,5 @@ export function printSemaforo(
   <script>window.onload = function () { window.print(); };</script>
   </body></html>`;
 
-  const w = window.open("", "_blank", "width=800,height=1000");
-  if (!w) {
-    alert("Permita pop-ups para imprimir o semáforo.");
-    return;
-  }
-  w.document.write(html);
-  w.document.close();
+  abrirDocumento(html);
 }

@@ -518,7 +518,8 @@ export const useAlunos = create<AlunosState>()(
         cloudRemovePlano(id);
       },
       addLiberacao: (l) => {
-        set((s) => ({ liberacoes: [l, ...s.liberacoes].slice(0, 200) }));
+        // 1000 liberações: com semáforo diário numa carteira de 20 alunos, 200 eram dez dias.
+        set((s) => ({ liberacoes: [l, ...s.liberacoes].slice(0, 1000) }));
         cloudSaveLiberacao(l);
       },
       // A conduta do profissional quando ela diverge do semáforo. Não altera o RESULTADO
@@ -558,7 +559,10 @@ export const useAlunos = create<AlunosState>()(
                   (x.serie ?? null) === (e.serie ?? null)
                 ),
             ),
-          ].slice(0, 2000),
+          // 6000 execuções: com o registro por série (3 por exercício), 2000 eram duas
+          // semanas de uma carteira de 20 alunos. A nuvem guarda tudo; este teto só protege
+          // o localStorage de quem usa sem conta.
+          ].slice(0, 6000),
         }));
       },
       removeExecucao: (id) => {
@@ -574,7 +578,7 @@ export const useAlunos = create<AlunosState>()(
             ...s.sessaoFeedbacks.filter(
               (x) => !(x.alunoId === f.alunoId && x.planoId === f.planoId && x.semana === f.semana && x.sessaoRef === f.sessaoRef),
             ),
-          ].slice(0, 500),
+          ].slice(0, 1500),
         }));
       },
       // Rastreio postural: contém fotos (data URL, sensível e pesado). Fica LOCAL,

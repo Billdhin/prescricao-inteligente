@@ -9,6 +9,7 @@
  */
 
 import type { Aluno, Prescricao, ProntuarioSnapshot } from "@/data/alunos";
+import { abrirDocumento } from "@/lib/abrirDocumento";
 import { rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import type { MarcaDocumento } from "@/lib/store";
 import { bibliografia } from "@/data/referencias";
@@ -320,11 +321,5 @@ export function exportProntuarioPDF({
   <script>window.onload = function () { window.print(); };</script>
   </body></html>`;
 
-  const w = window.open("", "_blank", "width=820,height=1000");
-  if (!w) {
-    alert("Permita pop-ups para exportar o prontuário em PDF.");
-    return;
-  }
-  w.document.write(html);
-  w.document.close();
+  abrirDocumento(html);
 }

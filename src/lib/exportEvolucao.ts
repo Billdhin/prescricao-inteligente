@@ -1,4 +1,5 @@
 import type { MarcaDocumento } from "@/lib/store";
+import { abrirDocumento } from "@/lib/abrirDocumento";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { METRICAS_EVOLUCAO, type DirMetrica } from "@/components/app/EvolucaoMini";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -162,11 +163,5 @@ export function montarEvolucaoHtml({ aluno, avaliacoes, profissional, cref, marc
 
 export function exportEvolucaoPDF(opts: EvolucaoPdfOpts) {
   const html = montarEvolucaoHtml(opts);
-  const w = window.open("", "_blank", "width=900,height=1000");
-  if (!w) {
-    alert("Permita pop-ups para exportar a evolução em PDF.");
-    return;
-  }
-  w.document.write(html);
-  w.document.close();
+  abrirDocumento(html);
 }

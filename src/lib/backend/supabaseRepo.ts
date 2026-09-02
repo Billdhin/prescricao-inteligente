@@ -372,6 +372,26 @@ export async function salvarLiberacao(l: Liberacao): Promise<void> {
     // divergência ficaria retido no aparelho, com o aviso de falha que o toast já dá.
     ...(l.decisaoContraria ? { decisao_contraria: l.decisaoContraria } : {}),
   });
+  /*
+   * Coluna ausente (42703) = migração 0008 ainda não rodou neste projeto. Antes, a liberação
+   * INTEIRA falhava, e o profissional que tinha acabado de registrar uma decisão contrária
+   * via o semáforo do dia não subir. Agora a liberação sobe sem a divergência, e o erro que
+   * segue para o toast diz exatamente o que ficou retido e o que resolve.
+   */
+  if (error && error.code === "42703" && l.decisaoContraria) {
+    const { error: e2 } = await getSupabase().from("liberacoes").upsert({
+      id: l.id,
+      user_id: await uid(),
+      aluno_id: l.alunoId ?? null,
+      grupo_slug: l.grupoSlug,
+      data: new Date(l.data).toISOString(),
+      respostas: l.respostas,
+      resultado: l.resultado,
+      ajustes: l.ajustes,
+    });
+    if (e2) throw e2;
+    throw new Error("a decisão contrária (a liberação em si subiu; falta aplicar a migração 0008 no Supabase)");
+  }
   if (error) throw error;
 }
 

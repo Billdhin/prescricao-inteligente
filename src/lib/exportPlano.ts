@@ -1,9 +1,10 @@
 import type { Aluno } from "@/data/alunos";
+import { abrirDocumento } from "@/lib/abrirDocumento";
 import { rotuloObjetivoPar } from "@/lib/gps/objetivos";
 import type { MarcaDocumento } from "@/lib/store";
 import type { Macrociclo, Mesociclo, Microciclo, PlanoTreino, Sessao } from "@/data/periodizacao";
 import type { Nivel } from "@/data/types";
-import { getModelo, getMetodo, rotuloHorizonte, rotuloFrequencia, TEND_LABEL, agruparBlocosPorMetodo } from "@/data/periodizacao";
+import { getModelo, getMetodo, rotuloHorizonte, rotuloFrequencia, TEND_LABEL, agruparBlocosPorMetodo, fraseDeSessoes } from "@/data/periodizacao";
 import { getModalidade } from "@/data/modalities";
 import { exercises } from "@/data/exercises";
 import { getParam } from "@/data/monitoringParameters";
@@ -277,7 +278,7 @@ function mesoHtml(m: Mesociclo, i: number) {
       return `
       <div class="semana">
         <p class="semana-tit">${rotuloSemanas(g.semanas)} <span class="tipo">${TIPO_SEMANA[g.micro.tipo]}</span>${seloEstado}
-          <span class="freq">${g.micro.sessoes.length} ${g.micro.sessoes.length === 1 ? "sessão" : "sessões"} na semana</span></p>
+          <span class="freq">${fraseDeSessoes(g.micro.sessoes)} na semana</span></p>
         ${g.micro.objetivo ? `<p class="objetivo-sem"><b>Objetivo da semana:</b> ${esc(g.micro.objetivo)}</p>` : ""}
         ${reducao}
         ${g.micro.nota ? `<p class="nota">${esc(g.micro.nota)}</p>` : ""}
@@ -617,11 +618,5 @@ export function exportPlanoPDF({
 
   if (apenasHtml) return html;
 
-  const w = window.open("", "_blank", "width=800,height=1000");
-  if (!w) {
-    alert("Permita pop-ups para exportar o plano em PDF.");
-    return;
-  }
-  w.document.write(html);
-  w.document.close();
+  abrirDocumento(html);
 }

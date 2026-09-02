@@ -65,6 +65,8 @@ import {
   agruparBlocosPorMetodo,
   sessaoDeHojeIndex,
   rotuloFrequencia,
+  sessoesPrincipais,
+  complementosDe,
 } from "@/data/periodizacao";
 
 // A sessão tem algum bloco com intensidade prescrita? Governa a nota educacional
@@ -398,7 +400,9 @@ function CabecalhoAluno({
   const treinosDaSemana = React.useMemo(() => {
     if (!plano || semana == null) return null;
     const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
-    const sessoes = micro?.sessoes ?? [];
+    // Só as sessões que ocupam um dia: o complemento isométrico cabe no dia de uma delas,
+    // e contá-lo faria quem declarou 3 dias ler "6 treinos" (ver Sessao.complemento).
+    const sessoes = sessoesPrincipais(micro?.sessoes ?? []);
     if (!sessoes.length) return null;
     return { total: sessoes.length, feitos: sessoes.filter((s) => sessaoConcluida(s, semana, execucoes)).length };
   }, [plano, semana, execucoes]);
@@ -642,13 +646,18 @@ function AbaHoje({
 
   const semana = semanaAtual(plano);
   const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
-  const sessoes = micro?.sessoes ?? [];
+  const todas = micro?.sessoes ?? [];
+  // As sessões que ocupam um dia, e os complementos (isométricos) que cabem no dia de
+  // uma delas. Listados separados: o aluno que declarou 3 dias não pode ler 6 treinos.
+  const sessoes = sessoesPrincipais(todas);
+  const complementos = complementosDe(todas);
   // "Hoje" = a primeira sessão ainda não concluída; se todas foram feitas, a
   // primeira da semana. Helper compartilhado com o "personalizar o treino do
-  // dia" do profissional, para os dois nunca mirarem sessões diferentes.
-  const idxHoje = sessaoDeHojeIndex(plano, execucoes);
-  const sessaoHoje = sessoes[idxHoje];
-  const outras = sessoes.filter((_, i) => i !== idxHoje);
+  // dia" do profissional, para os dois nunca mirarem sessões diferentes. Se o
+  // índice cair num complemento (todas as principais feitas), hoje é a primeira.
+  const idxTodas = sessaoDeHojeIndex(plano, execucoes);
+  const sessaoHoje = todas[idxTodas]?.complemento ? sessoes[0] : todas[idxTodas];
+  const outras = sessoes.filter((s) => s.id !== sessaoHoje?.id);
 
   return (
     <div className="space-y-4">
@@ -699,6 +708,27 @@ function AbaHoje({
                 key={s.id}
                 sessao={s}
                 ordem={sessoes.findIndex((x) => x.id === s.id) + 1}
+                concluida={sessaoConcluida(s, semana, execucoes)}
+                cor={cor}
+                onIniciar={onAbrir ? () => onAbrir(s) : undefined}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {complementos.length > 0 && (
+        <section>
+          <h2 className="mb-1 text-2xs font-bold uppercase tracking-wider text-analysis-text">Complementos da semana</h2>
+          <p className="mb-2 text-xs text-ink-2">
+            Curtos, no mesmo dia de um treino. Não são dias a mais: seu professor os prescreveu para caber na sua semana.
+          </p>
+          <div className="space-y-2">
+            {complementos.map((s, i) => (
+              <LinhaSessao
+                key={s.id}
+                sessao={s}
+                ordem={i + 1}
                 concluida={sessaoConcluida(s, semana, execucoes)}
                 cor={cor}
                 onIniciar={onAbrir ? () => onAbrir(s) : undefined}
@@ -1483,7 +1513,7 @@ function AbaTreinos({
   const semana = semanaAtual(plano);
   const meso = mesocicloAtual(plano);
   const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
-  const sessoes = micro?.sessoes ?? [];
+  const sessoes = sessoesPrincipais(micro?.sessoes ?? []);
   const idxHoje = sessaoDeHojeIndex(plano, execucoes);
   const concluidasNaSemana = sessoes.filter((s) => sessaoConcluida(s, semana, execucoes)).length;
   const semanaFechada = sessoes.length > 0 && concluidasNaSemana === sessoes.length;

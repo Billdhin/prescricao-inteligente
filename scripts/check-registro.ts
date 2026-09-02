@@ -251,6 +251,23 @@ const DIA = 86_400_000;
   else ok(`hipertensão estágio 1: ${ht1} descargas em 12 semanas contra ${base} sem condição`);
 }
 
+/* ============ 4. Complemento isométrico não é dia a mais na semana do aluno ============ */
+{
+  const { sessoesPrincipais, complementosDe, fraseDeSessoes } = await import("@/data/periodizacao");
+  const p = gerarPlano({ objetivo: "Hipertrofia", nivel: "Iniciante", semanas: 8, frequencia: 3, grupoEspecial: "hipertensao-estagio-1" });
+  const sem1 = p.principal.mesociclos[0].microciclos[0].sessoes;
+  const principais = sessoesPrincipais(sem1).length;
+  const comps = complementosDe(sem1).length;
+  if (comps === 0) falha("a hipertensão deixou de receber sessão isométrica como complemento (a camada isométrica sumiu ou perdeu o marcador)");
+  else if (principais !== 3) falha(`frequência declarada 3 e ${principais} sessões principais na semana: o complemento virou dia a mais`);
+  else ok(`hipertensão 3x: ${principais} sessões que ocupam dia + ${comps} complementos, e a frase diz “${fraseDeSessoes(sem1)}”`);
+
+  const app = fs.readFileSync(path.resolve(process.cwd(), "src/components/student/StudentApp.tsx"), "utf8");
+  if (!/sessoesPrincipais\(micro\?\.sessoes \?\? \[\]\)/.test(app))
+    falha("o app do aluno voltou a contar os complementos como treinos da semana");
+  else ok("o app do aluno conta a semana pelas sessões que ocupam dia");
+}
+
 /* --------------------------------- Veredito --------------------------------- */
 if (falhas.length) {
   console.error(`\n[check:registro] ${falhas.length} falha(s):`);

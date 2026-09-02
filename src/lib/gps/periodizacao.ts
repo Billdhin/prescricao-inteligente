@@ -1530,6 +1530,8 @@ function montarSessoes(
         sessoes.push({
           id: nid("ses"),
           nome: `Sessão isométrica ${k + 1}`,
+          // Cabe no dia de treino, não é dia a mais: ver Sessao.complemento.
+          complemento: true,
           // O foco sai da INDICAÇÃO que de fato disparou, e não de um texto fixo da camada:
           // é ele que responde, na tela, por que este aluno recebeu esta sessão.
           foco: indicacaoIso.foco,
