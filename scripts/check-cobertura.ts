@@ -151,6 +151,47 @@ if (falhas.length) {
   process.exit(1);
 }
 
+/*
+ * COBERTURA POR FAMÍLIA AO LONGO DO PLANO (01/09/2026).
+ *
+ * "Três grupos por semana" passava um plano de hipertrofia de 12 semanas sem um único
+ * exercício de braço nem de core, e um de emagrecimento sem ombro, braço nem core. O amigo do
+ * Filipe olhou e perguntou "cadê o braço?". A causa era dupla: o gerador pedia só
+ * `frequência + 2` exercícios para a semana inteira e girava a lista, e o catálogo marca
+ * poucas famílias para alguns objetivos. Agora o pool pede a semana inteira, o corte garante
+ * uma vaga por família, a distribuição gira as famílias pelas sessões, e o guardrail cobra:
+ *
+ *  - plano de 3x ou mais toca as 6 famílias (perna, peito, costas, ombro, braço, core);
+ *  - plano de 2x toca ao menos 5;
+ *  - nenhuma sessão principal sai sem membros inferiores;
+ *  - quando um exercício de outro objetivo entra por cobertura, o raciocínio diz isso.
+ */
+{
+  const FAMILIAS = ["Membros inferiores", "Peitorais", "Costas", "Ombros", "Braços", "Core (tronco)"];
+  const casos = [
+    { rotulo: "hipertrofia 3x", objetivo: "Hipertrofia", nivel: "Intermediário", frequencia: 3, minimo: 6 },
+    { rotulo: "emagrecimento 3x", objetivo: "Emagrecimento", nivel: "Iniciante", frequencia: 3, minimo: 6 },
+    { rotulo: "emagrecimento 2x", objetivo: "Emagrecimento", nivel: "Iniciante", frequencia: 2, minimo: 5 },
+    { rotulo: "força 4x", objetivo: "Força", nivel: "Avançado", frequencia: 4, minimo: 6 },
+    { rotulo: "hipertensão 3x", objetivo: "Emagrecimento", nivel: "Iniciante", frequencia: 3, grupoEspecial: "hipertensao-estagio-1", minimo: 6 },
+    { rotulo: "casa halter+elástico 3x", objetivo: "Hipertrofia", nivel: "Iniciante", frequencia: 3, equipamentos: ["Halter", "Elástico", "Peso corporal"], minimo: 6 },
+  ] as const;
+  for (const c of casos) {
+    const plano = gerarPlano({ objetivo: c.objetivo as never, nivel: c.nivel as never, semanas: 12, frequencia: c.frequencia, grupoEspecial: (c as { grupoEspecial?: string }).grupoEspecial, equipamentos: (c as { equipamentos?: string[] }).equipamentos ? [...(c as { equipamentos: string[] }).equipamentos] : undefined });
+    const sessoes = sessoesDe(plano.principal).filter((s) => !s.complemento);
+    const forca = sessoes.flatMap((s) => s.blocos.filter((b) => b.tipo === "forca"));
+    const familias = new Set(forca.map((b) => getExercise(b.exercicioSlug ?? "")?.grupoMuscular).filter((g) => g && FAMILIAS.includes(g)));
+    if (familias.size < c.minimo)
+      falhas.push(`${c.rotulo}: o plano toca ${familias.size} das 6 famílias (${[...familias].join(", ")}); o mínimo para ${c.frequencia}x é ${c.minimo}.`);
+    const semPerna = sessoes.filter((s) => !s.blocos.some((b) => b.tipo === "forca" && getExercise(b.exercicioSlug ?? "")?.grupoMuscular === "Membros inferiores")).length;
+    if (semPerna > 0) falhas.push(`${c.rotulo}: ${semPerna} sessão(ões) de força sem membros inferiores.`);
+    const foraDoObjetivo = forca.some((b) => { const e = getExercise(b.exercicioSlug ?? ""); return e && !e.objetivo?.includes(c.objetivo); });
+    if (foraDoObjetivo && !/não (é|são) específic/i.test(plano.raciocinio))
+      falhas.push(`${c.rotulo}: entrou exercício de outro objetivo e o raciocínio não declara.`);
+  }
+  if (!falhas.length) console.log("[check:cobertura] ok: 6 planos tocam as famílias que a frequência permite, nenhuma sessão sai sem perna, e o que entra por cobertura é declarado no raciocínio.");
+}
+
 console.log(
   `[check:cobertura] ok: ${PERFIS.length} perfis, nenhum grupo passa de ${TETO_POR_GRUPO * 100}% nem membros inferiores caem abaixo de ${PISO_INFERIORES * 100}%, todos tocam ao menos ${MIN_GRUPOS} grupos e nenhum plano fica sem membros superiores.`,
 );

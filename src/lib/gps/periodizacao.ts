@@ -448,7 +448,24 @@ function selecionarExercicios(
 
   // Pool base: do objetivo quando houver o bastante; senão, todo o catálogo no nível.
   const doObjetivo = exercises.filter((e) => e.objetivo?.includes(objetivo) && noNivel(e) && ehForca(e) && equipOk(e));
-  const pool = doObjetivo.length >= n ? doObjetivo : exercises.filter((e) => noNivel(e) && ehForca(e) && equipOk(e));
+  const noCatalogo = exercises.filter((e) => noNivel(e) && ehForca(e) && equipOk(e));
+  /*
+   * AS FAMÍLIAS QUE O OBJETIVO NÃO MARCA ENTRAM PELO CATÁLOGO.
+   *
+   * O catálogo marca poucos grupos para alguns objetivos: Emagrecimento tem perna, costas,
+   * peito e corpo todo, e nenhum ombro, braço ou core. Com o pool restrito ao objetivo, um
+   * plano de 12 semanas saía sem um único exercício dessas três famílias, e a sessão que
+   * sobrava era "perna, perna, perna". Não é decisão de treino: é a marcação do catálogo
+   * virando prescrição por omissão.
+   *
+   * O pool continua sendo o do objetivo (ele vem primeiro na fila, pelo bônus de primário),
+   * acrescido dos exercícios das famílias que o objetivo não tem. Eles só entram no plano
+   * pela vaga de cobertura, e são declarados em `foraDoObjetivo`, como qualquer exercício
+   * de outro objetivo sempre foi.
+   */
+  const familiasDoObjetivo = new Set(doObjetivo.map((e) => e.grupoMuscular));
+  const complementoDeFamilia = noCatalogo.filter((e) => !familiasDoObjetivo.has(e.grupoMuscular));
+  const pool = doObjetivo.length >= n ? [...doObjetivo, ...complementoDeFamilia] : noCatalogo;
 
   const ativas = restricoesAtivas(restricoes);
   const descartados: SelecaoExercicios["descartados"] = [];
@@ -688,9 +705,37 @@ function selecionarExercicios(
   // quando não há exercício limpo suficiente (perfil muito restrito, pouco equipamento).
   const jaNoRodizio = new Set(rodizio.map((a) => a.e.slug));
   const ordemFinal = [...rodizio, ...comPeso.filter((a) => !jaNoRodizio.has(a.e.slug))];
-  const escolhidos = ordemFinal
+  /*
+   * O CORTE DO POOL GARANTE UMA VAGA POR FAMÍLIA, e só depois segue a fila.
+   *
+   * Cortar os primeiros `n` da fila de mérito parecia neutro e não era. O rodízio roda
+   * primeiro entre os exercícios DO OBJETIVO, e o catálogo marca poucos grupos para alguns
+   * objetivos: Emagrecimento tem perna, costas, peito e corpo todo, e nada de ombro, braço
+   * ou core. Os `n` primeiros vinham todos dessas quatro famílias, e um plano de 12 semanas
+   * saía sem um único exercício de ombro ou de braço. Não é decisão de treino: é a marcação
+   * do catálogo virando prescrição por omissão.
+   *
+   * Agora a primeira ocorrência de cada família na fila entra antes do corte, e o resto das
+   * vagas segue a ordem de mérito. Quem já tinha perdido por segurança continua fora
+   * (`limpos` decide isso, não este corte), e o exercício de outro objetivo que entra por
+   * cobertura é declarado em `foraDoObjetivo`, como sempre foi.
+   */
+  /*
+   * A VAGA POR FAMÍLIA SÓ SAI DOS LIMPOS. A primeira versão procurava na fila inteira, e o
+   * check:core reprovou na hora: para a gestante, os únicos exercícios de peito e de tríceps
+   * limpos não existiam, e a garantia de família promoveu "Flexão de braço" e "Tríceps testa",
+   * os dois na posição deitada que a condição pede para evitar. Cobertura nunca custa
+   * segurança: família sem exercício limpo fica de fora, e o plano diz menos, mas não mente.
+   */
+  const FAMILIAS = ["Membros inferiores", "Peitorais", "Costas", "Ombros", "Braços", "Core (tronco)", "Corpo todo"];
+  const primeiroDeCadaFamilia = FAMILIAS.map((f) => rodizio.find((a) => a.e.grupoMuscular === f)).filter(
+    (a): a is (typeof rodizio)[number] => a != null,
+  );
+  const garantidos = new Set(primeiroDeCadaFamilia.map((a) => a.e.slug));
+  const ordemComCobertura = [...primeiroDeCadaFamilia, ...ordemFinal.filter((a) => !garantidos.has(a.e.slug))];
+  const escolhidos = ordemComCobertura
     .slice(0, Math.max(n, 1))
-    .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug }));
+    .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, limpo: jaNoRodizio.has(a.e.slug) }));
 
   /*
    * A RESTRIÇÃO DO ALUNO REBAIXAVA EM SILÊNCIO.
@@ -817,10 +862,14 @@ export interface ConsequenciasDoPlano {
  * consideradas ao lado. É o que ele pediu, e é o que é verdade.
  */
 export function consequenciasDoPlano(input: GerarPlanoInput): ConsequenciasDoPlano {
+  // O MESMO pedido que montarSessoes faz (sessões x vagas), senão as consequências
+  // descrevem uma seleção que não é a do plano: com `frequência + 2` aqui e a semana inteira
+  // lá, o raciocínio dizia "nenhum exercício fora do objetivo" para um plano que tinha três.
+  const porSessao = input.objetivo === "Emagrecimento" ? 3 : 4;
   const sel = selecionarExercicios(
     input.objetivo,
     input.nivel,
-    Math.max(4, input.frequencia + 2),
+    Math.max(4, input.frequencia * porSessao),
     restricoesDoPlano(input),
     input.objetivoSecundario,
     regraClinicaDoPlano(input),
@@ -1245,6 +1294,127 @@ function exercicioIsometrico(
   return undefined;
 }
 
+/**
+ * AS FAMÍLIAS QUE UMA SEMANA DE FORÇA PRECISA TOCAR, e a ordem em que as vagas giram.
+ *
+ * Membros inferiores têm cota própria por sessão (metade das vagas, arredondada para baixo:
+ * 2 de 4, 1 de 3), porque o rótulo único esconde dois padrões de movimento (dominante de
+ * joelho e de quadril). As outras vagas giram por estas famílias, nesta ordem, atravessando
+ * as sessões da semana: quem treina 3x com 4 exercícios tem 6 vagas de superior por semana,
+ * e as 5 famílias cabem. "Corpo todo" fecha a fila como coringa, não como obrigação.
+ */
+const FAMILIAS_SUPERIORES = ["Peitorais", "Costas", "Ombros", "Braços", "Core (tronco)", "Corpo todo"] as const;
+
+/**
+ * DISTRIBUI OS ESCOLHIDOS PELAS SESSÕES DA SEMANA COBRINDO AS FAMÍLIAS.
+ *
+ * ## O defeito que isto corrige
+ *
+ * O gerador pedia `frequência + 2` exercícios para a semana INTEIRA (5, para quem treina 3x)
+ * e cada sessão girava essa lista pelo módulo. Com a cota de 2 de perna no rodízio de
+ * seleção, sobravam 3 vagas, que peito, costas e ombro ocupavam. Braço e core nunca entravam,
+ * em semana nenhuma: um plano de hipertrofia de 12 semanas para um homem de 28 anos saía sem
+ * um único exercício de braço. Passava no guardrail de cobertura (3 grupos por semana) e
+ * qualquer professor olhando de longe perguntava "cadê o braço?". Um amigo do Filipe
+ * perguntou exatamente isso.
+ *
+ * ## Como funciona
+ *
+ * Cada sessão recebe primeiro a cota de membros inferiores, depois as vagas de superior
+ * andam por FAMILIAS_SUPERIORES com um cursor que atravessa as sessões (a sessão 2 continua
+ * de onde a 1 parou), para a semana cobrir o máximo de famílias que as vagas permitirem.
+ * Família sem exercício no pool (equipamento, restrição) é pulada, não inventada. Exercício
+ * não se repete dentro da semana enquanto o pool tiver outro; quando acaba, repete, na ordem
+ * de mérito, que é o comportamento antigo e é o que garante que a sessão nunca sai curta.
+ *
+ * A lista de entrada JÁ VEM ranqueada por segurança e mérito (selecionarExercicios), e a
+ * primeira ocorrência de cada família na lista é a melhor daquela família para o aluno.
+ * Esta função só decide ONDE cada um cai; não reordena o mérito.
+ */
+function distribuirPorFamilia(
+  escolhidos: { slug: string; nome: string; limpo?: boolean }[],
+  frequencia: number,
+  porSessao: number,
+): { slug: string; nome: string }[][] {
+  const grupoDe = (slug: string) => exercises.find((e) => e.slug === slug)?.grupoMuscular ?? "outro";
+  // As famílias e a cota de perna só escolhem entre os LIMPOS (nenhuma restrição rebaixou,
+  // condição não penalizou). O que a seleção deixou na cauda por segurança só entra quando
+  // não sobrou nada limpo, que é o mesmo papel que a cauda sempre teve.
+  const ehLimpo = (e: { limpo?: boolean }) => e.limpo !== false;
+  const porGrupo = new Map<string, { slug: string; nome: string }[]>();
+  for (const e of escolhidos) {
+    if (!ehLimpo(e)) continue;
+    const g = grupoDe(e.slug);
+    if (!porGrupo.has(g)) porGrupo.set(g, []);
+    porGrupo.get(g)!.push(e);
+  }
+  const usados = new Set<string>();
+  const reuso = new Map<string, number>();
+  // O próximo exercício de um grupo: um que ainda não entrou na semana; se o grupo já foi
+  // todo usado e `repetir` está ligado, cicla pela ordem de mérito do grupo.
+  const proximo = (grupo: string, repetir: boolean) => {
+    const lista = porGrupo.get(grupo) ?? [];
+    const livre = lista.find((x) => !usados.has(x.slug));
+    if (livre) {
+      usados.add(livre.slug);
+      return livre;
+    }
+    if (!repetir || !lista.length) return undefined;
+    const i = reuso.get(grupo) ?? 0;
+    reuso.set(grupo, i + 1);
+    return lista[i % lista.length];
+  };
+  const inferioresPorSessao = Math.max(1, Math.floor(porSessao / 2));
+  let cursor = 0;
+  const sessoes: { slug: string; nome: string }[][] = [];
+  for (let i = 0; i < frequencia; i++) {
+    const sessao: { slug: string; nome: string }[] = [];
+    // Perna sempre entra, repetindo o exercício se o pool acabou: treinar perna toda sessão
+    // com o mesmo leg press é rotina, sessão sem perna é reclamação.
+    for (let k = 0; k < inferioresPorSessao; k++) {
+      const it = proximo("Membros inferiores", true);
+      if (it && !sessao.some((x) => x.slug === it.slug)) sessao.push(it);
+    }
+    // Superiores giram pelas famílias; uma volta inteira sem achar nada encerra a busca.
+    let semAchar = 0;
+    while (sessao.length < porSessao && semAchar < FAMILIAS_SUPERIORES.length) {
+      const fam = FAMILIAS_SUPERIORES[cursor % FAMILIAS_SUPERIORES.length];
+      cursor++;
+      const it = proximo(fam, false);
+      if (it) {
+        sessao.push(it);
+        semAchar = 0;
+      } else semAchar++;
+    }
+    // Vaga que sobrou: o melhor ainda não usado, primeiro de qualquer grupo que NÃO seja
+    // perna (a cota de perna já entrou), depois perna. Sem esta ordem, um pool magro em
+    // superiores devolvia a sessão "perna + perna + perna", que é a reclamação original com
+    // outro rosto.
+    // Ordem de preferência: limpo de superior, limpo de perna, e só então a cauda penalizada.
+    for (const [soLimpo, preferirSuperior] of [
+      [true, true],
+      [true, false],
+      [false, false],
+    ] as const) {
+      for (const e of escolhidos) {
+        if (sessao.length >= porSessao) break;
+        if (usados.has(e.slug)) continue;
+        if (soLimpo && !ehLimpo(e)) continue;
+        if (preferirSuperior && grupoDe(e.slug) === "Membros inferiores") continue;
+        usados.add(e.slug);
+        sessao.push(e);
+      }
+    }
+    // Pool esgotado: repete pela ordem de mérito, sem duplicar dentro da mesma sessão.
+    for (let j = 0; sessao.length < porSessao && escolhidos.length > 0 && j < escolhidos.length; j++) {
+      const e = escolhidos[j];
+      if (!sessao.some((x) => x.slug === e.slug)) sessao.push(e);
+    }
+    sessoes.push(sessao);
+  }
+  return sessoes;
+}
+
 function montarSessoes(
   objetivo: GpsObjetivo,
   nivel: Nivel,
@@ -1277,8 +1447,13 @@ function montarSessoes(
   frequenciaDoPlano?: number,
 ): Sessao[] {
   const faixa = getFaixa(objetivo);
-  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, (frequenciaDoPlano ?? frequencia) + 2), restricoes, objetivoSecundario, regraClinica, equipamentos);
+  // 3 a 4 exercícios de força por sessão. O POOL pede a semana inteira (sessões x vagas), e
+  // não `frequência + 2`: com 5 exercícios para 3 sessões, as vagas giravam os mesmos cinco
+  // e duas famílias nunca entravam (ver distribuirPorFamilia).
+  const porSessao = objetivo === "Emagrecimento" ? 3 : 4;
+  const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, (frequenciaDoPlano ?? frequencia) * porSessao), restricoes, objetivoSecundario, regraClinica, equipamentos);
   const escolhidos = selecao.escolhidos;
+  const porSessaoDaSemana = distribuirPorFamilia(escolhidos, frequencia, porSessao);
   const sessoes: Sessao[] = [];
 
   // A variação diária só entra quando o modelo pede E o objetivo tem ênfases autoradas
@@ -1378,17 +1553,13 @@ function montarSessoes(
       });
     }
 
-    // 3 a 4 exercícios de força por sessão, girando a lista de escolhidos.
-    const porSessao = objetivo === "Emagrecimento" ? 3 : 4;
     /*
-     * Pool vazio não pode derrubar a geração. Antes do filtro de equipamentos isso era
-     * inalcançável (o catálogo inteiro no nível sempre sobrava); com ele, uma lista
-     * excêntrica (só Piscina, por exemplo) zera a força. O plano sai com o aeróbio que
-     * couber e `faltouCatalogo` acende, que é o sinal que a tela usa para mandar rever
-     * equipamentos, em vez de um índice por zero estourar aqui.
+     * Os exercícios desta sessão vêm da distribuição por família (ver distribuirPorFamilia).
+     * Pool vazio não pode derrubar a geração: com uma lista de equipamentos excêntrica (só
+     * Piscina, por exemplo) a força zera, o plano sai com o aeróbio que couber e
+     * `faltouCatalogo` acende, que é o sinal que a tela usa para mandar rever equipamentos.
      */
-    for (let j = 0; j < porSessao && escolhidos.length > 0; j++) {
-      const ex = escolhidos[(i * porSessao + j) % escolhidos.length];
+    for (const ex of porSessaoDaSemana[i] ?? []) {
       blocos.push({
         id: nid("blk"),
         tipo: "forca",
@@ -2625,12 +2796,24 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
      * mesma linha do aviso de horizonte curto logo abaixo.
      */
     (() => {
-      const fora = consequenciasDoPlano(input).foraDoObjetivo;
+      const cons = consequenciasDoPlano(input);
+      const fora = cons.foraDoObjetivo;
       if (!fora.length) return "";
+      // Dois motivos diferentes para um exercício de outro objetivo entrar, e a frase precisa
+      // dizer qual foi: faltou catálogo (o pool do objetivo não alcançava as vagas) ou
+      // cobertura de família (o catálogo não marca ombro, braço ou core para este objetivo, e
+      // uma semana de força sem essas famílias é a reclamação "cadê o braço?").
+      const cabeca = `Sobre a seleção: ${fora.length === 1 ? "um exercício não é específico" : `${fora.length} exercícios não são específicos`} do objetivo (${fora.join(", ")}). `;
+      if (cons.faltouCatalogo)
+        return (
+          cabeca +
+          `O catálogo disponível para este objetivo, neste nível e com os equipamentos declarados não alcançava a frequência pedida, ` +
+          `então entraram exercícios seguros do nível para completar a sessão. Ampliar os equipamentos declarados costuma resolver.`
+        );
       return (
-        `Sobre a seleção: ${fora.length === 1 ? "um exercício não é específico" : `${fora.length} exercícios não são específicos`} do objetivo ` +
-        `(${fora.join(", ")}). O catálogo disponível para este objetivo, neste nível e com os equipamentos declarados não alcançava a frequência pedida, ` +
-        `então entraram exercícios seguros do nível para completar a sessão. Ampliar os equipamentos declarados costuma resolver.`
+        cabeca +
+        `Entraram para a semana cobrir as famílias musculares que o catálogo não marca para este objetivo, ` +
+        `porque uma semana de força sem ombro, braço ou core não é um treino completo. Passaram pelos mesmos filtros de segurança, equipamento e restrição de todos os outros.`
       );
     })(),
     /*
