@@ -86,6 +86,34 @@ if (!modelo) {
       );
   }
 
+  /*
+   * -------- 2b. O painel diz o número do DIA, não só o da semana --------
+   * O professor pensava na sessão (dobrou) e lia o número da semana (+23%). Com o gesto
+   * numa sessão só, o efeito nomeia a sessão, dá o delta dela (maior que o da semana na
+   * proporção das sessões) e a leitura diz os dois números e o porquê.
+   */
+  if (e) {
+    if (!e.sessao) falhas.push("gesto numa sessão só, e o efeito não diz em qual sessão foi");
+    else {
+      if (e.sessao.nome !== sessao.nome)
+        falhas.push(`o efeito apontou a sessão errada: "${e.sessao.nome}" em vez de "${sessao.nome}"`);
+      if (!(e.sessao.deltaVolume != null && e.deltaVolume != null && e.sessao.deltaVolume > e.deltaVolume))
+        falhas.push(
+          `o delta da sessão (${e.sessao.deltaVolume}%) deveria ser maior que o da semana (${e.deltaVolume}%): ` +
+            "a semana dilui o gesto pelas outras sessões",
+        );
+      if (e.sessao.exerciciosDepois !== e.sessao.exerciciosAntes + 4)
+        falhas.push(`a sessão deveria ter 4 exercícios a mais, tem ${e.sessao.exerciciosDepois - e.sessao.exerciciosAntes}`);
+      if (e.sessoesMudadas !== 1) falhas.push(`mudou uma sessão, o efeito contou ${e.sessoesMudadas}`);
+      if (!(e.leitura && /na sessão/i.test(e.leitura) && /na semana/i.test(e.leitura)))
+        falhas.push("a leitura não diz os dois números (sessão e semana) no caso em que eles diferem");
+      if (!falhas.length)
+        ok(
+          `o painel fala do dia e da semana: sessão "${e.sessao.nome}" ${e.sessao.deltaVolume}%, semana ${e.deltaVolume}%, ${semana.sessoes.length} sessões`,
+        );
+    }
+  }
+
   /* -------- 3. Autoverificação: sem mudança nenhuma, nada é inventado -------- */
   if (efeitoDaEdicao(semana, semana) !== null)
     falhas.push("autoverificação: semana idêntica devolveu efeito, e o painel apareceria sem gesto nenhum");

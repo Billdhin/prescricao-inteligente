@@ -37,6 +37,23 @@ export interface EfeitoDaEdicao {
    * formas DESIGUAIS, que é exatamente o caso em que alguém conclui que a tela está quebrada.
    */
   leitura?: string;
+  /**
+   * A SESSÃO em que a edição aconteceu, com o efeito nela mesma.
+   *
+   * Um professor acrescentou quatro exercícios num dia de treino e leu "+23%" no painel: o
+   * número era da SEMANA (o dia era um de três), e ele pensava no dia, que tinha dobrado. O
+   * painel dizia a verdade sobre a semana e nada sobre o gesto. Presente quando exatamente
+   * uma sessão mudou; com mais de uma, `sessoesMudadas` diz quantas e o painel fala da semana.
+   */
+  sessao?: {
+    nome: string;
+    volumeAntes: number;
+    volumeDepois: number;
+    deltaVolume: number | null;
+    exerciciosAntes: number;
+    exerciciosDepois: number;
+  };
+  sessoesMudadas: number;
 }
 
 const contarBlocos = (m: Microciclo) => m.sessoes.reduce((n, s) => n + s.blocos.length, 0);
@@ -82,6 +99,35 @@ export function efeitoDaEdicao(antes: Microciclo, depois: Microciclo): EfeitoDaE
   if (nadaMudou) return null;
 
   /*
+   * QUAL SESSÃO MUDOU. Pareia as sessões pelo id e compara a assinatura dos blocos; a sessão
+   * cujo agregado ou contagem de blocos mudou é a do gesto. O agregado da sessão reaproveita
+   * `agregadoSemana` numa semana de uma sessão só, para a conta ser a mesma da semana (fonte
+   * única) e não uma segunda definição de volume.
+   */
+  const agregadoDaSessao = (m: Microciclo, s: Microciclo["sessoes"][number]) => agregadoSemana({ ...m, sessoes: [s] });
+  const mudadas = depois.sessoes
+    .map((s) => {
+      const antiga = antes.sessoes.find((x) => x.id === s.id);
+      if (!antiga) return { s, antiga: undefined };
+      const va = agregadoDaSessao(antes, antiga);
+      const vd = agregadoDaSessao(depois, s);
+      const mudou = va.volume !== vd.volume || va.intensidade !== vd.intensidade || antiga.blocos.length !== s.blocos.length;
+      return mudou ? { s, antiga, va, vd } : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x != null);
+  const unica = mudadas.length === 1 && mudadas[0].antiga ? mudadas[0] : undefined;
+  const sessao = unica && unica.va && unica.vd
+    ? {
+        nome: unica.s.nome,
+        volumeAntes: unica.va.volume,
+        volumeDepois: unica.vd.volume,
+        deltaVolume: variacao(unica.va.volume, unica.vd.volume),
+        exerciciosAntes: unica.antiga!.blocos.length,
+        exerciciosDepois: unica.s.blocos.length,
+      }
+    : undefined;
+
+  /*
    * A LEITURA. Escrita só para os casos em que as duas linhas discordam, porque é aí que a
    * tela parece errada. Quando ambas sobem juntas, o número já se explica sozinho e uma frase
    * a mais seria paternalismo.
@@ -100,6 +146,22 @@ export function efeitoDaEdicao(antes: Microciclo, depois: Microciclo): EfeitoDaE
       "As duas linhas foram para lados opostos: uma soma e uma média reagem de formas diferentes ao mesmo gesto.";
   }
 
+  /*
+   * O DIA E A SEMANA. Quando o gesto foi numa sessão só, o número do dia é o que a pessoa
+   * está esperando ver, e ele é maior que o da semana na proporção das sessões. Dizer os dois
+   * fecha o vão: "+96% na sessão, +23% na semana, porque a semana tem três sessões".
+   */
+  if (
+    sessao?.deltaVolume != null &&
+    deltaVolume != null &&
+    Math.abs(sessao.deltaVolume) >= 5 &&
+    Math.abs(sessao.deltaVolume) > Math.abs(deltaVolume) * 1.5
+  ) {
+    const n = depois.sessoes.length;
+    const frase = `Na sessão (${sessao.nome}) o volume ${sessao.deltaVolume > 0 ? "subiu" : "caiu"} ${Math.abs(sessao.deltaVolume).toFixed(0)}%; na semana, ${Math.abs(deltaVolume).toFixed(0)}%, porque a semana tem ${n} ${n === 1 ? "sessão" : "sessões"}.`;
+    leitura = leitura ? `${frase} ${leitura}` : frase;
+  }
+
   return {
     semana: depois.semana,
     volumeAntes: a.volume,
@@ -111,6 +173,8 @@ export function efeitoDaEdicao(antes: Microciclo, depois: Microciclo): EfeitoDaE
     exerciciosAntes: exAntes,
     exerciciosDepois: exDepois,
     leitura,
+    sessao,
+    sessoesMudadas: mudadas.length,
   };
 }
 

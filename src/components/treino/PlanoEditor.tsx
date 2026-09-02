@@ -489,6 +489,16 @@ export function MesocicloCard({
                 <span>
                   <b className="text-ink">Esforço médio</b> {formatarDelta(efeito.deltaEsforco)}
                 </span>
+                {/* O gesto foi num dia; o número acima é da semana. O dia aparece ao lado, com
+                    o nome da sessão, para quem dobrou o treino de terça ler que dobrou. */}
+                {efeito.sessao && (
+                  <span>
+                    <b className="text-ink">Nesta sessão ({efeito.sessao.nome})</b> volume {formatarDelta(efeito.sessao.deltaVolume)}
+                    {efeito.sessao.exerciciosAntes !== efeito.sessao.exerciciosDepois
+                      ? `, ${efeito.sessao.exerciciosAntes} para ${efeito.sessao.exerciciosDepois} exercícios`
+                      : ""}
+                  </span>
+                )}
               </div>
               {efeito.leitura && <p className="mt-1.5 text-xs leading-relaxed text-ink-2">{efeito.leitura}</p>}
             </div>
