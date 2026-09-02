@@ -1287,7 +1287,7 @@ export function SessaoBloco({
         </div>
       ) : (
         sessao.fecho && (
-          <p className="mt-2 rounded-md border-l-2 border-primary bg-surface px-2 py-1 text-2xs text-ink-2">
+          <p className="mt-2 rounded-md border border-border bg-surface-soft px-2 py-1 text-2xs text-ink-2">
             {sessao.fecho}
           </p>
         )
