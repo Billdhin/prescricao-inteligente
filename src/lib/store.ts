@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
 import type { Execucao, SessaoFeedback } from "@/data/execucao";
+import type { DeclaracaoAluno } from "@/data/declaracoes";
 import type { AvaliacaoPostural } from "@/data/postural";
 import type { Modo } from "@/lib/theme/palettes";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
@@ -17,6 +18,7 @@ import {
   cloudRemovePlano,
   cloudSaveLiberacao,
   cloudSavePerfil,
+  cloudSaveDeclaracao,
 } from "@/lib/backend/cloudSync";
 
 /* ----------------------------- Usuário / plano ---------------------------- */
@@ -345,6 +347,8 @@ interface AlunosState {
   sessaoFeedbacks: SessaoFeedback[];
   /** rastreios posturais (fotos + observações + laudo); ficam locais (dado sensível) */
   posturais: AvaliacaoPostural[];
+  /** o que o aluno informou sobre si no app, pendente ou revisado (src/data/declaracoes.ts) */
+  declaracoes: DeclaracaoAluno[];
   addAluno: (a: Aluno) => void;
   updateAluno: (id: string, patch: Partial<Aluno>) => void;
   removeAluno: (id: string) => void;
@@ -369,6 +373,10 @@ interface AlunosState {
   addPostural: (a: AvaliacaoPostural) => void;
   /** remove um rastreio postural pelo id */
   removePostural: (id: string) => void;
+  /** o aluno declarou (ou redeclarou) um campo: upsert por aluno+campo, volta a pendente */
+  addDeclaracao: (d: DeclaracaoAluno) => void;
+  /** o profissional revisou: confirmada ou dispensada, com a data */
+  revisarDeclaracao: (id: string, status: "confirmada" | "dispensada") => void;
   /** carrega os alunos de demonstração (para experimentar sem cadastrar) */
   loadExamples: () => void;
 }
@@ -385,6 +393,7 @@ export const useAlunos = create<AlunosState>()(
       execucoes: [],
       sessaoFeedbacks: [],
       posturais: [],
+      declaracoes: [],
       loadExamples: () => {
         /*
          * Os exemplos incluem os DOIS CASOS DO VSL com a história inteira (plano de 12
@@ -438,6 +447,7 @@ export const useAlunos = create<AlunosState>()(
           prescricoes: s.prescricoes.filter((p) => p.alunoId !== id),
           planos: s.planos.filter((p) => p.alunoId !== id),
           liberacoes: s.liberacoes.filter((l) => l.alunoId !== id),
+          declaracoes: s.declaracoes.filter((d) => d.alunoId !== id),
           execucoes: s.execucoes.filter((e) => e.alunoId !== id),
           sessaoFeedbacks: s.sessaoFeedbacks.filter((f) => f.alunoId !== id),
           posturais: s.posturais.filter((pp) => pp.alunoId !== id),
@@ -585,6 +595,16 @@ export const useAlunos = create<AlunosState>()(
       // sem espelho na nuvem, para respeitar a privacidade e não inchar o Supabase.
       addPostural: (a) => {
         set((s) => ({ posturais: [a, ...s.posturais].slice(0, 200) }));
+      },
+      addDeclaracao: (d) => {
+        // Uma linha por aluno+campo (o id já é isso): a resposta nova substitui a antiga.
+        set((s) => ({ declaracoes: [d, ...s.declaracoes.filter((x) => x.id !== d.id)].slice(0, 2000) }));
+        cloudSaveDeclaracao(d);
+      },
+      revisarDeclaracao: (id, status) => {
+        set((s) => ({ declaracoes: s.declaracoes.map((d) => (d.id === id ? { ...d, status, revisadaEm: Date.now() } : d)) }));
+        const atual = get().declaracoes.find((d) => d.id === id);
+        if (atual) cloudSaveDeclaracao(atual);
       },
       removePostural: (id) => {
         set((s) => ({ posturais: s.posturais.filter((p) => p.id !== id) }));

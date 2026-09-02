@@ -74,6 +74,12 @@ export interface CicloCtx {
    * cancelamento, e é aqui que ele passa a aparecer.
    */
   execucoes: { alunoId?: string; concluidoEm?: number }[];
+  /**
+   * O que o aluno informou sobre si no app (src/data/declaracoes.ts). Opcional porque
+   * chegou depois: quem não passar segue como antes. Com uma pendente, o próximo passo é
+   * revisá-la, antes de qualquer outra coisa, porque ela pode mudar a avaliação e o plano.
+   */
+  declaracoes?: { alunoId?: string; status?: string }[];
 }
 
 /**
@@ -107,6 +113,23 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
   const planoAtivo = ctx.planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
   const libs = ctx.liberacoes.filter((l) => l.alunoId === aluno.id);
   const agora = Date.now();
+
+  // 0) O aluno informou algo que ainda não foi revisado. Vem antes de tudo: "pressão
+  //    alta desde 2022" digitado pelo aluno muda a avaliação, o plano e o semáforo, e é
+  //    o profissional quem traduz isso em conduta. Tarefa curta, chip próprio.
+  const pendentes = (ctx.declaracoes ?? []).filter((d) => d.alunoId === aluno.id && d.status === "pendente").length;
+  if (pendentes > 0) {
+    return {
+      etapa: "planejar",
+      tone: "cta",
+      frase:
+        pendentes === 1
+          ? "O aluno informou um dado sobre ele no app. Revise antes de prescrever."
+          : `O aluno informou ${pendentes} dados sobre ele no app. Revise antes de prescrever.`,
+      cta: { label: "Revisar o que o aluno informou", kind: "planejar", to: `/alunos/${aluno.id}` },
+      chip: { label: "Aluno informou dados", tone: "cta" },
+    };
+  }
 
   // 1) Sem avaliação: o ciclo ainda nem começou.
   if (avals.length === 0) {

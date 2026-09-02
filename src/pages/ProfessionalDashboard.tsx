@@ -43,7 +43,7 @@ const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
 
 export function ProfessionalDashboard() {
   const { name, plan } = useUser();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, loadExamples } = useAlunos();
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, loadExamples, declaracoes } = useAlunos();
   const premium = isPremiumUnlocked(plan);
   // Fallback quando o nome está vazio (o profissional pode limpar em Configurações):
   // "Olá" seco, sem a vírgula pendurada.
@@ -63,7 +63,7 @@ export function ProfessionalDashboard() {
   // Quem precisa de atenção HOJE vem da MESMA fonte do stepper do aluno
   // (avisosDoAluno), não de uma cópia da lógica: Painel, lista e tela do aluno
   // falam o mesmo "próximo passo".
-  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes };
   // "Não liberado" pendente é a pendência mais grave (tone "danger"): esses alunos
   // sobem para o topo da lista de atenção. Ordenação estável mantém o resto na
   // ordem original.

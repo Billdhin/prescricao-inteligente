@@ -35,7 +35,7 @@ function prioridade(chip: ProximoPasso["chip"]): number {
 const FILTROS_VALIDOS = new Set<string>(["todos", "pausados", ...ETAPAS]);
 
 export function Alunos() {
-  const { alunos, addAluno, loadExamples, avaliacoes, prescricoes, planos, liberacoes, execucoes } = useAlunos();
+  const { alunos, addAluno, loadExamples, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes } = useAlunos();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   // Busca e filtro na URL: ver o bloco de comentário acima do componente.
@@ -68,7 +68,7 @@ export function Alunos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params, setParams]);
 
-  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes };
 
   // Deriva o próximo passo de cada aluno uma vez, para chip + ordenação + resumo.
   const comPasso = React.useMemo(
@@ -79,7 +79,7 @@ export function Alunos() {
         temPlanoAtivo: planos.some((p) => p.alunoId === a.id && p.status === "ativo"),
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes],
+    [alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes],
   );
 
   const ativos = comPasso.filter((x) => x.aluno.status === "ativo").length;

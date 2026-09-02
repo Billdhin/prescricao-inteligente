@@ -75,6 +75,7 @@ import { montarChecklist } from "@/data/semaforo";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
 import { useDialog } from "@/lib/useDialog";
 import { ConfirmarAcao } from "@/components/app/ConfirmarAcao";
+import { DeclaracoesDoAluno } from "@/components/app/DeclaracoesDoAluno";
 import { toast, toastDesfazer } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
@@ -376,7 +377,7 @@ function AlunoTabs({ aba, onAba, contagens }: { aba: Aba; onAba: (a: Aba) => voi
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao, unarchivePrescricao } =
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, declaracoes, revisarDeclaracao, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao, unarchivePrescricao } =
     useAlunos();
   const navigate = useNavigate();
   const [confirmarExclusao, setConfirmarExclusao] = React.useState(false);
@@ -531,7 +532,7 @@ export function AlunoDetail() {
   // o painel de execução lista os últimos; a aba "App do aluno" mostra o resumo do topo.
   const feedbacksDoAluno = sessaoFeedbacks.filter((f) => f.alunoId === id).sort((a, b) => b.concluidaEm - a.concluidaEm);
   // Fonte única do ciclo (avaliar, planejar, liberar, acompanhar, reavaliar).
-  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes };
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes };
   const passo = proximoPasso(aluno, ctx);
   // GATE DURO, agora completo: a avaliação era só o primeiro dos oito bloqueios.
   // `podeTreino` mantém a forma {ok, motivo} que os cards desta tela consomem, mas o
@@ -748,6 +749,21 @@ export function AlunoDetail() {
             <LinhaDoTempo avaliacoes={avals} planos={planosDoAluno} feedbacks={feedbacksDoAluno} liberacoes={libsAlunoDesc} />
           </div>
           <div className="space-y-4">
+            {/* O que o aluno informou no app vem ANTES do treino e da avaliação: é a
+                primeira parada do próximo passo, porque pode mudar as duas. */}
+            <DeclaracoesDoAluno
+              aluno={aluno}
+              declaracoes={declaracoes}
+              onConfirmar={(d, patch) => {
+                if (Object.keys(patch).length) updateAluno(aluno.id, patch);
+                revisarDeclaracao(d.id, "confirmada");
+                toast("Confirmado. A ficha registra que veio do aluno.");
+              }}
+              onDispensar={(d) => {
+                revisarDeclaracao(d.id, "dispensada");
+                toast("Dispensado.");
+              }}
+            />
             <VisaoTreino aluno={aluno} plano={planoAtivo} alunoId={aluno.id} onVer={() => setAba("treino")} podeTreino={podeTreino} />
             <VisaoAvaliacao aluno={aluno} avals={avals} reav={reav} vencida={reavaliacaoVencida} onVer={() => setAba("avaliacoes")} onAvaliar={() => setAvaliar(true)} />
             <VisaoNoApp

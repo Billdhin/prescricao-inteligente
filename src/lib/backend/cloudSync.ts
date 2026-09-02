@@ -1,4 +1,5 @@
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
+import type { DeclaracaoAluno } from "@/data/declaracoes";
 import type { PlanoTreino } from "@/data/periodizacao";
 import type { PerfilRemoto } from "./supabaseRepo";
 import * as repo from "./supabaseRepo";
@@ -56,6 +57,11 @@ export function cloudSavePlano(p: PlanoTreino) {
 }
 export function cloudRemovePlano(id: string) {
   if (cloudOn) mirror(repo.removerPlano(id), "a remoção do plano");
+}
+export function cloudSaveDeclaracao(d: DeclaracaoAluno) {
+  // O profissional revisa pela própria conta; o aluno grava pelo AlunoPortal, que chama o
+  // repo direto com o professionalId dele (mesmo desenho de execuções e feedbacks).
+  if (cloudOn) mirror(repo.salvarDeclaracao(d), "a resposta do aluno");
 }
 export function cloudSaveLiberacao(l: Liberacao) {
   if (cloudOn) mirror(repo.salvarLiberacao(l), "a liberação");

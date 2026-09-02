@@ -24,6 +24,8 @@ import {
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
+import { SobreVoce, resumoSobreVoce } from "@/components/student/SobreVoce";
+import type { DeclaracaoAluno } from "@/data/declaracoes";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
 import { aplicarPaleta, PALETA_ALUNO, corDeContraste } from "@/lib/theme/palettes";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
@@ -144,10 +146,19 @@ export function StudentApp({
   preview = false,
   onSair,
   rodapeDoPerfil,
+  declaracoes = [],
+  onDeclarar,
+  abrirSobreVoce = false,
 }: {
   aluno: Aluno;
   plano?: PlanoTreino;
   marca: Marca;
+  /** o que o aluno já informou sobre si (pré-preenche a tela e mostra o status no Perfil) */
+  declaracoes?: DeclaracaoAluno[];
+  /** grava uma resposta do aluno; ausente = prévia (a tela mostra, não grava) */
+  onDeclarar?: (d: DeclaracaoAluno) => void;
+  /** primeiro acesso: abre "Conte sobre você" por cima do app */
+  abrirSobreVoce?: boolean;
   avaliacoes?: Avaliacao[];
   /** o que o aluno já registrou (para marcar sessões feitas) */
   execucoes?: Execucao[];
@@ -174,6 +185,8 @@ export function StudentApp({
   const aba = nav.aba;
   const cor = marca.corPrimaria || "#2064EC";
   const tintaDaMarca = corDeContraste(cor);
+  // "Conte sobre você": abre sozinha no primeiro acesso, e depois pelo cartão do Perfil.
+  const [sobreVoce, setSobreVoce] = React.useState(abrirSobreVoce);
 
   const semanaGuiado = plano ? semanaAtual(plano) : 1;
 
@@ -240,6 +253,16 @@ export function StudentApp({
             {/* A moldura de celular e o chrome do profissional (AlunoPreview) já
                 sinalizam que isto é prévia. Uma tarja aqui dentro contradizia o "é
                 exatamente o que o aluno vê", já que o aluno real nunca a vê. */}
+            {sobreVoce && (
+              <SobreVoce
+                aluno={aluno}
+                cor={cor}
+                declaracoes={declaracoes}
+                onDeclarar={onDeclarar}
+                onFechar={() => setSobreVoce(false)}
+                primeiraVez={abrirSobreVoce}
+              />
+            )}
             <CabecalhoAluno
               aluno={aluno}
               marca={marca}
@@ -337,6 +360,8 @@ export function StudentApp({
                   onSair={onSair}
                   rodapeDoPerfil={rodapeDoPerfil}
                   preview={preview}
+                  declaracoes={declaracoes}
+                  onSobreVoce={() => setSobreVoce(true)}
                 />
               )}
                 </>
@@ -1816,6 +1841,8 @@ function AbaPerfil({
   onSair,
   rodapeDoPerfil,
   preview,
+  declaracoes = [],
+  onSobreVoce,
 }: {
   aluno: Aluno;
   marca: Marca;
@@ -1824,6 +1851,9 @@ function AbaPerfil({
   plano?: PlanoTreino;
   avaliacoes: Avaliacao[];
   onSair?: () => void;
+  declaracoes?: DeclaracaoAluno[];
+  /** abre a tela "Conte sobre você" (o aluno atualiza o que informou) */
+  onSobreVoce?: () => void;
   /** peça extra no fim do Perfil (a troca de espaço). Vem por PROP para a prévia do
    *  profissional não herdar a conta dele dentro da simulação do aluno. */
   rodapeDoPerfil?: React.ReactNode;
@@ -1879,6 +1909,30 @@ function AbaPerfil({
           </div>
         </Card>
       )}
+
+      {/* SOBRE VOCÊ: o aluno conta e atualiza os próprios dados; o professor confirma. */}
+      {onSobreVoce && (() => {
+        const r = resumoSobreVoce(declaracoes, aluno.id);
+        return (
+          <button
+            onClick={onSobreVoce}
+            className="flex w-full items-center gap-3 rounded-card border border-border bg-surface p-4 text-left transition-colors hover:bg-surface-soft"
+          >
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-card" style={{ background: `${cor}1a`, color: cor }}>
+              <User className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold text-ink">Sobre você</span>
+              <span className="block text-xs text-ink-2">
+                {r.respondidas === 0
+                  ? "Conte sobre você para o seu professor montar o seu treino. Leva uns dois minutos."
+                  : `${r.respondidas} ${r.respondidas === 1 ? "resposta" : "respostas"} · ${r.confirmadas} ${r.confirmadas === 1 ? "confirmada" : "confirmadas"} pelo seu professor. Toque para atualizar.`}
+              </span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
+          </button>
+        );
+      })()}
 
       <MensalidadeCard aluno={aluno} cor={cor} tinta={tinta} />
 

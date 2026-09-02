@@ -2,6 +2,7 @@ import { getSupabase } from "./supabaseClient";
 import type { Aluno, Avaliacao, Prescricao, Liberacao } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
 import type { Execucao, SessaoFeedback } from "@/data/execucao";
+import type { DeclaracaoAluno } from "@/data/declaracoes";
 import type { PerfilCampos, Plan } from "@/lib/store";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
 
@@ -610,6 +611,56 @@ function feedbackFromRow(r: Record<string, any>): SessaoFeedback {
 export async function salvarSessaoFeedback(f: SessaoFeedback, professionalId: string): Promise<void> {
   const { error } = await getSupabase().from("sessao_feedbacks").upsert(feedbackToRow(f, professionalId));
   if (error) throw error;
+}
+
+/* ------------------------- Declarações do aluno ------------------------- */
+
+function declaracaoToRow(d: DeclaracaoAluno, professionalId: string) {
+  return {
+    id: d.id,
+    aluno_id: d.alunoId,
+    professional_id: professionalId,
+    campo: d.campo,
+    valor: d.valor ?? "",
+    nao_sei: !!d.naoSei,
+    status: d.status,
+    declarada_em: new Date(d.declaradaEm).toISOString(),
+    revisada_em: d.revisadaEm ? new Date(d.revisadaEm).toISOString() : null,
+  };
+}
+
+function declaracaoFromRow(r: Record<string, any>): DeclaracaoAluno {
+  return {
+    id: r.id,
+    alunoId: r.aluno_id,
+    campo: r.campo,
+    valor: r.valor ?? "",
+    naoSei: r.nao_sei ? true : undefined,
+    status: r.status ?? "pendente",
+    declaradaEm: r.declarada_em ? new Date(r.declarada_em).getTime() : Date.now(),
+    revisadaEm: r.revisada_em ? new Date(r.revisada_em).getTime() : undefined,
+  };
+}
+
+/**
+ * Grava uma declaração. Do lado do aluno, professionalId é o do profissional dele (o
+ * portal passa); do lado do profissional (revisão), é o próprio uid, e a policy
+ * declaracoes_prof_rw autoriza. Sem professionalId, resolve pelo usuário logado.
+ */
+export async function salvarDeclaracao(d: DeclaracaoAluno, professionalId?: string): Promise<void> {
+  const dono = professionalId ?? (await uid());
+  const { error } = await getSupabase().from("declaracoes_aluno").upsert(declaracaoToRow(d, dono));
+  if (error) throw error;
+}
+
+/** Declarações visíveis pela RLS (as do próprio aluno, ou as da carteira do profissional). */
+export async function listarDeclaracoes(): Promise<DeclaracaoAluno[]> {
+  const { data, error } = await getSupabase()
+    .from("declaracoes_aluno")
+    .select("*")
+    .order("declarada_em", { ascending: false });
+  if (error) return [];
+  return (data ?? []).map(declaracaoFromRow);
 }
 
 /** Feedbacks visiveis pela RLS (do proprio aluno, ou dos alunos do profissional). */

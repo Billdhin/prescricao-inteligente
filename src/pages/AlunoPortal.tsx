@@ -2,7 +2,7 @@ import * as React from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useCloudAuth, recarregarSessao } from "@/lib/backend/cloudAuth";
 import { signIn, signUp, signOut } from "@/lib/backend/supabaseAuth";
-import { reivindicarConvite, salvarExecucao, apagarExecucao, salvarSessaoFeedback } from "@/lib/backend/supabaseRepo";
+import { reivindicarConvite, salvarExecucao, apagarExecucao, salvarSessaoFeedback, salvarDeclaracao } from "@/lib/backend/supabaseRepo";
 import { useAlunos } from "@/lib/store";
 import { StudentApp } from "@/components/student/StudentApp";
 import { Logo } from "@/components/brand/Logo";
@@ -59,6 +59,8 @@ function PortalApp() {
   const addExecucao = useAlunos((s) => s.addExecucao);
   const removeExecucao = useAlunos((s) => s.removeExecucao);
   const addSessaoFeedback = useAlunos((s) => s.addSessaoFeedback);
+  const declaracoes = useAlunos((s) => s.declaracoes);
+  const addDeclaracao = useAlunos((s) => s.addDeclaracao);
   const { marca, professionalId } = useCloudAuth();
 
   const aluno = alunos[0];
@@ -98,6 +100,32 @@ function PortalApp() {
   };
   // Selo "Personalizado em DD/MM" nas sessões que nasceram de uma prescrição. Se a
   // conta do aluno não carregou as prescrições, o selo aparece sem a data (ainda útil).
+  // "Conte sobre você" abre sozinha UMA vez: no primeiro acesso, enquanto o aluno não
+  // respondeu nada. Depois vive no cartão do Perfil. O marcador fica no aparelho para a
+  // tela não voltar a cada abertura de quem pulou.
+  const chaveSobreVoce = `pi-sobre-voce-${aluno.id}`;
+  const jaOfereceu = (() => {
+    try {
+      return localStorage.getItem(chaveSobreVoce) === "1";
+    } catch {
+      return true;
+    }
+  })();
+  const abrirSobreVoce = !jaOfereceu && !declaracoes.some((d) => d.alunoId === aluno.id);
+  React.useEffect(() => {
+    if (abrirSobreVoce) {
+      try {
+        localStorage.setItem(chaveSobreVoce, "1");
+      } catch {
+        /* sem armazenamento: a tela abre de novo na próxima, o que é tolerável */
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const declarar = (d: Parameters<typeof addDeclaracao>[0]) => {
+    addDeclaracao(d);
+    if (professionalId) void salvarDeclaracao(d, professionalId).catch(() => toastFalha(AVISO_SEM_REDE));
+  };
   const dataDaPrescricao = (pid: string) => {
     const p = prescricoes.find((x) => x.id === pid);
     return p ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(p.data)) : undefined;
@@ -122,6 +150,9 @@ function PortalApp() {
         onRegistrar={registrar}
         onDesfazer={desfazer}
         onFeedback={registrarFeedback}
+        declaracoes={declaracoes}
+        onDeclarar={declarar}
+        abrirSobreVoce={abrirSobreVoce}
         onSair={() => void signOut()}
       />
       {/* O app do aluno nao tinha canal de confirmacao nenhum. Reaproveita o toast do
