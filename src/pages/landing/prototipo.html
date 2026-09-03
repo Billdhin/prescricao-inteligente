@@ -206,7 +206,12 @@
   <div class="lp-wrap lp-grade lp-grade-8-12 lp-grade-topo lp-cond-grade">
     <div>
       <h3 class="lp-h3 lp-cond-pergunta">E quando duas regras pedem coisas diferentes?</h3>
-      <p class="lp-lede lp-lede-escuro">Acontece o tempo todo. O limite mais conservador prevalece, e a tela mostra qual regra pediu o quê. Um aluno a partir de 65 anos com hipertensão treina com três repetições de reserva, porque a idade pediu três, e a tela mostra que a hipertensão pedia duas.</p>
+      <p class="lp-lede lp-lede-escuro">Acontece o tempo todo. O limite mais conservador prevalece, e a tela mostra qual regra pediu o quê.</p>
+      <div class="lp-disputa">
+        <p class="lp-label">Aluno de 65 anos com hipertensão · reserva de repetições</p>
+        <div class="lp-disputa-linha lp-disputa-vence"><span>A idade pediu</span><b>3 repetições</b><em>é a que vale</em></div>
+        <div class="lp-disputa-linha"><span>A hipertensão pedia</span><b>2 repetições</b><em>preterida</em></div>
+      </div>
       <p class="lp-lede lp-lede-escuro">Você não precisa decorar cada diretriz para enxergar o que interfere naquela prescrição.</p>
       <p class="lp-destaque-mint">O sistema organiza. O profissional avalia e decide.</p>
     </div>
@@ -283,46 +288,90 @@
 
 <!-- 8 · 06 ALUNO -->
 <section id="app" data-screen-label="Aluno" class="lp-sec lp-sec-a lp-tx-rota">
-  <div class="lp-wrap lp-grade lp-grade-8-12">
-    <div>
+  <div class="lp-wrap">
+    <div class="lp-cabeca">
       <p class="lp-eyebrow">06 · Aluno</p>
       <h2 class="lp-h2">O aluno não valoriza o que não consegue ver.</h2>
-      <p class="lp-lede">Hoje ele recebe uma lista de exercícios. Com o Mapa, passa a ver a fase em que está, o objetivo da semana, a execução que registrou e a evolução comparada por data, num aplicativo com a sua marca e a sua cor.</p>
-      <ul class="lp-pontos">
-        <li><b>Prescrito x executado</b> na mesma tela, série por série.</li>
-        <li><b>Sugestão de ajuste</b> calculada sobre o que aconteceu, com o motivo.</li>
-        <li><b>Quem parou de registrar</b> aparece na sua carteira, com a próxima ação ao lado.</li>
-      </ul>
-      <p class="lp-ganho">Aplicativo barato entrega uma lista. O seu aluno passa a ver o processo, e o preço deixa de ser o único critério.</p>
+      <p class="lp-lede">Hoje ele recebe uma lista de exercícios. No Mapa ele abre a sessão do dia, registra cada série e acompanha a própria evolução, num aplicativo com a sua marca.</p>
     </div>
-    <div class="lp-aluno">
-      <div class="lp-card-dark lp-sessao">
-        <div class="lp-sessao-topo"><p>Sessão de hoje</p><span class="lp-pill">Em andamento</span></div>
-        <p class="lp-sessao-ex">Agachamento livre</p>
-        <p class="lp-mono lp-sessao-dose">3 x 8 · esforço 7</p>
-        <div class="lp-barra"><div class="lp-barra-cheia"></div></div>
-        <p class="lp-sessao-prog">2 de 3 séries concluídas</p>
-        <div class="lp-btn lp-btn-amber lp-btn-bloco">Concluir série</div>
-      </div>
-      <div class="lp-card lp-resumo">
-        <p class="lp-label">Resumo do plano</p>
-        <p class="lp-corpo-sm lp-ink lp-mt-8">Semana 9 de 12 · fase de hipertrofia</p>
-        <div class="lp-linhas lp-mt-12">
-          <div class="lp-linha"><span class="lp-k">Objetivo</span><span class="lp-v">Ganho de massa muscular</span></div>
-          <div class="lp-linha"><span class="lp-k">Frequência</span><span class="lp-v">4x por semana</span></div>
-          <div class="lp-linha"><span class="lp-k">Próxima descarga</span><span class="lp-v">Semana 12</span></div>
+    <div class="lp-palco">
+      <div class="lp-palco-lado">
+        <div class="lp-card lp-mini">
+          <p class="lp-label">O plano dele, sempre à vista</p>
+          <div class="lp-linhas">
+            <div class="lp-linha"><span class="lp-k">Fase</span><span class="lp-v">Semana 9 de 12</span></div>
+            <div class="lp-linha"><span class="lp-k">Objetivo</span><span class="lp-v">Ganho de massa muscular</span></div>
+            <div class="lp-linha"><span class="lp-k">Frequência</span><span class="lp-v">4x por semana</span></div>
+            <div class="lp-linha"><span class="lp-k">Próxima descarga</span><span class="lp-v">Semana 12</span></div>
+          </div>
+        </div>
+        <div class="lp-card lp-mini">
+          <p class="lp-label">O que ele enxerga</p>
+          <ul class="lp-pontos lp-pontos-mini">
+            <li>A <b>fase</b> em que está e o objetivo da semana</li>
+            <li>A <b>execução</b> que ele mesmo registrou</li>
+            <li>A <b>evolução</b> comparada por data</li>
+          </ul>
         </div>
       </div>
-      <div class="lp-card lp-executado">
-        <p class="lp-label">Prescrito x executado · semana atual</p>
-        <table class="lp-tbl lp-mt-12"><thead><tr><th>Exercício</th><th>Prescrito</th><th>Executado</th><th>Sinal</th></tr></thead><tbody>
-          <tr><td>Agachamento livre</td><td>3 x 8</td><td>3 x 8</td><td class="lp-verde-txt">manter</td></tr>
-          <tr><td>Remada curvada</td><td>3 x 10</td><td>3 x 9</td><td class="lp-ambar-txt">rever</td></tr>
-          <tr><td>Supino reto</td><td>3 x 8</td><td>3 x 8</td><td class="lp-verde-txt">progredir</td></tr>
-        </tbody></table>
-        <p class="lp-corpo-sm lp-mt-12">A sugestão vem com o motivo. Você decide o ajuste.</p>
+
+      <div class="lp-fone-col">
+        <div class="lp-fone">
+          <span class="lp-fone-ilha" aria-hidden="true"></span>
+          <div class="lp-fone-tela">
+            <div class="lp-fone-status"><span>9:41</span><span class="lp-fone-sinal" aria-hidden="true"></span></div>
+            <p class="lp-fone-titulo">Treino de hoje</p>
+            <div class="lp-fone-cartao">
+              <p class="lp-fone-ex">Agachamento livre</p>
+              <p class="lp-fone-sub">Treino A · Inferiores</p>
+              <div class="lp-fone-doses">
+                <div><b>4</b><span>séries</span></div>
+                <div><b>8 a 10</b><span>repetições</span></div>
+                <div><b>RPE 7</b><span>esforço</span></div>
+                <div><b>120 s</b><span>descanso</span></div>
+              </div>
+            </div>
+            <div class="lp-fone-cta">Iniciar treino</div>
+            <div class="lp-fone-cartao">
+              <p class="lp-fone-rot">Registre sua execução</p>
+              <div class="lp-fone-campos">
+                <div><span>Carga utilizada</span><em>kg</em></div>
+                <div><span>Repetições feitas</span><em>rep</em></div>
+              </div>
+            </div>
+            <div class="lp-fone-abas">
+              <span class="lp-fone-aba lp-fone-aba-on">Hoje</span>
+              <span class="lp-fone-aba">Plano</span>
+              <span class="lp-fone-aba">Progresso</span>
+              <span class="lp-fone-aba">Perfil</span>
+            </div>
+          </div>
+        </div>
+        <p class="lp-fone-legenda">A tela do aluno, com a sua marca e a sua cor.</p>
+      </div>
+
+      <div class="lp-palco-lado">
+        <div class="lp-card lp-mini">
+          <p class="lp-label">Prescrito x executado, na sua tela</p>
+          <table class="lp-tbl">
+            <thead><tr><th>Exercício</th><th>Prescrito</th><th>Feito</th><th>Sinal</th></tr></thead>
+            <tbody>
+              <tr><td>Agachamento livre</td><td>3 x 8</td><td>3 x 8</td><td class="lp-verde-txt">manter</td></tr>
+              <tr><td>Remada curvada</td><td>3 x 10</td><td>3 x 9</td><td class="lp-ambar-txt">rever</td></tr>
+              <tr><td>Supino reto</td><td>3 x 8</td><td>3 x 8</td><td class="lp-verde-txt">progredir</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="lp-card lp-mini">
+          <p class="lp-label">O que volta para você</p>
+          <ul class="lp-pontos lp-pontos-mini">
+            <li><b>Sugestão de ajuste</b> calculada sobre o que aconteceu, com o motivo</li>
+            <li><b>Quem parou de registrar</b> aparece na carteira, com a próxima ação</li>
+          </ul>
+        </div>
       </div>
     </div>
+    <p class="lp-ganho lp-ganho-centro">Aplicativo barato entrega uma lista. O seu aluno passa a ver o processo, e o preço deixa de ser o único critério.</p>
   </div>
 </section>
 
@@ -392,8 +441,14 @@
       <p class="lp-lede lp-max-600">Quem ensina prescrição vê o mesmo padrão se repetir, turma após turma: o profissional sai sabendo decidir, e encontra um dia a dia que não guarda nenhuma dessas decisões.</p>
       <p class="lp-fundador-nome">Filipe</p>
       <p class="lp-corpo lp-corpo-sm">Profissional de Educação Física · mestre e doutor · professor universitário e pesquisador de pós-doutorado</p>
-      <p class="lp-corpo lp-max-600 lp-mt-16">Filipe é profissional de Educação Física, mestre e doutor na área, com formação científica voltada à fisiologia do exercício, ao emagrecimento e à obesidade, e ao uso do treinamento físico e de fármacos na prevenção e no tratamento de doenças crônicas.</p>
-      <p class="lp-corpo lp-max-600 lp-mt-16">Há oito anos é professor universitário. Nesse período, ensinou milhares de alunos e participou da formação de cerca de 600 profissionais de Educação Física. Hoje também atua como pesquisador de pós-doutorado, investigando como o exercício, as diferentes estratégias de intervenção e seus mecanismos fisiológicos e moleculares modificam a composição corporal, o metabolismo e a saúde.</p>
+      <div class="lp-linhas lp-fundador-fatos lp-max-600">
+        <div class="lp-linha"><span class="lp-k">Formação</span><span class="lp-v">Mestre e doutor em Educação Física</span></div>
+        <div class="lp-linha"><span class="lp-k">Área científica</span><span class="lp-v">Fisiologia do exercício, emagrecimento e obesidade</span></div>
+        <div class="lp-linha"><span class="lp-k">Também estuda</span><span class="lp-v">Treinamento e fármacos em doenças crônicas</span></div>
+        <div class="lp-linha"><span class="lp-k">Docência</span><span class="lp-v">Oito anos, cerca de 600 profissionais formados</span></div>
+        <div class="lp-linha"><span class="lp-k">Hoje</span><span class="lp-v">Pesquisador de pós-doutorado</span></div>
+      </div>
+      <p class="lp-corpo lp-max-600 lp-mt-16">No pós-doutorado, investiga como o exercício e as diferentes estratégias de intervenção modificam a composição corporal, o metabolismo e a saúde.</p>
       <p class="lp-citacao lp-citacao-esq lp-max-600">“Foi dessa convivência entre ciência, ensino e prescrição de treinamento que nasceu o Mapa da Prescrição.”</p>
     </div>
   </div>
