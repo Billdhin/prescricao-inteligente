@@ -39,7 +39,11 @@
 
 <!-- 2 · HERO -->
 <section data-screen-label="Hero" class="lp-hero">
-  <svg aria-hidden="true" class="lp-hero-anel" width="520" height="520" viewBox="0 0 520 520"><circle cx="260" cy="260" r="258" fill="none" stroke="rgba(127,227,216,.35)" stroke-width="1.5"/><circle cx="260" cy="260" r="190" fill="none" stroke="rgba(127,227,216,.2)" stroke-width="1.5"/></svg>
+  <picture class="lp-hero-foto">
+    <source media="(max-width: 760px)" srcset="/landing/hero-aluno-m.webp">
+    <img src="/landing/hero-aluno.webp" alt="" width="2000" height="880" loading="eager" fetchpriority="high">
+  </picture>
+  <div class="lp-hero-veu" aria-hidden="true"></div>
   <div class="lp-wrap lp-hero-grade">
     <div class="lp-entrada">
       <h1 class="lp-h1">A parte do seu trabalho que o aluno <span class="lp-mint">nunca vê</span>, finalmente visível.</h1>
@@ -53,35 +57,6 @@
       <p class="lp-hero-nota">O Mapa propõe. Você revisa e personaliza.</p>
     </div>
 
-    <!-- A rota, no desktop: seis nós subindo até o pino -->
-    <svg class="lp-entrada lp-entrada-2 lp-rota-desk" viewBox="0 0 520 340" fill="none" aria-hidden="true">
-      <!-- A trilha passa EXATAMENTE pelos seis nós (curvas quadráticas encadeadas), e o pino é o último nó, dentro do quadro. -->
-      <path d="M44 296 Q88 288 132 266 T222 220 T312 182 T398 128 T470 64" stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-linecap="round"/>
-      <g font-family="Instrument Sans, sans-serif" font-size="13" fill="#B9C6D6">
-        <circle cx="44" cy="296" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="44" y="324" text-anchor="middle">Avaliação</text>
-        <circle cx="132" cy="266" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="132" y="294" text-anchor="middle">Contexto</text>
-        <circle cx="222" cy="220" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="222" y="248" text-anchor="middle">Evidência</text>
-        <circle cx="312" cy="182" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="312" y="210" text-anchor="middle">Prescrição</text>
-        <circle cx="398" cy="128" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="398" y="156" text-anchor="middle">Execução</text>
-        <circle cx="470" cy="64" r="34" fill="rgba(31,97,229,.18)"/>
-        <path d="M470 78c8.5-10.4 15-17.4 15-26.4a15 15 0 0 0-30 0c0 9 6.5 16 15 26.4Z" fill="#1F61E5"/>
-        <circle cx="470" cy="51.5" r="6" fill="#fff"/><circle cx="470" cy="51.5" r="2.6" fill="#1F61E5"/>
-        <text x="470" y="112" text-anchor="middle" fill="#F3F1EA" font-weight="600">Revisão</text>
-      </g>
-    </svg>
-
-    <!-- A rota, no celular: seis pontos numa linha -->
-    <div class="lp-rota-m">
-      <div class="lp-rota-m-linha">
-        <span class="lp-rota-m-no"></span><span class="lp-rota-m-tra"></span>
-        <span class="lp-rota-m-no"></span><span class="lp-rota-m-tra"></span>
-        <span class="lp-rota-m-no"></span><span class="lp-rota-m-tra"></span>
-        <span class="lp-rota-m-no"></span><span class="lp-rota-m-tra"></span>
-        <span class="lp-rota-m-no"></span><span class="lp-rota-m-tra"></span>
-        <span class="lp-rota-m-no lp-rota-m-fim"></span>
-      </div>
-      <div class="lp-rota-m-rotulos"><span>Avaliação</span><span>Contexto</span><span>Evidência</span><span>Prescrição</span><span>Execução</span><span>Revisão</span></div>
-    </div>
   </div>
   <div class="lp-hero-faixa"><div class="lp-wrap"><p>Avaliação, regra, decisão e entrega. Tudo no mesmo processo.</p></div></div>
 </section>

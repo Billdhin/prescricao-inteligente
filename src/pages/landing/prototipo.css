@@ -88,13 +88,15 @@ html{scroll-behavior:smooth}
 
 /* ---------- hero ---------- */
 .landing-prototipo .lp-hero{background:#10233A;color:#F3F1EA;position:relative;overflow:hidden}
-.landing-prototipo .lp-hero-anel{position:absolute;right:-120px;top:-140px;opacity:.35;pointer-events:none}
-.landing-prototipo .lp-hero-grade{position:relative;padding:64px 0 56px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:48px;align-items:center}
-.landing-prototipo .lp-rota-desk{width:100%;max-width:500px;justify-self:end;display:block}
+/* A foto cobre o hero inteiro e o aluno fica na metade direita; a própria imagem já escurece
+ * até #10233A na esquerda, e o véu reforça o degradê para o texto não depender do corte. */
+.landing-prototipo .lp-hero-foto{position:absolute;inset:0;display:block;pointer-events:none}
+.landing-prototipo .lp-hero-foto img{width:100%;height:100%;object-fit:cover;object-position:right center;display:block}
+.landing-prototipo .lp-hero-veu{position:absolute;inset:0;background:linear-gradient(90deg,#10233A 0%,#10233A 34%,rgba(16,35,58,.55) 52%,rgba(16,35,58,0) 68%);pointer-events:none}
+.landing-prototipo .lp-hero-grade{position:relative;padding:88px 0 84px;min-height:600px;display:grid;grid-template-columns:minmax(0,600px);align-items:center}
 .landing-prototipo .lp-hero .lp-lede{max-width:480px;margin-top:26px}
 .landing-prototipo .lp-hero-acoes{display:flex;align-items:center;gap:24px;margin-top:38px;flex-wrap:wrap}
 .landing-prototipo .lp-hero-nota{margin-top:22px;font-size:14px;color:#8FA0B5}
-.landing-prototipo .lp-rota-m{display:none}
 .landing-prototipo .lp-hero-faixa{background:#0B1A2C;border-top:1px solid rgba(255,255,255,.1)}
 .landing-prototipo .lp-hero-faixa p{text-align:center;padding:18px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;color:#B9C6D6;font-weight:500}
 
@@ -291,22 +293,17 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-header-linha{height:56px}
   .landing-prototipo .lp-marca-img{width:22px;height:22px}
   .landing-prototipo .lp-marca-nome{font-size:14.5px}
-  .landing-prototipo .lp-hero-anel{display:none}
-  .landing-prototipo .lp-hero-grade{grid-template-columns:1fr;padding:28px 0 32px;gap:0}
+  /* No celular a foto vira um bloco em cima do texto, cortada na metade do aluno, e some
+   * suavemente para o navy onde o texto começa. */
+  .landing-prototipo .lp-hero-foto{position:relative;inset:auto;height:300px;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 100%);mask-image:linear-gradient(to bottom,#000 55%,transparent 100%)}
+  .landing-prototipo .lp-hero-foto img{object-position:62% 20%}
+  .landing-prototipo .lp-hero-veu{display:none}
+  .landing-prototipo .lp-hero-grade{grid-template-columns:1fr;min-height:0;padding:0 0 32px;gap:0;margin-top:-56px}
   .landing-prototipo .lp-hero .lp-lede{margin-top:14px}
   .landing-prototipo .lp-hero-acoes{flex-direction:column;align-items:stretch;gap:14px;margin-top:22px}
   .landing-prototipo .lp-hero-acoes .lp-btn{min-height:50px;font-size:15px}
   .landing-prototipo .lp-seta{justify-content:center;font-size:14px}
   .landing-prototipo .lp-hero-nota{text-align:center;margin-top:16px;font-size:12.5px}
-  .landing-prototipo .lp-rota-desk{display:none}
-  .landing-prototipo .lp-rota-m{display:block;margin-top:30px}
-  .landing-prototipo .lp-rota-m-linha{display:flex;align-items:center;justify-content:space-between}
-  .landing-prototipo .lp-rota-m-no{width:7px;height:7px;border-radius:50%;background:#F3F1EA;flex:none}
-  .landing-prototipo .lp-rota-m-fim{width:9px;height:9px;background:#1F61E5}
-  .landing-prototipo .lp-rota-m-tra{flex:1;border-top:1.5px dashed rgba(255,255,255,.4)}
-  .landing-prototipo .lp-rota-m-rotulos{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin-top:8px;font-size:9.5px;color:#B9C6D6;text-align:center}
-  .landing-prototipo .lp-rota-m-rotulos span:first-child{text-align:left}
-  .landing-prototipo .lp-rota-m-rotulos span:last-child{text-align:right}
   .landing-prototipo .lp-hero-faixa p{padding:14px 0;font-size:13px;font-family:'Instrument Sans',sans-serif}
   .landing-prototipo .lp-vsl{aspect-ratio:16/13;border-radius:12px;margin-top:20px}
   .landing-prototipo .lp-vsl-tag{font-size:9px;top:12px;right:12px}
