@@ -34,7 +34,8 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-h1{font-size:clamp(34px,4.6vw,66px);line-height:1.02;color:#fff;max-width:560px}
 .landing-prototipo .lp-h2{font-size:clamp(24px,3.2vw,44px);line-height:1.08;margin-top:18px}
 .landing-prototipo .lp-h3{font-size:22px;line-height:1.25}
-.landing-prototipo .lp-eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:#1F61E5}
+.landing-prototipo .lp-eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:#1F61E5;display:flex;align-items:center;gap:10px}
+.landing-prototipo .lp-eyebrow::before{content:"";width:22px;height:2px;border-radius:2px;background:currentColor;opacity:.7;flex:none}
 .landing-prototipo .lp-eyebrow-teal{color:#0C6B70}
 .landing-prototipo .lp-eyebrow-mint{color:#7FE3D8}
 .landing-prototipo .lp-eyebrow-ambar{color:#8E6009}
@@ -71,6 +72,8 @@ html{scroll-behavior:smooth}
 
 /* ---------- header ---------- */
 .landing-prototipo .lp-header{position:sticky;top:0;z-index:50;background:#10233A;color:#F3F1EA;border-bottom:1px solid rgba(255,255,255,.08)}
+/* Linha de luz na base do cabeçalho: turquesa no centro, some nas pontas. */
+.landing-prototipo .lp-header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(127,227,216,.0) 20%,rgba(127,227,216,.7) 50%,rgba(127,227,216,0) 80%,transparent 100%);pointer-events:none}
 .landing-prototipo .lp-header-linha{display:flex;align-items:center;justify-content:space-between;height:72px;gap:24px}
 .landing-prototipo .lp-marca{display:flex;align-items:center;gap:10px;color:#F3F1EA}
 .landing-prototipo .lp-marca-img{width:30px;height:30px;object-fit:contain;flex:none}
@@ -90,10 +93,16 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-hero{background:#10233A;color:#F3F1EA;position:relative;overflow:hidden}
 /* A foto cobre o hero inteiro e o aluno fica na metade direita; a própria imagem já escurece
  * até #10233A na esquerda, e o véu reforça o degradê para o texto não depender do corte. */
-.landing-prototipo .lp-hero-foto{position:absolute;inset:0;display:block;pointer-events:none}
+.landing-prototipo .lp-hero-foto{position:absolute;inset:0;z-index:0;display:block;pointer-events:none}
 .landing-prototipo .lp-hero-foto img{width:100%;height:100%;object-fit:cover;object-position:right center;display:block}
-.landing-prototipo .lp-hero-veu{position:absolute;inset:0;background:linear-gradient(90deg,#10233A 0%,#10233A 34%,rgba(16,35,58,.55) 52%,rgba(16,35,58,0) 68%);pointer-events:none}
-.landing-prototipo .lp-hero-grade{position:relative;padding:88px 0 84px;min-height:600px;display:grid;grid-template-columns:minmax(0,600px);align-items:center}
+.landing-prototipo .lp-hero-veu{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,#10233A 0%,#10233A 34%,rgba(16,35,58,.55) 52%,rgba(16,35,58,0) 68%);pointer-events:none}
+/* Atmosfera: uma malha fina de linhas sobre o navy, que se dissolve onde a foto começa, e um
+ * brilho turquesa por trás do aluno. Os dois ficam entre a foto e o texto. */
+.landing-prototipo .lp-hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background-image:linear-gradient(rgba(127,227,216,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(127,227,216,.09) 1px,transparent 1px);background-size:72px 72px;background-position:0 0;-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.6) 40%,transparent 68%),linear-gradient(180deg,transparent 0%,#000 30%,#000 70%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.6) 40%,transparent 68%),linear-gradient(180deg,transparent 0%,#000 30%,#000 70%,transparent 100%);mask-composite:intersect}
+.landing-prototipo .lp-hero::after{content:"";position:absolute;z-index:1;pointer-events:none;left:52%;top:-10%;width:900px;height:900px;border-radius:50%;background:radial-gradient(circle,rgba(20,179,186,.28) 0%,rgba(20,179,186,.10) 32%,rgba(20,179,186,0) 62%);mix-blend-mode:screen}
+.landing-prototipo .lp-hero-grade{position:relative;z-index:2;padding:88px 0 84px;min-height:600px;display:grid;grid-template-columns:minmax(0,600px);align-items:center}
+.landing-prototipo .lp-hero-nota{position:relative}
+.landing-prototipo .lp-hero-nota::before{content:"";display:inline-block;width:22px;height:1px;background:#7FE3D8;vertical-align:middle;margin-right:10px;opacity:.8}
 .landing-prototipo .lp-hero .lp-lede{max-width:480px;margin-top:26px}
 .landing-prototipo .lp-hero-acoes{display:flex;align-items:center;gap:24px;margin-top:38px;flex-wrap:wrap}
 .landing-prototipo .lp-hero-nota{margin-top:22px;font-size:14px;color:#8FA0B5}
@@ -104,8 +113,13 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-sec{padding:84px 0}
 .landing-prototipo .lp-sec-a{background:#F7F6F2}
 .landing-prototipo .lp-sec-b{background:#FFFDF9;border-top:1px solid #E3E0D8;border-bottom:1px solid #E3E0D8}
-.landing-prototipo .lp-sec-turquesa{background:#E0F5F4}
-.landing-prototipo .lp-sec-navy{background:#10233A;color:#F3F1EA}
+.landing-prototipo .lp-sec-turquesa{background:#E0F5F4;position:relative;overflow:hidden}
+.landing-prototipo .lp-sec-turquesa::before{content:"";position:absolute;right:-160px;top:-160px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,rgba(20,179,186,.22) 0%,rgba(20,179,186,0) 62%);pointer-events:none}
+.landing-prototipo .lp-sec-turquesa>.lp-wrap{position:relative}
+.landing-prototipo .lp-sec-navy{background:#10233A;color:#F3F1EA;position:relative;overflow:hidden}
+/* A mesma malha do hero, mais discreta, nas seções escuras. */
+.landing-prototipo .lp-sec-navy::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(127,227,216,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(127,227,216,.06) 1px,transparent 1px);background-size:72px 72px;-webkit-mask-image:radial-gradient(ellipse at 20% 30%,#000 0%,transparent 70%);mask-image:radial-gradient(ellipse at 20% 30%,#000 0%,transparent 70%)}
+.landing-prototipo .lp-sec-navy>.lp-wrap{position:relative}
 .landing-prototipo .lp-sec-navy .lp-h2{color:#fff}
 .landing-prototipo .lp-sec-ambar{background:#FBF1DC}
 .landing-prototipo .lp-sec-oferta{background:#E8A317;color:#17202E;padding:72px 0}
@@ -138,7 +152,8 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-skel{height:7px;border-radius:4px;background:#E3E0D8;margin-top:4px}
 
 /* ---------- 01 apresentação ---------- */
-.landing-prototipo .lp-vsl{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:#0B1A2C;box-shadow:0 40px 70px -40px rgba(16,35,58,.7)}
+.landing-prototipo .lp-vsl{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:radial-gradient(ellipse at 70% 30%,#1B2F4A 0%,#0B1A2C 60%);box-shadow:0 40px 70px -40px rgba(16,35,58,.7);border:1px solid rgba(127,227,216,.14)}
+.landing-prototipo .lp-vsl::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(127,227,216,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(127,227,216,.07) 1px,transparent 1px);background-size:48px 48px}
 .landing-prototipo .lp-vsl-tag{position:absolute;top:16px;right:16px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8FA0B5;font-weight:600}
 .landing-prototipo .lp-vsl-notebook{position:absolute;right:8%;top:16%;width:42%;aspect-ratio:4/3;background:#FFFDF9;border-radius:8px 8px 3px 3px;padding:16px 18px;box-shadow:0 24px 40px -20px rgba(0,0,0,.8);transform:perspective(900px) rotateY(-16deg)}
 .landing-prototipo .lp-vsl-notebook-titulo{font-size:12px;font-weight:600;color:#17202E}
@@ -245,7 +260,9 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-oferta-lista p{border-top:1px solid rgba(23,32,46,.25);padding-top:10px}
 .landing-prototipo .lp-oferta-outros{margin-top:28px;font-size:14px;color:#5A3F04;max-width:640px}
 .landing-prototipo .lp-oferta-outros a{color:#5A3F04;text-decoration:underline;text-underline-offset:3px}
-.landing-prototipo .lp-preco{background:#10233A;color:#F3F1EA;border-radius:16px;padding:32px}
+.landing-prototipo .lp-preco{background:#10233A;color:#F3F1EA;border-radius:16px;padding:32px;position:relative;overflow:hidden;box-shadow:0 30px 60px -30px rgba(16,35,58,.55)}
+.landing-prototipo .lp-preco::before{content:"";position:absolute;right:-90px;top:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(127,227,216,.28) 0%,rgba(127,227,216,0) 65%);pointer-events:none}
+.landing-prototipo .lp-preco>*{position:relative}
 .landing-prototipo .lp-preco-valor{font-family:'Bricolage Grotesque',sans-serif;font-size:56px;line-height:1;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
 .landing-prototipo .lp-preco-valor span{font-size:18px;color:#B9C6D6;font-weight:500}
 .landing-prototipo .lp-preco-sub{margin-top:8px;font-size:13px;color:#8FA0B5}
@@ -309,6 +326,9 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-hero-foto{position:relative;inset:auto;height:300px;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 100%);mask-image:linear-gradient(to bottom,#000 55%,transparent 100%)}
   .landing-prototipo .lp-hero-foto img{object-position:62% 20%}
   .landing-prototipo .lp-hero-veu{display:none}
+  .landing-prototipo .lp-hero::before{-webkit-mask-image:linear-gradient(180deg,transparent 0%,transparent 34%,#000 55%,#000 85%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0%,transparent 34%,#000 55%,#000 85%,transparent 100%)}
+  .landing-prototipo .lp-hero::after{left:20%;top:-20%;width:520px;height:520px;opacity:.8}
+  .landing-prototipo .lp-hero-foto{z-index:0}
   .landing-prototipo .lp-hero-grade{grid-template-columns:1fr;min-height:0;padding:0 0 32px;gap:0;margin-top:-56px}
   .landing-prototipo .lp-hero .lp-lede{margin-top:14px}
   .landing-prototipo .lp-hero-acoes{flex-direction:column;align-items:stretch;gap:14px;margin-top:22px}
