@@ -98,10 +98,11 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-hero-veu{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,#10233A 0%,#10233A 34%,rgba(16,35,58,.55) 52%,rgba(16,35,58,0) 68%);pointer-events:none}
 /* Atmosfera: uma malha fina de linhas sobre o navy, que se dissolve onde a foto começa, e um
  * brilho turquesa por trás do aluno. Os dois ficam entre a foto e o texto. */
-.landing-prototipo .lp-hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background-image:linear-gradient(rgba(127,227,216,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(127,227,216,.09) 1px,transparent 1px);background-size:96px 96px;background-position:0 0;-webkit-mask-image:linear-gradient(90deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.6) 40%,transparent 68%),linear-gradient(180deg,transparent 0%,#000 30%,#000 70%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.6) 40%,transparent 68%),linear-gradient(180deg,transparent 0%,#000 30%,#000 70%,transparent 100%);mask-composite:intersect}
+/* Fundo de pontos, como na referência: grade regular sobre o navy, que se dissolve onde a
+ * foto começa. É a textura da casa, e reaparece de forma mais discreta nas seções claras. */
+.landing-prototipo .lp-hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background-image:radial-gradient(rgba(190,214,232,.62) 1.6px,transparent 1.7px);background-size:26px 26px;background-position:0 0;-webkit-mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.85) 34%,rgba(0,0,0,.35) 52%,transparent 66%);mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.85) 34%,rgba(0,0,0,.35) 52%,transparent 66%)}
 /* Sem brilho em CSS por cima da foto: a luz turquesa nasce na própria imagem (rim light e
  * névoa gerados junto com a foto), que é o que integra de verdade. */
-.landing-prototipo .lp-hero-topo{position:absolute;left:0;top:0;width:62%;height:100%;z-index:1;pointer-events:none;overflow:hidden}
 .landing-prototipo .lp-hero-grade{position:relative;z-index:2;padding:88px 0 84px;min-height:600px;display:grid;grid-template-columns:minmax(0,600px);align-items:center}
 .landing-prototipo .lp-hero-nota{position:relative}
 .landing-prototipo .lp-hero-nota::before{content:"";display:inline-block;width:22px;height:1px;background:#7FE3D8;vertical-align:middle;margin-right:10px;opacity:.8}
@@ -122,7 +123,7 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-grafico{position:relative;background-image:linear-gradient(rgba(12,107,112,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(12,107,112,.07) 1px,transparent 1px);background-size:12px 12px;background-color:#FFFDF9}
 .landing-prototipo .lp-sec-navy{background:#10233A;color:#F3F1EA;position:relative;overflow:hidden}
 /* A mesma malha do hero, mais discreta, nas seções escuras. */
-.landing-prototipo .lp-sec-navy::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(127,227,216,.22) 1px,transparent 1.5px),repeating-linear-gradient(180deg,transparent 0 119px,rgba(127,227,216,.08) 119px 120px);background-size:22px 22px,100% 120px;-webkit-mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.5) 45%,transparent 75%);mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.5) 45%,transparent 75%)}
+.landing-prototipo .lp-sec-navy::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(190,214,232,.5) 1.5px,transparent 1.6px);background-size:26px 26px;-webkit-mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.45) 42%,transparent 70%);mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.45) 42%,transparent 70%)}
 .landing-prototipo .lp-sec-navy>.lp-wrap{position:relative}
 .landing-prototipo .lp-sec-navy .lp-h2{color:#fff}
 .landing-prototipo .lp-sec-ambar{background:#FBF1DC}
@@ -332,7 +333,7 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-hero-foto{position:relative;inset:auto;height:300px;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 100%);mask-image:linear-gradient(to bottom,#000 55%,transparent 100%)}
   .landing-prototipo .lp-hero-foto img{object-position:62% 20%}
   .landing-prototipo .lp-hero-veu{display:none}
-  .landing-prototipo .lp-hero::before{-webkit-mask-image:linear-gradient(180deg,transparent 0%,transparent 34%,#000 55%,#000 85%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0%,transparent 34%,#000 55%,#000 85%,transparent 100%)}
+  .landing-prototipo .lp-hero::before{background-size:22px 22px;-webkit-mask-image:linear-gradient(180deg,transparent 0%,transparent 32%,#000 52%,#000 88%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0%,transparent 32%,#000 52%,#000 88%,transparent 100%)}
   .landing-prototipo .lp-hero-foto{z-index:0}
   .landing-prototipo .lp-hero-grade{grid-template-columns:1fr;min-height:0;padding:0 0 32px;gap:0;margin-top:-56px}
   .landing-prototipo .lp-hero .lp-lede{margin-top:14px}
@@ -432,4 +433,41 @@ html{scroll-behavior:smooth}
 @media (max-width:760px){
   .landing-prototipo .lp-tx-doc::before,.landing-prototipo .lp-tx-doc::after,.landing-prototipo .lp-tx-doc>.lp-wrap::after{display:none}
   .landing-prototipo .lp-hero-topo{width:100%;height:300px}
+}
+
+/* O mesmo ponto do hero, quase invisível, nas seções claras: textura sem poluição. */
+.landing-prototipo .lp-sec-a,.landing-prototipo .lp-sec-b{position:relative}
+.landing-prototipo .lp-sec-a::after,.landing-prototipo .lp-sec-b::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(16,35,58,.2) 1.4px,transparent 1.5px);background-size:26px 26px;-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 40%,#000 100%);mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 40%,#000 100%);opacity:.6;z-index:0}
+.landing-prototipo .lp-sec-a>.lp-wrap,.landing-prototipo .lp-sec-b>.lp-wrap{position:relative;z-index:1}
+
+/* ---------- 07 comparar: tabela + cartão de ganhos ---------- */
+.landing-prototipo .lp-cmp-bloco{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:stretch;margin-top:36px}
+.landing-prototipo .lp-cmp-bloco .lp-cmp{margin-top:0;height:100%}
+.landing-prototipo .lp-cmp-tabela{min-width:0}
+.landing-prototipo .lp-cmp th,.landing-prototipo .lp-cmp td{padding:14px 16px;font-size:14px}
+.landing-prototipo .lp-cmp th{font-size:10.5px;line-height:1.3;vertical-align:bottom}
+.landing-prototipo .lp-cmp th.lp-cmp-crit{width:26%}
+.landing-prototipo .lp-cmp td.lp-cmp-crit{font-size:15px}
+.landing-prototipo .lp-cmp td.lp-cmp-fraco{color:#8E6009}
+.landing-prototipo .lp-cmp th.lp-cmp-mapa,.landing-prototipo .lp-cmp td.lp-cmp-mapa{background:#10233A;color:#fff}
+.landing-prototipo .lp-cmp td.lp-cmp-mapa::before{width:15px;height:15px;margin-right:8px;vertical-align:-3px;background-size:9px}
+.landing-prototipo .lp-cmp-ganhos{background:#10233A;color:#F3F1EA;border-radius:14px;padding:28px;box-shadow:0 24px 50px -34px rgba(16,35,58,.5)}
+.landing-prototipo .lp-cmp-ganhos-titulo{display:flex;align-items:center;gap:10px;font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:600;color:#fff;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.14)}
+.landing-prototipo .lp-cmp-ganhos-titulo img{width:22px;height:22px;object-fit:contain}
+.landing-prototipo .lp-cmp-ganhos ul{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-direction:column;gap:16px}
+.landing-prototipo .lp-cmp-ganhos li{position:relative;padding-left:30px;font-size:14.5px;line-height:1.5;color:#D6DFEA}
+.landing-prototipo .lp-cmp-ganhos li::before{content:"";position:absolute;left:0;top:2px;width:18px;height:18px;border-radius:50%;background:#14B3BA url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310233A' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 12.5l4 4 8-9'/></svg>") center/11px no-repeat}
+
+/* ---------- 08 fundador: foto real ---------- */
+.landing-prototipo .lp-fundador-figura{margin:0;border-radius:16px;overflow:hidden;background:#10233A;box-shadow:0 30px 60px -34px rgba(16,35,58,.5)}
+.landing-prototipo .lp-fundador-figura img{display:block;width:100%;height:100%;aspect-ratio:4/5;object-fit:cover;object-position:center top}
+
+@media (max-width:760px){
+  .landing-prototipo .lp-sec-a::after,.landing-prototipo .lp-sec-b::after{background-size:22px 22px;opacity:.4}
+  .landing-prototipo .lp-cmp-bloco{grid-template-columns:1fr;gap:14px;margin-top:20px}
+  .landing-prototipo .lp-cmp-ganhos{padding:20px;border-radius:12px}
+  .landing-prototipo .lp-cmp-ganhos-titulo{font-size:15px;padding-bottom:14px}
+  .landing-prototipo .lp-cmp-ganhos ul{gap:12px;margin-top:14px}
+  .landing-prototipo .lp-cmp-ganhos li{font-size:13.5px}
+  .landing-prototipo .lp-fundador-figura{max-width:190px}
 }

@@ -44,15 +44,6 @@
     <img src="/landing/hero-aluno.webp" alt="" width="2000" height="880" loading="eager" fetchpriority="high">
   </picture>
   <div class="lp-hero-veu" aria-hidden="true"></div>
-  <svg class="lp-hero-topo" viewBox="0 0 900 700" fill="none" aria-hidden="true" preserveAspectRatio="xMinYMid slice">
-    <g stroke="#7FE3D8" stroke-width="1" opacity=".16">
-      <path d="M-40 520 C 120 470, 180 380, 320 360 S 520 300, 620 200 S 760 60, 940 40"/>
-      <path d="M-40 580 C 140 540, 220 450, 360 430 S 560 370, 660 270 S 800 130, 940 110"/>
-      <path d="M-40 640 C 160 610, 260 520, 400 500 S 600 440, 700 340 S 840 200, 940 180"/>
-      <path d="M-40 460 C 100 400, 140 310, 280 290 S 480 230, 580 130 S 720 -10, 940 -30"/>
-      <path d="M-40 700 C 180 680, 300 590, 440 570 S 640 510, 740 410 S 880 270, 940 250"/>
-    </g>
-  </svg>
   <div class="lp-wrap lp-hero-grade">
     <div class="lp-entrada">
       <h1 class="lp-h1">A parte do seu trabalho que o aluno <span class="lp-mint">nunca vê</span>, finalmente visível.</h1>
@@ -275,22 +266,46 @@
 <!-- 9 · 07 COMPARAÇÃO -->
 <section data-screen-label="Comparação" class="lp-sec lp-sec-b">
   <div class="lp-wrap">
-    <p class="lp-eyebrow">07 · Comparação</p>
+    <p class="lp-eyebrow">07 · Comparar</p>
     <h2 class="lp-h2 lp-max-640">Compare pelo processo, não pela aparência.</h2>
-    <table class="lp-cmp">
-      <thead><tr><th class="lp-cmp-crit">Critério</th><th>Planilha</th><th>IA generativa</th><th class="lp-cmp-mapa"><span class="lp-cmp-marca"><img src="/brand/marca-pino.webp" alt="" width="22" height="22">Mapa da Prescrição</span></th></tr></thead>
-      <tbody>
-        <tr><td class="lp-cmp-crit">Continuidade entre semanas</td><td>Manual e difícil de manter</td><td>Depende do prompt</td><td class="lp-cmp-mapa">Organiza alvos e recalcula o impacto</td></tr>
-        <tr><td class="lp-cmp-crit">Origem de cada limite</td><td>Fica em outra aba</td><td>Opaca</td><td class="lp-cmp-mapa">Sempre visível, com a referência</td></tr>
-        <tr><td class="lp-cmp-crit">Edição profissional</td><td>Livre, sem histórico</td><td>Limitada</td><td class="lp-cmp-mapa">Totalmente editável, com histórico</td></tr>
-        <tr><td class="lp-cmp-crit">Registro da execução</td><td>Ausente</td><td>Ausente</td><td class="lp-cmp-mapa">Integrado ao plano, série por série</td></tr>
-      </tbody>
-    </table>
-    <div class="lp-cmp-m">
-      <div class="lp-card lp-cmp-m-item"><p>Continuidade entre semanas</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Manual, difícil de manter</span></div><div class="lp-linha"><span class="lp-k">IA generativa</span><span class="lp-v">Depende do prompt</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa da Prescrição</span><span class="lp-v">Recalcula o impacto</span></div></div></div>
-      <div class="lp-card lp-cmp-m-item"><p>Origem de cada limite</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Fica em outra aba</span></div><div class="lp-linha"><span class="lp-k">IA generativa</span><span class="lp-v">Opaca</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa da Prescrição</span><span class="lp-v">Sempre visível</span></div></div></div>
-      <div class="lp-card lp-cmp-m-item"><p>Edição profissional</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Livre, sem histórico</span></div><div class="lp-linha"><span class="lp-k">IA generativa</span><span class="lp-v">Limitada</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa da Prescrição</span><span class="lp-v">Editável, com histórico</span></div></div></div>
-      <div class="lp-card lp-cmp-m-item"><p>Registro da execução</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Ausente</span></div><div class="lp-linha"><span class="lp-k">IA generativa</span><span class="lp-v">Ausente</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa da Prescrição</span><span class="lp-v">Série por série</span></div></div></div>
+    <div class="lp-cmp-bloco">
+      <div class="lp-cmp-tabela">
+        <table class="lp-cmp">
+          <thead>
+            <tr>
+              <th class="lp-cmp-crit">Critério</th>
+              <th>Só na percepção</th>
+              <th>Planilha tradicional</th>
+              <th>App de treino genérico</th>
+              <th class="lp-cmp-mapa">Mapa</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="lp-cmp-crit">Contexto real do aluno</td><td>Na memória</td><td class="lp-cmp-fraco">Raramente</td><td class="lp-cmp-fraco">Não usa</td><td class="lp-cmp-mapa">Sim, permanente</td></tr>
+            <tr><td class="lp-cmp-crit">Continuidade entre semanas</td><td>Depende do dia</td><td class="lp-cmp-fraco">Manual</td><td class="lp-cmp-fraco">Programa fixo</td><td class="lp-cmp-mapa">Recalcula o impacto</td></tr>
+            <tr><td class="lp-cmp-crit">Origem de cada limite</td><td>Não registrada</td><td class="lp-cmp-fraco">Em outra aba</td><td class="lp-cmp-fraco">Não mostra</td><td class="lp-cmp-mapa">Sempre visível</td></tr>
+            <tr><td class="lp-cmp-crit">Edição profissional</td><td>Livre</td><td class="lp-cmp-fraco">Sem histórico</td><td class="lp-cmp-fraco">Limitada</td><td class="lp-cmp-mapa">Total, com histórico</td></tr>
+            <tr><td class="lp-cmp-crit">Registro da execução</td><td>Relato solto</td><td class="lp-cmp-fraco">Parcial</td><td class="lp-cmp-fraco">Genérico</td><td class="lp-cmp-mapa">Série por série</td></tr>
+          </tbody>
+        </table>
+        <div class="lp-cmp-m">
+          <div class="lp-card lp-cmp-m-item"><p>Contexto real do aluno</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Na memória</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Raramente</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Não usa</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Sim, permanente</span></div></div></div>
+          <div class="lp-card lp-cmp-m-item"><p>Continuidade entre semanas</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Depende do dia</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Manual</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Programa fixo</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Recalcula o impacto</span></div></div></div>
+          <div class="lp-card lp-cmp-m-item"><p>Origem de cada limite</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Não registrada</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Em outra aba</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Não mostra</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Sempre visível</span></div></div></div>
+          <div class="lp-card lp-cmp-m-item"><p>Edição profissional</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Livre</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Sem histórico</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Limitada</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Total, com histórico</span></div></div></div>
+          <div class="lp-card lp-cmp-m-item"><p>Registro da execução</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Relato solto</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Parcial</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Genérico</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Série por série</span></div></div></div>
+        </div>
+      </div>
+      <div class="lp-cmp-ganhos">
+        <p class="lp-cmp-ganhos-titulo"><img src="/brand/marca-pino.webp" alt="" width="22" height="22">Com o Mapa da Prescrição</p>
+        <ul>
+          <li>A condição do aluno chega ao plano, com a regra escrita.</li>
+          <li>Menos achismo: cada limite tem origem e referência.</li>
+          <li>Menos tempo montando, mais tempo decidindo.</li>
+          <li>O treino evolui como uma história, semana após semana.</li>
+          <li>O aluno vê o processo, não só a lista de exercícios.</li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
@@ -298,15 +313,17 @@
 <!-- 10 · 08 QUEM CONSTRUIU -->
 <section data-screen-label="Quem construiu" class="lp-sec lp-sec-a lp-tx-papel">
   <div class="lp-wrap lp-grade lp-grade-foto">
-    <div class="lp-fundador-foto" aria-hidden="true">F</div>
+    <figure class="lp-fundador-figura">
+      <img src="/landing/filipe.webp" alt="Filipe, criador do Mapa da Prescrição" width="720" height="900" loading="lazy">
+    </figure>
     <div>
       <p class="lp-eyebrow">08 · Por que o Mapa existe</p>
       <h2 class="lp-h2">A ciência da prescrição não podia continuar se perdendo entre planilhas, memória e bom senso.</h2>
       <p class="lp-fundador-nome">Filipe</p>
-      <p class="lp-corpo lp-corpo-sm">Doutor em Educação Física · professor e pesquisador em prescrição do exercício</p>
-      <p class="lp-corpo lp-max-600 lp-mt-16">Na aula, os alunos aprendiam a ciência da prescrição. Na correria dos atendimentos, ela virava planilha, memória e bom senso. O Mapa nasceu para levar a evidência da sala de aula até o dia a dia de quem atende.</p>
-      <p class="lp-citacao lp-citacao-esq lp-max-600">“Não para decidir pelo profissional, mas para colocar a informação no ponto exato em que ele vai decidir.”</p>
-      <p class="lp-corpo lp-corpo-sm lp-max-600 lp-mt-16">Onde há afirmação empírica, a referência científica que a sustenta vem junto, pronta para conferência. As faixas de treino nascem de literatura publicada e de diretriz, não de opinião.</p>
+      <p class="lp-corpo lp-corpo-sm">Profissional de Educação Física · mestre e doutor · professor universitário e pesquisador de pós-doutorado</p>
+      <p class="lp-corpo lp-max-600 lp-mt-16">Filipe é profissional de Educação Física, mestre e doutor na área, com formação científica voltada à fisiologia do exercício, ao emagrecimento e à obesidade, e ao uso do treinamento físico e de fármacos na prevenção e no tratamento de doenças crônicas.</p>
+      <p class="lp-corpo lp-max-600 lp-mt-16">Há oito anos é professor universitário. Nesse período, ensinou milhares de alunos e participou da formação de cerca de 600 profissionais de Educação Física. Hoje também atua como pesquisador de pós-doutorado, investigando como o exercício, as diferentes estratégias de intervenção e seus mecanismos fisiológicos e moleculares modificam a composição corporal, o metabolismo e a saúde.</p>
+      <p class="lp-citacao lp-citacao-esq lp-max-600">“Foi dessa convivência entre ciência, ensino e prescrição de treinamento que nasceu o Mapa da Prescrição.”</p>
     </div>
   </div>
 </section>
