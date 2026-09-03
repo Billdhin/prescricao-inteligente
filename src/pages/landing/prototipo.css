@@ -27,7 +27,7 @@ html{scroll-behavior:smooth}
 .landing-prototipo summary{list-style:none;cursor:pointer}
 .landing-prototipo summary::-webkit-details-marker{display:none}
 .landing-prototipo ::selection{background:#CDE3DF}
-.landing-prototipo .lp-wrap{width:min(1120px,100% - 48px);margin:0 auto}
+.landing-prototipo .lp-wrap{width:min(1180px,100% - 48px);margin:0 auto}
 
 /* ---------- tipografia ---------- */
 .landing-prototipo .lp-h1,.landing-prototipo .lp-h2,.landing-prototipo .lp-h3,.landing-prototipo .lp-marca-nome{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;letter-spacing:-.025em;margin:0;text-wrap:pretty}
@@ -51,7 +51,7 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-verde-txt{color:#177A4C;font-weight:600}
 .landing-prototipo .lp-mono{font-variant-numeric:tabular-nums}
 .landing-prototipo .lp-label{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#8FA0B5}
-.landing-prototipo .lp-citacao{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:clamp(20px,2.2vw,30px);line-height:1.3;color:#10233A;text-align:center;max-width:760px;margin:56px auto 0}
+.landing-prototipo .lp-citacao{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:clamp(20px,2.2vw,30px);line-height:1.3;color:#10233A;text-align:center;max-width:760px;margin:40px auto 0}
 .landing-prototipo .lp-citacao-esq{text-align:left;margin:22px 0 0;font-size:24px}
 .landing-prototipo .lp-legenda{margin-top:14px;text-align:center;font-size:13px;color:#8FA0B5}
 .landing-prototipo .lp-max-640{max-width:640px}
@@ -89,26 +89,26 @@ html{scroll-behavior:smooth}
 /* ---------- hero ---------- */
 .landing-prototipo .lp-hero{background:#10233A;color:#F3F1EA;position:relative;overflow:hidden}
 .landing-prototipo .lp-hero-anel{position:absolute;right:-120px;top:-140px;opacity:.35;pointer-events:none}
-.landing-prototipo .lp-hero-grade{position:relative;padding:96px 0 80px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:56px;align-items:center}
+.landing-prototipo .lp-hero-grade{position:relative;padding:64px 0 56px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:48px;align-items:center}
+.landing-prototipo .lp-rota-desk{width:100%;max-width:500px;justify-self:end;display:block}
 .landing-prototipo .lp-hero .lp-lede{max-width:480px;margin-top:26px}
 .landing-prototipo .lp-hero-acoes{display:flex;align-items:center;gap:24px;margin-top:38px;flex-wrap:wrap}
 .landing-prototipo .lp-hero-nota{margin-top:22px;font-size:14px;color:#8FA0B5}
-.landing-prototipo .lp-rota-desk{display:block}
 .landing-prototipo .lp-rota-m{display:none}
 .landing-prototipo .lp-hero-faixa{background:#0B1A2C;border-top:1px solid rgba(255,255,255,.1)}
 .landing-prototipo .lp-hero-faixa p{text-align:center;padding:18px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;color:#B9C6D6;font-weight:500}
 
 /* ---------- seções ---------- */
-.landing-prototipo .lp-sec{padding:120px 0}
+.landing-prototipo .lp-sec{padding:84px 0}
 .landing-prototipo .lp-sec-a{background:#F7F6F2}
 .landing-prototipo .lp-sec-b{background:#FFFDF9;border-top:1px solid #E3E0D8;border-bottom:1px solid #E3E0D8}
 .landing-prototipo .lp-sec-turquesa{background:#E0F5F4}
 .landing-prototipo .lp-sec-navy{background:#10233A;color:#F3F1EA}
 .landing-prototipo .lp-sec-navy .lp-h2{color:#fff}
 .landing-prototipo .lp-sec-ambar{background:#FBF1DC}
-.landing-prototipo .lp-sec-oferta{background:#E8A317;color:#17202E;padding:96px 0}
-.landing-prototipo .lp-sec-faq{padding-bottom:96px}
-.landing-prototipo .lp-grade{display:grid;gap:64px;align-items:center}
+.landing-prototipo .lp-sec-oferta{background:#E8A317;color:#17202E;padding:72px 0}
+.landing-prototipo .lp-sec-faq{padding-bottom:72px}
+.landing-prototipo .lp-grade{display:grid;gap:48px;align-items:center}
 .landing-prototipo .lp-grade-topo{align-items:start}
 .landing-prototipo .lp-grade-9-11{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}
 .landing-prototipo .lp-grade-8-12{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}
@@ -145,10 +145,10 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-vsl-sub{font-size:13.5px;color:#B9C6D6;margin-top:8px}
 
 /* ---------- 02 como funciona ---------- */
-.landing-prototipo .lp-etapas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px 64px;margin-top:56px}
+.landing-prototipo .lp-etapas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px 56px;margin-top:40px}
 .landing-prototipo .lp-etapa{display:grid;grid-template-columns:72px minmax(0,1fr);gap:20px;align-items:start;border-top:1px solid #E3E0D8;padding-top:24px}
 .landing-prototipo .lp-num{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:44px;line-height:1;color:#1F61E5;letter-spacing:-.03em}
-.landing-prototipo .lp-tres-telas{margin-top:56px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.landing-prototipo .lp-tres-telas{margin-top:40px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .landing-prototipo .lp-tres-telas>div{padding:24px;border-right:1px solid #E3E0D8}
 .landing-prototipo .lp-tres-telas>div:last-child{border-right:none}
 
@@ -199,7 +199,7 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-executado{padding:22px;grid-column:span 2}
 
 /* ---------- 07 comparação ---------- */
-.landing-prototipo .lp-cmp{width:100%;border-collapse:collapse;font-size:15px;margin-top:48px}
+.landing-prototipo .lp-cmp{width:100%;border-collapse:collapse;font-size:15px;margin-top:36px}
 .landing-prototipo .lp-cmp th{text-align:left;padding:0 20px 14px 0;font-weight:700;font-size:14px;color:#17202E;border-bottom:2px solid #17202E;font-family:'Bricolage Grotesque',sans-serif}
 .landing-prototipo .lp-cmp th.lp-cmp-crit{width:26%}
 .landing-prototipo .lp-cmp th.lp-cmp-mapa{color:#1F61E5;border-bottom-color:#1F61E5}

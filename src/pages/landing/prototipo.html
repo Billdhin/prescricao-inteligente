@@ -54,20 +54,19 @@
     </div>
 
     <!-- A rota, no desktop: seis nós subindo até o pino -->
-    <svg class="lp-entrada lp-entrada-2 lp-rota-desk" width="100%" viewBox="0 0 520 330" fill="none" aria-hidden="true">
-      <path d="M30 300 C 80 300, 90 250, 140 245 S 215 240, 250 205 S 305 160, 350 150 S 400 130, 435 95 S 465 55, 485 40" stroke="rgba(255,255,255,.4)" stroke-width="1.5" stroke-dasharray="4 7"/>
-      <g font-family="Instrument Sans, sans-serif" font-size="13" fill="#B9C6D6" text-anchor="middle">
-        <circle cx="30" cy="300" r="6.5" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="30" y="326">Avaliação</text>
-        <circle cx="140" cy="245" r="6.5" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="140" y="271">Contexto</text>
-        <circle cx="250" cy="205" r="6.5" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="250" y="231">Evidência</text>
-        <circle cx="350" cy="150" r="6.5" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="350" y="176">Prescrição</text>
-        <circle cx="435" cy="95" r="6.5" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="435" y="121">Execução</text>
-        <circle cx="485" cy="40" r="6.5" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="466" y="66">Revisão</text>
-      </g>
-      <g transform="translate(472, -24)">
-        <circle cx="16" cy="28" r="32" fill="rgba(31,97,229,.2)"/>
-        <path d="M16 54c7-8.6 12.5-14.5 12.5-22A12.5 12.5 0 0 0 3.5 32C3.5 39.5 9 45.4 16 54Z" fill="#1F61E5"/>
-        <circle cx="16" cy="32" r="5.4" fill="#fff"/><circle cx="16" cy="32" r="2.4" fill="#1F61E5"/>
+    <svg class="lp-entrada lp-entrada-2 lp-rota-desk" viewBox="0 0 520 340" fill="none" aria-hidden="true">
+      <!-- A trilha passa EXATAMENTE pelos seis nós (curvas quadráticas encadeadas), e o pino é o último nó, dentro do quadro. -->
+      <path d="M44 296 Q88 288 132 266 T222 220 T312 182 T398 128 T470 64" stroke="rgba(255,255,255,.55)" stroke-width="2" stroke-linecap="round"/>
+      <g font-family="Instrument Sans, sans-serif" font-size="13" fill="#B9C6D6">
+        <circle cx="44" cy="296" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="44" y="324" text-anchor="middle">Avaliação</text>
+        <circle cx="132" cy="266" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="132" y="294" text-anchor="middle">Contexto</text>
+        <circle cx="222" cy="220" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="222" y="248" text-anchor="middle">Evidência</text>
+        <circle cx="312" cy="182" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="312" y="210" text-anchor="middle">Prescrição</text>
+        <circle cx="398" cy="128" r="7" fill="#10233A" stroke="#F3F1EA" stroke-width="2"/><text x="398" y="156" text-anchor="middle">Execução</text>
+        <circle cx="470" cy="64" r="34" fill="rgba(31,97,229,.18)"/>
+        <path d="M470 78c8.5-10.4 15-17.4 15-26.4a15 15 0 0 0-30 0c0 9 6.5 16 15 26.4Z" fill="#1F61E5"/>
+        <circle cx="470" cy="51.5" r="6" fill="#fff"/><circle cx="470" cy="51.5" r="2.6" fill="#1F61E5"/>
+        <text x="470" y="112" text-anchor="middle" fill="#F3F1EA" font-weight="600">Revisão</text>
       </g>
     </svg>
 
