@@ -201,23 +201,27 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-executado{padding:22px;grid-column:span 2}
 
 /* ---------- 07 comparação ---------- */
-.landing-prototipo .lp-cmp{width:100%;border-collapse:collapse;font-size:15px;margin-top:36px}
-.landing-prototipo .lp-cmp th{text-align:left;padding:0 20px 14px 0;font-weight:700;font-size:14px;color:#17202E;border-bottom:2px solid #17202E;font-family:'Bricolage Grotesque',sans-serif}
-.landing-prototipo .lp-cmp th.lp-cmp-crit{width:26%}
-.landing-prototipo .lp-cmp th.lp-cmp-mapa{color:#1F61E5;border-bottom-color:#1F61E5;background:#EEF3FE;padding:16px 20px 14px;border-radius:12px 12px 0 0;font-size:15px}
-.landing-prototipo .lp-cmp th.lp-cmp-mapa::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:#1F61E5;margin-right:8px;vertical-align:1px}
-.landing-prototipo .lp-cmp td{padding:18px 20px 18px 0;border-bottom:1px solid #E3E0D8;color:#616874;vertical-align:top}
-.landing-prototipo .lp-cmp td.lp-cmp-crit{color:#17202E;font-weight:600}
-.landing-prototipo .lp-cmp td.lp-cmp-mapa{color:#10233A;font-weight:600;background:#EEF3FE;padding:18px 20px;border-bottom-color:#D6E2FB;position:relative}
-.landing-prototipo .lp-cmp td.lp-cmp-mapa::before{content:"";display:inline-block;width:16px;height:16px;margin-right:10px;vertical-align:-3px;border-radius:50%;background:#14B3BA url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310233A' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 12.5l4 4 8-9'/></svg>") center/10px no-repeat}
+.landing-prototipo .lp-cmp{width:100%;border-collapse:separate;border-spacing:0;font-size:15px;margin-top:36px}
+/* Três níveis: o critério é o eixo (fundo próprio, texto forte), planilha e IA são neutras, e o Mapa é o bloco navy com a marca. */
+.landing-prototipo .lp-cmp th{text-align:left;padding:0 20px 14px 0;font-weight:600;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#8FA0B5;border-bottom:1px solid #E3E0D8;vertical-align:bottom}
+.landing-prototipo .lp-cmp th.lp-cmp-crit{width:24%;color:#17202E;background:#F1EFE9;padding:14px 18px;border-radius:12px 0 0 0}
+.landing-prototipo .lp-cmp td{padding:18px 20px 18px 0;border-bottom:1px solid #EEECE5;color:#616874;vertical-align:top}
+.landing-prototipo .lp-cmp td.lp-cmp-crit{background:#F1EFE9;padding:18px;color:#10233A;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:600;letter-spacing:-.01em;border-bottom-color:#E3E0D8}
+.landing-prototipo .lp-cmp tr:last-child td.lp-cmp-crit{border-radius:0 0 0 12px;border-bottom-color:transparent}
+.landing-prototipo .lp-cmp th.lp-cmp-mapa{background:#10233A;color:#fff;padding:14px 20px;border-radius:12px 12px 0 0;border-bottom:1px solid rgba(255,255,255,.14);text-transform:none;letter-spacing:0;font-size:15px}
+.landing-prototipo .lp-cmp-marca{display:inline-flex;align-items:center;gap:8px;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:16px;color:#fff}
+.landing-prototipo .lp-cmp-marca img{width:22px;height:22px;object-fit:contain}
+.landing-prototipo .lp-cmp td.lp-cmp-mapa{color:#fff;font-weight:600;background:#10233A;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.landing-prototipo .lp-cmp td.lp-cmp-mapa::before{content:"";display:inline-block;width:18px;height:18px;margin-right:10px;vertical-align:-4px;border-radius:50%;background:#14B3BA url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310233A' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 12.5l4 4 8-9'/></svg>") center/11px no-repeat}
 .landing-prototipo .lp-cmp tr:last-child td.lp-cmp-mapa{border-radius:0 0 12px 12px;border-bottom-color:transparent}
 .landing-prototipo .lp-cmp-m{display:none}
-.landing-prototipo .lp-cmp-m-item{padding:14px 16px}
-.landing-prototipo .lp-cmp-m-item>p{font-size:14px;font-weight:600}
+.landing-prototipo .lp-cmp-m-item{padding:14px 16px 0;overflow:hidden}
+.landing-prototipo .lp-cmp-m-item>p{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:600;color:#10233A}
 .landing-prototipo .lp-cmp-m-item .lp-linhas{margin-top:6px}
-.landing-prototipo .lp-cmp-m-item .lp-linha:last-child{background:#EEF3FE;margin:6px -16px -14px;padding:10px 16px 12px;border-radius:0 0 12px 12px}
-.landing-prototipo .lp-cmp-m-item .lp-linha:last-child .lp-k{font-weight:700}
-.landing-prototipo .lp-cmp-m-item .lp-linha:last-child .lp-v{color:#10233A;font-weight:600}
+.landing-prototipo .lp-linha-mapa{background:#10233A;margin:6px -16px 0;padding:12px 16px 14px;border-bottom:0}
+.landing-prototipo .lp-linha-mapa .lp-k{color:#fff;font-weight:700}
+.landing-prototipo .lp-linha-mapa .lp-k::before{content:"";display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border-radius:50%;background:#14B3BA url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310233A' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 12.5l4 4 8-9'/></svg>") center/9px no-repeat}
+.landing-prototipo .lp-linha-mapa .lp-v{color:#fff;font-weight:600}
 
 /* ---------- 08 fundador ---------- */
 .landing-prototipo .lp-fundador-foto{aspect-ratio:4/5;border-radius:16px;background:#10233A;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-size:120px;font-weight:700;line-height:1}
