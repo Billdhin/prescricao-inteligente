@@ -111,22 +111,7 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-hero-faixa p{text-align:center;padding:18px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;color:#B9C6D6;font-weight:500}
 
 /* ---------- seções ---------- */
-.landing-prototipo .lp-sec{padding:84px 0;position:relative}
-/* A TRILHA QUE COSTURA AS SEÇÕES: uma linha vertical pontilhada na margem esquerda do
- * conteúdo, atravessando cada seção de ponta a ponta, com um nó no eyebrow de cada uma.
- * É a mesma ideia da rota do produto (avaliação → revisão), agora como fio da página. */
-.landing-prototipo .lp-sec>.lp-wrap{position:relative}
-.landing-prototipo .lp-sec>.lp-wrap::before{content:"";position:absolute;left:-34px;top:-84px;bottom:-84px;width:0;border-left:2px dashed rgba(31,97,229,.35);pointer-events:none}
-.landing-prototipo .lp-sec-navy>.lp-wrap::before{border-left-color:rgba(127,227,216,.45)}
-.landing-prototipo .lp-sec-oferta>.lp-wrap::before{border-left-color:rgba(23,32,46,.35)}
-.landing-prototipo .lp-sec .lp-eyebrow{position:relative}
-.landing-prototipo .lp-sec .lp-eyebrow::after{content:"";position:absolute;left:-41px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#1F61E5;box-shadow:0 0 0 4px #F7F6F2,0 0 0 6px rgba(31,97,229,.35)}
-.landing-prototipo .lp-sec-b .lp-eyebrow::after{box-shadow:0 0 0 4px #FFFDF9,0 0 0 6px rgba(31,97,229,.35)}
-.landing-prototipo .lp-sec-turquesa .lp-eyebrow::after{background:#0C6B70;box-shadow:0 0 0 4px #E0F5F4,0 0 0 6px rgba(12,107,112,.35)}
-.landing-prototipo .lp-sec-navy .lp-eyebrow::after{background:#7FE3D8;box-shadow:0 0 0 4px #10233A,0 0 0 6px rgba(127,227,216,.4)}
-.landing-prototipo .lp-sec-ambar .lp-eyebrow::after{background:#8E6009;box-shadow:0 0 0 4px #FBF1DC,0 0 0 6px rgba(142,96,9,.35)}
-.landing-prototipo .lp-sec-oferta .lp-eyebrow::after{background:#17202E;box-shadow:0 0 0 4px #E8A317,0 0 0 6px rgba(23,32,46,.35)}
-.landing-prototipo .lp-sec .lp-eyebrow::before{display:none}
+.landing-prototipo .lp-sec{padding:84px 0}
 .landing-prototipo .lp-sec-a{background:#F7F6F2}
 .landing-prototipo .lp-sec-b{background:#FFFDF9;border-top:1px solid #E3E0D8;border-bottom:1px solid #E3E0D8}
 .landing-prototipo .lp-sec-turquesa{background:#E0F5F4;position:relative;overflow:hidden}
@@ -363,8 +348,6 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-vsl-texto{left:7%;bottom:10%;max-width:44%}
   .landing-prototipo .lp-vsl-sub{font-size:11px;margin-top:6px}
   .landing-prototipo .lp-legenda{font-size:11px;margin-top:10px}
-  .landing-prototipo .lp-sec>.lp-wrap::before,.landing-prototipo .lp-sec .lp-eyebrow::after{display:none}
-  .landing-prototipo .lp-sec .lp-eyebrow::before{display:block}
   .landing-prototipo .lp-etapas{grid-template-columns:1fr;gap:10px;margin-top:20px}
   .landing-prototipo .lp-etapa{display:grid;grid-template-columns:40px minmax(0,1fr);gap:4px 12px;padding:14px 16px;align-items:center}
   .landing-prototipo .lp-etapa .lp-num{width:40px;height:40px;font-size:16px;grid-row:span 2}
