@@ -154,19 +154,22 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-tbl th{text-align:left;font-weight:600;color:#8FA0B5;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;padding:0 0 10px;border-bottom:1px solid #E3E0D8}
 .landing-prototipo .lp-tbl td{padding:11px 0;border-bottom:1px solid #EEECE5;vertical-align:top}
 .landing-prototipo .lp-tbl tr:last-child td{border-bottom:none}
-.landing-prototipo .lp-skel{height:7px;border-radius:4px;background:#E3E0D8;margin-top:4px}
 
-/* ---------- 01 apresentação ---------- */
-.landing-prototipo .lp-vsl{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:radial-gradient(ellipse at 70% 30%,#1B2F4A 0%,#0B1A2C 60%);box-shadow:0 40px 70px -40px rgba(16,35,58,.7);border:1px solid rgba(127,227,216,.14)}
-.landing-prototipo .lp-vsl::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(127,227,216,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(127,227,216,.07) 1px,transparent 1px);background-size:48px 48px}
-.landing-prototipo .lp-vsl-tag{position:absolute;top:16px;right:16px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8FA0B5;font-weight:600}
-.landing-prototipo .lp-vsl-notebook{position:absolute;right:8%;top:16%;width:42%;aspect-ratio:4/3;background:#FFFDF9;border-radius:8px 8px 3px 3px;padding:16px 18px;box-shadow:0 24px 40px -20px rgba(0,0,0,.8);transform:perspective(900px) rotateY(-16deg)}
-.landing-prototipo .lp-vsl-notebook-titulo{font-size:12px;font-weight:600;color:#17202E}
-.landing-prototipo .lp-vsl-notebook-campos{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-.landing-prototipo .lp-vsl-notebook-campos p{font-size:9.5px;color:#8FA0B5}
-.landing-prototipo .lp-vsl-texto{position:absolute;left:8%;bottom:12%;max-width:44%}
-.landing-prototipo .lp-vsl-titulo{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(17px,2.1vw,30px);line-height:1.1;color:#fff;font-weight:600}
-.landing-prototipo .lp-vsl-sub{font-size:13.5px;color:#B9C6D6;margin-top:8px}
+/* ---------- 01 apresentação: o player ----------
+ * O quadro era um notebook desenhado, e a seção convida a assistir a uma apresentação. Ele
+ * passa a ser o que o visitante espera ver: o frame da gravação, o botão de play no meio e
+ * a barra embaixo. O selo "em breve" fica porque o vídeo ainda não subiu, e um play que não
+ * abre nada, sem aviso, é promessa quebrada em cima do CTA principal da seção. */
+.landing-prototipo .lp-vsl{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:#0B1A2C;box-shadow:0 40px 70px -40px rgba(16,35,58,.7);border:1px solid rgba(127,227,216,.14)}
+.landing-prototipo .lp-vsl-poster,.landing-prototipo .lp-vsl-poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.landing-prototipo .lp-vsl::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(11,26,44,.35) 0%,rgba(11,26,44,0) 32%,rgba(11,26,44,.12) 55%,rgba(11,26,44,.88) 100%)}
+.landing-prototipo .lp-vsl-selo{position:absolute;top:14px;right:14px;z-index:2;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#10233A;background:#7FE3D8;border-radius:999px;padding:5px 11px}
+.landing-prototipo .lp-vsl-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;width:76px;height:76px;border-radius:50%;background:rgba(255,255,255,.94);color:#10233A;display:flex;align-items:center;justify-content:center;box-shadow:0 18px 40px -14px rgba(0,0,0,.7)}
+.landing-prototipo .lp-vsl-play svg{width:30px;height:30px;margin-left:4px}
+.landing-prototipo .lp-vsl-rodape{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:0 22px 20px}
+.landing-prototipo .lp-vsl-trilha{height:3px;border-radius:2px;background:rgba(255,255,255,.28);margin-bottom:14px}
+.landing-prototipo .lp-vsl-trilha span{display:block;width:0;height:3px;border-radius:2px;background:#E8A317}
+.landing-prototipo .lp-vsl-titulo{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(16px,1.7vw,23px);line-height:1.15;color:#fff;font-weight:600;text-shadow:0 2px 14px rgba(0,0,0,.5)}
 
 /* ---------- 02 como funciona ---------- */
 /* As etapas são cartões: número em selo, título curto, uma linha. Nada de parágrafo corrido. */
@@ -198,14 +201,7 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-eixo{text-align:center;font-size:11px;color:#8FA0B5}
 
 /* ---------- 04 condição ---------- */
-.landing-prototipo .lp-cond{display:flex;flex-direction:column;gap:14px}
-.landing-prototipo .lp-cond-item{background:#16293F;border:1px solid rgba(255,255,255,.14);border-radius:12px;color:#F3F1EA}
-.landing-prototipo .lp-cond-aberto{border-color:rgba(127,227,216,.45)}
-.landing-prototipo .lp-cond-item summary{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 24px;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:600}
-.landing-prototipo .lp-chev{width:18px;height:18px;flex:none;color:#F3F1EA;transition:transform .2s ease}
-.landing-prototipo .lp-cond-item[open] .lp-chev{transform:rotate(180deg)}
-.landing-prototipo .lp-cond-corpo{padding:0 24px 20px;font-size:14.5px;color:#B9C6D6;display:flex;flex-direction:column;gap:8px}
-.landing-prototipo .lp-fonte{font-size:13px;color:#8FA0B5}
+.landing-prototipo .lp-fonte{font-size:12.5px;color:#8FA0B5;margin-top:auto;padding-top:4px}
 
 /* ---------- 05 edição ---------- */
 .landing-prototipo .lp-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -331,15 +327,13 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-seta{justify-content:center;font-size:14px}
   .landing-prototipo .lp-hero-nota{text-align:center;margin-top:16px;font-size:12.5px}
   .landing-prototipo .lp-hero-faixa p{padding:14px 0;font-size:13px;font-family:'Instrument Sans',sans-serif}
-  .landing-prototipo .lp-vsl{aspect-ratio:16/13;border-radius:12px;margin-top:20px}
-  .landing-prototipo .lp-vsl-tag{font-size:9px;top:12px;right:12px}
-  .landing-prototipo .lp-vsl-notebook{right:6%;top:15%;width:46%;aspect-ratio:4/4.4;padding:12px}
-  .landing-prototipo .lp-vsl-notebook-titulo{font-size:9.5px}
-  .landing-prototipo .lp-vsl-notebook-campos{gap:9px;margin-top:10px}
-  .landing-prototipo .lp-vsl-notebook-campos p{font-size:8px}
-  .landing-prototipo .lp-skel{height:6px}
-  .landing-prototipo .lp-vsl-texto{left:7%;bottom:10%;max-width:44%}
-  .landing-prototipo .lp-vsl-sub{font-size:11px;margin-top:6px}
+  .landing-prototipo .lp-vsl{aspect-ratio:16/10;border-radius:12px;margin-top:18px}
+  .landing-prototipo .lp-vsl-selo{font-size:9px;top:10px;right:10px;padding:4px 9px}
+  .landing-prototipo .lp-vsl-play{width:56px;height:56px}
+  .landing-prototipo .lp-vsl-play svg{width:22px;height:22px}
+  .landing-prototipo .lp-vsl-rodape{padding:0 14px 14px}
+  .landing-prototipo .lp-vsl-trilha{margin-bottom:10px}
+  .landing-prototipo .lp-vsl-titulo{font-size:15px}
   .landing-prototipo .lp-legenda{font-size:11px;margin-top:10px}
   .landing-prototipo .lp-etapas{grid-template-columns:1fr;gap:10px;margin-top:20px}
   .landing-prototipo .lp-etapa{display:grid;grid-template-columns:40px minmax(0,1fr);gap:4px 12px;padding:14px 16px;align-items:center}
@@ -360,9 +354,6 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-grafico{padding:16px 14px 12px}
   .landing-prototipo .lp-legenda-linha{gap:12px;font-size:10.5px}
   .landing-prototipo .lp-destaque-teal,.landing-prototipo .lp-destaque-mint{margin-top:12px;font-size:13px;font-weight:500}
-  .landing-prototipo .lp-cond{gap:10px}
-  .landing-prototipo .lp-cond-item summary{padding:14px 16px;font-size:15px;font-family:'Instrument Sans',sans-serif}
-  .landing-prototipo .lp-cond-corpo{padding:0 16px 16px;font-size:13.5px}
   .landing-prototipo .lp-editor{grid-template-columns:1fr;gap:10px}
   .landing-prototipo .lp-editor-principal{grid-column:auto;padding:16px}
   .landing-prototipo .lp-editor-ex{font-size:15px;font-family:'Instrument Sans',sans-serif}
@@ -479,10 +470,13 @@ html{scroll-behavior:smooth}
 /* ---------- 04 · condição: a demonstração gatilho / efeito ---------- */
 /* Três linhas em que a esquerda é o que o profissional DECLARA e a direita o que o motor
  * MUDA. Sem a coluna da esquerda, a seção volta a ser descrição de recurso. */
-.landing-prototipo .lp-demo{margin-top:36px;display:flex;flex-direction:column;border-top:1px solid rgba(255,255,255,.14)}
-.landing-prototipo .lp-demo-linha{display:grid;grid-template-columns:minmax(0,.42fr) minmax(0,1fr);gap:24px;align-items:baseline;padding:20px 0;border-bottom:1px solid rgba(255,255,255,.14)}
-.landing-prototipo .lp-gatilho{font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600;color:#7FE3D8;letter-spacing:-.01em}
-.landing-prototipo .lp-efeito{font-size:15.5px;line-height:1.55;color:#B9C6D6}
+/* Três cartões lado a lado: a condição declarada em cima, o que ela muda no plano embaixo,
+ * e a procedência em letra miúda. Em linhas empilhadas isto ocupava três dobras e a coluna
+ * da esquerda ficava quase vazia. */
+.landing-prototipo .lp-demo{margin-top:36px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.landing-prototipo .lp-demo-cartao{background:#16293F;border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px}
+.landing-prototipo .lp-gatilho{align-self:flex-start;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#7FE3D8;background:rgba(127,227,216,.14);border-radius:999px;padding:5px 12px}
+.landing-prototipo .lp-efeito{font-size:15px;line-height:1.5;color:#B9C6D6}
 .landing-prototipo .lp-efeito b{color:#fff;font-weight:600}
 .landing-prototipo .lp-cond-grade{margin-top:48px}
 .landing-prototipo .lp-cond-pergunta{color:#fff;font-size:26px}
@@ -723,4 +717,16 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-disputa-linha b{font-size:15px}
   .landing-prototipo .lp-disputa-linha em{min-width:0;font-size:10px}
   .landing-prototipo .lp-fundador-fatos .lp-k,.landing-prototipo .lp-fundador-fatos .lp-v{font-size:12.5px}
+}
+
+/* Os cartões da demonstração empilham no celular e ficam lado a lado no tablet. */
+@media (max-width:980px){
+  .landing-prototipo .lp-demo{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .landing-prototipo .lp-demo{grid-template-columns:1fr;gap:10px;margin-top:18px}
+  .landing-prototipo .lp-demo-cartao{padding:16px;gap:8px}
+  .landing-prototipo .lp-gatilho{font-size:10px;padding:4px 10px}
+  .landing-prototipo .lp-efeito{font-size:13.5px}
+  .landing-prototipo .lp-fonte{font-size:11.5px}
 }

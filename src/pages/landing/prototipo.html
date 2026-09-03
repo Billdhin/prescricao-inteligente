@@ -49,7 +49,7 @@
   <div class="lp-wrap lp-hero-grade">
     <div class="lp-entrada">
       <h1 class="lp-h1">A parte do seu trabalho que o aluno <span class="lp-mint">nunca vê</span>, finalmente visível.</h1>
-      <p class="lp-lede lp-lede-escuro">Do cadastro à próxima decisão, o Mapa organiza avaliação, evidência e progressão em uma prescrição rastreável. A proposta sai na hora. A decisão continua sua.</p>
+      <p class="lp-lede lp-lede-escuro">Do cadastro à próxima decisão, o Mapa organiza avaliação, evidência e progressão em uma prescrição rastreável.</p>
       <div class="lp-hero-acoes">
         <a href="/dashboard" class="lp-btn lp-btn-amber" style-hover="background:#F0B429;transform:translateY(-1px)">Começar com um aluno meu</a>
         <a href="#como" class="lp-seta" style-hover="color:#7FE3D8">Entender o Mapa
@@ -93,19 +93,17 @@
       </div>
       <div>
         <div class="lp-vsl">
-          <span class="lp-vsl-tag">Apresentação em vídeo: em breve</span>
-          <div class="lp-vsl-notebook">
-            <p class="lp-vsl-notebook-titulo">Avaliação do aluno</p>
-            <div class="lp-vsl-notebook-campos">
-              <div><p>Objetivo</p><div class="lp-skel"></div></div>
-              <div><p>Histórico</p><div class="lp-skel"></div></div>
-              <div><p>Restrições</p><div class="lp-skel"></div></div>
-              <div><p>Recursos</p><div class="lp-skel"></div></div>
-            </div>
-          </div>
-          <div class="lp-vsl-texto">
+          <picture class="lp-vsl-poster">
+            <source media="(max-width: 760px)" srcset="/landing/vsl-poster-m.webp">
+            <img src="/landing/vsl-poster.webp" alt="Filipe, criador do Mapa da Prescrição, na gravação da apresentação" width="1440" height="900" loading="lazy">
+          </picture>
+          <span class="lp-vsl-selo">Em breve</span>
+          <span class="lp-vsl-play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6L19 12z"/></svg>
+          </span>
+          <div class="lp-vsl-rodape">
+            <div class="lp-vsl-trilha"><span></span></div>
             <p class="lp-vsl-titulo">O raciocínio que o aluno nunca viu</p>
-            <p class="lp-vsl-sub">Da avaliação à decisão documentada</p>
           </div>
         </div>
         <p class="lp-legenda">Problema · mecanismo · demonstrações · autonomia · oferta</p>
@@ -185,71 +183,47 @@
 <!-- 6 · 04 CONDIÇÃO -->
 <section data-screen-label="Condição" class="lp-sec lp-sec-navy">
   <div class="lp-wrap">
-    <p class="lp-eyebrow lp-eyebrow-mint">04 · O diferencial</p>
-    <h2 class="lp-h2 lp-max-640">Condição de saúde aqui não é observação num campo de texto.</h2>
-    <p class="lp-lede lp-lede-escuro lp-max-640">É regra. Cada condição declarada tem regra própria, escrita a partir de artigo verificado, e ela muda números concretos do plano do seu aluno. Declare, e veja o que acontece.</p>
+    <div class="lp-cabeca">
+      <p class="lp-eyebrow lp-eyebrow-mint">04 · O diferencial</p>
+      <h2 class="lp-h2">Condição de saúde aqui não é observação num campo de texto.</h2>
+      <p class="lp-lede lp-lede-escuro">É regra. Cada condição declarada muda números concretos do plano, e a origem de cada limite fica escrita na tela.</p>
+    </div>
     <div class="lp-demo">
-      <div class="lp-demo-linha">
-        <span class="lp-gatilho">Declarou hipertensão</span>
-        <span class="lp-efeito">O motor aplica o teto previsto para esse perfil: <b>reserva mínima de repetições</b>, manobra de Valsalva evitada e <b>descarga mais frequente</b>, com a referência ao lado.</span>
+      <div class="lp-demo-cartao">
+        <span class="lp-gatilho">Hipertensão</span>
+        <p class="lp-efeito"><b>Reserva mínima de repetições</b>, Valsalva evitada e <b>descarga mais frequente</b>.</p>
+        <p class="lp-fonte">Henkin 2023 · Hanssen 2022 · SBC 2020</p>
       </div>
-      <div class="lp-demo-linha">
-        <span class="lp-gatilho">Declarou artrose de joelho</span>
-        <span class="lp-efeito">O exercício incompatível com a restrição <b>perde prioridade ou sai</b> do plano, e o motivo fica escrito na tela.</span>
+      <div class="lp-demo-cartao">
+        <span class="lp-gatilho">Artrose de joelho</span>
+        <p class="lp-efeito">O exercício incompatível com a restrição <b>perde prioridade ou sai</b> do plano, com o motivo ao lado.</p>
+        <p class="lp-fonte">Restrição estruturada, aplicada na seleção</p>
       </div>
-      <div class="lp-demo-linha">
-        <span class="lp-gatilho">Declarou betabloqueador</span>
-        <span class="lp-efeito">A zona de frequência cardíaca <b>sai do aeróbio</b>, porque o fármaco altera a resposta da frequência, e entram esforço percebido e teste da fala.</span>
+      <div class="lp-demo-cartao">
+        <span class="lp-gatilho">Betabloqueador</span>
+        <p class="lp-efeito">A zona de frequência cardíaca <b>sai do aeróbio</b>; entram esforço percebido e teste da fala.</p>
+        <p class="lp-fonte">Wonisch 2003 · Mitchell 2019</p>
       </div>
     </div>
-  </div>
-  <div class="lp-wrap lp-grade lp-grade-8-12 lp-grade-topo lp-cond-grade">
-    <div>
-      <h3 class="lp-h3 lp-cond-pergunta">E quando duas regras pedem coisas diferentes?</h3>
-      <p class="lp-lede lp-lede-escuro">Acontece o tempo todo. O limite mais conservador prevalece, e a tela mostra qual regra pediu o quê.</p>
-      <div class="lp-disputa">
-        <p class="lp-label">Aluno de 65 anos com hipertensão · reserva de repetições</p>
-        <div class="lp-disputa-linha lp-disputa-vence"><span>A idade pediu</span><b>3 repetições</b><em>é a que vale</em></div>
-        <div class="lp-disputa-linha"><span>A hipertensão pedia</span><b>2 repetições</b><em>preterida</em></div>
-      </div>
-      <p class="lp-lede lp-lede-escuro">Você não precisa decorar cada diretriz para enxergar o que interfere naquela prescrição.</p>
-      <p class="lp-destaque-mint">O sistema organiza. O profissional avalia e decide.</p>
-    </div>
-    <div class="lp-cond">
-      <details class="lp-cond-item">
-        <summary><span>Contexto do caso</span><svg class="lp-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
-        <div class="lp-cond-corpo"><p>Aluna de 48 anos, hipertrofia, 4x por semana, intermediária. Medicação: betabloqueador. Condição confirmada: hipertensão, estágio 1.</p></div>
-      </details>
-      <details class="lp-cond-item lp-cond-aberto" open>
-        <summary><span class="lp-mint">Ponto de atenção</span><svg class="lp-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
-        <div class="lp-cond-corpo">
-          <p class="lp-claro">Reserva mínima de 2 repetições, manobra de Valsalva evitada e descarga a cada 3 semanas.</p>
-          <p>A zona de frequência cardíaca sai do aeróbio; entram esforço percebido e teste da fala.</p>
-          <p class="lp-fonte">Fonte: Henkin 2023 · Hanssen 2022 · SBC 2020 · Mitchell 2019 · Wonisch 2003</p>
+    <div class="lp-grade lp-grade-8-12 lp-grade-topo lp-cond-grade">
+      <div>
+        <h3 class="lp-h3 lp-cond-pergunta">E quando duas regras discordam?</h3>
+        <p class="lp-lede lp-lede-escuro">O limite mais conservador prevalece, e a tela mostra qual regra pediu o quê.</p>
+        <div class="lp-disputa">
+          <p class="lp-label">Aluno de 65 anos com hipertensão · reserva de repetições</p>
+          <div class="lp-disputa-linha lp-disputa-vence"><span>A idade pediu</span><b>3 repetições</b><em>é a que vale</em></div>
+          <div class="lp-disputa-linha"><span>A hipertensão pedia</span><b>2 repetições</b><em>preterida</em></div>
         </div>
-      </details>
-      <details class="lp-cond-item">
-        <summary><span>Origem da regra</span><svg class="lp-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
-        <div class="lp-cond-corpo"><p>Regra do Mapa construída sobre a direção da evidência. A cautela da descarga está escrita como escolha da casa, não como corte universal de literatura.</p></div>
-      </details>
+        <p class="lp-destaque-mint">O sistema organiza. O profissional avalia e decide.</p>
+      </div>
+      <div class="lp-card-dark lp-check">
+        <p class="lp-label">Checklist de hoje · aluna com hipertensão</p>
+        <div class="lp-check-linha"><span>Pressão de repouso</span><span class="lp-check-ok">registrada</span></div>
+        <div class="lp-check-linha"><span>Sintomas hoje</span><span class="lp-check-ok">nenhum</span></div>
+        <div class="lp-check-linha"><span>Tomou a medicação</span><span class="lp-check-alerta">não informou</span></div>
+        <div class="lp-check-status"><span class="lp-pill lp-pill-alerta">Rever antes de liberar</span><span class="lp-check-quem">O checklist muda conforme a condição do aluno.</span></div>
+      </div>
     </div>
-  </div>
-  <div class="lp-wrap lp-grade lp-grade-8-12 lp-grade-topo lp-cond-grade">
-    <div>
-      <h3 class="lp-h3 lp-cond-pergunta">E no dia da sessão</h3>
-      <p class="lp-lede lp-lede-escuro">Antes de começar, o aluno responde a um checklist que muda conforme a condição dele. Não é questionário genérico: é o cuidado daquele caso. O nível de atenção mais alto prevalece no status do dia e chama a sua atenção para o que precisa ser revisto.</p>
-      <p class="lp-lede lp-lede-escuro">A conduta continua sendo sua.</p>
-    </div>
-    <div class="lp-card-dark lp-check">
-      <p class="lp-label">Checklist de hoje · aluna com hipertensão</p>
-      <div class="lp-check-linha"><span>Pressão de repouso</span><span class="lp-check-ok">registrada</span></div>
-      <div class="lp-check-linha"><span>Sintomas hoje</span><span class="lp-check-ok">nenhum</span></div>
-      <div class="lp-check-linha"><span>Tomou a medicação</span><span class="lp-check-alerta">não informou</span></div>
-      <div class="lp-check-status"><span class="lp-pill lp-pill-alerta">Rever antes de liberar</span><span class="lp-check-quem">Quem decide é você.</span></div>
-    </div>
-  </div>
-  <div class="lp-wrap">
-    <p class="lp-ganho lp-ganho-mint">O Mapa coloca a informação no ponto exato em que você decide, e não na sua memória.</p>
   </div>
 </section>
 
@@ -466,8 +440,8 @@
         <div class="lp-conta-linha"><span>Com 20 alunos</span><b>{{ porAluno20 }} por aluno no mês</b></div>
         <div class="lp-conta-linha"><span>Com 40 alunos</span><b>{{ porAluno40 }} por aluno no mês</b></div>
       </div>
-      <p class="lp-conta-nota">Contas feitas sobre o plano anual. Quanto mais a sua carteira cresce, menos ele custa por pessoa, e nenhum plano cobra por aluno.</p>
-      <p class="lp-lede lp-lede-oferta lp-max-620">E o lugar que ele ocupa não é o de outra ferramenta. É o do tempo que você não cobra: o que vai embora montando plano do zero, procurando a diretriz que já leu e refazendo a conta a cada ajuste.</p>
+      <p class="lp-conta-nota">Contas sobre o plano anual. Quanto mais a carteira cresce, menos ele custa por pessoa.</p>
+      <p class="lp-lede lp-lede-oferta lp-max-620">O lugar que ele ocupa não é o de outra ferramenta. É o do tempo que você não cobra: o que vai embora montando plano do zero e refazendo a conta a cada ajuste.</p>
       <div class="lp-oferta-lista">
         <p>Proposta de até 12 semanas, editável</p>
         <p>Origem de cada limite, com a referência</p>
@@ -476,14 +450,14 @@
         <p>App do aluno com a sua marca</p>
         <p>Suporte por e-mail</p>
       </div>
-      <p class="lp-oferta-nenhum"><b>Nenhum item fica atrás de upgrade.</b> O que você viu nesta página é o que você recebe, em qualquer um dos planos.</p>
+      <p class="lp-oferta-nenhum"><b>Nenhum item fica atrás de upgrade:</b> os três planos têm o sistema inteiro.</p>
       <p class="lp-oferta-outros">Estúdio com 3 ou mais profissionais e instituições de ensino: <a href="mailto:suporte@mapadaprescricao.com.br?subject=Estúdio%20ou%20instituição" style-hover="color:#10233A">fale com a gente</a>. Estudantes de bacharelado em Educação Física usam sem custo durante a graduação.</p>
     </div>
     <div class="lp-preco">
       <p class="lp-preco-tag">Plano anual</p>
       <p class="lp-preco-valor">R$ {{ proPreco }}<span>/mês</span></p>
       <p class="lp-preco-sub">{{ proAno }} cobrados uma vez, no ano.</p>
-      <p class="lp-preco-linha">Alunos ilimitados, sem cobrança por aluno, e {{ economiaAnual }} de economia no ano em relação ao mensal.</p>
+      <p class="lp-preco-linha">Alunos ilimitados. Economia de {{ economiaAnual }} no ano em relação ao mensal.</p>
       <a href="/dashboard" class="lp-btn lp-btn-amber lp-btn-bloco" style-hover="background:#F0B429">Começar com um aluno meu</a>
       <sc-if value="{{ cobrancaAtiva }}"><p class="lp-preco-nota">Sete dias para testar com um aluno seu, com tudo liberado.</p></sc-if>
       <sc-if value="{{ semCobranca }}"><p class="lp-preco-nota">A cobrança ainda não está no ar: hoje você cria a conta e usa o sistema inteiro, sem cartão. Quando ela entrar, você é avisado antes de qualquer valor ser cobrado.</p></sc-if>
@@ -520,7 +494,7 @@
         <p class="lp-plano-m-economia">Economia de {{ economiaAnual }} no ano.</p>
       </div>
     </div>
-    <p class="lp-escada-nota">O anual é o plano que a gente recomenda, e por um motivo prático: <b>prescrição não se avalia em trinta dias.</b> Um mesociclo inteiro leva doze semanas. É nesse prazo que você vê a progressão fechar, a descarga cair no lugar certo e a reavaliação comparar duas datas de verdade.</p>
+    <p class="lp-escada-nota">Recomendamos o anual por um motivo prático: <b>prescrição não se avalia em trinta dias.</b> Um mesociclo leva doze semanas, e é nesse prazo que a progressão fecha, a descarga cai no lugar certo e a reavaliação compara duas datas de verdade.</p>
   </div>
 </section>
 
