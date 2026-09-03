@@ -1,13 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  PRECO_MENSAL,
-  PRECO_TABELA,
-  PRECO_ANUAL,
-  ECONOMIA_ANUAL,
-  PRECO_ESTUDIO,
-  fmtBRL,
-} from "@/data/planos";
+import { PRECO_MENSAL, PRECO_TABELA, PRECO_ANUAL, fmtBRL } from "@/data/planos";
 import { renderizarComEstados, cssDosEstados, ATTR_ACAO, type Valores } from "./landing/renderizar";
 import "./landing/prototipo.css";
 import template from "./landing/prototipo.html?raw";
@@ -16,52 +9,40 @@ import template from "./landing/prototipo.html?raw";
 const CSS_ESTADOS = cssDosEstados(template);
 
 /**
- * LANDING: PORTE DO PROTÓTIPO DO ARTIFACT.
+ * LANDING: PORTE DO PROTÓTIPO DO CANVAS (02/09/2026).
  *
- * Duas versões anteriores desta página divergiram do protótipo, e a segunda divergiu por
- * um motivo que vale registrar: eu portei `docs/nova-landing-mapa-da-prescricao.html`
- * supondo que fosse o artifact do link, e nunca conferi. Não era. O artifact tem 14
- * seções, 91 KB de marcação e blocos que aquele arquivo não tinha ("Por que eu fiz isso",
- * o guia dos 23 semáforos). A fonte agora é `docs/prototipo-artifact.html`, extraída do
- * pacote do próprio artifact.
+ * A marcação vive em `landing/prototipo.html` e este componente só a injeta e liga o
+ * comportamento; `renderizar` interpreta a linguagem de template (`{{ }}`, `<sc-if>`,
+ * `sc-camel-on-click`, `style-hover`). A fonte do desenho é o canvas aprovado pelo Filipe
+ * em 02/09/2026 (desktop em blocos de cor inteiros; celular desenhado à parte), que por sua
+ * vez segue a estrutura da LP v5: apresentação, como funciona, periodização, condição,
+ * edição, aluno, comparação, quem construiu, oferta e perguntas.
  *
- * A marcação fica INTACTA em `landing/prototipo.html` e o `renderizar` interpreta a
- * linguagem de template do artifact. Trocar o protótipo por um novo é trocar dois
- * arquivos, e qualquer divergência vira diff.
+ * ## O que o protótipo dizia e o site NÃO diz, e por quê
  *
- * ## O que foi alterado, e por quê
+ * - "7 dias de garantia, reembolso integral": a cobrança está desligada (COBRANCA_ATIVA em
+ *   planos.ts). Sem transação não há valor a devolver, e `check:legal` reprova a promessa.
+ *   A página diz o que é verdade hoje: cria a conta e usa sem cartão, avisado antes de
+ *   qualquer cobrança.
+ * - "Condição de fundador no checkout": não existe checkout. Saiu.
+ * - Nome completo, anos de docência e foto do Filipe entre colchetes: placeholder não vai ao
+ *   ar (`check:legal`, bloco D). Fica "Filipe, doutor em Educação Física", que é o que está
+ *   confirmado, e a inicial no lugar da foto até a foto real existir.
+ * - O vídeo de apresentação ainda não existe: o quadro fica sem botão de play, com o aviso
+ *   "em breve", em vez de um botão que não abre nada.
+ * - Preço só por binding da fonte única (`@/data/planos`); literal de preço no template é
+ *   exatamente como as tabelas divergiram antes.
  *
- * O protótipo afirma coisas que o sistema não faz, e essas não sobem:
+ * ## O que saiu da versão anterior
  *
- * - "43 das 100 vagas preenchidas" conta vendas que não existem.
- * - "R$ 690 por ano" na barra do topo contradiz o R$ 1.164 da seção de planos do MESMO
- *   arquivo. Preço passa a vir da fonte única.
- * - O formulário do guia em PDF coletava e-mail e mostrava "enviado" sem enviar nada, sem
- *   PDF existir e sem declarar tratamento de dado pessoal. A seção virou um convite direto
- *   ao suporte, sem campo de e-mail, que é o que de fato acontece hoje.
- * - A faixa de credibilidade anunciava "82 referências científicas conferidas no PubMed".
- *   O número era literal, não vinha de `referencias.length`, e a palavra "conferidas" não
- *   se sustentava: 12 das 82 não têm DOI nem PMID. Contagem exposta é contagem contestável,
- *   e ela também quebraria em silêncio na referência seguinte. As três afirmações da faixa
- *   passaram a ser qualitativas, e `check:legal` agora reprova quem reintroduzir um número.
+ * Calculadora de retorno, abas "por dentro do app", barra fixa de preço, seletor mensal x
+ * anual e a carta do fundador que o colocava atendendo clientes (ele forma quem prescreve;
+ * nunca prescreveu para clientes). O menu do celular, o reveal por scroll e a preservação
+ * do FAQ ficaram.
  */
-
-/** Vagas de fundador exibidas. Zero enquanto não houver contagem real de assinaturas. */
-const VAGAS_REAIS = 0;
-
 export function Landing() {
   const ref = React.useRef<HTMLDivElement>(null);
-  const [st, setSt] = React.useState({
-    sticky: false,
-    mobile: false,
-    menu: false,
-    anual: true,
-    tab: 0,
-    a: "8",
-    v: "120",
-    s: "2",
-    p: "20",
-  });
+  const [st, setSt] = React.useState({ mobile: false, menu: false });
   const mudar = React.useCallback((p: Partial<typeof st>) => setSt((s) => ({ ...s, ...p })), []);
 
   useJanela(mudar);
@@ -74,9 +55,9 @@ export function Landing() {
   useRevelarPorScroll(ref, html);
   usePreservarFaq(ref, html);
 
-  // Porta das animações de load (hero, brilho do H1): depois do primeiro segundo, a raiz
-  // ganha `lp-carregada` e as entradas não replayam quando o DOM for recriado por estado
-  // (abrir o menu mobile no topo era o caso visível). A classe vai na RAIZ porque ela é o
+  // Porta das animações de load (hero): depois do primeiro segundo, a raiz ganha
+  // `lp-carregada` e as entradas não replayam quando o DOM for recriado por estado (abrir
+  // o menu do celular no topo era o caso visível). A classe vai na RAIZ porque ela é o
   // único nó que o dangerouslySetInnerHTML não destrói.
   React.useEffect(() => {
     const raiz = ref.current;
@@ -96,17 +77,17 @@ export function Landing() {
 /**
  * REVEAL POR SCROLL QUE SOBREVIVE À RECRIAÇÃO DO DOM.
  *
- * Cada mudança de estado (tecla na calculadora, aba, limiar da barra fixa) re-injeta o
- * HTML inteiro e destrói o DOM anterior, então o observer não pode guardar estado em nó
- * nenhum. O que já foi revelado vive num Set de rótulos (`data-screen-label`) num ref, e
- * a cada render: seção já vista recebe `lp-visto` direto (sem re-animar, sem piscar);
- * seção nova entra oculta e é observada. Quem esconde é o JS, não o CSS: se nada disto
- * rodar, a página fica inteira visível, que é o fallback certo.
+ * Cada mudança de estado (menu do celular, largura) re-injeta o HTML inteiro e destrói o
+ * DOM anterior, então o observer não pode guardar estado em nó nenhum. O que já foi
+ * revelado vive num Set de rótulos (`data-screen-label`) num ref, e a cada render: seção
+ * já vista recebe `lp-visto` direto (sem re-animar, sem piscar); seção nova entra oculta e
+ * é observada. Quem esconde é o JS, não o CSS: se nada disto rodar, a página fica inteira
+ * visível, que é o fallback certo.
  *
- * Header, barra de anúncio e hero ficam fora: os dois primeiros são a casca, e o hero
- * está acima da dobra com entrada própria no load (ver `lp-entrada` no CSS).
+ * Header e hero ficam fora: o header é a casca, e o hero está acima da dobra com entrada
+ * própria no load (ver `lp-entrada` no CSS).
  */
-const SEM_REVEAL = new Set(["Barra de anúncio", "Header", "Hero"]);
+const SEM_REVEAL = new Set(["Header", "Hero"]);
 function useRevelarPorScroll(ref: React.RefObject<HTMLDivElement | null>, html: string) {
   const vistos = React.useRef(new Set<string>());
   React.useEffect(() => {
@@ -123,8 +104,8 @@ function useRevelarPorScroll(ref: React.RefObject<HTMLDivElement | null>, html: 
           obs.unobserve(ent.target);
         }
       },
-      // 0.05 e não mais: o rodapé é alto e divide a última dobra com a barra fixa, então
-      // exigir 12% dele visível deixava os links legais invisíveis numa rolagem rápida.
+      // 0.05 e não mais: o rodapé divide a última dobra, e exigir 12% dele visível deixava
+      // os links legais invisíveis numa rolagem rápida.
       { threshold: 0.05 },
     );
     const alvos: HTMLElement[] = [];
@@ -169,10 +150,11 @@ function useRevelarPorScroll(ref: React.RefObject<HTMLDivElement | null>, html: 
 }
 
 /**
- * Mantém abertas as respostas do FAQ que o visitante abriu, através das recriações do DOM.
+ * Mantém abertas as respostas do FAQ (e os acordeões da condição) que o visitante abriu,
+ * através das recriações do DOM.
  *
- * A chave é o texto da pergunta, não o índice: se a ordem do template mudar, o índice
- * abriria a resposta errada, que é pior que fechar todas.
+ * A chave é o texto do resumo, não o índice: se a ordem do template mudar, o índice abriria
+ * a resposta errada, que é pior que fechar todas.
  */
 function usePreservarFaq(ref: React.RefObject<HTMLDivElement | null>, html: string) {
   const abertos = React.useRef(new Set<string>());
@@ -204,105 +186,35 @@ function usePreservarFaq(ref: React.RefObject<HTMLDivElement | null>, html: stri
   }, [ref, html]);
 }
 
-/** Os valores que o template consome, espelhando o `renderVals` do protótipo. */
-function construirValores(st: { sticky: boolean; mobile: boolean; menu: boolean; anual: boolean; tab: number; a: string; v: string; s: string; p: string }, mudar: (p: Partial<typeof st>) => void): Valores {
-  const num = (x: string) => parseFloat(String(x).replace(",", ".")) || 0;
-  // Trava a leitura na mesma faixa que o input declara. O `min`/`max` do HTML segura o
-  // stepper, não o teclado: sem clampe aqui, "-50 alunos" imprimia "+R$ -10.392 a mais por
-  // mês" (sinal de mais na frente de negativo) e um valor alto imprimia bilhões. Numa página
-  // cuja tese é que todo número tem procedência, esse era o único lugar que se deixava pegar.
-  const preso = (x: string, min: number, max: number) => Math.min(max, Math.max(min, num(x)));
-  const nAlunos = preso(st.a, 0, 200);
-  const vSessao = preso(st.v, 0, 600);
-  const nSessoes = preso(st.s, 0, 7);
-  const pctExtra = preso(st.p, 0, 50);
-  // 4,33 é a média de semanas por mês, como no protótipo.
-  const mes = nAlunos * vSessao * nSessoes * 4.33 * (pctExtra / 100);
-  const fmt = (n: number) => "R$ " + Math.round(n).toLocaleString("pt-BR");
-  const { anual } = st;
-
-  const vals: Valores = {
-    // A contagem de vagas era 43 fixo no protótipo. Sem sistema de cobrança não há o que
-    // contar, e barra de progresso de escassez inventada é publicidade enganosa.
-    vagas: VAGAS_REAIS,
-    vagasPct: VAGAS_REAIS + "%",
-    stickyT: st.sticky ? "translateY(0)" : "translateY(120%)",
+/** Os valores que o template consome. Preço da FONTE ÚNICA, sem o "R$" (o template imprime o cifrão). */
+function construirValores(st: { mobile: boolean; menu: boolean }, mudar: (p: Partial<typeof st>) => void): Valores {
+  return {
     isMobile: st.mobile,
     isDesktop: !st.mobile,
     menuOpen: st.menu && st.mobile,
     toggleMenu: () => mudar({ menu: !st.menu }),
     fecharMenu: () => mudar({ menu: false }),
-    verAnual: () => mudar({ anual: true }),
-    verMensal: () => mudar({ anual: false }),
-    tAnBg: anual ? "#10233A" : "transparent",
-    tAnFg: anual ? "#FFFFFF" : "#5C6D84",
-    tMeBg: !anual ? "#10233A" : "transparent",
-    tMeFg: !anual ? "#FFFFFF" : "#5C6D84",
-    // Preço da FONTE ÚNICA, sem o "R$" (o template já imprime o cifrão ao lado).
-    proPreco: String(anual ? PRECO_MENSAL : PRECO_TABELA),
-    proWasDisp: anual ? "inline" : "none",
-    proSub: anual
-      ? `${fmtBRL(PRECO_ANUAL)} por ano, em 12x de ${fmtBRL(PRECO_MENSAL)}. Economia de ${fmtBRL(ECONOMIA_ANUAL)}`
-      : "cobrado mês a mês, sem fidelidade",
-    estPreco: String(anual ? PRECO_ESTUDIO : PRECO_ESTUDIO + 20),
-    aVal: st.a,
-    vVal: st.v,
-    sVal: st.s,
-    pVal: st.p,
-    mudaA: (e: Event) => mudar({ a: (e.target as HTMLInputElement).value }),
-    mudaV: (e: Event) => mudar({ v: (e.target as HTMLInputElement).value }),
-    mudaS: (e: Event) => mudar({ s: (e.target as HTMLInputElement).value }),
-    mudaP: (e: Event) => mudar({ p: (e.target as HTMLInputElement).value }),
-    economiaTxt: fmtBRL(ECONOMIA_ANUAL),
-    tabelaTxt: fmtBRL(PRECO_TABELA),
-    proMesTxt: `${fmtBRL(PRECO_MENSAL)}/mês`,
-    mesTxt: "+" + fmt(mes),
-    anoTxt: "+" + fmt(mes * 12) + " por ano",
-    mesesTxt: (() => {
-      const n = Math.max(1, Math.floor(mes / PRECO_MENSAL));
-      return n === 1 ? "1 mês" : `${n} meses`;
-    })(),
+    proPreco: String(PRECO_MENSAL),
+    proSub: `${fmtBRL(PRECO_ANUAL)} por ano, em 12x de ${fmtBRL(PRECO_MENSAL)}, ou ${fmtBRL(PRECO_TABELA)} mês a mês, sem fidelidade.`,
   };
-  for (const i of [0, 1, 2, 3]) {
-    const on = st.tab === i;
-    vals[`t${i}Bg`] = on ? "#10233A" : "transparent";
-    vals[`t${i}Fg`] = on ? "#FFFFFF" : "#5C6D84";
-    vals[`p${i}Disp`] = on ? "block" : "none";
-    vals[`setTab${i}`] = () => mudar({ tab: i });
-  }
-  return vals;
 }
 
-/** Rolagem e largura, como no `componentDidMount` do protótipo. */
-function useJanela(mudar: (p: { sticky?: boolean; mobile?: boolean; menu?: boolean }) => void) {
+/** Largura da janela: decide o menu do celular. Redimensionar fecha o menu. */
+function useJanela(mudar: (p: { mobile?: boolean; menu?: boolean }) => void) {
   React.useEffect(() => {
-    /*
-     * A posição vem do elemento que de fato rola, e não só de `window.scrollY`.
-     *
-     * O script do protótipo lê `window.scrollY`, o que vale numa página solta. Dentro
-     * deste app a rolagem pode acontecer num contêiner, e ali `scrollY` fica em 0 para
-     * sempre: foi assim que a barra fixa nunca apareceu na tentativa anterior.
-     */
-    const posicao = () => Math.max(window.scrollY, document.scrollingElement?.scrollTop ?? 0);
-    const aoRolar = () => mudar({ sticky: posicao() > 760 });
-    const aoRedimensionar = () => mudar({ mobile: window.innerWidth < 980, menu: false });
-    aoRolar();
+    const aoRedimensionar = () => mudar({ mobile: window.innerWidth < 761, menu: false });
     aoRedimensionar();
-    document.addEventListener("scroll", aoRolar, { passive: true, capture: true });
     window.addEventListener("resize", aoRedimensionar);
-    return () => {
-      document.removeEventListener("scroll", aoRolar, { capture: true });
-      window.removeEventListener("resize", aoRedimensionar);
-    };
+    return () => window.removeEventListener("resize", aoRedimensionar);
   }, [mudar]);
 }
 
 /**
- * Delegação de eventos: o clique e a digitação encontram o handler pelo atributo.
+ * Delegação de eventos: o clique encontra o handler pelo atributo.
  *
- * A marcação é injetada como texto, então não há como pendurar função nela. O
- * `renderizar` deixa o NOME do handler num atributo e aqui ele é resolvido no objeto de
- * valores, que é o mesmo que alimentou a renderização.
+ * A marcação é injetada como texto, então não há como pendurar função nela. O `renderizar`
+ * deixa o NOME do handler num atributo e aqui ele é resolvido no objeto de valores, que é o
+ * mesmo que alimentou a renderização.
  */
 function useDelegacao(ref: React.RefObject<HTMLDivElement | null>, vals: Valores) {
   const ultimo = React.useRef(vals);
@@ -310,23 +222,15 @@ function useDelegacao(ref: React.RefObject<HTMLDivElement | null>, vals: Valores
   React.useEffect(() => {
     const raiz = ref.current;
     if (!raiz) return;
-    const acionar = (tipo: "click" | "change") => (e: Event) => {
-      const alvo = (e.target as HTMLElement | null)?.closest?.(`[${ATTR_ACAO}-${tipo}]`);
-      const nome = alvo?.getAttribute(`${ATTR_ACAO}-${tipo}`);
+    const aoClicar = (e: Event) => {
+      const alvo = (e.target as HTMLElement | null)?.closest?.(`[${ATTR_ACAO}-click]`);
+      const nome = alvo?.getAttribute(`${ATTR_ACAO}-click`);
       if (!nome) return;
       const fn = ultimo.current[nome];
       if (typeof fn === "function") (fn as (ev: Event) => void)(e);
     };
-    const aoClicar = acionar("click");
-    // `input` e não `change`: o protótipo recalcula a cada tecla, e `change` só dispara
-    // quando o campo perde o foco, o que faria a calculadora parecer travada.
-    const aoDigitar = acionar("change");
     raiz.addEventListener("click", aoClicar);
-    raiz.addEventListener("input", aoDigitar);
-    return () => {
-      raiz.removeEventListener("click", aoClicar);
-      raiz.removeEventListener("input", aoDigitar);
-    };
+    return () => raiz.removeEventListener("click", aoClicar);
   }, [ref]);
 }
 

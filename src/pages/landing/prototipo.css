@@ -1,191 +1,349 @@
 /*
- * CSS DA LANDING (porte do protótipo do artifact).
+ * CSS DA LANDING (porte do protótipo do canvas de 02/09/2026).
  *
- * SEM @font-face DE PROPÓSITO. O protótipo trazia dezenas de declarações apontando para
- * identificadores internos do editor (URLs sem extensão, tipo "ed34b74f-..."), que não
- * existem neste servidor: cada visita disparava 404 de fonte em silêncio, e as
- * declarações quebradas ainda disputavam com as verdadeiras de src/index.css (mesmas
- * famílias, /fonts/, variáveis 400-800), com o vencedor dependendo da ordem do bundle.
- * Já foi removido uma vez (06/08/2026) e voltou junto com um porte novo do protótipo:
- * se trocar o protótipo de novo, apague os @font-face de novo.
+ * SEM @font-face DE PROPÓSITO: as famílias vêm de src/index.css (auto-hospedadas em /fonts).
+ * A citação em serifa usa Georgia, que existe em todo sistema, porque a landing não carrega
+ * fonte externa.
  *
  * Este arquivo é GLOBAL (não scoped): TODA regra vai prefixada com .landing-prototipo.
+ * `check:contraste` mede os estados de hover e trava se algum par cair abaixo de AA;
+ * `check:design` proíbe regra global neste arquivo. Cor de estado aqui é hex fixo porque
+ * a landing é uma peça autoral de superfície fixa, e por isso ele fica PRESO a ela.
  *
- * O bloco base já foi global "de propósito", e o propósito estava errado. Ele
- * carregava `a:hover{color:#10233A}`, um hex fixo quase preto, e a barra lateral
- * do app tem fundo #0D1524: passar o mouse num item do menu deixava o texto em
- * 1,15:1 contra o próprio fundo, ou seja, a palavra sumia. O fundador viu e
- * reportou em 23/08/2026 ("algumas palavras somem ao passar o mouse... o
- * contraste fica com a cor quase igual da cor do botão").
- *
- * A regra do produto é: **cor de estado vem de TOKEN, nunca de hex fixo**, porque
- * o hex não sabe em que superfície vai cair e o app tem claro, escuro e uma barra
- * escura dentro do tema claro. Aqui o hex fica porque a landing é uma peça
- * autoral de superfície fixa, e por isso ele fica PRESO a ela.
- *
- * `check:contraste` mede os estados de hover e trava se algum par cair abaixo de
- * AA; `check:design` proíbe regra global neste arquivo.
+ * O desenho: seções como blocos de cor inteiros alternados (off-white, branco, turquesa
+ * claro, navy, âmbar claro, âmbar cheio), tipografia grande e pesada, números grandes nas
+ * etapas, e um layout de celular desenhado à parte (rota em seis pontos, acordeões na
+ * condição, comparação em cartões), não o desktop espremido.
  */
 
 html{scroll-behavior:smooth}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-.landing-prototipo{min-height:100dvh;background:#F7F6F3;color:#10233A;font-family:'Instrument Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-.landing-prototipo a{color:#2064EC}
+.landing-prototipo{min-height:100dvh;background:#F7F6F2;color:#17202E;font-family:'Instrument Sans',system-ui,sans-serif;font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+.landing-prototipo *,.landing-prototipo *::before,.landing-prototipo *::after{box-sizing:border-box}
+.landing-prototipo a{color:#1F61E5;text-decoration:none}
 .landing-prototipo a:hover{color:#10233A}
-.landing-prototipo summary{list-style:none}
+.landing-prototipo p{margin:0}
+.landing-prototipo summary{list-style:none;cursor:pointer}
 .landing-prototipo summary::-webkit-details-marker{display:none}
-.landing-prototipo input::placeholder{color:#93A3B8}
 .landing-prototipo ::selection{background:#CDE3DF}
+.landing-prototipo .lp-wrap{width:min(1120px,100% - 48px);margin:0 auto}
 
-@media print{}
-/*
- * Estado PENDENTE de uma captura de tela.
- *
- * O protótipo declara os espaços com `<image-slot placeholder="Captura real do produto:
- * ...">`, que é elemento do editor dele e não renderiza nada no navegador: a seção "tela
- * por tela" ficava com quatro caixas vazias de 440px. Os espaços viraram <img> com destino
- * em /screens/, e enquanto o arquivo não existir o `onerror` cai aqui.
- *
- * Declarar o que vai naquele espaço é honesto; caixa vazia ou ícone de imagem quebrada,
- * não.
- */
-.landing-prototipo .tela-pendente {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 28px;
-  box-sizing: border-box;
-  font-size: 14.5px;
-  line-height: 1.5;
-  color: #7C8A9C;
-  background:
-    repeating-linear-gradient(45deg, #F4F3EF 0 10px, #EFEEE9 10px 20px);
-}
+/* ---------- tipografia ---------- */
+.landing-prototipo .lp-h1,.landing-prototipo .lp-h2,.landing-prototipo .lp-h3,.landing-prototipo .lp-marca-nome{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;letter-spacing:-.025em;margin:0;text-wrap:pretty}
+.landing-prototipo .lp-h1{font-size:clamp(34px,4.6vw,66px);line-height:1.02;color:#fff;max-width:560px}
+.landing-prototipo .lp-h2{font-size:clamp(24px,3.2vw,44px);line-height:1.08;margin-top:18px}
+.landing-prototipo .lp-h3{font-size:22px;line-height:1.25}
+.landing-prototipo .lp-eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:#1F61E5}
+.landing-prototipo .lp-eyebrow-teal{color:#0C6B70}
+.landing-prototipo .lp-eyebrow-mint{color:#7FE3D8}
+.landing-prototipo .lp-eyebrow-ambar{color:#8E6009}
+.landing-prototipo .lp-lede{font-size:19px;line-height:1.55;color:#3F5168;margin-top:22px}
+.landing-prototipo .lp-lede b{color:#17202E;font-weight:600}
+.landing-prototipo .lp-lede-escuro{color:#B9C6D6}
+.landing-prototipo .lp-corpo{font-size:16.5px;color:#616874;margin-top:8px}
+.landing-prototipo .lp-corpo-sm{font-size:14.5px}
+.landing-prototipo .lp-ink{color:#17202E}
+.landing-prototipo .lp-mint{color:#7FE3D8}
+.landing-prototipo .lp-claro{color:#F3F1EA}
+.landing-prototipo .lp-azul-txt{color:#1F61E5}
+.landing-prototipo .lp-ambar-txt{color:#8E6009;font-weight:600}
+.landing-prototipo .lp-verde-txt{color:#177A4C;font-weight:600}
+.landing-prototipo .lp-mono{font-variant-numeric:tabular-nums}
+.landing-prototipo .lp-label{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#8FA0B5}
+.landing-prototipo .lp-citacao{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:clamp(20px,2.2vw,30px);line-height:1.3;color:#10233A;text-align:center;max-width:760px;margin:56px auto 0}
+.landing-prototipo .lp-citacao-esq{text-align:left;margin:22px 0 0;font-size:24px}
+.landing-prototipo .lp-legenda{margin-top:14px;text-align:center;font-size:13px;color:#8FA0B5}
+.landing-prototipo .lp-max-640{max-width:640px}
+.landing-prototipo .lp-max-620{max-width:620px}
+.landing-prototipo .lp-max-600{max-width:600px}
+.landing-prototipo .lp-mt-8{margin-top:8px}
+.landing-prototipo .lp-mt-12{margin-top:12px}
+.landing-prototipo .lp-mt-16{margin-top:16px}
 
-/*
- * A BARRA FIXA NÃO PODE COBRIR O FIM DA PÁGINA.
- *
- * O protótipo põe a barra de ação em `position:fixed;bottom:0` e não reserva espaço para
- * ela. Quem rola até o fim perde a última faixa do rodapé debaixo dela, que é justamente
- * onde estão Termos, Política e Suporte. Numa página de marketing isso é um incômodo; numa
- * que precisa dar acesso a documento legal, é um problema.
- *
- * O respiro fica na PÁGINA e não na barra, para o cálculo não depender da altura dela em
- * cada quebra de linha do texto.
- */
-.landing-prototipo {
-  padding-bottom: 96px;
-  /* Já existia em produção: no celular a página rolava ~44px para o lado, porque o grid
-   * do hero pede colunas de no mínimo 360px e os círculos decorativos vazam. O corte é
-   * na raiz da landing, onde o vazamento horizontal nunca é conteúdo. */
-  overflow-x: hidden;
-}
+/* ---------- botões ---------- */
+.landing-prototipo .lp-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 28px;border-radius:8px;font-weight:600;font-size:16px;white-space:nowrap;cursor:pointer;border:1px solid transparent;font-family:inherit;text-decoration:none}
+.landing-prototipo .lp-btn-amber{background:#E8A317;color:#17202E}
+.landing-prototipo .lp-btn-linha{background:transparent;color:#F3F1EA;border-color:rgba(255,255,255,.3);min-height:42px;padding:0 18px;font-size:14.5px;font-weight:500}
+.landing-prototipo .lp-btn-bloco{display:flex;width:100%}
+.landing-prototipo .lp-btn-mini{min-height:34px;padding:0 14px;font-size:13px;background:#FFFDF9;color:#17202E;border-color:#D8D4CA}
+.landing-prototipo .lp-seta{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:16px;color:#F3F1EA}
 
-@media (max-width: 700px) {
-  /* Em tela estreita a barra quebra em duas linhas e ocupa mais altura. */
-  .landing-prototipo {
-    padding-bottom: 132px;
-  }
-}
+/* ---------- header ---------- */
+.landing-prototipo .lp-header{position:sticky;top:0;z-index:50;background:#10233A;color:#F3F1EA;border-bottom:1px solid rgba(255,255,255,.08)}
+.landing-prototipo .lp-header-linha{display:flex;align-items:center;justify-content:space-between;height:72px;gap:24px}
+.landing-prototipo .lp-marca{display:flex;align-items:center;gap:10px;color:#F3F1EA}
+.landing-prototipo .lp-marca-img{width:30px;height:30px;object-fit:contain;flex:none}
+.landing-prototipo .lp-marca-img-sm{width:22px;height:22px;object-fit:contain;flex:none}
+.landing-prototipo .lp-marca-nome{font-size:17px;letter-spacing:-.01em}
+.landing-prototipo .lp-nav{display:flex;gap:30px;font-size:14.5px}
+.landing-prototipo .lp-nav a{color:#B9C6D6}
+.landing-prototipo .lp-header-acoes{display:flex;align-items:center;gap:18px}
+.landing-prototipo .lp-header-entrar{font-size:14.5px;color:#B9C6D6}
+.landing-prototipo .lp-hamburger{width:44px;height:44px;border:0;background:transparent;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;cursor:pointer}
+.landing-prototipo .lp-hamburger span{width:20px;height:2px;background:#F3F1EA;border-radius:2px}
+.landing-prototipo .lp-menu-m{border-top:1px solid rgba(255,255,255,.1);background:#0B1A2C;padding:10px 24px 18px;display:flex;flex-direction:column}
+.landing-prototipo .lp-menu-m a{color:#F3F1EA;font-weight:600;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08);min-height:44px;display:flex;align-items:center}
+.landing-prototipo .lp-menu-m .lp-menu-m-cta{justify-content:center;border-radius:8px;margin-top:14px;border-bottom:0;color:#17202E}
 
-/*
- * VIDA DA PÁGINA (classes lp-*).
- *
- * Três regras de casa antes de qualquer efeito novo:
- *
- * 1. Tudo escopado em `.landing-prototipo`: este arquivo é CSS global e vaza para o app.
- * 2. O `prefers-reduced-motion` do reset global (src/index.css) zera animação e transição
- *    com !important; nada aqui contorna isso.
- * 3. O DOM da landing é recriado a cada mudança de estado (ver Landing.tsx). Animação de
- *    ENTRADA replay de graça quando o nó volta (aba, resultado da calculadora), e é isso
- *    que o `lp-pop` explora de propósito. Efeito que dependa de estado acumulado no nó
- *    não sobrevive e não entra.
- *
- * Os hovers autorados no template (`style-hover` -> classes lh-N geradas em renderizar.ts)
- * ganham a transição aqui, porque estilo inline não declara transition sem repetir em 34
- * lugares.
- */
+/* ---------- hero ---------- */
+.landing-prototipo .lp-hero{background:#10233A;color:#F3F1EA;position:relative;overflow:hidden}
+.landing-prototipo .lp-hero-anel{position:absolute;right:-120px;top:-140px;opacity:.35;pointer-events:none}
+.landing-prototipo .lp-hero-grade{position:relative;padding:96px 0 80px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:56px;align-items:center}
+.landing-prototipo .lp-hero .lp-lede{max-width:480px;margin-top:26px}
+.landing-prototipo .lp-hero-acoes{display:flex;align-items:center;gap:24px;margin-top:38px;flex-wrap:wrap}
+.landing-prototipo .lp-hero-nota{margin-top:22px;font-size:14px;color:#8FA0B5}
+.landing-prototipo .lp-rota-desk{display:block}
+.landing-prototipo .lp-rota-m{display:none}
+.landing-prototipo .lp-hero-faixa{background:#0B1A2C;border-top:1px solid rgba(255,255,255,.1)}
+.landing-prototipo .lp-hero-faixa p{text-align:center;padding:18px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;color:#B9C6D6;font-weight:500}
 
-/* Suporte aos estados visuais autorados: a reação é instantânea sem transição. */
-.landing-prototipo [class*="lh-"],
-.landing-prototipo [class*="lf-"] {
-  transition: transform .18s ease, background .18s ease, background-color .18s ease,
-    box-shadow .18s ease, color .18s ease, border-color .18s ease, opacity .18s ease;
-}
+/* ---------- seções ---------- */
+.landing-prototipo .lp-sec{padding:120px 0}
+.landing-prototipo .lp-sec-a{background:#F7F6F2}
+.landing-prototipo .lp-sec-b{background:#FFFDF9;border-top:1px solid #E3E0D8;border-bottom:1px solid #E3E0D8}
+.landing-prototipo .lp-sec-turquesa{background:#E0F5F4}
+.landing-prototipo .lp-sec-navy{background:#10233A;color:#F3F1EA}
+.landing-prototipo .lp-sec-navy .lp-h2{color:#fff}
+.landing-prototipo .lp-sec-ambar{background:#FBF1DC}
+.landing-prototipo .lp-sec-oferta{background:#E8A317;color:#17202E;padding:96px 0}
+.landing-prototipo .lp-sec-faq{padding-bottom:96px}
+.landing-prototipo .lp-grade{display:grid;gap:64px;align-items:center}
+.landing-prototipo .lp-grade-topo{align-items:start}
+.landing-prototipo .lp-grade-9-11{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}
+.landing-prototipo .lp-grade-8-12{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}
+.landing-prototipo .lp-grade-12-8{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr)}
+.landing-prototipo .lp-grade-foto{grid-template-columns:360px minmax(0,1fr)}
+.landing-prototipo .lp-grade-oferta{grid-template-columns:minmax(0,1fr) 340px}
+.landing-prototipo .lp-grade-faq{grid-template-columns:300px minmax(0,1fr);align-items:start}
+.landing-prototipo .lp-destaque-teal{margin-top:26px;font-size:15px;color:#0C6B70;font-weight:600}
+.landing-prototipo .lp-destaque-mint{margin-top:26px;font-size:15px;color:#7FE3D8;font-weight:600}
 
-/* Reveal por scroll: o JS esconde e o observer revela; sem JS a página fica visível. */
-.landing-prototipo .lp-oculto {
-  opacity: 0;
-  transform: translateY(22px);
-}
-.landing-prototipo .lp-visto {
-  opacity: 1;
-  transform: none;
-  transition: opacity .55s ease, transform .55s ease;
-}
+/* ---------- cartões e linhas ---------- */
+.landing-prototipo .lp-card{background:#FFFDF9;border:1px solid #E3E0D8;border-radius:12px}
+.landing-prototipo .lp-card-dark{background:#0B1A2C;border:1px solid rgba(255,255,255,.1);border-radius:12px;color:#F3F1EA}
+.landing-prototipo .lp-linhas{margin-top:14px;display:flex;flex-direction:column}
+.landing-prototipo .lp-linha{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid #EEECE5}
+.landing-prototipo .lp-linha:last-child{border-bottom:none}
+.landing-prototipo .lp-k{font-size:13.5px;color:#616874}
+.landing-prototipo .lp-v{font-size:13.5px;color:#17202E;font-variant-numeric:tabular-nums;text-align:right}
+.landing-prototipo .lp-tbl{width:100%;border-collapse:collapse;font-size:14px;margin-top:14px;font-variant-numeric:tabular-nums}
+.landing-prototipo .lp-tbl th{text-align:left;font-weight:600;color:#8FA0B5;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;padding:0 0 10px;border-bottom:1px solid #E3E0D8}
+.landing-prototipo .lp-tbl td{padding:11px 0;border-bottom:1px solid #EEECE5;vertical-align:top}
+.landing-prototipo .lp-tbl tr:last-child td{border-bottom:none}
+.landing-prototipo .lp-skel{height:7px;border-radius:4px;background:#E3E0D8;margin-top:4px}
 
-/* Escada sutil dentro das seções reveladas: colunas e cartões chegam um após o outro.
- * O atraso é no FILHO direto das grades internas, via nth-child, sem JS. */
-.landing-prototipo .lp-visto > div > div:nth-child(2) { animation: lp-subir .5s ease .1s backwards; }
-.landing-prototipo .lp-visto > div > div:nth-child(3) { animation: lp-subir .5s ease .2s backwards; }
-@keyframes lp-subir {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
-}
+/* ---------- 01 apresentação ---------- */
+.landing-prototipo .lp-vsl{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:#0B1A2C;box-shadow:0 40px 70px -40px rgba(16,35,58,.7)}
+.landing-prototipo .lp-vsl-tag{position:absolute;top:16px;right:16px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8FA0B5;font-weight:600}
+.landing-prototipo .lp-vsl-notebook{position:absolute;right:8%;top:16%;width:42%;aspect-ratio:4/3;background:#FFFDF9;border-radius:8px 8px 3px 3px;padding:16px 18px;box-shadow:0 24px 40px -20px rgba(0,0,0,.8);transform:perspective(900px) rotateY(-16deg)}
+.landing-prototipo .lp-vsl-notebook-titulo{font-size:12px;font-weight:600;color:#17202E}
+.landing-prototipo .lp-vsl-notebook-campos{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.landing-prototipo .lp-vsl-notebook-campos p{font-size:9.5px;color:#8FA0B5}
+.landing-prototipo .lp-vsl-texto{position:absolute;left:8%;bottom:12%;max-width:44%}
+.landing-prototipo .lp-vsl-titulo{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(17px,2.1vw,30px);line-height:1.1;color:#fff;font-weight:600}
+.landing-prototipo .lp-vsl-sub{font-size:13.5px;color:#B9C6D6;margin-top:8px}
 
-/* Entrada do hero no load: texto primeiro, mockup meio passo depois. Só ANTES de
- * `lp-carregada` (o Landing marca a raiz ~1s após montar): o DOM é recriado a cada
- * estado, e sem a porta abrir o menu mobile faria o hero re-entrar do nada. */
-.landing-prototipo:not(.lp-carregada) .lp-entrada { animation: lp-subir .55s ease backwards; }
-.landing-prototipo:not(.lp-carregada) .lp-entrada-2 { animation-delay: .18s; }
+/* ---------- 02 como funciona ---------- */
+.landing-prototipo .lp-etapas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:48px 64px;margin-top:56px}
+.landing-prototipo .lp-etapa{display:grid;grid-template-columns:72px minmax(0,1fr);gap:20px;align-items:start;border-top:1px solid #E3E0D8;padding-top:24px}
+.landing-prototipo .lp-num{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:44px;line-height:1;color:#1F61E5;letter-spacing:-.03em}
+.landing-prototipo .lp-tres-telas{margin-top:56px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.landing-prototipo .lp-tres-telas>div{padding:24px;border-right:1px solid #E3E0D8}
+.landing-prototipo .lp-tres-telas>div:last-child{border-right:none}
 
-/* O cartão de prontuário flutua de leve: a dobra nunca parece uma imagem parada.
- * O rotate(1.4deg) vem do style inline; a animação precisa repeti-lo para não apagá-lo. */
-.landing-prototipo .lp-flutuar { animation: lp-flutuar 6s ease-in-out infinite alternate; }
-@keyframes lp-flutuar {
-  from { transform: rotate(1.4deg) translateY(0); }
-  to { transform: rotate(1.4deg) translateY(-6px); }
-}
+/* ---------- 03 periodização ---------- */
+.landing-prototipo .lp-grafico{padding:26px 28px 22px;border-color:rgba(12,107,112,.25)}
+.landing-prototipo .lp-legenda-linha{display:flex;gap:22px;font-size:13px;color:#616874;flex-wrap:wrap}
+.landing-prototipo .lp-legenda-linha span{display:inline-flex;align-items:center;gap:8px}
+.landing-prototipo .lp-leg-solida{width:18px;height:2.5px;background:#14B3BA;display:inline-block}
+.landing-prototipo .lp-leg-descarga{width:18px;height:12px;background:#E0F5F4;border:1px solid #14B3BA;display:inline-block}
+.landing-prototipo .lp-leg-editada{width:0;height:12px;border-left:2px dashed #1F61E5;display:inline-block}
+.landing-prototipo .lp-svg{display:block;margin-top:8px}
+.landing-prototipo .lp-eixo{text-align:center;font-size:11px;color:#8FA0B5}
 
-/* A luz acesa do semáforo respira: o sistema está decidindo, não posando. */
-.landing-prototipo .lp-luz { animation: lp-respirar 2.4s ease-in-out infinite; }
-@keyframes lp-respirar {
-  0%, 100% { box-shadow: 0 0 0 8px rgba(240,180,41,.16), 0 8px 22px rgba(240,180,41,.5); }
-  50% { box-shadow: 0 0 0 13px rgba(240,180,41,.09), 0 8px 26px rgba(240,180,41,.62); }
-}
+/* ---------- 04 condição ---------- */
+.landing-prototipo .lp-cond{display:flex;flex-direction:column;gap:14px}
+.landing-prototipo .lp-cond-item{background:#16293F;border:1px solid rgba(255,255,255,.14);border-radius:12px;color:#F3F1EA}
+.landing-prototipo .lp-cond-aberto{border-color:rgba(127,227,216,.45)}
+.landing-prototipo .lp-cond-item summary{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 24px;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:600}
+.landing-prototipo .lp-chev{width:18px;height:18px;flex:none;color:#F3F1EA;transition:transform .2s ease}
+.landing-prototipo .lp-cond-item[open] .lp-chev{transform:rotate(180deg)}
+.landing-prototipo .lp-cond-corpo{padding:0 24px 20px;font-size:14.5px;color:#B9C6D6;display:flex;flex-direction:column;gap:8px}
+.landing-prototipo .lp-fonte{font-size:13px;color:#8FA0B5}
 
-/* Pop de recálculo/troca: replay automático porque o nó é recriado a cada estado. */
-.landing-prototipo .lp-pop { animation: lp-pop .28s ease; }
-@keyframes lp-pop {
-  from { opacity: .35; transform: scale(.985); }
-  to { opacity: 1; transform: scale(1); }
-}
+/* ---------- 05 edição ---------- */
+.landing-prototipo .lp-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.landing-prototipo .lp-editor-principal{padding:22px;grid-column:span 2}
+.landing-prototipo .lp-editor-ex{font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:600;margin-top:4px}
+.landing-prototipo .lp-editor-doses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px;font-variant-numeric:tabular-nums}
+.landing-prototipo .lp-editor-n{font-size:20px;margin-top:2px}
+.landing-prototipo .lp-editor-antes{padding:20px}
+.landing-prototipo .lp-editor-antes p+p{color:#616874;margin-top:6px}
+.landing-prototipo .lp-editor-depois{padding:20px;border-color:#1F61E5}
+.landing-prototipo .lp-editor-depois p+p{margin-top:6px}
+.landing-prototipo .lp-editor-rodape{grid-column:span 2;display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:13.5px;color:#616874}
 
-/* Brilho único no gradiente do H1, no load. O gradiente é o inline (92deg, turquesa ->
- * azul); aqui só se alarga o fundo e anda a posição, uma vez, sem loop. */
-.landing-prototipo:not(.lp-carregada) .lp-brilho {
-  background-size: 200% 100%;
-  animation: lp-brilho 1.4s ease .3s backwards;
-}
-@keyframes lp-brilho {
-  from { background-position: 120% 0; }
-  to { background-position: 0 0; }
-}
+/* ---------- 06 aluno ---------- */
+.landing-prototipo .lp-aluno{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.landing-prototipo .lp-sessao{padding:22px}
+.landing-prototipo .lp-sessao-topo{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600}
+.landing-prototipo .lp-pill{font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(127,227,216,.15);color:#7FE3D8;font-weight:600}
+.landing-prototipo .lp-sessao-ex{font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:600;margin-top:16px}
+.landing-prototipo .lp-sessao-dose{font-size:14px;color:#B9C6D6;margin-top:4px}
+.landing-prototipo .lp-barra{margin-top:16px;height:6px;border-radius:3px;background:rgba(255,255,255,.12)}
+.landing-prototipo .lp-barra-cheia{width:66%;height:6px;border-radius:3px;background:#14B3BA}
+.landing-prototipo .lp-sessao-prog{font-size:12.5px;color:#7FE3D8;margin-top:8px}
+.landing-prototipo .lp-sessao .lp-btn-bloco{margin-top:18px;min-height:44px;font-size:14px;cursor:default}
+.landing-prototipo .lp-resumo{padding:22px}
+.landing-prototipo .lp-executado{padding:22px;grid-column:span 2}
 
-/* O marcador "+" do FAQ, autorado como `style-after` (atributo do editor que o navegador
- * ignora) e morto desde sempre. Vive aqui, com o giro para X quando a pergunta abre. */
-.landing-prototipo details summary::after {
-  content: "+";
-  margin-left: auto;
-  font-size: 22px;
-  color: #5C6D84;
-  font-weight: 400;
-  line-height: 1;
-  transition: transform .25s ease;
+/* ---------- 07 comparação ---------- */
+.landing-prototipo .lp-cmp{width:100%;border-collapse:collapse;font-size:15px;margin-top:48px}
+.landing-prototipo .lp-cmp th{text-align:left;padding:0 20px 14px 0;font-weight:700;font-size:14px;color:#17202E;border-bottom:2px solid #17202E;font-family:'Bricolage Grotesque',sans-serif}
+.landing-prototipo .lp-cmp th.lp-cmp-crit{width:26%}
+.landing-prototipo .lp-cmp th.lp-cmp-mapa{color:#1F61E5;border-bottom-color:#1F61E5}
+.landing-prototipo .lp-cmp td{padding:18px 20px 18px 0;border-bottom:1px solid #E3E0D8;color:#616874;vertical-align:top}
+.landing-prototipo .lp-cmp td.lp-cmp-crit{color:#17202E;font-weight:600}
+.landing-prototipo .lp-cmp td.lp-cmp-mapa{color:#17202E;font-weight:500}
+.landing-prototipo .lp-cmp-m{display:none}
+.landing-prototipo .lp-cmp-m-item{padding:14px 16px}
+.landing-prototipo .lp-cmp-m-item>p{font-size:14px;font-weight:600}
+.landing-prototipo .lp-cmp-m-item .lp-linhas{margin-top:6px}
+
+/* ---------- 08 fundador ---------- */
+.landing-prototipo .lp-fundador-foto{aspect-ratio:4/5;border-radius:16px;background:#10233A;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-size:120px;font-weight:700;line-height:1}
+.landing-prototipo .lp-fundador-nome{margin-top:20px;font-size:15px;font-weight:600}
+
+/* ---------- 09 oferta ---------- */
+.landing-prototipo .lp-oferta-lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 40px;margin-top:32px;font-size:15.5px;max-width:640px}
+.landing-prototipo .lp-oferta-lista p{border-top:1px solid rgba(23,32,46,.25);padding-top:10px}
+.landing-prototipo .lp-oferta-outros{margin-top:28px;font-size:14px;color:#5A3F04;max-width:640px}
+.landing-prototipo .lp-oferta-outros a{color:#5A3F04;text-decoration:underline;text-underline-offset:3px}
+.landing-prototipo .lp-preco{background:#10233A;color:#F3F1EA;border-radius:16px;padding:32px}
+.landing-prototipo .lp-preco-valor{font-family:'Bricolage Grotesque',sans-serif;font-size:56px;line-height:1;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
+.landing-prototipo .lp-preco-valor span{font-size:18px;color:#B9C6D6;font-weight:500}
+.landing-prototipo .lp-preco-sub{margin-top:8px;font-size:13px;color:#8FA0B5}
+.landing-prototipo .lp-preco-linha{margin-top:10px;font-size:15px}
+.landing-prototipo .lp-preco .lp-btn-bloco{margin-top:22px}
+.landing-prototipo .lp-preco-nota{margin-top:12px;font-size:12.5px;color:#8FA0B5;line-height:1.5}
+
+/* ---------- 10 perguntas ---------- */
+.landing-prototipo .lp-faq details{border-bottom:1px solid #E3E0D8}
+.landing-prototipo .lp-faq summary{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:600}
+.landing-prototipo .lp-faq summary::after{content:"+";margin-left:auto;font-size:24px;color:#1F61E5;font-weight:400;line-height:1;transition:transform .25s ease}
+.landing-prototipo .lp-faq details[open] summary::after{transform:rotate(45deg)}
+.landing-prototipo .lp-faq details p{padding:0 0 20px;color:#616874;font-size:15.5px;max-width:520px;animation:lp-pop .28s ease}
+
+/* ---------- rodapé ---------- */
+.landing-prototipo .lp-rodape{background:#0B1A2C;color:#8FA0B5;font-size:13px}
+.landing-prototipo .lp-rodape-linha{display:flex;justify-content:space-between;align-items:center;padding:26px 0;gap:16px;flex-wrap:wrap}
+.landing-prototipo .lp-marca-rodape .lp-marca-nome{font-size:15px;color:#F3F1EA}
+.landing-prototipo .lp-rodape-links{display:flex;gap:26px;flex-wrap:wrap}
+.landing-prototipo .lp-rodape-links a{color:#8FA0B5}
+.landing-prototipo .lp-rodape-copy{color:#8FA0B5}
+.landing-prototipo .lp-rodape-aviso{border-top:1px solid rgba(255,255,255,.08);padding:18px 0 28px;font-size:12.5px;line-height:1.6;color:#8FA0B5}
+
+/* ---------- vida da página ---------- */
+.landing-prototipo [class*="lh-"],.landing-prototipo [class*="lf-"]{transition:transform .18s ease,background .18s ease,background-color .18s ease,box-shadow .18s ease,color .18s ease,border-color .18s ease,opacity .18s ease}
+.landing-prototipo .lp-oculto{opacity:0;transform:translateY(22px)}
+.landing-prototipo .lp-visto{opacity:1;transform:none;transition:opacity .55s ease,transform .55s ease}
+@keyframes lp-subir{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.landing-prototipo:not(.lp-carregada) .lp-entrada{animation:lp-subir .55s ease backwards}
+.landing-prototipo:not(.lp-carregada) .lp-entrada-2{animation-delay:.18s}
+@keyframes lp-pop{from{opacity:.35;transform:scale(.985)}to{opacity:1;transform:scale(1)}}
+
+/* ---------- celular ---------- */
+@media (max-width:760px){
+  .landing-prototipo{font-size:15px}
+  .landing-prototipo .lp-wrap{width:min(1120px,100% - 44px)}
+  .landing-prototipo .lp-h1{font-size:34px;line-height:1.08}
+  .landing-prototipo .lp-h2{font-size:24px;line-height:1.15;margin-top:10px}
+  .landing-prototipo .lp-h3{font-size:16.5px}
+  .landing-prototipo .lp-lede{font-size:14.5px;margin-top:10px}
+  .landing-prototipo .lp-corpo{font-size:14px}
+  .landing-prototipo .lp-eyebrow{font-size:10.5px}
+  .landing-prototipo .lp-citacao{font-size:18px;margin-top:24px}
+  .landing-prototipo .lp-citacao-esq{font-size:18px;margin-top:14px}
+  .landing-prototipo .lp-sec{padding:44px 0}
+  .landing-prototipo .lp-sec-oferta{padding:44px 0}
+  .landing-prototipo .lp-sec-b{border-top:1px solid #E3E0D8}
+  .landing-prototipo .lp-grade{grid-template-columns:1fr !important;gap:18px}
+  .landing-prototipo .lp-grade-inverte-m>div:first-child{order:2}
+  .landing-prototipo .lp-header-linha{height:56px}
+  .landing-prototipo .lp-marca-img{width:22px;height:22px}
+  .landing-prototipo .lp-marca-nome{font-size:14.5px}
+  .landing-prototipo .lp-hero-anel{display:none}
+  .landing-prototipo .lp-hero-grade{grid-template-columns:1fr;padding:28px 0 32px;gap:0}
+  .landing-prototipo .lp-hero .lp-lede{margin-top:14px}
+  .landing-prototipo .lp-hero-acoes{flex-direction:column;align-items:stretch;gap:14px;margin-top:22px}
+  .landing-prototipo .lp-hero-acoes .lp-btn{min-height:50px;font-size:15px}
+  .landing-prototipo .lp-seta{justify-content:center;font-size:14px}
+  .landing-prototipo .lp-hero-nota{text-align:center;margin-top:16px;font-size:12.5px}
+  .landing-prototipo .lp-rota-desk{display:none}
+  .landing-prototipo .lp-rota-m{display:block;margin-top:30px}
+  .landing-prototipo .lp-rota-m-linha{display:flex;align-items:center;justify-content:space-between}
+  .landing-prototipo .lp-rota-m-no{width:7px;height:7px;border-radius:50%;background:#F3F1EA;flex:none}
+  .landing-prototipo .lp-rota-m-fim{width:9px;height:9px;background:#1F61E5}
+  .landing-prototipo .lp-rota-m-tra{flex:1;border-top:1.5px dashed rgba(255,255,255,.4)}
+  .landing-prototipo .lp-rota-m-rotulos{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin-top:8px;font-size:9.5px;color:#B9C6D6;text-align:center}
+  .landing-prototipo .lp-rota-m-rotulos span:first-child{text-align:left}
+  .landing-prototipo .lp-rota-m-rotulos span:last-child{text-align:right}
+  .landing-prototipo .lp-hero-faixa p{padding:14px 0;font-size:13px;font-family:'Instrument Sans',sans-serif}
+  .landing-prototipo .lp-vsl{aspect-ratio:16/13;border-radius:12px;margin-top:20px}
+  .landing-prototipo .lp-vsl-tag{font-size:9px;top:12px;right:12px}
+  .landing-prototipo .lp-vsl-notebook{right:6%;top:15%;width:46%;aspect-ratio:4/4.4;padding:12px}
+  .landing-prototipo .lp-vsl-notebook-titulo{font-size:9.5px}
+  .landing-prototipo .lp-vsl-notebook-campos{gap:9px;margin-top:10px}
+  .landing-prototipo .lp-vsl-notebook-campos p{font-size:8px}
+  .landing-prototipo .lp-skel{height:6px}
+  .landing-prototipo .lp-vsl-texto{left:7%;bottom:10%;max-width:44%}
+  .landing-prototipo .lp-vsl-sub{font-size:11px;margin-top:6px}
+  .landing-prototipo .lp-legenda{font-size:11px;margin-top:10px}
+  .landing-prototipo .lp-etapas{grid-template-columns:1fr;gap:0;margin-top:20px}
+  .landing-prototipo .lp-etapa{grid-template-columns:44px minmax(0,1fr);gap:12px;padding:14px 0;border-top:0;border-bottom:1px solid #E3E0D8}
+  .landing-prototipo .lp-etapa:last-child{border-bottom:0}
+  .landing-prototipo .lp-etapa .lp-corpo{font-size:13px;margin-top:3px}
+  .landing-prototipo .lp-num{font-size:26px}
+  .landing-prototipo .lp-tres-telas{margin-top:16px}
+  .landing-prototipo .lp-tres-telas>div{padding:12px}
+  .landing-prototipo .lp-tres-telas .lp-label{font-size:9px;letter-spacing:.04em}
+  .landing-prototipo .lp-tres-telas .lp-k,.landing-prototipo .lp-tres-telas .lp-v{font-size:9.5px}
+  .landing-prototipo .lp-tres-telas .lp-linha{padding:5px 0;gap:6px}
+  .landing-prototipo .lp-tres-telas .lp-tbl{font-size:9.5px;margin-top:8px;table-layout:fixed;word-break:break-word}
+  .landing-prototipo .lp-tres-telas .lp-tbl th{font-size:8.5px;padding-bottom:6px}
+  .landing-prototipo .lp-tres-telas .lp-tbl td{padding:6px 0}
+  .landing-prototipo .lp-grafico{padding:16px 14px 12px}
+  .landing-prototipo .lp-legenda-linha{gap:12px;font-size:10.5px}
+  .landing-prototipo .lp-destaque-teal,.landing-prototipo .lp-destaque-mint{margin-top:12px;font-size:13px;font-weight:500}
+  .landing-prototipo .lp-cond{gap:10px}
+  .landing-prototipo .lp-cond-item summary{padding:14px 16px;font-size:15px;font-family:'Instrument Sans',sans-serif}
+  .landing-prototipo .lp-cond-corpo{padding:0 16px 16px;font-size:13.5px}
+  .landing-prototipo .lp-editor{grid-template-columns:1fr;gap:10px}
+  .landing-prototipo .lp-editor-principal{grid-column:auto;padding:16px}
+  .landing-prototipo .lp-editor-ex{font-size:15px;font-family:'Instrument Sans',sans-serif}
+  .landing-prototipo .lp-editor-doses{gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid #EEECE5}
+  .landing-prototipo .lp-editor-n{font-size:16px}
+  .landing-prototipo .lp-editor-antes,.landing-prototipo .lp-editor-depois{padding:14px 16px}
+  .landing-prototipo .lp-editor-rodape{grid-column:auto;font-size:12px}
+  .landing-prototipo .lp-aluno{grid-template-columns:1fr;gap:10px}
+  .landing-prototipo .lp-sessao,.landing-prototipo .lp-resumo,.landing-prototipo .lp-executado{padding:16px;grid-column:auto}
+  .landing-prototipo .lp-sessao-ex{font-size:15px;margin-top:12px;font-family:'Instrument Sans',sans-serif}
+  .landing-prototipo .lp-sessao .lp-btn-bloco{display:none}
+  .landing-prototipo .lp-executado .lp-tbl{font-size:12px}
+  .landing-prototipo .lp-cmp{display:none}
+  .landing-prototipo .lp-cmp-m{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+  .landing-prototipo .lp-fundador-foto{width:120px;aspect-ratio:1;font-size:48px;border-radius:10px}
+  .landing-prototipo .lp-oferta-lista{grid-template-columns:1fr;gap:0;margin-top:16px;font-size:13.5px}
+  .landing-prototipo .lp-oferta-lista p{padding:8px 0}
+  .landing-prototipo .lp-oferta-outros{font-size:13px;margin-top:16px}
+  .landing-prototipo .lp-preco{padding:22px;border-radius:14px}
+  .landing-prototipo .lp-preco-valor{font-size:44px}
+  .landing-prototipo .lp-preco-valor span{font-size:16px}
+  .landing-prototipo .lp-preco .lp-btn-bloco{margin-top:16px;min-height:50px;font-size:15px}
+  .landing-prototipo .lp-faq summary{padding:15px 0;font-size:14.5px;font-family:'Instrument Sans',sans-serif}
+  .landing-prototipo .lp-faq summary::after{font-size:20px}
+  .landing-prototipo .lp-faq details p{font-size:13.5px;padding-bottom:14px}
+  .landing-prototipo .lp-rodape-linha{flex-direction:column;align-items:flex-start;gap:12px;padding:22px 0}
+  .landing-prototipo .lp-rodape-links{gap:18px}
 }
-.landing-prototipo details[open] summary::after { transform: rotate(45deg); }
-.landing-prototipo details p { animation: lp-pop .28s ease; }
