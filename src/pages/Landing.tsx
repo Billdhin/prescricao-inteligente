@@ -61,10 +61,20 @@ const CSS_ESTADOS = cssDosEstados(template);
  * nunca prescreveu para clientes). O menu do celular, o reveal por scroll e a preservação
  * do FAQ ficaram.
  */
+/**
+ * O plano ESCOLHIDO na seção de preço.
+ *
+ * Não existe checkout ainda, então a escolha é preferência, não compra: ela destaca o
+ * cartão e troca a linha de resumo abaixo dele. Existe porque comparar três valores num
+ * cartão que não responde ao clique é a única parte da página que parecia um print.
+ */
+type PlanoEscolhido = "mensal" | "semestral" | "anual";
+type Estado = { mobile: boolean; menu: boolean; plano: PlanoEscolhido };
+
 export function Landing() {
   const ref = React.useRef<HTMLDivElement>(null);
-  const [st, setSt] = React.useState({ mobile: false, menu: false });
-  const mudar = React.useCallback((p: Partial<typeof st>) => setSt((s) => ({ ...s, ...p })), []);
+  const [st, setSt] = React.useState<Estado>({ mobile: false, menu: false, plano: "anual" });
+  const mudar = React.useCallback((p: Partial<Estado>) => setSt((s) => ({ ...s, ...p })), []);
 
   useJanela(mudar);
 
@@ -218,7 +228,7 @@ function usePreservarFaq(ref: React.RefObject<HTMLDivElement | null>, html: stri
  * `cobrancaAtiva` e `semCobranca` são o par que liga e desliga os dois textos de risco no
  * template. Existem os dois, e não só a negação de um, porque `sc-if` não tem `else`.
  */
-function construirValores(st: { mobile: boolean; menu: boolean }, mudar: (p: Partial<typeof st>) => void): Valores {
+function construirValores(st: Estado, mudar: (p: Partial<Estado>) => void): Valores {
   return {
     isMobile: st.mobile,
     isDesktop: !st.mobile,
@@ -252,8 +262,30 @@ function construirValores(st: { mobile: boolean; menu: boolean }, mudar: (p: Par
     porAluno10: fmtBRLc(precoPorAluno(10)),
     porAluno20: fmtBRLc(precoPorAluno(20)),
     porAluno40: fmtBRLc(precoPorAluno(40)),
+
+    // Cartões de plano: a classe do escolhido e o resumo que muda com ele.
+    clsMensal: st.plano === "mensal" ? "lp-plano-on" : "",
+    clsSemestral: st.plano === "semestral" ? "lp-plano-on" : "",
+    clsAnual: st.plano === "anual" ? "lp-plano-on" : "",
+    selMensal: () => mudar({ plano: "mensal" }),
+    selSemestral: () => mudar({ plano: "semestral" }),
+    selAnual: () => mudar({ plano: "anual" }),
+    resumoPlano: RESUMO[st.plano],
   };
 }
+
+/**
+ * A linha que explica o cartão escolhido.
+ *
+ * A do anual diz as duas coisas na mesma frase, e a ordem importa: primeiro o que o
+ * visitante paga hoje, depois a condição que faz esse valor existir. Sem a segunda metade,
+ * o valor de fundador pareceria preço de tabela, e ele não é.
+ */
+const RESUMO: Record<PlanoEscolhido, string> = {
+  mensal: `Mensal: ${fmtBRL(PRECO_MENSAL_AVULSO)} por mês, cobrados todo mês, sem compromisso de prazo.`,
+  semestral: `Semestral: ${fmtBRL(PRECO_SEMESTRAL_MES)} por mês, cobrados ${fmtBRL(PRECO_SEMESTRAL)} a cada seis meses.`,
+  anual: `Anual de fundador: ${fmtBRL(PRECO_FUNDADOR_MES)} por mês, cobrados ${fmtBRL(PRECO_FUNDADOR_ANO)} uma vez. Vale para as ${VAGAS_FUNDADOR} primeiras contas; depois delas, o anual é ${fmtBRL(PRECO_MENSAL)} por mês.`,
+};
 
 /** Largura da janela: decide o menu do celular. Redimensionar fecha o menu. */
 function useJanela(mudar: (p: { mobile?: boolean; menu?: boolean }) => void) {

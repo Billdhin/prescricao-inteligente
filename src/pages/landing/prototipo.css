@@ -113,7 +113,7 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-hero-faixa p{text-align:center;padding:18px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:17px;color:#B9C6D6;font-weight:500}
 
 /* ---------- seções ---------- */
-.landing-prototipo .lp-sec{padding:84px 0}
+.landing-prototipo .lp-sec{padding:62px 0}
 .landing-prototipo .lp-sec-a{background:#F7F6F2}
 .landing-prototipo .lp-sec-b{background:#FFFDF9;border-top:1px solid #E3E0D8;border-bottom:1px solid #E3E0D8}
 .landing-prototipo .lp-sec-turquesa{background:#E0F5F4;position:relative;overflow:hidden}
@@ -127,7 +127,7 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-sec-navy>.lp-wrap{position:relative}
 .landing-prototipo .lp-sec-navy .lp-h2{color:#fff}
 .landing-prototipo .lp-sec-ambar{background:#FBF1DC}
-.landing-prototipo .lp-sec-oferta{background:#E8A317;color:#17202E;padding:72px 0}
+.landing-prototipo .lp-sec-oferta{background:#E8A317;color:#17202E;padding:62px 0}
 .landing-prototipo .lp-sec-faq{padding-bottom:72px}
 .landing-prototipo .lp-grade{display:grid;gap:48px;align-items:center}
 .landing-prototipo .lp-grade-topo{align-items:start}
@@ -139,7 +139,6 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-faq-wrap{max-width:860px}
 .landing-prototipo .lp-faq-topo .lp-lede{margin-top:14px;max-width:640px}
 .landing-prototipo .lp-faq{margin-top:36px;border-top:1px solid #E3E0D8}
-.landing-prototipo .lp-destaque-teal{margin-top:26px;font-size:15px;color:#0C6B70;font-weight:600}
 .landing-prototipo .lp-destaque-mint{margin-top:26px;font-size:15px;color:#7FE3D8;font-weight:600}
 
 /* ---------- cartões e linhas ---------- */
@@ -190,30 +189,10 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-pontos b{color:#17202E;font-weight:600}
 .landing-prototipo .lp-sec-ambar .lp-pontos li::before{background:#8E6009}
 
-/* ---------- 03 periodização ---------- */
-.landing-prototipo .lp-grafico{padding:26px 28px 22px;border-color:rgba(12,107,112,.25)}
-.landing-prototipo .lp-legenda-linha{display:flex;gap:22px;font-size:13px;color:#616874;flex-wrap:wrap}
-.landing-prototipo .lp-legenda-linha span{display:inline-flex;align-items:center;gap:8px}
-.landing-prototipo .lp-leg-solida{width:18px;height:2.5px;background:#14B3BA;display:inline-block}
-.landing-prototipo .lp-leg-descarga{width:18px;height:12px;background:#E0F5F4;border:1px solid #14B3BA;display:inline-block}
-.landing-prototipo .lp-leg-editada{width:0;height:12px;border-left:2px dashed #1F61E5;display:inline-block}
-.landing-prototipo .lp-svg{display:block;margin-top:8px}
-.landing-prototipo .lp-eixo{text-align:center;font-size:11px;color:#8FA0B5}
 
 /* ---------- 04 condição ---------- */
 .landing-prototipo .lp-fonte{font-size:12.5px;color:#8FA0B5;margin-top:auto;padding-top:4px}
 
-/* ---------- 05 edição ---------- */
-.landing-prototipo .lp-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.landing-prototipo .lp-editor-principal{padding:22px;grid-column:span 2}
-.landing-prototipo .lp-editor-ex{font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:600;margin-top:4px}
-.landing-prototipo .lp-editor-doses{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px;font-variant-numeric:tabular-nums}
-.landing-prototipo .lp-editor-n{font-size:20px;margin-top:2px}
-.landing-prototipo .lp-editor-antes{padding:20px}
-.landing-prototipo .lp-editor-antes p+p{color:#616874;margin-top:6px}
-.landing-prototipo .lp-editor-depois{padding:20px;border-color:#1F61E5}
-.landing-prototipo .lp-editor-depois p+p{margin-top:6px}
-.landing-prototipo .lp-editor-rodape{grid-column:span 2;display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:13.5px;color:#616874}
 
 /* ---------- 06 aluno ---------- */
 .landing-prototipo .lp-pill{font-size:11px;padding:3px 8px;border-radius:999px;background:rgba(127,227,216,.15);color:#7FE3D8;font-weight:600}
@@ -247,20 +226,6 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-fundador-foto{aspect-ratio:4/5;border-radius:16px;background:#10233A;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-size:120px;font-weight:700;line-height:1}
 .landing-prototipo .lp-fundador-nome{margin-top:20px;font-size:15px;font-weight:600}
 
-/* ---------- 09 oferta ---------- */
-.landing-prototipo .lp-oferta-lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 40px;margin-top:32px;font-size:15.5px;max-width:640px}
-.landing-prototipo .lp-oferta-lista p{border-top:1px solid rgba(23,32,46,.25);padding-top:10px}
-.landing-prototipo .lp-oferta-outros{margin-top:28px;font-size:14px;color:#5A3F04;max-width:640px}
-.landing-prototipo .lp-oferta-outros a{color:#5A3F04;text-decoration:underline;text-underline-offset:3px}
-.landing-prototipo .lp-preco{background:#10233A;color:#F3F1EA;border-radius:16px;padding:32px;position:relative;overflow:hidden;box-shadow:0 30px 60px -30px rgba(16,35,58,.55)}
-.landing-prototipo .lp-preco::before{content:"";position:absolute;right:-90px;top:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(127,227,216,.28) 0%,rgba(127,227,216,0) 65%);pointer-events:none}
-.landing-prototipo .lp-preco>*{position:relative}
-.landing-prototipo .lp-preco-valor{font-family:'Bricolage Grotesque',sans-serif;font-size:56px;line-height:1;color:#fff;font-weight:700;font-variant-numeric:tabular-nums}
-.landing-prototipo .lp-preco-valor span{font-size:18px;color:#B9C6D6;font-weight:500}
-.landing-prototipo .lp-preco-sub{margin-top:8px;font-size:13px;color:#8FA0B5}
-.landing-prototipo .lp-preco-linha{margin-top:10px;font-size:15px}
-.landing-prototipo .lp-preco .lp-btn-bloco{margin-top:22px}
-.landing-prototipo .lp-preco-nota{margin-top:12px;font-size:12.5px;color:#8FA0B5;line-height:1.5}
 
 /* ---------- 10 perguntas ---------- */
 .landing-prototipo .lp-faq details{border-bottom:1px solid #E3E0D8}
@@ -351,26 +316,13 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-tres-telas .lp-tbl{font-size:9.5px;margin-top:8px;table-layout:fixed;word-break:break-word}
   .landing-prototipo .lp-tres-telas .lp-tbl th{font-size:8.5px;padding-bottom:6px}
   .landing-prototipo .lp-tres-telas .lp-tbl td{padding:6px 0}
-  .landing-prototipo .lp-grafico{padding:16px 14px 12px}
-  .landing-prototipo .lp-legenda-linha{gap:12px;font-size:10.5px}
   .landing-prototipo .lp-destaque-teal,.landing-prototipo .lp-destaque-mint{margin-top:12px;font-size:13px;font-weight:500}
-  .landing-prototipo .lp-editor{grid-template-columns:1fr;gap:10px}
-  .landing-prototipo .lp-editor-principal{grid-column:auto;padding:16px}
-  .landing-prototipo .lp-editor-ex{font-size:15px;font-family:'Instrument Sans',sans-serif}
-  .landing-prototipo .lp-editor-doses{gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid #EEECE5}
-  .landing-prototipo .lp-editor-n{font-size:16px}
-  .landing-prototipo .lp-editor-antes,.landing-prototipo .lp-editor-depois{padding:14px 16px}
-  .landing-prototipo .lp-editor-rodape{grid-column:auto;font-size:12px}
   .landing-prototipo .lp-cmp{display:none}
   .landing-prototipo .lp-cmp-m{display:flex;flex-direction:column;gap:10px;margin-top:18px}
   .landing-prototipo .lp-fundador-foto{width:120px;aspect-ratio:1;font-size:48px;border-radius:10px}
   .landing-prototipo .lp-oferta-lista{grid-template-columns:1fr;gap:0;margin-top:16px;font-size:13.5px}
   .landing-prototipo .lp-oferta-lista p{padding:8px 0}
   .landing-prototipo .lp-oferta-outros{font-size:13px;margin-top:16px}
-  .landing-prototipo .lp-preco{padding:22px;border-radius:14px}
-  .landing-prototipo .lp-preco-valor{font-size:44px}
-  .landing-prototipo .lp-preco-valor span{font-size:16px}
-  .landing-prototipo .lp-preco .lp-btn-bloco{margin-top:16px;min-height:50px;font-size:15px}
   .landing-prototipo .lp-faq summary{padding:15px 0;font-size:14.5px;font-family:'Instrument Sans',sans-serif}
   .landing-prototipo .lp-faq summary::after{font-size:20px}
   .landing-prototipo .lp-faq details p{font-size:13.5px;padding-bottom:14px}
@@ -465,7 +417,6 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-etapa .lp-ganho{margin-top:auto;padding-top:14px;padding-left:12px;border-left-width:2px}
 .landing-prototipo .lp-ganho-teal{color:#0C6B70;border-left-color:#14B3BA;margin-top:20px}
 .landing-prototipo .lp-ganho-ambar{color:#5A3F04;border-left-color:#8E6009}
-.landing-prototipo .lp-ganho-mint{color:#F3F1EA;border-left-color:#7FE3D8;margin-top:40px;font-size:17px}
 
 /* ---------- 04 · condição: a demonstração gatilho / efeito ---------- */
 /* Três linhas em que a esquerda é o que o profissional DECLARA e a direita o que o motor
@@ -504,69 +455,8 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-oferta-nenhum b{color:#17202E}
 .landing-prototipo .lp-preco-tag{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#7FE3D8;margin-bottom:10px}
 
-/* ---------- 09 · a escada de planos ---------- */
-/* Três degraus na mesma tabela, com o anual em bloco escuro. A escada existe para o
- * desconto de fundador (seção 10) poder ser dito na MESMA unidade do degrau acima dele:
- * mensal contra mensal, sem exigir divisão de cabeça. */
-.landing-prototipo .lp-escada{margin-top:56px;padding-top:40px;border-top:1px solid rgba(90,63,4,.3);position:relative}
-.landing-prototipo .lp-escada-rot{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#5A3F04}
-.landing-prototipo .lp-escada-rola{overflow-x:auto;margin-top:18px;border-radius:14px}
-.landing-prototipo .lp-planos{width:100%;min-width:660px;border-collapse:separate;border-spacing:0;background:#FFFDF9;font-size:15px;overflow:hidden;border-radius:14px;box-shadow:0 24px 50px -36px rgba(16,35,58,.4)}
-.landing-prototipo .lp-planos th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#8FA0B5;background:#F7F6F2;padding:14px 20px;border-bottom:1px solid #E3E0D8}
-.landing-prototipo .lp-planos td{padding:18px 20px;border-bottom:1px solid #EEECE5;color:#616874;vertical-align:middle;font-variant-numeric:tabular-nums}
-.landing-prototipo .lp-planos tr:last-child td{border-bottom:none}
-.landing-prototipo .lp-plano-nome{font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:600;color:#10233A;font-variant-numeric:normal}
-.landing-prototipo .lp-plano-mes{font-family:'Bricolage Grotesque',sans-serif;font-size:21px;font-weight:700;color:#17202E;white-space:nowrap}
-.landing-prototipo .lp-plano-selo{display:block;margin-top:4px;font-family:'Instrument Sans',sans-serif;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#7FE3D8}
-.landing-prototipo .lp-plano-foco td{background:#10233A;color:#D6DFEA;border-bottom-color:rgba(255,255,255,.1)}
-.landing-prototipo .lp-plano-foco .lp-plano-nome{color:#fff}
-.landing-prototipo .lp-plano-foco .lp-plano-mes{color:#fff;font-size:26px}
-/* No celular a tabela viraria 600px rolando dentro de 331px: o profissional veria metade
- * da escada e teria que arrastar para comparar. Vira um cartão por plano, como a tabela de
- * comparação já faz na seção 07. */
-.landing-prototipo .lp-planos-m{display:none}
-.landing-prototipo .lp-plano-m{background:#FFFDF9;border:1px solid #E3E0D8;border-radius:12px;padding:16px 18px}
-.landing-prototipo .lp-plano-m-topo{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
-.landing-prototipo .lp-plano-m-nome{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:600;color:#10233A}
-.landing-prototipo .lp-plano-m-nome .lp-plano-selo{display:block;font-style:normal;color:#0C6B70}
-.landing-prototipo .lp-plano-m-mes{font-family:'Bricolage Grotesque',sans-serif;font-size:24px;font-weight:700;color:#17202E;font-variant-numeric:tabular-nums;white-space:nowrap}
-.landing-prototipo .lp-plano-m-mes i{font-style:normal;font-size:13px;font-weight:500;color:#616874}
-.landing-prototipo .lp-plano-m-cobranca{margin-top:10px;font-size:13px;color:#616874}
-.landing-prototipo .lp-plano-m-economia{margin-top:4px;font-size:13px;font-weight:600;color:#0C6B70}
-.landing-prototipo .lp-plano-m-foco{background:#10233A;border-color:#10233A}
-.landing-prototipo .lp-plano-m-foco .lp-plano-m-nome,.landing-prototipo .lp-plano-m-foco .lp-plano-m-mes{color:#fff}
-.landing-prototipo .lp-plano-m-foco .lp-plano-m-nome .lp-plano-selo{color:#7FE3D8}
-.landing-prototipo .lp-plano-m-foco .lp-plano-m-mes i{color:#B9C6D6}
-.landing-prototipo .lp-plano-m-foco .lp-plano-m-cobranca{color:#B9C6D6}
-.landing-prototipo .lp-plano-m-foco .lp-plano-m-economia{color:#7FE3D8}
-.landing-prototipo .lp-escada-nota{margin-top:22px;max-width:760px;font-size:15.5px;line-height:1.6;color:#3A2A05}
-.landing-prototipo .lp-escada-nota b{color:#17202E}
 
-/* ---------- 10 · o vínculo 97 para 47 ---------- */
-/* O desconto tem que ser lido sem conta: dois valores MENSAIS lado a lado, o de cima
- * riscado. Enquanto a página comparava R$ 97 por mês com o total do ano, o leitor
- * precisava dividir para entender, e desconto que exige divisão não é sentido. */
-.landing-prototipo .lp-vinculo{margin-top:34px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;background:#16293F;border:1px solid rgba(127,227,216,.28);border-radius:14px;padding:24px 26px}
-.landing-prototipo .lp-vinculo-lado{display:flex;flex-direction:column;gap:4px}
-.landing-prototipo .lp-vinculo-de,.landing-prototipo .lp-vinculo-para{font-family:'Bricolage Grotesque',sans-serif;font-size:38px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
-.landing-prototipo .lp-vinculo-de{color:#8FA0B5;text-decoration:line-through;text-decoration-thickness:2px}
-.landing-prototipo .lp-vinculo-para{color:#7FE3D8}
-.landing-prototipo .lp-vinculo-seta{color:#7FE3D8;display:inline-flex;align-items:center}
-.landing-prototipo .lp-vinculo-obs{flex:1;min-width:260px;font-size:14.5px;line-height:1.55;color:#B9C6D6}
-.landing-prototipo .lp-fundador-card{padding:24px}
-.landing-prototipo .lp-pontos-escuro li{color:#B9C6D6}
-.landing-prototipo .lp-pontos-escuro li::before{background:#7FE3D8}
-.landing-prototipo .lp-pontos-escuro b{color:#fff}
-.landing-prototipo .lp-fundador-card .lp-btn-bloco{margin-top:22px;min-height:46px}
-.landing-prototipo .lp-fundador-card .lp-preco-nota{margin-top:12px;font-size:12.5px;color:#8FA0B5;line-height:1.5}
 
-/* ---------- 11 · risco e garantia ---------- */
-/* O parágrafo do teste vive atrás de <sc-if value="{{ cobrancaAtiva }}">: enquanto não há
- * transação, não há valor a devolver, e a página mostra o que é verdade hoje. As quatro
- * garantias abaixo não dependem de cobrança nenhuma e valem sempre. */
-.landing-prototipo .lp-teste{margin-top:30px;max-width:760px;background:#10233A;color:#B9C6D6;border-radius:14px;padding:26px 28px;display:flex;flex-direction:column;gap:12px;font-size:15.5px;line-height:1.6}
-.landing-prototipo .lp-teste-forte{font-family:'Bricolage Grotesque',sans-serif;font-size:21px;line-height:1.3;font-weight:600;color:#fff}
-.landing-prototipo .lp-garantias-rot{margin-top:44px;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#8FA0B5}
 .landing-prototipo .lp-garantias{margin-top:18px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 .landing-prototipo .lp-garantia{background:#FFFDF9;border:1px solid #E3E0D8;border-radius:12px;padding:22px}
 .landing-prototipo .lp-garantia .lp-h3{font-size:17px;display:flex;align-items:flex-start;gap:10px}
@@ -601,17 +491,6 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-conta-linha b{font-size:15px}
   .landing-prototipo .lp-conta-nota{font-size:12.5px}
   .landing-prototipo .lp-oferta-nenhum{font-size:13.5px}
-  .landing-prototipo .lp-escada{margin-top:32px;padding-top:24px}
-  .landing-prototipo .lp-escada-rola{display:none}
-  .landing-prototipo .lp-planos-m{display:flex;flex-direction:column;gap:10px;margin-top:14px}
-  .landing-prototipo .lp-escada-nota{font-size:13.5px;margin-top:16px}
-  .landing-prototipo .lp-vinculo{margin-top:20px;padding:18px;gap:14px}
-  .landing-prototipo .lp-vinculo-de,.landing-prototipo .lp-vinculo-para{font-size:30px}
-  .landing-prototipo .lp-vinculo-obs{font-size:13px;min-width:100%}
-  .landing-prototipo .lp-fundador-card{padding:16px}
-  .landing-prototipo .lp-teste{margin-top:18px;padding:18px;font-size:13.5px}
-  .landing-prototipo .lp-teste-forte{font-size:17px;font-family:'Instrument Sans',sans-serif}
-  .landing-prototipo .lp-garantias-rot{margin-top:26px}
   .landing-prototipo .lp-garantias{grid-template-columns:1fr;gap:10px}
   .landing-prototipo .lp-garantia{padding:16px}
   .landing-prototipo .lp-garantia .lp-h3{font-size:15px}
@@ -687,10 +566,6 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-disputa-vence em{color:#7FE3D8}
 
 /* ---------- 08 · a ficha do fundador ---------- */
-.landing-prototipo .lp-fundador-fatos{margin-top:18px}
-.landing-prototipo .lp-fundador-fatos .lp-linha{padding:10px 0}
-.landing-prototipo .lp-fundador-fatos .lp-k{font-size:14px}
-.landing-prototipo .lp-fundador-fatos .lp-v{font-size:14px;text-align:right}
 
 @media (max-width:1080px){
   /* O palco não cabe em três colunas: o aparelho sobe para o topo, sozinho, e os quadros
@@ -716,7 +591,6 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-disputa-linha{font-size:13px;gap:8px;padding:9px 0}
   .landing-prototipo .lp-disputa-linha b{font-size:15px}
   .landing-prototipo .lp-disputa-linha em{min-width:0;font-size:10px}
-  .landing-prototipo .lp-fundador-fatos .lp-k,.landing-prototipo .lp-fundador-fatos .lp-v{font-size:12.5px}
 }
 
 /* Os cartões da demonstração empilham no celular e ficam lado a lado no tablet. */
@@ -729,4 +603,153 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-gatilho{font-size:10px;padding:4px 10px}
   .landing-prototipo .lp-efeito{font-size:13.5px}
   .landing-prototipo .lp-fonte{font-size:11.5px}
+}
+
+
+/* ================= HIERARQUIA E ESPAÇO (03/09/2026, terceira volta) =================
+ *
+ * Os dez pontos que o Filipe marcou nas capturas caem em três padrões, e é isso que as
+ * classes abaixo resolvem: (1) o título de cada dobra centralizado, para o olho achar o
+ * começo da seção sem varrer a largura toda; (2) a prova em IMAGEM DO PRÓPRIO SISTEMA no
+ * lugar de mockups desenhados; (3) faixas de uma linha para o que precisa ser lido de
+ * longe (fundador, garantia), separando o número da argumentação que vem depois.
+ */
+
+/* ---------- cabeçalho centralizado ---------- */
+.landing-prototipo .lp-cabeca-centro{max-width:720px;margin-left:auto;margin-right:auto;text-align:center}
+.landing-prototipo .lp-cabeca-centro .lp-eyebrow{justify-content:center}
+.landing-prototipo .lp-cabeca-centro .lp-lede{margin-left:auto;margin-right:auto}
+
+/* ---------- captura de tela do sistema ---------- */
+/* Mostrar vale mais que descrever, e um mockup desenhado é descrição. A moldura é discreta
+ * de propósito: quem tem que chamar atenção é a tela, não o quadro em volta dela. */
+.landing-prototipo .lp-tela{margin:0}
+.landing-prototipo .lp-tela img{display:block;width:100%;height:auto;border-radius:14px;border:1px solid rgba(16,35,58,.14);box-shadow:0 30px 60px -34px rgba(16,35,58,.45);background:#FFFDF9}
+.landing-prototipo .lp-tela figcaption{margin-top:12px;font-size:13px;color:#616874}
+.landing-prototipo .lp-sec-turquesa .lp-tela figcaption{color:#0C6B70}
+.landing-prototipo .lp-sec-ambar .lp-tela figcaption{color:#5A3F04}
+
+/* ---------- 02: o painel das três telas descolado dos quatro passos ---------- */
+.landing-prototipo .lp-tres-rot{margin-top:40px;text-align:center;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#8FA0B5}
+.landing-prototipo .lp-tres-telas{margin-top:14px;background:#10233A;border-color:#10233A}
+.landing-prototipo .lp-tres-telas>div{border-right-color:rgba(255,255,255,.12)}
+.landing-prototipo .lp-tres-telas .lp-tela-titulo{color:#fff;border-bottom-color:#7FE3D8}
+.landing-prototipo .lp-tres-telas .lp-tela-titulo::before{background:#7FE3D8}
+.landing-prototipo .lp-tres-telas .lp-k{color:#8FA0B5}
+.landing-prototipo .lp-tres-telas .lp-v{color:#fff}
+.landing-prototipo .lp-tres-telas .lp-linha{border-bottom-color:rgba(255,255,255,.1)}
+.landing-prototipo .lp-tres-telas .lp-tbl th{color:#8FA0B5;border-bottom-color:rgba(255,255,255,.18)}
+.landing-prototipo .lp-tres-telas .lp-tbl td{color:#D6DFEA;border-bottom-color:rgba(255,255,255,.1)}
+.landing-prototipo .lp-tres-telas .lp-ambar-txt{color:#F0B429}
+
+/* ---------- 06: a tela real dentro do aparelho ---------- */
+.landing-prototipo .lp-fone-tela-real{display:block;width:100%;height:auto;border-radius:34px}
+
+/* ---------- 07: o título ao lado da tabela ---------- */
+.landing-prototipo .lp-grade-cmp{display:grid;grid-template-columns:minmax(0,290px) minmax(0,1fr);gap:44px;align-items:start}
+.landing-prototipo .lp-cmp-cabeca{position:sticky;top:96px}
+.landing-prototipo .lp-cmp-cabeca .lp-lede{font-size:16px;margin-top:14px}
+.landing-prototipo .lp-cmp{margin-top:0}
+
+/* ---------- 08: as credenciais em selos, e a biografia de volta em prosa ---------- */
+.landing-prototipo .lp-selos{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 20px}
+.landing-prototipo .lp-selos span{font-size:12.5px;font-weight:600;color:#10233A;background:#EEF3FE;border:1px solid rgba(31,97,229,.18);border-radius:999px;padding:6px 13px}
+.landing-prototipo .lp-tx-papel .lp-corpo+.lp-corpo{margin-top:14px}
+
+/* ---------- 09: a conta e os cartões de plano ---------- */
+.landing-prototipo .lp-grade-conta{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px;align-items:center;margin-top:34px}
+.landing-prototipo .lp-conta{margin-top:0;max-width:none}
+.landing-prototipo .lp-oferta-lista{margin-top:36px;max-width:none;grid-template-columns:repeat(3,minmax(0,1fr))}
+.landing-prototipo .lp-oferta-nenhum{max-width:none}
+
+/* Três cartões escolhíveis, que é o formato que todo site de assinatura usa e que a página
+ * não tinha: a comparação estava numa tabela, o formato mais difícil de ler no celular. */
+.landing-prototipo .lp-planos-cards{margin-top:34px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+.landing-prototipo .lp-plano-card{position:relative;display:flex;flex-direction:column;gap:6px;text-align:left;font-family:inherit;cursor:pointer;background:#FFFDF9;border:2px solid rgba(23,32,46,.14);border-radius:16px;padding:22px 22px 24px;color:#17202E}
+.landing-prototipo .lp-plano-topo{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:600;color:#616874}
+.landing-prototipo .lp-plano-valor{font-family:'Bricolage Grotesque',sans-serif;font-size:38px;font-weight:700;line-height:1;color:#17202E;font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.landing-prototipo .lp-plano-valor i{font-style:normal;font-size:15px;font-weight:500;color:#616874}
+.landing-prototipo .lp-plano-valor s{font-size:22px;font-weight:600;color:#8E6009;text-decoration-thickness:2px}
+.landing-prototipo .lp-plano-cobranca{margin-top:6px;font-size:14px;color:#3F5168}
+.landing-prototipo .lp-plano-ano{font-size:13.5px;font-weight:600;color:#0C6B70}
+.landing-prototipo .lp-plano-card::after{content:"";position:absolute;top:20px;right:20px;width:20px;height:20px;border-radius:50%;border:2px solid rgba(23,32,46,.22)}
+.landing-prototipo .lp-plano-on{border-color:#10233A;box-shadow:0 20px 44px -26px rgba(16,35,58,.6)}
+.landing-prototipo .lp-plano-on::after{border-color:#10233A;background:#10233A url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'><path d='M6 12.5l4 4 8-9'/></svg>") center/12px no-repeat}
+.landing-prototipo .lp-plano-destaque{background:#10233A;border-color:#10233A;color:#fff;padding-top:34px}
+.landing-prototipo .lp-plano-destaque .lp-plano-topo{color:#B9C6D6}
+.landing-prototipo .lp-plano-destaque .lp-plano-valor{color:#fff}
+.landing-prototipo .lp-plano-destaque .lp-plano-valor i{color:#B9C6D6}
+.landing-prototipo .lp-plano-destaque .lp-plano-valor s{color:#8FA0B5}
+.landing-prototipo .lp-plano-destaque .lp-plano-cobranca{color:#D6DFEA}
+.landing-prototipo .lp-plano-destaque .lp-plano-ano{color:#7FE3D8}
+.landing-prototipo .lp-plano-destaque::after{border-color:rgba(255,255,255,.34)}
+.landing-prototipo .lp-plano-destaque.lp-plano-on{border-color:#7FE3D8}
+.landing-prototipo .lp-plano-destaque.lp-plano-on::after{border-color:#7FE3D8;background:#7FE3D8 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310233A' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'><path d='M6 12.5l4 4 8-9'/></svg>") center/12px no-repeat}
+.landing-prototipo .lp-plano-selo{position:absolute;top:0;left:22px;transform:translateY(-50%);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#10233A;background:#7FE3D8;border-radius:999px;padding:5px 12px}
+.landing-prototipo .lp-plano-resumo{margin-top:18px;font-size:15px;line-height:1.55;color:#3A2A05;max-width:720px}
+.landing-prototipo .lp-oferta-acao{margin-top:26px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.landing-prototipo .lp-btn-escuro{background:#10233A;color:#fff;min-height:52px;padding:0 26px;font-size:15.5px}
+.landing-prototipo .lp-oferta-nota{flex:1;min-width:260px;font-size:13px;line-height:1.5;color:#5A3F04}
+.landing-prototipo .lp-oferta-outros{margin-top:22px;max-width:none}
+
+/* ---------- faixas: uma linha, lida de longe ---------- */
+/* A condição de fundador e a garantia são a informação que o visitante precisa levar da
+ * página inteira. Enquanto elas eram seções com três assuntos, o número competia com a
+ * argumentação. Agora o número é a faixa, e a argumentação vem na dobra seguinte. */
+.landing-prototipo .lp-faixa{padding:44px 0;position:relative;overflow:hidden}
+.landing-prototipo .lp-faixa-navy{background:#10233A;color:#fff}
+.landing-prototipo .lp-faixa-navy::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(190,214,232,.16) 1.1px,transparent 1.2px);background-size:26px 26px;-webkit-mask-image:radial-gradient(ellipse 70% 80% at 50% 50%,transparent 30%,#000 100%);mask-image:radial-gradient(ellipse 70% 80% at 50% 50%,transparent 30%,#000 100%)}
+.landing-prototipo .lp-faixa-verde{background:#E0F5F4;color:#10233A;border-top:1px solid rgba(12,107,112,.2);border-bottom:1px solid rgba(12,107,112,.2)}
+.landing-prototipo .lp-faixa-corpo{position:relative;display:flex;flex-direction:column;gap:14px}
+.landing-prototipo .lp-faixa-corpo-centro{align-items:center;text-align:center}
+.landing-prototipo .lp-faixa-rot{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:#7FE3D8}
+.landing-prototipo .lp-faixa-titulo{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(26px,3.4vw,44px);line-height:1.08;letter-spacing:-.025em;font-weight:600;margin:0;max-width:820px}
+.landing-prototipo .lp-faixa-sub{font-size:16.5px;line-height:1.55;color:#0C6B70;max-width:640px}
+.landing-prototipo .lp-faixa-selo{width:52px;height:52px;border-radius:50%;background:#14B3BA;color:#fff;display:flex;align-items:center;justify-content:center}
+.landing-prototipo .lp-faixa-selo svg{width:26px;height:26px}
+.landing-prototipo .lp-faixa-troca{display:flex;align-items:center;gap:16px;flex-wrap:wrap;color:#7FE3D8}
+.landing-prototipo .lp-faixa-de{font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;color:#8FA0B5;text-decoration:line-through;text-decoration-thickness:2px;font-variant-numeric:tabular-nums}
+.landing-prototipo .lp-faixa-para{font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;color:#7FE3D8;font-variant-numeric:tabular-nums}
+.landing-prototipo .lp-faixa-obs{flex:1;min-width:280px;font-size:14.5px;line-height:1.55;color:#B9C6D6}
+
+/* ---------- 10b: a troca ---------- */
+.landing-prototipo .lp-troca-card{padding:24px}
+.landing-prototipo .lp-troca-card .lp-btn-bloco{margin-top:20px;min-height:48px}
+.landing-prototipo .lp-troca-nota{margin-top:12px;font-size:12.5px;line-height:1.5;color:#8FA0B5}
+
+@media (max-width:980px){
+  .landing-prototipo .lp-grade-cmp{grid-template-columns:1fr;gap:22px}
+  .landing-prototipo .lp-cmp-cabeca{position:static}
+  .landing-prototipo .lp-planos-cards{grid-template-columns:1fr}
+  .landing-prototipo .lp-plano-destaque{order:-1}
+}
+
+@media (max-width:760px){
+  .landing-prototipo .lp-sec{padding:40px 0}
+  .landing-prototipo .lp-sec-oferta{padding:40px 0}
+  .landing-prototipo .lp-cabeca-centro{text-align:left}
+  .landing-prototipo .lp-cabeca-centro .lp-eyebrow{justify-content:flex-start}
+  .landing-prototipo .lp-tres-rot{margin-top:22px;text-align:left}
+  .landing-prototipo .lp-tela figcaption{font-size:12px;margin-top:8px}
+  .landing-prototipo .lp-fone-tela-real{border-radius:30px}
+  .landing-prototipo .lp-selos span{font-size:11.5px;padding:5px 11px}
+  .landing-prototipo .lp-grade-conta{grid-template-columns:1fr;gap:14px;margin-top:18px}
+  .landing-prototipo .lp-oferta-lista{grid-template-columns:1fr;margin-top:20px}
+  .landing-prototipo .lp-planos-cards{margin-top:20px;gap:10px}
+  .landing-prototipo .lp-plano-card{padding:18px}
+  .landing-prototipo .lp-plano-destaque{padding-top:28px}
+  .landing-prototipo .lp-plano-valor{font-size:30px}
+  .landing-prototipo .lp-plano-valor s{font-size:18px}
+  .landing-prototipo .lp-plano-resumo{font-size:13.5px;margin-top:14px}
+  .landing-prototipo .lp-oferta-acao{margin-top:18px;gap:14px}
+  .landing-prototipo .lp-btn-escuro{width:100%;min-height:50px}
+  .landing-prototipo .lp-oferta-nota{font-size:12.5px;min-width:100%}
+  .landing-prototipo .lp-faixa{padding:30px 0}
+  .landing-prototipo .lp-faixa-titulo{font-size:24px}
+  .landing-prototipo .lp-faixa-sub{font-size:14px}
+  .landing-prototipo .lp-faixa-de,.landing-prototipo .lp-faixa-para{font-size:24px}
+  .landing-prototipo .lp-faixa-obs{font-size:13px;min-width:100%}
+  .landing-prototipo .lp-faixa-selo{width:42px;height:42px}
+  .landing-prototipo .lp-faixa-selo svg{width:21px;height:21px}
+  .landing-prototipo .lp-troca-card{padding:16px}
 }
