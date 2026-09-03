@@ -362,6 +362,39 @@ if (!/PRECO_ANUAL\b/.test(PLANOS) || !/PRECO_ESTUDIO/.test(PLANOS) || PLANOS.len
 /* -------- I · reembolso e cancelamento sem cobrança que os sustente -------- */
 {
   const cobrancaAtiva = /export const COBRANCA_ATIVA\s*=\s*true/.test(PLANOS);
+
+  /*
+   * O PORTÃO DA COBRANÇA.
+   *
+   * O texto definitivo da garantia (sete dias, reembolso sem justificar) já está escrito no
+   * template, mas dentro de `<sc-if value="{{ cobrancaAtiva }}">`, que o renderizador
+   * remove do DOM enquanto o interruptor estiver desligado. Isso resolve o impasse que
+   * travava a seção: o Filipe queria a copy pronta antes de ligar o checkout, e a página
+   * não pode prometer devolução de um dinheiro que ninguém pagou.
+   *
+   * Então as asserções abaixo não leem o arquivo inteiro: leem o que a página MOSTRA hoje,
+   * isto é, o texto fora do portão. E, para o portão não virar um esconderijo, há dois
+   * controles: ele precisa realmente conter a promessa, e precisa estar ligado ao mesmo
+   * COBRANCA_ATIVA de planos.ts, não a um booleano qualquer.
+   */
+  const foraDoPortao = (t: string) =>
+    t.replace(/<sc-if\s+value="\{\{\s*cobrancaAtiva\s*\}\}"[^>]*>[\s\S]*?<\/sc-if>/g, "");
+  const dentroDoPortao = LANDING.match(/<sc-if\s+value="\{\{\s*cobrancaAtiva\s*\}\}"[^>]*>[\s\S]*?<\/sc-if>/g) ?? [];
+
+  if (!/cobrancaAtiva:\s*COBRANCA_ATIVA/.test(LANDING) || !/semCobranca:\s*!COBRANCA_ATIVA/.test(LANDING))
+    reprovar(
+      "I",
+      "a landing não liga cobrancaAtiva/semCobranca ao COBRANCA_ATIVA de planos.ts: o portão da " +
+        "garantia passaria a abrir por outro critério, e o texto dos sete dias iria ao ar sem cobrança.",
+    );
+
+  if (!dentroDoPortao.some((b) => /reembolso/i.test(b)))
+    reprovar(
+      "I",
+      "controle positivo: nenhum bloco atrás de <sc-if cobrancaAtiva> fala em reembolso. Ou a " +
+        "promessa saiu do portão, ou o portão virou decoração e as asserções abaixo não protegem nada.",
+    );
+
   if (!cobrancaAtiva) {
     // Cada padrão é uma promessa que exige uma transação para existir. Sem cobrança, não
     // há valor a devolver nem assinatura a cancelar, e afirmar isso é o tipo de frase que
@@ -370,14 +403,21 @@ if (!/PRECO_ANUAL\b/.test(PLANOS) || !/PRECO_ESTUDIO/.test(PLANOS) || PLANOS.len
       [/garantia (?:total )?de \d+ dias/i, "garantia de reembolso por prazo"],
       [/devolvemos 100%|devolvemos o valor|reembolso integral/i, "promessa de devolução do valor"],
       [/cancela em \d+ cliques?/i, "promessa de cancelamento em N cliques"],
+      // A revisão de copy de 03/09/2026 trouxe o texto definitivo do teste. Estas duas
+      // entradas existem porque as três acima não pegariam "peça o reembolso e receba cada
+      // centavo de volta", que promete exatamente a mesma coisa com outras palavras.
+      [/reembolso|devolv[eo]/i, "promessa de devolução do valor"],
+      [/(sete|7) dias (?:para )?(?:testar|de teste)/i, "prazo de teste com direito a devolução"],
     ];
+    const visivelHoje = foraDoPortao(LANDING);
     for (const [re, oQue] of PROMESSAS) {
-      const achado = LANDING.match(re) ?? PRICING.match(re);
+      const achado = visivelHoje.match(re) ?? PRICING.match(re);
       if (achado)
         reprovar(
           "I",
-          `a página promete "${achado[0]}" (${oQue}), e COBRANCA_ATIVA é false: não há pagamento ` +
-            `a devolver nem assinatura a cancelar. Ou a frase muda, ou a cobrança entra no ar.`,
+          `a página promete "${achado[0]}" (${oQue}) FORA do portão da cobrança, e COBRANCA_ATIVA é ` +
+            `false: não há pagamento a devolver nem assinatura a cancelar. Ou a frase entra em ` +
+            `<sc-if value="{{ cobrancaAtiva }}">, ou a cobrança entra no ar.`,
         );
     }
     // Controle positivo: se a landing parar de falar de preço, esta trava vira decorativa

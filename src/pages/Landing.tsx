@@ -1,6 +1,23 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { PRECO_MENSAL, PRECO_TABELA, PRECO_ANUAL, fmtBRL } from "@/data/planos";
+import {
+  COBRANCA_ATIVA,
+  PRECO_MENSAL,
+  PRECO_MENSAL_AVULSO,
+  PRECO_SEMESTRAL_MES,
+  PRECO_SEMESTRAL,
+  PRECO_ANUAL,
+  PRECO_FUNDADOR_MES,
+  PRECO_FUNDADOR_ANO,
+  ANO_NO_MENSAL,
+  ECONOMIA_ANUAL,
+  ECONOMIA_SEMESTRAL,
+  ECONOMIA_FUNDADOR,
+  VAGAS_FUNDADOR,
+  precoPorAluno,
+  fmtBRL,
+  fmtBRLc,
+} from "@/data/planos";
 import { renderizarComEstados, cssDosEstados, ATTR_ACAO, type Valores } from "./landing/renderizar";
 import "./landing/prototipo.css";
 import template from "./landing/prototipo.html?raw";
@@ -20,11 +37,15 @@ const CSS_ESTADOS = cssDosEstados(template);
  *
  * ## O que o protótipo dizia e o site NÃO diz, e por quê
  *
- * - "7 dias de garantia, reembolso integral": a cobrança está desligada (COBRANCA_ATIVA em
- *   planos.ts). Sem transação não há valor a devolver, e `check:legal` reprova a promessa.
- *   A página diz o que é verdade hoje: cria a conta e usa sem cartão, avisado antes de
- *   qualquer cobrança.
- * - "Condição de fundador no checkout": não existe checkout. Saiu.
+ * - "7 dias de garantia, reembolso integral": o texto definitivo existe e está no template,
+ *   mas atrás de `<sc-if value="{{ cobrancaAtiva }}">`. Enquanto COBRANCA_ATIVA for false
+ *   não há transação, então não há valor a devolver, e a página mostra no lugar o que é
+ *   verdade hoje (`semCobranca`): cria a conta e usa sem cartão. `check:legal` bloco I
+ *   confere as duas metades: que a promessa está dentro do portão, e que o portão lê o
+ *   mesmo interruptor. No dia em que a cobrança ligar, o parágrafo aparece sozinho.
+ * - "Condição de fundador no checkout": a condição é anunciada (seção 10), o checkout não
+ *   existe ainda; o CTA leva ao mesmo cadastro e a ordem de criação das contas é o que
+ *   identifica as primeiras.
  * - Nome completo, anos de docência e foto do Filipe entre colchetes: placeholder não vai ao
  *   ar (`check:legal`, bloco D). Fica "Filipe, doutor em Educação Física", que é o que está
  *   confirmado, e a inicial no lugar da foto até a foto real existir.
@@ -186,7 +207,17 @@ function usePreservarFaq(ref: React.RefObject<HTMLDivElement | null>, html: stri
   }, [ref, html]);
 }
 
-/** Os valores que o template consome. Preço da FONTE ÚNICA, sem o "R$" (o template imprime o cifrão). */
+/**
+ * Os valores que o template consome.
+ *
+ * Preço sempre da FONTE ÚNICA (`@/data/planos`), e sem o "R$" nos números grandes, porque o
+ * template imprime o cifrão em tipografia própria. Os totais não são digitados em lugar
+ * nenhum: cada um vem do mensal multiplicado pelos meses, que é o que impede a escada de
+ * divergir de si mesma.
+ *
+ * `cobrancaAtiva` e `semCobranca` são o par que liga e desliga os dois textos de risco no
+ * template. Existem os dois, e não só a negação de um, porque `sc-if` não tem `else`.
+ */
 function construirValores(st: { mobile: boolean; menu: boolean }, mudar: (p: Partial<typeof st>) => void): Valores {
   return {
     isMobile: st.mobile,
@@ -194,8 +225,33 @@ function construirValores(st: { mobile: boolean; menu: boolean }, mudar: (p: Par
     menuOpen: st.menu && st.mobile,
     toggleMenu: () => mudar({ menu: !st.menu }),
     fecharMenu: () => mudar({ menu: false }),
+
+    cobrancaAtiva: COBRANCA_ATIVA,
+    semCobranca: !COBRANCA_ATIVA,
+
+    // Degrau de foco: o anual, dito por mês.
     proPreco: String(PRECO_MENSAL),
-    proSub: `${fmtBRL(PRECO_ANUAL)} por ano, em 12x de ${fmtBRL(PRECO_MENSAL)}, ou ${fmtBRL(PRECO_TABELA)} mês a mês, sem fidelidade.`,
+    proAno: fmtBRL(PRECO_ANUAL),
+
+    // Os outros degraus da escada.
+    mensalAvulso: String(PRECO_MENSAL_AVULSO),
+    anoNoMensal: fmtBRL(ANO_NO_MENSAL),
+    semestralMes: String(PRECO_SEMESTRAL_MES),
+    semestralFatura: fmtBRL(PRECO_SEMESTRAL),
+    anoNoSemestral: fmtBRL(PRECO_SEMESTRAL_MES * 12),
+    economiaAnual: fmtBRL(ECONOMIA_ANUAL),
+    economiaSemestral: fmtBRL(ECONOMIA_SEMESTRAL),
+
+    // Condição de fundador, dita na MESMA unidade do degrau acima dela.
+    fundadorMes: String(PRECO_FUNDADOR_MES),
+    fundadorAno: fmtBRL(PRECO_FUNDADOR_ANO),
+    economiaFundador: fmtBRL(ECONOMIA_FUNDADOR),
+    vagas: String(VAGAS_FUNDADOR),
+
+    // A ancoragem que abre a seção: quanto o anual custa por aluno da carteira.
+    porAluno10: fmtBRLc(precoPorAluno(10)),
+    porAluno20: fmtBRLc(precoPorAluno(20)),
+    porAluno40: fmtBRLc(precoPorAluno(40)),
   };
 }
 

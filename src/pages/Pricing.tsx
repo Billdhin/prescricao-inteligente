@@ -2,7 +2,46 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Check, Crown, Calculator } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
-import { NOME_PLANO, PRECO_MENSAL, ITENS_PLANO, fmtBRL } from "@/data/planos";
+import {
+  NOME_PLANO,
+  PRECO_MENSAL,
+  PRECO_MENSAL_AVULSO,
+  PRECO_SEMESTRAL_MES,
+  PRECO_SEMESTRAL,
+  PRECO_ANUAL,
+  ECONOMIA_ANUAL,
+  ECONOMIA_SEMESTRAL,
+  ANO_NO_MENSAL,
+  ITENS_PLANO,
+  fmtBRL,
+} from "@/data/planos";
+
+/**
+ * A ESCADA, NA MESMA ORDEM DA LANDING.
+ *
+ * O produto é um só e nada fica atrás de upgrade: o que muda entre os degraus é só a forma
+ * de pagar. Esta página mostrava um preço solto, sem dizer a qual plano ele pertencia, e
+ * o valor que ela exibia (o mensal do anual) parecia contradizer a landing. Agora as duas
+ * telas leem a mesma escada da fonte única.
+ */
+const DEGRAUS = [
+  { nome: "Mensal", mes: PRECO_MENSAL_AVULSO, cobranca: "cobrado todo mês", ano: ANO_NO_MENSAL, economia: null },
+  {
+    nome: "Semestral",
+    mes: PRECO_SEMESTRAL_MES,
+    cobranca: `${fmtBRL(PRECO_SEMESTRAL)} a cada seis meses`,
+    ano: PRECO_SEMESTRAL_MES * 12,
+    economia: ECONOMIA_SEMESTRAL,
+  },
+  {
+    nome: "Anual",
+    mes: PRECO_MENSAL,
+    cobranca: `${fmtBRL(PRECO_ANUAL)} uma vez`,
+    ano: PRECO_ANUAL,
+    economia: ECONOMIA_ANUAL,
+    foco: true,
+  },
+];
 
 // FAQs reaproveitadas VERBATIM da landing (as mais objecionáveis): substituição
 // da avaliação profissional, acesso e celular. Nenhuma resposta nova de política
@@ -41,7 +80,8 @@ export function Pricing() {
         <h1 className="font-display text-4xl font-extrabold text-ink">Um plano, tudo liberado.</h1>
         <p className="mx-auto mt-3 max-w-xl text-ink-2">
           O sistema da tríade completo, registro, acompanhamento e direcionamento da prescrição, com
-          todos os grupos, casos e ferramentas. Sem versão limitada.
+          todos os grupos, casos e ferramentas. Sem versão limitada. O que muda entre os planos é só
+          a forma de pagar.
         </p>
 
         <div className="mt-10 text-left">
@@ -53,6 +93,45 @@ export function Pricing() {
             items={ITENS_PLANO}
             cta="Começar agora"
           />
+        </div>
+
+        <div className="mt-8 text-left">
+          <p className="text-xs font-semibold uppercase tracking-widest text-ink-3">
+            As três formas de pagar
+          </p>
+          <div className="mt-3 overflow-x-auto rounded-xl border border-border">
+            <table className="w-full min-w-[520px] text-sm">
+              <thead>
+                <tr className="bg-surface-soft text-left text-xs uppercase tracking-wide text-ink-3">
+                  <th className="px-4 py-3 font-semibold">Plano</th>
+                  <th className="px-4 py-3 font-semibold">Por mês</th>
+                  <th className="px-4 py-3 font-semibold">Como é cobrado</th>
+                  <th className="px-4 py-3 font-semibold">Economia no ano</th>
+                </tr>
+              </thead>
+              <tbody>
+                {DEGRAUS.map((d) => (
+                  <tr key={d.nome} className={d.foco ? "bg-primary/10" : ""}>
+                    <td className="border-t border-border px-4 py-3 font-semibold text-ink">
+                      {d.nome}
+                      {d.foco && <span className="ml-2 text-xs font-bold uppercase text-primary">recomendado</span>}
+                    </td>
+                    <td className="border-t border-border px-4 py-3 font-display font-bold tabular-nums text-ink">
+                      {fmtBRL(d.mes)}
+                    </td>
+                    <td className="border-t border-border px-4 py-3 text-ink-2">{d.cobranca}</td>
+                    <td className="border-t border-border px-4 py-3 tabular-nums text-ink-2">
+                      {d.economia ? fmtBRL(d.economia) : "ponto de partida"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-sm text-ink-2">
+            O anual é o que recomendamos: um mesociclo inteiro leva doze semanas, e é nesse prazo que
+            dá para avaliar a prescrição de verdade.
+          </p>
         </div>
 
         {/* Resto: dúvidas que mais travam a decisão de compra */}
@@ -101,7 +180,7 @@ function Plan({
 
       {/* Ordem mobile fixa: preço, CTA, âncora (risco-reverso), resto (o que inclui). */}
       <div className="mt-3 font-display text-3xl font-extrabold text-ink">
-        {preco} <span className="text-sm font-medium text-ink-3">/mês</span>
+        {preco} <span className="text-sm font-medium text-ink-3">/mês no plano anual</span>
       </div>
       <Link to="/dashboard" className={buttonClasses(destaque ? "primary" : "secondary") + " mt-4 w-full"}>
         {cta}

@@ -30,17 +30,57 @@
  */
 export const COBRANCA_ATIVA = false;
 
-/** Preço de TABELA do plano individual, por mês. É o valor riscado ao lado da oferta. */
-export const PRECO_TABELA = 129;
+/**
+ * A ESCADA DE PREÇOS: TUDO DERIVADO DO "POR MÊS".
+ *
+ * A página inteira fala em valor MENSAL, em qualquer degrau, porque foi assim que o desconto
+ * de fundador ficou legível: R$ 97 por mês virando R$ 47 por mês. Enquanto o anual era
+ * anunciado pelo total, a comparação exigia uma divisão de cabeça, e o número do vídeo
+ * (R$ 590 no ano) não batia com nenhum mensal redondo.
+ *
+ * Por isso o total NÃO é digitado: ele é o mensal vezes o número de meses. Digitar os dois
+ * é abrir de novo a porta para a divergência que este arquivo existe para fechar.
+ */
 
-/** Preço praticado do plano individual, por mês. */
+/** Plano mensal avulso, cobrado todo mês. É a âncora de cima da escada. */
+export const PRECO_MENSAL_AVULSO = 117;
+
+/** Semestral: o que ele custa por mês. */
+export const PRECO_SEMESTRAL_MES = 107;
+
+/** Semestral: o que sai na fatura, a cada seis meses. */
+export const PRECO_SEMESTRAL = PRECO_SEMESTRAL_MES * 6;
+
+/**
+ * Preço praticado do plano individual, por mês, NO ANUAL. É o preço de foco da página:
+ * o anual é o plano que queremos que o profissional assine, porque prescrição não se
+ * avalia em trinta dias (um mesociclo leva doze semanas).
+ */
 export const PRECO_MENSAL = 97;
 
 /** Plano individual pago de uma vez, no ano. */
-export const PRECO_ANUAL = 1164;
+export const PRECO_ANUAL = PRECO_MENSAL * 12;
 
-/** Quanto o anual economiza contra doze meses da TABELA, no ano. */
-export const ECONOMIA_ANUAL = PRECO_TABELA * 12 - PRECO_ANUAL;
+/** Condição de fundador: por mês, também no anual. */
+export const PRECO_FUNDADOR_MES = 47;
+
+/** Condição de fundador: o que sai na fatura, uma vez, no ano. */
+export const PRECO_FUNDADOR_ANO = PRECO_FUNDADOR_MES * 12;
+
+/** Quantas contas entram na condição de fundador. Acabou, acabou. */
+export const VAGAS_FUNDADOR = 30;
+
+/** Doze meses do mensal avulso: o total contra o qual os outros degraus economizam. */
+export const ANO_NO_MENSAL = PRECO_MENSAL_AVULSO * 12;
+
+/** Quanto o anual economiza contra doze meses do MENSAL, no ano. */
+export const ECONOMIA_ANUAL = ANO_NO_MENSAL - PRECO_ANUAL;
+
+/** Quanto o semestral economiza contra doze meses do mensal, no ano. */
+export const ECONOMIA_SEMESTRAL = ANO_NO_MENSAL - PRECO_SEMESTRAL_MES * 12;
+
+/** Quanto o fundador economiza contra doze meses do mensal, no ano. */
+export const ECONOMIA_FUNDADOR = ANO_NO_MENSAL - PRECO_FUNDADOR_ANO;
 
 /** Preço por profissional, por mês, na faixa de equipe. */
 export const PRECO_ESTUDIO = 89;
@@ -53,6 +93,20 @@ export const NOME_PLANO = "Profissional";
 
 export const fmtBRL = (n: number) =>
   n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+
+/** Com centavos. Existe para a conta por aluno, onde arredondar para real muda o argumento. */
+export const fmtBRLc = (n: number) =>
+  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
+
+/**
+ * Quanto o plano anual custa POR ALUNO, por mês, numa carteira de `alunos` pessoas.
+ *
+ * É a ancoragem que abre a seção de preço, e ela é verificável: a assinatura não cobra por
+ * aluno, então o custo por pessoa cai sozinho conforme a carteira cresce. Substituiu a
+ * "conta da hora de trabalho" do VSL, que não fechava (uma hora a noventa reais não custa
+ * mais que a mensalidade) e usava um valor de hora que nunca foi medido.
+ */
+export const precoPorAluno = (alunos: number) => PRECO_MENSAL / alunos;
 
 /**
  * O que está incluído no plano individual. Não acrescente item que o produto não faz:
