@@ -204,14 +204,20 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-cmp{width:100%;border-collapse:collapse;font-size:15px;margin-top:36px}
 .landing-prototipo .lp-cmp th{text-align:left;padding:0 20px 14px 0;font-weight:700;font-size:14px;color:#17202E;border-bottom:2px solid #17202E;font-family:'Bricolage Grotesque',sans-serif}
 .landing-prototipo .lp-cmp th.lp-cmp-crit{width:26%}
-.landing-prototipo .lp-cmp th.lp-cmp-mapa{color:#1F61E5;border-bottom-color:#1F61E5}
+.landing-prototipo .lp-cmp th.lp-cmp-mapa{color:#1F61E5;border-bottom-color:#1F61E5;background:#EEF3FE;padding:16px 20px 14px;border-radius:12px 12px 0 0;font-size:15px}
+.landing-prototipo .lp-cmp th.lp-cmp-mapa::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:#1F61E5;margin-right:8px;vertical-align:1px}
 .landing-prototipo .lp-cmp td{padding:18px 20px 18px 0;border-bottom:1px solid #E3E0D8;color:#616874;vertical-align:top}
 .landing-prototipo .lp-cmp td.lp-cmp-crit{color:#17202E;font-weight:600}
-.landing-prototipo .lp-cmp td.lp-cmp-mapa{color:#17202E;font-weight:500}
+.landing-prototipo .lp-cmp td.lp-cmp-mapa{color:#10233A;font-weight:600;background:#EEF3FE;padding:18px 20px;border-bottom-color:#D6E2FB;position:relative}
+.landing-prototipo .lp-cmp td.lp-cmp-mapa::before{content:"";display:inline-block;width:16px;height:16px;margin-right:10px;vertical-align:-3px;border-radius:50%;background:#14B3BA url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310233A' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 12.5l4 4 8-9'/></svg>") center/10px no-repeat}
+.landing-prototipo .lp-cmp tr:last-child td.lp-cmp-mapa{border-radius:0 0 12px 12px;border-bottom-color:transparent}
 .landing-prototipo .lp-cmp-m{display:none}
 .landing-prototipo .lp-cmp-m-item{padding:14px 16px}
 .landing-prototipo .lp-cmp-m-item>p{font-size:14px;font-weight:600}
 .landing-prototipo .lp-cmp-m-item .lp-linhas{margin-top:6px}
+.landing-prototipo .lp-cmp-m-item .lp-linha:last-child{background:#EEF3FE;margin:6px -16px -14px;padding:10px 16px 12px;border-radius:0 0 12px 12px}
+.landing-prototipo .lp-cmp-m-item .lp-linha:last-child .lp-k{font-weight:700}
+.landing-prototipo .lp-cmp-m-item .lp-linha:last-child .lp-v{color:#10233A;font-weight:600}
 
 /* ---------- 08 fundador ---------- */
 .landing-prototipo .lp-fundador-foto{aspect-ratio:4/5;border-radius:16px;background:#10233A;color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-size:120px;font-weight:700;line-height:1}
