@@ -149,12 +149,23 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-vsl-sub{font-size:13.5px;color:#B9C6D6;margin-top:8px}
 
 /* ---------- 02 como funciona ---------- */
-.landing-prototipo .lp-etapas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px 56px;margin-top:40px}
-.landing-prototipo .lp-etapa{display:grid;grid-template-columns:72px minmax(0,1fr);gap:20px;align-items:start;border-top:1px solid #E3E0D8;padding-top:24px}
-.landing-prototipo .lp-num{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:44px;line-height:1;color:#1F61E5;letter-spacing:-.03em}
+/* As etapas são cartões: número em selo, título curto, uma linha. Nada de parágrafo corrido. */
+.landing-prototipo .lp-etapas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:40px}
+.landing-prototipo .lp-etapa{background:#F7F6F2;border:1px solid #E3E0D8;border-radius:12px;padding:22px 22px 24px;display:flex;flex-direction:column;gap:12px}
+.landing-prototipo .lp-num{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:10px;background:#EEF3FE;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:20px;color:#1F61E5;letter-spacing:-.02em}
+.landing-prototipo .lp-etapa .lp-h3{font-size:19px;margin-top:4px}
+.landing-prototipo .lp-etapa-txt{font-size:14.5px;line-height:1.5;color:#616874}
 .landing-prototipo .lp-tres-telas{margin-top:40px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
-.landing-prototipo .lp-tres-telas>div{padding:24px;border-right:1px solid #E3E0D8}
+.landing-prototipo .lp-tres-telas>div{padding:22px 24px 24px;border-right:1px solid #E3E0D8}
 .landing-prototipo .lp-tres-telas>div:last-child{border-right:none}
+.landing-prototipo .lp-tela-titulo{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:600;color:#10233A;display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:2px solid #10233A}
+.landing-prototipo .lp-tela-titulo::before{content:"";width:8px;height:8px;border-radius:50%;background:#1F61E5;flex:none}
+/* Três pontos com o que importa em negrito: substitui o parágrafo corrido ao lado das telas. */
+.landing-prototipo .lp-pontos{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.landing-prototipo .lp-pontos li{position:relative;padding-left:22px;font-size:15.5px;line-height:1.5;color:#616874}
+.landing-prototipo .lp-pontos li::before{content:"";position:absolute;left:0;top:9px;width:9px;height:9px;border-radius:2px;background:#1F61E5}
+.landing-prototipo .lp-pontos b{color:#17202E;font-weight:600}
+.landing-prototipo .lp-sec-ambar .lp-pontos li::before{background:#8E6009}
 
 /* ---------- 03 periodização ---------- */
 .landing-prototipo .lp-grafico{padding:26px 28px 22px;border-color:rgba(12,107,112,.25)}
@@ -315,11 +326,14 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-vsl-texto{left:7%;bottom:10%;max-width:44%}
   .landing-prototipo .lp-vsl-sub{font-size:11px;margin-top:6px}
   .landing-prototipo .lp-legenda{font-size:11px;margin-top:10px}
-  .landing-prototipo .lp-etapas{grid-template-columns:1fr;gap:0;margin-top:20px}
-  .landing-prototipo .lp-etapa{grid-template-columns:44px minmax(0,1fr);gap:12px;padding:14px 0;border-top:0;border-bottom:1px solid #E3E0D8}
-  .landing-prototipo .lp-etapa:last-child{border-bottom:0}
-  .landing-prototipo .lp-etapa .lp-corpo{font-size:13px;margin-top:3px}
-  .landing-prototipo .lp-num{font-size:26px}
+  .landing-prototipo .lp-etapas{grid-template-columns:1fr;gap:10px;margin-top:20px}
+  .landing-prototipo .lp-etapa{display:grid;grid-template-columns:40px minmax(0,1fr);gap:4px 12px;padding:14px 16px;align-items:center}
+  .landing-prototipo .lp-etapa .lp-num{width:40px;height:40px;font-size:16px;grid-row:span 2}
+  .landing-prototipo .lp-etapa .lp-h3{font-size:16px;margin-top:0}
+  .landing-prototipo .lp-etapa-txt{font-size:13px}
+  .landing-prototipo .lp-tela-titulo{font-size:11px;padding-bottom:8px}
+  .landing-prototipo .lp-pontos{margin-top:14px;gap:8px}
+  .landing-prototipo .lp-pontos li{font-size:13.5px}
   .landing-prototipo .lp-tres-telas{margin-top:16px}
   .landing-prototipo .lp-tres-telas>div{padding:12px}
   .landing-prototipo .lp-tres-telas .lp-label{font-size:9px;letter-spacing:.04em}
