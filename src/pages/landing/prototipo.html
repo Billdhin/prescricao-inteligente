@@ -10,14 +10,13 @@
     <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
       <nav class="lp-nav">
         <a href="#como" style-hover="color:#FFFFFF">Como funciona</a>
-        <a href="#paraquem" style-hover="color:#FFFFFF">Para quem é</a>
-        <a href="#recursos" style-hover="color:#FFFFFF">Recursos</a>
-        <a href="#preco" style-hover="color:#FFFFFF">Preço</a>
-        <a href="#garantia" style-hover="color:#FFFFFF">Garantia</a>
+        <a href="#preco" style-hover="color:#FFFFFF">Planos</a>
+        <a href="#faq" style-hover="color:#FFFFFF">Dúvidas</a>
       </nav>
       <div class="lp-header-acoes">
         <a href="/dashboard" class="lp-header-entrar" style-hover="color:#FFFFFF">Entrar</a>
-        <a href="#como" class="lp-btn lp-btn-linha" style-hover="background:rgba(255,255,255,.08)">Entender o Mapa</a>
+        <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" class="lp-btn lp-btn-linha" style-hover="background:rgba(255,255,255,.08)">Ver planos e assinar</a></sc-if>
+        <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-linha" style-hover="background:rgba(255,255,255,.08)">Criar minha conta</a></sc-if>
       </div>
     </sc-if>
     <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
@@ -29,237 +28,167 @@
   <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
     <div class="lp-menu-m">
       <a href="#como" sc-camel-on-click="{{ fecharMenu }}">Como funciona</a>
-      <a href="#paraquem" sc-camel-on-click="{{ fecharMenu }}">Para quem é</a>
-      <a href="#recursos" sc-camel-on-click="{{ fecharMenu }}">Recursos</a>
-      <a href="#preco" sc-camel-on-click="{{ fecharMenu }}">Preço</a>
-      <a href="#garantia" sc-camel-on-click="{{ fecharMenu }}">Garantia</a>
+      <a href="#preco" sc-camel-on-click="{{ fecharMenu }}">Planos</a>
+      <a href="#faq" sc-camel-on-click="{{ fecharMenu }}">Dúvidas</a>
       <a href="/dashboard" sc-camel-on-click="{{ fecharMenu }}">Entrar</a>
-      <a href="/dashboard" sc-camel-on-click="{{ fecharMenu }}" class="lp-btn lp-btn-amber lp-menu-m-cta">Começar com um aluno meu</a>
+      <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" sc-camel-on-click="{{ fecharMenu }}" class="lp-btn lp-btn-amber lp-menu-m-cta">Ver planos e assinar</a></sc-if>
+      <sc-if value="{{ semCobranca }}"><a href="/dashboard" sc-camel-on-click="{{ fecharMenu }}" class="lp-btn lp-btn-amber lp-menu-m-cta">Criar minha conta</a></sc-if>
     </div>
   </sc-if>
 </div>
 
-<!-- 2 · HERO -->
+<!-- 2 · HERO + VÍDEO -->
 <section data-screen-label="Hero" class="lp-hero">
   <picture class="lp-hero-foto">
     <source media="(max-width: 760px)" srcset="/landing/hero-aluno-m.webp">
     <img src="/landing/hero-aluno.webp" alt="" width="2000" height="880" loading="eager" fetchpriority="high">
   </picture>
   <div class="lp-hero-veu" aria-hidden="true"></div>
-  <div class="lp-wrap lp-hero-grade">
+  <div class="lp-wrap lp-hero-grade lp-hero-duas">
     <div class="lp-entrada">
-      <h1 class="lp-h1">A parte do seu trabalho que o aluno <span class="lp-mint">nunca vê</span>, finalmente visível.</h1>
-      <p class="lp-lede lp-lede-escuro">Do cadastro à próxima decisão, o Mapa organiza avaliação, evidência e progressão em uma prescrição rastreável.</p>
+      <p class="lp-eyebrow lp-eyebrow-mint">Plataforma de prescrição e acompanhamento para profissionais de Educação Física</p>
+      <h1 class="lp-h1">Prescreva para cada aluno, <span class="lp-mint">sem montar tudo do zero.</span></h1>
+      <p class="lp-lede lp-lede-escuro">O Mapa monta uma proposta de treino a partir do objetivo, da rotina e das condições de saúde do aluno, com progressão e referências para consultar. Você ajusta, entrega pelo aplicativo com a sua marca e acompanha a execução.</p>
       <div class="lp-hero-acoes">
-        <a href="/dashboard" class="lp-btn lp-btn-amber" style-hover="background:#F0B429;transform:translateY(-1px)">Começar com um aluno meu</a>
-        <a href="#como" class="lp-seta" style-hover="color:#7FE3D8">Entender o Mapa
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" class="lp-btn lp-btn-amber" style-hover="background:#F0B429;transform:translateY(-1px)">Ver planos e assinar</a></sc-if>
+        <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-amber" style-hover="background:#F0B429;transform:translateY(-1px)">Criar minha conta</a></sc-if>
+        <a href="#como" class="lp-seta" style-hover="color:#7FE3D8">Prefiro conhecer por aqui
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
         </a>
       </div>
-      <sc-if value="{{ cobrancaAtiva }}"><p class="lp-hero-nota">O Mapa propõe, você revisa e personaliza. Sete dias para testar com o seu aluno mais difícil.</p></sc-if>
-      <sc-if value="{{ semCobranca }}"><p class="lp-hero-nota">O Mapa propõe. Você revisa e personaliza.</p></sc-if>
+      <sc-if value="{{ cobrancaAtiva }}"><p class="lp-hero-nota">Alunos ilimitados · App do aluno incluído · Garantia de 7 dias</p></sc-if>
+      <sc-if value="{{ semCobranca }}"><p class="lp-hero-nota">Alunos ilimitados · App do aluno incluído · Hoje sem cartão e sem cobrança</p></sc-if>
     </div>
 
-  </div>
-  <div class="lp-hero-faixa"><div class="lp-wrap"><p>Avaliação, regra, decisão e entrega. Tudo no mesmo processo.</p></div></div>
-</section>
-
-<!-- 3 · 01 APRESENTAÇÃO -->
-<section id="como" data-screen-label="Apresentação" class="lp-sec lp-sec-a">
-  <div class="lp-wrap">
-    <p class="lp-eyebrow">01 · O problema</p>
-    <h2 class="lp-h2 lp-max-640">Você estudou anos para tomar decisões que ninguém vê.</h2>
-    <div class="lp-cenas">
-      <div class="lp-cena">
-        <span class="lp-quando">Segunda, aluno novo</span>
-        <p>Você abre a planilha em branco outra vez. Procura a diretriz que já leu três vezes. Monta. Uma hora depois o treino está pronto, e nada do que você pensou ficou registrado.</p>
-      </div>
-      <div class="lp-cena">
-        <span class="lp-quando">No fim do mês</span>
-        <p>Ele recebe uma lista de exercícios. Do outro lado, um aplicativo entrega uma lista parecida por uma fração do seu preço. Sem ver o raciocínio, ele decide pelo valor.</p>
-      </div>
-      <div class="lp-cena">
-        <span class="lp-quando">Quando alguém pergunta</span>
-        <p>O médico pede o histórico. O aluno some por três semanas. A reavaliação chega. Em todos esses momentos, a resposta depende do que você lembrar.</p>
-      </div>
-    </div>
-    <p class="lp-lede lp-max-640">O Mapa trabalha exatamente no espaço entre esses momentos: o raciocínio que liga a avaliação à próxima decisão.</p>
-    <div class="lp-grade lp-grade-9-11 lp-convite">
-      <div>
-        <p class="lp-label">Apresentação em vídeo</p>
-        <h3 class="lp-h3 lp-convite-titulo">Quer ver isso resolvido num caso de verdade?</h3>
-        <p class="lp-lede">Uma aluna com hipertensão, artrose e betabloqueador percorre o caminho inteiro: avaliação, proposta, revisão, publicação e acompanhamento. <b>Filipe</b>, doutor em Educação Física, conduz e explica cada decisão.</p>
-        <p class="lp-convite-aviso">A gravação está a caminho. Assim que subir, o vídeo abre aqui mesmo.</p>
-      </div>
-      <div>
-        <div class="lp-vsl">
-          <picture class="lp-vsl-poster">
-            <source media="(max-width: 760px)" srcset="/landing/vsl-poster-m.webp">
-            <img src="/landing/vsl-poster.webp" alt="Filipe, criador do Mapa da Prescrição, na gravação da apresentação" width="1440" height="900" loading="eager" fetchpriority="low" decoding="async">
-          </picture>
-          <span class="lp-vsl-selo">Em breve</span>
-          <span class="lp-vsl-play" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6L19 12z"/></svg>
-          </span>
-          <div class="lp-vsl-rodape">
-            <div class="lp-vsl-trilha"><span></span></div>
-            <p class="lp-vsl-titulo">O raciocínio que o aluno nunca viu</p>
-          </div>
-        </div>
-        <p class="lp-legenda">Problema · mecanismo · demonstrações · autonomia · oferta</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 4 · 02 COMO FUNCIONA -->
-<section id="paraquem" data-screen-label="Como funciona" class="lp-sec lp-sec-b lp-tx-doc">
-  <div class="lp-wrap">
-    <div class="lp-cabeca lp-cabeca-centro">
-      <p class="lp-eyebrow">02 · Como funciona</p>
-      <h2 class="lp-h2">Quatro passos. Em cada um, você entrega menos trabalho e recebe mais decisão.</h2>
-      <p class="lp-lede">Você não muda a sua forma de prescrever. Muda o ponto de partida.</p>
-    </div>
-    <div class="lp-etapas">
-      <div class="lp-etapa"><span class="lp-num">01</span><h3 class="lp-h3">Você conta quem é o aluno</h3><p class="lp-etapa-txt">Objetivo, nível, frequência, o equipamento que ele tem e as condições de saúde. Quatro campos criam o aluno; o resto entra no seu ritmo, ou o próprio aluno preenche pelo app para você confirmar.</p><p class="lp-ganho">Você nunca mais começa de uma planilha em branco.</p></div>
-      <div class="lp-etapa"><span class="lp-num">02</span><h3 class="lp-h3">O Mapa monta a proposta com o critério à vista</h3><p class="lp-etapa-txt">Até 12 semanas com alvo por semana, descarga posicionada, e cada limite chegando junto com a regra e a referência que o sustentam.</p><p class="lp-ganho">Você revisa em minutos o que levaria uma tarde para montar.</p></div>
-      <div class="lp-etapa"><span class="lp-num">03</span><h3 class="lp-h3">Você ajusta e publica</h3><p class="lp-etapa-txt">Troque o exercício, mude a dose, trave o que não quer que se mexa, registre o motivo. O que você editar é o que vai para o documento e para o app do aluno.</p><p class="lp-ganho">A prescrição continua sua, com o seu critério e o seu nome.</p></div>
-      <div class="lp-etapa"><span class="lp-num">04</span><h3 class="lp-h3">A execução volta antes da próxima decisão</h3><p class="lp-etapa-txt">O aluno registra carga, repetições e esforço de cada série. Isso volta organizado, ao lado do que estava prescrito, com a sugestão de ajuste e o motivo.</p><p class="lp-ganho">A próxima semana começa com dado, não com memória.</p></div>
-    </div>
-    <p class="lp-tres-rot">O mesmo aluno, nas três telas que os quatro passos produzem</p>
-    <div class="lp-card lp-tres-telas">
-      <div>
-        <p class="lp-tela-titulo">Avaliação do aluno</p>
-        <div class="lp-linhas">
-          <div class="lp-linha"><span class="lp-k">Objetivo</span><span class="lp-v">Hipertrofia</span></div>
-          <div class="lp-linha"><span class="lp-k">Histórico</span><span class="lp-v">3 anos</span></div>
-          <div class="lp-linha"><span class="lp-k">Condição</span><span class="lp-v">Hipertensão, est. 1</span></div>
-          <div class="lp-linha"><span class="lp-k">Restrições</span><span class="lp-v">Nenhuma</span></div>
+    <div class="lp-entrada lp-entrada-2">
+      <p class="lp-hero-chamada-rot">Apresentação em vídeo</p>
+      <p class="lp-hero-chamada">Quando o aluno tem hipertensão, dor no joelho e usa medicação, o que muda no treino?</p>
+      <div class="lp-vsl">
+        <picture class="lp-vsl-poster">
+          <source media="(max-width: 760px)" srcset="/landing/vsl-poster-m.webp">
+          <img src="/landing/vsl-poster.webp" alt="Filipe, criador do Mapa da Prescrição, na gravação da apresentação" width="1440" height="900" loading="eager" fetchpriority="low" decoding="async">
+        </picture>
+        <span class="lp-vsl-selo">Em breve</span>
+        <span class="lp-vsl-play" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6L19 12z"/></svg>
+        </span>
+        <div class="lp-vsl-rodape">
+          <div class="lp-vsl-trilha"><span></span></div>
+          <p class="lp-vsl-titulo">A prescrição na prática, com Filipe</p>
         </div>
       </div>
-      <div>
-        <p class="lp-tela-titulo">Proposta do plano semanal</p>
-        <table class="lp-tbl"><thead><tr><th>Exercício</th><th>Séries</th><th>Rep.</th></tr></thead><tbody><tr><td>Agachamento livre</td><td>3</td><td>8</td></tr><tr><td>Remada curvada</td><td>3</td><td>10</td></tr><tr><td>Supino reto</td><td>3</td><td>8</td></tr></tbody></table>
-      </div>
-      <div>
-        <p class="lp-tela-titulo">Alvos da semana</p>
-        <table class="lp-tbl"><thead><tr><th>Semana</th><th>Volume</th><th>Esforço</th></tr></thead><tbody><tr><td>1</td><td>36</td><td>7</td></tr><tr><td>2</td><td>38</td><td>7</td></tr><tr><td>3</td><td>26</td><td class="lp-ambar-txt">descarga</td></tr></tbody></table>
-      </div>
+      <p class="lp-hero-videonota">Filipe monta e revisa uma prescrição no Mapa, com os critérios de cada ajuste na tela. A gravação está a caminho: assim que subir, o vídeo abre aqui mesmo.</p>
     </div>
-
   </div>
 </section>
 
-<!-- 5 · 03 PERIODIZAÇÃO -->
-<section id="recursos" data-screen-label="Periodização" class="lp-sec lp-sec-turquesa">
-  <div class="lp-wrap lp-grade lp-grade-8-12">
-    <div>
-      <p class="lp-eyebrow lp-eyebrow-teal">03 · Periodização</p>
-      <h2 class="lp-h2">Uma semana precisa conversar com a próxima.</h2>
-      <p class="lp-lede">O plano nasce com alvo por semana e a descarga posicionada pelo perfil do aluno. Mudou uma sessão? A curva se move junto, e o que vem depois é recalculado na hora.</p>
-      <p class="lp-ganho lp-ganho-teal">Você para de refazer as contas a cada ajuste.</p>
+<!-- 3 · 01 IDENTIFICAÇÃO -->
+<section id="como" data-screen-label="Identificação" class="lp-sec lp-sec-a">
+  <div class="lp-wrap">
+    <p class="lp-eyebrow">01 · O dia a dia</p>
+    <h2 class="lp-h2 lp-max-640">O aluno novo não é uma cópia do anterior. Mas boa parte do trabalho recomeça.</h2>
+    <div class="lp-prosa">
+      <p>Um quer ganhar massa, mas só consegue treinar três vezes por semana. Outra quer emagrecer, sente dor no joelho e usa medicação. Um terceiro mudou de academia e perdeu acesso aos equipamentos do plano.</p>
+      <p>Você precisa considerar tudo isso, escolher os exercícios, distribuir o treino e conferir o que muda de uma semana para a outra. Depois, ainda vem a entrega e o acompanhamento.</p>
+      <p class="lp-prosa-forte">No Mapa, essas informações entram na construção da proposta. Você parte de um plano organizado e concentra a revisão no que precisa ser ajustado para aquela pessoa.</p>
     </div>
-    <figure class="lp-tela">
-      <img src="/landing/sistema-periodizacao.webp" alt="Tela do Mapa da Prescrição: gráfico de progressão de 12 semanas, com as quatro fases e as descargas marcadas" width="773" height="392" loading="lazy" decoding="async">
-      <figcaption>Tela do sistema, plano de 12 semanas de uma aluna com hipertensão.</figcaption>
-    </figure>
   </div>
 </section>
 
-<!-- 6 · 04 CONDIÇÃO -->
+<!-- 4 · 02 A PROVA DO DIFERENCIAL -->
 <section data-screen-label="Condição" class="lp-sec lp-sec-navy">
   <div class="lp-wrap">
     <div class="lp-cabeca lp-cabeca-centro">
-      <p class="lp-eyebrow lp-eyebrow-mint">04 · O diferencial</p>
-      <h2 class="lp-h2">Condição de saúde aqui não é observação num campo de texto.</h2>
-      <p class="lp-lede lp-lede-escuro">É regra. Cada condição declarada muda números concretos do plano, e a origem de cada limite fica escrita na tela.</p>
+      <p class="lp-eyebrow lp-eyebrow-mint">02 · O diferencial</p>
+      <h2 class="lp-h2">Você informou uma condição de saúde. Veja onde ela entrou na prescrição.</h2>
+      <p class="lp-lede lp-lede-escuro">As condições contempladas pelo sistema participam dos critérios da proposta. Você consulta o ajuste sugerido, o motivo e a referência antes de decidir o que manter.</p>
     </div>
     <div class="lp-demo">
       <div class="lp-demo-cartao">
         <span class="lp-gatilho">Hipertensão</span>
-        <p class="lp-efeito"><b>Reserva mínima de repetições</b>, Valsalva evitada e <b>descarga mais frequente</b>.</p>
+        <p class="lp-efeito"><b>Reserva mínima de repetições</b>, Valsalva evitada e <b>descarga mais frequente</b>, com as referências associadas a cada limite.</p>
         <p class="lp-fonte">Henkin 2023 · Hanssen 2022 · SBC 2020</p>
       </div>
       <div class="lp-demo-cartao">
         <span class="lp-gatilho">Artrose de joelho</span>
-        <p class="lp-efeito">O exercício incompatível com a restrição <b>perde prioridade ou sai</b> do plano, com o motivo ao lado.</p>
+        <p class="lp-efeito">A restrição informada interfere na seleção: o exercício incompatível <b>perde prioridade ou sai</b> do plano, com o motivo ao lado.</p>
         <p class="lp-fonte">Restrição estruturada, aplicada na seleção</p>
       </div>
       <div class="lp-demo-cartao">
         <span class="lp-gatilho">Betabloqueador</span>
-        <p class="lp-efeito">A zona de frequência cardíaca <b>sai do aeróbio</b>; entram esforço percebido e teste da fala.</p>
+        <p class="lp-efeito">A zona de frequência cardíaca <b>sai do aeróbio</b>; entram esforço percebido e teste da fala, com a justificativa exibida.</p>
         <p class="lp-fonte">Wonisch 2003 · Mitchell 2019</p>
       </div>
     </div>
-    <div class="lp-grade lp-grade-8-12 lp-grade-topo lp-cond-grade">
-      <div>
-        <h3 class="lp-h3 lp-cond-pergunta">E quando duas regras discordam?</h3>
-        <p class="lp-lede lp-lede-escuro">O limite mais conservador prevalece, e a tela mostra qual regra pediu o quê.</p>
-        <div class="lp-disputa">
-          <p class="lp-label">Aluno de 65 anos com hipertensão · reserva de repetições</p>
-          <div class="lp-disputa-linha lp-disputa-vence"><span>A idade pediu</span><b>3 repetições</b><em>é a que vale</em></div>
-          <div class="lp-disputa-linha"><span>A hipertensão pedia</span><b>2 repetições</b><em>preterida</em></div>
-        </div>
-        <p class="lp-destaque-mint">O sistema organiza. O profissional avalia e decide.</p>
+    <div class="lp-disputa-solo">
+      <h3 class="lp-h3 lp-cond-pergunta">E quando duas regras apontam limites diferentes?</h3>
+      <p class="lp-lede lp-lede-escuro">O Mapa mostra qual prevaleceu na proposta e por quê. Você examina essa escolha antes de publicar.</p>
+      <div class="lp-disputa">
+        <p class="lp-label">Caso demonstrativo · aluno de 65 anos com hipertensão · reserva de repetições</p>
+        <div class="lp-disputa-linha lp-disputa-vence"><span>A idade pediu</span><b>3 repetições</b><em>é a que vale</em></div>
+        <div class="lp-disputa-linha"><span>A hipertensão pedia</span><b>2 repetições</b><em>preterida</em></div>
       </div>
-      <div class="lp-card-dark lp-check">
-        <p class="lp-label">Checklist de hoje · aluna com hipertensão</p>
-        <div class="lp-check-linha"><span>Pressão de repouso</span><span class="lp-check-ok">registrada</span></div>
-        <div class="lp-check-linha"><span>Sintomas hoje</span><span class="lp-check-ok">nenhum</span></div>
-        <div class="lp-check-linha"><span>Tomou a medicação</span><span class="lp-check-alerta">não informou</span></div>
-        <div class="lp-check-status"><span class="lp-pill lp-pill-alerta">Rever antes de liberar</span><span class="lp-check-quem">O checklist muda conforme a condição do aluno.</span></div>
-      </div>
+      <p class="lp-destaque-mint">O sistema organiza. O profissional avalia e decide.</p>
     </div>
   </div>
 </section>
 
-<!-- 7 · 05 EDIÇÃO -->
-<section data-screen-label="Edição" class="lp-sec lp-sec-ambar">
-  <div class="lp-wrap lp-grade lp-grade-12-8 lp-grade-inverte-m">
-    <figure class="lp-tela">
-      <img src="/landing/sistema-editor.webp" alt="Tela do Mapa da Prescrição: editor de exercícios com séries, repetições, intensidade e intervalo, cada campo mostrando a faixa citada pela evidência" width="745" height="392" loading="lazy" decoding="async">
-      <figcaption>Tela do sistema. Em cada campo, a faixa que a evidência cita fica ao lado do valor.</figcaption>
-    </figure>
-    <div>
-      <p class="lp-eyebrow lp-eyebrow-ambar">05 · Edição</p>
-      <h2 class="lp-h2">A proposta não vira ordem. Vira ponto de partida.</h2>
-      <p class="lp-lede">Se uma ferramenta entrega uma decisão sem mostrar o critério e sem deixar você intervir, você acaba só aceitando o resultado. Aqui o desenho é outro: o critério aberto, a edição sua, e a palavra final sempre sua.</p>
-      <ul class="lp-pontos">
-        <li><b>Troque, ajuste ou trave</b> qualquer variável de qualquer exercício.</li>
-        <li><b>Registre o motivo</b> da edição, para o histórico contar a decisão.</li>
-        <li><b>Autoria e data</b> sempre visíveis em cada alteração.</li>
-      </ul>
-      <p class="lp-ganho lp-ganho-ambar">O Mapa não substitui a sua avaliação. Ele é a prova de que ela aconteceu.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 8 · 06 ALUNO -->
-<section id="app" data-screen-label="Aluno" class="lp-sec lp-sec-a lp-tx-rota">
+<!-- 5 · 03 MONTAGEM, REVISÃO E PROGRESSÃO -->
+<section data-screen-label="Montagem" class="lp-sec lp-sec-b lp-tx-doc">
   <div class="lp-wrap">
     <div class="lp-cabeca lp-cabeca-centro">
-      <p class="lp-eyebrow">06 · Aluno</p>
-      <h2 class="lp-h2">O aluno não valoriza o que não consegue ver.</h2>
-      <p class="lp-lede">Hoje ele recebe uma lista de exercícios. No Mapa ele abre a sessão do dia, registra cada série e acompanha a própria evolução, num aplicativo com a sua marca.</p>
+      <p class="lp-eyebrow">03 · Montagem e revisão</p>
+      <h2 class="lp-h2">Comece com uma proposta organizada. Termine com o treino que você quer entregar.</h2>
+    </div>
+    <div class="lp-etapas">
+      <div class="lp-etapa"><span class="lp-num">01</span><h3 class="lp-h3">Informe o que importa sobre o aluno</h3><p class="lp-etapa-txt">Objetivo, nível, frequência, equipamentos e condições de saúde dão o ponto de partida. O plano é construído a partir desse perfil.</p></div>
+      <div class="lp-etapa"><span class="lp-num">02</span><h3 class="lp-h3">Veja como as semanas foram planejadas</h3><p class="lp-etapa-txt">A proposta reúne exercícios, séries, repetições e esforço, com metas por semana e períodos de redução do treino. O gráfico mostra a progressão antes da primeira sessão.</p></div>
+      <div class="lp-etapa"><span class="lp-num">03</span><h3 class="lp-h3">Ajuste com o impacto à vista</h3><p class="lp-etapa-txt">Troque exercícios, altere séries e repetições e preserve o que quer manter. Ao editar uma sessão, acompanhe a mudança no volume da semana, sem refazer essa conta à parte.</p></div>
+      <div class="lp-etapa"><span class="lp-num">04</span><h3 class="lp-h3">Publique depois da sua revisão</h3><p class="lp-etapa-txt">A versão que você aprova é a que chega ao aplicativo do aluno e ao documento. Seus ajustes e os motivos ficam no histórico para as próximas consultas.</p></div>
+    </div>
+    <div class="lp-grade lp-grade-par lp-grade-topo lp-prova-par">
+      <figure class="lp-tela">
+        <img src="/landing/sistema-editor.webp" alt="Tela do Mapa da Prescrição: editor de exercícios com séries, repetições, intensidade e intervalo, cada campo mostrando a faixa citada pela evidência" width="745" height="392" loading="lazy" decoding="async">
+        <figcaption>Tela do sistema. Em cada campo, a faixa que a evidência cita fica ao lado do valor.</figcaption>
+      </figure>
+      <figure class="lp-tela">
+        <img src="/landing/sistema-periodizacao.webp" alt="Tela do Mapa da Prescrição: gráfico de progressão de 12 semanas, com as quatro fases e as descargas marcadas" width="773" height="392" loading="lazy" decoding="async">
+        <figcaption>O mesmo plano no gráfico: 12 semanas, fases e descargas. Editou uma sessão? A curva acompanha.</figcaption>
+      </figure>
+    </div>
+    <div class="lp-objecao">
+      <p class="lp-citacao lp-citacao-esq">“Mas eu já tenho meu jeito de prescrever.”</p>
+      <p class="lp-objecao-resposta">Pode continuar tendo. Você revisa a proposta exercício por exercício e muda os parâmetros do treino. O Mapa organiza um ponto de partida; a avaliação do aluno e a aprovação do plano continuam com você.</p>
+      <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" class="lp-btn lp-btn-escuro" style-hover="background:#0B1A2C">Ver planos e assinar</a></sc-if>
+      <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-escuro" style-hover="background:#0B1A2C">Criar minha conta</a></sc-if>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · 04 ENTREGA E ACOMPANHAMENTO -->
+<section id="app" data-screen-label="Entrega" class="lp-sec lp-sec-a lp-tx-rota">
+  <div class="lp-wrap">
+    <div class="lp-cabeca lp-cabeca-centro">
+      <p class="lp-eyebrow">04 · Entrega e acompanhamento</p>
+      <h2 class="lp-h2">Entregou o treino. Agora acompanhe o que aconteceu com ele.</h2>
+      <p class="lp-lede">O aluno acessa o plano em um aplicativo com a sua marca e a sua cor. Durante o treino, registra cargas, repetições e esforço. Você consulta a execução para revisar a próxima etapa.</p>
     </div>
     <div class="lp-palco">
       <div class="lp-palco-lado">
         <div class="lp-card lp-mini">
-          <p class="lp-label">O plano dele, sempre à vista</p>
-          <div class="lp-linhas">
-            <div class="lp-linha"><span class="lp-k">Fase</span><span class="lp-v">Semana 9 de 12</span></div>
-            <div class="lp-linha"><span class="lp-k">Objetivo</span><span class="lp-v">Ganho de massa muscular</span></div>
-            <div class="lp-linha"><span class="lp-k">Frequência</span><span class="lp-v">4x por semana</span></div>
-            <div class="lp-linha"><span class="lp-k">Próxima descarga</span><span class="lp-v">Semana 12</span></div>
-          </div>
-        </div>
-        <div class="lp-card lp-mini">
-          <p class="lp-label">O que ele enxerga</p>
+          <p class="lp-label">Para o aluno · o treino do dia</p>
           <ul class="lp-pontos lp-pontos-mini">
-            <li>A <b>fase</b> em que está e o objetivo da semana</li>
-            <li>A <b>execução</b> que ele mesmo registrou</li>
-            <li>A <b>evolução</b> comparada por data</li>
+            <li>Ele encontra <b>o que deve fazer</b> e a fase do plano em que está</li>
+            <li>Registra <b>cada série que executou</b>, no mesmo lugar</li>
+            <li>Dá a <b>percepção de esforço</b> no fim da sessão</li>
           </ul>
+        </div>
+        <div class="lp-card-dark lp-check">
+          <p class="lp-label">Antes da sessão · o que mudou naquele dia</p>
+          <div class="lp-check-linha"><span>Pressão de repouso</span><span class="lp-check-ok">registrada</span></div>
+          <div class="lp-check-linha"><span>Sintomas hoje</span><span class="lp-check-ok">nenhum</span></div>
+          <div class="lp-check-linha"><span>Tomou a medicação</span><span class="lp-check-alerta">não informou</span></div>
+          <div class="lp-check-status"><span class="lp-pill lp-pill-alerta">Rever antes de liberar</span><span class="lp-check-quem">O checklist se adapta às condições do perfil e destaca o que pede revisão. Você decide a conduta.</span></div>
         </div>
       </div>
 
@@ -273,7 +202,7 @@
 
       <div class="lp-palco-lado">
         <div class="lp-card lp-mini">
-          <p class="lp-label">Prescrito x executado, na sua tela</p>
+          <p class="lp-label">Para você · informações para o próximo ajuste</p>
           <table class="lp-tbl">
             <thead><tr><th>Exercício</th><th>Prescrito</th><th>Feito</th><th>Sinal</th></tr></thead>
             <tbody>
@@ -284,303 +213,150 @@
           </table>
         </div>
         <div class="lp-card lp-mini">
-          <p class="lp-label">O que volta para você</p>
+          <p class="lp-label">Quando precisar apresentar o trabalho</p>
           <ul class="lp-pontos lp-pontos-mini">
-            <li><b>Sugestão de ajuste</b> calculada sobre o que aconteceu, com o motivo</li>
-            <li><b>Quem parou de registrar</b> aparece na carteira, com a próxima ação</li>
+            <li>Compare o <b>prescrito com o realizado</b> e as reavaliações por data</li>
+            <li>Emita o plano em <b>PDF com seu nome, CREF e data</b></li>
+            <li>Tudo organizado para conversar com o aluno e <b>compartilhar com outros profissionais</b></li>
           </ul>
         </div>
       </div>
     </div>
-    <p class="lp-ganho lp-ganho-centro">Aplicativo barato entrega uma lista. O seu aluno passa a ver o processo, e o preço deixa de ser o único critério.</p>
+    <p class="lp-ganho lp-ganho-centro">O ciclo inteiro fica no mesmo lugar: preparar, entregar, conferir e ajustar.</p>
   </div>
 </section>
 
-<!-- 9 · 07 COMPARAÇÃO -->
-<section data-screen-label="Comparação" class="lp-sec lp-sec-b">
-  <div class="lp-wrap lp-grade-cmp">
-    <div class="lp-cmp-cabeca">
-      <p class="lp-eyebrow">07 · Comparar</p>
-      <h2 class="lp-h2">Compare pelo processo, não pela aparência.</h2>
-      <p class="lp-lede">Talvez a ferramenta que você usa hoje já faça tudo isso. Se fizer, continue com ela.</p>
-    </div>
-    <div class="lp-cmp-corpo">
-    <table class="lp-cmp">
-      <thead>
-        <tr>
-          <th class="lp-cmp-crit">Critério</th>
-          <th>Só na percepção</th>
-          <th>Planilha tradicional</th>
-          <th>App de treino genérico</th>
-          <th class="lp-cmp-mapa"><span class="lp-cmp-marca"><img src="/brand/marca-pino.webp" alt="" width="22" height="22">Mapa da Prescrição</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="lp-cmp-crit">Contexto real do aluno</td>
-          <td>Na memória</td><td class="lp-cmp-fraco">Raramente</td><td class="lp-cmp-fraco">Não usa</td>
-          <td class="lp-cmp-mapa"><b>Sempre no plano.</b> A condição do aluno chega à prescrição com a regra escrita.</td>
-        </tr>
-        <tr>
-          <td class="lp-cmp-crit">Continuidade entre semanas</td>
-          <td>Depende do dia</td><td class="lp-cmp-fraco">Manual</td><td class="lp-cmp-fraco">Programa fixo</td>
-          <td class="lp-cmp-mapa"><b>Recalcula o impacto.</b> O treino evolui como uma história, semana após semana.</td>
-        </tr>
-        <tr>
-          <td class="lp-cmp-crit">Origem de cada limite</td>
-          <td>Não registrada</td><td class="lp-cmp-fraco">Em outra aba</td><td class="lp-cmp-fraco">Não mostra</td>
-          <td class="lp-cmp-mapa"><b>Sempre visível.</b> Menos achismo: cada limite tem origem e referência.</td>
-        </tr>
-        <tr>
-          <td class="lp-cmp-crit">Edição profissional</td>
-          <td>Livre</td><td class="lp-cmp-fraco">Sem histórico</td><td class="lp-cmp-fraco">Limitada</td>
-          <td class="lp-cmp-mapa"><b>Total, com histórico.</b> Menos tempo montando, mais tempo decidindo.</td>
-        </tr>
-        <tr>
-          <td class="lp-cmp-crit">Registro da execução</td>
-          <td>Relato solto</td><td class="lp-cmp-fraco">Parcial</td><td class="lp-cmp-fraco">Genérico</td>
-          <td class="lp-cmp-mapa"><b>Série por série.</b> O aluno vê o processo, não só a lista de exercícios.</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="lp-cmp-m">
-      <div class="lp-card lp-cmp-m-item"><p>Contexto real do aluno</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Na memória</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Raramente</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Não usa</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Sempre no plano, com a regra escrita</span></div></div></div>
-      <div class="lp-card lp-cmp-m-item"><p>Continuidade entre semanas</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Depende do dia</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Manual</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Programa fixo</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Recalcula o impacto</span></div></div></div>
-      <div class="lp-card lp-cmp-m-item"><p>Origem de cada limite</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Não registrada</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Em outra aba</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Não mostra</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Sempre visível, com referência</span></div></div></div>
-      <div class="lp-card lp-cmp-m-item"><p>Edição profissional</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Livre</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Sem histórico</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Limitada</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Total, com histórico</span></div></div></div>
-      <div class="lp-card lp-cmp-m-item"><p>Registro da execução</p><div class="lp-linhas"><div class="lp-linha"><span class="lp-k">Só na percepção</span><span class="lp-v">Relato solto</span></div><div class="lp-linha"><span class="lp-k">Planilha</span><span class="lp-v">Parcial</span></div><div class="lp-linha"><span class="lp-k">App genérico</span><span class="lp-v">Genérico</span></div><div class="lp-linha lp-linha-mapa"><span class="lp-k">Mapa</span><span class="lp-v">Série por série</span></div></div></div>
-    </div>
-    </div>
-  </div>
-</section>
-
-<!-- 10 · 08 QUEM CONSTRUIU -->
-<section data-screen-label="Quem construiu" class="lp-sec lp-sec-a lp-tx-papel">
+<!-- 7 · 05 AUTORIDADE -->
+<section data-screen-label="Quem construiu" class="lp-sec lp-sec-b lp-tx-papel">
   <div class="lp-wrap lp-grade lp-grade-foto">
     <figure class="lp-fundador-figura">
-      <img src="/landing/filipe.webp" alt="Filipe, criador do Mapa da Prescrição" width="720" height="900" loading="lazy">
+      <img src="/landing/filipe.webp" alt="Filipe Moura Ribeiro, criador do Mapa da Prescrição" width="720" height="900" loading="lazy">
     </figure>
     <div>
-      <p class="lp-eyebrow">08 · Por que o Mapa existe</p>
-      <h2 class="lp-h2">A ciência da prescrição não podia continuar se perdendo entre planilhas, memória e bom senso.</h2>
-      <p class="lp-lede lp-max-600">Quem ensina prescrição vê o mesmo padrão se repetir, turma após turma: o profissional sai sabendo decidir, e encontra um dia a dia que não guarda nenhuma dessas decisões.</p>
-      <p class="lp-fundador-nome">Filipe</p>
-      <p class="lp-corpo lp-corpo-sm">Profissional de Educação Física · mestre e doutor · professor universitário e pesquisador de pós-doutorado</p>
+      <p class="lp-eyebrow">05 · Quem construiu</p>
+      <h2 class="lp-h2">Criado por quem ensina e pesquisa prescrição do exercício.</h2>
+      <p class="lp-fundador-nome">Filipe Moura Ribeiro</p>
       <div class="lp-selos">
-        <span>Mestre e doutor</span>
-        <span>8 anos de docência</span>
-        <span>Cerca de 600 profissionais formados</span>
-        <span>Pós-doutorado em andamento</span>
+        <span>Doutor em Educação Física</span>
+        <span>8 anos de docência universitária</span>
+        <span>Pesquisador de pós-doutorado</span>
       </div>
-      <p class="lp-corpo lp-max-600">Filipe é profissional de Educação Física, mestre e doutor na área, com formação científica voltada à fisiologia do exercício, ao emagrecimento e à obesidade, e ao uso do treinamento físico e de fármacos na prevenção e no tratamento de doenças crônicas.</p>
-      <p class="lp-corpo lp-max-600">Há oito anos é professor universitário e, nesse período, participou da formação de cerca de 600 profissionais. Hoje também atua como pesquisador de pós-doutorado, investigando como o exercício e as diferentes estratégias de intervenção modificam a composição corporal, o metabolismo e a saúde.</p>
-      <p class="lp-citacao lp-citacao-esq lp-max-600">“Foi dessa convivência entre ciência, ensino e prescrição de treinamento que nasceu o Mapa da Prescrição.”</p>
+      <p class="lp-corpo lp-max-600">Doutor em Educação Física, professor universitário há oito anos e pesquisador de pós-doutorado, Filipe atua no estudo do treinamento físico para emagrecimento e doenças crônicas.</p>
+      <p class="lp-corpo lp-max-600">O Mapa da Prescrição nasceu dessa convivência entre ensino, pesquisa e as dificuldades de aplicar o conhecimento na rotina de atendimento.</p>
+      <p class="lp-corpo lp-max-600">A proposta é colocar as referências perto da decisão e manter o planejamento, a execução e a evolução do aluno conectados ao longo do acompanhamento.</p>
     </div>
   </div>
 </section>
 
-<!-- 11 · 09 OFERTA -->
+<!-- 8 · 06 ASSINATURA -->
 <section id="preco" data-screen-label="Oferta" class="lp-sec lp-sec-oferta lp-tx-ruido">
   <div class="lp-wrap">
     <div class="lp-cabeca lp-cabeca-centro">
-      <p class="lp-eyebrow lp-eyebrow-ambar">09 · Preço</p>
-      <h2 class="lp-h2">Antes do número, uma conta rápida.</h2>
-      <p class="lp-lede lp-lede-oferta">Quantos alunos você atende hoje? Vinte? Quarenta? O Mapa não cobra por aluno: é um valor só, para a carteira inteira.</p>
-    </div>
-    <div class="lp-grade lp-grade-conta">
-      <div class="lp-conta">
-        <div class="lp-conta-linha"><span>Com 10 alunos na carteira</span><b>{{ porAluno10 }} por aluno no mês</b></div>
-        <div class="lp-conta-linha"><span>Com 20 alunos</span><b>{{ porAluno20 }} por aluno no mês</b></div>
-        <div class="lp-conta-linha"><span>Com 40 alunos</span><b>{{ porAluno40 }} por aluno no mês</b></div>
-      </div>
-      <div>
-        <p class="lp-lede lp-lede-oferta">O lugar que ele ocupa não é o de outra ferramenta. É o do tempo que você não cobra: o que vai embora montando plano do zero e refazendo a conta a cada ajuste.</p>
-        <p class="lp-conta-nota">Contas sobre o plano anual. Quanto mais a carteira cresce, menos ele custa por pessoa.</p>
-      </div>
+      <p class="lp-eyebrow lp-eyebrow-ambar">06 · Assinatura</p>
+      <h2 class="lp-h2">Uma assinatura para prescrever e acompanhar todos os seus alunos.</h2>
+      <p class="lp-lede lp-lede-oferta">Escolha o período de contratação. O sistema completo está incluído em todos os planos, sem cobrança por aluno.</p>
     </div>
 
     <div class="lp-oferta-lista">
-      <p>Proposta de até 12 semanas, editável</p>
-      <p>Origem de cada limite, com a referência</p>
-      <p>Editor completo com histórico</p>
-      <p>Registro da execução, série por série</p>
-      <p>App do aluno com a sua marca</p>
-      <p>Suporte por e-mail</p>
+      <p>Propostas de treino e progressão para revisar e personalizar</p>
+      <p>Critérios e referências disponíveis na prescrição</p>
+      <p>Editor com registro dos ajustes e seus motivos</p>
+      <p>Aplicativo do aluno com a sua marca, incluído</p>
+      <p>Registro da execução, reavaliações e documentos em PDF</p>
+      <p>Orientação no primeiro acesso, materiais de ajuda e suporte</p>
     </div>
-    <p class="lp-oferta-nenhum"><b>Nenhum item fica atrás de upgrade:</b> os três planos têm o sistema inteiro. O que muda é só a forma de pagar.</p>
 
     <div class="lp-planos-cards">
       <button type="button" class="lp-plano-card {{ clsMensal }}" sc-camel-on-click="{{ selMensal }}" style-hover="border-color:#10233A">
         <span class="lp-plano-topo">Mensal</span>
         <span class="lp-plano-valor">R$ {{ mensalAvulso }}<i>/mês</i></span>
-        <span class="lp-plano-cobranca">Cobrado todo mês</span>
+        <span class="lp-plano-cobranca">Cobrado todo mês, sem compromisso de prazo</span>
         <span class="lp-plano-ano">{{ anoNoMensal }} no ano</span>
       </button>
       <button type="button" class="lp-plano-card {{ clsSemestral }}" sc-camel-on-click="{{ selSemestral }}" style-hover="border-color:#10233A">
         <span class="lp-plano-topo">Semestral</span>
-        <span class="lp-plano-valor">R$ {{ semestralMes }}<i>/mês</i></span>
-        <span class="lp-plano-cobranca">{{ semestralFatura }} a cada seis meses</span>
-        <span class="lp-plano-ano">{{ economiaSemestral }} de economia no ano</span>
+        <span class="lp-plano-valor">{{ semestralFatura }}<i>a cada 6 meses</i></span>
+        <span class="lp-plano-cobranca">Equivale a R$ {{ semestralMes }} por mês</span>
+        <span class="lp-plano-ano">{{ economiaSem6m }} de economia no semestre, contra o mensal</span>
       </button>
       <button type="button" class="lp-plano-card lp-plano-destaque {{ clsAnual }}" sc-camel-on-click="{{ selAnual }}" style-hover="border-color:#7FE3D8">
         <span class="lp-plano-selo">As {{ vagas }} primeiras contas</span>
-        <span class="lp-plano-topo">Anual</span>
-        <span class="lp-plano-valor"><s>R$ {{ proPreco }}</s>R$ {{ fundadorMes }}<i>/mês</i></span>
-        <span class="lp-plano-cobranca">{{ fundadorAno }} cobrados uma vez</span>
-        <span class="lp-plano-ano">{{ economiaFundador }} de economia no ano</span>
+        <span class="lp-plano-topo">Anual fundador</span>
+        <span class="lp-plano-valor">{{ fundadorAno }}<i>por 12 meses</i></span>
+        <span class="lp-plano-cobranca">Pagamento anual, equivalente a R$ {{ fundadorMes }} por mês</span>
+        <span class="lp-plano-ano">{{ fundadorVsAnual }} a menos que o anual regular de {{ proAno }}</span>
       </button>
     </div>
     <p class="lp-plano-resumo">{{ resumoPlano }}</p>
+
+    <p class="lp-oferta-nenhum"><b>Por que existe a condição de fundador:</b> ela é destinada às {{ vagas }} primeiras contas. Quem entra nesta fase pode dizer o que encontra no atendimento e contribuir com a evolução da plataforma, e o valor permanece enquanto a assinatura for mantida ativa. A ordem de criação das contas é o que identifica as primeiras; contador de vagas sem venda real seria propaganda enganosa. Encerrada a condição, vale o anual regular de {{ proAno }}.</p>
+
     <div class="lp-oferta-acao">
-      <a href="/dashboard" class="lp-btn lp-btn-escuro" style-hover="background:#0B1A2C">Começar com um aluno meu</a>
-      <sc-if value="{{ semCobranca }}"><p class="lp-oferta-nota">A cobrança ainda não está no ar: hoje você cria a conta e usa o sistema inteiro, sem cartão. Quando ela entrar, você é avisado antes de qualquer valor ser cobrado.</p></sc-if>
-      <sc-if value="{{ cobrancaAtiva }}"><p class="lp-oferta-nota">Sete dias para testar com um aluno seu, com tudo liberado.</p></sc-if>
+      <sc-if value="{{ cobrancaAtiva }}"><a href="/dashboard" class="lp-btn lp-btn-escuro" style-hover="background:#0B1A2C">Assinar no plano escolhido</a></sc-if>
+      <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-escuro" style-hover="background:#0B1A2C">Criar minha conta</a></sc-if>
+      <sc-if value="{{ semCobranca }}"><p class="lp-oferta-nota">A cobrança ainda não está no ar: hoje você cria a conta e usa o sistema inteiro, sem cartão. Os valores acima são a tabela anunciada, e você é avisado antes de qualquer cobrança entrar em vigor.</p></sc-if>
     </div>
+
+    <sc-if value="{{ cobrancaAtiva }}">
+    <div class="lp-garantia-oferta">
+      <h3 class="lp-h3">Escolha um aluno seu e avalie o Mapa na prática por 7 dias.</h3>
+      <p>Depois de assinar, cadastre um aluno, monte uma proposta, faça seus ajustes e conheça a entrega no aplicativo. Se o Mapa não fizer sentido para a sua rotina, solicite o reembolso nos primeiros sete dias após a contratação: você recebe o valor pago de volta, sem precisar justificar. Basta escrever para <a href="mailto:suporte@mapadaprescricao.com.br">suporte@mapadaprescricao.com.br</a>.</p>
+    </div>
+    </sc-if>
+
     <p class="lp-oferta-outros">Estúdio com 3 ou mais profissionais e instituições de ensino: <a href="mailto:suporte@mapadaprescricao.com.br?subject=Estúdio%20ou%20instituição" style-hover="color:#10233A">fale com a gente</a>. Estudantes de bacharelado em Educação Física usam sem custo durante a graduação.</p>
   </div>
 </section>
 
-<!-- 12 · 10 CONDIÇÃO DE FUNDADOR -->
-<section id="fundador" data-screen-label="Fundador" class="lp-faixa lp-faixa-navy">
-  <div class="lp-wrap lp-faixa-corpo">
-    <p class="lp-faixa-rot">10 · Condição de fundador</p>
-    <h2 class="lp-faixa-titulo">As {{ vagas }} primeiras contas pagam <span class="lp-mint">R$ {{ fundadorMes }} por mês</span>.</h2>
-    <div class="lp-faixa-troca">
-      <span class="lp-faixa-de">R$ {{ proPreco }}</span>
-      <svg width="30" height="16" viewBox="0 0 30 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8h25M22 3l5 5-5 5"/></svg>
-      <span class="lp-faixa-para">R$ {{ fundadorMes }}</span>
-      <span class="lp-faixa-obs">Por mês nos dois lados. No ano, {{ proAno }} vira {{ fundadorAno }}, travado enquanto a assinatura durar.</span>
-    </div>
-  </div>
-</section>
-
-<!-- 13 · 10b A TROCA, QUE SUSTENTA A CONDIÇÃO -->
-<section data-screen-label="Troca" class="lp-sec lp-sec-a">
-  <div class="lp-wrap lp-grade lp-grade-8-12 lp-grade-topo">
-    <div>
-      <p class="lp-eyebrow">Por que essa condição existe</p>
-      <h2 class="lp-h2">Não é desconto. É troca.</h2>
-      <p class="lp-lede">O Mapa está no começo, e nesta fase o que mais vale não é a mensalidade: é profissional de verdade colocando caso de verdade aqui dentro e dizendo o que falta. O produto cresce com a digital de quem entra agora.</p>
-      <p class="lp-ganho">Acabaram as {{ vagas }} vagas, acabou a condição. Quem entrou continua no valor de fundador; quem chegar depois entra pela tabela.</p>
-    </div>
-    <div class="lp-card lp-troca-card">
-      <p class="lp-label">O que entra na condição</p>
-      <ul class="lp-pontos">
-        <li><b>O sistema inteiro</b>, igual ao plano de tabela, sem nenhum recurso a menos.</li>
-        <li><b>Preço travado</b> enquanto a assinatura durar, mesmo quando a tabela subir.</li>
-        <li><b>Canal direto</b> com quem constrói o Mapa, para dizer o que falta.</li>
-      </ul>
-      <a href="/dashboard" class="lp-btn lp-btn-amber lp-btn-bloco" style-hover="background:#F0B429">Entrar como fundador</a>
-      <p class="lp-troca-nota">Sem contador de vagas na tela: barra de escassez sem venda real é propaganda enganosa. A ordem de criação das contas é o que identifica as primeiras.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 13 · 11 RISCO E GARANTIA -->
-<sc-if value="{{ cobrancaAtiva }}">
-<section id="garantia" data-screen-label="Garantia" class="lp-faixa lp-faixa-verde">
-  <div class="lp-wrap lp-faixa-corpo lp-faixa-corpo-centro">
-    <span class="lp-faixa-selo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6l7-3z"/><path d="M9 12.5l2 2 4-4.5"/></svg>
-    </span>
-    <h2 class="lp-faixa-titulo">Garantia total de 7 dias.</h2>
-    <p class="lp-faixa-sub">Se não fizer sentido para a sua forma de prescrever, você pede o reembolso e recebe cada centavo de volta, sem justificar nada.</p>
-  </div>
-</section>
-</sc-if>
-<sc-if value="{{ semCobranca }}">
-<section id="garantia" data-screen-label="Garantia" class="lp-faixa lp-faixa-verde">
-  <div class="lp-wrap lp-faixa-corpo lp-faixa-corpo-centro">
-    <span class="lp-faixa-selo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6l7-3z"/><path d="M9 12.5l2 2 4-4.5"/></svg>
-    </span>
-    <h2 class="lp-faixa-titulo">Sem cartão, sem prazo.</h2>
-    <p class="lp-faixa-sub">A cobrança ainda não está no ar: o sistema inteiro está liberado. Quando ela entrar, você é avisado antes de qualquer valor ser cobrado.</p>
-  </div>
-</section>
-</sc-if>
-
-<!-- 15 · 11b O QUE VOCÊ ARRISCA -->
-<section data-screen-label="Risco" class="lp-sec lp-sec-a">
-  <div class="lp-wrap">
-    <div class="lp-cabeca lp-cabeca-centro">
-      <p class="lp-eyebrow">11 · Risco</p>
-      <h2 class="lp-h2">O risco de testar é nosso, não seu.</h2>
-      <p class="lp-lede">Entre, pegue o aluno mais difícil da sua carteira e monte a prescrição dele. O primeiro acesso conduz do cadastro até a primeira prescrição publicada, com ajuda à mão e suporte respondendo por e-mail.</p>
-    </div>
-    <div class="lp-garantias">
-      <div class="lp-garantia"><h3 class="lp-h3">A decisão é sempre sua</h3><p>O Mapa propõe; o que você editar é o que vale, no documento e no aplicativo do aluno.</p></div>
-      <div class="lp-garantia"><h3 class="lp-h3">Todo limite tem origem</h3><p>Nenhum número aparece sem a regra e a referência que o sustentam.</p></div>
-      <div class="lp-garantia"><h3 class="lp-h3">Seus dados saem com você</h3><p>Exportação em PDF quando quiser, e excluir um aluno apaga os registros vinculados a ele.</p></div>
-      <div class="lp-garantia"><h3 class="lp-h3">Sem limite de alunos</h3><p>Nenhuma cobrança por aluno, em nenhum plano, em nenhuma faixa de carteira.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- 12 · 10 PERGUNTAS -->
-<section data-screen-label="FAQ" class="lp-sec lp-sec-b lp-sec-faq">
+<!-- 9 · 07 PERGUNTAS -->
+<section id="faq" data-screen-label="FAQ" class="lp-sec lp-sec-b lp-sec-faq">
   <div class="lp-wrap lp-faq-wrap">
-    <div class="lp-faq-topo"><p class="lp-eyebrow">12 · Perguntas</p><h2 class="lp-h2">As dúvidas de sempre.</h2><p class="lp-lede">Começar, prescrever, acompanhar e pagar. Se a sua não estiver aqui, escreva para <a href="mailto:suporte@mapadaprescricao.com.br">suporte@mapadaprescricao.com.br</a>.</p></div>
+    <div class="lp-faq-topo"><p class="lp-eyebrow">07 · Perguntas</p><h2 class="lp-h2">As dúvidas de sempre.</h2><p class="lp-lede">Começar, prescrever, acompanhar e pagar. Se a sua não estiver aqui, escreva para <a href="mailto:suporte@mapadaprescricao.com.br">suporte@mapadaprescricao.com.br</a>.</p></div>
     <div class="lp-faq">
       <sc-if value="{{ semCobranca }}"><details><summary>Preciso informar cartão para começar?</summary><p>Não. A cobrança ainda não está no ar: você cria a conta, cadastra um aluno seu e usa o sistema inteiro. Quando a cobrança entrar, você é avisado antes.</p></details></sc-if>
-      <sc-if value="{{ cobrancaAtiva }}"><details><summary>Como funciona o teste de sete dias?</summary><p>Você entra com tudo liberado e monta a prescrição de um aluno seu. Se não fizer sentido, pede o reembolso dentro dos sete dias e recebe o valor de volta, sem precisar justificar.</p></details></sc-if>
-      <details><summary>Qual a diferença entre mensal, semestral e anual?</summary><p>O sistema é o mesmo nos três, sem nenhum recurso a mais ou a menos. Muda só a forma de pagar, e o valor por mês cai conforme o compromisso aumenta. O anual é o que recomendamos, porque um mesociclo inteiro leva doze semanas e é nesse prazo que dá para avaliar a prescrição.</p></details>
-      <details><summary>Sou fundador. O preço muda depois?</summary><p>Não. O valor de fundador fica travado enquanto a assinatura durar, mesmo que a tabela suba. A condição vale para as primeiras contas criadas e existe só no plano anual.</p></details>
+      <details><summary>Já uso um aplicativo de treino. O que vale conferir no Mapa?</summary><p>Confira como o perfil do aluno participa da proposta, onde aparecem os critérios e as referências, como você edita o plano e como a execução volta para o acompanhamento. São esses os recursos que você avalia com um aluno seu.</p></details>
+      <details><summary>Por que assinar se consigo montar uma ficha com IA?</summary><p>A assinatura reúne a montagem da proposta, a sua revisão, a entrega no aplicativo e o acompanhamento ao longo das semanas. Você mantém o plano, os registros de execução e as reavaliações do aluno no mesmo sistema.</p></details>
+      <details><summary>Vou precisar aceitar o treino que o sistema gerar?</summary><p>Não. Você pode trocar exercícios, alterar os parâmetros e revisar os critérios da proposta. O plano publicado é a versão que você aprova.</p></details>
+      <details><summary>Atendo principalmente emagrecimento e hipertrofia. Serve para mim?</summary><p>Sim. Objetivo, experiência, frequência e equipamentos orientam a construção do plano. Os critérios ligados às condições de saúde entram quando o perfil informado pede e a condição está contemplada pelo sistema.</p></details>
+      <details><summary>Preciso transferir todos os meus alunos para começar?</summary><p>Não. Você pode começar cadastrando um aluno e conhecer o processo completo antes de incluir os demais. O primeiro acesso oferece orientação, e você também conta com materiais de ajuda e suporte.</p></details>
+      <details><summary>O aluno precisa pagar pelo aplicativo?</summary><p>Não. O acesso do aluno está incluído na sua assinatura. Os planos têm alunos ilimitados, sem cobrança individual.</p></details>
+      <details><summary>Funciona no celular?</summary><p>Sim. Você pode acessar pelo computador ou pelo celular, e o aluno consulta o treino e registra a execução pelo aplicativo.</p></details>
       <details><summary>Meus dados e os dos alunos estão seguros?</summary><p>Você é responsável pelo cadastro dos seus alunos e pela base legal usada para tratar esses dados. A plataforma processa e armazena as informações conforme os Termos e a Política de Privacidade, com acesso, exportação e exclusão.</p></details>
-      <details><summary>O aluno paga algo?</summary><p>Não. O app do aluno faz parte da sua assinatura, sem cobrança por aluno.</p></details>
-      <details><summary>Serve para aluno sem condição nenhuma?</summary><p>Serve. O plano dele sai da mesma engenharia, com alvos por semana e progressão. A camada clínica só entra quando o perfil pede.</p></details>
-      <details><summary>Funciona no celular?</summary><p>Sim. Você usa no computador ou no celular; o aluno registra cada série pelo app, de onde estiver.</p></details>
-      <details><summary>O que o Mapa não faz?</summary><p>Não decide por você. Cada limite é proposta com a origem escrita; você edita, e o que você editar é o que vai para o documento e para o app.</p></details>
+      <sc-if value="{{ cobrancaAtiva }}"><details><summary>E se eu assinar e não me adaptar?</summary><p>Solicite o reembolso nos primeiros sete dias após a contratação pelo e-mail suporte@mapadaprescricao.com.br. A devolução é integral, sem necessidade de justificar.</p></details></sc-if>
     </div>
   </div>
 </section>
 
-<!-- 16 · FECHO -->
+<!-- 10 · FECHO -->
 <section data-screen-label="Fecho" class="lp-sec lp-sec-a lp-fecho">
   <div class="lp-wrap">
-    <h2 class="lp-h2 lp-max-640">A parte invisível da sua prescrição está a um clique de aparecer.</h2>
-    <p class="lp-lede lp-max-640">Crie a sua conta e monte a primeira prescrição. Na próxima vez que o seu aluno abrir o plano, ele não vai ver apenas exercícios: vai ver fases, objetivos, evolução e o seu trabalho por trás de cada decisão, com o seu nome embaixo.</p>
-    <a href="/dashboard" class="lp-btn lp-btn-amber lp-fecho-cta" style-hover="background:#F0B429;transform:translateY(-1px)">Começar com um aluno meu</a>
+    <h2 class="lp-h2 lp-max-640">Pense no próximo treino que você precisa preparar.</h2>
+    <p class="lp-lede lp-max-640">O perfil do aluno, a proposta para revisar, a entrega no aplicativo e os registros para o próximo ajuste podem ficar no mesmo lugar.</p>
+    <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" class="lp-btn lp-btn-amber lp-fecho-cta" style-hover="background:#F0B429;transform:translateY(-1px)">Escolher meu plano</a><p class="lp-fecho-nota">Alunos ilimitados · App do aluno incluído · Garantia de 7 dias</p></sc-if>
+    <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-amber lp-fecho-cta" style-hover="background:#F0B429;transform:translateY(-1px)">Criar minha conta</a><p class="lp-fecho-nota">Alunos ilimitados · App do aluno incluído · Hoje sem cartão e sem cobrança</p></sc-if>
   </div>
 </section>
 
-<!-- 17 · RODAPÉ -->
+<!-- 11 · RODAPÉ -->
 <footer data-screen-label="Rodapé" class="lp-rodape">
-  <div class="lp-wrap lp-rodape-grade">
+  <div class="lp-wrap lp-rodape-solo">
     <div class="lp-rodape-marca">
       <div class="lp-marca lp-marca-rodape">
         <img src="/brand/marca-pino.webp" alt="" width="26" height="26" class="lp-marca-img-sm">
         <span class="lp-marca-nome">Mapa da Prescrição</span>
       </div>
-      <p class="lp-rodape-tagline">Avaliação, regra, decisão e entrega no mesmo processo. Quem decide é sempre você.</p>
-      <a href="/dashboard" class="lp-btn lp-btn-amber lp-rodape-cta" style-hover="background:#F0B429">Começar com um aluno meu</a>
+      <p class="lp-rodape-tagline">Prescrição, entrega e acompanhamento em uma plataforma para profissionais de Educação Física.</p>
     </div>
-    <div class="lp-rodape-col">
-      <p class="lp-rodape-titulo">Produto</p>
-      <a href="#como" style-hover="color:#FFFFFF">Como funciona</a>
-      <a href="#recursos" style-hover="color:#FFFFFF">Periodização</a>
-      <a href="#app" style-hover="color:#FFFFFF">App do aluno</a>
-      <a href="/pricing" style-hover="color:#FFFFFF">Planos e preços</a>
-      <a href="/roi" style-hover="color:#FFFFFF">Calculadora de retorno</a>
-      <a href="/demo" style-hover="color:#FFFFFF">Demonstração</a>
-    </div>
-    <div class="lp-rodape-col">
-      <p class="lp-rodape-titulo">Ciência</p>
-      <a href="/casos-rcd" style-hover="color:#FFFFFF">Casos públicos</a>
-      <a href="#recursos" style-hover="color:#FFFFFF">Origem de cada limite</a>
-      <a href="#paraquem" style-hover="color:#FFFFFF">Para quem é</a>
-    </div>
-    <div class="lp-rodape-col">
-      <p class="lp-rodape-titulo">Legal e suporte</p>
+    <div class="lp-rodape-linksrow">
       <a href="/termos" style-hover="color:#FFFFFF">Termos de uso</a>
       <a href="/privacidade" style-hover="color:#FFFFFF">Política de Privacidade</a>
       <a href="/lgpd" style-hover="color:#FFFFFF">Seus direitos (LGPD)</a>
       <a href="mailto:suporte@mapadaprescricao.com.br" style-hover="color:#FFFFFF">Falar com o suporte</a>
-      <a href="/aluno" style-hover="color:#FFFFFF">Sou aluno: entrar no app</a>
+      <a href="/aluno" style-hover="color:#FFFFFF">Acesso do aluno</a>
     </div>
   </div>
   <div class="lp-wrap">
-    <p class="lp-rodape-aviso">O Mapa da Prescrição é uma ferramenta de apoio à decisão destinada a profissionais de Educação Física registrados no Sistema CONFEF/CREFs. Não realiza diagnóstico, não substitui avaliação de profissional de saúde e não emite prescrição de forma autônoma: toda conduta registrada é de responsabilidade do profissional que a assina.</p>
+    <p class="lp-rodape-aviso">O Mapa da Prescrição apoia o planejamento e o acompanhamento do exercício. A avaliação do aluno, a revisão da proposta e a decisão sobre a conduta permanecem sob responsabilidade do profissional habilitado.</p>
     <div class="lp-rodape-base">
       <p>© 2026 Mapa da Prescrição</p>
       <div class="lp-rodape-links"><a href="/termos" style-hover="color:#FFFFFF">Termos</a><a href="/privacidade" style-hover="color:#FFFFFF">Privacidade</a><a href="/lgpd" style-hover="color:#FFFFFF">LGPD</a></div>

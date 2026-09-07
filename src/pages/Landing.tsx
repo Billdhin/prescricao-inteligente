@@ -30,10 +30,14 @@ const CSS_ESTADOS = cssDosEstados(template);
  *
  * A marcação vive em `landing/prototipo.html` e este componente só a injeta e liga o
  * comportamento; `renderizar` interpreta a linguagem de template (`{{ }}`, `<sc-if>`,
- * `sc-camel-on-click`, `style-hover`). A fonte do desenho é o canvas aprovado pelo Filipe
- * em 02/09/2026 (desktop em blocos de cor inteiros; celular desenhado à parte), que por sua
- * vez segue a estrutura da LP v5: apresentação, como funciona, periodização, condição,
- * edição, aluno, comparação, quem construiu, oferta e perguntas.
+ * `sc-camel-on-click`, `style-hover`). O desenho segue o canvas aprovado pelo Filipe em
+ * 02/09/2026 (blocos de cor inteiros; celular desenhado à parte) com a ESTRUTURA da revisão
+ * editorial de 07/09/2026: o vídeo subiu para o hero (a promessa concreta antes do play),
+ * identificação curta, prova do diferencial, montagem com a objeção da autonomia, entrega e
+ * acompanhamento, autoridade, assinatura com o total em destaque, perguntas e fecho. A
+ * seção de comparação com planilha e apps saiu: demonstrar o recurso convence mais do que
+ * atribuir limitação a uma categoria inteira, e as duas primeiras perguntas do FAQ cobrem o
+ * assunto sem depreciar ninguém.
  *
  * ## O que o protótipo dizia e o site NÃO diz, e por quê
  *
@@ -251,6 +255,11 @@ function construirValores(st: Estado, mudar: (p: Partial<Estado>) => void): Valo
     anoNoSemestral: fmtBRL(PRECO_SEMESTRAL_MES * 12),
     economiaAnual: fmtBRL(ECONOMIA_ANUAL),
     economiaSemestral: fmtBRL(ECONOMIA_SEMESTRAL),
+    // A revisão de 07/09 pediu a economia dita no PRAZO do plano, não sempre no ano:
+    // o semestral economiza contra seis meses do mensal, e o fundador contra o anual
+    // REGULAR, que é o cartão que ele substitui.
+    economiaSem6m: fmtBRL(PRECO_MENSAL_AVULSO * 6 - PRECO_SEMESTRAL),
+    fundadorVsAnual: fmtBRL(PRECO_ANUAL - PRECO_FUNDADOR_ANO),
 
     // Condição de fundador, dita na MESMA unidade do degrau acima dela.
     fundadorMes: String(PRECO_FUNDADOR_MES),
@@ -283,8 +292,8 @@ function construirValores(st: Estado, mudar: (p: Partial<Estado>) => void): Valo
  */
 const RESUMO: Record<PlanoEscolhido, string> = {
   mensal: `Mensal: ${fmtBRL(PRECO_MENSAL_AVULSO)} por mês, cobrados todo mês, sem compromisso de prazo.`,
-  semestral: `Semestral: ${fmtBRL(PRECO_SEMESTRAL_MES)} por mês, cobrados ${fmtBRL(PRECO_SEMESTRAL)} a cada seis meses.`,
-  anual: `Anual de fundador: ${fmtBRL(PRECO_FUNDADOR_MES)} por mês, cobrados ${fmtBRL(PRECO_FUNDADOR_ANO)} uma vez. Vale para as ${VAGAS_FUNDADOR} primeiras contas; depois delas, o anual é ${fmtBRL(PRECO_MENSAL)} por mês.`,
+  semestral: `Semestral: ${fmtBRL(PRECO_SEMESTRAL)} a cada seis meses, o que equivale a ${fmtBRL(PRECO_SEMESTRAL_MES)} por mês.`,
+  anual: `Anual de fundador: ${fmtBRL(PRECO_FUNDADOR_ANO)} cobrados uma vez, o que equivale a ${fmtBRL(PRECO_FUNDADOR_MES)} por mês. Vale para as ${VAGAS_FUNDADOR} primeiras contas; encerrada a condição, o anual regular é ${fmtBRL(PRECO_ANUAL)} por ano.`,
 };
 
 /** Largura da janela: decide o menu do celular. Redimensionar fecha o menu. */
