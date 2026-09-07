@@ -744,6 +744,18 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-prosa{margin-top:26px;max-width:640px;display:flex;flex-direction:column;gap:16px}
 .landing-prototipo .lp-prosa p{font-size:17px;line-height:1.65;color:#3F5168}
 .landing-prototipo .lp-prosa-forte{font-weight:600;color:#10233A;padding-left:14px;border-left:3px solid #1F61E5}
+/* A dor em duas colunas: o título segura a esquerda, a prosa corre à direita. Empilhado,
+ * o bloco virava uma coluna comprida de texto sob um título largo. */
+.landing-prototipo .lp-prosa-lado{margin-top:6px;max-width:none}
+
+/* ---------- 03: três passos, três colunas ---------- */
+.landing-prototipo .lp-etapas-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.landing-prototipo .lp-etapas-3 .lp-etapa{padding:26px 26px 28px}
+
+/* ---------- 06: o que está incluído, com marcador de conferido ---------- */
+.landing-prototipo .lp-inclui{list-style:none;margin:32px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 28px;max-width:none}
+.landing-prototipo .lp-inclui li{position:relative;padding-left:30px;font-size:15px;line-height:1.5;color:#3A2A05}
+.landing-prototipo .lp-inclui li::before{content:"";position:absolute;left:0;top:1px;width:20px;height:20px;border-radius:50%;background:#14B3BA url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310233A' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 12.5l4 4 8-9'/></svg>") center/12px no-repeat}
 
 /* ---------- 02: a disputa sozinha, centrada ---------- */
 .landing-prototipo .lp-disputa-solo{max-width:660px;margin:48px auto 0;text-align:left}
@@ -778,6 +790,13 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-hero-videonota{font-size:12.5px;margin-top:10px}
   .landing-prototipo .lp-prosa{margin-top:14px;gap:12px}
   .landing-prototipo .lp-prosa p{font-size:14px}
+  .landing-prototipo .lp-inclui{grid-template-columns:1fr;gap:8px;margin-top:18px}
+  .landing-prototipo .lp-inclui li{font-size:13.5px;padding-left:26px}
+  .landing-prototipo .lp-inclui li::before{width:17px;height:17px;background-size:10px}
+  /* A regra base de 3 colunas vive DEPOIS do override mobile genérico de .lp-etapas no
+   * arquivo, então sem esta linha as três etapas ficavam espremidas lado a lado no celular. */
+  .landing-prototipo .lp-etapas-3{grid-template-columns:1fr}
+  .landing-prototipo .lp-etapas-3 .lp-etapa{padding:14px 16px}
   .landing-prototipo .lp-disputa-solo{margin-top:26px}
   .landing-prototipo .lp-prova-par{margin-top:22px}
   .landing-prototipo .lp-objecao{margin-top:28px;text-align:left}
