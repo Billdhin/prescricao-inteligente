@@ -327,13 +327,6 @@ html{scroll-behavior:smooth}
 }
 
 /* ---------- texturas por seção (o mesmo universo, uma variação por dobra) ---------- */
-/* Documento técnico: réguas com marcações verticais nas laterais e coordenadas miúdas. */
-.landing-prototipo .lp-tx-doc{position:relative;overflow:hidden}
-.landing-prototipo .lp-tx-doc::before,.landing-prototipo .lp-tx-doc::after{content:"";position:absolute;top:0;bottom:0;width:14px;pointer-events:none;background-image:repeating-linear-gradient(180deg,rgba(31,97,229,.35) 0 1px,transparent 1px 24px),repeating-linear-gradient(180deg,rgba(31,97,229,.6) 0 1px,transparent 1px 120px);background-size:8px 24px,14px 120px;background-repeat:repeat-y}
-.landing-prototipo .lp-tx-doc::before{left:22px}
-.landing-prototipo .lp-tx-doc::after{right:22px;transform:scaleX(-1)}
-.landing-prototipo .lp-tx-doc>.lp-wrap{position:relative}
-.landing-prototipo .lp-tx-doc>.lp-wrap::after{content:"01 · 02 · 03 · 04";position:absolute;right:-56px;top:0;writing-mode:vertical-rl;font-size:10px;letter-spacing:.3em;color:rgba(31,97,229,.45);font-family:ui-monospace,monospace;pointer-events:none}
 /* Rota: contornos suaves ligando celular, plano e acompanhamento. */
 .landing-prototipo .lp-tx-rota .lp-palco{position:relative}
 .landing-prototipo .lp-tx-rota .lp-palco::before{content:"";position:absolute;inset:-24px;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600' fill='none'><path d='M60 90 C 260 40, 420 210, 560 120 S 780 220, 700 430 S 420 560, 240 470 S 40 300, 60 90Z' stroke='%231F61E5' stroke-opacity='.16' stroke-width='1.5' stroke-dasharray='6 8'/><path d='M120 150 C 300 110, 440 250, 560 190 S 720 300, 640 420 S 420 500, 280 430 S 90 300, 120 150Z' stroke='%231F61E5' stroke-opacity='.1' stroke-width='1'/></svg>");background-size:100% 100%;background-repeat:no-repeat}
@@ -349,7 +342,6 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-tx-ruido>.lp-wrap{position:relative}
 .landing-prototipo .lp-tx-ruido>.lp-wrap::after{content:"";position:absolute;left:0;right:0;bottom:-54px;height:1px;background:linear-gradient(90deg,rgba(23,32,46,.3) 0%,rgba(23,32,46,.3) 100%);pointer-events:none}
 @media (max-width:760px){
-  .landing-prototipo .lp-tx-doc::before,.landing-prototipo .lp-tx-doc::after,.landing-prototipo .lp-tx-doc>.lp-wrap::after{display:none}
 }
 
 /* O mesmo ponto do hero, quase invisível, nas seções claras: textura sem poluição. */
