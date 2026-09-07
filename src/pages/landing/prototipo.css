@@ -90,19 +90,13 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-menu-m .lp-menu-m-cta{justify-content:center;border-radius:8px;margin-top:14px;border-bottom:0;color:#17202E}
 
 /* ---------- hero ---------- */
+/* Navy limpo: a foto de fundo saiu quando o vídeo subiu para o hero, porque atrás do card
+ * ela virava ruído e o véu de degradê brigava com o poster. A atmosfera agora é só a
+ * textura de pontos da casa, mais forte atrás da copy e sumindo onde o vídeo senta, e um
+ * brilho turquesa discreto ancorando o card na direita. */
 .landing-prototipo .lp-hero{background:#10233A;color:#F3F1EA;position:relative;overflow:hidden}
-/* A foto cobre o hero inteiro e o aluno fica na metade direita; a própria imagem já escurece
- * até #10233A na esquerda, e o véu reforça o degradê para o texto não depender do corte. */
-.landing-prototipo .lp-hero-foto{position:absolute;inset:0;z-index:0;display:block;pointer-events:none}
-.landing-prototipo .lp-hero-foto img{width:100%;height:100%;object-fit:cover;object-position:right center;display:block}
-.landing-prototipo .lp-hero-veu{position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,#10233A 0%,#10233A 34%,rgba(16,35,58,.55) 52%,rgba(16,35,58,0) 68%);pointer-events:none}
-/* Atmosfera: uma malha fina de linhas sobre o navy, que se dissolve onde a foto começa, e um
- * brilho turquesa por trás do aluno. Os dois ficam entre a foto e o texto. */
-/* Fundo de pontos, como na referência: grade regular sobre o navy, que se dissolve onde a
- * foto começa. É a textura da casa, e reaparece de forma mais discreta nas seções claras. */
-.landing-prototipo .lp-hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background-image:radial-gradient(rgba(190,214,232,.62) 1.6px,transparent 1.7px);background-size:26px 26px;background-position:0 0;-webkit-mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.85) 34%,rgba(0,0,0,.35) 52%,transparent 66%);mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.85) 34%,rgba(0,0,0,.35) 52%,transparent 66%)}
-/* Sem brilho em CSS por cima da foto: a luz turquesa nasce na própria imagem (rim light e
- * névoa gerados junto com a foto), que é o que integra de verdade. */
+.landing-prototipo .lp-hero::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background-image:radial-gradient(rgba(190,214,232,.4) 1.5px,transparent 1.6px);background-size:26px 26px;background-position:0 0;-webkit-mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.8) 40%,rgba(0,0,0,.25) 58%,transparent 74%);mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.8) 40%,rgba(0,0,0,.25) 58%,transparent 74%)}
+.landing-prototipo .lp-hero::after{content:"";position:absolute;right:-160px;top:50%;transform:translateY(-50%);z-index:0;width:680px;height:680px;border-radius:50%;background:radial-gradient(circle,rgba(20,179,186,.15) 0%,rgba(20,179,186,0) 62%);pointer-events:none}
 .landing-prototipo .lp-hero-grade{position:relative;z-index:2;padding:88px 0 84px;min-height:600px;display:grid;grid-template-columns:minmax(0,600px);align-items:center}
 .landing-prototipo .lp-hero-nota{position:relative}
 .landing-prototipo .lp-hero-nota::before{content:"";display:inline-block;width:22px;height:1px;background:#7FE3D8;vertical-align:middle;margin-right:10px;opacity:.8}
@@ -277,14 +271,12 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-header-linha{height:56px}
   .landing-prototipo .lp-marca-img{width:22px;height:22px}
   .landing-prototipo .lp-marca-nome{font-size:14.5px}
-  /* No celular a foto vira um bloco em cima do texto, cortada na metade do aluno, e some
-   * suavemente para o navy onde o texto começa. */
-  .landing-prototipo .lp-hero-foto{position:relative;inset:auto;height:300px;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 100%);mask-image:linear-gradient(to bottom,#000 55%,transparent 100%)}
-  .landing-prototipo .lp-hero-foto img{object-position:62% 20%}
-  .landing-prototipo .lp-hero-veu{display:none}
-  .landing-prototipo .lp-hero::before{background-size:22px 22px;-webkit-mask-image:linear-gradient(180deg,transparent 0%,transparent 32%,#000 52%,#000 88%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0%,transparent 32%,#000 52%,#000 88%,transparent 100%)}
-  .landing-prototipo .lp-hero-foto{z-index:0}
-  .landing-prototipo .lp-hero-grade{grid-template-columns:1fr;min-height:0;padding:0 0 32px;gap:0;margin-top:-56px}
+  /* Sem a foto, o hero do celular é o navy direto: a textura de pontos sobe discreta no
+   * topo e o conteúdo entra com padding normal, sem a margem negativa que compensava o
+   * bloco de imagem. */
+  .landing-prototipo .lp-hero::before{background-size:22px 22px;-webkit-mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.5) 40%,transparent 78%);mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.5) 40%,transparent 78%)}
+  .landing-prototipo .lp-hero::after{right:-220px;top:60%;width:460px;height:460px}
+  .landing-prototipo .lp-hero-grade{grid-template-columns:1fr;min-height:0;padding:36px 0 34px;gap:0;margin-top:0}
   .landing-prototipo .lp-hero .lp-lede{margin-top:14px}
   .landing-prototipo .lp-hero-acoes{flex-direction:column;align-items:stretch;gap:14px;margin-top:22px}
   .landing-prototipo .lp-hero-acoes .lp-btn{min-height:50px;font-size:15px}
@@ -358,7 +350,6 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-tx-ruido>.lp-wrap::after{content:"";position:absolute;left:0;right:0;bottom:-54px;height:1px;background:linear-gradient(90deg,rgba(23,32,46,.3) 0%,rgba(23,32,46,.3) 100%);pointer-events:none}
 @media (max-width:760px){
   .landing-prototipo .lp-tx-doc::before,.landing-prototipo .lp-tx-doc::after,.landing-prototipo .lp-tx-doc>.lp-wrap::after{display:none}
-  .landing-prototipo .lp-hero-topo{width:100%;height:300px}
 }
 
 /* O mesmo ponto do hero, quase invisível, nas seções claras: textura sem poluição. */
@@ -412,10 +403,6 @@ html{scroll-behavior:smooth}
 /* ---------- o GANHO, que fecha cada bloco ---------- */
 /* Uma linha por seção dizendo o que o profissional leva, marcada por um traço curto.
  * É o que separa "o sistema faz X" de "você ganha Y", que era a crítica da copy. */
-.landing-prototipo .lp-ganho{margin-top:16px;font-size:14.5px;line-height:1.5;font-weight:600;color:#10233A;padding-left:14px;border-left:3px solid #1F61E5}
-.landing-prototipo .lp-etapa .lp-ganho{margin-top:auto;padding-top:14px;padding-left:12px;border-left-width:2px}
-.landing-prototipo .lp-ganho-teal{color:#0C6B70;border-left-color:#14B3BA;margin-top:20px}
-.landing-prototipo .lp-ganho-ambar{color:#5A3F04;border-left-color:#8E6009}
 
 /* ---------- 04 · condição: a demonstração gatilho / efeito ---------- */
 /* Três linhas em que a esquerda é o que o profissional DECLARA e a direita o que o motor
@@ -475,8 +462,6 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-convite{margin-top:28px;padding-top:24px}
   .landing-prototipo .lp-convite-titulo{font-size:19px;margin-top:8px}
   .landing-prototipo .lp-convite-aviso{margin-top:12px;font-size:12.5px}
-  .landing-prototipo .lp-ganho{font-size:13.5px;margin-top:12px;padding-left:12px}
-  .landing-prototipo .lp-ganho-mint{font-size:15px;margin-top:24px}
   .landing-prototipo .lp-demo{margin-top:20px}
   .landing-prototipo .lp-demo-linha{grid-template-columns:1fr;gap:6px;padding:14px 0}
   .landing-prototipo .lp-gatilho{font-size:15px;font-family:'Instrument Sans',sans-serif}
@@ -551,7 +536,6 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-fone-abas{margin:6px -16px 0;padding:12px 10px 18px;border-top:1px solid rgba(255,255,255,.1);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;text-align:center}
 .landing-prototipo .lp-fone-aba{font-size:10px;color:#8FA0B5}
 .landing-prototipo .lp-fone-aba-on{color:#7FE3D8;font-weight:700}
-.landing-prototipo .lp-ganho-centro{margin:40px auto 0;max-width:720px;text-align:left}
 
 /* ---------- 04 · a disputa entre duas regras ---------- */
 /* O exemplo era uma frase com quatro números dentro. Vira um quadro com a regra que venceu
@@ -585,7 +569,6 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-fone-ex{font-size:15px}
   .landing-prototipo .lp-fone-cta{font-size:14px;padding:12px 0}
   .landing-prototipo .lp-fone-abas{margin:4px -13px 0;padding:10px 8px 14px}
-  .landing-prototipo .lp-ganho-centro{margin-top:22px}
   .landing-prototipo .lp-disputa{padding:12px 14px;margin-top:14px}
   .landing-prototipo .lp-disputa-linha{font-size:13px;gap:8px;padding:9px 0}
   .landing-prototipo .lp-disputa-linha b{font-size:15px}
@@ -731,7 +714,7 @@ html{scroll-behavior:smooth}
  */
 
 /* ---------- hero em duas colunas: a promessa e o player ---------- */
-.landing-prototipo .lp-hero-duas{grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:56px;padding:72px 0 64px;min-height:0}
+.landing-prototipo .lp-hero-duas{grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:64px;padding:84px 0 76px;min-height:0}
 .landing-prototipo .lp-hero-duas .lp-eyebrow{max-width:460px;letter-spacing:.12em}
 .landing-prototipo .lp-hero-duas .lp-h1{margin-top:18px}
 .landing-prototipo .lp-hero-chamada-rot{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:#7FE3D8}
@@ -742,7 +725,7 @@ html{scroll-behavior:smooth}
 /* ---------- 01 identificação: prosa contínua, sem cards ---------- */
 .landing-prototipo .lp-prosa{margin-top:26px;max-width:640px;display:flex;flex-direction:column;gap:16px}
 .landing-prototipo .lp-prosa p{font-size:17px;line-height:1.65;color:#3F5168}
-.landing-prototipo .lp-prosa-forte{font-weight:600;color:#10233A;padding-left:14px;border-left:3px solid #1F61E5}
+.landing-prototipo .lp-prosa-forte{font-weight:600;color:#10233A}
 /* A dor em duas colunas: o título segura a esquerda, a prosa corre à direita. Empilhado,
  * o bloco virava uma coluna comprida de texto sob um título largo. */
 .landing-prototipo .lp-prosa-lado{margin-top:6px;max-width:none}
@@ -784,7 +767,7 @@ html{scroll-behavior:smooth}
   .landing-prototipo .lp-hero-duas{grid-template-columns:1fr;gap:26px}
 }
 @media (max-width:760px){
-  .landing-prototipo .lp-hero-duas{padding:0 0 32px;margin-top:-56px}
+  .landing-prototipo .lp-hero-duas{padding:36px 0 34px;margin-top:0;gap:22px}
   .landing-prototipo .lp-hero-chamada{font-size:16.5px}
   .landing-prototipo .lp-hero-videonota{font-size:12.5px;margin-top:10px}
   .landing-prototipo .lp-prosa{margin-top:14px;gap:12px}
