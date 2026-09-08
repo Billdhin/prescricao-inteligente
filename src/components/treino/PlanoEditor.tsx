@@ -182,6 +182,12 @@ export function GraficoProgressao({
   const ordemAberta = modeloId === "flexivel" || modeloId === "autorregulada";
   const g = desenharProgressao(macro, undefined, undefined, nivel);
   const gid = React.useId().replace(/:/g, "");
+  // Régua de semanas em SEGMENTOS (protótipo do editor): cada semana vira uma
+  // barrinha arredondada na cor do tipo, no lugar do tick fino. Só geometria; a
+  // posição (t.x) e o tipo continuam vindo de desenharProgressao.
+  const passoSemana = g.microTicks.length > 1 ? g.microTicks[1].x - g.microTicks[0].x : 12;
+  const segSemanaW = Math.max(passoSemana - 3, 3);
+  const segSemanaH = g.weekTickBottom - g.weekTickTop;
   // Só os tipos de semana que aparecem no plano entram na legenda (nunca "Teste" quando
   // não há semana de teste).
   const tiposPresentes = new Set(g.microTicks.map((t) => t.tipo));
@@ -219,7 +225,7 @@ export function GraficoProgressao({
         aponta onde a diferença ESTÁ para ser conferida.
       */}
       {ordemAberta && (
-        <div className="mb-3 rounded-lg border border-border bg-surface-soft p-3">
+        <div className="mb-3 rounded-[14px] border border-border bg-surface-soft p-3">
           <p className="text-xs font-semibold text-ink">Por que esta curva é igual à da periodização ondulatória</p>
           <p className="mt-1 text-xs leading-relaxed text-ink-2">
             Porque neste modelo ela tem que ser. O volume e a intensidade da semana são os mesmos; o que muda é a ORDEM
@@ -309,17 +315,18 @@ export function GraficoProgressao({
               horizonte anual não sobrepor 48 números. */}
           {g.microTicks.map((t, i) => (
             <g key={i}>
-              <line
-                x1={t.x}
-                y1={g.weekTickTop}
-                x2={t.x}
-                y2={g.weekTickBottom}
+              <rect
+                x={t.x - segSemanaW / 2}
+                y={g.weekTickTop}
+                width={segSemanaW}
+                height={segSemanaH}
+                rx={segSemanaH / 2}
+                fill={ordemAberta ? "none" : t.tipo === "deload" ? "var(--warning)" : t.tipo === "teste" ? "var(--analysis)" : "var(--primary)"}
                 stroke={t.tipo === "deload" ? "var(--warning)" : t.tipo === "teste" ? "var(--analysis)" : "var(--primary)"}
-                strokeWidth={t.tipo === "carga" ? 1.5 : 2.5}
-                strokeLinecap="round"
+                strokeWidth={ordemAberta ? 1.2 : 0}
                 // Marca VAZADA quando a ordem da semana é escolhida no dia: o tracejado é a
                 // leitura de "sequência não fechada", e não um estado de erro.
-                strokeDasharray={ordemAberta ? "2 2" : undefined}
+                strokeDasharray={ordemAberta ? "3 3" : undefined}
               />
               {t.rotular && (
                 <text x={t.x} y={g.weekLabelY} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 9 }}>
@@ -346,7 +353,7 @@ export function GraficoProgressao({
           {tiposSemana.map((t) => (
             <span key={t} className="flex items-center gap-1.5 text-xs text-ink-2">
               <span
-                className="h-3 w-0.5 rounded-full"
+                className="h-2 w-3.5 rounded-full"
                 style={{ background: t === "deload" ? "var(--warning)" : t === "teste" ? "var(--analysis)" : "var(--primary)" }}
               />
               {TIPO_LABEL[t]}
@@ -432,16 +439,21 @@ export function MesocicloCard({
   const mostrarReavaliar =
     Boolean(reavaliarHref) && meso.reavaliacao && semanaCorrente != null && semanaCorrente >= meso.semanaFim - 1;
 
-  // Identidade de fase (Onda 4): filete petróleo no topo do header + disco de fase
-  // com gradiente da marca. Cada bloco lê como uma etapa do ciclo.
+  // Identidade de fase (protótipo do editor): quadrado navy com o número da fase,
+  // no vocabulário do redesign (o disco com gradiente saiu junto com o filete).
   return (
-    <Card className="overflow-hidden border-t-2 border-t-primary">
+    <Card className="overflow-hidden">
       <button
         onClick={() => setAberto((v) => !v)}
         aria-expanded={aberto}
         className="flex w-full items-start gap-3 p-4 text-left hover:bg-surface-soft"
       >
-        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">{indice + 1}</span>
+        <span
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
+          style={{ background: "#0B1628", color: "#F3F1EA" }}
+        >
+          {indice + 1}
+        </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-display font-bold text-ink">{rotuloMeso(meso, indice)}</span>
@@ -466,7 +478,7 @@ export function MesocicloCard({
             e some sozinho quando ela edita outra coisa que não muda nada mensurável.
           */}
           {efeito && (
-            <div className="rounded-xl border border-analysis/30 bg-analysis-tint/40 p-3">
+            <div className="rounded-[14px] border border-analysis/30 bg-analysis-tint/40 p-3">
               <div className="flex items-start justify-between gap-2">
                 <p className="text-xs font-semibold text-ink">O que a sua edição mudou na semana {efeito.semana}</p>
                 <button
@@ -523,7 +535,7 @@ export function MesocicloCard({
           </div>
 
           {/* (2) Dinâmica: as três tendências da fase, num cartão só, com o cadeado por variável. */}
-          <div className="rounded-xl border border-border bg-surface-soft p-3">
+          <div className="rounded-[14px] border border-border bg-surface-soft p-3">
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <span className="mr-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Dinâmica</span>
               <Pill tone={meso.tendenciaVolume === "sobe" ? "analysis" : "neutral"}>Volume {TEND_LABEL[meso.tendenciaVolume]}</Pill>
@@ -576,7 +588,7 @@ export function MesocicloCard({
 
           {/* (4) Reavaliação e critérios de decisão. */}
           {editavel && (
-            <label className="flex items-center gap-2 rounded-xl bg-surface-soft p-2.5 text-sm text-ink-2">
+            <label className="flex items-center gap-2 rounded-[14px] bg-surface-soft p-2.5 text-sm text-ink-2">
               <input
                 type="checkbox"
                 checked={Boolean(meso.reavaliacao)}
@@ -612,7 +624,7 @@ export function MesocicloCard({
           )}
 
           {/* (5) Detalhes da fase: o que desce da leitura de relance para quem quiser aprofundar. */}
-          <details className="rounded-lg border border-dashed border-border bg-surface-soft p-3 text-xs">
+          <details className="rounded-[14px] border border-dashed border-border bg-surface-soft p-3 text-xs">
             <summary className="cursor-pointer list-none font-semibold text-ink-2 [&::-webkit-details-marker]:hidden">
               Detalhes da fase
             </summary>
@@ -700,7 +712,7 @@ function MicrocicloRow({
     trocarSessoes([...micro.sessoes, { id: nid("ses"), nome: `Sessão ${micro.sessoes.length + 1}`, blocos: [] }]);
 
   return (
-    <div className={cn("rounded-xl border", atual ? "border-primary bg-primary-tint" : "border-border")}>
+    <div className={cn("rounded-[14px] border", atual ? "border-primary bg-primary-tint" : "border-border")}>
       <button
         onClick={() => setAberto((v) => !v)}
         aria-expanded={aberto}
@@ -733,29 +745,40 @@ function MicrocicloRow({
           {editavel && (
             <div className="flex flex-wrap items-center gap-2">
               <Eyebrow>Tipo da semana</Eyebrow>
-              {(["carga", "deload", "teste"] as TipoMicrociclo[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() =>
-                    onChange({
-                      ...micro,
-                      tipo: t,
-                      nota: t === "deload" ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
-                    })
-                  }
-                  aria-pressed={micro.tipo === t}
-                  className={cn(
-                    "rounded-full border px-2.5 py-1 text-xs transition-colors",
-                    micro.tipo === t ? "border-primary bg-primary-tint font-semibold text-primary" : "border-border text-ink-2 hover:bg-surface",
-                  )}
-                >
-                  {TIPO_LABEL[t]}
-                </button>
-              ))}
+              {/* Segmentado do protótipo: trilho branco com borda; o segmento ativo é a
+                  pílula escura (bg-ink), os inativos ficam em texto. */}
+              <div className="inline-flex gap-0.5 rounded-full border border-border bg-surface p-0.5">
+                {(["carga", "deload", "teste"] as TipoMicrociclo[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() =>
+                      onChange({
+                        ...micro,
+                        tipo: t,
+                        nota: t === "deload" ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
+                      })
+                    }
+                    aria-pressed={micro.tipo === t}
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
+                      micro.tipo === t ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft",
+                    )}
+                  >
+                    {TIPO_LABEL[t]}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
-          {micro.nota && <p className="text-xs text-ink-3">{micro.nota}</p>}
+          {/* Nota da semana no card âmbar do protótipo ("Motivo registrado"): rótulo em
+              caixa alta warning, corpo em tinta. O texto é o mesmo de antes. */}
+          {micro.nota && (
+            <div className="rounded-[14px] border border-warning/30 bg-warning-tint px-3 py-2">
+              <p className="text-2xs font-bold uppercase tracking-[0.12em] text-warning">Nota da semana</p>
+              <p className="mt-1 text-xs leading-relaxed text-ink">{micro.nota}</p>
+            </div>
+          )}
 
           {/* Objetivo declarado da semana (derivado da fase e do tipo). */}
           {micro.objetivo && (
@@ -769,7 +792,7 @@ function MicrocicloRow({
 
           {/* O que mudou em relação à semana anterior (só leitura; no editor os campos mudam à mão). */}
           {!editavel && mudancas && (
-            <div className="rounded-lg border border-dashed border-border bg-surface-soft p-2.5">
+            <div className="rounded-[14px] border border-dashed border-border bg-surface-soft p-2.5">
               <p className="mb-1 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">
                 <TrendingUp className="h-3.5 w-3.5 text-primary" aria-hidden /> Em relação à semana anterior
               </p>
@@ -798,7 +821,10 @@ function MicrocicloRow({
           ))}
 
           {editavel && (
-            <button onClick={addSessao} className={buttonClasses("ghost", "sm")}>
+            <button
+              onClick={addSessao}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-card border-2 border-dashed border-border py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
+            >
               <Plus className="h-3.5 w-3.5" /> Adicionar sessão nesta semana
             </button>
           )}
@@ -821,7 +847,7 @@ function FaixaReferencia({ ctx }: { ctx: ContextoFaixa }) {
   const refs = f.refIds.map(refCurta).filter(Boolean).join(" · ");
 
   return (
-    <details className="rounded-lg border border-dashed border-border bg-surface-soft text-xs">
+    <details className="rounded-[14px] border border-dashed border-border bg-surface-soft text-xs">
       <summary className="cursor-pointer list-none px-2.5 py-2 text-ink-2 [&::-webkit-details-marker]:hidden">
         <span className="font-semibold">Faixa de referência</span> ({ctx.objetivo}, {ctx.nivel}):{" "}
         {/* Só os valores em negrito: a linha toda em bold virava ruído (o dado é o número). */}
@@ -929,7 +955,7 @@ const camposDoBloco = (b: BlocoSessao): CampoBloco[] =>
  */
 function QuadroForca({ blocos, ctx }: { blocos: BlocoSessao[]; ctx: ContextoFaixa }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-surface">
+    <div className="overflow-hidden rounded-[14px] border border-border bg-surface">
       <div className="flex items-center gap-1.5 border-b border-border bg-surface-soft px-2.5 py-1.5">
         <Dumbbell className="h-3.5 w-3.5 text-primary" aria-hidden />
         <span className="text-2xs font-semibold uppercase tracking-wide text-ink-2">Musculação</span>
@@ -984,7 +1010,7 @@ function QuadroForca({ blocos, ctx }: { blocos: BlocoSessao[]; ctx: ContextoFaix
 
 function QuadroCardio({ blocos }: { blocos: BlocoSessao[] }) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-surface">
+    <div className="overflow-hidden rounded-[14px] border border-border bg-surface">
       <div className="flex items-center gap-1.5 border-b border-border bg-surface-soft px-2.5 py-1.5">
         <HeartPulse className="h-3.5 w-3.5 text-analysis" aria-hidden />
         <span className="text-2xs font-semibold uppercase tracking-wide text-ink-2">Cardio</span>
@@ -1043,7 +1069,7 @@ function SessaoQuadro({ sessao, ctx }: { sessao: Sessao; ctx: ContextoFaixa }) {
         {cardio.length > 0 && <QuadroCardio blocos={cardio} />}
       </div>
       {regras.length > 0 && (
-        <details className="rounded-lg border border-dashed border-border bg-surface-soft text-2xs">
+        <details className="rounded-[14px] border border-dashed border-border bg-surface-soft text-2xs">
           <summary className="cursor-pointer list-none px-2.5 py-1.5 text-ink-3 [&::-webkit-details-marker]:hidden">
             <Info className="mr-1 inline h-3 w-3 align-[-2px]" aria-hidden /> Por que estes números
           </summary>
@@ -1169,8 +1195,12 @@ export function SessaoBloco({
   };
   const segmentos = agruparBlocosPorMetodo(sessao.blocos);
 
+  // Número de ordem do exercício NA SESSÃO (a ordem é parte da prescrição: aquecimento,
+  // principal, acessório). Alimenta o quadrado numerado do protótipo; nada decorativo.
+  const numeroDoBloco = (id: string) => sessao.blocos.findIndex((x) => x.id === id) + 1;
+
   return (
-    <div className="rounded-lg bg-surface-soft p-2.5">
+    <div className="rounded-[14px] bg-surface-soft p-2.5">
       <div className="mb-1.5 flex items-center gap-1.5">
         <Repeat className="h-3.5 w-3.5 shrink-0 text-primary" />
         {editavel ? (
@@ -1204,7 +1234,7 @@ export function SessaoBloco({
                   <li key={seg.grupoId}>
                     {/* Colchete: as linhas do grupo ficam numa moldura única com a badge do
                         método e a instrução do catálogo; o método é do grupo, não de cada bloco. */}
-                    <div className="rounded-lg border border-primary bg-primary-tint p-1.5">
+                    <div className="rounded-[14px] border border-primary bg-primary-tint p-1.5">
                       <div className="mb-1 flex flex-wrap items-center gap-2 px-1">
                         <span className="rounded-full bg-primary px-2 py-0.5 text-2xs font-bold text-white">{info?.nome}</span>
                         <span className="min-w-0 flex-1 text-2xs leading-tight text-ink-2">{info?.descricao}</span>
@@ -1219,7 +1249,14 @@ export function SessaoBloco({
                       <ul className="space-y-1.5">
                         {seg.blocos.map((b) => (
                           <li key={b.id}>
-                            <BlocoRow bloco={b} ctx={ctx} ocultarMetodo onChange={trocarBloco} onRemover={() => removerBloco(b.id)} />
+                            <BlocoRow
+                              bloco={b}
+                              numero={numeroDoBloco(b.id)}
+                              ctx={ctx}
+                              ocultarMetodo
+                              onChange={trocarBloco}
+                              onRemover={() => removerBloco(b.id)}
+                            />
                           </li>
                         ))}
                       </ul>
@@ -1237,7 +1274,7 @@ export function SessaoBloco({
               const podeTri = podeBi && Boolean(prox2Solo);
               return (
                 <li key={b.id}>
-                  <BlocoRow bloco={b} ctx={ctx} onChange={trocarBloco} onRemover={() => removerBloco(b.id)} />
+                  <BlocoRow bloco={b} numero={numeroDoBloco(b.id)} ctx={ctx} onChange={trocarBloco} onRemover={() => removerBloco(b.id)} />
                   {podeBi && (
                     <div className="mt-1 flex flex-wrap items-center gap-1.5 pl-2">
                       <span className="text-2xs text-ink-3">Agrupar com o próximo:</span>
@@ -1253,9 +1290,11 @@ export function SessaoBloco({
             })}
           </ul>
 
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <label className="text-xs text-ink-3" htmlFor={`add-${sessao.id}`}>
-              Adicionar exercício
+          {/* Área de adicionar no traço do protótipo ("+ Adicionar exercício" tracejado):
+              o gesto continua sendo escolher do acervo pelo select. */}
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-card border-2 border-dashed border-border px-3 py-2.5">
+            <label className="inline-flex items-center gap-1 text-sm font-semibold text-ink-2" htmlFor={`add-${sessao.id}`}>
+              <Plus className="h-3.5 w-3.5" aria-hidden /> Adicionar exercício
             </label>
             <select
               id={`add-${sessao.id}`}
@@ -1321,12 +1360,15 @@ export function SessaoBloco({
 
 function BlocoRow({
   bloco,
+  numero,
   ctx,
   onChange,
   onRemover,
   ocultarMetodo,
 }: {
   bloco: BlocoSessao;
+  /** posição do bloco na sessão (1-based): vira o quadrado numerado do protótipo */
+  numero?: number;
   ctx: ContextoFaixa;
   onChange: (b: BlocoSessao) => void;
   onRemover: () => void;
@@ -1339,19 +1381,36 @@ function BlocoRow({
   const exAtual = bloco.exercicioSlug ? exercises.find((e) => e.slug === bloco.exercicioSlug) : undefined;
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-2">
-      <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+    <div className="rounded-[18px] border border-border bg-surface p-3">
+      <div className="mb-1.5 flex flex-wrap items-center gap-2">
+        {numero != null && (
+          <span
+            className={cn(
+              "grid h-[38px] w-[38px] shrink-0 place-items-center rounded-control font-display text-sm font-bold",
+              aerobio ? "bg-analysis-tint text-analysis-text" : "bg-primary-tint text-primary",
+            )}
+            aria-hidden
+          >
+            {numero}
+          </span>
+        )}
         {aerobio && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded bg-analysis/10 px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-analysis">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-analysis-tint px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide text-analysis-text">
             <HeartPulse className="h-3 w-3" aria-hidden /> Cardio
           </span>
         )}
-        <input
-          value={bloco.nome ?? ""}
-          onChange={(e) => onChange({ ...bloco, nome: e.target.value })}
-          aria-label={aerobio ? "Nome do bloco de cardio" : "Nome do exercício"}
-          className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-xs font-semibold text-ink hover:border-border focus:border-primary focus:outline-none"
-        />
+        <span className="min-w-0 flex-1">
+          <input
+            value={bloco.nome ?? ""}
+            onChange={(e) => onChange({ ...bloco, nome: e.target.value })}
+            aria-label={aerobio ? "Nome do bloco de cardio" : "Nome do exercício"}
+            className="w-full min-w-0 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink hover:border-border focus:border-primary focus:outline-none"
+          />
+          {/* Grupo muscular do catálogo sob o nome, como no protótipo (dado real). */}
+          {!aerobio && exAtual?.grupoMuscular && (
+            <span className="block px-1 text-2xs text-ink-3">{exAtual.grupoMuscular}</span>
+          )}
+        </span>
         <SeloOrigem ctx={ctx} bloco={bloco} />
         {!aerobio && (
           <button
@@ -1492,8 +1551,10 @@ function CampoInline({
         aria-describedby={aviso ? `${id}-aviso` : undefined}
         aria-invalid={undefined}
         className={cn(
-          "w-full rounded-md border bg-surface px-1.5 py-1 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary",
-          aviso ? "border-warning bg-warning-tint" : "border-border",
+          // Chip de dose do protótipo: fundo mute, radius 8, valor em peso forte. Continua
+          // sendo um input editável; o aviso de fora da faixa mantém o tratamento âmbar.
+          "w-full rounded-[8px] border px-2 py-1 text-xs font-semibold text-ink focus:outline-none focus:ring-2 focus:ring-primary",
+          aviso ? "border-warning bg-warning-tint" : "border-transparent bg-surface-mute hover:border-border focus:bg-surface",
         )}
       />
       {aviso && (
@@ -1520,7 +1581,7 @@ function CampoFormatoInline({ rotulo, valor, onChange }: { rotulo: string; valor
         id={id}
         value={valor}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-border bg-surface px-1.5 py-1 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full rounded-[8px] border border-transparent bg-surface-mute px-2 py-1 text-xs font-semibold text-ink hover:border-border focus:outline-none focus:ring-2 focus:ring-primary"
       >
         {!valor && <option value="">Escolher</option>}
         {foraDaLista && <option value={valor}>{valor}</option>}
@@ -1698,7 +1759,7 @@ export function ListaChips({ titulo, itens }: { titulo: string; itens: string[] 
           paleta pele clínica. Conserta MesocicloCard e ModeloExplicacao de uma vez. */}
       <div className="flex flex-wrap gap-1.5">
         {itens.map((it, i) => (
-          <span key={i} className="rounded-lg border border-border bg-surface px-2 py-1 text-xs font-medium text-ink">
+          <span key={i} className="rounded-full border border-border bg-surface px-2.5 py-1 text-xs font-medium text-ink">
             {it}
           </span>
         ))}
