@@ -789,35 +789,35 @@ export function Gps() {
 function FlowSteps({ atual }: { atual: 1 | 2 | 3 }) {
   const steps = ["Para quem?", "Perfil de treino", "Recomendações"];
   return (
-    <ol aria-label="Etapas da prescrição" className="flex flex-wrap items-center gap-x-1 gap-y-2">
+    <ol aria-label="Etapas da prescrição" className="flex flex-wrap items-center gap-x-2 gap-y-2">
       {steps.map((label, i) => {
         const n = (i + 1) as 1 | 2 | 3;
         const done = n < atual;
         const current = n === atual;
         return (
-          <li key={label} className="flex items-center gap-1">
+          <li key={label} className="flex items-center gap-2">
             <span
               aria-current={current ? "step" : undefined}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
-                current ? "bg-primary-tint text-primary" : done ? "text-ink-2" : "text-ink-3",
+                "inline-flex items-center gap-2 text-sm font-semibold",
+                done ? "text-success" : current ? "text-ink" : "text-ink-3",
               )}
             >
-              {done ? (
-                <Check className="h-3.5 w-3.5 text-success" />
-              ) : (
-                <span
-                  className={cn(
-                    "tabular grid h-4 w-4 place-items-center rounded-full text-2xs font-bold",
-                    current ? "bg-primary text-on-primary" : "bg-surface-soft text-ink-3",
-                  )}
-                >
-                  {n}
-                </span>
-              )}
+              <span
+                className={cn(
+                  "tabular grid h-6 w-6 shrink-0 place-items-center rounded-full text-2xs font-bold",
+                  done
+                    ? "bg-success-fill text-on-success-fill"
+                    : current
+                      ? "bg-ink text-surface"
+                      : "bg-surface-mute text-ink-3",
+                )}
+              >
+                {done ? <Check className="h-3.5 w-3.5" /> : n}
+              </span>
               {label}
             </span>
-            {i < steps.length - 1 && <ArrowRight aria-hidden className="h-3.5 w-3.5 text-ink-3/60" />}
+            {i < steps.length - 1 && <span aria-hidden className="h-0.5 w-6 rounded-full bg-border" />}
           </li>
         );
       })}
@@ -1080,10 +1080,12 @@ function LinhaSemaforoDoDia({
   liberacao?: { resultado: "verde" | "amarelo" | "vermelho" };
   alunoId: string;
 }) {
+  // A tira do protótipo: fundo na tint da família, borda suave e o PONTO cheio
+  // (o mesmo desenho do semáforo) no lugar de mais um ícone de escudo.
   const cores = {
-    verde: { bg: "bg-success-tint", borda: "border-success", texto: "text-success", rotulo: "Liberado hoje" },
-    amarelo: { bg: "bg-warning-tint", borda: "border-warning", texto: "text-warning", rotulo: "Liberado com ajuste hoje" },
-    vermelho: { bg: "bg-danger-tint", borda: "border-danger", texto: "text-danger", rotulo: "Não liberado hoje" },
+    verde: { bg: "bg-success-tint", borda: "border-success/30", ponto: "bg-success-fill", texto: "text-success", rotulo: "Liberado hoje" },
+    amarelo: { bg: "bg-warning-tint", borda: "border-warning/30", ponto: "bg-warning-fill", texto: "text-warning", rotulo: "Liberado com ajuste hoje" },
+    vermelho: { bg: "bg-danger-tint", borda: "border-danger/30", ponto: "bg-danger-fill", texto: "text-danger", rotulo: "Não liberado hoje" },
   } as const;
 
   if (!liberacao) {
@@ -1103,8 +1105,8 @@ function LinhaSemaforoDoDia({
 
   const c = cores[liberacao.resultado];
   return (
-    <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border p-3 text-sm", c.bg, c.borda)}>
-      <ShieldCheck className={cn("h-4 w-4 shrink-0", c.texto)} aria-hidden />
+    <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border p-3.5 text-sm", c.bg, c.borda)}>
+      <span aria-hidden className={cn("h-3 w-3 shrink-0 rounded-full", c.ponto)} />
       <span className={cn("font-semibold", c.texto)}>{c.rotulo}</span>
       <span className="min-w-0 flex-1 text-ink-2">
         {liberacao.resultado === "vermelho"
@@ -1714,23 +1716,29 @@ function Results({
     return (
       <Card key={r.exercise.slug} className="p-5">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h4 className="font-display font-bold text-ink">{r.exercise.nome}</h4>
-            </div>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              <Pill tone="neutral">{r.exercise.grupoMuscular}</Pill>
-              <Pill tone={r.equipDisponivel ? "success" : "warning"}>{r.exercise.equipamento}</Pill>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="tabular font-display text-xl font-bold text-primary">
-              {/* uma casa decimal desempata visualmente exercicios que arredondariam para o mesmo inteiro (M4) */}
+          <div className="flex min-w-0 items-center gap-3">
+            {/* Badge de score do protótipo: quadrado 44px na cor neutra; apagado quando
+                o exercício exige equipamento fora da lista. Uma casa decimal desempata
+                visualmente exercícios que arredondariam para o mesmo inteiro (M4). */}
+            <span
+              className={cn(
+                "tabular grid h-11 w-11 shrink-0 place-items-center rounded-control bg-surface-mute font-display text-sm font-bold",
+                r.equipDisponivel ? "text-ink" : "text-ink-3",
+              )}
+              title={`Adequação ${r.scoreExato.toFixed(1)}/100 (${adequacaoLabel(r.score)})`}
+              aria-label={`Adequação ${r.scoreExato.toFixed(1)} de 100`}
+            >
               {r.scoreExato.toFixed(1)}
-              <span className="text-xs font-semibold text-ink-3">/100</span>
+            </span>
+            <div className="min-w-0">
+              <h4 className="font-display font-bold text-ink">{r.exercise.nome}</h4>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                <Pill tone="neutral">{r.exercise.grupoMuscular}</Pill>
+                <Pill tone={r.equipDisponivel ? "success" : "warning"}>{r.exercise.equipamento}</Pill>
+              </div>
             </div>
-            <div className="text-2xs uppercase text-ink-3">adequação</div>
           </div>
+          <Pill tone="neutral">Alternativa</Pill>
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button onClick={() => onJustify(r)} className="text-sm font-semibold text-primary hover:underline">
@@ -1766,29 +1774,48 @@ function Results({
   return (
     <div className="space-y-6">
       {onSalvar && alunoNome ? (
-        <Card tone="success" className="p-4">
+        /* O cartão da sessão do protótipo: superfície NAVY fixa (fora do tema
+           claro/escuro), sobrelinha teal e o CTA âmbar com o rótulo real da ação. */
+        <section
+          className="relative overflow-hidden rounded-card p-5"
+          style={{ background: "#0B1628", color: "#F3F1EA" }}
+        >
           <div className="flex flex-wrap items-center gap-3">
-            <UserCheck className="h-5 w-5 shrink-0 text-success" />
-            <div className="min-w-0">
-              <div className="font-semibold text-ink">
-                {modoDia ? `Último passo: personalizar o treino de ${alunoNome}` : `Último passo: concluir a prescrição de ${alunoNome}`}
+            <div className="min-w-0 flex-1 basis-64">
+              <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
+                Último passo
+              </p>
+              <div className="mt-1 font-display text-lg font-bold tracking-[-0.02em]">
+                {modoDia ? `Personalizar o treino de ${alunoNome}` : `Concluir a prescrição de ${alunoNome}`}
               </div>
-              <p className="text-sm text-ink-2">
+              <p className="mt-1 text-sm" style={{ color: "#B9C6D6" }}>
                 {modoDia
                   ? "Salvar leva estes exercícios para a sessão desta semana do treino. O PDF com a sua marca é opcional."
                   : "Salvar registra no perfil do aluno e volta para ele. O PDF com a sua marca é opcional."}
               </p>
             </div>
             <div className="ml-auto flex flex-wrap gap-2">
-              <button onClick={onSalvar} className={buttonClasses("primary")}>
+              <button
+                onClick={onSalvar}
+                className="inline-flex h-11 select-none items-center justify-center gap-2 whitespace-nowrap rounded-control px-5 text-sm font-bold transition-[filter,transform] duration-150 hover:brightness-110 active:translate-y-px"
+                style={{ background: "#E8A317", color: "#0B1628" }}
+              >
                 <Save className="h-4 w-4" /> {modoDia ? `Personalizar o treino de ${alunoNome}` : `Salvar no perfil de ${alunoNome}`}
               </button>
               {podeExportar ? (
-                <button onClick={onExportar} className={buttonClasses("secondary", "sm")}>
+                <button
+                  onClick={onExportar}
+                  className="inline-flex h-9 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                  style={{ borderColor: "rgba(255,255,255,.2)" }}
+                >
                   <FileDown className="h-4 w-4" /> Exportar PDF
                 </button>
               ) : (
-                <Link to="/pricing" className={buttonClasses("secondary", "sm")}>
+                <Link
+                  to="/pricing"
+                  className="inline-flex h-9 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                  style={{ borderColor: "rgba(255,255,255,.2)" }}
+                >
                   <LockIcon className="h-3.5 w-3.5" /> PDF (Profissional)
                 </Link>
               )}
@@ -1797,25 +1824,32 @@ function Results({
           {/* Esta tela resolve a sessão. Com plano ativo, salvar oferece levar estes
               exercícios para as sessões dele (o tubo); sem plano, o convite é montar o treino. */}
           {alunoId && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-sm">
-              <CalendarRange className="h-4 w-4 shrink-0 text-primary" />
+            <div
+              className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3 text-sm"
+              style={{ borderColor: "rgba(255,255,255,.12)" }}
+            >
+              <CalendarRange className="h-4 w-4 shrink-0" style={{ color: "#7FE3D8" }} />
               {planoAtivoId ? (
-                <span className="text-ink-2">
+                <span style={{ color: "#B9C6D6" }}>
                   {modoDia
                     ? `Ao salvar, estes exercícios personalizam a sessão desta semana do treino de ${alunoNome}.`
                     : `${alunoNome} já tem um plano ativo. Ao salvar, você pode aplicar estes exercícios nas sessões desse plano.`}
                 </span>
               ) : (
                 <>
-                  <span className="text-ink-2">Estes exercícios são a sessão. Para organizar os próximos meses:</span>
-                  <Link to={`/prescrever-treino?aluno=${alunoId}`} className="font-semibold text-primary hover:underline">
+                  <span style={{ color: "#B9C6D6" }}>Estes exercícios são a sessão. Para organizar os próximos meses:</span>
+                  <Link
+                    to={`/prescrever-treino?aluno=${alunoId}`}
+                    className="font-semibold hover:underline"
+                    style={{ color: "#F0B429" }}
+                  >
                     Montar o treino agora
                   </Link>
                 </>
               )}
             </div>
           )}
-        </Card>
+        </section>
       ) : (
         <Card tone="primary" className="flex flex-wrap items-center gap-3 p-4">
           <Info className="h-5 w-5 shrink-0 text-primary" />
@@ -1943,6 +1977,8 @@ function Results({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-display text-2xl font-bold text-ink">{best.exercise.nome}</h3>
+                {/* Tag de família do protótipo: o topo do ranking é o Escolhido. */}
+                <Pill tone="primary">Escolhido</Pill>
               </div>
               <p className="mt-2 text-ink-2">{best.exercise.resumoPratico}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
