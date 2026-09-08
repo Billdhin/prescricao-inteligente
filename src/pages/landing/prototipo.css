@@ -714,6 +714,19 @@ html{scroll-behavior:smooth}
 .landing-prototipo .lp-hero-duas .lp-vsl{margin-top:18px}
 .landing-prototipo .lp-hero-videonota{margin-top:14px;font-size:13.5px;line-height:1.55;color:#8FA0B5;max-width:520px}
 
+/* ---------- hero: a tela real no lugar do player anunciado ---------- */
+/* O quadro de vídeo com "em breve" prometia uma experiência indisponível no espaço mais
+ * caro da página. Até o VSL subir, o destaque é uma captura real do sistema, sem ícone de
+ * play: entrega algo que o visitante pode conferir agora. */
+.landing-prototipo .lp-hero-tela{margin-top:18px}
+.landing-prototipo .lp-hero-tela img{border-color:rgba(127,227,216,.22);box-shadow:0 40px 70px -38px rgba(0,0,0,.85)}
+.landing-prototipo .lp-hero-tela figcaption{color:#8FA0B5}
+
+/* ---------- 05 veja em uso: a faixa de demonstração ---------- */
+.landing-prototipo .lp-faixa-sub-navy{color:#B9C6D6;max-width:760px}
+.landing-prototipo .lp-demo-rot{text-align:center;margin-top:34px;color:#8FA0B5}
+.landing-prototipo .lp-demo-rot+.lp-demo{margin-top:14px}
+
 /* ---------- 01 identificação: prosa contínua, sem cards ---------- */
 .landing-prototipo .lp-prosa{margin-top:26px;max-width:640px;display:flex;flex-direction:column;gap:16px}
 .landing-prototipo .lp-prosa p{font-size:17px;line-height:1.65;color:#3F5168}
@@ -761,7 +774,8 @@ html{scroll-behavior:smooth}
 @media (max-width:760px){
   .landing-prototipo .lp-hero-duas{padding:36px 0 34px;margin-top:0;gap:22px}
   .landing-prototipo .lp-hero-chamada{font-size:16.5px}
-  .landing-prototipo .lp-hero-videonota{font-size:12.5px;margin-top:10px}
+  .landing-prototipo .lp-hero-tela{margin-top:12px}
+  .landing-prototipo .lp-demo-rot{text-align:left;margin-top:20px}
   .landing-prototipo .lp-prosa{margin-top:14px;gap:12px}
   .landing-prototipo .lp-prosa p{font-size:14px}
   .landing-prototipo .lp-inclui{grid-template-columns:1fr;gap:8px;margin-top:18px}

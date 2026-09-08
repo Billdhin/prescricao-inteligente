@@ -53,8 +53,9 @@ const CSS_ESTADOS = cssDosEstados(template);
  * - Nome completo, anos de docência e foto do Filipe entre colchetes: placeholder não vai ao
  *   ar (`check:legal`, bloco D). Fica "Filipe, doutor em Educação Física", que é o que está
  *   confirmado, e a inicial no lugar da foto até a foto real existir.
- * - O vídeo de apresentação ainda não existe: o quadro fica sem botão de play, com o aviso
- *   "em breve", em vez de um botão que não abre nada.
+ * - O vídeo de apresentação ainda não existe: o hero mostra uma CAPTURA REAL do sistema
+ *   com legenda, sem ícone de play (revisão de 08/09: o espaço mais caro da página não
+ *   pode anunciar "em breve"). Quando o VSL subir, o quadro de player volta no lugar.
  * - Preço só por binding da fonte única (`@/data/planos`); literal de preço no template é
  *   exatamente como as tabelas divergiram antes.
  *
