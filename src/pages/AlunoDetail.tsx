@@ -70,6 +70,7 @@ import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/sp
 import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
 import { EvolucaoMini, TabelaEvolucao, comUnidade, type DirMetrica } from "@/components/app/EvolucaoMini";
+import { EvolucaoExercicio } from "@/components/app/EvolucaoExercicio";
 import { TresCamadas } from "@/components/ui/camadas";
 import { montarChecklist } from "@/data/semaforo";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
@@ -818,6 +819,13 @@ export function AlunoDetail() {
       {aba === "visao" && (
         <div role="tabpanel" id="aba-painel-visao" aria-labelledby="aba-tab-visao" className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
           <div className="space-y-3">
+            {/* A evolução de CARGA por exercício abre a coluna: é o único lugar da tela
+                onde o que o aluno registrou no app encosta no que o plano pediu. */}
+            <EvolucaoExercicio
+              plano={planoAtivo}
+              execucoes={execucoesDoAluno}
+              primeiroNome={aluno.nome.split(" ")[0]}
+            />
             <h2 className="text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Linha do tempo</h2>
             <LinhaDoTempo avaliacoes={avals} planos={planosDoAluno} feedbacks={feedbacksDoAluno} liberacoes={libsAlunoDesc} />
           </div>
