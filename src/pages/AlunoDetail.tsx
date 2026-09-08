@@ -2587,9 +2587,9 @@ function VisaoTreino({
 
   const semana = semanaAtual(plano);
   const total = plano.semanas;
-  const pct = Math.max(6, Math.min(100, Math.round((semana / Math.max(total, 1)) * 100)));
   const meso = mesocicloAtual(plano);
-  const micro = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos).find((mc) => mc.semana === semana);
+  const micros = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos);
+  const micro = micros.find((mc) => mc.semana === semana);
   const sessoes = micro?.sessoes ?? [];
   // Divisão em letras (A/B/C...), o "split" da semana — sem despejar o rótulo de
   // cada mesociclo (era isso que virava "B... · D..." e poluía o card).
@@ -2604,10 +2604,42 @@ function VisaoTreino({
           semana {semana} de {total}
         </span>
       </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-soft">
-        <div className="h-full rounded-full gradient-brand transition-[width] duration-500" style={{ width: `${pct}%` }} />
+      {/* A TIRA DE SEMANAS do protótipo, no lugar da barra lisa: uma marca por
+          semana do plano, na cor do que aquela semana é (carga, descarga, teste),
+          com a semana de hoje anelada. A barra de uma cor só dizia "quanto já
+          passou" e escondia justamente o que o profissional precisa antever, que é
+          quando vem a descarga. */}
+      <div
+        className="mt-2.5 flex gap-1"
+        role="img"
+        aria-label={`Semana ${semana} de ${total}. ${micros.filter((m) => m.tipo === "deload").length} semanas de descarga no plano.`}
+      >
+        {micros.map((m) => {
+          const passada = m.semana < semana;
+          const hoje = m.semana === semana;
+          const cor =
+            m.tipo === "deload"
+              ? "var(--warning-fill)"
+              : m.tipo === "teste"
+                ? "var(--analysis-fill)"
+                : passada || hoje
+                  ? "var(--primary)"
+                  : "var(--surface-mute)";
+          return (
+            <span
+              key={m.id}
+              title={`Semana ${m.semana} · ${m.tipo === "deload" ? "descarga" : m.tipo === "teste" ? "teste" : "carga"}`}
+              className="h-2 min-w-0 flex-1 rounded-full"
+              style={{
+                background: cor,
+                opacity: !passada && !hoje && m.tipo === "carga" ? 1 : passada || hoje ? 1 : 0.45,
+                boxShadow: hoje ? "0 0 0 2px var(--ink)" : undefined,
+              }}
+            />
+          );
+        })}
       </div>
-      <div className="mt-2 flex items-center justify-between gap-2">
+      <div className="mt-2.5 flex items-center justify-between gap-2">
         <p className="min-w-0 truncate text-sm text-ink-2">
           {meso && <span className="font-semibold text-analysis">{rotuloMeso(meso)}</span>}
           {split ? ` · ${split}` : ""} · {plano.frequenciaSemanal}×/sem
