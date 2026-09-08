@@ -78,6 +78,14 @@ export const PRECO_FUNDADOR_MES = 49;
 /** Quantas contas entram na condição de fundador. Acabou, acabou. */
 export const VAGAS_FUNDADOR = 30;
 
+/**
+ * Quantos fundadores JÁ CONFIRMARAM. Dado real, informado pelo Dilton em 08/09/2026
+ * (3 pessoas confirmadas, acesso a liberar); o contador da landing lê daqui e NUNCA de
+ * um número solto na marcação. Atualizar aqui a cada confirmação; barra de escassez que
+ * não acompanha a realidade é propaganda enganosa.
+ */
+export const VAGAS_FUNDADOR_OCUPADAS = 3;
+
 /** Doze meses do mensal avulso: o total contra o qual os outros degraus economizam. */
 export const ANO_NO_MENSAL = PRECO_MENSAL_AVULSO * 12;
 

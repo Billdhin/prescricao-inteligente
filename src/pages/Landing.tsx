@@ -12,6 +12,7 @@ import {
   ANO_NO_MENSAL,
   ECONOMIA_SEMESTRAL,
   VAGAS_FUNDADOR,
+  VAGAS_FUNDADOR_OCUPADAS,
   fmtBRL,
 } from "@/data/planos";
 import { renderizarComEstados, cssDosEstados, ATTR_ACAO, type Valores } from "./landing/renderizar";
@@ -200,12 +201,12 @@ function usePreservarFaq(ref: React.RefObject<HTMLDivElement | null>, html: stri
  * própria, e formatados quando o valor entra no meio da frase.
  *
  * `cobrancaAtiva`/`semCobranca` são o par que liga os dois textos de risco (sc-if não tem
- * else). O contador de fundadores (vagasOcupadas/barraVagas) alimenta só o bloco atrás de
- * `cobrancaAtiva`; enquanto não há venda, não há contagem a mostrar, e os valores abaixo
- * partem de zero de propósito: ao ligar a cobrança, a contagem real substitui.
+ * else). O contador de fundadores lê VAGAS_FUNDADOR_OCUPADAS da fonte única: desde
+ * 08/09/2026 existem confirmações REAIS (3 fundadores), então a barra aparece nas duas
+ * fases, sempre com o número que a fonte declara.
  */
 function construirValores(st: Estado, mudar: (p: Partial<Estado>) => void): Valores {
-  const ocupadas = 0;
+  const ocupadas = VAGAS_FUNDADOR_OCUPADAS;
   return {
     isMobile: st.mobile,
     isDesktop: !st.mobile,
