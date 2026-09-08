@@ -448,10 +448,10 @@ export function PrescreverTreino() {
   };
 
   return (
-    // Duas larguras, porque são duas telas: o formulário é curto e fica legível numa
-    // coluna estreita; o plano gerado tem gráfico, semana, sessão e trilho lateral, e
-    // sufoca em 4xl.
-    <div className={cn("mx-auto space-y-6", plano ? "max-w-[1200px]" : "max-w-4xl")}>
+    // Duas larguras, porque são duas telas: o formulário tem o trilho navy fixo à
+    // direita (protótipo de 08/09) e precisa de duas colunas; o plano gerado tem
+    // gráfico, semana, sessão e trilho lateral, e sufoca em menos que isso.
+    <div className={cn("mx-auto space-y-6", plano ? "max-w-[1200px]" : "max-w-[1100px]")}>
       {/*
         PASSO ÚNICO: contexto e gerar.
         Antes eram dois cards ("Passo 1" e um "Passo 2" que ficava vazio embaixo até
@@ -477,17 +477,29 @@ export function PrescreverTreino() {
                 <ArrowLeft className="h-4 w-4" /> Voltar para {aluno.nome.split(" ")[0]}
               </Link>
             )}
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <SeloRCD compacto explicavel />
+            {/* Cabeçalho no vocabulário do protótipo: sobrelinha azul em caixa alta,
+                H1 display e o passo a passo 1-2-3 à direita. O passo atual é DERIVADO
+                do estado real: sem aluno decidido, a pergunta da tela é "para quem";
+                com aluno escolhido, o que se ajusta é o perfil. */}
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="min-w-0">
+                <div className="mb-1.5 flex flex-wrap items-center gap-2.5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">Prescrever treino</p>
+                  <SeloRCD compacto explicavel />
+                </div>
+                <h1 className="font-display text-3xl font-bold tracking-[-0.03em] text-ink md:text-4xl">
+                  Para quem é este plano?
+                </h1>
+                <p className="mt-2 text-ink-2">
+                  6 respostas rápidas. Você edita tudo depois. Exercício avulso?{" "}
+                  <Link to="/gps" className="font-semibold text-primary hover:underline">
+                    Use o Treino do dia
+                  </Link>
+                  .
+                </p>
+              </div>
+              <PassosDaPrescricao atual={aluno ? 2 : 1} />
             </div>
-            <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">Para quem é este plano?</h1>
-            <p className="mt-1 text-ink-2">
-              6 respostas rápidas. Você edita tudo depois. Exercício avulso?{" "}
-              <Link to="/gps" className="font-semibold text-primary hover:underline">
-                Use o Treino do dia
-              </Link>
-              .
-            </p>
 
             {/*
               QUANDO JÁ ESTÁ TUDO RESPONDIDO, A AÇÃO VEM ANTES DO FORMULÁRIO.
@@ -564,45 +576,85 @@ export function PrescreverTreino() {
             )}
           </div>
 
+          {/* Duas colunas no desktop, como o protótipo: o formulário à esquerda e o
+              cartão navy fixo "O que o Mapa já sabe" à direita, com o CTA de gerar. */}
+          <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 space-y-5">
           <Card variant="raised" className="p-5 md:p-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Campo label="Aluno">
-                {alunos.length === 0 ? (
-                  <p className="rounded-control border border-dashed border-border p-3 text-sm text-ink-3">
-                    Nenhum aluno cadastrado.{" "}
-                    <Link to="/alunos?novo=1" className="font-semibold text-primary hover:underline">
-                      Cadastrar aluno
-                    </Link>{" "}
-                    ou siga com um plano avulso.
-                  </p>
-                ) : (
-                  <>
-                    <select
-                      value={alunoId ?? ""}
-                      onChange={(e) => escolherAluno(e.target.value || undefined)}
-                      aria-label="Aluno"
-                      className="input w-full"
-                    >
-                      <option value="">Plano avulso (sem aluno)</option>
-                      {alunos.map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.nome}
-                        </option>
-                      ))}
-                    </select>
-                    {/* O perfil dele numa linha, colado ao seletor: é o que diz se o
-                        contexto herdado abaixo faz sentido, sem abrir o cadastro. */}
-                    {aluno && (
-                      <span className="mt-1 block truncate text-xs text-ink-2">
-                        {[aluno.nivel.toLowerCase(), ...aluno.restricoes.map((r) => rotuloRestricao(r.tag).toLowerCase())]
-                          .slice(0, 3)
-                          .join(" · ")}
-                      </span>
+            <p className="text-sm font-semibold text-ink">Aluno</p>
+            {alunos.length === 0 ? (
+              <p className="mt-3 rounded-control border border-dashed border-border p-3 text-sm text-ink-3">
+                Nenhum aluno cadastrado.{" "}
+                <Link to="/alunos?novo=1" className="font-semibold text-primary hover:underline">
+                  Cadastrar aluno
+                </Link>{" "}
+                ou siga com um plano avulso.
+              </p>
+            ) : (
+              <>
+                {/* O seletor virou os cartões do protótipo: avatar navy quadrado com as
+                    iniciais, nome e o perfil numa linha. O plano avulso segue sendo a
+                    primeira opção, como era no select. */}
+                <div role="group" aria-label="Aluno" className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    aria-pressed={!alunoId}
+                    onClick={() => escolherAluno(undefined)}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-control border p-3 text-left transition-colors",
+                      !alunoId ? "border-primary bg-primary-tint" : "border-border hover:bg-surface-soft",
                     )}
-                  </>
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control border border-dashed border-border bg-surface text-ink-3">
+                      <Users className="h-4 w-4" aria-hidden />
+                    </span>
+                    <span className="min-w-0">
+                      <b className="block truncate text-sm font-semibold text-ink">Plano avulso</b>
+                      <span className="block truncate text-xs text-ink-2">sem aluno</span>
+                    </span>
+                  </button>
+                  {alunos.map((a) => {
+                    const sel = a.id === alunoId;
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        aria-pressed={sel}
+                        onClick={() => escolherAluno(a.id)}
+                        className={cn(
+                          "flex items-center gap-2.5 rounded-control border p-3 text-left transition-colors",
+                          sel ? "border-primary bg-primary-tint" : "border-border hover:bg-surface-soft",
+                        )}
+                      >
+                        <span
+                          className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
+                          style={{ background: "#0B1628", color: "#F3F1EA" }}
+                        >
+                          {a.iniciais}
+                        </span>
+                        <span className="min-w-0">
+                          <b className="block truncate text-sm font-semibold text-ink">{a.nome}</b>
+                          <span className="block truncate text-xs text-ink-2">
+                            {a.objetivo} · {a.nivel}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* O perfil dele numa linha, colado à escolha: é o que diz se o
+                    contexto herdado abaixo faz sentido, sem abrir o cadastro. */}
+                {aluno && (
+                  <span className="mt-2 block truncate text-xs text-ink-2">
+                    {[aluno.nivel.toLowerCase(), ...aluno.restricoes.map((r) => rotuloRestricao(r.tag).toLowerCase())]
+                      .slice(0, 3)
+                      .join(" · ")}
+                  </span>
                 )}
-              </Campo>
+              </>
+            )}
 
+            <div className="mt-4 border-t border-border pt-4">
               <Campo label="Condição / grupo especial">
                 <select
                   id="grupo-especial"
@@ -625,15 +677,15 @@ export function PrescreverTreino() {
                 )}
               </Campo>
             </div>
+          </Card>
 
             {/* Gate duro: aluno selecionado sem o que decide a prescrição não gera plano. */}
             {bloquearPorPerfil && aluno && prontidao ? (
-              <div className="mt-4">
-                <ProntidaoAviso aluno={aluno} prontidao={prontidao} />
-              </div>
+              <ProntidaoAviso aluno={aluno} prontidao={prontidao} />
             ) : (
               <>
-                <div className="mt-4">
+                <Card variant="raised" className="p-5 md:p-6">
+                <div>
                   <Campo label="Objetivo">
                     <Opcoes
                       valor={objetivo}
@@ -664,17 +716,16 @@ export function PrescreverTreino() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <div className="mt-4 border-t border-border pt-4">
                   <Campo label="Nível">
                     <Opcoes valor={nivel} opcoes={NIVEIS} onSelect={(v) => setNivel(v as Nivel)} />
                   </Campo>
-                  <Campo label="Sessões por semana">
-                    <Opcoes
-                      valor={String(frequencia)}
-                      opcoes={FREQUENCIAS.map((f) => `${f}`)}
-                      onSelect={(v) => setFrequencia(Number(v))}
-                    />
-                  </Campo>
+                </div>
+                </Card>
+
+                {/* Horizonte em card próprio, como no protótipo, com as pílulas ativas
+                    em navy (bg-ink) em vez do tint azul. */}
+                <Card variant="raised" className="p-5 md:p-6">
                   <Campo label="Duração do plano">
                     <div className="flex flex-wrap gap-1.5">
                       {HORIZONTES.map((h) => (
@@ -684,9 +735,9 @@ export function PrescreverTreino() {
                           aria-pressed={semanas === h.semanas}
                           title={`${h.rotulo}: ${h.semanas} semanas`}
                           className={cn(
-                            "inline-flex min-h-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm leading-tight transition-colors",
+                            "inline-flex min-h-[44px] items-center justify-center rounded-full border px-4 py-1.5 text-sm leading-tight transition-colors",
                             semanas === h.semanas
-                              ? "border-primary bg-primary-tint font-semibold text-primary"
+                              ? "border-ink bg-ink font-semibold text-surface"
                               : "border-border text-ink-2 hover:bg-surface-soft",
                           )}
                         >
@@ -699,68 +750,79 @@ export function PrescreverTreino() {
                       ))}
                     </div>
                   </Campo>
-                </div>
+                </Card>
 
-                {/* Campo opcional recolhido: ele é a exceção, não a regra, e aberto
-                    empurrava o botão de gerar para fora da primeira dobra. */}
-                <div className="mt-4 border-t border-border pt-4">
-                  {maisOpcoes ? (
-                    <Campo label="Disponibilidade e observações (opcional)">
-                      <input
-                        id="disponibilidade"
-                        autoFocus
-                        value={disponibilidade}
-                        onChange={(e) => setDisponibilidade(e.target.value)}
-                        placeholder="Ex.: seg/qua/sex à noite, 60 min, academia completa"
-                        className="input w-full"
-                      />
-                    </Campo>
-                  ) : (
-                    <div className="flex flex-wrap items-center justify-between gap-3">
+                <Card variant="raised" className="p-5 md:p-6">
+                  <Campo label="Sessões por semana">
+                    <Opcoes
+                      valor={String(frequencia)}
+                      opcoes={FREQUENCIAS.map((f) => `${f}`)}
+                      sufixo="×/sem"
+                      onSelect={(v) => setFrequencia(Number(v))}
+                    />
+                  </Campo>
+
+                  {/* Campo opcional recolhido: ele é a exceção, não a regra, e aberto
+                      empurrava a página inteira para baixo. O botão de gerar mora no
+                      cartão navy ao lado (e na faixa de resumo, com aluno escolhido). */}
+                  <div className="mt-4 border-t border-border pt-4">
+                    {maisOpcoes ? (
+                      <Campo label="Disponibilidade e observações (opcional)">
+                        <input
+                          id="disponibilidade"
+                          autoFocus
+                          value={disponibilidade}
+                          onChange={(e) => setDisponibilidade(e.target.value)}
+                          placeholder="Ex.: seg/qua/sex à noite, 60 min, academia completa"
+                          className="input w-full"
+                        />
+                      </Campo>
+                    ) : (
                       <button
                         onClick={() => setMaisOpcoes(true)}
                         className="text-sm font-semibold text-primary hover:underline"
                       >
                         + disponibilidade e observações
                       </button>
-                      <button onClick={gerar} className={buttonClasses("primary")}>
-                        <Sparkles className="h-4 w-4" />
-                        {planoSalvoDoAluno || treinoNaoAnunciado ? "Gerar de novo" : "Gerar periodização"}
-                      </button>
-                    </div>
-                  )}
-                  {maisOpcoes && (
-                    <div className="mt-4 flex justify-end">
-                      <button onClick={gerar} className={buttonClasses("primary")}>
-                        <Sparkles className="h-4 w-4" />
-                        {planoSalvoDoAluno || treinoNaoAnunciado ? "Gerar de novo" : "Gerar periodização"}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                </Card>
               </>
             )}
-          </Card>
 
-          {/* O motor propõe, você decide: o que a condição e as restrições DE FATO já
-              filtram neste plano. Derivado do perfil; sem restrição e sem condição, não
-              existe card, em vez de uma frase genérica de marketing. */}
-          <AvisoDoMotor aluno={aluno} grupoSlug={grupo} />
+              <button
+                onClick={carregarExemplo}
+                className="text-sm text-ink-3 underline decoration-dotted underline-offset-4 hover:text-primary"
+              >
+                Não sabe por onde começar? Ver um exemplo pronto
+              </button>
+            </div>
 
-          {!plano && (
-            <button
-              onClick={carregarExemplo}
-              className="text-sm text-ink-3 underline decoration-dotted underline-offset-4 hover:text-primary"
-            >
-              Não sabe por onde começar? Ver um exemplo pronto
-            </button>
-          )}
+            {/* O cartão navy fixo do protótipo: "O que o Mapa já sabe". O antigo card
+                "O motor propõe, você decide" vive aqui agora, com o mesmo conteúdo
+                derivado, e o CTA âmbar é o MESMO gerar de sempre. */}
+            <MapaJaSabe
+              aluno={aluno}
+              grupoSlug={grupo}
+              objetivo={objetivo}
+              objetivoSecundario={objetivoSecundario}
+              nivel={nivel}
+              modeloPreferidoNome={modeloPreferido ? getModelo(modeloPreferido).nome : undefined}
+              podeGerar={!bloquearPorPerfil}
+              rotuloGerar={planoSalvoDoAluno || treinoNaoAnunciado ? "Gerar de novo" : "Gerar periodização"}
+              onGerar={gerar}
+            />
+          </div>
         </>
       )}
 
       {/* Resultado */}
       {plano && (
         <div id="resultado-treino" className="scroll-mt-24">
+          {/* O mesmo passo a passo do formulário, agora com o passo 3 aceso: o plano existe. */}
+          <div className="mb-3 flex justify-end">
+            <PassosDaPrescricao atual={3} />
+          </div>
           {/* O rascunho voltou da sessão: o profissional precisa saber que é o trabalho dele
               de volta, e que ele ainda não está guardado no perfil do aluno. */}
           {rascunhoRecuperado && !salvo && (
@@ -884,16 +946,72 @@ function ConfirmarRegenerarModal({
 /** Gate duro do trilho no Prescrever treino: sem avaliação, o plano não nasce.
  *  Substitui o formulário de geração, explica o porquê e leva a registrar a
  *  avaliação (ou voltar ao plano avulso). */
+/** O passo a passo 1-2-3 do protótipo: número em círculo, o atual (e os já passados)
+ *  em navy, os futuros em cinza. O passo vem do estado real da tela, nunca de um
+ *  contador solto. */
+function PassosDaPrescricao({ atual }: { atual: 1 | 2 | 3 }) {
+  const passos = ["Para quem", "Perfil", "Plano"];
+  return (
+    <ol aria-label="Etapas da prescrição" className="flex list-none items-center gap-2 p-0 text-xs font-semibold sm:text-sm">
+      {passos.map((rotulo, i) => {
+        const n = i + 1;
+        const alcancado = n <= atual;
+        return (
+          <li
+            key={rotulo}
+            aria-current={n === atual ? "step" : undefined}
+            className={cn("flex items-center gap-2", alcancado ? "text-ink" : "text-ink-3")}
+          >
+            {i > 0 && <span aria-hidden className="h-0.5 w-6 rounded-full bg-border" />}
+            <span
+              className={cn(
+                "grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full text-xs",
+                !alcancado && "border-2 border-border",
+              )}
+              style={alcancado ? { background: "#0B1628", color: "#F3F1EA" } : undefined}
+            >
+              {n}
+            </span>
+            {rotulo}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 /**
- * "O motor propõe, você decide": o que a condição e as restrições DESTE aluno já
- * filtram, antes de gerar.
+ * O cartão navy fixo do protótipo: "O que o Mapa já sabe".
  *
- * Tudo aqui é DERIVADO: as restrições vêm do perfil, as estruturais vêm da condição
- * (`restricoesEstruturais` em groupRules, as mesmas que o `check:condicao` trava), e
- * o texto do efeito vem do catálogo de restrições. Sem restrição e sem condição, o
- * card não existe: uma frase genérica de marketing aqui seria pior que silêncio.
+ * Substitui o card "O motor propõe, você decide" com a MESMA informação derivada: as
+ * restrições vêm do perfil, as estruturais vêm da condição (`restricoesEstruturais`
+ * em groupRules, as mesmas que o `check:condicao` trava), o texto do efeito vem do
+ * catálogo de restrições, e os equipamentos vêm do cadastro. As linhas do protótipo
+ * sem dado real nesta etapa (reavaliação em dias, referências) ficaram de fora de
+ * propósito: as referências só existem depois de gerar. Superfície fixa fora do tema
+ * claro/escuro, como o herói do aluno.
  */
-function AvisoDoMotor({ aluno, grupoSlug }: { aluno?: Aluno; grupoSlug: string }) {
+function MapaJaSabe({
+  aluno,
+  grupoSlug,
+  objetivo,
+  objetivoSecundario,
+  nivel,
+  modeloPreferidoNome,
+  podeGerar,
+  rotuloGerar,
+  onGerar,
+}: {
+  aluno?: Aluno;
+  grupoSlug: string;
+  objetivo: GpsObjetivo;
+  objetivoSecundario?: GpsObjetivo;
+  nivel: Nivel;
+  modeloPreferidoNome?: string;
+  podeGerar: boolean;
+  rotuloGerar: string;
+  onGerar: () => void;
+}) {
   // TODAS as condições do aluno, não só a principal: é a mesma lista que o motor recebe.
   const slugs = React.useMemo(
     () => slugsClinicosDoPlano({ grupoEspecial: grupoSlug || undefined, condicoesAtencao: aluno?.condicoesAtencao }),
@@ -904,38 +1022,84 @@ function AvisoDoMotor({ aluno, grupoSlug }: { aluno?: Aluno; grupoSlug: string }
     const daCondicao = slugs.flatMap((s) => groupGpsRules[s]?.restricoesEstruturais ?? []);
     return [...new Set([...declaradas, ...daCondicao])];
   }, [aluno?.restricoes, slugs]);
-
-  if (tags.length === 0 && slugs.length < 2) return null;
-  const nome = aluno ? aluno.nome.split(" ")[0] : "este perfil";
+  const nome = aluno ? aluno.nome.split(" ")[0] : "Plano avulso";
   const nomesCondicoes = slugs.map((s) => groupGpsRules[s]?.nome ?? s);
 
+  const Linha = ({ marcador, cor, children }: { marcador: string; cor: string; children: React.ReactNode }) => (
+    <p className="m-0 flex gap-2.5">
+      <span aria-hidden style={{ color: cor }}>
+        {marcador}
+      </span>
+      <span className="min-w-0">{children}</span>
+    </p>
+  );
+
   return (
-    <Card variant="soft" className="flex items-start gap-3 p-4">
-      <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-analysis" aria-hidden />
-      <p className="min-w-0 text-sm text-ink-2">
-        <span className="font-semibold text-ink">O motor propõe, você decide.</span>{" "}
-        {tags.length > 0 && (
-          <>
-            {tags.length === 1 ? "A restrição" : "As restrições"} de {nome} já{" "}
-            {tags.length === 1 ? "entra" : "entram"} como filtro:{" "}
-            {/* "Rebaixado" saiu daqui também. É palavra do motor (peso na ordenação da fila),
-                não do profissional, e o Filipe leu a versão anterior e perguntou, com razão,
-                por que um exercício rebaixado tinha entrado no plano. O que interessa dizer é
-                o efeito: o exercício incompatível não entra. */}
-            {tags.map((t) => rotuloRestricao(t).toLowerCase()).join(", ")}. Os exercícios
-            incompatíveis ficam de fora do plano, e os parecidos que sobram entram no lugar.{" "}
-          </>
-        )}
-        {/* Com mais de uma condição, a tela diz qual é a lei da combinação. Sem isto, o
-            profissional não tem como saber qual delas mandou em cada limite. */}
-        {slugs.length > 1 && (
-          <>
-            {nome} tem <span className="font-semibold text-ink">{slugs.length} condições declaradas</span> (
-            {nomesCondicoes.join(", ")}), e onde elas divergem o plano aplica sempre a mais conservadora.
-          </>
-        )}
+    <aside
+      aria-label="O que o Mapa já sabe"
+      className="relative overflow-hidden rounded-card p-5 lg:sticky lg:top-20"
+      style={{ background: "#0B1628", color: "#F3F1EA" }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-24 -right-20 h-[260px] w-[260px] rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(20,179,186,.35), rgba(20,179,186,0) 65%)" }}
+      />
+      <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
+        O que o Mapa já sabe
       </p>
-    </Card>
+      <div className="relative mt-3.5 space-y-3 text-sm leading-relaxed" style={{ color: "#D6DFEA" }}>
+        <Linha marcador="●" cor="#7FE3D8">
+          <b style={{ color: "#fff" }}>{nome}</b>: {objetivo.toLowerCase()}
+          {objetivoSecundario ? ` com ênfase em ${objetivoSecundario.toLowerCase()}` : ""}, nível{" "}
+          {nivel.toLowerCase()}.
+        </Linha>
+        {nomesCondicoes.length > 0 && (
+          <Linha marcador="▲" cor="#F0B429">
+            <b style={{ color: "#fff" }}>{nomesCondicoes.join(", ")}</b>:{" "}
+            {/* Com mais de uma condição, a tela diz qual é a lei da combinação. Sem isto,
+                o profissional não tem como saber qual delas mandou em cada limite. */}
+            {slugs.length > 1
+              ? "onde as condições divergem, o plano aplica sempre a mais conservadora."
+              : grupoSlug
+                ? "a jornada de fases deste grupo vira a base do macrociclo."
+                : "esta condição chega ao motor e ajusta o plano."}
+          </Linha>
+        )}
+        {tags.length > 0 && (
+          <Linha marcador="▲" cor="#F0B429">
+            {/* "Rebaixado" segue fora daqui. É palavra do motor (peso na ordenação da
+                fila), não do profissional; o que interessa dizer é o efeito. */}
+            <b style={{ color: "#fff" }}>{tags.length === 1 ? "Restrição" : "Restrições"}</b>:{" "}
+            {tags.map((t) => rotuloRestricao(t).toLowerCase()).join(", ")}. Os exercícios incompatíveis ficam de
+            fora do plano, e os parecidos que sobram entram no lugar.
+          </Linha>
+        )}
+        {aluno && aluno.equipamentos.length > 0 && (
+          <Linha marcador="●" cor="#7FE3D8">
+            <b style={{ color: "#fff" }}>Equipamentos</b>:{" "}
+            {listaCurta(aluno.equipamentos.map((e) => e.toLowerCase()), 4)}.
+          </Linha>
+        )}
+        {modeloPreferidoNome && (
+          <Linha marcador="●" cor="#7FE3D8">
+            <b style={{ color: "#fff" }}>Modelo escolhido no Aprender</b>: {modeloPreferidoNome}.
+          </Linha>
+        )}
+      </div>
+      <p className="relative mt-4 text-xs" style={{ color: "#8FA0B5" }}>
+        O motor propõe, você decide: dá para editar tudo depois de gerar.
+      </p>
+      {podeGerar && (
+        <button
+          onClick={onGerar}
+          className="relative mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-control text-sm font-bold transition-[filter] hover:brightness-110 active:translate-y-px"
+          style={{ background: "#E8A317", color: "#0B1628" }}
+        >
+          <Sparkles className="h-4 w-4" /> {rotuloGerar}
+        </button>
+      )}
+    </aside>
   );
 }
 
@@ -1078,17 +1242,6 @@ function ResultadoPlano({
           </div>
           <p className="mt-0.5 text-sm text-ink-2">
             {modelo.nome}
-            {plano.alternativa && premium && (
-              <>
-                {" · "}
-                <button
-                  onClick={() => setAba(naAlternativa ? "principal" : "alternativa")}
-                  className="font-semibold text-primary hover:underline"
-                >
-                  {naAlternativa ? "voltar à principal" : "trocar modelo"}
-                </button>
-              </>
-            )}
             {" · "}
             {/* Sem esta saída o formulário fica inalcançável depois de gerar, e
                 trocar frequência ou duração exigiria recarregar a página. O plano
@@ -1138,6 +1291,32 @@ function ResultadoPlano({
         <p className="text-xs text-ink-3">
           Plano avulso: escolha um aluno para publicar no app dele e exportar com a sua marca.
         </p>
+      )}
+
+      {/* Os cartões de modelo do protótipo: o principal com o selo "Sugerido" (é o que o
+          motor escolheu para este contexto) e a alternativa ao lado. As mini-barras não
+          são enfeite inventado: cada barra é o volume REAL de uma semana daquele
+          macrociclo, via agregadoSemana, a mesma fonte do gráfico e da régua. Clicar
+          troca a aba, o que o antigo link "trocar modelo" fazia; promover a alternativa
+          segue no aviso logo abaixo. */}
+      {plano.alternativa && plano.modeloAltId && premium && (
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          <ModeloCardEscolha
+            nome={getModelo(plano.modeloId).nome}
+            resumo={getModelo(plano.modeloId).resumo}
+            macro={plano.macrociclo}
+            sugerido
+            ativo={!naAlternativa}
+            onClick={() => setAba("principal")}
+          />
+          <ModeloCardEscolha
+            nome={getModelo(plano.modeloAltId).nome}
+            resumo={getModelo(plano.modeloAltId).resumo}
+            macro={plano.alternativa}
+            ativo={naAlternativa}
+            onClick={() => setAba("alternativa")}
+          />
+        </div>
       )}
 
       {naAlternativa && (
@@ -1249,6 +1428,65 @@ function ResultadoPlano({
         do profissional de saúde.
       </p>
     </div>
+  );
+}
+
+/* --------------------------- Cartões de modelo --------------------------- */
+
+/**
+ * Cartão de modelo do protótipo, no resultado: nome, resumo do catálogo e mini-barras.
+ * Cada barra é o volume real de uma semana do macrociclo (`agregadoSemana`, a mesma
+ * fonte do gráfico), com a descarga em âmbar: nada desenhado à mão. O selo "Sugerido"
+ * marca o principal, que é o modelo que o motor escolheu para este contexto.
+ */
+function ModeloCardEscolha({
+  nome,
+  resumo,
+  macro,
+  sugerido,
+  ativo,
+  onClick,
+}: {
+  nome: string;
+  resumo: string;
+  macro: Macrociclo;
+  sugerido?: boolean;
+  ativo: boolean;
+  onClick: () => void;
+}) {
+  const barras = React.useMemo(() => {
+    const micros = macro.mesociclos.flatMap((m) => m.microciclos);
+    const vols = micros.map((w) => ({ id: w.id, deload: w.tipo === "deload", vol: agregadoSemana(w).volume }));
+    const teto = Math.max(1, ...vols.map((v) => v.vol));
+    return vols.map((v) => ({ ...v, h: Math.max(3, Math.round((v.vol / teto) * 20)) }));
+  }, [macro]);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={ativo}
+      className={cn(
+        "relative rounded-control border p-4 text-left transition-colors",
+        ativo ? "border-primary bg-primary-tint" : "border-border bg-surface hover:bg-surface-soft",
+      )}
+    >
+      {sugerido && (
+        <Pill tone="primary" className="absolute right-3 top-3">
+          Sugerido
+        </Pill>
+      )}
+      <b className={cn("block font-display text-base font-bold text-ink", sugerido && "pr-20")}>{nome}</b>
+      <p className="mt-1 text-xs leading-relaxed text-ink-2">{resumo}</p>
+      <div aria-hidden className="mt-3 flex items-end gap-px" style={{ height: 20 }}>
+        {barras.map((b) => (
+          <span
+            key={b.id}
+            className={cn("flex-1 rounded-sm", b.deload ? "bg-warning" : "bg-primary")}
+            style={{ height: b.h }}
+          />
+        ))}
+      </div>
+    </button>
   );
 }
 
@@ -1861,8 +2099,9 @@ function Opcoes({ valor, opcoes, onSelect, sufixo }: { valor: string; opcoes: re
           onClick={() => onSelect(o)}
           aria-pressed={valor === o}
           className={cn(
-            "inline-flex min-h-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm transition-colors",
-            valor === o ? "border-primary bg-primary-tint font-semibold text-primary" : "border-border text-ink-2 hover:bg-surface-soft",
+            // Pílula do protótipo: a ativa fica navy (bg-ink) com texto claro.
+            "inline-flex min-h-[44px] items-center justify-center rounded-full border px-4 py-1.5 text-sm transition-colors",
+            valor === o ? "border-ink bg-ink font-semibold text-surface" : "border-border text-ink-2 hover:bg-surface-soft",
           )}
         >
           {o}
