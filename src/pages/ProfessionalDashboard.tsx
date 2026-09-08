@@ -110,37 +110,24 @@ export function ProfessionalDashboard() {
   );
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
-      {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Pill tone="primary" icon={<CalendarRange className="h-3 w-3" />} className="mb-3 capitalize">
-            Hoje · {fmtHoje(Date.now())}
-          </Pill>
-          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{saudacao}</h1>
-          <p className="mt-2 max-w-xl text-ink-2">
-            Comece pelo que precisa de atenção e resolva o próximo passo de cada aluno.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {/* Só no mobile: a topbar já traz "Cadastrar aluno" a partir de sm. */}
-          <Link to="/alunos?novo=1" className={cn(buttonClasses("secondary"), "sm:hidden")}>
-            <UserPlus className="h-4 w-4" /> Cadastrar aluno
-          </Link>
-          {/* O início do trilho no topo: avaliar é a etapa 1 e o hub /assessments já
-              lista quem precisa. Prescrever exercício vive na nav e no contexto do aluno. */}
-          <Link to="/assessments" className={buttonClasses("primary")}>
-            <CalendarPlus className="h-4 w-4" /> Registrar avaliação
-          </Link>
-        </div>
-      </div>
+    <div className="space-y-4">
+      {/* O HERÓI NAVY do protótipo: saudação, resumo da rota e os três números
+          do dia dentro do mesmo cartão escuro. */}
+      <HeroDoDia
+        saudacao={saudacao}
+        rota={rota}
+        ativos={ativos.length}
+        comTreino={comTreino}
+        pendentesCentavos={pendentesCentavos}
+        avaliacoesMes={avaliacoesMes}
+      />
 
       {alunos.length === 0 ? (
         <EmptyPro onExemplos={loadExamples} />
       ) : (
         <>
-      {/* Moldura única de boas-vindas: celebração do 1º caso + passo a passo,
-          encabeçada pela espinha do cuidado; colapsa a uma linha quando termina. */}
+      {/* Moldura única de boas-vindas: celebração do 1º caso + passo a passo em
+          linha de chips (como no protótipo); colapsa a uma linha quando termina. */}
       <MolduraBoasVindas
         temAluno={alunos.length > 0}
         temAvaliacao={avaliacoes.length > 0}
@@ -150,48 +137,32 @@ export function ProfessionalDashboard() {
         primeiroAlunoId={ativos[0]?.id ?? alunos[0]?.id}
       />
 
-      {/* OS TRÊS NÚMEROS DO DIA, na ordem do mockup: carteira, cobertura de
-          treino e dinheiro parado. O terceiro slot prefere o financeiro (que é o
-          que o design pede) e cai para as avaliações do mês quando não há nada
-          pendente: um "R$ 0 pendentes" seria mobília, não informação. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <NumeroDoDia valor={String(ativos.length)} rotulo={ativos.length === 1 ? "aluno ativo" : "alunos ativos"} to="/alunos" />
-        <NumeroDoDia valor={String(comTreino)} rotulo="com treino ativo" to="/alunos" />
-        {pendentesCentavos > 0 ? (
-          <NumeroDoDia valor={formatBRL(pendentesCentavos)} rotulo="pendentes" to="/alunos" tone="warning" />
-        ) : (
-          <NumeroDoDia valor={String(avaliacoesMes)} rotulo="avaliações em 30 dias" to="/assessments" />
-        )}
+      {/* O corpo em duas colunas do protótipo: a rota de hoje à esquerda (o
+          bloco-assinatura) e a coluna de apoio à direita. */}
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <RotaDeHojeCard rota={rota} reavaliamSemana={reavaliamSemana} />
+
+        <div className="space-y-4">
+          <SemanaDosAlunos execucoes={execucoes} />
+          <RetencaoPanel alunos={alunosSemAtencao} execucoes={execucoes} nomeProfissional={name || undefined} />
+          <div className="grid grid-cols-3 gap-2">
+            <AtalhoRef to="/comparador" titulo="Comparador" hint="decidir entre dois" />
+            <AtalhoRef to="/protocols" titulo="Protocolos" hint="pontos de partida" />
+            <AtalhoRef to="/aprender" titulo="Estudar" hint="trilhas e casos" />
+          </div>
+        </div>
       </div>
-
-      {/* ÂNCORA: Sua rota de hoje (o bloco-assinatura do Meu dia no design). */}
-      <RotaDeHojeCard rota={rota} reavaliamSemana={reavaliamSemana} />
-
-      {/* Atalhos de referência, na linha do mockup: três portas, um clique. */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <AtalhoRef to="/comparador" icon={<GitCompare className="h-4 w-4" />} titulo="Comparador" hint="decidir entre dois" />
-        <AtalhoRef to="/protocols" icon={<ClipboardList className="h-4 w-4" />} titulo="Protocolos" hint="pontos de partida" />
-        <AtalhoRef to="/aprender" icon={<Crown className="h-4 w-4" />} titulo="Estudar" hint="trilhas e casos" />
-      </div>
-
-      {/* Semana dos seus alunos: quantos treinos aconteceram por dia, e a
-          variação contra a semana anterior. Tudo contado das execuções reais. */}
-      <SemanaDosAlunos execucoes={execucoes} />
-
-      {/* Reativar alunos: retenção a partir da execução real (só aparece se houver quem
-          reativar). Recebe já sem os que estão em "Precisam de atenção" (dedup). */}
-      <RetencaoPanel alunos={alunosSemAtencao} execucoes={execucoes} nomeProfissional={name || undefined} />
 
       {/* Seus alunos (apoio): quem NÃO está na rota, ou seja, quem está em dia. */}
       {seusAlunos.length > 0 && (
         <section>
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-2.5 flex items-center justify-between">
             <h2 className="font-display text-base font-bold text-ink">Em dia</h2>
             <Link to="/alunos" className="text-sm font-semibold text-primary hover:underline">
               Ver todos
             </Link>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
             {seusAlunos.slice(0, 4).map((a) => (
               <AlunoCard key={a.id} aluno={a} temTreino={temTreinoAtivo(a.id)} />
             ))}
@@ -204,6 +175,134 @@ export function ProfessionalDashboard() {
       <p className="pt-2 text-xs text-ink-3">
         Conteúdo educacional e de apoio à decisão; não substitui avaliação profissional
         individualizada nem prescrição clínica.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * O herói do Meu dia, fiel ao protótipo: cartão navy de 24px com textura de
+ * grade, dois halos de cor, a saudação com o resumo REAL da rota e os três
+ * números do dia como azulejos translúcidos. A superfície é fixa (navy da
+ * casca, fora do tema claro/escuro), então os valores são literais medidos.
+ */
+function HeroDoDia({
+  saudacao,
+  rota,
+  ativos,
+  comTreino,
+  pendentesCentavos,
+  avaliacoesMes,
+}: {
+  saudacao: string;
+  rota: RotaDoDia;
+  ativos: number;
+  comTreino: number;
+  pendentesCentavos: number;
+  avaliacoesMes: number;
+}) {
+  const restantes = rota.total - rota.feitas;
+  const fraseRota =
+    restantes > 0
+      ? `${restantes} ${restantes === 1 ? "parada" : "paradas"} na rota de hoje.`
+      : rota.total > 0
+        ? "Rota de hoje concluída."
+        : "Seu dia começa por aqui.";
+  return (
+    <section
+      className="relative overflow-hidden rounded-[24px] p-5 md:p-8"
+      style={{ background: "#0B1628", color: "#F3F1EA" }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage: "radial-gradient(ellipse 60% 100% at 100% 50%,#000 0%,transparent 80%)",
+          WebkitMaskImage: "radial-gradient(ellipse 60% 100% at 100% 50%,#000 0%,transparent 80%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-[120px] -top-[160px] h-[460px] w-[460px] rounded-full"
+        style={{ background: "radial-gradient(circle,rgba(232,163,23,.22) 0%,rgba(232,163,23,0) 62%)" }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-[220px] left-[30%] h-[460px] w-[460px] rounded-full"
+        style={{ background: "radial-gradient(circle,rgba(20,179,186,.22) 0%,rgba(20,179,186,0) 62%)" }}
+      />
+      <div className="relative grid items-end gap-7 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <div>
+          <p
+            className="m-0 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]"
+            style={{ color: "#7FE3D8" }}
+          >
+            <span aria-hidden className="h-2 w-2 animate-pulseDot rounded-full" style={{ background: "#7FE3D8" }} />
+            <span className="capitalize">{fmtHoje(Date.now())}</span>
+          </p>
+          <h1 className="m-0 mt-3 font-display text-[clamp(28px,3.4vw,42px)] font-bold leading-[1.05] tracking-[-0.03em]">
+            {saudacao}. {fraseRota}
+          </h1>
+          <p className="m-0 mt-3 max-w-[520px] text-[15px] leading-relaxed" style={{ color: "#B9C6D6" }}>
+            Comece pelo que precisa de atenção e resolva o próximo passo de cada aluno.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            {rota.agora && (
+              <Link
+                to={destinoDaParada(rota.agora)}
+                className="inline-flex h-11 items-center gap-2 rounded-control px-5 text-sm font-bold transition-[filter] hover:brightness-110"
+                style={{ background: "#E8A317", color: "#0B1628", boxShadow: "0 12px 24px -12px rgba(232,163,23,.7)" }}
+              >
+                Abrir o dia <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+            )}
+            <Link
+              to="/assessments"
+              className="inline-flex h-11 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              style={{ borderColor: "rgba(255,255,255,.2)" }}
+            >
+              <CalendarPlus className="h-4 w-4" aria-hidden /> Registrar avaliação
+            </Link>
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-2.5">
+          <AzulejoDoDia valor={String(ativos)} rotulo={ativos === 1 ? "aluno ativo" : "alunos ativos"} />
+          <AzulejoDoDia valor={String(comTreino)} rotulo="com treino ativo" cor="#7FE3D8" />
+          {pendentesCentavos > 0 ? (
+            <AzulejoDoDia valor={formatBRL(pendentesCentavos)} rotulo="pendentes" tom="ambar" />
+          ) : (
+            <AzulejoDoDia valor={String(avaliacoesMes)} rotulo="avaliações em 30 dias" />
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Um azulejo do herói: número grande e rótulo, translúcido sobre o navy. O tom
+ *  âmbar é o do dinheiro parado, literal do protótipo. */
+function AzulejoDoDia({ valor, rotulo, cor, tom }: { valor: string; rotulo: string; cor?: string; tom?: "ambar" }) {
+  const ambar = tom === "ambar";
+  return (
+    <div
+      className="rounded-2xl border p-3.5"
+      style={
+        ambar
+          ? { background: "rgba(232,163,23,.14)", borderColor: "rgba(232,163,23,.3)" }
+          : { background: "rgba(255,255,255,.06)", borderColor: "rgba(255,255,255,.1)" }
+      }
+    >
+      <p
+        className="tabular m-0 font-display text-3xl font-bold leading-none tracking-[-0.03em]"
+        style={{ color: ambar ? "#F0B429" : cor ?? "#F3F1EA" }}
+      >
+        {valor}
+      </p>
+      <p className="m-0 mt-1.5 text-xs" style={{ color: ambar ? "#D6C39A" : "#8FA0B5" }}>
+        {rotulo}
       </p>
     </div>
   );
@@ -270,7 +369,6 @@ function MolduraBoasVindas({
   if (completo && !mostrarCelebracao) {
     return (
       <Card className="flex items-center gap-4 p-4">
-        <EspinhaSelo atual={5} className="hidden w-full max-w-[18rem] sm:flex" />
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
           <p className="min-w-0 flex-1 text-sm text-ink-2">
@@ -285,12 +383,8 @@ function MolduraBoasVindas({
     );
   }
 
-  const espinhaAtual = completo ? 5 : Math.max(0, Math.min(atualIdx, 4));
-
   return (
-    <Card className="p-5">
-      <EspinhaSelo atual={espinhaAtual} halo={!completo} className="mb-4" />
-
+    <Card className="px-5 py-4">
       {mostrarCelebracao && (
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-success/30 bg-success-tint/50 p-3">
           <PartyPopper className="h-5 w-5 shrink-0 text-success" />
@@ -307,50 +401,49 @@ function MolduraBoasVindas({
         </div>
       )}
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="font-display text-base font-bold text-ink">Seu passo a passo</h2>
-        <Pill tone="primary">{feitos} de {passos.length}</Pill>
-        <button onClick={ocultar} className="ml-auto text-xs font-medium text-ink-3 hover:text-ink">
+      {/* A linha de chips do protótipo: título, contador e um chip-pílula por
+          passo. O feito risca e apaga; o atual acende em azul. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="flex items-center gap-2">
+          <h2 className="font-display text-sm font-bold text-ink">Seu passo a passo</h2>
+          <Pill tone="primary">{feitos} de {passos.length}</Pill>
+        </div>
+        <ol className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+          {passos.map((p, i) => {
+            const atual = i === atualIdx;
+            const feito = feitoMono[i];
+            return (
+              <li key={p.label}>
+                <Link
+                  to={p.to}
+                  aria-current={atual ? "step" : undefined}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border py-1.5 pl-1.5 pr-2.5 text-xs font-semibold transition-colors",
+                    feito
+                      ? "border-border bg-bg text-ink-3 line-through decoration-ink-3/50"
+                      : atual
+                        ? "border-primary bg-primary-tint text-primary"
+                        : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "tabular grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full text-2xs font-bold leading-none",
+                      feito ? "bg-success-fill text-on-success-fill" : atual ? "bg-primary text-on-primary" : "bg-surface-mute text-ink-3",
+                    )}
+                  >
+                    {feito ? "✓" : i + 1}
+                  </span>
+                  {p.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+        <button onClick={ocultar} className="ml-auto shrink-0 text-xs font-medium text-ink-3 hover:text-ink">
           Ocultar
         </button>
       </div>
-      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-        {passos.map((p, i) => {
-          const atual = i === atualIdx;
-          const feito = feitoMono[i];
-          return (
-            <li key={p.label}>
-              <Link
-                to={p.to}
-                aria-current={atual ? "step" : undefined}
-                className={cn(
-                  "flex h-full items-center gap-2.5 rounded-xl border p-3 text-sm transition-colors",
-                  feito
-                    ? "border-border bg-surface-soft text-ink-3"
-                    : atual
-                      ? "border-primary bg-primary-tint font-semibold text-ink hover:bg-primary-tint"
-                      : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
-                )}
-              >
-                {feito ? (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
-                ) : (
-                  <span
-                    className={cn(
-                      "tabular grid h-5 w-5 shrink-0 place-items-center rounded-full text-2xs font-bold",
-                      atual ? "bg-primary text-on-primary" : "bg-surface-soft text-ink-3",
-                    )}
-                  >
-                    {i + 1}
-                  </span>
-                )}
-                <span className={cn(feito && "line-through decoration-ink-3/50")}>{p.label}</span>
-                {atual && <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-primary" />}
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
     </Card>
   );
 }
@@ -383,9 +476,14 @@ function EmptyPro({ onExemplos }: { onExemplos: () => void }) {
   );
 }
 
+/** Avatar de iniciais no vocabulário do protótipo: quadrado navy de canto 12px,
+ *  tinta clara, título em Bricolage. */
 function Avatar({ iniciais }: { iniciais: string }) {
   return (
-    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
+    <span
+      className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
+      style={{ background: "#0B1628", color: "#F3F1EA" }}
+    >
       {iniciais}
     </span>
   );
@@ -396,32 +494,39 @@ function AlunoCard({ aluno, temTreino }: { aluno: Aluno; temTreino: boolean }) {
   // Teto de 1 pill de restrição (+N) para não competir com o flag acionável.
   const restr = aluno.restricoes;
   return (
-    <Link to={`/alunos/${aluno.id}`} className="block rounded-xl border border-border bg-surface p-3.5 transition-colors hover:bg-surface-soft">
-      <div className="flex items-center gap-3">
-        <Avatar iniciais={aluno.iniciais} />
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-semibold text-ink">{aluno.nome}</div>
-          <div className="truncate text-xs text-ink-3">
-            {aluno.objetivo} · {aluno.nivel}
-          </div>
+    <Link
+      to={`/alunos/${aluno.id}`}
+      className="flex items-center gap-3 rounded-[14px] border border-border bg-surface px-3.5 py-3 transition-colors hover:bg-surface-soft"
+    >
+      <span
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] font-display text-xs font-bold"
+        style={{ background: "#0B1628", color: "#F3F1EA" }}
+      >
+        {aluno.iniciais}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-semibold text-ink">{aluno.nome}</div>
+        <div className="truncate text-xs text-ink-2">
+          {aluno.objetivo} · {aluno.nivel}
         </div>
-        <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
-      </div>
-      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-        {!temTreino && <Pill tone="warning">Sem treino</Pill>}
-        {restr.length > 0 && (
-          <Pill tone="warning">
-            {rotuloRestricao(restr[0].tag)}
-            {restr.length > 1 ? ` +${restr.length - 1}` : ""}
-          </Pill>
-        )}
-        {aluno.ultimaAvaliacaoEm && (
-          <span className="ml-auto text-xs text-ink-3">
-            aval. {fmtData(aluno.ultimaAvaliacaoEm)}
-            {dias !== null && dias < 0 ? " · reavaliar" : ""}
-          </span>
+        {(!temTreino || restr.length > 0) && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {!temTreino && <Pill tone="warning">Sem treino</Pill>}
+            {restr.length > 0 && (
+              <Pill tone="warning">
+                {rotuloRestricao(restr[0].tag)}
+                {restr.length > 1 ? ` +${restr.length - 1}` : ""}
+              </Pill>
+            )}
+          </div>
         )}
       </div>
+      {aluno.ultimaAvaliacaoEm && (
+        <span className="shrink-0 whitespace-nowrap text-xs text-ink-3">
+          aval. {fmtData(aluno.ultimaAvaliacaoEm)}
+          {dias !== null && dias < 0 ? " · reavaliar" : ""}
+        </span>
+      )}
     </Link>
   );
 }
@@ -489,14 +594,22 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
       </div>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
-        {[...grupos.entries()].map(([acao, ps]) => (
-          <span
-            key={acao}
-            className="rounded-full bg-surface-soft px-3 py-1 text-xs font-semibold text-ink-2 ring-1 ring-inset ring-border"
-          >
-            {acao} · {ps.length === 1 ? ps[0].aluno.nome.split(" ")[0] : `${ps.length} alunos`}
-          </span>
-        ))}
+        {/* Chips coloridos pela família da ação, como no protótipo: âmbar para o
+            semáforo/atenção, azul para o fluxo, turquesa para publicar. */}
+        {[...grupos.entries()].map(([acao, ps]) => {
+          const tone = ps[0].tone;
+          const cor =
+            tone === "warning" || tone === "cta"
+              ? "bg-warning-tint text-warning"
+              : tone === "success"
+                ? "bg-analysis-tint text-analysis"
+                : "bg-primary-tint text-primary";
+          return (
+            <span key={acao} className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", cor)}>
+              {acao} · {ps.length === 1 ? ps[0].aluno.nome.split(" ")[0] : `${ps.length} alunos`}
+            </span>
+          );
+        })}
       </div>
 
       {reavaliamSemana > 0 && (
@@ -507,22 +620,26 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
         </p>
       )}
 
-      <ol className="mt-4 space-y-2.5">
+      <ol className="mt-4 space-y-2">
         {rota.paradas.map((p) => (
           <li key={p.aluno.id}>
             <Link
               to={destinoDaParada(p)}
-              className="flex items-center gap-3 rounded-card border border-border bg-surface p-3 transition-colors hover:bg-surface-soft"
-              // Borda esquerda na cor da urgência: regra de linha de lista com
-              // pendência, do Design System.
+              className="flex items-center gap-3.5 rounded-[14px] border border-border bg-surface py-3 pl-0 pr-3.5 transition-colors hover:border-ink hover:bg-surface-soft"
+              // Filete de urgência à esquerda, na cor da família: regra de linha
+              // de lista com pendência, do Design System (o protótipo desenha o
+              // mesmo filete de 4px).
               style={{ borderLeftWidth: 4, borderLeftColor: `var(--${p.tone === "cta" ? "warning" : p.tone})` }}
             >
+              <span className="w-2.5" aria-hidden />
               <Avatar iniciais={p.aluno.iniciais} />
               <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold text-ink">{p.aluno.nome}</div>
+                <div className="truncate text-sm font-semibold text-ink">{p.aluno.nome}</div>
                 <div className="truncate text-sm text-ink-2">{p.frase}</div>
               </div>
-              <span className={cn(buttonClasses("secondary", "sm"), "shrink-0")}>{p.acao}</span>
+              <span className="max-w-[40%] shrink-0 truncate whitespace-nowrap rounded-full bg-bg px-3 py-1.5 text-xs font-semibold text-ink">
+                {p.acao} →
+              </span>
             </Link>
           </li>
         ))}
@@ -543,48 +660,16 @@ function destinoDaParada(p: ParadaDoDia): string {
   return `/alunos/${p.aluno.id}`;
 }
 
-/** Um dos três números do topo do Meu dia: valor grande, rótulo colado, e a
- *  tela para onde ele leva. Card clicável inteiro (alvo generoso). */
-function NumeroDoDia({
-  valor,
-  rotulo,
-  to,
-  tone = "neutro",
-}: {
-  valor: string;
-  rotulo: string;
-  to: string;
-  tone?: "neutro" | "warning";
-}) {
+/** Atalho de referência da coluna de apoio, compacto e centrado como no
+ *  protótipo: nome em cima, descrição de uma linha embaixo. */
+function AtalhoRef({ to, titulo, hint }: { to: string; titulo: string; hint: string }) {
   return (
     <Link
       to={to}
-      className="rounded-card border border-border bg-surface p-4 transition-colors hover:bg-surface-soft"
+      className="rounded-[14px] border border-border bg-surface px-2 py-3 text-center transition-colors hover:bg-surface-soft"
     >
-      <div className={cn("tabular font-display text-2xl font-bold", tone === "warning" ? "text-warning" : "text-ink")}>
-        {valor}
-      </div>
-      <div className="text-sm text-ink-2">{rotulo}</div>
-    </Link>
-  );
-}
-
-/** Atalho de referência do rodapé do Meu dia: ícone, nome e a descrição de uma
- *  linha que o Design System exige em toda opção clicável. */
-function AtalhoRef({ to, icon, titulo, hint }: { to: string; icon: ReactNode; titulo: string; hint: string }) {
-  return (
-    <Link
-      to={to}
-      className="flex items-center gap-3 rounded-card border border-border bg-surface p-4 transition-colors hover:bg-surface-soft"
-    >
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-primary-tint text-primary">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-ink">{titulo}</span>
-        <span className="block truncate text-xs text-ink-2">{hint}</span>
-      </span>
-      <ArrowRight className="h-4 w-4 shrink-0 text-ink-2" aria-hidden />
+      <span className="block truncate text-sm font-semibold text-ink">{titulo}</span>
+      <span className="block truncate text-xs text-ink-3">{hint}</span>
     </Link>
   );
 }

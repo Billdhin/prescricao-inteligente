@@ -33,14 +33,19 @@ export function RetencaoPanel({
   if (sinais.length === 0) return null;
 
   return (
-    <Card className="p-5 md:p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary-tint text-primary">
-          <HeartPulse className="h-5 w-5" />
+    // O cartão "Reativar" do protótipo: gradiente de papel turquesa autorado
+    // (analysis-tint para o fundo da página), rótulo em caixa alta turquesa.
+    <Card
+      className="border p-5"
+      style={{ background: "linear-gradient(135deg,var(--analysis-tint),var(--bg))", borderColor: "#CFE7E4" }}
+    >
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="grid h-8 w-8 place-items-center rounded-control bg-surface text-analysis">
+          <HeartPulse className="h-4 w-4" />
         </span>
         <div>
-          <h2 className="font-display text-xl font-bold text-ink">Reativar alunos</h2>
-          <p className="text-sm text-ink-3">
+          <h2 className="text-2xs font-semibold uppercase tracking-[0.12em] text-analysis">Reativar</h2>
+          <p className="text-sm text-ink-2">
             {sinais.length} aluno{sinais.length > 1 ? "s" : ""} sem registro recente
           </p>
         </div>
