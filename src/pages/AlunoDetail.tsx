@@ -336,8 +336,9 @@ function AlunoTabs({ aba, onAba, contagens }: { aba: Aba; onAba: (a: Aba) => voi
     <div
       role="tablist"
       aria-label="Seções do aluno"
-      className="flex gap-1 overflow-x-auto rounded-control border border-border bg-surface-soft p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
+      {/* Abas em sublinhado de 2px, o vocabulário do protótipo. */}
       {ABAS.map(({ id, label, Icon }, i) => {
         const ativo = id === aba;
         return (
@@ -352,9 +353,9 @@ function AlunoTabs({ aba, onAba, contagens }: { aba: Aba; onAba: (a: Aba) => voi
             onClick={() => onAba(id)}
             onKeyDown={(e) => onKey(e, i)}
             className={cn(
-              "inline-flex flex-none items-center justify-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-sm font-semibold transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
-              ativo ? "bg-surface text-primary shadow-soft" : "text-ink-2 hover:bg-surface hover:text-ink",
+              "inline-flex flex-none items-center justify-center gap-2 whitespace-nowrap border-b-2 px-3 pb-2.5 pt-2 text-sm font-semibold transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+              ativo ? "border-primary text-ink" : "border-transparent text-ink-2 hover:text-ink",
             )}
           >
             <Icon className="h-4 w-4" aria-hidden />
@@ -562,6 +563,10 @@ export function AlunoDetail() {
   // A aba viaja junto na troca de aluno (ver o pager abaixo).
   const sufixoDaAba = aba === "visao" ? "" : `?aba=${aba}`;
   const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
+  // O chip de fase do herói: só quando há plano ativo, com o rótulo honesto do
+  // mesociclo corrente (fonte única rotuloMeso, a mesma do portal do aluno).
+  const mesoDeHoje = planoAtivo ? mesocicloAtual(planoAtivo) : undefined;
+  const faseAtual = mesoDeHoje ? rotuloMeso(mesoDeHoje) : null;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -604,18 +609,7 @@ export function AlunoDetail() {
             </button>
           </div>
         )}
-        <div className="ml-auto flex items-center gap-2">
-          <button onClick={() => setConvidar(true)} className={buttonClasses("outline", "sm")}>
-            <Smartphone className="h-4 w-4" /> Convidar para o app
-          </button>
-          <button
-            onClick={() =>
-              exportEvolucaoPDF({ aluno, avaliacoes: avals, profissional: profNome, cref: cref || undefined, marca: marcaDoUsuario(usuario) })
-            }
-            className={buttonClasses("outline", "sm")}
-          >
-            <FileDown className="h-4 w-4" /> Exportar
-          </button>
+        <div className="ml-auto">
           <MenuAcoes
             ativo={aluno.status === "ativo"}
             onEditar={() => navigate(`/alunos/${aluno.id}/perfil`)}
@@ -628,32 +622,111 @@ export function AlunoDetail() {
         </div>
       </div>
 
-      {/* Identidade */}
-      <div className="flex items-start gap-4">
-        <span
+      {/* O HERÓI DO ALUNO do protótipo: cartão navy em gradiente com textura de
+          pontos, avatar âmbar, os chips clínicos e as ações da ficha. Superfície
+          fixa (navy da casca), fora do tema claro/escuro. */}
+      <section
+        className="relative overflow-hidden rounded-[24px] p-5 md:p-7"
+        style={{ background: "linear-gradient(120deg,#0B1628 0%,#13233B 70%,#1A3A5C 100%)", color: "#F3F1EA" }}
+      >
+        <div
           aria-hidden
-          className="grid h-14 w-14 shrink-0 place-items-center rounded-full gradient-brand font-display text-lg font-bold text-white"
-        >
-          {aluno.iniciais}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            <h1 className="font-display text-2xl font-bold text-ink md:text-3xl">{aluno.nome}</h1>
-            {grupo && <Pill tone="danger">{grupo.nome}</Pill>}
-            {aluno.status !== "ativo" && <Pill tone="neutral">Inativo</Pill>}
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: "radial-gradient(rgba(190,214,232,.2) 1.3px,transparent 1.4px)",
+            backgroundSize: "24px 24px",
+            maskImage: "radial-gradient(ellipse 45% 80% at 85% 40%,#000 0%,transparent 100%)",
+            WebkitMaskImage: "radial-gradient(ellipse 45% 80% at 85% 40%,#000 0%,transparent 100%)",
+          }}
+        />
+        <div className="relative grid items-end gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+          <div className="flex min-w-0 items-center gap-4">
+            <span
+              aria-hidden
+              className="grid h-[68px] w-[68px] shrink-0 place-items-center rounded-[22px] font-display text-2xl font-bold"
+              style={{ background: "#E8A317", color: "#0B1628" }}
+            >
+              {aluno.iniciais}
+            </span>
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl font-bold tracking-[-0.03em] md:text-3xl">{aluno.nome}</h1>
+              <p className="mt-1 text-sm" style={{ color: "#B9C6D6" }}>
+                {[
+                  aluno.idade ? `${aluno.idade} anos` : null,
+                  aluno.objetivo,
+                  aluno.nivel,
+                  `aluno(a) desde ${fmtMesAno(aluno.criadoEm)}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {grupo && (
+                  <span className="rounded-full px-2.5 py-1 text-2xs font-semibold text-white" style={{ background: "rgba(255,255,255,.1)" }}>
+                    {grupo.nome}
+                  </span>
+                )}
+                {aluno.restricoes.length > 0 && (
+                  <span
+                    className="rounded-full px-2.5 py-1 text-2xs font-semibold"
+                    style={{ background: "rgba(232,163,23,.2)", color: "#F0B429" }}
+                    title={aluno.restricoes.map((r) => rotuloRestricao(r.tag)).join(", ")}
+                  >
+                    {aluno.restricoes.length === 1
+                      ? `1 restrição · ${rotuloRestricao(aluno.restricoes[0].tag)}`
+                      : `${aluno.restricoes.length} restrições`}
+                  </span>
+                )}
+                {faseAtual && (
+                  <span
+                    className="rounded-full px-2.5 py-1 text-2xs font-semibold"
+                    style={{ background: "rgba(127,227,216,.16)", color: "#7FE3D8" }}
+                  >
+                    {faseAtual}
+                  </span>
+                )}
+                {aluno.status !== "ativo" && (
+                  <span className="rounded-full px-2.5 py-1 text-2xs font-semibold text-white" style={{ background: "rgba(255,255,255,.1)" }}>
+                    Inativo
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-          <p className="mt-1 text-sm text-ink-2">
-            {[
-              aluno.idade ? `${aluno.idade} anos` : null,
-              aluno.objetivo,
-              aluno.nivel,
-              `aluno(a) desde ${fmtMesAno(aluno.criadoEm)}`,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
+          <div className="flex flex-wrap gap-2 xl:justify-end">
+            <button
+              onClick={() => setAvaliar(true)}
+              className="inline-flex h-11 items-center gap-2 rounded-control px-4 text-sm font-bold transition-[filter] hover:brightness-110"
+              style={{ background: "#E8A317", color: "#0B1628" }}
+            >
+              {avals.length ? "Reavaliar agora" : "Avaliar agora"}
+            </button>
+            <button
+              onClick={() => navigate(`/alunos/${aluno.id}/perfil`)}
+              className="inline-flex h-11 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              style={{ borderColor: "rgba(255,255,255,.2)" }}
+            >
+              Editar perfil
+            </button>
+            <button
+              onClick={() => setConvidar(true)}
+              className="inline-flex h-11 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              style={{ borderColor: "rgba(255,255,255,.2)" }}
+            >
+              <Smartphone className="h-4 w-4" /> Convidar
+            </button>
+            <button
+              onClick={() =>
+                exportEvolucaoPDF({ aluno, avaliacoes: avals, profissional: profNome, cref: cref || undefined, marca: marcaDoUsuario(usuario) })
+              }
+              className="inline-flex h-11 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              style={{ borderColor: "rgba(255,255,255,.2)" }}
+            >
+              <FileDown className="h-4 w-4" /> Exportar
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
 
       {recemCriado && (
         <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
