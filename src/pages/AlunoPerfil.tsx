@@ -93,17 +93,18 @@ export function AlunoPerfil() {
 
   return (
     <div className="mx-auto max-w-[1240px] space-y-5">
-      <CabecalhoPerfil aluno={aluno} feitas={completude.feitas} total={completude.total} />
+      <CabecalhoPerfil aluno={aluno} completude={completude} indice={indice} />
 
-      {/* Trilho de seções: desktop mostra as seis; mobile mostra passo e barra. */}
-      <TrilhoSecoes
-        secaoAtiva={secao}
-        onSecao={setSecao}
-        completude={completude}
-        indice={indice}
-      />
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      {/* O corpo do protótipo: rail vertical de seções à esquerda, o painel da
+          seção no meio e o "O que isso muda" à direita. No mobile o rail vira a
+          barra segmentada (dentro do próprio TrilhoSecoes). */}
+      <div className="grid items-start gap-5 lg:grid-cols-[260px_minmax(0,1fr)_300px]">
+        <TrilhoSecoes
+          secaoAtiva={secao}
+          onSecao={setSecao}
+          completude={completude}
+          indice={indice}
+        />
         <div className="min-w-0 space-y-4">
           <div>
             {/* O "passo N de 6" vive COLADO no título da seção, que é o objeto a
@@ -169,49 +170,64 @@ export function AlunoPerfil() {
 
 /* ------------------------------- Cabeçalho -------------------------------- */
 
-function CabecalhoPerfil({ aluno, feitas, total }: { aluno: Aluno; feitas: number; total: number }) {
-  const criadoHa = tempoDesde(aluno.criadoEm);
+function CabecalhoPerfil({
+  aluno,
+  completude,
+  indice,
+}: {
+  aluno: Aluno;
+  completude: ReturnType<typeof completudeAluno>;
+  indice: number;
+}) {
+  const primeiroNome = aluno.nome.split(" ")[0];
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-end gap-3">
       <Link
         to={`/alunos/${aluno.id}`}
         aria-label="Voltar para o aluno"
-        className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-ink-2 hover:text-ink"
+        className="mb-1 grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-ink-2 hover:text-ink"
       >
         <ChevronLeft aria-hidden className="h-4 w-4" />
       </Link>
       <div className="min-w-0 flex-1">
-        <h1 className="truncate font-display text-2xl font-bold text-ink">{aluno.nome}</h1>
-        {/* O quanto está preenchido é DITO por extenso aqui, e desenhado como
-            barra no card da lateral. O percentual solto ("33% preenchido") era o
-            mesmo número em outra unidade, e ainda encostava no "2 de 6" do trilho
-            querendo dizer outra coisa. */}
-        <p className="truncate text-sm text-ink-2">
-          Perfil do aluno ·{" "}
-          <span className="font-semibold text-ink">
-            {feitas} de {total} seções preenchidas
-          </span>
-          {criadoHa && ` · criado ${criadoHa}`}
+        {/* O cabeçalho do protótipo: sobrelinha com o preenchimento por extenso
+            e o H1 que diz para que o perfil serve. */}
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+          Perfil · {completude.feitas} de {completude.total} seções
         </p>
+        <h1 className="mt-1.5 font-display text-2xl font-bold tracking-[-0.03em] text-ink md:text-3xl">
+          O que o Mapa precisa saber sobre {primeiroNome}
+        </h1>
       </div>
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-success-tint px-3 py-1.5 text-xs font-bold text-success-text">
-        <CheckCheck aria-hidden className="h-3.5 w-3.5" /> Salva a cada resposta, neste aparelho
-      </span>
-      <Link to={`/alunos/${aluno.id}?avaliar=1`} className={buttonClasses("primary", "sm")}>
-        Registrar avaliação <ChevronRight aria-hidden className="h-4 w-4" />
-      </Link>
+      <div className="flex flex-col items-end gap-2">
+        {/* A barra de 6 segmentos do protótipo: turquesa nas seções feitas,
+            âmbar na pendente em foco, trilho nas demais. */}
+        <div
+          className="flex h-1.5 w-[200px] gap-1"
+          role="img"
+          aria-label={`${completude.feitas} de ${completude.total} seções preenchidas`}
+        >
+          {completude.secoes.map((s, i) => (
+            <span
+              key={s.secao.id}
+              className={cn(
+                "flex-1 rounded-full",
+                s.feita ? "bg-analysis-fill" : i === indice ? "bg-warning-fill" : "bg-surface-mute",
+              )}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-tint px-3 py-1.5 text-xs font-bold text-success-text">
+            <CheckCheck aria-hidden className="h-3.5 w-3.5" /> Salva a cada resposta
+          </span>
+          <Link to={`/alunos/${aluno.id}?avaliar=1`} className={buttonClasses("primary", "sm")}>
+            Registrar avaliação <ChevronRight aria-hidden className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
     </div>
   );
-}
-
-function tempoDesde(ts: number): string {
-  const min = Math.round((Date.now() - ts) / 60000);
-  if (min < 1) return "agora";
-  if (min < 60) return `há ${min} min`;
-  const h = Math.round(min / 60);
-  if (h < 24) return `há ${h} h`;
-  const d = Math.round(h / 24);
-  return `há ${d} d`;
 }
 
 /* ----------------------------- Trilho de seções --------------------------- */
@@ -250,7 +266,10 @@ function TrilhoSecoes({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Desktop: o RAIL VERTICAL do protótipo, um cartão por seção com o check
+          verde nas feitas, a borda navy na ativa e a linha do que falta ("Ainda
+          não perguntado") nas pendentes. */}
+      <div className="hidden space-y-2 lg:block">
         {completude.secoes.map((s, i) => {
           const ativo = s.secao.id === secaoAtiva;
           return (
@@ -260,30 +279,31 @@ function TrilhoSecoes({
               onClick={() => onSecao(s.secao.id)}
               aria-current={ativo ? "step" : undefined}
               className={cn(
-                "inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors",
+                "flex w-full items-center gap-3 rounded-[14px] border px-3.5 py-3 text-left transition-colors",
                 ativo
-                  ? "border-ink bg-ink font-bold text-surface"
-                  : s.feita
-                    ? "border-success/40 bg-success-tint font-semibold text-success-text"
-                    : "border-border bg-surface text-ink-2 hover:bg-surface-soft hover:text-ink",
-                // A 390 a fila vira rolagem horizontal natural do flex-wrap
-                "max-lg:hidden",
+                  ? "border-ink bg-surface"
+                  : "border-border bg-surface-soft hover:bg-surface",
               )}
             >
-              {s.feita ? (
-                <Check aria-hidden className="h-4 w-4" />
-              ) : (
-                <span
-                  aria-hidden
-                  className={cn(
-                    "grid h-5 w-5 place-items-center rounded-full text-2xs font-bold",
-                    ativo ? "bg-surface/20 text-surface" : "bg-surface-soft text-ink-2",
-                  )}
-                >
-                  {i + 1}
+              <span
+                aria-hidden
+                className={cn(
+                  "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-2xs font-bold",
+                  s.feita
+                    ? "bg-success-tint text-success"
+                    : ativo
+                      ? "bg-ink text-surface"
+                      : "bg-surface-mute text-ink-2",
+                )}
+              >
+                {s.feita ? <Check className="h-3.5 w-3.5" /> : ativo ? "›" : i + 1}
+              </span>
+              <span className="min-w-0 flex-1">
+                <b className="block text-sm font-semibold text-ink">{s.secao.titulo}</b>
+                <span className="block truncate text-xs text-ink-2">
+                  {s.feita ? "Preenchida" : s.falta}
                 </span>
-              )}
-              {s.secao.titulo}
+              </span>
             </button>
           );
         })}
