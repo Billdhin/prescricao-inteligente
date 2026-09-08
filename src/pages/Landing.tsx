@@ -69,6 +69,7 @@ export function Landing() {
   useRevelar(ref, html);
   useProgressoRolagem(ref);
   usePreservarFaq(ref, html);
+  useCarrosselDoAluno(ref, html);
 
   return (
     <>
@@ -139,6 +140,84 @@ function useRevelar(ref: React.RefObject<HTMLDivElement | null>, html: string) {
     }
 
     return () => obs.disconnect();
+  }, [ref, html]);
+}
+
+/**
+ * O CARROSSEL DE 4 TELAS DO ALUNO (redesign v2 de 08/09).
+ *
+ * O protótipo guarda a tela atual em estado de componente; aqui isso re-injetaria a página
+ * inteira a cada rolagem do carrossel, então a tela vive num ref e TUDO é mutação direta:
+ * os pontos, o realce dos passos e a legenda do celular. O template nasce com a tela 2
+ * (Treino de hoje, a captura real) ativa, e o hook re-aplica o estado guardado depois de
+ * cada recriação do DOM (menu, resize).
+ */
+const TELAS_ALUNO = [
+  { titulo: "Check-in de saúde", desc: "Pressão, medicação e sintomas antes do treino. O semáforo libera ou avisa você." },
+  { titulo: "Treino de hoje", desc: "Sessão, fase do plano, exercícios e intervalos, no app com a sua marca." },
+  { titulo: "Registro série a série", desc: "Carga, repetições e esforço percebido, guardados no mesmo lugar." },
+  { titulo: "Progresso e sinais", desc: "Prescrito × registrado com sinal para manter, rever ou progredir." },
+];
+function useCarrosselDoAluno(ref: React.RefObject<HTMLDivElement | null>, html: string) {
+  const tela = React.useRef(1);
+  React.useEffect(() => {
+    const raiz = ref.current;
+    if (!raiz) return;
+    const car = raiz.querySelector<HTMLElement>("[data-carrossel-alvo]");
+    if (!car) return;
+
+    const aplicar = (k: number) => {
+      tela.current = k;
+      raiz.querySelectorAll<HTMLElement>("[data-dot]").forEach((d) => {
+        const on = Number(d.dataset.dot) === k;
+        d.style.width = on ? "22px" : "6px";
+        d.style.background = on ? "#7FE3D8" : "rgba(255,255,255,.25)";
+      });
+      raiz.querySelectorAll<HTMLElement>("[data-passo]").forEach((p) => {
+        const on = Number(p.dataset.passo) === k;
+        p.style.background = on ? "rgba(255,255,255,.07)" : "transparent";
+        const num = p.querySelector<HTMLElement>("[data-passo-num]");
+        if (num) { num.style.background = on ? "#7FE3D8" : "#13233B"; num.style.color = on ? "#0B1628" : "#7FE3D8"; }
+        const desc = p.querySelector<HTMLElement>("[data-passo-desc]");
+        if (desc) desc.style.color = on ? "#D6DFEA" : "#8FA0B5";
+      });
+      const n = raiz.querySelector("[data-tela-num]");
+      if (n) n.textContent = String(k + 1);
+      const t = raiz.querySelector("[data-tela-titulo]");
+      if (t) t.textContent = TELAS_ALUNO[k].titulo;
+      const de = raiz.querySelector("[data-tela-desc]");
+      if (de) de.textContent = TELAS_ALUNO[k].desc;
+    };
+    const ir = (k: number, suave = true) => {
+      const filho = car.children[k] as HTMLElement | undefined;
+      if (filho) car.scrollTo({ left: filho.offsetLeft, behavior: suave ? "smooth" : "auto" });
+    };
+    const aoRolar = () => {
+      const centro = car.scrollLeft + car.clientWidth / 2;
+      let melhor = 0, dist = Infinity;
+      [...car.children].forEach((f, i) => {
+        const el = f as HTMLElement;
+        const d = Math.abs(el.offsetLeft + el.offsetWidth / 2 - centro);
+        if (d < dist) { dist = d; melhor = i; }
+      });
+      if (melhor !== tela.current) aplicar(melhor);
+    };
+    const aoClicar = (e: Event) => {
+      const b = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-tela-btn],[data-car]");
+      if (!b) return;
+      if (b.dataset.telaBtn != null) ir(Number(b.dataset.telaBtn));
+      else ir(Math.max(0, Math.min(3, tela.current + Number(b.dataset.car))));
+    };
+
+    car.addEventListener("scroll", aoRolar, { passive: true });
+    raiz.addEventListener("click", aoClicar);
+    aplicar(tela.current);
+    const quadro = requestAnimationFrame(() => ir(tela.current, false));
+    return () => {
+      cancelAnimationFrame(quadro);
+      car.removeEventListener("scroll", aoRolar);
+      raiz.removeEventListener("click", aoClicar);
+    };
   }, [ref, html]);
 }
 
@@ -220,8 +299,12 @@ function construirValores(st: Estado, mudar: (p: Partial<Estado>) => void): Valo
     // Responsivo do canvas: atributo de aparelho + colunas por faixa de largura.
     mobileAttr: String(st.mobile),
     colunasHero: st.largo ? "minmax(0,5fr) minmax(0,7fr)" : "1fr",
-    colunasPalco: !st.mobile ? "minmax(0,5fr) minmax(0,7fr)" : "1fr",
-    padFone: st.mobile ? "0" : "0 64px",
+    colunasPalco: !st.mobile ? "minmax(0,5fr) minmax(0,6fr)" : "1fr",
+    colunasDor: !st.mobile ? "minmax(0,6fr) minmax(0,6fr)" : "1fr",
+    colunasSobre: !st.mobile ? "minmax(0,340px) minmax(0,1fr)" : "1fr",
+    ordemTexto: st.mobile ? "0" : "1",
+    larguraFone: st.mobile ? "min(220px,62vw)" : "min(250px,80vw)",
+    gapPalco: st.mobile ? "24px" : "clamp(32px,5vw,72px)",
     gapRodape: st.mobile ? "28px" : "40px",
 
     // A escada de preços, por binding.
