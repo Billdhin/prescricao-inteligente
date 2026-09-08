@@ -10,13 +10,9 @@ import {
   PRECO_FUNDADOR_MES,
   PRECO_FUNDADOR_ANO,
   ANO_NO_MENSAL,
-  ECONOMIA_ANUAL,
   ECONOMIA_SEMESTRAL,
-  ECONOMIA_FUNDADOR,
   VAGAS_FUNDADOR,
-  precoPorAluno,
   fmtBRL,
-  fmtBRLc,
 } from "@/data/planos";
 import { renderizarComEstados, cssDosEstados, ATTR_ACAO, type Valores } from "./landing/renderizar";
 import "./landing/prototipo.css";
@@ -26,59 +22,40 @@ import template from "./landing/prototipo.html?raw";
 const CSS_ESTADOS = cssDosEstados(template);
 
 /**
- * LANDING: PORTE DO PROTÓTIPO DO CANVAS (02/09/2026).
+ * LANDING: PORTE DO REDESIGN DE 08/09/2026 (canvas "Redesign Mapa da Prescrição").
  *
  * A marcação vive em `landing/prototipo.html` e este componente só a injeta e liga o
  * comportamento; `renderizar` interpreta a linguagem de template (`{{ }}`, `<sc-if>`,
- * `sc-camel-on-click`, `style-hover`). O desenho segue o canvas aprovado pelo Filipe em
- * 02/09/2026 (blocos de cor inteiros; celular desenhado à parte) com a ESTRUTURA da revisão
- * editorial de 07/09/2026: o vídeo subiu para o hero (a promessa concreta antes do play),
- * identificação curta, prova do diferencial, montagem com a objeção da autonomia, entrega e
- * acompanhamento, autoridade, assinatura com o total em destaque, perguntas e fecho. A
- * seção de comparação com planilha e apps saiu: demonstrar o recurso convence mais do que
- * atribuir limitação a uma categoria inteira, e as duas primeiras perguntas do FAQ cobrem o
- * assunto sem depreciar ninguém.
+ * `sc-camel-on-click`, `style-hover`). O canvas trazia três heros em A/B/C com seletor de
+ * protótipo; o próprio export fixa o HERO B como padrão, e é só ele que vai ao ar. O
+ * responsivo é o do canvas: grades `auto-fit` + visibilidade por aparelho
+ * ([data-oculta-m]/[data-so-m]) chaveada pelo `data-mobile` calculado aqui (corte em 860,
+ * com um segundo corte em 960 para as colunas do hero).
  *
  * ## O que o protótipo dizia e o site NÃO diz, e por quê
  *
- * - "7 dias de garantia, reembolso integral": o texto definitivo existe e está no template,
- *   mas atrás de `<sc-if value="{{ cobrancaAtiva }}">`. Enquanto COBRANCA_ATIVA for false
- *   não há transação, então não há valor a devolver, e a página mostra no lugar o que é
- *   verdade hoje (`semCobranca`): cria a conta e usa sem cartão. `check:legal` bloco I
- *   confere as duas metades: que a promessa está dentro do portão, e que o portão lê o
- *   mesmo interruptor. No dia em que a cobrança ligar, o parágrafo aparece sozinho.
- * - "Condição de fundador no checkout": a condição é anunciada (seção 10), o checkout não
- *   existe ainda; o CTA leva ao mesmo cadastro e a ordem de criação das contas é o que
- *   identifica as primeiras.
- * - Nome completo, anos de docência e foto do Filipe entre colchetes: placeholder não vai ao
- *   ar (`check:legal`, bloco D). Fica "Filipe, doutor em Educação Física", que é o que está
- *   confirmado, e a inicial no lugar da foto até a foto real existir.
- * - O vídeo de apresentação ainda não existe: o hero mostra uma CAPTURA REAL do sistema
- *   com legenda, sem ícone de play (revisão de 08/09: o espaço mais caro da página não
- *   pode anunciar "em breve"). Quando o VSL subir, o quadro de player volta no lugar.
- * - Preço só por binding da fonte única (`@/data/planos`); literal de preço no template é
- *   exatamente como as tabelas divergiram antes.
- *
- * ## O que saiu da versão anterior
- *
- * Calculadora de retorno, abas "por dentro do app", barra fixa de preço, seletor mensal x
- * anual e a carta do fundador que o colocava atendendo clientes (ele forma quem prescreve;
- * nunca prescreveu para clientes). O menu do celular, o reveal por scroll e a preservação
- * do FAQ ficaram.
+ * - "Vídeo · 4:12" e "Filipe explica o Mapa em 4 minutos": o VSL ainda não foi publicado,
+ *   e duração inventada de vídeo inexistente é promessa quebrada. O quadro do player fica
+ *   como o canvas desenhou, com o selo dizendo "em breve" e sem link morto; quando o vídeo
+ *   subir, entra o embed com a duração real.
+ * - Depoimentos "Nome do profissional · CREF · cidade": modelo ilustrativo do canvas.
+ *   Prova social fabricada não vai ao ar (check:legal bloco D barra o literal); a seção
+ *   de prova mostra o caso demonstrativo real e os cartões entram quando houver relato
+ *   autorizado.
+ * - "12 fundadores já entraram" com barra de progresso: número inventado. O contador só
+ *   existe atrás de `cobrancaAtiva`, lendo contagem real; hoje a faixa diz a condição
+ *   sem fingir venda.
+ * - Garantia, reembolso e botões "Assinar": atrás de `<sc-if cobrancaAtiva>`, como sempre
+ *   (check:legal bloco I). Enquanto COBRANCA_ATIVA for false, a página diz "Criar minha
+ *   conta" e "hoje sem cartão", e os preços são a tabela anunciada.
+ * - Preço só por binding da fonte única (`@/data/planos`). O fundador de R$ 590/ano do
+ *   canvas e do VSL virou a fonte: planos.ts foi alinhado na direção do vídeo gravado.
  */
-/**
- * O plano ESCOLHIDO na seção de preço.
- *
- * Não existe checkout ainda, então a escolha é preferência, não compra: ela destaca o
- * cartão e troca a linha de resumo abaixo dele. Existe porque comparar três valores num
- * cartão que não responde ao clique é a única parte da página que parecia um print.
- */
-type PlanoEscolhido = "mensal" | "semestral" | "anual";
-type Estado = { mobile: boolean; menu: boolean; plano: PlanoEscolhido };
+type Estado = { mobile: boolean; largo: boolean; menu: boolean };
 
 export function Landing() {
   const ref = React.useRef<HTMLDivElement>(null);
-  const [st, setSt] = React.useState<Estado>({ mobile: false, menu: false, plano: "anual" });
+  const [st, setSt] = React.useState<Estado>({ mobile: false, largo: true, menu: false });
   const mudar = React.useCallback((p: Partial<Estado>) => setSt((s) => ({ ...s, ...p })), []);
 
   useJanela(mudar);
@@ -88,19 +65,9 @@ export function Landing() {
 
   useDelegacao(ref, vals);
   useNavegacaoInterna(ref);
-  useRevelarPorScroll(ref, html);
+  useRevelar(ref, html);
+  useProgressoRolagem(ref);
   usePreservarFaq(ref, html);
-
-  // Porta das animações de load (hero): depois do primeiro segundo, a raiz ganha
-  // `lp-carregada` e as entradas não replayam quando o DOM for recriado por estado (abrir
-  // o menu do celular no topo era o caso visível). A classe vai na RAIZ porque ela é o
-  // único nó que o dangerouslySetInnerHTML não destrói.
-  React.useEffect(() => {
-    const raiz = ref.current;
-    if (!raiz) return;
-    const t = window.setTimeout(() => raiz.classList.add("lp-carregada"), 1100);
-    return () => window.clearTimeout(t);
-  }, []);
 
   return (
     <>
@@ -111,86 +78,92 @@ export function Landing() {
 }
 
 /**
- * REVEAL POR SCROLL QUE SOBREVIVE À RECRIAÇÃO DO DOM.
+ * REVEAL POR SCROLL, no desenho do canvas: elementos [data-reveal] entram com fade e
+ * subida; [data-stagger] escalona os filhos; [data-grow] anima barras até a largura alvo.
  *
- * Cada mudança de estado (menu do celular, largura) re-injeta o HTML inteiro e destrói o
- * DOM anterior, então o observer não pode guardar estado em nó nenhum. O que já foi
- * revelado vive num Set de rótulos (`data-screen-label`) num ref, e a cada render: seção
- * já vista recebe `lp-visto` direto (sem re-animar, sem piscar); seção nova entra oculta e
- * é observada. Quem esconde é o JS, não o CSS: se nada disto rodar, a página fica inteira
- * visível, que é o fallback certo.
- *
- * Header e hero ficam fora: o header é a casca, e o hero está acima da dobra com entrada
- * própria no load (ver `lp-entrada` no CSS).
+ * Cada mudança de estado (menu, largura) re-injeta o HTML inteiro, então nada pode viver
+ * em nó do DOM: a cada render o motor recomeça, revelando NA HORA o que já está acima de
+ * 90% da janela (o que o visitante já viu não pisca) e observando só o que ainda está
+ * abaixo. Quem esconde é o JS; se nada disto rodar, a página fica inteira visível.
  */
-const SEM_REVEAL = new Set(["Header", "Hero"]);
-function useRevelarPorScroll(ref: React.RefObject<HTMLDivElement | null>, html: string) {
-  const vistos = React.useRef(new Set<string>());
+function useRevelar(ref: React.RefObject<HTMLDivElement | null>, html: string) {
   React.useEffect(() => {
     const raiz = ref.current;
     if (!raiz || typeof IntersectionObserver === "undefined") return;
+
+    const crescer = (el: Element) =>
+      el.querySelectorAll<HTMLElement>("[data-grow]").forEach((g) => {
+        g.style.width = g.getAttribute("data-grow") ?? "";
+      });
+
     const obs = new IntersectionObserver(
       (entradas) => {
         for (const ent of entradas) {
           if (!ent.isIntersecting) continue;
-          const rotulo = (ent.target as HTMLElement).dataset.screenLabel ?? "";
-          vistos.current.add(rotulo);
-          ent.target.classList.remove("lp-oculto");
-          ent.target.classList.add("lp-visto");
-          obs.unobserve(ent.target);
+          const el = ent.target as HTMLElement;
+          if (el.hasAttribute("data-stagger")) {
+            Array.from(el.children).forEach((c, k) => {
+              const f = c as HTMLElement;
+              f.style.transition = `opacity .7s ease ${k * 90}ms, transform .7s cubic-bezier(.2,.8,.2,1) ${k * 90}ms`;
+              f.style.opacity = "1";
+              f.style.transform = "none";
+            });
+          }
+          el.style.opacity = "1";
+          el.style.transform = "none";
+          crescer(el);
+          obs.unobserve(el);
         }
       },
-      // 0.05 e não mais: o rodapé divide a última dobra, e exigir 12% dele visível deixava
-      // os links legais invisíveis numa rolagem rápida.
-      { threshold: 0.05 },
+      { threshold: 0.15 },
     );
-    const alvos: HTMLElement[] = [];
-    for (const sec of raiz.querySelectorAll<HTMLElement>("[data-screen-label]")) {
-      const rotulo = sec.dataset.screenLabel ?? "";
-      if (SEM_REVEAL.has(rotulo)) continue;
-      if (vistos.current.has(rotulo)) sec.classList.add("lp-visto");
-      else alvos.push(sec);
+
+    for (const el of raiz.querySelectorAll<HTMLElement>("[data-reveal]")) {
+      const r = el.getBoundingClientRect();
+      // Já está na janela (ou acima dela): revela sem animar, para o re-render do menu
+      // ou do resize não fazer a página piscar.
+      if (r.top < window.innerHeight * 0.9) {
+        crescer(el);
+        continue;
+      }
+      el.style.opacity = "0";
+      el.style.transform = "translateY(24px)";
+      if (el.hasAttribute("data-stagger"))
+        Array.from(el.children).forEach((c) => {
+          const f = c as HTMLElement;
+          f.style.opacity = "0";
+          f.style.transform = "translateY(18px)";
+        });
+      obs.observe(el);
     }
 
-    const revelarTudo = () => {
-      for (const sec of alvos) {
-        sec.classList.remove("lp-oculto");
-        sec.classList.add("lp-visto");
-        vistos.current.add(sec.dataset.screenLabel ?? "");
-      }
-      obs.disconnect();
-    };
-
-    // Só esconde no PRÓXIMO QUADRO. Numa aba que não compõe, o quadro não vem, e a página
-    // simplesmente nunca some. Esconder de forma síncrona era o que criava a janela em que
-    // "invisível" virava estado final.
-    let socorro = 0;
-    const quadro = requestAnimationFrame(() => {
-      for (const sec of alvos) {
-        sec.classList.add("lp-oculto");
-        obs.observe(sec);
-      }
-      // Rede de segurança: sem nenhuma entrega em 2 s, a animação é abandonada e o
-      // conteúdo aparece. Página legível vale mais que fade.
-      socorro = window.setTimeout(() => {
-        if (!raiz.querySelector(".lp-visto")) revelarTudo();
-      }, 2000);
-    });
-
-    return () => {
-      cancelAnimationFrame(quadro);
-      if (socorro) clearTimeout(socorro);
-      obs.disconnect();
-    };
+    return () => obs.disconnect();
   }, [ref, html]);
 }
 
 /**
- * Mantém abertas as respostas do FAQ (e os acordeões da condição) que o visitante abriu,
- * através das recriações do DOM.
- *
- * A chave é o texto do resumo, não o índice: se a ordem do template mudar, o índice abriria
- * a resposta errada, que é pior que fechar todas.
+ * A régua de progresso do topo é IMPERATIVA de propósito: alimentá-la por estado React
+ * re-renderizaria (e re-injetaria) a página inteira a cada tick de rolagem.
+ */
+function useProgressoRolagem(ref: React.RefObject<HTMLDivElement | null>) {
+  React.useEffect(() => {
+    const aoRolar = () => {
+      const barra = ref.current?.querySelector<HTMLElement>("#lp-progresso");
+      if (!barra) return;
+      const d = document.documentElement;
+      const max = d.scrollHeight - d.clientHeight;
+      barra.style.width = max > 0 ? `${Math.min(100, (d.scrollTop / max) * 100)}%` : "0";
+    };
+    window.addEventListener("scroll", aoRolar, { passive: true });
+    aoRolar();
+    return () => window.removeEventListener("scroll", aoRolar);
+  }, [ref]);
+}
+
+/**
+ * Mantém abertas as respostas do FAQ que o visitante abriu, através das recriações do DOM.
+ * A chave é o texto do resumo, não o índice: se a ordem mudar, o índice abriria a
+ * resposta errada, que é pior que fechar todas.
  */
 function usePreservarFaq(ref: React.RefObject<HTMLDivElement | null>, html: string) {
   const abertos = React.useRef(new Set<string>());
@@ -200,7 +173,6 @@ function usePreservarFaq(ref: React.RefObject<HTMLDivElement | null>, html: stri
     const chave = (d: HTMLDetailsElement) => d.querySelector("summary")?.textContent?.trim() ?? "";
     const lista = [...raiz.querySelectorAll<HTMLDetailsElement>("details")];
 
-    // Reaplica o que já estava aberto antes desta recriação.
     for (const d of lista) {
       const k = chave(d);
       if (!k) continue;
@@ -223,17 +195,17 @@ function usePreservarFaq(ref: React.RefObject<HTMLDivElement | null>, html: stri
 }
 
 /**
- * Os valores que o template consome.
+ * Os valores que o template consome. Preço sempre da FONTE ÚNICA (`@/data/planos`); os
+ * números grandes saem sem o "R$" quando o template imprime o cifrão em tipografia
+ * própria, e formatados quando o valor entra no meio da frase.
  *
- * Preço sempre da FONTE ÚNICA (`@/data/planos`), e sem o "R$" nos números grandes, porque o
- * template imprime o cifrão em tipografia própria. Os totais não são digitados em lugar
- * nenhum: cada um vem do mensal multiplicado pelos meses, que é o que impede a escada de
- * divergir de si mesma.
- *
- * `cobrancaAtiva` e `semCobranca` são o par que liga e desliga os dois textos de risco no
- * template. Existem os dois, e não só a negação de um, porque `sc-if` não tem `else`.
+ * `cobrancaAtiva`/`semCobranca` são o par que liga os dois textos de risco (sc-if não tem
+ * else). O contador de fundadores (vagasOcupadas/barraVagas) alimenta só o bloco atrás de
+ * `cobrancaAtiva`; enquanto não há venda, não há contagem a mostrar, e os valores abaixo
+ * partem de zero de propósito: ao ligar a cobrança, a contagem real substitui.
  */
 function construirValores(st: Estado, mudar: (p: Partial<Estado>) => void): Valores {
+  const ocupadas = 0;
   return {
     isMobile: st.mobile,
     isDesktop: !st.mobile,
@@ -244,63 +216,39 @@ function construirValores(st: Estado, mudar: (p: Partial<Estado>) => void): Valo
     cobrancaAtiva: COBRANCA_ATIVA,
     semCobranca: !COBRANCA_ATIVA,
 
-    // Degrau de foco: o anual, dito por mês.
-    proPreco: String(PRECO_MENSAL),
-    proAno: fmtBRL(PRECO_ANUAL),
+    // Responsivo do canvas: atributo de aparelho + colunas por faixa de largura.
+    mobileAttr: String(st.mobile),
+    colunasHero: st.largo ? "minmax(0,5fr) minmax(0,7fr)" : "1fr",
+    colunasPalco: !st.mobile ? "minmax(0,5fr) minmax(0,7fr)" : "1fr",
+    padFone: st.mobile ? "0" : "0 64px",
+    gapRodape: st.mobile ? "28px" : "40px",
 
-    // Os outros degraus da escada.
+    // A escada de preços, por binding.
     mensalAvulso: String(PRECO_MENSAL_AVULSO),
     anoNoMensal: fmtBRL(ANO_NO_MENSAL),
     semestralMes: String(PRECO_SEMESTRAL_MES),
     semestralFatura: fmtBRL(PRECO_SEMESTRAL),
-    anoNoSemestral: fmtBRL(PRECO_SEMESTRAL_MES * 12),
-    economiaAnual: fmtBRL(ECONOMIA_ANUAL),
-    economiaSemestral: fmtBRL(ECONOMIA_SEMESTRAL),
-    // A revisão de 07/09 pediu a economia dita no PRAZO do plano, não sempre no ano:
-    // o semestral economiza contra seis meses do mensal, e o fundador contra o anual
-    // REGULAR, que é o cartão que ele substitui.
-    economiaSem6m: fmtBRL(PRECO_MENSAL_AVULSO * 6 - PRECO_SEMESTRAL),
-    fundadorVsAnual: fmtBRL(PRECO_ANUAL - PRECO_FUNDADOR_ANO),
-
-    // Condição de fundador, dita na MESMA unidade do degrau acima dela.
+    economiaSemestralAno: fmtBRL(ECONOMIA_SEMESTRAL),
+    proPreco: String(PRECO_MENSAL),
+    proAno: fmtBRL(PRECO_ANUAL),
     fundadorMes: String(PRECO_FUNDADOR_MES),
     fundadorAno: fmtBRL(PRECO_FUNDADOR_ANO),
-    economiaFundador: fmtBRL(ECONOMIA_FUNDADOR),
     vagas: String(VAGAS_FUNDADOR),
 
-    // A ancoragem que abre a seção: quanto o anual custa por aluno da carteira.
-    porAluno10: fmtBRLc(precoPorAluno(10)),
-    porAluno20: fmtBRLc(precoPorAluno(20)),
-    porAluno40: fmtBRLc(precoPorAluno(40)),
-
-    // Cartões de plano: a classe do escolhido e o resumo que muda com ele.
-    clsMensal: st.plano === "mensal" ? "lp-plano-on" : "",
-    clsSemestral: st.plano === "semestral" ? "lp-plano-on" : "",
-    clsAnual: st.plano === "anual" ? "lp-plano-on" : "",
-    selMensal: () => mudar({ plano: "mensal" }),
-    selSemestral: () => mudar({ plano: "semestral" }),
-    selAnual: () => mudar({ plano: "anual" }),
-    resumoPlano: RESUMO[st.plano],
+    // Contador de fundadores: só renderiza com a cobrança ativa, com contagem real.
+    vagasOcupadas: String(ocupadas),
+    vagasRestantes: String(VAGAS_FUNDADOR - ocupadas),
+    percentualVagas: `${Math.round((ocupadas / VAGAS_FUNDADOR) * 100)}% preenchido`,
+    barraVagas: `${Math.round((ocupadas / VAGAS_FUNDADOR) * 100)}%`,
   };
 }
 
-/**
- * A linha que explica o cartão escolhido.
- *
- * A do anual diz as duas coisas na mesma frase, e a ordem importa: primeiro o que o
- * visitante paga hoje, depois a condição que faz esse valor existir. Sem a segunda metade,
- * o valor de fundador pareceria preço de tabela, e ele não é.
- */
-const RESUMO: Record<PlanoEscolhido, string> = {
-  mensal: `Mensal: ${fmtBRL(PRECO_MENSAL_AVULSO)} por mês, cobrados todo mês, sem compromisso de prazo.`,
-  semestral: `Semestral: ${fmtBRL(PRECO_SEMESTRAL)} a cada seis meses, o que equivale a ${fmtBRL(PRECO_SEMESTRAL_MES)} por mês.`,
-  anual: `Anual de fundador: ${fmtBRL(PRECO_FUNDADOR_ANO)} cobrados uma vez, o que equivale a ${fmtBRL(PRECO_FUNDADOR_MES)} por mês. Vale para as ${VAGAS_FUNDADOR} primeiras contas; encerrada a condição, o anual regular é ${fmtBRL(PRECO_ANUAL)} por ano.`,
-};
-
-/** Largura da janela: decide o menu do celular. Redimensionar fecha o menu. */
-function useJanela(mudar: (p: { mobile?: boolean; menu?: boolean }) => void) {
+/** Largura da janela: dois cortes (860 para aparelho, 960 para as colunas do hero).
+ *  Redimensionar fecha o menu. */
+function useJanela(mudar: (p: Partial<Estado>) => void) {
   React.useEffect(() => {
-    const aoRedimensionar = () => mudar({ mobile: window.innerWidth < 761, menu: false });
+    const aoRedimensionar = () =>
+      mudar({ mobile: window.innerWidth < 860, largo: window.innerWidth >= 960, menu: false });
     aoRedimensionar();
     window.addEventListener("resize", aoRedimensionar);
     return () => window.removeEventListener("resize", aoRedimensionar);
@@ -308,11 +256,9 @@ function useJanela(mudar: (p: { mobile?: boolean; menu?: boolean }) => void) {
 }
 
 /**
- * Delegação de eventos: o clique encontra o handler pelo atributo.
- *
- * A marcação é injetada como texto, então não há como pendurar função nela. O `renderizar`
- * deixa o NOME do handler num atributo e aqui ele é resolvido no objeto de valores, que é o
- * mesmo que alimentou a renderização.
+ * Delegação de eventos: o clique encontra o handler pelo atributo. A marcação é injetada
+ * como texto, então não há como pendurar função nela; `renderizar` deixa o NOME do
+ * handler num atributo e aqui ele é resolvido no objeto de valores.
  */
 function useDelegacao(ref: React.RefObject<HTMLDivElement | null>, vals: Valores) {
   const ultimo = React.useRef(vals);

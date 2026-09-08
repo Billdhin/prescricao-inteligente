@@ -61,11 +61,19 @@ export const PRECO_MENSAL = 97;
 /** Plano individual pago de uma vez, no ano. */
 export const PRECO_ANUAL = PRECO_MENSAL * 12;
 
-/** Condição de fundador: por mês, também no anual. */
-export const PRECO_FUNDADOR_MES = 47;
+/**
+ * Condição de fundador: o que sai na fatura, uma vez, no ano.
+ *
+ * EXCEÇÃO CONSCIENTE à regra "o total não é digitado": R$ 590 é o número que o Filipe
+ * GRAVOU no VSL e que o redesign de 08/09 fixou, e vídeo publicado não se rederiva.
+ * Era 47 × 12 = 564; o alinhamento (obrigatório: anúncio, página e vídeo com a mesma
+ * oferta) foi feito NA DIREÇÃO do vídeo.
+ */
+export const PRECO_FUNDADOR_ANO = 590;
 
-/** Condição de fundador: o que sai na fatura, uma vez, no ano. */
-export const PRECO_FUNDADOR_ANO = PRECO_FUNDADOR_MES * 12;
+/** Equivalente mensal ANUNCIADO do fundador (590/12 = 49,17; anuncia-se o inteiro a
+ *  menor, com o total cobrado sempre dito ao lado). */
+export const PRECO_FUNDADOR_MES = 49;
 
 /** Quantas contas entram na condição de fundador. Acabou, acabou. */
 export const VAGAS_FUNDADOR = 30;

@@ -1,355 +1,577 @@
-<div class="lp">
+<div lang="pt-BR" data-mobile="{{ mobileAttr }}" class="lp" style="min-height:100vh;font-size:17px;line-height:1.6;overflow-x:clip">
 
-<!-- 1 · HEADER -->
-<div data-screen-label="Header" class="lp-header">
-  <div class="lp-wrap lp-header-linha">
-    <a href="/" class="lp-marca">
-      <img src="/brand/marca-pino.webp" alt="" width="30" height="30" class="lp-marca-img">
-      <span class="lp-marca-nome">Mapa da Prescrição</span>
+<!-- HEADER -->
+<div data-screen-label="Header" style="position:sticky;top:0;z-index:50;background:rgba(11,22,40,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:#F3F1EA;border-bottom:1px solid rgba(255,255,255,.08)">
+  <div style="width:min(1180px,100% - 40px);margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px;gap:24px">
+    <a href="#topo" style="display:flex;align-items:center;gap:10px;color:#F3F1EA">
+      <img src="/brand/marca-pino.webp" alt="" width="30" height="30" style="width:30px;height:30px;object-fit:contain">
+      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em">Mapa da Prescrição</span>
     </a>
     <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
-      <nav class="lp-nav">
-        <a href="#como" style-hover="color:#FFFFFF">Como funciona</a>
-        <a href="#preco" style-hover="color:#FFFFFF">Planos</a>
-        <a href="#faq" style-hover="color:#FFFFFF">Dúvidas</a>
+      <nav style="display:flex;gap:30px;font-size:14.5px">
+        <a href="#como" style="color:#B9C6D6" style-hover="color:#FFFFFF">Como funciona</a>
+        <a href="#recursos" style="color:#B9C6D6" style-hover="color:#FFFFFF">Recursos</a>
+        <a href="#semaforo" style="color:#B9C6D6" style-hover="color:#FFFFFF">Semáforo</a>
+        <a href="#preco" style="color:#B9C6D6" style-hover="color:#FFFFFF">Planos</a>
+        <a href="#faq" style="color:#B9C6D6" style-hover="color:#FFFFFF">Dúvidas</a>
       </nav>
-      <div class="lp-header-acoes">
-        <a href="/dashboard" class="lp-header-entrar" style-hover="color:#FFFFFF">Entrar</a>
-        <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" class="lp-btn lp-btn-linha" style-hover="background:rgba(255,255,255,.08)">Ver planos</a></sc-if>
-        <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-linha" style-hover="background:rgba(255,255,255,.08)">Criar minha conta</a></sc-if>
+      <div style="display:flex;align-items:center;gap:16px">
+        <a href="/dashboard" style="font-size:14.5px;color:#B9C6D6" style-hover="color:#FFFFFF">Entrar</a>
+        <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" style="display:inline-flex;align-items:center;min-height:42px;padding:0 18px;border-radius:10px;background:#2064EC;color:#fff;font-weight:600;font-size:14.5px" style-hover="background:#1A4FC0">Assinar</a></sc-if>
+        <sc-if value="{{ semCobranca }}"><a href="/dashboard" style="display:inline-flex;align-items:center;min-height:42px;padding:0 18px;border-radius:10px;background:#2064EC;color:#fff;font-weight:600;font-size:14.5px" style-hover="background:#1A4FC0">Criar conta</a></sc-if>
       </div>
     </sc-if>
     <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
-      <button sc-camel-on-click="{{ toggleMenu }}" aria-label="Abrir menu" class="lp-hamburger">
-        <span></span><span></span><span></span>
+      <button sc-camel-on-click="{{ toggleMenu }}" aria-label="Abrir menu" style="width:44px;height:44px;border:0;background:transparent;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;cursor:pointer;padding:0">
+        <span style="width:20px;height:2px;background:#F3F1EA;border-radius:2px"></span><span style="width:20px;height:2px;background:#F3F1EA;border-radius:2px"></span><span style="width:20px;height:2px;background:#F3F1EA;border-radius:2px"></span>
       </button>
     </sc-if>
   </div>
   <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
-    <div class="lp-menu-m">
-      <a href="#como" sc-camel-on-click="{{ fecharMenu }}">Como funciona</a>
-      <a href="#preco" sc-camel-on-click="{{ fecharMenu }}">Planos</a>
-      <a href="#faq" sc-camel-on-click="{{ fecharMenu }}">Dúvidas</a>
-      <a href="/dashboard" sc-camel-on-click="{{ fecharMenu }}">Entrar</a>
-      <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" sc-camel-on-click="{{ fecharMenu }}" class="lp-btn lp-btn-amber lp-menu-m-cta">Ver planos</a></sc-if>
-      <sc-if value="{{ semCobranca }}"><a href="/dashboard" sc-camel-on-click="{{ fecharMenu }}" class="lp-btn lp-btn-amber lp-menu-m-cta">Criar minha conta</a></sc-if>
+    <div style="border-top:1px solid rgba(255,255,255,.1);background:#0B1628;padding:8px 20px 20px;display:flex;flex-direction:column">
+      <a href="#como" sc-camel-on-click="{{ fecharMenu }}" style="color:#F3F1EA;font-weight:600;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08);min-height:44px;display:flex;align-items:center">Como funciona</a>
+      <a href="#recursos" sc-camel-on-click="{{ fecharMenu }}" style="color:#F3F1EA;font-weight:600;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08);min-height:44px;display:flex;align-items:center">Recursos</a>
+      <a href="#semaforo" sc-camel-on-click="{{ fecharMenu }}" style="color:#F3F1EA;font-weight:600;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08);min-height:44px;display:flex;align-items:center">Semáforo</a>
+      <a href="#preco" sc-camel-on-click="{{ fecharMenu }}" style="color:#F3F1EA;font-weight:600;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08);min-height:44px;display:flex;align-items:center">Planos</a>
+      <a href="#faq" sc-camel-on-click="{{ fecharMenu }}" style="color:#F3F1EA;font-weight:600;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08);min-height:44px;display:flex;align-items:center">Dúvidas</a>
+      <a href="/dashboard" sc-camel-on-click="{{ fecharMenu }}" style="color:#B9C6D6;font-weight:500;padding:13px 4px;min-height:44px;display:flex;align-items:center">Entrar</a>
+      <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" sc-camel-on-click="{{ fecharMenu }}" style="display:flex;justify-content:center;align-items:center;min-height:50px;border-radius:12px;background:#2064EC;color:#fff;font-weight:600;margin-top:8px">Assinar um plano</a></sc-if>
+      <sc-if value="{{ semCobranca }}"><a href="/dashboard" sc-camel-on-click="{{ fecharMenu }}" style="display:flex;justify-content:center;align-items:center;min-height:50px;border-radius:12px;background:#2064EC;color:#fff;font-weight:600;margin-top:8px">Criar minha conta</a></sc-if>
     </div>
   </sc-if>
 </div>
 
-<!-- 2 · HERO + VÍDEO -->
-<section data-screen-label="Hero" class="lp-hero">
-  <div class="lp-wrap lp-hero-grade lp-hero-duas">
-    <div class="lp-entrada">
-      <p class="lp-eyebrow lp-eyebrow-mint">Para profissionais de Educação Física</p>
-      <h1 class="lp-h1">Menos tempo montando treinos. <span class="lp-mint">Mais controle sobre cada prescrição.</span></h1>
-      <p class="lp-lede lp-lede-escuro">O Mapa monta uma proposta a partir do perfil do aluno, com progressão e referências para consultar. Você revisa, entrega pelo aplicativo com a sua marca e acompanha os registros para ajustar o próximo treino.</p>
-      <div class="lp-hero-acoes">
-        <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" class="lp-btn lp-btn-amber" style-hover="background:#F0B429;transform:translateY(-1px)">Ver planos</a></sc-if>
-        <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-amber" style-hover="background:#F0B429;transform:translateY(-1px)">Criar minha conta</a></sc-if>
-        <a href="#rotina" class="lp-seta" style-hover="color:#7FE3D8">Prefiro conhecer por texto
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
-        </a>
-      </div>
-      <sc-if value="{{ cobrancaAtiva }}"><p class="lp-hero-nota">Alunos ilimitados · App do aluno incluído · Garantia de 7 dias</p></sc-if>
-      <sc-if value="{{ semCobranca }}"><p class="lp-hero-nota">Acesso liberado nesta fase · Sem cartão · Alunos ilimitados</p></sc-if>
-    </div>
+<div id="topo"></div>
+<div id="lp-progresso" style="position:fixed;top:0;left:0;height:3px;z-index:70;background:linear-gradient(90deg,#2064EC,#14B3BA,#E8A317);width:0;pointer-events:none;transition:width .1s linear"></div>
 
-    <div class="lp-entrada lp-entrada-2">
-      <p class="lp-hero-chamada-rot">Tela do sistema</p>
-      <p class="lp-hero-chamada">Do perfil do aluno ao treino revisado. Veja o Mapa em uso.</p>
-      <figure class="lp-tela lp-hero-tela">
-        <img src="/landing/sistema-editor.webp" alt="Tela do Mapa da Prescrição: proposta de treino com séries, repetições e a faixa citada pela evidência ao lado de cada valor" width="745" height="392" loading="eager" fetchpriority="high" decoding="async">
-        <figcaption>Uma proposta de treino, com os critérios à vista.</figcaption>
+<!-- HERO (variante B do protótipo, fixada como padrão) -->
+<section id="video" data-screen-label="Hero" style="position:relative;overflow:hidden;background:#0B1628;color:#F3F1EA">
+  <div data-oculta-m style="position:absolute;inset:0;pointer-events:none;background-image:repeating-radial-gradient(ellipse 70% 60% at 85% 30%,transparent 0 46px,rgba(127,227,216,.14) 46px 47.5px);mask-image:radial-gradient(ellipse 50% 70% at 88% 25%,#000 0%,rgba(0,0,0,.4) 50%,transparent 100%);-webkit-mask-image:radial-gradient(ellipse 50% 70% at 88% 25%,#000 0%,rgba(0,0,0,.4) 50%,transparent 100%)"></div>
+  <div style="position:absolute;right:-200px;top:-200px;width:760px;height:760px;border-radius:50%;background:radial-gradient(circle,rgba(232,163,23,.16) 0%,rgba(232,163,23,0) 62%);pointer-events:none;animation:lp-orbita 14s ease-in-out infinite"></div>
+  <div style="position:absolute;left:-260px;bottom:-320px;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(20,179,186,.16) 0%,rgba(20,179,186,0) 62%);pointer-events:none;animation:lp-orbita2 18s ease-in-out infinite"></div>
+  <div style="position:relative;width:min(1180px,100% - 40px);margin:0 auto;padding:clamp(48px,7vw,96px) 0 clamp(64px,7vw,96px);display:grid;grid-template-columns:{{ colunasHero }};gap:clamp(32px,4vw,56px);align-items:center">
+    <div style="animation:lp-subir .6s ease backwards">
+      <p style="margin:0;display:inline-flex;align-items:center;gap:10px;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#F0B429;background:rgba(232,163,23,.1);border:1px solid rgba(232,163,23,.3);border-radius:999px;padding:7px 14px"><span style="width:7px;height:7px;border-radius:50%;background:#F0B429;animation:lp-pulso 2s ease infinite"></span>Para profissionais de Educação Física</p>
+      <h1 style="margin:22px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(34px,4.2vw,58px);line-height:1.04;color:#fff;text-wrap:balance;max-width:520px">Você é profissional. <span style="color:#F0B429">Sua prescrição também precisa ser.</span></h1>
+      <p style="margin:26px 0 0;font-size:clamp(16px,1.4vw,19px);line-height:1.6;color:#B9C6D6;max-width:460px;text-wrap:pretty">Avaliação, semáforo de saúde e treino conectados, com o porquê de cada decisão escrito, referenciado e assinado por você.</p>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:36px">
+        <a href="#preco" style="position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border-radius:12px;background:#E8A317;color:#17202E;font-weight:700;font-size:16px;box-shadow:0 12px 30px -10px rgba(232,163,23,.7);transition:all .18s ease" style-hover="background:#F0B429;transform:translateY(-2px)"><span style="position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.45),rgba(255,255,255,0));animation:lp-brilho 3.2s ease-in-out 1s infinite;pointer-events:none"></span><span style="position:relative">Quero prescrever com evidência</span><span style="position:relative;font-size:18px">→</span></a>
+      </div>
+      <sc-if value="{{ cobrancaAtiva }}"><p style="margin:14px 0 0;font-size:14px;color:#8FA0B5">A partir de R$ {{ fundadorMes }}/mês no anual · Garantia de 7 dias</p></sc-if>
+      <sc-if value="{{ semCobranca }}"><p style="margin:14px 0 0;font-size:14px;color:#8FA0B5">Tabela a partir de R$ {{ fundadorMes }}/mês no anual · Hoje sem cartão</p></sc-if>
+      <div data-oculta-m style="display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:18px;font-size:14px;color:#8FA0B5">
+        <span style="display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#F0B429"></span>Alunos ilimitados</span>
+        <span style="display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#F0B429"></span>App do aluno incluído</span>
+        <sc-if value="{{ cobrancaAtiva }}"><span style="display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#F0B429"></span>Garantia de 7 dias</span></sc-if>
+        <sc-if value="{{ semCobranca }}"><span style="display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#F0B429"></span>Acesso liberado nesta fase</span></sc-if>
+      </div>
+    </div>
+    <div style="position:relative;animation:lp-subir .6s ease .15s backwards">
+      <p style="margin:0 0 12px;display:flex;align-items:center;gap:10px;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:#8FA0B5"><span style="display:flex;align-items:flex-end;gap:2px;height:14px"><i style="display:block;width:3px;height:14px;border-radius:2px;background:#E8A317;transform-origin:bottom;animation:lp-eq 1.1s ease-in-out 0s infinite"></i><i style="display:block;width:3px;height:14px;border-radius:2px;background:#E8A317;transform-origin:bottom;animation:lp-eq 1.1s ease-in-out .2s infinite"></i><i style="display:block;width:3px;height:14px;border-radius:2px;background:#E8A317;transform-origin:bottom;animation:lp-eq 1.1s ease-in-out .4s infinite"></i><i style="display:block;width:3px;height:14px;border-radius:2px;background:#E8A317;transform-origin:bottom;animation:lp-eq 1.1s ease-in-out .1s infinite"></i><i style="display:block;width:3px;height:14px;border-radius:2px;background:#E8A317;transform-origin:bottom;animation:lp-eq 1.1s ease-in-out .3s infinite"></i></span>Filipe explica o Mapa</p>
+      <div style="position:absolute;inset:-40px -30px;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,rgba(232,163,23,.22) 0%,rgba(232,163,23,0) 60%)"></div>
+      <div aria-label="Apresentação em vídeo, em breve" style="position:relative;display:block;aspect-ratio:16/9;border-radius:20px;overflow:hidden;background:#0E1A2E;border:1px solid rgba(232,163,23,.35);box-shadow:0 60px 110px -40px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.06),0 0 80px -20px rgba(232,163,23,.35)">
+        <img src="/landing/vsl-poster.webp" alt="Filipe Moura Ribeiro apresentando o Mapa da Prescrição" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block">
+        <span style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,22,40,.25) 0%,rgba(11,22,40,0) 35%,rgba(11,22,40,.15) 60%,rgba(11,22,40,.9) 100%)"></span>
+        <span style="position:absolute;top:14px;left:14px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#0B1628;background:#E8A317;border-radius:999px;padding:5px 11px">Vídeo · em breve</span>
+        <span style="position:absolute;top:50%;left:50%;width:96px;height:96px;border-radius:50%;border:2px solid rgba(232,163,23,.7);animation:lp-anel 2.4s ease-out infinite;pointer-events:none"></span><span style="position:absolute;top:50%;left:50%;width:96px;height:96px;border-radius:50%;border:2px solid rgba(232,163,23,.7);animation:lp-anel 2.4s ease-out 1.2s infinite;pointer-events:none"></span>
+        <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:96px;height:96px;border-radius:50%;background:#E8A317;color:#0B1628;display:flex;align-items:center;justify-content:center;box-shadow:0 18px 40px -14px rgba(0,0,0,.7),0 0 0 16px rgba(232,163,23,.18),0 0 0 32px rgba(232,163,23,.08)"><span style="width:0;height:0;border-style:solid;border-width:16px 0 16px 28px;border-color:transparent transparent transparent #0B1628;margin-left:6px"></span></span>
+        <span style="position:absolute;left:0;right:0;bottom:0;padding:0 22px 20px;display:flex;flex-direction:column;gap:12px">
+          <span style="height:3px;border-radius:2px;background:rgba(255,255,255,.28);display:block"><span style="display:block;width:18%;height:3px;border-radius:2px;background:#E8A317"></span></span>
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(16px,1.6vw,22px);line-height:1.2;color:#fff;font-weight:600;text-shadow:0 2px 14px rgba(0,0,0,.5)">Do perfil do aluno ao treino revisado: veja o Mapa em uso.</span>
+        </span>
+      </div>
+      <div data-oculta-m style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">
+        <span style="font-size:12.5px;font-weight:600;color:#B9C6D6;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 12px">Caso de demonstração</span>
+        <span style="font-size:12.5px;font-weight:600;color:#B9C6D6;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 12px">A gravação está a caminho</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ESTEIRA -->
+<div data-screen-label="Esteira" style="background:#070F1C;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);overflow:hidden;position:relative">
+  <div style="position:absolute;left:0;top:0;bottom:0;width:120px;background:linear-gradient(90deg,#070F1C,rgba(7,15,28,0));z-index:2;pointer-events:none"></div>
+  <div style="position:absolute;right:0;top:0;bottom:0;width:120px;background:linear-gradient(270deg,#070F1C,rgba(7,15,28,0));z-index:2;pointer-events:none"></div>
+  <div style="display:flex;width:max-content;padding:14px 0;animation:lp-esteira 48s linear infinite"><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Hipertensão</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Artrose no joelho</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Betabloqueador</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Diabetes tipo 2</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Emagrecimento</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Hipertrofia</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Idoso · 65+</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Gestante</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Henkin 2023</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>SBC 2020</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Hanssen 2022</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Wonisch 2003</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>ACSM 2021</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Mitchell 2019</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Hipertensão</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Artrose no joelho</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Betabloqueador</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Diabetes tipo 2</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Emagrecimento</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Hipertrofia</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Idoso · 65+</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Gestante</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Henkin 2023</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>SBC 2020</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Hanssen 2022</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Wonisch 2003</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>ACSM 2021</span><span style="display:inline-flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600;color:#B9C6D6;white-space:nowrap;padding:0 22px"><span style="width:6px;height:6px;border-radius:50%;background:#E8A317"></span>Mitchell 2019</span></div>
+  <p data-oculta-m style="margin:0;text-align:center;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:#5F6F85;font-weight:600;padding:0 20px 12px">Condições contempladas e referências citadas na prescrição</p>
+</div>
+
+<!-- 01 · A DOR -->
+<section id="rotina" data-screen-label="Dor" style="position:relative;background:#F6F5F0;padding:clamp(56px,7vw,96px) 0;overflow:hidden">
+  <div style="position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(16,35,58,.22) 1.3px,transparent 1.4px);background-size:26px 26px;mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 40%,#000 100%);-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 40%,#000 100%);opacity:.6"></div>
+  <div style="position:relative;width:min(1180px,100% - 40px);margin:0 auto">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:clamp(24px,4vw,56px);align-items:start">
+      <div>
+        <p style="margin:0;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#2064EC;display:flex;align-items:center;gap:10px"><span style="width:22px;height:2px;background:#2064EC;border-radius:2px"></span>01 · A rotina</p>
+        <h2 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(28px,3.4vw,46px);line-height:1.06;color:#0B1628;text-wrap:balance">A mensalidade não aumenta quando você passa horas refazendo treinos.</h2>
+      </div>
+      <div style="font-size:clamp(16px,1.3vw,18px);color:#5B6779;line-height:1.65;display:flex;flex-direction:column;gap:16px;padding-top:6px">
+        <p style="margin:0">Chega um aluno novo. Outro passa a treinar só duas vezes por semana. Além dos atendimentos, você precisa montar, adaptar e recalcular tudo.</p>
+        <p style="margin:0">Você trabalha mais pelo mesmo valor e fica com menos tempo para conquistar novos alunos, acompanhar melhor os atuais e viver fora do trabalho.</p>
+        <p style="margin:0;color:#0B1628;font-weight:600">O Mapa adianta a montagem e os cálculos. Você concentra sua energia no que cada aluno precisa.</p>
+      </div>
+    </div>
+    <div data-oculta-m data-reveal data-stagger style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px;margin-top:clamp(36px,4vw,56px)">
+      <div style="background:#FFFDF9;border:1px solid #E3E0D8;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px;transition:all .2s ease" style-hover="transform:translateY(-3px);box-shadow:0 24px 40px -30px rgba(16,35,58,.35)">
+        <span style="align-self:flex-start;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#2064EC;background:#E8EFFD;border-radius:999px;padding:5px 12px">Domingo à noite</span>
+        <p style="margin:0;font-size:15.5px;line-height:1.55;color:#5B6779">Três treinos para entregar amanhã. Cada um começa da planilha em branco, com a mesma conta de volume feita de cabeça.</p>
+      </div>
+      <div style="background:#FFFDF9;border:1px solid #E3E0D8;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px;transition:all .2s ease" style-hover="transform:translateY(-3px);box-shadow:0 24px 40px -30px rgba(16,35,58,.35)">
+        <span style="align-self:flex-start;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#2064EC;background:#E8EFFD;border-radius:999px;padding:5px 12px">No meio da aula</span>
+        <p style="margin:0;font-size:15.5px;line-height:1.55;color:#5B6779">A aluna conta que começou um betabloqueador. A intensidade que você prescreveu já não vale, e a referência para o novo limite não está à mão.</p>
+      </div>
+      <div style="background:#FFFDF9;border:1px solid #E3E0D8;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px;transition:all .2s ease" style-hover="transform:translateY(-3px);box-shadow:0 24px 40px -30px rgba(16,35,58,.35)">
+        <span style="align-self:flex-start;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#2064EC;background:#E8EFFD;border-radius:999px;padding:5px 12px">Na reavaliação</span>
+        <p style="margin:0;font-size:15.5px;line-height:1.55;color:#5B6779">O aluno pergunta por que mudou o treino. O motivo existiu, mas ficou só na sua memória, sem registro para mostrar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 · COMO FUNCIONA -->
+<section id="como" data-screen-label="Como funciona" style="background:#FFFDF9;border-top:1px solid #E3E0D8;border-bottom:1px solid #E3E0D8;padding:clamp(56px,7vw,96px) 0">
+  <div style="width:min(1180px,100% - 40px);margin:0 auto">
+    <div data-reveal data-center style="max-width:680px;margin:0 auto;text-align:center">
+      <p style="margin:0;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#2064EC;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:22px;height:2px;background:#2064EC;border-radius:2px"></span>02 · Como funciona</p>
+      <h2 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(28px,3.4vw,46px);line-height:1.06;color:#0B1628;text-wrap:balance">O Mapa monta a proposta. Você aprova o treino.</h2>
+      <p style="margin:16px 0 0;font-size:clamp(16px,1.3vw,18px);color:#5B6779;line-height:1.6">Três passos, do cadastro à reavaliação. A decisão é sempre sua.</p>
+    </div>
+    <div data-oculta-m><div data-reveal data-stagger style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px;margin-top:clamp(36px,4vw,52px)">
+      <div style="position:relative;background:#F6F5F0;border:1px solid #E3E0D8;border-radius:16px;padding:26px 24px;display:flex;flex-direction:column;gap:12px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;background:#0B1628;color:#7FE3D8;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">01</span>
+        <h3 style="margin:6px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:21px;letter-spacing:-.02em;color:#0B1628">Cadastre o perfil</h3>
+        <p style="margin:0;font-size:15px;line-height:1.55;color:#5B6779">Objetivo, disponibilidade, equipamentos e condições de saúde. O Mapa organiza os exercícios e a progressão semana a semana.</p>
+      </div>
+      <div style="position:relative;background:#F6F5F0;border:1px solid #E3E0D8;border-radius:16px;padding:26px 24px;display:flex;flex-direction:column;gap:12px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;background:#0B1628;color:#7FE3D8;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">02</span>
+        <h3 style="margin:6px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:21px;letter-spacing:-.02em;color:#0B1628">Revise com os cálculos à vista</h3>
+        <p style="margin:0;font-size:15px;line-height:1.55;color:#5B6779">Troque exercícios, ajuste séries e repetições. O volume atualiza enquanto você edita e o motivo de cada ajuste fica registrado.</p>
+      </div>
+      <div style="position:relative;background:#F6F5F0;border:1px solid #E3E0D8;border-radius:16px;padding:26px 24px;display:flex;flex-direction:column;gap:12px">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:12px;background:#0B1628;color:#7FE3D8;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px">03</span>
+        <h3 style="margin:6px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:21px;letter-spacing:-.02em;color:#0B1628">Entregue e acompanhe</h3>
+        <p style="margin:0;font-size:15px;line-height:1.55;color:#5B6779">O aluno recebe a versão aprovada no aplicativo com a sua marca. Você consulta os registros e o histórico na próxima revisão.</p>
+      </div>
+    </div>
+    </div>
+    <div data-so-m data-reveal style="margin-top:32px;display:flex;flex-direction:column">
+      <div style="display:grid;grid-template-columns:36px 1fr;gap:0 16px">
+        <div style="display:flex;flex-direction:column;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:50%;background:#0B1628;color:#7FE3D8;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:13px">01</span><span style="flex:1;width:2px;background:linear-gradient(180deg,#0B1628,#E3E0D8);margin:6px 0"></span></div>
+        <div style="padding:6px 0 26px"><p style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:18px;letter-spacing:-.02em;color:#0B1628">Cadastre o perfil</p><p style="margin:6px 0 0;font-size:14.5px;line-height:1.55;color:#5B6779">Objetivo, disponibilidade, equipamentos e condições de saúde. O Mapa organiza a progressão semana a semana.</p></div>
+      </div>
+      <div style="display:grid;grid-template-columns:36px 1fr;gap:0 16px">
+        <div style="display:flex;flex-direction:column;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:50%;background:#0B1628;color:#7FE3D8;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:13px">02</span><span style="flex:1;width:2px;background:linear-gradient(180deg,#0B1628,#E3E0D8);margin:6px 0"></span></div>
+        <div style="padding:6px 0 26px"><p style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:18px;letter-spacing:-.02em;color:#0B1628">Revise com os cálculos à vista</p><p style="margin:6px 0 0;font-size:14.5px;line-height:1.55;color:#5B6779">Troque exercícios, ajuste séries e repetições. O volume atualiza e o motivo de cada ajuste fica registrado.</p></div>
+      </div>
+      <div style="display:grid;grid-template-columns:36px 1fr;gap:0 16px">
+        <div style="display:flex;flex-direction:column;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:50%;background:#0B1628;color:#7FE3D8;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:13px">03</span></div>
+        <div style="padding:6px 0 0"><p style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:18px;letter-spacing:-.02em;color:#0B1628">Entregue e acompanhe</p><p style="margin:6px 0 0;font-size:14.5px;line-height:1.55;color:#5B6779">O aluno recebe a versão aprovada no aplicativo com a sua marca. Você consulta os registros na próxima revisão.</p></div>
+      </div>
+    </div>
+    <div data-reveal data-stagger style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:24px;margin-top:clamp(32px,4vw,48px)">
+      <figure style="margin:0">
+        <div style="border-radius:16px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 30px 60px -40px rgba(16,35,58,.4);background:#F1F3F6"><img src="/landing/sistema-editor.webp" alt="Editor de exercícios com a faixa citada pela evidência" style="display:block;width:100%;height:auto"></div>
+        <figcaption style="margin-top:12px;font-size:13.5px;color:#8FA0B5;text-align:center">A edição com a faixa que a evidência cita ao lado de cada valor.</figcaption>
+      </figure>
+      <figure data-oculta-m style="margin:0">
+        <div style="border-radius:16px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 30px 60px -40px rgba(16,35,58,.4);background:#F1F3F6"><img src="/landing/sistema-periodizacao.webp" alt="Gráfico de progressão de 12 semanas" style="display:block;width:100%;height:auto"></div>
+        <figcaption style="margin-top:12px;font-size:13.5px;color:#8FA0B5;text-align:center">O mesmo plano no gráfico: editou uma sessão, o volume da semana acompanha.</figcaption>
       </figure>
     </div>
   </div>
 </section>
 
-<!-- 3 · 01 A DOR -->
-<section id="rotina" data-screen-label="Dor" class="lp-sec lp-sec-a">
-  <div class="lp-wrap lp-grade lp-grade-8-12 lp-grade-topo">
+<!-- 03 · RECURSOS -->
+<section id="recursos" data-screen-label="Recursos" style="position:relative;overflow:hidden;background:#0B1628;color:#F3F1EA;padding:clamp(56px,7vw,96px) 0">
+  <div style="position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 70% 80% at 50% 0%,#000 0%,transparent 80%);-webkit-mask-image:radial-gradient(ellipse 70% 80% at 50% 0%,#000 0%,transparent 80%);animation:lp-deriva 14s linear infinite"></div>
+  <div style="position:relative;width:min(1180px,100% - 40px);margin:0 auto">
+    <div style="max-width:680px">
+      <p style="margin:0;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#7FE3D8;display:flex;align-items:center;gap:10px"><span style="width:22px;height:2px;background:#7FE3D8;border-radius:2px"></span>03 · O que vem junto</p>
+      <h2 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(28px,3.4vw,46px);line-height:1.06;color:#fff;text-wrap:balance">Tudo o que a prescrição precisa, no mesmo lugar.</h2>
+      <p style="margin:16px 0 0;font-size:clamp(16px,1.3vw,18px);color:#B9C6D6;line-height:1.6">Nada de recurso solto: cada peça alimenta a próxima, do cadastro ao PDF com o seu nome.</p>
+    </div>
+    <div data-oculta-m><div data-reveal data-stagger style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin-top:clamp(36px,4vw,52px)">
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;transition:all .2s ease" style-hover="background:rgba(255,255,255,.07);border-color:rgba(127,227,216,.35)">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">Rx</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Motor de prescrição com justificativa</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Cada série, repetição e intervalo vem com a faixa citada e a referência ao lado.</p>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;transition:all .2s ease" style-hover="background:rgba(255,255,255,.07);border-color:rgba(127,227,216,.35)">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">12s</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Periodização semana a semana</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Plano de 12 semanas com fases e descargas. Editou uma sessão, o volume acompanha.</p>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;transition:all .2s ease" style-hover="background:rgba(255,255,255,.07);border-color:rgba(127,227,216,.35)">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;gap:3px"><i style="width:7px;height:7px;border-radius:50%;background:#1DB56C"></i><i style="width:7px;height:7px;border-radius:50%;background:#E8A317"></i><i style="width:7px;height:7px;border-radius:50%;background:#E5484D"></i></span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Semáforo de saúde diário</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Checklist que se adapta às condições do aluno e destaca o que pede sua revisão antes de liberar.</p>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;transition:all .2s ease" style-hover="background:rgba(255,255,255,.07);border-color:rgba(127,227,216,.35)">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">App</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Aplicativo do aluno com a sua marca</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">O aluno consulta o treino, registra carga, repetições e esforço. Sem custo extra para ele.</p>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;transition:all .2s ease" style-hover="background:rgba(255,255,255,.07);border-color:rgba(127,227,216,.35)">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">Av</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Avaliação e reavaliação</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Compare avaliações por data e use o histórico para explicar cada ajuste ao aluno.</p>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:24px;transition:all .2s ease" style-hover="background:rgba(255,255,255,.07);border-color:rgba(127,227,216,.35)">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">PDF</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Prontuário em PDF</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Plano, decisões e referências saem com seu nome, CREF e data. Documento técnico, não só ficha.</p>
+      </div>
+    </div></div>
+    <div data-so-m data-carrossel style="display:flex;gap:12px;margin:28px -20px 0;padding:0 20px 8px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none">
+      <div style="flex:0 0 78%;scroll-snap-align:start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">Rx</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Motor de prescrição com justificativa</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Cada série, repetição e intervalo vem com a faixa citada e a referência ao lado.</p>
+      </div>
+      <div style="flex:0 0 78%;scroll-snap-align:start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">12s</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Periodização semana a semana</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Plano de 12 semanas com fases e descargas. Editou uma sessão, o volume acompanha.</p>
+      </div>
+      <div style="flex:0 0 78%;scroll-snap-align:start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;gap:3px"><i style="width:7px;height:7px;border-radius:50%;background:#1DB56C"></i><i style="width:7px;height:7px;border-radius:50%;background:#E8A317"></i><i style="width:7px;height:7px;border-radius:50%;background:#E5484D"></i></span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Semáforo de saúde diário</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Checklist que se adapta às condições do aluno e destaca o que pede sua revisão antes de liberar.</p>
+      </div>
+      <div style="flex:0 0 78%;scroll-snap-align:start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">App</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Aplicativo do aluno com a sua marca</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">O aluno consulta o treino, registra carga, repetições e esforço. Sem custo extra para ele.</p>
+      </div>
+      <div style="flex:0 0 78%;scroll-snap-align:start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">Av</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Avaliação e reavaliação</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Compare avaliações por data e use o histórico para explicar cada ajuste ao aluno.</p>
+      </div>
+      <div style="flex:0 0 78%;scroll-snap-align:start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:20px">
+        <span style="display:flex;width:40px;height:40px;border-radius:10px;background:rgba(127,227,216,.12);color:#7FE3D8;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:14px">PDF</span>
+        <h3 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:19px;letter-spacing:-.02em;color:#fff">Prontuário em PDF</h3>
+        <p style="margin:8px 0 0;font-size:14.5px;line-height:1.55;color:#A9B7C9">Plano, decisões e referências saem com seu nome, CREF e data. Documento técnico, não só ficha.</p>
+      </div>
+    </div>
+    <p data-so-m style="margin:10px 0 0;text-align:center;font-size:12px;color:#8FA0B5">Deslize para ver os seis recursos →</p>
+  </div>
+</section>
+
+<!-- 04 · SEMÁFORO -->
+<section id="semaforo" data-screen-label="Semáforo" style="position:relative;overflow:hidden;background:#EEF6F5;padding:clamp(56px,7vw,96px) 0">
+  <div data-oculta-m style="position:absolute;inset:0;pointer-events:none;background-image:repeating-radial-gradient(ellipse 55% 70% at 88% 45%,transparent 0 46px,rgba(20,179,186,.18) 46px 47.5px);mask-image:radial-gradient(ellipse 45% 70% at 92% 45%,#000 0%,rgba(0,0,0,.5) 45%,transparent 100%);-webkit-mask-image:radial-gradient(ellipse 45% 70% at 92% 45%,#000 0%,rgba(0,0,0,.5) 45%,transparent 100%)"></div>
+  <div style="position:relative;width:min(1180px,100% - 40px);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:clamp(32px,5vw,72px);align-items:center">
     <div>
-      <p class="lp-eyebrow">01 · A rotina</p>
-      <h2 class="lp-h2">A mensalidade não aumenta quando você passa horas refazendo treinos.</h2>
-    </div>
-    <div class="lp-prosa lp-prosa-lado">
-      <p>Chega um aluno novo. Outro passa a treinar só duas vezes por semana. Além dos atendimentos, você precisa montar, adaptar e recalcular os treinos.</p>
-      <p>Você trabalha mais pelo mesmo valor e fica com menos tempo para conquistar novos alunos, acompanhar melhor os atuais e aproveitar a vida fora do trabalho.</p>
-      <p class="lp-prosa-forte">O Mapa adianta a montagem e os cálculos. Você concentra a revisão no que cada aluno precisa.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 4 · 02 PERFIL DO ALUNO E REFERÊNCIAS -->
-<section data-screen-label="Condição" class="lp-sec lp-sec-navy">
-  <div class="lp-wrap">
-    <div class="lp-cabeca lp-cabeca-centro">
-      <p class="lp-eyebrow lp-eyebrow-mint">02 · O diferencial, na prática</p>
-      <h2 class="lp-h2">O perfil do aluno muda o treino. Veja o que mudou e por quê.</h2>
-      <p class="lp-lede lp-lede-escuro">Objetivo, experiência, frequência e equipamentos orientam a proposta. As condições de saúde contempladas pelo Mapa também entram na montagem quando são informadas.</p>
-    </div>
-    <p class="lp-label lp-demo-rot">Caso demonstrativo · perfil fictício</p>
-    <div class="lp-demo">
-      <div class="lp-demo-cartao">
-        <span class="lp-gatilho">Hipertensão</span>
-        <p class="lp-efeito">Confira os <b>limites propostos para o esforço</b> e as <b>referências associadas</b> a eles.</p>
-        <p class="lp-fonte">Henkin 2023 · Hanssen 2022 · SBC 2020</p>
+      <p style="margin:0;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#0C6B70;display:flex;align-items:center;gap:10px"><span style="width:12px;height:12px;border-radius:50%;background:#1DB56C;animation:lp-semaforo 6s ease-in-out infinite"></span>04 · Semáforo de saúde</p>
+      <h2 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(28px,3.4vw,46px);line-height:1.06;color:#0B1628;text-wrap:balance">Antes de cada treino, o aluno responde. Você decide se libera.</h2>
+      <p style="margin:18px 0 0;font-size:clamp(16px,1.3vw,18px);color:#3F5168;line-height:1.6;text-wrap:pretty">O checklist muda conforme o perfil: quem tem hipertensão informa a pressão de repouso; quem usa medicação, confirma a dose. O que foge do esperado aparece em destaque para você rever.</p>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-top:26px">
+        <div style="display:flex;gap:14px;align-items:flex-start"><span style="flex:none;margin-top:6px;width:12px;height:12px;border-radius:50%;background:#1DB56C"></span><p style="margin:0;font-size:15.5px;color:#3F5168;line-height:1.5"><b style="color:#0B1628;font-weight:600">Verde:</b> tudo dentro do esperado, treino liberado.</p></div>
+        <div style="display:flex;gap:14px;align-items:flex-start"><span style="flex:none;margin-top:6px;width:12px;height:12px;border-radius:50%;background:#E8A317"></span><p style="margin:0;font-size:15.5px;color:#3F5168;line-height:1.5"><b style="color:#0B1628;font-weight:600">Amarelo:</b> algo pede sua atenção antes de liberar.</p></div>
+        <div style="display:flex;gap:14px;align-items:flex-start"><span style="flex:none;margin-top:6px;width:12px;height:12px;border-radius:50%;background:#E5484D"></span><p style="margin:0;font-size:15.5px;color:#3F5168;line-height:1.5"><b style="color:#0B1628;font-weight:600">Vermelho:</b> sinal de alerta; o aluno é orientado a não treinar até você avaliar.</p></div>
       </div>
-      <div class="lp-demo-cartao">
-        <span class="lp-gatilho">Artrose no joelho</span>
-        <p class="lp-efeito">Confira como a restrição informada <b>interfere na escolha</b> dos exercícios, com o motivo ao lado.</p>
-        <p class="lp-fonte">Restrição estruturada, aplicada na seleção</p>
-      </div>
-      <div class="lp-demo-cartao">
-        <span class="lp-gatilho">Uso de betabloqueador</span>
-        <p class="lp-efeito">Veja qual <b>parâmetro de intensidade</b> foi usado no caso e a justificativa apresentada.</p>
-        <p class="lp-fonte">Wonisch 2003 · Mitchell 2019</p>
-      </div>
+      <p style="margin:26px 0 0;font-size:15px;color:#0C6B70;font-weight:600">O sistema organiza. O profissional avalia e decide.</p>
     </div>
-    <div class="lp-disputa-solo">
-      <h3 class="lp-h3 lp-cond-pergunta">E se dois critérios indicam limites diferentes?</h3>
-      <p class="lp-lede lp-lede-escuro">O Mapa mostra qual foi aplicado. Você revisa a proposta com essa informação à vista.</p>
-      <div class="lp-disputa">
-        <p class="lp-label">Caso demonstrativo · aluno de 65 anos com hipertensão · reserva de repetições</p>
-        <div class="lp-disputa-linha lp-disputa-vence"><span>A idade pediu</span><b>3 repetições</b><em>é a que vale</em></div>
-        <div class="lp-disputa-linha"><span>A hipertensão pedia</span><b>2 repetições</b><em>preterida</em></div>
-      </div>
-      <p class="lp-destaque-mint">O sistema organiza. O profissional avalia e decide.</p>
-    </div>
-  </div>
-</section>
-
-<!-- 5 · 03 MONTAGEM E AUTONOMIA -->
-<section id="como" data-screen-label="Montagem" class="lp-sec lp-sec-b">
-  <div class="lp-wrap">
-    <div class="lp-cabeca lp-cabeca-centro">
-      <p class="lp-eyebrow">03 · Como funciona</p>
-      <h2 class="lp-h2">O Mapa monta a proposta. Você aprova o treino.</h2>
-    </div>
-    <div class="lp-etapas lp-etapas-3">
-      <div class="lp-etapa"><span class="lp-num">01</span><h3 class="lp-h3">Cadastre o perfil</h3><p class="lp-etapa-txt">Informe o objetivo, a disponibilidade e as particularidades do aluno. O Mapa organiza os exercícios e a progressão por semana.</p></div>
-      <div class="lp-etapa"><span class="lp-num">02</span><h3 class="lp-h3">Revise com os cálculos à vista</h3><p class="lp-etapa-txt">Troque exercícios, ajuste séries e repetições. O volume é atualizado enquanto você edita, e os motivos dos ajustes ficam registrados.</p></div>
-      <div class="lp-etapa"><span class="lp-num">03</span><h3 class="lp-h3">Entregue e acompanhe</h3><p class="lp-etapa-txt">O aluno recebe a versão aprovada no aplicativo. Você consulta os registros e o histórico na próxima revisão.</p></div>
-    </div>
-    <div class="lp-grade lp-grade-par lp-grade-topo lp-prova-par">
-      <figure class="lp-tela">
-        <img src="/landing/sistema-editor.webp" alt="Tela do Mapa da Prescrição: editor de exercícios com séries, repetições, intensidade e intervalo, cada campo mostrando a faixa citada pela evidência" width="745" height="392" loading="lazy" decoding="async">
-        <figcaption>Tela do sistema: a edição com a faixa que a evidência cita ao lado de cada valor.</figcaption>
-      </figure>
-      <figure class="lp-tela">
-        <img src="/landing/sistema-periodizacao.webp" alt="Tela do Mapa da Prescrição: gráfico de progressão de 12 semanas, com as quatro fases e as descargas marcadas" width="773" height="392" loading="lazy" decoding="async">
-        <figcaption>O mesmo plano no gráfico: editou uma sessão, o volume da semana acompanha.</figcaption>
-      </figure>
-    </div>
-    <div class="lp-objecao">
-      <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" class="lp-btn lp-btn-escuro" style-hover="background:#0B1A2C">Ver planos</a></sc-if>
-      <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-escuro" style-hover="background:#0B1A2C">Criar minha conta</a></sc-if>
-    </div>
-  </div>
-</section>
-
-<!-- 6 · 04 EXPERIÊNCIA DO ALUNO E ACOMPANHAMENTO -->
-<section id="app" data-screen-label="Entrega" class="lp-sec lp-sec-a lp-tx-rota">
-  <div class="lp-wrap">
-    <div class="lp-cabeca lp-cabeca-centro">
-      <p class="lp-eyebrow">04 · Acompanhamento</p>
-      <h2 class="lp-h2">O aluno registra. Você acompanha e decide o próximo ajuste.</h2>
-      <p class="lp-lede">No aplicativo com a sua marca, o aluno consulta o treino e registra cargas, repetições e esforço. Você compara esses registros com o planejado antes de revisar a próxima sessão.</p>
-    </div>
-    <div class="lp-palco">
-      <div class="lp-palco-lado">
-        <div class="lp-card lp-mini">
-          <p class="lp-label">O treino do dia</p>
-          <ul class="lp-pontos lp-pontos-mini">
-            <li>O aluno encontra os <b>exercícios</b> e a <b>fase do plano</b> em que está</li>
-            <li>Registra <b>cada série que executou</b>, no mesmo lugar</li>
-            <li>Dá a <b>percepção de esforço</b> ao fim da sessão</li>
-          </ul>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="background:#0B1628;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:24px;color:#F3F1EA;box-shadow:0 40px 80px -40px rgba(16,35,58,.6)">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <p style="margin:0;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#8FA0B5">Semáforo de hoje · Helena, 65 · caso demonstrativo</p>
+          <span style="display:inline-flex;align-items:center;gap:8px;font-size:11.5px;padding:4px 10px;border-radius:999px;background:rgba(232,163,23,.16);color:#F0B429;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#F0B429;animation:lp-pulso 1.4s ease infinite"></span>Rever antes de liberar</span>
         </div>
-        <div class="lp-card-dark lp-check">
-          <p class="lp-label">Atenção ao que mudou hoje</p>
-          <div class="lp-check-linha"><span>Pressão de repouso</span><span class="lp-check-ok">registrada</span></div>
-          <div class="lp-check-linha"><span>Sintomas hoje</span><span class="lp-check-ok">nenhum</span></div>
-          <div class="lp-check-linha"><span>Tomou a medicação</span><span class="lp-check-alerta">não informou</span></div>
-          <div class="lp-check-status"><span class="lp-pill lp-pill-alerta">Rever antes de liberar</span><span class="lp-check-quem">O checklist se adapta às condições do perfil e destaca o que pede revisão. A conduta continua sendo sua.</span></div>
-        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14.5px;color:#D6DFEA"><span>Pressão de repouso</span><span style="color:#7FE3D8;font-weight:600;font-size:13.5px">128/82 · registrada</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14.5px;color:#D6DFEA"><span>Sintomas hoje</span><span style="color:#7FE3D8;font-weight:600;font-size:13.5px">nenhum</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14.5px;color:#D6DFEA"><span>Tomou o betabloqueador</span><span style="color:#F0B429;font-weight:600;font-size:13.5px">não informou</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:14px 0;font-size:14.5px;color:#D6DFEA"><span>Dor no joelho (0 a 10)</span><span style="color:#7FE3D8;font-weight:600;font-size:13.5px">2</span></div>
+        <p style="margin:14px 0 0;font-size:13px;color:#8FA0B5;line-height:1.5">O checklist se adapta às condições do perfil. A conduta continua sendo sua.</p>
       </div>
-
-      <div class="lp-fone-col">
-        <div class="lp-fone">
-          <span class="lp-fone-ilha" aria-hidden="true"></span>
-          <img class="lp-fone-tela-real" src="/landing/sistema-aluno.webp" alt="Tela do aplicativo do aluno: treino de hoje, com a sessão, os exercícios e o registro da execução" width="430" height="932" loading="lazy" decoding="async">
+      <div data-reveal style="background:#FFFDF9;border:1px solid #D3E4E1;border-radius:18px;padding:20px 22px">
+        <p style="margin:0;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#8FA0B5">E se dois critérios pedem limites diferentes?</p>
+        <div style="margin-top:14px;display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13.5px;color:#5B6779"><span>A idade pediu</span><em style="font-style:normal;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#0C6B70;background:#E0F5F4;border-radius:999px;padding:3px 8px">aplicada</em></div>
+          <b style="font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:700;color:#0C6B70;letter-spacing:-.01em">3 repetições em reserva</b>
+          <div style="height:6px;border-radius:999px;background:#E9F1EF;overflow:hidden;margin-top:4px"><div data-grow="100%" style="height:100%;border-radius:999px;background:linear-gradient(90deg,#14B3BA,#7FE3D8);width:0;transition:width 1.2s cubic-bezier(.2,.8,.2,1) .2s"></div></div>
         </div>
-        <p class="lp-fone-legenda">Tela real do aplicativo do aluno.</p>
-      </div>
-
-      <div class="lp-palco-lado">
-        <div class="lp-card lp-mini">
-          <p class="lp-label">Os registros, na sua tela</p>
-          <table class="lp-tbl">
-            <thead><tr><th>Exercício</th><th>Prescrito</th><th>Registrado</th><th>Sinal</th></tr></thead>
-            <tbody>
-              <tr><td>Agachamento livre</td><td>3 x 8</td><td>3 x 8</td><td class="lp-verde-txt">manter</td></tr>
-              <tr><td>Remada curvada</td><td>3 x 10</td><td>3 x 9</td><td class="lp-ambar-txt">rever</td></tr>
-              <tr><td>Supino reto</td><td>3 x 8</td><td>3 x 8</td><td class="lp-verde-txt">progredir</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="lp-card lp-mini">
-          <p class="lp-label">Um histórico para acompanhar e apresentar</p>
-          <ul class="lp-pontos lp-pontos-mini">
-            <li>Compare <b>reavaliações</b> e consulte o histórico por data</li>
-            <li>Emita o plano em <b>PDF com nome, CREF e data</b></li>
-            <li>Consulte o que foi registrado para <b>explicar os ajustes</b> e conversar sobre a evolução</li>
-          </ul>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #E3E0D8;display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13.5px;color:#5B6779"><span>A hipertensão pedia</span><em style="font-style:normal;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#8FA0B5;background:#F1EFE9;border-radius:999px;padding:3px 8px">preterida</em></div>
+          <b style="font-family:'Bricolage Grotesque',sans-serif;font-size:19px;font-weight:700;color:#17202E;letter-spacing:-.01em">2 repetições em reserva</b>
+          <div style="height:6px;border-radius:999px;background:#EEECE5;overflow:hidden;margin-top:4px"><div data-grow="66%" style="height:100%;border-radius:999px;background:#C9D2DC;width:0;transition:width 1.2s cubic-bezier(.2,.8,.2,1) .4s"></div></div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 6b · 05 VEJA EM USO (o slot de depoimentos, com demonstração real até existir relato) -->
-<section data-screen-label="Demonstração" class="lp-faixa lp-faixa-navy">
-  <div class="lp-wrap lp-faixa-corpo">
-    <p class="lp-faixa-rot">05 · Veja em uso</p>
-    <h2 class="lp-faixa-titulo">Não precisa imaginar: o Mapa vem com um caso completo de demonstração.</h2>
-    <p class="lp-faixa-sub lp-faixa-sub-navy">Crie a conta, clique em Carregar exemplos e navegue por um perfil fictício com hipertensão, artrose e betabloqueador: o plano de 12 semanas, os limites com as referências, os semáforos respondidos e semanas de execução registrada.</p>
+<!-- 05 · O ALUNO -->
+<section id="app" data-screen-label="Aluno" style="position:relative;overflow:hidden;background:#F6F5F0;padding:clamp(56px,7vw,96px) 0">
+  <div data-oculta-m style="position:absolute;inset:0;pointer-events:none;background-image:repeating-radial-gradient(ellipse 50% 60% at 22% 55%,transparent 0 60px,rgba(32,100,236,.11) 60px 61.5px);mask-image:radial-gradient(ellipse 32% 60% at 22% 55%,#000 0%,rgba(0,0,0,.5) 50%,transparent 100%);-webkit-mask-image:radial-gradient(ellipse 32% 60% at 22% 55%,#000 0%,rgba(0,0,0,.5) 50%,transparent 100%)"></div>
+  <div style="position:relative;width:min(1000px,100% - 40px);margin:0 auto;display:grid;grid-template-columns:{{ colunasPalco }};gap:clamp(32px,5vw,72px);align-items:center">
+    <div data-reveal style="display:flex;justify-content:center;padding:{{ padFone }}">
+      <div style="position:relative;width:min(260px,100%)">
+        <div style="position:absolute;inset:30px -30px -10px -30px;border-radius:50%;background:radial-gradient(ellipse,rgba(32,100,236,.22) 0%,rgba(32,100,236,0) 65%);pointer-events:none"></div>
+        <div style="position:relative;padding:9px;border-radius:46px;background:#0A0F18;box-shadow:0 50px 90px -40px rgba(11,22,40,.8),0 0 0 1px rgba(255,255,255,.06),inset 0 0 0 1px rgba(255,255,255,.08)">
+          <span style="position:absolute;left:-2px;top:110px;width:3px;height:30px;border-radius:2px;background:#1B2432"></span>
+          <span style="position:absolute;left:-2px;top:150px;width:3px;height:52px;border-radius:2px;background:#1B2432"></span>
+          <span style="position:absolute;right:-2px;top:130px;width:3px;height:70px;border-radius:2px;background:#1B2432"></span>
+          <div style="position:relative;border-radius:38px;overflow:hidden;background:#0B1628;aspect-ratio:9/19.3">
+            <img src="/landing/sistema-aluno.webp" alt="Aplicativo do aluno: treino de hoje" style="position:absolute;left:-4.8%;top:0;width:113.2%;height:auto;display:block">
+          </div>
+        </div>
+        <div data-oculta-m style="position:absolute;right:-56px;top:24%;background:#FFFDF9;color:#17202E;border-radius:12px;padding:10px 12px;box-shadow:0 24px 50px -20px rgba(0,0,0,.4);display:flex;gap:10px;align-items:center;animation:lp-flutuar 6s ease-in-out infinite">
+          <span style="flex:none;width:10px;height:10px;border-radius:50%;background:#1DB56C;box-shadow:0 0 0 4px rgba(29,181,108,.2)"></span>
+          <span style="font-size:12.5px;line-height:1.3;color:#5B6779"><b style="color:#17202E;font-weight:600">Semáforo: verde</b><br>liberado às 07:40</span>
+        </div>
+        <div data-oculta-m style="position:absolute;left:-56px;bottom:20%;background:#0B1628;color:#fff;border-radius:12px;padding:10px 12px;box-shadow:0 24px 50px -20px rgba(0,0,0,.5);animation:lp-flutuar 7s ease-in-out 1s infinite">
+          <p style="margin:0;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#7FE3D8;font-weight:600">Registrado</p>
+          <p style="margin:3px 0 0;font-size:12.5px;line-height:1.3;color:#B9C6D6">Agachamento · 3×8 · RPE 7</p>
+        </div>
+      </div>
+    </div>
     <div>
-      <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" class="lp-btn lp-btn-amber" style-hover="background:#F0B429">Ver planos</a></sc-if>
-      <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-amber" style-hover="background:#F0B429">Criar minha conta</a></sc-if>
-    </div>
-  </div>
-</section>
-
-<!-- 7 · 05 QUEM CRIOU O MAPA -->
-<section data-screen-label="Quem construiu" class="lp-sec lp-sec-b lp-tx-papel">
-  <div class="lp-wrap lp-grade lp-grade-foto">
-    <figure class="lp-fundador-figura">
-      <img src="/landing/filipe.webp" alt="Filipe Moura Ribeiro, criador do Mapa da Prescrição" width="720" height="900" loading="lazy">
-    </figure>
-    <div>
-      <p class="lp-eyebrow">06 · Quem criou</p>
-      <h2 class="lp-h2">Da pesquisa em exercício à rotina de quem prescreve.</h2>
-      <p class="lp-fundador-nome">Filipe Moura Ribeiro</p>
-      <div class="lp-selos">
-        <span>Doutor em Educação Física</span>
-        <span>8 anos de docência universitária</span>
-        <span>Pesquisador de pós-doutorado</span>
+      <div data-reveal>
+        <p style="margin:0;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#2064EC;display:flex;align-items:center;gap:10px"><span style="width:22px;height:2px;background:#2064EC;border-radius:2px"></span>05 · O que o aluno vê</p>
+        <h2 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(28px,3.4vw,44px);line-height:1.06;color:#0B1628;text-wrap:balance">O aluno registra. Você acompanha e decide o próximo ajuste.</h2>
+        <p style="margin:16px 0 0;font-size:clamp(15px,1.2vw,17px);color:#5B6779;line-height:1.6;text-wrap:pretty;max-width:520px">No aplicativo com a sua marca, o aluno consulta o treino e registra cargas, repetições e esforço. Você compara com o planejado antes da próxima revisão.</p>
       </div>
-      <p class="lp-corpo lp-max-600">Filipe estuda o treinamento físico para emagrecimento e doenças crônicas. Criou o Mapa para aproximar as referências científicas das decisões do dia a dia e conectar a prescrição ao acompanhamento: quem consulta os critérios, revisa o plano e responde pelo que entrega é sempre o profissional.</p>
+      <div data-reveal data-stagger style="display:flex;flex-direction:column;gap:18px;margin-top:28px">
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="flex:none;width:36px;height:36px;border-radius:10px;background:#0B1628;color:#7FE3D8;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:13px">01</span>
+          <div><p style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em;color:#0B1628">Treino do dia, com a fase do plano</p><p style="margin:4px 0 0;font-size:14.5px;line-height:1.55;color:#5B6779">Exercícios, séries e intervalos da sessão. Cada série executada é registrada no mesmo lugar.</p></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="flex:none;width:36px;height:36px;border-radius:10px;background:#0B1628;color:#7FE3D8;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:13px">02</span>
+          <div><p style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em;color:#0B1628">Semáforo antes de começar</p><p style="margin:4px 0 0;font-size:14.5px;line-height:1.55;color:#5B6779">Pressão, sintomas e medicação conforme o perfil. O que foge do esperado chega a você antes do treino.</p></div>
+        </div>
+        <div style="display:flex;gap:14px;align-items:flex-start">
+          <span style="flex:none;width:36px;height:36px;border-radius:10px;background:#0B1628;color:#7FE3D8;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:13px">03</span>
+          <div><p style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:17px;letter-spacing:-.01em;color:#0B1628">Registros na sua tela</p><p style="margin:4px 0 0;font-size:14.5px;line-height:1.55;color:#5B6779">Prescrito × registrado, com sinal para manter, rever ou progredir. Histórico por data e PDF com nome, CREF e data.</p></div>
+        </div>
+      </div>
+      <div data-reveal data-oculta-m style="margin-top:24px;background:#FFFDF9;border:1px solid #E3E0D8;border-radius:14px;padding:16px 18px;max-width:520px">
+        <p style="margin:0;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:#8FA0B5">Prescrito × registrado · Helena, semana 10</p>
+        <table style="width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px;font-variant-numeric:tabular-nums">
+          <thead><tr><th style="text-align:left;font-weight:600;color:#8FA0B5;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:0 10px 8px 0;border-bottom:1px solid #E3E0D8">Exercício</th><th style="text-align:left;font-weight:600;color:#8FA0B5;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:0 10px 8px 0;border-bottom:1px solid #E3E0D8">Prescrito</th><th style="text-align:left;font-weight:600;color:#8FA0B5;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:0 10px 8px 0;border-bottom:1px solid #E3E0D8">Registrado</th><th style="text-align:left;font-weight:600;color:#8FA0B5;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:0 10px 8px 0;border-bottom:1px solid #E3E0D8">Sinal</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:9px 10px 9px 0;border-bottom:1px solid #EEECE5">Agachamento</td><td style="padding:9px 10px 9px 0;border-bottom:1px solid #EEECE5">3×8</td><td style="padding:9px 10px 9px 0;border-bottom:1px solid #EEECE5">3×8</td><td style="padding:9px 10px 9px 0;border-bottom:1px solid #EEECE5;color:#177A4C;font-weight:600">manter</td></tr>
+            <tr><td style="padding:9px 10px 9px 0;border-bottom:1px solid #EEECE5">Remada curvada</td><td style="padding:9px 10px 9px 0;border-bottom:1px solid #EEECE5">3×10</td><td style="padding:9px 10px 9px 0;border-bottom:1px solid #EEECE5">3×9</td><td style="padding:9px 10px 9px 0;border-bottom:1px solid #EEECE5;color:#8E6009;font-weight:600">rever</td></tr>
+            <tr><td style="padding:9px 10px 0 0">Supino reto</td><td style="padding:9px 10px 0 0">3×8</td><td style="padding:9px 10px 0 0">3×8</td><td style="padding:9px 0 0 0;color:#177A4C;font-weight:600">progredir</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- 8 · 06 PLANOS -->
-<section id="preco" data-screen-label="Oferta" class="lp-sec lp-sec-oferta lp-tx-ruido">
-  <div class="lp-wrap">
-    <div class="lp-cabeca lp-cabeca-centro">
-      <p class="lp-eyebrow lp-eyebrow-ambar">07 · Planos</p>
-      <h2 class="lp-h2">Todos os seus alunos em uma assinatura. Sem cobrança por aluno.</h2>
-      <p class="lp-lede lp-lede-oferta">Os recursos são os mesmos em todos os planos. Você escolhe o período de contratação.</p>
+<!-- 06 · PROVA (o slot de depoimentos abre quando houver relato real e autorizado.
+     O protótipo desenha três cartões de citação com nome, CREF e cidade; eles entram
+     aqui, no mesmo desenho, no dia em que existirem relatos de verdade. Publicar o
+     modelo ilustrativo seria prova social fabricada, e a régua de conformidade barra. -->
+<section id="prova" data-screen-label="Prova" style="background:#FFFDF9;border-top:1px solid #E3E0D8;border-bottom:1px solid #E3E0D8;padding:clamp(56px,7vw,96px) 0">
+  <div style="width:min(1180px,100% - 40px);margin:0 auto">
+    <div style="background:#0B1628;border-radius:20px;padding:clamp(24px,3vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px;align-items:center;color:#F3F1EA">
+      <div>
+        <p style="margin:0;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:#7FE3D8">Não precisa imaginar</p>
+        <h3 style="margin:10px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:clamp(20px,2vw,26px);letter-spacing:-.02em;color:#fff;text-wrap:pretty">O Mapa vem com um caso completo de demonstração.</h3>
+        <p style="margin:12px 0 0;font-size:15px;color:#B9C6D6;line-height:1.55">Um perfil fictício com hipertensão, artrose e betabloqueador: plano de 12 semanas, limites com referências, semáforos respondidos e semanas de execução registradas.</p>
+      </div>
+      <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:12px">
+        <a href="/dashboard" style="display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:0 24px;border-radius:12px;background:#7FE3D8;color:#0B1628;font-weight:700;font-size:15.5px;transition:all .18s ease" style-hover="background:#A5F0E8">Explorar o caso demonstrativo</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 · PREÇOS -->
+<section id="preco" data-screen-label="Oferta" style="position:relative;overflow:hidden;background:#E8A317;color:#17202E;padding:clamp(56px,7vw,96px) 0">
+  <div style="position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(58,42,5,.12) 1px,transparent 1px),linear-gradient(90deg,rgba(58,42,5,.12) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 80% 70% at 50% 20%,#000 0%,transparent 85%);-webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 20%,#000 0%,transparent 85%)"></div>
+  <div style="position:absolute;left:-200px;bottom:-300px;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(255,236,190,.6) 0%,rgba(255,236,190,0) 62%);pointer-events:none"></div>
+  <div style="position:relative;width:min(1000px,100% - 40px);margin:0 auto">
+    <div data-reveal data-center style="max-width:640px;margin:0 auto;text-align:center">
+      <p style="margin:0;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#5A3F04;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:22px;height:2px;background:#5A3F04;border-radius:2px"></span>06 · Planos</p>
+      <h2 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(28px,3.4vw,44px);line-height:1.06;color:#0B1628;text-wrap:balance">Todos os seus alunos em uma assinatura. Sem cobrança por aluno.</h2>
+      <p data-oculta-m style="margin:14px 0 0;font-size:clamp(15px,1.2vw,17px);color:#3A2A05;line-height:1.6">Os recursos são os mesmos em todos os planos. Você escolhe só o período.</p>
     </div>
 
-    <ul class="lp-inclui">
-      <li>Montagem do treino com progressão e referências para consultar</li>
-      <li>Editor com atualização do volume e histórico dos ajustes</li>
-      <li>App do aluno com a sua marca e registros de cada sessão</li>
-      <li>Reavaliações e documentos em PDF</li>
-      <li>Orientação no primeiro acesso, tutoriais e suporte por e-mail</li>
-    </ul>
-
-    <div class="lp-planos-cards">
-      <button type="button" class="lp-plano-card {{ clsMensal }}" sc-camel-on-click="{{ selMensal }}" style-hover="border-color:#10233A">
-        <span class="lp-plano-topo">Mensal</span>
-        <span class="lp-plano-valor">R$ {{ mensalAvulso }}<i>/mês</i></span>
-        <span class="lp-plano-cobranca">Cobrança mensal, sem compromisso de prazo</span>
-        <span class="lp-plano-ano">{{ anoNoMensal }} no ano</span>
-      </button>
-      <button type="button" class="lp-plano-card {{ clsSemestral }}" sc-camel-on-click="{{ selSemestral }}" style-hover="border-color:#10233A">
-        <span class="lp-plano-topo">Semestral</span>
-        <span class="lp-plano-valor">{{ semestralFatura }}<i>a cada 6 meses</i></span>
-        <span class="lp-plano-cobranca">Equivalente a R$ {{ semestralMes }} por mês</span>
-        <span class="lp-plano-ano">{{ economiaSem6m }} de economia em seis meses, contra o mensal</span>
-      </button>
-      <button type="button" class="lp-plano-card lp-plano-destaque {{ clsAnual }}" sc-camel-on-click="{{ selAnual }}" style-hover="border-color:#7FE3D8">
-        <span class="lp-plano-selo">As {{ vagas }} primeiras contas</span>
-        <span class="lp-plano-topo">Anual fundador</span>
-        <span class="lp-plano-valor">{{ fundadorAno }}<i>por 12 meses</i></span>
-        <span class="lp-plano-cobranca">Pagamento anual, equivalente a R$ {{ fundadorMes }} por mês</span>
-        <span class="lp-plano-ano">{{ fundadorVsAnual }} a menos que o anual regular de {{ proAno }}</span>
-      </button>
-    </div>
-    <p class="lp-plano-resumo">{{ resumoPlano }}</p>
-
-    <p class="lp-oferta-nenhum"><b>A condição de fundador</b> vale para as {{ vagas }} primeiras contas elegíveis. Quem entra nesta fase pode contribuir com sugestões a partir da rotina de atendimento, e o preço permanece enquanto a assinatura estiver ativa, conforme as condições da oferta. A ordem de criação das contas identifica as primeiras; encerrada a condição, vale o anual regular de {{ proAno }}.</p>
-
-    <div class="lp-oferta-acao">
-      <sc-if value="{{ cobrancaAtiva }}"><a href="/dashboard" class="lp-btn lp-btn-escuro" style-hover="background:#0B1A2C">Assinar no plano escolhido</a></sc-if>
-      <sc-if value="{{ semCobranca }}"><a href="/dashboard" class="lp-btn lp-btn-escuro" style-hover="background:#0B1A2C">Criar minha conta</a></sc-if>
-      <sc-if value="{{ semCobranca }}"><p class="lp-oferta-nota">Crie sua conta e use o sistema completo, sem cartão: a cobrança ainda não está ativa, e os valores acima são a tabela anunciada. Você será avisado antes de ela entrar em vigor.</p></sc-if>
+    <div data-reveal data-center data-oculta-m style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:26px">
+      <span style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#3A2A05;background:rgba(255,253,249,.55);border:1px solid rgba(58,42,5,.18);border-radius:999px;padding:7px 12px 7px 8px"><span style="flex:none;width:16px;height:16px;border-radius:50%;background:#0B1628;color:#7FE3D8;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">✓</span>Alunos ilimitados</span><span style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#3A2A05;background:rgba(255,253,249,.55);border:1px solid rgba(58,42,5,.18);border-radius:999px;padding:7px 12px 7px 8px"><span style="flex:none;width:16px;height:16px;border-radius:50%;background:#0B1628;color:#7FE3D8;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">✓</span>Motor com referências</span><span style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#3A2A05;background:rgba(255,253,249,.55);border:1px solid rgba(58,42,5,.18);border-radius:999px;padding:7px 12px 7px 8px"><span style="flex:none;width:16px;height:16px;border-radius:50%;background:#0B1628;color:#7FE3D8;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">✓</span>Semáforo diário</span><span style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#3A2A05;background:rgba(255,253,249,.55);border:1px solid rgba(58,42,5,.18);border-radius:999px;padding:7px 12px 7px 8px"><span style="flex:none;width:16px;height:16px;border-radius:50%;background:#0B1628;color:#7FE3D8;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">✓</span>Periodização 12 semanas</span><span style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#3A2A05;background:rgba(255,253,249,.55);border:1px solid rgba(58,42,5,.18);border-radius:999px;padding:7px 12px 7px 8px"><span style="flex:none;width:16px;height:16px;border-radius:50%;background:#0B1628;color:#7FE3D8;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">✓</span>App do aluno com sua marca</span><span style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#3A2A05;background:rgba(255,253,249,.55);border:1px solid rgba(58,42,5,.18);border-radius:999px;padding:7px 12px 7px 8px"><span style="flex:none;width:16px;height:16px;border-radius:50%;background:#0B1628;color:#7FE3D8;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center">✓</span>Prontuário em PDF</span>
     </div>
 
+    <sc-if value="{{ semCobranca }}">
+    <div data-reveal style="margin:clamp(26px,3vw,36px) auto 0;background:#0B1628;color:#F3F1EA;border-radius:16px;padding:16px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;align-items:center;box-shadow:0 30px 60px -40px rgba(16,35,58,.6)">
+      <div>
+        <p style="margin:0;display:flex;align-items:center;gap:10px;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#F0B429"><span style="width:8px;height:8px;border-radius:50%;background:#F0B429;animation:lp-pulso 1.6s ease infinite"></span>Condição de fundador</p>
+        <p style="margin:4px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:clamp(17px,1.5vw,20px);letter-spacing:-.02em;color:#fff;line-height:1.2">As {{ vagas }} primeiras contas entram a <span style="color:#F0B429">{{ fundadorAno }}/ano</span></p>
+      </div>
+      <p style="margin:0;font-size:13px;color:#8FA0B5;line-height:1.5">A ordem de criação das contas identifica as primeiras. A cobrança ainda não está ativa; os valores são a tabela anunciada.</p>
+    </div>
+    </sc-if>
     <sc-if value="{{ cobrancaAtiva }}">
-    <div class="lp-garantia-oferta">
-      <h3 class="lp-h3">Assine, use com um aluno seu e avalie na prática.</h3>
-      <p>Você tem 7 dias após a contratação para pedir o reembolso integral se o Mapa não fizer sentido para a sua rotina, sem precisar justificar. Solicite pelo e-mail <a href="mailto:suporte@mapadaprescricao.com.br">suporte@mapadaprescricao.com.br</a>.</p>
+    <div data-reveal style="margin:clamp(26px,3vw,36px) auto 0;background:#0B1628;color:#F3F1EA;border-radius:16px;padding:16px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px;align-items:center;box-shadow:0 30px 60px -40px rgba(16,35,58,.6)">
+      <div>
+        <p style="margin:0;display:flex;align-items:center;gap:10px;font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#F0B429"><span style="width:8px;height:8px;border-radius:50%;background:#F0B429;animation:lp-pulso 1.6s ease infinite"></span>Condição de fundador</p>
+        <p style="margin:4px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:clamp(17px,1.5vw,20px);letter-spacing:-.02em;color:#fff;line-height:1.2">Restam <span style="color:#F0B429">{{ vagasRestantes }}</span> de {{ vagas }} vagas a {{ fundadorAno }}/ano</p>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#8FA0B5;margin-bottom:8px"><span>{{ vagasOcupadas }} fundadores já entraram</span><span data-oculta-m>{{ percentualVagas }}</span></div>
+        <div style="height:8px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden"><div style="height:100%;border-radius:999px;background:linear-gradient(90deg,#E8A317,#F0B429);width:{{ barraVagas }};transition:width 1.4s cubic-bezier(.2,.8,.2,1)"></div></div>
+      </div>
     </div>
     </sc-if>
 
-    <p class="lp-oferta-outros">Estúdio com 3 ou mais profissionais e instituições de ensino: <a href="mailto:suporte@mapadaprescricao.com.br?subject=Estúdio%20ou%20instituição" style-hover="color:#10233A">fale com a gente</a>. Estudantes de bacharelado em Educação Física usam sem custo durante a graduação.</p>
-  </div>
-</section>
-
-<!-- 9 · 07 PERGUNTAS -->
-<section id="faq" data-screen-label="FAQ" class="lp-sec lp-sec-b lp-sec-faq">
-  <div class="lp-wrap lp-faq-wrap">
-    <div class="lp-faq-topo"><p class="lp-eyebrow">08 · Perguntas</p><h2 class="lp-h2">Antes de escolher seu plano.</h2><p class="lp-lede">Se a sua dúvida não estiver aqui, escreva para <a href="mailto:suporte@mapadaprescricao.com.br">suporte@mapadaprescricao.com.br</a>.</p></div>
-    <div class="lp-faq">
-      <sc-if value="{{ semCobranca }}"><details><summary>Preciso informar cartão para começar?</summary><p>Não. A cobrança ainda não está no ar: você cria a conta, cadastra um aluno seu e usa o sistema inteiro. Quando a cobrança entrar, você é avisado antes.</p></details></sc-if>
-      <details><summary>Já uso um aplicativo de treino. Por que considerar o Mapa?</summary><p>Compare como a sua ferramenta usa o perfil do aluno, apresenta os motivos da proposta e reúne os registros para a próxima revisão. No Mapa, essas etapas fazem parte do mesmo acompanhamento.</p></details>
-      <details><summary>Vou precisar trocar todos os meus alunos de uma vez?</summary><p>Não. Comece com um aluno e conheça o processo antes de incluir os demais. Você conta com orientação no primeiro acesso, tutoriais e suporte por e-mail.</p></details>
-      <details><summary>Posso mudar o treino sugerido?</summary><p>Sim. Você pode trocar exercícios e ajustar séries, repetições e esforço. O aluno recebe a versão que você revisou e aprovou.</p></details>
-      <details><summary>Por que assinar se uma IA também monta treinos?</summary><p>A assinatura reúne montagem, edição, entrega e acompanhamento. O plano, os registros do aluno e as reavaliações ficam juntos para orientar as próximas revisões.</p></details>
-      <details><summary>Serve para quem atende emagrecimento e hipertrofia?</summary><p>Sim. O objetivo orienta a proposta. Os critérios de saúde entram quando a condição está informada e contemplada pelo sistema.</p></details>
-      <details><summary>O aluno também precisa pagar?</summary><p>Não. O acesso do aluno está incluído. Você usa o Mapa no computador ou no celular; ele consulta o treino e registra a sessão pelo aplicativo.</p></details>
-    </div>
-  </div>
-</section>
-
-<!-- 10 · FECHO -->
-<section data-screen-label="Fecho" class="lp-sec lp-sec-a lp-fecho">
-  <div class="lp-wrap">
-    <h2 class="lp-h2 lp-max-640">Monte seu próximo treino com o Mapa.</h2>
-    <sc-if value="{{ cobrancaAtiva }}"><p class="lp-lede lp-max-640">Comece com um aluno. Revise a proposta, entregue o treino e conheça o acompanhamento. Sua assinatura tem garantia de reembolso integral nos primeiros 7 dias.</p><a href="#preco" class="lp-btn lp-btn-amber lp-fecho-cta" style-hover="background:#F0B429;transform:translateY(-1px)">Escolher meu plano</a><p class="lp-fecho-nota">Alunos ilimitados · App do aluno incluído · Garantia de 7 dias</p></sc-if>
-    <sc-if value="{{ semCobranca }}"><p class="lp-lede lp-max-640">Crie sua conta, cadastre um aluno e revise sua primeira proposta. Depois, conheça a entrega no aplicativo e o acompanhamento.</p><a href="/dashboard" class="lp-btn lp-btn-amber lp-fecho-cta" style-hover="background:#F0B429;transform:translateY(-1px)">Criar minha conta</a><p class="lp-fecho-nota">Acesso liberado nesta fase · Sem cartão · Alunos ilimitados</p></sc-if>
-  </div>
-</section>
-
-<!-- 11 · RODAPÉ -->
-<footer data-screen-label="Rodapé" class="lp-rodape">
-  <div class="lp-wrap lp-rodape-solo">
-    <div class="lp-rodape-marca">
-      <div class="lp-marca lp-marca-rodape">
-        <img src="/brand/marca-pino.webp" alt="" width="26" height="26" class="lp-marca-img-sm">
-        <span class="lp-marca-nome">Mapa da Prescrição</span>
+    <div data-reveal data-stagger style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px;margin-top:16px;align-items:stretch">
+      <div data-oculta-m style="background:#FFFDF9;border:1px solid #E3E0D8;border-radius:18px;padding:24px;display:flex;flex-direction:column;transition:all .2s ease" style-hover="border-color:#10233A;transform:translateY(-3px)">
+        <p style="margin:0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:#8FA0B5">Mensal</p>
+        <p style="margin:12px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:40px;line-height:1;color:#0B1628">R$ {{ mensalAvulso }}<span style="font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:500;color:#8FA0B5;letter-spacing:0;margin-left:4px">/mês</span></p>
+        <p style="margin:10px 0 0;font-size:13.5px;color:#5B6779;line-height:1.5">Sem compromisso de prazo.<br><span style="color:#8FA0B5">{{ anoNoMensal }} no ano</span></p>
+        <div style="margin-top:auto;padding-top:20px"><sc-if value="{{ cobrancaAtiva }}"><a href="/dashboard" style="display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;border:1px solid #D8D4CA;color:#0B1628;font-weight:600;font-size:14.5px;transition:all .18s ease" style-hover="border-color:#0B1628;background:#F6F5F0">Assinar mensal</a></sc-if><sc-if value="{{ semCobranca }}"><a href="/dashboard" style="display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;border:1px solid #D8D4CA;color:#0B1628;font-weight:600;font-size:14.5px;transition:all .18s ease" style-hover="border-color:#0B1628;background:#F6F5F0">Criar minha conta</a></sc-if></div>
       </div>
-      <p class="lp-rodape-tagline">Prescrição e acompanhamento para profissionais de Educação Física.</p>
+      <div data-oculta-m style="background:#FFFDF9;border:1px solid #E3E0D8;border-radius:18px;padding:24px;display:flex;flex-direction:column;transition:all .2s ease" style-hover="border-color:#10233A;transform:translateY(-3px)">
+        <p style="margin:0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:#8FA0B5">Semestral</p>
+        <p style="margin:12px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:40px;line-height:1;color:#0B1628">R$ {{ semestralMes }}<span style="font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:500;color:#8FA0B5;letter-spacing:0;margin-left:4px">/mês</span></p>
+        <p style="margin:10px 0 0;font-size:13.5px;color:#5B6779;line-height:1.5">{{ semestralFatura }} a cada 6 meses.<br><span style="color:#8FA0B5">Economia de {{ economiaSemestralAno }} no ano</span></p>
+        <div style="margin-top:auto;padding-top:20px"><sc-if value="{{ cobrancaAtiva }}"><a href="/dashboard" style="display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;border:1px solid #D8D4CA;color:#0B1628;font-weight:600;font-size:14.5px;transition:all .18s ease" style-hover="border-color:#0B1628;background:#F6F5F0">Assinar semestral</a></sc-if><sc-if value="{{ semCobranca }}"><a href="/dashboard" style="display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;border:1px solid #D8D4CA;color:#0B1628;font-weight:600;font-size:14.5px;transition:all .18s ease" style-hover="border-color:#0B1628;background:#F6F5F0">Criar minha conta</a></sc-if></div>
+      </div>
+      <div style="position:relative;background:#0B1628;border:1px solid rgba(127,227,216,.3);border-radius:18px;padding:24px;display:flex;flex-direction:column;color:#F3F1EA;box-shadow:0 40px 80px -40px rgba(11,22,40,.8);transition:all .2s ease;overflow:hidden" style-hover="transform:translateY(-3px);border-color:rgba(127,227,216,.6)">
+        <div style="position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(190,214,232,.18) 1px,transparent 1.1px);background-size:22px 22px;mask-image:linear-gradient(180deg,#000,transparent 70%);-webkit-mask-image:linear-gradient(180deg,#000,transparent 70%)"></div>
+        <div style="position:relative;display:flex;flex-direction:column;flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><p style="margin:0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:#7FE3D8">Anual · Fundador</p><span style="font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#0B1628;background:#F0B429;border-radius:999px;padding:4px 9px">{{ vagas }} vagas</span></div>
+          <div style="margin:14px 0 0;display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
+            <p style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:52px;line-height:1;color:#fff">R$ {{ fundadorMes }}<span style="font-family:'Instrument Sans',sans-serif;font-size:14px;font-weight:500;color:#8FA0B5;letter-spacing:0;margin-left:4px">/mês</span></p>
+            <p style="margin:0 0 6px;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:22px;line-height:1;color:#5F6F85;text-decoration:line-through;text-decoration-color:#E5484D;text-decoration-thickness:2px">R$ {{ proPreco }}</p>
+          </div>
+          <p style="margin:10px 0 0;font-size:13.5px;color:#B9C6D6;line-height:1.5"><b style="color:#fff;font-weight:600">{{ fundadorAno }}/ano</b>, pagamento único, em vez de {{ proAno }}.<br><span style="color:#7FE3D8;font-weight:600">Quase metade do anual regular · preço travado</span></p>
+          <div data-so-m style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12.5px;color:#D6DFEA"><span style="display:flex;gap:6px;align-items:baseline"><span style="color:#7FE3D8;font-weight:700">✓</span>Alunos ilimitados</span><span style="display:flex;gap:6px;align-items:baseline"><span style="color:#7FE3D8;font-weight:700">✓</span>App do aluno</span><span style="display:flex;gap:6px;align-items:baseline"><span style="color:#7FE3D8;font-weight:700">✓</span>Semáforo diário</span><span style="display:flex;gap:6px;align-items:baseline"><span style="color:#7FE3D8;font-weight:700">✓</span>Periodização</span><span style="display:flex;gap:6px;align-items:baseline"><span style="color:#7FE3D8;font-weight:700">✓</span>Referências citadas</span><span style="display:flex;gap:6px;align-items:baseline"><span style="color:#7FE3D8;font-weight:700">✓</span>Prontuário em PDF</span></div>
+          <div style="margin-top:auto;padding-top:20px"><sc-if value="{{ cobrancaAtiva }}"><a href="/dashboard" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:12px;background:#2064EC;color:#fff;font-weight:600;font-size:15px;box-shadow:0 12px 30px -10px rgba(32,100,236,.8);transition:all .18s ease" style-hover="background:#1A4FC0">Garantir vaga de fundador<span>→</span></a></sc-if><sc-if value="{{ semCobranca }}"><a href="/dashboard" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;border-radius:12px;background:#2064EC;color:#fff;font-weight:600;font-size:15px;box-shadow:0 12px 30px -10px rgba(32,100,236,.8);transition:all .18s ease" style-hover="background:#1A4FC0">Criar minha conta<span>→</span></a></sc-if></div>
+        </div>
+      </div>
     </div>
-    <div class="lp-rodape-linksrow">
-      <a href="/termos" style-hover="color:#FFFFFF">Termos de uso</a>
-      <a href="/privacidade" style-hover="color:#FFFFFF">Privacidade</a>
-      <a href="/lgpd" style-hover="color:#FFFFFF">Seus direitos (LGPD)</a>
-      <a href="mailto:suporte@mapadaprescricao.com.br" style-hover="color:#FFFFFF">Suporte</a>
-      <a href="/aluno" style-hover="color:#FFFFFF">Acesso do aluno</a>
+    <div data-so-m style="margin-top:12px;background:#FFFDF9;border:1px solid #E3E0D8;border-radius:16px;overflow:hidden">
+      <p style="margin:0;padding:12px 16px 0;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:#8FA0B5">Outros períodos</p>
+      <a href="/dashboard" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #E3E0D8;color:#0B1628"><span><b style="display:block;font-weight:600;font-size:15px">Mensal</b><span style="font-size:12.5px;color:#8FA0B5">sem compromisso de prazo</span></span><span style="display:flex;align-items:center;gap:10px"><b style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.02em">R$ {{ mensalAvulso }}<span style="font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:500;color:#8FA0B5">/mês</span></b><span style="color:#8FA0B5">→</span></span></a>
+      <a href="/dashboard" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;color:#0B1628"><span><b style="display:block;font-weight:600;font-size:15px">Semestral</b><span style="font-size:12.5px;color:#8FA0B5">{{ semestralFatura }} a cada 6 meses</span></span><span style="display:flex;align-items:center;gap:10px"><b style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.02em">R$ {{ semestralMes }}<span style="font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:500;color:#8FA0B5">/mês</span></b><span style="color:#8FA0B5">→</span></span></a>
+    </div>
+    <p data-reveal data-oculta-m style="margin:18px auto 0;max-width:640px;text-align:center;font-size:13px;color:#5A3F04;line-height:1.55">Depois das {{ vagas }} vagas, vale o anual regular de R$ {{ proPreco }}/mês. Quem entra como fundador mantém {{ fundadorAno }}/ano enquanto a assinatura estiver ativa.</p>
+  </div>
+</section>
+
+<!-- FAIXA · garantia e outros perfis -->
+<section data-screen-label="Garantia" style="background:#FFFDF9;border-top:1px solid #E3E0D8;border-bottom:1px solid #E3E0D8">
+  <div style="width:min(1000px,100% - 40px);margin:0 auto;padding:26px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px 48px">
+    <sc-if value="{{ cobrancaAtiva }}">
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <span style="flex:none;width:44px;height:44px;border-radius:12px;background:#0B1628;color:#F0B429;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px">7d</span>
+      <p style="margin:0;font-size:14.5px;line-height:1.55;color:#5B6779"><b style="color:#0B1628;font-weight:600">Garantia de 7 dias.</b> Assine, use com um aluno seu e avalie na prática. Se não fizer sentido para a sua rotina, devolvemos tudo, sem justificativa.</p>
+    </div>
+    </sc-if>
+    <sc-if value="{{ semCobranca }}">
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <span style="flex:none;width:44px;height:44px;border-radius:12px;background:#0B1628;color:#F0B429;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px">✓</span>
+      <p style="margin:0;font-size:14.5px;line-height:1.55;color:#5B6779"><b style="color:#0B1628;font-weight:600">Sem cartão nesta fase.</b> Crie sua conta e use o sistema completo. A cobrança ainda não está ativa, e você será avisado antes de ela entrar em vigor.</p>
+    </div>
+    </sc-if>
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <span style="flex:none;width:44px;height:44px;border-radius:12px;background:#E8EFFD;color:#2064EC;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px">3+</span>
+      <p style="margin:0;font-size:14.5px;line-height:1.55;color:#5B6779"><b style="color:#0B1628;font-weight:600">Estúdios e instituições.</b> Equipes com 3 ou mais profissionais e cursos de Educação Física: <a href="mailto:suporte@mapadaprescricao.com.br" style="font-weight:600">fale com a gente</a>. Estudantes de bacharelado usam sem custo.</p>
     </div>
   </div>
-  <div class="lp-wrap">
-    <p class="lp-rodape-aviso">O Mapa apoia o planejamento e o acompanhamento do exercício. A avaliação do aluno, a revisão do plano e a decisão sobre a conduta permanecem sob responsabilidade do profissional habilitado.</p>
-    <div class="lp-rodape-base">
-      <p>© 2026 Mapa da Prescrição</p>
-      <div class="lp-rodape-links"><a href="/termos" style-hover="color:#FFFFFF">Termos</a><a href="/privacidade" style-hover="color:#FFFFFF">Privacidade</a><a href="/lgpd" style-hover="color:#FFFFFF">LGPD</a></div>
+</section>
+
+<!-- 08 · FAQ -->
+<section id="faq" data-screen-label="FAQ" style="background:#FFFDF9;border-top:1px solid #E3E0D8;padding:clamp(56px,7vw,96px) 0">
+  <div style="width:min(860px,100% - 40px);margin:0 auto">
+    <p style="margin:0;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#2064EC;display:flex;align-items:center;gap:10px"><span style="width:22px;height:2px;background:#2064EC;border-radius:2px"></span>07 · Perguntas</p>
+    <h2 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(28px,3.4vw,46px);line-height:1.06;color:#0B1628">Antes de escolher seu plano.</h2>
+    <p style="margin:14px 0 0;font-size:16.5px;color:#5B6779;line-height:1.6">Se a sua dúvida não estiver aqui, escreva para <a href="mailto:suporte@mapadaprescricao.com.br" style="font-weight:600">suporte@mapadaprescricao.com.br</a>.</p>
+    <div style="margin-top:32px;border-top:1px solid #E3E0D8">
+      <sc-if value="{{ semCobranca }}"><details style="border-bottom:1px solid #E3E0D8"><summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600;color:#0B1628">Preciso informar cartão para começar?<span style="flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #D8D4CA;color:#2064EC;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:400">+</span></summary><p style="margin:0;padding:0 0 20px;color:#5B6779;font-size:15.5px;line-height:1.6;max-width:640px">Não. A cobrança ainda não está no ar: você cria a conta, cadastra um aluno seu e usa o sistema inteiro. Quando a cobrança entrar, você é avisado antes.</p></details></sc-if>
+      <details style="border-bottom:1px solid #E3E0D8"><summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600;color:#0B1628">Já uso um aplicativo de treino. Por que considerar o Mapa?<span style="flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #D8D4CA;color:#2064EC;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:400">+</span></summary><p style="margin:0;padding:0 0 20px;color:#5B6779;font-size:15.5px;line-height:1.6;max-width:640px">Compare como a sua ferramenta usa o perfil do aluno, apresenta os motivos da proposta e reúne os registros para a próxima revisão. No Mapa, essas etapas fazem parte do mesmo acompanhamento.</p></details>
+      <details style="border-bottom:1px solid #E3E0D8"><summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600;color:#0B1628">Vou precisar trocar todos os meus alunos de uma vez?<span style="flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #D8D4CA;color:#2064EC;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:400">+</span></summary><p style="margin:0;padding:0 0 20px;color:#5B6779;font-size:15.5px;line-height:1.6;max-width:640px">Não. Comece com um aluno e conheça o processo antes de incluir os demais. Você conta com orientação no primeiro acesso, tutoriais e suporte por e-mail.</p></details>
+      <details style="border-bottom:1px solid #E3E0D8"><summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600;color:#0B1628">Posso mudar o treino sugerido?<span style="flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #D8D4CA;color:#2064EC;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:400">+</span></summary><p style="margin:0;padding:0 0 20px;color:#5B6779;font-size:15.5px;line-height:1.6;max-width:640px">Sim. Você pode trocar exercícios e ajustar séries, repetições e esforço. O aluno recebe a versão que você revisou e aprovou.</p></details>
+      <details style="border-bottom:1px solid #E3E0D8"><summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600;color:#0B1628">Por que assinar se uma IA também monta treinos?<span style="flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #D8D4CA;color:#2064EC;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:400">+</span></summary><p style="margin:0;padding:0 0 20px;color:#5B6779;font-size:15.5px;line-height:1.6;max-width:640px">A assinatura reúne montagem, edição, entrega e acompanhamento. O plano, os registros do aluno e as reavaliações ficam juntos para orientar as próximas revisões, com referência citada.</p></details>
+      <details style="border-bottom:1px solid #E3E0D8"><summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600;color:#0B1628">Serve para quem atende emagrecimento e hipertrofia?<span style="flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #D8D4CA;color:#2064EC;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:400">+</span></summary><p style="margin:0;padding:0 0 20px;color:#5B6779;font-size:15.5px;line-height:1.6;max-width:640px">Sim. O objetivo orienta a proposta. Os critérios de saúde entram quando a condição está informada e contemplada pelo sistema.</p></details>
+      <details style="border-bottom:1px solid #E3E0D8"><summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600;color:#0B1628">O aluno também precisa pagar?<span style="flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #D8D4CA;color:#2064EC;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:400">+</span></summary><p style="margin:0;padding:0 0 20px;color:#5B6779;font-size:15.5px;line-height:1.6;max-width:640px">Não. O acesso do aluno está incluído. Você usa o Mapa no computador ou no celular; ele consulta o treino e registra a sessão pelo aplicativo.</p></details>
+      <details style="border-bottom:1px solid #E3E0D8"><summary style="list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:20px 0;font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600;color:#0B1628">O que acontece quando as {{ vagas }} vagas de fundador acabarem?<span style="flex:none;width:28px;height:28px;border-radius:50%;border:1px solid #D8D4CA;color:#2064EC;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:400">+</span></summary><p style="margin:0;padding:0 0 20px;color:#5B6779;font-size:15.5px;line-height:1.6;max-width:640px">Vale o anual regular de R$ {{ proPreco }} por mês. Quem entrou como fundador mantém {{ fundadorAno }} por ano enquanto a assinatura estiver ativa, e pode sugerir melhorias a partir da rotina de atendimento.</p></details>
     </div>
+  </div>
+</section>
+
+<!-- 09 · SOBRE -->
+<section id="sobre" data-screen-label="Quem criou" style="position:relative;background:#F6F5F0;border-top:1px solid #E3E0D8;padding:clamp(56px,7vw,96px) 0;overflow:hidden">
+  <div style="position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(16,35,58,.2) 1.3px,transparent 1.4px);background-size:26px 26px;mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 40%,#000 100%);-webkit-mask-image:radial-gradient(ellipse 60% 70% at 50% 50%,transparent 40%,#000 100%);opacity:.5"></div>
+  <div style="position:relative;width:min(1180px,100% - 40px);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(28px,4vw,56px);align-items:center">
+    <figure style="margin:0;max-width:380px;border-radius:20px;overflow:hidden;background:#0B1628;box-shadow:0 40px 80px -40px rgba(16,35,58,.6)">
+      <img src="/landing/filipe.webp" alt="Filipe Moura Ribeiro, criador do Mapa da Prescrição" style="display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;object-position:center top">
+    </figure>
+    <div style="grid-column:span 1">
+      <p style="margin:0;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:#2064EC;display:flex;align-items:center;gap:10px"><span style="width:22px;height:2px;background:#2064EC;border-radius:2px"></span>08 · Quem criou</p>
+      <h2 style="margin:16px 0 0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(28px,3.4vw,46px);line-height:1.06;color:#0B1628;text-wrap:balance">Da pesquisa em exercício à rotina de quem prescreve.</h2>
+      <p style="margin:18px 0 0;font-size:16px;font-weight:600;color:#0B1628">Filipe Moura Ribeiro</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+        <span style="font-size:13px;font-weight:600;color:#0B1628;background:#FFFDF9;border:1px solid #E3E0D8;border-radius:999px;padding:6px 12px">Doutor em Educação Física</span>
+        <span style="font-size:13px;font-weight:600;color:#0B1628;background:#FFFDF9;border:1px solid #E3E0D8;border-radius:999px;padding:6px 12px">8 anos de docência universitária</span>
+        <span style="font-size:13px;font-weight:600;color:#0B1628;background:#FFFDF9;border:1px solid #E3E0D8;border-radius:999px;padding:6px 12px">Pesquisador de pós-doutorado</span>
+      </div>
+      <p style="margin:20px 0 0;font-size:16.5px;color:#5B6779;line-height:1.65;max-width:600px;text-wrap:pretty">Filipe estuda o treinamento físico para emagrecimento e doenças crônicas. Criou o Mapa para aproximar as referências científicas das decisões do dia a dia e conectar a prescrição ao acompanhamento: quem consulta os critérios, revisa o plano e responde pelo que entrega é sempre o profissional.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section data-screen-label="Fecho" style="position:relative;overflow:hidden;background:#0B1628;color:#F3F1EA;padding:clamp(64px,8vw,120px) 0;text-align:center">
+  <div data-oculta-m style="position:absolute;inset:0;pointer-events:none;background-image:repeating-radial-gradient(circle at 50% 120%,transparent 0 56px,rgba(127,227,216,.14) 56px 57.5px);mask-image:linear-gradient(180deg,transparent 20%,#000 100%);-webkit-mask-image:linear-gradient(180deg,transparent 20%,#000 100%)"></div>
+  <div style="position:absolute;left:50%;bottom:-300px;margin-left:-450px;width:900px;height:600px;border-radius:50%;background:radial-gradient(ellipse,rgba(32,100,236,.35) 0%,rgba(32,100,236,0) 65%);pointer-events:none;animation:lp-orbita 16s ease-in-out infinite"></div>
+  <div style="position:relative;width:min(760px,100% - 40px);margin:0 auto;display:flex;flex-direction:column;align-items:center">
+    <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;letter-spacing:-.03em;font-size:clamp(30px,4vw,56px);line-height:1.04;color:#fff;text-wrap:balance">Monte seu próximo treino com o Mapa.</h2>
+    <sc-if value="{{ cobrancaAtiva }}"><p style="margin:18px 0 0;font-size:clamp(16px,1.3vw,18px);color:#B9C6D6;line-height:1.6;max-width:560px">Comece com um aluno. Revise a proposta, entregue o treino e conheça o acompanhamento. Reembolso integral nos primeiros 7 dias.</p><a href="#preco" style="margin-top:32px;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:58px;padding:0 32px;border-radius:12px;background:#2064EC;color:#fff;font-weight:600;font-size:16.5px;box-shadow:0 12px 30px -10px rgba(32,100,236,.8);transition:all .18s ease" style-hover="background:#1A4FC0;transform:translateY(-2px)">Escolher meu plano<span style="font-size:18px">→</span></a><p style="margin:18px 0 0;font-size:14px;color:#8FA0B5">Alunos ilimitados · App do aluno incluído · Garantia de 7 dias</p></sc-if>
+    <sc-if value="{{ semCobranca }}"><p style="margin:18px 0 0;font-size:clamp(16px,1.3vw,18px);color:#B9C6D6;line-height:1.6;max-width:560px">Comece com um aluno. Revise a proposta, entregue o treino e conheça o acompanhamento. Hoje sem cartão: a cobrança ainda não está ativa.</p><a href="/dashboard" style="margin-top:32px;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:58px;padding:0 32px;border-radius:12px;background:#2064EC;color:#fff;font-weight:600;font-size:16.5px;box-shadow:0 12px 30px -10px rgba(32,100,236,.8);transition:all .18s ease" style-hover="background:#1A4FC0;transform:translateY(-2px)">Criar minha conta<span style="font-size:18px">→</span></a><p style="margin:18px 0 0;font-size:14px;color:#8FA0B5">Alunos ilimitados · App do aluno incluído · Acesso liberado nesta fase</p></sc-if>
+  </div>
+</section>
+
+<!-- RODAPÉ -->
+<footer data-screen-label="Rodapé" style="position:relative;overflow:hidden;background:#070F1C;color:#8FA0B5;font-size:14px">
+  <div style="position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(127,227,216,0) 15%,rgba(127,227,216,.8) 50%,rgba(127,227,216,0) 85%,transparent 100%)"></div>
+  <div style="position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(190,214,232,.14) 1.1px,transparent 1.2px);background-size:26px 26px;mask-image:linear-gradient(180deg,transparent 0%,#000 100%);-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 100%)"></div>
+  <div style="position:relative;width:min(1180px,100% - 40px);margin:0 auto;padding:clamp(40px,6vw,72px) 0 32px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:{{ gapRodape }} 48px">
+    <div style="max-width:340px">
+      <div style="display:flex;align-items:center;gap:10px;color:#F3F1EA">
+        <img src="/brand/marca-pino.webp" alt="" width="30" height="30" style="width:30px;height:30px;object-fit:contain">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:17px">Mapa da Prescrição</span>
+      </div>
+      <p data-oculta-m style="margin:16px 0 0;line-height:1.6;font-size:14.5px">Registrar, acompanhar e direcionar a prescrição. Para profissionais de Educação Física que assinam o que entregam.</p>
+      <sc-if value="{{ cobrancaAtiva }}"><a href="#preco" style="margin-top:22px;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:10px;background:rgba(127,227,216,.12);border:1px solid rgba(127,227,216,.3);color:#7FE3D8;font-weight:600;font-size:14px;transition:all .18s ease" style-hover="background:rgba(127,227,216,.2)">Garantir vaga de fundador<span>→</span></a></sc-if>
+      <sc-if value="{{ semCobranca }}"><a href="/dashboard" style="margin-top:22px;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:10px;background:rgba(127,227,216,.12);border:1px solid rgba(127,227,216,.3);color:#7FE3D8;font-weight:600;font-size:14px;transition:all .18s ease" style-hover="background:rgba(127,227,216,.2)">Criar minha conta<span>→</span></a></sc-if>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:28px 20px">
+    <div>
+      <p style="margin:0 0 14px;color:#F3F1EA;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Produto</p>
+      <a href="#como" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Como funciona</a>
+      <a href="#recursos" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Recursos</a>
+      <a href="#semaforo" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Semáforo de saúde</a>
+      <a href="#app" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Aplicativo do aluno</a>
+      <a href="#preco" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Planos</a>
+    </div>
+    <div>
+      <p style="margin:0 0 14px;color:#F3F1EA;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Ajuda</p>
+      <a href="#faq" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Perguntas frequentes</a>
+      <a href="mailto:suporte@mapadaprescricao.com.br" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Falar com o suporte</a>
+      <a href="mailto:suporte@mapadaprescricao.com.br?subject=Estúdio%20ou%20instituição" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Estúdios e instituições</a>
+      <a href="/aluno" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Acesso do aluno</a>
+      <a href="/dashboard" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Entrar</a>
+    </div>
+    <div data-oculta-m>
+      <p style="margin:0 0 14px;color:#F3F1EA;font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:600">Legal</p>
+      <a href="/termos" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Termos de uso</a>
+      <a href="/privacidade" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Política de privacidade</a>
+      <a href="/lgpd" style="color:#8FA0B5;font-size:14.5px;padding:4px 0;display:block" style-hover="color:#FFFFFF">Seus direitos (LGPD)</a>
+      <sc-if value="{{ cobrancaAtiva }}"><p style="margin:18px 0 0;font-size:12.5px;line-height:1.55;color:#5F6F85">Garantia de reembolso integral em 7 dias após a contratação.</p></sc-if>
+      <sc-if value="{{ semCobranca }}"><p style="margin:18px 0 0;font-size:12.5px;line-height:1.55;color:#5F6F85">Acesso liberado nesta fase, sem cartão e sem cobrança.</p></sc-if>
+    </div>
+    </div>
+  </div>
+  <div style="position:relative;width:min(1180px,100% - 40px);margin:0 auto;border-top:1px solid rgba(255,255,255,.08);padding:22px 0 30px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px 32px;align-items:flex-start">
+    <p style="margin:0;font-size:12.5px;line-height:1.6;max-width:720px;color:#5F6F85">O Mapa apoia o planejamento e o acompanhamento do exercício. A avaliação do aluno, a revisão do plano e a decisão sobre a conduta permanecem sob responsabilidade do profissional habilitado.</p>
+    <div data-so-m style="display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px"><a href="/termos" style="color:#8FA0B5">Termos</a><a href="/privacidade" style="color:#8FA0B5">Privacidade</a><a href="/lgpd" style="color:#8FA0B5">LGPD</a></div>
+    <p style="margin:0;font-size:13px;white-space:nowrap">© 2026 Mapa da Prescrição</p>
   </div>
 </footer>
 
