@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, ChevronDown, CheckCheck, MoreHorizontal, Search, Eye, Plus, LogOut } from "lucide-react";
+import { Bell, CheckCheck, MoreHorizontal, Search, Eye, Plus, LogOut } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { PRIMARIOS, MAIS, BOTTOM, CONTA, itemAtivo } from "@/components/app/nav";
@@ -21,6 +21,7 @@ import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { marcarAtivacao } from "@/lib/ativacao";
 import { useDialog } from "@/lib/useDialog";
 import { useUser, useAlunos, planLabel, uid } from "@/lib/store";
+import { VAGAS_FUNDADOR, VAGAS_FUNDADOR_OCUPADAS } from "@/data/planos";
 import { iniciaisDe, type Aluno } from "@/data/alunos";
 import { completudeAluno } from "@/lib/gps/perfilAluno";
 import type { Nivel } from "@/data/types";
@@ -137,11 +138,11 @@ export function AppLayout() {
         {/* A coluna de conteúdo abre espaço para a barra fixa em lg+; no mobile a
             barra lateral não existe e o espaço é zero. */}
         <div className="flex min-w-0 flex-1 flex-col lg:pl-[248px]">
-          {/* A barra global (busca, notificações, cadastrar) vive SÓ no Meu dia: é o
-              painel do dia, onde faz sentido ter tudo à mão. Nas outras telas cada
-              página é dona do próprio cabeçalho, como no desenho da tela do aluno. */}
-          {pathname === "/dashboard" && <Topbar />}
-          <main className="mx-auto w-full min-w-0 max-w-[1400px] flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-10">
+          {/* A barra global (busca, prévia do aluno, sino, cadastrar) vive em TODAS
+              as telas no redesign (protótipo de 08/09/2026): é ferramenta, não
+              navegação, e cada página continua dona do próprio cabeçalho. */}
+          <Topbar />
+          <main className="mx-auto w-full min-w-0 max-w-[1180px] flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-10">
             <ErrorBoundary chaveDeReset={pathname}>
               <React.Suspense fallback={<RouteFallback />}>
                 <Outlet />
@@ -353,40 +354,29 @@ function OnboardingGate({ onDone }: { onDone: () => void }) {
 }
 
 /**
- * A CASCA: uma barra superior, e só. A barra lateral (rail de ícones + drawer
- * mobile + grupos comprimíveis) saiu inteira: eram 3 estados de menu para o
- * mesmo menu, e a preferência de cada um ficava salva, então dois profissionais
- * viam produtos diferentes. Agora são 5 pílulas na linha e um "Mais" com os 8
- * destinos de referência, iguais para todo mundo.
+ * A BARRA LATERAL no desenho do redesign (protótipo de 08/09/2026).
  *
- * Abaixo de xl a busca vira botão com painel, porque a 1280px a linha não
- * comporta logo + 5 rótulos + Mais + campo de busca + sino + avatar.
- */
-/**
- * A BARRA LATERAL, de volta por decisão do fundador (mockup de 28/07/2026).
+ * Continua ESCURA e com valores fixos (é casca com identidade própria, fora do
+ * tema claro/escuro), mas o vocabulário mudou: o item ativo é um véu claro
+ * translúcido com PONTO âmbar (não mais a pílula de papel), os destinos são
+ * marcados por ponto em vez de ícone, e o rodapé ganhou o card do plano
+ * fundador com a barra de vagas real.
  *
- * A rodada anterior tinha trocado a lateral por pílulas na barra superior. O
- * desenho novo devolve a lateral, e com duas coisas que a topbar não conseguia:
- * CONTADORES por destino (12 alunos, 2 para avaliar, 3 para liberar) e um card
- * de ação fixo no rodapé. Um menu que já diz quanto trabalho tem em cada porta
- * dispensa abrir porta por porta para descobrir.
- *
- * A lateral é ESCURA por decisão de contraste do design: ela é casca, não
- * conteúdo, e o papel claro do miolo fica com o trabalho. Os valores são fixos
- * (não seguem o tema claro/escuro do profissional) pelo mesmo motivo do app do
- * aluno: é uma superfície com identidade própria, verificada uma vez.
- *
- * Contraste medido sobre o navy #0D1524: o texto inativo #9DB2D6 dá 7,4:1 e o
- * ativo é papel sobre tinta (o inverso do miolo). Os dois passam AA com folga.
+ * Contraste medido sobre o navy #0B1628: o inativo #B9C6D6 dá 9,5:1, o
+ * secundário #8FA0B5 dá 6,4:1 e o rótulo de seção #5F6F85 dá 3,1:1 (caixa alta
+ * decorativa de 11px, mesmo papel do ink-4). Todos verificados uma vez aqui.
  */
 const CASCA = {
-  fundo: "#0D1524",
-  fundoTopo: "#0A0D14",
-  borda: "rgba(148,170,210,.12)",
-  tinta: "#F2F6FC",
-  tinta2: "#9DB2D6",
-  ativoFundo: "#FFFDF9",
-  ativoTinta: "#17202E",
+  fundo: "#0B1628",
+  borda: "rgba(255,255,255,.08)",
+  tinta: "#F3F1EA",
+  tinta2: "#B9C6D6",
+  tinta3: "#8FA0B5",
+  rotulo: "#5F6F85",
+  ativoFundo: "rgba(255,255,255,.1)",
+  ativoTinta: "#FFFFFF",
+  ponto: "#E8A317",
+  pontoInativo: "rgba(255,255,255,.25)",
 } as const;
 
 /** Largura da lateral. Vive aqui e no padding da coluna de conteúdo. */
@@ -415,15 +405,27 @@ function Sidebar() {
           borderRight: `1px solid ${CASCA.borda}`,
           // A casca publica os próprios valores como variáveis para o hover dos
           // itens ler daqui, e não de um hex repetido na classe. Fonte única.
-          "--casca-tinta": CASCA.tinta,
-          "--casca-hover": "rgba(148,170,210,.14)",
+          "--casca-tinta": CASCA.ativoTinta,
+          "--casca-hover": "rgba(255,255,255,.08)",
         } as React.CSSProperties
       }
     >
+      {/* Textura de pontos do protótipo: nasce no rodapé e some subindo. É
+          decoração pura (pointer-events none, aria-hidden). */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-y-0 left-0 hidden w-[248px] lg:block"
+        style={{
+          backgroundImage: "radial-gradient(rgba(190,214,232,.18) 1.2px,transparent 1.3px)",
+          backgroundSize: "22px 22px",
+          maskImage: "radial-gradient(ellipse 80% 40% at 50% 100%,#000 0%,transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 80% 40% at 50% 100%,#000 0%,transparent 100%)",
+        }}
+      />
       <Link
         to="/dashboard"
         aria-label="Mapa da Prescrição, ir para Meu dia"
-        className="flex items-center gap-3 px-5 pb-5 pt-6"
+        className="relative flex items-center gap-3 px-5 pb-5 pt-6"
       >
         <Logo showWord={false} />
         <span className="font-display text-base font-bold leading-tight" style={{ color: CASCA.tinta }}>
@@ -433,18 +435,38 @@ function Sidebar() {
         </span>
       </Link>
 
-      <nav className="px-3">
+      <nav className="relative px-3">
+        <div
+          className="px-3 pb-2 text-2xs font-semibold uppercase tracking-[0.14em]"
+          style={{ color: CASCA.rotulo }}
+        >
+          Dia a dia
+        </div>
         <ul className="space-y-1">
-          {PRIMARIOS.map((item) => (
-            <li key={item.to}>
-              <ItemLateral item={item} ativo={itemAtivo(item, pathname)} badge={badgeDe(item.to)} />
-            </li>
-          ))}
+          {PRIMARIOS.map((item) => {
+            const grupoAtivo = itemAtivo(item, pathname);
+            return (
+              <li key={item.to}>
+                <ItemLateral item={item} ativo={grupoAtivo} badge={badgeDe(item.to)} />
+                {/* "Treino do dia" aninhado sob Prescrever quando o profissional
+                    está nesse fluxo, como no protótipo. */}
+                {grupoAtivo && item.children && item.children.length > 0 && (
+                  <ul className="mt-1 space-y-1 pl-5">
+                    {item.children.map((filho) => (
+                      <li key={filho.to}>
+                        <FilhoLateral filho={filho} ativo={pathname === filho.to} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
 
         <div
-          className="px-3 pb-2 pt-6 text-2xs font-bold uppercase tracking-[0.14em]"
-          style={{ color: CASCA.tinta2 }}
+          className="px-3 pb-2 pt-5 text-2xs font-semibold uppercase tracking-[0.14em]"
+          style={{ color: CASCA.rotulo }}
         >
           Mais
         </div>
@@ -457,7 +479,7 @@ function Sidebar() {
             const grupoAtivo = itemAtivo(item, pathname);
             return (
               <li key={item.to}>
-                <ItemLateral item={item} ativo={grupoAtivo} />
+                <ItemLateral item={item} ativo={grupoAtivo} anel hint={item.hint} />
                 {grupoAtivo && item.children && item.children.length > 0 && (
                   <ul className="mt-1 space-y-1 pl-5">
                     {item.children.map((filho) => (
@@ -473,53 +495,94 @@ function Sidebar() {
         </ul>
       </nav>
 
-      {/* Empurra o rodapé para baixo sem depender de altura fixa. A lateral fica
-          com nav + rodapé e nada mais: os cartões "Este aluno" e "Semáforo do dia"
-          moravam aqui e empurravam o conteúdo além da altura da tela, o que ligava
-          um scroll feio na barra. O contexto do aluno agora vive na PRÓPRIA tela do
-          aluno (ciclo do cuidado) e o semáforo já tem o destino com contador no menu. */}
       <div className="flex-1" />
 
+      <CardFundador />
       <RodapeUsuario />
     </aside>
   );
 }
 
-/** Uma linha da lateral: ícone, rótulo e o contador. O ATIVO é papel sólido com
- *  tinta escura, o inverso da lateral, que é a forma mais legível de dizer
- *  "você está aqui" numa superfície escura. */
+/**
+ * O card do plano fundador no rodapé da lateral, como no protótipo, com os
+ * NÚMEROS REAIS de planos.ts (nunca um "7 de 10" decorativo). Enquanto a fase
+ * fundador estiver aberta ele mostra as vagas ocupadas; quando as 30 fecharem
+ * (ou a fase acabar), remova o card junto com a oferta da landing.
+ */
+function CardFundador() {
+  const ocupadas = VAGAS_FUNDADOR_OCUPADAS;
+  const total = VAGAS_FUNDADOR;
+  const pct = Math.max(4, Math.round((ocupadas / total) * 100));
+  return (
+    <div
+      className="relative mx-3 mb-2 rounded-card border p-3.5"
+      style={{ background: "linear-gradient(135deg,#13233B,#0F1B30)", borderColor: CASCA.borda }}
+    >
+      <p className="m-0 text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
+        Plano fundador
+      </p>
+      <p className="m-0 mt-1.5 text-[13px] leading-snug" style={{ color: CASCA.tinta2 }}>
+        Alunos ilimitados e preço travado.
+      </p>
+      <div className="mt-2.5 h-[5px] overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,.08)" }}>
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${pct}%`, background: "linear-gradient(90deg,#14B3BA,#7FE3D8)" }}
+        />
+      </div>
+      <p className="m-0 mt-1.5 text-xs" style={{ color: CASCA.tinta3 }}>
+        {ocupadas} de {total} fundadores ·{" "}
+        <a href="/#preco" target="_blank" rel="noreferrer" className="font-semibold" style={{ color: "#F0B429" }}>
+          convide um colega
+        </a>
+      </p>
+    </div>
+  );
+}
+
+/** Uma linha da lateral: PONTO, rótulo e o contador. O ATIVO é o véu claro
+ *  translúcido com o ponto âmbar aceso, vocabulário do protótipo; os itens do
+ *  "Mais" usam um ANEL vazado no lugar do ponto cheio. */
 function ItemLateral({
   item,
   ativo,
   badge,
+  anel,
+  hint,
 }: {
-  item: { to: string; label: string; short?: string; icon: React.ComponentType<{ className?: string }> };
+  item: { to: string; label: string; short?: string };
   ativo: boolean;
   badge?: { n: number; tom: "neutro" | "atencao" | "urgente" };
+  anel?: boolean;
+  hint?: string;
 }) {
-  const Icon = item.icon;
   return (
     <Link
       to={item.to}
+      title={hint}
       aria-current={ativo ? "page" : undefined}
-      // O realce de hover deste item vinha, até 23/08/2026, de uma regra GLOBAL
-      // que vazava do CSS da landing (`a:hover{color:#10233A}`). Aquele hex é quase
-      // preto e a casca tem fundo #0D1524: passar o mouse deixava a palavra em
-      // 1,15:1 contra o próprio fundo, ou seja, sumia. Escopar a landing consertou
-      // o defeito e apagou o efeito junto, então o efeito nasce aqui, com os
-      // valores da própria casca: a tinta sobe de #9DB2D6 (8,5:1) para #F2F6FC
-      // (15,1:1) e o fundo ganha um véu claro. Hover que AUMENTA o contraste.
       className={cn(
-        "flex min-h-[44px] items-center gap-3 rounded-card px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        "flex min-h-[44px] items-center gap-3 rounded-control px-3 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        anel && !ativo ? "font-medium" : "font-semibold",
         !ativo && "hover:bg-[var(--casca-hover)] hover:text-[var(--casca-tinta)]",
       )}
       style={
         ativo
-          ? { background: CASCA.ativoFundo, color: CASCA.ativoTinta, boxShadow: "0 1px 3px rgba(13,21,36,.28)" }
-          : { color: CASCA.tinta2 }
+          ? { background: CASCA.ativoFundo, color: CASCA.ativoTinta }
+          : { color: anel ? CASCA.tinta3 : CASCA.tinta2 }
       }
     >
-      <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden />
+      <span
+        aria-hidden
+        className="h-2 w-2 shrink-0 rounded-full"
+        style={
+          ativo
+            ? { background: CASCA.ponto }
+            : anel
+              ? { border: `1.5px solid ${CASCA.rotulo}` }
+              : { background: CASCA.pontoInativo }
+        }
+      />
       {/* A lateral tem 248px: cabe o rótulo inteiro, que é o que nav.ts declara. O
           `short` é da barra de 320px e continua lá embaixo, onde faz sentido. */}
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
@@ -528,32 +591,34 @@ function ItemLateral({
   );
 }
 
-/** Um filho da lateral: mesma linha, um degrau abaixo. Peso menor e ícone menor
- *  para a hierarquia se ler de relance, e alvo de 40px, que continua confortável
- *  num item secundário de desktop. */
+/** Um filho da lateral: mesma linha, um degrau abaixo e um ponto menor, como o
+ *  "Treino do dia" aninhado do protótipo. Alvo de 40px, confortável em desktop. */
 function FilhoLateral({
   filho,
   ativo,
 }: {
-  filho: { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
+  filho: { to: string; label: string };
   ativo: boolean;
 }) {
-  const Icon = filho.icon;
   return (
     <Link
       to={filho.to}
       aria-current={ativo ? "page" : undefined}
-      className="flex min-h-[40px] items-center gap-2.5 rounded-card px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      style={ativo ? { background: CASCA.ativoFundo, color: CASCA.ativoTinta } : { color: CASCA.tinta2 }}
+      className={cn(
+        "flex min-h-[40px] items-center gap-2.5 rounded-control px-3 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+        !ativo && "hover:bg-[var(--casca-hover)] hover:text-[var(--casca-tinta)]",
+      )}
+      style={ativo ? { background: CASCA.ativoFundo, color: CASCA.ativoTinta } : { color: CASCA.tinta3 }}
     >
-      <Icon className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
+      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
       <span className="min-w-0 flex-1 truncate">{filho.label}</span>
     </Link>
   );
 }
 
-/** O contador ao lado do destino. Cor por urgência, com o número sempre legível
- *  e um rótulo acessível que diz de que se trata (o número sozinho não diz). */
+/** O contador ao lado do destino. O protótipo pinta o badge de âmbar sólido; o
+ *  vermelho fica para o que é URGENTE (semáforo vencido), com a tinta escura
+ *  que passa AA sobre os dois preenchimentos. */
 function BadgeLateral({
   n,
   tom,
@@ -565,10 +630,10 @@ function BadgeLateral({
 }) {
   const estilo =
     tom === "urgente"
-      ? { background: "var(--danger-fill)", color: "#17202E" }
+      ? { background: "#E5484D", color: "#0B1628" }
       : tom === "atencao"
-        ? { background: "var(--warning-tint)", color: "var(--warning)" }
-        : { background: "rgba(148,170,210,.16)", color: CASCA.tinta2 };
+        ? { background: "#E8A317", color: "#0B1628" }
+        : { background: "rgba(255,255,255,.1)", color: CASCA.tinta2 };
   return (
     <span
       className="tabular grid h-6 min-w-[24px] shrink-0 place-items-center rounded-full px-1.5 text-2xs font-bold"
@@ -582,7 +647,7 @@ function BadgeLateral({
 
 /** Rodapé da lateral: quem está logado e a saída. */
 function RodapeUsuario() {
-  const { name, plan, fotoDataUrl } = useUser();
+  const { name, plan, cref, fotoDataUrl } = useUser();
   const cloud = useCloudAuth();
   const navigate = useNavigate();
   const [aberto, setAberto] = React.useState(false);
@@ -635,8 +700,9 @@ function RodapeUsuario() {
           <span className="block truncate text-sm font-semibold" style={{ color: CASCA.tinta }}>
             {name || "Seu perfil"}
           </span>
-          <span className="block truncate text-2xs" style={{ color: CASCA.tinta2 }}>
+          <span className="block truncate text-2xs" style={{ color: CASCA.tinta3 }}>
             {planLabel[plan]}
+            {cref ? ` · CREF ${cref}` : ""}
           </span>
         </span>
         <MoreHorizontal className="h-4 w-4 shrink-0" style={{ color: CASCA.tinta2 }} aria-hidden />
@@ -689,21 +755,21 @@ function Topbar() {
   const previa = alunoParaPrevia(alunos, ctx);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-surface/85 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur">
       <div className="flex h-16 w-full items-center gap-2 px-3 md:gap-3 md:px-6">
         {/* A marca só aparece no mobile: em lg+ ela vive no topo da lateral. */}
         <Link to="/dashboard" aria-label="Mapa da Prescrição, ir para Meu dia" className="shrink-0 lg:hidden">
           <Logo />
         </Link>
 
-        <div className="hidden min-w-0 flex-1 md:block md:max-w-md">
+        <div className="hidden min-w-0 flex-1 md:block md:max-w-xl">
           <GlobalSearch />
         </div>
         <button
           onClick={() => setBusca((v) => !v)}
           aria-label="Buscar"
           aria-expanded={busca}
-          className="grid h-11 w-11 place-items-center rounded-full text-ink-2 hover:bg-surface-soft md:hidden"
+          className="grid h-11 w-11 place-items-center rounded-control text-ink-2 hover:bg-surface-soft md:hidden"
         >
           <Search className="h-[18px] w-[18px]" />
         </button>
@@ -712,7 +778,7 @@ function Topbar() {
           {previa && (
             <Link
               to={`/alunos/${previa.id}/preview`}
-              className="hidden h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold text-ink-2 hover:bg-surface-soft hover:text-ink lg:inline-flex"
+              className="hidden h-10 items-center gap-2 rounded-control border border-border bg-surface px-3.5 text-sm font-semibold text-ink-2 transition-colors hover:text-ink lg:inline-flex"
             >
               <Eye className="h-[18px] w-[18px]" aria-hidden /> Ver como aluno
             </Link>
@@ -786,22 +852,23 @@ function MaisMenu({ variante = "topbar" }: { variante?: "topbar" | "barra-inferi
         className={cn(
           "transition-colors lg:hidden",
           variante === "barra-inferior"
-            ? "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-2xs font-medium leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary " +
-              (algumAtivo || open ? "text-ink" : "text-ink-2 hover:text-ink")
-            : "inline-flex h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold " +
+            ? "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 px-1 py-2 text-2xs font-semibold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+            : "inline-flex h-10 items-center gap-1.5 rounded-control px-3 text-sm font-semibold " +
               (algumAtivo ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft hover:text-ink"),
         )}
+        style={
+          variante === "barra-inferior"
+            ? { color: algumAtivo || open ? CASCA.ativoTinta : CASCA.tinta2 }
+            : undefined
+        }
       >
         {variante === "barra-inferior" ? (
           <>
             <span
-              className={cn(
-                "grid h-6 w-12 place-items-center rounded-full transition-colors",
-                (algumAtivo || open) && "bg-ink text-surface",
-              )}
-            >
-              <MoreHorizontal className="h-5 w-5 shrink-0" aria-hidden />
-            </span>
+              aria-hidden
+              className="h-1 w-[22px] rounded-full transition-colors"
+              style={{ background: algumAtivo || open ? CASCA.ponto : CASCA.pontoInativo }}
+            />
             <span className="max-w-full">Mais</span>
           </>
         ) : (
@@ -900,10 +967,10 @@ function BottomBar() {
   return (
     <nav
       aria-label="Atalhos do dia"
-      className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 flex border-t pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
+      style={{ background: "rgba(11,22,40,.96)", borderColor: CASCA.borda }}
     >
       {BOTTOM.map((item) => {
-        const Icon = item.icon;
         const ativo = itemAtivo(item, pathname);
         return (
           <Link
@@ -911,19 +978,22 @@ function BottomBar() {
             to={item.to}
             aria-current={ativo ? "page" : undefined}
             className={cn(
-              "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-2xs font-medium leading-none transition-colors",
+              "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 px-1 py-2 text-2xs font-semibold leading-none transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-              ativo ? "text-ink" : "text-ink-2 hover:text-ink",
             )}
+            style={{ color: ativo ? CASCA.ativoTinta : CASCA.tinta2 }}
           >
-            <span className={cn("grid h-6 w-12 place-items-center rounded-full transition-colors", ativo && "bg-ink text-surface")}>
-              <Icon className="h-5 w-5 shrink-0" aria-hidden />
-            </span>
+            {/* O indicador do protótipo: uma barra de 4px acesa em âmbar no ativo. */}
+            <span
+              aria-hidden
+              className="h-1 w-[22px] rounded-full transition-colors"
+              style={{ background: ativo ? CASCA.ponto : CASCA.pontoInativo }}
+            />
             <span className="max-w-full">{item.short ?? item.label}</span>
           </Link>
         );
       })}
-      {/* Sexto item: o desenho da casca sempre foi "5 pílulas mais Mais", e no celular
+      {/* Sexto item: o desenho da casca sempre foi "5 destinos mais Mais", e no celular
           era justamente o "Mais" que faltava fora do Meu dia. */}
       <MaisMenu variante="barra-inferior" />
     </nav>
@@ -983,13 +1053,13 @@ function NotificationsMenu() {
         onClick={openMenu}
         aria-label={`Notificações${unseen ? ` (${unseen} novas)` : ""}`}
         aria-expanded={open}
-        className="relative grid h-11 w-11 place-items-center rounded-full text-ink-2 hover:bg-surface-soft"
+        className="relative grid h-10 w-10 place-items-center rounded-control border border-border bg-surface text-ink-2 transition-colors hover:text-ink"
       >
         <Bell className="h-[18px] w-[18px]" />
         {/* O contador é danger-fill (o vermelho de preenchimento da identidade),
             com a tinta escolhida para ele; era bg-cta com branco, herança do coral. */}
         {unseen > 0 && (
-          <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-danger-fill px-1 text-2xs font-bold text-ink">
+          <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-danger-fill px-1 text-2xs font-bold text-ink">
             {unseen}
           </span>
         )}

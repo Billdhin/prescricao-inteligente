@@ -155,15 +155,13 @@ const REGRAS = [
     re: /\bbg-gradient-to-[a-z]{1,2}\b[^"'`]*?\b(?:from|via|to)-(?:primary|analysis|brand-blue|brand-turquesa|cta|success|warning|danger)[a-z-]*\b/g,
   },
   {
-    // "Botões e chips sempre pílula (999)", literal do Design System. O raio
-    // intermediário (md/lg/xl) é o que faz o controle parecer um cartãozinho e
-    // some com a diferença entre "isto é clicável" e "isto é uma caixa".
-    // Duas formas legítimas dentro de <button>: rounded-full quando é CONTROLE
-    // (o caso normal) e rounded-card quando o botão é uma OPÇÃO em forma de
-    // cartão (seletor de fármaco, de restrição), que o design trata como campo,
-    // não como botão. Qualquer outro raio é violação.
+    // Redesign da plataforma (protótipo de 08/09/2026): o botão de AÇÃO é
+    // rounded-control (12px), o chip/filtro é pílula (rounded-full) e a OPÇÃO em
+    // forma de cartão (seletor de fármaco, de restrição) é rounded-card. O que
+    // segue proibido é o raio arbitrário (md/lg/xl, valores entre colchetes),
+    // que faz o controle parecer um cartãozinho fora da família.
     id: "raio-de-botao",
-    desc: "botão com raio intermediário; controle é pílula (rounded-full) e opção-cartão é rounded-card.",
+    desc: "botão com raio fora da família; ação é rounded-control, chip é pílula (rounded-full) e opção-cartão é rounded-card.",
     varrer: (conteudo, push) => {
       // O `(?<!=)` é o que faz a regra funcionar de verdade: a tag termina no
       // primeiro `>` que NÃO fecha uma arrow function. Sem ele, um
@@ -174,7 +172,9 @@ const REGRAS = [
       let m;
       while ((m = tags.exec(conteudo))) {
         const raios = m[0].match(/\brounded-[a-z0-9[\]#.-]+/g) ?? [];
-        const ruim = raios.find((r) => r !== "rounded-full" && r !== "rounded-card");
+        const ruim = raios.find(
+          (r) => r !== "rounded-full" && r !== "rounded-card" && r !== "rounded-control",
+        );
         if (ruim) push(m.index + m[0].indexOf(ruim));
       }
     },

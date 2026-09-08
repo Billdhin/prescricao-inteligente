@@ -94,7 +94,7 @@ export const PRIMARIOS: NavItem[] = [
   },
   {
     to: "/semaforo",
-    label: "Fazer o semáforo do dia",
+    label: "Semáforo do dia",
     icon: ShieldCheck,
     short: "Semáforo",
     hint: "Liberar, ajustar ou segurar o treino de hoje.",

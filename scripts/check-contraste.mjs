@@ -42,6 +42,9 @@ const PARES = [
    * escreve por cima dela é `on-warning-fill`.
    */
   ["on-warning-fill", "warning-fill", 4.5],
+  // O VERDE VIVO ganhou o mesmo par (redesign da plataforma, 08/09/2026):
+  // `success` escreve, `success-fill` acende a luz, e a tinta por cima passa AA.
+  ["on-success-fill", "success-fill", 4.5],
   ["ink", "surface-mute", 4.5], ["ink-2", "surface-mute", 4.5],
   ["danger-fill", "bg", 3],
 ];

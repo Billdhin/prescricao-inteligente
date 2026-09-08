@@ -33,6 +33,8 @@ export default {
         danger: "rgb(var(--danger-rgb) / <alpha-value>)",
         "danger-tint": "rgb(var(--danger-tint-rgb) / <alpha-value>)",
         "danger-fill": "rgb(var(--danger-fill-rgb) / <alpha-value>)",
+        "success-fill": "rgb(var(--success-fill-rgb) / <alpha-value>)",
+        "on-success-fill": "rgb(var(--on-success-fill-rgb) / <alpha-value>)",
         "warning-fill": "rgb(var(--warning-fill-rgb) / <alpha-value>)",
         "on-warning-fill": "rgb(var(--on-warning-fill-rgb) / <alpha-value>)",
         // Direção "1c Rota". Os dois primeiros são de PREENCHIMENTO e o
@@ -56,8 +58,9 @@ export default {
         "2xs": ["11px", { lineHeight: "16px" }],
       },
       borderRadius: {
-        // Design System "1c Rota": card 18px (a faixa e 16-20), controle 12px.
-        card: "18px",
+        // Redesign da plataforma (protótipo de 08/09/2026): o raio dominante de
+        // cartão subiu para 20px; controle segue 12px e botão segue pílula.
+        card: "20px",
         control: "12px",
       },
       boxShadow: {

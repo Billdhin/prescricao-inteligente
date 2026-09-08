@@ -56,10 +56,11 @@ export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
 export type ButtonSize = "sm" | "md";
 
 export function buttonClasses(variant: ButtonVariant = "primary", size: ButtonSize = "md") {
-  // Pílula em todo botão, por regra do Design System ("botões e chips sempre
-  // pílula 999"). Antes era rounded-control (10px).
+  // Redesign da plataforma (protótipo de 08/09/2026): botão de ação volta ao
+  // raio de CONTROLE (12px), como todo botão do protótipo; a pílula (999) fica
+  // para chip, selo e filtro. O app do aluno segue com as próprias pílulas.
   const base =
-    "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold " +
+    "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-control font-semibold " +
     "transition-[background-color,border-color,box-shadow,transform,filter] duration-150 ease-out " +
     "active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60";
   const sizes: Record<ButtonSize, string> = {

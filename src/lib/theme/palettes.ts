@@ -50,6 +50,14 @@ export interface Compartilhado {
   /** o que vai POR CIMA do turquesa vivo (ink na Rota; branco daria 2,57) */
   onAnalysisFill?: string;
   /**
+   * VERDE VIVO da sinalização: a luz verde do semáforo, o ponto de "liberado".
+   * Mesmo par do âmbar e do vermelho: `success` escreve, `successFill` acende.
+   * Ausente = cai em `success`, e nada muda de aparência.
+   */
+  successFill?: string;
+  /** o que vai POR CIMA do verde vivo. Ausente = cai em `onPrimary`. */
+  onSuccessFill?: string;
+  /**
    * AMARELO VIVO da sinalização: a luz do semáforo, o ponto de alerta.
    *
    * Existe porque `warning` foi escurecido até #8E6009 para passar 4,5:1 como
@@ -130,25 +138,29 @@ const COMPART_ESCURO: Compartilhado = {
  * é como o produto perde acessibilidade sem ninguém perceber.
  */
 const ROTA_CLARO: PaletaCore = {
-  bg: "#F7F6F2",
-  surface: "#FFFDF9",
-  surfaceSoft: "#F0EFE9",
-  surfaceMute: "#EEECE5",
-  border: "#E8E6DF",
-  ink: "#17202E",
-  // literal do design era #6A7180, que dá 4,14 sobre surface-soft. Escurecer
-  // ~5% de L é imperceptível e sobe para 4,87.
-  ink2: "#616874",
-  ink3: "#616874",
-  // o #9AA1AC do design dá 2,56 como texto: é cinza decorativo, e vive aqui.
-  ink4: "#9AA1AC",
-  // O literal da marca (#2064EC) dá 4,45 sobre surface-soft e 4,34 sobre
-  // surface-mute, e `hover:bg-surface-soft` aparece 116 vezes no produto: um link
-  // primário que o mouse toca cairia abaixo de AA. Escurecer 3% resolve os quatro
-  // pares (pior fica 4,56) e é imperceptível. O azul EXATO da marca continua em
+  /*
+   * Rampa clara do redesign da plataforma (protótipo de 08/09/2026): neutros
+   * FRIOS (cinza-esverdeado + branco puro), no lugar do creme quente da rodada
+   * anterior. Todos os literais do protótipo passam AA medidos, menos um: o
+   * azul da marca sobre a própria tint (4,40), derivado logo abaixo.
+   */
+  bg: "#F3F4F1",
+  surface: "#FFFFFF",
+  surfaceSoft: "#FAFAF7",
+  surfaceMute: "#EEEFEA",
+  border: "#E3E4DF",
+  ink: "#0B1628",
+  // literal do protótipo: 4,96 no pior fundo (surface-mute). Passa direto.
+  ink2: "#5B6779",
+  ink3: "#5B6779",
+  // o #8FA0B5 do protótipo dá 2,9 como texto: é cinza decorativo, e vive aqui.
+  ink4: "#8FA0B5",
+  // O literal da marca (#2064EC) dá 4,40 sobre a primary-tint e reprovaria AA.
+  // Escurecer 3% resolve (4,96 na tint, 5,79 no papel) e é imperceptível; é o
+  // MESMO derivado que a landing usa nos chips. O azul EXATO continua em
   // `brandBlue`, que é quem pinta o logo.
-  primary: "#1F61E5",
-  primaryTint: "#EEF3FE",
+  primary: "#1E5CDD",
+  primaryTint: "#E6EEFD",
 };
 
 const ROTA_ESCURO: PaletaCore = {
@@ -169,29 +181,31 @@ const ROTA_COMPART_CLARO: Compartilhado = {
   onPrimary: "#ffffff",
   onAnalysis: "#ffffff",
   // o turquesa da marca (#14B3BA) dá 2,52 sobre papel: NÃO é cor de texto.
-  // Quem escreve usa este tom escuro, que é literal do mockup e dá 6,17.
+  // Quem escreve usa este tom escuro, que é literal do protótipo e dá 6,26.
   analysis: "#0C6B70",
   analysisText: "#0C6B70",
   analysisTint: "#E0F5F4",
   analysisFill: "#14B3BA",
-  onAnalysisFill: "#17202E",
+  onAnalysisFill: "#0B1628",
   // a família coral (cta) não existe no design novo: por ora é ALIAS do âmbar,
   // então tudo compila e nada muda de significado. O codemod apaga depois.
-  cta: "#8E6009",
-  ctaText: "#8E6009",
-  ctaTint: "#FBF1DC",
-  success: "#177A4C",
-  successTint: "#E3F4EA",
-  // #96650A sobre a tint dá 4,4999 e reprovaria por arredondamento. Este tom
-  // escreve; quem acende a luz do semáforo é o warningFill logo abaixo.
-  warning: "#8E6009",
-  warningTint: "#FBF1DC",
+  cta: "#8A5A00",
+  ctaText: "#8A5A00",
+  ctaTint: "#FDF3DC",
+  // verde do protótipo: #0F6B3E escreve (5,98 no pior fundo), #1DB56C acende.
+  success: "#0F6B3E",
+  successTint: "#E8F8EF",
+  successFill: "#1DB56C",
+  onSuccessFill: "#0B1628",
+  // este tom escreve; quem acende a luz do semáforo é o warningFill abaixo.
+  warning: "#8A5A00",
+  warningTint: "#FDF3DC",
   warningFill: "#E8A317",
-  onWarningFill: "#17202E",
-  danger: "#C0361F",
-  dangerTint: "#FCEAE6",
-  dangerFill: "#E2543E",
-  dataIntensidade: "#8E6009",
+  onWarningFill: "#0B1628",
+  danger: "#B4232A",
+  dangerTint: "#FDE8E8",
+  dangerFill: "#E5484D",
+  dataIntensidade: "#8A5A00",
   brandBlue: "#2064EC",
   brandTurquesa: "#14B3BA",
 };
@@ -209,6 +223,8 @@ const ROTA_COMPART_ESCURO: Compartilhado = {
   ctaTint: "#322510",
   success: "#3ECF8E",
   successTint: "#10301F",
+  successFill: "#3ECF8E",
+  onSuccessFill: "#06231F",
   warning: "#E6B03C",
   warningTint: "#322510",
   warningFill: "#F0B429",
@@ -362,6 +378,8 @@ export function tokensDe(paleta: Paleta, escuro: boolean): Record<string, string
     "brand-turquesa": comp.brandTurquesa ?? comp.analysis,
     cta: comp.cta, "cta-text": comp.ctaText,
     success: comp.success, warning: comp.warning, danger: comp.danger, "danger-fill": comp.dangerFill,
+    "success-fill": comp.successFill ?? comp.success,
+    "on-success-fill": comp.onSuccessFill ?? comp.onPrimary,
     "warning-fill": comp.warningFill ?? comp.warning,
     "on-warning-fill": comp.onWarningFill ?? comp.onPrimary,
     "success-tint": comp.successTint, "warning-tint": comp.warningTint,

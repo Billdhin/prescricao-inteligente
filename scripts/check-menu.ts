@@ -30,7 +30,7 @@ const diaADia = NAV.find((s) => s.label === "Dia a dia");
 ok(!!diaADia, 'NAV precisa ter o grupo "Dia a dia"');
 
 const labelsDia = diaADia?.items.map((i) => i.label) ?? [];
-const ESPERADO_DIA = ["Meu dia", "Meus alunos", "Avaliar e reavaliar", "Prescrever treino", "Fazer o semáforo do dia"];
+const ESPERADO_DIA = ["Meu dia", "Meus alunos", "Avaliar e reavaliar", "Prescrever treino", "Semáforo do dia"];
 ok(
   JSON.stringify(labelsDia) === JSON.stringify(ESPERADO_DIA),
   `Grupo "Dia a dia" fora do ciclo do cuidado. Esperado ${JSON.stringify(ESPERADO_DIA)}, veio ${JSON.stringify(labelsDia)}`,
