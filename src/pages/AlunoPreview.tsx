@@ -61,33 +61,65 @@ export function AlunoPreview() {
         </div>
       </header>
 
-      {/* Palco: a moldura de celular deixa claro que é uma amostra, não o app real. */}
-      <div className="flex flex-1 items-start justify-center overflow-auto px-4 py-8">
-        <div className="w-full max-w-[390px]">
-          <div className="overflow-hidden rounded-[2.25rem] border-[6px] border-ink shadow-elevated">
-            {/* pointer-events-none: é um retrato da tela, não um app para operar.
-                aria-hidden porque o conteúdo é ilustrativo; a navegação real do
-                profissional está no header acima. */}
-            <div className="pointer-events-none select-none" aria-hidden>
-              <StudentApp
-                aluno={aluno}
-                plano={plano}
-                marca={marca}
-                avaliacoes={avaliacoes}
-                execucoes={execucoesDoAluno}
-                sessaoFeedbacks={feedbacksDoAluno}
-                liberacoes={liberacoes}
-                dataDaPrescricao={dataDaPrescricao}
-                onRegistrar={() => {}}
-                onFeedback={() => {}}
-                preview
-              />
+      {/* Palco (protótipo 08/09): a moldura de celular navy à esquerda deixa
+          claro que é uma amostra, não o app real; o card "Como funciona" ao
+          lado explica o que se está vendo. */}
+      <div className="flex-1 overflow-auto px-4 py-8">
+        <div className="mx-auto grid w-full max-w-4xl items-start justify-items-center gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+          <div className="w-full max-w-[390px]">
+            {/* A mesma moldura do app do aluno: navy #0A0F18, raio 44, padding 9. */}
+            <div
+              className="rounded-[44px] p-[9px]"
+              style={{ background: "#0A0F18", boxShadow: "0 40px 70px -34px rgba(0,0,0,.6)" }}
+            >
+              <div className="overflow-hidden rounded-[36px]" style={{ background: "#0B1628" }}>
+                {/* pointer-events-none: é um retrato da tela, não um app para operar.
+                    aria-hidden porque o conteúdo é ilustrativo; a navegação real do
+                    profissional está no header acima. */}
+                <div className="pointer-events-none select-none" aria-hidden>
+                  <StudentApp
+                    aluno={aluno}
+                    plano={plano}
+                    marca={marca}
+                    avaliacoes={avaliacoes}
+                    execucoes={execucoesDoAluno}
+                    sessaoFeedbacks={feedbacksDoAluno}
+                    liberacoes={liberacoes}
+                    dataDaPrescricao={dataDaPrescricao}
+                    onRegistrar={() => {}}
+                    onFeedback={() => {}}
+                    preview
+                  />
+                </div>
+              </div>
             </div>
           </div>
-          <p className="mt-4 text-center text-xs text-ink-3">
-            É assim que {aluno.nome.split(" ")[0]} vê o treino de hoje no celular. As demais telas
-            (Treinos, Progresso e Perfil) aparecem quando o aluno entra na conta dele.
-          </p>
+
+          <div className="w-full rounded-card border border-border bg-surface p-5 shadow-soft">
+            <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">Como funciona</p>
+            <p className="mt-2 text-sm leading-relaxed text-ink">
+              É assim que {aluno.nome.split(" ")[0]} vê o treino de hoje no celular, com a sua marca.
+              Esta prévia é somente leitura: as demais telas (Treinos, Progresso e Perfil) e o registro
+              série a série aparecem quando o aluno entra na conta dele, criada pelo convite.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={voltar}
+                className="inline-flex h-9 items-center gap-2 rounded-control px-4 text-sm font-semibold transition-[filter] hover:brightness-[1.15]"
+                style={{ background: "#0B1628", color: "#F3F1EA" }}
+              >
+                Voltar para {aluno.nome.split(" ")[0]}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/alunos")}
+                className="inline-flex h-9 items-center gap-2 rounded-control border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:bg-surface-soft"
+              >
+                Trocar aluno
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

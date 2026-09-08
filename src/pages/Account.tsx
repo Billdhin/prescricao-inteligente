@@ -1,7 +1,9 @@
 import * as React from "react";
-import { Settings, Crown, Check, ShieldAlert, Sparkles, Camera, ImageIcon, Trash2, Lock, KeyRound } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Settings, Check, ShieldAlert, Sparkles, Camera, ImageIcon, Trash2, Lock, KeyRound } from "lucide-react";
 import { Card, Pill, Button, SectionHeader, buttonClasses } from "@/components/ui/primitives";
-import { useUser, planLabel, isPremiumUnlocked, type Plan } from "@/lib/store";
+import { useUser, planLabel, type Plan } from "@/lib/store";
+import { COBRANCA_ATIVA, ITENS_PLANO } from "@/data/planos";
 import { hashSenha, novoSalt, abrirSessao, encerrarSessao } from "@/lib/auth";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { signOut } from "@/lib/backend/supabaseAuth";
@@ -46,26 +48,34 @@ export function Account() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <SectionHeader
         eyebrow="Conta"
         icon={<Settings className="h-3 w-3" />}
-        title="Sua conta"
-        subtitle="Perfil, marca, acesso e plano. O que você preencher aqui assina os documentos entregues aos alunos."
+        title="Sua conta e sua marca"
+        subtitle="O que você preencher aqui assina os documentos entregues aos alunos."
       />
 
       {/* Volta para o espaço do aluno. Só aparece quando alguém de fato atende esta conta:
           sem vínculo, não há treino a ver, e o botão seria uma porta para lugar nenhum. */}
       <AlternarEspaco />
 
+      {/* Duas colunas no desktop (protótipo 08/09): à esquerda o que assina os
+          documentos (perfil e marca), à direita a conta em si (plano, acesso,
+          aparência, preferências e a zona de risco). */}
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className="min-w-0 space-y-6">
       {/* Perfil profissional */}
       <Card className="p-6">
         <h3 className="mb-4 font-display text-lg font-bold text-ink">Perfil profissional</h3>
         <div className="flex flex-wrap items-center gap-4">
           {fotoDataUrl ? (
-            <img src={fotoDataUrl} alt="Sua foto" className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/20" />
+            <img src={fotoDataUrl} alt="Sua foto" className="h-16 w-16 rounded-card object-cover" />
           ) : (
-            <span className="grid h-16 w-16 place-items-center rounded-full gradient-brand text-lg font-bold text-white">
+            <span
+              className="grid h-16 w-16 place-items-center rounded-card font-display text-lg font-bold"
+              style={{ background: "#0B1628", color: "#F3F1EA" }}
+            >
               {initials}
             </span>
           )}
@@ -94,9 +104,6 @@ export function Account() {
               </button>
             )}
           </div>
-          <Pill tone={isPremiumUnlocked(plan) ? "success" : "neutral"} icon={<Crown className="h-3 w-3" />} className="ml-auto">
-            {planLabel[plan]}
-          </Pill>
         </div>
 
         <div className="mt-5 grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
@@ -141,13 +148,6 @@ export function Account() {
         </p>
       </Card>
 
-      {/* Aparência: só do profissional, e por isso longe da marca. */}
-      <Card className="p-6">
-        <h3 className="mb-1 font-display text-lg font-bold text-ink">Aparência do seu app</h3>
-        <p className="mb-4 text-sm text-ink-2">Como este app se parece na sua tela.</p>
-        <SeletorTema />
-      </Card>
-
       {/* Marca */}
       <Card className="p-6">
         <h3 className="mb-1 font-display text-lg font-bold text-ink">Sua marca nos documentos</h3>
@@ -157,9 +157,9 @@ export function Account() {
         </p>
         <div className="flex flex-wrap items-center gap-4">
           {logoDataUrl ? (
-            <img src={logoDataUrl} alt="Sua logo" className="h-14 max-w-[220px] rounded-lg border border-border bg-surface object-contain p-1.5" />
+            <img src={logoDataUrl} alt="Sua logo" className="h-14 max-w-[220px] rounded-[14px] border border-border bg-surface object-contain p-1.5" />
           ) : (
-            <span className="grid h-14 w-36 place-items-center rounded-lg border border-dashed border-border text-ink-3">
+            <span className="grid h-14 w-36 place-items-center rounded-[14px] border border-dashed border-border text-ink-3">
               <ImageIcon className="h-5 w-5" />
             </span>
           )}
@@ -262,14 +262,26 @@ export function Account() {
           />
         </div>
       </Card>
+      </div>
+
+      <div className="min-w-0 space-y-6">
+      {/* Plano: superfície navy fixa (fora do tema claro/escuro, de propósito). */}
+      <PlanoCard plan={plan} />
 
       {/* Acesso: conta em nuvem quando o backend está ligado; senão, senha local. */}
       {cloudConfigured ? <ContaNuvemCard /> : <SenhaCard temSenha={Boolean(senhaHash)} />}
 
+      {/* Aparência: só do profissional, e por isso longe da marca. */}
+      <Card className="p-6">
+        <h3 className="mb-1 font-display text-lg font-bold text-ink">Aparência do seu app</h3>
+        <p className="mb-4 text-sm text-ink-2">Só na sua tela; o app do aluno segue a sua marca.</p>
+        <SeletorTema />
+      </Card>
+
       {/* Preferências */}
       <Card className="p-6">
         <h3 className="font-display text-lg font-bold text-ink">Preferências</h3>
-        <div className="mt-3 flex items-start gap-3 rounded-xl bg-surface-soft p-4">
+        <div className="mt-3 flex items-start gap-3 rounded-[14px] border border-border bg-surface-soft p-4">
           <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <div className="text-sm text-ink-2">
             <span className="font-semibold text-ink">Movimento reduzido:</span> a plataforma respeita
@@ -304,7 +316,60 @@ export function Account() {
           </Button>
         )}
       </Card>
+      </div>
+      </div>
     </div>
+  );
+}
+
+/* -------------------------------- Plano ----------------------------------- */
+
+/**
+ * O plano REAL da conta, no card navy do protótipo. Sem preço e sem promessa de
+ * renovação de propósito: enquanto `COBRANCA_ATIVA` é falso nenhuma assinatura é
+ * cobrada, e imprimir "R$ NN/mês · renova em..." aqui seria o produto afirmando
+ * uma cobrança que o código desmente. A tabela anunciada vive em /pricing.
+ */
+function PlanoCard({ plan }: { plan: Plan }) {
+  return (
+    <section
+      className="relative overflow-hidden rounded-card p-6"
+      style={{ background: "#0B1628", color: "#F3F1EA" }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-[60px] -top-[80px] h-[220px] w-[220px] rounded-full"
+        style={{ background: "radial-gradient(circle,rgba(232,163,23,.3),rgba(232,163,23,0) 65%)" }}
+      />
+      <div className="relative">
+        <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#F0B429" }}>
+          Plano
+        </p>
+        <p className="mt-2 font-display text-3xl font-bold leading-none tracking-[-0.03em]">
+          {planLabel[plan]}
+        </p>
+        {!COBRANCA_ATIVA && (
+          <p className="mt-2 text-sm leading-relaxed" style={{ color: "#B9C6D6" }}>
+            Acesso completo liberado. Nenhuma cobrança está ativa nesta conta hoje.
+          </p>
+        )}
+        <div className="mt-4 flex flex-col gap-1.5 text-sm" style={{ color: "#D6DFEA" }}>
+          {ITENS_PLANO.slice(0, 3).map((item) => (
+            <span key={item} className="inline-flex items-start gap-2">
+              <Check className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "#7FE3D8" }} aria-hidden />
+              {item}
+            </span>
+          ))}
+        </div>
+        <Link
+          to="/pricing"
+          className="mt-5 inline-flex h-10 items-center rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+          style={{ borderColor: "rgba(255,255,255,.2)" }}
+        >
+          Ver planos e preços
+        </Link>
+      </div>
+    </section>
   );
 }
 
@@ -490,7 +555,7 @@ function ContaNuvemCard() {
         Você está conectado. Seus alunos, avaliações e prescrições ficam salvos na sua conta e
         aparecem em qualquer aparelho onde você entrar.
       </p>
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-soft p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-border bg-surface-soft p-3">
         <div className="min-w-0">
           <div className="text-2xs font-semibold uppercase tracking-wider text-ink-3">E-mail da conta</div>
           <div className="truncate text-sm font-semibold text-ink">{emailConta || "conta conectada"}</div>
@@ -589,7 +654,9 @@ function SenhaCard({ temSenha }: { temSenha: boolean }) {
           : "Crie uma senha para o app pedir acesso ao abrir: útil em computador compartilhado (recepção, notebook do estúdio)."}
       </p>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      {/* No desktop este card vive na coluna estreita da direita: os campos
+          empilham (lg:grid-cols-1) para não espremer três senhas lado a lado. */}
+      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
         {temSenha && (
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-ink">Senha atual</span>
