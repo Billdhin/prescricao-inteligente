@@ -288,7 +288,7 @@ function AzulejoDoDia({ valor, rotulo, cor, tom }: { valor: string; rotulo: stri
   const ambar = tom === "ambar";
   return (
     <div
-      className="rounded-2xl border p-3.5"
+      className="rounded-card border p-3.5"
       style={
         ambar
           ? { background: "rgba(232,163,23,.14)", borderColor: "rgba(232,163,23,.3)" }
