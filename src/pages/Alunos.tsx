@@ -1,17 +1,17 @@
 import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { UserPlus, Search, AlertTriangle, CheckCircle2, Stethoscope, ArrowRight } from "lucide-react";
+import { UserPlus, Search, CheckCircle2 } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
-import { tempoDesde } from "@/data/alunos";
+
 import type { Aluno } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
+import { semanaAtual } from "@/data/periodizacao";
 import {
   proximoPasso,
   dataReavaliacao,
-  linkDoPasso,
   ETAPAS,
   ROTULO_ETAPA,
   type CicloCtx,
@@ -105,6 +105,21 @@ export function Alunos() {
     return m;
   }, [comPasso]);
 
+  // "Treinos 7d": DIAS distintos com registro nos últimos 7 dias, por aluno; a
+  // mesma definição de treino do painel e do app do aluno (nunca execuções
+  // soltas, que inflariam o número).
+  const treinos7d = React.useMemo(() => {
+    const corte = Date.now() - 7 * DIA;
+    const dias = new Map<string, Set<number>>();
+    for (const e of execucoes) {
+      if (!e.alunoId || e.concluidoEm < corte) continue;
+      const s = dias.get(e.alunoId) ?? new Set<number>();
+      s.add(Math.floor(e.concluidoEm / DIA));
+      dias.set(e.alunoId, s);
+    }
+    return new Map([...dias.entries()].map(([id, s]) => [id, s.size]));
+  }, [execucoes]);
+
   const filtrados = comPasso
     .filter(({ aluno: a, passo }) =>
       filtro === "todos"
@@ -128,28 +143,25 @@ export function Alunos() {
     });
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      {/* Cabeçalho do mockup: o título com a contagem colada, a busca na mesma
-          linha e a ação primária à direita. O card de "resumo de triagem" saiu:
-          os mesmos números já vivem nos chips de filtro, e repetir contagem em
-          dois lugares é o caminho mais curto para elas discordarem. */}
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-ink">
-          Meus alunos
-          {alunos.length > 0 && (
-            <span className="tabular rounded-full bg-surface-soft px-2.5 py-0.5 text-sm font-bold text-ink-2">
-              {ativos}
-            </span>
-          )}
-        </h1>
-        <div className="relative ml-auto w-full sm:w-64">
+    <div className="space-y-5">
+      {/* Cabeçalho do protótipo: sobrelinha "Carteira", H1 grande com a contagem
+          colada em cinza, busca à direita. */}
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">Carteira</p>
+          <h1 className="mt-1.5 font-display text-3xl font-bold tracking-[-0.03em] text-ink md:text-4xl">
+            Meus alunos{" "}
+            {alunos.length > 0 && <span className="tabular font-semibold text-ink-3">· {ativos}</span>}
+          </h1>
+        </div>
+        <div className="relative w-full sm:w-64">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-2" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar aluno..."
             aria-label="Buscar aluno por nome, objetivo ou restrição"
-            className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary"
+            className="h-11 w-full rounded-control border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary"
           />
         </div>
         {/* Só no mobile: a topbar já mostra "Cadastrar aluno" a partir de sm, e dois
@@ -199,26 +211,46 @@ export function Alunos() {
               )}
             </Card>
           ) : (
-            <div className="space-y-3">
-              {filtrados.map(({ aluno, passo }) => (
-                <AlunoRow key={aluno.id} aluno={aluno} passo={passo} planoAtivo={planos.find((p) => p.alunoId === aluno.id && p.status === "ativo")} />
-              ))}
-              {/* O cartão tracejado que fecha a lista no mockup: a porta de
-                  cadastro onde o olho já está, com o custo declarado. */}
-              <button
-                onClick={() => setNovo(true)}
-                className="flex w-full items-center gap-3 rounded-card border-2 border-dashed border-border bg-surface p-4 text-left transition-colors hover:border-primary hover:bg-surface-soft"
-              >
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-card bg-primary-tint text-primary">
-                  <UserPlus className="h-5 w-5" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block font-display font-semibold text-ink">Cadastrar aluno</span>
-                  {/* O que o modal de fato pergunta hoje. A condição de saúde saiu
-                      daqui e foi para o perfil, então prometê-la seria mentir na porta. */}
-                  <span className="block text-sm text-ink-2">Nome, idade, nível e objetivo. Leva 20 segundos.</span>
-                </span>
-              </button>
+            <>
+              {/* A TABELA do protótipo: um cartão só, cabeçalho de colunas em
+                  caixa alta (desktop), uma linha por aluno e a porta de cadastro
+                  fechando a lista. */}
+              <Card className="overflow-hidden p-0">
+                <div
+                  className="hidden gap-3.5 border-b border-surface-mute px-5 py-3 text-2xs font-semibold uppercase tracking-[0.1em] text-ink-3 lg:grid"
+                  style={{ gridTemplateColumns: COLUNAS_LISTA }}
+                >
+                  <span>Aluno</span>
+                  <span>Próximo passo</span>
+                  <span>Semana</span>
+                  <span>Treinos 7d</span>
+                  <span>Reavaliação</span>
+                  <span />
+                </div>
+                {filtrados.map(({ aluno, passo }) => (
+                  <LinhaTabela
+                    key={aluno.id}
+                    aluno={aluno}
+                    passo={passo}
+                    planoAtivo={planos.find((p) => p.alunoId === aluno.id && p.status === "ativo")}
+                    treinos7d={treinos7d.get(aluno.id) ?? 0}
+                  />
+                ))}
+                <button
+                  onClick={() => setNovo(true)}
+                  className="flex w-full items-center gap-3 bg-surface-soft px-5 py-3.5 text-left transition-colors hover:bg-bg"
+                >
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control border-2 border-dashed border-border text-lg text-ink-2">
+                    +
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-ink">Cadastrar aluno</span>
+                    {/* O que o modal de fato pergunta hoje. A condição de saúde saiu
+                        daqui e foi para o perfil, então prometê-la seria mentir na porta. */}
+                    <span className="block text-xs text-ink-2">Nome, idade, nível e objetivo. Leva 20 segundos.</span>
+                  </span>
+                </button>
+              </Card>
               {/* A porta dos exemplos fora da carteira vazia: quem já tem alunos reais
                   também precisa dos dois casos de demonstração (gravação, apresentação).
                   Carregar MESCLA sem tocar no que existe, e a linha some quando os
@@ -231,7 +263,7 @@ export function Alunos() {
                   Carregar alunos de exemplo
                 </button>
               )}
-            </div>
+            </>
           )}
         </>
       )}
@@ -252,60 +284,75 @@ export function Alunos() {
   );
 }
 
-function AlunoRow({ aluno, passo, planoAtivo }: { aluno: Aluno; passo: ProximoPasso; planoAtivo?: import("@/data/periodizacao").PlanoTreino }) {
+/** As colunas do desktop, na proporção do protótipo. */
+const COLUNAS_LISTA = "minmax(0,2fr) minmax(0,1.6fr) 90px 90px 110px minmax(90px,auto)";
+
+/**
+ * Uma linha da tabela do protótipo. A linha inteira abre o aluno; a coluna
+ * "Próximo passo" mostra a MESMA frase de `proximoPasso()` que manda no chip e
+ * na ordenação (fonte única), com o ponto na cor da urgência. No mobile as
+ * colunas de dado somem e a frase desce para debaixo do nome.
+ */
+function LinhaTabela({
+  aluno,
+  passo,
+  planoAtivo,
+  treinos7d,
+}: {
+  aluno: Aluno;
+  passo: ProximoPasso;
+  planoAtivo?: import("@/data/periodizacao").PlanoTreino;
+  treinos7d: number;
+}) {
   const restr = aluno.restricoes;
   const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
   const reav = dataReavaliacao(aluno, planoAtivo);
   const reavTexto = reav ? textoReav(reav.em) : null;
+  const reavVencida = reav != null && reav.em < Date.now();
+  const semana = planoAtivo ? `S${semanaAtual(planoAtivo)} de ${planoAtivo.semanas}` : null;
+  const pontoCor =
+    passo.chip == null
+      ? "var(--success-fill)"
+      : passo.chip.tone === "warning"
+        ? "var(--danger-fill)"
+        : passo.chip.tone === "cta"
+          ? "var(--warning-fill)"
+          : "var(--analysis-fill)";
 
   return (
-    <Card variant="base" interactive className="group overflow-hidden p-0">
-      <div className="flex items-center gap-4 p-4">
-      <Link to={`/alunos/${aluno.id}`} className="flex min-w-0 flex-1 items-center gap-4 outline-none">
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-card gradient-brand font-display font-bold text-white">
+    <Link
+      to={`/alunos/${aluno.id}`}
+      className="grid items-center gap-x-3.5 gap-y-1.5 border-b border-surface-mute px-5 py-3.5 transition-colors hover:bg-surface-soft lg:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_90px_90px_110px_minmax(90px,auto)]"
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        <span
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
+          style={{ background: "#0B1628", color: "#F3F1EA" }}
+        >
           {aluno.iniciais}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="truncate font-display font-semibold text-ink group-hover:text-primary">{aluno.nome}</p>
+        <span className="min-w-0">
+          <span className="flex items-center gap-2">
+            <b className="truncate text-sm font-semibold text-ink">{aluno.nome}</b>
             {aluno.status !== "ativo" && <Pill tone="neutral">Saiu</Pill>}
-          </div>
-          {/* Taxonomia de pill: o nome é a âncora (semibold, dieta de peso). Metadado
-              não acionável (objetivo, nível) veste TEXTO simples, nunca pill. Só o que
-              é clínico (condição = analysis + ícone) ou alerta (restrição = warning)
-              ganha pill. */}
-          <p className="mt-1 text-sm text-ink-2">
+          </span>
+          <span className="block truncate text-xs text-ink-2">
             {aluno.objetivo} · {aluno.nivel}
-          </p>
-          {(grupo || restr.length > 0) && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              {grupo && (
-                <Pill tone="analysis" icon={<Stethoscope className="h-3 w-3" />}>
-                  {grupo.nome}
-                </Pill>
-              )}
-              {restr.length > 0 && (
-                <Pill
-                  tone="warning"
-                  icon={<AlertTriangle className="h-3 w-3" />}
-                  className="cursor-default"
-                >
-                  <span title={restr.map((r) => rotuloRestricao(r.tag)).join(", ")}>
-                    {restr.length} {restr.length === 1 ? "restrição" : "restrições"}
-                  </span>
-                </Pill>
-              )}
-            </div>
-          )}
-          <p className="tabular mt-1 truncate text-xs text-ink-3">
-            {aluno.ultimaAvaliacaoEm ? `Última avaliação ${tempoDesde(aluno.ultimaAvaliacaoEm).texto}` : "Sem avaliação"}
-            {reavTexto ? ` · próxima reavaliação ${reavTexto}` : ""}
-          </p>
-        </div>
-      </Link>
-
-      {/* Estado (some no mobile para não apertar) */}
-      <div className="hidden shrink-0 sm:block">
+            {grupo ? ` · ${grupo.nome}` : ""}
+            {restr.length > 0 ? ` · ${restr.length} ${restr.length === 1 ? "restrição" : "restrições"}` : ""}
+          </span>
+        </span>
+      </span>
+      <span className="flex min-w-0 items-center gap-2 pl-[52px] lg:pl-0">
+        <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: pontoCor }} />
+        <span className="truncate text-[13px] text-ink">{passo.frase}</span>
+      </span>
+      <span className="tabular hidden text-sm font-semibold text-ink lg:block">{semana ?? "·"}</span>
+      <span className="tabular hidden text-sm font-semibold text-ink lg:block">{treinos7d > 0 ? treinos7d : "·"}</span>
+      <span className={cn("hidden text-[13px] font-semibold lg:block", reavVencida ? "text-danger" : "text-ink-2")}>
+        {reavTexto ?? "·"}
+      </span>
+      <span className="hidden justify-self-end lg:block">
         {passo.chip ? (
           <Pill tone={passo.chip.tone}>{passo.chip.label}</Pill>
         ) : (
@@ -313,36 +360,8 @@ function AlunoRow({ aluno, passo, planoAtivo }: { aluno: Aluno; passo: ProximoPa
             Em dia
           </Pill>
         )}
-      </div>
-      </div>
-      <LinhaProximoPasso aluno={aluno} passo={passo} />
-    </Card>
-  );
-}
-
-/**
- * A LINHA DO PRÓXIMO PASSO. `proximoPasso()` já devolvia `frase` e `cta.label`
- * junto do chip, e a lista jogava os dois fora: o profissional lia "Sem treino"
- * e tinha que abrir o aluno para descobrir o que fazer. Agora a frase aparece e
- * o botão diz a ação pelo nome, indo direto ao lugar dela (`linkDoPasso`).
- *
- * Some quando o aluno está em dia (`chip` nulo): botão que não precisa ser
- * apertado é ruído.
- */
-function LinhaProximoPasso({ aluno, passo }: { aluno: Aluno; passo: ProximoPasso }) {
-  if (!passo.chip) return null;
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
-      <p className="min-w-0 flex-1 text-sm text-ink-2">
-        <span className="font-semibold text-ink">Próximo passo:</span> {passo.frase}
-      </p>
-      <Link
-        to={passo.cta.to ?? linkDoPasso(aluno.id, passo.cta.kind)}
-        className={cn(buttonClasses(passo.tone === "success" ? "secondary" : "primary", "sm"), "shrink-0")}
-      >
-        {passo.cta.label} <ArrowRight className="h-4 w-4" />
-      </Link>
-    </div>
+      </span>
+    </Link>
   );
 }
 
