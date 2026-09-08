@@ -84,15 +84,33 @@ const REGRAS = [
     id: "par-dado-separado",
     desc: "rótulo e valor separados pelas bordas; use ParDado/TokenRotulado, com o valor colado ao rótulo.",
     varrer: (conteudo, push) => {
-      // Só o caso estreito que a auditoria encontrou: um container justify-between cujos
-      // DOIS filhos diretos são <span> de texto. Cabeçalho com título e botão, que é o uso
-      // legítimo e maioritário de justify-between, não casa, porque o segundo filho não é
-      // um span de texto.
-      const re = /<(?:div|dl|dt|p)\b[^>]*justify-between[^>]*>\s*<span\b[^>]*>[^<>{}]{1,60}<\/span>\s*<span\b[^>]*>[^<>]{1,60}<\/span>\s*<\/(?:div|dl|dt|p)>/g;
+      /*
+       * Só o caso estreito que a auditoria encontrou: um container justify-between cujos
+       * DOIS filhos diretos são <span> de texto. Cabeçalho com título e botão, que é o uso
+       * legítimo e maioritário de justify-between, não casa, porque o segundo filho não é
+       * um span de texto.
+       *
+       * O RÓTULO PODE VIR DE EXPRESSÃO. Até 08/09/2026 o primeiro span exigia texto
+       * literal (`[^<>{}]`), e como quase todo rótulo real é `{variavel}`, a regra estava
+       * praticamente cega: varria 282 arquivos e casava 2, os dois já isentos. Sem a
+       * exclusão de chaves ela vê 4 casos a mais. É o mesmo defeito de 02/09, quando o
+       * `\b` do check:legal não enxergava letra acentuada: a régua existia e não olhava
+       * para onde precisava.
+       */
+      const re = /<(?:div|dl|dt|p)\b[^>]*justify-between[^>]*>\s*<span\b[^>]*>[^<>]{1,60}<\/span>\s*<span\b[^>]*>[^<>]{1,60}<\/span>\s*<\/(?:div|dl|dt|p)>/g;
+      /*
+       * CABEÇALHO DE BARRA não é o defeito. Quando o par vem imediatamente acima de uma
+       * barra de progresso, o vão do meio não fica vazio: a própria barra liga o rótulo ao
+       * valor, e o olho lê os três como uma coisa só ("Quadríceps ... 6 séries" com a barra
+       * embaixo, que é o padrão do Design System e do protótipo da plataforma). O defeito
+       * que esta regra existe para pegar é o par SOLTO, com um vão vazio no meio.
+       */
+      const barraLogoAbaixo = /^[\s\S]{0,220}?(?:<Progress\b|className="[^"]*\brounded-full\b[^"]*"[^>]*>\s*<(?:div|span)\b[^>]*\bwidth:)/;
       let m;
       while ((m = re.exec(conteudo))) {
         // Exceção declarada no próprio elemento, com motivo. Ver o comentário da regra.
         if (/data-par-dado=/.test(m[0])) continue;
+        if (barraLogoAbaixo.test(conteudo.slice(m.index + m[0].length))) continue;
         push(m.index);
       }
     },
