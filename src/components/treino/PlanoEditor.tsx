@@ -170,34 +170,97 @@ function SeloOrigem({ ctx, bloco }: { ctx: ContextoFaixa; bloco: BlocoSessao }) 
  * a marca da semana é vazada em vez de sólida e a legenda diz por quê. A leitura muda porque a
  * promessa mudou, e não porque o número mudou.
  */
+/**
+ * As cores das três séries sobre o navy do macrociclo. A superfície é FIXA (fora
+ * do tema claro/escuro), como o herói do Meu dia e a lateral: por isso os valores
+ * são literais verificados uma vez, e não tokens. Sobre #0B1628: o teal dá 11,1:1,
+ * o âmbar 8,3:1 e o cinza da complexidade 6,4:1.
+ */
+const SERIE_NAVY: Record<string, string> = { vol: "#7FE3D8", int: "#E8A317", cpx: "#8FA0B5" };
+
+/** Famílias das faixas de fase, cicladas na ordem do protótipo. */
+const FAIXA_FASE = [
+  { bg: "rgba(20,179,186,.18)", borda: "rgba(20,179,186,.4)", tinta: "#7FE3D8" },
+  { bg: "rgba(32,100,236,.22)", borda: "rgba(32,100,236,.5)", tinta: "#9DBAFF" },
+  { bg: "rgba(232,163,23,.16)", borda: "rgba(232,163,23,.4)", tinta: "#F0B429" },
+] as const;
+
 export function GraficoProgressao({
   macro,
   nivel,
   modeloId,
+  semanaAtual,
 }: {
   macro: Macrociclo;
   nivel?: Nivel;
   modeloId?: ModeloPeriodizacaoId;
+  /** semana corrente do plano; só quem tem plano SALVO passa (senão "você está aqui" mentiria) */
+  semanaAtual?: number;
 }) {
   const ordemAberta = modeloId === "flexivel" || modeloId === "autorregulada";
-  const g = desenharProgressao(macro, undefined, undefined, nivel);
+  // 1200x200 é o enquadramento do protótipo. As contas não mudam: `desenharProgressao`
+  // projeta a mesma série em qualquer moldura.
+  const g = desenharProgressao(macro, 1200, 200, nivel);
   const gid = React.useId().replace(/:/g, "");
-  // Régua de semanas em SEGMENTOS (protótipo do editor): cada semana vira uma
-  // barrinha arredondada na cor do tipo, no lugar do tick fino. Só geometria; a
-  // posição (t.x) e o tipo continuam vindo de desenharProgressao.
-  const passoSemana = g.microTicks.length > 1 ? g.microTicks[1].x - g.microTicks[0].x : 12;
-  const segSemanaW = Math.max(passoSemana - 3, 3);
-  const segSemanaH = g.weekTickBottom - g.weekTickTop;
+
+  /*
+   * O SVG desenha SÓ a geometria do plot, esticada na largura (preserveAspectRatio
+   * "none", como no protótipo). Todo TEXTO e todo marcador redondo vive em HTML por
+   * cima, posicionado em porcentagem: dentro de um SVG esticado, letra e círculo
+   * sairiam deformados. `pontos` (progressao.ts) dá a coordenada já projetada de
+   * cada semana, então a bandeira e os pontos caem exatamente sobre a curva.
+   */
+  const vbTop = g.plot.top - 12;
+  const vbAltura = g.plot.bottom - g.plot.top + 24;
+  const pctX = (x: number) => (x / g.largura) * 100;
+  const pctY = (y: number) => ((y - vbTop) / vbAltura) * 100;
+
+  const atual = semanaAtual != null ? g.pontos.find((p) => p.semana === semanaAtual) : undefined;
+  const grade = [0.25, 0.5, 0.75].map((f) => g.plot.top + (g.plot.bottom - g.plot.top) * f);
+  const passoSemana = g.microTicks.length > 1 ? g.microTicks[1].x - g.microTicks[0].x : 24;
+  const larguraChip = Math.max(pctX(passoSemana) - 0.35, 0.6);
   // Só os tipos de semana que aparecem no plano entram na legenda (nunca "Teste" quando
   // não há semana de teste).
   const tiposPresentes = new Set(g.microTicks.map((t) => t.tipo));
   const tiposSemana = (["carga", "deload", "teste"] as TipoMicrociclo[]).filter((t) => tiposPresentes.has(t));
 
   return (
-    <Card className="p-4">
-      <div className="mb-1 flex items-center gap-2">
-        <TrendingUp className="h-4 w-4 text-ink-3" />
-        <h3 className="font-display text-base font-bold text-ink">Progressão ao longo das semanas</h3>
+    <section
+      className="relative overflow-hidden rounded-[24px] p-4 md:p-6"
+      style={{ background: "#0B1628", color: "#F3F1EA" }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage: "linear-gradient(180deg,transparent,#000 40%)",
+          WebkitMaskImage: "linear-gradient(180deg,transparent,#000 40%)",
+        }}
+      />
+      <div className="relative flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+        <p className="m-0 flex items-center gap-2 text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
+          <TrendingUp className="h-3.5 w-3.5" aria-hidden />
+          Macrociclo · volume, esforço e complexidade por semana
+        </p>
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs" style={{ color: "#B9C6D6" }}>
+          {g.series.map((s) => (
+            <span key={s.id} className="flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className="w-3.5"
+                style={
+                  s.id === "cpx"
+                    ? { borderTop: `2px dashed ${SERIE_NAVY.cpx}` }
+                    : { height: 3, borderRadius: 2, background: SERIE_NAVY[s.id] ?? s.cor }
+                }
+              />
+              {s.nome}
+            </span>
+          ))}
+        </div>
       </div>
       {/*
         AS TRÊS LINHAS NÃO SÃO A MESMA CONTA, e omitir isso já enganou um professor testando
@@ -211,11 +274,11 @@ export function GraficoProgressao({
         essa leitura. Soma e média reagem de formas opostas ao mesmo gesto, e quem lê precisa
         saber disso antes de olhar.
       */}
-      <p className="mb-3 text-xs text-ink-3">
+      <p className="relative mt-2 text-xs leading-relaxed" style={{ color: "#B9C6D6" }}>
         Valores relativos, calculados das sessões (sem unidade absoluta). O nome de cada linha já diz como
-        ela é calculada: <b>volume é soma</b>, então acrescentar exercício ou série sobe a linha;{" "}
-        <b>esforço médio é média</b>, então ele sobe quando o treino fica mais pesado, e não quando fica mais
-        longo. As faixas ao pé mostram cada fase e quantas semanas ela dura.
+        ela é calculada: <b style={{ color: "#F3F1EA" }}>volume é soma</b>, então acrescentar exercício ou série sobe a linha;{" "}
+        <b style={{ color: "#F3F1EA" }}>esforço médio é média</b>, então ele sobe quando o treino fica mais pesado, e não quando fica mais
+        longo. As faixas acima do gráfico mostram cada fase e quantas semanas ela dura.
       </p>
       {/*
         POR QUE A CURVA NÃO MUDOU, dito antes de o profissional olhar para ela.
@@ -225,143 +288,211 @@ export function GraficoProgressao({
         aponta onde a diferença ESTÁ para ser conferida.
       */}
       {ordemAberta && (
-        <div className="mb-3 rounded-[14px] border border-border bg-surface-soft p-3">
-          <p className="text-xs font-semibold text-ink">Por que esta curva é igual à da periodização ondulatória</p>
-          <p className="mt-1 text-xs leading-relaxed text-ink-2">
+        <div
+          className="relative mt-3 rounded-[14px] border p-3"
+          style={{ background: "rgba(255,255,255,.06)", borderColor: "rgba(255,255,255,.1)" }}
+        >
+          <p className="text-xs font-semibold" style={{ color: "#F3F1EA" }}>
+            Por que esta curva é igual à da periodização ondulatória
+          </p>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: "#B9C6D6" }}>
             Porque neste modelo ela tem que ser. O volume e a intensidade da semana são os mesmos; o que muda é a ORDEM
             das sessões dentro da semana, escolhida no dia conforme a agenda e a resposta do aluno. No ensaio que
             compara os dois modelos de frente (Colquhoun, 2017), intensidade e volume não diferiram entre os grupos, e
             os ganhos foram semelhantes. Uma curva diferente aqui seria um modelo que ninguém estudou.
           </p>
-          <p className="mt-1.5 text-xs leading-relaxed text-ink-2">
+          <p className="mt-1.5 text-xs leading-relaxed" style={{ color: "#B9C6D6" }}>
             A diferença está em outros dois lugares, e é neles que vale comparar: as sessões vêm por LETRA (A, B, C) e
-            não por número, porque a semana é um conjunto e não uma sequência; e a marca de cada semana no gráfico vem
+            não por número, porque a semana é um conjunto e não uma sequência; e a marca de cada semana na régua vem
             tracejada, para lembrar que a dose da semana está fechada e a sequência dela não. Quando um dia cair, a
             escolha de qual sessão manter é sua.
           </p>
         </div>
       )}
-      <div className="relative overflow-x-auto">
+      {/* FAIXAS DE FASE, acima do plot e alinhadas por porcentagem com as curvas.
+          Cada faixa é um mesociclo real: nome, intervalo de semanas e os ícones do
+          que se treina mais nela (só quando a faixa é larga o bastante para eles
+          não espremerem o nome). */}
+      <div className="relative mt-4 h-8 min-w-[560px]" aria-hidden>
+        {g.fases.map((f) => {
+          const fam = FAIXA_FASE[f.indice % FAIXA_FASE.length];
+          const largura = pctX(f.x1) - pctX(f.x0);
+          const focos = largura > 14 ? posicoesFocos(f, 0, 12, 5) : [];
+          return (
+            <div
+              key={f.indice}
+              className="absolute inset-y-0 flex items-center gap-2 overflow-hidden rounded-[8px] border px-2.5"
+              style={{
+                left: `${pctX(f.x0)}%`,
+                width: `calc(${largura}% - 3px)`,
+                background: fam.bg,
+                borderColor: fam.borda,
+                color: fam.tinta,
+              }}
+            >
+              {/* Só o NOME na faixa: o intervalo de semanas já está escrito na régua
+                  logo abaixo, e repeti-lo aqui truncava o nome da fase. */}
+              <span className="min-w-0 flex-1 truncate text-2xs font-semibold" title={`${f.nome} · ${f.spanSemanas}`}>
+                {f.nome}
+              </span>
+              {focos.length > 0 && (
+                <span className="flex shrink-0 items-center gap-1">
+                  {focos.map((p, i) => (
+                    <svg key={i} width={12} height={12} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round">
+                      <title>{p.foco.label}</title>
+                      {p.foco.glifo.paths.map((d, j) => (
+                        <path key={j} d={d} />
+                      ))}
+                      {p.foco.glifo.circles?.map((c, j) => (
+                        <circle key={`c${j}`} cx={c.cx} cy={c.cy} r={c.r} />
+                      ))}
+                    </svg>
+                  ))}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* O PLOT. O SVG leva só geometria (esticada na largura); texto, bandeira e
+          pontos são HTML por cima, posicionados pelas coordenadas reais de cada
+          semana. */}
+      <div className="relative mt-2 h-[200px] min-w-[560px]">
         <svg
-          viewBox={`0 0 ${g.largura} ${g.altura}`}
-          className="h-56 w-full min-w-[560px]"
+          viewBox={`0 ${vbTop} ${g.largura} ${vbAltura}`}
+          preserveAspectRatio="none"
+          className="h-full w-full"
           role="img"
-          aria-label="Gráfico de progressão de volume, intensidade e complexidade por semana, com as fases do plano"
+          aria-label={`Progressão de volume, esforço médio e complexidade ao longo de ${g.microTicks.length} semanas, com as fases do plano${atual ? `, semana atual ${atual.semana}` : ""}`}
         >
           <defs>
             <linearGradient id={`vol-${gid}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.16" />
-              <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+              <stop offset="0%" stopColor={SERIE_NAVY.vol} stopOpacity="0.35" />
+              <stop offset="100%" stopColor={SERIE_NAVY.vol} stopOpacity="0" />
             </linearGradient>
           </defs>
 
-          {/* faixas de fase (identidade de fase, Onda 4): tint alternado + rótulo da
-              fase NO TOPO + divisória sólida de 1px na fronteira. O tint sozinho é
-              ~1.16:1 e não lê; quem marca onde uma fase começa é a divisória e o rótulo. */}
-          {g.fases.map((f) => (
-            <g key={f.indice}>
-              <rect
-                x={f.x0}
-                y={g.bandTop}
-                width={f.x1 - f.x0}
-                height={g.faixaBottom - g.bandTop}
-                fill={f.indice % 2 === 0 ? "var(--surface-soft)" : "transparent"}
-                opacity={0.5}
-              />
-              {f.indice > 0 && (
-                <line x1={f.x0} y1={g.bandTop} x2={f.x0} y2={g.faixaBottom} stroke="var(--border)" strokeWidth={1} />
-              )}
-              {/* rótulo da fase no topo da faixa (marca onde cada fase começa) */}
-              <text x={f.cx} y={10} textAnchor="middle" className="fill-ink" style={{ fontSize: 10, fontWeight: 700 }}>
-                {f.nome}
-              </text>
-              {/* ícones do que se treina mais na fase, no topo */}
-              {posicoesFocos(f, g.iconRowY).map((p, i) => (
-                <g key={i} transform={p.transform} stroke="var(--ink-2)" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round">
-                  <title>{p.foco.label}</title>
-                  {p.foco.glifo.paths.map((d, j) => (
-                    <path key={j} d={d} />
-                  ))}
-                  {p.foco.glifo.circles?.map((c, j) => (
-                    <circle key={`c${j}`} cx={c.cx} cy={c.cy} r={c.r} />
-                  ))}
-                </g>
-              ))}
-              {/* ao pé: só o intervalo de semanas (o nome da fase subiu para o topo) */}
-              <text x={f.cx} y={g.faixaTop + 12} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 10 }}>
-                {f.spanSemanas}
-                {f.temDescarga ? " · descarga" : ""}
-              </text>
-            </g>
-          ))}
-
-          {/* semanas de descarga */}
+          {/* semanas de descarga: coluna âmbar discreta atrás das curvas */}
           {g.alivios.map((a, i) => (
-            <rect key={i} x={a.x - a.w / 2} y={g.plot.top} width={a.w} height={g.plot.bottom - g.plot.top} fill="var(--warning)" opacity={0.07} rx={2} />
+            <rect key={i} x={a.x - a.w / 2} y={vbTop} width={a.w} height={vbAltura} fill="rgba(232,163,23,.10)" />
+          ))}
+          {/* a semana de hoje, quando o plano já está rodando */}
+          {atual && (
+            <rect x={atual.x - passoSemana / 2} y={vbTop} width={passoSemana} height={vbAltura} fill="rgba(255,255,255,.06)" />
+          )}
+          {grade.map((y, i) => (
+            <line key={i} x1={0} y1={y} x2={g.largura} y2={y} stroke="rgba(255,255,255,.07)" vectorEffect="non-scaling-stroke" />
           ))}
 
-          {/* eixo qualitativo */}
-          <text x={g.eixo.x} y={g.eixo.maiorY} textAnchor="end" className="fill-ink-3" style={{ fontSize: 9 }}>maior</text>
-          <text x={g.eixo.x} y={g.eixo.menorY} textAnchor="end" className="fill-ink-3" style={{ fontSize: 9 }}>menor</text>
-
-          {/* área sob o volume + curvas suaves */}
           <path d={g.areaVolume} fill={`url(#vol-${gid})`} stroke="none" />
           {g.series.map((s) => (
-            <path key={s.nome} d={s.d} fill="none" stroke={s.cor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-          ))}
-
-          {/* régua de semanas (camada micro): um tick por microciclo, colorido pelo tipo
-              da semana (carga, descarga, teste), com rótulo "S1..Sn" espaçado para o
-              horizonte anual não sobrepor 48 números. */}
-          {g.microTicks.map((t, i) => (
-            <g key={i}>
-              <rect
-                x={t.x - segSemanaW / 2}
-                y={g.weekTickTop}
-                width={segSemanaW}
-                height={segSemanaH}
-                rx={segSemanaH / 2}
-                fill={ordemAberta ? "none" : t.tipo === "deload" ? "var(--warning)" : t.tipo === "teste" ? "var(--analysis)" : "var(--primary)"}
-                stroke={t.tipo === "deload" ? "var(--warning)" : t.tipo === "teste" ? "var(--analysis)" : "var(--primary)"}
-                strokeWidth={ordemAberta ? 1.2 : 0}
-                // Marca VAZADA quando a ordem da semana é escolhida no dia: o tracejado é a
-                // leitura de "sequência não fechada", e não um estado de erro.
-                strokeDasharray={ordemAberta ? "3 3" : undefined}
-              />
-              {t.rotular && (
-                <text x={t.x} y={g.weekLabelY} textAnchor="middle" className="fill-ink-3" style={{ fontSize: 9 }}>
-                  S{t.semana}
-                </text>
-              )}
-            </g>
+            <path
+              key={s.id}
+              d={s.d}
+              fill="none"
+              stroke={SERIE_NAVY[s.id] ?? s.cor}
+              strokeWidth={s.id === "cpx" ? 2 : 3}
+              strokeDasharray={s.id === "cpx" ? "6 6" : undefined}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            />
           ))}
         </svg>
-        {/* Affordance de rolagem: um fade no canto direito sugere que o gráfico continua. */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-surface" />
-      </div>
-      <div className="mt-2 flex flex-wrap gap-3">
-        {g.series.map((s) => (
-          <span key={s.nome} className="flex items-center gap-1.5 text-xs text-ink-2">
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: s.cor }} /> {s.nome}
-          </span>
-        ))}
+
+        {/* eixo qualitativo: os valores são relativos, então o que orienta é o sentido */}
+        <span className="absolute left-0 top-1 text-2xs" style={{ color: "#8FA0B5" }}>
+          maior
+        </span>
+        <span className="absolute bottom-1 left-0 text-2xs" style={{ color: "#8FA0B5" }}>
+          menor
+        </span>
+
+        {atual && (
+          <>
+            {/* os dois pontos do protótipo, sobre volume e esforço da semana de hoje */}
+            <span
+              aria-hidden
+              className="absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              style={{ left: `${pctX(atual.x)}%`, top: `${pctY(atual.vol)}%`, background: "#0B1628", boxShadow: `0 0 0 3px ${SERIE_NAVY.vol}` }}
+            />
+            <span
+              aria-hidden
+              className="absolute h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              style={{ left: `${pctX(atual.x)}%`, top: `${pctY(atual.int)}%`, background: "#0B1628", boxShadow: `0 0 0 3px ${SERIE_NAVY.int}` }}
+            />
+            <span
+              className="absolute -translate-x-1/2 whitespace-nowrap rounded-[8px] px-2 py-1 text-2xs font-bold"
+              style={{ left: `${pctX(atual.x)}%`, top: 0, background: "#FFFFFF", color: "#0B1628" }}
+            >
+              Você está aqui · S{atual.semana}
+            </span>
+          </>
+        )}
       </div>
 
-      {tiposSemana.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semanas</span>
-          {tiposSemana.map((t) => (
-            <span key={t} className="flex items-center gap-1.5 text-xs text-ink-2">
+      {/* RÉGUA DE SEMANAS: um chip por microciclo, alinhado com a curva. O rótulo
+          "S1..Sn" é espaçado (num plano anual, um a cada quatro) e o tipo só
+          aparece quando a semana NÃO é de carga, que é o que muda a leitura. */}
+      <div className="relative mt-3 h-9 min-w-[560px]">
+        {g.microTicks.map((t, i) => {
+          const ehAtual = atual != null && t.semana === atual.semana;
+          const fundo =
+            t.tipo === "deload"
+              ? "rgba(232,163,23,.2)"
+              : t.tipo === "teste"
+                ? "rgba(20,179,186,.2)"
+                : "rgba(255,255,255,.06)";
+          const tinta = t.tipo === "deload" ? "#F0B429" : t.tipo === "teste" ? "#7FE3D8" : "#B9C6D6";
+          return (
+            <div
+              key={i}
+              className="absolute top-0 -translate-x-1/2 text-center"
+              style={{ left: `${pctX(t.x)}%`, width: `${larguraChip}%` }}
+            >
               <span
+                className="tabular block truncate rounded-[6px] py-0.5 text-2xs font-semibold"
+                style={
+                  ehAtual
+                    ? { background: "#F3F1EA", color: "#0B1628" }
+                    : { background: fundo, color: tinta, ...(ordemAberta ? { border: `1px dashed ${tinta}` } : null) }
+                }
+                title={`Semana ${t.semana} · ${TIPO_LABEL[t.tipo]}`}
+              >
+                {t.rotular ? `S${t.semana}` : " "}
+              </span>
+              {t.tipo !== "carga" && t.rotular && (
+                <span className="mt-0.5 block truncate text-2xs" style={{ color: "#8FA0B5" }}>
+                  {TIPO_LABEL[t.tipo]}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {tiposSemana.length > 1 && (
+        <div className="relative mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="text-2xs font-semibold uppercase tracking-wide" style={{ color: "#8FA0B5" }}>
+            Semanas
+          </span>
+          {tiposSemana.map((t) => (
+            <span key={t} className="flex items-center gap-1.5 text-xs" style={{ color: "#B9C6D6" }}>
+              <span
+                aria-hidden
                 className="h-2 w-3.5 rounded-full"
-                style={{ background: t === "deload" ? "var(--warning)" : t === "teste" ? "var(--analysis)" : "var(--primary)" }}
+                style={{
+                  background:
+                    t === "deload" ? "rgba(232,163,23,.55)" : t === "teste" ? "rgba(20,179,186,.55)" : "rgba(255,255,255,.25)",
+                }}
               />
               {TIPO_LABEL[t]}
             </span>
           ))}
         </div>
       )}
-    </Card>
+    </section>
   );
 }
 

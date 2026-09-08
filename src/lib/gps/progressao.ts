@@ -530,6 +530,14 @@ export interface DesenhoProgressao {
    * um horizonte anual não sobrepor 48 números. Fonte única para a tela e o PDF.
    */
   microTicks: { x: number; semana: number; tipo: TipoMicrociclo; rotular: boolean }[];
+  /**
+   * As coordenadas JÁ PROJETADAS de cada semana, série por série. Existem para
+   * quem precisa marcar um ponto FORA do SVG (a bandeira "você está aqui" e os
+   * pontos da semana corrente são HTML posicionado por cima, porque o plot usa
+   * `preserveAspectRatio="none"` e qualquer texto ou círculo dentro dele sairia
+   * esticado). Mesma fonte das curvas: nenhuma conta nova.
+   */
+  pontos: { x: number; semana: number; vol: number; int: number; cpx: number }[];
   /** y do eixo qualitativo (rótulos "maior" e "menor") e x da coluna */
   eixo: { x: number; maiorY: number; menorY: number };
   /** topo da faixa de fase (inclui a fileira de ícones, acima das curvas) */
@@ -596,7 +604,7 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
       x1,
       cx: (x0 + x1) / 2,
       nome: truncar(nomeBase, Math.max(6, Math.floor(largFaixa / 6))),
-      spanSemanas: m.semanaInicio === m.semanaFim ? `sem ${m.semanaInicio}` : `sem ${m.semanaInicio}–${m.semanaFim}`,
+      spanSemanas: m.semanaInicio === m.semanaFim ? `sem ${m.semanaInicio}` : `sem ${m.semanaInicio} a ${m.semanaFim}`,
       temDescarga: m.microciclos.some((w) => w.tipo !== "carga"),
       focos: focosDaFase(m.modalidades),
     };
@@ -639,6 +647,13 @@ export function desenharProgressao(macro: Macrociclo, largura = 720, altura = 25
       { id: "cpx", nome: "Complexidade", cor: "var(--analysis)", d: caminhoSuave(pontosDe((p) => p.cpx)) },
     ],
     areaVolume,
+    pontos: pts.map((p, i) => ({
+      x: x(i),
+      semana: microsFlat[i]?.semana ?? i + 1,
+      vol: y(p.vol),
+      int: y(p.int),
+      cpx: y(p.cpx),
+    })),
     fases,
     alivios: pts.map((p, i) => (p.aliviada ? { x: x(i), w: Math.min(18, meio * 1.4) } : null)).filter((v): v is { x: number; w: number } => v !== null),
     microTicks,

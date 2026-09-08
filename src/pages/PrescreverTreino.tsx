@@ -1334,7 +1334,15 @@ function ResultadoPlano({
       {/* Duas colunas: o plano à esquerda, o porquê à direita. Empilha no mobile. */}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
-          <GraficoProgressao macro={macro} nivel={plano.nivel} modeloId={naAlternativa ? plano.modeloAltId : plano.modeloId} />
+          {/* "Você está aqui" só com plano SALVO: num plano recém-gerado, que ainda
+              não começou, a bandeira afirmaria uma semana corrente que não existe.
+              Mesmo critério da régua de semanas logo abaixo. */}
+          <GraficoProgressao
+            macro={macro}
+            nivel={plano.nivel}
+            modeloId={naAlternativa ? plano.modeloAltId : plano.modeloId}
+            semanaAtual={salvo ? semanaCorrente : undefined}
+          />
 
           {/* Régua de semanas: o mapa do plano vira navegação. */}
           <ReguaDeSemanas
