@@ -279,7 +279,7 @@ function TrilhoSecoes({
               onClick={() => onSecao(s.secao.id)}
               aria-current={ativo ? "step" : undefined}
               className={cn(
-                "flex w-full items-center gap-3 rounded-[14px] border px-3.5 py-3 text-left transition-colors",
+                "flex w-full items-center gap-3 rounded-card border px-3.5 py-3 text-left transition-colors",
                 ativo
                   ? "border-ink bg-surface"
                   : "border-border bg-surface-soft hover:bg-surface",
