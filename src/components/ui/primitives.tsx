@@ -340,11 +340,14 @@ export function SectionHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
+        {/* Redesign da plataforma (protótipo de 08/09/2026): a sobrelinha do H1
+            é texto azul em caixa alta, não mais um Pill. */}
         {eyebrow &&
           (level === 1 ? (
-            <Pill tone="primary" icon={icon} className="mb-3">
+            <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+              {icon}
               {eyebrow}
-            </Pill>
+            </p>
           ) : (
             <Eyebrow className="mb-1.5 flex items-center gap-1.5">
               {icon}
@@ -352,7 +355,7 @@ export function SectionHeader({
             </Eyebrow>
           ))}
         {level === 1 ? (
-          <h1 className="font-display text-3xl font-bold text-ink md:text-4xl">{title}</h1>
+          <h1 className="font-display text-3xl font-bold tracking-[-0.03em] text-ink md:text-4xl">{title}</h1>
         ) : (
           <h2 className="font-display text-xl font-semibold text-ink md:text-2xl">{title}</h2>
         )}

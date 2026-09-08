@@ -6,6 +6,7 @@ import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { useAlunos, useUser, isPremiumUnlocked } from "@/lib/store";
 import { estadoSemaforo, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
+import { cn } from "@/lib/utils";
 
 /**
  * /semaforo é o "Semáforo do dia": o painel operacional da carteira. Quem já fez o
@@ -55,8 +56,15 @@ export function Semaforo() {
   });
   const fase = Number(params.get("fase")) || undefined;
 
+  // As três luzes do protótipo, contadas da mesma fonte da lista: verde e
+  // amarelo REGISTRADOS HOJE, e o vermelho pendente (de qualquer dia), que é o
+  // que reabre a sessão.
+  const verdes = linhas.filter((l) => !l.estado.vermelhoPendente && l.estado.hoje?.resultado === "verde").length;
+  const amarelos = linhas.filter((l) => !l.estado.vermelhoPendente && l.estado.hoje?.resultado === "amarelo").length;
+  const vermelhos = linhas.filter((l) => !!l.estado.vermelhoPendente).length;
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-5">
       <SectionHeader
         eyebrow="Rotina do dia"
         icon={<TrafficCone className="h-3 w-3" />}
@@ -74,6 +82,17 @@ export function Semaforo() {
           ) : undefined
         }
       />
+
+      {/* As três luzes do dia, no vocabulário do protótipo: círculo cheio com
+          halo, número grande e rótulo, cada família na sua tinta AA. O vermelho
+          pulsa só quando existe pendência. */}
+      {ativos.length > 0 && (
+        <div className="grid grid-cols-3 gap-2.5">
+          <LuzDoDia n={verdes} rotulo={verdes === 1 ? "liberado" : "liberados"} familia="verde" />
+          <LuzDoDia n={amarelos} rotulo="com ajuste" familia="amarelo" />
+          <LuzDoDia n={vermelhos} rotulo={vermelhos === 1 ? "não liberado" : "não liberados"} familia="vermelho" pulsa={vermelhos > 0} />
+        </div>
+      )}
 
       {/* Lista dos alunos ativos com o estado de hoje */}
       {ativos.length === 0 ? (
@@ -100,7 +119,10 @@ export function Semaforo() {
                     to={`/alunos/${aluno.id}?aba=semaforo`}
                     className="flex items-center gap-3 rounded-card p-3 transition-colors hover:bg-surface-soft"
                   >
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full gradient-brand text-sm font-bold text-white">
+                    <span
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] font-display text-xs font-bold"
+                      style={{ background: "#0B1628", color: "#F3F1EA" }}
+                    >
                       {aluno.iniciais}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -161,6 +183,45 @@ export function Semaforo() {
           <SemaforoLiberacao grupoSlug={grupoSlug} fase={fase} />
         </div>
       </details>
+    </div>
+  );
+}
+
+/** Uma das três luzes do topo: círculo cheio com halo na cor da família e o
+ *  número na tinta que escreve. As cores vêm dos tokens (fill acende, texto
+ *  escreve), nunca de par inventado. */
+function LuzDoDia({
+  n,
+  rotulo,
+  familia,
+  pulsa,
+}: {
+  n: number;
+  rotulo: string;
+  familia: "verde" | "amarelo" | "vermelho";
+  pulsa?: boolean;
+}) {
+  const f =
+    familia === "verde"
+      ? { bg: "var(--success-tint)", luz: "var(--success-fill)", halo: "rgba(29,181,108,.18)", tinta: "var(--success)" }
+      : familia === "amarelo"
+        ? { bg: "var(--warning-tint)", luz: "var(--warning-fill)", halo: "rgba(232,163,23,.18)", tinta: "var(--warning)" }
+        : { bg: "var(--danger-tint)", luz: "var(--danger-fill)", halo: "rgba(229,72,77,.18)", tinta: "var(--danger)" };
+  return (
+    <div className="flex items-center gap-3 rounded-card border border-border p-3.5 sm:p-4" style={{ background: f.bg }}>
+      <span
+        aria-hidden
+        className={cn("h-9 w-9 shrink-0 rounded-full sm:h-11 sm:w-11", pulsa && "animate-pulseDot")}
+        style={{ background: f.luz, boxShadow: `0 0 0 6px ${f.halo}` }}
+      />
+      <span className="min-w-0">
+        <b className="tabular block font-display text-2xl font-bold leading-none tracking-[-0.03em] sm:text-[28px]" style={{ color: f.tinta }}>
+          {n}
+        </b>
+        <span className="block truncate text-[12.5px]" style={{ color: f.tinta }}>
+          {rotulo}
+        </span>
+      </span>
     </div>
   );
 }
