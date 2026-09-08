@@ -13,9 +13,9 @@ export function Tutorial() {
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <SectionHeader
-        eyebrow="Ajuda"
+        eyebrow="Passo a passo e suporte"
         icon={<GraduationCap className="h-3 w-3" />}
-        title="Passo a passo e suporte"
+        title="Ajuda"
         subtitle="Guias visuais, passo a passo, das ações principais. Cada passo tem um atalho para fazer na hora, e o suporte fica a um clique."
       />
 

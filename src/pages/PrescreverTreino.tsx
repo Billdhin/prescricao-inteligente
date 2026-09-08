@@ -1481,7 +1481,7 @@ function ModeloCardEscolha({
         {barras.map((b) => (
           <span
             key={b.id}
-            className={cn("flex-1 rounded-sm", b.deload ? "bg-warning" : "bg-primary")}
+            className={cn("flex-1 rounded-sm", b.deload ? "bg-warning-fill" : "bg-primary")}
             style={{ height: b.h }}
           />
         ))}

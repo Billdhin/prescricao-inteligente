@@ -12,6 +12,7 @@ import { semanaAtual } from "@/data/periodizacao";
 import {
   proximoPasso,
   dataReavaliacao,
+  linkDoPasso,
   ETAPAS,
   ROTULO_ETAPA,
   type CicloCtx,
@@ -320,11 +321,15 @@ function LinhaTabela({
           : "var(--analysis-fill)";
 
   return (
-    <Link
-      to={`/alunos/${aluno.id}`}
-      className="grid items-center gap-x-3.5 gap-y-1.5 border-b border-surface-mute px-5 py-3.5 transition-colors hover:bg-surface-soft lg:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_90px_90px_110px_minmax(90px,auto)]"
-    >
-      <span className="flex min-w-0 items-center gap-3">
+    <div className="relative grid items-center gap-x-3.5 gap-y-1.5 border-b border-surface-mute px-5 py-3.5 transition-colors hover:bg-surface-soft lg:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_90px_90px_110px_minmax(90px,auto)]">
+      {/* A linha inteira abre o aluno (link esticado pelo before); o CHIP da
+          direita é um segundo link, para o DESTINO do próximo passo
+          (passo.cta.to quando o passo declara um; senão o lugar padrão da ação).
+          A lista nunca sugere sem levar. */}
+      <Link
+        to={`/alunos/${aluno.id}`}
+        className="flex min-w-0 items-center gap-3 outline-none before:absolute before:inset-0 focus-visible:before:ring-2 focus-visible:before:ring-inset focus-visible:before:ring-primary"
+      >
         <span
           className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
           style={{ background: "#0B1628", color: "#F3F1EA" }}
@@ -342,7 +347,7 @@ function LinhaTabela({
             {restr.length > 0 ? ` · ${restr.length} ${restr.length === 1 ? "restrição" : "restrições"}` : ""}
           </span>
         </span>
-      </span>
+      </Link>
       <span className="flex min-w-0 items-center gap-2 pl-[52px] lg:pl-0">
         <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: pontoCor }} />
         <span className="truncate text-[13px] text-ink">{passo.frase}</span>
@@ -352,16 +357,22 @@ function LinhaTabela({
       <span className={cn("hidden text-[13px] font-semibold lg:block", reavVencida ? "text-danger" : "text-ink-2")}>
         {reavTexto ?? "·"}
       </span>
-      <span className="hidden justify-self-end lg:block">
+      <span className="relative hidden justify-self-end lg:block">
         {passo.chip ? (
-          <Pill tone={passo.chip.tone}>{passo.chip.label}</Pill>
+          <Link
+            to={passo.cta.to ?? linkDoPasso(aluno.id, passo.cta.kind)}
+            title={passo.cta.label}
+            className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <Pill tone={passo.chip.tone}>{passo.chip.label}</Pill>
+          </Link>
         ) : (
           <Pill tone="success" icon={<CheckCircle2 className="h-3 w-3" />}>
             Em dia
           </Pill>
         )}
       </span>
-    </Link>
+    </div>
   );
 }
 
