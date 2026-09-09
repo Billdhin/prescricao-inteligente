@@ -1870,16 +1870,24 @@ function TrilhoDoPlano({
     return { frase: `Neste plano, o volume ${rot[dv]} e a intensidade ${rot[di]} ao longo das semanas de carga.` };
   }, [plano]);
 
-  // Equilíbrio: séries de força por região, a partir dos blocos da semana em foco.
+  // Equilíbrio: séries de força DINÂMICA por região, a partir dos blocos da semana em foco.
+  // O isométrico de condição fica fora deste denominador pela mesma regra que tirou o
+  // aeróbio: série de 2 minutos sustentados não é série dinâmica, e a dose dele é protocolo
+  // clínico fechado, não escolha de distribuição. Ele sai numa linha própria, em sessões.
   const equilibrio = React.useMemo(() => {
     const porRegiao = new Map<string, number>();
     let series = 0;
     let minutosAerobio = 0;
+    let sessoesIso = 0;
     for (const s of micro?.sessoes ?? []) {
       for (const b of s.blocos) {
         if (b.tipo === "aerobio") {
           const m = /(\d+)/.exec(b.duracaoAlvoMin != null ? String(b.duracaoAlvoMin) : (b.duracao ?? ""));
           if (m) minutosAerobio += Number(m[1]);
+          continue;
+        }
+        if (b.tipo === "isometrico") {
+          sessoesIso++;
           continue;
         }
         const ex = b.exercicioSlug ? exercises.find((e) => e.slug === b.exercicioSlug) : undefined;
@@ -1894,15 +1902,20 @@ function TrilhoDoPlano({
     return {
       series,
       minutosAerobio,
+      sessoesIso,
       linhas: [...porRegiao.entries()]
         .map(([regiao, n]) => ({ regiao, n, pct: series ? Math.round((n / series) * 100) : 0 }))
         .sort((a, b) => b.n - a.n),
     };
   }, [micro]);
 
-  // Aviso: concentração de uma região só. O corte é declarado, não mágico.
-  const CONCENTRACAO = 60;
-  const concentrada = equilibrio.linhas.find((l) => l.pct >= CONCENTRACAO && l.regiao !== "Corpo todo");
+  // Aviso: concentração de uma região só. O corte é declarado, não mágico, e é POR REGIÃO:
+  // "Superiores" agrega 4 famílias (peito, costas, ombro, braço), então 60% ali é uma semana
+  // normal; o corte dele fica em 75. Inferiores e Core são famílias únicas: 60.
+  const CONCENTRACAO: Record<string, number> = { Superiores: 75 };
+  const concentrada = equilibrio.linhas.find(
+    (l) => l.pct >= (CONCENTRACAO[l.regiao] ?? 60) && l.regiao !== "Corpo todo",
+  );
 
   const resumo = (
     <ul className="space-y-2.5">
@@ -2065,6 +2078,8 @@ function TrilhoDoPlano({
             Percentual sobre as {equilibrio.series} séries de força da semana.
             {equilibrio.minutosAerobio > 0 &&
               ` O aeróbio entra em minutos, fora desta conta: ${equilibrio.minutosAerobio} min.`}
+            {equilibrio.sessoesIso > 0 &&
+              ` O isométrico de condição é protocolo próprio, fora desta conta: ${equilibrio.sessoesIso} ${equilibrio.sessoesIso === 1 ? "sessão" : "sessões"} na semana.`}
           </p>
         </Card>
       )}
@@ -2073,8 +2088,8 @@ function TrilhoDoPlano({
         <Card tone="warning" className="p-4">
           <p className="text-sm text-ink-2">
             <span className="font-semibold text-ink">1 aviso.</span> {concentrada.pct}% das séries desta
-            semana são de {concentrada.regiao.toLowerCase()}. Acima de {CONCENTRACAO}% numa região só, vale
-            conferir se o resto do corpo está coberto no bloco.
+            semana são de {concentrada.regiao.toLowerCase()}. Acima de {CONCENTRACAO[concentrada.regiao] ?? 60}%
+            nessa região, vale conferir se o resto do corpo está coberto no bloco.
           </p>
         </Card>
       )}
