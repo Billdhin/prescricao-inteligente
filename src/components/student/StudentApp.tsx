@@ -1959,25 +1959,53 @@ function CardSessaoPlano({
 }
 
 /** O card do professor: quem acompanha, com as iniciais da marca. */
-function ProfessorCard({ marca, cor, tinta }: { marca: Marca; cor: string; tinta: string }) {
+/**
+ * QUEM MONTA O TREINO (protótipo, telas 07 e 09).
+ *
+ * Três coisas na mesma linha, e cada uma responde a uma pergunta diferente: a FOTO diz quem
+ * é a pessoa, o NOME com o CREF diz quem responde tecnicamente, e a LOGO diz sob que marca.
+ * O cartão mostrava só a logo, então o aluno via a empresa e não via ninguém.
+ *
+ * `rotulo` muda por tela porque o contexto muda: na aba Treinos ele apresenta quem montou
+ * aquele plano; no Perfil ele é a ficha de contato do profissional.
+ */
+function ProfessorCard({
+  marca,
+  cor,
+  tinta,
+  rotulo = "Quem monta o seu treino",
+}: {
+  marca: Marca;
+  cor: string;
+  tinta: string;
+  rotulo?: string;
+}) {
   return (
     <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-3.5">
-      {marca.logoDataUrl ? (
-        <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-control border border-border bg-white p-1">
-          <img src={marca.logoDataUrl} alt="" className="max-h-full max-w-full object-contain" />
-        </span>
+      {marca.fotoDataUrl ? (
+        <img src={marca.fotoDataUrl} alt="" className="h-10 w-10 shrink-0 rounded-control object-cover" />
       ) : (
         <span
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
           style={{ background: cor, color: tinta }}
         >
           {iniciaisDe(marca.nome)}
         </span>
       )}
       <div className="min-w-0 flex-1">
-        <div className="truncate font-semibold text-ink">{marca.nome}</div>
-        <div className="text-xs text-ink-2">quem monta e acompanha o seu treino</div>
+        <div className="text-2xs text-ink-2">{rotulo}</div>
+        <div className="truncate text-[13px] font-bold text-ink">
+          {marca.nome}
+          {marca.cref ? ` · CREF ${marca.cref}` : ""}
+        </div>
       </div>
+      {/* A logo fecha a linha, sobre papel branco: ela foi desenhada para esse fundo, e o
+          object-contain existe porque logo de professor costuma ser horizontal. */}
+      {marca.logoDataUrl && (
+        <span className="grid h-8 min-w-[32px] shrink-0 place-items-center overflow-hidden rounded-[9px] bg-white px-1.5 py-0.5">
+          <img src={marca.logoDataUrl} alt="" className="max-h-6 max-w-16 object-contain" />
+        </span>
+      )}
     </div>
   );
 }

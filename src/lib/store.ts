@@ -130,6 +130,8 @@ export const useUser = create<UserState>()(
 export interface MarcaDocumento {
   nome: string;
   cref?: string;
+  /** foto do profissional (a pessoa); a logo, quando existe, identifica a empresa */
+  fotoDataUrl?: string;
   empresa?: string;
   site?: string;
   email?: string;
@@ -142,6 +144,7 @@ export function marcaDoUsuario(u: Pick<UserState, keyof PerfilCampos>): MarcaDoc
   return {
     nome: u.name,
     cref: u.cref || undefined,
+    fotoDataUrl: u.fotoDataUrl || undefined,
     empresa: u.empresa || undefined,
     site: u.site || undefined,
     email: u.email || undefined,

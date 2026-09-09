@@ -9,6 +9,12 @@ import * as React from "react";
 export interface Marca {
   nome: string;
   logoDataUrl?: string;
+  /**
+   * FOTO do profissional. A logo identifica a EMPRESA e a foto identifica a PESSOA, e o
+   * cartão do professor no app do aluno mostra as duas: quem monta o treino tem rosto, e
+   * era só a logo que chegava lá. Ausente = o cartão cai nas iniciais.
+   */
+  fotoDataUrl?: string;
   corPrimaria?: string;
   /** paleta + aparência do profissional; o portal do aluno herda ambas. */
   paleta?: string;

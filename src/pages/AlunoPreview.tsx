@@ -38,6 +38,7 @@ export function AlunoPreview() {
   const marca = {
     nome: user.empresa || user.name || "Seu treino",
     logoDataUrl: user.logoDataUrl || undefined,
+    fotoDataUrl: user.fotoDataUrl || undefined,
     corPrimaria: user.corPrimaria || undefined,
     paleta: user.paleta || undefined,
     modo: user.modo || undefined,

@@ -482,15 +482,18 @@ export async function reivindicarConvite(token: string): Promise<void> {
 /** Marca do profissional (nome, logo, cor) para o portal do aluno. */
 export async function carregarMarcaProfissional(
   professionalId: string,
-): Promise<{ nome: string; logoDataUrl?: string; corPrimaria?: string; telefone?: string; cref?: string }> {
+): Promise<{ nome: string; logoDataUrl?: string; fotoDataUrl?: string; corPrimaria?: string; telefone?: string; cref?: string }> {
   const { data } = await getSupabase()
     .from("profiles")
-    .select("name,empresa,logo_url,cor_primaria,telefone,cref")
+    .select("name,empresa,logo_url,cor_primaria,telefone,cref,foto_url")
     .eq("id", professionalId)
     .single();
   return {
     nome: (data?.empresa || data?.name || "Seu treino") as string,
     logoDataUrl: data?.logo_url || undefined,
+    // A FOTO do profissional: a logo identifica a empresa, a foto identifica a pessoa,
+    // e o cartao do professor no app do aluno mostra as duas.
+    fotoDataUrl: data?.foto_url || undefined,
     corPrimaria: data?.cor_primaria || undefined,
     // O canal real de conversa. Sem ele, o app do aluno não oferece o toque (ver
     // FalarComProfessor em StudentApp).
