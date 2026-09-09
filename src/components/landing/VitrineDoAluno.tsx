@@ -735,7 +735,10 @@ export function VitrineDoAluno({
                 border: 0,
                 padding: 0,
                 background: i === tela ? "#7FE3D8" : "rgba(255,255,255,.25)",
-                transition: "width .3s ease, background .3s ease",
+                // Só a cor faz a travessia. A largura muda de uma vez porque animá-la é
+                // animar layout: quatro pontinhos não justificam recalcular a linha 60 vezes
+                // por segundo, e a cor sozinha já carrega a mudança de estado.
+                transition: "background .3s ease",
                 cursor: "pointer",
               }}
             />
