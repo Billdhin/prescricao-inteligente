@@ -784,6 +784,8 @@ function AbaHoje({
       */}
       <SemanaStrip alunoId={aluno.id} execucoes={execucoes} liberacoes={liberacoes} cor={cor} />
 
+      <SemaforoDoDia hoje={estadoSemaforo(aluno.id, liberacoes).hoje} />
+
       {sessaoHoje ? (
         <VisaoSessao
           sessao={sessaoHoje}
@@ -1482,6 +1484,47 @@ function FalarComProfessor({ marca, cor }: { marca: Marca; cor: string }) {
       {miolo}
       <ChevronRight className="h-5 w-5 shrink-0 text-ink-3" aria-hidden />
     </a>
+  );
+}
+
+/**
+ * O SEMÁFORO DO DIA na tela do aluno (protótipo, tela 01).
+ *
+ * O app só mostrava o estado VERMELHO (o `AlertaPausa`), então o aluno liberado abria a
+ * tela sem nenhuma confirmação de que podia treinar: o silêncio servia de "sim", e é
+ * justamente o que o semáforo existe para não fazer. Agora os três estados aparecem, com a
+ * mesma fonte do painel do professor (`estadoSemaforo`), e o subtítulo carrega o que foi de
+ * fato registrado (hora do check-in e os ajustes anotados), nunca uma frase genérica.
+ *
+ * O vermelho continua com o `AlertaPausa`, que é mais forte e diz o que fazer; aqui ele
+ * não se repete.
+ */
+function SemaforoDoDia({ hoje }: { hoje?: Liberacao }) {
+  if (!hoje || hoje.resultado === "vermelho") return null;
+  const verde = hoje.resultado === "verde";
+  const hora = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date(hoje.data));
+  // Os ajustes ANOTADOS no amarelo: é o que muda a sessão dele hoje, e é dado registrado.
+  const ajustes = hoje.ajustes.map((a) => a.acao).filter(Boolean);
+  return (
+    <div className="flex items-center gap-2.5 rounded-card border border-border bg-surface p-3.5">
+      <span
+        aria-hidden
+        className="h-3 w-3 shrink-0 rounded-full"
+        style={{
+          background: verde ? "var(--success-fill)" : "var(--warning-fill)",
+          boxShadow: `0 0 0 4px ${verde ? "var(--success-tint)" : "var(--warning-tint)"}`,
+        }}
+      />
+      <span className="min-w-0 flex-1">
+        <b className="block text-[13px] text-ink">
+          {verde ? "Liberado para treinar hoje" : "Liberado com ajuste"}
+        </b>
+        <span className="block truncate text-xs text-ink-2">
+          Check-in {hora}
+          {ajustes.length > 0 ? ` · ${ajustes[0]}` : ""}
+        </span>
+      </span>
+    </div>
   );
 }
 
