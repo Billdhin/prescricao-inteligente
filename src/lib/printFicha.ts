@@ -9,7 +9,7 @@
 import type { MonitoringParameter } from "@/data/monitoringParameters";
 import { abrirDocumento } from "@/lib/abrirDocumento";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
-import { CORES_PDF as C } from "@/lib/pdfCores";
+import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -19,6 +19,7 @@ const AVISO =
 
 const CSS = `
   * { box-sizing: border-box; }
+${PAPEL_BASE_CSS}
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
   .page { max-width: 720px; margin: 0 auto; padding: 32px; }
   ${cabecalhoCss(C.marca)}

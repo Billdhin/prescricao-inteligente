@@ -8,7 +8,7 @@ import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
-import { CORES_PDF as C } from "@/lib/pdfCores";
+import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -103,6 +103,7 @@ export function exportPrescricaoPDF({
   <title>Prescrição · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
+${PAPEL_BASE_CSS}
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(cor)}

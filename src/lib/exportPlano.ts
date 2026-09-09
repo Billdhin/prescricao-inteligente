@@ -15,7 +15,7 @@ import { temAlvoForca, tokensAlvoForca, temAlvoAerobio, tokensAlvoAerobio } from
 import { assinaturaSemana } from "@/lib/gps/assinaturaSemana";
 import { topicosDoRaciocinio } from "@/lib/gps/raciocinioTopicos";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
-import { CORES_PDF as C } from "@/lib/pdfCores";
+import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -314,13 +314,38 @@ function mesoHtml(m: Mesociclo, i: number) {
   </section>`;
 }
 
+/**
+ * As famílias das faixas de fase, na ordem em que a TELA as cicla (turquesa, azul, âmbar).
+ *
+ * A tela pinta as faixas com alpha sobre o navy do macrociclo; no papel o fundo é branco,
+ * então entram as lavadas equivalentes da mesma família, com a tinta que escreve em cada
+ * uma. O que se preserva é o SIGNIFICADO da sequência, não o valor do pixel: quem viu a
+ * fase 2 em azul na tela encontra a fase 2 em azul no papel.
+ */
+const FAIXA_FASE_PAPEL = [
+  { bg: C.analiseTint, borda: C.analise, tinta: C.analise },
+  { bg: C.marcaTint, borda: C.marca, tinta: C.marca },
+  { bg: C.alertaTint, borda: C.alerta, tinta: C.alerta },
+] as const;
+
 function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
   const g = desenharProgressao(macro, 700, 250, nivel);
   if (g.vazio) return "";
-  // O PDF não tem as variáveis CSS do app; as cores entram literais, vindas do mapa
-  // do papel. Chaveado por id da série (nunca pelo nome exibido), com fallback na
-  // cor de área.
-  const cor: Record<string, string> = { vol: C.marca, int: C.intensidade, cpx: C.analise, area: C.marca };
+  /*
+   * AS TRÊS SÉRIES, com a MESMA família que a tela dá a cada uma.
+   *
+   * Estava trocado, e trocado de um jeito que confunde: na tela o turquesa é o VOLUME, e
+   * aqui o turquesa era a COMPLEXIDADE, com o volume em azul. Quem lia o plano na tela e
+   * depois no papel via a mesma cor significando duas coisas.
+   *
+   * A FORMA também distingue, e não por capricho: no papel branco as três tintas escuras
+   * ficam entre 5,7 e 6,3 contra o branco, mas entre SI ficam em 1,03 a 1,09, ou seja,
+   * praticamente a mesma luminância. Impresso em tons de cinza (que é como um plano de
+   * treino costuma sair), as três linhas viravam uma só. Sólida, tracejada e pontilhada
+   * sobrevivem à impressão sem cor.
+   */
+  const cor: Record<string, string> = { vol: C.analise, int: C.alerta, cpx: C.ink2, area: C.analise };
+  const traco: Record<string, string> = { vol: "", int: "7 4", cpx: "1.5 3.5" };
   // Régua de semanas: carga = marca, descarga = âmbar (mesmo do alívio),
   // teste = turquesa (mesmo da complexidade).
   const corTick: Record<string, string> = { carga: C.marca, deload: C.alerta, teste: C.analise };
@@ -339,15 +364,25 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
   // Identidade de fase (Onda 4): tint alternado + rótulo da fase no TOPO da faixa
   // + divisória sólida de 1px na fronteira. O tint sozinho é ~1.16:1 e não lê;
   // quem marca a fase é a divisória e o rótulo. Paridade byte-a-byte com a tela.
+  /*
+   * AS FASES COMO CHIPS, que é o desenho da tela hoje.
+   *
+   * Antes eram faixas cinzas alternadas com o nome solto por cima: o cinza não dizia nada
+   * (é a mesma cor para todas as fases) e o nome flutuava sem moldura. Agora cada fase é um
+   * retângulo com a cor da própria família, borda e nome dentro, na mesma ordem de cores em
+   * que a tela as cicla.
+   */
   const fases = g.fases
-    .map(
-      (f) => `
-      ${f.indice % 2 === 0 ? `<rect x="${f.x0.toFixed(1)}" y="${g.bandTop}" width="${(f.x1 - f.x0).toFixed(1)}" height="${(g.faixaBottom - g.bandTop).toFixed(1)}" fill="${C.papelSuave}" opacity="0.6" />` : ""}
-      ${f.indice > 0 ? `<line x1="${f.x0.toFixed(1)}" y1="${g.bandTop}" x2="${f.x0.toFixed(1)}" y2="${g.faixaBottom.toFixed(1)}" stroke="${C.borda}" stroke-width="1" />` : ""}
-      <text x="${f.cx.toFixed(1)}" y="10" text-anchor="middle" fill="${C.ink}" font-size="10" font-weight="700">${esc(f.nome)}</text>
+    .map((f) => {
+      const fam = FAIXA_FASE_PAPEL[f.indice % FAIXA_FASE_PAPEL.length];
+      const largura = f.x1 - f.x0;
+      return `
+      <rect x="${(f.x0 + 1).toFixed(1)}" y="0" width="${Math.max(0, largura - 2).toFixed(1)}" height="16" rx="5"
+            fill="${fam.bg}" stroke="${fam.borda}" stroke-width="0.75" />
+      <text x="${f.cx.toFixed(1)}" y="11.5" text-anchor="middle" fill="${fam.tinta}" font-size="9.5" font-weight="700">${esc(f.nome)}</text>
       ${iconesFase(f)}
-      <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="${C.ink2}" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`,
-    )
+      <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="${C.ink2}" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`;
+    })
     .join("");
   return `
   <section class="bloco">
@@ -358,11 +393,25 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
         <stop offset="0%" stop-color="${cor.area}" stop-opacity="0.16" /><stop offset="100%" stop-color="${cor.area}" stop-opacity="0" />
       </linearGradient></defs>
       ${fases}
-      ${g.alivios.map((a) => `<rect x="${(a.x - a.w / 2).toFixed(1)}" y="${g.plot.top}" width="${a.w.toFixed(1)}" height="${(g.plot.bottom - g.plot.top).toFixed(1)}" fill="${C.alerta}" opacity="0.09" rx="2" />`).join("")}
+      ${/* As COLUNAS de descarga. Estavam a 9% de opacidade, ou seja, invisíveis no papel e
+             perdidas de vez na impressão em cinza; a tela as desenha como coluna cheia. */ ""}
+      ${g.alivios
+        .map(
+          (a) =>
+            `<rect x="${(a.x - a.w / 2).toFixed(1)}" y="${g.plot.top}" width="${a.w.toFixed(1)}" height="${(g.plot.bottom - g.plot.top).toFixed(1)}" fill="${C.alertaTint}" stroke="${C.alerta}" stroke-width="0.5" stroke-dasharray="2 2" rx="2" />`,
+        )
+        .join("")}
       <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.maiorY.toFixed(1)}" text-anchor="end" fill="${C.ink2}" font-size="9">maior</text>
       <text x="${g.eixo.x.toFixed(1)}" y="${g.eixo.menorY.toFixed(1)}" text-anchor="end" fill="${C.ink2}" font-size="9">menor</text>
       <path d="${g.areaVolume}" fill="url(#volpdf)" stroke="none" />
-      ${g.series.map((s) => `<path d="${s.d}" fill="none" stroke="${cor[s.id] ?? cor.area}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />`).join("")}
+      ${g.series
+        .map(
+          (s) =>
+            `<path d="${s.d}" fill="none" stroke="${cor[s.id] ?? cor.area}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"${
+              traco[s.id] ? ` stroke-dasharray="${traco[s.id]}"` : ""
+            } />`,
+        )
+        .join("")}
       ${g.microTicks
         .map(
           (t) =>
@@ -372,7 +421,18 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
         .join("")}
     </svg>
     <div class="legenda">
-      ${g.series.map((s) => `<span><i style="background:${cor[s.id] ?? cor.area}"></i>${s.nome}</span>`).join("")}
+      ${g.series
+        .map((s) => {
+          // A amostra da legenda é um pedaço da PRÓPRIA linha (mesma cor e mesmo traço),
+          // e não um disco de cor: com três luminâncias iguais, o disco não identificava
+          // nada em preto e branco.
+          const d = traco[s.id];
+          const estilo = d
+            ? `background: repeating-linear-gradient(90deg, ${cor[s.id]} 0 ${d.split(" ")[0]}px, transparent ${d.split(" ")[0]}px ${Number(d.split(" ")[0]) + Number(d.split(" ")[1])}px)`
+            : `background:${cor[s.id] ?? cor.area}`;
+          return `<span><i class="linha" style="${estilo}"></i>${s.nome}</span>`;
+        })
+        .join("")}
     </div>
     ${
       tiposSemana.length
@@ -459,6 +519,7 @@ export function exportPlanoPDF({
   <title>${somenteSemana != null ? "Semana " + somenteSemana : "Plano de treino"} · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
+${PAPEL_BASE_CSS}
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(corMarca)}
@@ -474,6 +535,7 @@ export function exportPlanoPDF({
     .legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 11px; color: ${C.ink2}; margin-top: 4px; }
     .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
     .legenda i.tick { width: 3px; height: 11px; border-radius: 2px; }
+    .legenda i.linha { width: 20px; height: 3px; border-radius: 2px; }
     .legenda-semanas { gap: 12px; margin-top: 2px; }
     .legenda .lg-rot { color: ${C.ink2}; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 10px; }
     .legenda-nota { font-size: 11px; color: ${C.ink2}; margin: 0 0 4px; }

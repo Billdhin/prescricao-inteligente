@@ -13,6 +13,7 @@
  * o próprio texto. Por isso a checagem olha TODO texto que o motor gera e que chega ao
  * papel, e não só o campo que quebrou da última vez.
  */
+import fs from "node:fs";
 import { gerarPlano } from "../src/lib/gps/periodizacao";
 import { specialGroups } from "../src/data/specialGroups";
 import { OBJETIVOS } from "../src/lib/gps/engine";
@@ -184,6 +185,59 @@ for (const grupo of specialGroups) {
     if (nome && tabela.includes(nome)) erros.push(`o isométrico "${nome}" continua listado na tabela de Musculação, onde a coluna Repetições fica vazia.`);
   }
 }
+
+/*
+ * O PAPEL NÃO PODE DERIVAR DA IDENTIDADE (09/09/2026).
+ *
+ * Duas regras estruturais, e as duas nasceram de defeito medido no documento gerado:
+ *
+ * 1. COR SÓ DE `pdfCores`. O mapa do papel existe justamente para a identidade da tela e a
+ *    do documento andarem juntas, mas nada impedia um gerador de escrever o próprio hex.
+ *    `pdfSelo.ts` fazia isso, e ficou para trás quando a paleta mudou: a borda do carimbo
+ *    saía no bege da rampa QUENTE, ao lado de uma identidade que já era fria.
+ *
+ * 2. TODO documento declara o papel. Sem `color-scheme: light` e sem fundo explícito, o
+ *    `body` fica transparente e quem abrir num aparelho com preferência escura (o padrão de
+ *    boa parte dos celulares) recebe tinta escura sobre tela escura: medido, o título do
+ *    plano sumia por completo. E é o ALUNO que baixa o documento de evolução, num aparelho
+ *    que ninguém controla.
+ */
+const GERADORES = [
+  "src/lib/exportPlano.ts",
+  "src/lib/exportProntuario.ts",
+  "src/lib/exportPrescricao.ts",
+  "src/lib/exportEvolucao.ts",
+  "src/lib/exportPostural.ts",
+  "src/lib/printFicha.ts",
+  "src/lib/printSemaforo.ts",
+  "src/lib/pdfCabecalho.ts",
+  "src/lib/pdfSelo.ts",
+];
+// Branco e preto puros são papel e tinta, não escolha de identidade: seguem liberados.
+const HEX_LIVRES = new Set(["#ffffff", "#fff", "#000000", "#000"]);
+for (const arq of GERADORES) {
+  const src = fs
+    .readFileSync(arq, "utf8")
+    // comentários explicam a regra e costumam CITAR o hex que ela baniu.
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:"'`\\])\/\/[^\n]*/g, "$1");
+  const achados = [...src.matchAll(/#[0-9a-fA-F]{3,8}\b/g)]
+    .map((m) => m[0])
+    .filter((h) => !HEX_LIVRES.has(h.toLowerCase()));
+  for (const h of [...new Set(achados)]) {
+    erros.push(`${arq}: cor literal ${h} fora de pdfCores. O papel deriva da identidade; hex solto volta a divergir da tela.`);
+  }
+}
+
+// A INJECAO, nao a mencao: testar a simples presenca do nome passava com o arquivo so
+// importando a base e nunca a usando, que e justamente o defeito. A falsificacao desta
+// regra pegou isso: removi a injecao do exportEvolucao e ela continuou verde.
+for (const arq of GERADORES.filter((a) => /\/(export|print)/.test(a))) {
+  if (!fs.readFileSync(arq, "utf8").includes("$" + "{PAPEL_BASE_CSS}")) {
+    erros.push(`${arq}: não injeta PAPEL_BASE_CSS. Sem color-scheme e fundo explícitos, o documento sai ilegível em aparelho no modo escuro.`);
+  }
+}
+
 
 if (erros.length) {
   console.error(`\n[check:documentos] ${erros.length} problema(s):\n`);

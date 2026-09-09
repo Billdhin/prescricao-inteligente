@@ -22,6 +22,27 @@ import { PALETA_ROTA, tokensDe } from "@/lib/theme/palettes";
 /** Tokens da identidade no modo claro. Chave = mesmo nome da variável CSS da tela. */
 const T = tokensDe(PALETA_ROTA, false);
 
+/**
+ * A BASE DO PAPEL: o que todo documento precisa declarar antes de qualquer estilo próprio.
+ *
+ * ## O defeito que isto corrige
+ *
+ * Nenhum dos sete documentos declarava `color-scheme` nem um fundo explícito. O `body` ficava
+ * transparente, então quem abrisse o documento num aparelho com preferência escura (o padrão
+ * de boa parte dos celulares) recebia a tinta #0B1628 sobre a tela escura do navegador: medido,
+ * o título do plano SUMIA por completo. E o aluno passou a baixar o próprio documento de
+ * evolução, ou seja, o documento sai da mão do profissional e vai para um aparelho que ninguém
+ * controla.
+ *
+ * `color-scheme: light` diz ao navegador para não inverter nada, e o fundo branco literal
+ * garante o papel mesmo quando a preferência do sistema é escura. Papel é papel: o documento
+ * não segue o modo que o profissional escolheu para a tela, e muito menos o do leitor.
+ */
+export const PAPEL_BASE_CSS = `
+    :root { color-scheme: light; }
+    html, body { background: #ffffff; }
+`;
+
 export const CORES_PDF = {
   /** acento da marca. É o fallback quando o profissional não tem marca própria. */
   marca: T.primary,

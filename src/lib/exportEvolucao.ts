@@ -4,7 +4,7 @@ import type { Aluno, Avaliacao } from "@/data/alunos";
 import { METRICAS_EVOLUCAO, type DirMetrica } from "@/components/app/EvolucaoMini";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
-import { CORES_PDF as C } from "@/lib/pdfCores";
+import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
 
 /**
  * Tabela de evolução do aluno em PDF, no estilo de um resultado de exame: cada
@@ -119,6 +119,7 @@ export function montarEvolucaoHtml({ aluno, avaliacoes, profissional, cref, marc
   <title>Evolução · ${esc(aluno.nome)}</title>
   <style>
     * { box-sizing: border-box; }
+${PAPEL_BASE_CSS}
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
     .page { max-width: 820px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(cor)}

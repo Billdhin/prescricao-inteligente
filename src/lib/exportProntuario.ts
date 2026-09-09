@@ -17,7 +17,7 @@ import { rotuloRestricao, GATILHOS_OPCOES, LADO_OPCOES, LIBERACAO_OPCOES } from 
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
-import { CORES_PDF as C } from "@/lib/pdfCores";
+import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -205,6 +205,7 @@ export function exportProntuarioPDF({
   <title>Prontuário de Decisão · ${esc(aluno.nome)} · ${docId}</title>
   <style>
     * { box-sizing: border-box; }
+${PAPEL_BASE_CSS}
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; font-size: 13px; }
     .page { max-width: 760px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(C.analise)}
