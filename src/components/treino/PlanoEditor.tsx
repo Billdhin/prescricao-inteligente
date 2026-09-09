@@ -1040,8 +1040,20 @@ export function ControlesDaSemana({
             {TIPO_LABEL[micro.tipo]}
           </Pill>
         )}
-        {mostrarSeloEstado && <Pill tone={ESTADO_TONE[estado]}>{ESTADO_LABEL[estado]}</Pill>}
         <span className="text-xs text-ink-2">{fraseDeSessoes(micro.sessoes)}</span>
+        {/*
+          O SELO DE ESTADO É O ÚLTIMO DA LINHA, e isso não é ordem de importância: é o que
+          impede a linha de dançar. Ele existe só em algumas semanas (a primeira do bloco não
+          tem com o que comparar, e descarga e teste já se dizem no tipo). No meio da linha,
+          aparecer e sumir empurrava "3 sessões + 3 complementos" uns 90 px para o lado a cada
+          troca de semana, e o profissional trocava de semana o tempo todo. Ancorado à direita
+          com `ml-auto`, ele entra e sai sem mover nada que já estava lá.
+        */}
+        {mostrarSeloEstado && (
+          <span className="ml-auto shrink-0">
+            <Pill tone={ESTADO_TONE[estado]}>{ESTADO_LABEL[estado]}</Pill>
+          </span>
+        )}
       </div>
 
       {variacoes.length > 0 && (
@@ -1165,7 +1177,7 @@ function FaixaReferencia({ ctx }: { ctx: ContextoFaixa }) {
 // Força e aeróbio se editam por variáveis diferentes. `confere` liga o aviso de fora da
 // faixa só nos campos de força que a diretriz cobre (séries, repetições, intervalo).
 type CampoBloco = {
-  chave: "series" | "reps" | "intensidade" | "intervalo" | "formato" | "duracao" | "recuperacao" | "tiros";
+  chave: "series" | "reps" | "intensidade" | "intervalo" | "formato" | "duracao" | "recuperacao" | "tiros" | "modalidade";
   rotulo: string;
   confere?: CampoFaixa;
 };
@@ -1185,13 +1197,27 @@ const CAMPOS_FORCA: CampoBloco[] = [
  * recuperações. Chamar os dois de "Duração" foi o que fez o Filipe ler 5 a 10 min e entender
  * sessão inteira.
  */
+/*
+ * A ATIVIDADE VEM PRIMEIRO, e por muito tempo ela não vinha de jeito nenhum.
+ *
+ * O bloco aeróbio sempre teve `modalidade` (é ela que o cartão de leitura imprime como título
+ * e que o app do aluno usa para a foto), e o editor não oferecia campo nenhum para trocá-la:
+ * quem acrescentava cardio recebia caminhada e caminhada ficava, mesmo com bicicleta e
+ * piscina declaradas na etapa de equipamentos. Editar "Formato" e "Duração" de uma atividade
+ * que não dá para mudar é o formulário respondendo a pergunta errada.
+ *
+ * Ela é o primeiro campo porque é a que manda nas outras: trocar caminhada por bicicleta muda
+ * o que "moderada" quer dizer na prática, e ninguém escolhe a duração antes de escolher o quê.
+ */
 const CAMPOS_AEROBIO: CampoBloco[] = [
+  { chave: "modalidade", rotulo: "Atividade" },
   { chave: "formato", rotulo: "Formato" },
   { chave: "duracao", rotulo: "Duração" },
   { chave: "intensidade", rotulo: "Intensidade" },
   { chave: "recuperacao", rotulo: "Recuperação" },
 ];
 const CAMPOS_AEROBIO_COM_TIROS: CampoBloco[] = [
+  { chave: "modalidade", rotulo: "Atividade" },
   { chave: "formato", rotulo: "Formato" },
   { chave: "tiros", rotulo: "Tiros" },
   { chave: "duracao", rotulo: "Tempo de trabalho" },
@@ -1210,6 +1236,34 @@ const CAMPOS_AEROBIO_COM_TIROS: CampoBloco[] = [
  * tudo de uma vez.
  */
 const FORMATOS_CARDIO = FORMATOS_AEROBIOS_LISTA.map((f) => f.nome);
+
+/**
+ * AS ATIVIDADES AERÓBIAS QUE ESTE ALUNO TEM COMO EXECUTAR.
+ *
+ * Derivada do catálogo, não de uma lista de rótulos: modalidade aeróbia é a que tem exercício
+ * com `doseAerobia`, exatamente o critério que o motor usa em `modalidadeAerobia`. Duas listas
+ * escritas à mão para a mesma pergunta divergem no dia em que o catálogo cresce.
+ *
+ * A regra de disponibilidade é a MESMA do resto do produto (peso corporal sempre disponível,
+ * o resto precisa estar declarado). Sem ela, o seletor ofereceria hidroginástica a quem não
+ * declarou piscina, que é o defeito que o próprio motor já teve e corrigiu: prescrever o
+ * inexequível é pior que oferecer menos opção.
+ *
+ * O valor ATUAL entra na lista mesmo quando o filtro o excluiria. Um plano gerado antes, ou
+ * com outro conjunto de equipamentos, não pode perder a modalidade dele só por abrir o editor.
+ */
+function modalidadesAerobias(equipamentos: string[] | undefined, atual?: string): { id: string; nome: string }[] {
+  const ids = new Set<string>();
+  for (const e of exercises) {
+    if (!e.doseAerobia || !e.modalidade) continue;
+    const temEquip = !equipamentos?.length || e.equipamento === "Peso corporal" || equipamentos.includes(e.equipamento);
+    if (temEquip) ids.add(e.modalidade);
+  }
+  if (atual) ids.add(atual);
+  return [...ids]
+    .map((id) => ({ id, nome: getModalidade(id)?.nome ?? id }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
 /*
  * O ISOMÉTRICO TEM VARIÁVEIS PRÓPRIAS, e o editor precisava saber disso.
  *
@@ -1421,12 +1475,13 @@ export function SessaoBloco({
   const addBloco = (slug: string) => {
     if (!slug) return;
     const ex = exercises.find((e) => e.slug === slug);
+    const id = nid("blk");
     onChange({
       ...sessao,
       blocos: [
         ...sessao.blocos,
         {
-          id: nid("blk"),
+          id,
           tipo: "forca",
           exercicioSlug: ex?.slug,
           nome: ex?.nome ?? "Novo exercício",
@@ -1437,18 +1492,43 @@ export function SessaoBloco({
         },
       ],
     });
+    revelar(id);
   };
 
+  /*
+   * ACRESCENTAR CARDIO ABRE O CARDIO.
+   *
+   * Este botão despejava um bloco de caminhada no FIM da lista e não dizia nada. Numa sessão
+   * de cinco exercícios o bloco novo nascia fora da tela, e a única resposta ao clique era
+   * nenhuma: parecia que o botão não tinha funcionado. Quem descobria que funcionara ainda
+   * tinha que caçar a linha e abri-la para chegar nas opções.
+   *
+   * Agora ele entra JÁ ABERTO, com atividade, formato, duração e intensidade à mão, e a lista
+   * rola até ele. É o mesmo contrato de "Adicionar exercício", que passa pelo seletor e
+   * portanto sempre teve uma resposta ao gesto.
+   *
+   * O id da modalidade é o CANÔNICO (`m-caminhada`). Aqui estava gravado "caminhada", sem o
+   * prefixo, e `getModalidade` não resolvia: o cartão de leitura caía no rótulo genérico
+   * "Aeróbio" e o app do aluno ficava sem a foto da atividade. O mesmo defeito já tinha sido
+   * corrigido no motor (ver o comentário em data/periodizacao.ts); a porta do editor ficou
+   * para trás.
+   */
   const addCardio = () => {
+    const id = nid("blk");
+    // Caminhada é o padrão porque é de peso corporal, ou seja, nunca fica inexequível: é a
+    // mesma escolha (e o mesmo motivo) que o motor faz em `modalidadeAerobia`. Só cai na
+    // primeira da lista se um dia a caminhada sair do catálogo.
+    const disponiveis = modalidadesAerobias(ctx.equipamentos);
+    const modalidade = disponiveis.find((m) => m.id === "m-caminhada")?.id ?? disponiveis[0]?.id ?? "m-caminhada";
     onChange({
       ...sessao,
       blocos: [
         ...sessao.blocos,
         {
-          id: nid("blk"),
+          id,
           tipo: "aerobio",
-          modalidade: "caminhada",
-          nome: "Aeróbio",
+          modalidade,
+          nome: getModalidade(modalidade)?.nome ?? "Aeróbio",
           formato: "Contínuo",
           duracao: "20 a 30 min",
           intensidade: "Moderada (teste da conversa; RPE 4 a 6)",
@@ -1456,6 +1536,7 @@ export function SessaoBloco({
         },
       ],
     });
+    revelar(id);
   };
 
   const trocarBloco = (nb: BlocoSessao) => onChange({ ...sessao, blocos: sessao.blocos.map((x) => (x.id === nb.id ? nb : x)) });
@@ -1504,6 +1585,25 @@ export function SessaoBloco({
   const [abertoId, setAbertoId] = React.useState<string | null>(null);
   const alternar = (id: string) => setAbertoId((a) => (a === id ? null : id));
   /*
+   * REVELAR: abre a linha nova e leva o olho até ela.
+   *
+   * O bloco entra no FIM da lista, que numa sessão cheia é abaixo da dobra. Abrir sem rolar
+   * resolveria metade do problema (a resposta existe, mas fora da tela). `block: "nearest"`
+   * não rola nada quando a linha já está visível, então acrescentar na sessão curta não
+   * sacode a página. O id novo espera o React pintar a lista antes de ser procurado.
+   */
+  const listaRef = React.useRef<HTMLUListElement>(null);
+  const [revelarId, setRevelarId] = React.useState<string | null>(null);
+  const revelar = (id: string) => {
+    setAbertoId(id);
+    setRevelarId(id);
+  };
+  React.useEffect(() => {
+    if (!revelarId) return;
+    listaRef.current?.querySelector(`[data-bloco="${revelarId}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    setRevelarId(null);
+  }, [revelarId]);
+  /*
    * ADICIONAR EXERCÍCIO PASSA PELA MESMA PORTA DE TROCAR.
    *
    * Era um <select> de 108 opções agrupadas dentro da caixa tracejada: escolher ali é rolar
@@ -1513,6 +1613,9 @@ export function SessaoBloco({
    * adicionava. O botão tracejado do protótipo abre essa porta.
    */
   const [adicionando, setAdicionando] = React.useState(false);
+  // O fecho de flexibilidade só vira campo quando alguém pede (ou quando já existe um).
+  const [fechoAberto, setFechoAberto] = React.useState(false);
+  React.useEffect(() => setFechoAberto(false), [sessao.id]);
 
   return (
     /*
@@ -1550,7 +1653,7 @@ export function SessaoBloco({
         <>
           {sessao.blocos.length === 0 && <p className="px-1 py-2 text-xs text-ink-3">Sessão sem exercícios. Adicione abaixo.</p>}
 
-          <ul className="space-y-2.5">
+          <ul ref={listaRef} className="space-y-2.5">
             {segmentos.map((seg, si) => {
               if (seg.tipo === "grupo") {
                 const info = getMetodo(seg.metodo);
@@ -1572,7 +1675,7 @@ export function SessaoBloco({
                       </div>
                       <ul className="space-y-2">
                         {seg.blocos.map((b) => (
-                          <li key={b.id}>
+                          <li key={b.id} data-bloco={b.id}>
                             <BlocoRow
                               bloco={b}
                               numero={numeroDoBloco(b.id)}
@@ -1600,7 +1703,7 @@ export function SessaoBloco({
               const podeBi = ehForca && Boolean(prox1Solo);
               const podeTri = podeBi && Boolean(prox2Solo);
               return (
-                <li key={b.id}>
+                <li key={b.id} data-bloco={b.id}>
                   <BlocoRow
                     bloco={b}
                     numero={numeroDoBloco(b.id)}
@@ -1660,24 +1763,44 @@ export function SessaoBloco({
         </>
       )}
 
-      {/* Fecho de flexibilidade da sessão (onda F): editável no editor, nota no modo leitura. */}
+      {/*
+        Fecho de flexibilidade da sessão (onda F): editável no editor, nota no modo leitura.
+
+        VAZIO ELE É UM LINK, NÃO UM FORMULÁRIO. É opcional e quase sempre fica em branco, e
+        mesmo assim toda sessão terminava numa caixa de texto de duas linhas com rótulo em
+        versalete: a última coisa que se via ao rolar a sessão era um campo por preencher que
+        ninguém pediu. Como link ele ocupa uma linha, continua achável, e some do caminho de
+        quem não usa. Quem já tem fecho escrito vê o campo aberto, como antes.
+      */}
       {editavel ? (
-        <div>
-          <label
-            htmlFor={`fecho-${sessao.id}`}
-            className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3"
+        sessao.fecho == null && !fechoAberto ? (
+          <button
+            type="button"
+            onClick={() => setFechoAberto(true)}
+            className="inline-flex items-center gap-1 text-2xs font-semibold text-ink-3 transition-colors hover:text-primary"
           >
-            Fecho de flexibilidade
-          </label>
-          <textarea
-            id={`fecho-${sessao.id}`}
-            value={sessao.fecho ?? ""}
-            onChange={(e) => onChange({ ...sessao, fecho: e.target.value || undefined })}
-            rows={2}
-            placeholder="Alongamento ao final da sessão (opcional)"
-            className="w-full rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink placeholder:text-ink-3/60 focus:border-primary focus:outline-none"
-          />
-        </div>
+            <Plus className="h-3 w-3" aria-hidden /> Fecho de flexibilidade (opcional)
+          </button>
+        ) : (
+          <div>
+            <label
+              htmlFor={`fecho-${sessao.id}`}
+              className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3"
+            >
+              Fecho de flexibilidade
+            </label>
+            <textarea
+              id={`fecho-${sessao.id}`}
+              autoFocus={fechoAberto && !sessao.fecho}
+              value={sessao.fecho ?? ""}
+              onChange={(e) => onChange({ ...sessao, fecho: e.target.value || undefined })}
+              onBlur={() => !sessao.fecho && setFechoAberto(false)}
+              rows={2}
+              placeholder="Alongamento ao final da sessão (opcional)"
+              className="w-full rounded-md border border-border bg-surface px-2 py-1 text-xs text-ink placeholder:text-ink-3/60 focus:border-primary focus:outline-none"
+            />
+          </div>
+        )
       ) : (
         sessao.fecho && (
           <p className="rounded-md border border-border bg-surface-soft px-2 py-1 text-2xs text-ink-2">
@@ -1905,6 +2028,30 @@ function BlocoRow({
           // campo é texto livre no modelo, mas escolher de uma lista evita digitar e
           // padroniza o vocabulário. Continua aceitando um valor fora da lista (planos
           // antigos ou algo digitado pelo motor) sem perdê-lo.
+          /*
+           * A ATIVIDADE grava modalidade E nome juntos, pelo mesmo motivo que "Trocar
+           * exercício" grava slug e nome juntos: o cartão de leitura imprime o nome da
+           * modalidade e a linha fechada imprime `nome`. Gravar só um dos dois faz a mesma
+           * tela dizer "Caminhada" em cima e "Bicicleta ergométrica" embaixo.
+           *
+           * O nome só é reescrito quando ele ainda era o da modalidade anterior. Quem digitou
+           * "Caminhada no parque, ritmo confortável" não perde a frase por trocar a atividade.
+           */
+          if (aerobio && chave === "modalidade") {
+            return (
+              <CampoModalidadeInline
+                key={chave}
+                rotulo={rotulo}
+                valor={valor}
+                equipamentos={ctx.equipamentos}
+                onChange={(id) => {
+                  const anterior = valor ? getModalidade(valor)?.nome : undefined;
+                  const nome = !bloco.nome || bloco.nome === anterior || bloco.nome === "Aeróbio";
+                  onChange({ ...bloco, modalidade: id, nome: nome ? (getModalidade(id)?.nome ?? bloco.nome) : bloco.nome });
+                }}
+              />
+            );
+          }
           if (aerobio && chave === "formato") {
             return (
               <CampoFormatoInline
@@ -2007,6 +2154,43 @@ function CampoInline({
           {aviso}
         </p>
       )}
+    </div>
+  );
+}
+
+/** Atividade do bloco aeróbio: as modalidades que o aluno tem como executar (ver
+ *  `modalidadesAerobias`), com a atual sempre presente mesmo quando o filtro a excluiria. */
+function CampoModalidadeInline({
+  rotulo,
+  valor,
+  equipamentos,
+  onChange,
+}: {
+  rotulo: string;
+  valor: string;
+  equipamentos?: string[];
+  onChange: (v: string) => void;
+}) {
+  const id = React.useId();
+  const opcoes = modalidadesAerobias(equipamentos, valor || undefined);
+  return (
+    <div>
+      <label htmlFor={id} className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3">
+        {rotulo}
+      </label>
+      <select
+        id={id}
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-[8px] border border-transparent bg-surface-mute px-2 py-1 text-xs font-semibold text-ink hover:border-border focus:outline-none focus:ring-2 focus:ring-primary"
+      >
+        {!valor && <option value="">Escolher</option>}
+        {opcoes.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.nome}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }

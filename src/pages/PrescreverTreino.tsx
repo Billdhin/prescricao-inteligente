@@ -2119,14 +2119,25 @@ function EditorDaSemana({
   const trocarSessao = (nova: Sessao) =>
     trocarMicro({ ...micro, sessoes: micro.sessoes.map((s) => (s.id === nova.id ? nova : s)) });
 
-  const addSessao = () =>
+  /*
+   * ADICIONAR SESSÃO ABRE A SESSÃO. Ela nascia como a última pílula do trilho, não
+   * selecionada, e a tela continuava mostrando a sessão anterior: o único sinal de que o
+   * clique funcionou era uma pílula a mais no meio de outras seis. O nome sai numerado pelas
+   * PRINCIPAIS, senão a semana com três complementos criava a "Sessão 7" logo depois da 3.
+   */
+  const addSessao = () => {
     trocarMicro({
       ...micro,
-      sessoes: [...micro.sessoes, { id: `ses-${uid()}`, nome: `Sessão ${micro.sessoes.length + 1}`, blocos: [] }],
+      sessoes: [
+        ...micro.sessoes,
+        { id: `ses-${uid()}`, nome: `Sessão ${sessoesPrincipais(micro.sessoes).length + 1}`, blocos: [] },
+      ],
       // Frequência é quantas sessões a semana tem. Guardar o número separado das sessões
       // deixaria o plano dizer "4x" e entregar 3.
       frequencia: micro.sessoes.length + 1,
     });
+    setSessaoIdx(micro.sessoes.length);
+  };
 
   // A semana anterior DO MESMO BLOCO: é contra ela que "o que mudou" compara.
   const anteriorNoBloco = (() => {
@@ -2134,9 +2145,11 @@ function EditorDaSemana({
     return i > 0 ? meso.microciclos[i - 1] : undefined;
   })();
 
+  // A semana anterior DO PLANO: é ela que o selo de decisão de cada exercício compara. A
+  // próxima saiu daqui junto com o segmentado do cabeçalho; quem anda entre semanas agora é
+  // a régua, que já sabe onde está.
   const idx = semanas.findIndex((x) => x.micro.semana === micro.semana);
   const anterior = idx > 0 ? semanas[idx - 1] : undefined;
-  const proxima = idx >= 0 && idx < semanas.length - 1 ? semanas[idx + 1] : undefined;
 
   /*
    * DESCARTAR ALTERAÇÕES (protótipo, ao lado de "aplicar às outras semanas").
@@ -2158,78 +2171,90 @@ function EditorDaSemana({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0">
+      {/*
+        O CABEÇALHO NÃO SE MEXE AO TROCAR DE SEMANA.
+
+        Ele era `flex-wrap` com `justify-between`, e três coisas mudavam de largura a cada
+        troca de semana: o título (de "Semana 8 · Fase 3: Desenvolvimento" a "Semana 1 · Fase
+        1: Entrada · segurança · adaptação"), e o segmentado das três semanas vizinhas, que
+        tinha ora dois ora três botões e ganhava " · descarga" em alguns. Resultado: os botões
+        de ação escorregavam para o lado e às vezes pulavam para outra linha, na mesma largura
+        de tela, só por clicar numa semana.
+
+        Agora as ações moram na linha do "voltar", cuja altura é a de um botão e não muda
+        nunca, e o título ocupa a largura inteira embaixo. É isso que torna a posição delas
+        INDEPENDENTE do texto do título: nome de fase comprido, pílula de descarga ou título
+        em duas linhas deixam de ser capazes de mover o que quer que seja. Alinhá-las pela
+        base do título, que foi a primeira tentativa, ainda deixava a semana de descarga
+        empurrar tudo 24 px para baixo.
+      */}
+      <div className="space-y-3">
+        {/*
+          `flex-wrap` VOLTA AQUI, e agora ele é seguro. Ele era o que fazia os botões pularem
+          de linha quando o TÍTULO crescia, porque o título dividia a linha com eles. Do outro
+          lado deste par está o "voltar", que tem sempre a mesma largura: a quebra passa a
+          depender só da largura da tela, que é o que ela deve significar. Sem ele, o celular
+          de 390 px cortava o "Publicar" fora da tela.
+        */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <button
             onClick={onVoltar}
-            className="mb-1.5 inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
+            className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden /> Periodização
           </button>
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <button
+              onClick={() => onExportar(micro.semana)}
+              disabled={!podeSalvar}
+              className={cn(buttonClasses("secondary", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}
+              // O número da semana saiu do RÓTULO e foi para o title. Ele fazia o botão mudar
+              // de largura entre "Folha da semana 1" e "Folha da semana 12", e como o par de
+              // ações é ancorado à direita, os 11 px de diferença empurravam este botão a cada
+              // troca de semana. Qual semana é já está dito no título logo abaixo, em corpo 30.
+              title={`Uma página com a semana ${micro.semana}, com espaço para o aluno anotar a carga`}
+            >
+              <FileDown className="h-4 w-4" /> Folha da semana
+            </button>
+            <button
+              onClick={onPublicar}
+              disabled={!podeSalvar}
+              className={cn(
+                buttonClasses("primary", "sm"),
+                "gradient-publicar text-white",
+                !podeSalvar && "cursor-not-allowed opacity-50",
+              )}
+            >
+              {salvo ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+              {aluno ? `Publicar no app de ${aluno.split(" ")[0]}` : "Publicar no app do aluno"}
+            </button>
+          </div>
+        </div>
+        <div className="min-w-0">
           <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-primary">
             {aluno ? `${aluno} · ` : ""}
             {getModelo(plano.modeloId).nome} · {plano.semanas} semanas
           </p>
-          <h2 className="mt-1 font-display text-2xl font-bold text-ink md:text-3xl">
-            Semana {micro.semana} · {rotuloMeso(meso)}
+          {/*
+            A descarga é uma PÍLULA ao lado do nome, e não um parágrafo embaixo dele. Como
+            parágrafo, ela acrescentava uma linha ao título só em algumas semanas, e com as
+            duas colunas alinhadas pela base os botões de ação desciam 14 px ao entrar numa
+            semana de descarga e subiam ao sair. O que ela dizia ("menos carga, de propósito")
+            já está dito duas vezes logo abaixo: na barra hachurada da régua e no segmentado
+            "Descarga" do tipo da semana, que é onde a descarga se explica e se desfaz.
+          */}
+          <h2 className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-display text-2xl font-bold text-ink md:text-3xl">
+            <span>
+              Semana {micro.semana} · {rotuloMeso(meso)}
+            </span>
+            {micro.tipo === "deload" && <Pill tone="warning">descarga</Pill>}
           </h2>
-          {micro.tipo === "deload" && (
-            <p className="mt-1 text-sm text-ink-2">Semana de descarga: menos carga, de propósito.</p>
-          )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/*
-            AS TRÊS SEMANAS VIZINHAS (protótipo: "Semana 6 | Semana 7 | Semana 8 · descarga").
-            A navegação entre semanas vivia em dois links no RODAPÉ da coluna de edição, ou
-            seja, depois de rolar a sessão inteira, e sem dizer o que vinha antes ou depois. No
-            cabeçalho ela vira contexto: onde estou, o que veio, o que vem, e a descarga
-            anunciada antes de o profissional chegar nela.
-          */}
-          {(anterior || proxima) && (
-            <div className="inline-flex gap-0.5 rounded-full border border-border bg-surface p-1">
-              {[anterior, { micro, meso }, proxima].map((s) =>
-                !s ? null : (
-                  <button
-                    key={s.micro.id}
-                    type="button"
-                    onClick={() => s.micro.semana !== micro.semana && onFocar(s.micro.semana)}
-                    aria-current={s.micro.semana === micro.semana ? "page" : undefined}
-                    className={cn(
-                      "min-h-[36px] whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition-colors",
-                      s.micro.semana === micro.semana
-                        ? "bg-ink text-surface"
-                        : "text-ink-2 hover:bg-surface-soft hover:text-ink",
-                    )}
-                  >
-                    Semana {s.micro.semana}
-                    {s.micro.tipo === "deload" && <span className="font-medium opacity-70"> · descarga</span>}
-                  </button>
-                ),
-              )}
-            </div>
-          )}
-          <button
-            onClick={() => onExportar(micro.semana)}
-            disabled={!podeSalvar}
-            className={cn(buttonClasses("secondary", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}
-            title="Uma pagina com esta semana, com espaco para o aluno anotar a carga"
-          >
-            <FileDown className="h-4 w-4" /> Folha da semana {micro.semana}
-          </button>
-          <button
-            onClick={onPublicar}
-            disabled={!podeSalvar}
-            className={cn(
-              buttonClasses("primary", "sm"),
-              "gradient-publicar text-white",
-              !podeSalvar && "cursor-not-allowed opacity-50",
-            )}
-          >
-            {salvo ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-            {aluno ? `Publicar no app de ${aluno.split(" ")[0]}` : "Publicar no app do aluno"}
-          </button>
-        </div>
+        {/* A navegação entre semanas também saiu daqui: ela vivia como segmentado das três
+            vizinhas EM CIMA da régua de doze semanas que vem logo abaixo, dois controles
+            para o mesmo trabalho, um colado no outro. A régua ficou com o trabalho inteiro e
+            ganhou os passos anterior e próximo em lugares fixos. */}
       </div>
 
       <ReguaDoEditor semanas={semanas} atual={micro.semana} onFocar={onFocar} />
@@ -2247,80 +2272,36 @@ function EditorDaSemana({
           {efeito && <EfeitoDaEdicaoCard efeito={efeito} onDispensar={() => setEfeito(null)} />}
 
           {micro.sessoes.length === 0 ? (
-            <p className="rounded-control border border-dashed border-border p-4 text-sm text-ink-3">
-              Esta semana não tem sessão. Ajuste no plano bloco a bloco, na periodização.
-            </p>
+            /* Mandava "ajuste na periodização" numa tela que tem o botão de criar sessão. A
+               saída existe aqui; o vazio passa a mostrá-la em vez de mandar embora. */
+            <div className="rounded-control border border-dashed border-border p-4 text-center">
+              <p className="text-sm text-ink-3">Esta semana ainda não tem sessão.</p>
+              {editavel && (
+                <button onClick={addSessao} className={cn(buttonClasses("secondary", "sm"), "mt-2")}>
+                  <Plus className="h-4 w-4" aria-hidden /> Criar a primeira sessão
+                </button>
+              )}
+            </div>
           ) : (
             <>
-              {/* As sessões viram pílulas, e não abas sublinhadas: é o desenho do protótipo
-                  e o mesmo vocabulário de escolha do resto do produto. */}
-              {/*
-                AS PÍLULAS SÃO O NOME DA SESSÃO, e agora também o lugar de renomear e remover.
-                O nome aparecia duas vezes na mesma tela: na pílula e como título do bloco de
-                exercícios logo abaixo, com dois caminhos diferentes para a mesma edição.
-              */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <div role="tablist" aria-label="Sessões da semana" className="flex flex-wrap gap-1.5">
-                  {micro.sessoes.map((s, i) =>
-                    i === sessaoIdx && renomeando ? (
-                      <input
-                        key={s.id}
-                        autoFocus
-                        value={s.nome}
-                        aria-label="Nome da sessão"
-                        onChange={(e) => trocarSessao({ ...s, nome: e.target.value })}
-                        onBlur={() => setRenomeando(false)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === "Escape") setRenomeando(false);
-                        }}
-                        className="min-h-[44px] rounded-full border border-primary bg-surface px-4 text-sm font-semibold text-ink focus:outline-none"
-                      />
-                    ) : (
-                      <button
-                        key={s.id}
-                        role="tab"
-                        aria-selected={i === sessaoIdx}
-                        onClick={() => setSessaoIdx(i)}
-                        className={cn(
-                          "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 text-sm transition-colors",
-                          i === sessaoIdx
-                            ? "border-ink bg-ink font-semibold text-surface"
-                            : "border-border text-ink-2 hover:bg-surface-soft",
-                        )}
-                      >
-                        {s.nome}
-                        {s.foco && (
-                          <span className={cn("font-normal", i === sessaoIdx ? "opacity-70" : "text-ink-3")}>{s.foco}</span>
-                        )}
-                      </button>
-                    ),
-                  )}
-                </div>
-                {editavel && sessao && !renomeando && (
-                  <span className="inline-flex items-center gap-0.5">
-                    <button
-                      onClick={() => setRenomeando(true)}
-                      aria-label={`Renomear ${sessao.nome}`}
-                      title="Renomear sessão"
-                      className="rounded-control p-2 text-ink-3 transition-colors hover:bg-surface-soft hover:text-ink"
-                    >
-                      <Pencil className="h-4 w-4" aria-hidden />
-                    </button>
-                    <button
-                      onClick={() => {
-                        const antes = micro;
-                        trocarMicro({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) });
-                        toastDesfazer(`${sessao.nome} removida da semana ${micro.semana}.`, () => onChange(antes));
-                      }}
-                      aria-label={`Remover ${sessao.nome}`}
-                      title="Remover sessão"
-                      className="rounded-control p-2 text-ink-3 transition-colors hover:bg-surface-soft hover:text-[color:var(--cta-text)]"
-                    >
-                      <Trash2 className="h-4 w-4" aria-hidden />
-                    </button>
-                  </span>
-                )}
-              </div>
+              <SeletorDeSessoes
+                sessoes={micro.sessoes}
+                idx={sessaoIdx}
+                editavel={editavel}
+                renomeando={renomeando}
+                onEscolher={setSessaoIdx}
+                onRenomear={() => setRenomeando(true)}
+                onFecharRenomear={() => setRenomeando(false)}
+                onNome={(nome) => sessao && trocarSessao({ ...sessao, nome })}
+                onAdicionar={addSessao}
+                onRemover={() => {
+                  if (!sessao) return;
+                  const antes = micro;
+                  trocarMicro({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) });
+                  setSessaoIdx((i) => Math.max(0, Math.min(i, micro.sessoes.length - 2)));
+                  toastDesfazer(`${sessao.nome} removida da semana ${micro.semana}.`, () => onChange(antes));
+                }}
+              />
 
               {sessao && (
                 <SessaoBloco
@@ -2336,15 +2317,10 @@ function EditorDaSemana({
             </>
           )}
 
-          {editavel && (
-            <button
-              onClick={addSessao}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-card border-2 border-dashed border-border py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
-            >
-              <Plus className="h-3.5 w-3.5" aria-hidden /> Adicionar sessão nesta semana
-            </button>
-          )}
-
+          {/* "Adicionar sessão" subiu para o fim do trilho de sessões, que é onde as sessões
+              se escolhem. Aqui embaixo ele ficava depois da lista inteira de exercícios,
+              longe do controle que ele alimenta, e competia em peso com "Adicionar
+              exercício", que é o gesto de dentro da sessão aberta. */}
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
             {editavel && micro.tipo !== "deload" ? (
               <button onClick={onDuplicar} className={buttonClasses("secondary", "sm")}>
@@ -2370,9 +2346,187 @@ function EditorDaSemana({
 }
 
 /**
+ * A ESCOLHA DA SESSÃO: um trilho de pílulas do mesmo tamanho, e a identidade embaixo.
+ *
+ * ## O que estava errado
+ *
+ * A pílula carregava `nome` MAIS `foco`, e o foco é a frase que o motor escreve para a
+ * sessão: "Condicionamento aeróbio", "Isométrico para o controle da pressão arterial". Numa
+ * semana de emagrecimento com hipertensão isso dava seis pílulas de larguras completamente
+ * diferentes, entre 150 e 400 px, embrulhando em quatro fileiras, com a MESMA frase repetida
+ * três vezes seguidas. Um monte irregular no lugar de um controle.
+ *
+ * Pior: renomear e remover ficavam num par de ícones depois do monte todo, agindo sobre a
+ * sessão selecionada sem nenhuma ligação visual com ela. O alvo do gesto estava a quatro
+ * fileiras de distância do gesto.
+ *
+ * ## O desenho
+ *
+ * A pílula fica com o que a distingue das outras (o nome) e com o que se quer saber ao
+ * escolher entre elas (quantos exercícios tem). Larguras parecidas, uma fileira só.
+ *
+ * O `foco` não sumiu: ele é do que está aberto, não de cada opção da lista, então desce para
+ * a linha de identidade logo abaixo, onde aparece UMA vez, ao lado das ações que agem
+ * exatamente sobre aquela sessão. Renomear acontece ali, e não dentro da pílula: um campo
+ * dentro do trilho fazia as outras pílulas escorregarem a cada letra digitada.
+ *
+ * Os COMPLEMENTOS ficam num grupo à parte, atrás de um traço. Eles não são mais um dia de
+ * treino (é o que o campo `complemento` significa: acontecem no mesmo dia de uma principal),
+ * e misturados no meio das outras faziam a semana parecer ter seis treinos quando tem três.
+ */
+function SeletorDeSessoes({
+  sessoes,
+  idx,
+  editavel,
+  renomeando,
+  onEscolher,
+  onRenomear,
+  onFecharRenomear,
+  onNome,
+  onRemover,
+  onAdicionar,
+}: {
+  sessoes: Sessao[];
+  idx: number;
+  editavel: boolean;
+  renomeando: boolean;
+  onEscolher: (i: number) => void;
+  onRenomear: () => void;
+  onFecharRenomear: () => void;
+  onNome: (nome: string) => void;
+  onRemover: () => void;
+  onAdicionar: () => void;
+}) {
+  const itens = sessoes.map((s, i) => ({ s, i }));
+  const principais = itens.filter((x) => !x.s.complemento);
+  const complementos = itens.filter((x) => x.s.complemento);
+  const atual = sessoes[idx];
+
+  const pilula = ({ s, i }: { s: Sessao; i: number }) => (
+    <button
+      key={s.id}
+      role="tab"
+      aria-selected={i === idx}
+      onClick={() => onEscolher(i)}
+      title={s.foco ? `${s.nome} · ${s.foco}` : s.nome}
+      className={cn(
+        "inline-flex min-h-[44px] max-w-[14rem] items-center gap-2 rounded-full border px-3.5 text-sm transition-colors",
+        i === idx
+          ? "border-ink bg-ink font-semibold text-surface"
+          : s.complemento
+            ? "border-dashed border-border text-ink-2 hover:bg-surface-soft hover:text-ink"
+            : "border-border text-ink-2 hover:bg-surface-soft hover:text-ink",
+      )}
+    >
+      <span className="truncate">{s.nome}</span>
+      {/*
+        Quantos exercícios a sessão tem. É o dado que decide entre uma sessão e outra ao
+        escolher, e ele não existia em lugar nenhum do trilho. Herda a cor da pílula (opacidade
+        em cima de `currentColor`), então funciona igual na escura e na clara sem depender de
+        um token para cada estado.
+      */}
+      <span className="tabular text-2xs font-semibold opacity-60" aria-label={`${s.blocos.length} exercícios`}>
+        {s.blocos.length}
+      </span>
+    </button>
+  );
+
+  return (
+    <div className="space-y-2">
+      {/*
+        DUAS FILEIRAS POR DESENHO, e não por transbordo.
+
+        Com tudo numa fileira só, seis sessões embrulhavam em três linhas conforme a largura
+        da janela, e a quebra caía onde calhasse: "Sessão isométrica 1" podia terminar a
+        primeira linha e a 2 começar a segunda. Separadas, cada grupo cabe folgado na sua
+        (medido em 773 px de coluna: 409 px as principais com o botão de acrescentar, 529 px
+        os complementos), e o rótulo diz o que antes era só um traço vertical.
+      */}
+      <div role="tablist" aria-label="Sessões da semana" className="space-y-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {principais.map(pilula)}
+          {editavel && (
+            <button
+              type="button"
+              onClick={onAdicionar}
+              title="Adicionar uma sessão nesta semana"
+              className="inline-flex min-h-[44px] shrink-0 items-center gap-1 rounded-full border border-dashed border-border px-3 text-sm font-semibold text-ink-3 transition-colors hover:border-primary hover:text-primary"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden /> Sessão
+            </button>
+          )}
+        </div>
+        {complementos.length > 0 && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            <span
+              className="text-2xs font-semibold uppercase tracking-[0.08em] text-ink-3"
+              title="Acontecem no mesmo dia de uma sessão principal, não num dia a mais"
+            >
+              No mesmo dia
+            </span>
+            {complementos.map(pilula)}
+          </div>
+        )}
+      </div>
+
+      {atual && (
+        <div className="flex min-h-[32px] flex-wrap items-center gap-x-2 gap-y-1">
+          {renomeando && editavel ? (
+            <input
+              autoFocus
+              value={atual.nome}
+              aria-label="Nome da sessão"
+              onChange={(e) => onNome(e.target.value)}
+              onBlur={onFecharRenomear}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === "Escape") onFecharRenomear();
+              }}
+              className="min-h-[32px] min-w-0 flex-1 rounded-control border border-primary bg-surface px-2 text-sm font-semibold text-ink focus:outline-none"
+            />
+          ) : (
+            <p className="min-w-0 flex-1 text-sm text-ink-2">
+              <b className="font-semibold text-ink">{atual.nome}</b>
+              {atual.complemento && <span className="text-ink-3"> · complemento</span>}
+              {atual.foco && <span> · {atual.foco}</span>}
+            </p>
+          )}
+          {editavel && !renomeando && (
+            <span className="inline-flex shrink-0 items-center gap-0.5">
+              <button
+                onClick={onRenomear}
+                aria-label={`Renomear ${atual.nome}`}
+                title="Renomear sessão"
+                className="rounded-control p-2 text-ink-3 transition-colors hover:bg-surface-soft hover:text-ink"
+              >
+                <Pencil className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                onClick={onRemover}
+                aria-label={`Remover ${atual.nome}`}
+                title="Remover sessão"
+                className="rounded-control p-2 text-ink-3 transition-colors hover:bg-surface-soft hover:text-[color:var(--cta-text)]"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+              </button>
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * A RÉGUA DE SEMANAS do editor (protótipo). Uma barra por semana, na cor da fase, a atual
  * marcada e a descarga hachurada: é o calendário da periodização achatado, porque aqui o
  * que se precisa saber é só onde estou e o que vem antes e depois.
+ *
+ * ELA É O ÚNICO CONTROLE DE SEMANA DESTA TELA. O segmentado das três vizinhas que ficava no
+ * cabeçalho dizia a mesma coisa em pior resolução e mudava de largura conforme a semana, o
+ * que empurrava os botões de ação para o lado a cada clique. Os passos anterior e próximo
+ * vieram para cá, em lugares FIXOS nas pontas: eles ficam desabilitados na primeira e na
+ * última semana em vez de sumirem, senão a régua inteira mudaria de largura nas pontas, que é
+ * exatamente o defeito que este arranjo existe para não ter.
  */
 function ReguaDoEditor({
   semanas,
@@ -2386,13 +2540,41 @@ function ReguaDoEditor({
   const indiceDoMeso = new Map<string, number>();
   let i = 0;
   for (const { meso } of semanas) if (!indiceDoMeso.has(meso.id)) indiceDoMeso.set(meso.id, i++);
+  const posicao = semanas.findIndex((s) => s.micro.semana === atual);
+  const passoAnterior = posicao > 0 ? semanas[posicao - 1] : undefined;
+  const passoProximo = posicao >= 0 && posicao < semanas.length - 1 ? semanas[posicao + 1] : undefined;
+
+  const passo = (alvo: typeof passoAnterior, dir: "anterior" | "próxima") => (
+    <button
+      type="button"
+      onClick={() => alvo && onFocar(alvo.micro.semana)}
+      disabled={!alvo}
+      aria-label={alvo ? `Semana ${alvo.micro.semana}` : `Sem semana ${dir}`}
+      title={
+        alvo
+          ? `Semana ${alvo.micro.semana}${alvo.micro.tipo === "deload" ? " · descarga" : ""}`
+          : undefined
+      }
+      className={cn(
+        "grid h-9 w-9 shrink-0 place-items-center rounded-control border border-border text-ink-2 transition-colors",
+        alvo ? "hover:bg-surface-soft hover:text-ink" : "cursor-not-allowed opacity-40",
+      )}
+    >
+      {dir === "anterior" ? (
+        <ChevronLeft className="h-4 w-4" aria-hidden />
+      ) : (
+        <ChevronRight className="h-4 w-4" aria-hidden />
+      )}
+    </button>
+  );
 
   return (
     <div
-      className="grid gap-1"
+      className="flex items-center gap-2"
       style={{ ["--cols" as string]: String(semanas.length) }}
     >
-      <div className="grid grid-cols-6 gap-1 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]">
+      {passo(passoAnterior, "anterior")}
+      <div className="grid min-w-0 flex-1 grid-cols-6 gap-1 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]">
         {semanas.map(({ micro, meso }) => {
           const ehAtual = micro.semana === atual;
           const cor = CORES_DE_FASE[(indiceDoMeso.get(meso.id) ?? 0) % CORES_DE_FASE.length];
@@ -2422,6 +2604,7 @@ function ReguaDoEditor({
           );
         })}
       </div>
+      {passo(passoProximo, "próxima")}
     </div>
   );
 }
