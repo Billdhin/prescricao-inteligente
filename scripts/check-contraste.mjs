@@ -4,7 +4,7 @@
 // nenhuma paleta chegar ao profissional com texto ilegível.
 import fs from "node:fs";
 import path from "node:path";
-import { PALETA_ALUNO, PALETAS, tokensDe } from "../src/lib/theme/palettes.ts";
+import { PALETA_ALUNO, PALETAS, tokensDe, ajustarParaContraste, parDeMarca, CORES_DE_MARCA } from "../src/lib/theme/palettes.ts";
 
 function lum(hex) {
   const h = hex.replace("#", "");
@@ -174,7 +174,36 @@ if (usosBgWarning.length) {
   process.exit(1);
 }
 
-console.log(`[check:contraste] ${PALETAS.length + 1} paletas × 2 modos × ${PARES.length} pares + ${DECORATIVOS.length} decorativos + ${TEXTOS.length}×${SUPERFICIES.length} de hover.`);
+/*
+ * A COR DE MARCA DO PROFISSIONAL, nos dois temas do app do aluno.
+ *
+ * Este era um ponto CEGO: as regras acima validam a paleta AUTORADA, mas o portal do aluno
+ * troca `--primary` em tempo de execução pela cor que o profissional escolheu, e nenhuma
+ * régua olhava para isso. Um dourado sobre o papel claro dava 2,3:1, ou seja, o nome da
+ * marca do professor ficava ilegível no app do aluno dele.
+ *
+ * `ajustarParaContraste` puxa a cor até o alvo, e é isso que esta régua confere: para cada
+ * uma das cores oferecidas, nos dois temas, o que ESCREVE passa 4,5 e o que PREENCHE passa 3
+ * (com a tinta escolhida por cima do preenchimento também passando 4,5).
+ */
+for (const tema of ["claro", "escuro"]) {
+  const core = tema === "claro" ? PALETA_ALUNO.claro : PALETA_ALUNO.escuro;
+  for (const { hex, nome } of CORES_DE_MARCA) {
+    const escreve = ajustarParaContraste(hex, core.bg, 4.5);
+    const { preenche, tinta } = parDeMarca(hex, core.bg);
+    const casos = [
+      [`marca "${nome}" como TEXTO`, escreve, core.bg, 4.5],
+      [`marca "${nome}" como PREENCHIMENTO`, preenche, core.bg, 3],
+      [`tinta sobre a marca "${nome}"`, tinta, preenche, 4.5],
+    ];
+    for (const [rotulo, a, b, min] of casos) {
+      const r = ratio(a, b);
+      if (r < min) falhas.push(`aluno/${tema}: ${rotulo} = ${r.toFixed(2)} < ${min}`);
+    }
+  }
+}
+
+console.log(`[check:contraste] ${PALETAS.length + 1} paletas × 2 modos × ${PARES.length} pares + ${DECORATIVOS.length} decorativos + ${TEXTOS.length}×${SUPERFICIES.length} de hover + ${CORES_DE_MARCA.length} cores de marca × 2 temas.`);
 if (falhas.length) {
   console.error(`\n[check:contraste] FALHOU: ${falhas.length} par(es) abaixo do AA:\n`);
   for (const f of falhas) console.error("  • " + f);

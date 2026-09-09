@@ -20,6 +20,8 @@ import {
   CalendarDays,
   Info,
   FileText,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
@@ -27,7 +29,18 @@ import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
 import { SobreVoce, resumoSobreVoce } from "@/components/student/SobreVoce";
 import type { DeclaracaoAluno } from "@/data/declaracoes";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
-import { aplicarPaleta, PALETA_ALUNO, corDeContraste } from "@/lib/theme/palettes";
+import {
+  aplicarPaleta,
+  PALETA_ALUNO,
+  parDeMarca,
+  ajustarParaContraste,
+  // segue em uso onde o componente recebe so a cor ja ajustada: parDeMarca garante
+  // que a tinta escolhida por aqui passa 4,5 em cima dela.
+  corDeContraste,
+  temaAlunoSalvo,
+  salvarTemaAluno,
+  type TemaAluno,
+} from "@/lib/theme/palettes";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
 import { EvolucaoExercicio } from "@/components/app/EvolucaoExercicio";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
@@ -184,8 +197,37 @@ export function StudentApp({
   // `useState` e o voltar do navegador (e o gesto do Android) saía do app.
   const nav = useNavegacaoAluno();
   const aba = nav.aba;
-  const cor = marca.corPrimaria || "#2064EC";
-  const tintaDaMarca = corDeContraste(cor);
+  /*
+   * A APARÊNCIA É DO ALUNO, não do produto (redesign mobile de 09/09/2026).
+   *
+   * O escuro continua sendo o padrão pela razão de sempre (vestiário, academia, pouca luz),
+   * mas quem treina de manhã na rua lia mal o navy. A escolha fica no aparelho dele, e não na
+   * conta do professor: é o aluno que está com o celular na mão.
+   */
+  const [tema, setTema] = React.useState<TemaAluno>(() => temaAlunoSalvo());
+  const trocarTema = React.useCallback((t: TemaAluno) => {
+    salvarTemaAluno(t);
+    setTema(t);
+  }, []);
+
+  /*
+   * A COR DA MARCA, AJUSTADA AO TEMA. A cor crua do profissional não serve nos dois lados:
+   * um dourado some no papel claro e um grafite some no navy. `parDeMarca` puxa o
+   * preenchimento até 3:1 contra o fundo e garante que a tinta escrita nele passe 4,5;
+   * `corTexto` é a mesma marca puxada até 4,5, para quando ela ESCREVE. Os inline styles
+   * daqui usam exatamente os mesmos valores que os tokens, senão as duas coisas divergiriam
+   * na mesma tela.
+   */
+  const corMarca = marca.corPrimaria || "#2064EC";
+  const fundoDoTema = tema === "escuro" ? PALETA_ALUNO.escuro.bg : PALETA_ALUNO.claro.bg;
+  const { preenche: cor, tinta: tintaDaMarca } = React.useMemo(
+    () => parDeMarca(corMarca, fundoDoTema),
+    [corMarca, fundoDoTema],
+  );
+  const corTexto = React.useMemo(
+    () => ajustarParaContraste(corMarca, fundoDoTema, 4.5),
+    [corMarca, fundoDoTema],
+  );
   // "Conte sobre você": abre sozinha no primeiro acesso, e depois pelo cartão do Perfil.
   const [sobreVoce, setSobreVoce] = React.useState(abrirSobreVoce);
 
@@ -213,16 +255,15 @@ export function StudentApp({
       )
     : undefined;
 
-  // O portal do aluno tem PELE PRÓPRIA: navy escuro, sempre. Ele não herda a
-  // aparência do profissional, porque quem abre esta tela é o aluno, na
-  // academia, e o design aprovado desenhou este lado escuro. O que o
-  // profissional controla é a COR DE MARCA, que entra como acento sobre o navy.
+  // O portal do aluno tem PELE PRÓPRIA (escura por padrão, clara se o aluno pedir).
+  // Ele não herda a aparência do profissional: quem abre esta tela é o aluno. O que o
+  // profissional controla é a COR DE MARCA, que entra como acento sobre a pele.
   // Aplica no container do portal, não na raiz do documento, para não vazar para
   // a prévia que roda dentro do app do profissional.
   const rootRef = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
-    if (rootRef.current) aplicarPaleta(rootRef.current, PALETA_ALUNO, true, marca.corPrimaria);
-  }, [marca.corPrimaria]);
+    if (rootRef.current) aplicarPaleta(rootRef.current, PALETA_ALUNO, tema === "escuro", marca.corPrimaria);
+  }, [marca.corPrimaria, tema]);
 
   const cobranca = aluno.cobranca;
   const cobrancaPendente = cobranca ? statusEfetivo(cobranca) === "pendente" : false;
@@ -364,6 +405,8 @@ export function StudentApp({
                   preview={preview}
                   declaracoes={declaracoes}
                   onSobreVoce={() => setSobreVoce(true)}
+                  tema={tema}
+                  onTema={trocarTema}
                 />
               )}
                 </>
@@ -1866,7 +1909,12 @@ function AbaPerfil({
   preview,
   declaracoes = [],
   onSobreVoce,
+  tema,
+  onTema,
 }: {
+  /** tema escolhido pelo aluno, e como trocar (a escolha vive no aparelho dele) */
+  tema: TemaAluno;
+  onTema: (t: TemaAluno) => void;
   aluno: Aluno;
   marca: Marca;
   cor: string;
@@ -1958,6 +2006,43 @@ function AbaPerfil({
       })()}
 
       <MensalidadeCard aluno={aluno} cor={cor} tinta={tinta} />
+
+      {/*
+        APARÊNCIA: a escolha é do aluno e vive no aparelho dele, não na conta do professor.
+        O escuro segue padrão (academia, pouca luz); o claro existe para quem treina de dia
+        na rua e lia mal o navy.
+      */}
+      <div className="flex items-center gap-3 rounded-card border border-border bg-surface p-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-surface-soft text-ink-2">
+          {tema === "escuro" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold text-ink">Aparência</span>
+          <span className="block text-xs text-ink-2">Como o app se veste neste aparelho</span>
+        </span>
+        <span role="group" aria-label="Aparência" className="flex shrink-0 gap-1 rounded-full bg-surface-soft p-1">
+          {([
+            ["escuro", "Escuro"],
+            ["claro", "Claro"],
+          ] as [TemaAluno, string][]).map(([id, rotulo]) => {
+            const ativo = tema === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onTema(id)}
+                aria-pressed={ativo}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
+                  ativo ? "bg-ink text-surface" : "text-ink-2",
+                )}
+              >
+                {rotulo}
+              </button>
+            );
+          })}
+        </span>
+      </div>
 
       {rodapeDoPerfil}
 

@@ -18,6 +18,9 @@ export default {
         "ink-3": "rgb(var(--ink-3-rgb) / <alpha-value>)",
         primary: "rgb(var(--primary-rgb) / <alpha-value>)",
         "primary-tint": "rgb(var(--primary-tint-rgb) / <alpha-value>)",
+        // A cor da marca do profissional em dois niveis: `primary` preenche (3:1) e
+        // `primary-texto` escreve (4,5:1). Ver ajustarParaContraste em palettes.ts.
+        "primary-texto": "rgb(var(--primary-texto-rgb) / <alpha-value>)",
         "on-primary": "rgb(var(--on-primary-rgb) / <alpha-value>)",
         "on-analysis": "rgb(var(--on-analysis-rgb) / <alpha-value>)",
         analysis: "rgb(var(--analysis-rgb) / <alpha-value>)",

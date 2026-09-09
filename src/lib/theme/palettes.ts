@@ -105,6 +105,68 @@ function contraste(a: string, b: string): number {
   const l2 = lum(b);
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
+/** Mistura dois hexes na proporção `t` (0 = a, 1 = b). */
+function misturar(a: string, b: string, t: number): string {
+  const [ar, ag, ab] = hexToRgb(a);
+  const [br, bg, bb] = hexToRgb(b);
+  const canal = (x: number, y: number) => Math.round(x * (1 - t) + y * t);
+  return "#" + [canal(ar, br), canal(ag, bg), canal(ab, bb)].map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * A COR DA MARCA, PUXADA ATÉ FICAR LEGÍVEL NO TEMA.
+ *
+ * O profissional escolhe a cor dele, e essa cor tem que aparecer no app do aluno nos DOIS
+ * temas. Só que a mesma cor não serve nos dois: um dourado (#C9A227) dá 2,3:1 sobre papel
+ * branco e 7,4:1 sobre o navy; um grafite faz o contrário. Fixar a cor crua deixava o texto
+ * da marca ilegível em um dos lados, e essa troca acontece em tempo de execução, onde o
+ * `check:contraste` não enxerga (ele valida a paleta autorada, não o acento do profissional).
+ *
+ * Então a cor não é fixada: ela é ANDADA na direção da tinta do tema (para o escuro no tema
+ * claro, para o branco no tema escuro), em passos de 4%, até alcançar o alvo. O matiz é
+ * preservado; o que muda é só a luminosidade, o mínimo para o texto passar.
+ *
+ * `alvo` é 4,5 para texto e 3 para preenchimento (WCAG 1.4.3 e 1.4.11).
+ */
+export function ajustarParaContraste(base: string, fundo: string, alvo: number): string {
+  if (!/^#[0-9a-fA-F]{6}$/.test(base)) return base;
+  const rumo = lum(fundo) > 0.5 ? "#0B1628" : "#FFFFFF";
+  let cor = base;
+  for (let t = 0; t <= 1 && contraste(cor, fundo) < alvo; t += 0.04) cor = misturar(base, rumo, t);
+  return cor;
+}
+
+/**
+ * O PAR DE PREENCHIMENTO da marca: a cor do botão e a tinta que vai escrita nele.
+ *
+ * `ajustarParaContraste` resolve a cor contra o FUNDO, mas sobra um segundo par que ninguém
+ * olhava: o texto DENTRO do botão. O coral (#E2543E) é o caso que provou isso, e a régua nova
+ * o pegou: nem branco (3,77) nem grafite (4,34) alcançam 4,5 em cima dele. Ou seja, todo
+ * profissional que escolhesse coral entregava ao aluno um botão de marca com o rótulo abaixo
+ * de AA, nos dois temas.
+ *
+ * O conserto é empurrar o preenchimento o MÍNIMO até uma das duas tintas passar, sem perder
+ * os 3:1 contra o fundo. No coral bastam 4% na direção do claro (#E35B46), um desvio que não
+ * se percebe ao lado da cor original e que o desvio alternativo (12% para o escuro) não teria.
+ */
+export function parDeMarca(base: string, fundo: string): { preenche: string; tinta: string } {
+  const inicial = ajustarParaContraste(base, fundo, 3);
+  const melhorTinta = (c: string) => (contraste("#FFFFFF", c) >= contraste("#17202E", c) ? "#FFFFFF" : "#17202E");
+  const passa = (c: string) => contraste(melhorTinta(c), c) >= 4.5;
+  if (passa(inicial)) return { preenche: inicial, tinta: melhorTinta(inicial) };
+
+  // Empurra nos dois rumos em paralelo e fica com o desvio MENOR que resolve: a marca do
+  // profissional deve mudar o mínimo possível para virar legível.
+  for (let t = 0.04; t <= 1; t += 0.04) {
+    for (const rumo of ["#FFFFFF", "#0B1628"]) {
+      const c = misturar(inicial, rumo, t);
+      if (passa(c) && contraste(c, fundo) >= 3) return { preenche: c, tinta: melhorTinta(c) };
+    }
+  }
+  // Nenhum desvio resolve (não acontece com as cores oferecidas): devolve o melhor esforço.
+  return { preenche: inicial, tinta: melhorTinta(inicial) };
+}
+
 /* ------------------------- acentos/semânticas ------------------------- */
 
 const COMPART_CLARO: Compartilhado = {
@@ -304,15 +366,87 @@ const ALUNO_ESCURO: PaletaCore = {
   primaryTint: "#1B2A45",
 };
 
+/**
+ * A PELE CLARA do app do aluno (redesign mobile de 09/09/2026).
+ *
+ * O escuro continua sendo o padrão, pela razão de sempre (vestiário, academia, pouca luz),
+ * mas ele deixou de ser a ÚNICA opção: quem treina de manhã ao ar livre lia mal o navy, e a
+ * escolha agora é do aluno, não do produto. É uma rampa fria e AZULADA, e não o papel quente
+ * do profissional, para o app do aluno continuar sendo reconhecidamente outro produto.
+ */
+const ALUNO_CLARO: PaletaCore = {
+  bg: "#F6F8FC",
+  surface: "#FFFFFF",
+  surfaceSoft: "#E9EEF6",
+  surfaceMute: "#E9EEF6",
+  border: "#D6DEEA",
+  ink: "#0B1628",
+  ink2: "#5B6779",
+  ink3: "#5B6779",
+  ink4: "#8FA0B5",
+  // azul do mapa derivado: o literal dá 4,40 sobre a tint e reprovaria como texto.
+  primary: "#1E5CDD",
+  primaryTint: "#E3ECFC",
+};
+
+/** Semânticas da pele clara do aluno: as mesmas famílias, nas tintas que escrevem no papel. */
+const ALUNO_COMPART_CLARO: Compartilhado = {
+  onPrimary: "#ffffff",
+  onAnalysis: "#ffffff",
+  analysis: "#0C6B70",
+  analysisText: "#0C6B70",
+  analysisTint: "#D9F2F1",
+  analysisFill: "#14B3BA",
+  onAnalysisFill: "#0B1628",
+  cta: "#8A5A00",
+  ctaText: "#8A5A00",
+  ctaTint: "#FBF0D4",
+  success: "#0B6B3E",
+  successTint: "#E3F7EC",
+  successFill: "#1DB56C",
+  onSuccessFill: "#0B1628",
+  warning: "#8A5A00",
+  warningTint: "#FBF0D4",
+  warningFill: "#E8A317",
+  onWarningFill: "#0B1628",
+  danger: "#B4232A",
+  dangerTint: "#FCE4E4",
+  dangerFill: "#E5484D",
+  dataIntensidade: "#8A5A00",
+  brandBlue: "#2064EC",
+  brandTurquesa: "#14B3BA",
+};
+
 export const PALETA_ALUNO: Paleta = {
   id: "aluno",
   nome: "App do aluno",
   amostra: "#0D1524",
-  claro: ALUNO_ESCURO,
+  claro: ALUNO_CLARO,
   escuro: ALUNO_ESCURO,
-  compartClaro: ROTA_COMPART_ESCURO,
+  compartClaro: ALUNO_COMPART_CLARO,
   compartEscuro: ROTA_COMPART_ESCURO,
 };
+
+/** O tema que o ALUNO escolheu, guardado no aparelho dele. Padrão: escuro. */
+export type TemaAluno = "claro" | "escuro";
+const CHAVE_TEMA_ALUNO = "mp-aluno-tema";
+
+export function temaAlunoSalvo(): TemaAluno {
+  if (typeof localStorage === "undefined") return "escuro";
+  try {
+    return localStorage.getItem(CHAVE_TEMA_ALUNO) === "claro" ? "claro" : "escuro";
+  } catch {
+    return "escuro";
+  }
+}
+
+export function salvarTemaAluno(tema: TemaAluno): void {
+  try {
+    localStorage.setItem(CHAVE_TEMA_ALUNO, tema);
+  } catch {
+    /* aparelho com armazenamento bloqueado: a escolha vale só nesta sessão */
+  }
+}
 
 /** Resolve a paleta por id. Id desconhecido cai no padrão. */
 export function getPaleta(id?: string): Paleta {
@@ -370,6 +504,9 @@ export function tokensDe(paleta: Paleta, escuro: boolean): Record<string, string
     "surface-mute": core.surfaceMute ?? core.surfaceSoft,
     ink: core.ink, "ink-2": core.ink2, "ink-3": core.ink3, "ink-4": core.ink4 ?? core.ink3,
     primary: core.primary, "primary-tint": core.primaryTint,
+    // Sem cor de marca, quem escreve em primária é a própria primária da paleta (ela já
+    // passa 4,5 como texto). Com cor de marca, `aplicarPaleta` sobrescreve as duas.
+    "primary-texto": core.primary,
     "on-primary": comp.onPrimary, "on-analysis": comp.onAnalysis,
     analysis: comp.analysis, "analysis-text": comp.analysisText,
     "analysis-fill": comp.analysisFill ?? comp.analysis,
@@ -419,10 +556,20 @@ export function aplicarPaleta(el: HTMLElement, paleta: Paleta, escuro: boolean, 
   }
   // Acento de marca: quem passa `corMarca` (hoje só o portal do aluno) troca a
   // primária e a tinta que vai por cima dela, sobre a MESMA base neutra.
+  //
+  // A cor NÃO entra crua. Ela é puxada até passar contraste contra o fundo DESTE tema
+  // (ver `ajustarParaContraste`), em dois níveis, porque os dois usos têm réguas
+  // diferentes: `--primary` preenche (3:1) e `--primary-texto` escreve (4,5:1). Sem
+  // isso, a mesma cor de marca ficava legível num tema e sumia no outro, e nenhuma régua
+  // via, porque a troca acontece em tempo de execução.
   if (corMarca && /^#[0-9a-fA-F]{6}$/.test(corMarca)) {
-    el.style.setProperty("--primary", corMarca);
-    el.style.setProperty("--primary-rgb", hexParaCanais(corMarca));
-    const tinta = corDeContraste(corMarca);
+    const fundo = tokens.bg;
+    const { preenche, tinta } = parDeMarca(corMarca, fundo);
+    const escreve = ajustarParaContraste(corMarca, fundo, 4.5);
+    el.style.setProperty("--primary", preenche);
+    el.style.setProperty("--primary-rgb", hexParaCanais(preenche));
+    el.style.setProperty("--primary-texto", escreve);
+    el.style.setProperty("--primary-texto-rgb", hexParaCanais(escreve));
     el.style.setProperty("--on-primary", tinta);
     el.style.setProperty("--on-primary-rgb", hexParaCanais(tinta));
   }
