@@ -164,6 +164,35 @@ main .grid > * {
    aluno. O design reserva o gradiente para esse gesto ("Publicar no app do
    aluno") e a acao principal comum virou pilula escura (bg-ink). O nome
    antigo (.gradient-cta, coral) morreu junto com o botao coral. */
+/*
+ * A MARCA EM CARREGAMENTO: a rota se traça de um nó ao outro.
+ *
+ * Era uma barrinha pulsante genérica embaixo do logo, que servia a qualquer produto. O
+ * comprimento 363 é o do próprio caminho da rota (medido, não estimado), e por isso o traço
+ * fecha exatamente no último nó.
+ *
+ * O `stroke-dasharray` vive AQUI e não no atributo do SVG de propósito: quem desliga
+ * animação no sistema recebe o quadro final (offset 0, pino inteiro), e o SVG parado nunca
+ * aparece tracejado. O reset de motion reduzida no fim deste arquivo cuida do resto.
+ */
+@keyframes marca-percorre {
+  from { stroke-dashoffset: 363; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes marca-no {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.16); }
+}
+.marca-carregando .marca-rota {
+  stroke-dasharray: 363;
+  animation: marca-percorre 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+.marca-carregando .marca-no {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: marca-no 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
 .gradient-publicar {
   background-image: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-turquesa) 100%);
 }

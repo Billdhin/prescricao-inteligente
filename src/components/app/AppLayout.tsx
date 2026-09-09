@@ -2,7 +2,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bell, CheckCheck, MoreHorizontal, Search, Eye, Plus, LogOut } from "lucide-react";
-import { Logo } from "@/components/brand/Logo";
+import { Logo, MarcaPino } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { PRIMARIOS, MAIS, BOTTOM, CONTA, itemAtivo } from "@/components/app/nav";
 import { notificacoes } from "@/lib/notificacoes";
@@ -164,15 +164,26 @@ export function AppLayout() {
   );
 }
 
-/** Tela cheia enquanto o Supabase confere se há sessão ativa (login em nuvem). */
+/**
+ * Tela cheia enquanto o Supabase confere se há sessão ativa (login em nuvem).
+ *
+ * A espera é da própria marca: a rota se traça de um nó ao outro, no lugar da barrinha
+ * pulsante que servia a qualquer produto. `role="status"` e `aria-live` ficam no wrapper,
+ * porque quem usa leitor de tela precisa ouvir que há uma espera, e não ver uma animação.
+ */
 function SplashCarregando() {
   return (
     <div className="fixed inset-0 grid place-items-center bg-bg">
-      <div className="flex flex-col items-center gap-3">
-        <Logo />
-        <div className="h-1 w-24 overflow-hidden rounded-full bg-surface-soft">
-          <div className="h-full w-1/2 animate-pulse rounded-full gradient-brand" />
-        </div>
+      <div role="status" aria-live="polite" className="flex flex-col items-center gap-4">
+        <MarcaPino animado className="h-16 w-16" />
+        <span className="font-display text-base font-bold leading-none text-ink">
+          Mapa da{" "}
+          <span className="relative inline-block">
+            Prescrição
+            <span aria-hidden className="absolute inset-x-0 -bottom-[0.18em] h-[0.1em] rounded-full bg-[#10B7C0]" />
+          </span>
+        </span>
+        <span className="sr-only">Carregando</span>
       </div>
     </div>
   );
@@ -434,10 +445,16 @@ function Sidebar() {
         className="relative flex items-center gap-3 px-5 pb-5 pt-6"
       >
         <Logo showWord={false} />
+        {/* O logotipo como ele foi desenhado: nome em duas linhas e o traço da rota sob
+            "Prescrição". A lateral é o único lugar do produto que reproduz o lockup inteiro,
+            porque é o único com o pino e o nome empilhado lado a lado. */}
         <span className="font-display text-base font-bold leading-tight" style={{ color: CASCA.tinta }}>
           Mapa da
           <br />
-          Prescrição
+          <span className="relative inline-block">
+            Prescrição
+            <span aria-hidden className="absolute inset-x-0 -bottom-[0.16em] h-[0.09em] rounded-full bg-[#10B7C0]" />
+          </span>
         </span>
       </Link>
 
