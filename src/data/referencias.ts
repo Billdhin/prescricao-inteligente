@@ -1383,6 +1383,16 @@ export const referencias: Referencia[] = [
     pmid: "36796860",
     nota: "Revisão guarda-chuva de 97 revisões, 1.039 ensaios e 128.119 participantes. Efeito MÉDIO da atividade física sobre depressão (mediana -0,43), ansiedade (mediana -0,42) e sofrimento psicológico (-0,60) frente ao cuidado usual, com os maiores benefícios em quem tem depressão e em gestantes e puérperas. Os autores concluem que a atividade física deve ser abordagem central no manejo desses quadros. Sustenta o tom do checklist de ansiedade e sintomas depressivos: o gate é encaminhar diante de piora importante, não desencorajar o treino.",
   },
+  {
+    id: "sherrington-quedas-2019",
+    autores: "Sherrington C, Fairhall NJ, Wallbank GK, Tiedemann A, Michaleff ZA, Howard K, Clemson L, Hopewell S, Lamb SE",
+    titulo: "Exercise for preventing falls in older people living in the community",
+    fonte: "Cochrane Database of Systematic Reviews, 1(1):CD012424",
+    ano: 2019,
+    doi: "10.1002/14651858.CD012424.pub2",
+    pmid: "30703272",
+    nota: "Revisão sistemática Cochrane com metanálise de 108 ensaios randomizados e 23.407 pessoas com 60 anos ou mais vivendo na comunidade (média de 76 anos, 77% mulheres); o registro no PubMed tipa como Meta-Analysis e Systematic Review. Exercício em geral reduz a taxa de quedas em 23% (razão de taxas 0,77; IC 95% 0,71 a 0,83; alta certeza). Por tipo: exercícios de EQUILÍBRIO E FUNCIONAIS reduzem a taxa de quedas em 24% (0,76; IC 95% 0,70 a 0,81; 39 estudos; alta certeza) e o número de pessoas que caem em 13%; programas com vários tipos, tipicamente equilíbrio e funcional mais resistido, provavelmente reduzem a taxa em 34% (0,66; IC 95% 0,50 a 0,88; certeza moderada); Tai Chi pode reduzir em 19%. O ponto que o produto usa: os autores declaram INCERTEZA sobre o efeito do resistido SOZINHO, da dança e da caminhada, ou seja, força isolada não substitui o trabalho de equilíbrio na prevenção de queda. A dose por sessão NÃO vem daqui (a revisão não a fixa): vem da diretriz do ACSM (garber-2011, exercício neuromotor em 2 a 3 dias por semana). Limitações declaradas: a maioria dos ensaios tinha risco de viés incerto ou alto em ao menos um item, e os eventos adversos, quando relatados, foram predominantemente não graves.",
+  },
 ];
 
 export function getReferencia(id: string) {

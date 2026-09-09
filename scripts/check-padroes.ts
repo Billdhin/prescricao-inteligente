@@ -35,6 +35,7 @@
  */
 import { gerarPlano } from "@/lib/gps/periodizacao";
 import { getExercise } from "@/data/exercises";
+import { getReferencia } from "@/data/referencias";
 import { padraoDe, PADROES_ESSENCIAIS, type PadraoMovimento } from "@/lib/gps/padroes";
 
 const OBJETIVOS = ["Hipertrofia", "Emagrecimento", "Força", "Resistência muscular", "Retorno ao treino", "Aprendizado técnico"];
@@ -234,6 +235,10 @@ for (const objetivo of OBJETIVOS)
         if (comEquilibrio < esperado) falhasS.push(`${rot}: a condição indica equilíbrio e a semana tem ${comEquilibrio} sessão(ões) com o bloco (esperado ${esperado}).`);
         if (!/Sobre o equilíbrio/.test(g.raciocinio)) falhasS.push(`${rot}: o bloco de equilíbrio entrou e o raciocínio não o explica.`);
         if (!g.refIds.includes("sherrington-quedas-2019")) falhasS.push(`${rot}: a bibliografia do plano não traz a fonte do bloco de equilíbrio.`);
+        // A string no plano não basta: cada id precisa EXISTIR na bibliografia. A primeira versão
+        // desta régua passou verde com o plano citando um id que não tinha entrada (09/09/2026).
+        for (const id of g.refIds)
+          if (!getReferencia(id)) falhasS.push(`${rot}: o plano cita "${id}" e a bibliografia não tem essa entrada.`);
       } else if (comEquilibrio > 0) {
         falhasS.push(`${rot}: recebeu bloco de equilíbrio por indicação sem a condição indicar.`);
       }
