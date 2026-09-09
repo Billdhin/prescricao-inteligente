@@ -48,3 +48,6 @@ npm-debug.log*
 .github/hooks/
 .codex/
 .impeccable/
+
+# Scripts de bancada temporarios de agente: nunca versionados.
+scripts/tmp-*.ts
