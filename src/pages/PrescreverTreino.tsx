@@ -19,7 +19,7 @@ import {
 import { Card, Pill, buttonClasses, SectionHeader, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
-import { GraficoProgressao, MesocicloCard, ModeloExplicacao, SessaoBloco, type ContextoFaixa } from "@/components/treino/PlanoEditor";
+import { GraficoProgressao, MesocicloCard, ModeloExplicacao, SessaoBloco, tetosDoPlano, type ContextoFaixa } from "@/components/treino/PlanoEditor";
 import { DeOndeVemOLimite } from "@/components/treino/DeOndeVemOLimite";
 import { TresCamadas } from "@/components/ui/camadas";
 import { letraSessao } from "@/lib/gps/semear";
@@ -1175,6 +1175,10 @@ function ResultadoPlano({
   // "Registrar reavaliação" só faz sentido quando há aluno (o destino é o perfil dele).
   const reavaliarHref = podeSalvar && plano.alunoId ? `/alunos/${plano.alunoId}?avaliar=1` : undefined;
 
+  // Os tetos do macrociclo EXIBIDO (o principal ou a alternativa): é contra o maior bloco
+  // deste plano que as barras dos cartões se medem. Trocar de aba troca a régua junto.
+  const tetos = React.useMemo(() => tetosDoPlano(macro), [macro]);
+
   const trocarMacro = (m: Macrociclo) => onChange(naAlternativa ? { ...plano, alternativa: m } : { ...plano, macrociclo: m });
   const trocarMeso = (meso: Mesociclo) =>
     trocarMacro({ ...macro, mesociclos: macro.mesociclos.map((x) => (x.id === meso.id ? meso : x)) });
@@ -1394,13 +1398,19 @@ function ResultadoPlano({
             />
           )}
 
-          {/* O plano bloco a bloco continua acessível: é onde vivem tendência,
-              descarga e as travas por variável, que a visão por semana não substitui. */}
-          <details className="rounded-card border border-border bg-surface">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-ink">
-              Ver o plano bloco a bloco (tendências, descarga e travas)
-            </summary>
-            <div className="space-y-3 p-4 pt-0">
+          {/*
+            O PLANO BLOCO A BLOCO, lado a lado e sempre visível (protótipo do editor).
+            Ele morava dentro de um <details>: a camada que responde "para onde este plano
+            está indo" ficava atrás de um clique, enquanto a semana solta ficava na frente.
+            Agora cada cartão traz a assinatura do bloco na face (as duas barras e as três
+            direções) e abre só para o detalhe fino das semanas.
+          */}
+          <section>
+            <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="font-display text-base font-bold text-ink">O plano bloco a bloco</h3>
+              <span className="text-xs text-ink-3">as barras comparam os blocos deste plano</span>
+            </div>
+            <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
               {macro.mesociclos.map((m, i) => (
                 <MesocicloCard
                   key={m.id}
@@ -1412,11 +1422,14 @@ function ResultadoPlano({
                   atual={m.id === mesoAtual?.id}
                   semanaCorrente={semanaCorrente}
                   reavaliarHref={reavaliarHref}
+                  tetos={tetos}
                 />
               ))}
+            </div>
+            <div className="mt-3">
               <ModeloExplicacao modelo={modelo} />
             </div>
-          </details>
+          </section>
         </div>
 
         {/* TRILHO: por que estes números, equilíbrio da semana e avisos. */}

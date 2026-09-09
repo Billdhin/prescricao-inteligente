@@ -50,7 +50,14 @@ import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
 import { efeitoDaEdicao, formatarDelta, type EfeitoDaEdicao } from "@/lib/gps/efeitoDaEdicao";
 import type { FarmacoSelecionado } from "@/data/farmacos";
 import { conferirFaixa, faixaSugerida, type CampoFaixa } from "@/lib/gps/faixas";
-import { desenharProgressao, posicoesFocos, estadoSemana, ESTADO_LABEL, type EstadoSemana } from "@/lib/gps/progressao";
+import {
+  agregadoSemana,
+  desenharProgressao,
+  posicoesFocos,
+  estadoSemana,
+  ESTADO_LABEL,
+  type EstadoSemana,
+} from "@/lib/gps/progressao";
 import {
   temAlvoForca,
   tokensAlvoForca,
@@ -498,6 +505,125 @@ export function GraficoProgressao({
 
 /* ================================ Mesociclo ================================ */
 
+/**
+ * O QUE O BLOCO PESA, agregado das semanas dele pela MESMA fonte do gráfico e da régua
+ * (`agregadoSemana`). Volume é SOMA (a dose total do bloco) e esforço é MÉDIA, e é por isso
+ * que os dois rótulos carregam a agregação: soma e média reagem de formas opostas ao mesmo
+ * gesto de edição.
+ *
+ * A complexidade fica de fora de propósito. O motor não tem magnitude para ela: o único sinal
+ * por bloco é a contagem de métodos avançados, e o que a fase declara é a DIREÇÃO. Barra de
+ * complexidade seria uma escala inventada, então ela continua palavra.
+ */
+export interface MagnitudeMeso {
+  /** Σ do volume das semanas do bloco (séries×reps da força + minutos de aeróbio). */
+  volume: number;
+  /** média do esforço médio das semanas parseáveis; null quando nenhuma tem %1RM, RIR nem PSE. */
+  esforco: number | null;
+}
+
+export function magnitudeDoMeso(meso: Mesociclo): MagnitudeMeso {
+  let volume = 0;
+  let soma = 0;
+  let n = 0;
+  for (const w of meso.microciclos) {
+    const a = agregadoSemana(w);
+    volume += a.volume;
+    if (a.intensidade != null) {
+      soma += a.intensidade;
+      n++;
+    }
+  }
+  return { volume, esforco: n > 0 ? soma / n : null };
+}
+
+/**
+ * Os tetos do PLANO. A barra de um cartão só quer dizer alguma coisa se ela comparar bloco
+ * com bloco: normalizar cada bloco contra ele mesmo daria três barras cheias e nenhuma
+ * informação. É o mesmo raciocínio do teto da régua de semanas.
+ */
+export interface TetosDoPlano {
+  volume: number;
+  esforco: number;
+}
+
+export function tetosDoPlano(macro: Macrociclo): TetosDoPlano {
+  const mags = macro.mesociclos.map(magnitudeDoMeso);
+  return {
+    volume: Math.max(1, ...mags.map((m) => m.volume)),
+    esforco: Math.max(1, ...mags.map((m) => m.esforco ?? 0)),
+  };
+}
+
+/** Quanto este bloco ocupa do maior do plano, com piso visível para bloco pequeno não sumir. */
+function pctDoTeto(valor: number, teto: number): number {
+  if (!(teto > 0)) return 0;
+  return Math.max(6, Math.min(100, Math.round((valor / teto) * 100)));
+}
+
+/** Rótulo de exibição das variáveis traváveis (o motor chama de "intensidade", a tela de esforço). */
+export const VARIAVEL_LABEL: Record<VariavelTravavel, string> = {
+  volume: "Volume",
+  intensidade: "Esforço",
+  complexidade: "Complexidade",
+};
+
+/** Famílias da faixa do topo do cartão, na mesma ordem das faixas de fase do gráfico. */
+const TOPO_FASE = ["bg-analysis-fill", "bg-primary", "bg-warning-fill"] as const;
+
+/** Uma linha "rótulo, barra, tendência". A barra é proporcional; o número não é impresso
+ *  porque ele não tem unidade: o que se lê é a comparação com o maior bloco do plano. */
+function LinhaMagnitude({
+  rotulo,
+  pct,
+  tendencia,
+  fill,
+}: {
+  rotulo: string;
+  pct: number;
+  tendencia: string;
+  fill: string;
+}) {
+  return (
+    <div className="grid grid-cols-[minmax(0,auto)_minmax(2.5rem,1fr)_auto] items-center gap-2">
+      <span className="text-xs text-ink-2">{rotulo}</span>
+      <span
+        role="img"
+        aria-label={`${rotulo} deste bloco: ${pct}% do maior bloco deste plano`}
+        className="block h-1.5 overflow-hidden rounded-full bg-surface-mute"
+      >
+        <span className={cn("block h-full rounded-full", fill)} style={{ width: `${pct}%` }} />
+      </span>
+      <b className="text-xs text-ink">{tendencia}</b>
+    </div>
+  );
+}
+
+/**
+ * Linha de variável SEM magnitude: mesma grade das outras, com um TRAÇO no lugar da barra.
+ *
+ * O traço é o ponto: ele diz "esta variável não tem escala aqui" na mesma linha em que as
+ * outras duas mostram a delas, em vez de deixar o leitor supor que a barra ficou faltando.
+ * O porquê vive no title e no aria-label, uma vez por linha, e não como um parágrafo
+ * repetido em cada um dos três cartões.
+ */
+function LinhaSemBarra({ rotulo, tendencia, porque }: { rotulo: string; tendencia: string; porque: string }) {
+  return (
+    <div className="grid grid-cols-[minmax(0,auto)_minmax(2.5rem,1fr)_auto] items-center gap-2">
+      <span className="text-xs text-ink-2">{rotulo}</span>
+      <span
+        role="img"
+        aria-label={`${rotulo}: sem barra, ${porque}`}
+        title={porque}
+        className="flex h-1.5 items-center"
+      >
+        <span aria-hidden className="block h-px w-full rounded-full bg-border" />
+      </span>
+      <b className="text-xs text-ink">{tendencia}</b>
+    </div>
+  );
+}
+
 export function MesocicloCard({
   meso,
   indice,
@@ -507,6 +633,7 @@ export function MesocicloCard({
   atual,
   semanaCorrente,
   reavaliarHref,
+  tetos,
 }: {
   meso: Mesociclo;
   indice: number;
@@ -519,9 +646,16 @@ export function MesocicloCard({
   semanaCorrente?: number;
   /** destino do "Registrar reavaliação" (só quando há aluno com plano) */
   reavaliarHref?: string;
+  /**
+   * Os tetos do plano inteiro (`tetosDoPlano`), para as barras compararem bloco com bloco.
+   * Sem eles não há com o que comparar, e o cartão volta às tendências em palavra: barra
+   * sem referência declarada seria número decorativo.
+   */
+  tetos?: TetosDoPlano;
 }) {
-  // O bloco corrente abre por padrão ("você está aqui"); sem essa informação, o primeiro.
-  const [aberto, setAberto] = React.useState(atual ?? indice === 0);
+  // As semanas (o detalhe fino) começam recolhidas: a face do cartão já carrega a
+  // informação-assinatura do bloco, que antes ficava a dois cliques.
+  const [aberto, setAberto] = React.useState(false);
 
   /*
    * O EFEITO DA ÚLTIMA EDIÇÃO, guardado para ser mostrado em número.
@@ -531,6 +665,9 @@ export function MesocicloCard({
    * edição dele não tinha pegado (ver efeitoDaEdicao.ts).
    */
   const [efeito, setEfeito] = React.useState<EfeitoDaEdicao | null>(null);
+
+  // O que este bloco pesa, da MESMA fonte do gráfico e da régua de semanas.
+  const mag = React.useMemo(() => magnitudeDoMeso(meso), [meso]);
 
   // A descarga vive na semana (`tipo`), não num campo à parte: mover a descarga de semana
   // tem que mudar o selo do bloco junto, senão o card diz uma coisa e o plano faz outra.
@@ -601,6 +738,44 @@ export function MesocicloCard({
         <ChevronDown className={cn("mt-1 h-4 w-4 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
       </button>
 
+      {/*
+        A ASSINATURA DO BLOCO, na face do cartão (protótipo do editor).
+        As duas barras comparam ESTE bloco com o maior bloco do MESMO plano, que é a única
+        comparação que quer dizer alguma coisa: normalizar cada bloco contra ele mesmo daria
+        três barras cheias. O rótulo carrega a agregação (soma x média), porque as duas
+        reagem de formas opostas ao mesmo gesto de edição.
+        Fica FORA do botão de propósito: é leitura, não gesto.
+      */}
+      {tetos && (
+        <div className="space-y-2 border-t border-border px-4 py-3">
+          <LinhaMagnitude
+            rotulo="Volume (soma)"
+            pct={pctDoTeto(mag.volume, tetos.volume)}
+            tendencia={TEND_LABEL[meso.tendenciaVolume]}
+            fill="bg-analysis-fill"
+          />
+          {mag.esforco != null ? (
+            <LinhaMagnitude
+              rotulo="Esforço médio"
+              pct={pctDoTeto(mag.esforco, tetos.esforco)}
+              tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
+              fill="bg-primary"
+            />
+          ) : (
+            <LinhaSemBarra
+              rotulo="Esforço médio"
+              tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
+              porque="as semanas deste bloco não declaram carga relativa, reserva de repetições nem esforço percebido, então não há o que medir"
+            />
+          )}
+          <LinhaSemBarra
+            rotulo="Complexidade"
+            tendencia={TEND_LABEL[meso.tendenciaComplexidade]}
+            porque="o plano declara a direção da complexidade, e o motor não produz uma magnitude por bloco para ela"
+          />
+        </div>
+      )}
+
       {aberto && (
         <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
           {/*
@@ -665,17 +840,12 @@ export function MesocicloCard({
             </div>
           </div>
 
-          {/* (2) Dinâmica: as três tendências da fase, num cartão só, com o cadeado por variável. */}
+          {/* (2) Dinâmica: o cadeado por variável. As três tendências saíram daqui e foram
+              para a FACE do cartão, junto das barras; repeti-las aqui era a mesma frase duas
+              vezes na mesma tela, uma delas escondida atrás de um clique. */}
           <div className="rounded-[14px] border border-border bg-surface-soft p-3">
-            <div className="flex flex-wrap items-center gap-1.5 text-xs">
-              <span className="mr-0.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">Dinâmica</span>
-              <Pill tone={meso.tendenciaVolume === "sobe" ? "analysis" : "neutral"}>Volume {TEND_LABEL[meso.tendenciaVolume]}</Pill>
-              {/* Mesmo vocabulário da série do gráfico: aqui é a MÉDIA do esforço da fase. */}
-              <Pill tone={meso.tendenciaIntensidade === "sobe" ? "analysis" : "neutral"}>Esforço médio {TEND_LABEL[meso.tendenciaIntensidade]}</Pill>
-              <Pill tone={meso.tendenciaComplexidade === "sobe" ? "analysis" : "neutral"}>Complexidade {TEND_LABEL[meso.tendenciaComplexidade]}</Pill>
-            </div>
             {editavel ? (
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <span className="mr-0.5 text-2xs text-ink-3">Travar (não deixa progredir):</span>
                 {(["volume", "intensidade", "complexidade"] as VariavelTravavel[]).map((v) => {
                   const on = travadas.includes(v);
@@ -698,7 +868,7 @@ export function MesocicloCard({
               </div>
             ) : (
               travadas.length > 0 && (
-                <p className="mt-2 flex items-center gap-1 text-2xs font-medium text-ink-3">
+                <p className="flex items-center gap-1 text-2xs font-medium text-ink-3">
                   <Lock className="h-3 w-3" aria-hidden /> Travado (não progride): {travadas.join(", ")}
                 </p>
               )

@@ -120,7 +120,7 @@ export function EvolucaoMini({
             aria-pressed={metric === m.key}
             className={cn(
               "rounded-full px-3 py-1 text-sm font-medium transition-colors",
-              metric === m.key ? "bg-primary-tint text-primary" : "text-ink-2 hover:bg-surface-soft",
+              metric === m.key ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft",
             )}
           >
             {m.label}
@@ -459,25 +459,35 @@ function SetaDirecao({ sobe, cor }: { sobe: boolean; cor: string }) {
 }
 
 /**
- * COMPARATIVO POR DATA: medidas nas linhas, avaliações em colunas cronológicas.
+ * TODAS AS MEDIDAS: uma medida por cartão, com a série real atrás do número.
  *
- * O Filipe: "a tabela comparativa por data está bem feia, e não fica claro quando não tem
- * dados". O `NaNmmHg` que ele viu era outro defeito, já corrigido na origem (letra digitada
- * num campo numérico virando não-número). O que restava aqui era a tabela:
+ * Isto era uma TABELA de medidas nas linhas por avaliações nas colunas. A tabela nasceu de um
+ * "está bem feia, e não fica claro quando não tem dados" e resolveu aquilo (direção em seta
+ * mais palavra, unidade no rótulo, ausência escrita, coluna de hoje com peso próprio), mas
+ * carregava um defeito de forma que a largura só piorava: a cada reavaliação nasce uma coluna,
+ * e a partir da quarta a leitura vira rolagem horizontal, justamente na medida em que a série
+ * fica interessante. O protótipo de 08/09/2026 troca a matriz por uma GRADE DE CARTÕES, um por
+ * medida, que não cresce para o lado.
  *
- *  - A DIREÇÃO só existia na cor do delta. Quem não distingue verde de vermelho lia a tabela
- *    inteira como neutra. Agora a direção é seta mais palavra, e a cor virou reforço.
- *  - A UNIDADE se repetia em toda célula, roubando espaço do número. Ela é da linha inteira,
- *    então subiu para o rótulo e os números ganharam o alinhamento tabular limpo.
- *  - A AUSÊNCIA era um ponto solto, que se lê como sujeira de renderização e não como "não
- *    medido". Agora está escrita.
- *  - A COLUNA DE HOJE, que é a que decide, tinha o mesmo peso das anteriores.
+ * O que foi preservado da tabela, item por item, porque cada um matou um defeito medido:
  *
- * Continua sem recalcular nada: lê `medidas` como está, inclusive `imc`. Rola na horizontal
- * em telas estreitas.
+ *  - QUAIS MEDIDAS APARECEM: as mesmas, e pelo mesmo predicado (medida com ao menos um valor
+ *    registrado em alguma avaliação).
+ *  - A DIREÇÃO em seta mais palavra, com a cor como reforço, nunca como único portador.
+ *  - A UNIDADE colada ao valor (`comUnidade`), não repetida em cada célula.
+ *  - A AUSÊNCIA continua escrita: "medida em 2 das 3 avaliações" no lugar do "não medido" por
+ *    célula, que a grade não tem mais onde pôr.
+ *  - O JUÍZO ("na direção certa" / "na direção oposta" / "sem juízo") continua ao lado do
+ *    delta, porque "2,8 kg abaixo" é fato sem leitura.
+ *
+ * O que a grade acrescenta é a SPARKLINE: a mesma série real que a tabela já lia, desenhada em
+ * segmentos retos entre pontos medidos, com o x proporcional ao tempo. Com uma medida só não
+ * sai linha nenhuma, porque dois pixels ligados por nada seriam uma tendência inventada.
+ *
+ * Continua sem recalcular nada: lê `medidas` como está, inclusive `imc`.
  */
 export function TabelaEvolucao({ avals }: { avals: Avaliacao[] }) {
-  // As avaliações já chegam ascendentes; fixamos a ordem aqui para as colunas.
+  // As avaliações já chegam ascendentes; fixamos a ordem aqui para a série.
   const cols = [...avals].sort((a, b) => a.data - b.data);
   const linhas = METRICAS_EVOLUCAO.filter((m) => cols.some((a) => a.medidas[m.key] != null));
 
@@ -492,88 +502,151 @@ export function TabelaEvolucao({ avals }: { avals: Avaliacao[] }) {
   const ultima = cols.length - 1;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr>
-            <th className="whitespace-nowrap border-b-2 border-border px-3 pb-2.5 pt-1 text-left text-2xs font-semibold uppercase tracking-wide text-ink-2">
-              Medida
-            </th>
-            {cols.map((a, i) => (
-              <th
-                key={a.id}
-                className={cn(
-                  "whitespace-nowrap px-3 pb-2.5 pt-1 text-right text-2xs font-semibold uppercase tracking-wide",
-                  i === ultima ? "border-b-2 border-ink text-ink" : "border-b-2 border-border text-ink-3",
-                )}
-              >
-                {fmtDataCurta(a.data)}
-                {/* A primeira e a última se nomeiam: é o que o olho procura numa fila de datas. */}
-                {(i === 0 || i === ultima) && (
-                  <span className="block text-2xs font-normal normal-case tracking-normal">
-                    {i === ultima ? "mais recente" : "inicial"}
-                  </span>
-                )}
-              </th>
-            ))}
-            <th className="w-52 whitespace-nowrap border-b-2 border-border px-3 pb-2.5 pt-1 text-left text-2xs font-semibold uppercase tracking-wide text-ink-2">
-              No período
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {linhas.map((m, li) => {
-            const serie = cols.map((a) => a.medidas[m.key]);
-            const presentes = serie.filter((v): v is number => v != null);
-            const primeiro = presentes[0];
-            const ultimo = presentes[presentes.length - 1];
-            const delta =
-              presentes.length >= 2 && primeiro != null && ultimo != null ? +(ultimo - primeiro).toFixed(1) : null;
-            const bom = delta == null || m.dir === "neutro" || delta === 0 ? null : m.dir === "menor" ? delta < 0 : delta > 0;
-            const cor = bom == null ? "var(--ink-2)" : bom ? "var(--success)" : "var(--warning)";
-            const classeTexto = bom == null ? "text-ink-2" : bom ? "text-success" : "text-warning";
-            return (
-              <tr key={m.key} className={li % 2 === 0 ? "bg-surface-soft" : undefined}>
-                <th scope="row" className="whitespace-nowrap px-3 py-2.5 text-left font-semibold text-ink">
-                  {m.label}
-                  {m.unit && <span className="ml-1 text-xs font-normal text-ink-3">{m.unit}</span>}
-                </th>
-                {serie.map((v, i) => (
-                  <td
-                    key={i}
-                    className={cn(
-                      "tabular whitespace-nowrap px-3 py-2.5 text-right",
-                      i === ultima ? "font-bold text-ink" : "text-ink-2",
-                    )}
-                  >
-                    {v != null ? fmtValor(v) : <span className="text-xs italic text-ink-3">não medido</span>}
-                  </td>
-                ))}
-                <td className="px-3 py-2.5">
-                  {delta != null && delta !== 0 ? (
-                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                      <SetaDirecao sobe={delta > 0} cor={cor} />
-                      <span className={cn("tabular text-sm font-semibold", classeTexto)}>
-                        {fmtValor(Math.abs(delta))} {delta > 0 ? "acima" : "abaixo"}
-                      </span>
-                      {/* A palavra que diz se essa direção é a desejada PARA ESTE OBJETIVO.
-                          Sem ela, "2,8 kg abaixo" é um fato sem leitura: em emagrecimento é
-                          bom, em hipertrofia não é, e a tabela não pode decidir sozinha. */}
-                      <span className="text-xs text-ink-3">
-                        {m.dir === "neutro" ? "sem juízo" : bom ? "na direção certa" : "na direção oposta"}
-                      </span>
+    <div>
+      {/* O que a grade é, dito antes dela: sem esta linha o cartão "72,4 kg / de 75,2 kg"
+          não diz de quando a quando, que é metade da leitura. As datas são as reais. */}
+      <p className="mb-3 text-xs text-ink-2">
+        Uma medida por cartão, do valor inicial ao mais recente
+        {cols.length >= 2 ? `, de ${fmtDataCurta(cols[0].data)} a ${fmtDataCurta(cols[ultima].data)}` : ""}.
+      </p>
+
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {linhas.map((m) => {
+          const pontos = cols
+            .filter((a) => a.medidas[m.key] != null)
+            .map((a) => ({ data: a.data, valor: a.medidas[m.key] as number }));
+          const primeiro = pontos[0]?.valor;
+          const ultimo = pontos[pontos.length - 1]?.valor;
+          const delta =
+            pontos.length >= 2 && primeiro != null && ultimo != null ? +(ultimo - primeiro).toFixed(1) : null;
+          const bom = delta == null || m.dir === "neutro" || delta === 0 ? null : m.dir === "menor" ? delta < 0 : delta > 0;
+          const cor = bom == null ? "var(--ink-2)" : bom ? "var(--success)" : "var(--warning)";
+          const classeTexto = bom == null ? "text-ink-2" : bom ? "text-success" : "text-warning";
+
+          return (
+            <div
+              key={m.key}
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1 rounded-[14px] border border-border bg-surface px-3.5 py-3"
+            >
+              <span className="truncate text-xs text-ink-2">{m.label}</span>
+              <span className={cn("inline-flex items-center gap-1 justify-self-end text-2xs font-semibold", classeTexto)}>
+                {delta != null && delta !== 0 ? (
+                  <>
+                    <SetaDirecao sobe={delta > 0} cor={cor} />
+                    <span className="tabular whitespace-nowrap">
+                      {fmtValor(Math.abs(delta))} {delta > 0 ? "acima" : "abaixo"}
                     </span>
-                  ) : delta === 0 ? (
-                    <span className="text-sm text-ink-2">sem mudança</span>
-                  ) : (
-                    <span className="text-xs italic text-ink-3">uma medida só</span>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  </>
+                ) : delta === 0 ? (
+                  <span className="text-ink-2">sem mudança</span>
+                ) : (
+                  <span className="italic text-ink-3">uma medida só</span>
+                )}
+              </span>
+
+              <b className="tabular font-display text-lg font-bold leading-tight text-ink">
+                {ultimo != null ? comUnidade(ultimo, m.unit) : "·"}
+              </b>
+              {pontos.length >= 2 && primeiro != null ? (
+                <span className="tabular justify-self-end whitespace-nowrap text-2xs text-ink-3">
+                  de {comUnidade(primeiro, m.unit)}
+                </span>
+              ) : (
+                <span aria-hidden />
+              )}
+
+              {pontos.length >= 2 && (
+                <span className="col-span-2 mt-0.5 block">
+                  <Sparkline pontos={pontos} cor={cor} rotulo={m.label} />
+                </span>
+              )}
+
+              {/* A palavra que diz se essa direção é a desejada PARA ESTE OBJETIVO.
+                  Sem ela, "2,8 kg abaixo" é um fato sem leitura: em emagrecimento é
+                  bom, em hipertrofia não é, e a grade não pode decidir sozinha. */}
+              {delta != null && delta !== 0 && (
+                <span className="col-span-2 text-2xs text-ink-3">
+                  {m.dir === "neutro" ? "sem juízo" : bom ? "na direção certa" : "na direção oposta"}
+                </span>
+              )}
+
+              {/* A ausência escrita, herdada do "não medido" que a tabela punha por célula. */}
+              {pontos.length < cols.length && (
+                <span className="col-span-2 text-2xs italic text-ink-3">
+                  medida em {pontos.length} das {cols.length} avaliações
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
+  );
+}
+
+/**
+ * A SÉRIE DA MEDIDA EM MINIATURA.
+ *
+ * Três decisões, todas herdadas do gráfico grande logo acima nesta tela:
+ *
+ *  - SEM `preserveAspectRatio="none"`. O sparkline tem tamanho fixo e escala igual nos dois
+ *    eixos quando o cartão aperta; esticar um eixo só era o defeito que a curva grande já
+ *    corrigiu, e a inclinação voltaria a ser o esticão do navegador.
+ *  - X PROPORCIONAL AO TEMPO. Duas avaliações em três semanas e duas em seis meses não
+ *    desenham a mesma coisa.
+ *  - SEGMENTOS RETOS entre pontos medidos, sem suavização: aqui não há altura para uma curva
+ *    honesta, e curva com overshoot desenharia valor que não houve.
+ *
+ * A escala vertical é a da PRÓPRIA medida (mínimo a máximo da série), então a altura serve
+ * para ler a forma daquela medida, nunca para comparar um cartão com o outro.
+ */
+function Sparkline({
+  pontos,
+  cor,
+  rotulo,
+}: {
+  pontos: { data: number; valor: number }[];
+  cor: string;
+  rotulo: string;
+}) {
+  const W = 132;
+  const H = 26;
+  const P = 3.5;
+  const n = pontos.length;
+  const vals = pontos.map((p) => p.valor);
+  const vmin = Math.min(...vals);
+  const vmax = Math.max(...vals);
+  const t0 = pontos[0].data;
+  const tN = pontos[n - 1].data;
+  const px = (p: { data: number }, i: number) =>
+    tN === t0 ? P + (i / Math.max(n - 1, 1)) * (W - 2 * P) : P + ((p.data - t0) / (tN - t0)) * (W - 2 * P);
+  // Série plana desenha no meio da caixa: colar no topo ou no piso sugeriria uma variação
+  // que a medida não teve.
+  const py = (v: number) => (vmax === vmin ? H / 2 : H - P - ((v - vmin) / (vmax - vmin)) * (H - 2 * P));
+
+  const d = pontos.map((p, i) => `${i === 0 ? "M" : "L"} ${px(p, i).toFixed(1)} ${py(p.valor).toFixed(1)}`).join(" ");
+
+  return (
+    <svg
+      width={W}
+      height={H}
+      viewBox={`0 0 ${W} ${H}`}
+      className="max-w-full"
+      role="img"
+      aria-label={`${rotulo}: série de ${n} medidas, da primeira à mais recente`}
+    >
+      <path d={d} fill="none" stroke={cor} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
+      {pontos.map((p, i) => (
+        <circle
+          key={i}
+          cx={px(p, i)}
+          cy={py(p.valor)}
+          r={i === n - 1 ? 2.75 : 1.6}
+          fill={i === n - 1 ? cor : "var(--surface)"}
+          stroke={cor}
+          strokeWidth={i === n - 1 ? 0 : 1.2}
+        />
+      ))}
+    </svg>
   );
 }
