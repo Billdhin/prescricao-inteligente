@@ -4,6 +4,7 @@ import { withBase } from "@/lib/utils";
 import { getExercise } from "@/data/exercises";
 import { getFasePose } from "@/data/fase-poses";
 import { getMuscleMapPose } from "@/data/muscle-map-images";
+import { getErroImagemPorIndice } from "@/data/aba-imagens";
 import { MovimentoPlayer } from "@/components/movement-lab/MovimentoPlayer";
 import { LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 
@@ -194,6 +195,37 @@ export function ExercicioSheet({
                   ))}
                 </ol>
               )}
+            </section>
+          )}
+
+          {/*
+            ERROS COMUNS (protótipo, tela 04).
+            O aluno abria a folha, via como fazer e ia executar sem nunca ler o que evitar,
+            que é a metade da orientação que evita lesão. O texto sai do catálogo
+            (`errosComuns`) e a foto, quando existe, do índice de imagens de erro. Sem
+            imagem o erro continua listado: a frase é o conteúdo, a foto é o reforço.
+          */}
+          {ex?.blocos.errosComuns && ex.blocos.errosComuns.length > 0 && (
+            <section>
+              <h3 className="font-display text-base font-bold text-ink">Erros comuns</h3>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {ex.blocos.errosComuns.slice(0, 4).map((erro, i) => {
+                  const img = getErroImagemPorIndice(exercicioSlug, i);
+                  return (
+                    <div key={erro} className="overflow-hidden rounded-control border border-border bg-surface-soft">
+                      {img && (
+                        <img src={withBase(img)} alt="" className="block aspect-[4/3] w-full object-cover" />
+                      )}
+                      <span className="block p-2 text-xs leading-snug text-ink">
+                        <b className="text-danger" aria-hidden>
+                          ✕
+                        </b>{" "}
+                        {erro}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           )}
 
