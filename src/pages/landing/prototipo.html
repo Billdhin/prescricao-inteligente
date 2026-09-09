@@ -169,14 +169,20 @@
         <div style="padding:6px 0 0"><p style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:18px;letter-spacing:-.02em;color:#0B1628">Entregue e acompanhe</p><p style="margin:6px 0 0;font-size:14.5px;line-height:1.55;color:#5B6779">O aluno recebe a versão aprovada no aplicativo com a sua marca. Você consulta os registros na próxima revisão.</p></div>
       </div>
     </div>
-    <div data-reveal data-stagger style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:24px;margin-top:clamp(32px,4vw,48px)">
+    <!--
+      UMA FIGURA POR LINHA, e a razão é legibilidade.
+      Lado a lado, cada print ficava com 548 px e a tela do editor virava um borrão: um mockup
+      que ninguém consegue ler não prova nada. E as duas alturas eram muito diferentes (a tela
+      do editor é o dobro do gráfico), o que deixava um vazio grande ao lado do gráfico.
+    -->
+    <div data-reveal data-stagger style="display:grid;grid-template-columns:1fr;gap:32px;margin-top:clamp(32px,4vw,48px)">
       <figure style="margin:0">
-        <div style="border-radius:16px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 30px 60px -40px rgba(16,35,58,.4);background:#F1F3F6"><img src="/landing/sistema-editor.webp" alt="Editor da semana: cada exercício com o alvo da semana e o que muda em relação à anterior" style="display:block;width:100%;height:auto"></div>
-        <figcaption style="margin-top:12px;font-size:13.5px;color:#5B6779;text-align:center">A edição com a faixa que a evidência cita ao lado de cada valor.</figcaption>
+        <div style="border-radius:16px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 30px 60px -40px rgba(16,35,58,.4);background:#F1F3F6"><img src="/landing/sistema-editor.webp" alt="Editor da semana 10: cabeçalho com a fase, a tira das 12 semanas com as descargas, as sessões da semana, cada exercício com o alvo e o que mudou, e ao lado o volume da sessão e o equilíbrio entre superiores, inferiores e tronco" style="display:block;width:100%;height:auto"></div>
+        <figcaption style="margin-top:12px;font-size:13.5px;color:#5B6779;text-align:center">A semana aberta para edição: a faixa de referência no topo, o alvo de cada exercício e o volume da sessão ao lado.</figcaption>
       </figure>
       <figure data-oculta-m style="margin:0">
-        <div style="border-radius:16px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 30px 60px -40px rgba(16,35,58,.4);background:#F1F3F6"><img src="/landing/sistema-periodizacao.webp" alt="Macrociclo de 12 semanas: volume, esforço médio e complexidade por semana, com as fases e as descargas" style="display:block;width:100%;height:auto"></div>
-        <figcaption style="margin-top:12px;font-size:13.5px;color:#5B6779;text-align:center">O mesmo plano no gráfico: editou uma sessão, o volume da semana acompanha.</figcaption>
+        <div style="border-radius:16px;overflow:hidden;border:1px solid #E3E0D8;box-shadow:0 30px 60px -40px rgba(16,35,58,.4);background:#F1F3F6"><img src="/landing/sistema-periodizacao.webp" alt="Macrociclo de 12 semanas: volume, esforço médio e complexidade por semana, com as quatro fases, as descargas e a marca da semana atual" style="display:block;width:100%;height:auto"></div>
+        <figcaption style="margin-top:12px;font-size:13.5px;color:#5B6779;text-align:center">O mesmo plano no gráfico, com a semana atual marcada: editou uma sessão, o volume acompanha.</figcaption>
       </figure>
     </div>
   </div>
@@ -315,7 +321,7 @@
     mostrando a marca azul do produto. As telas agora são componentes, e a cor e a logo do
     visitante entram nelas ao vivo.
   -->
-  <div data-ilha="vitrine-aluno" style="position:relative;width:min(1040px,100% - 40px);margin:0 auto"></div>
+  <div data-ilha="vitrine-aluno" style="position:relative;width:min(920px,100% - 40px);margin:0 auto"></div>
 </section>
 
 <!-- 06 · PROVA (o slot de depoimentos abre quando houver relato real e autorizado.
