@@ -674,8 +674,9 @@ function BarraDeAbas({
 }) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md gap-1 border-t px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 backdrop-blur"
-      style={{ background: "rgba(10,15,24,.96)", borderColor: "#2E3E5A" }}
+      // A barra segue o TEMA, e nao um navy fixo: no tema claro do aluno ela e papel.
+      // Foi assim que ela ficou navy sobre uma tela branca na primeira passada.
+      className="fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-md gap-1 border-t border-border bg-surface/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 backdrop-blur"
       aria-label="Navegação do app"
     >
       {/* O indicador do protótipo: uma barra curta na COR DA MARCA do
@@ -692,7 +693,7 @@ function BarraDeAbas({
               "flex min-h-[52px] flex-1 flex-col items-center justify-center gap-1 py-1.5 text-2xs font-semibold leading-none transition-colors",
               !ativo && "text-ink-2",
             )}
-            style={ativo ? { color: "#F2F6FC" } : undefined}
+            style={ativo ? { color: "var(--ink)" } : undefined}
           >
             <span
               aria-hidden

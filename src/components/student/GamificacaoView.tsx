@@ -107,6 +107,8 @@ export function GamificacaoView({
         <EsforcoCard feedbacks={feedbacks} cor={cor} />
       </div>
 
+      <DorCard avaliacoes={avaliacoes} />
+
       {/* Conquistas */}
       <Card className="p-4">
         <h3 className="mb-3 font-display text-base font-bold text-ink">Conquistas</h3>
@@ -183,6 +185,56 @@ function GraficoSemanas({ dados, cor }: { dados: { rotulo: string; treinos: numb
           );
         })}
       </div>
+    </Card>
+  );
+}
+
+/**
+ * A DOR, da primeira à última avaliação (protótipo, tela 08).
+ *
+ * Para quem entrou no treino por causa de dor, este é o número que importa, e ele já era
+ * registrado (`dorEscala`, 0 a 10) sem nunca chegar ao aluno. A leitura é direta e não
+ * depende do objetivo, ao contrário do peso: dor que cai é melhora, e por isso aqui o verde
+ * é honesto.
+ *
+ * Só aparece com DUAS avaliações que tragam a escala: um ponto sozinho não é evolução.
+ */
+function DorCard({ avaliacoes }: { avaliacoes: Avaliacao[] }) {
+  const comDor = avaliacoes.filter((a) => a.dorEscala != null).sort((a, b) => a.data - b.data);
+  if (comDor.length < 2) return null;
+  const primeiro = comDor[0].dorEscala as number;
+  const ultimo = comDor[comDor.length - 1].dorEscala as number;
+  const melhorou = ultimo < primeiro;
+  const igual = ultimo === primeiro;
+  return (
+    <Card className="p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-2xs font-bold uppercase tracking-wider text-ink-2">Dor percebida</h3>
+        <span
+          className={cn(
+            "tabular text-sm font-bold",
+            melhorou ? "text-success" : igual ? "text-ink-2" : "text-warning",
+          )}
+        >
+          {primeiro} para {ultimo}
+        </span>
+      </div>
+      {/* A régua vai do vermelho ao verde, e o marcador fica onde a última medida caiu.
+          É a mesma escala 0 a 10 que ele responde na avaliação. */}
+      <div className="relative mt-3 h-1.5 rounded-full" style={{ background: "linear-gradient(90deg,#E2543E,#F0B429 40%,#3ECF8E)" }}>
+        <span
+          aria-hidden
+          className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-ink"
+          style={{ left: `${Math.max(0, Math.min(100, 100 - ultimo * 10))}%` }}
+        />
+      </div>
+      <p className="mt-2 text-xs text-ink-2">
+        {melhorou
+          ? "Menos dor do que na primeira avaliação."
+          : igual
+            ? "Sem mudança desde a primeira avaliação."
+            : "Mais dor do que na primeira avaliação. Conte ao seu professor."}
+      </p>
     </Card>
   );
 }
