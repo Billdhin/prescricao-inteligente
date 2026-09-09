@@ -74,7 +74,8 @@ export function tokensDoBloco(bloco: BlocoSessao): { label: string; value: strin
     bloco.series && bloco.reps ? `${bloco.series} x ${bloco.reps}` : limpo(bloco.series) || limpo(bloco.reps);
   if (ehIsometrico(bloco))
     return [
-      { label: "Contração", value: contracaoDoBloco(bloco) },
+      // Prancha e equilíbrio são séries por tempo, não contrações de protocolo isométrico.
+      { label: bloco.sustentado ? "Tempo" : "Contração", value: contracaoDoBloco(bloco) },
       { label: "Descanso", value: limpo(bloco.intervalo) || limpo(bloco.recuperacao) },
       { label: "Intensidade", value: abrevDose(limpo(bloco.intensidade)) },
     ].filter((t) => t.value);
@@ -197,7 +198,7 @@ export function tokensExtras(bloco: BlocoSessao): { label: string; value: string
     bloco.tipo === "aerobio"
       ? new Set(["Duração", "Formato"])
       : bloco.tipo === "isometrico"
-        ? new Set(["Contração", "Descanso"])
+        ? new Set(["Contração", "Tempo", "Descanso"])
         : NA_LINHA_CURTA;
   return tokensDoBloco(bloco).filter((t) => !naCurta.has(t.label));
 }

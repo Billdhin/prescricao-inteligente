@@ -880,6 +880,7 @@ function selecionarExercicios(
       "ombro-acessorio",
       "quadril-acessorio",
       "carregamento",
+      "equilibrio",
       "acessorio-menor",
     ];
     const porPadrao = new Map<PadraoMovimento, typeof fila>();
@@ -1396,7 +1397,8 @@ export const INDICACOES_ISOMETRICAS: readonly IndicacaoIsometrica[] = [
 function indicacaoDoMacro(m: Macrociclo): IndicacaoIsometrica | undefined {
   const focos = new Set(
     (m.mesociclos[0]?.microciclos[0]?.sessoes ?? [])
-      .filter((se) => se.blocos.some((bl) => bl.tipo === "isometrico"))
+      // Só o protocolo de condição: o bloco sustentado (prancha, equilíbrio) não tem indicação.
+      .filter((se) => se.blocos.some((bl) => bl.tipo === "isometrico" && !bl.sustentado))
       .map((se) => se.foco)
       .filter((f): f is string => Boolean(f)),
   );
@@ -1511,14 +1513,18 @@ const FAMILIAS_SUPERIORES = ["Peitorais", "Costas", "Core (tronco)", "Ombros", "
  * voltava a liderar justamente na frequência mais alta. 38% com floor mantém a perna entre
  * 25% e 42% das séries dinâmicas em toda a grade medida, sempre atrás de superiores.
  *
- * A camada isométrica desconta METADE de sua contagem (ceil(K/2)) e não K inteiro: a sessão
- * isométrica é protocolo clínico curto e sustentado, não substitui volume dinâmico de perna
- * um-por-um, e o desconto cheio empurrava a semana dinâmica para o excesso contrário.
+ * A camada isométrica desconta METADE de sua contagem, arredondada para BAIXO (floor(K/2)), e
+ * só a partir de 3 sessões: a sessão isométrica é protocolo clínico curto, não substitui volume
+ * dinâmico de perna um-por-um, e o desconto cheio empurrava a semana dinâmica para o excesso
+ * contrário. Medido em 09/09/2026 com ceil(K/2): hipertensão e diabetes em Retorno e Resistência
+ * caíam a 23% de perna dinâmica (piso 25%) assim que a prancha passou a contar por tempo; numa
+ * semana de 2 sessões o desconto tirava a única segunda perna da semana.
  */
 function cotaInferioresSemana(frequencia: number, porSessao: number, blocosIsoInferiores: number): number {
   const tetoSessao = Math.max(1, Math.floor(porSessao / 2));
   const vagasDinamicas = frequencia * porSessao;
-  const alvo = Math.floor(0.38 * (vagasDinamicas + blocosIsoInferiores)) - Math.ceil(blocosIsoInferiores / 2);
+  const desconto = frequencia >= 3 ? Math.floor(blocosIsoInferiores / 2) : 0;
+  const alvo = Math.floor(0.38 * (vagasDinamicas + blocosIsoInferiores)) - desconto;
   return Math.min(frequencia * tetoSessao, Math.max(frequencia, alvo));
 }
 
@@ -1759,6 +1765,53 @@ function distribuirPorFamilia(
   return sessoes;
 }
 
+/* ------------------------- Exercício sustentado e equilíbrio ------------------------- */
+
+/** Sessões da semana que recebem o bloco de equilíbrio quando a condição indica (ponta baixa da diretriz: 2 a 3 dias). */
+const SESSOES_EQUILIBRIO = 2;
+/** O trabalho de equilíbrio do catálogo, em ordem de preferência. Hoje é um só. */
+const EXERCICIOS_EQUILIBRIO: readonly string[] = ["equilibrio-unipodal"];
+const NOTA_SUSTENTADO =
+  "Dose por tempo: mantenha a posição com técnica estável e respiração contínua, e encerre a série quando a técnica cair, antes do tempo. O tempo é a faixa do exercício; o descanso é o do objetivo.";
+const NOTA_EQUILIBRIO =
+  "Equilíbrio desafiador, sempre perto de um apoio (parede ou cadeira), junto do resistido. Progrida retirando informação (olhos, superfície macia) antes de aumentar o tempo. Com tontura ou vertigem no dia, não faça.";
+
+/**
+ * BLOCO DE EXERCÍCIO SUSTENTADO: prancha e equilíbrio saem com dose por TEMPO.
+ *
+ * Até 09/09/2026 eles nasciam pelo mesmo trilho do supino ("3 x 15, reserva 4"), enquanto o
+ * texto do próprio exercício dizia "15 a 40 s". Medido em 18/08: 1.704 de 3.888 planos. O
+ * bloco usa o tipo `isometrico`, que já sabe se registrar no app do aluno, se editar e se
+ * imprimir por tempo; a marca `sustentado` diz às telas que não é o protocolo de condição.
+ *
+ * Séries e tempo são os do catálogo (`Exercise.sustentado`); o descanso é o da faixa de
+ * intervalo do objetivo, como em qualquer bloco de força. Não progride pelo alvo da semana:
+ * a progressão do sustentado é dificuldade da tarefa, e isso é decisão do profissional.
+ */
+function blocoSustentado(
+  cat: (typeof exercises)[number],
+  faixa: FaixaObjetivo,
+  nivel: Nivel,
+  enfase: EnfaseSessao | undefined,
+  ctx: CtxAlvo,
+): BlocoSessao {
+  const s = cat.sustentado!;
+  const dose = doseForca(faixa, nivel, enfase, ctx);
+  return {
+    id: nid("blk"),
+    tipo: "isometrico",
+    sustentado: true,
+    exercicioSlug: cat.slug,
+    nome: cat.nome,
+    series: s.series,
+    duracao: s.porLado ? `${s.tempo} por lado` : s.tempo,
+    intervalo: dose.intervalo,
+    recuperacao: dose.intervalo,
+    intensidade: "Sustentação com técnica estável e respiração contínua; o alvo é o tempo, não a repetição.",
+    observacao: NOTA_SUSTENTADO,
+  };
+}
+
 function montarSessoes(
   objetivo: GpsObjetivo,
   nivel: Nivel,
@@ -1919,6 +1972,12 @@ function montarSessoes(
      * `faltouCatalogo` acende, que é o sinal que a tela usa para mandar rever equipamentos.
      */
     for (const ex of porSessaoDaSemana[i] ?? []) {
+      // Exercício sustentado (prancha, equilíbrio): dose por TEMPO, pelo trilho do isométrico.
+      const catalogo = exercises.find((e) => e.slug === ex.slug);
+      if (catalogo?.sustentado) {
+        blocos.push(blocoSustentado(catalogo, faixa, nivel, enfase, ctx));
+        continue;
+      }
       blocos.push({
         id: nid("blk"),
         tipo: "forca",
@@ -1926,6 +1985,29 @@ function montarSessoes(
         nome: ex.nome,
         ...doseForca(faixa, nivel, enfase, ctx),
       });
+    }
+
+    /*
+     * EQUILÍBRIO POR INDICAÇÃO DA CONDIÇÃO (ver GroupGpsRule.equilibrio).
+     *
+     * Entra ao FIM do treino de força das primeiras sessões da semana, e não em sessão
+     * própria como o isométrico: são 3 séries curtas perto de um apoio, cabem no dia, e é
+     * "junto do resistido" que a evidência o descreve. A quantidade de sessões é a ponta
+     * baixa da diretriz (2 a 3 dias por semana de exercício neuromotor), e o teto é a
+     * própria frequência do plano, como no isométrico.
+     *
+     * Passa pelos mesmos filtros de equipamento e de posição de todo mundo
+     * (`exercicioIsometrico` faz exatamente isso); não passa pela fila de mérito de
+     * propósito, porque a restrição `equilibrio_reduzido` penaliza o apoio unipodal, e a
+     * indicação clínica não pode ser vetada pelo ranking que ela existe para corrigir. Se a
+     * seleção já trouxe o exercício por conta própria, não duplica.
+     */
+    if (regraClinica?.equilibrio?.indicado && i < Math.min(SESSOES_EQUILIBRIO, frequencia)) {
+      const exEq = exercicioIsometrico(EXERCICIOS_EQUILIBRIO, equipamentos, regraClinica);
+      if (exEq?.sustentado && !blocos.some((b) => b.exercicioSlug === exEq.slug)) {
+        const base = blocoSustentado(exEq, faixa, nivel, enfase, ctx);
+        blocos.push({ ...base, equilibrio: true, observacao: `${NOTA_EQUILIBRIO} ${base.observacao ?? ""}`.trim() });
+      }
     }
 
     // Aeróbio COMPLEMENTAR (princípio da variabilidade): todos os objetivos MENOS o
@@ -3100,6 +3182,8 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
        * o contrapeso negativo: um plano que cita só o que confirma não é auditável.
        */
       ...(indicacaoIsoDoPlano?.refIds ?? []),
+      // Bibliografia do bloco de equilíbrio, quando a condição o indicou (ver GroupGpsRule.equilibrio).
+      ...(regraDoPlano?.equilibrio?.refId ?? []),
     ]),
   );
 
@@ -3189,7 +3273,7 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
      */
     (() => {
       const porSemana = macroPrincipal.mesociclos[0]?.microciclos[0]?.sessoes.filter((s) =>
-        s.blocos.some((b) => b.tipo === "isometrico"),
+        s.blocos.some((b) => b.tipo === "isometrico" && !b.sustentado),
       ).length;
       if (!porSemana) return "";
       const ind = indicacaoIsoDoPlano;
@@ -3199,6 +3283,21 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
         `separadas do treino, com ${ind.protocolo.series} contrações de ${ind.protocolo.contracao} e ${ind.protocolo.descanso} de descanso entre elas, ` +
         `porque foi assim que o protocolo foi testado. ` +
         ind.raciocinio
+      );
+    })(),
+    /*
+     * O bloco de equilíbrio explica a si mesmo, sem nomear a condição (o texto vai ao aluno).
+     * Só aparece quando de fato entrou na semana, lido do macro, e não recalculado.
+     */
+    (() => {
+      const porSemana = macroPrincipal.mesociclos[0]?.microciclos[0]?.sessoes.filter((s) =>
+        s.blocos.some((b) => b.equilibrio),
+      ).length;
+      if (!porSemana || !regraDoPlano?.equilibrio) return "";
+      return (
+        `Sobre o equilíbrio: entra em ${porSemana} ${porSemana === 1 ? "sessão" : "sessões"} por semana, ao fim do treino de força e perto de um apoio, ` +
+        `com 3 séries curtas em um pé só. ${regraDoPlano.equilibrio.motivo} ` +
+        `A quantidade de sessões é a ponta baixa do que a diretriz recomenda para exercício neuromotor (2 a 3 dias por semana); a progressão é retirar informação (olhos, superfície), e não só somar tempo.`
       );
     })(),
     /*

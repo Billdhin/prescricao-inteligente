@@ -52,7 +52,9 @@ export type PadraoMovimento =
   /** punho, antebraço, pescoço, tibial: trabalho miúdo, último na fila de prioridade */
   | "acessorio-menor"
   /** quadril em plano frontal (abdução, adução): não substitui a cadeia posterior */
-  | "quadril-acessorio";
+  | "quadril-acessorio"
+  /** equilíbrio (apoio unipodal): bloco de indicação clínica, nunca trabalho miúdo */
+  | "equilibrio";
 
 /** Os padrões que uma semana de corpo inteiro precisa tocar para ser um treino completo. */
 export const PADROES_ESSENCIAIS: readonly PadraoMovimento[] = ["joelho", "quadril", "empurrar", "puxar", "core"];
@@ -140,6 +142,9 @@ export function padraoDe(ex: Exercise): PadraoMovimento {
       if (CORE.has(prim)) return "core";
       return "quadril-acessorio";
     case "Tornozelo e pé":
+      // O apoio unipodal é EQUILÍBRIO, com padrão próprio: entra por indicação clínica (idoso,
+      // osteoporose) e não pode ser rebaixado como trabalho miúdo. A dorsiflexão segue miúda.
+      return /Fibulares|estabilizadores/i.test(prim) ? "equilibrio" : "acessorio-menor";
     case "Pescoço":
       return "acessorio-menor";
     default: {

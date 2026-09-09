@@ -201,11 +201,11 @@ if (falhas.length) {
   for (const c of casos) {
     const plano = gerarPlano({ objetivo: c.objetivo as never, nivel: c.nivel as never, semanas: 12, frequencia: c.frequencia, grupoEspecial: (c as { grupoEspecial?: string }).grupoEspecial, equipamentos: (c as { equipamentos?: string[] }).equipamentos ? [...(c as { equipamentos: string[] }).equipamentos] : undefined });
     const sessoes = sessoesDe(plano.principal).filter((s) => !s.complemento);
-    const forca = sessoes.flatMap((s) => s.blocos.filter((b) => b.tipo === "forca"));
+    const forca = sessoes.flatMap((s) => s.blocos.filter((b) => b.tipo === "forca" || (b.tipo === "isometrico" && (b as { sustentado?: boolean }).sustentado)));
     const familias = new Set(forca.map((b) => getExercise(b.exercicioSlug ?? "")?.grupoMuscular).filter((g) => g && FAMILIAS.includes(g)));
     if (familias.size < c.minimo)
       falhas.push(`${c.rotulo}: o plano toca ${familias.size} das 6 famílias (${[...familias].join(", ")}); o mínimo para ${c.frequencia}x é ${c.minimo}.`);
-    const semPerna = sessoes.filter((s) => !s.blocos.some((b) => b.tipo === "forca" && EH_INFERIOR_SLUG(b.exercicioSlug))).length;
+    const semPerna = sessoes.filter((s) => !s.blocos.some((b) => (b.tipo === "forca" || (b.tipo === "isometrico" && (b as { sustentado?: boolean }).sustentado)) && EH_INFERIOR_SLUG(b.exercicioSlug))).length;
     if (semPerna > 0) falhas.push(`${c.rotulo}: ${semPerna} sessão(ões) de força sem membros inferiores.`);
     const foraDoObjetivo = forca.some((b) => { const e = getExercise(b.exercicioSlug ?? ""); return e && !e.objetivo?.includes(c.objetivo); });
     if (foraDoObjetivo && !/não (é|são) específic/i.test(plano.raciocinio))
@@ -276,7 +276,7 @@ if (falhas.length) {
         let series = 0;
         for (const s of semana.sessoes)
           for (const b of s.blocos) {
-            if (b.tipo !== "forca") continue;
+            if (b.tipo === "aerobio" || (b.tipo === "isometrico" && !(b as { sustentado?: boolean }).sustentado)) continue;
             const ex = b.exercicioSlug ? getExercise(b.exercicioSlug) : undefined;
             if (!ex) continue;
             const n = (b as { seriesAlvo?: number }).seriesAlvo ?? Number(/(\d+)/.exec((b as { series?: string }).series ?? "")?.[1] ?? 0);

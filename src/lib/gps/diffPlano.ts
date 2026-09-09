@@ -55,7 +55,7 @@ function exerciciosDo(macro: Macrociclo): Set<string> {
 function isometricasPorSemana(macro: Macrociclo): number {
   const semana = macro.mesociclos[0]?.microciclos[0];
   if (!semana) return 0;
-  return semana.sessoes.filter((s) => s.blocos.some((b) => b.tipo === "isometrico")).length;
+  return semana.sessoes.filter((s) => s.blocos.some((b) => b.tipo === "isometrico" && !b.sustentado)).length;
 }
 
 export function diferencaDePlano(anterior: PlanoTreino, novo: PlanoTreino): DiferencaDePlano {

@@ -633,6 +633,8 @@ export const extraExercises: Exercise[] = [
   {
     id: "e20",
     slug: "prancha-frontal",
+    // Dose por TEMPO, a do próprio texto abaixo ("3 a 4 séries de 15 a 40 s"). Ver Exercise.sustentado.
+    sustentado: { series: "3 a 4", tempo: "15 a 40 s" },
     nome: "Prancha alta",
     grupoMuscular: "Core (tronco)",
     equipamento: "Peso corporal",

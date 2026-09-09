@@ -70,6 +70,14 @@ export interface BlocoSessao {
    * seu conjunto de campos abaixo, e não os da musculação para tudo.
    */
   tipo?: "forca" | "aerobio" | "isometrico";
+  /**
+   * Bloco de exercício SUSTENTADO dentro da sessão normal (prancha, equilíbrio em um pé):
+   * usa o mesmo conjunto de campos do isométrico (séries, tempo, descanso) porque a dose é
+   * por tempo, mas não é o protocolo isométrico de condição, e as telas rotulam diferente.
+   */
+  sustentado?: boolean;
+  /** bloco de equilíbrio que a CONDIÇÃO indicou (ver GroupGpsRule.equilibrio); sempre também `sustentado` */
+  equilibrio?: boolean;
   /** slug de exercício (src/data/exercises) OU id de modalidade (src/data/modalities) */
   exercicioSlug?: string;
   modalidade?: string;
@@ -404,7 +412,8 @@ export function rotuloHorizonte(semanas: number): string | undefined {
 export function rotuloFrequencia(plano: PlanoTreino): string {
   const base = `${plano.frequenciaSemanal}x por semana`;
   const primeira = plano.macrociclo?.mesociclos?.[0]?.microciclos?.[0];
-  const iso = primeira?.sessoes.filter((s) => s.blocos.some((b) => b.tipo === "isometrico")).length ?? 0;
+  // Só o PROTOCOLO de condição é sessão isométrica; prancha e equilíbrio (sustentados) moram na sessão normal.
+  const iso = primeira?.sessoes.filter((s) => s.blocos.some((b) => b.tipo === "isometrico" && !b.sustentado)).length ?? 0;
   if (!iso) return base;
   return `${base} + ${iso} ${iso === 1 ? "sessão isométrica" : "sessões isométricas"}`;
 }

@@ -437,6 +437,8 @@ imagem: "/exercises/dorsiflexao-elastico.webp",
   {
     id: "e96",
     slug: "equilibrio-unipodal",
+    // Dose por TEMPO, a do próprio texto ("3 séries de 20 a 30 s por pé"). Ver Exercise.sustentado.
+    sustentado: { series: "3", tempo: "20 a 30 s", porLado: true },
     nome: "Equilíbrio em um pé",
     grupoMuscular: "Tornozelo e pé",
     equipamento: "Peso corporal",

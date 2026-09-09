@@ -220,13 +220,21 @@ function sessaoHtml(s: Sessao) {
    */
   const fichaIsometrico = isometrico.length
     ? `<div class="quadro">
-        <p class="quadro-tit">Isométrico</p>
+        <p class="quadro-tit">${
+          isometrico.every((b) => b.sustentado)
+            ? "Sustentado (dose por tempo)"
+            : isometrico.some((b) => b.sustentado)
+              ? "Isométrico e sustentado"
+              : "Isométrico"
+        }</p>
         ${isometrico
           .map((b) => {
+            // Prancha e equilíbrio são séries por tempo, não contrações de protocolo: o rótulo
+            // acompanha, senão o documento chama uma prancha de "contração".
             const linhas: [string, string | undefined][] = [
-              ["Contrações", b.series],
-              ["Tempo de contração", b.duracao],
-              ["Descanso entre contrações", b.intervalo && b.intervalo !== "-" ? b.intervalo : b.recuperacao],
+              [b.sustentado ? "Séries" : "Contrações", b.series],
+              [b.sustentado ? "Tempo" : "Tempo de contração", b.duracao],
+              [b.sustentado ? "Descanso" : "Descanso entre contrações", b.intervalo && b.intervalo !== "-" ? b.intervalo : b.recuperacao],
               ["Intensidade", b.intensidade],
             ];
             return `<div class="cardio">

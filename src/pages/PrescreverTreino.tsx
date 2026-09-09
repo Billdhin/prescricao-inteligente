@@ -15,11 +15,21 @@ import {
   AlertTriangle,
   MapPin,
   ArrowLeft,
+  Lock,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
-import { GraficoProgressao, MesocicloCard, ModeloExplicacao, SessaoBloco, tetosDoPlano, type ContextoFaixa } from "@/components/treino/PlanoEditor";
+import {
+  GraficoProgressao,
+  MesocicloCard,
+  ModeloExplicacao,
+  SessaoBloco,
+  tetosDoPlano,
+  VARIAVEL_LABEL,
+  type ContextoFaixa,
+} from "@/components/treino/PlanoEditor";
+import { getParam } from "@/data/monitoringParameters";
 import { DeOndeVemOLimite } from "@/components/treino/DeOndeVemOLimite";
 import { TresCamadas } from "@/components/ui/camadas";
 import { letraSessao } from "@/lib/gps/semear";
@@ -49,7 +59,7 @@ import {
 import type { Nivel } from "@/data/types";
 import type { Aluno } from "@/data/alunos";
 import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
-import { bibliografia } from "@/data/referencias";
+import { bibliografia, getReferencia } from "@/data/referencias";
 import { exportPlanoPDF } from "@/lib/exportPlano";
 import { diferencaDePlano } from "@/lib/gps/diffPlano";
 import { ConfirmarPublicacao } from "@/components/treino/ConfirmarPublicacao";
@@ -1870,6 +1880,39 @@ const REGIAO: Record<string, "Inferiores" | "Superiores" | "Core" | "Corpo todo"
  * Uma lista de nomes que cabe numa frase: até três, e o resto vira contagem. O bloco de
  * consequências pode receber dez exercícios, e dez nomes numa linha não se lê.
  */
+/**
+ * Nome curto de uma referência para a linha "Base" do trilho: sobrenome do primeiro autor,
+ * ou a sigla quando quem assina é uma instituição.
+ *
+ * `refCurta` existe para citação no meio do texto e sai grande demais numa coluna de 320px:
+ * a de 2009 do ACSM vira "American College of Sports Medicine (Ratamess NA et al.) (2009)",
+ * que sozinha ocupa três linhas. Nada é inventado aqui: a sigla é feita das iniciais do
+ * próprio nome, e a lista completa continua na aba Ciência, logo abaixo.
+ */
+function nomeCurtoDaRef(id: string): string {
+  const r = getReferencia(id);
+  if (!r) return "";
+  const primeiro = r.autores.replace(/\s*\(.*$/, "").split(/,| e /)[0].trim();
+  const palavras = primeiro.split(/\s+/);
+  // Instituição: várias palavras e nenhuma delas é inicial de nome próprio ("Schoenfeld BJ").
+  const instituicao = palavras.length >= 3 && palavras.every((w) => !/^[A-Z]{1,3}$/.test(w));
+  const nome = instituicao
+    ? palavras.filter((w) => w.length > 3).map((w) => w[0]).join("")
+    : palavras[0];
+  return nome ? `${nome} ${r.ano}` : "";
+}
+
+/** Maiúscula só na inicial. (text-transform:capitalize maiusculiza cada palavra, e "Volume E Esforço" não é português.) */
+function comInicialMaiuscula(t: string): string {
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+}
+
+/** "a", "a e b", "a, b e c": o "e" do último par, que uma lista de três itens pede. */
+function eLista(itens: string[]): string {
+  if (itens.length <= 1) return itens[0] ?? "";
+  return `${itens.slice(0, -1).join(", ")} e ${itens[itens.length - 1]}`;
+}
+
 function listaCurta(nomes: string[], max = 3): string {
   if (nomes.length <= max) return nomes.join(", ");
   return `${nomes.slice(0, max).join(", ")} e mais ${nomes.length - max}`;
@@ -1984,8 +2027,10 @@ function TrilhoDoPlano({
           if (m) minutosAerobio += Number(m[1]);
           continue;
         }
-        if (b.tipo === "isometrico") {
-          sessoesIso++;
+        // Prancha e equilíbrio (sustentados) são trabalho da semana e contam pela região, com as
+        // séries declaradas; só o protocolo isométrico de CONDIÇÃO (sessão-complemento) fica fora.
+        if (b.tipo === "isometrico" && !b.sustentado) {
+          if (s.complemento) sessoesIso++;
           continue;
         }
         const ex = b.exercicioSlug ? exercises.find((e) => e.slug === b.exercicioSlug) : undefined;
@@ -2043,9 +2088,6 @@ function TrilhoDoPlano({
         Então quem se corrige é a FRASE: ela passa a descrever a direção que este plano de
         fato tomou, medida das semanas de carga, e diz onde a progressão aconteceu.
       */}
-      <ItemPorque tom="primary" titulo={modelo.nome}>
-        {direcaoReal.frase} {modelo.resumo}
-      </ItemPorque>
       {plano.objetivoSecundario && (
         <ItemPorque tom="analysis" titulo={`Dois objetivos: ${plano.objetivo} e ${plano.objetivoSecundario}`}>
           {linhaObjetivos(plano.objetivo, plano.objetivoSecundario)}
@@ -2136,8 +2178,110 @@ function TrilhoDoPlano({
     </div>
   );
 
+  // As variáveis que o profissional congelou NESTE bloco, e as que seguem progredindo.
+  // Quem escreve o rótulo é o editor (VARIAVEL_LABEL): o motor chama de "intensidade" o que
+  // a tela inteira chama de "esforço", e duas grafias para a mesma coisa é como um plano
+  // passa a parecer dois planos.
+  const TRAVAVEIS = ["volume", "intensidade", "complexidade"] as const;
+  const travadas = TRAVAVEIS.filter((v) => (meso?.variaveisTravadas ?? []).includes(v));
+  const livres = TRAVAVEIS.filter((v) => !travadas.includes(v));
+
+  // Parâmetros do bloco em foco, com a sigla que o profissional usa na prancheta.
+  const parametros = (meso?.parametros ?? []).flatMap((id) => {
+    const par = getParam(id);
+    return par ? [par] : [];
+  });
+
+  // Até três nomes, e o resto vira contagem: a bibliografia inteira já está na aba Ciência.
+  const baseCitada = listaCurta(refIds.map(nomeCurtoDaRef).filter(Boolean), 3);
+
+  /*
+   * O TETO DO TRILHO GRUDADO.
+   *
+   * `sticky` num bloco mais alto que a janela não rola: ele gruda no topo e o que passa da
+   * borda de baixo fica inalcançável. Com quatro cartões o trilho cabia; com os seis do
+   * protótipo ele passa de mil pixels, e o último cartão sumiria numa tela de notebook.
+   *
+   * Então o trilho ganha o teto da janela e rola por dentro, com `overscroll-contain` para a
+   * roda voltar a rolar a página assim que ele chega ao fim (sem isso, o gesto morre dentro
+   * da coluna). Vale só a partir de lg, que é onde existe coluna: no mobile o trilho é só
+   * mais conteúdo empilhado.
+   */
   return (
-    <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+    <aside className="space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
+      {/*
+        POR QUE ESTE MODELO (protótipo da periodização, cartão navy do trilho).
+
+        A resposta já existia: era o segundo item de uma lista de tópicos dentro de "Por que
+        estes números", do mesmo tamanho e do mesmo peso que os outros quatro. Só que ela não
+        é um item entre iguais: é a pergunta que o profissional leva para a consulta, e a que
+        ele precisa saber responder quando o aluno perguntar por que o treino é assim.
+
+        Por isso ela sobe para o topo do trilho, no mesmo navy do gráfico ao lado: as duas
+        peças respondem a mesma coisa, uma em curva e a outra em frase. O navy é fixo nos dois
+        temas, como no gráfico e na casca, porque é superfície imersiva e não papel.
+
+        Nada aqui é informação nova: a frase é a direção MEDIDA das semanas de carga deste
+        plano, e a base citada é `plano.refIds`, cuja lista completa segue no cartão logo
+        abaixo. O que muda é a hierarquia.
+      */}
+      <section
+        className="relative overflow-hidden rounded-card p-4"
+        style={{ background: "#0B1628", color: "#F3F1EA" }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-14 -top-20 h-52 w-52 rounded-full"
+          style={{ background: "radial-gradient(circle, rgba(20,179,186,.35), rgba(20,179,186,0) 65%)" }}
+        />
+        <div className="relative">
+          <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
+            Por que {modelo.nome.replace(/^Periodização (?:em )?/i, "").toLowerCase()}
+          </p>
+          <p className="mt-2 text-sm leading-relaxed" style={{ color: "#D6DFEA" }}>
+            {direcaoReal.frase} {modelo.resumo}
+          </p>
+          {baseCitada && (
+            <p className="mt-3 text-xs" style={{ color: "#8FA0B5" }}>
+              Base: {baseCitada}
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/*
+        A TRAVA DO BLOCO (cartão âmbar do protótipo).
+
+        Travar uma variável é a decisão mais consequente desta tela: ela para a progressão de
+        volume, de esforço ou de complexidade até alguém destravar. E até aqui essa decisão só
+        era visível para quem abrisse o cartão do bloco, ou seja justamente para quem já sabia
+        dela. Quem chegasse depois via um plano que não progride, e explicação nenhuma.
+
+        O cartão só existe quando há trava (o motor nunca gera nenhuma; ela é sempre gesto de
+        gente), e diz as duas metades: o que parou e o que continua.
+      */}
+      {meso && travadas.length > 0 && (
+        <Card tone="warning" className="p-4">
+          <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-warning">
+            <Lock className="h-3 w-3" aria-hidden /> Trava · {rotuloMeso(meso)}
+          </p>
+          <p className="mt-2 text-sm text-ink-2">
+            <span className="font-semibold text-ink">
+              Sem progressão neste bloco: {eLista(travadas.map((v) => VARIAVEL_LABEL[v].toLowerCase()))}.
+            </span>{" "}
+            O alvo fica no patamar da primeira semana de carga.
+            {livres.length > 0 && (
+              <>
+                {" "}
+                {comInicialMaiuscula(eLista(livres.map((v) => VARIAVEL_LABEL[v].toLowerCase())))}{" "}
+                {livres.length === 1 ? "segue" : "seguem"} progredindo.
+              </>
+            )}
+          </p>
+          <p className="mt-2 text-2xs text-ink-3">Travas se ligam e desligam no cartão do bloco, logo acima.</p>
+        </Card>
+      )}
+
       <Card className="p-4">
         <TresCamadas resumo={resumo} pratica={pratica} refs={refIds} ariaLabel="Por que estes números" />
       </Card>
@@ -2178,6 +2322,30 @@ function TrilhoDoPlano({
               ` O aeróbio entra em minutos, fora desta conta: ${equilibrio.minutosAerobio} min.`}
             {equilibrio.sessoesIso > 0 &&
               ` O isométrico de condição é protocolo próprio, fora desta conta: ${equilibrio.sessoesIso} ${equilibrio.sessoesIso === 1 ? "sessão" : "sessões"} na semana.`}
+          </p>
+        </Card>
+      )}
+
+      {/*
+        O QUE ACOMPANHAR (cartão de chips do protótipo).
+
+        `meso.parametros` sempre existiu e sempre foi escolhido pelo motor bloco a bloco, mas
+        vivia atrás de dois cliques: abrir o cartão do bloco e depois abrir "Detalhes da fase".
+        É a lista do que medir para saber se o plano está funcionando, e ela precisa estar
+        visível ENQUANTO se olha a semana, não escondida num terceiro nível.
+      */}
+      {meso && parametros.length > 0 && (
+        <Card className="p-4">
+          <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Parâmetros acompanhados</h3>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {parametros.map((par) => (
+              <Pill key={par.id} tone="neutral">
+                {par.sigla ?? par.nome}
+              </Pill>
+            ))}
+          </div>
+          <p className="mt-2 text-2xs leading-snug text-ink-3">
+            O que o bloco {rotuloMeso(meso)} pede medir para dizer se o plano está indo bem.
           </p>
         </Card>
       )}

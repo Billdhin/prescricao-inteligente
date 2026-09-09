@@ -313,6 +313,27 @@ export interface GroupGpsRule extends GroupRuleInput {
    */
   horizonteMinimoSemanas?: number;
   /**
+   * TRABALHO DE EQUILÍBRIO ENTRA NO PLANO, e não só no texto do cuidado.
+   *
+   * A regra do idoso destreinado dizia, em `cuidados`, que "o equilíbrio desafiador é a
+   * ênfase que mais aumenta a eficácia" contra queda, e o plano gerado não tinha um único
+   * exercício de equilíbrio (bancada de 09/09/2026). Pior: a restrição estrutural
+   * `equilibrio_reduzido` PENALIZA justamente o apoio unipodal sem apoio, ou seja, o filtro
+   * de segurança bloqueava o estímulo terapêutico. É a classe "a tela promete, o motor não
+   * entrega".
+   *
+   * Com este campo a condição pede o bloco de equilíbrio explicitamente, e o motor o coloca
+   * ao fim das sessões principais, perto de um apoio, pelo mesmo trilho de dose por tempo
+   * dos exercícios sustentados. A seleção por mérito não é consultada, como no isométrico:
+   * indicação clínica não disputa vaga com a segurança do ranking.
+   */
+  equilibrio?: {
+    indicado: true;
+    /** por que, em uma frase; impresso no raciocínio, sem nomear a condição */
+    motivo: string;
+    refId: string[];
+  };
+  /**
    * ÊNFASE DE MODALIDADE: qual modalidade a evidência DESTA condição coloca na frente.
    *
    * Nasceu porque o mesmo buraco apareceu TRÊS vezes na rodada de evidência, em condições
@@ -933,6 +954,19 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
    */
   "idoso-destreinado": {
     slug: "idoso-destreinado",
+    /*
+     * O cuidado abaixo já dizia que o equilíbrio é a ênfase que mais reduz queda. Agora o
+     * plano ENTREGA: `sherrington-quedas-2019` (Cochrane, 108 ensaios, 23.407 pessoas) mede
+     * 24% menos quedas com exercícios de equilíbrio e funcionais, alta certeza, e declara
+     * INCERTEZA sobre o resistido sozinho. A dose por sessão vem da diretriz (`garber-2011`:
+     * exercício neuromotor 2 a 3 dias por semana); o plano entra com 2, a ponta baixa.
+     */
+    equilibrio: {
+      indicado: true,
+      motivo:
+        "Exercícios de equilíbrio e funcionais reduzem quedas com evidência de alta certeza, e a força sozinha não mostrou esse efeito; por isso o equilíbrio entra junto do resistido, perto de um apoio.",
+      refId: ["sherrington-quedas-2019", "devries-quedas-2022", "garber-2011"],
+    },
     restricoesEstruturais: ["baixa_tolerancia_impacto", "equilibrio_reduzido", "dificuldade_chao"],
     nome: "Idoso destreinado",
     cuidados: [
@@ -1340,6 +1374,14 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
   },
   osteoporose: {
     slug: "osteoporose",
+    // O cuidado "força, equilíbrio e mobilidade reduzem o risco de queda e de fratura" vira
+    // bloco no plano. Mesma base do idoso destreinado: Sherrington 2019 e a dose do ACSM.
+    equilibrio: {
+      indicado: true,
+      motivo:
+        "Nesta condição a fratura vem da queda, e o que reduz queda com evidência de alta certeza é o exercício de equilíbrio e funcional junto do resistido.",
+      refId: ["sherrington-quedas-2019", "garber-2011"],
+    },
     nome: "Osteopenia / osteoporose",
     cuidados: [
       // O primeiro cuidado dizia "força e impacto controlado estimulam o osso" e, na mesma
@@ -1943,6 +1985,16 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
         motivo: is.map((i) => i.motivo).join(" "),
         refId: refs.length ? refs : undefined,
       };
+    })(),
+    // Equilíbrio: basta UMA condição indicar. Não há "evitar" porque o bloco entra perto de
+    // um apoio e pelo filtro de posição de sempre; quem não tolera ficar em pé já está
+    // coberto por `posicoesEvitar`.
+    equilibrio: (() => {
+      const es = rules.map((r) => r.equilibrio).filter((e): e is NonNullable<GroupGpsRule["equilibrio"]> => Boolean(e));
+      if (!es.length) return undefined;
+      const refs: string[] = [];
+      for (const e of es) for (const r of e.refId) if (!refs.includes(r)) refs.push(r);
+      return { indicado: true as const, motivo: es.map((e) => e.motivo).join(" "), refId: refs };
     })(),
     modProgressao: fundirModProgressao(
       rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),

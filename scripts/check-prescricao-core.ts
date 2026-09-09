@@ -253,6 +253,16 @@ if (parAtende("Emagrecimento", "Hipertrofia", "Força")) erro("parAtende aceitou
 // As saídas que chegam ao profissional e ao aluno imprimem o PAR, e não só o primário.
 // Formatar o par à mão em cada arquivo foi como o secundário sumiu dos três PDFs.
 import { readFileSync } from "node:fs";
+
+/*
+ * PROTOCOLO ISOMÉTRICO DE CONDIÇÃO, e não o bloco sustentado (09/09/2026).
+ *
+ * Prancha e equilíbrio em um pé passaram a sair pelo tipo isometrico dentro da sessão normal,
+ * com a marca sustentado, porque a dose deles é por tempo. Toda asserção deste arquivo sobre
+ * "sessão isométrica" fala do PROTOCOLO (pressão arterial, tendão), então o predicado exclui o
+ * sustentado; senão uma prancha na sessão 2 reprova como "sessão isométrica sem indicação".
+ */
+const ehProtocoloIso = (b: { tipo?: string; sustentado?: boolean }) => b.tipo === "isometrico" && !b.sustentado;
 const SAIDAS = [
   "src/lib/exportPlano.ts",
   "src/lib/exportPrescricao.ts",
@@ -447,7 +457,7 @@ for (const objetivo of OBJETIVOS) {
   if (!comIndicacao.length) erro("AUTOVERIFICAÇÃO (isométrico): nenhuma condição declara isometrico.indicado; a integração não teria como ser conferida.");
   const blocosIso = (grupo?: string) => {
     const p = gerarPlano({ objetivo: "Resistência muscular", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo });
-    return p.principal.mesociclos.flatMap((m) => m.microciclos).flatMap((w) => w.sessoes.flatMap((s) => s.blocos)).filter((b) => b.tipo === "isometrico");
+    return p.principal.mesociclos.flatMap((m) => m.microciclos).flatMap((w) => w.sessoes.flatMap((s) => s.blocos)).filter((b) => ehProtocoloIso(b));
   };
   for (const slug of comIndicacao) {
     const bs = blocosIso(slug);
@@ -465,7 +475,7 @@ for (const objetivo of OBJETIVOS) {
     const p = gerarPlano({ objetivo: "Resistência muscular", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: slug });
     for (const w of p.principal.mesociclos.flatMap((m) => m.microciclos))
       for (const s of w.sessoes) {
-        const temIso = s.blocos.some((b) => b.tipo === "isometrico");
+        const temIso = s.blocos.some((b) => ehProtocoloIso(b));
         const temOutro = s.blocos.some((b) => b.tipo !== "isometrico");
         if (temIso && temOutro)
           erro(
@@ -504,7 +514,7 @@ for (const objetivo of OBJETIVOS) {
    */
   const sessoesIso = (grupo?: string, objetivo: GpsObjetivo = "Resistência muscular") =>
     gerarPlano({ objetivo, nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: grupo } as never)
-      .principal.mesociclos[0].microciclos[0].sessoes.filter((se) => se.blocos.some((b) => b.tipo === "isometrico")).length;
+      .principal.mesociclos[0].microciclos[0].sessoes.filter((se) => se.blocos.some((b) => ehProtocoloIso(b))).length;
 
   for (const grupo of ["gestante"]) {
     if (sessoesIso(grupo)) erro(`VETO DO ISOMÉTRICO IGNORADO (${grupo}): a condição declara evitar e o plano prescreveu o protocolo mesmo assim.`);
@@ -558,7 +568,7 @@ for (const objetivo of OBJETIVOS) {
       const tem = p.principal.mesociclos
         .flatMap((m) => m.microciclos)
         .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
-        .some((b) => b.tipo === "isometrico");
+        .some((b) => ehProtocoloIso(b));
       if (FORA.includes(objetivo) && tem)
         erro(`ISOMÉTRICO EM OBJETIVO QUE NÃO O COMPORTA (${objetivo}): o protocolo entrou num plano cujo propósito é a execução, não a carga.`);
       if (!FORA.includes(objetivo) && !tem)
@@ -615,7 +625,7 @@ for (const objetivo of OBJETIVOS) {
     const tem = p.principal.mesociclos
       .flatMap((m) => m.microciclos)
       .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
-      .some((b) => b.tipo === "isometrico");
+      .some((b) => ehProtocoloIso(b));
     const cita = /isom[ée]tric/i.test(p.raciocinio);
     if (tem && !cita)
       erro(`RACIOCÍNIO OMITE O PROTOCOLO ISOMÉTRICO (${grupo ?? "sem condição"}): o plano tem sessões isométricas e o texto que o profissional assina não as menciona.`);
@@ -745,7 +755,7 @@ for (const objetivo of OBJETIVOS) {
         const tem = p.principal.mesociclos
           .flatMap((m) => m.microciclos)
           .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
-          .some((b) => b.tipo === "isometrico");
+          .some((b) => ehProtocoloIso(b));
         if (tem)
           erro(
             `VETO DO ISOMÉTRICO PERDEU DA INDICAÇÃO (${indicada} + ${veto}): a condição que veta foi fundida e o bloco isométrico foi prescrito assim mesmo.`,
@@ -771,7 +781,7 @@ for (const objetivo of OBJETIVOS) {
   const bloco = p.principal.mesociclos
     .flatMap((m) => m.microciclos)
     .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
-    .find((b) => b.tipo === "isometrico");
+    .find((b) => ehProtocoloIso(b));
   if (!bloco) {
     erro("AUTOVERIFICAÇÃO (linha do isométrico): nenhum bloco isométrico no plano de hipertensão; a asserção passaria por vazio.");
   } else {
@@ -2158,7 +2168,7 @@ function minutosNoTexto(texto: string): { min: number; max: number } | null {
     const w = semanaDe(modelo);
     // Só as sessões de TREINO entram na conta: a sessão isométrica é protocolo fechado à parte,
     // não participa da rotação de ênfase e segue numerada em qualquer modelo.
-    const deTreino = w.sessoes.filter((se) => !se.blocos.some((b) => b.tipo === "isometrico"));
+    const deTreino = w.sessoes.filter((se) => !se.blocos.some((b) => ehProtocoloIso(b)));
     const porLetra = deTreino.filter((se) => /^Sessão [A-G]/.test(se.nome)).length;
     if (porLetra !== deTreino.length)
       erro(
@@ -2264,7 +2274,7 @@ function minutosNoTexto(texto: string): { min: number; max: number } | null {
         const plano = gerarPlano({ objetivo, nivel, semanas: 12, frequencia: 4, grupoEspecial, equipamentos } as never);
         const quem = `${objetivo}/${nivel}/${grupoEspecial ?? "sem condição"}/${equipamentos.includes("Máquina") ? "com máquina" : "sem máquina"}`;
         const sessoesIso = (plano.principal.mesociclos[0]?.microciclos[0]?.sessoes ?? []).filter((se) =>
-          se.blocos.some((bl) => bl.tipo === "isometrico"),
+          se.blocos.some((bl) => ehProtocoloIso(bl)),
         );
         if (!sessoesIso.length) {
           planosSemIso++;
@@ -2297,7 +2307,7 @@ function minutosNoTexto(texto: string): { min: number; max: number } | null {
 
         /* (b) A DOSE É A DA INDICAÇÃO QUE ESTÁ NO RÓTULO, e não a de outra. */
         for (const se of sessoesIso) {
-          const b = se.blocos.find((bl) => bl.tipo === "isometrico");
+          const b = se.blocos.find((bl) => ehProtocoloIso(bl));
           if (!b) continue;
           if (b.series !== ind.protocolo.series || b.duracao !== ind.protocolo.contracao || b.intervalo !== ind.protocolo.descanso)
             erro(

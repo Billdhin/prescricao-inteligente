@@ -549,6 +549,8 @@ imagem: "/exercises/rotacao-interna-elastico.webp",
   {
     id: "e46",
     slug: "prancha-lateral",
+    // Dose por TEMPO, a do próprio texto ("3 séries de 15 a 40 s por lado"). Ver Exercise.sustentado.
+    sustentado: { series: "3", tempo: "15 a 40 s", porLado: true },
     nome: "Prancha lateral",
     grupoMuscular: "Core (tronco)",
     equipamento: "Peso corporal",
@@ -631,6 +633,8 @@ imagem: "/exercises/rotacao-interna-elastico.webp",
   {
     id: "e47",
     slug: "prancha-apoio-banco",
+    // Dose por TEMPO, a do próprio texto ("3 séries de 20 a 40 s"). Ver Exercise.sustentado.
+    sustentado: { series: "3", tempo: "20 a 40 s" },
     nome: "Prancha com apoio no banco",
     grupoMuscular: "Core (tronco)",
     equipamento: "Peso corporal",

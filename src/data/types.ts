@@ -219,6 +219,27 @@ export interface Exercise {
    * publicado, não faixa que o motor possa interpolar.
    */
   doseIsometrica?: boolean;
+  /**
+   * EXERCÍCIO SUSTENTADO: a dose é TEMPO, nunca repetição.
+   *
+   * Prancha e equilíbrio em um pé entravam na sessão pelo mesmo trilho do supino e saíam
+   * como "3 séries de 15 repetições, reserva 4", enquanto o próprio texto do exercício dizia
+   * "15 a 40 s". Medido em 18/08/2026: 1.704 de 3.888 planos, e 100% dos de Retorno ao
+   * treino. Marcar `doseIsometrica` os tiraria da seleção de força, que é onde eles precisam
+   * continuar entrando (são o core e o equilíbrio da semana). Este campo é o caminho do meio:
+   * o exercício segue sendo escolhido como força, e o bloco nasce com dose por tempo.
+   *
+   * Os números são os do próprio exercício (a frase de dose do catálogo), não interpolação.
+   * O descanso não vem daqui: vem da faixa de intervalo do objetivo, como em qualquer bloco.
+   */
+  sustentado?: {
+    /** "3", "3 a 4" */
+    series: string;
+    /** "15 a 40 s" */
+    tempo: string;
+    /** o tempo é POR LADO (prancha lateral, equilíbrio em um pé) */
+    porLado?: boolean;
+  };
   ativacao: MuscleActivation[];
   indiceEficiencia: IndiceEficiencia;
   fases: Fase[];

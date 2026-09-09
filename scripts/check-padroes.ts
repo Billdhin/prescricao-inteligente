@@ -77,7 +77,8 @@ function padroesDaSemana(g: ReturnType<typeof gerarPlano>) {
   let series = 0;
   for (const s of principais)
     for (const b of s.blocos) {
-      if (b.tipo !== "forca") continue;
+      // Sustentado (prancha, equilíbrio) é trabalho da semana; só o protocolo de condição fica fora.
+      if (b.tipo === "aerobio" || (b.tipo === "isometrico" && !(b as { sustentado?: boolean }).sustentado)) continue;
       const ex = b.exercicioSlug ? getExercise(b.exercicioSlug) : undefined;
       if (!ex) continue;
       const n = b.seriesAlvo ?? Number(/(\d+)/.exec(b.series ?? "")?.[1] ?? 0);
@@ -167,6 +168,82 @@ for (const objetivo of OBJETIVOS)
     process.exit(1);
   }
   console.log(`[check:padroes] autoverificação OK: a semana só de joelho e empurrar é reprovada por ${acusou.length} regras (${acusou.join(", ")}).`);
+}
+
+/*
+ * SUSTENTADO NUNCA SAI EM REPETIÇÕES, E O EQUILÍBRIO ENTRA ONDE A CONDIÇÃO INDICA (09/09/2026).
+ *
+ * Dois defeitos de "a tela promete, o motor não entrega", ambos medidos:
+ *  - prancha e equilíbrio em um pé saíam como "3 x 15, reserva 4" enquanto o texto deles diz
+ *    "15 a 40 s" (1.704 de 3.888 planos em 18/08). Agora nascem como bloco sustentado, com
+ *    séries e TEMPO, pelo trilho do isométrico;
+ *  - a regra do idoso destreinado dizia que equilíbrio é a ênfase que mais reduz queda, e o
+ *    plano não tinha nenhum exercício de equilíbrio, porque a restrição `equilibrio_reduzido`
+ *    penalizava justamente o apoio unipodal. Agora a condição indica (`GroupGpsRule.equilibrio`)
+ *    e o motor coloca o bloco ao fim das sessões principais, 2 por semana.
+ */
+{
+  const falhasS: string[] = [];
+  type Bl = { tipo?: string; exercicioSlug?: string; repsAlvo?: number; series?: string; duracao?: string; sustentado?: boolean; equilibrio?: boolean };
+  /** O que reprova um bloco: sustentado em repetição, ou bloco sustentado sem tempo. */
+  const defeitoDoBloco = (b: Bl): string | undefined => {
+    const ex = b.exercicioSlug ? getExercise(b.exercicioSlug) : undefined;
+    if (!ex?.sustentado) return undefined;
+    if (b.tipo !== "isometrico" || !b.sustentado) return `"${ex.nome}" saiu como ${b.tipo} em repetições, e é exercício sustentado (tempo)`;
+    if (!b.series || !b.duracao) return `"${ex.nome}" sustentado sem séries ou sem tempo`;
+    if (b.repsAlvo != null) return `"${ex.nome}" sustentado carrega alvo de repetições`;
+    return undefined;
+  };
+  // Autoverificação: o bloco falso em repetições precisa ser reprovado.
+  const falso: Bl = { tipo: "forca", exercicioSlug: "prancha-frontal", repsAlvo: 15 };
+  if (!defeitoDoBloco(falso)) {
+    console.error("[check:padroes] AUTOVERIFICAÇÃO FALHOU: uma prancha em 'forca' com 15 repetições deveria ser reprovada.");
+    process.exit(1);
+  }
+  let blocosSustentados = 0;
+  for (const objetivo of OBJETIVOS)
+    for (const frequencia of [2, 3])
+      for (const grupoEspecial of CONDICOES) {
+        let g;
+        try {
+          g = gerarPlano({ objetivo: objetivo as never, nivel: "Iniciante" as never, semanas: 8, frequencia, idade: 40, grupoEspecial } as never);
+        } catch {
+          continue;
+        }
+        for (const m of g.principal.mesociclos)
+          for (const w of m.microciclos)
+            for (const s of w.sessoes)
+              for (const b of s.blocos as Bl[]) {
+                const d = defeitoDoBloco(b);
+                if (d) falhasS.push(`${objetivo}/${frequencia}x/${grupoEspecial ?? "sem condição"}: ${d}.`);
+                if (b.sustentado) blocosSustentados++;
+              }
+      }
+  // Equilíbrio: entra em quem indica, com a quantidade prometida, e só ali.
+  const indicam = ["idoso-destreinado", "osteoporose"];
+  const naoIndicam = [undefined, "hipertensao-estagio-1", "gestante", "pos-parto"];
+  for (const grupoEspecial of [...indicam, ...naoIndicam])
+    for (const frequencia of [2, 3, 5]) {
+      const g = gerarPlano({ objetivo: "Retorno ao treino" as never, nivel: "Iniciante" as never, semanas: 8, frequencia, idade: 70, grupoEspecial } as never);
+      const w = g.principal.mesociclos[0]?.microciclos[0];
+      const principais = (w?.sessoes ?? []).filter((s) => !(s as { complemento?: boolean }).complemento);
+      const comEquilibrio = principais.filter((s) => (s.blocos as Bl[]).some((b) => b.equilibrio)).length;
+      const rot = `Retorno/${frequencia}x/${grupoEspecial ?? "sem condição"}`;
+      if (indicam.includes(grupoEspecial ?? "")) {
+        const esperado = Math.min(2, frequencia);
+        if (comEquilibrio < esperado) falhasS.push(`${rot}: a condição indica equilíbrio e a semana tem ${comEquilibrio} sessão(ões) com o bloco (esperado ${esperado}).`);
+        if (!/Sobre o equilíbrio/.test(g.raciocinio)) falhasS.push(`${rot}: o bloco de equilíbrio entrou e o raciocínio não o explica.`);
+        if (!g.refIds.includes("sherrington-quedas-2019")) falhasS.push(`${rot}: a bibliografia do plano não traz a fonte do bloco de equilíbrio.`);
+      } else if (comEquilibrio > 0) {
+        falhasS.push(`${rot}: recebeu bloco de equilíbrio por indicação sem a condição indicar.`);
+      }
+    }
+  if (falhasS.length) {
+    console.error(`\n[check:padroes] FALHOU no sustentado/equilíbrio: ${falhasS.length} caso(s).\n`);
+    for (const f of falhasS.slice(0, 30)) console.error("  • " + f);
+    process.exit(1);
+  }
+  console.log(`[check:padroes] ok: ${blocosSustentados} blocos sustentados saíram por tempo (nenhuma prancha em repetições), e o bloco de equilíbrio entra 2x/semana só onde a condição indica, com raciocínio e bibliografia.`);
 }
 
 if (falhas.length) {
