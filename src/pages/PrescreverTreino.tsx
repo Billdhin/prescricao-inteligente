@@ -1240,34 +1240,45 @@ function ResultadoPlano({
   React.useEffect(() => setSemanaFoco(Number(params.get("semana")) || semanaCorrente), [semanaCorrente]);
 
   /*
-   * O FOCO VAI ATRÁS DO CLIQUE.
+   * O FOCO VAI ATRÁS DO CLIQUE, E CADA CLIQUE TEM O SEU DESTINO.
    *
    * Clicar numa semana do calendário mudava o painel do bloco e o cartão da semana, os dois
    * bem mais abaixo, sem nenhum sinal de que algo tinha acontecido: em tela de notebook o
-   * que mudava estava fora da vista. Agora o gesto leva o olho (e o foco de teclado) até a
-   * região que mudou. `block: "nearest"` não rola nada quando ela já está visível, então o
-   * segundo clique seguido não sacode a página.
+   * que mudava estava fora da vista.
+   *
+   * A primeira versão disto mandava os dois cliques para a MESMA região, e a região começa
+   * no painel do bloco: quem clicava numa semana caía nas regras da fase, não na semana.
+   * Agora são dois destinos, um por pergunta. Clique em semana leva à semana; clique em
+   * bloco leva às regras do bloco.
+   *
+   * `block: "nearest"` não rola nada quando o destino já está visível, então clicar em duas
+   * semanas seguidas não sacode a página.
    */
-  const regiaoDoFoco = React.useRef<HTMLDivElement>(null);
-  const focarSemana = (n: number) => {
-    setSemanaFoco(n);
+  const alvoDaSemana = React.useRef<HTMLDivElement>(null);
+  const alvoDoBloco = React.useRef<HTMLDivElement>(null);
+
+  const levarAte = (ref: React.RefObject<HTMLDivElement>, alinhamento: "start" | "nearest") => {
     requestAnimationFrame(() => {
-      const el = regiaoDoFoco.current;
+      const el = ref.current;
       if (!el) return;
-      el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      el.scrollIntoView({ block: alinhamento, behavior: "smooth" });
       el.focus({ preventScroll: true });
     });
   };
 
-  // Clicar num bloco move o foco para ele. Se a semana em foco JÁ está dentro do bloco, não
-  // mexe: trocar a semana debaixo do dedo de quem só quis ler as regras da fase seria perder
-  // o lugar sem ter pedido.
+  const focarSemana = (n: number) => {
+    setSemanaFoco(n);
+    // "start": a semana clicada encosta no topo e é a primeira coisa que se lê.
+    levarAte(alvoDaSemana, "start");
+  };
+
+  // Clicar num bloco leva às regras dele. Se a semana em foco JÁ está dentro do bloco, a
+  // semana não muda: trocar a semana debaixo do dedo de quem só quis ler as regras da fase
+  // seria perder o lugar sem ter pedido.
   const focarBloco = (meso: Mesociclo) => {
-    if (semanaFoco >= meso.semanaInicio && semanaFoco <= meso.semanaFim) {
-      regiaoDoFoco.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-      return;
-    }
-    focarSemana(meso.semanaInicio);
+    if (!(semanaFoco >= meso.semanaInicio && semanaFoco <= meso.semanaFim)) setSemanaFoco(meso.semanaInicio);
+    // "nearest": basta revelar o painel; os cartões continuam à vista para trocar de bloco.
+    levarAte(alvoDoBloco, "nearest");
   };
 
   const irParaEditor = (n: number) => {
@@ -1495,9 +1506,55 @@ function ResultadoPlano({
       />
 
       {/*
-        O PLANO BLOCO A BLOCO: a fileira é o SELETOR, e o detalhe é um painel só, logo
-        abaixo, sempre no mesmo lugar. Ver o comentário de MesocicloCard: o cartão que abria
-        no lugar mudava de posição conforme qual deles era aberto.
+        A SEMANA EM FOCO VEM LOGO DEPOIS DO CALENDÁRIO, e não no fim da página.
+
+        Não é gosto de ordem, é geometria: a semana era a última coisa do documento, então
+        clicar nela rolava a página até o fim e ela parava a 291px do topo, com o painel do
+        bloco ocupando a faixa de cima. O clique ia para a semana e a tela dizia "bloco em
+        foco", que foi exatamente a queixa. Com conteúdo abaixo dela, a semana encosta no
+        topo e é a primeira coisa que se lê.
+
+        A leitura melhora junto: o gráfico e o calendário mostram o plano inteiro, esta caixa
+        mostra o ponto onde você está, e os blocos, abaixo, são a camada de referência.
+
+        As duas caixas que mudam com o clique (esta e a do bloco) são grupos com nome, com
+        `tabIndex` para receber o foco de teclado e `scroll-mt-24` para descontar a barra fixa
+        do topo na hora de encostar o destino no alto da tela.
+      */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        {emFoco && (
+          <div
+            ref={alvoDaSemana}
+            tabIndex={-1}
+            role="group"
+            aria-label={`Semana ${emFoco.micro.semana} em foco`}
+            className="min-w-0 scroll-mt-24 focus:outline-none"
+          >
+            <ResumoDaSemana
+              micro={emFoco.micro}
+              meso={emFoco.meso}
+              semanas={semanas}
+              podeEditar={premium}
+              onFocar={focarSemana}
+              onEditar={() => irParaEditor(emFoco.micro.semana)}
+            />
+          </div>
+        )}
+
+        {/* TRILHO: por que o PLANO é assim. O que é do bloco vive no painel do bloco e o que
+            é da semana, no cartão ao lado; sem isso a mesma frase saía em três lugares da
+            mesma tela. */}
+        <TrilhoDoPlano plano={plano} modelo={modelo} alunoObj={alunoObj} refIds={plano.refIds} />
+      </div>
+
+      {/*
+        O PLANO BLOCO A BLOCO: a fileira é o SELETOR, e o detalhe é um painel só, colado
+        embaixo dela, sempre no mesmo lugar. Ver o comentário de MesocicloCard: o cartão que
+        abria no próprio lugar mudava de posição conforme qual deles fosse aberto.
+
+        Clicar num cartão não joga a página para o topo do painel: basta revelá-lo, com os
+        cartões ainda à vista para comparar e trocar. Por isso este destino rola pelo "mais
+        perto", e o da semana, "pelo começo".
       */}
       <section>
         <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-2">
@@ -1517,53 +1574,31 @@ function ResultadoPlano({
             />
           ))}
         </div>
+
+        {emFoco && (
+          <div
+            ref={alvoDoBloco}
+            tabIndex={-1}
+            role="group"
+            aria-label={`Bloco em foco: ${rotuloMeso(emFoco.meso)}`}
+            className="mt-3 scroll-mt-24 focus:outline-none"
+          >
+            <PainelDoBloco
+              meso={emFoco.meso}
+              indice={macro.mesociclos.findIndex((m) => m.id === emFoco.meso.id)}
+              ctx={ctx}
+              editavel={premium}
+              onChange={trocarMeso}
+              reavaliarHref={reavaliarHref}
+              semanaCorrente={semanaCorrente}
+            />
+          </div>
+        )}
+
         <div className="mt-3">
           <ModeloExplicacao modelo={modelo} />
         </div>
       </section>
-
-      {/*
-        TUDO O QUE MUDA COM O CLIQUE mora daqui para baixo, e é para cá que o foco vai: as
-        regras do bloco escolhido, a semana escolhida e o porquê. É uma região só, com nome,
-        para que a mudança seja anunciada a quem navega por teclado ou leitor de tela.
-      */}
-      <div
-        ref={regiaoDoFoco}
-        tabIndex={-1}
-        role="group"
-        aria-label={`Semana ${semanaFoco} em foco`}
-        className="scroll-mt-24 space-y-5 focus:outline-none"
-      >
-        {emFoco && (
-          <PainelDoBloco
-            meso={emFoco.meso}
-            indice={macro.mesociclos.findIndex((m) => m.id === emFoco.meso.id)}
-            ctx={ctx}
-            editavel={premium}
-            onChange={trocarMeso}
-            reavaliarHref={reavaliarHref}
-            semanaCorrente={semanaCorrente}
-          />
-        )}
-
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-          {emFoco && (
-            <ResumoDaSemana
-              micro={emFoco.micro}
-              meso={emFoco.meso}
-              semanas={semanas}
-              podeEditar={premium}
-              onFocar={focarSemana}
-              onEditar={() => irParaEditor(emFoco.micro.semana)}
-            />
-          )}
-
-          {/* TRILHO: por que o PLANO é assim. O que é do bloco vive no painel acima e o
-              que é da semana, no cartão ao lado; sem isso a mesma frase saía em três
-              lugares da mesma tela. */}
-          <TrilhoDoPlano plano={plano} modelo={modelo} alunoObj={alunoObj} refIds={plano.refIds} />
-        </div>
-      </div>
 
       <p className="rounded-card bg-surface-soft p-3 text-xs text-ink-3">
         As faixas são referência e não substituem a sua decisão. O plano apoia a organização e a justificativa;
