@@ -625,63 +625,165 @@ function LinhaSemBarra({ rotulo, tendencia, porque }: { rotulo: string; tendenci
   );
 }
 
+/**
+ * O CARTÃO DO BLOCO É UM SELETOR, E NÃO UMA GAVETA.
+ *
+ * ## O que estava errado
+ *
+ * O cartão abria no lugar. Numa coluna de 280px isso era ilegível, então ele passou a ocupar
+ * a linha inteira quando aberto (`col-span-full`) e aí virou outra coisa: como a grade
+ * reorganiza o que sobra, abrir o primeiro cartão o deixava sozinho em cima e empurrava os
+ * outros dois para baixo; abrir o terceiro deixava os dois primeiros em cima e o painel
+ * embaixo. O mesmo gesto colocava o conteúdo em lugares diferentes da tela. O Filipe:
+ * "abre em toda tela, mas quando é o segundo ele abre embaixo, está muito esquisito".
+ *
+ * ## O desenho agora
+ *
+ * Os cartões são a fileira de seleção e o detalhe é UM painel, sempre no mesmo lugar, logo
+ * abaixo dela (`PainelDoBloco`). Clicar num cartão não abre nada: ele move o foco do plano
+ * para aquele bloco, e o painel, a semana em foco e o trilho passam a falar dele. Um foco
+ * só na tela inteira, em vez de dois (o bloco aberto de um lado, a semana escolhida do
+ * outro) que podiam apontar para pontos diferentes do plano ao mesmo tempo.
+ *
+ * A face continua carregando a assinatura do bloco (as três direções e as duas barras),
+ * porque é ela que permite COMPARAR os blocos entre si; o painel é o detalhe de um.
+ */
 export function MesocicloCard({
   meso,
   indice,
-  ctx,
-  editavel,
-  onChange,
+  emFoco,
   atual,
-  semanaCorrente,
-  reavaliarHref,
   tetos,
-  onEditarSemana,
+  onFocar,
 }: {
   meso: Mesociclo;
   indice: number;
-  ctx: ContextoFaixa;
-  editavel: boolean;
-  onChange?: (m: Mesociclo) => void;
-  /** leva para a tela do editor, na semana escolhida (a edição fina não mora mais aqui) */
-  onEditarSemana?: (n: number) => void;
+  /** este é o bloco que o resto da tela está mostrando */
+  emFoco?: boolean;
   /** este é o bloco em que o plano está hoje (pelo calendário) */
   atual?: boolean;
-  /** semana corrente do plano, para destacar a semana e disparar a reavaliação */
-  semanaCorrente?: number;
-  /** destino do "Registrar reavaliação" (só quando há aluno com plano) */
-  reavaliarHref?: string;
   /**
    * Os tetos do plano inteiro (`tetosDoPlano`), para as barras compararem bloco com bloco.
    * Sem eles não há com o que comparar, e o cartão volta às tendências em palavra: barra
    * sem referência declarada seria número decorativo.
    */
   tetos?: TetosDoPlano;
+  onFocar: (meso: Mesociclo) => void;
 }) {
-  // As semanas (o detalhe fino) começam recolhidas: a face do cartão já carrega a
-  // informação-assinatura do bloco, que antes ficava a dois cliques.
-  const [aberto, setAberto] = React.useState(false);
-
-  /*
-   * O EFEITO DA ÚLTIMA EDIÇÃO, guardado para ser mostrado em número.
-   *
-   * Sem isto, a única resposta ao gesto era a curva se redesenhar, e ninguém guarda de
-   * memória onde ela estava dois segundos atrás. Foi assim que um professor concluiu que a
-   * edição dele não tinha pegado (ver efeitoDaEdicao.ts).
-   */
-  const [efeito, setEfeito] = React.useState<EfeitoDaEdicao | null>(null);
-
-  // O que este bloco pesa, da MESMA fonte do gráfico e da régua de semanas.
+  // O que este bloco pesa, da MESMA fonte do gráfico e do calendário.
   const mag = React.useMemo(() => magnitudeDoMeso(meso), [meso]);
 
-  // A descarga vive na semana (`tipo`), não num campo à parte: mover a descarga de semana
-  // tem que mudar o selo do bloco junto, senão o card diz uma coisa e o plano faz outra.
-  const trocarMicro = (m: Microciclo) => {
-    const anterior = meso.microciclos.find((w) => w.id === m.id);
-    if (anterior) setEfeito(efeitoDaEdicao(anterior, m));
-    const microciclos = meso.microciclos.map((w) => (w.id === m.id ? m : w));
-    onChange?.({ ...meso, microciclos, deload: microciclos.some((w) => w.tipo === "deload") });
-  };
+  return (
+    <button
+      type="button"
+      onClick={() => onFocar(meso)}
+      aria-pressed={emFoco}
+      className={cn(
+        "flex w-full flex-col rounded-card border bg-surface p-4 text-left transition-colors",
+        emFoco ? "border-ink shadow-soft" : "border-border hover:bg-surface-soft",
+      )}
+    >
+      <div className="flex items-start gap-3">
+        {/* Identidade de fase: quadrado navy com o número, no vocabulário do redesign. */}
+        <span
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
+          style={{ background: "#0B1628", color: "#F3F1EA" }}
+        >
+          {indice + 1}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-display font-bold text-ink">{rotuloMeso(meso, indice)}</span>
+            <span className="text-xs text-ink-3">
+              semanas {meso.semanaInicio} a {meso.semanaFim}
+            </span>
+            {/* Teto de 3 selos: "em curso", "com descarga", "reavaliar ao fim". */}
+            {atual && <Pill tone="primary">em curso</Pill>}
+            {meso.deload && <Pill tone="neutral">com descarga</Pill>}
+            {meso.reavaliacao && <Pill tone="analysis">reavaliar ao fim</Pill>}
+          </div>
+          <p className="mt-0.5 text-sm text-ink-2">{meso.foco}</p>
+        </div>
+      </div>
 
+      {/*
+        A ASSINATURA DO BLOCO. As duas barras comparam ESTE bloco com o maior bloco do MESMO
+        plano, que é a única comparação que quer dizer alguma coisa: normalizar cada bloco
+        contra ele mesmo daria três barras cheias. O rótulo carrega a agregação (soma x
+        média), porque as duas reagem de formas opostas ao mesmo gesto de edição.
+      */}
+      {tetos && (
+        <div className="mt-3 space-y-2 border-t border-border pt-3">
+          <LinhaMagnitude
+            rotulo="Volume (soma)"
+            pct={pctDoTeto(mag.volume, tetos.volume)}
+            tendencia={TEND_LABEL[meso.tendenciaVolume]}
+            fill="bg-analysis-fill"
+          />
+          {mag.esforco != null ? (
+            <LinhaMagnitude
+              rotulo="Esforço médio"
+              pct={pctDoTeto(mag.esforco, tetos.esforco)}
+              tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
+              fill="bg-primary"
+            />
+          ) : (
+            <LinhaSemBarra
+              rotulo="Esforço médio"
+              tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
+              porque="as semanas deste bloco não declaram carga relativa, reserva de repetições nem esforço percebido, então não há o que medir"
+            />
+          )}
+          <LinhaSemBarra
+            rotulo="Complexidade"
+            tendencia={TEND_LABEL[meso.tendenciaComplexidade]}
+            porque="o plano declara a direção da complexidade, e o motor não produz uma magnitude por bloco para ela"
+          />
+        </div>
+      )}
+    </button>
+  );
+}
+
+/**
+ * O PAINEL DO BLOCO EM FOCO: as regras da fase, e só elas.
+ *
+ * ## O que saiu daqui, e por quê
+ *
+ * Este painel listava as SEMANAS do bloco, cada uma abrindo o editor completo de cada
+ * sessão. Três problemas de uma vez: o editor aparecia duas vezes na mesma tela (aqui e na
+ * semana em foco, logo abaixo), a lista de semanas repetia o calendário que está logo acima,
+ * e a semana em foco repetia de novo a semana que este painel já mostrava aberta. O Filipe:
+ * "está replicando informações, pois logo abaixo tem a informação da semana em foco".
+ *
+ * A divisão agora é por PERGUNTA, e cada uma tem um lugar só:
+ *   · o calendário responde "que semanas existem e onde estou";
+ *   · este painel responde "o que esta fase faz e por quais regras";
+ *   · a semana em foco responde "o que tem nesta semana";
+ *   · o editor responde "com que dose".
+ *
+ * As três colunas daqui não são estética: são as três decisões que se toma sobre uma fase.
+ * O que treinar, quando avançar ou recuar, e o que vigiar enquanto ela corre.
+ */
+export function PainelDoBloco({
+  meso,
+  indice,
+  ctx,
+  editavel,
+  onChange,
+  reavaliarHref,
+  semanaCorrente,
+}: {
+  meso: Mesociclo;
+  indice: number;
+  ctx: ContextoFaixa;
+  editavel: boolean;
+  onChange?: (m: Mesociclo) => void;
+  /** destino do "Registrar reavaliação" (só quando há aluno com plano) */
+  reavaliarHref?: string;
+  /** semana corrente do plano, para saber se a reavaliação deste bloco já está à porta */
+  semanaCorrente?: number;
+}) {
   // Cadeado por variável (onda MP-6): travar/destravar volume/intensidade/complexidade. Uma
   // variável travada NÃO progride; ao travar/destravar, recalcula os alvos das semanas do bloco
   // (src/lib/gps/travas.ts) para o plano exibido refletir a decisão na hora.
@@ -711,211 +813,39 @@ export function MesocicloCard({
   const mostrarReavaliar =
     Boolean(reavaliarHref) && meso.reavaliacao && semanaCorrente != null && semanaCorrente >= meso.semanaFim - 1;
 
-  // Identidade de fase (protótipo do editor): quadrado navy com o número da fase,
-  // no vocabulário do redesign (o disco com gradiente saiu junto com o filete).
+  const parametros = meso.parametros.flatMap((id) => {
+    const p = getParam(id);
+    return p ? [p] : [];
+  });
+
   return (
-    /*
-     * ABERTO, O CARTÃO OCUPA A LINHA INTEIRA.
-     *
-     * Os blocos ficam lado a lado numa grade, e cada coluna tem cerca de 280px. Fechado isso
-     * basta: nome, semanas, selos e as três barras. Aberto, não: dentro daquela coluna cabiam
-     * quatro semanas com tipo, nota, objetivo e faixa, tudo em duas ou três palavras por
-     * linha. Era pior aberto do que fechado, que é o contrário do que abrir significa.
-     * `col-span-full` tira o cartão da grade enquanto ele estiver aberto.
-     */
-    <Card className={cn("overflow-hidden", aberto && "[grid-column:1/-1]")}>
-      <button
-        onClick={() => setAberto((v) => !v)}
-        aria-expanded={aberto}
-        className="flex w-full items-start gap-3 p-4 text-left hover:bg-surface-soft"
-      >
-        <span
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
-          style={{ background: "#0B1628", color: "#F3F1EA" }}
-        >
-          {indice + 1}
+    <Card className="p-4 md:p-5">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <Eyebrow>Bloco em foco</Eyebrow>
+        <span className="font-display text-base font-bold text-ink">
+          {indice + 1}. {rotuloMeso(meso, indice)}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-display font-bold text-ink">{rotuloMeso(meso, indice)}</span>
-            <span className="text-xs text-ink-3">
-              semanas {meso.semanaInicio} a {meso.semanaFim}
-            </span>
-            {/* Teto de 3 selos: "em curso", "com descarga", "reavaliar ao fim". */}
-            {atual && <Pill tone="primary">em curso</Pill>}
-            {meso.deload && <Pill tone="neutral">com descarga</Pill>}
-            {meso.reavaliacao && <Pill tone="analysis">reavaliar ao fim</Pill>}
-          </div>
-          <p className="mt-0.5 text-sm text-ink-2">{meso.foco}</p>
-        </div>
-        <ChevronDown className={cn("mt-1 h-4 w-4 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
-      </button>
+        <span className="text-xs text-ink-3">
+          semanas {meso.semanaInicio} a {meso.semanaFim}
+        </span>
+      </div>
 
-      {/*
-        A ASSINATURA DO BLOCO, na face do cartão (protótipo do editor).
-        As duas barras comparam ESTE bloco com o maior bloco do MESMO plano, que é a única
-        comparação que quer dizer alguma coisa: normalizar cada bloco contra ele mesmo daria
-        três barras cheias. O rótulo carrega a agregação (soma x média), porque as duas
-        reagem de formas opostas ao mesmo gesto de edição.
-        Fica FORA do botão de propósito: é leitura, não gesto.
-      */}
-      {tetos && (
-        <div className="space-y-2 border-t border-border px-4 py-3">
-          <LinhaMagnitude
-            rotulo="Volume (soma)"
-            pct={pctDoTeto(mag.volume, tetos.volume)}
-            tendencia={TEND_LABEL[meso.tendenciaVolume]}
-            fill="bg-analysis-fill"
-          />
-          {mag.esforco != null ? (
-            <LinhaMagnitude
-              rotulo="Esforço médio"
-              pct={pctDoTeto(mag.esforco, tetos.esforco)}
-              tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
-              fill="bg-primary"
+      <div className="mt-4 grid gap-x-6 gap-y-5 lg:grid-cols-3">
+        <section>
+          <Eyebrow className="mb-2">O que treinar</Eyebrow>
+          <div className="space-y-3">
+            <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
+            <ListaChips
+              titulo="Modalidades em foco"
+              itens={(meso.modalidades ?? []).map((id) => getModalidade(id)?.nome ?? id)}
             />
-          ) : (
-            <LinhaSemBarra
-              rotulo="Esforço médio"
-              tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
-              porque="as semanas deste bloco não declaram carga relativa, reserva de repetições nem esforço percebido, então não há o que medir"
-            />
-          )}
-          <LinhaSemBarra
-            rotulo="Complexidade"
-            tendencia={TEND_LABEL[meso.tendenciaComplexidade]}
-            porque="o plano declara a direção da complexidade, e o motor não produz uma magnitude por bloco para ela"
-          />
-        </div>
-      )}
-
-      {aberto && (
-        <div className="space-y-4 border-t border-border px-4 pb-4 pt-3">
-          {/*
-            O EFEITO DA EDIÇÃO, na hora e em número.
-            Aparece acima das semanas porque é resposta ao gesto que a pessoa acabou de fazer,
-            e some sozinho quando ela edita outra coisa que não muda nada mensurável.
-          */}
-          {efeito && (
-            <div className="rounded-[14px] border border-analysis/30 bg-analysis-tint/40 p-3">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-xs font-semibold text-ink">O que a sua edição mudou na semana {efeito.semana}</p>
-                <button
-                  onClick={() => setEfeito(null)}
-                  className="rounded p-0.5 text-ink-3 hover:bg-surface hover:text-ink"
-                  aria-label="Dispensar o resumo da edição"
-                >
-                  <X className="h-3.5 w-3.5" aria-hidden />
-                </button>
-              </div>
-              <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
-                {efeito.exerciciosAntes !== efeito.exerciciosDepois && (
-                  <span>
-                    <b className="text-ink">Exercícios</b> {efeito.exerciciosAntes} para {efeito.exerciciosDepois}
-                  </span>
-                )}
-                <span>
-                  <b className="text-ink">Volume (soma)</b> {formatarDelta(efeito.deltaVolume)}
-                </span>
-                <span>
-                  <b className="text-ink">Esforço médio</b> {formatarDelta(efeito.deltaEsforco)}
-                </span>
-                {/* O gesto foi num dia; o número acima é da semana. O dia aparece ao lado, com
-                    o nome da sessão, para quem dobrou o treino de terça ler que dobrou. */}
-                {efeito.sessao && (
-                  <span>
-                    <b className="text-ink">Nesta sessão ({efeito.sessao.nome})</b> volume {formatarDelta(efeito.sessao.deltaVolume)}
-                    {efeito.sessao.exerciciosAntes !== efeito.sessao.exerciciosDepois
-                      ? `, ${efeito.sessao.exerciciosAntes} para ${efeito.sessao.exerciciosDepois} exercícios`
-                      : ""}
-                  </span>
-                )}
-              </div>
-              {efeito.leitura && <p className="mt-1.5 text-xs leading-relaxed text-ink-2">{efeito.leitura}</p>}
-            </div>
-          )}
-
-          {/* (1) Semanas primeiro: é o que decide o que fazer AGORA para o professor com pressa. */}
-          <div>
-            <Eyebrow className="mb-1.5">Semanas</Eyebrow>
-            <div className="space-y-2">
-              {meso.microciclos.map((w, wi) => (
-                <MicrocicloRow
-                  key={w.id}
-                  micro={w}
-                  microAnterior={wi > 0 ? meso.microciclos[wi - 1] : undefined}
-                  ctx={ctx}
-                  editavel={editavel}
-                  onChange={trocarMicro}
-                  atual={semanaCorrente != null && w.semana === semanaCorrente}
-                  onEditar={onEditarSemana}
-                />
-              ))}
-            </div>
+            <ListaChips titulo="Tipos de exercício" itens={meso.tiposExercicio} />
           </div>
+        </section>
 
-          {/* (2) Dinâmica: o cadeado por variável. As três tendências saíram daqui e foram
-              para a FACE do cartão, junto das barras; repeti-las aqui era a mesma frase duas
-              vezes na mesma tela, uma delas escondida atrás de um clique. */}
-          <div className="rounded-[14px] border border-border bg-surface-soft p-3">
-            {editavel ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="mr-0.5 text-2xs text-ink-3">Travar (não deixa progredir):</span>
-                {(["volume", "intensidade", "complexidade"] as VariavelTravavel[]).map((v) => {
-                  const on = travadas.includes(v);
-                  return (
-                    <button
-                      key={v}
-                      type="button"
-                      onClick={() => toggleTrava(v)}
-                      aria-pressed={on}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-2xs font-semibold transition-colors",
-                        on ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface",
-                      )}
-                    >
-                      {on ? <Lock className="h-3 w-3" aria-hidden /> : <LockOpen className="h-3 w-3" aria-hidden />}
-                      <span className="capitalize">{v}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              travadas.length > 0 && (
-                <p className="flex items-center gap-1 text-2xs font-medium text-ink-3">
-                  <Lock className="h-3 w-3" aria-hidden /> Travado (não progride): {travadas.join(", ")}
-                </p>
-              )
-            )}
-          </div>
-
-          {/* (3) O que treinar: identidade da fase (capacidades e modalidades). */}
-          <div>
-            <Eyebrow className="mb-1.5">O que treinar</Eyebrow>
-            <div className="grid gap-x-4 gap-y-3 sm:grid-cols-2">
-              <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
-              <ListaChips
-                titulo="Modalidades em foco"
-                itens={(meso.modalidades ?? []).map((id) => getModalidade(id)?.nome ?? id)}
-              />
-            </div>
-          </div>
-
-          {/* (4) Reavaliação e critérios de decisão. */}
-          {editavel && (
-            <label className="flex items-center gap-2 rounded-[14px] bg-surface-soft p-2.5 text-sm text-ink-2">
-              <input
-                type="checkbox"
-                checked={Boolean(meso.reavaliacao)}
-                onChange={(e) => onChange?.({ ...meso, reavaliacao: e.target.checked })}
-                className="h-4 w-4 accent-[var(--primary)]"
-              />
-              <CalendarCheck className="h-4 w-4 text-analysis" />
-              Reavaliar ao fim deste bloco (semana {meso.semanaFim})
-            </label>
-          )}
-
-          <div className="grid gap-3 sm:grid-cols-2">
+        <section>
+          <Eyebrow className="mb-2">Quando avançar ou recuar</Eyebrow>
+          <div className="space-y-3">
             <CriterioLista
               titulo="Progredir quando"
               itens={meso.criteriosProgressao}
@@ -930,40 +860,98 @@ export function MesocicloCard({
               editavel={editavel}
               onChange={(itens) => onChange?.({ ...meso, criteriosRegressao: itens })}
             />
+            {editavel ? (
+              <label className="flex items-center gap-2 rounded-[14px] bg-surface-soft p-2.5 text-sm text-ink-2">
+                <input
+                  type="checkbox"
+                  checked={Boolean(meso.reavaliacao)}
+                  onChange={(e) => onChange?.({ ...meso, reavaliacao: e.target.checked })}
+                  className="h-4 w-4 accent-[var(--primary)]"
+                />
+                <CalendarCheck className="h-4 w-4 shrink-0 text-analysis" aria-hidden />
+                Reavaliar ao fim deste bloco (semana {meso.semanaFim})
+              </label>
+            ) : (
+              meso.reavaliacao && (
+                <p className="flex items-center gap-2 text-sm text-ink-2">
+                  <CalendarCheck className="h-4 w-4 shrink-0 text-analysis" aria-hidden />
+                  Reavaliar ao fim deste bloco (semana {meso.semanaFim}).
+                </p>
+              )
+            )}
+            {mostrarReavaliar && (
+              <Link to={reavaliarHref!} className={buttonClasses("secondary", "sm")}>
+                <CalendarCheck className="h-4 w-4" /> Registrar reavaliação
+              </Link>
+            )}
           </div>
+        </section>
 
-          {mostrarReavaliar && (
-            <Link to={reavaliarHref!} className={buttonClasses("secondary", "sm")}>
-              <CalendarCheck className="h-4 w-4" /> Registrar reavaliação
-            </Link>
-          )}
+        <section>
+          <Eyebrow className="mb-2">Acompanhar e travar</Eyebrow>
+          <div className="space-y-3">
+            {parametros.length > 0 && (
+              <div>
+                <p className="mb-1 text-2xs font-semibold uppercase tracking-wide text-ink-3">Parâmetros do bloco</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {parametros.map((p) => (
+                    <Pill key={p.id} tone="neutral">
+                      {p.sigla ?? p.nome}
+                    </Pill>
+                  ))}
+                </div>
+              </div>
+            )}
 
-          {/* (5) Detalhes da fase: o que desce da leitura de relance para quem quiser aprofundar. */}
-          <details className="rounded-[14px] border border-dashed border-border bg-surface-soft p-3 text-xs">
-            <summary className="cursor-pointer list-none font-semibold text-ink-2 [&::-webkit-details-marker]:hidden">
-              Detalhes da fase
-            </summary>
-            <div className="mt-3 grid gap-x-4 gap-y-3 sm:grid-cols-2">
-              <ListaChips titulo="Tipos de exercício" itens={meso.tiposExercicio} />
-              {meso.parametros.length > 0 && (
-                <div>
-                  <p className="mb-1 text-2xs font-semibold uppercase tracking-wide text-ink-3">Acompanhar</p>
+            {/*
+              CONTROLE E CONSEQUÊNCIA NO MESMO LUGAR. A trava tinha o botão aqui e a
+              explicação num cartão âmbar do trilho, do outro lado da tela: quem ligava não
+              lia, e quem lia não sabia onde desligar.
+            */}
+            <div className="rounded-[14px] border border-border bg-surface-soft p-3">
+              {editavel ? (
+                <>
+                  <p className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+                    Travar (não deixa progredir)
+                  </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {meso.parametros.map((id) => {
-                      const p = getParam(id);
-                      return p ? (
-                        <Pill key={id} tone="neutral">
-                          {p.sigla ?? p.nome}
-                        </Pill>
-                      ) : null;
+                    {(["volume", "intensidade", "complexidade"] as VariavelTravavel[]).map((v) => {
+                      const on = travadas.includes(v);
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => toggleTrava(v)}
+                          aria-pressed={on}
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
+                            on ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface",
+                          )}
+                        >
+                          {on ? <Lock className="h-3 w-3" aria-hidden /> : <LockOpen className="h-3 w-3" aria-hidden />}
+                          {VARIAVEL_LABEL[v]}
+                        </button>
+                      );
                     })}
                   </div>
-                </div>
+                </>
+              ) : (
+                travadas.length > 0 && (
+                  <p className="flex items-start gap-1.5 text-xs font-medium text-ink-2">
+                    <Lock className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+                    Sem progressão neste bloco: {travadas.map((v) => VARIAVEL_LABEL[v].toLowerCase()).join(", ")}.
+                  </p>
+                )
+              )}
+              {travadas.length > 0 && (
+                <p className="mt-2 text-2xs leading-snug text-ink-3">
+                  O alvo destas variáveis fica no patamar da primeira semana de carga até você destravar.
+                </p>
               )}
             </div>
-          </details>
-        </div>
-      )}
+          </div>
+        </section>
+      </div>
     </Card>
   );
 }
@@ -973,50 +961,34 @@ export function MesocicloCard({
 /**
  * Resumo dos métodos de série usados na semana ("2x Bi-set · 1x Drop-set"), para o método
  * ficar visível no nível do microciclo sem abrir cada sessão. Cada grupo (bi/tri/super-set)
- * conta UMA vez (é um par/trio, não dois exercícios soltos); métodos por bloco (drop-set,
- * rest-pause...) contam por bloco.
+ * conta UMA vez, e não uma por exercício.
  */
 function variacoesDoMicro(micro: Microciclo): { metodo: MetodoSerie; n: number }[] {
-  const contagem = new Map<MetodoSerie, number>();
-  const gruposVistos = new Set<string>();
+  const conta = new Map<MetodoSerie, number>();
   for (const s of micro.sessoes) {
-    for (const b of s.blocos) {
-      if (!b.metodo || b.metodo === "tradicional") continue;
-      if (b.grupoMetodo) {
-        if (gruposVistos.has(b.grupoMetodo)) continue;
-        gruposVistos.add(b.grupoMetodo);
-      }
-      contagem.set(b.metodo, (contagem.get(b.metodo) ?? 0) + 1);
+    for (const seg of agruparBlocosPorMetodo(s.blocos)) {
+      const m = seg.tipo === "grupo" ? seg.metodo : seg.bloco.metodo;
+      if (!m || m === "tradicional") continue;
+      conta.set(m, (conta.get(m) ?? 0) + 1);
     }
   }
-  return [...contagem.entries()].map(([metodo, n]) => ({ metodo, n }));
+  return [...conta.entries()].map(([metodo, n]) => ({ metodo, n }));
 }
 
 /**
- * "5 exercícios · 14 séries": o tamanho de uma sessão em uma linha, direto dos blocos.
- * O aeróbio entra em minutos e fora da conta de séries, que é a mesma regra do equilíbrio
- * da semana e do documento: minuto de caminhada não é série de força.
+ * OS CONTROLES DA SEMANA, na tela do editor.
+ *
+ * Eram a cabeça de uma linha sanfonada dentro do cartão do bloco, no meio de outras três ou
+ * quatro semanas, cada uma carregando o editor inteiro de cada sessão. Tudo o que é DA
+ * SEMANA passou a viver na tela da semana: o tipo (carga, descarga, teste), o que mudou em
+ * relação à anterior, a faixa da diretriz e a porta de adicionar sessão.
  */
-function fraseDeExercicios(sessao: Sessao): string {
-  const forca = sessao.blocos.filter((b) => b.tipo !== "aerobio");
-  const series = forca.reduce((n, b) => n + (b.seriesAlvo ?? Number(/(\d+)/.exec(b.series ?? "")?.[1] ?? 0)), 0);
-  const minutos = sessao.blocos
-    .filter((b) => b.tipo === "aerobio")
-    .reduce((n, b) => n + Number(/(\d+)/.exec(String(b.duracaoAlvoMin ?? b.duracao ?? ""))?.[1] ?? 0), 0);
-  const partes = [`${forca.length} ${forca.length === 1 ? "exercício" : "exercícios"}`];
-  if (series > 0) partes.push(`${series} ${series === 1 ? "série" : "séries"}`);
-  if (minutos > 0) partes.push(`aeróbio ${minutos} min`);
-  return partes.join(" · ");
-}
-
-function MicrocicloRow({
+export function ControlesDaSemana({
   micro,
   microAnterior,
   ctx,
   editavel,
   onChange,
-  atual,
-  onEditar,
 }: {
   micro: Microciclo;
   /** a semana anterior no mesmo bloco: alimenta o selo de estado e o "o que mudou" */
@@ -1024,168 +996,130 @@ function MicrocicloRow({
   ctx: ContextoFaixa;
   editavel: boolean;
   onChange: (m: Microciclo) => void;
-  /** a semana corrente do plano: ganha destaque e abre por padrão */
-  atual?: boolean;
-  /** abre a tela do editor nesta semana; ausente = sem porta (uso fora da periodização) */
-  onEditar?: (n: number) => void;
 }) {
-  const [aberto, setAberto] = React.useState(Boolean(atual));
   const variacoes = variacoesDoMicro(micro);
 
   // Estado da semana (progressão/manutenção/regressão/descarga/teste), derivado do agregado
-  // real vs a semana anterior. Descarga e teste já aparecem no selo "Semana N"; para as de
-  // carga, o selo de estado diz para onde a dose foi. "o que mudou" lista as diferenças.
+  // real vs a semana anterior. Descarga e teste já aparecem no tipo; para as de carga, o selo
+  // de estado diz para onde a dose foi. "o que mudou" lista as diferenças.
   const estado = estadoSemana(micro, microAnterior);
   const mostrarSeloEstado = micro.tipo === "carga" && estado !== "inicio";
   const mudancas = microAnterior ? compararAlvos(microAnterior, micro) : null;
 
-  // Frequência é quantas sessões a semana tem. Guardar o número separado das sessões
-  // deixaria o plano dizer "4x" e entregar 3.
-  const trocarSessoes = (sessoes: Sessao[]) => onChange({ ...micro, sessoes, frequencia: sessoes.length });
-
-  const addSessao = () =>
-    trocarSessoes([...micro.sessoes, { id: nid("ses"), nome: `Sessão ${micro.sessoes.length + 1}`, blocos: [] }]);
-
   return (
-    <div className={cn("rounded-[14px] border", atual ? "border-primary bg-primary-tint" : "border-border")}>
-      <button
-        onClick={() => setAberto((v) => !v)}
-        aria-expanded={aberto}
-        className="flex w-full items-start gap-2 p-2.5 text-left text-sm hover:bg-surface-soft"
-      >
-        {/* Duas linhas: o selo da semana com a contagem em cima, os nomes das sessões embaixo. */}
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <Pill tone={micro.tipo === "deload" ? "warning" : micro.tipo === "teste" ? "analysis" : "neutral"}>
-              Semana {micro.semana}
-              {micro.tipo !== "carga" ? ` · ${TIPO_LABEL[micro.tipo]}` : ""}
-            </Pill>
-            <span className="text-ink-2">{fraseDeSessoes(micro.sessoes)}</span>
-            {mostrarSeloEstado && <Pill tone={ESTADO_TONE[estado]}>{ESTADO_LABEL[estado]}</Pill>}
-          </div>
-          {micro.sessoes.length > 0 && (
-            <p className="truncate text-xs text-ink-3">{micro.sessoes.map((s) => s.nome).join(" · ")}</p>
-          )}
-          {variacoes.length > 0 && (
-            <p className="truncate text-2xs text-ink-3">
-              Variações: {variacoes.map((v) => `${v.n}x ${getMetodo(v.metodo)?.nome}`).join(" · ")}
-            </p>
-          )}
-        </div>
-        <ChevronDown className={cn("mt-0.5 h-4 w-4 shrink-0 text-ink-3 transition-transform", aberto && "rotate-180")} />
-      </button>
-
-      {aberto && (
-        <div className="space-y-2 border-t border-border p-2.5">
-          {editavel && (
-            <div className="flex flex-wrap items-center gap-2">
-              <Eyebrow>Tipo da semana</Eyebrow>
-              {/* Segmentado do protótipo: trilho branco com borda; o segmento ativo é a
-                  pílula escura (bg-ink), os inativos ficam em texto. */}
-              <div className="inline-flex gap-0.5 rounded-full border border-border bg-surface p-0.5">
-                {(["carga", "deload", "teste"] as TipoMicrociclo[]).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() =>
-                      onChange({
-                        ...micro,
-                        tipo: t,
-                        nota: t === "deload" ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
-                      })
-                    }
-                    aria-pressed={micro.tipo === t}
-                    className={cn(
-                      "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
-                      micro.tipo === t ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft",
-                    )}
-                  >
-                    {TIPO_LABEL[t]}
-                  </button>
-                ))}
-              </div>
+    <div className="space-y-2.5 rounded-card border border-border bg-surface-soft p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        {editavel ? (
+          <>
+            <Eyebrow>Tipo da semana</Eyebrow>
+            {/* Segmentado do protótipo: trilho branco com borda; o segmento ativo é a
+                pílula escura (bg-ink), os inativos ficam em texto. */}
+            <div className="inline-flex gap-0.5 rounded-full border border-border bg-surface p-0.5">
+              {(["carga", "deload", "teste"] as TipoMicrociclo[]).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() =>
+                    onChange({
+                      ...micro,
+                      tipo: t,
+                      nota: t === "deload" ? "Semana de descarga: reduza volume e intensidade para recuperar." : undefined,
+                    })
+                  }
+                  aria-pressed={micro.tipo === t}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
+                    micro.tipo === t ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft",
+                  )}
+                >
+                  {TIPO_LABEL[t]}
+                </button>
+              ))}
             </div>
-          )}
+          </>
+        ) : (
+          <Pill tone={micro.tipo === "deload" ? "warning" : micro.tipo === "teste" ? "analysis" : "neutral"}>
+            {TIPO_LABEL[micro.tipo]}
+          </Pill>
+        )}
+        {mostrarSeloEstado && <Pill tone={ESTADO_TONE[estado]}>{ESTADO_LABEL[estado]}</Pill>}
+        <span className="text-xs text-ink-2">{fraseDeSessoes(micro.sessoes)}</span>
+      </div>
 
-          {/* Nota da semana no card âmbar do protótipo ("Motivo registrado"): rótulo em
-              caixa alta warning, corpo em tinta. O texto é o mesmo de antes. */}
-          {micro.nota && (
-            <div className="rounded-[14px] border border-warning/30 bg-warning-tint px-3 py-2">
-              <p className="text-2xs font-bold uppercase tracking-[0.12em] text-warning">Nota da semana</p>
-              <p className="mt-1 text-xs leading-relaxed text-ink">{micro.nota}</p>
-            </div>
-          )}
+      {variacoes.length > 0 && (
+        <p className="text-2xs text-ink-3">
+          Variações: {variacoes.map((v) => `${v.n}x ${getMetodo(v.metodo)?.nome}`).join(" · ")}
+        </p>
+      )}
 
-          {/* Objetivo declarado da semana (derivado da fase e do tipo). */}
-          {micro.objetivo && (
-            <p className="flex items-start gap-1.5 text-xs text-ink-2">
-              <Target className="mt-0.5 h-3.5 w-3.5 shrink-0 text-analysis" aria-hidden />
-              <span>
-                <span className="font-semibold text-ink">Objetivo da semana:</span> {micro.objetivo}
-              </span>
-            </p>
-          )}
-
-          {/* O que mudou em relação à semana anterior (só leitura; no editor os campos mudam à mão). */}
-          {!editavel && mudancas && (
-            <div className="rounded-[14px] border border-dashed border-border bg-surface-soft p-2.5">
-              <p className="mb-1 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">
-                <TrendingUp className="h-3.5 w-3.5 text-primary" aria-hidden /> Em relação à semana anterior
-              </p>
-              <ul className="space-y-0.5">
-                {mudancas.map((m, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-xs text-ink-2">
-                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-ink-3" />
-                    {m}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <FaixaReferencia ctx={ctx} />
-
-          {/*
-            AQUI TERMINA A LEITURA E COMEÇA O EDITOR.
-
-            Este ponto renderizava um `SessaoBloco` completo por sessão da semana. Quatro
-            semanas abertas num bloco davam oito ou doze paredões de formulário empilhados
-            DENTRO de um cartão de coluna estreita, e a mesma edição existia de novo mais
-            abaixo, na semana em foco. Duas cópias do editor na mesma tela, e a de dentro do
-            cartão era a pior das duas.
-
-            Fica o que responde "o que tem nesta semana"; a dose de cada exercício se edita
-            na tela do editor, que é onde ela cabe.
-          */}
-          <ul className="space-y-1.5">
-            {micro.sessoes.map((s) => (
-              <li
-                key={s.id}
-                className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-[14px] border border-border bg-surface px-3 py-2"
-              >
-                <span className="text-sm font-semibold text-ink">{s.nome}</span>
-                {s.foco && <span className="text-xs text-ink-3">{s.foco}</span>}
-                <span className="ml-auto text-xs text-ink-2">{fraseDeExercicios(s)}</span>
+      {/* O que mudou em relação à semana anterior. No editor os campos mudam à mão, então a
+          lista só serve a quem está lendo o plano, não a quem o está reescrevendo. */}
+      {!editavel && mudancas && (
+        <div className="rounded-[14px] border border-dashed border-border bg-surface p-2.5">
+          <p className="mb-1 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">
+            <TrendingUp className="h-3.5 w-3.5 text-primary" aria-hidden /> Em relação à semana anterior
+          </p>
+          <ul className="space-y-0.5">
+            {mudancas.map((m, i) => (
+              <li key={i} className="flex items-start gap-1.5 text-xs text-ink-2">
+                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-ink-3" />
+                {m}
               </li>
             ))}
           </ul>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {onEditar && (
-              <button onClick={() => onEditar(micro.semana)} className={buttonClasses("secondary", "sm")}>
-                <Pencil className="h-3.5 w-3.5" /> Editar semana {micro.semana}
-              </button>
-            )}
-            {editavel && (
-              <button
-                onClick={addSessao}
-                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-control border-2 border-dashed border-border px-3 text-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
-              >
-                <Plus className="h-3.5 w-3.5" /> Adicionar sessão
-              </button>
-            )}
-          </div>
         </div>
       )}
+
+      <FaixaReferencia ctx={ctx} />
+    </div>
+  );
+}
+
+/**
+ * O EFEITO DA ÚLTIMA EDIÇÃO, na hora e em número.
+ *
+ * Sem isto, a única resposta ao gesto era a curva se redesenhar, e ninguém guarda de memória
+ * onde ela estava dois segundos atrás. Foi assim que um professor concluiu que a edição dele
+ * não tinha pegado (ver efeitoDaEdicao.ts). Mora na tela do editor, que é onde o gesto
+ * acontece.
+ */
+export function EfeitoDaEdicaoCard({ efeito, onDispensar }: { efeito: EfeitoDaEdicao; onDispensar: () => void }) {
+  return (
+    <div className="rounded-card border border-analysis/30 bg-analysis-tint/40 p-3">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-semibold text-ink">O que a sua edição mudou na semana {efeito.semana}</p>
+        <button
+          onClick={onDispensar}
+          className="rounded p-0.5 text-ink-3 hover:bg-surface hover:text-ink"
+          aria-label="Dispensar o resumo da edição"
+        >
+          <X className="h-3.5 w-3.5" aria-hidden />
+        </button>
+      </div>
+      <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
+        {efeito.exerciciosAntes !== efeito.exerciciosDepois && (
+          <span>
+            <b className="text-ink">Exercícios</b> {efeito.exerciciosAntes} para {efeito.exerciciosDepois}
+          </span>
+        )}
+        <span>
+          <b className="text-ink">Volume (soma)</b> {formatarDelta(efeito.deltaVolume)}
+        </span>
+        <span>
+          <b className="text-ink">Esforço médio</b> {formatarDelta(efeito.deltaEsforco)}
+        </span>
+        {/* O gesto foi num dia; o número acima é da semana. O dia aparece ao lado, com
+            o nome da sessão, para quem dobrou o treino de terça ler que dobrou. */}
+        {efeito.sessao && (
+          <span>
+            <b className="text-ink">Nesta sessão ({efeito.sessao.nome})</b> volume {formatarDelta(efeito.sessao.deltaVolume)}
+            {efeito.sessao.exerciciosAntes !== efeito.sessao.exerciciosDepois
+              ? `, ${efeito.sessao.exerciciosAntes} para ${efeito.sessao.exerciciosDepois} exercícios`
+              : ""}
+          </span>
+        )}
+      </div>
+      {efeito.leitura && <p className="mt-1.5 text-xs leading-relaxed text-ink-2">{efeito.leitura}</p>}
     </div>
   );
 }

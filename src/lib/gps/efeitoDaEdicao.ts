@@ -182,5 +182,6 @@ export function efeitoDaEdicao(antes: Microciclo, depois: Microciclo): EfeitoDaE
 export function formatarDelta(d: number | null): string {
   if (d == null) return "sem base de comparação";
   if (Math.abs(d) < 1) return "praticamente igual";
-  return `${d > 0 ? "+" : ""}${d}%`;
+  // Vírgula decimal: a variação saía "-38.7%" na tela, em português.
+  return `${d > 0 ? "+" : ""}${String(d).replace(".", ",")}%`;
 }

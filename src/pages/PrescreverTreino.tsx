@@ -15,20 +15,25 @@ import {
   AlertTriangle,
   MapPin,
   ArrowLeft,
-  Lock,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
 import {
+  ControlesDaSemana,
+  EfeitoDaEdicaoCard,
   GraficoProgressao,
   MesocicloCard,
   ModeloExplicacao,
+  PainelDoBloco,
   SessaoBloco,
   tetosDoPlano,
-  VARIAVEL_LABEL,
   type ContextoFaixa,
 } from "@/components/treino/PlanoEditor";
+import { efeitoDaEdicao, type EfeitoDaEdicao } from "@/lib/gps/efeitoDaEdicao";
 import { getParam } from "@/data/monitoringParameters";
 import { DeOndeVemOLimite } from "@/components/treino/DeOndeVemOLimite";
 import { TresCamadas } from "@/components/ui/camadas";
@@ -1234,6 +1239,37 @@ function ResultadoPlano({
   );
   React.useEffect(() => setSemanaFoco(Number(params.get("semana")) || semanaCorrente), [semanaCorrente]);
 
+  /*
+   * O FOCO VAI ATRÁS DO CLIQUE.
+   *
+   * Clicar numa semana do calendário mudava o painel do bloco e o cartão da semana, os dois
+   * bem mais abaixo, sem nenhum sinal de que algo tinha acontecido: em tela de notebook o
+   * que mudava estava fora da vista. Agora o gesto leva o olho (e o foco de teclado) até a
+   * região que mudou. `block: "nearest"` não rola nada quando ela já está visível, então o
+   * segundo clique seguido não sacode a página.
+   */
+  const regiaoDoFoco = React.useRef<HTMLDivElement>(null);
+  const focarSemana = (n: number) => {
+    setSemanaFoco(n);
+    requestAnimationFrame(() => {
+      const el = regiaoDoFoco.current;
+      if (!el) return;
+      el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      el.focus({ preventScroll: true });
+    });
+  };
+
+  // Clicar num bloco move o foco para ele. Se a semana em foco JÁ está dentro do bloco, não
+  // mexe: trocar a semana debaixo do dedo de quem só quis ler as regras da fase seria perder
+  // o lugar sem ter pedido.
+  const focarBloco = (meso: Mesociclo) => {
+    if (semanaFoco >= meso.semanaInicio && semanaFoco <= meso.semanaFim) {
+      regiaoDoFoco.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      return;
+    }
+    focarSemana(meso.semanaInicio);
+  };
+
   const irParaEditor = (n: number) => {
     const proximos = new URLSearchParams(params);
     proximos.set("semana", String(n));
@@ -1455,15 +1491,13 @@ function ResultadoPlano({
         semanas={semanas}
         foco={semanaFoco}
         corrente={salvo ? semanaCorrente : undefined}
-        onFocar={setSemanaFoco}
+        onFocar={focarSemana}
       />
 
       {/*
-        O PLANO BLOCO A BLOCO, lado a lado e sempre visível (protótipo do editor).
-        Ele morava dentro de um <details>: a camada que responde "para onde este plano
-        está indo" ficava atrás de um clique, enquanto a semana solta ficava na frente.
-        Agora cada cartão traz a assinatura do bloco na face (as duas barras e as três
-        direções) e abre só para o detalhe fino das semanas.
+        O PLANO BLOCO A BLOCO: a fileira é o SELETOR, e o detalhe é um painel só, logo
+        abaixo, sempre no mesmo lugar. Ver o comentário de MesocicloCard: o cartão que abria
+        no lugar mudava de posição conforme qual deles era aberto.
       */}
       <section>
         <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-2">
@@ -1476,14 +1510,10 @@ function ResultadoPlano({
               key={m.id}
               meso={m}
               indice={i}
-              ctx={ctx}
-              editavel={premium}
-              onChange={trocarMeso}
+              emFoco={m.id === emFoco?.meso.id}
               atual={m.id === mesoAtual?.id}
-              semanaCorrente={semanaCorrente}
-              reavaliarHref={reavaliarHref}
               tetos={tetos}
-              onEditarSemana={irParaEditor}
+              onFocar={focarBloco}
             />
           ))}
         </div>
@@ -1493,30 +1523,46 @@ function ResultadoPlano({
       </section>
 
       {/*
-        A SEMANA EM FOCO E O PORQUÊ, lado a lado (protótipo). O trilho fala da semana em
-        foco, então é aqui, e não ao lado da página inteira, que ele pertence. E o que está
-        aqui é LEITURA: editar é a tela do editor, um clique adiante.
+        TUDO O QUE MUDA COM O CLIQUE mora daqui para baixo, e é para cá que o foco vai: as
+        regras do bloco escolhido, a semana escolhida e o porquê. É uma região só, com nome,
+        para que a mudança seja anunciada a quem navega por teclado ou leitor de tela.
       */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div
+        ref={regiaoDoFoco}
+        tabIndex={-1}
+        role="group"
+        aria-label={`Semana ${semanaFoco} em foco`}
+        className="scroll-mt-24 space-y-5 focus:outline-none"
+      >
         {emFoco && (
-          <ResumoDaSemana
-            micro={emFoco.micro}
+          <PainelDoBloco
             meso={emFoco.meso}
-            semanas={semanas}
-            podeEditar={premium}
-            onEditar={() => irParaEditor(emFoco.micro.semana)}
+            indice={macro.mesociclos.findIndex((m) => m.id === emFoco.meso.id)}
+            ctx={ctx}
+            editavel={premium}
+            onChange={trocarMeso}
+            reavaliarHref={reavaliarHref}
+            semanaCorrente={semanaCorrente}
           />
         )}
 
-        {/* TRILHO: por que este modelo, a trava do bloco e o porquê dos números. */}
-        <TrilhoDoPlano
-          plano={plano}
-          micro={emFoco?.micro}
-          meso={emFoco?.meso}
-          modelo={modelo}
-          alunoObj={alunoObj}
-          refIds={plano.refIds}
-        />
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          {emFoco && (
+            <ResumoDaSemana
+              micro={emFoco.micro}
+              meso={emFoco.meso}
+              semanas={semanas}
+              podeEditar={premium}
+              onFocar={focarSemana}
+              onEditar={() => irParaEditor(emFoco.micro.semana)}
+            />
+          )}
+
+          {/* TRILHO: por que o PLANO é assim. O que é do bloco vive no painel acima e o
+              que é da semana, no cartão ao lado; sem isso a mesma frase saía em três
+              lugares da mesma tela. */}
+          <TrilhoDoPlano plano={plano} modelo={modelo} alunoObj={alunoObj} refIds={plano.refIds} />
+        </div>
       </div>
 
       <p className="rounded-card bg-surface-soft p-3 text-xs text-ink-3">
@@ -1842,22 +1888,64 @@ function ResumoDaSemana({
   meso,
   semanas,
   podeEditar,
+  onFocar,
   onEditar,
 }: {
   micro: Microciclo;
   meso: Mesociclo;
   semanas: { micro: Microciclo; meso: Mesociclo }[];
   podeEditar: boolean;
+  onFocar: (n: number) => void;
   onEditar: () => void;
 }) {
+  /*
+   * O PASSO DE SEMANA, aqui e não só no calendário.
+   *
+   * O calendário fica uma tela inteira acima desta caixa: clicar nele traz o olho para cá,
+   * e trocar de semana de novo exigiria subir a página toda de volta. Duas setas resolvem o
+   * caminho de ida e volta sem repetir o calendário (que continua sendo o mapa; estas são
+   * só o próximo e o anterior).
+   */
+  const idx = semanas.findIndex((x) => x.micro.semana === micro.semana);
+  const anterior = idx > 0 ? semanas[idx - 1].micro.semana : undefined;
+  const proxima = idx >= 0 && idx < semanas.length - 1 ? semanas[idx + 1].micro.semana : undefined;
+
   return (
     <Card variant="raised" className="min-w-0 p-4 md:p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="font-display text-lg font-bold text-ink">Semana {micro.semana} em foco</h3>
-        <span className="text-xs text-ink-3">
-          {rotuloMeso(meso)}
-          {micro.tipo === "deload" ? " · descarga" : ""}
-        </span>
+        <div className="flex items-center gap-1">
+          <span className="mr-1 text-xs text-ink-3">
+            {rotuloMeso(meso)}
+            {micro.tipo === "deload" ? " · descarga" : ""}
+          </span>
+          <button
+            type="button"
+            onClick={() => anterior != null && onFocar(anterior)}
+            disabled={anterior == null}
+            aria-label={anterior != null ? `Ir para a semana ${anterior}` : "Não há semana anterior"}
+            className={cn(
+              // 44px: o piso de alvo de toque da casa. Com 36 a seta cabia no desenho e não no dedo.
+              "grid h-11 w-11 place-items-center rounded-control border border-border text-ink-2",
+              anterior == null ? "cursor-not-allowed opacity-40" : "hover:bg-surface-soft hover:text-ink",
+            )}
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => proxima != null && onFocar(proxima)}
+            disabled={proxima == null}
+            aria-label={proxima != null ? `Ir para a semana ${proxima}` : "Não há próxima semana"}
+            className={cn(
+              // 44px: o piso de alvo de toque da casa. Com 36 a seta cabia no desenho e não no dedo.
+              "grid h-11 w-11 place-items-center rounded-control border border-border text-ink-2",
+              proxima == null ? "cursor-not-allowed opacity-40" : "hover:bg-surface-soft hover:text-ink",
+            )}
+          >
+            <ChevronRight className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
       </div>
       {meso.foco && <p className="mt-1 text-sm text-ink-2">{meso.foco}</p>}
 
@@ -1972,8 +2060,37 @@ function EditorDaSemana({
   React.useEffect(() => setSessaoIdx(0), [micro.id]);
   const sessao = micro.sessoes[Math.min(sessaoIdx, micro.sessoes.length - 1)];
 
+  /*
+   * O EFEITO DA EDIÇÃO acompanha o gesto, e o gesto é aqui.
+   *
+   * Ele vivia dentro do cartão do bloco, na periodização, onde a edição não acontece mais.
+   * Sem ele, a única resposta a mexer numa dose seria a curva se redesenhar noutra tela, e
+   * ninguém guarda de memória onde ela estava dois segundos atrás.
+   */
+  const [efeito, setEfeito] = React.useState<EfeitoDaEdicao | null>(null);
+  React.useEffect(() => setEfeito(null), [micro.id]);
+  const trocarMicro = (novo: Microciclo) => {
+    setEfeito(efeitoDaEdicao(micro, novo));
+    onChange(novo);
+  };
+
   const trocarSessao = (nova: Sessao) =>
-    onChange({ ...micro, sessoes: micro.sessoes.map((s) => (s.id === nova.id ? nova : s)) });
+    trocarMicro({ ...micro, sessoes: micro.sessoes.map((s) => (s.id === nova.id ? nova : s)) });
+
+  const addSessao = () =>
+    trocarMicro({
+      ...micro,
+      sessoes: [...micro.sessoes, { id: `ses-${uid()}`, nome: `Sessão ${micro.sessoes.length + 1}`, blocos: [] }],
+      // Frequência é quantas sessões a semana tem. Guardar o número separado das sessões
+      // deixaria o plano dizer "4x" e entregar 3.
+      frequencia: micro.sessoes.length + 1,
+    });
+
+  // A semana anterior DO MESMO BLOCO: é contra ela que "o que mudou" compara.
+  const anteriorNoBloco = (() => {
+    const i = meso.microciclos.findIndex((w) => w.id === micro.id);
+    return i > 0 ? meso.microciclos[i - 1] : undefined;
+  })();
 
   const idx = semanas.findIndex((x) => x.micro.semana === micro.semana);
   const anterior = idx > 0 ? semanas[idx - 1] : undefined;
@@ -2029,6 +2146,16 @@ function EditorDaSemana({
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-3">
+          <ControlesDaSemana
+            micro={micro}
+            microAnterior={anteriorNoBloco}
+            ctx={ctx}
+            editavel={editavel}
+            onChange={trocarMicro}
+          />
+
+          {efeito && <EfeitoDaEdicaoCard efeito={efeito} onDispensar={() => setEfeito(null)} />}
+
           {micro.sessoes.length === 0 ? (
             <p className="rounded-control border border-dashed border-border p-4 text-sm text-ink-3">
               Esta semana não tem sessão. Ajuste no plano bloco a bloco, na periodização.
@@ -2067,12 +2194,21 @@ function EditorDaSemana({
                   onChange={trocarSessao}
                   onRemover={() => {
                     const antes = micro;
-                    onChange({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) });
+                    trocarMicro({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) });
                     toastDesfazer(`${sessao.nome} removida da semana ${micro.semana}.`, () => onChange(antes));
                   }}
                 />
               )}
             </>
+          )}
+
+          {editavel && (
+            <button
+              onClick={addSessao}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-card border-2 border-dashed border-border py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden /> Adicionar sessão nesta semana
+            </button>
           )}
 
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
@@ -2228,17 +2364,21 @@ function listaCurta(nomes: string[], max = 3): string {
   return `${nomes.slice(0, max).join(", ")} e mais ${nomes.length - max}`;
 }
 
+/**
+ * O TRILHO responde POR QUE O PLANO É ASSIM, e mais nada.
+ *
+ * Ele já falou de três coisas ao mesmo tempo: o modelo, a trava do bloco e os parâmetros do
+ * bloco, enquanto o painel do bloco, logo à esquerda, falava dos mesmos parâmetros e trazia
+ * o botão da mesma trava. Controle de um lado da tela e explicação do outro: quem ligava não
+ * lia, e quem lia não sabia onde desligar. O que é do bloco voltou para o painel do bloco.
+ */
 function TrilhoDoPlano({
   plano,
-  micro,
-  meso,
   modelo,
   alunoObj,
   refIds,
 }: {
   plano: PlanoTreino;
-  micro?: Microciclo;
-  meso?: Mesociclo;
   modelo: ReturnType<typeof getModelo>;
   alunoObj?: Aluno;
   refIds: string[];
@@ -2422,36 +2562,12 @@ function TrilhoDoPlano({
             <p className="text-sm text-ink-2">{t.texto}</p>
           </li>
         ))}
-        {meso && (
-          <li className="border-l-2 border-primary pl-3">
-            <p className="text-sm font-semibold text-ink">Este bloco</p>
-            <p className="text-sm text-ink-2">
-              {rotuloMeso(meso)}
-              {meso.foco ? `, ${meso.foco}` : ""}.
-            </p>
-          </li>
-        )}
       </ul>
-      <p className="text-xs text-ink-3">
-        O que você editar aqui vale para a semana escolhida. Para mexer na tendência do bloco inteiro,
-        use o plano bloco a bloco.
-      </p>
+      {/* Saiu daqui o item "Este bloco" e o aviso sobre onde a edição vale: o painel do
+          bloco em foco diz a mesma coisa logo acima, com mais detalhe, e a edição deixou
+          de acontecer nesta tela. */}
     </div>
   );
-
-  // As variáveis que o profissional congelou NESTE bloco, e as que seguem progredindo.
-  // Quem escreve o rótulo é o editor (VARIAVEL_LABEL): o motor chama de "intensidade" o que
-  // a tela inteira chama de "esforço", e duas grafias para a mesma coisa é como um plano
-  // passa a parecer dois planos.
-  const TRAVAVEIS = ["volume", "intensidade", "complexidade"] as const;
-  const travadas = TRAVAVEIS.filter((v) => (meso?.variaveisTravadas ?? []).includes(v));
-  const livres = TRAVAVEIS.filter((v) => !travadas.includes(v));
-
-  // Parâmetros do bloco em foco, com a sigla que o profissional usa na prancheta.
-  const parametros = (meso?.parametros ?? []).flatMap((id) => {
-    const par = getParam(id);
-    return par ? [par] : [];
-  });
 
   // Até três nomes, e o resto vira contagem: a bibliografia inteira já está na aba Ciência.
   const baseCitada = listaCurta(refIds.map(nomeCurtoDaRef).filter(Boolean), 3);
@@ -2507,39 +2623,6 @@ function TrilhoDoPlano({
         </div>
       </section>
 
-      {/*
-        A TRAVA DO BLOCO (cartão âmbar do protótipo).
-
-        Travar uma variável é a decisão mais consequente desta tela: ela para a progressão de
-        volume, de esforço ou de complexidade até alguém destravar. E até aqui essa decisão só
-        era visível para quem abrisse o cartão do bloco, ou seja justamente para quem já sabia
-        dela. Quem chegasse depois via um plano que não progride, e explicação nenhuma.
-
-        O cartão só existe quando há trava (o motor nunca gera nenhuma; ela é sempre gesto de
-        gente), e diz as duas metades: o que parou e o que continua.
-      */}
-      {meso && travadas.length > 0 && (
-        <Card tone="warning" className="p-4">
-          <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-warning">
-            <Lock className="h-3 w-3" aria-hidden /> Trava · {rotuloMeso(meso)}
-          </p>
-          <p className="mt-2 text-sm text-ink-2">
-            <span className="font-semibold text-ink">
-              Sem progressão neste bloco: {eLista(travadas.map((v) => VARIAVEL_LABEL[v].toLowerCase()))}.
-            </span>{" "}
-            O alvo fica no patamar da primeira semana de carga.
-            {livres.length > 0 && (
-              <>
-                {" "}
-                {comInicialMaiuscula(eLista(livres.map((v) => VARIAVEL_LABEL[v].toLowerCase())))}{" "}
-                {livres.length === 1 ? "segue" : "seguem"} progredindo.
-              </>
-            )}
-          </p>
-          <p className="mt-2 text-2xs text-ink-3">Travas se ligam e desligam no cartão do bloco, logo acima.</p>
-        </Card>
-      )}
-
       <Card className="p-4">
         <TresCamadas resumo={resumo} pratica={pratica} refs={refIds} ariaLabel="Por que estes números" />
       </Card>
@@ -2555,30 +2638,6 @@ function TrilhoDoPlano({
         condicoesAtencao={alunoObj?.condicoesAtencao}
         idade={alunoObj?.idade}
       />
-
-      {/*
-        O QUE ACOMPANHAR (cartão de chips do protótipo).
-
-        `meso.parametros` sempre existiu e sempre foi escolhido pelo motor bloco a bloco, mas
-        vivia atrás de dois cliques: abrir o cartão do bloco e depois abrir "Detalhes da fase".
-        É a lista do que medir para saber se o plano está funcionando, e ela precisa estar
-        visível ENQUANTO se olha a semana, não escondida num terceiro nível.
-      */}
-      {meso && parametros.length > 0 && (
-        <Card className="p-4">
-          <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Parâmetros acompanhados</h3>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {parametros.map((par) => (
-              <Pill key={par.id} tone="neutral">
-                {par.sigla ?? par.nome}
-              </Pill>
-            ))}
-          </div>
-          <p className="mt-2 text-2xs leading-snug text-ink-3">
-            O que o bloco {rotuloMeso(meso)} pede medir para dizer se o plano está indo bem.
-          </p>
-        </Card>
-      )}
 
     </aside>
   );
