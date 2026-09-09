@@ -29,6 +29,7 @@ import type { DeclaracaoAluno } from "@/data/declaracoes";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
 import { aplicarPaleta, PALETA_ALUNO, corDeContraste } from "@/lib/theme/palettes";
 import { GamificacaoView } from "@/components/student/GamificacaoView";
+import { EvolucaoExercicio } from "@/components/app/EvolucaoExercicio";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
 import { ExercicioSheet } from "@/components/student/ExercicioSheet";
 import { TreinoGuiado } from "@/components/student/TreinoGuiado";
@@ -347,6 +348,7 @@ export function StudentApp({
                   feedbacks={sessaoFeedbacks.filter((f) => f.alunoId === aluno.id)}
                   cor={cor}
                   marca={marca}
+                  plano={plano}
                 />
               )}
               {aba === "perfil" && (
@@ -1748,6 +1750,7 @@ function AbaProgresso({
   feedbacks,
   cor,
   marca,
+  plano,
 }: {
   aluno: Aluno;
   avaliacoes: Avaliacao[];
@@ -1757,6 +1760,8 @@ function AbaProgresso({
   cor: string;
   /** marca do profissional: identifica o documento que o aluno leva daqui */
   marca: Marca;
+  /** plano ativo: dá as semanas e as fases do gráfico de carga por exercício */
+  plano?: PlanoTreino;
 }) {
   const doAluno = avaliacoes.filter((a) => a.alunoId === aluno.id).sort((a, b) => b.data - a.data);
   const fmt = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
@@ -1774,6 +1779,15 @@ function AbaProgresso({
         avaliacoes={doAluno}
         feedbacks={feedbacks}
       />
+
+      {/*
+        A CARGA QUE ELE LEVANTOU, exercício por exercício.
+        O aluno via quantos treinos fez na semana e nenhuma linha do que isso virou em
+        quilo, que é justamente o que ele registrou série a série. É o MESMO componente
+        do profissional (mesma agregação, mesma comparação entre semanas de carga), então
+        os dois leem o mesmo número; o que muda é só a pele, que vem da paleta.
+      */}
+      <EvolucaoExercicio plano={plano} execucoes={execucoes} primeiroNome={aluno.nome.split(" ")[0]} />
 
       {/*
         O DOCUMENTO DE EVOLUÇÃO NA MÃO DO ALUNO.

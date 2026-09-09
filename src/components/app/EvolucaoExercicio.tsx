@@ -301,12 +301,14 @@ export function EvolucaoExercicio({
             contêiner rola na horizontal, e um elemento puxado para cima por translate
             seria decepado pelo overflow. */}
         <div className="relative min-w-[520px] pl-11 pt-7">
+          {/* A bandeira usa TOKENS invertidos (tinta como fundo, papel como texto), e não
+              o navy literal: este mesmo gráfico é servido ao aluno na pele escura, onde
+              navy sobre navy sumiria. Assim ela fica escura no papel claro do profissional
+              e clara no navy do aluno, sem um segundo componente. */}
           <span
-            className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-[8px] px-2 py-1 text-2xs font-bold"
+            className="absolute top-0 -translate-x-1/2 whitespace-nowrap rounded-[8px] bg-ink px-2 py-1 text-2xs font-bold text-surface"
             style={{
               left: `calc(2.75rem + (100% - 2.75rem) * ${(x(semanaHoje) / W).toFixed(4)})`,
-              background: "#0B1628",
-              color: "#F3F1EA",
             }}
           >
             Hoje · S{semanaHoje}
