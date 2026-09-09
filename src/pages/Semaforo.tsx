@@ -208,10 +208,16 @@ function LuzDoDia({
         ? { bg: "var(--warning-tint)", luz: "var(--warning-fill)", halo: "rgba(232,163,23,.18)", tinta: "var(--warning)" }
         : { bg: "var(--danger-tint)", luz: "var(--danger-fill)", halo: "rgba(229,72,77,.18)", tinta: "var(--danger)" };
   return (
-    <div className="flex items-center gap-3 rounded-card border border-border p-3.5 sm:p-4" style={{ background: f.bg }}>
+    // No celular a luz vai EM CIMA do numero: lado a lado, os tres cartoes deixavam 30px
+    // para o rotulo, e "nao liberados" precisa de 77. O rotulo e o que da sentido ao
+    // numero; cortado, o cartao vira tres numeros sem significado.
+    <div
+      className="flex flex-col items-start gap-2 rounded-card border border-border p-3 sm:flex-row sm:items-center sm:gap-3 sm:p-4"
+      style={{ background: f.bg }}
+    >
       <span
         aria-hidden
-        className={cn("h-9 w-9 shrink-0 rounded-full sm:h-11 sm:w-11", pulsa && "animate-pulseDot")}
+        className={cn("h-8 w-8 shrink-0 rounded-full sm:h-11 sm:w-11", pulsa && "animate-pulseDot")}
         style={{ background: f.luz, boxShadow: `0 0 0 6px ${f.halo}` }}
       />
       <span className="min-w-0">
