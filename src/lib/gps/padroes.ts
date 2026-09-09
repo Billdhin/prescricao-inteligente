@@ -54,7 +54,9 @@ export type PadraoMovimento =
   /** quadril em plano frontal (abdução, adução): não substitui a cadeia posterior */
   | "quadril-acessorio"
   /** equilíbrio (apoio unipodal): bloco de indicação clínica, nunca trabalho miúdo */
-  | "equilibrio";
+  | "equilibrio"
+  /** assoalho pélvico: bloco de indicação clínica (gestação, pós-parto), nunca conta como tronco */
+  | "assoalho-pelvico";
 
 /** Os padrões que uma semana de corpo inteiro precisa tocar para ser um treino completo. */
 export const PADROES_ESSENCIAIS: readonly PadraoMovimento[] = ["joelho", "quadril", "empurrar", "puxar", "core"];
@@ -104,6 +106,13 @@ const ACESSORIO_MENOR = new Set([
   "Fibulares (estabilizadores do tornozelo)",
 ]);
 const CORE = new Set(["Core", "Reto abdominal", "Oblíquos", "Transverso do abdome", "Quadrado lombar", "Eretores da espinha", "Diafragma"]);
+/**
+ * O assoalho pélvico mora em "Core (tronco)" por falta de família melhor, mas NÃO é trabalho
+ * de tronco: uma semana cuja única vaga de core fosse a contração do assoalho passaria no
+ * guardrail de padrões sem nenhuma prancha, nenhum dead bug, nada. Padrão próprio, como o
+ * equilíbrio, que entra por indicação da condição e não pela fila de mérito.
+ */
+const ASSOALHO = new Set(["Assoalho pélvico"]);
 
 /** O músculo primário de maior ativação. É o que decide o padrão. */
 export function musculoPrimario(ex: Exercise): string | undefined {
@@ -123,7 +132,7 @@ export function padraoDe(ex: Exercise): PadraoMovimento {
   const prim = musculoPrimario(ex) ?? "";
   switch (ex.grupoMuscular) {
     case "Core (tronco)":
-      return "core";
+      return ASSOALHO.has(prim) ? "assoalho-pelvico" : "core";
     case "Corpo todo":
       /*
        * A FAMÍLIA DIZ "CORPO TODO", O MOVIMENTO DIZ DOBRADIÇA.

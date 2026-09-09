@@ -78,6 +78,8 @@ export interface BlocoSessao {
   sustentado?: boolean;
   /** bloco de equilíbrio que a CONDIÇÃO indicou (ver GroupGpsRule.equilibrio); sempre também `sustentado` */
   equilibrio?: boolean;
+  /** bloco de assoalho pélvico por indicação da condição (gestação, pós-parto); ver GroupGpsRule.assoalhoPelvico */
+  assoalho?: boolean;
   /** slug de exercício (src/data/exercises) OU id de modalidade (src/data/modalities) */
   exercicioSlug?: string;
   modalidade?: string;

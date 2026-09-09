@@ -33,8 +33,9 @@
  *
  * Roda em `npm run check`.
  */
-import { gerarPlano } from "@/lib/gps/periodizacao";
-import { getExercise } from "@/data/exercises";
+import { gerarPlano, consequenciasDoPlano } from "@/lib/gps/periodizacao";
+import { getExercise, exercises } from "@/data/exercises";
+import { groupGpsRules } from "@/lib/gps/groupRules";
 import { getReferencia } from "@/data/referencias";
 import { padraoDe, PADROES_ESSENCIAIS, type PadraoMovimento } from "@/lib/gps/padroes";
 
@@ -243,12 +244,102 @@ for (const objetivo of OBJETIVOS)
         falhasS.push(`${rot}: recebeu bloco de equilíbrio por indicação sem a condição indicar.`);
       }
     }
+  /*
+   * ASSOALHO PÉLVICO: a regra do pós-parto prometia "parte do plano" desde a metanálise e o
+   * plano não tinha o exercício (09/09/2026). Agora a condição indica
+   * (`GroupGpsRule.assoalhoPelvico`) e o bloco entra em TODAS as sessões de força, com
+   * raciocínio e bibliografia, e só onde a condição indica.
+   */
+  type BlA = Bl & { assoalho?: boolean };
+  const indicamAssoalho = ["gestante", "pos-parto"];
+  const naoIndicamAssoalho = [undefined, "idoso-destreinado", "hipertensao-estagio-1", "obesidade-grau-2"];
+  for (const grupoEspecial of [...indicamAssoalho, ...naoIndicamAssoalho])
+    for (const frequencia of [2, 3, 4])
+      for (const equipamentos of [undefined, ["Peso corporal"]]) {
+        const g = gerarPlano({ objetivo: "Retorno ao treino" as never, nivel: "Iniciante" as never, semanas: 8, frequencia, idade: 32, grupoEspecial, equipamentos } as never);
+        const w = g.principal.mesociclos[0]?.microciclos[0];
+        const principais = (w?.sessoes ?? []).filter((s) => !(s as { complemento?: boolean }).complemento);
+        const comAssoalho = principais.filter((s) => (s.blocos as BlA[]).some((b) => b.assoalho)).length;
+        const rot = `Retorno/${frequencia}x/${grupoEspecial ?? "sem condição"}/${equipamentos ? "só corpo" : "tudo"}`;
+        if (indicamAssoalho.includes(grupoEspecial ?? "")) {
+          if (comAssoalho < principais.length) falhasS.push(`${rot}: a condição indica assoalho pélvico e só ${comAssoalho} de ${principais.length} sessões têm o bloco.`);
+          for (const s of principais)
+            for (const b of s.blocos as BlA[])
+              if (b.assoalho && (!b.sustentado || b.tipo !== "isometrico" || !b.duracao)) falhasS.push(`${rot}: o bloco de assoalho pélvico não saiu como sustentado por tempo.`);
+          if (!/Sobre o assoalho pélvico/.test(g.raciocinio)) falhasS.push(`${rot}: o bloco de assoalho pélvico entrou e o raciocínio não o explica.`);
+          if (!g.refIds.includes("woodley-assoalho-2020")) falhasS.push(`${rot}: a bibliografia do plano não traz a fonte do bloco de assoalho pélvico.`);
+          for (const id of g.refIds) if (!getReferencia(id)) falhasS.push(`${rot}: o plano cita "${id}" e a bibliografia não tem essa entrada.`);
+          // Ele nunca ocupa a vaga de tronco: a semana precisa de um core de verdade além dele.
+          const temCore = principais.some((s) => (s.blocos as BlA[]).some((b) => !b.assoalho && b.exercicioSlug && padraoDe(getExercise(b.exercicioSlug)!) === "core"));
+          if (!temCore) falhasS.push(`${rot}: o assoalho pélvico está na semana e não há nenhum outro trabalho de tronco.`);
+        } else if (comAssoalho > 0) {
+          falhasS.push(`${rot}: recebeu bloco de assoalho pélvico por indicação sem a condição indicar.`);
+        }
+      }
+
   if (falhasS.length) {
     console.error(`\n[check:padroes] FALHOU no sustentado/equilíbrio: ${falhasS.length} caso(s).\n`);
     for (const f of falhasS.slice(0, 30)) console.error("  • " + f);
     process.exit(1);
   }
   console.log(`[check:padroes] ok: ${blocosSustentados} blocos sustentados saíram por tempo (nenhuma prancha em repetições), e o bloco de equilíbrio entra 2x/semana só onde a condição indica, com raciocínio e bibliografia.`);
+}
+
+/*
+ * O CATÁLOGO TEM CANDIDATO PARA CADA PADRÃO EM TODA CONDIÇÃO, MESMO SÓ COM O PESO DO CORPO.
+ *
+ * Bancada de 09/09/2026 (objetivo x 23 condições x 4 conjuntos de equipamento): 18
+ * combinações não tinham NENHUM dominante de quadril disponível depois dos filtros da
+ * condição (obesidade grau 2 e 3 e idoso destreinado, só com o peso do corpo), 310 tinham um
+ * único candidato para quadril, puxar ou tronco, e 24 semanas saíam sem dobradiça de quadril.
+ * A causa: o único quadril com o peso do corpo começava no chão, e a condição proíbe o chão.
+ * Sete exercícios fecharam isso (exercises-lacunas.ts). Esta régua impede que o buraco volte:
+ * para cada objetivo, condição e os dois ambientes de casa, cada padrão essencial precisa de
+ * PELO MENOS DOIS candidatos disponíveis (um só repete em toda sessão) e o plano precisa
+ * cobrir os cinco.
+ */
+{
+  const falhasC: string[] = [];
+  const AMBIENTES: Record<string, string[]> = { casa: ["Peso corporal", "Halter", "Elástico"], corpo: ["Peso corporal"] };
+  const NIVEL_INICIANTE = (e: { nivel: string }) => e.nivel === "Iniciante";
+  const forca = exercises.filter((e) => !e.doseAerobia && !e.doseIsometrica && NIVEL_INICIANTE(e));
+  let combos = 0;
+  for (const objetivo of OBJETIVOS)
+    for (const grupoEspecial of [undefined, ...Object.keys(groupGpsRules)])
+      for (const [amb, equipamentos] of Object.entries(AMBIENTES)) {
+        combos++;
+        const base = { objetivo: objetivo as never, nivel: "Iniciante" as never, semanas: 8, frequencia: 3, idade: 45, grupoEspecial, equipamentos };
+        const rot = `${objetivo}/${grupoEspecial ?? "sem condição"}/${amb}`;
+        const evitados = new Set(consequenciasDoPlano(base as never).evitados.map((e) => e.slug));
+        const disponiveis = new Map<PadraoMovimento, number>();
+        for (const e of forca) {
+          if (e.equipamento !== "Peso corporal" && !equipamentos.includes(e.equipamento)) continue;
+          if (evitados.has(e.slug)) continue;
+          const p = padraoDe(e);
+          disponiveis.set(p, (disponiveis.get(p) ?? 0) + 1);
+        }
+        for (const p of PADROES_ESSENCIAIS) {
+          const n = disponiveis.get(p) ?? 0;
+          if (n < 2) falhasC.push(`${rot}: ${n === 0 ? "nenhum" : "um único"} candidato disponível para ${p}.`);
+        }
+        const g = gerarPlano(base as never);
+        const w = g.principal.mesociclos[0]?.microciclos[0];
+        const presentes = new Set<PadraoMovimento>();
+        for (const s of (w?.sessoes ?? []).filter((x) => !(x as { complemento?: boolean }).complemento))
+          for (const b of s.blocos as Bl[]) {
+            if (b.tipo === "aerobio" || (b.tipo === "isometrico" && !b.sustentado)) continue;
+            const ex = getExercise(b.exercicioSlug ?? "");
+            if (ex) presentes.add(padraoDe(ex));
+          }
+        for (const p of PADROES_ESSENCIAIS) if (!presentes.has(p)) falhasC.push(`${rot}: a semana saiu sem ${p}.`);
+      }
+  if (falhasC.length) {
+    console.error(`\n[check:padroes] FALHOU no catálogo por condição: ${falhasC.length} caso(s) em ${combos} combinações.\n`);
+    for (const f of falhasC.slice(0, 30)) console.error("  • " + f);
+    console.error("\n  Um padrão sem candidato depois dos filtros da condição é semana sem esse padrão. Ver exercises-lacunas.ts.\n");
+    process.exit(1);
+  }
+  console.log(`[check:padroes] ok: em ${combos} combinações (objetivo x condição x casa/só corpo) todo padrão essencial tem ao menos 2 candidatos disponíveis e a semana cobre os cinco.`);
 }
 
 if (falhas.length) {

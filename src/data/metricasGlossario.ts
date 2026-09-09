@@ -308,6 +308,9 @@ const MUSCULOS_COMO_ATIVACAO = [
   "flexores do punho",
   "extensores do punho",
   "flexores profundos do pescoço",
+  // Assoalho pélvico (09/09/2026): a contração voluntária isolada, sem EMG de superfície
+  // publicada; a ativação segue a convenção pedagógica do diafragma.
+  "assoalho pélvico",
 ];
 
 // Nomes usados nos dados dos exercícios que apontam para a mesma definição.

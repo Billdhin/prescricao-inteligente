@@ -316,10 +316,39 @@ const SEM_ANALISE_COM_MOTIVO = new Set<string>([
   "suitcase-carry",
 ]);
 
+/*
+ * IMAGEM PENDENTE, COM DATA: a fila de trabalho de exercício novo.
+ *
+ * Diferente das duas listas de exceção acima, que dizem "esta imagem não pode existir", esta
+ * diz "ainda não foi feita, e desde quando". Nasceu em 09/09/2026 com os sete exercícios que
+ * fecharam os buracos por padrão de movimento (exercises-lacunas.ts): o motor precisava deles
+ * no mesmo dia, e a rodada de imagem é outra rodada, com verificação olho a olho de cada uma.
+ *
+ * A regra continua sendo a mesma: ausência silenciosa é buraco. Por isso a fila é IMPRESSA a
+ * cada rodada, com a data de entrada, e um exercício sai daqui no dia em que as duas imagens
+ * (análise e boneco) existirem. Exercício novo sem entrar aqui e sem imagem reprova como antes.
+ */
+const IMAGEM_PENDENTE_DESDE: Record<string, string> = {
+  "elevacao-quadril-apoio-banco": "09/09/2026",
+  "dobradica-quadril-peso-corpo": "09/09/2026",
+  "extensao-quadril-em-pe-apoio": "09/09/2026",
+  "elevacao-joelho-sentado": "09/09/2026",
+  "prancha-parede": "09/09/2026",
+  "remada-toalha-porta": "09/09/2026",
+  "contracao-assoalho-pelvico": "09/09/2026",
+};
+for (const [slug, desde] of Object.entries(IMAGEM_PENDENTE_DESDE)) {
+  const e = exercises.find((x) => x.slug === slug);
+  if (!e) problemas.push(`IMAGEM_PENDENTE_DESDE cita "${slug}", que não existe no catálogo.`);
+  else if (e.imagemAnalise && getMuscleMapPose(slug))
+    problemas.push(`[${slug}]: está na fila de imagem pendente e já tem as duas imagens. Tire-o da fila.`);
+  else console.log(`[check:catalogo] fila de imagem: ${slug} (pendente desde ${desde}${e.imagemAnalise ? ", falta o boneco" : getMuscleMapPose(slug) ? ", falta a análise" : ", faltam as duas"})`);
+}
+
 for (const e of exercises) {
   const temAnalise = Boolean(e.imagemAnalise);
   const ehExcecao = SEM_ANALISE_COM_MOTIVO.has(e.slug);
-  if (!temAnalise && !ehExcecao)
+  if (!temAnalise && !ehExcecao && !IMAGEM_PENDENTE_DESDE[e.slug])
     problemas.push(
       `[${e.slug}]: sem imagem de análise e sem estar na lista de exceções com motivo anatômico. Gere a imagem ou declare por que ela não pode existir.`,
     );
@@ -345,7 +374,7 @@ const SEM_BONECO_COM_MOTIVO = new Set<string>([]);
 for (const e of exercises) {
   const temBoneco = Boolean(getMuscleMapPose(e.slug));
   const ehExcecao = SEM_BONECO_COM_MOTIVO.has(e.slug);
-  if (!temBoneco && !ehExcecao)
+  if (!temBoneco && !ehExcecao && !IMAGEM_PENDENTE_DESDE[e.slug])
     problemas.push(
       `[${e.slug}]: sem boneco na posição (mmp) e sem estar na lista de exceções com motivo. Gere a imagem ou declare por que ela não pode existir.`,
     );

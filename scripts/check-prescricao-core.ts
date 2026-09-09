@@ -41,6 +41,7 @@ import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
 import { recalcularAlvosDoMeso } from "../src/lib/gps/travas";
 import { EFEITO_POR_TAG, criarRestricao, rotuloRestricao } from "../src/lib/gps/restricoes";
 import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
+import { padraoDe } from "../src/lib/gps/padroes";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
 import { BANDAS_AEROBIAS } from "../src/data/periodizacao";
@@ -1496,10 +1497,15 @@ for (const objetivo of OBJETIVOS) {
    * Emagrecimento + Elástico é o substituto, com pool 4, e a regra testada é a mesma: todo
    * exercício do objetivo, executável e no nível, entra antes de qualquer um de fora.
    */
-  // Emagrecimento + Peso corporal: pool 6 contra pedido 7, o que ainda força o fallback
-  // depois de o catálogo ter fechado os buracos da frequência 3.
+  /*
+   * TERCEIRA TROCA DE CENÁRIO, mesma causa: o catálogo melhorou (09/09/2026). Emagrecimento
+   * passou a marcar ombro, tronco e as puxadas de casa, e o pool com o peso do corpo foi de 6
+   * para 16. Hipertrofia + Peso corporal é o substituto (pool 8), e o pedido passa a ser o
+   * MESMO que o motor faz (frequência x vagas por sessão), e não a fórmula antiga de
+   * `frequência + 2`, que era de quando a semana inteira girava sobre cinco exercícios.
+   */
   const equipamentos = ["Peso corporal"];
-  const objetivo = "Emagrecimento" as const;
+  const objetivo = "Hipertrofia" as const;
   const teto = { Iniciante: 0, Intermediário: 1, Avançado: 2 } as Record<string, number>;
   const doObjetivo = exercises.filter(
     (e) =>
@@ -1519,8 +1525,8 @@ for (const objetivo of OBJETIVOS) {
    * É a segunda vez que este cenário precisa ser refeito por melhora do catálogo, e as duas
    * vezes quem apontou foi a própria autoverificação. Ela vale mais que a asserção.
    */
-  const FREQ = 5;
-  const pedido = Math.max(4, FREQ + 2);
+  const FREQ = 3;
+  const pedido = Math.max(4, FREQ * (objetivo === ("Emagrecimento" as string) ? 3 : 4));
   if (doObjetivo.length < 2 || doObjetivo.length >= pedido) {
     erro(
       `AUTOVERIFICAÇÃO (fallback): o cenário precisa de um pool do objetivo menor que o pedido (${pedido}) para forçar o fallback; achou ${doObjetivo.length}. O catálogo mudou; suba a frequência ou escolha outro equipamento.`,
@@ -1533,12 +1539,40 @@ for (const objetivo of OBJETIVOS) {
         .filter((b) => b.tipo === "forca")
         .map((b) => b.exercicioSlug),
     );
-    for (const e of doObjetivo) {
-      if (!usados.has(e.slug)) {
-        erro(
-          `FALLBACK ATROPELA O OBJETIVO: "${e.nome}" é de ${objetivo}, executável com [${equipamentos.join(", ")}], e ficou fora do plano enquanto exercícios de outros objetivos entraram.`,
-        );
+    /*
+     * A REGRA É POR PADRÃO DE MOVIMENTO, desde a rotação por padrão (09/09/2026).
+     *
+     * A versão anterior cobrava "todo exercício do objetivo entra antes de QUALQUER um de
+     * fora". Com a rotação, as vagas giram entre os padrões (joelho, quadril, empurrar,
+     * puxar, tronco...) e o objetivo manda DENTRO de cada padrão: numa semana de 12 vagas em
+     * que o objetivo tem três dobradiças de quadril e nenhum tronco, o segundo tronco de fora
+     * entra antes da terceira dobradiça do objetivo, e isso é a semana certa, não o fallback
+     * atropelando. O que continua proibido, e é o que se cobra aqui: um exercício de fora
+     * ocupar vaga de um padrão em que o objetivo ainda tinha candidato executável parado.
+     */
+    const atropelos = (usadosSlugs: Set<string | undefined>): string[] => {
+      const usadosDeFora = [...usadosSlugs]
+        .map((slug) => exercises.find((e) => e.slug === slug))
+        .filter((e): e is (typeof exercises)[number] => Boolean(e) && !doObjetivo.some((d) => d.slug === e!.slug));
+      const saida: string[] = [];
+      for (const e of doObjetivo) {
+        if (usadosSlugs.has(e.slug)) continue;
+        const rival = usadosDeFora.find((f) => padraoDe(f) === padraoDe(e));
+        if (rival)
+          saida.push(
+            `FALLBACK ATROPELA O OBJETIVO: "${e.nome}" é de ${objetivo}, executável com [${equipamentos.join(", ")}], e ficou fora do plano enquanto "${rival.nome}", de outro objetivo e do mesmo padrão (${padraoDe(e)}), entrou.`,
+          );
       }
+      return saida;
+    };
+    for (const a of atropelos(usados)) erro(a);
+    // Autoverificação: uma semana plantada em que um rival de fora ocupa a vaga do padrão de
+    // um exercício do objetivo que ficou parado precisa ser acusada.
+    {
+      const alvo = doObjetivo[0];
+      const rival = exercises.find((f) => !doObjetivo.some((d) => d.slug === f.slug) && padraoDe(f) === padraoDe(alvo));
+      if (!rival) erro("AUTOVERIFICAÇÃO (fallback): não achei um rival de fora do objetivo no mesmo padrão para plantar.");
+      else if (!atropelos(new Set([rival.slug])).length) erro(`AUTOVERIFICAÇÃO (fallback): a semana plantada com "${rival.nome}" no lugar de "${alvo.nome}" deveria ser acusada e não foi.`);
     }
   }
 }

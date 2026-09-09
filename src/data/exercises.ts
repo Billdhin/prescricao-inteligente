@@ -8,6 +8,7 @@ import { extraExercises6 } from "./exercises-extra6";
 import { extraExercises7 } from "./exercises-extra7";
 import { exerciciosIsometricos } from "./exercises-isometricos";
 import { exerciciosEmagrecimento } from "./exercises-emagrecimento";
+import { exerciciosLacunas } from "./exercises-lacunas";
 import { RESTRICAO_PERFIS } from "./restricao-perfis";
 
 const exercisesRaw: Exercise[] = [
@@ -391,7 +392,7 @@ const exercisesRaw: Exercise[] = [
     nome: "Mesa flexora",
     grupoMuscular: "Membros inferiores",
     equipamento: "Máquina",
-    objetivo: ["Hipertrofia", "Resistência muscular"],
+    objetivo: ["Hipertrofia", "Resistência muscular", "Emagrecimento"],
     nivel: "Iniciante",
     articulacaoPredominante: "Joelho",
     premium: false,
@@ -929,7 +930,7 @@ const exercisesRaw: Exercise[] = [
     nome: "Tríceps na polia",
     grupoMuscular: "Braços",
     equipamento: "Polia",
-    objetivo: ["Hipertrofia", "Resistência muscular"],
+    objetivo: ["Hipertrofia", "Resistência muscular", "Retorno ao treino"],
     nivel: "Iniciante",
     articulacaoPredominante: "Cotovelo",
     premium: false,
@@ -996,6 +997,9 @@ const exercisesRaw: Exercise[] = [
   ...exerciciosIsometricos,
   // Fecham os buracos que a bancada do catalogo mediu. Ver exercises-emagrecimento.ts.
   ...exerciciosEmagrecimento,
+  // Fecham os buracos por PADRÃO DE MOVIMENTO que a bancada de 09/09/2026 mediu (quadril,
+  // tronco e puxar sem ir ao chão) e trazem o assoalho pélvico. Ver exercises-lacunas.ts.
+  ...exerciciosLacunas,
 ];
 
 // Anexa o perfil de restrição (fatos estruturais autorados por inspeção) por slug,

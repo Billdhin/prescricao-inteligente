@@ -2602,8 +2602,16 @@ function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo })
     let series = 0;
     let minutosAerobio = 0;
     let sessoesIso = 0;
+    let sessoesAssoalho = 0;
     for (const s of micro.sessoes) {
       for (const b of s.blocos) {
+        // O assoalho pélvico é indicação clínica com dose própria, não distribuição de volume
+        // entre regiões: contá-lo como "Core" faria a semana da gestante parecer concentrada
+        // em tronco por desenho. Sai numa linha própria, como o isométrico de condição.
+        if (b.assoalho) {
+          sessoesAssoalho++;
+          continue;
+        }
         if (b.tipo === "aerobio") {
           const m = /(\d+)/.exec(b.duracaoAlvoMin != null ? String(b.duracaoAlvoMin) : (b.duracao ?? ""));
           if (m) minutosAerobio += Number(m[1]);
@@ -2628,6 +2636,7 @@ function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo })
       series,
       minutosAerobio,
       sessoesIso,
+      sessoesAssoalho,
       linhas: [...porRegiao.entries()]
         .map(([regiao, n]) => ({ regiao, n, pct: series ? Math.round((n / series) * 100) : 0 }))
         .sort((a, b) => b.n - a.n),
@@ -2675,6 +2684,8 @@ function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo })
               ` O aeróbio entra em minutos, fora desta conta: ${equilibrio.minutosAerobio} min.`}
             {equilibrio.sessoesIso > 0 &&
               ` O isométrico de condição é protocolo próprio, fora desta conta: ${equilibrio.sessoesIso} ${equilibrio.sessoesIso === 1 ? "sessão" : "sessões"} na semana.`}
+            {equilibrio.sessoesAssoalho > 0 &&
+              ` O assoalho pélvico entra por indicação, com dose própria, fora desta conta: ${equilibrio.sessoesAssoalho} ${equilibrio.sessoesAssoalho === 1 ? "sessão" : "sessões"} na semana.`}
           </p>
         </Card>
       )}

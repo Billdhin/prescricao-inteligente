@@ -1393,6 +1393,26 @@ export const referencias: Referencia[] = [
     pmid: "30703272",
     nota: "Revisão sistemática Cochrane com metanálise de 108 ensaios randomizados e 23.407 pessoas com 60 anos ou mais vivendo na comunidade (média de 76 anos, 77% mulheres); o registro no PubMed tipa como Meta-Analysis e Systematic Review. Exercício em geral reduz a taxa de quedas em 23% (razão de taxas 0,77; IC 95% 0,71 a 0,83; alta certeza). Por tipo: exercícios de EQUILÍBRIO E FUNCIONAIS reduzem a taxa de quedas em 24% (0,76; IC 95% 0,70 a 0,81; 39 estudos; alta certeza) e o número de pessoas que caem em 13%; programas com vários tipos, tipicamente equilíbrio e funcional mais resistido, provavelmente reduzem a taxa em 34% (0,66; IC 95% 0,50 a 0,88; certeza moderada); Tai Chi pode reduzir em 19%. O ponto que o produto usa: os autores declaram INCERTEZA sobre o efeito do resistido SOZINHO, da dança e da caminhada, ou seja, força isolada não substitui o trabalho de equilíbrio na prevenção de queda. A dose por sessão NÃO vem daqui (a revisão não a fixa): vem da diretriz do ACSM (garber-2011, exercício neuromotor em 2 a 3 dias por semana). Limitações declaradas: a maioria dos ensaios tinha risco de viés incerto ou alto em ao menos um item, e os eventos adversos, quando relatados, foram predominantemente não graves.",
   },
+  {
+    id: "woodley-assoalho-2020",
+    autores: "Woodley SJ, Lawrenson P, Boyle R, Cody JD, Mørkved S, Kernohan A, Hay-Smith EJC",
+    titulo: "Pelvic floor muscle training for preventing and treating urinary and faecal incontinence in antenatal and postnatal women",
+    fonte: "Cochrane Database of Systematic Reviews, 5(5):CD007471",
+    ano: 2020,
+    doi: "10.1002/14651858.CD007471.pub4",
+    pmid: "32378735",
+    nota: "Revisão sistemática Cochrane com metanálise de 46 ensaios e 10.832 mulheres de 21 países; o registro no PubMed tipa como Meta-Analysis e Systematic Review. PREVENÇÃO: gestantes continentes que fizeram o treino do assoalho pélvico na gestação provavelmente têm menor risco de relatar incontinência urinária no fim da gravidez (62% menos; RR 0,38; IC 95% 0,20 a 0,72; 6 ensaios, 624 mulheres; qualidade moderada) e um risco levemente menor de três a seis meses após o parto (29% menos; RR 0,71; IC 95% 0,54 a 0,95; 5 ensaios, 673 mulheres; qualidade alta). Na abordagem mista (com e sem incontinência), o treino na gestação provavelmente reduz o risco no fim da gravidez (22% menos; RR 0,78; IC 95% 0,64 a 0,94; 11 ensaios, 3.307 mulheres; qualidade moderada). O CONTRAPESO, que viaja junto: como TRATAMENTO de incontinência já instalada na gestação ou no pós-parto, a evidência é incerta (qualidade baixa a muito baixa), e para o treino iniciado só depois do parto em população mista o efeito no período tardio é incerto (RR 0,88; IC 95% 0,71 a 1,09). Ou seja, o que o produto pode afirmar é PREVENÇÃO, começando cedo e de forma estruturada. A dose (contrações, tempo, séries) NÃO vem daqui: os autores declaram que os programas variaram muito e foram muitas vezes mal descritos. Eventos adversos: dois abandonos por dor pélvica em um estudo de 43 gestantes; nenhum outro ensaio relatou efeito adverso.",
+  },
+  {
+    id: "bo-assoalho-2004",
+    autores: "Bø K",
+    titulo: "Pelvic floor muscle training is effective in treatment of female stress urinary incontinence, but how does it work?",
+    fonte: "International Urogynecology Journal and Pelvic Floor Dysfunction, 15(2):76-84",
+    ano: 2004,
+    doi: "10.1007/s00192-004-1125-0",
+    pmid: "15014933",
+    nota: "Revisão narrativa que organiza as três hipóteses de POR QUE o treino do assoalho pélvico funciona: (1) a mulher aprende a pré-contrair conscientemente o assoalho antes e durante o aumento da pressão abdominal (tosse, esforço físico), (2) o treino de força aumenta o volume muscular e dá suporte estrutural duradouro, e (3) o treino abdominal fortaleceria o assoalho de forma indireta. A autora conclui que só as duas primeiras têm ensaios randomizados e anatomia funcional a favor. É a base pedagógica do exercício no catálogo: a contração é voluntária e isolada, com respiração contínua, e a técnica de 'contrair antes do esforço' é o que se ensina. Não traz metanálise nem dose; a evidência de efeito está em woodley-assoalho-2020 e lu-assoalho-2020.",
+  },
 ];
 
 export function getReferencia(id: string) {

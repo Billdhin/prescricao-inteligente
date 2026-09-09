@@ -133,6 +133,14 @@ export const exerciseReferencias: Record<string, string[]> = {
   "desenvolvimento-elastico": ["boeckh-behrens-2000"],
   "mergulho-no-banco": ["boeckh-behrens-2000", "schoenfeld-2010"],
   "empurra-puxa-aquatico": ["acsm-getp11", "donnelly-2009"],
+  // Lacunas por padrão de movimento (09/09/2026). Ver exercises-lacunas.ts.
+  "elevacao-quadril-apoio-banco": ["contreras-2015", "ekstrom-2007"],
+  "dobradica-quadril-peso-corpo": ["ekstrom-2007", "boeckh-behrens-2000"],
+  "extensao-quadril-em-pe-apoio": ["distefano-2009", "ekstrom-2007", "chodzko-2009"],
+  "elevacao-joelho-sentado": ["mcgill-2010"],
+  "prancha-parede": ["mcgill-2010"],
+  "remada-toalha-porta": ["boeckh-behrens-2000"],
+  "contracao-assoalho-pelvico": ["woodley-assoalho-2020", "lu-assoalho-2020", "bo-assoalho-2004"],
 };
 
 export function getExercicioRefs(slug: string): string[] {

@@ -430,7 +430,10 @@ function selecionarExercicios(
    * primeiro isométrico entrar no catálogo, exatamente para que essa regressão nunca chegue
    * a existir.
    */
-  const ehForca = (e: (typeof exercises)[number]) => !e.doseAerobia && !e.doseIsometrica;
+  // O assoalho pélvico entra só por indicação da condição (ver GroupGpsRule.assoalhoPelvico),
+  // nunca pela fila de mérito: no pool ele ocuparia uma vaga de força em toda semana de
+  // "Retorno ao treino", e a camada de indicação depois o veria "já presente" e não marcaria.
+  const ehForca = (e: (typeof exercises)[number]) => !e.doseAerobia && !e.doseIsometrica && padraoDe(e) !== "assoalho-pelvico";
 
   /*
    * EXERCÍCIO QUE O ALUNO NÃO TEM COMO EXECUTAR NÃO ENTRA NO PLANO.
@@ -881,6 +884,7 @@ function selecionarExercicios(
       "quadril-acessorio",
       "carregamento",
       "equilibrio",
+      "assoalho-pelvico",
       "acessorio-menor",
     ];
     const porPadrao = new Map<PadraoMovimento, typeof fila>();
@@ -1775,6 +1779,10 @@ const NOTA_SUSTENTADO =
   "Dose por tempo: mantenha a posição com técnica estável e respiração contínua, e encerre a série quando a técnica cair, antes do tempo. O tempo é a faixa do exercício; o descanso é o do objetivo.";
 const NOTA_EQUILIBRIO =
   "Equilíbrio desafiador, sempre perto de um apoio (parede ou cadeira), junto do resistido. Progrida retirando informação (olhos, superfície macia) antes de aumentar o tempo. Com tontura ou vertigem no dia, não faça.";
+/** O treino do assoalho pélvico do catálogo, em ordem de preferência. Hoje é um só. */
+const EXERCICIOS_ASSOALHO: readonly string[] = ["contracao-assoalho-pelvico"];
+const NOTA_ASSOALHO =
+  "Contração isolada do assoalho pélvico, com glúteo e coxas soltos e respiração contínua; relaxe por completo entre as contrações. Entra em toda sessão porque o efeito medido é de treino estruturado e frequente. Dor pélvica durante a contração ou perda que persiste pedem avaliação própria.";
 
 /**
  * BLOCO DE EXERCÍCIO SUSTENTADO: prancha e equilíbrio saem com dose por TEMPO.
@@ -2007,6 +2015,23 @@ function montarSessoes(
       if (exEq?.sustentado && !blocos.some((b) => b.exercicioSlug === exEq.slug)) {
         const base = blocoSustentado(exEq, faixa, nivel, enfase, ctx);
         blocos.push({ ...base, equilibrio: true, observacao: `${NOTA_EQUILIBRIO} ${base.observacao ?? ""}`.trim() });
+      }
+    }
+
+    /*
+     * ASSOALHO PÉLVICO POR INDICAÇÃO DA CONDIÇÃO (ver GroupGpsRule.assoalhoPelvico).
+     *
+     * Mesmo trilho do equilíbrio, com uma diferença: entra em TODAS as sessões de força da
+     * semana, e não em 2. A evidência (Cochrane, `woodley-assoalho-2020`) é de treino
+     * estruturado e frequente, e a revisão não fixa dose; o que o plano faz é garantir que o
+     * exercício exista em cada dia de treino, com a dose do próprio exercício, e deixar a
+     * prática diária fora do plano a cargo da orientação do profissional.
+     */
+    if (regraClinica?.assoalhoPelvico?.indicado) {
+      const exAs = exercicioIsometrico(EXERCICIOS_ASSOALHO, equipamentos, regraClinica);
+      if (exAs?.sustentado && !blocos.some((b) => b.exercicioSlug === exAs.slug)) {
+        const base = blocoSustentado(exAs, faixa, nivel, enfase, ctx);
+        blocos.push({ ...base, assoalho: true, observacao: `${NOTA_ASSOALHO} ${base.observacao ?? ""}`.trim() });
       }
     }
 
@@ -3184,6 +3209,8 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
       ...(indicacaoIsoDoPlano?.refIds ?? []),
       // Bibliografia do bloco de equilíbrio, quando a condição o indicou (ver GroupGpsRule.equilibrio).
       ...(regraDoPlano?.equilibrio?.refId ?? []),
+      // Bibliografia do bloco de assoalho pélvico, quando a condição o indicou.
+      ...(regraDoPlano?.assoalhoPelvico?.refId ?? []),
     ]),
   );
 
@@ -3298,6 +3325,116 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
         `Sobre o equilíbrio: entra em ${porSemana} ${porSemana === 1 ? "sessão" : "sessões"} por semana, ao fim do treino de força e perto de um apoio, ` +
         `com 3 séries curtas em um pé só. ${regraDoPlano.equilibrio.motivo} ` +
         `A quantidade de sessões é a ponta baixa do que a diretriz recomenda para exercício neuromotor (2 a 3 dias por semana); a progressão é retirar informação (olhos, superfície), e não só somar tempo.`
+      );
+    })(),
+    /*
+     * O bloco de assoalho pélvico explica a si mesmo, sem nomear a condição. Lido do macro,
+     * como o equilíbrio, e a frase declara o limite da evidência (prevenção, dose por
+     * convenção), porque um plano que só cita o que confirma não é auditável.
+     */
+    (() => {
+      const porSemana = macroPrincipal.mesociclos[0]?.microciclos[0]?.sessoes.filter((s) =>
+        s.blocos.some((b) => b.assoalho),
+      ).length;
+      if (!porSemana || !regraDoPlano?.assoalhoPelvico) return "";
+      return (
+        `Sobre o assoalho pélvico: entra em ${porSemana} ${porSemana === 1 ? "sessão" : "sessões"} por semana, ao fim do treino de força, como contração sustentada por tempo, sentada e sem ir ao chão. ${regraDoPlano.assoalhoPelvico.motivo} ` +
+        `A quantidade de contrações e de segundos é convenção de prática, porque os estudos variam nisso; o que a evidência fixa é que o treino seja estruturado e frequente, então a orientação para praticar também fora dos dias de treino é sua.`
+      );
+    })(),
+    /*
+     * A MONTAGEM DA SEMANA EXPLICA A SI MESMA.
+     *
+     * O texto do plano dizia "Sobre a seleção" só quando um exercício saía do objetivo, e
+     * calava sobre o que o motor de fato faz com as vagas: cobrir padrão de movimento antes
+     * de família, repartir a cota semanal de perna, e tirar o sustentado das repetições. O
+     * profissional via o resultado e não a regra, e a pergunta "por que este plano tem três
+     * pernas e não quatro?" não tinha resposta na tela. Tudo aqui é LIDO da primeira semana
+     * do macro, nunca recalculado: o texto descreve o plano que saiu.
+     */
+    (() => {
+      const semana = macroPrincipal.mesociclos[0]?.microciclos[0];
+      if (!semana) return "";
+      const principais = semana.sessoes.filter((s) => !s.complemento);
+      const blocos = principais.flatMap((s) => s.blocos).filter((b) => b.tipo === "forca" || (b.tipo === "isometrico" && b.sustentado));
+      const dinamicos = blocos.filter((b) => b.tipo === "forca");
+      if (!dinamicos.length) return "";
+      const padraoDoBloco = (b: (typeof blocos)[number]) => {
+        const ex = b.exercicioSlug ? exercises.find((e) => e.slug === b.exercicioSlug) : undefined;
+        return ex ? padraoDe(ex) : undefined;
+      };
+      const presentes = new Set(blocos.map(padraoDoBloco));
+      const ROTULO: Partial<Record<PadraoMovimento, string>> = {
+        joelho: "dominante de joelho",
+        quadril: "dominante de quadril",
+        empurrar: "empurrar",
+        puxar: "puxar",
+        core: "tronco",
+      };
+      const cobertos = PADROES_ESSENCIAIS.filter((p) => presentes.has(p)).map((p) => ROTULO[p]);
+      const faltando = PADROES_ESSENCIAIS.filter((p) => !presentes.has(p)).map((p) => ROTULO[p]);
+      const DE_PERNA = new Set<PadraoMovimento | undefined>(["joelho", "quadril", "panturrilha", "quadril-acessorio"]);
+      const perna = dinamicos.filter((b) => DE_PERNA.has(padraoDoBloco(b))).length;
+      const pct = Math.round((100 * perna) / dinamicos.length);
+      const sustentados = blocos.filter((b) => b.sustentado && !b.equilibrio && !b.assoalho).length;
+      return (
+        `Sobre a montagem da semana: as vagas de força foram preenchidas por padrão de movimento, e não só por grupo muscular. ` +
+        `A primeira semana cobre ${cobertos.join(", ")}` +
+        (faltando.length
+          ? `, e não cobre ${faltando.join(", ")} porque o catálogo disponível, com os equipamentos e as restrições declarados, não tinha opção para esse padrão`
+          : "") +
+        `; dentro de cada padrão a ordem é a de mérito, com o exercício do objetivo à frente. ` +
+        `Os membros inferiores ficaram com ${perna} das ${dinamicos.length} vagas dinâmicas (${pct}%): a cota é semanal, perto de 38% das vagas, com pelo menos uma perna por sessão e nunca mais da metade de uma sessão, o que evita tanto a semana só de perna quanto a sessão sem perna.` +
+        (sustentados
+          ? ` ${sustentados} ${sustentados === 1 ? "bloco sustentado sai" : "blocos sustentados saem"} por tempo, e não por repetições, porque é assim que o exercício se prescreve.`
+          : "")
+      );
+    })(),
+    /*
+     * OS LIMITES QUE O MOTOR APLICOU, ditos com todas as letras.
+     *
+     * A dose por perfil, o teto de esforço, a descarga, a banda aeróbia, as posições evitadas
+     * e o filtro de equipamento já agiam no plano, e cada um tinha a sua tela (procedência,
+     * consequências). O que faltava era o plano DIZER, no mesmo texto que vai ao PDF, o que
+     * foi aplicado antes de ele chegar ao profissional. Sem nomear condição: a idade e o
+     * perfil aparecem pelo efeito, e a origem de cada número segue na seção de procedência.
+     */
+    (() => {
+      const dose = doseDoPerfilComIdade(regraDoPlano, input.idade);
+      const prog = regraDoPlano?.modProgressao;
+      const aero = regraDoPlano?.modAerobio;
+      const daIdade = (campo: "rirMinimo" | "cargaRelativaMax") =>
+        dose?.procedencia?.[campo]?.de === "idade" || (!dose?.procedencia && dose?.de === "idade");
+      const naDose: string[] = [];
+      // A reserva por idade já tem parágrafo próprio logo abaixo; aqui entra só a do perfil.
+      if (dose?.rirMinimo != null && !daIdade("rirMinimo")) naDose.push(`reserva mínima de ${dose.rirMinimo} repetições nas séries principais`);
+      if (dose?.cargaRelativaMax != null && !daIdade("cargaRelativaMax")) naDose.push(`teto de carga de ${dose.cargaRelativaMax}% de 1RM`);
+      if (dose?.intervaloFolgado) naDose.push("intervalos mais longos entre as séries");
+      if (dose?.partirDoPiso) naDose.push("rampa que parte do piso da faixa citada");
+      if (prog?.pseTeto != null) naDose.push(`esforço percebido da sessão até ${prog.pseTeto} de 10`);
+      if (prog?.fatorIncremento != null && prog.fatorIncremento < 1) naDose.push("passo de progressão reduzido");
+      if (prog?.descargaCadaSemanas) naDose.push(`descarga a cada ${prog.descargaCadaSemanas} semanas`);
+      if (aero?.bandaMax) naDose.push(`intensidade aeróbia limitada à banda ${aero.bandaMax}`);
+      if (aero?.intervaladoEvitar) naDose.push("sem formato intervalado no aeróbio");
+      const naEscolha: string[] = [];
+      if (regraDoPlano?.posicoesEvitar?.length) naEscolha.push(`exercícios na posição ${regraDoPlano.posicoesEvitar.join(" ou ")} foram para o fim da fila`);
+      if (regraDoPlano?.evitarFlexaoColunaCarregada) naEscolha.push("exercícios com flexão de coluna sob carga foram para o fim da fila");
+      if (regraDoPlano?.evitarMembrosAcimaDoCoracao) naEscolha.push("alternativas que não trabalham os membros acima do coração vieram à frente");
+      const restr = restricoesDoPlano(input);
+      if (restr.length)
+        naEscolha.push(
+          `${restr.length === 1 ? "uma restrição física filtrou" : `${restr.length} restrições físicas filtraram`} o catálogo (${restr.map((r) => rotuloRestricao(r.tag)).join(", ")})`,
+        );
+      if (input.equipamentos?.length) {
+        const declarados = input.equipamentos.filter((e) => e !== "Peso corporal");
+        naEscolha.push(declarados.length ? `só entraram exercícios com ${declarados.join(", ")} ou com o peso do corpo` : "só entraram exercícios com o peso do corpo");
+      }
+      if (!naDose.length && !naEscolha.length) return "";
+      return (
+        `Sobre os limites aplicados: o que segue foi aplicado pelo motor antes de o plano chegar a você, a partir do perfil de cuidado, da idade e das declarações do aluno; a origem de cada número está na seção de procedência. ` +
+        [naDose.length ? `Na dose: ${naDose.join("; ")}.` : "", naEscolha.length ? `Na escolha dos exercícios: ${naEscolha.join("; ")}.` : ""]
+          .filter(Boolean)
+          .join(" ")
       );
     })(),
     /*

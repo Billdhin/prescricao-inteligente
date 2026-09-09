@@ -334,6 +334,25 @@ export interface GroupGpsRule extends GroupRuleInput {
     refId: string[];
   };
   /**
+   * A CONDIÇÃO INDICA O TREINO DO ASSOALHO PÉLVICO.
+   *
+   * Mesmo desenho de `equilibrio`, e pelo mesmo motivo: a regra do pós-parto dizia, no
+   * próprio `cuidados`, que o treino do assoalho "faz parte do plano" desde a metanálise
+   * `lu-assoalho-2020`, e o plano não tinha nenhum exercício de assoalho pélvico, porque o
+   * catálogo não tinha. Regra que promete e motor que não entrega é a classe de defeito que
+   * mais se repetiu neste produto.
+   *
+   * Entra como bloco sustentado ao fim de TODAS as sessões de força da semana (a evidência é
+   * de treino estruturado e frequente; a revisão Cochrane não fixa dose), sem nomear a
+   * condição no texto, porque o raciocínio vai ao aluno.
+   */
+  assoalhoPelvico?: {
+    indicado: true;
+    /** por que, em uma frase; impresso no raciocínio, sem nomear a condição */
+    motivo: string;
+    refId: string[];
+  };
+  /**
    * ÊNFASE DE MODALIDADE: qual modalidade a evidência DESTA condição coloca na frente.
    *
    * Nasceu porque o mesmo buraco apareceu TRÊS vezes na rodada de evidência, em condições
@@ -1483,6 +1502,19 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     // O cuidado logo acima diz "evitar decúbito dorsal prolongado após o 1º trimestre". Antes
     // disto, ele era só texto: o plano entregava supino com halteres, deitada, na semana 1.
     posicoesEvitar: ["deitado"],
+    /*
+     * O ASSOALHO PÉLVICO ENTRA NA GESTAÇÃO COMO PREVENÇÃO, e é só isso que a evidência
+     * sustenta. `woodley-assoalho-2020` (Cochrane, 46 ensaios): gestantes continentes que
+     * treinaram na gestação tiveram 62% menos risco de incontinência no fim da gravidez
+     * (qualidade moderada) e 29% menos de três a seis meses após o parto (qualidade alta).
+     * Como TRATAMENTO de perda já instalada a evidência é incerta, e o motivo diz isso.
+     */
+    assoalhoPelvico: {
+      indicado: true,
+      motivo:
+        "O treino estruturado do assoalho pélvico, começado cedo, reduziu o risco de perda urinária no fim da gestação e nos meses após o parto; o efeito com evidência é de prevenção, e perdas já presentes pedem avaliação própria.",
+      refId: ["woodley-assoalho-2020", "lu-assoalho-2020", "bo-assoalho-2004"],
+    },
     modProgressao: {
       pseTeto: 6,
       fatorIncremento: 0.5,
@@ -1524,6 +1556,14 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
     ],
     penalidades: [],
     complexidadeMax: 60,
+    // A promessa do `cuidados` acima ("parte do plano") vira bloco de verdade. Ver
+    // GroupGpsRule.assoalhoPelvico e o exercício `contracao-assoalho-pelvico`.
+    assoalhoPelvico: {
+      indicado: true,
+      motivo:
+        "O treino do assoalho pélvico reduziu a ocorrência de perda urinária e aumentou a força dessa musculatura no período pós-natal; por isso ele faz parte do plano de retorno, e perdas que persistem pedem encaminhamento.",
+      refId: ["lu-assoalho-2020", "woodley-assoalho-2020", "bo-assoalho-2004"],
+    },
     modProgressao: {
       pseTeto: 7,
       fatorIncremento: 0.5,
@@ -1995,6 +2035,14 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
       const refs: string[] = [];
       for (const e of es) for (const r of e.refId) if (!refs.includes(r)) refs.push(r);
       return { indicado: true as const, motivo: es.map((e) => e.motivo).join(" "), refId: refs };
+    })(),
+    // Assoalho pélvico: basta UMA condição indicar, como no equilíbrio.
+    assoalhoPelvico: (() => {
+      const as = rules.map((r) => r.assoalhoPelvico).filter((a): a is NonNullable<GroupGpsRule["assoalhoPelvico"]> => Boolean(a));
+      if (!as.length) return undefined;
+      const refs: string[] = [];
+      for (const a of as) for (const r of a.refId) if (!refs.includes(r)) refs.push(r);
+      return { indicado: true as const, motivo: as.map((a) => a.motivo).join(" "), refId: refs };
     })(),
     modProgressao: fundirModProgressao(
       rules.map((r) => r.modProgressao).filter((m): m is ModProgressao => Boolean(m)),
