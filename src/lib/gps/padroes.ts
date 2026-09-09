@@ -169,6 +169,24 @@ export function padraoDe(ex: Exercise): PadraoMovimento {
 }
 
 /**
+ * O EXERCÍCIO CARREGA OS MEMBROS INFERIORES? A pergunta da REGIÃO, não a do padrão.
+ *
+ * `padraoDe` existe para a semana de FORÇA e resolve "Corpo todo" com uma regra escrita para a
+ * caminhada do fazendeiro: quadríceps primário ali é carregamento, não perna. A regra está
+ * certa onde ela nasceu e erra fora dela: a esteira, o elíptico e a marcha aquática também
+ * moram em "Corpo todo", e nenhum deles é carregamento. Lidos por `padraoDe`, três das cinco
+ * modalidades aeróbias do catálogo apareciam como se não usassem a perna.
+ *
+ * Quem precisa saber se a perna trabalhou (a cota semanal de membros inferiores em
+ * `periodizacao.ts`) pergunta aqui: o músculo PRIMÁRIO é de membro inferior? É a mesma fonte
+ * curada de sempre, sem a desambiguação de família que só o treino de força precisa.
+ */
+export function primarioDeMembroInferior(ex: Exercise): boolean {
+  const prim = musculoPrimario(ex) ?? "";
+  return JOELHO.has(prim) || QUADRIL.has(prim) || QUADRIL_ACESSORIO.has(prim) || PANTURRILHA.has(prim);
+}
+
+/**
  * Trabalho miúdo: entra no plano quando sobra vaga, nunca ocupando a vaga de cobertura de uma
  * família nem competindo com um padrão essencial.
  */

@@ -46,7 +46,7 @@ import {
 import type { ParamMonitorId } from "@/data/monitoringParameters";
 import { alvoSemana, alvoAerobioSemana, objetivoDaSemana, lerFaixaRIR, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
 import { intervaloDe } from "@/lib/gps/faixasParse";
-import { padraoDe, ehAcessorioMenor, PADROES_ESSENCIAIS, type PadraoMovimento } from "@/lib/gps/padroes";
+import { padraoDe, ehAcessorioMenor, primarioDeMembroInferior, PADROES_ESSENCIAIS, type PadraoMovimento } from "@/lib/gps/padroes";
 
 export interface GerarPlanoInput {
   objetivo: GpsObjetivo;
@@ -1510,10 +1510,71 @@ function exercicioIsometrico(
  */
 const FAMILIAS_SUPERIORES = ["Peitorais", "Costas", "Core (tronco)", "Ombros", "Braços", "Corpo todo"] as const;
 
+const PADROES_INFERIORES: readonly PadraoMovimento[] = ["joelho", "quadril", "panturrilha", "quadril-acessorio"];
+
+/**
+ * A MODALIDADE AERÓBIA CARREGA OS MEMBROS INFERIORES?
+ *
+ * Derivado do catálogo: o músculo PRIMÁRIO de `ativacao[]` é dado curado e validado pelo
+ * `check:metricas`. Caminhada, bicicleta, elíptico, escada e remo têm quadríceps ou glúteo
+ * primário; a hidroginástica tem três exercícios, dois de perna e um de empurrar/puxar. A
+ * modalidade carrega a perna quando a MAIORIA dos seus exercícios aeróbios tem primário de
+ * membro inferior, e não por uma lista escrita à mão, que envelheceria no primeiro exercício
+ * novo do catálogo.
+ *
+ * A pergunta é de REGIÃO e não de padrão de movimento, e a diferença custou uma medição:
+ * `padraoDe` resolve "Corpo todo" pela regra da caminhada do fazendeiro (quadríceps primário
+ * ali é carregamento), e por ela a esteira, o elíptico e a marcha aquática apareciam como se
+ * não usassem a perna. Ver `primarioDeMembroInferior`, que existe por causa disto.
+ */
+const CACHE_MODALIDADE_PERNA = new Map<string, boolean>();
+function modalidadeCarregaInferiores(id: string): boolean {
+  const guardado = CACHE_MODALIDADE_PERNA.get(id);
+  if (guardado !== undefined) return guardado;
+  const daModalidade = exercises.filter((e) => e.doseAerobia && e.modalidade === id);
+  const dePerna = daModalidade.filter((e) => primarioDeMembroInferior(e)).length;
+  const v = daModalidade.length > 0 && dePerna * 2 > daModalidade.length;
+  CACHE_MODALIDADE_PERNA.set(id, v);
+  return v;
+}
+
+/**
+ * A CARGA DE PERNA QUE A SEMANA JÁ TEM ANTES DA PRIMEIRA VAGA DINÂMICA DE FORÇA.
+ *
+ * Tudo aqui é consequência da CONDIÇÃO declarada, e é por isso que a cota de perna deixou de
+ * ser a mesma para todo mundo: a condição escolhe a modalidade aeróbia (osteoartrite de joelho
+ * puxa hidroginástica e bicicleta), acende ou não o bloco de equilíbrio (idoso, osteoporose) e
+ * acende ou não a sessão isométrica de perna (hipertensão, diabetes). Cada uma dessas camadas
+ * põe membro inferior na semana sem gastar vaga dinâmica.
+ */
+interface CargaInferiorDaSemana {
+  /**
+   * Por sessão principal: quantos blocos de OUTRAS camadas carregam a perna NAQUELE dia
+   * (o aeróbio de modalidade que usa a perna, o bloco de equilíbrio). Governa a REPARTIÇÃO
+   * pela semana, e só ela.
+   */
+  porSessao: number[];
+  /**
+   * Trabalho RESISTIDO de perna que a semana recebe fora das vagas dinâmicas: hoje, as sessões
+   * isométricas de membro inferior. Governa a COTA semanal.
+   *
+   * A separação entre os dois campos é o que impede um erro que a bancada pegou: descontar
+   * vaga de FORÇA por causa de minutos de AERÓBIO. Medido na grade de 480 planos, com o
+   * aeróbio descontando: emagrecimento 3x com hipertensão caía a 22% de perna dinâmica e
+   * reprovava no piso do `check:cobertura`, porque a caminhada de 30 minutos comprava duas
+   * vagas de agachamento. Caminhar e agachar carregam a mesma região e não entregam a mesma
+   * qualidade; o aeróbio diz em QUE DIA a perna já trabalhou, o isométrico diz QUANTO de
+   * trabalho resistido de perna a semana já tem.
+   */
+  resistidoExtra: number;
+  /** a prioridade que a condição declara para a prescrição (ver GroupGpsRule.enfaseModalidade) */
+  prioridade?: "aerobio" | "forca" | "combinado";
+}
+
 /**
  * QUANTAS VAGAS DE MEMBROS INFERIORES A SEMANA RECEBE.
  *
- * ## O defeito que isto corrige (o Filipe, 08/09/2026)
+ * ## O defeito original (o Filipe, 08/09/2026)
  *
  * A cota era fixa em metade de cada sessão (`floor(porSessao/2)`), o que fazia TODO plano
  * sair com 50% das séries dinâmicas em inferiores, sempre à frente de superiores (33% a
@@ -1522,31 +1583,129 @@ const FAMILIAS_SUPERIORES = ["Peitorais", "Costas", "Core (tronco)", "Ombros", "
  * próprio aviso de concentração acendia em plano recém-gerado. Aviso que acende por desenho
  * não é aviso, é defeito com legenda.
  *
+ * ## O QUE ELE APONTOU EM SEGUIDA (09/09/2026), e que esta função passou a responder
+ *
+ * "Ele coloca uma cota para a perna semanal, mas não explica que a semana foi montada de
+ * acordo com a condição do indivíduo. Criou um padrão no pau, não precisa: para montar a
+ * periodização ele deve considerar a condição da pessoa, então essas cotas devem ser
+ * diferentes."
+ *
+ * Ele estava certo. A cota já era ciente da camada ISOMÉTRICA, e só dela: o aeróbio de
+ * caminhada, a bicicleta e o bloco de equilíbrio carregavam a perna da semana inteira sem
+ * aparecer na conta. Um plano de emagrecimento 4x com caminhada em toda sessão contava zero
+ * carga de perna fora das vagas dinâmicas, e a repartição saía parelha como se os quatro dias
+ * fossem iguais entre si. Agora TODA camada que carrega o membro inferior entra na conta, e
+ * como as camadas nascem da condição, a cota nasce da condição.
+ *
  * ## A régua
  *
- * O alvo é ~38% das vagas de força da semana INTEIRA (dinâmica + isométrica de perna),
+ * O alvo é ~38% das vagas de força da semana INTEIRA (dinâmica + toda carga extra de perna),
  * arredondado para BAIXO, com dois limites que já custaram uma rodada cada:
- *  - piso de UMA vaga por sessão: sessão sem perna é a reclamação contrária, já recebida;
- *  - teto de metade da sessão: mais que isso recria o defeito original.
+ *  - piso de UMA vaga dinâmica por sessão que nenhuma outra camada já carrega na perna: sessão
+ *    sem nenhum estímulo de membro inferior é a reclamação contrária, já recebida;
+ *  - teto de metade da sessão: mais que isso recria o defeito original (64% na tela do Filipe).
  *
  * O fator e o floor não são gosto: com 40% arredondado, a semana de 5x dava 8 vagas de
  * perna contra 7 de superiores (core e corpo-todo comem parte da rotação), e inferiores
  * voltava a liderar justamente na frequência mais alta. 38% com floor mantém a perna entre
  * 25% e 42% das séries dinâmicas em toda a grade medida, sempre atrás de superiores.
  *
- * A camada isométrica desconta METADE de sua contagem, arredondada para BAIXO (floor(K/2)), e
- * só a partir de 3 sessões: a sessão isométrica é protocolo clínico curto, não substitui volume
- * dinâmico de perna um-por-um, e o desconto cheio empurrava a semana dinâmica para o excesso
- * contrário. Medido em 09/09/2026 com ceil(K/2): hipertensão e diabetes em Retorno e Resistência
- * caíam a 23% de perna dinâmica (piso 25%) assim que a prancha passou a contar por tempo; numa
- * semana de 2 sessões o desconto tirava a única segunda perna da semana.
+ * ## O DESCONTO É QUE VARIA POR CONDIÇÃO, e é a coluna que o próprio Filipe escreveu
+ *
+ * A carga extra abatia sempre METADE da sua contagem (floor(K/2)), a partir de 3 sessões. O
+ * fator passou a sair da PRIORIDADE DA PRESCRIÇÃO que a condição declara
+ * (`enfaseModalidade.prioridade`), que é exatamente a primeira coluna da tabela que ele
+ * revisou:
+ *  - `"forca"` (sarcopenia: "resistido progressivo, prioridade máxima"; osteopenia/osteoporose:
+ *    "força + carga óssea + equilíbrio"): fator 0. O bloco de equilíbrio e o aeróbio são
+ *    adjuvantes ali, não substituem carga progressiva de perna, e descontá-los tiraria
+ *    justamente o estímulo que a condição pede.
+ *  - `"aerobio"`, `"combinado"` e sem declaração: fator 0,5, o comportamento medido em 08 e
+ *    09/09/2026, que continua sendo o padrão do motor.
+ *
+ * A ênfase AERÓBIA não ganha desconto maior, e a tentação de dar existiu: com fator cheio, a
+ * hipertensão caía a 24% de perna dinâmica e reprovava no piso do `check:cobertura`. O
+ * guardrail estava certo e a ideia estava errada, porque `enfaseModalidade` tem invariante
+ * declarada no próprio tipo: "ela nunca tira aeróbio nem tira força; uma ênfase que subtrai
+ * viraria contraindicação disfarçada". A rede que sustenta a ênfase aeróbia na hipertensão
+ * (`tian-has-modalidade-2025`) diz na mesma tabela que o resistido de alta intensidade é um
+ * dos dois que baixam a diastólica. Tirar perna dali seria ler metade da fonte.
+ *
+ * A meia-contagem do isométrico segue valendo pelo motivo de sempre: a sessão isométrica é
+ * protocolo clínico curto, não substitui volume dinâmico de perna um-por-um, e o desconto
+ * cheio empurrava a semana dinâmica para o excesso contrário. Medido em 09/09/2026 com
+ * ceil(K/2): hipertensão e diabetes em Retorno e Resistência caíam a 23% de perna dinâmica
+ * (piso 25%) assim que a prancha passou a contar por tempo; numa semana de 2 sessões o
+ * desconto tirava a única segunda perna da semana. Por isso o desconto continua valendo só a
+ * partir de 3 sessões.
  */
-function cotaInferioresSemana(frequencia: number, porSessao: number, blocosIsoInferiores: number): number {
+function cotaInferioresSemana(frequencia: number, porSessao: number, carga: CargaInferiorDaSemana): number {
   const tetoSessao = Math.max(1, Math.floor(porSessao / 2));
   const vagasDinamicas = frequencia * porSessao;
-  const desconto = frequencia >= 3 ? Math.floor(blocosIsoInferiores / 2) : 0;
-  const alvo = Math.floor(0.38 * (vagasDinamicas + blocosIsoInferiores)) - desconto;
-  return Math.min(frequencia * tetoSessao, Math.max(frequencia, alvo));
+  const extras = carga.resistidoExtra;
+  const fator = carga.prioridade === "forca" ? 0 : 0.5;
+  const desconto = frequencia >= 3 ? Math.floor(extras * fator) : 0;
+  const alvo = Math.floor(0.38 * (vagasDinamicas + extras)) - desconto;
+  const semCargaNenhuma = carga.porSessao.filter((n) => n === 0).length;
+  return Math.min(frequencia * tetoSessao, Math.max(Math.max(1, semCargaNenhuma), alvo));
+}
+
+/**
+ * REPARTE A COTA SEMANAL PELAS SESSÕES CONSIDERANDO A SEQUÊNCIA, e não em fatia igual.
+ *
+ * A repartição era `floor(cota/freq)` mais o resto nas PRIMEIRAS sessões, e as primeiras
+ * sessões são exatamente onde o aeróbio complementar e o bloco de equilíbrio caem (os dois
+ * entram em `i < n`). Ou seja: o dia que já tinha bicicleta e apoio unipodal era o mesmo que
+ * ganhava a vaga de perna a mais. O Filipe descreveu o efeito com estas palavras: "quando
+ * tiver um treino aeróbio que executou bastante as pernas, não faz sentido gerar um treino de
+ * perna em seguida; tem que ter variabilidade maior entre a execução de membros".
+ *
+ * A repartição agora é gulosa por CARGA ACUMULADA: cada vaga vai para a sessão com menos
+ * membro inferior até ali (carga de outras camadas mais o que já foi dado), e os desempates
+ * saem, nesta ordem, de quem recebe menos carga de fora e de quem está mais LONGE da última
+ * sessão servida. O último critério é o que impede duas sessões vizinhas de saírem as duas
+ * pesadas de perna quando a semana está toda empatada.
+ *
+ * ## UM BLOCO DE OUTRA CAMADA VALE MEIA VAGA, e não uma inteira
+ *
+ * A conta roda em MEIAS VAGAS (a vaga dinâmica vale 2, o bloco de fora vale 1) porque a
+ * primeira versão, com peso igual, empurrou o motor para o excesso contrário, que é o outro
+ * desvio que o Filipe pediu para não cometer ("não colocar um percentual muito grande ou muito
+ * pequeno para membro inferior e superior"). Medido na grade de 480 planos: hipertrofia 3x sem
+ * condição saía [0, 2, 2], ou seja, um dia inteiro sem nenhuma perna dinâmica seguido de dois
+ * dias carregados, que é pior do que o defeito que a mudança veio corrigir. Com meia vaga a
+ * mesma semana sai [1, 1, 2], com a sessão mais carregada de perna caindo justamente no dia em
+ * que o aeróbio não carrega.
+ *
+ * O teto por sessão continua sendo metade das vagas, e quem bate o teto sai da disputa.
+ */
+function repartirCotaDePerna(cota: number, frequencia: number, cargaExtra: number[], tetoSessao: number): number[] {
+  const dado = new Array<number>(frequencia).fill(0);
+  const externa = (i: number) => cargaExtra[i] ?? 0;
+  const total = (i: number) => externa(i) + 2 * dado[i];
+  let anterior = -1;
+  const distancia = (i: number) => (anterior < 0 ? 0 : Math.abs(i - anterior));
+  for (let n = 0; n < cota; n++) {
+    let escolhida = -1;
+    for (let i = 0; i < frequencia; i++) {
+      if (dado[i] >= tetoSessao) continue;
+      if (escolhida < 0) {
+        escolhida = i;
+        continue;
+      }
+      const porTotal = total(i) - total(escolhida);
+      if (porTotal < 0) escolhida = i;
+      else if (porTotal === 0) {
+        const porExterna = externa(i) - externa(escolhida);
+        if (porExterna < 0) escolhida = i;
+        else if (porExterna === 0 && distancia(i) > distancia(escolhida)) escolhida = i;
+      }
+    }
+    if (escolhida < 0) break;
+    dado[escolhida]++;
+    anterior = escolhida;
+  }
+  return dado;
 }
 
 /**
@@ -1579,9 +1738,11 @@ function distribuirPorFamilia(
   escolhidos: { slug: string; nome: string; limpo?: boolean }[],
   frequencia: number,
   porSessao: number,
-  // Sessões isométricas de membros inferiores que a semana VAI receber da camada de
-  // condição (ver cotaInferioresSemana): a cota dinâmica de perna nasce ciente delas.
-  blocosIsoInferiores = 0,
+  // A carga de membro inferior que as OUTRAS camadas da condição já põem na semana (aeróbio de
+  // modalidade que carrega a perna, bloco de equilíbrio, sessão isométrica). Ver
+  // `cotaInferioresSemana`: a cota dinâmica nasce ciente dela, e a repartição pela semana
+  // também, para o dia que já carregou a perna não ser o mesmo que recebe a vaga a mais.
+  carga: CargaInferiorDaSemana = { porSessao: [], resistidoExtra: 0 },
 ): { slug: string; nome: string }[][] {
   const grupoDe = (slug: string) => exercises.find((e) => e.slug === slug)?.grupoMuscular ?? "outro";
   // As famílias e a cota de perna só escolhem entre os LIMPOS (nenhuma restrição rebaixou,
@@ -1651,10 +1812,9 @@ function distribuirPorFamilia(
    * Medido: uma semana de hipertrofia avançada 2x saía com leg press, agachamento livre e leg
    * press de novo, com o terra escolhido e parado no banco.
    */
-  const INFERIORES: readonly PadraoMovimento[] = ["joelho", "quadril", "panturrilha", "quadril-acessorio"];
   const ehInferior = (slug: string) => {
     const p = padraoDoSlug(slug);
-    return p != null && INFERIORES.includes(p);
+    return p != null && PADROES_INFERIORES.includes(p);
   };
   /** A vaga de perna: joelho e quadril se revezam, e o que está atrás vem primeiro. */
   const proximaPerna = (): { slug: string; nome: string } | undefined => {
@@ -1687,10 +1847,19 @@ function distribuirPorFamilia(
     const outro: PadraoMovimento = p === "empurrar" ? "puxar" : "empurrar";
     return quantos(p) < quantos(outro) ? 2 : 1;
   };
-  // A cota semanal de perna, repartida pelas sessões o mais parelho possível: 5 vagas em
-  // 3 sessões viram 2, 2 e 1. Toda sessão recebe ao menos uma (o piso está na cota).
-  const cotaSemana = cotaInferioresSemana(frequencia, porSessao, blocosIsoInferiores);
-  const cotaDaSessao = (i: number) => Math.floor(cotaSemana / frequencia) + (i < cotaSemana % frequencia ? 1 : 0);
+  // A cota semanal de perna, repartida pela SEQUÊNCIA: a vaga vai para o dia com menos membro
+  // inferior até ali, contando o que o aeróbio e o equilíbrio já carregam (ver
+  // `repartirCotaDePerna`). Toda sessão que nenhuma outra camada carrega recebe ao menos uma.
+  const tetoDaSessao = Math.max(1, Math.floor(porSessao / 2));
+  // Uma entrada por sessão, sempre: sem isso o piso ("uma perna para cada dia que nenhuma
+  // outra camada carrega") leria uma semana inteira como se toda sessão já tivesse perna.
+  const cargaDaSemana: CargaInferiorDaSemana = {
+    ...carga,
+    porSessao: Array.from({ length: frequencia }, (_, i) => carga.porSessao?.[i] ?? 0),
+  };
+  const cotaSemana = cotaInferioresSemana(frequencia, porSessao, cargaDaSemana);
+  const repartida = repartirCotaDePerna(cotaSemana, frequencia, cargaDaSemana.porSessao, tetoDaSessao);
+  const cotaDaSessao = (i: number) => repartida[i] ?? 0;
   let cursor = 0;
   const sessoes: { slug: string; nome: string }[][] = [];
   for (let i = 0; i < frequencia; i++) {
@@ -1890,7 +2059,46 @@ function montarSessoes(
   const exIso = indicacaoIso ? exercicioIsometrico(indicacaoIso.exerciciosAceitos, equipamentos, regraClinica) : undefined;
   const sessoesIso = indicacaoIso && exIso ? Math.min(indicacaoIso.protocolo.sessoes, frequencia) : 0;
   const isoDePerna = exIso?.grupoMuscular === "Membros inferiores" ? sessoesIso : 0;
-  const porSessaoDaSemana = distribuirPorFamilia(escolhidos, frequencia, porSessao, isoDePerna);
+
+  /*
+   * QUAIS SESSÕES JÁ CARREGAM A PERNA ANTES DA FORÇA, decidido aqui e uma vez só.
+   *
+   * As três camadas abaixo escolhem a sessão por índice (`i < n`), então dá para saber quais
+   * dias carregam o membro inferior ANTES de distribuir as vagas dinâmicas. Sem isto, o
+   * aeróbio complementar e o equilíbrio caíam nas primeiras sessões e a repartição parelha
+   * dava a essas MESMAS sessões a vaga de perna a mais.
+   *
+   * A montagem lá embaixo continua sendo a fonte de verdade do que entra no plano; o que se
+   * antecipa aqui é só a CONTAGEM, com as mesmas condições, e é por isso que cada linha repete
+   * a condição do bloco correspondente em vez de tentar adivinhá-la.
+   */
+  const compAerobio = faixa.complementoAerobio;
+  const sessoesAerobias =
+    compAerobio && regraClinica?.enfaseModalidade?.prioridade === "aerobio"
+      ? Math.min(frequencia, compAerobio.sessoesPorSemana + 1)
+      : compAerobio?.sessoesPorSemana;
+  const modalidadeBase = modalidadeAerobia("m-caminhada", regraClinica, equipamentos);
+  const modalidadeComp = compAerobio ? modalidadeAerobia(compAerobio.modalidade, regraClinica, equipamentos) : undefined;
+  const exEquilibrio = regraClinica?.equilibrio?.indicado
+    ? exercicioIsometrico(EXERCICIOS_EQUILIBRIO, equipamentos, regraClinica)
+    : undefined;
+  const cargaExtraPorSessao = Array.from({ length: frequencia }, (_, i) => {
+    let n = 0;
+    if (objetivo === "Emagrecimento") {
+      if (modalidadeCarregaInferiores(modalidadeBase)) n++;
+    } else if (compAerobio && sessoesAerobias != null && i < sessoesAerobias && modalidadeComp && modalidadeCarregaInferiores(modalidadeComp)) {
+      n++;
+    }
+    // O equilíbrio é apoio unipodal: é membro inferior por definição, e entra nas primeiras
+    // sessões, as mesmas que a repartição antiga premiava.
+    if (exEquilibrio?.sustentado && i < Math.min(SESSOES_EQUILIBRIO, frequencia)) n++;
+    return n;
+  });
+  const porSessaoDaSemana = distribuirPorFamilia(escolhidos, frequencia, porSessao, {
+    porSessao: cargaExtraPorSessao,
+    resistidoExtra: isoDePerna,
+    prioridade: regraClinica?.enfaseModalidade?.prioridade,
+  });
   const sessoes: Sessao[] = [];
 
   // A variação diária só entra quando o modelo pede E o objetivo tem ênfases autoradas
@@ -1963,7 +2171,7 @@ function montarSessoes(
         tipo: "aerobio",
         // Id CANONICO da modalidade. Sem o prefixo, getModalidade nao resolve, e o mesmo bloco
     // saia como "Caminhada" no app do aluno e como "Aerobio" no PDF e no editor.
-    modalidade: modalidadeAerobia("m-caminhada", regraClinica, equipamentos),
+    modalidade: modalidadeBase,
         /*
          * O BLOCO DIZ QUAL CARDIO E, e nao so que existe um.
          *
@@ -1976,7 +2184,7 @@ function montarSessoes(
          * feito. A outra metade, escolher a modalidade IDEAL para as condicoes do aluno,
          * depende de evidencia por condicao e segue aberta.
          */
-        nome: getModalidade(modalidadeAerobia("m-caminhada", regraClinica, equipamentos))?.nome ?? "Aeróbio",
+        nome: getModalidade(modalidadeBase)?.nome ?? "Aeróbio",
         formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
@@ -2028,7 +2236,7 @@ function montarSessoes(
      * seleção já trouxe o exercício por conta própria, não duplica.
      */
     if (regraClinica?.equilibrio?.indicado && i < Math.min(SESSOES_EQUILIBRIO, frequencia)) {
-      const exEq = exercicioIsometrico(EXERCICIOS_EQUILIBRIO, equipamentos, regraClinica);
+      const exEq = exEquilibrio;
       if (exEq?.sustentado && !blocos.some((b) => b.exercicioSlug === exEq.slug)) {
         const base = blocoSustentado(exEq, faixa, nivel, enfase, ctx);
         blocos.push({ ...base, equilibrio: true, observacao: `${NOTA_EQUILIBRIO} ${base.observacao ?? ""}`.trim() });
@@ -2059,7 +2267,7 @@ function montarSessoes(
     // de hoje (fonte única do gráfico). Fica ao FINAL da sessão: o foco do objetivo (carga na
     // força, reps na resistência) vem primeiro. Dose e frequência saem da faixa citada
     // (garber-2011), nunca inventadas.
-    const comp = faixa.complementoAerobio;
+    const comp = compAerobio;
     /*
      * ÊNFASE DE MODALIDADE. A condição pode acrescentar UMA sessão de complemento aeróbio na
      * semana, e só isso. Ver `GroupGpsRule.enfaseModalidade` para por que este efeito é
@@ -2075,17 +2283,16 @@ function montarSessoes(
      * sessão já nasce com um bloco aeróbio e não sobra espaço. Uma condição que pede ênfase
      * aeróbia num plano de emagrecimento já está atendida antes de a ênfase existir.
      */
-    const sessoesAerobias =
-      comp && regraClinica?.enfaseModalidade?.prioridade === "aerobio"
-        ? Math.min(frequencia, comp.sessoesPorSemana + 1)
-        : comp?.sessoesPorSemana;
+    // A quantidade de sessões e a modalidade foram decididas ANTES da distribuição de força,
+    // que precisou delas para a cota de perna. Aqui só se aplica: recalcular seria a segunda
+    // cópia da regra, que é como a camada isométrica errou em julho.
     if (comp && sessoesAerobias != null && i < sessoesAerobias) {
       const doseAero = { duracao: comp.duracao, intensidade: intensidadeDaBanda(comp.intensidade, regraClinica) };
       blocos.push({
         id: nid("blk"),
         tipo: "aerobio",
-        modalidade: modalidadeAerobia(comp.modalidade, regraClinica, equipamentos),
-        nome: `${getModalidade(modalidadeAerobia(comp.modalidade, regraClinica, equipamentos))?.nome ?? "Aeróbio"} (complementar)`,
+        modalidade: modalidadeComp ?? comp.modalidade,
+        nome: `${getModalidade(modalidadeComp ?? comp.modalidade)?.nome ?? "Aeróbio"} (complementar)`,
         formato: formatoAerobio(regraClinica),
         duracao: doseAero.duracao,
         intensidade: intensidadeAerobia(ctx, doseAero.intensidade),
@@ -3390,10 +3597,57 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
       };
       const cobertos = PADROES_ESSENCIAIS.filter((p) => presentes.has(p)).map((p) => ROTULO[p]);
       const faltando = PADROES_ESSENCIAIS.filter((p) => !presentes.has(p)).map((p) => ROTULO[p]);
-      const DE_PERNA = new Set<PadraoMovimento | undefined>(["joelho", "quadril", "panturrilha", "quadril-acessorio"]);
+      const DE_PERNA = new Set<PadraoMovimento | undefined>(PADROES_INFERIORES);
       const perna = dinamicos.filter((b) => DE_PERNA.has(padraoDoBloco(b))).length;
       const pct = Math.round((100 * perna) / dinamicos.length);
       const sustentados = blocos.filter((b) => b.sustentado && !b.equilibrio && !b.assoalho).length;
+      /*
+       * DE ONDE VEIO A COTA DE PERNA, dito pela condição e não por um percentual solto.
+       *
+       * O parágrafo dizia "a cota é semanal, perto de 38% das vagas", e o Filipe leu isso como
+       * padrão fixo, com razão: o número aparecia sem nada que o ligasse àquele aluno. O que
+       * o texto conta agora é a CADEIA que produziu a cota naquele plano: quais camadas a
+       * condição acendeu, quantos dias elas já carregam a perna, e por que as vagas dinâmicas
+       * foram parar nos dias que sobraram. Tudo LIDO da semana gerada, como o resto daqui.
+       */
+      const carregaPerna = (s: (typeof principais)[number]) =>
+        s.blocos.some((b) => b.tipo === "aerobio" && b.modalidade && modalidadeCarregaInferiores(b.modalidade));
+      const diasComAerobioDePerna = principais.filter(carregaPerna).length;
+      const diasComEquilibrio = principais.filter((s) => s.blocos.some((b) => b.equilibrio)).length;
+      const isoDePernaSemana = semana.sessoes.filter(
+        (s) =>
+          s.complemento &&
+          s.blocos.some((b) => {
+            const ex = b.exercicioSlug ? exercises.find((e) => e.slug === b.exercicioSlug) : undefined;
+            return !!ex && PADROES_INFERIORES.includes(padraoDe(ex));
+          }),
+      ).length;
+      // As camadas que dizem em QUE DIA a perna já trabalhou. Elas movem a vaga pela semana, e
+      // não mudam quantas vagas existem: minutos de aeróbio e apoio unipodal carregam a mesma
+      // região que o agachamento e não entregam a mesma qualidade.
+      const temCondicao = !!regraDoPlano;
+      const ondeJaCarrega: string[] = [];
+      if (diasComAerobioDePerna)
+        ondeJaCarrega.push(
+          `${temCondicao ? "o aeróbio escolhido para a condição" : "o aeróbio do plano"} já carrega a perna em ${diasComAerobioDePerna} ${diasComAerobioDePerna === 1 ? "dia" : "dias"}`,
+        );
+      if (diasComEquilibrio)
+        ondeJaCarrega.push(`o bloco de equilíbrio ocupa apoio unipodal em ${diasComEquilibrio} ${diasComEquilibrio === 1 ? "dia" : "dias"}`);
+      const pernaPorSessao = principais.map((s) => s.blocos.filter((b) => b.tipo === "forca" && DE_PERNA.has(padraoDoBloco(b))).length);
+      const parelho = new Set(pernaPorSessao).size <= 1;
+      const frases: string[] = [];
+      if (isoDePernaSemana)
+        frases.push(
+          `a condição declarada acendeu ${isoDePernaSemana} ${isoDePernaSemana === 1 ? "sessão isométrica de membro inferior, que entra" : "sessões isométricas de membro inferior, que entram"} na conta e ${isoDePernaSemana === 1 ? "reduz" : "reduzem"} o número de vagas dinâmicas de perna da semana`,
+        );
+      if (ondeJaCarrega.length)
+        frases.push(
+          `${ondeJaCarrega.join(" e ")}, e por isso as vagas dinâmicas de perna ${parelho ? "ficaram iguais entre os dias, que é o que equilibra a semana quando toda sessão recebe a mesma carga de fora" : "foram para os dias que essas camadas não carregam, para dois dias seguidos não saírem os dois pesados de membro inferior"}`,
+        );
+      const maiuscula = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+      const origem = frases.length
+        ? `ela sai do que ${temCondicao ? "a condição declarada" : "o plano"} já monta na semana antes das vagas de força. ${frases.map(maiuscula).join(". ")}.`
+        : `nada mais nesta semana carrega o membro inferior, então as vagas dinâmicas são a única carga de perna e se repartem entre os dias.`;
       return (
         `Sobre a montagem da semana: as vagas de força foram preenchidas por padrão de movimento, e não só por grupo muscular. ` +
         `A primeira semana cobre ${cobertos.join(", ")}` +
@@ -3401,7 +3655,9 @@ export function gerarPlano(input: GerarPlanoInput): PlanoGerado {
           ? `, e não cobre ${faltando.join(", ")} porque o catálogo disponível, com os equipamentos e as restrições declarados, não tinha opção para esse padrão`
           : "") +
         `; dentro de cada padrão a ordem é a de mérito, com o exercício do objetivo à frente. ` +
-        `Os membros inferiores ficaram com ${perna} das ${dinamicos.length} vagas dinâmicas (${pct}%): a cota é semanal, perto de 38% das vagas, com pelo menos uma perna por sessão e nunca mais da metade de uma sessão, o que evita tanto a semana só de perna quanto a sessão sem perna.` +
+        `Os membros inferiores ficaram com ${perna} das ${dinamicos.length} vagas dinâmicas (${pct}%) e os superiores com o restante (${100 - pct}%). ` +
+        `Essa cota não é um padrão fixo: ${origem} ` +
+        `Os dois limites que valem para qualquer aluno são o piso de um estímulo de membro inferior por dia de treino e o teto de metade de uma sessão, que evitam tanto a semana só de perna quanto o dia sem perna.` +
         (sustentados
           ? ` ${sustentados} ${sustentados === 1 ? "bloco sustentado sai" : "blocos sustentados saem"} por tempo, e não por repetições, porque é assim que o exercício se prescreve.`
           : "")
