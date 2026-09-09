@@ -1297,13 +1297,48 @@ function exercicioIsometrico(
 /**
  * AS FAMÍLIAS QUE UMA SEMANA DE FORÇA PRECISA TOCAR, e a ordem em que as vagas giram.
  *
- * Membros inferiores têm cota própria por sessão (metade das vagas, arredondada para baixo:
- * 2 de 4, 1 de 3), porque o rótulo único esconde dois padrões de movimento (dominante de
- * joelho e de quadril). As outras vagas giram por estas famílias, nesta ordem, atravessando
- * as sessões da semana: quem treina 3x com 4 exercícios tem 6 vagas de superior por semana,
- * e as 5 famílias cabem. "Corpo todo" fecha a fila como coringa, não como obrigação.
+ * Membros inferiores têm cota própria (o rótulo único esconde dois padrões de movimento,
+ * dominante de joelho e de quadril), mas a cota é SEMANAL, não "metade de toda sessão".
+ * As outras vagas giram por estas famílias, nesta ordem, atravessando as sessões da semana:
+ * quem treina 3x com 4 exercícios tem 7 vagas de superior por semana, e as 5 famílias
+ * cabem. "Corpo todo" fecha a fila como coringa, não como obrigação.
  */
 const FAMILIAS_SUPERIORES = ["Peitorais", "Costas", "Ombros", "Braços", "Core (tronco)", "Corpo todo"] as const;
+
+/**
+ * QUANTAS VAGAS DE MEMBROS INFERIORES A SEMANA RECEBE.
+ *
+ * ## O defeito que isto corrige (o Filipe, 08/09/2026)
+ *
+ * A cota era fixa em metade de cada sessão (`floor(porSessao/2)`), o que fazia TODO plano
+ * sair com 50% das séries dinâmicas em inferiores, sempre à frente de superiores (33% a
+ * 40%). E quando a condição do aluno dispara a camada isométrica (agachamento na parede,
+ * membros inferiores), essas sessões empilhavam por cima: a tela mostrava 64% a 68% e o
+ * próprio aviso de concentração acendia em plano recém-gerado. Aviso que acende por desenho
+ * não é aviso, é defeito com legenda.
+ *
+ * ## A régua
+ *
+ * O alvo é ~38% das vagas de força da semana INTEIRA (dinâmica + isométrica de perna),
+ * arredondado para BAIXO, com dois limites que já custaram uma rodada cada:
+ *  - piso de UMA vaga por sessão: sessão sem perna é a reclamação contrária, já recebida;
+ *  - teto de metade da sessão: mais que isso recria o defeito original.
+ *
+ * O fator e o floor não são gosto: com 40% arredondado, a semana de 5x dava 8 vagas de
+ * perna contra 7 de superiores (core e corpo-todo comem parte da rotação), e inferiores
+ * voltava a liderar justamente na frequência mais alta. 38% com floor mantém a perna entre
+ * 25% e 42% das séries dinâmicas em toda a grade medida, sempre atrás de superiores.
+ *
+ * A camada isométrica desconta METADE de sua contagem (ceil(K/2)) e não K inteiro: a sessão
+ * isométrica é protocolo clínico curto e sustentado, não substitui volume dinâmico de perna
+ * um-por-um, e o desconto cheio empurrava a semana dinâmica para o excesso contrário.
+ */
+function cotaInferioresSemana(frequencia: number, porSessao: number, blocosIsoInferiores: number): number {
+  const tetoSessao = Math.max(1, Math.floor(porSessao / 2));
+  const vagasDinamicas = frequencia * porSessao;
+  const alvo = Math.floor(0.38 * (vagasDinamicas + blocosIsoInferiores)) - Math.ceil(blocosIsoInferiores / 2);
+  return Math.min(frequencia * tetoSessao, Math.max(frequencia, alvo));
+}
 
 /**
  * DISTRIBUI OS ESCOLHIDOS PELAS SESSÕES DA SEMANA COBRINDO AS FAMÍLIAS.
@@ -1335,6 +1370,9 @@ function distribuirPorFamilia(
   escolhidos: { slug: string; nome: string; limpo?: boolean }[],
   frequencia: number,
   porSessao: number,
+  // Sessões isométricas de membros inferiores que a semana VAI receber da camada de
+  // condição (ver cotaInferioresSemana): a cota dinâmica de perna nasce ciente delas.
+  blocosIsoInferiores = 0,
 ): { slug: string; nome: string }[][] {
   const grupoDe = (slug: string) => exercises.find((e) => e.slug === slug)?.grupoMuscular ?? "outro";
   // As famílias e a cota de perna só escolhem entre os LIMPOS (nenhuma restrição rebaixou,
@@ -1364,14 +1402,17 @@ function distribuirPorFamilia(
     reuso.set(grupo, i + 1);
     return lista[i % lista.length];
   };
-  const inferioresPorSessao = Math.max(1, Math.floor(porSessao / 2));
+  // A cota semanal de perna, repartida pelas sessões o mais parelho possível: 5 vagas em
+  // 3 sessões viram 2, 2 e 1. Toda sessão recebe ao menos uma (o piso está na cota).
+  const cotaSemana = cotaInferioresSemana(frequencia, porSessao, blocosIsoInferiores);
+  const cotaDaSessao = (i: number) => Math.floor(cotaSemana / frequencia) + (i < cotaSemana % frequencia ? 1 : 0);
   let cursor = 0;
   const sessoes: { slug: string; nome: string }[][] = [];
   for (let i = 0; i < frequencia; i++) {
     const sessao: { slug: string; nome: string }[] = [];
     // Perna sempre entra, repetindo o exercício se o pool acabou: treinar perna toda sessão
     // com o mesmo leg press é rotina, sessão sem perna é reclamação.
-    for (let k = 0; k < inferioresPorSessao; k++) {
+    for (let k = 0; k < cotaDaSessao(i); k++) {
       const it = proximo("Membros inferiores", true);
       if (it && !sessao.some((x) => x.slug === it.slug)) sessao.push(it);
     }
@@ -1385,6 +1426,20 @@ function distribuirPorFamilia(
         sessao.push(it);
         semAchar = 0;
       } else semAchar++;
+    }
+    // Sobrou vaga com o pool de inéditos esgotado: REPETE superiores pela fila de famílias
+    // antes de qualquer perna extra. Sem este passo, a vaga que sobrava caía na cauda por
+    // mérito, que é onde a perna guiada sempre está, e a terceira perna voltava pela porta
+    // dos fundos.
+    let voltas = 0;
+    while (sessao.length < porSessao && voltas < FAMILIAS_SUPERIORES.length) {
+      const fam = FAMILIAS_SUPERIORES[cursor % FAMILIAS_SUPERIORES.length];
+      cursor++;
+      const it = proximo(fam, true);
+      if (it && !sessao.some((x) => x.slug === it.slug)) {
+        sessao.push(it);
+        voltas = 0;
+      } else voltas++;
     }
     // Vaga que sobrou: o melhor ainda não usado, primeiro de qualquer grupo que NÃO seja
     // perna (a cota de perna já entrou), depois perna. Sem esta ordem, um pool magro em
@@ -1453,7 +1508,22 @@ function montarSessoes(
   const porSessao = objetivo === "Emagrecimento" ? 3 : 4;
   const selecao = selecionarExercicios(objetivo, nivel, Math.max(4, (frequenciaDoPlano ?? frequencia) * porSessao), restricoes, objetivoSecundario, regraClinica, equipamentos);
   const escolhidos = selecao.escolhidos;
-  const porSessaoDaSemana = distribuirPorFamilia(escolhidos, frequencia, porSessao);
+  /*
+   * A DECISÃO DO ISOMÉTRICO É TOMADA AQUI, UMA VEZ, antes da distribuição de força.
+   *
+   * A distribuição precisa saber quantas sessões de perna a camada isométrica vai empilhar
+   * na semana (agachamento na parede é membro inferior), senão a cota dinâmica soma por
+   * cima e a semana sai concentrada: foi o 64% que o Filipe viu na tela em 08/09/2026.
+   * O bloco que APLICA as sessões isométricas, mais abaixo, reusa esta mesma decisão:
+   * recalculá-la lá seria a segunda cópia da regra, que é como esta camada errou em julho.
+   */
+  const indicacaoIso = ISO_OBJETIVOS_FORA.includes(objetivo)
+    ? undefined
+    : indicacaoIsometrica({ objetivo, nivel, regraClinica });
+  const exIso = indicacaoIso ? exercicioIsometrico(indicacaoIso.exerciciosAceitos, equipamentos, regraClinica) : undefined;
+  const sessoesIso = indicacaoIso && exIso ? Math.min(indicacaoIso.protocolo.sessoes, frequencia) : 0;
+  const isoDePerna = exIso?.grupoMuscular === "Membros inferiores" ? sessoesIso : 0;
+  const porSessaoDaSemana = distribuirPorFamilia(escolhidos, frequencia, porSessao, isoDePerna);
   const sessoes: Sessao[] = [];
 
   // A variação diária só entra quando o modelo pede E o objetivo tem ênfases autoradas
@@ -1690,38 +1760,33 @@ function montarSessoes(
    * A frequência do protocolo (3x/semana) é o teto, e a do plano é o outro: quem treina 2x
    * não recebe 3 sessões isométricas, porque a semana dele não comporta.
    */
-  const indicacaoIso = ISO_OBJETIVOS_FORA.includes(objetivo)
-    ? undefined
-    : indicacaoIsometrica({ objetivo, nivel, regraClinica });
-  if (indicacaoIso) {
-    const ex = exercicioIsometrico(indicacaoIso.exerciciosAceitos, equipamentos, regraClinica);
-    if (ex) {
-      const quantas = Math.min(indicacaoIso.protocolo.sessoes, frequencia);
-      for (let k = 0; k < quantas; k++) {
-        sessoes.push({
-          id: nid("ses"),
-          nome: `Sessão isométrica ${k + 1}`,
-          // Cabe no dia de treino, não é dia a mais: ver Sessao.complemento.
-          complemento: true,
-          // O foco sai da INDICAÇÃO que de fato disparou, e não de um texto fixo da camada:
-          // é ele que responde, na tela, por que este aluno recebeu esta sessão.
-          foco: indicacaoIso.foco,
-          blocos: [
-            {
-              id: nid("blk"),
-              tipo: "isometrico",
-              exercicioSlug: ex.slug,
-              nome: ex.nome,
-              series: indicacaoIso.protocolo.series,
-              duracao: indicacaoIso.protocolo.contracao,
-              intervalo: indicacaoIso.protocolo.descanso,
-              intensidade: indicacaoIso.intensidade,
-              recuperacao: indicacaoIso.protocolo.descanso,
-              observacao: indicacaoIso.nota,
-            },
-          ],
-        });
-      }
+  // A decisão (indicação, exercício e quantidade) foi tomada ANTES da distribuição de
+  // força, que precisou dela para a cota de perna. Aqui só se aplica.
+  if (indicacaoIso && exIso) {
+    for (let k = 0; k < sessoesIso; k++) {
+      sessoes.push({
+        id: nid("ses"),
+        nome: `Sessão isométrica ${k + 1}`,
+        // Cabe no dia de treino, não é dia a mais: ver Sessao.complemento.
+        complemento: true,
+        // O foco sai da INDICAÇÃO que de fato disparou, e não de um texto fixo da camada:
+        // é ele que responde, na tela, por que este aluno recebeu esta sessão.
+        foco: indicacaoIso.foco,
+        blocos: [
+          {
+            id: nid("blk"),
+            tipo: "isometrico",
+            exercicioSlug: exIso.slug,
+            nome: exIso.nome,
+            series: indicacaoIso.protocolo.series,
+            duracao: indicacaoIso.protocolo.contracao,
+            intervalo: indicacaoIso.protocolo.descanso,
+            intensidade: indicacaoIso.intensidade,
+            recuperacao: indicacaoIso.protocolo.descanso,
+            observacao: indicacaoIso.nota,
+          },
+        ],
+      });
     }
   }
   return sessoes;

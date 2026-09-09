@@ -189,7 +189,104 @@ if (falhas.length) {
     if (foraDoObjetivo && !/não (é|são) específic/i.test(plano.raciocinio))
       falhas.push(`${c.rotulo}: entrou exercício de outro objetivo e o raciocínio não declara.`);
   }
-  if (!falhas.length) console.log("[check:cobertura] ok: 6 planos tocam as famílias que a frequência permite, nenhuma sessão sai sem perna, e o que entra por cobertura é declarado no raciocínio.");
+  // Este bloco nasceu depois do primeiro exit(1), então as falhas dele caíam no vazio:
+  // o processo terminava verde com a lista cheia. Reprovar aqui é o que o bloco sempre quis.
+  if (falhas.length) {
+    console.error(`\n[check:cobertura] FALHOU: ${falhas.length} problema(s) de cobertura por família.\n`);
+    for (const f of falhas) console.error("  • " + f);
+    process.exit(1);
+  }
+  console.log("[check:cobertura] ok: 6 planos tocam as famílias que a frequência permite, nenhuma sessão sai sem perna, e o que entra por cobertura é declarado no raciocínio.");
+}
+
+/*
+ * EQUILÍBRIO COMO A TELA MEDE (08/09/2026).
+ *
+ * O Filipe montou um treino e a tela mostrou 64% das SÉRIES da semana em membros
+ * inferiores, com o próprio aviso de concentração aceso. O guardrail acima não pegou por
+ * três frestas somadas: ele conta BLOCOS (a tela conta séries), roda só frequência 3 (o
+ * defeito piora em 2x, 4x e 5x), e não enxerga a camada isométrica de condição, que empilha
+ * sessões de agachamento na parede (membros inferiores) por cima da cota de 50% que a
+ * distribuição dava por desenho.
+ *
+ * Este bloco mede o que o profissional lê: séries de força DINÂMICA por região, numa grade
+ * de objetivo x frequência x condição. As réguas:
+ *
+ *  - inferiores nunca passam de METADE das séries dinâmicas da semana;
+ *  - superiores (as 4 famílias somadas) nunca ficam ATRÁS de inferiores: era exatamente a
+ *    reclamação ("todos os treinos com % maior em inferiores");
+ *  - inferiores nunca somem (piso de 25%), porque a primeira correção deste defeito já
+ *    produziu o excesso contrário uma vez.
+ *
+ * O isométrico de condição fica FORA desta conta de propósito, pela mesma regra de
+ * honestidade que tirou o aeróbio do denominador: série de 2 minutos sustentados não é
+ * série dinâmica, e a dose dele é protocolo clínico fechado, não escolha de distribuição.
+ * A tela passa a mostrá-lo em linha própria, como faz com o aeróbio.
+ */
+{
+  const REGIAO: Record<string, "Inferiores" | "Superiores" | "Core" | "Corpo todo"> = {
+    "Membros inferiores": "Inferiores",
+    Peitorais: "Superiores",
+    Costas: "Superiores",
+    Ombros: "Superiores",
+    Braços: "Superiores",
+    "Core (tronco)": "Core",
+    "Corpo todo": "Corpo todo",
+  };
+  const TETO_INFERIORES_SERIES = 0.5;
+  const PISO_INFERIORES_SERIES = 0.25;
+  const falhasEq: string[] = [];
+  const objetivos = ["Hipertrofia", "Emagrecimento", "Força", "Resistência muscular", "Retorno ao treino"];
+  const condicoes = [undefined, "hipertensao-estagio-1", "diabetes-tipo-2"];
+  let medidos = 0;
+  for (const objetivo of objetivos)
+    for (const frequencia of [2, 3, 4, 5])
+      for (const grupoEspecial of condicoes) {
+        let g;
+        try {
+          g = gerarPlano({ objetivo: objetivo as never, nivel: "Intermediário" as never, semanas: 8, frequencia, idade: 35, grupoEspecial } as never);
+        } catch {
+          continue;
+        }
+        const semana = g.principal.mesociclos[0]?.microciclos[0];
+        if (!semana) continue;
+        const porRegiao = new Map<string, number>();
+        let series = 0;
+        for (const s of semana.sessoes)
+          for (const b of s.blocos) {
+            if (b.tipo !== "forca") continue;
+            const ex = b.exercicioSlug ? getExercise(b.exercicioSlug) : undefined;
+            if (!ex) continue;
+            const n = (b as { seriesAlvo?: number }).seriesAlvo ?? Number(/(\d+)/.exec((b as { series?: string }).series ?? "")?.[1] ?? 0);
+            if (!n) continue;
+            series += n;
+            const r = REGIAO[ex.grupoMuscular] ?? "Corpo todo";
+            porRegiao.set(r, (porRegiao.get(r) ?? 0) + n);
+          }
+        if (!series) continue;
+        medidos++;
+        const rotulo = `${objetivo} ${frequencia}x ${grupoEspecial ?? "sem condição"}`;
+        const inf = porRegiao.get("Inferiores") ?? 0;
+        const sup = porRegiao.get("Superiores") ?? 0;
+        const pct = (n: number) => Math.round((100 * n) / series);
+        if (inf / series > TETO_INFERIORES_SERIES)
+          falhasEq.push(`${rotulo}: inferiores com ${pct(inf)}% das ${series} séries dinâmicas (teto ${TETO_INFERIORES_SERIES * 100}%).`);
+        if (sup < inf)
+          falhasEq.push(`${rotulo}: superiores (${pct(sup)}%) atrás de inferiores (${pct(inf)}%): é a reclamação do "% sempre maior em inferiores".`);
+        if (inf / series < PISO_INFERIORES_SERIES)
+          falhasEq.push(`${rotulo}: inferiores com só ${pct(inf)}% das séries dinâmicas (piso ${PISO_INFERIORES_SERIES * 100}%).`);
+      }
+  if (falhasEq.length) {
+    console.error(`\n[check:cobertura] FALHOU no equilíbrio de séries (a conta da tela): ${falhasEq.length} caso(s).\n`);
+    for (const f of falhasEq) console.error("  • " + f);
+    console.error(
+      "\n  A cota de perna era metade de TODA sessão (50% por desenho) e a camada isométrica de\n" +
+        "  condição empilhava agachamento na parede por cima. A cota é semanal (~40%), ciente do\n" +
+        "  isométrico, e o que sobra de vaga repete superiores antes de virar terceira perna.\n",
+    );
+    process.exit(1);
+  }
+  console.log(`[check:cobertura] ok: em ${medidos} planos (objetivo x frequência x condição), inferiores ficam entre 25% e 50% das séries dinâmicas e nunca à frente de superiores.`);
 }
 
 console.log(
