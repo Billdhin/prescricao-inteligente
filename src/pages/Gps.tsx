@@ -534,7 +534,7 @@ export function Gps() {
             </p>
           </div>
           {sessaoAlvoDia && (
-            <div className="mt-3 rounded-xl border border-border bg-surface p-3">
+            <div className="mt-3 rounded-xl border border-border bg-surface-soft p-3">
               <div className="mb-1.5 flex items-center gap-1.5">
                 <Target className="h-3.5 w-3.5 text-primary" />
                 <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Sessão de hoje a personalizar</p>
@@ -1622,6 +1622,7 @@ function EditorDaSessaoDeHoje({
         sessao={rascunho}
         ctx={ctx}
         editavel
+        ocultarCabecalho
         onChange={setRascunho}
       />
       <div className="mt-2 flex flex-wrap items-center gap-2">
