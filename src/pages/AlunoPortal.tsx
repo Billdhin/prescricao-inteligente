@@ -64,15 +64,7 @@ function PortalApp() {
   const { marca, professionalId } = useCloudAuth();
 
   const aluno = alunos[0];
-  if (!aluno) {
-    return (
-      <Centro>
-        <p className="max-w-sm text-center text-sm text-ink-2">
-          Ainda não há um treino vinculado à sua conta. Assim que o seu profissional publicar, ele aparece aqui.
-        </p>
-      </Centro>
-    );
-  }
+  if (!aluno) return <SemTreinoVinculado />;
   const plano = planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
 
   // O aviso de falha diz as duas coisas que importam: o registro NÃO se perdeu (está no
@@ -290,6 +282,51 @@ function Campo({
 
 function Centro({ children }: { children: React.ReactNode }) {
   return <div className="grid min-h-[100dvh] place-items-center bg-bg p-4">{children}</div>;
+}
+
+/**
+ * A CONTA ENTROU NO ESPAÇO DO ALUNO E NÃO HÁ TREINO NENHUM AQUI.
+ *
+ * Isto era uma frase solta no meio de uma tela vazia, e virou a armadilha que o Filipe
+ * encontrou no celular: ele entrou, caiu aqui e não tinha o que fazer. Não por falta de
+ * conta, mas por falta de PORTA.
+ *
+ * A cadeia que prende: `AppLayout` manda toda conta com `role === "aluno"` para /aluno; /aluno
+ * sem ficha de aluno mostrava esta frase; e o botão de trocar de espaço, que é a saída, mora
+ * dentro do StudentApp, que só existe quando há ficha. Ou seja, a única saída ficava atrás da
+ * condição que falhou. Quem tem carteira própria e o espaço marcado como aluno ficava trancado
+ * para fora do produto inteiro, e a tela não dizia sequer que havia uma saída.
+ *
+ * Agora ela é uma tela de verdade: diz de quem é a conta, explica o que aconteceu sem culpar
+ * o leitor, e oferece as duas saídas possíveis. `AlternarEspaco` se resolve sozinho (some
+ * quando não há para onde ir), então a conta que de fato só espera o professor publicar
+ * continua vendo a mesma mensagem de antes, mais o "sair".
+ */
+function SemTreinoVinculado() {
+  const { user, temCarteiraPropria } = useCloudAuth();
+  const email = user?.email;
+  return (
+    <Centro>
+      <div className="w-full max-w-sm space-y-4">
+        <div className="flex justify-center">
+          <Logo />
+        </div>
+        <div className="space-y-1.5 text-center">
+          <h1 className="font-display text-lg font-bold text-ink">Nenhum treino nesta conta</h1>
+          <p className="text-sm text-ink-2">
+            {temCarteiraPropria
+              ? "Esta conta está aberta no espaço de aluno, e é no espaço de trabalho que estão os seus alunos."
+              : "Assim que o seu profissional publicar o treino, ele aparece aqui."}
+          </p>
+          {email && <p className="text-2xs text-ink-3">Conectado como {email}</p>}
+        </div>
+        <AlternarEspaco />
+        <button onClick={() => void signOut()} className={cn(buttonClasses("ghost", "sm"), "w-full")}>
+          Sair desta conta
+        </button>
+      </div>
+    </Centro>
+  );
 }
 
 function Splash() {

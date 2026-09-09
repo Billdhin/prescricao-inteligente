@@ -44,3 +44,38 @@ html{scroll-behavior:smooth}
 
 /* O carrossel de recursos do celular esconde a própria barra de rolagem. */
 .landing-prototipo [data-carrossel]::-webkit-scrollbar{display:none}
+
+/*
+ * O CTA DO HERO ENCOSTA NAS DUAS MARGENS NO CELULAR.
+ *
+ * Ele é `inline-flex`, então a largura vem do texto mais o padding: 327 px numa coluna de
+ * 335. Oito pixels curtos só do lado direito, com tudo em volta (a pílula, o H1, o parágrafo,
+ * a nota de preço) terminando na margem. Num bloco amarelo sólido a borda direita torta é a
+ * primeira coisa que o olho pega, e foi o que o Filipe leu como "descentralizado". No
+ * desktop ele continua do tamanho do texto, que é como um botão de página deve ser.
+ */
+.landing-prototipo [data-mobile="true"] [data-cta-largo-m]{width:100%}
+
+/*
+ * PRINT DE TELA NO CELULAR: ROLA, NÃO ENCOLHE.
+ *
+ * As duas imagens do sistema têm 1113 px de largura. Espremidas em 334, a do editor vira uma
+ * mancha cinza e a do macrociclo perde o eixo, a legenda e as semanas: um print que ninguém
+ * consegue ler não prova nada, e era por isso que a do macrociclo estava simplesmente
+ * escondida no celular (`data-oculta-m`). Esconder resolve o borrão e cria outro problema: a
+ * página promete um gráfico que o celular nunca mostra, e foi essa a falta que o Filipe viu.
+ *
+ * Rolando na horizontal, ela aparece no tamanho em que se lê. A dica "deslize" ao lado da
+ * legenda é a mesma que o carrossel de recursos já usa nesta página, então o gesto não
+ * precisa ser descoberto duas vezes. `width` com !important porque a largura de 100% está
+ * inline na própria imagem, como todo estilo deste template.
+ */
+/* `min-width:0` no <figure> não é detalhe: item de grid nasce com `min-width:auto` e se
+   recusa a encolher abaixo do conteúdo. Sem ele, a moldura crescia para os 760 px da imagem,
+   o `overflow-x:auto` nunca chegava a valer, e o `overflow-x:hidden` da página decepava o
+   lado direito do print, sem rolagem nenhuma para alcançá-lo. */
+.landing-prototipo [data-mobile="true"] figure:has([data-print]){min-width:0}
+.landing-prototipo [data-mobile="true"] [data-print]{min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+.landing-prototipo [data-mobile="true"] [data-print] img{width:760px !important;max-width:none !important}
+.landing-prototipo [data-print]::-webkit-scrollbar{height:6px}
+.landing-prototipo [data-print]::-webkit-scrollbar-thumb{background:rgba(16,35,58,.25);border-radius:999px}
