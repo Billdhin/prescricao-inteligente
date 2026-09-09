@@ -224,7 +224,7 @@ export function Alunos() {
                   <span>Aluno</span>
                   <span>Próximo passo</span>
                   <span>Semana</span>
-                  <span>Treinos 7d</span>
+                  <span>Treinos na semana</span>
                   <span>Reavaliação</span>
                   <span />
                 </div>
@@ -311,6 +311,9 @@ function LinhaTabela({
   const reavTexto = reav ? textoReav(reav.em) : null;
   const reavVencida = reav != null && reav.em < Date.now();
   const semana = planoAtivo ? `S${semanaAtual(planoAtivo)} de ${planoAtivo.semanas}` : null;
+  // Quantas sessões o plano prevê por semana. Sem plano ativo não há alvo, e a coluna
+  // mostra só o que foi feito.
+  const alvoSemanal = planoAtivo?.frequenciaSemanal ?? 0;
   const pontoCor =
     passo.chip == null
       ? "var(--success-fill)"
@@ -353,7 +356,33 @@ function LinhaTabela({
         <span className="truncate text-[13px] text-ink">{passo.frase}</span>
       </span>
       <span className="tabular hidden text-sm font-semibold text-ink lg:block">{semana ?? "·"}</span>
-      <span className="tabular hidden text-sm font-semibold text-ink lg:block">{treinos7d > 0 ? treinos7d : "·"}</span>
+      {/*
+        TREINOS DA SEMANA contra a FREQUÊNCIA PRESCRITA, que é o único denominador honesto
+        que este produto tem: sem plano ativo não existe "quantos deveriam ser", e aí a
+        coluna volta a ser o número seco. O rótulo carrega a conta ("3 de 4"), porque uma
+        barra sozinha não diz contra o que ela está cheia.
+      */}
+      <span className="hidden lg:block">
+        {alvoSemanal ? (
+          <span
+            className="block"
+            role="img"
+            aria-label={`${treinos7d} ${treinos7d === 1 ? "treino registrado" : "treinos registrados"} nos últimos 7 dias; o plano prevê ${alvoSemanal} por semana`}
+          >
+            <span className="tabular block text-sm font-semibold text-ink">
+              {treinos7d <= alvoSemanal ? `${treinos7d} de ${alvoSemanal}` : `${treinos7d} · prevê ${alvoSemanal}`}
+            </span>
+            <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-surface-mute">
+              <span
+                className={cn("block h-full rounded-full", treinos7d >= alvoSemanal ? "bg-success-fill" : "bg-primary")}
+                style={{ width: `${Math.min(100, Math.round((treinos7d / alvoSemanal) * 100))}%` }}
+              />
+            </span>
+          </span>
+        ) : (
+          <span className="tabular text-sm font-semibold text-ink">{treinos7d > 0 ? treinos7d : "·"}</span>
+        )}
+      </span>
       <span className={cn("hidden text-[13px] font-semibold lg:block", reavVencida ? "text-danger" : "text-ink-2")}>
         {reavTexto ?? "·"}
       </span>
