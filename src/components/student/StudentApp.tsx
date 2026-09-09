@@ -430,6 +430,20 @@ export function StudentApp({
 
 /* ------------------------------- Cabeçalho -------------------------------- */
 
+/** "Bom dia" / "Boa tarde" / "Boa noite", pelo relógio do aparelho do aluno. */
+function saudacaoDoDia(agora = new Date()): string {
+  const h = agora.getHours();
+  if (h < 12) return "Bom dia";
+  if (h < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+/** "Quarta", com inicial maiúscula, para a linha de contexto. */
+function diaDaSemanaPorExtenso(agora = new Date()): string {
+  const d = new Intl.DateTimeFormat("pt-BR", { weekday: "long" }).format(agora).replace(/-feira$/, "");
+  return d.charAt(0).toUpperCase() + d.slice(1);
+}
+
 /**
  * Cabeçalho do design: o disco com as iniciais do PROFISSIONAL, o nome dele como
  * sobrenome da tela, a saudação em display e o streak em pílula âmbar. Abaixo, a
@@ -477,32 +491,57 @@ function CabecalhoAluno({
     return { total: sessoes.length, feitos: sessoes.filter((s) => sessaoConcluida(s, semana, execucoes)).length };
   }, [plano, semana, execucoes]);
 
+  // A FASE e a semana, do plano, para a linha de contexto sob a saudação. Sem plano a
+  // linha encolhe para o dia da semana, em vez de inventar fase.
+  const meso = plano ? mesocicloAtual(plano) : undefined;
+  const contexto = [
+    diaDaSemanaPorExtenso(),
+    // "Fase 2", não "Fase 2: Progressão de carga · construir base": o rótulo cheio do
+    // mesociclo não cabe numa linha de celular e empurrava a semana para fora da tela.
+    meso ? faseCurta(rotuloMeso(meso)) : null,
+    semana != null && plano ? `semana ${semana} de ${plano.semanas}` : null,
+    treinosDaSemana
+      ? `${treinosDaSemana.feitos} de ${treinosDaSemana.total} ${treinosDaSemana.total === 1 ? "treino" : "treinos"}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <header className="px-4 pb-2 pt-4">
-      <div className="flex items-center gap-3">
+      {/*
+        O CARTÃO DA MARCA (protótipo mobile de 09/09/2026): a identidade do professor ocupa
+        a primeira faixa da tela, na cor dele, com a logo sobre papel branco. A saudação saiu
+        de dentro dele e desceu: quem assina o treino é o professor, quem é saudado é o aluno,
+        e empilhar as duas coisas na mesma faixa disputava a leitura.
+      */}
+      <div className="flex items-center gap-3 rounded-card p-3.5" style={{ background: cor, color: tinta }}>
         {marca.logoDataUrl ? (
-          // object-CONTAIN sobre papel branco, nunca cover: a logo do
-          // profissional costuma ser horizontal (símbolo + nome por extenso), e
-          // o cover num quadrado comia as pontas dela.
-          <span className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-control border border-border bg-white p-1">
-            <img src={marca.logoDataUrl} alt="" className="max-h-full max-w-full object-contain" />
+          // object-CONTAIN sobre papel branco, nunca cover: a logo do profissional costuma
+          // ser horizontal (símbolo + nome por extenso), e o cover num quadrado comia as
+          // pontas dela. O papel branco é fixo porque a logo foi desenhada para ele.
+          <span className="grid h-12 min-w-[48px] shrink-0 place-items-center overflow-hidden rounded-control bg-white px-2 py-1">
+            <img src={marca.logoDataUrl} alt="" className="max-h-10 max-w-[96px] object-contain" />
           </span>
         ) : (
           <span
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
-            style={{ background: cor, color: tinta }}
+            className="grid h-12 min-w-[48px] shrink-0 place-items-center rounded-control bg-white px-2 font-display text-lg font-bold"
+            style={{ color: cor }}
           >
             {iniciaisDe(marca.nome)}
           </span>
         )}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-semibold text-ink-2">{marca.nome}</p>
-          <h1 className="truncate font-display text-2xl font-bold text-ink">Oi, {aluno.nome.split(" ")[0]}!</h1>
-        </div>
+        <span className="min-w-0 flex-1">
+          <span className="block text-2xs opacity-90">Seu treino com</span>
+          <b className="block truncate text-[15px] font-bold leading-tight">{marca.nome}</b>
+        </span>
         {/* Streak só aparece quando existe de verdade: zero dias não vira medalha. */}
         {streak > 0 && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-warning-tint px-2.5 py-1 text-sm font-bold text-warning">
-            <Flame className="h-4 w-4" aria-hidden />
+          <span
+            className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
+            style={{ background: tinta, color: cor }}
+          >
+            <Flame className="h-3.5 w-3.5" aria-hidden />
             <span className="tabular">{streak}</span>
             <span className="sr-only">dias seguidos de treino</span>
           </span>
@@ -510,13 +549,19 @@ function CabecalhoAluno({
         {onSair && (
           <button
             onClick={onSair}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-soft hover:text-ink"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
+            style={{ color: tinta }}
             aria-label={preview ? "Fechar prévia" : "Sair da conta"}
           >
             <LogOut className="h-4 w-4" />
           </button>
         )}
       </div>
+
+      <h1 className="mt-3.5 truncate font-display text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink">
+        {saudacaoDoDia()}, {aluno.nome.split(" ")[0]}
+      </h1>
+      {contexto && <p className="mt-1 text-[12.5px] leading-snug text-ink-2">{contexto}</p>}
 
       {cobrancaPendente && (
         <button
@@ -528,17 +573,6 @@ function CabecalhoAluno({
         </button>
       )}
 
-      <p className="mt-1 text-sm text-ink-2">
-        {semana && plano ? `Semana ${semana} de ${plano.semanas}` : ""}
-        {semana && plano && treinosDaSemana ? " · " : ""}
-        {treinosDaSemana
-          ? `${treinosDaSemana.feitos} de ${treinosDaSemana.total} ${treinosDaSemana.total === 1 ? "treino concluído" : "treinos concluídos"}`
-          : ""}
-      </p>
-      {/* Trilho do PLANO: uma semana por parada, a atual em destaque. Vem DEPOIS da frase
-          que o descreve, para o desenho confirmar o que se acabou de ler. A leitura por
-          DIA vive na seção "Seus dias" desta mesma tela e não se repete aqui. */}
-      {plano && <TrilhoDeSemanas plano={plano} cor={cor} tinta={tinta} />}
     </header>
   );
 }
@@ -742,6 +776,13 @@ function AbaHoje({
     <div className="space-y-4">
       {alerta}
 
+      {/*
+        A SEMANA DO ALUNO abre a tela (protótipo, tela 01). Ela morava no rodapé, depois de
+        tudo: "em que ponto da semana eu estou" é a pergunta que vem ANTES de "o que eu faço
+        hoje", e quem rolava até o fim já tinha respondido a segunda sozinho.
+      */}
+      <SemanaStrip alunoId={aluno.id} execucoes={execucoes} liberacoes={liberacoes} cor={cor} />
+
       {sessaoHoje ? (
         <VisaoSessao
           sessao={sessaoHoje}
@@ -817,10 +858,6 @@ function AbaHoje({
         </section>
       )}
 
-      <Card className="p-4">
-        <h2 className="mb-2.5 text-2xs font-bold uppercase tracking-wider text-analysis-text">Sua semana</h2>
-        <SemanaStrip alunoId={aluno.id} execucoes={execucoes} liberacoes={liberacoes} cor={cor} />
-      </Card>
     </div>
   );
 }
@@ -1610,6 +1647,11 @@ function AbaTreinos({
           Plano de {plano.semanas} {plano.semanas === 1 ? "semana" : "semanas"} · semana {semana}
         </p>
       </div>
+
+      {/* O trilho de SEMANAS morava no cabeçalho, que é compartilhado, então ele
+          aparecia nas quatro abas. O plano inteiro se lê aqui (protótipo, tela 07);
+          o "onde estou nesta semana" é a faixa de 7 dias, na aba Hoje. */}
+      <TrilhoDeSemanas plano={plano} cor={cor} tinta={tinta} />
 
       {/* Trilho de fases: a POSIÇÃO em cada parada, a atual em sólido, as passadas em
           contorno. O nome por extenso vem embaixo, porque é lá que ele cabe. */}
