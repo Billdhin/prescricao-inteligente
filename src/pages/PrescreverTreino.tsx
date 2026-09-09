@@ -38,6 +38,7 @@ import {
   rotuloHorizonte,
   mesocicloAtual,
   rotuloMeso,
+  sessoesPrincipais,
   getFaixa,
   type Macrociclo,
   type Mesociclo,
@@ -1348,13 +1349,47 @@ function ResultadoPlano({
             semanaAtual={salvo ? semanaCorrente : undefined}
           />
 
-          {/* Régua de semanas: o mapa do plano vira navegação. */}
-          <ReguaDeSemanas
+          {/* O calendário do plano: a ESTRUTURA (fase, descarga, reavaliação, sessões)
+              logo abaixo da curva, e cada semana é a porta para editá-la. */}
+          <CalendarioDoPlano
             semanas={semanas}
             foco={semanaFoco}
             corrente={salvo ? semanaCorrente : undefined}
             onFocar={setSemanaFoco}
           />
+
+          {/*
+            O PLANO BLOCO A BLOCO, lado a lado e sempre visível (protótipo do editor).
+            Ele morava dentro de um <details>: a camada que responde "para onde este plano
+            está indo" ficava atrás de um clique, enquanto a semana solta ficava na frente.
+            Agora cada cartão traz a assinatura do bloco na face (as duas barras e as três
+            direções) e abre só para o detalhe fino das semanas.
+          */}
+          <section>
+            <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="font-display text-base font-bold text-ink">O plano bloco a bloco</h3>
+              <span className="text-xs text-ink-3">as barras comparam os blocos deste plano</span>
+            </div>
+            <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
+              {macro.mesociclos.map((m, i) => (
+                <MesocicloCard
+                  key={m.id}
+                  meso={m}
+                  indice={i}
+                  ctx={ctx}
+                  editavel={premium}
+                  onChange={trocarMeso}
+                  atual={m.id === mesoAtual?.id}
+                  semanaCorrente={semanaCorrente}
+                  reavaliarHref={reavaliarHref}
+                  tetos={tetos}
+                />
+              ))}
+            </div>
+            <div className="mt-3">
+              <ModeloExplicacao modelo={modelo} />
+            </div>
+          </section>
 
           {emFoco && (
             <SemanaEmFoco
@@ -1398,38 +1433,6 @@ function ResultadoPlano({
             />
           )}
 
-          {/*
-            O PLANO BLOCO A BLOCO, lado a lado e sempre visível (protótipo do editor).
-            Ele morava dentro de um <details>: a camada que responde "para onde este plano
-            está indo" ficava atrás de um clique, enquanto a semana solta ficava na frente.
-            Agora cada cartão traz a assinatura do bloco na face (as duas barras e as três
-            direções) e abre só para o detalhe fino das semanas.
-          */}
-          <section>
-            <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-display text-base font-bold text-ink">O plano bloco a bloco</h3>
-              <span className="text-xs text-ink-3">as barras comparam os blocos deste plano</span>
-            </div>
-            <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
-              {macro.mesociclos.map((m, i) => (
-                <MesocicloCard
-                  key={m.id}
-                  meso={m}
-                  indice={i}
-                  ctx={ctx}
-                  editavel={premium}
-                  onChange={trocarMeso}
-                  atual={m.id === mesoAtual?.id}
-                  semanaCorrente={semanaCorrente}
-                  reavaliarHref={reavaliarHref}
-                  tetos={tetos}
-                />
-              ))}
-            </div>
-            <div className="mt-3">
-              <ModeloExplicacao modelo={modelo} />
-            </div>
-          </section>
         </div>
 
         {/* TRILHO: por que estes números, equilíbrio da semana e avisos. */}
@@ -1533,7 +1536,22 @@ function ModeloCardEscolha({
  * A descarga vem do TIPO do microciclo (dado do plano), não de uma convenção visual
  * inventada aqui: se um dia o motor mudar onde ela cai, a barra acompanha.
  */
-function ReguaDeSemanas({
+/**
+ * O CALENDÁRIO DO PLANO (protótipo da periodização).
+ *
+ * ## O que ele substitui, e por quê
+ *
+ * Aqui morava a "régua de semanas": barras cuja ALTURA era o volume relativo de cada semana.
+ * Ela ficava logo abaixo do gráfico do macrociclo, que plota volume por semana. Ou seja, o
+ * mesmo dado, na mesma tela, duas vezes seguidas, e a segunda vez sem os outros dois eixos.
+ *
+ * O calendário responde o que o gráfico NÃO responde: em que fase cada semana cai, qual é de
+ * descarga, quantas sessões ela tem, onde a reavaliação está marcada e onde estou agora. É a
+ * estrutura do plano, não a curva dele.
+ *
+ * Cada célula abre a semana para edição, que era a função da régua e continua sendo.
+ */
+function CalendarioDoPlano({
   semanas,
   foco,
   corrente,
@@ -1544,108 +1562,118 @@ function ReguaDeSemanas({
   corrente?: number;
   onFocar: (n: number) => void;
 }) {
-  // Agrupa preservando a ordem de chegada: a régua espelha o plano, não reordena nada.
-  const porBloco = React.useMemo(() => {
-    const grupos: { meso: Mesociclo; itens: Microciclo[] }[] = [];
-    for (const { micro, meso } of semanas) {
-      const ultimo = grupos[grupos.length - 1];
-      if (ultimo && ultimo.meso.id === meso.id) ultimo.itens.push(micro);
-      else grupos.push({ meso, itens: [micro] });
-    }
-    return grupos;
-  }, [semanas]);
+  // As famílias por FASE, na mesma ordem em que o gráfico cicla as faixas: quem viu a fase 2
+  // em azul na curva encontra a semana da fase 2 em azul aqui.
+  const familia = (indice: number) =>
+    [
+      { bg: "var(--analysis-tint)", tinta: "var(--analysis)", ponto: "var(--analysis-fill)" },
+      { bg: "var(--primary-tint)", tinta: "var(--primary)", ponto: "var(--primary)" },
+      { bg: "var(--warning-tint)", tinta: "var(--warning)", ponto: "var(--warning-fill)" },
+    ][indice % 3];
 
-  /*
-   * O teto da escala é o maior volume do plano inteiro, e não o do bloco: barra alta num
-   * bloco tem que significar a mesma coisa que barra alta em outro, senão a fita compara
-   * cada bloco consigo mesmo e some justamente a progressão entre blocos.
-   */
-  const volumes = React.useMemo(
-    () => new Map(semanas.map(({ micro }) => [micro.id, agregadoSemana(micro).volume])),
-    [semanas],
-  );
-  const teto = Math.max(1, ...volumes.values());
-  const ALTURA = 60;
-  const PISO = 10; // barra de volume zero ainda precisa ser clicável e visível
+  const indiceDoMeso = new Map<string, number>();
+  let i = 0;
+  for (const { meso } of semanas) if (!indiceDoMeso.has(meso.id)) indiceDoMeso.set(meso.id, i++);
 
   return (
     <Card className="p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <div>
-          <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semanas do plano</p>
-          <p className="text-xs text-ink-3">A altura é o volume relativo da semana. Clique para editar.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-ink-2">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-3.5 rounded-sm bg-primary" /> Carga
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-3.5 rounded-sm border border-warning/45 bg-warning-tint [background-image:repeating-linear-gradient(135deg,transparent,transparent_3px,rgb(var(--warning-rgb)/0.3)_3px,rgb(var(--warning-rgb)/0.3)_6px)]" />{" "}
-            Descarga
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-3.5 rounded-sm bg-primary ring-2 ring-ink ring-offset-1 ring-offset-surface" /> Em edição
-          </span>
-        </div>
+        <h3 className="font-display text-base font-bold text-ink">Calendário do plano</h3>
+        <span className="text-xs text-ink-3">toque numa semana para abrir</span>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {porBloco.map(({ meso, itens }) => (
-          <div key={meso.id} className="rounded-control border border-border p-3">
-            <p className="mb-2 text-2xs font-semibold uppercase tracking-wide text-ink-3">
-              {rotuloMeso(meso)}
-              {meso.foco ? <span className="font-normal normal-case tracking-normal"> · {meso.foco}</span> : null}
-            </p>
-            <div className="flex items-end gap-1.5" style={{ height: ALTURA + 22 }}>
-              {itens.map((micro) => {
-                const ativo = micro.semana === foco;
-                const descarga = micro.tipo === "deload";
-                const vol = volumes.get(micro.id) ?? 0;
-                const h = Math.max(PISO, Math.round((vol / teto) * ALTURA));
-                return (
-                  <button
-                    key={micro.id}
-                    onClick={() => onFocar(micro.semana)}
-                    aria-pressed={ativo}
-                    aria-label={`Semana ${micro.semana}, ${rotuloMeso(meso)}${descarga ? ", descarga" : ""}`}
-                    className="group flex flex-1 flex-col items-center justify-end gap-1"
-                    style={{ height: ALTURA + 22 }}
-                  >
-                    <span
-                      style={{ height: h }}
-                      className={cn(
-                        "w-full rounded-t-md rounded-b-sm transition-colors",
-                        descarga
-                          ? "border border-warning/45 bg-warning-tint [background-image:repeating-linear-gradient(135deg,transparent,transparent_3px,rgb(var(--warning-rgb)/0.3)_3px,rgb(var(--warning-rgb)/0.3)_6px)]"
-                          : "bg-primary group-hover:brightness-110",
-                        !descarga && !ativo && "opacity-70",
-                        ativo && "ring-2 ring-ink ring-offset-1 ring-offset-surface",
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "tabular text-xs",
-                        ativo ? "font-bold text-ink" : descarga ? "font-semibold text-warning" : "font-semibold text-ink-2",
-                      )}
-                    >
-                      {micro.semana}
-                      {micro.semana === corrente && (
-                        <span aria-hidden className="ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle" />
-                      )}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+      {/* Seis por linha no celular, e o plano INTEIRO numa linha so a partir de sm: e a
+          leitura que o calendario existe para dar, ver o ciclo completo de um golpe. */}
+      <div
+        className={cn(
+          // Seis por linha no celular (alvo de toque preservado) e o plano INTEIRO numa
+          // linha so a partir de sm: e a leitura que o calendario existe para dar, ver o
+          // ciclo completo de um golpe. A contagem vem do plano, que tem 4, 8, 12 ou 24.
+          "grid grid-cols-6 gap-1.5",
+          "sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]",
+        )}
+        style={{ ["--cols" as string]: String(semanas.length) } as React.CSSProperties}
+      >
+        {semanas.map(({ micro, meso }) => {
+          const fam = familia(indiceDoMeso.get(meso.id) ?? 0);
+          const descarga = micro.tipo === "deload";
+          const emFoco = micro.semana === foco;
+          const ehCorrente = micro.semana === corrente;
+          // A reavaliação do plano cai na ÚLTIMA semana do bloco que a pede.
+          const reavalia = Boolean(meso.reavaliacao) && micro.semana === meso.semanaFim;
+          const nSessoes = sessoesPrincipais(micro.sessoes).length;
+          return (
+            <button
+              key={micro.id}
+              type="button"
+              onClick={() => onFocar(micro.semana)}
+              aria-pressed={emFoco}
+              title={`Semana ${micro.semana} · ${meso.nome}${descarga ? " · descarga" : ""}${
+                reavalia ? " · reavaliação" : ""
+              } · ${nSessoes} ${nSessoes === 1 ? "sessão" : "sessões"}`}
+              className={cn(
+                "relative flex aspect-square min-h-[44px] flex-col items-center justify-center gap-1 rounded-control border transition-colors",
+                emFoco ? "border-ink" : ehCorrente ? "border-ink/40" : "border-transparent",
+              )}
+              style={{
+                background: fam.bg,
+                color: fam.tinta,
+                // A descarga é hachurada, e não só de outra cor: no plano ela é uma exceção
+                // de forma, e a hachura sobrevive ao daltonismo e à impressão em cinza.
+                backgroundImage: descarga
+                  ? "repeating-linear-gradient(135deg, rgba(255,255,255,.55) 0 1.5px, transparent 1.5px 4px)"
+                  : undefined,
+              }}
+            >
+              <span className="tabular text-xs font-bold leading-none">S{micro.semana}</span>
+              {/* Um ponto por sessão da semana: a densidade se lê sem contar. */}
+              <span className="flex h-1 items-center gap-0.5">
+                {Array.from({ length: Math.min(nSessoes, 5) }, (_, k) => (
+                  <span key={k} className="h-1 w-1 rounded-full" style={{ background: fam.ponto }} />
+                ))}
+              </span>
+              {reavalia && (
+                <span
+                  aria-hidden
+                  className="absolute right-1 top-1 h-[7px] w-[7px] rounded-full border-[1.5px] border-surface"
+                  style={{ background: "var(--danger-fill)" }}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
-      {corrente != null && (
-        <p className="mt-2.5 text-2xs text-ink-3">
-          <span aria-hidden className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-primary align-middle" />
-          O ponto marca a semana de hoje.
-        </p>
-      )}
+
+      {/* A legenda diz o que cada marca significa. Sem ela as cores viram enfeite. */}
+      <div className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 text-2xs text-ink-2">
+        {[...indiceDoMeso.entries()].map(([id, idx]) => {
+          const meso = semanas.find((x) => x.meso.id === id)!.meso;
+          return (
+            <span key={id} className="inline-flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: familia(idx).ponto }} />
+              {rotuloMeso(meso)}
+            </span>
+          );
+        })}
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="h-2.5 w-2.5 rounded-[3px]"
+            style={{
+              background: "var(--warning-fill)",
+              backgroundImage: "repeating-linear-gradient(135deg, rgba(255,255,255,.55) 0 1.5px, transparent 1.5px 4px)",
+            }}
+          />
+          Descarga
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--danger-fill)" }} />
+          Reavaliação
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-[3px] border-2 border-ink" />
+          Em foco
+        </span>
+      </div>
     </Card>
   );
 }
