@@ -23,6 +23,7 @@
  */
 import { gerarPlano } from "@/lib/gps/periodizacao";
 import { getExercise } from "@/data/exercises";
+import { padraoDe } from "@/lib/gps/padroes";
 import type { Sessao } from "@/data/periodizacao";
 
 type Perfil = {
@@ -69,6 +70,25 @@ const MIN_GRUPOS = 3;
 
 const SUPERIORES = ["Peitorais", "Costas", "Ombros", "Braços"];
 
+/*
+ * MEMBRO INFERIOR SE CONTA PELO MOVIMENTO, e não pelo rótulo da família (09/09/2026).
+ *
+ * O levantamento terra convencional é a dobradiça de quadril mais clássica que existe e o
+ * catálogo o guarda em "Corpo todo". Contando pelo rótulo, uma semana de hipertrofia avançada
+ * com leg press, agachamento livre, terra e mesa flexora aparecia com 25% de perna e reprovava
+ * no piso, quando o que ela tem é 33% e um treino de perna melhor que a média do lote.
+ *
+ * O teto por grupo (regra 1) continua contando pela FAMÍLIA de propósito: ali o que se vigia é
+ * a monocultura de um rótulo, e a família é a unidade certa para isso.
+ */
+const PADROES_INFERIORES = ["joelho", "quadril", "panturrilha", "quadril-acessorio"];
+const EH_INFERIOR = (ex: { grupoMuscular: string; ativacao: { musculo: string; papel: string; percentual: number }[] }) =>
+  PADROES_INFERIORES.includes(padraoDe(ex as never));
+const EH_INFERIOR_SLUG = (slug?: string) => {
+  const ex = slug ? getExercise(slug) : undefined;
+  return ex ? EH_INFERIOR(ex) : false;
+};
+
 const sessoesDe = (macro: { mesociclos: { microciclos: { sessoes: Sessao[] }[] }[] }): Sessao[] =>
   macro.mesociclos.flatMap((m) => m.microciclos.flatMap((w) => w.sessoes));
 
@@ -95,6 +115,7 @@ for (const p of PERFIS) {
   const semana = sessoesDe(g.principal).slice(0, 3);
   const grupos: Record<string, number> = {};
   let forca = 0;
+  let inferioresReais = 0;
   for (const s of semana)
     for (const b of s.blocos) {
       if (b.tipo === "aerobio") continue;
@@ -102,6 +123,7 @@ for (const p of PERFIS) {
       if (!ex) continue;
       forca++;
       grupos[ex.grupoMuscular] = (grupos[ex.grupoMuscular] ?? 0) + 1;
+      if (EH_INFERIOR(ex)) inferioresReais++;
     }
 
   if (forca === 0) {
@@ -118,7 +140,7 @@ for (const p of PERFIS) {
 
   // 2) Perna nao pode sumir. Toda sessao de corpo inteiro tem trabalho de membro inferior,
   //    e um plano que ficou so com tronco esta tao errado quanto o que so tinha perna.
-  const inferiores = grupos["Membros inferiores"] ?? 0;
+  const inferiores = inferioresReais;
   if (inferiores / forca < PISO_INFERIORES)
     falhas.push(
       `${p.rotulo}: membros inferiores ficaram com ${Math.round((100 * inferiores) / forca)}% da semana (piso ${PISO_INFERIORES * 100}%).`,
@@ -183,7 +205,7 @@ if (falhas.length) {
     const familias = new Set(forca.map((b) => getExercise(b.exercicioSlug ?? "")?.grupoMuscular).filter((g) => g && FAMILIAS.includes(g)));
     if (familias.size < c.minimo)
       falhas.push(`${c.rotulo}: o plano toca ${familias.size} das 6 famílias (${[...familias].join(", ")}); o mínimo para ${c.frequencia}x é ${c.minimo}.`);
-    const semPerna = sessoes.filter((s) => !s.blocos.some((b) => b.tipo === "forca" && getExercise(b.exercicioSlug ?? "")?.grupoMuscular === "Membros inferiores")).length;
+    const semPerna = sessoes.filter((s) => !s.blocos.some((b) => b.tipo === "forca" && EH_INFERIOR_SLUG(b.exercicioSlug))).length;
     if (semPerna > 0) falhas.push(`${c.rotulo}: ${semPerna} sessão(ões) de força sem membros inferiores.`);
     const foraDoObjetivo = forca.some((b) => { const e = getExercise(b.exercicioSlug ?? ""); return e && !e.objetivo?.includes(c.objetivo); });
     if (foraDoObjetivo && !/não (é|são) específic/i.test(plano.raciocinio))

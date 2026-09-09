@@ -46,6 +46,7 @@ import {
 import type { ParamMonitorId } from "@/data/monitoringParameters";
 import { alvoSemana, alvoAerobioSemana, objetivoDaSemana, lerFaixaRIR, type AlvoForca, type CtxAlvo } from "@/lib/gps/alvo";
 import { intervaloDe } from "@/lib/gps/faixasParse";
+import { padraoDe, ehAcessorioMenor, PADROES_ESSENCIAIS, type PadraoMovimento } from "@/lib/gps/padroes";
 
 export interface GerarPlanoInput {
   objetivo: GpsObjetivo;
@@ -463,8 +464,55 @@ function selecionarExercicios(
    * pela vaga de cobertura, e são declarados em `foraDoObjetivo`, como qualquer exercício
    * de outro objetivo sempre foi.
    */
-  const familiasDoObjetivo = new Set(doObjetivo.map((e) => e.grupoMuscular));
-  const complementoDeFamilia = noCatalogo.filter((e) => !familiasDoObjetivo.has(e.grupoMuscular));
+  /*
+   * O RESGATE POR FAMÍLIA PRECISA VALER TAMBÉM PARA A FAMÍLIA MAGRA, e não só para a vazia.
+   *
+   * A primeira versão resgatava a família com ZERO exercícios no objetivo, e isso deixou passar
+   * o caso do meio, medido em 09/09/2026: o catálogo marca só DOIS exercícios de core para
+   * Hipertrofia, e um deles ("Abdominal na polia alta") é rebaixado por qualquer condição que
+   * cuide de coluna lombar ou de apoio no joelho. Sobrava um, e quando ele também caía, a
+   * família core desaparecia do plano inteiro, com 12 exercícios de core disponíveis e limpos
+   * no catálogo. Resultado: 9% das semanas da grade saíam sem NENHUM trabalho de tronco,
+   * inclusive para dor lombar, onde ele é o que mais se prescreve.
+   *
+   * O mesmo mecanismo produzia o erro de pertinência mais visível do lote: "Retorno ao treino"
+   * marca UM único exercício de Braços, a flexão de punho. Sendo o único, ele virava o
+   * representante garantido da família, e um homem de 62 anos destreinado recebia flexão de
+   * punho como um dos oito exercícios da semana.
+   *
+   * Agora cada família é completada até `MIN_POR_FAMILIA` candidatos com o catálogo do nível.
+   * A prioridade do objetivo continua intacta: quem é do objetivo ganha `bonusPrimario` e vem
+   * antes na fila de mérito, e o rodízio roda primeiro entre eles. O que muda é só haver
+   * suplente quando o titular cai.
+   */
+  const MIN_POR_FAMILIA = 3;
+  /*
+   * O MESMO RESGATE VALE PARA O PADRÃO DE MOVIMENTO, e é ele que fecha o buraco da cadeia
+   * posterior.
+   *
+   * Contar por família não alcança este caso: "Membros inferiores" tem 11 exercícios marcados
+   * para Emagrecimento, então a família nunca parece magra. Só que DENTRO dela o catálogo marca
+   * três dobradiças de quadril (stiff, hip thrust e ponte de glúteos), e para um aluno com
+   * obesidade grau 2 as três são penalizadas de uma vez: as duas primeiras por complexidade e
+   * a terceira porque começa no chão. Sobrava zero, e a semana inteira saía sem glúteo e sem
+   * posterior de coxa, com seis outras dobradiças paradas no catálogo, entre elas a extensão de
+   * quadril em pé com elástico, que é justamente a mais adequada àquele aluno.
+   */
+  const MIN_POR_PADRAO = 6;
+  const porFamiliaNoObjetivo = new Map<string, number>();
+  const porPadraoNoObjetivo = new Map<PadraoMovimento, number>();
+  for (const e of doObjetivo) {
+    porFamiliaNoObjetivo.set(e.grupoMuscular, (porFamiliaNoObjetivo.get(e.grupoMuscular) ?? 0) + 1);
+    const p = padraoDe(e);
+    porPadraoNoObjetivo.set(p, (porPadraoNoObjetivo.get(p) ?? 0) + 1);
+  }
+  const slugsDoObjetivo = new Set(doObjetivo.map((e) => e.slug));
+  const complementoDeFamilia = noCatalogo.filter((e) => {
+    if (slugsDoObjetivo.has(e.slug)) return false;
+    if ((porFamiliaNoObjetivo.get(e.grupoMuscular) ?? 0) < MIN_POR_FAMILIA) return true;
+    const p = padraoDe(e);
+    return PADROES_ESSENCIAIS.includes(p) && (porPadraoNoObjetivo.get(p) ?? 0) < MIN_POR_PADRAO;
+  });
   const pool = doObjetivo.length >= n ? [...doObjetivo, ...complementoDeFamilia] : noCatalogo;
 
   const ativas = restricoesAtivas(restricoes);
@@ -727,12 +775,138 @@ function selecionarExercicios(
    * os dois na posição deitada que a condição pede para evitar. Cobertura nunca custa
    * segurança: família sem exercício limpo fica de fora, e o plano diz menos, mas não mente.
    */
+  /*
+   * COBRIR FAMÍLIA NÃO É COBRIR O CORPO: A GARANTIA TAMBÉM É POR PADRÃO DE MOVIMENTO.
+   *
+   * `grupoMuscular` é rótulo de REGIÃO. "Membros inferiores" junta dominante de joelho e
+   * dominante de quadril; "Braços" junta rosca, tríceps e flexão de punho. Garantir um de cada
+   * família, então, deixa passar a semana que tem seis exercícios de perna e nenhum de cadeia
+   * posterior: medido em 09/09/2026, 24% da grade de 576 planos, e a família "Membros
+   * inferiores" estava lá em todos eles.
+   *
+   * A garantia por padrão (ver `src/lib/gps/padroes.ts`) fecha essa fresta: joelho, quadril,
+   * empurrar, puxar e core entram na frente do corte, cada um com o melhor candidato LIMPO
+   * daquele padrão para este aluno. Padrão sem candidato limpo fica de fora, como sempre: a
+   * cobertura nunca custa segurança.
+   *
+   * E o representante de uma família nunca é um exercício de trabalho miúdo (punho, pescoço,
+   * tornozelo) quando existe alternativa: era assim que a flexão de punho entrava.
+   */
   const FAMILIAS = ["Membros inferiores", "Peitorais", "Costas", "Ombros", "Braços", "Core (tronco)", "Corpo todo"];
-  const primeiroDeCadaFamilia = FAMILIAS.map((f) => rodizio.find((a) => a.e.grupoMuscular === f)).filter(
-    (a): a is (typeof rodizio)[number] => a != null,
+  const semAcessorioMenor = rodizio.filter((a) => !ehAcessorioMenor(a.e));
+  const escolherDaFila = (fila: typeof rodizio, criterio: (e: (typeof exercises)[number]) => boolean) =>
+    fila.find((a) => criterio(a.e));
+  const primeiroDeCadaPadrao = PADROES_ESSENCIAIS.map((p) =>
+    escolherDaFila(semAcessorioMenor, (e) => padraoDe(e) === p),
+  ).filter((a): a is (typeof rodizio)[number] => a != null);
+  /*
+   * O REPRESENTANTE DA FAMÍLIA OLHA O QUE JÁ FOI ESCOLHIDO.
+   *
+   * "Braços" e "Ombros" servem aos dois lados: rosca puxa, tríceps e desenvolvimento empurram.
+   * Pegando sempre o primeiro da fila de mérito, a família ia de novo para o lado que já estava
+   * cheio, e o resultado media 12 séries de empurrar contra 3 de puxar num plano de Força para
+   * dor lombar, onde o trabalho de puxar é o que mais interessa.
+   *
+   * O desempate age SÓ no eixo empurrar contra puxar, e não "o padrão mais raro primeiro": a
+   * primeira versão desta regra preferia o menos representado em geral, e com isso elegia a
+   * panturrilha como representante de membros inferiores e a elevação lateral como
+   * representante de ombros, porque eram os padrões com contagem zero. Fora desse eixo, a
+   * ordem de mérito continua mandando.
+   */
+  const jaCoberto = new Map<PadraoMovimento, number>();
+  for (const a of primeiroDeCadaPadrao) jaCoberto.set(padraoDe(a.e), (jaCoberto.get(padraoDe(a.e)) ?? 0) + 1);
+  const notaDeEquilibrio = (p: PadraoMovimento) => {
+    if (p !== "empurrar" && p !== "puxar") return 1;
+    const outro: PadraoMovimento = p === "empurrar" ? "puxar" : "empurrar";
+    const meu = jaCoberto.get(p) ?? 0;
+    const dele = jaCoberto.get(outro) ?? 0;
+    return meu < dele ? 2 : meu > dele ? 0 : 1;
+  };
+  const primeiroDeCadaFamilia: typeof rodizio = [];
+  for (const f of FAMILIAS) {
+    const candidatos = semAcessorioMenor.filter((a) => a.e.grupoMuscular === f);
+    const escolhido =
+      [...candidatos].sort((x, y) => notaDeEquilibrio(padraoDe(y.e)) - notaDeEquilibrio(padraoDe(x.e)))[0] ??
+      escolherDaFila(rodizio, (e) => e.grupoMuscular === f);
+    if (!escolhido) continue;
+    primeiroDeCadaFamilia.push(escolhido);
+    const p = padraoDe(escolhido.e);
+    jaCoberto.set(p, (jaCoberto.get(p) ?? 0) + 1);
+  }
+  /*
+   * O PADRÃO VEM ANTES DA FAMÍLIA NA FILA DE COBERTURA, e a ordem decide o plano curto.
+   *
+   * Numa semana de 2 sessões com 3 vagas, o pedido é de 6 exercícios, e as 7 famílias sozinhas
+   * já estouram esse número: a garantia de padrão ficava atrás do corte e era descartada
+   * inteira. O efeito medido era uma semana com leg press nas duas sessões e nenhum glúteo,
+   * nenhum posterior de coxa.
+   *
+   * Uma semana com joelho, quadril, empurrar, puxar e tronco é um treino completo mesmo sem
+   * tocar as sete famílias; o contrário não é verdade. Então o padrão entra primeiro, e a
+   * família ocupa o que sobrar.
+   */
+  const cobertura = [...primeiroDeCadaPadrao, ...primeiroDeCadaFamilia].filter(
+    (a, i, todos) => todos.findIndex((b) => b.e.slug === a.e.slug) === i,
   );
-  const garantidos = new Set(primeiroDeCadaFamilia.map((a) => a.e.slug));
-  const ordemComCobertura = [...primeiroDeCadaFamilia, ...ordemFinal.filter((a) => !garantidos.has(a.e.slug))];
+  const garantidos = new Set(cobertura.map((a) => a.e.slug));
+  /*
+   * AS VAGAS QUE SOBRAM TAMBÉM GIRAM POR PADRÃO, e não pela fila de mérito pura.
+   *
+   * A cobertura garante UM de cada padrão essencial; o resto das vagas ia para o topo da fila,
+   * e o topo é sempre a mesma metade do corpo. Medido em Emagrecimento 4x: o catálogo marca
+   * para esse objetivo 4 exercícios de costas e 2 de peito, então as vagas extras viravam
+   * costas, e a semana fechava com 12 séries de puxar contra 3 de empurrar. O aluno recebia
+   * quatro remadas e uma flexão de braço.
+   *
+   * O rodízio por padrão mantém a ordem de mérito DENTRO de cada padrão (quem é do objetivo
+   * continua na frente pelo `bonusPrimario`), e só reveza qual padrão leva a próxima vaga.
+   *
+   * O RODÍZIO VALE TAMBÉM NO FALLBACK, e a primeira versão errou aqui.
+   *
+   * Ele nasceu desligado quando o pool do objetivo era menor que o pedido, para proteger a
+   * regra do `check:core` de que todo exercício do objetivo entre no plano. O efeito foi
+   * desligá-lo justamente nos perfis que mais precisavam: "Emagrecimento" no nível Iniciante
+   * tem pool pequeno, cai no fallback, e a fila de mérito enchia a semana de agachamento (o
+   * padrão mais seguro do catálogo) com UM movimento de empurrar em quinze vagas.
+   *
+   * Ligar sempre é seguro porque a ordem DENTRO de cada padrão continua a de mérito, e o
+   * mérito já põe o exercício do objetivo na frente (`bonusPrimario`). Quem garante que isso
+   * continua verdade é o próprio `check:core`.
+   */
+  const rodizioDePadrao = (fila: typeof ordemFinal) => {
+    const ORDEM_PADRAO: PadraoMovimento[] = [
+      ...PADROES_ESSENCIAIS,
+      "panturrilha",
+      "ombro-acessorio",
+      "quadril-acessorio",
+      "carregamento",
+      "acessorio-menor",
+    ];
+    const porPadrao = new Map<PadraoMovimento, typeof fila>();
+    for (const a of fila) {
+      const p = padraoDe(a.e);
+      const atual = porPadrao.get(p);
+      if (atual) atual.push(a);
+      else porPadrao.set(p, [a]);
+    }
+    const saida: typeof fila = [];
+    const cursores = new Map<PadraoMovimento, number>();
+    for (let volta = 0; saida.length < fila.length; volta++) {
+      let entrou = false;
+      for (const p of ORDEM_PADRAO) {
+        const lista = porPadrao.get(p);
+        const i = cursores.get(p) ?? 0;
+        if (!lista || i >= lista.length) continue;
+        saida.push(lista[i]);
+        cursores.set(p, i + 1);
+        entrou = true;
+      }
+      if (!entrou) break;
+    }
+    return saida;
+  };
+  const sobra = ordemFinal.filter((a) => !garantidos.has(a.e.slug));
+  const ordemComCobertura = [...cobertura, ...rodizioDePadrao(sobra)];
   const escolhidos = ordemComCobertura
     .slice(0, Math.max(n, 1))
     .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, limpo: jaNoRodizio.has(a.e.slug) }));
@@ -1303,7 +1477,15 @@ function exercicioIsometrico(
  * quem treina 3x com 4 exercícios tem 7 vagas de superior por semana, e as 5 famílias
  * cabem. "Corpo todo" fecha a fila como coringa, não como obrigação.
  */
-const FAMILIAS_SUPERIORES = ["Peitorais", "Costas", "Ombros", "Braços", "Core (tronco)", "Corpo todo"] as const;
+/*
+ * O CORE É O TERCEIRO DA FILA, e não o quinto.
+ *
+ * Com a ordem antiga, o tronco só era chamado depois de peito, costas, ombro e braço, e numa
+ * semana de poucas vagas de superior ele nunca chegava: 6% da grade fechava sem NENHUM
+ * trabalho de tronco, inclusive planos de dor lombar, onde o core é o que mais se prescreve.
+ * Entre a segunda vaga de ombro e a primeira de tronco, o tronco vem antes.
+ */
+const FAMILIAS_SUPERIORES = ["Peitorais", "Costas", "Core (tronco)", "Ombros", "Braços", "Corpo todo"] as const;
 
 /**
  * QUANTAS VAGAS DE MEMBROS INFERIORES A SEMANA RECEBE.
@@ -1388,19 +1570,95 @@ function distribuirPorFamilia(
   }
   const usados = new Set<string>();
   const reuso = new Map<string, number>();
-  // O próximo exercício de um grupo: um que ainda não entrou na semana; se o grupo já foi
-  // todo usado e `repetir` está ligado, cicla pela ordem de mérito do grupo.
-  const proximo = (grupo: string, repetir: boolean) => {
+  /*
+   * O PADRÃO DECIDE DENTRO DA FAMÍLIA.
+   *
+   * A contagem por padrão desta semana é o que faz a vaga seguinte escolher o que está
+   * FALTANDO, em vez do que está no topo da fila de mérito. Sem isso, a fila (ordenada por
+   * segurança) devolvia sempre a mesma metade do corpo: seis exercícios de perna todos
+   * dominantes de joelho, e "Braços" preenchido duas vezes com tríceps enquanto a semana
+   * inteira tinha um puxar só.
+   */
+  const contagemPadrao = new Map<PadraoMovimento, number>();
+  const padraoDoSlug = (slug: string) => {
+    const ex = exercises.find((e) => e.slug === slug);
+    return ex ? padraoDe(ex) : undefined;
+  };
+  const registrar = (slug: string) => {
+    const p = padraoDoSlug(slug);
+    if (p) contagemPadrao.set(p, (contagemPadrao.get(p) ?? 0) + 1);
+  };
+  const quantos = (p: PadraoMovimento) => contagemPadrao.get(p) ?? 0;
+  /**
+   * O próximo exercício de um grupo: um que ainda não entrou na semana; se o grupo já foi
+   * todo usado e `repetir` está ligado, cicla pela ordem de mérito do grupo.
+   *
+   * `preferir` reordena os candidatos ANTES da escolha, sem nunca excluir ninguém: quem casa
+   * com o padrão em falta vem primeiro, e o resto segue na ordem de mérito de sempre.
+   */
+  const proximo = (grupo: string, repetir: boolean, preferir?: (p: PadraoMovimento | undefined) => number) => {
     const lista = porGrupo.get(grupo) ?? [];
-    const livre = lista.find((x) => !usados.has(x.slug));
+    const ordenada = preferir
+      ? [...lista].sort((a, b) => preferir(padraoDoSlug(b.slug)) - preferir(padraoDoSlug(a.slug)))
+      : lista;
+    const livre = ordenada.find((x) => !usados.has(x.slug));
     if (livre) {
       usados.add(livre.slug);
+      registrar(livre.slug);
       return livre;
     }
     if (!repetir || !lista.length) return undefined;
     const i = reuso.get(grupo) ?? 0;
     reuso.set(grupo, i + 1);
-    return lista[i % lista.length];
+    const escolhido = ordenada[i % ordenada.length];
+    registrar(escolhido.slug);
+    return escolhido;
+  };
+  /*
+   * A VAGA DE PERNA ESCOLHE POR PADRÃO, E NÃO PELO RÓTULO DA FAMÍLIA.
+   *
+   * O levantamento terra convencional é a dobradiça de quadril mais clássica que existe e o
+   * catálogo o guarda em "Corpo todo". Enquanto a cota de perna puxava da família "Membros
+   * inferiores", ele era invisível para ela: a seleção garantia o padrão quadril, o exercício
+   * entrava no pool, e a distribuição o deixava na família que só é chamada no fim da fila.
+   * Medido: uma semana de hipertrofia avançada 2x saía com leg press, agachamento livre e leg
+   * press de novo, com o terra escolhido e parado no banco.
+   */
+  const INFERIORES: readonly PadraoMovimento[] = ["joelho", "quadril", "panturrilha", "quadril-acessorio"];
+  const ehInferior = (slug: string) => {
+    const p = padraoDoSlug(slug);
+    return p != null && INFERIORES.includes(p);
+  };
+  /** A vaga de perna: joelho e quadril se revezam, e o que está atrás vem primeiro. */
+  const proximaPerna = (): { slug: string; nome: string } | undefined => {
+    const candidatos = escolhidos.filter((e) => ehLimpo(e) && ehInferior(e.slug));
+    const nota = (slug: string) => {
+      const p = padraoDoSlug(slug);
+      if (p !== "joelho" && p !== "quadril") return 0;
+      const outro: PadraoMovimento = p === "joelho" ? "quadril" : "joelho";
+      return quantos(p) < quantos(outro) ? 2 : 1;
+    };
+    const ordenada = [...candidatos].sort((a, b) => nota(b.slug) - nota(a.slug));
+    const livre = ordenada.find((x) => !usados.has(x.slug));
+    if (livre) {
+      usados.add(livre.slug);
+      registrar(livre.slug);
+      return livre;
+    }
+    if (!ordenada.length) return undefined;
+    // Pool de perna esgotado: repete pela ordem de mérito, como sempre fez.
+    const i = reuso.get("__perna") ?? 0;
+    reuso.set("__perna", i + 1);
+    const escolhido = ordenada[i % ordenada.length];
+    registrar(escolhido.slug);
+    return escolhido;
+  };
+  /** A vaga de tronco quer equilibrar empurrar e puxar. */
+  const preferirTroncoEmFalta = (p: PadraoMovimento | undefined) => {
+    if (p === "acessorio-menor") return -1;
+    if (p !== "empurrar" && p !== "puxar") return 0;
+    const outro: PadraoMovimento = p === "empurrar" ? "puxar" : "empurrar";
+    return quantos(p) < quantos(outro) ? 2 : 1;
   };
   // A cota semanal de perna, repartida pelas sessões o mais parelho possível: 5 vagas em
   // 3 sessões viram 2, 2 e 1. Toda sessão recebe ao menos uma (o piso está na cota).
@@ -1413,7 +1671,7 @@ function distribuirPorFamilia(
     // Perna sempre entra, repetindo o exercício se o pool acabou: treinar perna toda sessão
     // com o mesmo leg press é rotina, sessão sem perna é reclamação.
     for (let k = 0; k < cotaDaSessao(i); k++) {
-      const it = proximo("Membros inferiores", true);
+      const it = proximaPerna();
       if (it && !sessao.some((x) => x.slug === it.slug)) sessao.push(it);
     }
     // Superiores giram pelas famílias; uma volta inteira sem achar nada encerra a busca.
@@ -1421,11 +1679,33 @@ function distribuirPorFamilia(
     while (sessao.length < porSessao && semAchar < FAMILIAS_SUPERIORES.length) {
       const fam = FAMILIAS_SUPERIORES[cursor % FAMILIAS_SUPERIORES.length];
       cursor++;
-      const it = proximo(fam, false);
+      const it = proximo(fam, false, preferirTroncoEmFalta);
       if (it) {
         sessao.push(it);
         semAchar = 0;
       } else semAchar++;
+    }
+    /*
+     * ANTES DE REPETIR, PROCURA O PADRÃO QUE ESTÁ FALTANDO EM QUALQUER FAMÍLIA.
+     *
+     * A rotação anda por família, e quando a família da vez não tem mais exercício inédito ela
+     * só passa a bola. Com isso um segundo exercício de empurrar já escolhido para a semana
+     * ficava parado enquanto a vaga era preenchida repetindo uma rosca. Medido em Emagrecimento
+     * 5x: a semana fechava com UM movimento de empurrar e cinco de puxar, com dezesseis
+     * exercícios de empurrar disponíveis e nenhum contraindicado.
+     */
+    while (sessao.length < porSessao) {
+      const emp = quantos("empurrar");
+      const pux = quantos("puxar");
+      if (emp === pux) break;
+      const alvo: PadraoMovimento = emp < pux ? "empurrar" : "puxar";
+      const it = escolhidos.find(
+        (e) => ehLimpo(e) && !usados.has(e.slug) && padraoDoSlug(e.slug) === alvo && !sessao.some((x) => x.slug === e.slug),
+      );
+      if (!it) break;
+      usados.add(it.slug);
+      registrar(it.slug);
+      sessao.push(it);
     }
     // Sobrou vaga com o pool de inéditos esgotado: REPETE superiores pela fila de famílias
     // antes de qualquer perna extra. Sem este passo, a vaga que sobrava caía na cauda por
@@ -1435,7 +1715,7 @@ function distribuirPorFamilia(
     while (sessao.length < porSessao && voltas < FAMILIAS_SUPERIORES.length) {
       const fam = FAMILIAS_SUPERIORES[cursor % FAMILIAS_SUPERIORES.length];
       cursor++;
-      const it = proximo(fam, true);
+      const it = proximo(fam, true, preferirTroncoEmFalta);
       if (it && !sessao.some((x) => x.slug === it.slug)) {
         sessao.push(it);
         voltas = 0;
@@ -1446,17 +1726,26 @@ function distribuirPorFamilia(
     // superiores devolvia a sessão "perna + perna + perna", que é a reclamação original com
     // outro rosto.
     // Ordem de preferência: limpo de superior, limpo de perna, e só então a cauda penalizada.
+    // O trabalho miúdo (punho, pescoço, tornozelo) é a ÚLTIMA opção desta fila, e não a
+    // primeira: ele é dos exercícios mais seguros do catálogo, então a ordem de mérito o
+    // trazia na frente de um supino ou de uma remada.
+    const filaDaSobra = [...escolhidos].sort((a, b) => {
+      const menorA = ehAcessorioMenor(exercises.find((x) => x.slug === a.slug)!) ? 1 : 0;
+      const menorB = ehAcessorioMenor(exercises.find((x) => x.slug === b.slug)!) ? 1 : 0;
+      return menorA - menorB;
+    });
     for (const [soLimpo, preferirSuperior] of [
       [true, true],
       [true, false],
       [false, false],
     ] as const) {
-      for (const e of escolhidos) {
+      for (const e of filaDaSobra) {
         if (sessao.length >= porSessao) break;
         if (usados.has(e.slug)) continue;
         if (soLimpo && !ehLimpo(e)) continue;
-        if (preferirSuperior && grupoDe(e.slug) === "Membros inferiores") continue;
+        if (preferirSuperior && ehInferior(e.slug)) continue;
         usados.add(e.slug);
+        registrar(e.slug);
         sessao.push(e);
       }
     }
