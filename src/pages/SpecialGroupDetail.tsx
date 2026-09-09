@@ -17,7 +17,8 @@ import {
   Microscope,
   Users,
 } from "lucide-react";
-import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { Card, Pill, ParDado, buttonClasses } from "@/components/ui/primitives";
+import { revisaoClinicaPorCondicao, type RevisaoClinica } from "@/lib/gps/revisaoClinica";
 import { associarGrupoAoAluno, textoDaAssociacao } from "@/lib/gps/associarGrupo";
 import { toast } from "@/lib/toast";
 import { PaywallCard } from "@/components/ui/PaywallCard";
@@ -253,6 +254,15 @@ export function SpecialGroupDetail() {
                       },
                     ]
                   : []),
+                ...(revisaoClinicaPorCondicao[g.slug]
+                  ? [
+                      {
+                        id: "orientacao",
+                        title: "Orientação clínica desta condição",
+                        content: <OrientacaoClinica slug={g.slug} />,
+                      },
+                    ]
+                  : []),
                 {
                   id: "alerta",
                   title: "Sinais de alerta e segurança",
@@ -384,6 +394,50 @@ function ResumoDecisao({
         </div>
       </div>
     </Card>
+  );
+}
+
+/**
+ * A ORIENTAÇÃO CLÍNICA DA CONDIÇÃO, que é leitura e não regra.
+ *
+ * O que o motor APLICA já aparece no plano gerado e na tela de procedência. Aqui vai o que a
+ * revisão clínica diz e o motor não tem como decidir sozinho, porque depende de avaliar o
+ * aluno: "se houver disfunção", "conforme os sintomas", "se houver risco de queda". O bloco
+ * diz isso na primeira linha, para ninguém ler orientação como se fosse comportamento do
+ * gerador. Fonte única: `src/lib/gps/revisaoClinica.ts`.
+ */
+function OrientacaoClinica({ slug }: { slug: string }) {
+  const r = revisaoClinicaPorCondicao[slug];
+  if (!r) return null;
+  const CAMPOS: { chave: keyof RevisaoClinica; rotulo: string }[] = [
+    { chave: "prioridade", rotulo: "Prioridade da prescrição" },
+    { chave: "aerobio", rotulo: "Aeróbio" },
+    { chave: "resistido", rotulo: "Resistido" },
+    { chave: "modalidades", rotulo: "Modalidade preferida" },
+    { chave: "intervalado", rotulo: "Intervalado" },
+    { chave: "isometrico", rotulo: "Isométrico" },
+    { chave: "equilibrio", rotulo: "Equilíbrio e impacto" },
+    { chave: "assoalho", rotulo: "Assoalho pélvico" },
+  ];
+  const presentes = CAMPOS.filter((c) => r[c.chave]);
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-ink-2">
+        Leitura clínica que acompanha o plano. O que está aqui orienta a sua decisão e não é
+        aplicado sozinho pelo gerador; o que o motor impõe aparece no próprio plano, com a origem
+        de cada número.
+      </p>
+      <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+        {presentes.map((c) => (
+          <ParDado key={c.chave} label={c.rotulo} value={r[c.chave]} />
+        ))}
+      </dl>
+      {r.cautela && (
+        <div className="rounded-xl border border-border bg-surface-soft p-3">
+          <ParDado label="Cautela específica" value={r.cautela} />
+        </div>
+      )}
+    </div>
   );
 }
 

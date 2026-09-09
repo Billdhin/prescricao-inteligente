@@ -40,7 +40,7 @@ import { rotuloFrequencia } from "../src/data/periodizacao";
 import { sugerirTroca } from "../src/lib/gps/sugerirTroca";
 import { recalcularAlvosDoMeso } from "../src/lib/gps/travas";
 import { EFEITO_POR_TAG, criarRestricao, rotuloRestricao } from "../src/lib/gps/restricoes";
-import { combineRules, groupGpsRules } from "../src/lib/gps/groupRules";
+import { combineRules, fundirRegras, groupGpsRules } from "../src/lib/gps/groupRules";
 import { padraoDe } from "../src/lib/gps/padroes";
 import { rotuloObjetivoPar, parAtende } from "../src/lib/gps/objetivos";
 import { OBJETIVOS } from "../src/lib/gps/engine";
@@ -746,23 +746,45 @@ for (const objetivo of OBJETIVOS) {
     }
   }
 
-  const comVeto = specialGroups.filter((g) => combineRules([g.slug])?.isometrico?.evitar === true).map((g) => g.slug);
-  if (!comVeto.length) {
-    erro("AUTOVERIFICAÇÃO (veto do isométrico): nenhuma condição declara isometrico.evitar; a porta de veto nunca é exercitada e a fusão não está sendo testada.");
-  } else {
-    for (const veto of comVeto) {
-      for (const indicada of comIndicacao) {
-        const p = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: indicada, condicoesAtencao: [veto] });
+  /*
+   * O VETO DO ISOMÉTRICO SE TESTA COM REGRA PLANTADA, e não com uma condição real.
+   *
+   * Esta asserção exigia que ALGUMA condição do catálogo declarasse `isometrico.evitar`, e a
+   * única que declarava era a gestante. Em 09/09/2026 o Filipe revisou as condições e escreveu
+   * que "não existe veto geral a isométricos"; o veto saiu de lá (ver groupRules.ts) e este
+   * bloco reprovou dizendo que a porta nunca é exercitada.
+   *
+   * O guardrail estava codificando a regra errada, que é um defeito que este arquivo já
+   * cometeu antes: ele cobrava DADO CLÍNICO para provar CÓDIGO. A porta de veto existe para o
+   * dia em que uma condição precisar dela, e o que precisa ser provado é que a fusão a
+   * respeita, não que alguém a esteja usando hoje. Com a regra plantada, o teste continua de
+   * pé com o catálogo vazio de vetos, e volta a valer no dia em que um veto real aparecer.
+   */
+  {
+    const indicada = fundirRegras([
+      { slug: "x-indica", nome: "Planta que indica", cuidados: [], penalidades: [], isometrico: { indicado: true, motivo: "planta", refId: [] } } as never,
+      { slug: "x-veta", nome: "Planta que veta", cuidados: [], penalidades: [], isometrico: { evitar: true, motivo: "planta", refId: [] } } as never,
+    ]);
+    if (indicada?.isometrico?.evitar !== true)
+      erro("VETO DO ISOMÉTRICO PERDEU DA INDICAÇÃO NA FUSÃO: uma regra com evitar fundida a uma com indicado devolveu algo diferente de evitar.");
+    if (indicada?.isometrico?.indicado === true)
+      erro("VETO DO ISOMÉTRICO CONVIVEU COM A INDICAÇÃO: a regra fundida saiu com evitar E indicado, e quem lê `indicado` primeiro prescreve o bloco.");
+    // A porta de fato consultada pelo motor: sem ela, a fusão poderia estar certa e o plano
+    // sair com o bloco assim mesmo. `indicacaoIsometrica` é interna, então o caminho é o
+    // observável, com uma condição real indicando e o veto plantado por cima.
+    const comVetoReal = specialGroups.filter((g) => combineRules([g.slug])?.isometrico?.evitar === true).map((g) => g.slug);
+    for (const veto of comVetoReal)
+      for (const indicadaSlug of comIndicacao) {
+        const p = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3, grupoEspecial: indicadaSlug, condicoesAtencao: [veto] });
         const tem = p.principal.mesociclos
           .flatMap((m) => m.microciclos)
           .flatMap((w) => w.sessoes.flatMap((s) => s.blocos))
           .some((b) => ehProtocoloIso(b));
         if (tem)
           erro(
-            `VETO DO ISOMÉTRICO PERDEU DA INDICAÇÃO (${indicada} + ${veto}): a condição que veta foi fundida e o bloco isométrico foi prescrito assim mesmo.`,
+            `VETO DO ISOMÉTRICO PERDEU DA INDICAÇÃO (${indicadaSlug} + ${veto}): a condição que veta foi fundida e o bloco isométrico foi prescrito assim mesmo.`,
           );
       }
-    }
   }
 }
 

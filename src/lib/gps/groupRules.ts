@@ -1463,37 +1463,35 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
    * Fica registrado para que ninguém gaste uma sexta busca atrás de algo que a literatura
    * não produziu.
    */
+  /*
+   * O VETO AO ISOMÉTRICO SAIU DAQUI, e a decisão é do Filipe, na revisão de 09/09/2026.
+   *
+   * A gestante declarava `isometrico: { evitar: true }`. O argumento escrito aqui era ESCOPO
+   * DE EVIDÊNCIA, não fisiologia: as duas fontes que colocam o isométrico no plano
+   * (`edwards-exercicio-pa-2023` e `baffour-isometrico-hipertensos-2023`) mediram adultos
+   * hipertensos, e não gestantes, e uma indicação automática não pode ser mais larga que a
+   * população medida. O comentário terminava dizendo, com todas as letras, que "isto não diz
+   * que gestante não pode fazer isométrico".
+   *
+   * O campo dizia outra coisa. `evitar` de UMA condição vence `indicado` de todas as outras
+   * (fusão conservadora), então a gestante com hipertensão perdia o protocolo que a evidência
+   * da hipertensão sustenta. O Filipe revisou a tabela das condições e escreveu, na coluna de
+   * cautela: "não existe veto geral a isométricos; evitar esforço máximo prolongado, Valsalva
+   * e situações obstétricas de risco". Ele é a autoridade clínica deste produto, a frase é
+   * exatamente sobre este campo, e o veto saiu. Ver `revisaoClinica.ts`.
+   *
+   * O que NÃO mudou: a gestante sozinha continua sem receber o protocolo, porque ela não casa
+   * com nenhuma das três portas da camada isométrica. A remoção só para de cancelar a
+   * indicação de outra condição. E a cautela dele virou `cuidados`, que é onde o plano a
+   * mostra ao profissional.
+   */
   gestante: {
-    /*
-     * A PORTA DE VETO DO ISOMÉTRICO, e o argumento NÃO é contraindicação inventada.
-     *
-     * A varredura de consistência mostrou que uma gestante com hipertensão recebia o
-     * protocolo isométrico automaticamente, porque a indicação vem da condição hipertensão e
-     * nenhuma outra condição a barrava.
-     *
-     * O que sustenta o veto é ESCOPO DE EVIDÊNCIA, não fisiologia que eu não conferi: as
-     * duas fontes que colocam o isométrico no plano (`edwards-exercicio-pa-2023` e
-     * `baffour-isometrico-hipertensos-2023`) mediram adultos hipertensos, e não gestantes.
-     * Uma indicação automática não pode ser mais larga que a população em que ela foi
-     * medida, ainda mais quando o que se prescreve é uma manobra que ELEVA a pressão durante
-     * o esforço. Procurei referência específica sobre isométrico na gestação e não encontrei;
-     * na dúvida, o produto não oferece sozinho.
-     *
-     * Isto NÃO diz que gestante não pode fazer isométrico: diz que o motor não prescreve por
-     * conta própria. O profissional segue livre para incluir manualmente, com a avaliação
-     * dele, que é exatamente a divisão de responsabilidade que os Termos declaram.
-     */
-    isometrico: {
-      evitar: true,
-      motivo:
-        "A evidência que sustenta o protocolo isométrico foi medida em adultos hipertensos, não em gestantes. O motor não oferece sozinho o que não foi estudado nesta população; a inclusão fica a critério do profissional.",
-      refId: ["edwards-exercicio-pa-2023", "baffour-isometrico-hipertensos-2023"],
-    },
     slug: "gestante",
     nome: "Gestante sem contraindicação",
     cuidados: [
       "Com liberação obstétrica: intensidade moderada pelo teste da fala, evitar esforço máximo, superaquecimento e decúbito dorsal prolongado após o 1º trimestre.",
       "Reduza atividades com risco de queda; sinais de alerta obstétricos pedem interrupção e encaminhamento imediato.",
+      "Exercício isométrico não é vetado na gestação: o que se evita é esforço máximo prolongado, manobra de Valsalva e situações obstétricas de risco.",
     ],
     penalidades: [
       { metrica: "Complexidade técnica", limite: 65, motivo: "Exercícios de alta exigência técnica/equilíbrio aumentam o risco de queda na gestação." },
@@ -1693,9 +1691,18 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
      * A frase foi reescrita, e o que ela tinha de correto (adesão importa) ficou, sem a
      * comparação que a evidência contraria.
      *
-     * O `intervaladoIndicado` aqui é a consequência direta do achado de intensidade. Vem
-     * com a limitação declarada na própria referência: 77 das 97 revisões tiveram qualidade
-     * metodológica criticamente baixa, e por isso isto orienta uma opção, não uma regra.
+     * ## O INTERVALADO INDICADO SAIU DAQUI (Filipe, revisão de 09/09/2026)
+     *
+     * O campo `intervaladoIndicado: true` estava escrito como "consequência direta do achado
+     * de intensidade". Era um salto: a revisão mede INTENSIDADE, e intervalado é FORMATO.
+     * Admitir intensidade maior não é o mesmo que prescrever o formato intervalado, e o
+     * `formatoAerobio` transformava aquele campo em intervalado no plano de todo aluno com a
+     * condição declarada.
+     *
+     * Na revisão das condições o Filipe escreveu, para ansiedade e para sintomas depressivos,
+     * intervalado "opcional". O campo saiu; a banda vigorosa FICOU, porque teto e obrigação
+     * são coisas diferentes e a leitura dele diz o mesmo ("intensidades mais altas podem
+     * produzir maior efeito, mas vigoroso não deve ser obrigatório"). Ver `revisaoClinica.ts`.
      */
     modAerobio: {
       /*
@@ -1712,8 +1719,7 @@ export const groupGpsRules: Record<string, GroupGpsRule> = {
        * criticamente baixa pelo AMSTAR.
        */
       bandaMax: "vigorosa",
-      intervaladoIndicado: true,
-      motivo: "Intensidade maior associou-se a melhora maior dos sintomas, num conjunto amplo de evidência de qualidade metodológica declaradamente baixa.",
+      motivo: "Intensidade maior associou-se a melhora maior dos sintomas, num conjunto amplo de evidência de qualidade metodológica declaradamente baixa. A banda é um teto que se abre, e o formato intervalado segue como opção do profissional.",
       refId: ["singh-saude-mental-2023"],
     },
     cuidados: [

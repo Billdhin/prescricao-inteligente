@@ -16,6 +16,7 @@ import { getReferencia } from "@/data/referencias";
 import { getModelo, FAIXAS_TREINO, BANDAS_AEROBIAS, MODELOS_PERIODIZACAO } from "@/data/periodizacao";
 import { getModalidade } from "@/data/modalities";
 import { getSpecialGroup } from "@/data/specialGroups";
+import { revisaoClinicaPorCondicao } from "@/lib/gps/revisaoClinica";
 import { groupGpsRules } from "@/lib/gps/groupRules";
 import { doseDoPerfilComIdade, IDADE_DOSE_PROPRIA, RIR_MINIMO_IDADE } from "@/lib/gps/esforco";
 import { rotuloRestricao, criarRestricao } from "@/lib/gps/restricoes";
@@ -199,8 +200,20 @@ const regras = Object.values(groupGpsRules).map((r) => {
     equilibrio: !!r.equilibrio, assoalho: !!r.assoalhoPelvico, horizonte: r.horizonteMinimoSemanas,
     penalidades: (r.penalidades ?? []).map((p: any) => `${p.metrica} ≥ ${p.limite}`),
     refs: r.refs,
+    // A leitura clínica do Filipe para esta condição (revisão de 09/09/2026). Vai ao
+    // documento numa tabela PRÓPRIA, ao lado da tabela do que o motor aplica: as duas dizem
+    // coisas diferentes e juntá-las numa só faria orientação parecer regra automática.
+    revisao: revisaoClinicaPorCondicao[r.slug],
   };
 });
+
+// Toda condição do motor precisa de uma linha na revisão, senão a tabela do documento volta
+// a sair com buraco, que foi exatamente a reclamação que originou este arquivo.
+const semRevisao = Object.values(groupGpsRules).filter((r) => !revisaoClinicaPorCondicao[r.slug]);
+if (semRevisao.length) {
+  console.error(`revisão clínica faltando para: ${semRevisao.map((r) => r.slug).join(", ")}`);
+  process.exit(1);
+}
 
 const faixas = Object.values(FAIXAS_TREINO).map((f) => ({ objetivo: f.objetivo, series: f.series.valor, reps: f.reps.porNivel ?? f.reps.valor, intensidade: f.intensidade.porNivel ?? f.intensidade.valor, intervalo: f.intervalo.valor, frequencia: f.frequencia, enfases: f.enfases, complemento: f.complementoAerobio, ressalva: f.ressalva, refIds: f.refIds }));
 const modelos = MODELOS_PERIODIZACAO.map((m) => ({ id: m.id, nome: m.nome, resumo: m.resumo }));
