@@ -36,6 +36,7 @@
 import { gerarPlano, consequenciasDoPlano } from "@/lib/gps/periodizacao";
 import { getExercise, exercises } from "@/data/exercises";
 import { groupGpsRules } from "@/lib/gps/groupRules";
+import { criarRestricao } from "@/lib/gps/restricoes";
 import { getReferencia } from "@/data/referencias";
 import { padraoDe, PADROES_ESSENCIAIS, type PadraoMovimento } from "@/lib/gps/padroes";
 
@@ -333,6 +334,28 @@ for (const objetivo of OBJETIVOS)
           }
         for (const p of PADROES_ESSENCIAIS) if (!presentes.has(p)) falhasC.push(`${rot}: a semana saiu sem ${p}.`);
       }
+  /*
+   * REBAIXADO NÃO É EXCLUÍDO, e a cobertura precisa lembrar disso. Obesidade grau 3 com "dor
+   * no joelho" declarada, só com o peso do corpo: os dois dominantes de joelho disponíveis
+   * ficam rebaixados (demanda de joelho 40), a cobertura só olhava os limpos, e a semana
+   * inteira saía sem agachar, sem nenhum exercício excluído (09/09/2026). Agora o padrão sem
+   * candidato limpo cai no menos rebaixado, e a distribuição o aceita como garantido.
+   */
+  for (const [cond, tag] of [["obesidade-grau-3", "joelho_dor"], ["osteoartrite-joelho", "joelho_dor"], ["dor-lombar-inespecifica", "lombar_sensivel"], ["idoso-destreinado", "ombro_sensivel"]] as const)
+    for (const equipamentos of [["Peso corporal"], AMBIENTES.casa]) {
+      const base = { objetivo: "Emagrecimento" as never, nivel: "Iniciante" as never, semanas: 8, frequencia: 3, idade: 50, grupoEspecial: cond, restricoes: [criarRestricao(tag)], equipamentos };
+      const g = gerarPlano(base as never);
+      const w = g.principal.mesociclos[0]?.microciclos[0];
+      const presentes = new Set<PadraoMovimento>();
+      for (const s of (w?.sessoes ?? []).filter((x) => !(x as { complemento?: boolean }).complemento))
+        for (const b of s.blocos as Bl[]) {
+          if (b.tipo === "aerobio" || (b.tipo === "isometrico" && !b.sustentado)) continue;
+          const ex = getExercise(b.exercicioSlug ?? "");
+          if (ex) presentes.add(padraoDe(ex));
+        }
+      for (const p of PADROES_ESSENCIAIS) if (!presentes.has(p)) falhasC.push(`Emagrecimento/${cond} + ${tag}/${equipamentos.length === 1 ? "só corpo" : "casa"}: a semana saiu sem ${p} (rebaixado virou excluído).`);
+    }
+
   if (falhasC.length) {
     console.error(`\n[check:padroes] FALHOU no catálogo por condição: ${falhasC.length} caso(s) em ${combos} combinações.\n`);
     for (const f of falhasC.slice(0, 30)) console.error("  • " + f);

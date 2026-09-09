@@ -2343,6 +2343,11 @@ const REGIAO: Record<string, "Inferiores" | "Superiores" | "Core" | "Corpo todo"
   Braços: "Superiores",
   "Core (tronco)": "Core",
   "Corpo todo": "Corpo todo",
+  // Sem estas duas, o equilíbrio em um pé (Tornozelo e pé) caía em "Corpo todo" e uma idosa
+  // com 2 sessões via 26% de "Corpo todo" numa semana que não tinha nenhum exercício de
+  // corpo todo (medido em 09/09/2026, cenário de validação 3).
+  "Tornozelo e pé": "Inferiores",
+  Pescoço: "Superiores",
 };
 
 /**
@@ -2697,6 +2702,7 @@ function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo })
     let minutosAerobio = 0;
     let sessoesIso = 0;
     let sessoesAssoalho = 0;
+    let sessoesEquilibrio = 0;
     for (const s of micro.sessoes) {
       for (const b of s.blocos) {
         // O assoalho pélvico é indicação clínica com dose própria, não distribuição de volume
@@ -2704,6 +2710,12 @@ function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo })
         // em tronco por desenho. Sai numa linha própria, como o isométrico de condição.
         if (b.assoalho) {
           sessoesAssoalho++;
+          continue;
+        }
+        // O equilíbrio por indicação é da mesma natureza: 3 séries curtas em um pé não são
+        // volume de perna, e contá-las inflava "Inferiores" (ou "Corpo todo") por desenho.
+        if (b.equilibrio) {
+          sessoesEquilibrio++;
           continue;
         }
         if (b.tipo === "aerobio") {
@@ -2731,6 +2743,7 @@ function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo })
       minutosAerobio,
       sessoesIso,
       sessoesAssoalho,
+      sessoesEquilibrio,
       linhas: [...porRegiao.entries()]
         .map(([regiao, n]) => ({ regiao, n, pct: series ? Math.round((n / series) * 100) : 0 }))
         .sort((a, b) => b.n - a.n),
@@ -2780,6 +2793,8 @@ function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo })
               ` O isométrico de condição é protocolo próprio, fora desta conta: ${equilibrio.sessoesIso} ${equilibrio.sessoesIso === 1 ? "sessão" : "sessões"} na semana.`}
             {equilibrio.sessoesAssoalho > 0 &&
               ` O assoalho pélvico entra por indicação, com dose própria, fora desta conta: ${equilibrio.sessoesAssoalho} ${equilibrio.sessoesAssoalho === 1 ? "sessão" : "sessões"} na semana.`}
+            {equilibrio.sessoesEquilibrio > 0 &&
+              ` O equilíbrio entra por indicação, com dose própria, fora desta conta: ${equilibrio.sessoesEquilibrio} ${equilibrio.sessoesEquilibrio === 1 ? "sessão" : "sessões"} na semana.`}
           </p>
         </Card>
       )}

@@ -2022,7 +2022,9 @@ export function fundirRegras(rules: GroupGpsRule[]): GroupGpsRule | undefined {
         indicado: !evitar && is.some((i) => i.indicado) ? true : undefined,
         prevencao: !evitar && is.some((i) => i.prevencao) ? true : undefined,
         evitar: evitar || undefined,
-        motivo: is.map((i) => i.motivo).join(" "),
+        // Duas condições de prevenção (obesidade grau 3 + diabetes) repetiam o mesmo parágrafo
+        // palavra por palavra no raciocínio; motivo igual entra uma vez.
+        motivo: [...new Set(is.map((i) => i.motivo))].join(" "),
         refId: refs.length ? refs : undefined,
       };
     })(),

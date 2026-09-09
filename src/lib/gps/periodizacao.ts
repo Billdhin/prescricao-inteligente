@@ -799,8 +799,21 @@ function selecionarExercicios(
   const semAcessorioMenor = rodizio.filter((a) => !ehAcessorioMenor(a.e));
   const escolherDaFila = (fila: typeof rodizio, criterio: (e: (typeof exercises)[number]) => boolean) =>
     fila.find((a) => criterio(a.e));
-  const primeiroDeCadaPadrao = PADROES_ESSENCIAIS.map((p) =>
-    escolherDaFila(semAcessorioMenor, (e) => padraoDe(e) === p),
+  /*
+   * PADRÃO SEM CANDIDATO LIMPO CAI NO MELHOR REBAIXADO, nunca no nada.
+   *
+   * Medido em 09/09/2026: obesidade grau 3 com "dor no joelho" declarada, só com o peso do
+   * corpo. Os dois dominantes de joelho disponíveis (sentar e levantar, subida no step) têm
+   * demanda de joelho 40 de 100 e a restrição os rebaixa a "penalizar moderado". A cobertura
+   * só olhava a fila dos LIMPOS, então a semana inteira saía sem agachar, sem nenhum
+   * exercício excluído: o rebaixamento, que existe para "ir ao fim da fila e só aparecer se
+   * não houver alternativa", virava exclusão porque a alternativa não existia e ninguém
+   * conferia. A ordem de mérito (`comPeso`) já traz o menos rebaixado primeiro; é dele que a
+   * vaga de cobertura se serve quando o limpo não existe. Excluído (nota 0) continua fora.
+   */
+  const comPesoSemMiudo = comPeso.filter((a) => !ehAcessorioMenor(a.e));
+  const primeiroDeCadaPadrao = PADROES_ESSENCIAIS.map(
+    (p) => escolherDaFila(semAcessorioMenor, (e) => padraoDe(e) === p) ?? escolherDaFila(comPesoSemMiudo, (e) => padraoDe(e) === p),
   ).filter((a): a is (typeof rodizio)[number] => a != null);
   /*
    * O REPRESENTANTE DA FAMÍLIA OLHA O QUE JÁ FOI ESCOLHIDO.
@@ -912,9 +925,13 @@ function selecionarExercicios(
   };
   const sobra = ordemFinal.filter((a) => !garantidos.has(a.e.slug));
   const ordemComCobertura = [...cobertura, ...rodizioDePadrao(sobra)];
+  // Quem entrou pela COBERTURA conta como limpo para a distribuição, mesmo que rebaixado: ele
+  // só está ali porque o padrão dele não tinha alternativa limpa, e a distribuição só serve
+  // de exercícios limpos. Sem isto o resgate acima era letra morta: o dominante de joelho
+  // rebaixado entrava na seleção e a semana continuava sem agachar.
   const escolhidos = ordemComCobertura
     .slice(0, Math.max(n, 1))
-    .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, limpo: jaNoRodizio.has(a.e.slug) }));
+    .map((a) => ({ slug: a.e.slug, nome: a.e.nome ?? a.e.slug, limpo: jaNoRodizio.has(a.e.slug) || garantidos.has(a.e.slug) }));
 
   /*
    * A RESTRIÇÃO DO ALUNO REBAIXAVA EM SILÊNCIO.
