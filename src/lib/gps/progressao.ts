@@ -57,7 +57,7 @@ const blocosDe = (m: Microciclo) => m.sessoes.flatMap((s) => s.blocos);
  * aeróbio em décimos; ou o meio da intensidade textual quando ela é parseável (ex.: "40 a
  * 60% de 1RM"). Sem nenhum desses, devolve null (não inventa número para intensidade textual).
  */
-function esforcoDoBloco(b: BlocoSessao): number | null {
+export function esforcoDoBloco(b: BlocoSessao): number | null {
   if (b.cargaRelativaAlvo != null) return b.cargaRelativaAlvo;
   /*
    * O RIR DIZ A FAIXA, AS REPETIÇÕES DIZEM ONDE DENTRO DELA.
@@ -338,6 +338,20 @@ export function serieSemanal(macro: Macrociclo, _nivel?: Nivel): PontoSemana[] {
     cpx: clampPlot(cpx[i]),
     aliviada: c.micro.tipo !== "carga",
   }));
+}
+
+/**
+ * Volume de UM bloco, na MESMA unidade do agregado da semana: séries x repetições na força,
+ * minutos no aeróbio. Existe exportado porque o selo de decisão de cada exercício precisa
+ * decidir "progrediu?" com a mesma régua que decide isso para a semana inteira; duas réguas
+ * dariam um selo dizendo "progride" embaixo de uma semana marcada como regressão.
+ */
+export function volumeDoBloco(b: BlocoSessao): number {
+  if (ehAerobio(b)) return b.duracaoAlvoMin ?? meioFaixa(b.duracao) ?? 0;
+  if (!ehForca(b)) return 0;
+  const series = b.seriesAlvo ?? meioFaixa(b.series) ?? 0;
+  const reps = b.repsAlvo ?? meioFaixa(b.reps) ?? 0;
+  return series * reps;
 }
 
 /* ------------------------------ Estado da semana (selo) ------------------------------ */

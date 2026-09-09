@@ -16,6 +16,7 @@ import {
   MapPin,
   ArrowLeft,
   Plus,
+  Trash2,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -73,6 +74,8 @@ import { prontidaoParaPrescrever } from "@/lib/gps/prontidao";
 import { ProntidaoAviso } from "@/components/alunos/ProntidaoAviso";
 import { groupGpsRules } from "@/lib/gps/groupRules";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
+import { getSemaforo } from "@/data/semaforo";
+import { intervaloDe } from "@/lib/gps/faixasParse";
 import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
 import { parValido, linhaObjetivos } from "@/lib/gps/objetivos";
 import { useDialog } from "@/lib/useDialog";
@@ -2092,7 +2095,11 @@ function EditorDaSemana({
   onPublicar: () => void;
 }) {
   const [sessaoIdx, setSessaoIdx] = React.useState(0);
-  React.useEffect(() => setSessaoIdx(0), [micro.id]);
+  const [renomeando, setRenomeando] = React.useState(false);
+  React.useEffect(() => {
+    setSessaoIdx(0);
+    setRenomeando(false);
+  }, [micro.id]);
   const sessao = micro.sessoes[Math.min(sessaoIdx, micro.sessoes.length - 1)];
 
   /*
@@ -2131,6 +2138,24 @@ function EditorDaSemana({
   const anterior = idx > 0 ? semanas[idx - 1] : undefined;
   const proxima = idx >= 0 && idx < semanas.length - 1 ? semanas[idx + 1] : undefined;
 
+  /*
+   * DESCARTAR ALTERAÇÕES (protótipo, ao lado de "aplicar às outras semanas").
+   *
+   * Cada gesto destrutivo já tinha desfazer, mas quem mexeu em cinco doses e se arrependeu do
+   * conjunto não tinha volta: teria que desfazer de memória, um a um, na ordem certa. A base
+   * é a semana COMO ELA ESTAVA ao abrir o editor, guardada por semana (trocar de semana troca
+   * a base). A comparação é por identidade porque toda edição cria um objeto novo.
+   */
+  const baseRef = React.useRef<{ id: string; micro: Microciclo }>({ id: micro.id, micro });
+  if (baseRef.current.id !== micro.id) baseRef.current = { id: micro.id, micro };
+  const base = baseRef.current.micro;
+  const temEdicao = base !== micro;
+  const descartar = () => {
+    const antes = micro;
+    onChange(base);
+    toastDesfazer(`Edições da semana ${micro.semana} descartadas.`, () => onChange(antes));
+  };
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -2154,6 +2179,36 @@ function EditorDaSemana({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/*
+            AS TRÊS SEMANAS VIZINHAS (protótipo: "Semana 6 | Semana 7 | Semana 8 · descarga").
+            A navegação entre semanas vivia em dois links no RODAPÉ da coluna de edição, ou
+            seja, depois de rolar a sessão inteira, e sem dizer o que vinha antes ou depois. No
+            cabeçalho ela vira contexto: onde estou, o que veio, o que vem, e a descarga
+            anunciada antes de o profissional chegar nela.
+          */}
+          {(anterior || proxima) && (
+            <div className="inline-flex gap-0.5 rounded-full border border-border bg-surface p-1">
+              {[anterior, { micro, meso }, proxima].map((s) =>
+                !s ? null : (
+                  <button
+                    key={s.micro.id}
+                    type="button"
+                    onClick={() => s.micro.semana !== micro.semana && onFocar(s.micro.semana)}
+                    aria-current={s.micro.semana === micro.semana ? "page" : undefined}
+                    className={cn(
+                      "min-h-[36px] whitespace-nowrap rounded-full px-3.5 text-xs font-semibold transition-colors",
+                      s.micro.semana === micro.semana
+                        ? "bg-ink text-surface"
+                        : "text-ink-2 hover:bg-surface-soft hover:text-ink",
+                    )}
+                  >
+                    Semana {s.micro.semana}
+                    {s.micro.tipo === "deload" && <span className="font-medium opacity-70"> · descarga</span>}
+                  </button>
+                ),
+              )}
+            </div>
+          )}
           <button
             onClick={() => onExportar(micro.semana)}
             disabled={!podeSalvar}
@@ -2199,26 +2254,72 @@ function EditorDaSemana({
             <>
               {/* As sessões viram pílulas, e não abas sublinhadas: é o desenho do protótipo
                   e o mesmo vocabulário de escolha do resto do produto. */}
-              <div role="tablist" aria-label="Sessões da semana" className="flex flex-wrap gap-1.5">
-                {micro.sessoes.map((s, i) => (
-                  <button
-                    key={s.id}
-                    role="tab"
-                    aria-selected={i === sessaoIdx}
-                    onClick={() => setSessaoIdx(i)}
-                    className={cn(
-                      "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 text-sm transition-colors",
-                      i === sessaoIdx
-                        ? "border-ink bg-ink font-semibold text-surface"
-                        : "border-border text-ink-2 hover:bg-surface-soft",
-                    )}
-                  >
-                    {s.nome}
-                    {s.foco && (
-                      <span className={cn("font-normal", i === sessaoIdx ? "opacity-70" : "text-ink-3")}>{s.foco}</span>
-                    )}
-                  </button>
-                ))}
+              {/*
+                AS PÍLULAS SÃO O NOME DA SESSÃO, e agora também o lugar de renomear e remover.
+                O nome aparecia duas vezes na mesma tela: na pílula e como título do bloco de
+                exercícios logo abaixo, com dois caminhos diferentes para a mesma edição.
+              */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <div role="tablist" aria-label="Sessões da semana" className="flex flex-wrap gap-1.5">
+                  {micro.sessoes.map((s, i) =>
+                    i === sessaoIdx && renomeando ? (
+                      <input
+                        key={s.id}
+                        autoFocus
+                        value={s.nome}
+                        aria-label="Nome da sessão"
+                        onChange={(e) => trocarSessao({ ...s, nome: e.target.value })}
+                        onBlur={() => setRenomeando(false)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === "Escape") setRenomeando(false);
+                        }}
+                        className="min-h-[44px] rounded-full border border-primary bg-surface px-4 text-sm font-semibold text-ink focus:outline-none"
+                      />
+                    ) : (
+                      <button
+                        key={s.id}
+                        role="tab"
+                        aria-selected={i === sessaoIdx}
+                        onClick={() => setSessaoIdx(i)}
+                        className={cn(
+                          "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 text-sm transition-colors",
+                          i === sessaoIdx
+                            ? "border-ink bg-ink font-semibold text-surface"
+                            : "border-border text-ink-2 hover:bg-surface-soft",
+                        )}
+                      >
+                        {s.nome}
+                        {s.foco && (
+                          <span className={cn("font-normal", i === sessaoIdx ? "opacity-70" : "text-ink-3")}>{s.foco}</span>
+                        )}
+                      </button>
+                    ),
+                  )}
+                </div>
+                {editavel && sessao && !renomeando && (
+                  <span className="inline-flex items-center gap-0.5">
+                    <button
+                      onClick={() => setRenomeando(true)}
+                      aria-label={`Renomear ${sessao.nome}`}
+                      title="Renomear sessão"
+                      className="rounded-control p-2 text-ink-3 transition-colors hover:bg-surface-soft hover:text-ink"
+                    >
+                      <Pencil className="h-4 w-4" aria-hidden />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const antes = micro;
+                        trocarMicro({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) });
+                        toastDesfazer(`${sessao.nome} removida da semana ${micro.semana}.`, () => onChange(antes));
+                      }}
+                      aria-label={`Remover ${sessao.nome}`}
+                      title="Remover sessão"
+                      className="rounded-control p-2 text-ink-3 transition-colors hover:bg-surface-soft hover:text-[color:var(--cta-text)]"
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden />
+                    </button>
+                  </span>
+                )}
               </div>
 
               {sessao && (
@@ -2226,12 +2327,10 @@ function EditorDaSemana({
                   sessao={sessao}
                   ctx={ctx}
                   editavel={editavel}
+                  microAnterior={anterior?.micro}
+                  tipoSemana={micro.tipo}
+                  ocultarCabecalho
                   onChange={trocarSessao}
-                  onRemover={() => {
-                    const antes = micro;
-                    trocarMicro({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) });
-                    toastDesfazer(`${sessao.nome} removida da semana ${micro.semana}.`, () => onChange(antes));
-                  }}
                 />
               )}
             </>
@@ -2254,22 +2353,17 @@ function EditorDaSemana({
             ) : (
               <span />
             )}
-            <div className="flex flex-wrap items-center gap-4 text-sm font-semibold">
-              {anterior && (
-                <button onClick={() => onFocar(anterior.micro.semana)} className="text-ink-2 hover:text-ink">
-                  ← Semana {anterior.micro.semana}
-                </button>
-              )}
-              {proxima && (
-                <button onClick={() => onFocar(proxima.micro.semana)} className="text-primary hover:underline">
-                  Semana {proxima.micro.semana} →
-                </button>
-              )}
-            </div>
+            {/* A navegação entre semanas subiu para o cabeçalho; aqui fica só o desfazer do
+                conjunto, que é a outra metade do par do protótipo. */}
+            {editavel && temEdicao && (
+              <button onClick={descartar} className="text-sm font-semibold text-ink-3 hover:text-ink hover:underline">
+                Descartar alterações da semana
+              </button>
+            )}
           </div>
         </div>
 
-        <TrilhoDoEditor micro={micro} meso={meso} />
+        <TrilhoDoEditor micro={micro} meso={meso} sessao={sessao} ctx={ctx} />
       </div>
     </div>
   );
@@ -2691,7 +2785,66 @@ function TrilhoDoPlano({
  * falavam nem estava aberta. Ao lado do editor, cada série acrescentada ou tirada move a
  * barra na hora, que é o que faz deles ferramenta em vez de enfeite.
  */
-function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo }) {
+function TrilhoDoEditor({
+  micro,
+  meso,
+  sessao,
+  ctx,
+}: {
+  micro: Microciclo;
+  meso: Mesociclo;
+  /** a sessão aberta: o volume do protótipo é da SESSÃO, não da semana */
+  sessao?: Sessao;
+  ctx: ContextoFaixa;
+}) {
+  /*
+   * VOLUME DA SESSÃO (protótipo: o primeiro cartão do trilho do editor).
+   *
+   * O trilho respondia só pela SEMANA (equilíbrio por região), e quem está editando uma
+   * sessão precisa antes da pergunta menor: quantas séries eu acabei de montar aqui, e isso
+   * é muito ou pouco? Sem ela, acrescentar um exercício não tem resposta na tela.
+   *
+   * A FAIXA DA SESSÃO NÃO É NÚMERO NOVO: é aritmética sobre a faixa de séries que o objetivo
+   * já cita ("2 a 3 séries por exercício" com 4 exercícios de força dá 8 a 12 na sessão), e o
+   * rodapé do cartão mostra a conta para ninguém precisar confiar no total. Sem faixa legível
+   * no texto do objetivo, o cartão mostra só o total, sem inventar um teto.
+   */
+  const volume = React.useMemo(() => {
+    if (!sessao) return null;
+    const porRegiao = new Map<string, number>();
+    let series = 0;
+    let exercicios = 0;
+    for (const b of sessao.blocos) {
+      if (b.tipo === "aerobio") continue;
+      // Protocolo isométrico de condição tem dose fechada e não entra na conta de volume,
+      // pela mesma regra do equilíbrio da semana; o sustentado (prancha) entra.
+      if (b.tipo === "isometrico" && !b.sustentado) continue;
+      const n = b.seriesAlvo ?? Number(/(\d+)/.exec(b.series ?? "")?.[1] ?? 0);
+      if (!n) continue;
+      exercicios++;
+      series += n;
+      const ex = b.exercicioSlug ? exercises.find((e) => e.slug === b.exercicioSlug) : undefined;
+      const regiao = ex ? (REGIAO[ex.grupoMuscular] ?? "Corpo todo") : "Sem classificação";
+      porRegiao.set(regiao, (porRegiao.get(regiao) ?? 0) + n);
+    }
+    if (!series) return null;
+    const porExercicio = intervaloDe(getFaixa(ctx.objetivo).series.valor);
+    const faixa =
+      porExercicio && Number.isFinite(porExercicio.max)
+        ? { min: Math.round(porExercicio.min * exercicios), max: Math.round(porExercicio.max * exercicios) }
+        : null;
+    return {
+      series,
+      exercicios,
+      faixa,
+      textoPorExercicio: getFaixa(ctx.objetivo).series.valor,
+      linhas: [...porRegiao.entries()].map(([regiao, n]) => ({ regiao, n })).sort((a, b) => b.n - a.n),
+    };
+  }, [sessao, ctx.objetivo]);
+
+  // O checklist do dia que a condição deste plano liga, com o tamanho real dele.
+  const semaforo = ctx.grupoEspecial ? getSemaforo(ctx.grupoEspecial) : undefined;
+  const nomeDaCondicao = ctx.grupoEspecial ? getSpecialGroup(ctx.grupoEspecial)?.nome : undefined;
   // Equilíbrio: séries de força DINÂMICA por região, a partir dos blocos da semana em foco.
   // O isométrico de condição fica fora deste denominador pela mesma regra que tirou o
   // aeróbio: série de 2 minutos sustentados não é série dinâmica, e a dose dele é protocolo
@@ -2760,7 +2913,73 @@ function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo })
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-      {/* O objetivo declarado da semana, primeiro: é contra ele que se dosa o resto. */}
+      {volume && (
+        <Card className="p-4">
+          <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Volume da sessão</h3>
+          <div className="mt-1.5 flex flex-wrap items-end gap-x-2 gap-y-1">
+            <p className="font-display text-3xl font-bold leading-none text-ink">
+              <span className="tabular">{volume.series}</span>
+              <span className="ml-1.5 text-sm font-medium text-ink-3">séries</span>
+            </p>
+            {volume.faixa && (
+              <span
+                className={cn(
+                  "mb-0.5 text-xs font-semibold",
+                  volume.series >= volume.faixa.min && volume.series <= volume.faixa.max ? "text-success" : "text-warning",
+                )}
+              >
+                {volume.series >= volume.faixa.min && volume.series <= volume.faixa.max ? "dentro da faixa" : "fora da faixa"}{" "}
+                <span className="tabular">
+                  {volume.faixa.min} a {volume.faixa.max}
+                </span>
+              </span>
+            )}
+          </div>
+          {/* A barra mostra a FAIXA como banda e o total como preenchimento: a leitura é a
+              posição do total dentro da faixa, e não um percentual de coisa nenhuma. */}
+          {volume.faixa && (
+            <div className="relative mt-3 h-2.5 overflow-hidden rounded-full bg-surface-mute">
+              {(() => {
+                const escala = Math.max(volume.faixa.max, volume.series) || 1;
+                const pct = (n: number) => `${Math.min(100, (n / escala) * 100)}%`;
+                return (
+                  <>
+                    <span
+                      className="absolute inset-y-0 bg-success-tint"
+                      style={{ left: pct(volume.faixa.min), width: pct(volume.faixa.max - volume.faixa.min) }}
+                      aria-hidden
+                    />
+                    <span className="absolute inset-y-0 left-0 rounded-full bg-primary" style={{ width: pct(volume.series) }} aria-hidden />
+                  </>
+                );
+              })()}
+            </div>
+          )}
+          <ul className="mt-3 space-y-2">
+            {volume.linhas.map((l) => (
+              <li key={l.regiao}>
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="text-ink-2">{l.regiao}</span>
+                  <span className="tabular font-semibold text-ink">
+                    {l.n} {l.n === 1 ? "série" : "séries"}
+                  </span>
+                </div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-mute">
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${(l.n / volume.series) * 100}%` }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-2xs leading-snug text-ink-3">
+            {volume.exercicios} {volume.exercicios === 1 ? "exercício" : "exercícios"} de força nesta sessão
+            {volume.faixa
+              ? `, e a faixa do objetivo pede ${volume.textoPorExercicio} séries em cada um.`
+              : "."}
+          </p>
+        </Card>
+      )}
+
+      {/* O objetivo declarado da semana: é contra ele que se dosa o resto. */}
       {micro.objetivo && (
         <Card className="p-4">
           <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Objetivo da semana</h3>
@@ -2815,6 +3034,27 @@ function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo })
         <Card tone="warning" className="p-4">
           <h3 className="text-2xs font-bold uppercase tracking-[0.12em] text-warning">Nota da semana</h3>
           <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{micro.nota}</p>
+        </Card>
+      )}
+
+      {/*
+        SEMÁFORO VINCULADO (protótipo). A condição do plano liga um checklist próprio antes da
+        sessão, e quem edita a semana não tinha como saber disso sem sair da tela.
+
+        O texto diz o que o produto FAZ, e não o que o protótipo prometia: o checklist devolve
+        a conduta recomendada para cada resposta fora do verde; ele não muda a dose sozinho.
+      */}
+      {semaforo && nomeDaCondicao && (
+        <Card className="p-4">
+          <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Semáforo vinculado</h3>
+          <p className="mt-1.5 text-sm leading-relaxed text-ink-2">
+            O checklist de <span className="font-semibold text-ink">{nomeDaCondicao}</span> tem{" "}
+            {semaforo.itens.length} {semaforo.itens.length === 1 ? "pergunta" : "perguntas"} antes de cada sessão.
+            Resposta fora do verde traz a conduta recomendada; quem decide seguir é você.
+          </p>
+          <Link to="/semaforo" className="mt-2 inline-flex text-xs font-semibold text-primary hover:underline">
+            Abrir o semáforo do dia
+          </Link>
         </Card>
       )}
     </aside>

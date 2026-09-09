@@ -1623,7 +1623,6 @@ function EditorDaSessaoDeHoje({
         ctx={ctx}
         editavel
         onChange={setRascunho}
-        onRemover={() => {}}
       />
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <button

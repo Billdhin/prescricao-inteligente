@@ -66,9 +66,12 @@ import {
   tokensAlvoAerobio,
   compararAlvos,
   regrasDaSessao,
+  decisaoDoBloco,
+  blocoAnteriorDe,
+  type TokenAlvo,
+  type DecisaoDoBloco,
 } from "@/lib/gps/alvoResumo";
 import { adequacaoLabel, EQUIPAMENTOS, type GpsObjetivo, type Recommendation } from "@/lib/gps/engine";
-import { acervoRanqueadoAgrupado, acervoAlfabeticoAgrupado } from "@/lib/gps/acervoAgrupado";
 import { sugerirTroca, type ContextoTroca } from "@/lib/gps/sugerirTroca";
 import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
 import type { Nivel } from "@/data/types";
@@ -143,11 +146,6 @@ function ctxTrocaDe(ctx: ContextoFaixa): ContextoTroca {
     farmacos: ctx.farmacos,
     farmacosNaoInformado: ctx.farmacosNaoInformado,
   };
-}
-
-/** Há perfil de aluno que justifique ranquear (senão a ordem alfabética é mais previsível). */
-function temContextoDeAluno(ctx: ContextoFaixa): boolean {
-  return Boolean(ctx.grupoEspecial) || (ctx.restricoes?.length ?? 0) > 0;
 }
 
 /** Selo pequeno "da prescrição de {data}" para blocos vindos do tubo Aplicar no treino. */
@@ -1390,30 +1388,35 @@ export function SessaoBloco({
   editavel,
   onChange,
   onRemover,
+  microAnterior,
+  tipoSemana = "carga",
+  ocultarCabecalho,
 }: {
   sessao: Sessao;
   ctx: ContextoFaixa;
   editavel: boolean;
   onChange: (s: Sessao) => void;
-  onRemover: () => void;
+  /**
+   * Ausente = sem lixeira. O Treino do dia passava `() => {}` e a tela exibia um botão de
+   * remover que não removia nada; controle que existe e não faz é pior que controle que
+   * falta, porque ensina a desconfiar dos outros.
+   */
+  onRemover?: () => void;
+  /**
+   * A semana imediatamente anterior DO PLANO (não a do bloco): o selo promete "em relação à
+   * semana anterior", e no primeiro microciclo de cada bloco a comparação com o bloco deixaria
+   * quatro exercícios sem resposta justamente onde a fase muda.
+   */
+  microAnterior?: Microciclo;
+  tipoSemana?: Microciclo["tipo"];
+  /**
+   * Esconde a linha de nome e ações da sessão. No editor da semana quem nomeia e troca a
+   * sessão são as pílulas logo acima, e repetir o nome como título fazia a mesma sessão
+   * aparecer duas vezes na mesma tela, com dois lugares diferentes para renomeá-la.
+   */
+  ocultarCabecalho?: boolean;
 }) {
   const faixa = getFaixa(ctx.objetivo);
-
-  /*
-   * O acervo AGRUPADO POR MÚSCULO, com o ranking preservado dentro de cada grupo.
-   *
-   * Era uma lista corrida de 101 itens sem cabeçalho, e o personal que pediu isto estava
-   * rolando às cegas atrás de um exercício de costas. A ordem nunca foi aleatória (é o
-   * ranking de segurança daquele aluno), então agrupar sem reordenar mantém as duas coisas:
-   * a seção que ele procura, e o item mais indicado no topo dela. Ver acervoAgrupado.ts.
-   */
-  const gruposDoAcervo = React.useMemo(
-    () =>
-      temContextoDeAluno(ctx)
-        ? acervoRanqueadoAgrupado(sugerirTroca(ctxTrocaDe(ctx)))
-        : acervoAlfabeticoAgrupado(exercises),
-    [ctx],
-  );
 
   const addBloco = (slug: string) => {
     if (!slug) return;
@@ -1500,27 +1503,46 @@ export function SessaoBloco({
    */
   const [abertoId, setAbertoId] = React.useState<string | null>(null);
   const alternar = (id: string) => setAbertoId((a) => (a === id ? null : id));
+  /*
+   * ADICIONAR EXERCÍCIO PASSA PELA MESMA PORTA DE TROCAR.
+   *
+   * Era um <select> de 108 opções agrupadas dentro da caixa tracejada: escolher ali é rolar
+   * uma lista de sistema, sem busca, sem o ranking do perfil do aluno e sem o motivo de um
+   * exercício ser desaconselhado. A tela já tinha a porta boa, o seletor ranqueado usado em
+   * "Trocar", e ela ficava a um clique de distância de quem trocava e inalcançável para quem
+   * adicionava. O botão tracejado do protótipo abre essa porta.
+   */
+  const [adicionando, setAdicionando] = React.useState(false);
 
   return (
-    <div className="rounded-[14px] bg-surface-soft p-2.5">
-      <div className="mb-1.5 flex items-center gap-1.5">
-        <Repeat className="h-3.5 w-3.5 shrink-0 text-primary" />
-        {editavel ? (
-          <input
-            value={sessao.nome}
-            onChange={(e) => onChange({ ...sessao, nome: e.target.value })}
-            aria-label="Nome da sessão"
-            className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink hover:border-border focus:border-primary focus:bg-surface focus:outline-none"
-          />
-        ) : (
-          <span className="flex-1 text-sm font-semibold text-ink">{sessao.nome}</span>
-        )}
-        {editavel && (
-          <button onClick={onRemover} aria-label={`Remover ${sessao.nome}`} className="rounded p-1 text-ink-3 hover:bg-surface hover:text-[color:var(--cta-text)]">
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
+    /*
+     * SEM BANDEJA. Os exercícios eram cartões brancos dentro de uma caixa cinza, e a caixa
+     * não carregava informação nenhuma: só empilhava um nível de moldura entre a página e a
+     * linha que interessa, encolhendo o respiro de cada cartão para caber. No protótipo os
+     * cartões assentam direto na página, com ar entre eles. Cartão dentro de cartão é o
+     * andaime que sobra quando o agrupamento já está dito pelo título e pelas pílulas.
+     */
+    <div className="space-y-2.5">
+      {!ocultarCabecalho && (
+        <div className="flex items-center gap-1.5">
+          <Repeat className="h-3.5 w-3.5 shrink-0 text-primary" />
+          {editavel ? (
+            <input
+              value={sessao.nome}
+              onChange={(e) => onChange({ ...sessao, nome: e.target.value })}
+              aria-label="Nome da sessão"
+              className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink hover:border-border focus:border-primary focus:bg-surface focus:outline-none"
+            />
+          ) : (
+            <span className="flex-1 text-sm font-semibold text-ink">{sessao.nome}</span>
+          )}
+          {editavel && onRemover && (
+            <button onClick={onRemover} aria-label={`Remover ${sessao.nome}`} className="rounded p-1 text-ink-3 hover:bg-surface hover:text-[color:var(--cta-text)]">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
 
       {!editavel ? (
         <SessaoQuadro sessao={sessao} ctx={ctx} />
@@ -1528,7 +1550,7 @@ export function SessaoBloco({
         <>
           {sessao.blocos.length === 0 && <p className="px-1 py-2 text-xs text-ink-3">Sessão sem exercícios. Adicione abaixo.</p>}
 
-          <ul className="space-y-1.5">
+          <ul className="space-y-2.5">
             {segmentos.map((seg, si) => {
               if (seg.tipo === "grupo") {
                 const info = getMetodo(seg.metodo);
@@ -1548,13 +1570,14 @@ export function SessaoBloco({
                           Desagrupar
                         </button>
                       </div>
-                      <ul className="space-y-1.5">
+                      <ul className="space-y-2">
                         {seg.blocos.map((b) => (
                           <li key={b.id}>
                             <BlocoRow
                               bloco={b}
                               numero={numeroDoBloco(b.id)}
                               ctx={ctx}
+                              decisao={decisaoDoBloco(b, blocoAnteriorDe(microAnterior, b), tipoSemana, microAnterior?.tipo)}
                               ocultarMetodo
                               aberto={abertoId === b.id}
                               onAlternar={() => alternar(b.id)}
@@ -1582,6 +1605,7 @@ export function SessaoBloco({
                     bloco={b}
                     numero={numeroDoBloco(b.id)}
                     ctx={ctx}
+                    decisao={decisaoDoBloco(b, blocoAnteriorDe(microAnterior, b), tipoSemana, microAnterior?.tipo)}
                     aberto={abertoId === b.id}
                     onAlternar={() => alternar(b.id)}
                     onChange={trocarBloco}
@@ -1602,46 +1626,43 @@ export function SessaoBloco({
             })}
           </ul>
 
-          {/* Área de adicionar no traço do protótipo ("+ Adicionar exercício" tracejado):
-              o gesto continua sendo escolher do acervo pelo select. */}
-          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-card border-2 border-dashed border-border px-3 py-2.5">
-            <label className="inline-flex items-center gap-1 text-sm font-semibold text-ink-2" htmlFor={`add-${sessao.id}`}>
-              <Plus className="h-3.5 w-3.5" aria-hidden /> Adicionar exercício
-            </label>
-            <select
-              id={`add-${sessao.id}`}
-              value=""
-              onChange={(e) => {
-                addBloco(e.target.value);
-                e.target.value = "";
-              }}
-              className="input h-8 max-w-[220px] py-0 text-xs"
+          {/* "+ Adicionar exercício" do protótipo: um alvo de clique de largura cheia, e a
+              escolha acontece no seletor ranqueado, com busca e com o motivo de cada
+              exclusão. O cardio fica ao lado, menor, porque é a exceção. */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setAdicionando(true)}
+              className="inline-flex min-h-[46px] flex-1 items-center justify-center gap-1.5 rounded-card border-2 border-dashed border-border text-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:bg-primary-tint hover:text-primary"
             >
-              <option value="">Escolher do acervo</option>
-              {gruposDoAcervo.map((g) => (
-                <optgroup key={g.rotulo} label={g.rotulo}>
-                  {g.exercicios.map((e) => (
-                    <option key={e.slug} value={e.slug}>
-                      {e.nome}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+              <Plus className="h-4 w-4" aria-hidden /> Adicionar exercício
+            </button>
             <button
               type="button"
               onClick={addCardio}
-              className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-1 text-xs font-semibold text-ink-2 hover:bg-surface"
+              className="inline-flex min-h-[46px] shrink-0 items-center gap-1.5 rounded-card border border-border px-3 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-soft hover:text-ink"
             >
-              <HeartPulse className="h-3.5 w-3.5 text-analysis" /> Adicionar cardio
+              <HeartPulse className="h-4 w-4 text-analysis" aria-hidden /> Cardio
             </button>
           </div>
+
+          {adicionando && (
+            <SeletorExercicioSheet
+              ctx={ctx}
+              titulo="Adicionar exercício"
+              onClose={() => setAdicionando(false)}
+              onEscolher={(ex) => {
+                addBloco(ex.slug);
+                setAdicionando(false);
+              }}
+            />
+          )}
         </>
       )}
 
       {/* Fecho de flexibilidade da sessão (onda F): editável no editor, nota no modo leitura. */}
       {editavel ? (
-        <div className="mt-2">
+        <div>
           <label
             htmlFor={`fecho-${sessao.id}`}
             className="mb-0.5 block text-2xs font-semibold uppercase tracking-wide text-ink-3"
@@ -1659,7 +1680,7 @@ export function SessaoBloco({
         </div>
       ) : (
         sessao.fecho && (
-          <p className="mt-2 rounded-md border border-border bg-surface-soft px-2 py-1 text-2xs text-ink-2">
+          <p className="rounded-md border border-border bg-surface-soft px-2 py-1 text-2xs text-ink-2">
             {sessao.fecho}
           </p>
         )
@@ -1670,6 +1691,36 @@ export function SessaoBloco({
 
 /* ================================ Bloco (exercício) ================================ */
 
+/**
+ * AS FICHAS DA LINHA FECHADA: o ALVO desta semana, e a faixa só quando não há alvo.
+ *
+ * A linha fechada imprimia a FAIXA de cada campo ("Séries 2 a 3", "Repetições 10 a 15",
+ * "Intensidade leve a moderada"): três fichas longas, IDÊNTICAS em todos os exercícios da
+ * sessão, que dizem o que o objetivo dosa e não o que este exercício faz nesta semana. A
+ * faixa é constante do plano e já está impressa uma vez, logo acima (ver FaixaReferencia);
+ * o que varia de linha para linha é o alvo, e é ele que a ficha passa a carregar. Abrir a
+ * linha continua mostrando os dois, campo a campo, com a faixa como pista.
+ */
+function fichasDoBloco(b: BlocoSessao): TokenAlvo[] {
+  if (b.tipo === "aerobio") {
+    if (temAlvoAerobio(b)) return tokensAlvoAerobio(b).slice(0, 3);
+  } else if (temAlvoForca(b)) {
+    return tokensAlvoForca(b).slice(0, 3);
+  }
+  return camposDoBloco(b)
+    .map((c) => ({ label: c.rotulo, value: (b[c.chave] as string | undefined) ?? "" }))
+    .filter((c) => c.value)
+    .slice(0, 3);
+}
+
+/** Tom do selo de decisão: progredir é ganho, aliviar é cuidado, ajustar é as duas coisas. */
+const TOM_DECISAO: Record<DecisaoDoBloco["tom"], PillTone> = {
+  progride: "success",
+  mantem: "neutral",
+  alivia: "warning",
+  ajusta: "analysis",
+};
+
 function BlocoRow({
   bloco,
   numero,
@@ -1679,11 +1730,14 @@ function BlocoRow({
   onChange,
   onRemover,
   ocultarMetodo,
+  decisao,
 }: {
   bloco: BlocoSessao;
   /** posição do bloco na sessão (1-based): vira o quadrado numerado do protótipo */
   numero?: number;
   ctx: ContextoFaixa;
+  /** o que muda neste exercício em relação à semana anterior (ver decisaoDoBloco) */
+  decisao?: DecisaoDoBloco | null;
   /** esta é a linha que está sendo mexida: só ela mostra campos e controles */
   aberto: boolean;
   onAlternar: () => void;
@@ -1704,7 +1758,7 @@ function BlocoRow({
         fichas. Fechada ela se LÊ; aberta ela se edita. Era só a forma aberta, sempre, para
         todos os exercícios ao mesmo tempo.
       */}
-      <div className="flex flex-wrap items-center gap-2 p-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3.5">
         {numero != null && (
           <span
             className={cn(
@@ -1753,10 +1807,8 @@ function BlocoRow({
             então o que se lê fechado é exatamente o que se muda aberto. */}
         {!aberto && (
           <LinhaDeTokens className="shrink-0">
-            {camposDoBloco(bloco)
-              .map((c) => ({ ...c, valor: (bloco[c.chave] as string | undefined) ?? "" }))
-              .filter((c) => c.valor)
-              .slice(0, 3)
+            {fichasDoBloco(bloco)
+              .map((c) => ({ chave: c.label, rotulo: c.label, valor: c.value }))
               .map((c) => (
                 <TokenRotulado
                   key={c.chave}
@@ -1773,6 +1825,19 @@ function BlocoRow({
                 />
               ))}
           </LinhaDeTokens>
+        )}
+        {/* O SELO DE DECISÃO (protótipo: a etiqueta à direita de cada exercício). Diz o que
+            muda aqui em relação à semana anterior, com a diferença medida entre os alvos.
+            Some na primeira semana do bloco, onde não há com o que comparar. */}
+        {decisao && !aberto && (
+          // O VEREDITO é a pílula, curta e colorida; a DIFERENÇA vem ao lado, em texto
+          // quieto, e pode quebrar para a linha de baixo quando a coluna aperta. Os dois
+          // juntos dentro da pílula faziam uma etiqueta de 28 caracteres competindo com o
+          // nome do exercício.
+          <span className="ml-auto flex min-w-0 items-center gap-2" title={decisao.completo}>
+            <Pill tone={TOM_DECISAO[decisao.tom]}>{decisao.rotulo}</Pill>
+            {decisao.detalhe && <span className="text-2xs leading-tight text-ink-3">{decisao.detalhe}</span>}
+          </span>
         )}
         <SeloOrigem ctx={ctx} bloco={bloco} />
         <button
