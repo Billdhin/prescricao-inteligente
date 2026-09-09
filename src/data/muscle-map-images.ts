@@ -264,6 +264,15 @@ const SLUGS_COM_POSE: string[] = [
   "preensao-isometrica-handgrip",
   "remada-invertida-apoio-alto",
   "agachamento-aquatico",
+  // Lacunas por padrão de movimento (09/09/2026), gerados por img2img do boneco-primo e
+  // conferidos um a um. Ver exercises-lacunas.ts.
+  "elevacao-quadril-apoio-banco",
+  "dobradica-quadril-peso-corpo",
+  "extensao-quadril-em-pe-apoio",
+  "elevacao-joelho-sentado",
+  "prancha-parede",
+  "remada-toalha-porta",
+  "contracao-assoalho-pelvico",
 ];
 
 export function getMuscleMapPose(slug?: string): string | undefined {

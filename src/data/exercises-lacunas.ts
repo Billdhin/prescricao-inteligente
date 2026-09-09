@@ -38,10 +38,15 @@
  *
  * ## Sobre as imagens
  *
- * Nenhum dos sete tem foto nem boneco ainda. Eles estão declarados em `IMAGEM_PENDENTE_DESDE`
- * no `check:catalogo`, que imprime a fila em vez de reprovar, com a data. A tela cai no
- * MuscleThumb quando `imagem` está ausente, e ausência é melhor do que imagem que ensina o
- * movimento errado (ver a skill imagens-lovable). Fechar a fila é a próxima rodada de imagem.
+ * As 21 imagens (foto de execução, camada de análise e boneco posado) saíram no mesmo dia por
+ * img2img no Lovable (projeto pi-fotos-k), cada uma a partir da foto ou do boneco do
+ * exercício-primo já aprovado, e foram conferidas uma a uma antes de entrar. Duas ressalvas
+ * registradas: a prancha na parede saiu na versão com as MÃOS na parede (o gerador não
+ * dobrou os cotovelos em três tentativas), que é a primeira variação listada e a mais fácil, e
+ * o texto das fases diz "mãos ou antebraços"; e o boneco da elevação de quadril precisou de
+ * sete tentativas, porque o gerador insistia em deixar o quadril caído abaixo da linha do
+ * banco. O que fechou foi trocar a SEMENTE (ponte no chão, que já tem o quadril no alto) em
+ * vez de insistir no prompt, como a skill imagens-lovable já registrava.
  */
 import type { Exercise, EficMetric } from "./types";
 
@@ -67,6 +72,8 @@ export const exerciciosLacunas: Exercise[] = [
   {
     id: "lc1",
     slug: "elevacao-quadril-apoio-banco",
+    imagem: "/exercises/elevacao-quadril-apoio-banco.webp",
+    imagemAnalise: "/exercises/elevacao-quadril-apoio-banco-analysis.webp",
     nome: "Elevação de quadril com apoio no banco (peso do corpo)",
     grupoMuscular: "Membros inferiores",
     equipamento: "Peso corporal",
@@ -145,6 +152,8 @@ export const exerciciosLacunas: Exercise[] = [
   {
     id: "lc2",
     slug: "dobradica-quadril-peso-corpo",
+    imagem: "/exercises/dobradica-quadril-peso-corpo.webp",
+    imagemAnalise: "/exercises/dobradica-quadril-peso-corpo-analysis.webp",
     nome: "Dobradiça de quadril em pé (peso do corpo)",
     grupoMuscular: "Membros inferiores",
     equipamento: "Peso corporal",
@@ -223,6 +232,8 @@ export const exerciciosLacunas: Exercise[] = [
   {
     id: "lc3",
     slug: "extensao-quadril-em-pe-apoio",
+    imagem: "/exercises/extensao-quadril-em-pe-apoio.webp",
+    imagemAnalise: "/exercises/extensao-quadril-em-pe-apoio-analysis.webp",
     nome: "Extensão de quadril em pé com apoio (peso do corpo)",
     grupoMuscular: "Membros inferiores",
     equipamento: "Peso corporal",
@@ -301,6 +312,8 @@ export const exerciciosLacunas: Exercise[] = [
   {
     id: "lc4",
     slug: "elevacao-joelho-sentado",
+    imagem: "/exercises/elevacao-joelho-sentado.webp",
+    imagemAnalise: "/exercises/elevacao-joelho-sentado-analysis.webp",
     nome: "Elevação de joelhos sentado na cadeira",
     grupoMuscular: "Core (tronco)",
     equipamento: "Peso corporal",
@@ -379,6 +392,8 @@ export const exerciciosLacunas: Exercise[] = [
   {
     id: "lc5",
     slug: "prancha-parede",
+    imagem: "/exercises/prancha-parede.webp",
+    imagemAnalise: "/exercises/prancha-parede-analysis.webp",
     // Dose por TEMPO, como a prancha no banco. Ver Exercise.sustentado.
     sustentado: { series: "3", tempo: "20 a 40 s" },
     nome: "Prancha inclinada na parede",
@@ -399,7 +414,7 @@ export const exerciciosLacunas: Exercise[] = [
     ],
     indiceEficiencia: { score: 68, metrics: m("Transverso do abdome", 45, 10, 10, 0, 15, 5) },
     fases: [
-      { nome: "Posição", descricao: "De frente para a parede, antebraços apoiados na altura do ombro, pés juntos e afastados da parede o suficiente para o corpo ficar inclinado e reto." },
+      { nome: "Posição", descricao: "De frente para a parede, mãos ou antebraços apoiados na altura do ombro, pés juntos e afastados da parede o suficiente para o corpo ficar inclinado e reto." },
       { nome: "Sustentação", descricao: "Contrai o abdômen e o glúteo, mantém o corpo numa linha só e respira normalmente pelo tempo prescrito." },
       { nome: "Saída", descricao: "Dá um passo à frente e sai da posição; descansa e repete." },
     ],
@@ -459,6 +474,8 @@ export const exerciciosLacunas: Exercise[] = [
   {
     id: "lc6",
     slug: "remada-toalha-porta",
+    imagem: "/exercises/remada-toalha-porta.webp",
+    imagemAnalise: "/exercises/remada-toalha-porta-analysis.webp",
     nome: "Remada com toalha na porta (peso do corpo)",
     grupoMuscular: "Costas",
     equipamento: "Peso corporal",
@@ -538,6 +555,8 @@ export const exerciciosLacunas: Exercise[] = [
   {
     id: "lc7",
     slug: "contracao-assoalho-pelvico",
+    imagem: "/exercises/contracao-assoalho-pelvico.webp",
+    imagemAnalise: "/exercises/contracao-assoalho-pelvico-analysis.webp",
     /*
      * Dose por TEMPO. Os números são convenção de prática clínica (contrações de alguns
      * segundos, repetidas em poucas séries), e não medida de estudo: a revisão Cochrane

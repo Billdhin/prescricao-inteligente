@@ -329,13 +329,9 @@ const SEM_ANALISE_COM_MOTIVO = new Set<string>([
  * (análise e boneco) existirem. Exercício novo sem entrar aqui e sem imagem reprova como antes.
  */
 const IMAGEM_PENDENTE_DESDE: Record<string, string> = {
-  "elevacao-quadril-apoio-banco": "09/09/2026",
-  "dobradica-quadril-peso-corpo": "09/09/2026",
-  "extensao-quadril-em-pe-apoio": "09/09/2026",
-  "elevacao-joelho-sentado": "09/09/2026",
-  "prancha-parede": "09/09/2026",
-  "remada-toalha-porta": "09/09/2026",
-  "contracao-assoalho-pelvico": "09/09/2026",
+  // Vazia desde 09/09/2026 à tarde: os sete exercícios das lacunas nasceram de manhã sem imagem,
+  // e as 21 imagens (foto, análise e boneco) saíram no mesmo dia por img2img no Lovable
+  // (projeto pi-fotos-k), conferidas uma a uma. Quem criar exercício novo entra aqui com a data.
 };
 for (const [slug, desde] of Object.entries(IMAGEM_PENDENTE_DESDE)) {
   const e = exercises.find((x) => x.slug === slug);
