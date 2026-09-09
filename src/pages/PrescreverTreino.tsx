@@ -1395,6 +1395,7 @@ function ResultadoPlano({
             <SemanaEmFoco
               micro={emFoco.micro}
               meso={emFoco.meso}
+              semanas={semanas}
               ctx={ctx}
               editavel={premium}
               onChange={trocarMicro}
@@ -1681,9 +1682,74 @@ function CalendarioDoPlano({
 /* --------------------------- Semana em foco --------------------------- */
 
 /** A semana escolhida, com as sessões em abas e cada sessão aberta no editor. */
+/**
+ * A TIRA DE QUATRO MÉTRICAS da semana em foco (protótipo da periodização).
+ *
+ * Responde, sem abrir nada, as quatro perguntas que se faz ao olhar uma semana: mudou o
+ * quanto em relação à anterior, em que esforço ela está, quando vem o alívio e quando é a
+ * próxima reavaliação. Tudo derivado do plano (`agregadoSemana` é a mesma fonte do gráfico
+ * e das barras dos blocos); nenhum número aqui é digitado.
+ *
+ * Cada campo some quando não há o que dizer: a primeira semana não tem "vs a anterior", e um
+ * plano sem descarga nem reavaliação não inventa uma.
+ */
+function TiraDaSemana({
+  micro,
+  semanas,
+}: {
+  micro: Microciclo;
+  semanas: { micro: Microciclo; meso: Mesociclo }[];
+}) {
+  const idx = semanas.findIndex((x) => x.micro.id === micro.id);
+  const anterior = idx > 0 ? semanas[idx - 1].micro : undefined;
+  const agora = agregadoSemana(micro);
+  const antes = anterior ? agregadoSemana(anterior) : undefined;
+
+  const deltaVolume =
+    antes && antes.volume > 0 ? Math.round(((agora.volume - antes.volume) / antes.volume) * 100) : null;
+  const proxDescarga = semanas.slice(idx + 1).find((x) => x.micro.tipo === "deload")?.micro.semana;
+  const proxReavaliacao = semanas.slice(idx).find((x) => x.meso.reavaliacao)?.meso.semanaFim;
+
+  const campos: { rotulo: string; valor: string; cor?: string }[] = [];
+  if (deltaVolume != null && anterior) {
+    campos.push({
+      rotulo: `vs semana ${anterior.semana}`,
+      valor: `Volume ${deltaVolume > 0 ? "+" : ""}${deltaVolume}%`,
+      cor: deltaVolume > 0 ? "text-analysis" : deltaVolume < 0 ? "text-warning" : undefined,
+    });
+  }
+  // O esforço entra como VARIAÇÃO, e não como número solto: `intensidade` é um valor
+  // relativo sem unidade (o próprio gráfico declara isso logo acima), e "80,4" cravado num
+  // azulejo é lido como %1RM por quem passa o olho. A variação diz a mesma coisa sem
+  // sugerir uma escala que não existe.
+  if (antes?.intensidade != null && agora.intensidade != null && antes.intensidade > 0) {
+    const d = Math.round(((agora.intensidade - antes.intensidade) / antes.intensidade) * 100);
+    campos.push({
+      rotulo: "Esforço médio",
+      valor: `${d > 0 ? "+" : ""}${d}%`,
+      cor: d > 0 ? "text-warning" : d < 0 ? "text-analysis" : undefined,
+    });
+  }
+  if (proxDescarga != null) campos.push({ rotulo: "Próxima descarga", valor: `S${proxDescarga}` });
+  if (proxReavaliacao != null) campos.push({ rotulo: "Reavaliação", valor: `fim da S${proxReavaliacao}` });
+  if (campos.length === 0) return null;
+
+  return (
+    <div className="mt-3 grid gap-3 border-t border-border pt-3 [grid-template-columns:repeat(auto-fit,minmax(120px,1fr))]">
+      {campos.map((c) => (
+        <div key={c.rotulo}>
+          <span className="block text-2xs font-semibold uppercase tracking-[0.08em] text-ink-3">{c.rotulo}</span>
+          <b className={cn("tabular font-display text-lg font-bold", c.cor ?? "text-ink")}>{c.valor}</b>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SemanaEmFoco({
   micro,
   meso,
+  semanas,
   ctx,
   editavel,
   onChange,
@@ -1691,6 +1757,8 @@ function SemanaEmFoco({
 }: {
   micro: Microciclo;
   meso: Mesociclo;
+  /** o plano inteiro: sem ele não dá para dizer "vs a semana anterior" nem onde é a próxima descarga */
+  semanas: { micro: Microciclo; meso: Mesociclo }[];
   ctx: ContextoFaixa;
   editavel: boolean;
   onChange: (m: Microciclo) => void;
@@ -1722,6 +1790,8 @@ function SemanaEmFoco({
           </button>
         )}
       </div>
+
+      <TiraDaSemana micro={micro} semanas={semanas} />
 
       {micro.sessoes.length === 0 ? (
         <p className="mt-3 rounded-control border border-dashed border-border p-3 text-sm text-ink-3">
