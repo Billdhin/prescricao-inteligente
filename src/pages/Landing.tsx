@@ -1,5 +1,7 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
+import { VitrineDoAluno, MARCA_DEMO_PADRAO, type MarcaDemo } from "@/components/landing/VitrineDoAluno";
 import {
   COBRANCA_ATIVA,
   PRECO_MENSAL,
@@ -61,6 +63,13 @@ export function Landing() {
 
   useJanela(mudar);
 
+  /*
+   * A MARCA DA VITRINE MORA AQUI, e não dentro da ilha, de propósito: cada mudança de estado
+   * da landing re-injeta o HTML inteiro e recria o nó da ilha. Com o estado lá dentro, girar
+   * o celular apagaria a cor e a logo que o visitante acabou de escolher.
+   */
+  const [marcaDemo, setMarcaDemo] = React.useState<MarcaDemo>(MARCA_DEMO_PADRAO);
+
   const vals = React.useMemo<Valores>(() => construirValores(st, mudar), [st, mudar]);
   const html = React.useMemo(() => renderizarComEstados(template, vals), [vals]);
 
@@ -69,14 +78,35 @@ export function Landing() {
   useRevelar(ref, html);
   useProgressoRolagem(ref);
   usePreservarFaq(ref, html);
-  useCarrosselDoAluno(ref, html);
+  const ilhaAluno = useIlha(ref, html, "vitrine-aluno");
 
   return (
     <>
       <style>{CSS_ESTADOS}</style>
       <div ref={ref} className="landing-prototipo" dangerouslySetInnerHTML={{ __html: html }} />
+      {ilhaAluno &&
+        createPortal(<VitrineDoAluno marca={marcaDemo} onChange={setMarcaDemo} mobile={st.mobile} />, ilhaAluno)}
     </>
   );
+}
+
+/**
+ * ILHA DE REACT DENTRO DO HTML INJETADO.
+ *
+ * O template é uma string só, e quase tudo nele é estático o bastante para viver assim. A
+ * seção do aluno não é: ela tem estado próprio (a tela em foco, a cor e a logo do visitante) e
+ * componentes que precisam ser os mesmos do produto. Em vez de reescrever a landing inteira em
+ * React, o template deixa um buraco marcado e o React planta o componente nele.
+ *
+ * O nó é reencontrado a cada troca de `html` porque a re-injeção destrói o anterior; sem isso o
+ * portal apontaria para um elemento fora da árvore e a seção sumiria depois do primeiro resize.
+ */
+function useIlha(ref: React.RefObject<HTMLDivElement | null>, html: string, nome: string) {
+  const [no, setNo] = React.useState<HTMLElement | null>(null);
+  React.useEffect(() => {
+    setNo(ref.current?.querySelector<HTMLElement>(`[data-ilha="${nome}"]`) ?? null);
+  }, [ref, html, nome]);
+  return no;
 }
 
 /**
@@ -152,74 +182,6 @@ function useRevelar(ref: React.RefObject<HTMLDivElement | null>, html: string) {
  * (Treino de hoje, a captura real) ativa, e o hook re-aplica o estado guardado depois de
  * cada recriação do DOM (menu, resize).
  */
-const TELAS_ALUNO = [
-  { titulo: "Check-in de saúde", desc: "Pressão, medicação e sintomas antes do treino. O semáforo libera ou avisa você." },
-  { titulo: "Treino de hoje", desc: "Sessão, fase do plano, exercícios e intervalos, no app com a sua marca." },
-  { titulo: "Registro série a série", desc: "Carga, repetições e esforço percebido, guardados no mesmo lugar." },
-  { titulo: "Progresso e sinais", desc: "Prescrito × registrado com sinal para manter, rever ou progredir." },
-];
-function useCarrosselDoAluno(ref: React.RefObject<HTMLDivElement | null>, html: string) {
-  const tela = React.useRef(1);
-  React.useEffect(() => {
-    const raiz = ref.current;
-    if (!raiz) return;
-    const car = raiz.querySelector<HTMLElement>("[data-carrossel-alvo]");
-    if (!car) return;
-
-    const aplicar = (k: number) => {
-      tela.current = k;
-      raiz.querySelectorAll<HTMLElement>("[data-dot]").forEach((d) => {
-        const on = Number(d.dataset.dot) === k;
-        d.style.width = on ? "22px" : "6px";
-        d.style.background = on ? "#7FE3D8" : "rgba(255,255,255,.25)";
-      });
-      raiz.querySelectorAll<HTMLElement>("[data-passo]").forEach((p) => {
-        const on = Number(p.dataset.passo) === k;
-        p.style.background = on ? "rgba(255,255,255,.07)" : "transparent";
-        const num = p.querySelector<HTMLElement>("[data-passo-num]");
-        if (num) { num.style.background = on ? "#7FE3D8" : "#13233B"; num.style.color = on ? "#0B1628" : "#7FE3D8"; }
-        const desc = p.querySelector<HTMLElement>("[data-passo-desc]");
-        if (desc) desc.style.color = on ? "#D6DFEA" : "#8FA0B5";
-      });
-      const n = raiz.querySelector("[data-tela-num]");
-      if (n) n.textContent = String(k + 1);
-      const t = raiz.querySelector("[data-tela-titulo]");
-      if (t) t.textContent = TELAS_ALUNO[k].titulo;
-      const de = raiz.querySelector("[data-tela-desc]");
-      if (de) de.textContent = TELAS_ALUNO[k].desc;
-    };
-    const ir = (k: number, suave = true) => {
-      const filho = car.children[k] as HTMLElement | undefined;
-      if (filho) car.scrollTo({ left: filho.offsetLeft, behavior: suave ? "smooth" : "auto" });
-    };
-    const aoRolar = () => {
-      const centro = car.scrollLeft + car.clientWidth / 2;
-      let melhor = 0, dist = Infinity;
-      [...car.children].forEach((f, i) => {
-        const el = f as HTMLElement;
-        const d = Math.abs(el.offsetLeft + el.offsetWidth / 2 - centro);
-        if (d < dist) { dist = d; melhor = i; }
-      });
-      if (melhor !== tela.current) aplicar(melhor);
-    };
-    const aoClicar = (e: Event) => {
-      const b = (e.target as HTMLElement | null)?.closest<HTMLElement>("[data-tela-btn],[data-car]");
-      if (!b) return;
-      if (b.dataset.telaBtn != null) ir(Number(b.dataset.telaBtn));
-      else ir(Math.max(0, Math.min(3, tela.current + Number(b.dataset.car))));
-    };
-
-    car.addEventListener("scroll", aoRolar, { passive: true });
-    raiz.addEventListener("click", aoClicar);
-    aplicar(tela.current);
-    const quadro = requestAnimationFrame(() => ir(tela.current, false));
-    return () => {
-      cancelAnimationFrame(quadro);
-      car.removeEventListener("scroll", aoRolar);
-      raiz.removeEventListener("click", aoClicar);
-    };
-  }, [ref, html]);
-}
 
 /**
  * A régua de progresso do topo é IMPERATIVA de propósito: alimentá-la por estado React
