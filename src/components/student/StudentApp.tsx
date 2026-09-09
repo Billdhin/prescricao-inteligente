@@ -44,6 +44,7 @@ import {
 import { GamificacaoView } from "@/components/student/GamificacaoView";
 import { EvolucaoExercicio } from "@/components/app/EvolucaoExercicio";
 import { SemanaStrip } from "@/components/student/SemanaStrip";
+import { getExercise } from "@/data/exercises";
 import { ExercicioSheet } from "@/components/student/ExercicioSheet";
 import { TreinoGuiado } from "@/components/student/TreinoGuiado";
 import {
@@ -798,6 +799,8 @@ function AbaHoje({
           onIniciar={onIniciar ? () => onIniciar(sessaoHoje) : undefined}
           dataDaPrescricao={dataDaPrescricao}
           preview={preview}
+          /* Na aba Hoje o cartao e NEUTRO: a marca ja ocupa a faixa do topo. */
+          variante="neutro"
         />
       ) : (
         <Card className="p-6 text-center text-sm text-ink-2">Sem sessões nesta semana.</Card>
@@ -886,6 +889,7 @@ function VisaoSessao({
   onIniciar,
   dataDaPrescricao,
   preview,
+  variante,
 }: {
   sessao: Sessao;
   plano: PlanoTreino;
@@ -900,6 +904,8 @@ function VisaoSessao({
   onIniciar?: () => void;
   dataDaPrescricao?: (id: string) => string | undefined;
   preview?: boolean;
+  /** repassada ao hero: a aba Hoje pede o cartao neutro, a sessao aberta pede o da marca */
+  variante?: "marca" | "neutro";
 }) {
   const concluida = sessaoConcluida(sessao, semana, execucoes);
   return (
@@ -908,6 +914,8 @@ function VisaoSessao({
         sessao={sessao}
         plano={plano}
         cor={cor}
+        tinta={tinta}
+        variante={variante}
         concluida={concluida}
         semana={semana}
         execucoes={execucoes}
@@ -957,25 +965,58 @@ function faseCurta(rotulo: string): string {
   return rotulo.match(/^(Fase \d+)\s*:/)?.[1] ?? rotulo;
 }
 
+/** Um azulejo do cartão de hoje: número em display e o rótulo colado embaixo. */
+function AzulejoDaSessao({
+  valor,
+  rotulo,
+  variante,
+}: {
+  valor: number;
+  rotulo: string;
+  variante: "marca" | "neutro";
+}) {
+  return (
+    <span
+      className={cn(
+        "block rounded-control px-1.5 py-2 text-center",
+        variante === "marca" ? "bg-white/15" : "bg-surface-soft",
+      )}
+    >
+      <b className="tabular block font-display text-base font-bold leading-none">{valor}</b>
+      <span className={cn("mt-0.5 block text-2xs", variante === "marca" ? "opacity-85" : "text-ink-2")}>{rotulo}</span>
+    </span>
+  );
+}
+
 function HeroTreinoDeHoje({
   sessao,
   plano,
   cor,
+  tinta,
   concluida,
   semana,
   execucoes,
   dataDaPrescricao,
   onIniciar,
+  variante = "marca",
 }: {
   sessao: Sessao;
   plano: PlanoTreino;
   cor: string;
+  tinta: string;
   concluida: boolean;
   /** semana e execuções: sem elas não dá para dizer QUANTOS já foram feitos */
   semana: number;
   execucoes: Execucao[];
   dataDaPrescricao?: (id: string) => string | undefined;
   onIniciar?: () => void;
+  /**
+   * "marca" pinta o cartão na cor do professor (é assim que a SESSÃO ABERTA abre);
+   * "neutro" é papel com o botão na cor dele, que é como o cartão aparece na aba HOJE.
+   * A distinção é do protótipo e tem motivo: no Hoje a marca já ocupa a faixa do topo, e
+   * um segundo bloco na mesma cor logo abaixo disputaria a leitura com ela.
+   */
+  variante?: "marca" | "neutro";
 }) {
   const nExercicios = sessao.blocos.length;
   // Feito = todas as séries registradas (blocoCompleto), não "tem algum registro".
@@ -984,70 +1025,140 @@ function HeroTreinoDeHoje({
   // Minutos DECLARADOS (soma do alvo aeróbio). Sem aeróbio com alvo, não há
   // minuto nenhum a mostrar: somar tempo de musculação seria número inventado.
   const minutos = minutosDeclarados(sessao);
+  // SÉRIES da sessão: só quando todo bloco de força declara a sua. Um total parcial
+  // ("13 séries" contando 3 de 5 exercícios) seria pior que não mostrar.
+  const blocosForca = sessao.blocos.filter((b) => b.tipo === "forca");
+  const seriesDeclaradas = blocosForca.every((b) => (b as { seriesAlvo?: number }).seriesAlvo != null)
+    ? blocosForca.reduce((n, b) => n + ((b as { seriesAlvo?: number }).seriesAlvo ?? 0), 0)
+    : null;
+  // As MINIATURAS dos exercícios, na ordem da sessão: a foto do catálogo, quando existe.
+  // Feito ganha anel verde, o próximo ganha anel na cor da marca, o resto fica apagado.
+  const miniaturas = sessao.blocos
+    .map((b) => ({ bloco: b, ex: b.exercicioSlug ? getExercise(b.exercicioSlug) : undefined }))
+    .flatMap((x) => (x.ex && x.ex.imagem ? [{ bloco: x.bloco, ex: x.ex }] : []))
+    .slice(0, 4);
+  const sobrando = sessao.blocos.length - miniaturas.length;
   const origemIds = Array.from(new Set(sessao.blocos.map((b) => b.origemPrescricaoId).filter(Boolean) as string[]));
   const personalizadoData = origemIds.length === 1 ? dataDaPrescricao?.(origemIds[0]) : undefined;
   const meso = mesocicloAtual(plano);
 
   return (
     <div
-      className="relative isolate overflow-hidden rounded-card p-5 text-white"
-      style={{ backgroundImage: `linear-gradient(135deg, ${cor} 0%, var(--brand-turquesa) 100%)` }}
+      className={cn(
+        "relative isolate overflow-hidden rounded-card p-4",
+        variante === "neutro" && "border border-border bg-surface text-ink",
+      )}
+      style={variante === "marca" ? { background: cor, color: tinta } : undefined}
     >
       {/* Brilho e figura do equipamento: decoração, atrás de tudo e sem alcançar o texto.
-          O conteúdo reserva a faixa da figura com o padding à direita do cabeçalho. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-14 -z-10 h-56 w-56 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 68%)" }}
-      />
-      <MotivoModalidade
-        modalidade={modalidadeDaSessao(sessao)}
-        className="pointer-events-none absolute -right-3 -top-3 -z-10 h-44 w-44 text-white/30"
-      />
+          Só existem sobre a cor da marca; no papel claro elas virariam mancha. */}
+      {variante === "marca" && (
+        <>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-10 -top-14 -z-10 h-56 w-56 rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 68%)" }}
+          />
+          <MotivoModalidade
+            modalidade={modalidadeDaSessao(sessao)}
+            className="pointer-events-none absolute -right-3 -top-3 -z-10 h-44 w-44 text-white/30"
+          />
+        </>
+      )}
 
-{/* Todo o bloco superior reserva a faixa da figura, não só o cabeçalho. */}
-      <div className="pr-24">
-        <div className="text-2xs font-bold uppercase tracking-wider text-white/80">
-          {concluida ? "Treino de hoje · feito" : "Treino de hoje"}
-        </div>
-        <h2 className="mt-0.5 font-display text-2xl font-bold leading-tight">{sessao.nome}</h2>
-        {sessao.foco && <p className="mt-1 text-sm text-white/85">{sessao.foco}</p>}
-      </div>
-
-      {/* A linha dos FATOS da sessão: quanto tem, quanto dura, e em que fase do plano ela
-          cai. A fase é fato como os outros e não precisa de linha própria. */}
-      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm text-white/90">
-        <span>
-          <span className="tabular font-bold">{nExercicios}</span> {nExercicios === 1 ? "exercício" : "exercícios"}
-        </span>
-        {minutos ? (
-          <>
-            <span aria-hidden>·</span>
-            <span>
-              <span className="tabular font-bold">{minutos}</span> min
-            </span>
-          </>
-        ) : null}
-        {personalizadoData && (
-          <>
-            <span aria-hidden>·</span>
-            <span className="inline-flex items-center gap-1">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden /> feito pra você {personalizadoData}
-            </span>
-          </>
-        )}
-        {/* A fase na forma CURTA. O nome inteiro tem linha própria na aba Treinos; aqui
-            inteiro ele viraria o elemento mais pesado de um cartão cujo assunto é o
-            treino de hoje. */}
-        {meso && (
+      <div className={cn(variante === "marca" && "pr-24")}>
+        <div className="flex items-center justify-between gap-2">
           <span
-            className="rounded-full bg-white/20 px-2.5 py-0.5 text-2xs font-bold uppercase tracking-wider"
-            title={rotuloMeso(meso)}
+            className={cn(
+              "text-2xs font-bold uppercase tracking-wider",
+              variante === "marca" ? "opacity-80" : "text-ink-2",
+            )}
           >
-            {faseCurta(rotuloMeso(meso))}
+            {concluida ? "Treino de hoje · feito" : "Treino de hoje"}
           </span>
+          {/* A fase na forma CURTA, à direita do rótulo (protótipo). O nome inteiro tem
+              linha própria na aba Treinos; aqui ele viraria o elemento mais pesado de um
+              cartão cujo assunto é o treino de hoje. */}
+          {meso && variante === "neutro" && (
+            <span className="shrink-0 text-2xs font-bold text-primary-texto" title={rotuloMeso(meso)}>
+              {faseCurta(rotuloMeso(meso))}
+            </span>
+          )}
+        </div>
+        <h2 className="mt-1 font-display text-lg font-bold leading-tight">{sessao.nome}</h2>
+        {sessao.foco && (
+          <p className={cn("mt-0.5 text-sm", variante === "marca" ? "opacity-85" : "text-ink-2")}>{sessao.foco}</p>
         )}
       </div>
+
+      {/*
+        OS AZULEJOS DO QUE A SESSÃO PESA (protótipo, tela 01): quantos exercícios, quantas
+        séries e quantos minutos. Cada um só aparece com dado real: séries só quando TODO
+        bloco de força declara a sua, e minutos só quando o aeróbio traz alvo. Somar tempo
+        de musculação seria número inventado.
+      */}
+      <div className="mt-3 grid grid-cols-3 gap-1.5">
+        <AzulejoDaSessao
+          valor={nExercicios}
+          rotulo={nExercicios === 1 ? "exercício" : "exercícios"}
+          variante={variante}
+        />
+        {seriesDeclaradas != null && (
+          <AzulejoDaSessao
+            valor={seriesDeclaradas}
+            rotulo={seriesDeclaradas === 1 ? "série" : "séries"}
+            variante={variante}
+          />
+        )}
+        {minutos ? <AzulejoDaSessao valor={minutos} rotulo="minutos" variante={variante} /> : null}
+      </div>
+
+      {/* AS MINIATURAS da sessão, na ordem: o que já foi ganha anel verde, o próximo ganha
+          anel na cor da marca, e o que sobra vira "+N". Fotos do catálogo, nunca genéricas. */}
+      {miniaturas.length > 0 && (
+        <div className="mt-2.5 flex gap-1.5">
+          {miniaturas.map(({ bloco, ex }, i) => {
+            const feito = blocoCompleto(bloco, execucoes, semana);
+            const proximo = !feito && miniaturas.slice(0, i).every((m) => blocoCompleto(m.bloco, execucoes, semana));
+            return (
+              <img
+                key={ex.slug + "-" + i}
+                src={ex.imagem}
+                alt=""
+                className={cn("h-11 w-11 shrink-0 rounded-control object-cover", !feito && !proximo && "opacity-60")}
+                style={
+                  feito
+                    ? { boxShadow: "0 0 0 2px var(--success-fill)" }
+                    : proximo
+                      ? { boxShadow: "0 0 0 2px " + (variante === "marca" ? tinta : cor) }
+                      : undefined
+                }
+              />
+            );
+          })}
+          {sobrando > 0 && (
+            <span
+              className={cn(
+                "grid h-11 w-11 shrink-0 place-items-center rounded-control text-2xs font-bold",
+                variante === "marca" ? "bg-white/20" : "bg-surface-soft text-ink-2",
+              )}
+            >
+              +{sobrando}
+            </span>
+          )}
+        </div>
+      )}
+
+      {personalizadoData && (
+        <p
+          className={cn(
+            "mt-2 inline-flex items-center gap-1 text-xs",
+            variante === "marca" ? "opacity-90" : "text-ink-2",
+          )}
+        >
+          <Sparkles className="h-3.5 w-3.5" aria-hidden /> feito pra você {personalizadoData}
+        </p>
+      )}
 
       {/* QUANTOS JÁ FORAM E QUANTOS FALTAM, dito de uma vez. A barra é a mesma
           informação em forma, para responder de relance no meio do treino. */}
@@ -1075,8 +1186,10 @@ function HeroTreinoDeHoje({
       {onIniciar && (
         <button
           onClick={onIniciar}
-          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white text-base font-bold shadow-lg shadow-black/10"
-          style={{ color: "#17202E" }}
+          // Sobre a cor da marca o botao e papel; sobre papel ele e a cor da marca. Nos dois
+          // casos a tinta vem do par verificado, nunca de um branco fixo.
+          className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full text-base font-bold"
+          style={variante === "marca" ? { background: tinta, color: cor } : { background: cor, color: tinta }}
         >
           {concluida ? (
             <>
