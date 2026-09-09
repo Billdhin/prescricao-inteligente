@@ -22,6 +22,7 @@ import {
   Lock,
   LockOpen,
   ExternalLink,
+  Pencil,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, Eyebrow, TokenRotulado, LinhaDeTokens, type PillTone } from "@/components/ui/primitives";
 import { TokenDose } from "@/components/gps/TermoDoseInfo";
@@ -634,12 +635,15 @@ export function MesocicloCard({
   semanaCorrente,
   reavaliarHref,
   tetos,
+  onEditarSemana,
 }: {
   meso: Mesociclo;
   indice: number;
   ctx: ContextoFaixa;
   editavel: boolean;
   onChange?: (m: Mesociclo) => void;
+  /** leva para a tela do editor, na semana escolhida (a edição fina não mora mais aqui) */
+  onEditarSemana?: (n: number) => void;
   /** este é o bloco em que o plano está hoje (pelo calendário) */
   atual?: boolean;
   /** semana corrente do plano, para destacar a semana e disparar a reavaliação */
@@ -710,7 +714,16 @@ export function MesocicloCard({
   // Identidade de fase (protótipo do editor): quadrado navy com o número da fase,
   // no vocabulário do redesign (o disco com gradiente saiu junto com o filete).
   return (
-    <Card className="overflow-hidden">
+    /*
+     * ABERTO, O CARTÃO OCUPA A LINHA INTEIRA.
+     *
+     * Os blocos ficam lado a lado numa grade, e cada coluna tem cerca de 280px. Fechado isso
+     * basta: nome, semanas, selos e as três barras. Aberto, não: dentro daquela coluna cabiam
+     * quatro semanas com tipo, nota, objetivo e faixa, tudo em duas ou três palavras por
+     * linha. Era pior aberto do que fechado, que é o contrário do que abrir significa.
+     * `col-span-full` tira o cartão da grade enquanto ele estiver aberto.
+     */
+    <Card className={cn("overflow-hidden", aberto && "[grid-column:1/-1]")}>
       <button
         onClick={() => setAberto((v) => !v)}
         aria-expanded={aberto}
@@ -835,6 +848,7 @@ export function MesocicloCard({
                   editavel={editavel}
                   onChange={trocarMicro}
                   atual={semanaCorrente != null && w.semana === semanaCorrente}
+                  onEditar={onEditarSemana}
                 />
               ))}
             </div>
@@ -978,6 +992,23 @@ function variacoesDoMicro(micro: Microciclo): { metodo: MetodoSerie; n: number }
   return [...contagem.entries()].map(([metodo, n]) => ({ metodo, n }));
 }
 
+/**
+ * "5 exercícios · 14 séries": o tamanho de uma sessão em uma linha, direto dos blocos.
+ * O aeróbio entra em minutos e fora da conta de séries, que é a mesma regra do equilíbrio
+ * da semana e do documento: minuto de caminhada não é série de força.
+ */
+function fraseDeExercicios(sessao: Sessao): string {
+  const forca = sessao.blocos.filter((b) => b.tipo !== "aerobio");
+  const series = forca.reduce((n, b) => n + (b.seriesAlvo ?? Number(/(\d+)/.exec(b.series ?? "")?.[1] ?? 0)), 0);
+  const minutos = sessao.blocos
+    .filter((b) => b.tipo === "aerobio")
+    .reduce((n, b) => n + Number(/(\d+)/.exec(String(b.duracaoAlvoMin ?? b.duracao ?? ""))?.[1] ?? 0), 0);
+  const partes = [`${forca.length} ${forca.length === 1 ? "exercício" : "exercícios"}`];
+  if (series > 0) partes.push(`${series} ${series === 1 ? "série" : "séries"}`);
+  if (minutos > 0) partes.push(`aeróbio ${minutos} min`);
+  return partes.join(" · ");
+}
+
 function MicrocicloRow({
   micro,
   microAnterior,
@@ -985,6 +1016,7 @@ function MicrocicloRow({
   editavel,
   onChange,
   atual,
+  onEditar,
 }: {
   micro: Microciclo;
   /** a semana anterior no mesmo bloco: alimenta o selo de estado e o "o que mudou" */
@@ -994,6 +1026,8 @@ function MicrocicloRow({
   onChange: (m: Microciclo) => void;
   /** a semana corrente do plano: ganha destaque e abre por padrão */
   atual?: boolean;
+  /** abre a tela do editor nesta semana; ausente = sem porta (uso fora da periodização) */
+  onEditar?: (n: number) => void;
 }) {
   const [aberto, setAberto] = React.useState(Boolean(atual));
   const variacoes = variacoesDoMicro(micro);
@@ -1110,25 +1144,46 @@ function MicrocicloRow({
 
           <FaixaReferencia ctx={ctx} />
 
-          {micro.sessoes.map((s) => (
-            <SessaoBloco
-              key={s.id}
-              sessao={s}
-              ctx={ctx}
-              editavel={editavel}
-              onChange={(nova) => trocarSessoes(micro.sessoes.map((x) => (x.id === s.id ? nova : x)))}
-              onRemover={() => trocarSessoes(micro.sessoes.filter((x) => x.id !== s.id))}
-            />
-          ))}
+          {/*
+            AQUI TERMINA A LEITURA E COMEÇA O EDITOR.
 
-          {editavel && (
-            <button
-              onClick={addSessao}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-card border-2 border-dashed border-border py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
-            >
-              <Plus className="h-3.5 w-3.5" /> Adicionar sessão nesta semana
-            </button>
-          )}
+            Este ponto renderizava um `SessaoBloco` completo por sessão da semana. Quatro
+            semanas abertas num bloco davam oito ou doze paredões de formulário empilhados
+            DENTRO de um cartão de coluna estreita, e a mesma edição existia de novo mais
+            abaixo, na semana em foco. Duas cópias do editor na mesma tela, e a de dentro do
+            cartão era a pior das duas.
+
+            Fica o que responde "o que tem nesta semana"; a dose de cada exercício se edita
+            na tela do editor, que é onde ela cabe.
+          */}
+          <ul className="space-y-1.5">
+            {micro.sessoes.map((s) => (
+              <li
+                key={s.id}
+                className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-[14px] border border-border bg-surface px-3 py-2"
+              >
+                <span className="text-sm font-semibold text-ink">{s.nome}</span>
+                {s.foco && <span className="text-xs text-ink-3">{s.foco}</span>}
+                <span className="ml-auto text-xs text-ink-2">{fraseDeExercicios(s)}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {onEditar && (
+              <button onClick={() => onEditar(micro.semana)} className={buttonClasses("secondary", "sm")}>
+                <Pencil className="h-3.5 w-3.5" /> Editar semana {micro.semana}
+              </button>
+            )}
+            {editavel && (
+              <button
+                onClick={addSessao}
+                className="inline-flex min-h-[36px] items-center gap-1.5 rounded-control border-2 border-dashed border-border px-3 text-sm font-semibold text-ink-2 transition-colors hover:border-primary hover:text-primary"
+              >
+                <Plus className="h-3.5 w-3.5" /> Adicionar sessão
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -1500,6 +1555,18 @@ export function SessaoBloco({
   // principal, acessório). Alimenta o quadrado numerado do protótipo; nada decorativo.
   const numeroDoBloco = (id: string) => sessao.blocos.findIndex((x) => x.id === id) + 1;
 
+  /*
+   * UMA LINHA ABERTA POR VEZ.
+   *
+   * Cada exercício mostrava, o tempo todo, quatro campos rotulados, o seletor de método de
+   * série e a fileira "agrupar com o próximo". Cinco exercícios davam trinta controles
+   * empilhados, e para saber o que a sessão prescreve era preciso ler o formulário inteiro.
+   * A dose agora se lê em fichas na própria linha (protótipo do editor), e os controles
+   * aparecem no exercício que está sendo mexido. Nada saiu: tudo está a um clique.
+   */
+  const [abertoId, setAbertoId] = React.useState<string | null>(null);
+  const alternar = (id: string) => setAbertoId((a) => (a === id ? null : id));
+
   return (
     <div className="rounded-[14px] bg-surface-soft p-2.5">
       <div className="mb-1.5 flex items-center gap-1.5">
@@ -1555,6 +1622,8 @@ export function SessaoBloco({
                               numero={numeroDoBloco(b.id)}
                               ctx={ctx}
                               ocultarMetodo
+                              aberto={abertoId === b.id}
+                              onAlternar={() => alternar(b.id)}
                               onChange={trocarBloco}
                               onRemover={() => removerBloco(b.id)}
                             />
@@ -1575,8 +1644,16 @@ export function SessaoBloco({
               const podeTri = podeBi && Boolean(prox2Solo);
               return (
                 <li key={b.id}>
-                  <BlocoRow bloco={b} numero={numeroDoBloco(b.id)} ctx={ctx} onChange={trocarBloco} onRemover={() => removerBloco(b.id)} />
-                  {podeBi && (
+                  <BlocoRow
+                    bloco={b}
+                    numero={numeroDoBloco(b.id)}
+                    ctx={ctx}
+                    aberto={abertoId === b.id}
+                    onAlternar={() => alternar(b.id)}
+                    onChange={trocarBloco}
+                    onRemover={() => removerBloco(b.id)}
+                  />
+                  {podeBi && abertoId === b.id && (
                     <div className="mt-1 flex flex-wrap items-center gap-1.5 pl-2">
                       <span className="text-2xs text-ink-3">Agrupar com o próximo:</span>
                       <BotaoAgrupar onClick={() => agruparIds([b.id, prox1Solo!.id], "bi-set")}>Bi-set</BotaoAgrupar>
@@ -1663,6 +1740,8 @@ function BlocoRow({
   bloco,
   numero,
   ctx,
+  aberto,
+  onAlternar,
   onChange,
   onRemover,
   ocultarMetodo,
@@ -1671,6 +1750,9 @@ function BlocoRow({
   /** posição do bloco na sessão (1-based): vira o quadrado numerado do protótipo */
   numero?: number;
   ctx: ContextoFaixa;
+  /** esta é a linha que está sendo mexida: só ela mostra campos e controles */
+  aberto: boolean;
+  onAlternar: () => void;
   onChange: (b: BlocoSessao) => void;
   onRemover: () => void;
   /** quando o bloco está num grupo (bi/tri/super-set), o método é do grupo: some o select */
@@ -1682,8 +1764,13 @@ function BlocoRow({
   const exAtual = bloco.exercicioSlug ? exercises.find((e) => e.slug === bloco.exercicioSlug) : undefined;
 
   return (
-    <div className="rounded-[18px] border border-border bg-surface p-3">
-      <div className="mb-1.5 flex flex-wrap items-center gap-2">
+    <div className={cn("rounded-[18px] border bg-surface", aberto ? "border-primary" : "border-border")}>
+      {/*
+        A LINHA DO EXERCÍCIO (protótipo do editor): número, nome, grupo muscular e a dose em
+        fichas. Fechada ela se LÊ; aberta ela se edita. Era só a forma aberta, sempre, para
+        todos os exercícios ao mesmo tempo.
+      */}
+      <div className="flex flex-wrap items-center gap-2 p-3">
         {numero != null && (
           <span
             className={cn(
@@ -1700,19 +1787,74 @@ function BlocoRow({
             <HeartPulse className="h-3 w-3" aria-hidden /> Cardio
           </span>
         )}
-        <span className="min-w-0 flex-1">
-          <input
-            value={bloco.nome ?? ""}
-            onChange={(e) => onChange({ ...bloco, nome: e.target.value })}
-            aria-label={aerobio ? "Nome do bloco de cardio" : "Nome do exercício"}
-            className="w-full min-w-0 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink hover:border-border focus:border-primary focus:outline-none"
-          />
-          {/* Grupo muscular do catálogo sob o nome, como no protótipo (dado real). */}
-          {!aerobio && exAtual?.grupoMuscular && (
-            <span className="block px-1 text-2xs text-ink-3">{exAtual.grupoMuscular}</span>
-          )}
-        </span>
+        {aberto ? (
+          <span className="min-w-[9rem] flex-1">
+            <input
+              value={bloco.nome ?? ""}
+              onChange={(e) => onChange({ ...bloco, nome: e.target.value })}
+              aria-label={aerobio ? "Nome do bloco de cardio" : "Nome do exercício"}
+              className="w-full min-w-0 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink hover:border-border focus:border-primary focus:outline-none"
+            />
+            {/* Grupo muscular do catálogo sob o nome, como no protótipo (dado real). */}
+            {!aerobio && exAtual?.grupoMuscular && (
+              <span className="block px-1 text-2xs text-ink-3">{exAtual.grupoMuscular}</span>
+            )}
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={onAlternar}
+            aria-expanded={aberto}
+            // Piso de largura, e não min-w-0: sem ele o nome encolhia até "Remada na ..."
+            // para caber as fichas na mesma linha. Com piso, as fichas é que descem de linha.
+            className="min-w-[9rem] flex-1 rounded-control px-1 py-0.5 text-left"
+          >
+            <span className="block truncate text-sm font-semibold text-ink">{bloco.nome}</span>
+            {!aerobio && exAtual?.grupoMuscular && (
+              <span className="block truncate text-2xs text-ink-3">{exAtual.grupoMuscular}</span>
+            )}
+          </button>
+        )}
+        {/* A dose em fichas sai dos MESMOS campos que o formulário edita: uma fonte só,
+            então o que se lê fechado é exatamente o que se muda aberto. */}
+        {!aberto && (
+          <LinhaDeTokens className="shrink-0">
+            {camposDoBloco(bloco)
+              .map((c) => ({ ...c, valor: (bloco[c.chave] as string | undefined) ?? "" }))
+              .filter((c) => c.valor)
+              .slice(0, 3)
+              .map((c) => (
+                <TokenRotulado
+                  key={c.chave}
+                  label={c.rotulo}
+                  // A intensidade do cardio tem frase inteira dentro ("Moderada: cerca de 64 a
+                  // 76% da FCmáx (teste da conversa; RPE 5 a 6 de 10)"), e uma ficha com uma
+                  // frase deixa de ser ficha. Ela é cortada À VISTA, com o valor inteiro no
+                  // title e a um clique de distância no campo.
+                  value={
+                    <span className="block max-w-[11rem] truncate" title={c.valor}>
+                      {c.valor}
+                    </span>
+                  }
+                />
+              ))}
+          </LinhaDeTokens>
+        )}
         <SeloOrigem ctx={ctx} bloco={bloco} />
+        <button
+          type="button"
+          onClick={onAlternar}
+          aria-expanded={aberto}
+          aria-label={aberto ? `Fechar ${bloco.nome}` : `Ajustar ${bloco.nome}`}
+          className="shrink-0 rounded-control p-1 text-ink-3 hover:bg-surface-soft hover:text-ink"
+        >
+          <ChevronDown className={cn("h-4 w-4 transition-transform", aberto && "rotate-180")} aria-hidden />
+        </button>
+      </div>
+
+      {aberto && (
+      <div className="space-y-1.5 border-t border-border p-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         {!aerobio && (
           <button
             type="button"
@@ -1819,6 +1961,8 @@ function BlocoRow({
             <p className="mt-0.5 text-2xs leading-tight text-ink-3">{getMetodo(bloco.metodo)?.descricao}</p>
           )}
         </div>
+      )}
+      </div>
       )}
     </div>
   );

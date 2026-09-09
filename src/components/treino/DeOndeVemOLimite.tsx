@@ -15,6 +15,7 @@
  * O painel nunca inventa: quando não há limite declarado, ele simplesmente não aparece.
  */
 import * as React from "react";
+import { Card } from "@/components/ui/primitives";
 import { combineRules, getGroupRule, type OrigemDoNumero } from "@/lib/gps/groupRules";
 import { doseDoPerfilComIdade } from "@/lib/gps/esforco";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -81,8 +82,12 @@ export function DeOndeVemOLimite({
   const p = dose?.procedencia;
   if (!p?.cargaRelativaMax && !p?.rirMinimo) return null;
 
+  // O CARTÃO É DELE, e não de quem o chama. Envolvido por fora, um <Card> continuava
+  // desenhando a borda quando este componente devolvia null: no trilho da periodização
+  // sobrava uma caixa vazia de 34px, sem título nem conteúdo, para todo aluno sem condição
+  // declarada. Caixa vazia é ruído com cara de bug.
   return (
-    <div>
+    <Card className="p-4">
       <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">De onde vem cada limite</h3>
       <ul className="mt-2 space-y-2.5">
         {p.cargaRelativaMax && (
@@ -100,6 +105,6 @@ export function DeOndeVemOLimite({
         Quando duas condições pedem coisas diferentes, o limite mais conservador prevalece. A palavra final
         sobre a conduta continua sendo sua.
       </p>
-    </div>
+    </Card>
   );
 }

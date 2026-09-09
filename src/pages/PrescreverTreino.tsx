@@ -1149,8 +1149,26 @@ function ResultadoPlano({
   /** Volta ao formulário preservando as respostas (o plano salvo segue no perfil). */
   onEditarContexto: () => void;
 }) {
+  const [params, setParams] = useSearchParams();
   const [aba, setAba] = React.useState<"principal" | "alternativa">("principal");
-  const [editando, setEditando] = React.useState(false);
+
+  /*
+   * O EDITOR É UMA TELA, NÃO UM RODAPÉ (protótipo: "Periodização" e "Editor de treino" são
+   * dois `data-screen-label` diferentes).
+   *
+   * Aqui as duas viviam empilhadas: abaixo do plano inteiro vinha o paredão de edição da
+   * semana, com abas de sessão, campos rotulados de cada exercício, método de série e os
+   * botões de agrupar. Mil e trezentos pixels de formulário embaixo de uma tela de leitura,
+   * e a leitura espremida numa coluna porque o trilho ocupava a direita da página inteira.
+   *
+   * Agora a periodização responde "para onde este plano vai" em largura cheia, e editar a
+   * semana é ir para a tela de editar a semana.
+   *
+   * O modo vive na URL de propósito: entrar EMPILHA e sair SUBSTITUI, então o voltar do
+   * navegador volta para a periodização em vez de sair do site (o defeito que a rodada do
+   * app do aluno já tinha custado caro).
+   */
+  const editando = params.get("editar") === "1";
 
   const naAlternativa = aba === "alternativa" && Boolean(plano.alternativa);
   const macro = naAlternativa ? plano.alternativa! : plano.macrociclo;
@@ -1211,8 +1229,23 @@ function ResultadoPlano({
   // Semana em foco: o plano deixou de ser uma pilha de mesociclos e virou
   // "mapa -> semana -> sessão". A semana corrente é o ponto de partida, e clicar
   // num chip do gráfico troca o foco sem sair da tela.
-  const [semanaFoco, setSemanaFoco] = React.useState(semanaCorrente);
-  React.useEffect(() => setSemanaFoco(semanaCorrente), [semanaCorrente]);
+  const [semanaFoco, setSemanaFoco] = React.useState(
+    () => Number(params.get("semana")) || semanaCorrente,
+  );
+  React.useEffect(() => setSemanaFoco(Number(params.get("semana")) || semanaCorrente), [semanaCorrente]);
+
+  const irParaEditor = (n: number) => {
+    const proximos = new URLSearchParams(params);
+    proximos.set("semana", String(n));
+    proximos.set("editar", "1");
+    setSemanaFoco(n);
+    setParams(proximos);
+  };
+  const sairDoEditor = () => {
+    const proximos = new URLSearchParams(params);
+    proximos.delete("editar");
+    setParams(proximos, { replace: true });
+  };
 
   const semanas = React.useMemo(
     () =>
@@ -1230,6 +1263,63 @@ function ResultadoPlano({
       microciclos: emFoco.meso.microciclos.map((w) => (w.id === novo.id ? novo : w)),
     });
   };
+
+  // Copia as sessões desta semana para as demais semanas de CARGA do mesmo bloco (ids
+  // novos, senão duas semanas apontariam para o mesmo bloco e a execução do aluno grudaria
+  // nas duas). O meso ANTES vai inteiro para o desfazer: esta ação reescreve várias semanas
+  // de ajuste manual de uma vez, e é a mais cara de refazer à mão.
+  const duplicarSemana = () => {
+    if (!emFoco) return;
+    const mesoAntes = emFoco.meso;
+    trocarMeso({
+      ...emFoco.meso,
+      microciclos: emFoco.meso.microciclos.map((w) =>
+        w.id === emFoco.micro.id || w.tipo === "deload"
+          ? w
+          : {
+              ...w,
+              sessoes: emFoco.micro.sessoes.map((s) => ({
+                ...s,
+                id: `ses-${uid()}`,
+                blocos: s.blocos.map((b) => ({ ...b, id: `blk-${uid()}` })),
+              })),
+            },
+      ),
+    });
+    const nReescritas = emFoco.meso.microciclos.filter(
+      (w) => w.id !== emFoco.micro.id && w.tipo !== "deload",
+    ).length;
+    toastDesfazer(
+      nReescritas === 1
+        ? `Semana ${emFoco.micro.semana} copiada para 1 semana de carga do bloco.`
+        : `Semana ${emFoco.micro.semana} copiada para ${nReescritas} semanas de carga do bloco.`,
+      () => trocarMeso(mesoAntes),
+    );
+  };
+
+  // O EDITOR É OUTRA TELA. O desvio vem depois de todos os hooks, que é o que a regra dos
+  // hooks exige, e antes de qualquer JSX da periodização: as duas nunca aparecem juntas.
+  if (editando && emFoco) {
+    return (
+      <EditorDaSemana
+        plano={plano}
+        micro={emFoco.micro}
+        meso={emFoco.meso}
+        semanas={semanas}
+        ctx={ctx}
+        editavel={premium}
+        aluno={aluno}
+        podeSalvar={podeSalvar}
+        salvo={salvo}
+        onChange={trocarMicro}
+        onDuplicar={duplicarSemana}
+        onFocar={irParaEditor}
+        onVoltar={sairDoEditor}
+        onExportar={onExportar}
+        onPublicar={onPublicar}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -1276,13 +1366,10 @@ function ResultadoPlano({
           >
             <FileDown className="h-4 w-4" /> Plano completo
           </button>
-          <button
-            onClick={() => onExportar(semanaFoco)}
-            disabled={!podeSalvar}
-            className={cn(buttonClasses("secondary", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}
-            title="Uma pagina com a semana aberta, com espaco para o aluno anotar a carga"
-          >
-            <FileDown className="h-4 w-4" /> Folha da semana {semanaFoco}
+          {/* A porta do editor, do lado das outras saídas do plano (protótipo:
+              "Editar semana 7 →" como ação de destaque do cabeçalho). */}
+          <button onClick={() => irParaEditor(semanaFoco)} className={buttonClasses("secondary", "sm")}>
+            <Pencil className="h-4 w-4" /> Editar semana {semanaFoco}
           </button>
           {/* O ÚNICO gradiente do produto, por regra do Design System: publicar é o
               momento em que o plano deixa de ser rascunho do profissional e vira o
@@ -1346,107 +1433,82 @@ function ResultadoPlano({
         </Card>
       )}
 
-      {/* Duas colunas: o plano à esquerda, o porquê à direita. Empilha no mobile. */}
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="min-w-0 space-y-5">
-          {/* "Você está aqui" só com plano SALVO: num plano recém-gerado, que ainda
-              não começou, a bandeira afirmaria uma semana corrente que não existe.
-              Mesmo critério da régua de semanas logo abaixo. */}
-          <GraficoProgressao
-            macro={macro}
-            nivel={plano.nivel}
-            modeloId={naAlternativa ? plano.modeloAltId : plano.modeloId}
-            semanaAtual={salvo ? semanaCorrente : undefined}
-          />
+      {/*
+        LARGURA CHEIA para o que é leitura do plano (curva, calendário, blocos), como no
+        protótipo. Antes tudo isso morava na coluna da esquerda de um grid de duas colunas,
+        e o trilho comia 320px da página inteira: os quatro cartões de bloco caíam em três
+        colunas de 210px, com o quarto órfão embaixo e o texto quebrando em cinco linhas.
+        O trilho passa a acompanhar só a semana em foco, que é do que ele fala.
+      */}
+      {/* "Você está aqui" só com plano SALVO: num plano recém-gerado, que ainda
+          não começou, a bandeira afirmaria uma semana corrente que não existe. */}
+      <GraficoProgressao
+        macro={macro}
+        nivel={plano.nivel}
+        modeloId={naAlternativa ? plano.modeloAltId : plano.modeloId}
+        semanaAtual={salvo ? semanaCorrente : undefined}
+      />
 
-          {/* O calendário do plano: a ESTRUTURA (fase, descarga, reavaliação, sessões)
-              logo abaixo da curva, e cada semana é a porta para editá-la. */}
-          <CalendarioDoPlano
-            semanas={semanas}
-            foco={semanaFoco}
-            corrente={salvo ? semanaCorrente : undefined}
-            onFocar={setSemanaFoco}
-          />
+      {/* O calendário do plano: a ESTRUTURA (fase, descarga, reavaliação, sessões)
+          logo abaixo da curva, e cada semana é a porta para editá-la. */}
+      <CalendarioDoPlano
+        semanas={semanas}
+        foco={semanaFoco}
+        corrente={salvo ? semanaCorrente : undefined}
+        onFocar={setSemanaFoco}
+      />
 
-          {/*
-            O PLANO BLOCO A BLOCO, lado a lado e sempre visível (protótipo do editor).
-            Ele morava dentro de um <details>: a camada que responde "para onde este plano
-            está indo" ficava atrás de um clique, enquanto a semana solta ficava na frente.
-            Agora cada cartão traz a assinatura do bloco na face (as duas barras e as três
-            direções) e abre só para o detalhe fino das semanas.
-          */}
-          <section>
-            <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-display text-base font-bold text-ink">O plano bloco a bloco</h3>
-              <span className="text-xs text-ink-3">as barras comparam os blocos deste plano</span>
-            </div>
-            <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
-              {macro.mesociclos.map((m, i) => (
-                <MesocicloCard
-                  key={m.id}
-                  meso={m}
-                  indice={i}
-                  ctx={ctx}
-                  editavel={premium}
-                  onChange={trocarMeso}
-                  atual={m.id === mesoAtual?.id}
-                  semanaCorrente={semanaCorrente}
-                  reavaliarHref={reavaliarHref}
-                  tetos={tetos}
-                />
-              ))}
-            </div>
-            <div className="mt-3">
-              <ModeloExplicacao modelo={modelo} />
-            </div>
-          </section>
-
-          {emFoco && (
-            <SemanaEmFoco
-              micro={emFoco.micro}
-              meso={emFoco.meso}
-              semanas={semanas}
+      {/*
+        O PLANO BLOCO A BLOCO, lado a lado e sempre visível (protótipo do editor).
+        Ele morava dentro de um <details>: a camada que responde "para onde este plano
+        está indo" ficava atrás de um clique, enquanto a semana solta ficava na frente.
+        Agora cada cartão traz a assinatura do bloco na face (as duas barras e as três
+        direções) e abre só para o detalhe fino das semanas.
+      */}
+      <section>
+        <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="font-display text-base font-bold text-ink">O plano bloco a bloco</h3>
+          <span className="text-xs text-ink-3">as barras comparam os blocos deste plano</span>
+        </div>
+        <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(17rem,1fr))]">
+          {macro.mesociclos.map((m, i) => (
+            <MesocicloCard
+              key={m.id}
+              meso={m}
+              indice={i}
               ctx={ctx}
               editavel={premium}
-              onChange={trocarMicro}
-              onDuplicar={() => {
-                // Copia as sessões desta semana para as demais semanas de CARGA do
-                // mesmo bloco (ids novos, senão duas semanas apontariam para o mesmo
-                // bloco e a execução do aluno grudaria nas duas).
-                // O meso ANTES vai inteiro para o desfazer: esta ação reescreve várias
-                // semanas de ajuste manual de uma vez, e é a mais cara de refazer à mão.
-                const mesoAntes = emFoco.meso;
-                trocarMeso({
-                  ...emFoco.meso,
-                  microciclos: emFoco.meso.microciclos.map((w) =>
-                    w.id === emFoco.micro.id || w.tipo === "deload"
-                      ? w
-                      : {
-                          ...w,
-                          sessoes: emFoco.micro.sessoes.map((s) => ({
-                            ...s,
-                            id: `ses-${uid()}`,
-                            blocos: s.blocos.map((b) => ({ ...b, id: `blk-${uid()}` })),
-                          })),
-                        },
-                  ),
-                });
-                const nReescritas = emFoco.meso.microciclos.filter(
-                  (w) => w.id !== emFoco.micro.id && w.tipo !== "deload",
-                ).length;
-                toastDesfazer(
-                  nReescritas === 1
-                    ? `Semana ${emFoco.micro.semana} copiada para 1 semana de carga do bloco.`
-                    : `Semana ${emFoco.micro.semana} copiada para ${nReescritas} semanas de carga do bloco.`,
-                  () => trocarMeso(mesoAntes),
-                );
-              }}
+              onChange={trocarMeso}
+              atual={m.id === mesoAtual?.id}
+              semanaCorrente={semanaCorrente}
+              reavaliarHref={reavaliarHref}
+              tetos={tetos}
+              onEditarSemana={irParaEditor}
             />
-          )}
-
+          ))}
         </div>
+        <div className="mt-3">
+          <ModeloExplicacao modelo={modelo} />
+        </div>
+      </section>
 
-        {/* TRILHO: por que estes números, equilíbrio da semana e avisos. */}
+      {/*
+        A SEMANA EM FOCO E O PORQUÊ, lado a lado (protótipo). O trilho fala da semana em
+        foco, então é aqui, e não ao lado da página inteira, que ele pertence. E o que está
+        aqui é LEITURA: editar é a tela do editor, um clique adiante.
+      */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        {emFoco && (
+          <ResumoDaSemana
+            micro={emFoco.micro}
+            meso={emFoco.meso}
+            semanas={semanas}
+            podeEditar={premium}
+            onEditar={() => irParaEditor(emFoco.micro.semana)}
+          />
+        )}
+
+        {/* TRILHO: por que este modelo, a trava do bloco e o porquê dos números. */}
         <TrilhoDoPlano
           plano={plano}
           micro={emFoco?.micro}
@@ -1548,6 +1610,18 @@ function ModeloCardEscolha({
  * inventada aqui: se um dia o motor mudar onde ela cai, a barra acompanha.
  */
 /**
+ * As famílias por FASE, na mesma ordem em que o gráfico cicla as faixas: quem viu a fase 2
+ * em azul na curva encontra a semana da fase 2 em azul no calendário e na régua do editor.
+ * Fonte única de propósito: três listas iguais em três arquivos é como uma delas fica para
+ * trás na próxima mudança de paleta.
+ */
+const CORES_DE_FASE = [
+  { bg: "var(--analysis-tint)", tinta: "var(--analysis)", ponto: "var(--analysis-fill)" },
+  { bg: "var(--primary-tint)", tinta: "var(--primary)", ponto: "var(--primary)" },
+  { bg: "var(--warning-tint)", tinta: "var(--warning)", ponto: "var(--warning-fill)" },
+];
+
+/**
  * O CALENDÁRIO DO PLANO (protótipo da periodização).
  *
  * ## O que ele substitui, e por quê
@@ -1575,12 +1649,7 @@ function CalendarioDoPlano({
 }) {
   // As famílias por FASE, na mesma ordem em que o gráfico cicla as faixas: quem viu a fase 2
   // em azul na curva encontra a semana da fase 2 em azul aqui.
-  const familia = (indice: number) =>
-    [
-      { bg: "var(--analysis-tint)", tinta: "var(--analysis)", ponto: "var(--analysis-fill)" },
-      { bg: "var(--primary-tint)", tinta: "var(--primary)", ponto: "var(--primary)" },
-      { bg: "var(--warning-tint)", tinta: "var(--warning)", ponto: "var(--warning-fill)" },
-    ][indice % 3];
+  const familia = (indice: number) => CORES_DE_FASE[indice % CORES_DE_FASE.length];
 
   const indiceDoMeso = new Map<string, number>();
   let i = 0;
@@ -1756,50 +1825,41 @@ function TiraDaSemana({
   );
 }
 
-function SemanaEmFoco({
+/**
+ * A SEMANA EM FOCO, na periodização: LEITURA (protótipo, coluna esquerda do rodapé).
+ *
+ * Aqui vivia o editor inteiro: abas de sessão, campos rotulados de cada exercício, método
+ * de série, botões de agrupar. Mil e trezentos pixels de formulário no pé de uma tela cuja
+ * pergunta é "para onde este plano vai". Agora esta caixa responde o que dá para responder
+ * de relance (o que mudou em relação à semana anterior, quantas sessões, que tamanho tem
+ * cada uma) e oferece a porta: editar é a tela de editar.
+ *
+ * Nenhum número aqui é digitado: sessões e séries saem dos blocos, e a tira de quatro
+ * métricas sai de `agregadoSemana`, a mesma fonte do gráfico.
+ */
+function ResumoDaSemana({
   micro,
   meso,
   semanas,
-  ctx,
-  editavel,
-  onChange,
-  onDuplicar,
+  podeEditar,
+  onEditar,
 }: {
   micro: Microciclo;
   meso: Mesociclo;
-  /** o plano inteiro: sem ele não dá para dizer "vs a semana anterior" nem onde é a próxima descarga */
   semanas: { micro: Microciclo; meso: Mesociclo }[];
-  ctx: ContextoFaixa;
-  editavel: boolean;
-  onChange: (m: Microciclo) => void;
-  onDuplicar: () => void;
+  podeEditar: boolean;
+  onEditar: () => void;
 }) {
-  const [sessaoIdx, setSessaoIdx] = React.useState(0);
-  React.useEffect(() => setSessaoIdx(0), [micro.id]);
-  const sessao = micro.sessoes[Math.min(sessaoIdx, micro.sessoes.length - 1)];
-
-  const trocarSessao = (nova: Sessao) =>
-    onChange({ ...micro, sessoes: micro.sessoes.map((s) => (s.id === nova.id ? nova : s)) });
-
   return (
-    <Card variant="raised" className="p-4 md:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="font-display text-lg font-bold text-ink">
-            Semana {micro.semana}{" "}
-            <span className="font-sans text-sm font-normal text-ink-2">
-              {rotuloMeso(meso)}
-              {micro.tipo === "deload" ? " · descarga" : ""}
-              {meso.foco ? ` · ${meso.foco}` : ""}
-            </span>
-          </h3>
-        </div>
-        {editavel && micro.tipo !== "deload" && (
-          <button onClick={onDuplicar} className={buttonClasses("secondary", "sm")}>
-            Aplicar às outras semanas do bloco
-          </button>
-        )}
+    <Card variant="raised" className="min-w-0 p-4 md:p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="font-display text-lg font-bold text-ink">Semana {micro.semana} em foco</h3>
+        <span className="text-xs text-ink-3">
+          {rotuloMeso(meso)}
+          {micro.tipo === "deload" ? " · descarga" : ""}
+        </span>
       </div>
+      {meso.foco && <p className="mt-1 text-sm text-ink-2">{meso.foco}</p>}
 
       <TiraDaSemana micro={micro} semanas={semanas} />
 
@@ -1808,48 +1868,298 @@ function SemanaEmFoco({
           Esta semana não tem sessão. Ajuste no plano bloco a bloco.
         </p>
       ) : (
-        <>
-          <div role="tablist" aria-label="Sessões da semana" className="mt-3 flex flex-wrap gap-1.5 border-b border-border">
-            {micro.sessoes.map((s, i) => (
-              <button
-                key={s.id}
-                role="tab"
-                aria-selected={i === sessaoIdx}
-                onClick={() => setSessaoIdx(i)}
-                className={cn(
-                  "-mb-px border-b-2 px-3 py-2 text-sm font-semibold transition-colors",
-                  i === sessaoIdx
-                    ? "border-ink text-ink"
-                    : "border-transparent text-ink-2 hover:text-ink",
-                )}
-              >
-                {s.nome}
-                {s.foco && <span className="ml-1 font-normal text-ink-3">{s.foco}</span>}
-              </button>
-            ))}
-          </div>
-
-          {sessao && (
-            <div className="mt-3">
-              <SessaoBloco
-                sessao={sessao}
-                ctx={ctx}
-                editavel={editavel}
-                onChange={trocarSessao}
-                onRemover={() => {
-                  const antes = micro;
-                  onChange({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) });
-                  toastDesfazer(`${sessao.nome} removida da semana ${micro.semana}.`, () => onChange(antes));
-                }}
-              />
-            </div>
-          )}
-        </>
+        <ul className="mt-3 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))]">
+          {micro.sessoes.map((s) => (
+            <CartaoDaSessao key={s.id} sessao={s} />
+          ))}
+        </ul>
       )}
+
+      <button
+        onClick={onEditar}
+        className={cn(buttonClasses("primary", "sm"), "mt-3")}
+        title={podeEditar ? undefined : "No plano gratuito o editor abre em leitura"}
+      >
+        <Pencil className="h-4 w-4" /> Editar semana {micro.semana}
+      </button>
     </Card>
   );
 }
 
+/**
+ * O cartão de uma sessão, no resumo da semana (protótipo: "Sessão A · Inferiores, 5
+ * exercícios · 14 séries · RIR 3").
+ *
+ * O que NÃO entra: o dia da semana e o selo "feita". O protótipo tem os dois, e nós não
+ * temos nem agenda nem execução nesta tela; imprimir "hoje · qua" aqui seria fingir uma
+ * agenda que o produto não mantém, que é exatamente o que o app do aluno é proibido de
+ * fazer. Fica o que o plano de fato declara.
+ */
+function CartaoDaSessao({ sessao }: { sessao: Sessao }) {
+  const forca = sessao.blocos.filter((b) => b.tipo !== "aerobio");
+  const series = forca.reduce(
+    (n, b) => n + (b.seriesAlvo ?? Number(/(\d+)/.exec(b.series ?? "")?.[1] ?? 0)),
+    0,
+  );
+  const minutos = sessao.blocos
+    .filter((b) => b.tipo === "aerobio")
+    .reduce((n, b) => n + Number(/(\d+)/.exec(String(b.duracaoAlvoMin ?? b.duracao ?? ""))?.[1] ?? 0), 0);
+  // A reserva de repetições só é dita quando TODOS os blocos de força concordam: uma média
+  // de reservas diferentes seria um número que não existe em sessão nenhuma.
+  const rirs = forca.map((b) => b.rirAlvo).filter((r): r is number => r != null);
+  const rirUnico = rirs.length === forca.length && rirs.length > 0 && rirs.every((r) => r === rirs[0]) ? rirs[0] : null;
+
+  return (
+    <li className="rounded-card border border-border p-3">
+      <p className="text-sm font-semibold text-ink">{sessao.nome}</p>
+      {sessao.foco && <p className="text-xs text-ink-3">{sessao.foco}</p>}
+      <LinhaDeTokens className="mt-2">
+        <TokenRotulado label="exercícios" value={forca.length} />
+        {series > 0 && <TokenRotulado label="séries" value={series} />}
+        {rirUnico != null && <TokenRotulado label="RIR" value={rirUnico} />}
+        {minutos > 0 && <TokenRotulado label="aeróbio" value={`${minutos} min`} tone="analysis" />}
+      </LinhaDeTokens>
+    </li>
+  );
+}
+
+/* ============================= Editor da semana ============================= */
+
+/**
+ * A tela de EDITAR A SEMANA (protótipo: \`data-screen-label="Editor de treino"\`).
+ *
+ * Não é função nova: é o mesmo \`SessaoBloco\` de sempre, com as mesmas trocas, os mesmos
+ * agrupamentos e os mesmos campos, tirado de baixo da tela de leitura e posto numa tela onde
+ * ele cabe em largura inteira. O que ele ganha é contexto: cabeçalho dizendo qual semana e
+ * de qual bloco, régua para pular de semana sem voltar, e um trilho que fala do que está
+ * sendo editado (o equilíbrio da semana e o aviso de concentração, que na periodização
+ * comentavam uma semana que nem estava à vista).
+ */
+function EditorDaSemana({
+  plano,
+  micro,
+  meso,
+  semanas,
+  ctx,
+  editavel,
+  aluno,
+  podeSalvar,
+  salvo,
+  onChange,
+  onDuplicar,
+  onFocar,
+  onVoltar,
+  onExportar,
+  onPublicar,
+}: {
+  plano: PlanoTreino;
+  micro: Microciclo;
+  meso: Mesociclo;
+  semanas: { micro: Microciclo; meso: Mesociclo }[];
+  ctx: ContextoFaixa;
+  editavel: boolean;
+  aluno?: string;
+  podeSalvar: boolean;
+  salvo: boolean;
+  onChange: (m: Microciclo) => void;
+  onDuplicar: () => void;
+  onFocar: (n: number) => void;
+  onVoltar: () => void;
+  onExportar: (somenteSemana?: number) => void;
+  onPublicar: () => void;
+}) {
+  const [sessaoIdx, setSessaoIdx] = React.useState(0);
+  React.useEffect(() => setSessaoIdx(0), [micro.id]);
+  const sessao = micro.sessoes[Math.min(sessaoIdx, micro.sessoes.length - 1)];
+
+  const trocarSessao = (nova: Sessao) =>
+    onChange({ ...micro, sessoes: micro.sessoes.map((s) => (s.id === nova.id ? nova : s)) });
+
+  const idx = semanas.findIndex((x) => x.micro.semana === micro.semana);
+  const anterior = idx > 0 ? semanas[idx - 1] : undefined;
+  const proxima = idx >= 0 && idx < semanas.length - 1 ? semanas[idx + 1] : undefined;
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <button
+            onClick={onVoltar}
+            className="mb-1.5 inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden /> Periodização
+          </button>
+          <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-primary">
+            {aluno ? `${aluno} · ` : ""}
+            {getModelo(plano.modeloId).nome} · {plano.semanas} semanas
+          </p>
+          <h2 className="mt-1 font-display text-2xl font-bold text-ink md:text-3xl">
+            Semana {micro.semana} · {rotuloMeso(meso)}
+          </h2>
+          {micro.tipo === "deload" && (
+            <p className="mt-1 text-sm text-ink-2">Semana de descarga: menos carga, de propósito.</p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => onExportar(micro.semana)}
+            disabled={!podeSalvar}
+            className={cn(buttonClasses("secondary", "sm"), !podeSalvar && "cursor-not-allowed opacity-50")}
+            title="Uma pagina com esta semana, com espaco para o aluno anotar a carga"
+          >
+            <FileDown className="h-4 w-4" /> Folha da semana {micro.semana}
+          </button>
+          <button
+            onClick={onPublicar}
+            disabled={!podeSalvar}
+            className={cn(
+              buttonClasses("primary", "sm"),
+              "gradient-publicar text-white",
+              !podeSalvar && "cursor-not-allowed opacity-50",
+            )}
+          >
+            {salvo ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+            {aluno ? `Publicar no app de ${aluno.split(" ")[0]}` : "Publicar no app do aluno"}
+          </button>
+        </div>
+      </div>
+
+      <ReguaDoEditor semanas={semanas} atual={micro.semana} onFocar={onFocar} />
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 space-y-3">
+          {micro.sessoes.length === 0 ? (
+            <p className="rounded-control border border-dashed border-border p-4 text-sm text-ink-3">
+              Esta semana não tem sessão. Ajuste no plano bloco a bloco, na periodização.
+            </p>
+          ) : (
+            <>
+              {/* As sessões viram pílulas, e não abas sublinhadas: é o desenho do protótipo
+                  e o mesmo vocabulário de escolha do resto do produto. */}
+              <div role="tablist" aria-label="Sessões da semana" className="flex flex-wrap gap-1.5">
+                {micro.sessoes.map((s, i) => (
+                  <button
+                    key={s.id}
+                    role="tab"
+                    aria-selected={i === sessaoIdx}
+                    onClick={() => setSessaoIdx(i)}
+                    className={cn(
+                      "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 text-sm transition-colors",
+                      i === sessaoIdx
+                        ? "border-ink bg-ink font-semibold text-surface"
+                        : "border-border text-ink-2 hover:bg-surface-soft",
+                    )}
+                  >
+                    {s.nome}
+                    {s.foco && (
+                      <span className={cn("font-normal", i === sessaoIdx ? "opacity-70" : "text-ink-3")}>{s.foco}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {sessao && (
+                <SessaoBloco
+                  sessao={sessao}
+                  ctx={ctx}
+                  editavel={editavel}
+                  onChange={trocarSessao}
+                  onRemover={() => {
+                    const antes = micro;
+                    onChange({ ...micro, sessoes: micro.sessoes.filter((s) => s.id !== sessao.id) });
+                    toastDesfazer(`${sessao.nome} removida da semana ${micro.semana}.`, () => onChange(antes));
+                  }}
+                />
+              )}
+            </>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+            {editavel && micro.tipo !== "deload" ? (
+              <button onClick={onDuplicar} className={buttonClasses("secondary", "sm")}>
+                Aplicar às outras semanas do bloco
+              </button>
+            ) : (
+              <span />
+            )}
+            <div className="flex flex-wrap items-center gap-4 text-sm font-semibold">
+              {anterior && (
+                <button onClick={() => onFocar(anterior.micro.semana)} className="text-ink-2 hover:text-ink">
+                  ← Semana {anterior.micro.semana}
+                </button>
+              )}
+              {proxima && (
+                <button onClick={() => onFocar(proxima.micro.semana)} className="text-primary hover:underline">
+                  Semana {proxima.micro.semana} →
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <TrilhoDoEditor micro={micro} meso={meso} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A RÉGUA DE SEMANAS do editor (protótipo). Uma barra por semana, na cor da fase, a atual
+ * marcada e a descarga hachurada: é o calendário da periodização achatado, porque aqui o
+ * que se precisa saber é só onde estou e o que vem antes e depois.
+ */
+function ReguaDoEditor({
+  semanas,
+  atual,
+  onFocar,
+}: {
+  semanas: { micro: Microciclo; meso: Mesociclo }[];
+  atual: number;
+  onFocar: (n: number) => void;
+}) {
+  const indiceDoMeso = new Map<string, number>();
+  let i = 0;
+  for (const { meso } of semanas) if (!indiceDoMeso.has(meso.id)) indiceDoMeso.set(meso.id, i++);
+
+  return (
+    <div
+      className="grid gap-1"
+      style={{ ["--cols" as string]: String(semanas.length) }}
+    >
+      <div className="grid grid-cols-6 gap-1 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]">
+        {semanas.map(({ micro, meso }) => {
+          const ehAtual = micro.semana === atual;
+          const cor = CORES_DE_FASE[(indiceDoMeso.get(meso.id) ?? 0) % CORES_DE_FASE.length];
+          return (
+            <button
+              key={micro.id}
+              type="button"
+              onClick={() => onFocar(micro.semana)}
+              aria-pressed={ehAtual}
+              title={`Semana ${micro.semana} · ${rotuloMeso(meso)}${micro.tipo === "deload" ? " · descarga" : ""}`}
+              className="flex min-h-[44px] flex-col items-center justify-center gap-1.5 rounded-control"
+            >
+              <span
+                className={cn("block h-2.5 w-full rounded-full", ehAtual && "ring-2 ring-ink ring-offset-2 ring-offset-bg")}
+                style={{
+                  background: cor.ponto,
+                  backgroundImage:
+                    micro.tipo === "deload"
+                      ? "repeating-linear-gradient(135deg, rgba(255,255,255,.55) 0 1.5px, transparent 1.5px 4px)"
+                      : undefined,
+                }}
+              />
+              <span className={cn("tabular text-2xs", ehAtual ? "font-bold text-ink" : "text-ink-3")}>
+                S{micro.semana}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 /* ------------------------------ Trilho lateral ----------------------------- */
 
@@ -2011,55 +2321,6 @@ function TrilhoDoPlano({
     return { frase: `Neste plano, o volume ${rot[dv]} e a intensidade ${rot[di]} ao longo das semanas de carga.` };
   }, [plano]);
 
-  // Equilíbrio: séries de força DINÂMICA por região, a partir dos blocos da semana em foco.
-  // O isométrico de condição fica fora deste denominador pela mesma regra que tirou o
-  // aeróbio: série de 2 minutos sustentados não é série dinâmica, e a dose dele é protocolo
-  // clínico fechado, não escolha de distribuição. Ele sai numa linha própria, em sessões.
-  const equilibrio = React.useMemo(() => {
-    const porRegiao = new Map<string, number>();
-    let series = 0;
-    let minutosAerobio = 0;
-    let sessoesIso = 0;
-    for (const s of micro?.sessoes ?? []) {
-      for (const b of s.blocos) {
-        if (b.tipo === "aerobio") {
-          const m = /(\d+)/.exec(b.duracaoAlvoMin != null ? String(b.duracaoAlvoMin) : (b.duracao ?? ""));
-          if (m) minutosAerobio += Number(m[1]);
-          continue;
-        }
-        // Prancha e equilíbrio (sustentados) são trabalho da semana e contam pela região, com as
-        // séries declaradas; só o protocolo isométrico de CONDIÇÃO (sessão-complemento) fica fora.
-        if (b.tipo === "isometrico" && !b.sustentado) {
-          if (s.complemento) sessoesIso++;
-          continue;
-        }
-        const ex = b.exercicioSlug ? exercises.find((e) => e.slug === b.exercicioSlug) : undefined;
-        const regiao = ex ? (REGIAO[ex.grupoMuscular] ?? "Corpo todo") : "Sem classificação";
-        // Séries do ALVO da semana quando existe; senão, o piso da faixa escrita.
-        const n = b.seriesAlvo ?? Number(/(\d+)/.exec(b.series ?? "")?.[1] ?? 0);
-        if (!n) continue;
-        series += n;
-        porRegiao.set(regiao, (porRegiao.get(regiao) ?? 0) + n);
-      }
-    }
-    return {
-      series,
-      minutosAerobio,
-      sessoesIso,
-      linhas: [...porRegiao.entries()]
-        .map(([regiao, n]) => ({ regiao, n, pct: series ? Math.round((n / series) * 100) : 0 }))
-        .sort((a, b) => b.n - a.n),
-    };
-  }, [micro]);
-
-  // Aviso: concentração de uma região só. O corte é declarado, não mágico, e é POR REGIÃO:
-  // "Superiores" agrega 4 famílias (peito, costas, ombro, braço), então 60% ali é uma semana
-  // normal; o corte dele fica em 75. Inferiores e Core são famílias únicas: 60.
-  const CONCENTRACAO: Record<string, number> = { Superiores: 75 };
-  const concentrada = equilibrio.linhas.find(
-    (l) => l.pct >= (CONCENTRACAO[l.regiao] ?? 60) && l.regiao !== "Corpo todo",
-  );
-
   const resumo = (
     <ul className="space-y-2.5">
       <ItemPorque tom="analysis" titulo={`${faixa.reps.valor}, ${faixa.intensidade.valor}`}>
@@ -2196,19 +2457,16 @@ function TrilhoDoPlano({
   const baseCitada = listaCurta(refIds.map(nomeCurtoDaRef).filter(Boolean), 3);
 
   /*
-   * O TETO DO TRILHO GRUDADO.
+   * TRILHO CURTO, SEM ROLAGEM PRÓPRIA.
    *
-   * `sticky` num bloco mais alto que a janela não rola: ele gruda no topo e o que passa da
-   * borda de baixo fica inalcançável. Com quatro cartões o trilho cabia; com os seis do
-   * protótipo ele passa de mil pixels, e o último cartão sumiria numa tela de notebook.
-   *
-   * Então o trilho ganha o teto da janela e rola por dentro, com `overscroll-contain` para a
-   * roda voltar a rolar a página assim que ele chega ao fim (sem isso, o gesto morre dentro
-   * da coluna). Vale só a partir de lg, que é onde existe coluna: no mobile o trilho é só
-   * mais conteúdo empilhado.
+   * Ele já teve seis cartões e passou de mil pixels, o que obrigava a uma rolagem dentro da
+   * coluna: uma barra a mais na tela, e conteúdo que só aparece se a pessoa descobrir que
+   * aquela coluna rola. A saída não era a barra, era a lista: o equilíbrio da semana e o
+   * aviso de concentração falam de UMA semana e foram para o trilho do editor, ao lado da
+   * semana que está sendo mexida. O que sobra aqui responde a pergunta desta tela, e cabe.
    */
   return (
-    <aside className="space-y-4 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
+    <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
       {/*
         POR QUE ESTE MODELO (protótipo da periodização, cartão navy do trilho).
 
@@ -2292,13 +2550,108 @@ function TrilhoDoPlano({
         aplicados pelo motor e não apareciam em tela nenhuma do produto. O componente some
         sozinho quando o aluno não tem condição nem idade declarada.
       */}
-      <Card className="p-4">
-        <DeOndeVemOLimite
-          grupoEspecial={alunoObj?.grupoEspecial ?? plano.grupoEspecial}
-          condicoesAtencao={alunoObj?.condicoesAtencao}
-          idade={alunoObj?.idade}
-        />
-      </Card>
+      <DeOndeVemOLimite
+        grupoEspecial={alunoObj?.grupoEspecial ?? plano.grupoEspecial}
+        condicoesAtencao={alunoObj?.condicoesAtencao}
+        idade={alunoObj?.idade}
+      />
+
+      {/*
+        O QUE ACOMPANHAR (cartão de chips do protótipo).
+
+        `meso.parametros` sempre existiu e sempre foi escolhido pelo motor bloco a bloco, mas
+        vivia atrás de dois cliques: abrir o cartão do bloco e depois abrir "Detalhes da fase".
+        É a lista do que medir para saber se o plano está funcionando, e ela precisa estar
+        visível ENQUANTO se olha a semana, não escondida num terceiro nível.
+      */}
+      {meso && parametros.length > 0 && (
+        <Card className="p-4">
+          <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Parâmetros acompanhados</h3>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {parametros.map((par) => (
+              <Pill key={par.id} tone="neutral">
+                {par.sigla ?? par.nome}
+              </Pill>
+            ))}
+          </div>
+          <p className="mt-2 text-2xs leading-snug text-ink-3">
+            O que o bloco {rotuloMeso(meso)} pede medir para dizer se o plano está indo bem.
+          </p>
+        </Card>
+      )}
+
+    </aside>
+  );
+}
+
+/**
+ * O TRILHO DO EDITOR (protótipo: "Volume da sessão" e os avisos, à direita do editor).
+ *
+ * O equilíbrio da semana e o aviso de concentração moram AQUI, e não na periodização, por um
+ * motivo simples: os dois falam de UMA semana, e na periodização a semana de que eles
+ * falavam nem estava aberta. Ao lado do editor, cada série acrescentada ou tirada move a
+ * barra na hora, que é o que faz deles ferramenta em vez de enfeite.
+ */
+function TrilhoDoEditor({ micro, meso }: { micro: Microciclo; meso: Mesociclo }) {
+  // Equilíbrio: séries de força DINÂMICA por região, a partir dos blocos da semana em foco.
+  // O isométrico de condição fica fora deste denominador pela mesma regra que tirou o
+  // aeróbio: série de 2 minutos sustentados não é série dinâmica, e a dose dele é protocolo
+  // clínico fechado, não escolha de distribuição. Ele sai numa linha própria, em sessões.
+  const equilibrio = React.useMemo(() => {
+    const porRegiao = new Map<string, number>();
+    let series = 0;
+    let minutosAerobio = 0;
+    let sessoesIso = 0;
+    for (const s of micro.sessoes) {
+      for (const b of s.blocos) {
+        if (b.tipo === "aerobio") {
+          const m = /(\d+)/.exec(b.duracaoAlvoMin != null ? String(b.duracaoAlvoMin) : (b.duracao ?? ""));
+          if (m) minutosAerobio += Number(m[1]);
+          continue;
+        }
+        // Prancha e equilíbrio (sustentados) são trabalho da semana e contam pela região, com as
+        // séries declaradas; só o protocolo isométrico de CONDIÇÃO (sessão-complemento) fica fora.
+        if (b.tipo === "isometrico" && !b.sustentado) {
+          if (s.complemento) sessoesIso++;
+          continue;
+        }
+        const ex = b.exercicioSlug ? exercises.find((e) => e.slug === b.exercicioSlug) : undefined;
+        const regiao = ex ? (REGIAO[ex.grupoMuscular] ?? "Corpo todo") : "Sem classificação";
+        // Séries do ALVO da semana quando existe; senão, o piso da faixa escrita.
+        const n = b.seriesAlvo ?? Number(/(\d+)/.exec(b.series ?? "")?.[1] ?? 0);
+        if (!n) continue;
+        series += n;
+        porRegiao.set(regiao, (porRegiao.get(regiao) ?? 0) + n);
+      }
+    }
+    return {
+      series,
+      minutosAerobio,
+      sessoesIso,
+      linhas: [...porRegiao.entries()]
+        .map(([regiao, n]) => ({ regiao, n, pct: series ? Math.round((n / series) * 100) : 0 }))
+        .sort((a, b) => b.n - a.n),
+    };
+  }, [micro]);
+
+  // Aviso: concentração de uma região só. O corte é declarado, não mágico, e é POR REGIÃO:
+  // "Superiores" agrega 4 famílias (peito, costas, ombro, braço), então 60% ali é uma semana
+  // normal; o corte dele fica em 75. Inferiores e Core são famílias únicas: 60.
+  const CONCENTRACAO: Record<string, number> = { Superiores: 75 };
+  const concentrada = equilibrio.linhas.find(
+    (l) => l.pct >= (CONCENTRACAO[l.regiao] ?? 60) && l.regiao !== "Corpo todo",
+  );
+
+  return (
+    <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+      {/* O objetivo declarado da semana, primeiro: é contra ele que se dosa o resto. */}
+      {micro.objetivo && (
+        <Card className="p-4">
+          <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Objetivo da semana</h3>
+          <p className="mt-1.5 text-sm text-ink-2">{micro.objetivo}</p>
+          <p className="mt-1.5 text-2xs text-ink-3">Bloco {rotuloMeso(meso)}.</p>
+        </Card>
+      )}
 
       {equilibrio.series > 0 && (
         <Card className="p-4">
@@ -2326,30 +2679,6 @@ function TrilhoDoPlano({
         </Card>
       )}
 
-      {/*
-        O QUE ACOMPANHAR (cartão de chips do protótipo).
-
-        `meso.parametros` sempre existiu e sempre foi escolhido pelo motor bloco a bloco, mas
-        vivia atrás de dois cliques: abrir o cartão do bloco e depois abrir "Detalhes da fase".
-        É a lista do que medir para saber se o plano está funcionando, e ela precisa estar
-        visível ENQUANTO se olha a semana, não escondida num terceiro nível.
-      */}
-      {meso && parametros.length > 0 && (
-        <Card className="p-4">
-          <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Parâmetros acompanhados</h3>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {parametros.map((par) => (
-              <Pill key={par.id} tone="neutral">
-                {par.sigla ?? par.nome}
-              </Pill>
-            ))}
-          </div>
-          <p className="mt-2 text-2xs leading-snug text-ink-3">
-            O que o bloco {rotuloMeso(meso)} pede medir para dizer se o plano está indo bem.
-          </p>
-        </Card>
-      )}
-
       {concentrada && (
         <Card tone="warning" className="p-4">
           <p className="text-sm text-ink-2">
@@ -2357,6 +2686,15 @@ function TrilhoDoPlano({
             semana são de {concentrada.regiao.toLowerCase()}. Acima de {CONCENTRACAO[concentrada.regiao] ?? 60}%
             nessa região, vale conferir se o resto do corpo está coberto no bloco.
           </p>
+        </Card>
+      )}
+      {/* "Motivo registrado" do protótipo: a nota que o motor escreveu para esta semana
+          (a descarga, por exemplo, explica por que ela é mais leve de propósito). Vivia
+          dentro do cartão do bloco, atrás de dois cliques, e some quando não há nota. */}
+      {micro.nota && (
+        <Card tone="warning" className="p-4">
+          <h3 className="text-2xs font-bold uppercase tracking-[0.12em] text-warning">Nota da semana</h3>
+          <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{micro.nota}</p>
         </Card>
       )}
     </aside>
