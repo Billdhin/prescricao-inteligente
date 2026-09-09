@@ -641,7 +641,11 @@ export function AlunoDetail() {
           }}
         />
         <div className="relative grid items-end gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-          <div className="flex min-w-0 items-center gap-4">
+          {/* items-start no celular: com o nome, a meta em duas linhas e os chips embaixo, o
+              centro do bloco cai na altura dos chips, e o avatar aparecia ao lado deles em
+              vez de ao lado do nome. Em telas largas o bloco e baixo e o centro volta a ser
+              o lugar certo. */}
+          <div className="flex min-w-0 items-start gap-4 sm:items-center">
             <span
               aria-hidden
               className="grid h-[68px] w-[68px] shrink-0 place-items-center rounded-[22px] font-display text-2xl font-bold"

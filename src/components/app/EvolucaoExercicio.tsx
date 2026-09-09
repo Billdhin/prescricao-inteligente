@@ -478,6 +478,9 @@ export function EvolucaoExercicio({
               pctX(f.x1 - f.x0) > 12 ? (
                 <span
                   key={`fn-${i}`}
+                  // O nome da fase e mais largo que a faixa dela no celular, entao ele
+                  // trunca. O title devolve o nome inteiro, que sem isso ficaria perdido.
+                  title={f.nome}
                   className="absolute top-1 truncate text-2xs font-bold uppercase tracking-[0.06em]"
                   style={{ left: `calc(${pctX(f.x0)}% + 6px)`, maxWidth: `calc(${pctX(f.x1 - f.x0)}% - 12px)`, color: f.fam.tinta }}
                 >

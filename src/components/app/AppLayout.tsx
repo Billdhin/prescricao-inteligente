@@ -73,6 +73,11 @@ const TITULOS_ROTA: [RegExp, string][] = [
   [/^\/suporte/, "Ajuda"],
 ];
 
+/** O nome da tela atual, da MESMA tabela que nomeia a aba do navegador. */
+function tituloDaRota(pathname: string): string | undefined {
+  return TITULOS_ROTA.find(([re]) => re.test(pathname))?.[1];
+}
+
 export function AppLayout() {
   const [onboarding, setOnboarding] = React.useState(
     () => typeof window !== "undefined" && !localStorage.getItem("pi-onboarded"),
@@ -111,7 +116,7 @@ export function AppLayout() {
   // "des-vaza" o título delas ao voltar para o app).
   const { pathname } = useLocation();
   React.useEffect(() => {
-    const t = TITULOS_ROTA.find(([re]) => re.test(pathname))?.[1];
+    const t = tituloDaRota(pathname);
     document.title = t ? `${t} | Mapa da Prescrição` : "Mapa da Prescrição";
   }, [pathname]);
 
@@ -151,6 +156,7 @@ export function AppLayout() {
           </main>
         </div>
       </div>
+      <BotaoCadastrarAluno />
       <BottomBar />
       {mostrarOnboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
       <Toasts />
@@ -750,16 +756,36 @@ function RodapeUsuario() {
  */
 function Topbar() {
   const [busca, setBusca] = React.useState(false);
+  const { pathname } = useLocation();
   const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes } = useAlunos();
   const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes };
   const previa = alunoParaPrevia(alunos, ctx);
+  const titulo = tituloDaRota(pathname);
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur">
       <div className="flex h-16 w-full items-center gap-2 px-3 md:gap-3 md:px-6">
-        {/* A marca só aparece no mobile: em lg+ ela vive no topo da lateral. */}
-        <Link to="/dashboard" aria-label="Mapa da Prescrição, ir para Meu dia" className="shrink-0 lg:hidden">
-          <Logo />
+        {/*
+          NO MOBILE, A BARRA DIZ ONDE VOCÊ ESTÁ (protótipo mobile de 09/09/2026).
+          No desktop a lateral responde isso com o item aceso; no celular ela não existe, e
+          a barra trazia só a marca, então a tela não se identificava. Agora vem o pino, a
+          marca como sobrelinha e o NOME DA TELA, da mesma tabela que nomeia a aba do
+          navegador (uma fonte só para os dois).
+        */}
+        <Link
+          to="/dashboard"
+          aria-label="Mapa da Prescrição, ir para Meu dia"
+          className="flex min-w-0 flex-1 items-center gap-2.5 lg:hidden"
+        >
+          <Logo showWord={false} />
+          <span className="min-w-0">
+            <span className="block text-2xs font-semibold uppercase leading-none tracking-[0.12em] text-ink-3">
+              Mapa da Prescrição
+            </span>
+            <b className="block truncate font-display text-base font-bold tracking-[-0.02em] text-ink">
+              {titulo ?? "Meu dia"}
+            </b>
+          </span>
         </Link>
 
         <div className="hidden min-w-0 flex-1 md:block md:max-w-xl">
@@ -783,8 +809,12 @@ function Topbar() {
               <Eye className="h-[18px] w-[18px]" aria-hidden /> Ver como aluno
             </Link>
           )}
-          {/* O "Mais" segue existindo no mobile, onde não há lateral. */}
-          <MaisMenu />
+          {/*
+            O "Mais" saiu daqui. Ele existia na barra superior para o mobile, onde não há
+            lateral, mas a barra INFERIOR passou a ter o próprio "Mais" (6º slot), e os dois
+            conviviam na mesma tela abrindo a mesma folha. Duas portas para o mesmo lugar,
+            a dois centímetros uma da outra.
+          */}
           <NotificationsMenu />
           <Link to="/alunos?novo=1" className={cn(buttonClasses("primary", "sm"), "hidden sm:inline-flex")}>
             <Plus className="h-4 w-4" /> Cadastrar aluno
@@ -953,6 +983,40 @@ function MaisMenu({ variante = "topbar" }: { variante?: "topbar" | "barra-inferi
           document.body,
         )}
     </>
+  );
+}
+
+/**
+ * O BOTÃO FLUTUANTE DE CADASTRAR ALUNO (protótipo mobile de 09/09/2026).
+ *
+ * No celular a ação primária do produto ficava escondida: a barra superior só mostra
+ * "Cadastrar aluno" a partir de sm, e abaixo disso ela sumia inteira. O botão âmbar resolve
+ * isso onde a ação de fato cabe, que é onde se olha para a carteira: o Meu dia e a lista de
+ * alunos. Em qualquer outra tela ele não aparece, porque ali a ação primária é outra e um
+ * botão flutuante permanente vira mobília por cima do conteúdo.
+ *
+ * Ele fica acima da barra inferior (bottom-[86px]) para não cobrir os destinos.
+ */
+function BotaoCadastrarAluno() {
+  const { pathname } = useLocation();
+  // Só nas duas telas da carteira, e nunca sobre a ficha de um aluno (/alunos/:id).
+  const cabe = pathname === "/dashboard" || pathname === "/alunos";
+  if (!cabe) return null;
+  return (
+    <Link
+      to="/alunos?novo=1"
+      aria-label="Cadastrar aluno"
+      className="fixed bottom-[86px] right-4 z-30 grid place-items-center rounded-card lg:hidden"
+      style={{
+        width: 52,
+        height: 52,
+        background: "var(--warning-fill)",
+        color: "var(--on-warning-fill)",
+        boxShadow: "0 14px 28px -12px rgba(232,163,23,.8)",
+      }}
+    >
+      <Plus className="h-6 w-6" aria-hidden />
+    </Link>
   );
 }
 
