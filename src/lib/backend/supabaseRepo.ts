@@ -206,9 +206,50 @@ export async function removerAluno(id: string): Promise<void> {
 /* ------------------------------- Avaliações ------------------------------- */
 
 export async function salvarAvaliacao(av: Avaliacao): Promise<void> {
-  const { error } = await getSupabase().from("avaliacoes").upsert({
+  const { error } = await getSupabase().from("avaliacoes").upsert(avaliacaoToRow(av, await uid()));
+  if (error) throw error;
+}
+
+/**
+ * VÁRIAS LINHAS NUMA REQUISIÇÃO SÓ, para carga em volume (o histórico dos exemplos grava
+ * centenas de registros de uma vez).
+ *
+ * Uma requisição por linha funcionava na tela, mas numa aba em segundo plano o Chrome segura
+ * os temporizadores do cliente do Supabase por até um minuto cada, e a carga, que levaria
+ * segundos, levou 25 minutos para gravar 26 semáforos. Em lote, são poucas requisições no
+ * total e a aba pode ficar atrás. Lotes de 400 para não estourar o tamanho do corpo.
+ */
+async function emLote<T>(tabela: string, linhas: T[]): Promise<void> {
+  for (let i = 0; i < linhas.length; i += 400) {
+    const { error } = await getSupabase().from(tabela).upsert(linhas.slice(i, i + 400) as never[]);
+    if (error) throw error;
+  }
+}
+
+export async function salvarAvaliacoesEmLote(lista: Avaliacao[]): Promise<void> {
+  if (!lista.length) return;
+  const u = await uid();
+  await emLote("avaliacoes", lista.map((av) => avaliacaoToRow(av, u)));
+}
+
+export async function salvarLiberacoesEmLote(lista: Liberacao[]): Promise<void> {
+  if (!lista.length) return;
+  const u = await uid();
+  await emLote("liberacoes", lista.map((l) => liberacaoToRow(l, u)));
+}
+
+export async function salvarExecucoesEmLote(lista: Execucao[], professionalId: string): Promise<void> {
+  await emLote("execucoes", lista.map((e) => execToRow(e, professionalId)));
+}
+
+export async function salvarSessaoFeedbacksEmLote(lista: SessaoFeedback[], professionalId: string): Promise<void> {
+  await emLote("sessao_feedbacks", lista.map((f) => feedbackToRow(f, professionalId)));
+}
+
+function avaliacaoToRow(av: Avaliacao, u: string) {
+  return {
     id: av.id,
-    user_id: await uid(),
+    user_id: u,
     aluno_id: av.alunoId,
     data: new Date(av.data).toISOString(),
     medidas: av.medidas,
@@ -221,8 +262,7 @@ export async function salvarAvaliacao(av: Avaliacao): Promise<void> {
     testes: av.testes ?? null,
     fotos: av.fotos ?? null,
     personalizadas: av.personalizadas ?? null,
-  });
-  if (error) throw error;
+  };
 }
 
 export async function listarAvaliacoes(): Promise<Avaliacao[]> {
@@ -361,9 +401,14 @@ export async function listarPrescricoes(): Promise<Prescricao[]> {
 /* ------------------------------- Liberações ------------------------------- */
 
 export async function salvarLiberacao(l: Liberacao): Promise<void> {
-  const { error } = await getSupabase().from("liberacoes").upsert({
+  const { error } = await getSupabase().from("liberacoes").upsert(liberacaoToRow(l, await uid()));
+  if (error) throw error;
+}
+
+function liberacaoToRow(l: Liberacao, u: string) {
+  return {
     id: l.id,
-    user_id: await uid(),
+    user_id: u,
     aluno_id: l.alunoId ?? null,
     grupo_slug: l.grupoSlug,
     data: new Date(l.data).toISOString(),
@@ -374,8 +419,7 @@ export async function salvarLiberacao(l: Liberacao): Promise<void> {
     // payload quando existe conduta divergente, que é o caso raro: nulo significa que o
     // profissional seguiu o semáforo, e é assim que o prontuário lê a ausência.
     ...(l.decisaoContraria ? { decisao_contraria: l.decisaoContraria } : {}),
-  });
-  if (error) throw error;
+  };
 }
 
 export async function listarLiberacoes(): Promise<Liberacao[]> {

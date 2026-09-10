@@ -74,23 +74,25 @@ export async function completarHistoricoDosExemplosNaConta(): Promise<ResumoHist
       resumo.falhas++;
     }
   };
-  for (const a of h.alunos) await tentar(() => repo.salvarAluno(a));
-  await emLotes(h.avaliacoes, 8, (av) => tentar(() => repo.salvarAvaliacao(av)));
-  for (const p of h.planos) await tentar(() => repo.salvarPlano(p));
-  await emLotes(h.liberacoes, 8, (l) => tentar(() => repo.salvarLiberacao(l)));
+  // Em LOTE (poucas requisições no total): uma por registro levou 25 minutos numa aba em
+  // segundo plano, porque o Chrome segura os temporizadores do cliente do Supabase.
+  await emLotes(h.alunos, 6, (a) => tentar(() => repo.salvarAluno(a)));
+  await tentar(() => repo.salvarAvaliacoesEmLote(h.avaliacoes));
+  await emLotes(h.planos, 4, (p) => tentar(() => repo.salvarPlano(p)));
+  await tentar(() => repo.salvarLiberacoesEmLote(h.liberacoes));
 
   const profissional = useCloudAuth.getState().user?.id;
   const [primeira, ...demais] = h.execucoes;
   let treinosSobem = !primeira;
   if (profissional && primeira) {
     treinosSobem = await repo
-      .salvarExecucao(primeira, profissional)
+      .salvarExecucoesEmLote([primeira], profissional)
       .then(() => true)
       .catch(() => false);
   }
   if (profissional && treinosSobem) {
-    await emLotes(demais, 16, (e) => tentar(() => repo.salvarExecucao(e, profissional)));
-    await emLotes(h.feedbacks, 16, (f) => tentar(() => repo.salvarSessaoFeedback(f, profissional)));
+    await tentar(() => repo.salvarExecucoesEmLote(demais, profissional));
+    await tentar(() => repo.salvarSessaoFeedbacksEmLote(h.feedbacks, profissional));
   }
   resumo.nuvem = treinosSobem ? "ok" : "treinos-locais";
   return resumo;
