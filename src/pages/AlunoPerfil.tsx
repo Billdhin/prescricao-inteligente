@@ -1,11 +1,11 @@
 import * as React from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Check, CheckCheck, ChevronLeft, ChevronRight, Plus, Search, ShieldAlert, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Plus, Search, ShieldAlert, X } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { GavetaSelecao, type GrupoGaveta, type ItemGaveta } from "@/components/alunos/GavetaSelecao";
 import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
 import { parValido } from "@/lib/gps/objetivos";
-import { FarmacosSelector } from "@/components/gps/FarmacosSelector";
+import { MedicamentosDoPerfil } from "@/components/alunos/MedicamentosDoPerfil";
 import { DetalheRestricoes } from "@/components/gps/RestricoesSelector";
 import { OQueIssoMudaPainel } from "@/components/alunos/OQueIssoMudaPainel";
 import { useAlunos } from "@/lib/store";
@@ -91,30 +91,27 @@ export function AlunoPerfil() {
   const { anterior, proxima } = vizinhasDaSecao(secao);
   const atual = SECOES_PERFIL[indice];
 
+  const nota = NOTA_DO_PASSO[secao];
+
   return (
     <div className="mx-auto max-w-[1240px] space-y-5">
-      <CabecalhoPerfil aluno={aluno} completude={completude} indice={indice} />
+      <CabecalhoPerfil aluno={aluno} />
+      <TrilhoSecoes secaoAtiva={secao} onSecao={setSecao} completude={completude} />
 
-      {/* O corpo do protótipo: rail vertical de seções à esquerda, o painel da
-          seção no meio e o "O que isso muda" à direita. No mobile o rail vira a
-          barra segmentada (dentro do próprio TrilhoSecoes). */}
-      <div className="grid items-start gap-5 lg:grid-cols-[260px_minmax(0,1fr)_300px]">
-        <TrilhoSecoes
-          secaoAtiva={secao}
-          onSecao={setSecao}
-          completude={completude}
-          indice={indice}
-        />
-        <div className="min-w-0 space-y-4">
-          <div>
-            {/* O "passo N de 6" vive COLADO no título da seção, que é o objeto a
-                que ele se refere. Ele já foi um número solto no canto direito do
-                trilho, a meia tela de distância do que estava contando. */}
-            <div className="text-2xs font-bold uppercase tracking-[0.14em] text-analysis-text">
-              Passo {indice + 1} de {completude.total}
+      {/* O corpo do protótipo de 10/09/2026: o passo em foco num cartão só, e o "O que
+          isso muda" ao lado. O trilho vertical que ocupava a coluna da esquerda subiu para a
+          bandeja horizontal logo acima: ele roubava 260 px de largura de um formulário que
+          precisa de três colunas de cartões, para mostrar seis nomes. */}
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <Card className="min-w-0 space-y-5 p-5 sm:p-6">
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h2 className="font-display text-xl font-bold text-ink sm:text-2xl">
+                {TITULO_DO_CARTAO[secao] ?? atual.titulo}
+              </h2>
+              {nota && <span className="text-sm text-ink-3">{nota}</span>}
             </div>
-            <h2 className="mt-1 font-display text-2xl font-bold text-ink">{atual.titulo}</h2>
-            <p className="mt-1 max-w-[62ch] text-sm leading-relaxed text-ink-2">{atual.resumo}</p>
+            <p className="max-w-[68ch] text-sm leading-relaxed text-ink-2">{atual.resumo}</p>
           </div>
 
           {secao === "basicos" && <SecaoBasicos aluno={aluno} onPatch={patch} />}
@@ -125,7 +122,7 @@ export function AlunoPerfil() {
           {secao === "notas" && <SecaoNotas aluno={aluno} onPatch={patch} />}
 
           {/* Rodapé de navegação: anterior, sair sem culpa, próxima */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
             {anterior ? (
               <button
                 type="button"
@@ -137,11 +134,11 @@ export function AlunoPerfil() {
             ) : (
               <span />
             )}
-            <div className="flex items-center gap-4">
+            <div className="ml-auto flex items-center gap-4">
               <button
                 type="button"
                 onClick={() => navigate(`/alunos/${aluno.id}`)}
-                className="text-sm font-semibold text-primary hover:underline"
+                className="text-sm font-semibold text-ink-2 hover:text-ink"
               >
                 Concluir depois
               </button>
@@ -160,71 +157,55 @@ export function AlunoPerfil() {
               )}
             </div>
           </div>
-        </div>
+        </Card>
 
-        <OQueIssoMudaPainel aluno={aluno} />
+        <OQueIssoMudaPainel aluno={aluno} secao={secao} />
       </div>
     </div>
   );
 }
 
+/**
+ * A nota à direita do título do passo: o limite do que o passo pergunta, dito antes da
+ * primeira resposta. Só existe onde há um limite que o profissional precisa saber para
+ * responder bem; os outros passos ficam sem, em vez de ganhar uma frase de enfeite.
+ */
+/** O nome do passo é curto porque mora na bandeja; no cartão ele pode dizer a pergunta inteira. */
+const TITULO_DO_CARTAO: Partial<Record<SecaoPerfilId, string>> = {
+  medicamentos: "Medicamentos em uso",
+};
+
+const NOTA_DO_PASSO: Partial<Record<SecaoPerfilId, string>> = {
+  saude: "Pode marcar mais de uma",
+  medicamentos: "Só a classe: nada de dose, marca ou horário",
+  notas: "Não vai para o app do aluno nem para o PDF",
+};
+
 /* ------------------------------- Cabeçalho -------------------------------- */
 
-function CabecalhoPerfil({
-  aluno,
-  completude,
-  indice,
-}: {
-  aluno: Aluno;
-  completude: ReturnType<typeof completudeAluno>;
-  indice: number;
-}) {
-  const primeiroNome = aluno.nome.split(" ")[0];
+function CabecalhoPerfil({ aluno }: { aluno: Aluno }) {
   return (
-    <div className="flex flex-wrap items-end gap-3">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
       <Link
         to={`/alunos/${aluno.id}`}
         aria-label="Voltar para o aluno"
-        className="mb-1 grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-ink-2 hover:text-ink"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-surface text-ink-2 transition-colors hover:bg-surface-soft hover:text-ink"
       >
-        <ChevronLeft aria-hidden className="h-4 w-4" />
+        <ChevronLeft aria-hidden className="h-5 w-5" />
       </Link>
       <div className="min-w-0 flex-1">
-        {/* O cabeçalho do protótipo: sobrelinha com o preenchimento por extenso
-            e o H1 que diz para que o perfil serve. */}
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
-          Perfil · {completude.feitas} de {completude.total} seções
-        </p>
-        <h1 className="mt-1.5 font-display text-2xl font-bold tracking-[-0.03em] text-ink md:text-3xl">
-          O que o Mapa precisa saber sobre {primeiroNome}
+        <p className="truncate text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Perfil de {aluno.nome}</p>
+        <h1 className="mt-0.5 font-display text-2xl font-bold tracking-[-0.03em] text-ink md:text-[28px]">
+          O que o Mapa precisa saber
         </h1>
       </div>
-      <div className="flex flex-col items-end gap-2">
-        {/* A barra de 6 segmentos do protótipo: turquesa nas seções feitas,
-            âmbar na pendente em foco, trilho nas demais. */}
-        <div
-          className="flex h-1.5 w-[200px] gap-1"
-          role="img"
-          aria-label={`${completude.feitas} de ${completude.total} seções preenchidas`}
-        >
-          {completude.secoes.map((s, i) => (
-            <span
-              key={s.secao.id}
-              className={cn(
-                "flex-1 rounded-full",
-                s.feita ? "bg-analysis-fill" : i === indice ? "bg-warning-fill" : "bg-surface-mute",
-              )}
-            />
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-success-tint px-3 py-1.5 text-xs font-bold text-success-text">
-            <CheckCheck aria-hidden className="h-3.5 w-3.5" /> Salva a cada resposta
-          </span>
-          <Link to={`/alunos/${aluno.id}?avaliar=1`} className={buttonClasses("primary", "sm")}>
-            Registrar avaliação <ChevronRight aria-hidden className="h-4 w-4" />
-          </Link>
-        </div>
+      <div className="flex w-full items-center justify-between gap-3 sm:ml-auto sm:gap-4 sm:w-auto sm:justify-end">
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold sm:text-sm text-success-text">
+          <Check aria-hidden className="h-4 w-4" strokeWidth={2.5} /> Salva a cada resposta
+        </span>
+        <Link to={`/alunos/${aluno.id}?avaliar=1`} className={cn(buttonClasses("primary"), "max-sm:h-10 max-sm:px-4")}>
+          Registrar avaliação <ChevronRight aria-hidden className="h-4 w-4" />
+        </Link>
       </div>
     </div>
   );
@@ -232,83 +213,90 @@ function CabecalhoPerfil({
 
 /* ----------------------------- Trilho de seções --------------------------- */
 
+/**
+ * A BANDEJA DE PASSOS: os seis passos numa linha, com o check nos feitos, a pílula branca no
+ * passo em foco e o número nos que faltam.
+ *
+ * Todo passo é clicável, feito ou não: o perfil não é um assistente que obriga a ordem, e
+ * quem voltou só para trocar a medicação vai direto nela. No celular os nomes dos passos que
+ * não estão em foco somem (os números bastam para achar o lugar), e a bandeja rola na
+ * horizontal em vez de quebrar em duas linhas, que é o que fazia o passo em foco pular de
+ * lugar a cada clique.
+ */
 function TrilhoSecoes({
   secaoAtiva,
   onSecao,
   completude,
-  indice,
 }: {
   secaoAtiva: SecaoPerfilId;
   onSecao: (s: SecaoPerfilId) => void;
   completude: ReturnType<typeof completudeAluno>;
-  indice: number;
 }) {
-  return (
-    <div>
-      {/* Mobile: barra segmentada no lugar da fila de seis pílulas, que não cabe a
-          390. O "Passo N de 6" NÃO se repete aqui: ele já é o eyebrow do título da
-          seção, logo abaixo, e dois deles na mesma dobra é a mesma frase duas vezes. */}
-      <div className="mb-3 lg:hidden">
-        <div
-          className="flex gap-1.5"
-          role="img"
-          aria-label={`${completude.feitas} de ${completude.total} seções preenchidas`}
-        >
-          {completude.secoes.map((s, i) => (
-            <span
-              key={s.secao.id}
-              className={cn(
-                "h-1.5 flex-1 rounded-full",
-                s.feita ? "bg-success" : i === indice ? "bg-primary" : "bg-surface-soft",
-              )}
-            />
-          ))}
-        </div>
-      </div>
+  // Quando a bandeja não cabe (celular), o passo em foco é trazido para dentro dela. Mexe só
+  // no `scrollLeft` da própria bandeja: `scrollIntoView` rolaria a página inteira junto.
+  const bandeja = React.useRef<HTMLOListElement>(null);
+  React.useEffect(() => {
+    const ol = bandeja.current;
+    const ativo = ol?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!ol || !ativo) return;
+    const esquerda = ativo.offsetLeft; // relativo à bandeja, que é o ancestral posicionado
+    if (esquerda < ol.scrollLeft || esquerda + ativo.offsetWidth > ol.scrollLeft + ol.clientWidth)
+      ol.scrollLeft = esquerda - (ol.clientWidth - ativo.offsetWidth) / 2;
+  }, [secaoAtiva]);
 
-      {/* Desktop: o RAIL VERTICAL do protótipo, um cartão por seção com o check
-          verde nas feitas, a borda navy na ativa e a linha do que falta ("Ainda
-          não perguntado") nas pendentes. */}
-      <div className="hidden space-y-2 lg:block">
+  return (
+    <nav
+      aria-label="Passos do perfil"
+      className="flex items-center gap-3 rounded-card bg-surface-soft p-2 ring-1 ring-inset ring-border"
+    >
+      {/* `relative` não é enfeite: os nomes escondidos no celular são `sr-only`, que é
+          posição absoluta, e sem um ancestral posicionado eles escapavam da rolagem da
+          bandeja e alargavam a página inteira em 70 px. */}
+      <ol
+        ref={bandeja}
+        className="relative flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {completude.secoes.map((s, i) => {
           const ativo = s.secao.id === secaoAtiva;
           return (
-            <button
-              key={s.secao.id}
-              type="button"
-              onClick={() => onSecao(s.secao.id)}
-              aria-current={ativo ? "step" : undefined}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-card border px-3.5 py-3 text-left transition-colors",
-                ativo
-                  ? "border-ink bg-surface"
-                  : "border-border bg-surface-soft hover:bg-surface",
-              )}
-            >
-              <span
-                aria-hidden
+            <li key={s.secao.id} className="flex shrink-0 items-center gap-1">
+              {i > 0 && <span aria-hidden className="h-px w-3 bg-ink-3/30 sm:w-5" />}
+              <button
+                type="button"
+                onClick={() => onSecao(s.secao.id)}
+                aria-current={ativo ? "step" : undefined}
+                title={s.feita ? `${s.secao.titulo}: preenchida` : `${s.secao.titulo}: ${s.falta}`}
                 className={cn(
-                  "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-2xs font-bold",
-                  s.feita
-                    ? "bg-success-tint text-success"
-                    : ativo
-                      ? "bg-ink text-surface"
-                      : "bg-surface-mute text-ink-2",
+                  "flex min-h-[40px] items-center gap-2 rounded-full px-2.5 text-sm transition-colors",
+                  ativo
+                    ? "bg-surface font-bold text-ink shadow-soft ring-1 ring-ink/80"
+                    : "font-semibold text-ink-2 hover:bg-surface hover:text-ink",
                 )}
               >
-                {s.feita ? <Check className="h-3.5 w-3.5" /> : ativo ? "›" : i + 1}
-              </span>
-              <span className="min-w-0 flex-1">
-                <b className="block text-sm font-semibold text-ink">{s.secao.titulo}</b>
-                <span className="block truncate text-xs text-ink-2">
-                  {s.feita ? "Preenchida" : s.falta}
+                <span
+                  aria-hidden
+                  className={cn(
+                    "grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold",
+                    ativo
+                      ? "bg-ink text-surface"
+                      : s.feita
+                        ? "bg-success-tint text-success-text"
+                        : "bg-surface-mute text-ink-2",
+                  )}
+                >
+                  {s.feita && !ativo ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : i + 1}
                 </span>
-              </span>
-            </button>
+                <span className={cn("whitespace-nowrap", !ativo && "sr-only md:not-sr-only")}>{s.secao.titulo}</span>
+                {s.feita && <span className="sr-only">(preenchida)</span>}
+              </button>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ol>
+      <span className="hidden shrink-0 whitespace-nowrap pr-2 text-sm text-ink-3 sm:block">
+        {completude.feitas} de {completude.total} concluídas
+      </span>
+    </nav>
   );
 }
 
@@ -327,7 +315,7 @@ function Campo({ label, children, dica }: { label: string; children: React.React
 function SecaoBasicos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Aluno>) => void }) {
   const idadeForaDaFaixa = aluno.idade != null && (aluno.idade < 12 || aluno.idade > 100);
   return (
-    <Card className="space-y-4 p-4 sm:p-5">
+    <div className="space-y-4">
       <Campo label="Nome">
         <input
           value={aluno.nome}
@@ -381,7 +369,7 @@ function SecaoBasicos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<A
           Trocar o nível reinicia a contagem de tempo nele, que é o que alimenta a sugestão de progressão.
         </p>
       </fieldset>
-    </Card>
+    </div>
   );
 }
 
@@ -402,7 +390,7 @@ function SecaoObjetivo({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<
   };
 
   return (
-    <Card className="space-y-3 p-4 sm:p-5">
+    <div className="space-y-3">
       <ObjetivoDuplo objetivo={par.o} objetivoSecundario={par.s} onChange={trocar} />
       {!valido && (
         <p className="rounded-card border border-danger/30 bg-danger-tint p-3 text-sm text-danger-text" role="alert">
@@ -412,7 +400,7 @@ function SecaoObjetivo({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<
           outro segundo objetivo, ou nenhum.
         </p>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -431,7 +419,7 @@ function SecaoSaude({
       <RestricoesFisicas aluno={aluno} onPatch={onPatch} />
       {/* Ponte para a próxima seção: a medicação muda como ler FC e glicemia, e é a
           pergunta que mais some quando não é feita na mesma conversa da saúde. */}
-      <Card variant="soft" className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-soft p-4">
         <div className="min-w-0">
           <h3 className="font-display font-bold text-ink">Medicamentos em uso</h3>
           <p className="text-sm text-ink-2">Só a classe. Ajuda a ler frequência cardíaca e glicemia.</p>
@@ -448,7 +436,7 @@ function SecaoSaude({
             {aluno.farmacosNaoInformado ? "Marcado: não informado" : "Não sei / não informar"}
           </button>
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
@@ -538,15 +526,15 @@ function CondicaoDeSaude({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partia
   };
 
   return (
-    <Card className="space-y-3 p-4 sm:p-5">
+    <section aria-label="Condições de saúde" className="space-y-3">
       {/* Título em cima, apoio embaixo: as duas coisas na mesma linha brigavam por
           espaço e empurravam o link para fora do card em telas médias. */}
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
         <div className="min-w-0">
           <h3 className="font-display font-bold text-ink">Condições de saúde</h3>
           <p className="text-sm text-ink-2">
-            Pode marcar mais de uma. Onde elas divergem, o plano aplica sempre a mais
-            conservadora, e a primeira marcada dá o esqueleto de fases do treino.
+            Onde elas divergem, o plano aplica sempre a mais conservadora, e a primeira
+            marcada dá o esqueleto de fases do treino.
           </p>
         </div>
         <button
@@ -608,7 +596,7 @@ function CondicaoDeSaude({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partia
             : "A busca abre a lista completa."}{" "}
         Em branco, a avaliação sugere pelo IMC, pressão e idade medidos.
       </p>
-    </Card>
+    </section>
   );
 }
 
@@ -646,7 +634,7 @@ function RestricoesFisicas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
   };
 
   return (
-    <Card className="space-y-3 p-4 sm:p-5">
+    <section aria-label="Restrições físicas" className="space-y-3 border-t border-border pt-5">
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -783,21 +771,19 @@ function RestricoesFisicas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
           onFechar={() => setGaveta(null)}
         />
       )}
-    </Card>
+    </section>
   );
 }
 
 function SecaoMedicamentos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Aluno>) => void }) {
   return (
-    <Card className="p-4 sm:p-5">
-      <FarmacosSelector
-        value={aluno.farmacos ?? []}
-        onChange={(f) => onPatch({ farmacos: f.length ? f : undefined, farmacosNaoInformado: undefined })}
-        naoInformado={Boolean(aluno.farmacosNaoInformado)}
-        onNaoInformado={(v) => onPatch({ farmacosNaoInformado: v || undefined })}
-        idBase="perfil-farm"
-      />
-    </Card>
+    <MedicamentosDoPerfil
+      value={aluno.farmacos ?? []}
+      onChange={(f) => onPatch({ farmacos: f.length ? f : undefined, farmacosNaoInformado: undefined })}
+      naoInformado={Boolean(aluno.farmacosNaoInformado)}
+      onNaoInformado={(v) => onPatch({ farmacosNaoInformado: v || undefined })}
+      idBase="perfil-farm"
+    />
   );
 }
 
@@ -819,7 +805,7 @@ function SecaoEquipamentos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
     });
 
   return (
-    <Card className="space-y-4 p-4 sm:p-5">
+    <div className="space-y-4">
       <div className="flex flex-wrap gap-3 text-sm font-semibold">
         <button type="button" onClick={() => onPatch({ equipamentos: [...KIT_ACADEMIA] })} className="text-primary hover:underline">
           Kit típico de academia
@@ -852,17 +838,16 @@ function SecaoEquipamentos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
           {confirmado ? "Confirmado" : "Confirmar equipamentos"}
         </button>
       </div>
-    </Card>
+    </div>
   );
 }
 
 function SecaoNotas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Aluno>) => void }) {
   const confirmado = (aluno.perfilConfirmado ?? []).includes("notas");
   return (
-    <Card className="space-y-4 p-4 sm:p-5">
+    <div className="space-y-4">
       <Campo
         label="Observações"
-        dica="Histórico, rotina, combinados. Isto não vai para o app do aluno nem para o PDF."
       >
         <textarea
           value={aluno.observacoes ?? ""}
@@ -887,7 +872,7 @@ function SecaoNotas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Alu
           {confirmado ? "Perfil de saúde concluído" : "Concluir o perfil de saúde"}
         </button>
       </div>
-    </Card>
+    </div>
   );
 }
 

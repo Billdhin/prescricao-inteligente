@@ -76,7 +76,7 @@ export const SECOES_PERFIL: SecaoPerfil[] = [
   {
     id: "medicamentos",
     titulo: "Medicamentos",
-    resumo: "Só a classe. Muda como ler frequência cardíaca e glicemia, e o checklist do dia.",
+    resumo: "A classe muda como ler a frequência cardíaca e a glicemia, e o que o checklist do dia pergunta antes da sessão.",
     fecha: "dado",
   },
   {
