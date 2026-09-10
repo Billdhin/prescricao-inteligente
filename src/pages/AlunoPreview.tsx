@@ -134,7 +134,11 @@ export function AlunoPreview() {
  *
  * ## Como o aparelho resolve
  *
- * - A tela tem altura fixa (a de um celular de 6,1", encolhida se a janela for baixa).
+ * - A tela tem o tamanho de um celular de 6,1" (390 x 844) SEMPRE, e o aparelho inteiro é
+ *   reduzido por igual para caber na janela. Antes só a ALTURA encolhia: numa janela de
+ *   860 px o aparelho ficava 370 x 708, e num notebook ainda mais atarracado, com proporção
+ *   de tablet. O profissional reclamou exatamente disso. Escalar o conjunto preserva a
+ *   proporção, e o conteúdo continua diagramado na largura real de um celular.
  * - A tela leva um `transform`. Isso não é enfeite: um ancestral com transform vira o
  *   bloco de referência de todo `position: fixed` dentro dele, então a barra de abas passa
  *   a grudar no rodapé DA TELA DO CELULAR, exatamente como no aparelho. E como quem rola é
@@ -150,6 +154,7 @@ function Aparelho({ corMarca, children }: { corMarca?: string; children: React.R
     if (telaRef.current) aplicarPaleta(telaRef.current, PALETA_ALUNO, temaAlunoSalvo() === "escuro", corMarca);
   }, [corMarca]);
 
+  const escala = useEscalaQueCabe();
   const [hora, setHora] = React.useState(() => horaAgora());
   React.useEffect(() => {
     const t = window.setInterval(() => setHora(horaAgora()), 30_000);
@@ -157,9 +162,10 @@ function Aparelho({ corMarca, children }: { corMarca?: string; children: React.R
   }, []);
 
   return (
-    // 390px, a largura lógica de um celular de 6,1". Numa janela mais estreita que isso (o
-    // profissional abrindo a prévia no próprio celular), o aparelho encolhe para caber.
-    <div className="relative" style={{ width: "min(390px, calc(100vw - 2rem))" }}>
+    // A caixa externa ocupa o tamanho JÁ reduzido, para o layout em volta não reservar o
+    // espaço do aparelho em tamanho cheio; o aparelho em si é desenhado em 1:1 e reduzido.
+    <div className="shrink-0" style={{ width: APARELHO_L * escala, height: APARELHO_A * escala }}>
+    <div className="relative" style={{ width: APARELHO_L, height: APARELHO_A, transform: `scale(${escala})`, transformOrigin: "top left" }}>
       {/* Botões laterais: volume à esquerda, energia à direita. */}
       <span aria-hidden className="absolute -left-[3px] top-[120px] h-8 w-[3px] rounded-l-sm" style={{ background: "#1C2433" }} />
       <span aria-hidden className="absolute -left-[3px] top-[168px] h-14 w-[3px] rounded-l-sm" style={{ background: "#1C2433" }} />
@@ -167,7 +173,7 @@ function Aparelho({ corMarca, children }: { corMarca?: string; children: React.R
       <span aria-hidden className="absolute -right-[3px] top-[190px] h-20 w-[3px] rounded-r-sm" style={{ background: "#1C2433" }} />
 
       <div
-        className="rounded-[54px] p-[10px]"
+        className="h-full rounded-[56px] p-[11px]"
         style={{
           background: "linear-gradient(145deg, #1C2433, #0A0F18 55%)",
           boxShadow: "0 50px 90px -40px rgba(11,22,40,.65), inset 0 0 0 1.5px rgba(255,255,255,.07)",
@@ -180,8 +186,7 @@ function Aparelho({ corMarca, children }: { corMarca?: string; children: React.R
           // encostavam na curva da tela. Aqui ela ganha o respiro do celular de verdade.
           className="relative flex flex-col overflow-hidden rounded-[44px] bg-bg [&_nav[aria-label='Navegação_do_app']]:pb-6"
           style={{
-            height: "min(800px, calc(100dvh - 9.5rem))",
-            minHeight: 560,
+            height: TELA_A,
             // Bloco de referência do `position: fixed` do app: a barra de abas gruda aqui.
             transform: "translateZ(0)",
           }}
@@ -216,7 +221,37 @@ function Aparelho({ corMarca, children }: { corMarca?: string; children: React.R
         </div>
       </div>
     </div>
+    </div>
   );
+}
+
+/** A tela de um celular de 6,1" em pontos (390 x 844), e o aparelho com a moldura de 11 px. */
+const TELA_L = 390;
+const TELA_A = 844;
+const APARELHO_L = TELA_L + 22;
+const APARELHO_A = TELA_A + 22;
+
+/**
+ * Quanto o aparelho precisa encolher para caber inteiro na janela, sem nunca crescer. Desconta
+ * o cabeçalho da prévia e o respiro do palco na altura, e a margem lateral na largura (a
+ * prévia aberta no próprio celular do profissional). Abaixo de 70% o texto do app cai para perto de
+ * 10 px e deixa de ser legível; numa janela muito baixa a página rola um pouco, o que é melhor do
+ * que um celular que ninguém consegue ler. Num notebook de 768 px de altura ele cabe inteiro.
+ */
+function useEscalaQueCabe(): number {
+  const calcular = () => {
+    if (typeof window === "undefined") return 1;
+    const altura = (window.innerHeight - 140) / APARELHO_A;
+    const largura = (window.innerWidth - 32) / APARELHO_L;
+    return Math.max(0.7, Math.min(1, altura, largura));
+  };
+  const [escala, setEscala] = React.useState(calcular);
+  React.useEffect(() => {
+    const aoMudar = () => setEscala(calcular());
+    window.addEventListener("resize", aoMudar);
+    return () => window.removeEventListener("resize", aoMudar);
+  }, []);
+  return escala;
 }
 
 function horaAgora(): string {
