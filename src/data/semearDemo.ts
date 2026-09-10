@@ -64,7 +64,7 @@ const betabloqueador = (declaradoEmMs: number): FarmacoSelecionado => ({
  * Gera o plano do aluno demo pelo MESMO caminho da tela de prescrição: as linhas espelham
  * o `montar` de PrescreverTreino de propósito, para a demo não divergir do produto.
  */
-function planoDoAluno(
+export function planoDoAluno(
   aluno: Aluno,
   avaliacoes: Avaliacao[],
   cfg: { semanas: number; frequencia: number; dataMs: number; disponibilidade: string },
@@ -182,7 +182,7 @@ function executarSemanas(
  * grupo e deixa `avaliarSemaforo` computar o resultado e os ajustes, exatamente como a tela
  * faz. Nada de resultado gravado à mão que o motor não produziria.
  */
-function responderSemaforo(
+export function responderSemaforo(
   checklist: ChecklistSemaforo,
   alunoId: string,
   dataMs: number,

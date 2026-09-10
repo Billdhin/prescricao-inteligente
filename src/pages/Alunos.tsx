@@ -7,6 +7,8 @@ import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
 import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
+import { completarHistoricoDosExemplosNaConta } from "@/lib/historicoExemplosAcao";
+import { toast, toastFalha } from "@/lib/toast";
 
 import type { Aluno } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -25,6 +27,40 @@ import { cn } from "@/lib/utils";
 import { AvatarAluno } from "@/components/alunos/FotoAluno";
 
 const DIA = 86_400_000;
+
+/**
+ * Com os exemplos já na carteira, a porta deles vira "completar o histórico até hoje": os
+ * exemplos envelhecem (reavaliação vence, o plano fica sem registro) e quem os usa para
+ * apresentar precisa deles vivos. Só toca aluno de exemplo (src/data/historicoExemplos.ts).
+ */
+function CompletarHistoricoDosExemplos() {
+  const [rodando, setRodando] = React.useState(false);
+  const completar = async () => {
+    setRodando(true);
+    try {
+      const r = await completarHistoricoDosExemplosNaConta();
+      const base = `Histórico dos exemplos completo: ${r.avaliacoes} avaliações, ${r.sessoes} sessões registradas e ${r.semaforos} semáforos.`;
+      if (r.nuvem === "treinos-locais") {
+        toastFalha(`${base} Os treinos registrados ficaram só neste aparelho: a conta ainda não aceita gravá-los.`);
+      } else if (r.falhas > 0) {
+        toastFalha(`${base} ${r.falhas} registros não subiram para a nuvem agora.`);
+      } else {
+        toast(base);
+      }
+    } finally {
+      setRodando(false);
+    }
+  };
+  return (
+    <button
+      onClick={completar}
+      disabled={rodando}
+      className="mx-auto block text-sm text-ink-2 underline decoration-border underline-offset-4 transition-colors hover:text-primary disabled:opacity-60"
+    >
+      {rodando ? "Completando o histórico dos exemplos..." : "Completar o histórico dos exemplos até hoje"}
+    </button>
+  );
+}
 
 /** Prioridade de triagem: atenção primeiro (vencida > pendência de rotina > em dia). */
 function prioridade(chip: ProximoPasso["chip"]): number {
@@ -262,13 +298,15 @@ export function Alunos() {
                   também precisa dos dois casos de demonstração (gravação, apresentação).
                   Carregar MESCLA sem tocar no que existe, e a linha some quando os
                   exemplos já estão aqui, porque botão que não faz nada é ruído. */}
-              {!alunos.some((a) => a.id.startsWith("al-vsl-")) && (
+              {!alunos.some((a) => a.id.startsWith("al-vsl-")) ? (
                 <button
                   onClick={loadExamples}
                   className="mx-auto block text-sm text-ink-2 underline decoration-border underline-offset-4 transition-colors hover:text-primary"
                 >
                   Carregar alunos de exemplo
                 </button>
+              ) : (
+                <CompletarHistoricoDosExemplos />
               )}
             </>
           )}
