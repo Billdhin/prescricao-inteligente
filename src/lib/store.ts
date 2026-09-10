@@ -9,6 +9,7 @@ import type { Modo } from "@/lib/theme/palettes";
 import { seedAlunos, seedAvaliacoes, seedPrescricoes } from "@/data/alunos";
 import { semearDemoVSL } from "@/data/semearDemo";
 import { migrarRestricoesLegado } from "@/lib/gps/restricoes";
+import { planoParaPublicar } from "@/lib/publicacao";
 import {
   cloudSaveAluno,
   cloudRemoveAluno,
@@ -353,6 +354,22 @@ interface AlunosState {
   posturais: AvaliacaoPostural[];
   /** o que o aluno informou sobre si no app, pendente ou revisado (src/data/declaracoes.ts) */
   declaracoes: DeclaracaoAluno[];
+  /**
+   * Treinos gerados e ainda NÃO publicados, um por aluno (src/lib/publicacao.ts). Ficam neste
+   * aparelho e nunca vão à tabela de planos, que o aluno lê: o que não foi publicado não é dele.
+   */
+  rascunhos: PlanoTreino[];
+  /** guarda (ou troca) o rascunho do aluno do plano */
+  guardarRascunho: (p: PlanoTreino) => void;
+  descartarRascunho: (alunoId: string) => void;
+  /**
+   * Publica no app do aluno: grava o plano (novo ou edição), arquiva o anterior, fecha o
+   * pedido de treino e apaga o rascunho. Devolve o que foi publicado. É a única porta de
+   * publicação, usada pelo editor e pelos botões da lista e da ficha.
+   */
+  publicarPlano: (p: PlanoTreino) => PlanoTreino;
+  /** o "Desfazer" da publicação de um treino novo: tira do app e devolve o rascunho */
+  desfazerPublicacao: (publicado: PlanoTreino, rascunho: PlanoTreino, pedidoAntes?: DeclaracaoAluno) => void;
   addAluno: (a: Aluno) => void;
   updateAluno: (id: string, patch: Partial<Aluno>) => void;
   /**
@@ -404,6 +421,42 @@ export const useAlunos = create<AlunosState>()(
       sessaoFeedbacks: [],
       posturais: [],
       declaracoes: [],
+      rascunhos: [],
+      guardarRascunho: (p) => {
+        if (!p.alunoId) return;
+        set((s) => ({ rascunhos: [p, ...s.rascunhos.filter((r) => r.alunoId !== p.alunoId)] }));
+      },
+      descartarRascunho: (alunoId) => {
+        set((s) => ({ rascunhos: s.rascunhos.filter((r) => r.alunoId !== alunoId) }));
+      },
+      publicarPlano: (p) => {
+        const existente = get().planos.find((x) => x.id === p.id);
+        const final = planoParaPublicar(p, existente);
+        if (existente) {
+          // Edição (ou reaproveitamento de id): o aluno não pode ficar com dois treinos
+          // ativos, então os outros ativos dele saem, como no addPlano.
+          get()
+            .planos.filter((x) => x.alunoId === final.alunoId && x.status === "ativo" && x.id !== final.id)
+            .forEach((x) => get().updatePlano(x.id, { status: "arquivado" }));
+          get().updatePlano(final.id, final);
+          const pedido = get().declaracoes.find((d) => d.alunoId === final.alunoId && d.campo === "pedido_treino" && d.status === "pendente");
+          if (pedido) get().revisarDeclaracao(pedido.id, "confirmada");
+        } else {
+          get().addPlano(final);
+        }
+        get().descartarRascunho(final.alunoId);
+        return final;
+      },
+      desfazerPublicacao: (publicado, rascunho, pedidoAntes) => {
+        get().removePlano(publicado.id);
+        get().guardarRascunho(rascunho);
+        // O pedido de treino que a publicação fechou volta a ficar aberto: o aluno segue
+        // esperando, e o sino e a fila precisam voltar a dizer isso.
+        if (pedidoAntes && pedidoAntes.status === "pendente") {
+          set((s) => ({ declaracoes: s.declaracoes.map((d) => (d.id === pedidoAntes.id ? pedidoAntes : d)) }));
+          cloudSaveDeclaracao(pedidoAntes);
+        }
+      },
       loadExamples: () => {
         /*
          * Os exemplos incluem os DOIS CASOS DO VSL com a história inteira (plano de 12
@@ -469,6 +522,7 @@ export const useAlunos = create<AlunosState>()(
           avaliacoes: s.avaliacoes.filter((a) => a.alunoId !== id),
           prescricoes: s.prescricoes.filter((p) => p.alunoId !== id),
           planos: s.planos.filter((p) => p.alunoId !== id),
+          rascunhos: s.rascunhos.filter((p) => p.alunoId !== id),
           liberacoes: s.liberacoes.filter((l) => l.alunoId !== id),
           declaracoes: s.declaracoes.filter((d) => d.alunoId !== id),
           execucoes: s.execucoes.filter((e) => e.alunoId !== id),

@@ -473,22 +473,27 @@ const feita = (a: Aluno, id: string) => completudeAluno(a).secoes.find((s) => s.
    * "Rascunho" o tempo todo, prometendo uma guarda que não existia. Quem editava semanas na
    * mão perdia o trabalho num toque, sem aviso.
    *
-   * O rascunho passou a viver na sessão do navegador, e a trava cobre as três partes que
-   * fazem isso ser seguro: ele é GRAVADO, é lido POR ALUNO (senão o rascunho de um apareceria
-   * na tela de outro, que seria muito pior que perder) e é APAGADO ao publicar.
+   * O rascunho viveu na sessão do navegador e, desde 10/09/2026, vive na store, um por aluno
+   * (src/lib/publicacao.ts), para a lista e a ficha mostrarem "Não publicado". A trava segue
+   * cobrindo as três partes que fazem isso ser seguro: ele é GRAVADO, é lido POR ALUNO (senão
+   * o rascunho de um apareceria na tela de outro, que seria muito pior que perder) e é
+   * APAGADO ao publicar e ao descartar. O comportamento está em `check:publicacao`.
    */
   const fontePrescrever = readFileSync("src/pages/PrescreverTreino.tsx", "utf8");
-  if (!/sessionStorage\.setItem\(CHAVE_RASCUNHO/.test(fontePrescrever))
+  const fontePublicacao = readFileSync("src/lib/publicacao.ts", "utf8");
+  const fonteStore = readFileSync("src/lib/store.ts", "utf8");
+  if (!/guardarRascunho\(plano\)/.test(fontePrescrever))
     problemas.push(
       "PrescreverTreino: o rascunho do plano deixou de ser gravado. Sem isso, sair da tela apaga o trabalho do profissional sem aviso.",
     );
-  if (!/p\?\.alunoId === alunoId/.test(fontePrescrever))
+  if (!/r\.alunoId === alunoId/.test(fontePublicacao) || !/rascunhoGuardado\(/.test(fontePrescrever))
     problemas.push(
       "PrescreverTreino: o rascunho voltou a ser lido sem conferir o aluno. Devolver o rascunho de um aluno na tela de outro é pior do que perdê-lo.",
     );
-  if ((fontePrescrever.match(/limparRascunho\(\)/g) ?? []).length < 3)
+  const blocoPublicar = fonteStore.match(/publicarPlano: \(p\) => \{[\s\S]*?\n {6}\},/)?.[0] ?? "";
+  if (!/descartarRascunho\(/.test(blocoPublicar) || (fontePrescrever.match(/descartarRascunho\(/g) ?? []).length < 2)
     problemas.push(
-      "PrescreverTreino: faltou apagar o rascunho em algum caminho (publicar, atualizar ou editar contexto). Rascunho órfão reaparece por cima de um plano já salvo.",
+      "PrescreverTreino: faltou apagar o rascunho em algum caminho (publicar, descartar ou editar contexto). Rascunho órfão reaparece por cima de um plano já salvo.",
     );
 
   const fonteGaveta = readFileSync("src/components/alunos/GavetaSelecao.tsx", "utf8");

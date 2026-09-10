@@ -395,8 +395,8 @@ const CASCA = {
 /** Largura da lateral. Vive aqui e no padding da coluna de conteúdo. */
 function Sidebar() {
   const { pathname } = useLocation();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes } = useAlunos();
-  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes };
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos } = useAlunos();
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos };
   const contagens = contagensDoMenu(alunos, ctx);
 
   // O contador de cada destino, quando existe. `undefined` não desenha nada: um
@@ -770,8 +770,8 @@ function RodapeUsuario() {
 function Topbar() {
   const [busca, setBusca] = React.useState(false);
   const { pathname } = useLocation();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes } = useAlunos();
-  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes };
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos } = useAlunos();
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos };
   const previa = alunoParaPrevia(alunos, ctx);
   const titulo = tituloDaRota(pathname);
 

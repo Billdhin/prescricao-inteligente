@@ -9,7 +9,6 @@ import {
   BookOpen,
   Pencil,
   Eye,
-  Save,
   FileDown,
   Check,
   AlertTriangle,
@@ -19,8 +18,12 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  CircleDashed,
+  Send,
+  Smartphone,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, SectionHeader, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
+import { rascunhoDoAluno } from "@/lib/publicacao";
 import { PaywallCard } from "@/components/ui/PaywallCard";
 import { SeloRCD } from "@/components/rcd/SeloRCD";
 import {
@@ -96,44 +99,21 @@ const fmtDataCurta = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(ts));
 
 /*
- * RASCUNHO DE PLANO QUE SOBREVIVE À NAVEGAÇÃO.
+ * RASCUNHO DE PLANO: UM POR ALUNO, VISÍVEL NA CARTEIRA INTEIRA (src/lib/publicacao.ts).
  *
- * Fica na sessão do navegador, e não no armazenamento persistido do app, de propósito: um
- * rascunho é do atendimento de agora, não da carteira. Fechou o navegador, ele vai embora,
- * que é o que a palavra promete. Guardar por aluno evita o pior erro possível aqui, que seria
- * devolver o rascunho de um aluno na tela de outro.
+ * Até 10/09/2026 ele ficava na sessão do navegador e só esta tela sabia dele. O profissional
+ * gerava o treino, saía, e a lista e a ficha diziam "Sem treino" de quem tinha um pronto
+ * esperando um clique; o Filipe achou a publicação "pouco clara", e era isso. Agora o rascunho
+ * mora na store (neste aparelho, nunca na tabela de planos que o aluno lê), a lista e a ficha
+ * mostram "Não publicado" com o botão ao lado, e esta tela o devolve ao voltar. Guardar por
+ * aluno segue evitando o pior erro possível aqui: devolver o rascunho de um aluno na tela de
+ * outro.
  */
-const CHAVE_RASCUNHO = "pi-rascunho-plano";
+const rascunhoGuardado = (alunoId?: string | null): PlanoTreino | undefined =>
+  alunoId ? rascunhoDoAluno(useAlunos.getState().rascunhos, alunoId) : undefined;
 
-function lerRascunho(alunoId?: string): PlanoTreino | null {
-  if (typeof window === "undefined" || !alunoId) return null;
-  try {
-    const bruto = sessionStorage.getItem(CHAVE_RASCUNHO);
-    if (!bruto) return null;
-    const p = JSON.parse(bruto) as PlanoTreino;
-    return p?.alunoId === alunoId && p?.macrociclo ? p : null;
-  } catch {
-    return null;
-  }
-}
-
-function gravarRascunho(plano: PlanoTreino) {
-  if (typeof window === "undefined" || !plano.alunoId) return;
-  try {
-    sessionStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(plano));
-  } catch {
-    /* cota cheia ou sessão indisponível: o rascunho segue só em memória, como antes */
-  }
-}
-
-function limparRascunho() {
-  if (typeof window === "undefined") return;
-  try {
-    sessionStorage.removeItem(CHAVE_RASCUNHO);
-  } catch {
-    /* nada a fazer */
-  }
-}
+/** Em que pé está a publicação do plano aberto nesta tela. */
+type EstadoNoEditor = "avulso" | "nao-publicado" | "substitui" | "alteracoes" | "publicado";
 
 /* ------------------------------- Página ------------------------------- */
 
@@ -141,8 +121,6 @@ export function PrescreverTreino() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const alunos = useAlunos((s) => s.alunos);
-  const addPlano = useAlunos((s) => s.addPlano);
-  const updatePlano = useAlunos((s) => s.updatePlano);
   const planosSalvos = useAlunos((s) => s.planos);
   const execucoes = useAlunos((s) => s.execucoes);
   const prescricoes = useAlunos((s) => s.prescricoes);
@@ -189,13 +167,20 @@ export function PrescreverTreino() {
 
   // O rascunho já nasce como o plano que vai ser salvo: editar, salvar e exportar
   // trabalham no mesmo objeto, então o PDF nunca mostra uma versão anterior da edição.
-  const [plano, setPlano] = React.useState<PlanoTreino | null>(
-    () => planoPre ?? lerRascunho(params.get("aluno") ?? undefined),
-  );
-  const [salvo, setSalvo] = React.useState(Boolean(planoPre));
-  const [rascunhoRecuperado, setRascunhoRecuperado] = React.useState(
-    () => !planoPre && Boolean(lerRascunho(params.get("aluno") ?? undefined)),
-  );
+  // Abrir o plano salvo (`?plano=`) devolve as ALTERAÇÕES não publicadas dele, se houver: sem
+  // isso, editar o treino em uso, sair e voltar perdia a edição. Abrir pelo aluno devolve o
+  // treino novo que ficou por publicar.
+  const [inicial] = React.useState(() => {
+    const r = rascunhoGuardado(planoPre?.alunoId ?? params.get("aluno"));
+    if (planoPre) return r && r.id === planoPre.id ? { plano: r, recuperado: true } : { plano: planoPre, recuperado: false };
+    return r ? { plano: r, recuperado: true } : { plano: null, recuperado: false };
+  });
+  const [plano, setPlano] = React.useState<PlanoTreino | null>(inicial.plano);
+  const [salvo, setSalvo] = React.useState(Boolean(planoPre) && !inicial.recuperado);
+  const [rascunhoRecuperado, setRascunhoRecuperado] = React.useState(inicial.recuperado);
+  const guardarRascunho = useAlunos((s) => s.guardarRascunho);
+  const descartarRascunho = useAlunos((s) => s.descartarRascunho);
+  const publicarPlano = useAlunos((s) => s.publicarPlano);
 
   /*
    * O PLANO NÃO PODE SUMIR SÓ PORQUE O PROFISSIONAL SAIU DA TELA.
@@ -205,15 +190,13 @@ export function PrescreverTreino() {
    * a pílula da tela dizia "Rascunho" o tempo todo, o que promete uma guarda que não existia.
    * Quem editou meia dúzia de semanas na mão perdia o trabalho num toque, sem aviso nenhum.
    *
-   * Isto NÃO decide o que "publicar" significa, que é uma decisão de produto ainda em aberto:
-   * o único botão que persiste de verdade continua sendo o de publicar no app do aluno. O que
-   * muda é que o rascunho passa a sobreviver à navegação, guardado na sessão do navegador e
-   * devolvido ao voltar, com um aviso dizendo que ele foi recuperado e ainda não está salvo.
+   * O rascunho sobrevive à navegação (na store, por aluno) e volta com um aviso dizendo que
+   * ele ainda não está no app do aluno. Publicar continua sendo o único gesto que o entrega.
    */
   React.useEffect(() => {
-    if (!plano || salvo) return;
-    gravarRascunho(plano);
-  }, [plano, salvo]);
+    if (!plano || salvo || !plano.alunoId) return;
+    guardarRascunho(plano);
+  }, [plano, salvo, guardarRascunho]);
 
   // `?modelo=` chega das aulas do Aprender ("aplicar no atendimento"): o profissional
   // acabou de estudar um modelo e quer montar um plano com ele.
@@ -350,7 +333,7 @@ export function PrescreverTreino() {
   // Abrir um plano salvo via ?plano= cai direto no resultado, não no formulário vazio:
   // senão "Gerar periodização" fica armado por cima do plano salvo (a armadilha antiga).
   React.useEffect(() => {
-    if (planoPre) irParaResultado();
+    if (inicial.plano) irParaResultado();
     // roda uma vez, no carregamento
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -368,8 +351,12 @@ export function PrescreverTreino() {
       setNivel(a.nivel);
       setGrupo(a.grupoEspecial ?? "");
     }
-    setPlano(null);
+    // O aluno escolhido pode ter um treino pronto esperando: ele volta, com o aviso.
+    const r = rascunhoGuardado(id);
+    setPlano(r ?? null);
     setSalvo(false);
+    setRascunhoRecuperado(Boolean(r));
+    if (r) irParaResultado();
   };
 
   const gerarAgora = () => {
@@ -419,24 +406,47 @@ export function PrescreverTreino() {
     else salvar();
   };
 
+  // O que o aluno vê em relação ao plano aberto (src/lib/publicacao.ts, na versão da tela).
+  const publicadoNoApp = plano ? planosSalvos.find((p) => p.id === plano.id && p.status === "ativo") : undefined;
+  const estadoPub: EstadoNoEditor = !aluno
+    ? "avulso"
+    : publicadoNoApp
+      ? salvo
+        ? "publicado"
+        : "alteracoes"
+      : planoAtivoDoAluno
+        ? "substitui"
+        : "nao-publicado";
+
+  // Descartar a EDIÇÃO de um treino em uso volta à versão publicada; descartar um treino
+  // novo volta ao formulário.
+  const descartar = () => {
+    if (alunoId) descartarRascunho(alunoId);
+    setRascunhoRecuperado(false);
+    if (publicadoNoApp) {
+      setPlano(publicadoNoApp);
+      setSalvo(true);
+    } else {
+      setPlano(null);
+    }
+    toast(publicadoNoApp ? "Alterações descartadas. Voltou a versão publicada." : "Rascunho descartado.");
+  };
+
   const salvar = () => {
     if (!plano || !aluno) return;
     const jaExiste = planosSalvos.some((p) => p.id === plano.id);
+    // A porta única de publicação: grava, arquiva o anterior, fecha o pedido de treino,
+    // apaga o rascunho e carimba a data em que o aluno começa (src/lib/publicacao.ts).
+    const publicado = publicarPlano({ ...plano, alunoId: aluno.id });
+    setRascunhoRecuperado(false);
     if (jaExiste) {
-      updatePlano(plano.id, plano);
+      setPlano(publicado);
       setSalvo(true);
-      limparRascunho();
-      setRascunhoRecuperado(false);
-      toast("Plano atualizado no perfil do aluno.");
+      toast(`Alterações publicadas no app de ${aluno.nome.split(" ")[0]}.`);
     } else {
-      addPlano({ ...plano, alunoId: aluno.id });
-      limparRascunho();
-      // Primeiro salvamento de um plano novo: leva ao perfil, onde o chip "Sem treino"
-      // morre na frente do usuário, com o banner e a aba de treino aberta. Salvamentos
-      // seguintes (updatePlano) ficam na tela, com o link "Ver no perfil de {nome}".
-      // A aba vai junto: quem acabou de montar o treino quer VER o treino. Sem `?aba=`, o
-      // destino abre na Visão e o plano recém-salvo fica a mais um clique, atrás de um
-      // banner. É a mesma classe do link de avaliação que caía na Visão.
+      // Primeira publicação: leva à ficha, onde o aviso diz se o treino de fato CHEGA (o
+      // aluno já entrou no app?) e oferece o convite quando não. A aba Treino vai junto:
+      // quem acabou de publicar quer ver o treino.
       navigate(`/alunos/${aluno.id}?aba=treino`, { state: { planoSalvo: true } });
     }
   };
@@ -846,27 +856,25 @@ export function PrescreverTreino() {
           <div className="mb-3 flex justify-end">
             <PassosDaPrescricao atual={3} />
           </div>
-          {/* O rascunho voltou da sessão: o profissional precisa saber que é o trabalho dele
-              de volta, e que ele ainda não está guardado no perfil do aluno. */}
-          {rascunhoRecuperado && !salvo && (
+          {/* QUEM VÊ O QUÊ, em uma linha, enquanto houver algo por publicar. Substitui o
+              antigo "rascunho recuperado", que dizia que o trabalho voltou mas não dizia o
+              que importa: se o aluno está vendo. */}
+          {aluno && (estadoPub === "nao-publicado" || estadoPub === "substitui" || estadoPub === "alteracoes") && (
             <div
               role="status"
-              className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-card border border-warning/40 bg-warning-tint px-4 py-3 text-sm text-warning-text"
+              className="mb-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 rounded-card border border-cta/40 bg-cta-tint px-4 py-3 text-sm text-ink"
             >
-              <AlertTriangle aria-hidden className="h-4 w-4 shrink-0" />
+              <CircleDashed aria-hidden className="h-4 w-4 shrink-0 text-cta-text" />
               <span className="min-w-0 flex-1">
-                Rascunho recuperado com as suas edições. Ele ainda não está no perfil do aluno.
+                {rascunhoRecuperado ? <span className="font-semibold">Você voltou ao rascunho. </span> : null}
+                {estadoPub === "nao-publicado"
+                  ? `${aluno.nome.split(" ")[0]} ainda não vê este treino. Ele fica guardado, e a lista de alunos avisa "Não publicado" até você publicar.`
+                  : estadoPub === "substitui"
+                    ? `${aluno.nome.split(" ")[0]} continua com o treino atual. Este só entra no lugar dele quando você publicar, e antes disso você vê o que muda.`
+                    : `${aluno.nome.split(" ")[0]} continua vendo a versão publicada. Suas alterações ficam guardadas até você publicar.`}
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  limparRascunho();
-                  setRascunhoRecuperado(false);
-                  setPlano(null);
-                }}
-                className="shrink-0 font-semibold underline underline-offset-4"
-              >
-                Descartar e recomeçar
+              <button type="button" onClick={descartar} className="shrink-0 font-semibold text-ink-2 underline underline-offset-4 hover:text-ink">
+                {estadoPub === "alteracoes" ? "Descartar alterações" : "Descartar rascunho"}
               </button>
             </div>
           )}
@@ -886,7 +894,8 @@ export function PrescreverTreino() {
             onSalvar={salvar}
             onExportar={exportar}
             onPublicar={publicar}
-            onEditarContexto={() => { limparRascunho(); setRascunhoRecuperado(false); setPlano(null); }}
+            estadoPublicacao={estadoPub}
+            onEditarContexto={() => { if (alunoId) descartarRascunho(alunoId); setRascunhoRecuperado(false); setPlano(null); }}
           />
         </div>
       )}
@@ -1133,6 +1142,66 @@ function MapaJaSabe({
 
 /* ------------------------------- Resultado ------------------------------- */
 
+/**
+ * O SELO DIZ SE O ALUNO VÊ. Era "Salvo" ou "Rascunho", duas palavras do lado de quem escreve;
+ * o que o profissional precisa saber é o lado de quem recebe.
+ */
+function SeloPublicacao({ estado, aluno, desde }: { estado: EstadoNoEditor; aluno?: string; desde: number }) {
+  const nome = aluno?.split(" ")[0];
+  switch (estado) {
+    case "publicado":
+      return (
+        <Pill tone="success" icon={<Smartphone className="h-3 w-3" aria-hidden />}>
+          No app de {nome} desde {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(desde))}
+        </Pill>
+      );
+    case "alteracoes":
+      return <Pill tone="cta" icon={<CircleDashed className="h-3 w-3" aria-hidden />}>Alterações não publicadas</Pill>;
+    case "substitui":
+      return <Pill tone="cta" icon={<CircleDashed className="h-3 w-3" aria-hidden />}>Treino novo não publicado</Pill>;
+    case "nao-publicado":
+      return <Pill tone="cta" icon={<CircleDashed className="h-3 w-3" aria-hidden />}>Não publicado</Pill>;
+    default:
+      return <Pill tone="neutral">Plano avulso</Pill>;
+  }
+}
+
+/**
+ * O BOTÃO DIZ O QUE VAI ACONTECER. "Publicar no app de Júlia" com o treino já publicado e
+ * nada mudado prometia uma ação que não fazia nada; agora ele vira "Publicado" (sem o
+ * gradiente, que é só do gesto de publicar) e "Publicar alterações" quando há o que mandar.
+ */
+function BotaoPublicarPlano({
+  estado,
+  aluno,
+  podeSalvar,
+  onPublicar,
+}: {
+  estado: EstadoNoEditor;
+  aluno?: string;
+  podeSalvar: boolean;
+  onPublicar: () => void;
+}) {
+  const nome = aluno?.split(" ")[0];
+  if (estado === "publicado") {
+    return (
+      <span className={cn(buttonClasses("secondary", "sm"), "cursor-default text-success")} aria-live="polite">
+        <Check className="h-4 w-4" aria-hidden /> Publicado
+      </span>
+    );
+  }
+  return (
+    <button
+      onClick={onPublicar}
+      disabled={!podeSalvar}
+      className={cn(buttonClasses("primary", "sm"), "gradient-publicar text-white", !podeSalvar && "cursor-not-allowed opacity-50")}
+    >
+      <Send className="h-4 w-4" aria-hidden />
+      {estado === "alteracoes" ? "Publicar alterações" : nome ? `Publicar no app de ${nome}` : "Publicar no app do aluno"}
+    </button>
+  );
+}
+
 function ResultadoPlano({
   plano,
   onChange,
@@ -1147,7 +1216,10 @@ function ResultadoPlano({
   onPublicar,
   onExportar,
   onEditarContexto,
+  estadoPublicacao,
 }: {
+  /** se o aluno vê este plano, e o que falta para ver (selo e botão do cabeçalho) */
+  estadoPublicacao: EstadoNoEditor;
   plano: PlanoTreino;
   onChange: (p: PlanoTreino) => void;
   premium: boolean;
@@ -1376,6 +1448,7 @@ function ResultadoPlano({
         onVoltar={sairDoEditor}
         onExportar={onExportar}
         onPublicar={onPublicar}
+        estadoPublicacao={estadoPublicacao}
       />
     );
   }
@@ -1393,7 +1466,7 @@ function ResultadoPlano({
                   no formulário e o que ele sumia de vista assim que o plano era gerado. */}
               {plano.objetivo} · {rotuloHorizonte(plano.semanas) ?? `${plano.semanas} semanas`}
             </h2>
-            {salvo ? <Pill tone="success">Salvo</Pill> : <Pill tone="warning">Rascunho</Pill>}
+            <SeloPublicacao estado={estadoPublicacao} aluno={aluno} desde={plano.data} />
             {grupoObj && <Pill tone="analysis">{grupoObj.nome}</Pill>}
             {/* As DEMAIS condições ao lado da principal: o profissional vê, num relance,
                 tudo o que o motor considerou. Aqui vale o rótulo clínico, porque esta tela
@@ -1417,7 +1490,6 @@ function ResultadoPlano({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {salvo && <span className="text-xs text-ink-3">Salvo no perfil</span>}
           <button
             onClick={() => onExportar()}
             disabled={!podeSalvar}
@@ -1430,21 +1502,7 @@ function ResultadoPlano({
           <button onClick={() => irParaEditor(semanaFoco)} className={buttonClasses("secondary", "sm")}>
             <Pencil className="h-4 w-4" /> Editar semana {semanaFoco}
           </button>
-          {/* O ÚNICO gradiente do produto, por regra do Design System: publicar é o
-              momento em que o plano deixa de ser rascunho do profissional e vira o
-              treino que o aluno vê. */}
-          <button
-            onClick={onPublicar}
-            disabled={!podeSalvar}
-            className={cn(
-              buttonClasses("primary", "sm"),
-              "gradient-publicar text-white",
-              !podeSalvar && "cursor-not-allowed opacity-50",
-            )}
-          >
-            {salvo ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-            {aluno ? `Publicar no app de ${aluno.split(" ")[0]}` : "Publicar no app do aluno"}
-          </button>
+          <BotaoPublicarPlano estado={estadoPublicacao} aluno={aluno} podeSalvar={podeSalvar} onPublicar={onPublicar} />
         </div>
       </div>
 
@@ -2088,7 +2146,9 @@ function EditorDaSemana({
   onVoltar,
   onExportar,
   onPublicar,
+  estadoPublicacao,
 }: {
+  estadoPublicacao: EstadoNoEditor;
   plano: PlanoTreino;
   micro: Microciclo;
   meso: Mesociclo;
@@ -2227,18 +2287,7 @@ function EditorDaSemana({
             >
               <FileDown className="h-4 w-4" /> Folha da semana
             </button>
-            <button
-              onClick={onPublicar}
-              disabled={!podeSalvar}
-              className={cn(
-                buttonClasses("primary", "sm"),
-                "gradient-publicar text-white",
-                !podeSalvar && "cursor-not-allowed opacity-50",
-              )}
-            >
-              {salvo ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-              {aluno ? `Publicar no app de ${aluno.split(" ")[0]}` : "Publicar no app do aluno"}
-            </button>
+            <BotaoPublicarPlano estado={estadoPublicacao} aluno={aluno} podeSalvar={podeSalvar} onPublicar={onPublicar} />
           </div>
         </div>
         <div className="min-w-0">

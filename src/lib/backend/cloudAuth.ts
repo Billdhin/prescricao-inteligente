@@ -32,7 +32,7 @@ const setDonoLocal = (id: string | null) => {
 /** Zera os stores locais (na troca/saida de conta), para o proximo usuario nao
  *  ver os dados do anterior. */
 function limparStoresLocais() {
-  useAlunos.setState({ alunos: [], avaliacoes: [], prescricoes: [], planos: [], liberacoes: [], execucoes: [], sessaoFeedbacks: [], posturais: [], declaracoes: [] });
+  useAlunos.setState({ alunos: [], avaliacoes: [], prescricoes: [], planos: [], liberacoes: [], execucoes: [], sessaoFeedbacks: [], posturais: [], declaracoes: [], rascunhos: [] });
   useUser.setState({ name: "", cref: "", email: "", telefone: "", empresa: "", site: "", fotoDataUrl: "", logoDataUrl: "", corPrimaria: "" });
 }
 
@@ -212,7 +212,8 @@ async function hydrate(userId: string) {
       // mantém o store local como está (já é a fonte que acabou de subir)
     } else if (!localEhDesteUsuario) {
       // O local é de OUTRA conta neste aparelho: não sobe nada; usa só a nuvem.
-      useAlunos.setState({ alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, declaracoes });
+      // Os rascunhos também são da outra conta (ficam só no aparelho): saem junto.
+      useAlunos.setState({ alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, declaracoes, rascunhos: [] });
     } else {
       // A nuvem manda, mas RECONCILIA: preserva o que só existe no local (ex.: o
       // que falhou de subir antes) e re-sobe esses registros, em vez de apagá-los.

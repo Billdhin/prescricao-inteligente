@@ -43,7 +43,7 @@ const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
 
 export function ProfessionalDashboard() {
   const { name, plan } = useUser();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, loadExamples, declaracoes } = useAlunos();
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, loadExamples, declaracoes, rascunhos } = useAlunos();
   const premium = isPremiumUnlocked(plan);
   // Fallback quando o nome está vazio (o profissional pode limpar em Configurações):
   // "Olá" seco, sem a vírgula pendurada.
@@ -63,7 +63,7 @@ export function ProfessionalDashboard() {
   // Quem precisa de atenção HOJE vem da MESMA fonte do stepper do aluno
   // (avisosDoAluno), não de uma cópia da lógica: Painel, lista e tela do aluno
   // falam o mesmo "próximo passo".
-  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes };
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos };
   // "Não liberado" pendente é a pendência mais grave (tone "danger"): esses alunos
   // sobem para o topo da lista de atenção. Ordenação estável mantém o resto na
   // ordem original.
@@ -665,6 +665,7 @@ const PARTE_DO_RESUMO: Record<string, { um: string; varios: string; feminino?: b
   Avaliar: { um: "avaliação inicial", varios: "avaliações iniciais", feminino: true },
   Reavaliar: { um: "reavaliação vencida", varios: "reavaliações vencidas", feminino: true },
   Planejar: { um: "treino para montar", varios: "treinos para montar" },
+  Publicar: { um: "treino pronto para publicar", varios: "treinos prontos para publicar" },
   "Completar perfil": { um: "perfil para completar", varios: "perfis para completar" },
   Revisar: { um: "declaração de aluno para revisar", varios: "declarações de alunos para revisar", feminino: true },
   "Ver semáforo": { um: "encaminhamento para conferir", varios: "encaminhamentos para conferir" },

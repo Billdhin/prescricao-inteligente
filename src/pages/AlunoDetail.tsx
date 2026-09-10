@@ -32,6 +32,8 @@ import {
   Plus,
   ClipboardList,
   ChevronDown,
+  CircleDashed,
+  Send,
 } from "lucide-react";
 import { Card, Pill, buttonClasses, ParDado, TokenRotulado, Eyebrow, type PillTone } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, prescricaoAplicadaEm } from "@/lib/store";
@@ -41,6 +43,8 @@ import { AjustesSugeridos } from "@/components/treino/AjustesSugeridos";
 import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
 import { PosturalCard } from "@/components/treino/PosturalCard";
 import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
+import { AvisoPublicado, BotaoPublicar, CartaoRascunho, linkDoRascunho, usePublicarAgora } from "@/components/treino/PublicarTreino";
+import { rotuloDaPublicacao, situacaoDoTreino } from "@/lib/publicacao";
 import { SugestaoGrupoCard } from "@/components/treino/SugestaoGrupoCard";
 import { classificarGrupos } from "@/lib/gps/classificador";
 import { corDaFase } from "@/components/treino/PlanoEditor";
@@ -384,7 +388,7 @@ function AlunoTabs({ aba, onAba, contagens }: { aba: Aba; onAba: (a: Aba) => voi
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, declaracoes, revisarDeclaracao, addAvaliacao, updateAluno, setFotoAluno, updatePlano, removeAluno, archivePrescricao, unarchivePrescricao } =
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, declaracoes, rascunhos, revisarDeclaracao, addAvaliacao, updateAluno, setFotoAluno, updatePlano, removeAluno, archivePrescricao, unarchivePrescricao } =
     useAlunos();
   const navigate = useNavigate();
   const [confirmarExclusao, setConfirmarExclusao] = React.useState(false);
@@ -461,6 +465,11 @@ export function AlunoDetail() {
   const [aplicarPresc, setAplicarPresc] = React.useState<Prescricao | null>(null);
   // Modal de convite: o ciclo de acesso do aluno (link, senha dele, status) num só lugar.
   const [convidar, setConvidar] = React.useState(false);
+  // O aviso "treino publicado": vem do editor (state `planoSalvo`) ou do botão Publicar
+  // desta própria tela, e o profissional fecha quando quiser.
+  const [publicadoAgora, setPublicadoAgora] = React.useState(false);
+  const [avisoPublicadoFechado, setAvisoPublicadoFechado] = React.useState(false);
+  const publicarAgora = usePublicarAgora();
 
   // ?avaliar=1 (vindo de Avaliações) abre o modal de registrar avaliação; ?aba= troca
   // a aba. O estado inicial já consome ambos no primeiro paint, mas o efeito depende de
@@ -539,8 +548,11 @@ export function AlunoDetail() {
   // o painel de execução lista os últimos; a aba "App do aluno" mostra o resumo do topo.
   const feedbacksDoAluno = sessaoFeedbacks.filter((f) => f.alunoId === id).sort((a, b) => b.concluidaEm - a.concluidaEm);
   // Fonte única do ciclo (avaliar, planejar, liberar, acompanhar, reavaliar).
-  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes };
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos };
   const passo = proximoPasso(aluno, ctx);
+  // Se o aluno vê o treino, se há um pronto esperando ou alterações a publicar.
+  const situacao = situacaoDoTreino(aluno.id, planos, rascunhos);
+  const pendentePublicar = situacao.estado === "nao-publicado" || situacao.estado === "alteracoes";
   // GATE DURO, agora completo: a avaliação era só o primeiro dos oito bloqueios.
   // `podeTreino` mantém a forma {ok, motivo} que os cards desta tela consomem, mas o
   // veredito vem da prontidão inteira, e o motivo é o PRIMEIRO bloqueio de verdade.
@@ -719,14 +731,56 @@ export function AlunoDetail() {
                     Inativo
                   </span>
                 )}
+                {/* SE O ALUNO VÊ O TREINO, colado ao nome dele: é a pergunta que o
+                    profissional faz depois de gerar, e a resposta morava só no editor. */}
+                {situacao.estado !== "sem-treino" && (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-2xs font-semibold"
+                    style={
+                      pendentePublicar
+                        ? { background: "rgba(232,163,23,.2)", color: "#F0B429" }
+                        : { background: "rgba(127,227,216,.16)", color: "#7FE3D8" }
+                    }
+                  >
+                    {pendentePublicar ? <CircleDashed className="h-3 w-3" aria-hidden /> : <Smartphone className="h-3 w-3" aria-hidden />}
+                    {rotuloDaPublicacao(situacao)}
+                  </span>
+                )}
               </div>
             </div>
           </div>
           <div className="flex flex-wrap gap-2 xl:justify-end">
+            {/* PUBLICAR, ao lado do aluno, sempre que há treino pronto esperando. O treino
+                novo publica daqui (Desfazer no aviso); o que substitui um treino em uso
+                passa pelo quadro de diferenças do editor. */}
+            {situacao.estado === "nao-publicado" && (
+              <BotaoPublicar
+                onClick={() => publicarAgora(aluno, () => {
+                  setPublicadoAgora(true);
+                  setAvisoPublicadoFechado(false);
+                })}
+                className="h-11 rounded-control px-4"
+              >
+                Publicar treino
+              </BotaoPublicar>
+            )}
+            {situacao.estado === "alteracoes" && (
+              <Link
+                to={linkDoRascunho(situacao, aluno.id)}
+                className={cn(buttonClasses("primary", "sm"), "gradient-publicar h-11 rounded-control px-4 text-white")}
+              >
+                <Send className="h-4 w-4" aria-hidden /> Revisar e publicar
+              </Link>
+            )}
+            {/* Com um treino esperando publicação, ele é a ação da vez e o âmbar cede: dois
+                botões cheios lado a lado disputam o olho e nenhum dos dois ganha. */}
             <button
               onClick={() => setAvaliar(true)}
-              className="inline-flex h-11 items-center gap-2 rounded-control px-4 text-sm font-bold transition-[filter] hover:brightness-110"
-              style={{ background: "#E8A317", color: "#0B1628" }}
+              className={cn(
+                "inline-flex h-11 items-center gap-2 rounded-control px-4 text-sm transition-[filter] hover:brightness-110",
+                pendentePublicar ? "border font-semibold text-white hover:bg-white/10" : "font-bold",
+              )}
+              style={pendentePublicar ? { borderColor: "rgba(255,255,255,.2)" } : { background: "#E8A317", color: "#0B1628" }}
             >
               {avals.length ? "Reavaliar agora" : "Avaliar agora"}
             </button>
@@ -786,19 +840,10 @@ export function AlunoDetail() {
         </Card>
       )}
 
-      {planoSalvo && (
-        <Card tone="success" className="flex flex-wrap items-center gap-3 p-4">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface text-success">
-            <CalendarRange className="h-4 w-4" />
-          </span>
-          <p className="min-w-0 flex-1 text-sm text-ink">
-            <span className="font-semibold">Treino montado para {aluno.nome.split(" ")[0]}.</span> Já está no
-            perfil, com a periodização e a progressão organizadas.
-          </p>
-          <button onClick={() => irParaCard("treino", "treino-card")} className={buttonClasses("secondary", "sm")}>
-            Ver o treino
-          </button>
-        </Card>
+      {/* Publicado agora (pelo editor ou pelo botão acima): a confirmação diz se o treino
+          chega de fato, e oferece o convite quando o aluno ainda não entrou no app. */}
+      {(planoSalvo || publicadoAgora) && !avisoPublicadoFechado && situacao.estado === "publicado" && (
+        <AvisoPublicado aluno={aluno} onConvidar={() => setConvidar(true)} onFechar={() => setAvisoPublicadoFechado(true)} />
       )}
 
       {aplicado && (
@@ -874,7 +919,21 @@ export function AlunoDetail() {
                 toast("Dispensado.");
               }}
             />
-            <VisaoTreino aluno={aluno} plano={planoAtivo} alunoId={aluno.id} onVer={() => setAba("treino")} podeTreino={podeTreino} />
+            {pendentePublicar && (
+              <CartaoRascunho
+                aluno={aluno}
+                situacao={situacao}
+                onPublicado={() => {
+                  setPublicadoAgora(true);
+                  setAvisoPublicadoFechado(false);
+                }}
+              />
+            )}
+            {/* Com um treino pronto esperando, o "Sem treino montado" mentiria: o cartão
+                acima já diz o que há e o que falta. */}
+            {!(situacao.estado === "nao-publicado") && (
+              <VisaoTreino aluno={aluno} plano={planoAtivo} alunoId={aluno.id} onVer={() => setAba("treino")} podeTreino={podeTreino} />
+            )}
             <VisaoAvaliacao aluno={aluno} avals={avals} reav={reav} vencida={reavaliacaoVencida} onVer={() => setAba("avaliacoes")} onAvaliar={() => setAvaliar(true)} />
             <VisaoNoApp
               aluno={aluno}
@@ -1007,7 +1066,20 @@ export function AlunoDetail() {
           */}
           <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <div className="min-w-0 space-y-4">
-            <PlanoCard aluno={aluno} planos={planosDoAluno} podeTreino={podeTreino} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} />
+            {pendentePublicar && (
+              <CartaoRascunho
+                id={situacao.estado === "nao-publicado" ? "treino-card" : undefined}
+                aluno={aluno}
+                situacao={situacao}
+                onPublicado={() => {
+                  setPublicadoAgora(true);
+                  setAvisoPublicadoFechado(false);
+                }}
+              />
+            )}
+            {situacao.estado !== "nao-publicado" && (
+              <PlanoCard aluno={aluno} planos={planosDoAluno} podeTreino={podeTreino} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} />
+            )}
 
             {planoAtivo && (
               <div id="execucao-card" className="scroll-mt-24">

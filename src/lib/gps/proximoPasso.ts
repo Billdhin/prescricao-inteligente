@@ -53,6 +53,8 @@ export interface ProximoPasso {
   tone: PassoTone;
   /** rótulo curto para o chip da lista; null quando o aluno está em dia */
   chip: { label: string; tone: ChipTone } | null;
+  /** o aluno pediu o treino pelo app e ainda espera (a rota do dia o põe na frente) */
+  pediuTreino?: boolean;
 }
 
 export interface CicloCtx {
@@ -80,7 +82,15 @@ export interface CicloCtx {
    * revisá-la, antes de qualquer outra coisa, porque ela pode mudar a avaliação e o plano.
    */
   declaracoes?: { alunoId?: string; status?: string; campo?: string; declaradaEm?: number }[];
+  /**
+   * Treinos gerados e ainda não publicados (src/lib/publicacao.ts). Opcional pelo mesmo
+   * motivo das declarações. Com um rascunho e sem treino ativo, o passo é publicar.
+   */
+  rascunhos?: { alunoId?: string; data?: number }[];
 }
+
+/** O chip do treino pronto e não publicado: `verboDaParada` e a lista o reconhecem por ele. */
+export const CHIP_NAO_PUBLICADO = "Não publicado";
 
 /**
  * Quantos dias de silêncio já são sinal, para este plano.
@@ -127,7 +137,10 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
     ...passo,
     tone: "cta",
     frase: `Pediu o treino${quando}. ${passo.frase}`,
-    chip: { label: "Pediu o treino", tone: "cta" },
+    // Com o treino já pronto, o chip continua dizendo o que falta fazer ("Não publicado"):
+    // o pedido está na frase, e o que o profissional precisa ver na lista é o clique que falta.
+    chip: passo.chip?.label === CHIP_NAO_PUBLICADO ? passo.chip : { label: "Pediu o treino", tone: "cta" },
+    pediuTreino: true,
   };
 }
 
@@ -193,6 +206,20 @@ function passoDoCiclo(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
         frase: "A última avaliação pede encaminhamento antes de treinar. Confira no semáforo.",
         cta: { label: "Ver o semáforo", kind: "liberar", to: `/alunos/${aluno.id}?aba=semaforo` },
         chip: { label: "Encaminhar", tone: "warning" },
+      };
+    }
+    // 2b) O TREINO JÁ FOI GERADO e só falta publicar. Vem antes das pendências de perfil:
+    //     o profissional já passou por elas ao gerar, e o que separa o aluno do treino
+    //     agora é um clique. Sem este passo a carteira dizia "Sem treino" de quem tinha um
+    //     pronto esperando, e o rascunho só existia para quem voltasse à tela de prescrição.
+    const rascunho = (ctx.rascunhos ?? []).find((r) => r.alunoId === aluno.id);
+    if (rascunho) {
+      return {
+        etapa: "planejar",
+        tone: "cta",
+        frase: `O treino foi gerado${rascunho.data ? ` em ${fmtDDMM(rascunho.data)}` : ""} e ainda não está no app do aluno. Publique para ele chegar ao celular.`,
+        cta: { label: "Revisar e publicar", kind: "planejar", to: `/prescrever-treino?aluno=${aluno.id}` },
+        chip: { label: CHIP_NAO_PUBLICADO, tone: "cta" },
       };
     }
     if (doPerfil.length > 0) {

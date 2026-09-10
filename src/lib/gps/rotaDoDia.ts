@@ -1,5 +1,5 @@
 import type { Aluno } from "@/data/alunos";
-import { proximoPasso, type CicloCtx, type EtapaCiclo, type ProximoPasso } from "./proximoPasso";
+import { proximoPasso, CHIP_NAO_PUBLICADO, type CicloCtx, type EtapaCiclo, type ProximoPasso } from "./proximoPasso";
 
 /**
  * "SUA ROTA DE HOJE": as paradas que o profissional tem pela frente neste dia, em
@@ -92,6 +92,8 @@ export function verboDaParada(passo: ProximoPasso, alunoId: string): string {
     case "reavaliar":
       return "Reavaliar";
     case "planejar":
+      // O treino já existe e só falta chegar ao aluno: o verbo é publicar, não planejar.
+      if (passo.chip?.label === CHIP_NAO_PUBLICADO) return "Publicar";
       if (destino.includes("/perfil")) return "Completar perfil";
       if (destino === `/alunos/${alunoId}`) return "Revisar";
       return "Planejar";
@@ -135,7 +137,7 @@ export function rotaDoDia(alunos: Aluno[], ctx: CicloCtx): RotaDoDia {
       acaoCurta: verboDaParada(passo, aluno.id),
       to: passo.cta.to,
       tone: passo.tone,
-      pediuTreino: passo.chip?.label === "Pediu o treino" || undefined,
+      pediuTreino: passo.pediuTreino,
     });
   }
 

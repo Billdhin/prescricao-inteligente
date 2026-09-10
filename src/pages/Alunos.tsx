@@ -19,12 +19,14 @@ import {
   linkDoPasso,
   ETAPAS,
   ROTULO_ETAPA,
+  CHIP_NAO_PUBLICADO,
   type CicloCtx,
   type ProximoPasso,
   type EtapaCiclo,
 } from "@/lib/gps/proximoPasso";
 import { cn } from "@/lib/utils";
 import { AvatarAluno } from "@/components/alunos/FotoAluno";
+import { BotaoPublicar, usePublicarAgora } from "@/components/treino/PublicarTreino";
 
 const DIA = 86_400_000;
 
@@ -79,7 +81,7 @@ function prioridade(chip: ProximoPasso["chip"]): number {
 const FILTROS_VALIDOS = new Set<string>(["todos", "pausados", ...ETAPAS]);
 
 export function Alunos() {
-  const { alunos, addAluno, loadExamples, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes } = useAlunos();
+  const { alunos, addAluno, loadExamples, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos } = useAlunos();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   // Busca e filtro na URL: ver o bloco de comentário acima do componente.
@@ -115,7 +117,7 @@ export function Alunos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params, setParams]);
 
-  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes };
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos };
 
   // Deriva o próximo passo de cada aluno uma vez, para chip + ordenação + resumo.
   const comPasso = React.useMemo(
@@ -126,7 +128,7 @@ export function Alunos() {
         temPlanoAtivo: planos.some((p) => p.alunoId === a.id && p.status === "ativo"),
       })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes],
+    [alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos],
   );
 
   const ativos = comPasso.filter((x) => x.aluno.status === "ativo").length;
@@ -280,6 +282,7 @@ export function Alunos() {
                     aluno={aluno}
                     passo={passo}
                     planoAtivo={planos.find((p) => p.alunoId === aluno.id && p.status === "ativo")}
+                    temRascunho={rascunhos.some((r) => r.alunoId === aluno.id)}
                     treinos7d={treinos7d.get(aluno.id) ?? 0}
                   />
                 ))}
@@ -365,13 +368,20 @@ function LinhaTabela({
   aluno,
   passo,
   planoAtivo,
+  temRascunho,
   treinos7d,
 }: {
   aluno: Aluno;
   passo: ProximoPasso;
   planoAtivo?: import("@/data/periodizacao").PlanoTreino;
+  /** há um treino gerado e ainda não publicado para este aluno */
+  temRascunho?: boolean;
   treinos7d: number;
 }) {
+  const publicarAgora = usePublicarAgora();
+  // Treino novo pronto e sem nenhum no app: publica da própria linha. Com treino no app, a
+  // versão nova passa pelo quadro de diferenças do editor, e a linha só avisa.
+  const publicaDaqui = !planoAtivo && passo.chip?.label === CHIP_NAO_PUBLICADO;
   const restr = aluno.restricoes;
   const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
   const reav = dataReavaliacao(aluno, planoAtivo);
@@ -409,6 +419,7 @@ function LinhaTabela({
           <span className="flex items-center gap-2">
             <b className="truncate text-sm font-semibold text-ink">{aluno.nome}</b>
             {aluno.status !== "ativo" && <Pill tone="neutral">Saiu</Pill>}
+            {planoAtivo && temRascunho && <Pill tone="cta">Alterações não publicadas</Pill>}
           </span>
           <span className="block truncate text-xs text-ink-2">
             {aluno.objetivo} · {aluno.nivel}
@@ -452,6 +463,15 @@ function LinhaTabela({
       <span className={cn("hidden text-[13px] font-semibold lg:block", reavVencida ? "text-danger" : "text-ink-2")}>
         {reavTexto ?? "·"}
       </span>
+      {/* O botão fica ACIMA do link esticado da linha (relative + z) e aparece também no
+          celular, onde as outras colunas somem: é a ação que falta, não um dado. */}
+      {publicaDaqui ? (
+        <span className="relative z-[1] justify-self-start pl-[52px] lg:justify-self-end lg:pl-0">
+          <BotaoPublicar onClick={() => publicarAgora(aluno)} className="h-9 px-3.5">
+            Publicar
+          </BotaoPublicar>
+        </span>
+      ) : (
       <span className="relative hidden justify-self-end lg:block">
         {passo.chip ? (
           <Link
@@ -467,6 +487,7 @@ function LinhaTabela({
           </Pill>
         )}
       </span>
+      )}
     </div>
   );
 }
