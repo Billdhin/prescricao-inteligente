@@ -13,6 +13,7 @@ import { toast } from "@/lib/toast";
 import { EQUIPAMENTOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { descricaoOpcao } from "@/data/opcoes-wizard";
 import { specialGroups } from "@/data/specialGroups";
+import { farmacosAtivos } from "@/data/farmacos";
 import {
   CATALOGO_RESTRICOES,
   GRUPOS_RESTRICAO,
@@ -413,6 +414,7 @@ function SecaoSaude({
   onPatch: (p: Partial<Aluno>) => void;
   onIrPara: (s: SecaoPerfilId) => void;
 }) {
+  const classesMarcadas = farmacosAtivos(aluno.farmacos).length;
   return (
     <div className="space-y-4">
       <CondicaoDeSaude aluno={aluno} onPatch={onPatch} />
@@ -422,19 +424,31 @@ function SecaoSaude({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface-soft p-4">
         <div className="min-w-0">
           <h3 className="font-display font-bold text-ink">Medicamentos em uso</h3>
-          <p className="text-sm text-ink-2">Só a classe. Ajuda a ler frequência cardíaca e glicemia.</p>
+          <p className="text-sm text-ink-2">
+            {classesMarcadas > 0
+              ? `${classesMarcadas} classe${classesMarcadas === 1 ? "" : "s"} marcada${classesMarcadas === 1 ? "" : "s"}.`
+              : "Só a classe. Ajuda a ler frequência cardíaca e glicemia."}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => onIrPara("medicamentos")} className={buttonClasses("secondary", "sm")}>
-            Preencher
+            {classesMarcadas > 0 ? "Ver" : "Preencher"}
           </button>
-          <button
-            type="button"
-            onClick={() => onPatch({ farmacosNaoInformado: true })}
-            className={cn(buttonClasses("ghost", "sm"), aluno.farmacosNaoInformado && "text-success-text")}
-          >
-            {aluno.farmacosNaoInformado ? "Marcado: não informado" : "Não sei / não informar"}
-          </button>
+          {/* O atalho só existe enquanto não há classe marcada: com classe declarada, "não
+              sei" apagaria a declaração daqui, sem mostrar o que estava sendo apagado. E ele
+              desmarca no segundo clique, como o do passo de medicamentos. */}
+          {classesMarcadas === 0 && (
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={Boolean(aluno.farmacosNaoInformado)}
+              onClick={() => onPatch({ farmacosNaoInformado: aluno.farmacosNaoInformado ? undefined : true })}
+              className={cn(buttonClasses("ghost", "sm"), aluno.farmacosNaoInformado && "text-success-text")}
+            >
+              {aluno.farmacosNaoInformado && <Check aria-hidden className="h-4 w-4" />}
+              {aluno.farmacosNaoInformado ? "Não informado" : "Não sei / não informar"}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -779,9 +793,8 @@ function SecaoMedicamentos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
   return (
     <MedicamentosDoPerfil
       value={aluno.farmacos ?? []}
-      onChange={(f) => onPatch({ farmacos: f.length ? f : undefined, farmacosNaoInformado: undefined })}
       naoInformado={Boolean(aluno.farmacosNaoInformado)}
-      onNaoInformado={(v) => onPatch({ farmacosNaoInformado: v || undefined })}
+      onChange={(f, naoSei) => onPatch({ farmacos: f.length ? f : undefined, farmacosNaoInformado: naoSei || undefined })}
       idBase="perfil-farm"
     />
   );

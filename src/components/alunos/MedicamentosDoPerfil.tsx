@@ -45,16 +45,22 @@ import {
  */
 export function MedicamentosDoPerfil({
   value,
+  naoInformado = false,
   onChange,
-  naoInformado,
-  onNaoInformado,
   idBase = "perfil-farm",
 }: {
   value: FarmacoSelecionado[];
-  onChange: (next: FarmacoSelecionado[]) => void;
   /** o profissional declarou que não sabe ou prefere não informar */
   naoInformado?: boolean;
-  onNaoInformado?: (v: boolean) => void;
+  /**
+   * UMA chamada com os DOIS campos, e não um callback para cada.
+   *
+   * Eram dois (`onChange` e `onNaoInformado`), e o "Não sei" não marcava: o clique gravava
+   * `naoInformado: true` e logo depois gravava a lista vazia, e a gravação da lista, por
+   * regra, limpava o "não sei". A segunda desfazia a primeira no mesmo clique. Os dois campos
+   * são um estado só (o que se sabe sobre a medicação), então mudam juntos.
+   */
+  onChange: (farmacos: FarmacoSelecionado[], naoInformado: boolean) => void;
   idBase?: string;
 }) {
   const [busca, setBusca] = React.useState("");
@@ -66,23 +72,25 @@ export function MedicamentosDoPerfil({
 
   const toggle = (classe: FarmacoClasseId) => {
     if (selMap.has(classe)) {
-      onChange(value.filter((f) => f.classe !== classe));
+      onChange(
+        value.filter((f) => f.classe !== classe),
+        false,
+      );
       return;
     }
     // Declarar uma classe e ao mesmo tempo dizer que não sabe seria contraditório: a
     // declaração vence, e o "não sei" cai.
-    onNaoInformado?.(false);
-    onChange([...value, criarFarmaco(classe)]);
+    onChange([...value, criarFarmaco(classe)], false);
   };
 
-  const marcarNaoInformado = () => {
-    const proximo = !naoInformado;
-    onNaoInformado?.(proximo);
-    if (proximo) onChange([]);
-  };
+  // Marcar "não sei" limpa as classes; desmarcar devolve a pergunta ao estado em branco.
+  const marcarNaoInformado = () => onChange([], !naoInformado);
 
   const patch = (classe: FarmacoClasseId, p: Partial<FarmacoSelecionado>) =>
-    onChange(value.map((f) => (f.classe === classe ? { ...f, ...p, atualizadoEm: agora() } : f)));
+    onChange(
+      value.map((f) => (f.classe === classe ? { ...f, ...p, atualizadoEm: agora() } : f)),
+      false,
+    );
 
   const q = busca.trim().toLowerCase();
   const casa = (it: FarmacoCatalogoItem) =>
@@ -143,24 +151,22 @@ export function MedicamentosDoPerfil({
         ) : (
           <span className="text-sm text-ink-3">{naoInformado ? "não informado" : "nenhuma classe marcada"}</span>
         )}
-        {onNaoInformado && (
-          <button
-            type="button"
-            role="checkbox"
-            aria-checked={Boolean(naoInformado)}
-            onClick={marcarNaoInformado}
-            title="Responder isto é melhor que deixar em branco."
-            className={cn(
-              "ml-auto inline-flex min-h-[36px] items-center gap-2 rounded-full border px-3 text-sm font-semibold transition-colors",
-              naoInformado
-                ? "border-primary bg-primary-tint text-primary"
-                : "border-border bg-surface text-ink-2 hover:bg-surface-soft hover:text-ink",
-            )}
-          >
-            <Caixa marcada={Boolean(naoInformado)} />
-            Não sei ou prefere não informar
-          </button>
-        )}
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={naoInformado}
+          onClick={marcarNaoInformado}
+          title="Responder isto é melhor que deixar em branco."
+          className={cn(
+            "ml-auto inline-flex min-h-[36px] items-center gap-2 rounded-full border px-3 text-sm font-semibold transition-colors",
+            naoInformado
+              ? "border-primary bg-primary-tint text-primary"
+              : "border-border bg-surface text-ink-2 hover:bg-surface-soft hover:text-ink",
+          )}
+        >
+          <Caixa marcada={naoInformado} />
+          Não sei ou prefere não informar
+        </button>
       </div>
       {naoInformado && (
         <p className="-mt-2 text-xs leading-relaxed text-ink-2">
