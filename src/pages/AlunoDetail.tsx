@@ -16,7 +16,6 @@ import {
   UserMinus,
   UserCheck,
   LayoutGrid,
-  FlaskConical,
   HeartPulse,
   FileDown,
   FileText,
@@ -34,17 +33,18 @@ import {
   ClipboardList,
   ChevronDown,
 } from "lucide-react";
-import { Card, Pill, buttonClasses, ParDado, LinhaDeDose, LinhaDeTokens, TokenRotulado, Eyebrow, type PillTone } from "@/components/ui/primitives";
-import { TokenDose } from "@/components/gps/TermoDoseInfo";
+import { Card, Pill, buttonClasses, ParDado, TokenRotulado, Eyebrow, type PillTone } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, prescricaoAplicadaEm } from "@/lib/store";
 import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
-import { ExecucaoPanel, PseBadge } from "@/components/treino/ExecucaoPanel";
+import { SemanaExecutada, AtencaoDaSemana, resumoDaSemana } from "@/components/treino/SemanaExecutada";
+import { AjustesSugeridos } from "@/components/treino/AjustesSugeridos";
 import { FinanceiroCard } from "@/components/treino/FinanceiroCard";
 import { PosturalCard } from "@/components/treino/PosturalCard";
 import { LinhaDoCuidado } from "@/components/treino/LinhaDoCuidado";
 import { SugestaoGrupoCard } from "@/components/treino/SugestaoGrupoCard";
 import { classificarGrupos } from "@/lib/gps/classificador";
-import { ListaChips } from "@/components/treino/PlanoEditor";
+import { corDaFase } from "@/components/treino/PlanoEditor";
+import { chaveDaFase, indicesDeCorDasFases, nomeDaFase } from "@/lib/gps/fasesDoPlano";
 import { proximoPasso, estadoDoCiclo, dataReavaliacao, type CicloCtx, type ProximoPasso } from "@/lib/gps/proximoPasso";
 import { prontidaoParaPrescrever, type Prontidao } from "@/lib/gps/prontidao";
 import { ProntidaoAviso } from "@/components/alunos/ProntidaoAviso";
@@ -61,11 +61,10 @@ import { ProntuarioView } from "@/components/rcd/ProntuarioView";
 import { exercises } from "@/data/exercises";
 import type { Aluno, Prescricao, Liberacao, Avaliacao } from "@/data/alunos";
 import type { SessaoFeedback, Execucao } from "@/data/execucao";
-import { nomeDoBloco, tokensDoBloco } from "@/components/student/blocoRegistro";
 import { tempoDesde, sugestaoProgressao } from "@/data/alunos";
 import { ROTULO_STATUS_COBRANCA, formatBRL, statusEfetivo } from "@/data/cobranca";
 import { getSpecialGroup } from "@/data/specialGroups";
-import { getModelo, rotuloMeso, rotuloFrequencia, semanaAtual, mesocicloAtual, proximaReavaliacao, sessoesDeHoje, sessaoDeHojeIndex, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
+import { getModelo, rotuloMeso, rotuloFrequencia, semanaAtual, mesocicloAtual, proximaReavaliacao, parametrosPadraoTreino, type PlanoTreino } from "@/data/periodizacao";
 import { ModalidadePills, ParametroPills, CriteriosLista } from "@/components/special/SpecialUI";
 import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
@@ -130,6 +129,11 @@ const MESES_ABREV = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "se
 const fmtMesAno = (ts: number) => {
   const d = new Date(ts);
   return `${MESES_ABREV[d.getMonth()]}/${d.getFullYear()}`;
+};
+/** Dia e mês curtos ("30 jun"), para listas densas. */
+const fmtDiaMesCurto = (ts: number) => {
+  const d = new Date(ts);
+  return `${String(d.getDate()).padStart(2, "0")} ${MESES_ABREV[d.getMonth()]}`;
 };
 
 /** Menu "..." do cabeçalho do aluno: as ações menos frequentes (editar perfil,
@@ -557,6 +561,15 @@ export function AlunoDetail() {
   const libsAlunoDesc = liberacoes.filter((l) => l.alunoId === id).sort((a, b) => b.data - a.data);
   const estadoSem = estadoSemaforo(id, liberacoes);
   const prescAberta = prontuarioDe ? prescs.find((p) => p.id === prontuarioDe) : undefined;
+  // "Atenção da semana": a última semana DESTE plano com registro, lida pela mesma função
+  // do cartão da execução (a frase e a tabela não podem discordar).
+  const ultimaSemanaExecutada = planoAtivo
+    ? Math.max(0, ...execucoesDoAluno.filter((e) => e.planoId === planoAtivo.id).map((e) => e.semana ?? 0))
+    : 0;
+  const atencao =
+    planoAtivo && ultimaSemanaExecutada > 0
+      ? resumoDaSemana(planoAtivo, ultimaSemanaExecutada, execucoesDoAluno, feedbacksDoAluno)
+      : undefined;
 
   // Paginador da carteira: navegar entre alunos na MESMA ordem da lista, sem voltar.
   const idxAluno = alunos.findIndex((a) => a.id === aluno.id);
@@ -985,43 +998,51 @@ export function AlunoDetail() {
             avulsas, e so entao o planejamento. Nada sumiu, e ele pediu isso: "pode ter a
             jornada, mas com menos foco, mais abaixo".
           */}
-          <div className="grid gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
-            <PlanoCard aluno={aluno} planos={planosDoAluno} execucoes={execucoesDoAluno} podeTreino={podeTreino} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} />
+          {/*
+            O DESENHO DO PROTÓTIPO DA PLATAFORMA (08/09/2026): à esquerda o que se decide
+            (o plano, o que o aluno fez com ele, os ajustes, as prescrições), à direita o que
+            se confere antes de decidir (o semáforo de hoje, a atenção da semana e o
+            prontuário). A proporção 1,5 : 1 é a do protótipo.
+          */}
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <div className="min-w-0 space-y-4">
+            <PlanoCard aluno={aluno} planos={planosDoAluno} podeTreino={podeTreino} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} />
 
-            <div id="execucao-card" className="scroll-mt-24">
-              <ExecucaoPanel
-                plano={planoAtivo}
-                execucoes={execucoesDoAluno}
-                sessaoFeedbacks={feedbacksDoAluno}
-                liberacoes={liberacoes}
-                alunoId={aluno.id}
-                aluno={aluno}
-                estadoSemaforo={estadoSem}
-                ultimaAvaliacao={avalsDesc[0]}
-                onAplicarPlano={(planoId, patch) => updatePlano(planoId, patch)}
-              />
-            </div>
+            {planoAtivo && (
+              <div id="execucao-card" className="scroll-mt-24">
+                <SemanaExecutada
+                  plano={planoAtivo}
+                  execucoes={execucoesDoAluno}
+                  feedbacks={feedbacksDoAluno}
+                  rodapeDaProxima={<EscalasDoDia aluno={aluno} plano={planoAtivo} />}
+                />
+              </div>
+            )}
 
-          <Card id="prescricoes-card" className="scroll-mt-24 p-5 md:p-6">
-            <div className="mb-3 flex items-center justify-between">
+            <AjustesSugeridos
+              plano={planoAtivo}
+              execucoes={execucoesDoAluno}
+              feedbacks={feedbacksDoAluno}
+              aluno={aluno}
+              estadoSemaforo={estadoSem}
+              ultimaAvaliacao={avalsDesc[0]}
+              onAplicarPlano={(planoId, patch) => updatePlano(planoId, patch)}
+            />
+
+          <Card id="prescricoes-card" className="scroll-mt-24 p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-lg font-bold text-ink">Prescrições</h2>
-              {/* Sem plano ativo, a porta daqui é a prescrição avulsa ("Nova prescrição").
-                  COM plano, "personalizar o treino do dia" vive só no card do plano acima,
-                  para não oferecer a mesma ação duas vezes na mesma aba. */}
-              {!planoAtivo &&
-                (podeTreino.ok ? (
-                  <Link
-                    to={`/gps?aluno=${aluno.id}`}
-                    className="text-sm font-semibold text-primary hover:underline"
-                  >
-                    Nova prescrição
-                  </Link>
-                ) : (
-                  <span className="text-sm font-semibold text-ink-3" aria-disabled>
-                    Nova prescrição
-                  </span>
-                ))}
+              {/* A escolha de exercícios com o perfil do aluno. Com plano, ela termina
+                  dentro de uma sessão do plano; sem plano, fica salva aqui. */}
+              {podeTreino.ok ? (
+                <Link to={`/gps?aluno=${aluno.id}`} className={buttonClasses("secondary", "sm")}>
+                  Nova prescrição
+                </Link>
+              ) : (
+                <button disabled className={buttonClasses("secondary", "sm")}>
+                  Nova prescrição
+                </button>
+              )}
             </div>
             {/* Gate duro: o que falta para prescrever, com o atalho de cada item. */}
             {!podeTreino.ok && (
@@ -1029,67 +1050,50 @@ export function AlunoDetail() {
             )}
             {prescs.length === 0 ? (
               podeTreino.ok && (
-                <div className="rounded-xl border border-dashed border-border p-4 text-center">
-                  <p className="text-sm text-ink-2">Sem prescrição ainda.</p>
-                  {/* CTA só sem plano: com plano, "personalizar o treino do dia" é do card do plano. */}
-                  {!planoAtivo && (
-                    <Link
-                      to={`/gps?aluno=${aluno.id}`}
-                      className={cn(buttonClasses("secondary", "sm"), "mt-3")}
-                    >
-                      <Navigation className="h-4 w-4" /> Prescrever agora
-                    </Link>
-                  )}
-                </div>
+                <p className="rounded-card border border-dashed border-border p-4 text-center text-sm text-ink-2">
+                  Sem prescrição ainda. Cada escolha de exercícios fica registrada aqui, com o prontuário da decisão.
+                </p>
               )
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {prescs.map((p) => {
                   // Vínculo reverso DERIVADO: onde (se) esta prescrição já entrou no plano.
                   const local = prescricaoAplicadaEm(planosDoAluno, p.id);
                   const podeColocar = Boolean(planoAtivo) && p.status === "ativa" && !local;
                   return (
-                  <div key={p.id} className="rounded-xl border border-border p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate font-semibold text-ink">{p.titulo}</span>
-                      <Pill tone={p.status === "ativa" ? "success" : "neutral"}>{p.status}</Pill>
+                  <div key={p.id} className="rounded-card border border-border px-3.5 py-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                      <span className="min-w-0 truncate text-sm font-semibold text-ink">{p.titulo}</span>
+                      <span className="tabular text-xs text-ink-2">
+                        {fmtDiaMesCurto(p.data)} · {p.status}
+                      </span>
                     </div>
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span className="tabular text-xs text-ink-3">Prescrita em {fmtData(p.data)}</span>
-                      {local && (
-                        <TokenRotulado label="No treino" value={`Semana ${local.semana} · Sessão ${local.sessao}`} tone="analysis" />
-                      )}
-                    </div>
-                    {/* Nome e dose vinculados: a dose fica logo abaixo do exercicio, nao empurrada
-                        para a borda oposta. A lista vira um bloco unico, com divisorias. */}
-                    <ul className="overflow-hidden rounded-lg border border-border">
-                      {p.itens.map((it) => (
-                        <LinhaDeDose
-                          key={it.slug}
-                          icon={<FlaskConical className="h-3.5 w-3.5" />}
-                          nome={
-                            <Link to={`/movement-lab/${it.slug}`} className="hover:text-primary">
-                              {nomeEx(it.slug)}
-                            </Link>
-                          }
-                        >
-                          {it.series ? (
-                            <>
-                              <span className="text-ink-3">Dose: </span>
-                              {it.series}
-                            </>
-                          ) : null}
-                        </LinhaDeDose>
+                    {/* O protótipo: os exercícios numa linha corrida, cada nome colado à
+                        própria dose ("Leg press 45° 3x15 · Cadeira extensora 2x15"). */}
+                    <p className="mt-1 text-xs leading-relaxed text-ink-2">
+                      {p.itens.map((it, i) => (
+                        <React.Fragment key={it.slug}>
+                          {i > 0 && " · "}
+                          <Link to={`/movement-lab/${it.slug}`} className="font-medium text-ink hover:text-primary">
+                            {nomeEx(it.slug)}
+                          </Link>
+                          {it.series ? ` ${it.series}` : ""}
+                        </React.Fragment>
                       ))}
-                    </ul>
-                    {p.observacoes && <p className="mt-2 text-xs text-ink-2">{p.observacoes}</p>}
-                    {p.raciocinio && (
-                      <p className="mt-1 text-xs text-ink-3">
-                        <span className="font-semibold">Raciocínio: </span>
-                        {p.raciocinio}
-                      </p>
+                    </p>
+                    {local && (
+                      <div className="mt-1.5">
+                        <TokenRotulado label="No treino" value={`Semana ${local.semana} · Sessão ${local.sessao}`} tone="analysis" />
+                      </div>
                     )}
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-2.5">
+                    {p.observacoes && <p className="mt-1.5 text-xs text-ink-2">{p.observacoes}</p>}
+                    {p.raciocinio && (
+                      <details className="mt-1.5 text-xs text-ink-2">
+                        <summary className="cursor-pointer font-semibold text-ink-2 hover:text-ink">Raciocínio</summary>
+                        <p className="mt-1">{p.raciocinio}</p>
+                      </details>
+                    )}
+                    <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
                       {podeColocar && (
                         <button
                           onClick={() => setAplicarPresc(p)}
@@ -1103,7 +1107,7 @@ export function AlunoDetail() {
                           onClick={() => setProntuarioDe(p.id)}
                           className="inline-flex items-center gap-1.5 text-sm font-semibold text-analysis hover:underline"
                         >
-                          <FileText className="h-4 w-4" /> Ver prontuário ({idDocumento(p.id)})
+                          <FileText className="h-4 w-4" /> Ver prontuário
                         </button>
                       )}
                       {premium ? (
@@ -1115,15 +1119,14 @@ export function AlunoDetail() {
                           }
                           className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
                         >
-                          <FileDown className="h-4 w-4" />
-                          {p.prontuario ? "Exportar prontuário assinável" : "Exportar PDF (com sua marca)"}
+                          <FileDown className="h-4 w-4" /> Baixar PDF
                         </button>
                       ) : (
                         <Link
                           to="/pricing"
                           className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-3 hover:text-ink"
                         >
-                          <Lock className="h-3.5 w-3.5" /> Exportar PDF para o aluno: plano Profissional
+                          <Lock className="h-3.5 w-3.5" /> PDF no plano Profissional
                         </Link>
                       )}
                       {p.status === "ativa" && (
@@ -1134,9 +1137,9 @@ export function AlunoDetail() {
                             // desfazer é o que separa "organizei" de "perdi".
                             toastDesfazer("Prescrição arquivada", () => unarchivePrescricao(p.id));
                           }}
-                          className="ml-auto text-sm font-medium text-ink-3 hover:text-ink"
+                          className="text-sm font-medium text-ink-2 hover:text-ink"
                         >
-                          Arquivar esta prescrição
+                          Arquivar
                         </button>
                       )}
                     </div>
@@ -1166,20 +1169,18 @@ export function AlunoDetail() {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             {/* Gate pré-sessão vale para TODO aluno: sem grupo especial, usa o checklist geral.
                 Este card é o RESUMO; a aba Semáforo tem o estado, o checklist e o histórico. */}
-            <Card className="p-5">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="font-display text-lg font-bold text-ink">Semáforo de Liberação</h2>
-              </div>
-              {/* Uma linha de estado: a aba Semáforo tem o checklist, a régua da semana
-                  e o histórico completo (sem repetir a lista aqui). */}
-              <ResumoSemaforoLinha estado={estadoSem} />
-              <button onClick={() => setAba("semaforo")} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
-                <ShieldCheck className="h-4 w-4" /> Fazer o semáforo de hoje
-              </button>
-            </Card>
+            <SemaforoDeHojeCard estado={estadoSem} onAbrir={() => setAba("semaforo")} />
+            {planoAtivo && atencao && <AtencaoDaSemana resumo={atencao} />}
+            <ProntuarioResumoCard
+              prescricoes={prescs}
+              alunoId={aluno.id}
+              primeiroNome={aluno.nome.split(" ")[0]}
+              podeEscolher={podeTreino.ok}
+              onVer={(id) => setProntuarioDe(id)}
+            />
           </div>
           </div>
         </div>
@@ -2002,41 +2003,6 @@ function SemaforoAba({
   );
 }
 
-/**
- * Uma linha do estado atual do semáforo, para o resumo na aba de treino: Pill do
- * estado + "há N dias" quando há registro. Sem lista de liberações (a aba Semáforo
- * é a fonte do estado, do checklist, da régua e do histórico).
- */
-function ResumoSemaforoLinha({ estado }: { estado: EstadoSemaforo }) {
-  if (estado.vermelhoPendente) {
-    const l = estado.vermelhoPendente;
-    return (
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-2">
-        <Pill tone="danger" icon={<XCircle className="h-3 w-3" />}>Não liberado</Pill>
-        <span>
-          em {fmtData(l.data)} · {registradoHa(l.data)}. Faça o semáforo de hoje para reabrir a sessão.
-        </span>
-      </div>
-    );
-  }
-  if (estado.ultimo) {
-    const r = estado.ultimo.resultado;
-    const tone = r === "verde" ? "success" : r === "amarelo" ? "warning" : "danger";
-    return (
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-2">
-        <Pill tone={tone}>{rotuloResultado(r)}</Pill>
-        <span>{registradoHa(estado.ultimo.data)}.</span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-2">
-      <Pill tone="neutral">Sem semáforo registrado</Pill>
-      <span>Faça o semáforo de hoje antes da sessão.</span>
-    </div>
-  );
-}
-
 /** Exclusão é irreversível (apaga avaliações, prescrições e liberações): confirma antes. */
 function ConfirmarExclusaoModal({
   nome,
@@ -2252,15 +2218,12 @@ function JornadaCard({
 function PlanoCard({
   aluno,
   planos,
-  execucoes,
   podeTreino,
   prontidao,
   onAvaliar,
 }: {
   aluno: Aluno;
   planos: PlanoTreino[];
-  /** execuções do aluno: derivam a "sessão de hoje" com os MESMOS helpers do app do aluno */
-  execucoes: Execucao[];
   /** gate duro do trilho: sem prontidão, "Montar treino" fica desabilitado */
   podeTreino: { ok: boolean; motivo?: string };
   /** o detalhe do que falta, para o card explicar em vez de só desabilitar */
@@ -2272,21 +2235,21 @@ function PlanoCard({
 
   if (!ativo) {
     return (
-      <Card id="treino-card" className="scroll-mt-24 p-5 md:p-6">
-        <h2 className="mb-3 font-display text-lg font-bold text-ink">Treino do aluno</h2>
-        <div className="rounded-xl border border-dashed border-border p-4 text-center">
+      <Card id="treino-card" className="scroll-mt-24 p-5">
+        <h2 className="mb-3 font-display text-lg font-bold text-ink">Plano de treino</h2>
+        <div className="rounded-card border border-dashed border-border p-4 text-center">
           <p className="text-sm text-ink-2">
             Sem treino montado ainda. O treino organiza os meses de {aluno.nome.split(" ")[0]} em macrociclo,
             mesociclos e semanas, com a progressão justificada.
           </p>
           {podeTreino.ok ? (
-            <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+            <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("primary", "sm"), "mt-3")}>
               <CalendarRange className="h-4 w-4" /> Montar treino
             </Link>
           ) : (
             <>
               {/* NÃO esconder o CTA: mostrar desabilitado e explicar por quê, com o atalho. */}
-              <button disabled className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+              <button disabled className={cn(buttonClasses("primary", "sm"), "mt-3")}>
                 <CalendarRange className="h-4 w-4" /> Montar treino
               </button>
               <div className="mt-3">
@@ -2296,7 +2259,7 @@ function PlanoCard({
           )}
         </div>
         {arquivados.length > 0 && (
-          <p className="mt-3 text-xs text-ink-3">
+          <p className="mt-3 text-xs text-ink-2">
             {arquivados.length} plano(s) arquivado(s) no histórico.
           </p>
         )}
@@ -2309,175 +2272,227 @@ function PlanoCard({
   const reav = proximaReavaliacao(ativo);
   const chegou = reav ? reav.em <= Date.now() + 7 * 86_400_000 : false;
   const modelo = getModelo(ativo.modeloId);
-  const pct = Math.round((semana / ativo.semanas) * 100);
 
-  // Treino de hoje: a MESMA sessão que o app do aluno abre (helpers puros compartilhados,
-  // nunca reimplementados), para o profissional e o aluno nunca divergirem sobre "hoje".
-  const sessaoHoje = sessoesDeHoje(ativo)[sessaoDeHojeIndex(ativo, execucoes)];
-
-  // Escalas de monitoramento acopladas ao treino do dia: com grupo, seguem a fase da jornada
-  // (mesma derivação do JornadaCard); sem grupo, fallback seguro por objetivo (id real, nunca
-  // inventado).
-  const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
-  const faseAluno = (Math.min(4, Math.max(1, aluno.faseJornada ?? 1))) as 1 | 2 | 3 | 4;
-  const idsParametros = grupo
-    ? (grupo.fases[faseAluno - 1] ?? grupo.fases[0]).parametros
-    : parametrosPadraoTreino(ativo.objetivo);
+  // A LINHA DAS SEMANAS pinta cada semana na cor da FASE, com a mesma regra do calendário
+  // e do gráfico do editor (fasesDoPlano): quem viu a fase 2 em azul lá encontra azul aqui.
+  // O que já passou fica cheio, o que vem fica claro, a semana de hoje ganha o contorno e a
+  // descarga é hachurada, como no calendário.
+  const semanas = ativo.macrociclo.mesociclos.flatMap((m) => m.microciclos.map((micro) => ({ micro, meso: m })));
+  const corPorFase = indicesDeCorDasFases(ativo.macrociclo.mesociclos);
 
   return (
-    <Card id="treino-card" className="scroll-mt-24 p-5 md:p-6">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="font-display text-lg font-bold text-ink">Treino do aluno</h2>
-        <Link to={`/prescrever-treino?aluno=${aluno.id}`} className="text-sm font-semibold text-primary hover:underline">
-          Gerar outro plano
+    <Card id="treino-card" className="scroll-mt-24 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-display text-lg font-bold text-ink">Plano em curso</h2>
+        {/* O plano ativo é o que o app do aluno abre: não existe publicar à parte. */}
+        <Pill tone="success">Ativo no app do aluno</Pill>
+      </div>
+      <p className="mt-1.5 text-sm font-semibold text-ink">{ativo.titulo}</p>
+      <p className="mt-0.5 text-sm text-ink-2">
+        {modelo.nome} · {ativo.semanas} semanas · {rotuloFrequencia(ativo)} ·{" "}
+        <b className="font-semibold text-ink">semana {semana}</b>
+        {meso && <> · {rotuloMeso(meso)}</>}
+      </p>
+
+      <div
+        className="mt-3.5 flex gap-[3px]"
+        role="img"
+        aria-label={`Semana ${semana} de ${ativo.semanas} do plano${meso ? `, ${nomeDaFase(meso)}` : ""}`}
+      >
+        {semanas.map(({ micro, meso: m }) => {
+          const c = corDaFase(corPorFase.get(chaveDaFase(m)) ?? 0);
+          const passou = micro.semana <= semana;
+          const descarga = micro.tipo === "deload";
+          return (
+            <span
+              key={micro.id}
+              title={`Semana ${micro.semana} · ${nomeDaFase(m)}${descarga ? " · descarga" : ""}`}
+              className={cn(
+                "h-2 min-w-0 flex-1 rounded-full",
+                micro.semana === semana && "ring-2 ring-ink ring-offset-1 ring-offset-surface",
+              )}
+              style={{
+                background: passou ? c.forte : `rgba(${c.rgb},.28)`,
+                backgroundImage: descarga
+                  ? "repeating-linear-gradient(135deg, rgba(255,255,255,.6) 0 1.5px, transparent 1.5px 4px)"
+                  : undefined,
+              }}
+            />
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link to={`/prescrever-treino?plano=${ativo.id}`} className={buttonClasses("primary", "sm")}>
+          Abrir plano
+        </Link>
+        <Link to={`/prescrever-treino?plano=${ativo.id}&semana=${semana}&editar=1`} className={buttonClasses("secondary", "sm")}>
+          Editar semana {semana}
+        </Link>
+        {/* Exceção diária: personalizar a sessão desta semana sem remontar o treino. */}
+        <Link to={`/gps?aluno=${aluno.id}&modo=dia`} className={buttonClasses("secondary", "sm")}>
+          Treino do dia
         </Link>
       </div>
 
-      <div className="rounded-xl border border-border p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="truncate font-semibold text-ink">{ativo.titulo}</span>
-          <Pill tone="success">ativo</Pill>
-          <Pill tone="neutral">{modelo.nome}</Pill>
+      {/* A reavaliação é o ponto em que o plano pede uma decisão: progredir, manter ou
+          regredir. Quando ela chega, o caminho para registrar a avaliação fica aqui. */}
+      {reav && chegou && (
+        <div className="mt-3.5 flex flex-wrap items-center gap-2 rounded-control border border-analysis/30 bg-analysis-tint px-3 py-2.5 text-sm">
+          <CalendarCheck className="h-4 w-4 shrink-0 text-analysis" aria-hidden />
+          <span className="min-w-0 flex-1 basis-56 text-ink-2">
+            <span className="font-semibold text-ink">Reavaliação da semana {reav.semana}.</span> Registre as medidas para
+            decidir entre progredir, manter ou ajustar.
+          </span>
+          <button onClick={onAvaliar} className={buttonClasses("secondary", "sm")}>
+            <Activity className="h-4 w-4" /> Reavaliar
+          </button>
         </div>
-        <p className="tabular mt-0.5 text-xs text-ink-3">
-          Montado em {fmtData(ativo.data)} · {ativo.frequenciaSemanal}x por semana
-        </p>
-
-        {/* Onde o plano está, contando do calendário */}
-        <div className="mt-3">
-          <div className="mb-1 flex items-baseline justify-between text-sm">
-            <span className="font-semibold text-ink">
-              Semana {semana} de {ativo.semanas}
-            </span>
-            <span className="text-xs text-ink-3">contando desde {fmtData(ativo.data)}</span>
-          </div>
-          <div
-            className="h-2 w-full overflow-hidden rounded-full bg-surface-soft"
-            role="progressbar"
-            aria-valuenow={semana}
-            aria-valuemin={1}
-            aria-valuemax={ativo.semanas}
-            aria-label={`Semana ${semana} de ${ativo.semanas} do plano`}
-          >
-            <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-          </div>
-        </div>
-
-        {meso && (
-          <div className="mt-3 rounded-lg bg-surface-soft p-2.5">
-            <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Bloco atual do plano (pelo calendário)</p>
-            <p className="text-sm font-semibold text-ink">{rotuloMeso(meso)}</p>
-            <p className="text-xs text-ink-2">{meso.foco}</p>
-            {meso.capacidades.length > 0 && (
-              <div className="mt-2">
-                <ListaChips titulo="Capacidades priorizadas" itens={meso.capacidades} />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Treino de hoje: o conteúdo da sessão que o aluno abre hoje, aqui mesmo no perfil,
-            sem precisar da prévia ou do editor. O semáforo é recomendado, não bloqueia isto. */}
-        {sessaoHoje && (
-          <div className="mt-3 rounded-lg border border-border p-3">
-            <div className="mb-1.5 flex items-center gap-1.5">
-              <Dumbbell className="h-3.5 w-3.5 text-primary" />
-              <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Treino de hoje</p>
-            </div>
-            <p className="text-sm font-semibold text-ink">{sessaoHoje.nome}</p>
-            {sessaoHoje.foco && <p className="text-xs text-ink-3">{sessaoHoje.foco}</p>}
-            {sessaoHoje.blocos.length > 0 && (
-              <ul className="mt-2 overflow-hidden rounded-xl border border-border">
-                {sessaoHoje.blocos.map((b) => {
-                  const tokens = tokensDoBloco(b);
-                  return (
-                    <LinhaDeDose
-                      key={b.id}
-                      nome={nomeDoBloco(b)}
-                      icon={b.tipo === "aerobio" ? <HeartPulse className="h-4 w-4" /> : <Dumbbell className="h-4 w-4" />}
-                    >
-                      {tokens.length > 0 && (
-                        <LinhaDeTokens>
-                          {tokens.map((t) => (
-                            <TokenDose key={t.label} label={t.label} value={t.value} />
-                          ))}
-                        </LinhaDeTokens>
-                      )}
-                    </LinhaDeDose>
-                  );
-                })}
-              </ul>
-            )}
-            {/* Fecho de flexibilidade da sessão (onda F), quando o plano o traz. */}
-            {sessaoHoje.fecho && (
-              <div className="mt-2 rounded-lg border border-l-2 border-border border-l-primary bg-surface-soft p-2.5">
-                <p className="text-xs text-ink-2">{sessaoHoje.fecho}</p>
-              </div>
-            )}
-            {/* Escalas de monitoramento acopladas ao treino do dia (item 3): toque para ver
-                como aplicar, escala e ficha. */}
-            {idsParametros.length > 0 && (
-              <div className="mt-2.5 border-t border-border pt-2.5">
-                <p className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-3">
-                  Escalas para acompanhar hoje
-                </p>
-                <ParametroPills ids={idsParametros} contexto={{ alunoNome: aluno.nome, objetivo: ativo.objetivo }} />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* A reavaliação é o ponto em que o plano pede uma decisão: progredir, manter ou
-            regredir. Quando ela chega, o caminho para registrar a avaliação fica aqui. */}
-        {reav && (
-          <div
-            className={cn(
-              "mt-3 flex flex-wrap items-center gap-2 rounded-lg p-2.5 text-sm",
-              chegou ? "border border-analysis/40 bg-primary-tint" : "",
-            )}
-          >
-            <CalendarCheck className="h-4 w-4 shrink-0 text-analysis" />
-            <span className="min-w-0 flex-1 text-ink-2">
-              {chegou ? (
-                <>
-                  <span className="font-semibold text-ink">Reavaliação da semana {reav.semana}.</span> Registre
-                  as medidas para decidir entre progredir, manter ou ajustar.
-                </>
-              ) : (
-                <>Próxima reavaliação prevista na semana {reav.semana}, por volta de {fmtData(reav.em)}.</>
-              )}
-            </span>
-            {chegou && (
-              <button onClick={onAvaliar} className={buttonClasses("secondary", "sm")}>
-                <Activity className="h-4 w-4" /> Reavaliar
-              </button>
-            )}
-          </div>
-        )}
-
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-2.5">
-          <Link
-            to={`/prescrever-treino?plano=${ativo.id}`}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
-          >
-            <CalendarRange className="h-4 w-4" /> Abrir e editar o plano
-          </Link>
-          {/* Exceção diária: personalizar a sessão desta semana sem remontar o treino.
-              É o ÚNICO ponto de entrada para "personalizar o treino do dia" (o card
-              Prescrições não repete). O semáforo tem o card-resumo próprio ao lado. */}
-          <Link
-            to={`/gps?aluno=${aluno.id}&modo=dia`}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
-          >
-            <Navigation className="h-4 w-4" /> Personalizar o treino do dia
-          </Link>
-        </div>
-      </div>
-
-      {arquivados.length > 0 && (
-        <p className="mt-3 text-xs text-ink-3">{arquivados.length} plano(s) anterior(es) arquivado(s).</p>
       )}
+
+      <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-3 text-xs text-ink-2">
+        {reav && !chegou && (
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarCheck className="h-3.5 w-3.5" aria-hidden /> Próxima reavaliação na semana {reav.semana}, por volta de{" "}
+            {fmtDiaMesCurto(reav.em)}
+          </span>
+        )}
+        <Link to={`/prescrever-treino?aluno=${aluno.id}`} className="font-semibold text-primary hover:underline">
+          Gerar outro plano
+        </Link>
+        {arquivados.length > 0 && (
+          <span>
+            {arquivados.length} {arquivados.length === 1 ? "plano anterior arquivado" : "planos anteriores arquivados"}
+          </span>
+        )}
+      </div>
     </Card>
+  );
+}
+
+/**
+ * As escalas de monitoramento que acompanham o treino do dia. Com grupo, seguem a fase da
+ * jornada (mesma derivação do JornadaCard); sem grupo, o padrão seguro por objetivo (id
+ * real, nunca inventado). Aparecem dentro da próxima sessão, quando ela é aberta.
+ */
+function EscalasDoDia({ aluno, plano }: { aluno: Aluno; plano: PlanoTreino }) {
+  const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
+  const faseAluno = Math.min(4, Math.max(1, aluno.faseJornada ?? 1)) as 1 | 2 | 3 | 4;
+  const ids = grupo ? (grupo.fases[faseAluno - 1] ?? grupo.fases[0]).parametros : parametrosPadraoTreino(plano.objetivo);
+  if (ids.length === 0) return null;
+  return (
+    <div className="border-t border-border pt-2.5">
+      <p className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-2">Escalas para acompanhar</p>
+      <ParametroPills ids={ids} contexto={{ alunoNome: aluno.nome, objetivo: plano.objetivo }} />
+    </div>
+  );
+}
+
+const fmtHora = (ts: number) =>
+  new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date(ts));
+
+/**
+ * SEMÁFORO DE HOJE, o resumo que fica ao lado do treino. O checklist, a régua e o histórico
+ * moram na aba Semáforo; aqui é o estado do dia em uma frase e o caminho para lá.
+ */
+function SemaforoDeHojeCard({ estado, onAbrir }: { estado: EstadoSemaforo; onAbrir: () => void }) {
+  const hoje = estado.hoje;
+  const pendente = estado.vermelhoPendente;
+  const resultado = hoje?.resultado ?? (pendente ? "vermelho" : undefined);
+  const tom: PillTone = resultado === "verde" ? "success" : resultado === "amarelo" ? "warning" : resultado ? "danger" : "neutral";
+  const ajustes = hoje?.ajustes.map((a) => a.acao).filter(Boolean) ?? [];
+  return (
+    <Card className="p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-2">Semáforo de hoje</p>
+        <Pill tone={tom}>{resultado ? rotuloResultado(resultado) : "Ainda não feito"}</Pill>
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-ink">
+        {hoje ? (
+          <>
+            Registrado às {fmtHora(hoje.data)}
+            {ajustes.length > 0 ? `. ${ajustes.join(" ")}` : "."}
+            {hoje.decisaoContraria && (
+              <span className="mt-1 block text-xs text-ink-2">
+                Conduta diferente do semáforo: {hoje.decisaoContraria.justificativa}
+              </span>
+            )}
+          </>
+        ) : pendente ? (
+          <>Não liberado em {fmtData(pendente.data)}. Faça o semáforo de hoje para reabrir a sessão.</>
+        ) : estado.ultimo ? (
+          <>O último foi {registradoHa(estado.ultimo.data)}. Faça o de hoje antes da sessão.</>
+        ) : (
+          <>Nenhum semáforo registrado. Faça o de hoje antes da sessão.</>
+        )}
+      </p>
+      <button type="button" onClick={onAbrir} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
+        <ShieldCheck className="h-4 w-4" /> {hoje ? "Ver checklist" : "Fazer o semáforo de hoje"}
+      </button>
+    </Card>
+  );
+}
+
+/**
+ * O PRONTUÁRIO DE DECISÃO TÉCNICA da escolha mais recente: quantos exercícios entraram,
+ * quantos foram descartados e quantas referências sustentam a decisão, com o documento a
+ * um toque. Sem prontuário ainda, explica o que ele é e onde nasce.
+ */
+function ProntuarioResumoCard({
+  prescricoes,
+  alunoId,
+  primeiroNome,
+  podeEscolher,
+  onVer,
+}: {
+  prescricoes: Prescricao[];
+  alunoId: string;
+  primeiroNome: string;
+  podeEscolher: boolean;
+  onVer: (id: string) => void;
+}) {
+  const p =
+    prescricoes.find((x) => x.prontuario && x.status === "ativa") ?? prescricoes.find((x) => x.prontuario);
+  const pr = p?.prontuario;
+  return (
+    <div className="rounded-card border border-analysis/25 bg-analysis-tint p-5">
+      <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-analysis-text">Prontuário de decisão técnica</p>
+      {pr && p ? (
+        <>
+          <p className="mt-2 text-sm leading-relaxed text-ink">
+            Cada escolha e cada descarte com o motivo, o semáforo do dia e a bibliografia numerada. Da escolha de{" "}
+            {fmtDiaMesCurto(p.data)}:
+          </p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <TokenRotulado label="Escolhidos" value={pr.escolhidos.length} />
+            <TokenRotulado label="Descartados" value={pr.descartados.length} />
+            <TokenRotulado label="Referências" value={pr.refIds.length} />
+          </div>
+          <button
+            type="button"
+            onClick={() => onVer(p.id)}
+            className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-analysis-text hover:underline"
+          >
+            <FileText className="h-4 w-4" aria-hidden /> Ver prontuário
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="mt-2 text-sm leading-relaxed text-ink">
+            Quando você escolher exercícios para {primeiroNome}, cada escolha e cada descarte ficam registrados com o
+            motivo, o semáforo do dia e a bibliografia numerada.
+          </p>
+          {podeEscolher && (
+            <Link
+              to={`/gps?aluno=${alunoId}`}
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-analysis-text hover:underline"
+            >
+              <FileText className="h-4 w-4" aria-hidden /> Escolher exercícios
+            </Link>
+          )}
+        </>
+      )}
+    </div>
   );
 }
 
