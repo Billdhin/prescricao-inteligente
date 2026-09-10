@@ -136,7 +136,15 @@ export function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-bg">
+    /*
+     * CLIP, E NÃO HIDDEN. `overflow-x: hidden` obriga o navegador a calcular `overflow-y: auto`
+     * e transforma esta div num contêiner de rolagem, que nunca rola (ela cresce com o
+     * conteúdo). Todo `position: sticky` abaixo dela passa a grudar NESTA div, e não na
+     * janela, ou seja, não gruda nunca: a barra de busca do topo, o trilho do editor da semana,
+     * o painel "O que isso muda" e a barra da seleção de exercícios rolavam junto com a página.
+     * `clip` corta o transbordo horizontal do mesmo jeito sem criar contêiner de rolagem.
+     */
+    <div className="min-h-screen w-full overflow-x-clip bg-bg">
       {/* Fundo fica inerte enquanto o onboarding está aberto (foco/leitura presos no diálogo) */}
       <div className="flex min-h-screen w-full" {...(mostrarOnboarding ? ({ inert: "" } as any) : {})}>
         <Sidebar />

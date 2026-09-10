@@ -784,8 +784,8 @@ export function AlunoDetail() {
           </span>
           <p className="min-w-0 flex-1 text-sm text-ink">
             <span className="font-semibold">
-              {aplicado.n} {aplicado.n === 1 ? "exercício aplicado" : "exercícios aplicados"} na Sessão {aplicado.sessao} até o
-              fim do bloco {aplicado.bloco}.
+              {aplicado.n} {aplicado.n === 1 ? "exercício colocado" : "exercícios colocados"} na {aplicado.sessao}
+              {aplicado.semanas <= 1 ? " desta semana" : ` até o fim do bloco ${aplicado.bloco}`}.
             </span>{" "}
             As doses seguem a faixa do plano; o raciocínio da escolha fica no prontuário da prescrição.
           </p>
@@ -2183,12 +2183,33 @@ function JornadaCard({
               ))}
             </ul>
           </div>
-          <Link
-            to={`/gps?aluno=${aluno.id}&grupo=${grupo.slug}&fase=${fase}`}
-            className={cn(buttonClasses("secondary"), "w-full")}
-          >
-            <Navigation className="h-4 w-4" /> Escolher exercícios desta fase
-          </Link>
+          {/*
+            "ESCOLHER EXERCÍCIOS DESTA FASE" LEVA ÀS SESSÕES DA FASE, e não ao treino do dia.
+            O link abria o /gps, que é a escolha avulsa para UMA sessão, com cinco perguntas de
+            perfil e um título "Treino do dia". Do uso real: "se ele quer escolher o exercício daquela
+            fase, direcionar para exercícios do dia pode confundir". Os exercícios de uma fase
+            moram nas sessões do plano, e o lugar de escolhê-los é o editor da semana, onde cada
+            sessão tem "Trocar" e "Adicionar exercício" ranqueados pelo mesmo perfil. Sem plano
+            ativo, o caminho é montar o plano, que já nasce na fase marcada aqui.
+          */}
+          {planoAtivo ? (
+            <>
+              <Link
+                to={`/prescrever-treino?plano=${planoAtivo.id}&semana=${semanaAtual(planoAtivo)}&editar=1`}
+                className={cn(buttonClasses("secondary"), "w-full")}
+              >
+                <Navigation className="h-4 w-4" />{" "}
+                {faseDivergente ? `Escolher exercícios da fase ${fasePlano} do plano` : "Escolher exercícios desta fase"}
+              </Link>
+              <p className="text-center text-xs text-ink-3">
+                Abre as sessões da semana {semanaAtual(planoAtivo)} no editor do plano.
+              </p>
+            </>
+          ) : (
+            <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("secondary"), "w-full")}>
+              <CalendarRange className="h-4 w-4" /> Montar o treino desta fase
+            </Link>
+          )}
         </div>
       </div>
 
@@ -2198,11 +2219,10 @@ function JornadaCard({
             <span className="font-semibold text-ink">Sua avaliação: fase {fase}.</span> O plano está na fase {fasePlano}{" "}
             pelo calendário. A fase clínica é decisão sua; o plano não muda sozinho.
           </p>
-          <Link
-            to={`/gps?aluno=${aluno.id}&grupo=${grupo.slug}&fase=${fase}`}
-            className={cn(buttonClasses("secondary", "sm"), "mt-2")}
-          >
-            <Navigation className="h-4 w-4" /> Escolher exercícios para a fase {fase}
+          {/* O plano está noutra fase pelo calendário: escolher exercícios "para a fase N" é montar
+              um plano que nasça nela. Editar a semana atual seria mexer na fase errada. */}
+          <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "mt-2")}>
+            <CalendarRange className="h-4 w-4" /> Montar um plano a partir da fase {fase}
           </Link>
         </div>
       )}

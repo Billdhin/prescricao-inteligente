@@ -1982,12 +1982,14 @@ const NOTA_ASSOALHO =
  * intervalo do objetivo, como em qualquer bloco de força. Não progride pelo alvo da semana:
  * a progressão do sustentado é dificuldade da tarefa, e isso é decisão do profissional.
  */
-function blocoSustentado(
+export function blocoSustentado(
   cat: (typeof exercises)[number],
   faixa: FaixaObjetivo,
   nivel: Nivel,
   enfase: EnfaseSessao | undefined,
-  ctx: CtxAlvo,
+  // Opcional porque o "levar para o treino" (semear.ts) também monta este bloco, e lá o
+  // contexto do alvo não existe; o descanso sai da faixa do objetivo do mesmo jeito.
+  ctx?: CtxAlvo,
 ): BlocoSessao {
   const s = cat.sustentado!;
   const dose = doseForca(faixa, nivel, enfase, ctx);

@@ -997,6 +997,45 @@ for (const objetivo of OBJETIVOS) {
 }
 
 /*
+ * (H2) O "LEVAR PARA O TREINO" NÃO REABRE OS DEFEITOS QUE O GERADOR JÁ FECHOU.
+ *
+ * A escolha de exercícios (/gps) passou a colocar exercícios direto numa sessão do plano, e
+ * o ranking do emagrecimento traz esteira e bicicleta. `blocosDePrescricao` transformava todo
+ * item em bloco de força: "Bicicleta ergométrica 2 x 13, reserva 3", e a prancha virava
+ * repetições. São exatamente o cardio-como-força e o sustentado-em-repetições que o gerador
+ * de plano já tinha corrigido. E o modo padrão passou a SOMAR: aplicar não pode apagar os
+ * exercícios de força que a sessão já tinha.
+ */
+{
+  const g = gerarPlano({ objetivo: "Emagrecimento", nivel: "Iniciante", semanas: 12, frequencia: 3 });
+  const plano = {
+    id: "p", alunoId: "a", titulo: g.titulo, objetivo: "Emagrecimento", nivel: "Iniciante" as Nivel, semanas: 12,
+    frequencia: 3, modeloId: g.modeloId, macrociclo: g.principal, criadoEm: 1, atualizadoEm: 1,
+    semanaAtual: 1, status: "ativo", raciocinio: g.raciocinio, refIds: g.refIds,
+  } as never as Parameters<typeof aplicarPrescricaoNoPlano>[0];
+  const forcaAntes = (sessoesDaSemana(plano, 2)[1]?.blocos ?? []).filter((b) => b.tipo === "forca").map((b) => b.id);
+  if (!forcaAntes.length) erro("AUTOVERIFICAÇÃO (H2): a sessão 2 da semana 2 já nasce sem força; a asserção de somar passaria por vazio.");
+  const r = aplicarPrescricaoNoPlano(
+    plano,
+    {
+      id: "pr2", alunoId: "a", objetivo: "Emagrecimento", nivel: "Iniciante", criadoEm: 1,
+      itens: [{ slug: "bicicleta-ergometrica" }, { slug: "prancha-frontal" }, { slug: "leg-press-45" }],
+    } as never as Parameters<typeof aplicarPrescricaoNoPlano>[1],
+    { semanaCorrente: 2, sessaoIndex: 1, escopo: "semana", modo: "adicionar" } as never as Parameters<typeof aplicarPrescricaoNoPlano>[2],
+  );
+  const blocos = sessoesDaSemana(r.plano, 2)[1]?.blocos ?? [];
+  const cardioComoForca = blocos.filter((b) => b.tipo === "forca" && b.exercicioSlug === "bicicleta-ergometrica");
+  if (cardioComoForca.length) erro("CARDIO VIROU FORÇA AO LEVAR PARA O TREINO: a bicicleta entrou na sessão com séries e repetições.");
+  const prancha = blocos.find((b) => b.exercicioSlug === "prancha-frontal" && b.origemPrescricaoId === "pr2");
+  if (!prancha) erro("AUTOVERIFICAÇÃO (H2): a prancha levada para o treino não apareceu na sessão.");
+  else if (prancha.tipo !== "isometrico" || !prancha.sustentado || !prancha.duracao)
+    erro(`SUSTENTADO EM REPETIÇÕES AO LEVAR PARA O TREINO: a prancha entrou como ${prancha.tipo} "${prancha.series} x ${prancha.reps}".`);
+  const sumiram = forcaAntes.filter((id) => !blocos.some((b) => b.id === id));
+  if (sumiram.length) erro(`SOMAR APAGOU EXERCÍCIOS: ${sumiram.length} bloco(s) de força da sessão sumiram com o modo "adicionar".`);
+  if (r.resumo.n !== 2) erro(`RESUMO CONTA O CARDIO: disse ${r.resumo.n} exercícios colocados, e só 2 viram bloco (a bicicleta não entra).`);
+}
+
+/*
  * (I) A TROCA DE EXERCÍCIO DO EDITOR SEGUE AS MESMAS REGRAS DO GERADOR.
  *
  * Achado de uma bateria funcional: as correções de cardio e de posição evitada tinham ido só

@@ -66,7 +66,14 @@ export function AplicarNoTreinoDialog({
 
   const [sessaoIndex, setSessaoIndex] = React.useState(sessaoHoje);
   const [picker, setPicker] = React.useState(false);
-  const [adicionar, setAdicionar] = React.useState(false);
+  /*
+   * SOMAR É O PADRÃO, e substituir é a escolha consciente.
+   * O padrão era substituir TODOS os blocos de força da sessão: uma prescrição de três
+   * exercícios de membros inferiores apagava o peito, as costas e o tronco daquela sessão até
+   * o fim do bloco. A tela de escolha de exercícios já nasce somando; este diálogo (o "Colocar
+   * no treino" da ficha do aluno) passa a nascer igual.
+   */
+  const [adicionar, setAdicionar] = React.useState(true);
 
   const podeAplicar = sessoes.length > 0;
   // Divergente só quando a prescrição não atende NENHUM dos objetivos do plano. Antes
@@ -113,7 +120,8 @@ export function AplicarNoTreinoDialog({
     onAplicar(novo, resumo);
   };
 
-  const letra = letraSessao(sessaoIndex);
+  // O nome que o plano dá à sessão ("Sessão 2"), e não a letra pela posição ("B").
+  const letra = (sessoes[sessaoIndex]?.nome ?? `Sessão ${letraSessao(sessaoIndex)}`).replace(/^Sessãos+/, "").replace(/s*([^)]*)s*$/, "");
 
   return (
     <div
@@ -178,7 +186,7 @@ export function AplicarNoTreinoDialog({
               <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-warning/30 bg-warning-tint p-2.5 text-xs text-warning">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                 O aluno já registrou execução nessas sessões. Substituir vai desvincular esse histórico das sessões atuais.
-                Se quiser preservar, use "adicionar sem substituir".
+                Se quiser preservar, marque "Somar aos exercícios atuais".
               </p>
             )}
 
@@ -205,7 +213,7 @@ export function AplicarNoTreinoDialog({
                 >
                   {sessoes.map((s, i) => (
                     <option key={s.id} value={i}>
-                      Sessão {letraSessao(i)} · {s.nome}
+                      {s.nome}
                     </option>
                   ))}
                 </select>
@@ -216,7 +224,7 @@ export function AplicarNoTreinoDialog({
                     onChange={(e) => setAdicionar(e.target.checked)}
                     className="h-4 w-4 accent-[var(--primary)]"
                   />
-                  Adicionar ao fim, sem substituir os exercícios atuais
+                  Somar aos exercícios atuais (desmarque para substituir os de força)
                 </label>
               </div>
             )}
@@ -253,7 +261,7 @@ export function AplicarNoTreinoDialog({
                 onClick={() => setPicker((v) => !v)}
                 className="font-semibold text-primary hover:underline"
               >
-                Escolher outra sessão ou adicionar sem substituir
+                Escolher outra sessão ou substituir os atuais
               </button>
               <button onClick={onDecidirDepois} className="text-ink-3 hover:text-ink">
                 Decidir depois (fica em Prescrições)

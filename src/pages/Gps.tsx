@@ -69,17 +69,18 @@ import {
   type JourneyPhase,
 } from "@/data/specialGroups";
 import { ParametroPills } from "@/components/special/SpecialUI";
-import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
 import { nomeDoBloco, tokensDoBloco } from "@/components/student/blocoRegistro";
 import {
   sessoesDeHoje,
   sessaoDeHojeIndex,
   semanaAtual,
+  mesocicloAtual,
   parametrosPadraoTreino,
   type PlanoTreino,
   type Sessao,
+  type Mesociclo,
 } from "@/data/periodizacao";
-import { substituirSessaoNaSemana, letraSessao } from "@/lib/gps/semear";
+import { substituirSessaoNaSemana, letraSessao, sessoesDaSemana, aplicarPrescricaoNoPlano, blocosForcaAtuais } from "@/lib/gps/semear";
 import { SessaoBloco, type ContextoFaixa } from "@/components/treino/PlanoEditor";
 import type { Prescricao } from "@/data/alunos";
 import { montarProntuario } from "@/lib/gps/prontuario";
@@ -129,8 +130,6 @@ export function Gps() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { alunos, addPrescricao, liberacoes, avaliacoes, planos, prescricoes, execucoes, updatePlano } = useAlunos();
-  // Diálogo "Aplicar no treino" aberto pós-salvar quando o aluno já tem plano ativo.
-  const [aplicarDe, setAplicarDe] = React.useState<{ presc: Prescricao; plano: PlanoTreino } | null>(null);
 
   // Passo 0 — contexto editável (para quem / grupo / fase). Absorve a antiga
   // "Decisão rápida": lê ?aluno / ?grupo / ?fase e deixa o usuário ajustar.
@@ -276,7 +275,19 @@ export function Gps() {
   // tela abre direto na edição dos exercícios. Quem quiser mexer no contexto abre o
   // assistente pelo botão, e aí volta a valer a lista gerada à mão.
   const [contextoAberto, setContextoAberto] = React.useState(false);
-  const abrirDireto = personalizarDia && !bloqueadoPorPerfil && !contextoAberto;
+  /*
+   * VALE PARA TODO ALUNO VINCULADO, e não só para o "personalizar o treino do dia".
+   *
+   * O atalho existia só com `?modo=dia` e plano ativo. Qualquer outra entrada com aluno (o
+   * perfil, a jornada, a rota do dia) abria as cinco etapas do assistente para responder
+   * objetivo, nível, restrições e equipamentos que o perfil do aluno JÁ tem, e o relato de uso
+   * descreveu exatamente isso: "tem todo um fluxo de perguntas que já podem ter sido
+   * respondidas para aquele aluno". A única pergunta que o perfil não responde é o GRUPO
+   * MUSCULAR desta escolha, e ela virou chips na própria tela de recomendações. O
+   * assistente continua a um botão ("Ajustar o contexto") para quem precisa mudar algo hoje,
+   * e o gate de prontidão continua valendo: perfil incompleto não pula nada.
+   */
+  const abrirDireto = Boolean(aluno) && !bloqueadoPorPerfil && !contextoAberto;
   const rankDireto = React.useMemo(
     () => (abrirDireto ? rankExercises(exercises, answers, rule) : null),
     [abrirDireto, answers, rule],
@@ -402,21 +413,105 @@ export function Gps() {
     [results, answers, rule, liberacaoDoDia, faseObj, monitoramentoPerfil],
   );
 
-  const salvarPrescricao = () => {
-    if (!aluno || !results) return;
-    marcarAtivacao("primeiroSalvo");
-    const presc: Prescricao = {
+  /*
+   * A SELEÇÃO É DO PROFISSIONAL, e aparece enquanto ele escolhe.
+   *
+   * Salvar levava os TRÊS primeiros do ranking, sem o profissional escolher nenhum, e a tela
+   * não dizia isso: ela mostrava o primeiro com o selo "Escolhido" e os outros como
+   * "Alternativa", sem botão para escolher. Do uso real: "não está claro como eu seleciono qual
+   * exercício eu quero; parece que estou criando a escolha de um único exercício".
+   *
+   * Agora cada exercício tem "Adicionar", e a seleção SOBREVIVE à troca de grupo muscular:
+   * dois de membros inferiores, troca para Costas, mais um de costas, e os três vão juntos. O
+   * melhor do primeiro ranking entra pré-marcado uma vez só, para o mecanismo se mostrar logo
+   * na chegada; dali em diante nada é marcado sem o profissional marcar.
+   */
+  const [selecao, setSelecao] = React.useState<{ slug: string; score: number }[]>([]);
+  const semeouSelecao = React.useRef(false);
+  const alternarSelecao = (r: Recommendation) =>
+    setSelecao((s) =>
+      s.some((x) => x.slug === r.exercise.slug)
+        ? s.filter((x) => x.slug !== r.exercise.slug)
+        : [...s, { slug: r.exercise.slug, score: r.score }],
+    );
+  const tirarDaSelecao = (slug: string) => setSelecao((s) => s.filter((x) => x.slug !== slug));
+
+  /*
+   * O FOCO DA ESCOLHA, a única pergunta que o perfil não responde.
+   * Com a lista herdada, o ranking é derivado das respostas e se refaz sozinho; com a lista
+   * gerada à mão pelo assistente, ela é refeita aqui com o mesmo motor.
+   */
+  const mudarFoco = (patch: Partial<GpsAnswers>) => {
+    const novo = { ...answers, ...patch };
+    setAnswers(novo);
+    if (resultsManuais) {
+      const r = rankExercises(exercises, novo, rule);
+      if (r.length) setResults(r);
+    }
+  };
+
+  /*
+   * PARA QUAL SESSÃO: a pergunta que só aparecia DEPOIS de salvar, dentro de um diálogo.
+   *
+   * Com plano ativo, o destino é escolhido na própria tela, antes do botão final, e cada
+   * sessão mostra o que ela já tem. Três escolhas, todas à vista:
+   *  - a sessão (só as de força; as sessões isométricas de condição são protocolo fechado);
+   *  - SOMAR aos exercícios da sessão (padrão) ou substituir os de força. O padrão do diálogo
+   *    antigo era substituir TODOS os de força: escolher três exercícios de perna apagava o
+   *    peito, as costas e o tronco da sessão;
+   *  - só esta semana ou até o fim do bloco. No "treino do dia" o padrão é a semana; nos
+   *    outros casos, o bloco, que é o que mantém a periodização coerente.
+   */
+  const semanaDoPlano = planoAtivo ? semanaAtual(planoAtivo) : 0;
+  const sessoesDestino = React.useMemo(
+    () =>
+      planoAtivo
+        ? sessoesDaSemana(planoAtivo, semanaDoPlano)
+            .map((s, i) => ({ s, i }))
+            .filter((x) => !x.s.complemento)
+        : [],
+    [planoAtivo, semanaDoPlano],
+  );
+  const [sessaoEscolhida, setSessaoEscolhida] = React.useState<number | null>(null);
+  const destinoIdx =
+    sessaoEscolhida ??
+    (sessoesDestino.some((x) => x.i === sessaoAlvoDiaIndex) ? sessaoAlvoDiaIndex : sessoesDestino[0]?.i ?? 0);
+  const [modoDestino, setModoDestino] = React.useState<"adicionar" | "substituir">("adicionar");
+  const [escopoDestino, setEscopoDestino] = React.useState<"semana" | "bloco">(personalizarDia ? "semana" : "bloco");
+  const mesoDoPlano = planoAtivo ? mesocicloAtual(planoAtivo) : undefined;
+  /*
+   * O QUE A SESSÃO DE DESTINO JÁ TEM. O melhor do ranking costuma ser justamente um exercício
+   * que o gerador já pôs ali (medido: a Ponte de glúteos era o topo para a Helena e já estava
+   * na Sessão 1), e pré-marcar isso colocaria o mesmo exercício duas vezes na sessão. O cartão
+   * diz "já está na sessão", e a pré-marcação pula quem já está lá.
+   */
+  const slugsNaSessao = React.useMemo(
+    () =>
+      planoAtivo
+        ? blocosForcaAtuais(planoAtivo, semanaDoPlano, destinoIdx)
+            .map((b) => b.exercicioSlug)
+            .filter((x): x is string => Boolean(x))
+        : [],
+    [planoAtivo, semanaDoPlano, destinoIdx],
+  );
+  React.useEffect(() => {
+    if (!results?.length || semeouSelecao.current) return;
+    semeouSelecao.current = true;
+    const livre = (r: Recommendation) => !slugsNaSessao.includes(r.exercise.slug) && !r.exercise.doseAerobia;
+    const melhor = results.find((r) => r.equipDisponivel && livre(r)) ?? results.find(livre);
+    if (melhor) setSelecao([{ slug: melhor.exercise.slug, score: melhor.score }]);
+  }, [results, slugsNaSessao]);
+
+  const montarPrescricao = (): Prescricao | null => {
+    if (!aluno || !results || !selecao.length) return null;
+    return {
       id: uid(),
       alunoId: aluno.id,
       data: Date.now(),
       titulo: grupo ? `${grupo.rotuloAluno} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
       answers,
       prontuario: gerarProntuario() ?? undefined,
-      itens: results.slice(0, 3).map((r) => ({
-        slug: r.exercise.slug,
-        score: r.score,
-        series: seriesSugerida(answers.objetivo),
-      })),
+      itens: selecao.map((x) => ({ slug: x.slug, score: x.score, series: seriesSugerida(answers.objetivo) })),
       status: "ativa",
       grupoEspecial: grupo?.slug,
       modalidadePrincipal: faseObj?.modalidades[0] ?? modRecs[0]?.modalidade.id,
@@ -429,14 +524,34 @@ export function Gps() {
       criteriosRegressao: faseObj?.criteriosRegredir,
       raciocinio: faseObj?.justificativa,
     };
+  };
+
+  /** Com plano ativo: grava a escolha no perfil E coloca os exercícios na sessão escolhida. */
+  const levarParaOTreino = () => {
+    if (!aluno || !planoAtivo) return;
+    const presc = montarPrescricao();
+    if (!presc) return;
+    marcarAtivacao("primeiroSalvo");
+    addPrescricao(presc);
+    const { plano: novo, resumo } = aplicarPrescricaoNoPlano(planoAtivo, presc, {
+      semanaCorrente: semanaDoPlano,
+      sessaoIndex: destinoIdx,
+      escopo: escopoDestino,
+      modo: modoDestino,
+    });
+    updatePlano(novo.id, novo);
+    addActivity(`Exercícios colocados no treino de ${aluno.nome}`);
+    navigate(`/alunos/${aluno.id}?aba=treino`, { state: { aplicado: resumo } });
+  };
+
+  /** Sem plano ativo: a escolha fica salva no perfil como prescrição, e volta para o aluno. */
+  const salvarPrescricao = () => {
+    if (!aluno) return;
+    const presc = montarPrescricao();
+    if (!presc) return;
+    marcarAtivacao("primeiroSalvo");
     addPrescricao(presc);
     addActivity(`Prescrição salva para ${aluno.nome}`);
-    // Aluno com plano ativo: em vez de só voltar, oferece levar os exercícios para as
-    // sessões do plano (o tubo). Sem plano ativo, o comportamento é o de sempre.
-    if (planoAtivo) {
-      setAplicarDe({ presc, plano: planoAtivo });
-      return;
-    }
     toast(`Prescrição salva no perfil de ${aluno.nome}`);
     navigate(`/alunos/${aluno.id}`, { state: { prescricaoSalva: true } });
   };
@@ -458,9 +573,9 @@ export function Gps() {
         data: Date.now(),
         titulo: grupo ? `${grupo.rotuloAluno} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
         answers,
-        itens: results.slice(0, 3).map((r) => ({
-          slug: r.exercise.slug,
-          score: r.score,
+        itens: (selecao.length ? selecao : results.slice(0, 3).map((r) => ({ slug: r.exercise.slug, score: r.score }))).map((x) => ({
+          slug: x.slug,
+          score: x.score,
           series: seriesSugerida(answers.objetivo),
         })),
         status: "ativa",
@@ -509,13 +624,21 @@ export function Gps() {
           </Link>
         )}
         <SectionHeader
-          eyebrow={personalizarDia ? "Treino do dia" : "Assistente de decisão"}
+          eyebrow={aluno && planoAtivo && !personalizarDia ? "Plano de treino" : "Treino do dia"}
           icon={<Navigation className="h-3 w-3" />}
-          title={personalizarDia ? "Personalizar o treino do dia" : "Treino do dia"}
+          title={
+            personalizarDia
+              ? "Personalizar o treino do dia"
+              : aluno
+                ? `Escolher exercícios para ${aluno.nome.split(" ")[0]}`
+                : "Treino do dia"
+          }
           subtitle={
-            personalizarDia && aluno
-              ? `Ajuste a sessão desta semana de ${aluno.nome.split(" ")[0]}. As escolhas entram direto no treino.`
-              : "Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê."
+            aluno && planoAtivo
+              ? `Escolha o grupo, adicione os exercícios que quiser e diga em qual sessão do plano de ${aluno.nome.split(" ")[0]} eles entram.`
+              : aluno
+                ? `Escolha o grupo e adicione os exercícios. O perfil de ${aluno.nome.split(" ")[0]} já orienta o ranking.`
+                : "Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê."
           }
           right={<SeloRCD compacto explicavel />}
         />
@@ -713,56 +836,77 @@ export function Gps() {
           bloqueado={bloqueadoPorPerfil}
         />
       ) : (
-        <Results
-          answers={answers}
-          results={results}
-          onRefazer={ajustarRespostas}
-          contextoHerdado={listaHerdada}
-          onJustify={setJustify}
-          compare={compare}
-          setCompare={setCompare}
-          alunoNome={aluno?.nome}
-          alunoId={aluno?.id}
-          planoAtivoId={planoAtivo?.id}
-          modoDia={personalizarDia}
-          onSalvar={aluno ? salvarPrescricao : undefined}
-          onExportar={aluno ? exportarPDF : undefined}
-          podeExportar={unlocked}
-          modRecs={modRecs}
-          grupoNome={grupoLocked ? undefined : grupo?.nome}
-          faseNum={grupoLocked ? undefined : grupo ? fase : undefined}
-          faseJustificativa={grupoLocked ? undefined : faseObj?.justificativa}
-          onProntuario={() => {
-            const p = gerarProntuario();
-            if (p) setProntuarioAberto(p);
-          }}
-        />
+        <div className="space-y-4">
+          {aluno && planoAtivo ? (
+            <DestinoDaEscolha
+              plano={planoAtivo}
+              semana={semanaDoPlano}
+              sessoes={sessoesDestino}
+              hojeIdx={sessaoAlvoDiaIndex}
+              destinoIdx={destinoIdx}
+              onDestino={setSessaoEscolhida}
+              modo={modoDestino}
+              onModo={setModoDestino}
+              escopo={escopoDestino}
+              onEscopo={setEscopoDestino}
+              meso={mesoDoPlano}
+              execucoes={execucoes.filter((e) => e.alunoId === aluno.id)}
+            />
+          ) : aluno ? (
+            <Card variant="soft" className="flex flex-wrap items-center gap-3 p-4">
+              <CalendarRange className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+              <p className="min-w-0 flex-1 text-sm text-ink-2">
+                <span className="font-semibold text-ink">{aluno.nome.split(" ")[0]} ainda não tem plano de treino.</span> A
+                escolha fica salva no perfil. Para distribuir os exercícios em sessões e semanas, monte o treino.
+              </p>
+              <Link to={`/prescrever-treino?aluno=${aluno.id}`} className={buttonClasses("secondary", "sm")}>
+                Montar o treino
+              </Link>
+            </Card>
+          ) : null}
+          <FocoDaEscolha answers={answers} onMudar={mudarFoco} />
+          <Results
+            answers={answers}
+            results={results}
+            onRefazer={ajustarRespostas}
+            contextoHerdado={listaHerdada}
+            onJustify={setJustify}
+            compare={compare}
+            setCompare={setCompare}
+            alunoNome={aluno?.nome}
+            onExportar={aluno ? exportarPDF : undefined}
+            podeExportar={unlocked}
+            modRecs={modRecs}
+            grupoNome={grupoLocked ? undefined : grupo?.nome}
+            faseNum={grupoLocked ? undefined : grupo ? fase : undefined}
+            faseJustificativa={grupoLocked ? undefined : faseObj?.justificativa}
+            selecionados={selecao.map((x) => x.slug)}
+            onAlternar={alternarSelecao}
+            jaNaSessao={slugsNaSessao}
+            sessaoDestinoNome={planoAtivo ? sessoesDestino.find((x) => x.i === destinoIdx)?.s.nome : undefined}
+            onProntuario={() => {
+              const p = gerarProntuario();
+              if (p) setProntuarioAberto(p);
+            }}
+          />
+          <BarraDaSelecao
+            selecao={selecao}
+            onTirar={tirarDaSelecao}
+            alunoNome={aluno?.nome}
+            destino={
+              aluno && planoAtivo
+                ? {
+                    sessaoNome: sessoesDestino.find((x) => x.i === destinoIdx)?.s.nome ?? `Sessão ${letraSessao(destinoIdx)}`,
+                    modo: modoDestino,
+                    escopo: escopoDestino,
+                  }
+                : undefined
+            }
+            onConfirmar={aluno ? (planoAtivo ? levarParaOTreino : salvarPrescricao) : undefined}
+          />
+        </div>
       )}
 
-      {aplicarDe && (
-        <AplicarNoTreinoDialog
-          prescricao={aplicarDe.presc}
-          plano={aplicarDe.plano}
-          modoDia={personalizarDia}
-          execucoes={execucoes.filter((e) => e.alunoId === aplicarDe.plano.alunoId)}
-          dataDaPrescricao={(pid) => {
-            const p = prescricoes.find((x) => x.id === pid);
-            return p ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(p.data)) : undefined;
-          }}
-          onDecidirDepois={() => {
-            const id = aplicarDe.plano.alunoId;
-            setAplicarDe(null);
-            toast("Prescrição salva. Você pode aplicar no treino depois, pela linha da prescrição.");
-            navigate(`/alunos/${id}`, { state: { prescricaoSalva: true } });
-          }}
-          onAplicar={(planoAtualizado, resumo) => {
-            updatePlano(planoAtualizado.id, planoAtualizado);
-            const id = planoAtualizado.alunoId;
-            setAplicarDe(null);
-            navigate(`/alunos/${id}`, { state: { aplicado: resumo } });
-          }}
-        />
-      )}
       {justify && <JustifyDialog rec={justify} onClose={() => setJustify(null)} />}
       {prontuarioAberto && (
         <ProntuarioView
@@ -1650,6 +1794,272 @@ function EditorDaSessaoDeHoje({
 
 /* -------------------------------- Results -------------------------------- */
 
+/* ------------------------- A escolha: foco, destino e seleção ------------------------- */
+
+/**
+ * O FOCO DA ESCOLHA: a única pergunta que o perfil do aluno não responde.
+ *
+ * Era a etapa 2 de um assistente de cinco. Agora é uma fila de chips em cima da lista: troca o
+ * grupo e o ranking se refaz na hora, sem perder o que já foi adicionado. No emagrecimento, o
+ * foco é a prioridade física, que é a pergunta que o motor usa nesse objetivo.
+ */
+function FocoDaEscolha({ answers, onMudar }: { answers: GpsAnswers; onMudar: (p: Partial<GpsAnswers>) => void }) {
+  const emagrecimento = answers.objetivo === "Emagrecimento";
+  const opcoes: readonly string[] = emagrecimento ? PRIORIDADES : GRUPOS_MUSCULARES;
+  const atual = emagrecimento ? answers.prioridade ?? "Cardio + força (misto)" : answers.grupoMuscular;
+  return (
+    <Card className="p-4 md:p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 className="font-display text-base font-bold text-ink">
+          {emagrecimento ? "Qual a prioridade desta escolha?" : "Para qual grupo muscular?"}
+        </h2>
+        <p className="text-xs text-ink-3">Trocar o grupo não tira o que você já adicionou.</p>
+      </div>
+      <div role="radiogroup" aria-label={emagrecimento ? "Prioridade" : "Grupo muscular"} className="mt-3 flex flex-wrap gap-1.5">
+        {opcoes.map((o) => {
+          const on = o === atual;
+          return (
+            <button
+              key={o}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() =>
+                onMudar(emagrecimento ? { prioridade: o as GpsPrioridade, grupoMuscular: "Corpo todo" } : { grupoMuscular: o })
+              }
+              className={cn(
+                "rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors",
+                on ? "border-ink bg-ink text-surface" : "border-border bg-surface text-ink-2 hover:bg-surface-soft",
+              )}
+            >
+              {o}
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * PARA QUAL SESSÃO: escolhida na tela, antes do botão final, com o que cada sessão já tem.
+ *
+ * Antes esta pergunta só aparecia depois de "Salvar", num diálogo, com a sessão escondida atrás
+ * de "Escolher outra sessão ou adicionar sem substituir". Aqui ela vem primeiro, porque é a
+ * pergunta que o profissional faz primeiro ("estou montando o quê, para quando?").
+ */
+function DestinoDaEscolha({
+  plano,
+  semana,
+  sessoes,
+  hojeIdx,
+  destinoIdx,
+  onDestino,
+  modo,
+  onModo,
+  escopo,
+  onEscopo,
+  meso,
+  execucoes,
+}: {
+  plano: PlanoTreino;
+  semana: number;
+  sessoes: { s: Sessao; i: number }[];
+  hojeIdx: number;
+  destinoIdx: number;
+  onDestino: (i: number) => void;
+  modo: "adicionar" | "substituir";
+  onModo: (m: "adicionar" | "substituir") => void;
+  escopo: "semana" | "bloco";
+  onEscopo: (e: "semana" | "bloco") => void;
+  meso?: Mesociclo;
+  execucoes: { blocoRef: string }[];
+}) {
+  if (!sessoes.length) {
+    return (
+      <Card variant="soft" className="p-4 text-sm text-ink-2">
+        A semana {semana} do plano não tem sessão de força para receber exercícios. Abra o plano e ajuste as sessões.
+      </Card>
+    );
+  }
+  const alvo = sessoes.find((x) => x.i === destinoIdx) ?? sessoes[0];
+  const atuais = blocosForcaAtuais(plano, semana, alvo.i);
+  // Substituir troca os blocos de força por ids novos: registros do aluno nesses blocos se
+  // desvinculam. Mesmo aviso do diálogo "Aplicar no treino", no mesmo alcance do escopo.
+  const ate = escopo === "semana" ? semana : meso?.semanaFim ?? semana;
+  const idsEmRisco = new Set<string>();
+  for (let w = semana; w <= ate; w++) blocosForcaAtuais(plano, w, alvo.i).forEach((b) => idsEmRisco.add(b.id));
+  const historicoEmRisco = modo === "substituir" && execucoes.some((e) => idsEmRisco.has(e.blocoRef));
+  const segmento = (on: boolean) =>
+    cn("rounded-full px-3 py-1.5 text-sm font-semibold transition-colors", on ? "bg-surface text-ink shadow-sm" : "text-ink-2 hover:text-ink");
+
+  return (
+    <Card className="p-4 md:p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 className="font-display text-base font-bold text-ink">Para qual sessão?</h2>
+        <p className="text-xs text-ink-3">
+          Semana {semana} do plano{meso ? ` · ${meso.nome}` : ""}
+        </p>
+      </div>
+      <div role="radiogroup" aria-label="Sessão que recebe os exercícios" className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {sessoes.map(({ s, i }) => {
+          const on = i === alvo.i;
+          const forca = s.blocos.filter((b) => b.tipo === "forca").length;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => onDestino(i)}
+              className={cn(
+                "rounded-card border p-3 text-left transition-colors",
+                on ? "border-primary bg-primary-tint ring-1 ring-primary" : "border-border bg-surface hover:bg-surface-soft",
+              )}
+            >
+              <span className="flex items-center gap-2">
+                <b className="text-sm font-semibold text-ink">{s.nome}</b>
+                {i === hojeIdx && <Pill tone="analysis">hoje</Pill>}
+              </span>
+              {s.foco && <span className="mt-0.5 block truncate text-xs text-ink-2">{s.foco}</span>}
+              <span className="mt-1 block text-xs text-ink-3">
+                {forca} {forca === 1 ? "exercício de força" : "exercícios de força"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {atuais.length > 0 && (
+        <p className="mt-3 text-xs leading-relaxed text-ink-2">
+          <span className="font-semibold text-ink">{alvo.s.nome} hoje:</span> {atuais.map((b) => b.nome).join(", ")}.
+        </p>
+      )}
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div role="radiogroup" aria-label="O que fazer com os exercícios atuais" className="inline-flex gap-1 rounded-full bg-surface-soft p-1">
+          <button type="button" role="radio" aria-checked={modo === "adicionar"} onClick={() => onModo("adicionar")} className={segmento(modo === "adicionar")}>
+            Somar aos atuais
+          </button>
+          <button type="button" role="radio" aria-checked={modo === "substituir"} onClick={() => onModo("substituir")} className={segmento(modo === "substituir")}>
+            Substituir os de força
+          </button>
+        </div>
+        <div role="radiogroup" aria-label="Por quanto tempo" className="inline-flex gap-1 rounded-full bg-surface-soft p-1">
+          <button type="button" role="radio" aria-checked={escopo === "semana"} onClick={() => onEscopo("semana")} className={segmento(escopo === "semana")}>
+            Só nesta semana
+          </button>
+          <button type="button" role="radio" aria-checked={escopo === "bloco"} onClick={() => onEscopo("bloco")} className={segmento(escopo === "bloco")}>
+            {meso && meso.semanaFim > semana ? `Até a semana ${meso.semanaFim}` : "Até o fim do bloco"}
+          </button>
+        </div>
+      </div>
+
+      {modo === "substituir" && atuais.length > 0 && (
+        <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-surface-soft p-2.5 text-xs text-ink-2">
+          <Dumbbell className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />
+          Saem da {alvo.s.nome}: {atuais.map((b) => b.nome).join(", ")}
+          {escopo === "bloco" && meso && meso.semanaFim > semana ? `, e os equivalentes até a semana ${meso.semanaFim}` : ""}.
+        </p>
+      )}
+      {historicoEmRisco && (
+        <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-warning/30 bg-warning-tint p-2.5 text-xs text-warning">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          O aluno já registrou treino nesses exercícios. Substituir desvincula esse histórico da sessão; para preservar, use
+          "Somar aos atuais".
+        </p>
+      )}
+      <p className="mt-3 text-2xs leading-snug text-ink-3">
+        As doses seguem a faixa do plano nesta semana; o raciocínio da escolha fica no prontuário.
+      </p>
+    </Card>
+  );
+}
+
+/**
+ * A SELEÇÃO E O BOTÃO FINAL, presos ao pé da tela enquanto se escolhe.
+ *
+ * O botão de salvar morava num cartão no TOPO da lista, e quem descia para ver as opções
+ * perdia de vista o que tinha escolhido e onde aquilo ia entrar. A barra acompanha a rolagem,
+ * diz quantos estão escolhidos, deixa tirar qualquer um e diz em que sessão eles vão entrar.
+ */
+function BarraDaSelecao({
+  selecao,
+  onTirar,
+  alunoNome,
+  destino,
+  onConfirmar,
+}: {
+  selecao: { slug: string }[];
+  onTirar: (slug: string) => void;
+  alunoNome?: string;
+  destino?: { sessaoNome: string; modo: "adicionar" | "substituir"; escopo: "semana" | "bloco" };
+  onConfirmar?: () => void;
+}) {
+  const n = selecao.length;
+  const primeiro = alunoNome?.split(" ")[0];
+  const nomeDe = (slug: string) => exercises.find((e) => e.slug === slug)?.nome ?? slug;
+  const rotulo = !destino
+    ? `Salvar no perfil de ${primeiro}`
+    : `${destino.modo === "adicionar" ? "Colocar" : "Trocar por"} ${n} ${n === 1 ? "exercício" : "exercícios"} na ${destino.sessaoNome}`;
+  return (
+    <div className="sticky bottom-20 z-20 lg:bottom-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-card p-3 shadow-overlay md:p-4" style={{ background: "#0B1628", color: "#F3F1EA" }}>
+        <div className="min-w-0 flex-1 basis-64">
+          <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
+            Sua seleção · {n}
+          </p>
+          {n === 0 ? (
+            <p className="mt-1 text-sm" style={{ color: "#B9C6D6" }}>
+              Nenhum exercício ainda. Toque em "Adicionar" nos exercícios da lista.
+            </p>
+          ) : (
+            <ul className="mt-1.5 flex flex-wrap gap-1.5">
+              {selecao.map((x) => (
+                <li key={x.slug}>
+                  <span className="inline-flex items-center gap-1 rounded-full py-1 pl-2.5 pr-1 text-xs font-semibold" style={{ background: "rgba(255,255,255,.1)" }}>
+                    {nomeDe(x.slug)}
+                    <button
+                      type="button"
+                      onClick={() => onTirar(x.slug)}
+                      aria-label={`Tirar ${nomeDe(x.slug)} da seleção`}
+                      className="grid h-6 w-6 place-items-center rounded-full hover:bg-white/15"
+                    >
+                      <X className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {destino && n > 0 && (
+            <p className="mt-1.5 text-xs" style={{ color: "#8FA0B5" }}>
+              {destino.escopo === "semana" ? "Só nesta semana" : "Até o fim do bloco"} ·{" "}
+              {destino.modo === "adicionar" ? "somados aos exercícios da sessão" : "no lugar dos exercícios de força da sessão"}
+            </p>
+          )}
+        </div>
+        {onConfirmar ? (
+          <button
+            type="button"
+            onClick={onConfirmar}
+            disabled={n === 0}
+            className="ml-auto inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-control px-5 text-sm font-bold transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ background: "#E8A317", color: "#0B1628" }}
+          >
+            {destino ? <CalendarRange className="h-4 w-4" aria-hidden /> : <Save className="h-4 w-4" aria-hidden />} {rotulo}
+          </button>
+        ) : (
+          <p className="ml-auto text-xs" style={{ color: "#B9C6D6" }}>
+            Vincule um aluno no topo para salvar a escolha.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 function Results({
   answers,
   results,
@@ -1659,10 +2069,6 @@ function Results({
   compare,
   setCompare,
   alunoNome,
-  alunoId,
-  planoAtivoId,
-  modoDia,
-  onSalvar,
   onExportar,
   podeExportar,
   onProntuario,
@@ -1670,6 +2076,10 @@ function Results({
   grupoNome,
   faseNum,
   faseJustificativa,
+  selecionados,
+  onAlternar,
+  jaNaSessao = [],
+  sessaoDestinoNome,
 }: {
   answers: GpsAnswers;
   results: Recommendation[];
@@ -1680,12 +2090,6 @@ function Results({
   compare: string[];
   setCompare: React.Dispatch<React.SetStateAction<string[]>>;
   alunoNome?: string;
-  alunoId?: string;
-  /** plano de treino já ativo do aluno, quando houver */
-  planoAtivoId?: string;
-  /** "personalizar o treino do dia": muda o enquadramento do salvar (entra no treino) */
-  modoDia?: boolean;
-  onSalvar?: () => void;
   onExportar?: () => void;
   podeExportar?: boolean;
   onProntuario: () => void;
@@ -1693,6 +2097,12 @@ function Results({
   grupoNome?: string;
   faseNum?: number;
   faseJustificativa?: string;
+  /** slugs na seleção do profissional, na ordem em que entraram */
+  selecionados: string[];
+  onAlternar: (r: Recommendation) => void;
+  /** slugs que a sessão de destino já tem */
+  jaNaSessao?: string[];
+  sessaoDestinoNome?: string;
 }) {
   const best = results[0];
   const others = results.slice(1);
@@ -1710,6 +2120,39 @@ function Results({
     setCompare((c) =>
       c.includes(slug) ? c.filter((x) => x !== slug) : c.length < 3 ? [...c, slug] : c,
     );
+
+  const BotaoSelecao = ({ r, grande }: { r: Recommendation; grande?: boolean }) => {
+    const dentro = selecionados.includes(r.exercise.slug);
+    const jaEsta = jaNaSessao.includes(r.exercise.slug);
+    // Aparelho de cardio não entra na sessão como exercício de força (ver itensSemeaveis): o
+    // aeróbio é a atividade do bloco aeróbio, e ela se troca no editor da sessão.
+    if (r.exercise.doseAerobia)
+      return (
+        <span className="max-w-[12rem] shrink-0 text-right text-2xs leading-snug text-ink-3">
+          Cardio: entra como a atividade aeróbia da sessão, no editor do plano
+        </span>
+      );
+    return (
+      <span className="inline-flex shrink-0 flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={() => onAlternar(r)}
+        aria-pressed={dentro}
+        className={cn(
+          "inline-flex shrink-0 items-center gap-1.5 rounded-full border font-semibold transition-colors",
+          grande ? "h-10 px-4 text-sm" : "h-9 px-3.5 text-sm",
+          dentro
+            ? "border-primary bg-primary text-on-primary hover:brightness-110"
+            : "border-primary/40 bg-surface text-primary hover:bg-primary-tint",
+        )}
+      >
+        {dentro ? <Check className="h-4 w-4" aria-hidden /> : <Plus className="h-4 w-4" aria-hidden />}
+        {dentro ? "Na seleção" : "Adicionar"}
+      </button>
+      {jaEsta && <span className="text-2xs font-semibold text-ink-3">já está na {sessaoDestinoNome ?? "sessão"}</span>}
+      </span>
+    );
+  };
 
   const renderOption = (r: Recommendation) => {
     const inCompare = compare.includes(r.exercise.slug);
@@ -1738,7 +2181,7 @@ function Results({
               </div>
             </div>
           </div>
-          <Pill tone="neutral">Alternativa</Pill>
+          <BotaoSelecao r={r} />
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button onClick={() => onJustify(r)} className="text-sm font-semibold text-primary hover:underline">
@@ -1773,89 +2216,12 @@ function Results({
 
   return (
     <div className="space-y-6">
-      {onSalvar && alunoNome ? (
-        /* O cartão da sessão do protótipo: superfície NAVY fixa (fora do tema
-           claro/escuro), sobrelinha teal e o CTA âmbar com o rótulo real da ação. */
-        <section
-          className="relative overflow-hidden rounded-card p-5"
-          style={{ background: "#0B1628", color: "#F3F1EA" }}
-        >
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="min-w-0 flex-1 basis-64">
-              <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
-                Último passo
-              </p>
-              <div className="mt-1 font-display text-lg font-bold tracking-[-0.02em]">
-                {modoDia ? `Personalizar o treino de ${alunoNome}` : `Concluir a prescrição de ${alunoNome}`}
-              </div>
-              <p className="mt-1 text-sm" style={{ color: "#B9C6D6" }}>
-                {modoDia
-                  ? "Salvar leva estes exercícios para a sessão desta semana do treino. O PDF com a sua marca é opcional."
-                  : "Salvar registra no perfil do aluno e volta para ele. O PDF com a sua marca é opcional."}
-              </p>
-            </div>
-            <div className="ml-auto flex flex-wrap gap-2">
-              <button
-                onClick={onSalvar}
-                className="inline-flex h-11 select-none items-center justify-center gap-2 whitespace-nowrap rounded-control px-5 text-sm font-bold transition-[filter,transform] duration-150 hover:brightness-110 active:translate-y-px"
-                style={{ background: "#E8A317", color: "#0B1628" }}
-              >
-                <Save className="h-4 w-4" /> {modoDia ? `Personalizar o treino de ${alunoNome}` : `Salvar no perfil de ${alunoNome}`}
-              </button>
-              {podeExportar ? (
-                <button
-                  onClick={onExportar}
-                  className="inline-flex h-9 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-                  style={{ borderColor: "rgba(255,255,255,.2)" }}
-                >
-                  <FileDown className="h-4 w-4" /> Exportar PDF
-                </button>
-              ) : (
-                <Link
-                  to="/pricing"
-                  className="inline-flex h-9 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-                  style={{ borderColor: "rgba(255,255,255,.2)" }}
-                >
-                  <LockIcon className="h-3.5 w-3.5" /> PDF (Profissional)
-                </Link>
-              )}
-            </div>
-          </div>
-          {/* Esta tela resolve a sessão. Com plano ativo, salvar oferece levar estes
-              exercícios para as sessões dele (o tubo); sem plano, o convite é montar o treino. */}
-          {alunoId && (
-            <div
-              className="mt-3 flex flex-wrap items-center gap-2 border-t pt-3 text-sm"
-              style={{ borderColor: "rgba(255,255,255,.12)" }}
-            >
-              <CalendarRange className="h-4 w-4 shrink-0" style={{ color: "#7FE3D8" }} />
-              {planoAtivoId ? (
-                <span style={{ color: "#B9C6D6" }}>
-                  {modoDia
-                    ? `Ao salvar, estes exercícios personalizam a sessão desta semana do treino de ${alunoNome}.`
-                    : `${alunoNome} já tem um plano ativo. Ao salvar, você pode aplicar estes exercícios nas sessões desse plano.`}
-                </span>
-              ) : (
-                <>
-                  <span style={{ color: "#B9C6D6" }}>Estes exercícios são a sessão. Para organizar os próximos meses:</span>
-                  <Link
-                    to={`/prescrever-treino?aluno=${alunoId}`}
-                    className="font-semibold hover:underline"
-                    style={{ color: "#F0B429" }}
-                  >
-                    Montar o treino agora
-                  </Link>
-                </>
-              )}
-            </div>
-          )}
-        </section>
-      ) : (
+      {!alunoNome && (
         <Card tone="primary" className="flex flex-wrap items-center gap-3 p-4">
           <Info className="h-5 w-5 shrink-0 text-primary" />
           <p className="min-w-0 flex-1 text-sm text-ink-2">
             <span className="font-semibold text-ink">Prescrição avulsa.</span> Selecione um aluno no
-            topo para salvar no perfil e exportar em PDF com sua marca.
+            topo para salvar no perfil, levar para o treino e exportar em PDF com sua marca.
           </p>
         </Card>
       )}
@@ -1877,11 +2243,9 @@ function Results({
       <Card variant="soft" className="flex flex-wrap items-center gap-2 p-4">
         {contextoHerdado && (
           <p className="basis-full text-xs text-ink-2">
-            <span className="font-semibold text-ink">Contexto herdado.</span> Estes dados vieram do
-            cadastro e da periodização de {alunoNome ?? "quem está em contexto"}, por isso o
-            assistente não perguntou de novo. Se algo mudou hoje, ajuste o contexto. Acima você
-            edita a sessão de hoje item a item; a lista abaixo é o ranking do motor, para trocar o
-            conjunto de uma vez.
+            <span className="font-semibold text-ink">Perfil de {alunoNome ?? "quem está em contexto"}.</span>{" "}
+            Objetivo, nível, restrições e equipamentos vieram do cadastro, por isso nada foi
+            perguntado de novo. Se algo mudou hoje, ajuste o contexto.
           </p>
         )}
         <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">Perfil</span>
@@ -1910,6 +2274,16 @@ function Results({
           >
             <FileText className="h-4 w-4" /> Ver prontuário desta decisão
           </button>
+          {onExportar &&
+            (podeExportar ? (
+              <button onClick={onExportar} className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-2 hover:text-ink">
+                <FileDown className="h-4 w-4" /> Exportar PDF
+              </button>
+            ) : (
+              <Link to="/pricing" className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-3 hover:text-ink">
+                <LockIcon className="h-3.5 w-3.5" /> PDF (Profissional)
+              </Link>
+            ))}
           <button onClick={onRefazer} className="inline-flex items-center gap-1 text-sm font-medium text-ink-2 hover:text-ink">
             <ArrowLeft className="h-3.5 w-3.5" />{" "}
             {contextoHerdado ? "Ajustar o contexto" : "Ajustar respostas"}
@@ -1977,8 +2351,12 @@ function Results({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-display text-2xl font-bold text-ink">{best.exercise.nome}</h3>
-                {/* Tag de família do protótipo: o topo do ranking é o Escolhido. */}
-                <Pill tone="primary">Escolhido</Pill>
+                {/* "Escolhido" dizia que a escolha já estava feita. É o mais adequado do
+                    ranking; quem escolhe é o profissional, no botão ao lado. */}
+                <Pill tone="primary">Mais adequado</Pill>
+                <span className="ml-auto">
+                  <BotaoSelecao r={best} grande />
+                </span>
               </div>
               <p className="mt-2 text-ink-2">{best.exercise.resumoPratico}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
@@ -1992,8 +2370,6 @@ function Results({
                 ))}
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                {/* Secundário: o primário escuro da tela é "Salvar no perfil". A
-                    justificativa é exploração, não a âncora, então não compete. */}
                 <button onClick={() => onJustify(best)} className={buttonClasses("secondary", "sm")}>
                   <Info className="h-4 w-4" /> Ver justificativa
                 </button>

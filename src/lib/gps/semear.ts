@@ -11,7 +11,7 @@
  *   na Prescricao. Aqui só marcamos `origemPrescricaoId` no bloco (rastro de exibição).
  */
 
-import { doseForca } from "@/lib/gps/periodizacao";
+import { doseForca, blocoSustentado } from "@/lib/gps/periodizacao";
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import type { Nivel } from "@/data/types";
 import { getFaixa, type BlocoSessao, type Microciclo, type PlanoTreino, type Sessao } from "@/data/periodizacao";
@@ -89,9 +89,14 @@ export function blocosDePrescricao(
   /** alvo concreto da semana, herdado do plano; ausente = bloco só com a faixa */
   alvo?: Partial<BlocoSessao>,
 ): BlocoSessao[] {
-  const dose = doseForca(getFaixa(ctx.objetivo), ctx.nivel, enfase);
-  return prescricao.itens.map((it) => {
+  const faixa = getFaixa(ctx.objetivo);
+  const dose = doseForca(faixa, ctx.nivel, enfase);
+  return itensSemeaveis(prescricao).map((it) => {
     const ex = exercises.find((e) => e.slug === it.slug);
+    // O sustentado (prancha, equilíbrio) sai por TEMPO, pelo mesmo construtor do gerador.
+    // Por este caminho ele virava "3 x 12, reserva 3", o defeito que o gerador já tinha
+    // corrigido e que o "levar para o treino" reabria.
+    if (ex?.sustentado) return { ...blocoSustentado(ex, faixa, ctx.nivel, enfase), origemPrescricaoId: prescricao.id };
     return {
       id: nid(),
       tipo: "forca" as const,
@@ -102,6 +107,19 @@ export function blocosDePrescricao(
       ...alvo,
     };
   });
+}
+
+/**
+ * OS ITENS QUE VIRAM BLOCO DE FORÇA, sem o aparelho de cardio.
+ *
+ * O ranking do emagrecimento traz esteira e bicicleta (é o objetivo em que o aeróbio é base),
+ * e esta função transformava TODO item em bloco de força: "Bicicleta ergométrica 2 x 13,
+ * reserva 3". É exatamente o defeito que o gerador de plano já tinha corrigido ("nenhum
+ * aparelho de cardio entra em bloco de força"), reaberto pela porta do "levar para o treino".
+ * O aeróbio da sessão é a atividade do bloco aeróbio, e ela se troca no editor da sessão.
+ */
+export function itensSemeaveis(prescricao: Prescricao): Prescricao["itens"] {
+  return prescricao.itens.filter((it) => !exercises.find((e) => e.slug === it.slug)?.doseAerobia);
 }
 
 export interface OpcoesAplicacao {
@@ -118,7 +136,7 @@ export interface OpcoesAplicacao {
 export interface ResumoAplicacao {
   /** exercícios inseridos por sessão */
   n: number;
-  /** letra da sessão-alvo (A, B, ...) */
+  /** nome da sessão-alvo como o plano a chama ("Sessão 2", "Sessão A"), sem a ênfase */
   sessao: string;
   /** índice 1-based do mesociclo corrente */
   bloco: number;
@@ -223,8 +241,13 @@ export function aplicarPrescricaoNoPlano(
   return {
     plano: { ...plano, macrociclo: { ...plano.macrociclo, mesociclos } },
     resumo: {
-      n: prescricao.itens.length,
-      sessao: letraSessao(sessaoIndex),
+      n: itensSemeaveis(prescricao).length,
+      // O NOME da sessão, e não a letra pela posição: o plano linear chama "Sessão 2" o que a
+      // letra chamaria de "B", e o aviso de volta dizia uma sessão que a tela anterior não
+      // tinha mostrado. A letra só vale quando a sessão não tem nome.
+      sessao:
+        sessoesDaSemana(plano, semanaCorrente)[sessaoIndex]?.nome.replace(/s*([^)]*)s*$/, "") ??
+        `Sessão ${letraSessao(sessaoIndex)}`,
       bloco: mesoIdx >= 0 ? mesoIdx + 1 : 1,
       semanas: semanasAfetadas,
     },
