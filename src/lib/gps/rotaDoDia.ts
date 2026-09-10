@@ -1,5 +1,5 @@
 import type { Aluno } from "@/data/alunos";
-import { proximoPasso, type CicloCtx, type EtapaCiclo } from "./proximoPasso";
+import { proximoPasso, type CicloCtx, type EtapaCiclo, type ProximoPasso } from "./proximoPasso";
 
 /**
  * "SUA ROTA DE HOJE": as paradas que o profissional tem pela frente neste dia, em
@@ -44,6 +44,8 @@ export interface ParadaDoDia {
   frase: string;
   /** rótulo do botão, também da fonte única (nunca um verbo genérico) */
   acao: string;
+  /** o mesmo passo em uma ou duas palavras, para chip e pílula (ver `verboDaParada`) */
+  acaoCurta: string;
   /**
    * Destino explícito do passo, quando ele tem um. Existe porque a parada precisa
    * levar ao lugar que DESTRAVA: com o perfil bloqueando a prescrição, mandar o
@@ -62,6 +64,38 @@ export interface RotaDoDia {
   total: number;
   /** a próxima parada, ou undefined quando o dia está limpo */
   agora?: ParadaDoDia;
+}
+
+/**
+ * O PASSO EM UMA OU DUAS PALAVRAS, derivado do MESMO passo, e não decidido de novo.
+ *
+ * O rótulo do botão da fonte única é uma frase feita para a tela do aluno ("Recomendado:
+ * fazer o semáforo de hoje", "Abrir Saúde e restrições"). No Meu dia ela ia inteira para o
+ * chip do topo e para a pílula de cada linha, e as duas saíam cortadas no meio
+ * ("Recomendado: fazer o semáforo de ..."): o profissional lia metade da instrução. O
+ * protótipo usa o verbo curto ("Liberar", "Reavaliar", "Planejar") e agrupa os chips por ele.
+ *
+ * A regra lê só o que o passo já decidiu (`cta.kind` e `cta.to`), então não existe segunda
+ * opinião sobre o que fazer: duas paradas com o mesmo verbo curto são, por construção, a mesma
+ * ação da fonte única. Destino e frase continuam os de sempre.
+ */
+export function verboDaParada(passo: ProximoPasso, alunoId: string): string {
+  const destino = passo.cta.to ?? "";
+  switch (passo.cta.kind) {
+    case "liberar":
+      // O encaminhamento também aponta para o semáforo, mas não é liberar: é conferir.
+      return passo.etapa === "liberar" ? "Liberar" : "Ver semáforo";
+    case "avaliar":
+      return "Avaliar";
+    case "reavaliar":
+      return "Reavaliar";
+    case "planejar":
+      if (destino.includes("/perfil")) return "Completar perfil";
+      if (destino === `/alunos/${alunoId}`) return "Revisar";
+      return "Planejar";
+    case "acompanhar":
+      return "Ver execução";
+  }
 }
 
 /**
@@ -96,6 +130,7 @@ export function rotaDoDia(alunos: Aluno[], ctx: CicloCtx): RotaDoDia {
       etapa: passo.etapa,
       frase: passo.frase,
       acao: passo.cta.label,
+      acaoCurta: verboDaParada(passo, aluno.id),
       to: passo.cta.to,
       tone: passo.tone,
     });

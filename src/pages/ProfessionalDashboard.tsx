@@ -24,11 +24,10 @@ import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { EspinhaSelo } from "@/components/ui/EspinhaSelo";
 import { RetencaoPanel } from "@/components/treino/RetencaoPanel";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
-import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { avisosDoAluno, type CicloCtx } from "@/lib/gps/proximoPasso";
 import { rotaDoDia, type RotaDoDia, type ParadaDoDia } from "@/lib/gps/rotaDoDia";
 import { alunosParaReativar } from "@/lib/retencao";
-import { proximaReavaliacao } from "@/data/periodizacao";
+import { proximaReavaliacao, semanaAtual } from "@/data/periodizacao";
 import { statusEfetivo, formatBRL } from "@/data/cobranca";
 import { getAtivacao, marcarCelebrado, minutosPrimeiroCaso } from "@/lib/ativacao";
 import type { Aluno } from "@/data/alunos";
@@ -93,6 +92,15 @@ export function ProfessionalDashboard() {
   const alunosSemAtencao = alunos.filter((a) => !atencaoIds.has(a.id) && !rotaIds.has(a.id));
   const reativarIds = new Set(alunosParaReativar(alunosSemAtencao, execucoes).map((s) => s.aluno.id));
   const seusAlunos = ativos.filter((a) => !atencaoIds.has(a.id) && !rotaIds.has(a.id) && !reativarIds.has(a.id));
+  // Parados que o cartão Reativar NÃO mostra porque a rota já os mostra: o cartão precisa
+  // saber disso para não dizer "ninguém parado" quando há, só que em outro lugar da tela.
+  const paradosNaRota = alunosParaReativar(ativos, execucoes).filter(
+    (s) => atencaoIds.has(s.aluno.id) || rotaIds.has(s.aluno.id),
+  ).length;
+  const semanaDoAluno = (id: string) => {
+    const p = planosAtivos.find((x) => x.alunoId === id);
+    return p ? semanaAtual(p) : undefined;
+  };
 
   // Ritual de segunda (parcial, sem backend): dois agregados deriváveis localmente.
   // Nada é inventado; se os dois forem zero, a linha some.
@@ -144,7 +152,12 @@ export function ProfessionalDashboard() {
 
         <div className="space-y-4">
           <SemanaDosAlunos execucoes={execucoes} />
-          <RetencaoPanel alunos={alunosSemAtencao} execucoes={execucoes} nomeProfissional={name || undefined} />
+          <RetencaoPanel
+            alunos={alunosSemAtencao}
+            execucoes={execucoes}
+            nomeProfissional={name || undefined}
+            paradosNaRota={paradosNaRota}
+          />
           <div className="grid grid-cols-3 gap-2">
             <AtalhoRef to="/comparador" titulo="Comparador" hint="decidir entre dois" />
             <AtalhoRef to="/protocols" titulo="Protocolos" hint="pontos de partida" />
@@ -164,7 +177,7 @@ export function ProfessionalDashboard() {
           </div>
           <div className="grid gap-2.5 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
             {seusAlunos.slice(0, 4).map((a) => (
-              <AlunoCard key={a.id} aluno={a} temTreino={temTreinoAtivo(a.id)} />
+              <AlunoCard key={a.id} aluno={a} temTreino={temTreinoAtivo(a.id)} semana={semanaDoAluno(a.id)} />
             ))}
           </div>
         </section>
@@ -246,8 +259,8 @@ function HeroDoDia({
           <h1 className="m-0 mt-3 font-display text-[clamp(28px,3.4vw,42px)] font-bold leading-[1.05] tracking-[-0.03em]">
             {saudacao}. {fraseRota}
           </h1>
-          <p className="m-0 mt-3 max-w-[520px] text-[15px] leading-relaxed" style={{ color: "#B9C6D6" }}>
-            Comece pelo que precisa de atenção e resolva o próximo passo de cada aluno.
+          <p className="m-0 mt-3 max-w-[560px] text-[15px] leading-relaxed" style={{ color: "#B9C6D6" }}>
+            {resumoDaRota(rota)}
           </p>
           <div className="mt-5 flex flex-wrap gap-2.5">
             {rota.agora && (
@@ -489,10 +502,17 @@ function Avatar({ iniciais }: { iniciais: string }) {
   );
 }
 
-function AlunoCard({ aluno, temTreino }: { aluno: Aluno; temTreino: boolean }) {
+/*
+ * O CARTÃO DE QUEM ESTÁ EM DIA, no formato do protótipo: nome, objetivo e a SEMANA do plano
+ * ("Hipertrofia · S9"), e a data da última avaliação à direita.
+ *
+ * Ele carregava pílulas âmbar de restrição ("Dor no joelho +1") e de "Sem treino". Numa lista
+ * que se chama "Em dia", uma pílula de alerta em cada cartão desmente o título, e a restrição
+ * já vive na ficha. O "sem treino" continua, só que como texto: quem não tem plano não tem
+ * semana para mostrar, e dizer isso no lugar da semana é a informação exata.
+ */
+function AlunoCard({ aluno, temTreino, semana }: { aluno: Aluno; temTreino: boolean; semana?: number }) {
   const dias = aluno.proximaReavaliacaoEm ? diasAte(aluno.proximaReavaliacaoEm) : null;
-  // Teto de 1 pill de restrição (+N) para não competir com o flag acionável.
-  const restr = aluno.restricoes;
   return (
     <Link
       to={`/alunos/${aluno.id}`}
@@ -507,19 +527,8 @@ function AlunoCard({ aluno, temTreino }: { aluno: Aluno; temTreino: boolean }) {
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold text-ink">{aluno.nome}</div>
         <div className="truncate text-xs text-ink-2">
-          {aluno.objetivo} · {aluno.nivel}
+          {aluno.objetivo} · {temTreino && semana ? `S${semana}` : temTreino ? aluno.nivel : "sem treino"}
         </div>
-        {(!temTreino || restr.length > 0) && (
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {!temTreino && <Pill tone="warning">Sem treino</Pill>}
-            {restr.length > 0 && (
-              <Pill tone="warning">
-                {rotuloRestricao(restr[0].tag)}
-                {restr.length > 1 ? ` +${restr.length - 1}` : ""}
-              </Pill>
-            )}
-          </div>
-        )}
       </div>
       {aluno.ultimaAvaliacaoEm && (
         <span className="shrink-0 whitespace-nowrap text-xs text-ink-3">
@@ -541,6 +550,14 @@ function AlunoCard({ aluno, temTreino }: { aluno: Aluno; temTreino: boolean }) {
  * profissional lê o que FAZER, e o rótulo vem da mesma fonte que decide o
  * próximo passo, então a tela nunca sugere uma coisa e a lista outra.
  */
+/** A família de cor de cada parada, lida do tom da fonte única (nunca de outra conta). */
+const COR_DA_PARADA: Record<ParadaDoDia["tone"], { chip: string; avatar: string; filete: string }> = {
+  warning: { chip: "bg-warning-tint text-warning", avatar: "bg-warning-tint text-warning", filete: "var(--warning-fill)" },
+  cta: { chip: "bg-warning-tint text-warning", avatar: "bg-warning-tint text-warning", filete: "var(--warning-fill)" },
+  success: { chip: "bg-analysis-tint text-analysis", avatar: "bg-analysis-tint text-analysis", filete: "var(--analysis-fill)" },
+  primary: { chip: "bg-primary-tint text-primary", avatar: "bg-primary-tint text-primary", filete: "var(--primary)" },
+};
+
 function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamSemana: number }) {
   if (rota.total === 0) return null;
 
@@ -556,34 +573,43 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
     );
   }
 
-  // Os chips do topo do mockup ("Semáforo · 3 alunos", "Avaliar João"): as
-  // paradas AGRUPADAS por ação. Com um aluno só, o chip diz o nome dele; com
-  // vários, diz quantos. Derivado da mesma lista abaixo, nunca de outra conta.
+  /*
+   * OS CHIPS SÃO AS PARADAS AGRUPADAS PELO VERBO CURTO ("Liberar · 2 alunos").
+   *
+   * Agrupavam pela frase inteira do botão, e a frase é longa: o topo do cartão virava quatro
+   * pílulas de 40 caracteres ("Recomendado: fazer o semáforo de hoje · 2 alunos") e, pior,
+   * "Abrir Medicamentos" e "Abrir Saúde e restrições" saíam separados sendo a mesma ação
+   * (completar o perfil). Com um aluno só, o chip diz o nome dele; com vários, quantos.
+   */
   const grupos = new Map<string, ParadaDoDia[]>();
   for (const p of rota.paradas) {
-    const atual = grupos.get(p.acao) ?? [];
+    const atual = grupos.get(p.acaoCurta) ?? [];
     atual.push(p);
-    grupos.set(p.acao, atual);
+    grupos.set(p.acaoCurta, atual);
   }
 
   return (
     <Card variant="raised" className="p-5 md:p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      {/* O botão "Abrir o dia" que morava aqui saiu: ele repetia o do herói, logo acima,
+          com o mesmo destino. O lugar dele é dos chips, como no protótipo. */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-bold text-ink">Sua rota de hoje</h2>
           <p className="tabular text-sm text-ink-2">
             {rota.feitas} de {rota.total} paradas feitas
           </p>
         </div>
-        {rota.agora && (
-          <Link to={destinoDaParada(rota.agora)} className={buttonClasses("primary", "sm")}>
-            Abrir o dia <ArrowRight className="h-4 w-4" />
-          </Link>
-        )}
+        <div className="flex flex-wrap gap-1.5 sm:justify-end">
+          {[...grupos.entries()].map(([verbo, ps]) => (
+            <span key={verbo} className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", COR_DA_PARADA[ps[0].tone].chip)}>
+              {verbo} · {ps.length === 1 ? ps[0].aluno.nome.split(" ")[0] : `${ps.length} alunos`}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Trilho de progresso: uma marca por parada, acesa nas já feitas. */}
-      <div className="mt-3 flex gap-1.5" role="img" aria-label={`${rota.feitas} de ${rota.total} paradas feitas`}>
+      <div className="mt-4 flex gap-1.5" role="img" aria-label={`${rota.feitas} de ${rota.total} paradas feitas`}>
         {Array.from({ length: rota.total }, (_, i) => (
           <span
             key={i}
@@ -591,25 +617,6 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
             className={cn("h-1.5 flex-1 rounded-full", i < rota.feitas ? "bg-analysis-fill" : "bg-surface-mute")}
           />
         ))}
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {/* Chips coloridos pela família da ação, como no protótipo: âmbar para o
-            semáforo/atenção, azul para o fluxo, turquesa para publicar. */}
-        {[...grupos.entries()].map(([acao, ps]) => {
-          const tone = ps[0].tone;
-          const cor =
-            tone === "warning" || tone === "cta"
-              ? "bg-warning-tint text-warning"
-              : tone === "success"
-                ? "bg-analysis-tint text-analysis"
-                : "bg-primary-tint text-primary";
-          return (
-            <span key={acao} className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", cor)}>
-              {acao} · {ps.length === 1 ? ps[0].aluno.nome.split(" ")[0] : `${ps.length} alunos`}
-            </span>
-          );
-        })}
       </div>
 
       {reavaliamSemana > 0 && (
@@ -621,31 +628,77 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
       )}
 
       <ol className="mt-4 space-y-2">
-        {rota.paradas.map((p) => (
-          <li key={p.aluno.id}>
-            <Link
-              to={destinoDaParada(p)}
-              className="flex items-center gap-3.5 rounded-[14px] border border-border bg-surface py-3 pl-0 pr-3.5 transition-colors hover:border-ink hover:bg-surface-soft"
-              // Filete de urgência à esquerda, na cor da família: regra de linha
-              // de lista com pendência, do Design System (o protótipo desenha o
-              // mesmo filete de 4px).
-              style={{ borderLeftWidth: 4, borderLeftColor: `var(--${p.tone === "cta" ? "warning" : p.tone})` }}
-            >
-              <span className="w-2.5" aria-hidden />
-              <Avatar iniciais={p.aluno.iniciais} />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-ink">{p.aluno.nome}</div>
-                <div className="truncate text-sm text-ink-2">{p.frase}</div>
-              </div>
-              <span className="max-w-[40%] shrink-0 truncate whitespace-nowrap rounded-full bg-bg px-3 py-1.5 text-xs font-semibold text-ink">
-                {p.acao} →
-              </span>
-            </Link>
-          </li>
-        ))}
+        {rota.paradas.map((p) => {
+          const cor = COR_DA_PARADA[p.tone];
+          return (
+            <li key={p.aluno.id}>
+              <Link
+                to={destinoDaParada(p)}
+                // A frase inteira do botão continua disponível: é o nome acessível e a dica.
+                aria-label={`${p.aluno.nome}: ${p.frase} ${p.acao}`}
+                title={p.acao}
+                className="flex items-center gap-3.5 overflow-hidden rounded-[14px] border border-border bg-surface py-3 pr-3.5 transition-colors hover:border-ink hover:bg-surface-soft"
+              >
+                {/* Filete de urgência na cor de PREENCHIMENTO da família, como o protótipo
+                    desenha: a tinta de texto (âmbar escuro) saía marrom numa faixa de 4px. */}
+                <span aria-hidden className="w-1 self-stretch rounded-r-full" style={{ background: cor.filete }} />
+                <span
+                  className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold", cor.avatar)}
+                >
+                  {p.aluno.iniciais}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-ink">{p.aluno.nome}</div>
+                  <div className="truncate text-sm text-ink-2">{p.frase}</div>
+                </div>
+                <span className="hidden shrink-0 whitespace-nowrap rounded-full bg-bg px-3 py-1.5 text-xs font-semibold text-ink sm:inline">
+                  {p.acaoCurta} →
+                </span>
+                <span aria-hidden className="shrink-0 text-ink-3 sm:hidden">
+                  ›
+                </span>
+              </Link>
+            </li>
+          );
+        })}
       </ol>
     </Card>
   );
+}
+
+/*
+ * O RESUMO DA ROTA EM UMA FRASE, para o herói ("Dois semáforos para liberar, uma reavaliação
+ * vencida e três perfis para completar."). O protótipo escreve exatamente isso debaixo da
+ * saudação, e a tela real tinha uma frase fixa ("comece pelo que precisa de atenção") que
+ * dizia a mesma coisa todo dia. Sai das MESMAS paradas da rota, agrupadas pelo verbo curto,
+ * na ordem de urgência da rota.
+ */
+const PARTE_DO_RESUMO: Record<string, { um: string; varios: string; feminino?: boolean }> = {
+  Liberar: { um: "semáforo para liberar", varios: "semáforos para liberar" },
+  Avaliar: { um: "avaliação inicial", varios: "avaliações iniciais", feminino: true },
+  Reavaliar: { um: "reavaliação vencida", varios: "reavaliações vencidas", feminino: true },
+  Planejar: { um: "treino para montar", varios: "treinos para montar" },
+  "Completar perfil": { um: "perfil para completar", varios: "perfis para completar" },
+  Revisar: { um: "declaração de aluno para revisar", varios: "declarações de alunos para revisar", feminino: true },
+  "Ver semáforo": { um: "encaminhamento para conferir", varios: "encaminhamentos para conferir" },
+  "Ver execução": { um: "aluno que parou de registrar", varios: "alunos que pararam de registrar" },
+};
+const POR_EXTENSO_M = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez"];
+const POR_EXTENSO_F = ["", "uma", "duas", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez"];
+
+function resumoDaRota(rota: RotaDoDia): string {
+  if (rota.total === 0) return "Comece pelo que precisa de atenção e resolva o próximo passo de cada aluno.";
+  if (rota.paradas.length === 0) return "Todos os alunos ativos estão em dia hoje.";
+  const contagem = new Map<string, number>();
+  for (const p of rota.paradas) contagem.set(p.acaoCurta, (contagem.get(p.acaoCurta) ?? 0) + 1);
+  const partes = [...contagem.entries()].map(([verbo, n]) => {
+    const def = PARTE_DO_RESUMO[verbo];
+    if (!def) return `${n} ${verbo.toLowerCase()}`;
+    const numero = n <= 10 ? (def.feminino ? POR_EXTENSO_F : POR_EXTENSO_M)[n] : String(n);
+    return `${numero} ${n === 1 ? def.um : def.varios}`;
+  });
+  const lista = partes.length === 1 ? partes[0] : `${partes.slice(0, -1).join(", ")} e ${partes[partes.length - 1]}`;
+  return `${lista.charAt(0).toUpperCase()}${lista.slice(1)}. Comece pelo que precisa de você.`;
 }
 
 /** Onde cada parada abre. Liberar cai direto na aba Semáforo do aluno; avaliar
@@ -702,41 +755,61 @@ function SemanaDosAlunos({ execucoes }: { execucoes: { alunoId?: string; conclui
   const anterior = contaJanela(inicio - 7 * DIA, inicio);
   const variacao = anterior > 0 ? Math.round(((total - anterior) / anterior) * 100) : null;
   const max = Math.max(1, ...porDia);
-  if (total === 0 && anterior === 0) return null;
+  /*
+   * O CARTÃO APARECE SEMPRE, e com zero ele diz que é zero.
+   *
+   * Ele saía com `return null` quando a semana e a anterior estavam vazias. Numa carteira em
+   * que os alunos ainda não usam o app, isso é todo dia: a coluna da direita do Meu dia ficava
+   * só com os atalhos, e o profissional nunca descobria que o registro do aluno alimenta esta
+   * leitura. Zero é um dado, e o texto de baixo diz de onde ele viria.
+   */
 
   return (
     <Card className="p-5">
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+      <div className="flex items-baseline justify-between gap-3">
         <h2 className="font-display text-base font-bold text-ink">Semana dos seus alunos</h2>
-        <div className="flex items-baseline gap-2">
-          <span className="tabular font-display text-lg font-bold text-ink">
-            {total} {total === 1 ? "treino" : "treinos"}
+        {variacao != null && variacao !== 0 && (
+          <span
+            className={cn("tabular text-sm font-bold", variacao > 0 ? "text-analysis" : "text-warning")}
+            title={`${anterior} ${anterior === 1 ? "treino" : "treinos"} na semana passada`}
+          >
+            {variacao > 0 ? "+" : "−"}
+            {Math.abs(variacao)}%
           </span>
-          {variacao != null && variacao !== 0 && (
-            <span className={cn("tabular text-xs font-bold", variacao > 0 ? "text-success" : "text-warning")}>
-              {variacao > 0 ? "+" : ""}
-              {variacao}% vs semana passada
-            </span>
-          )}
-        </div>
+        )}
       </div>
-      <div
-        className="flex h-20 items-end gap-2"
-        role="img"
-        aria-label={DIAS.map((d, i) => `${d}: ${porDia[i]}`).join(", ")}
-      >
-        {DIAS.map((d, i) => (
-          <div key={d} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-            <span className="tabular text-2xs font-bold text-ink-2">{porDia[i] || ""}</span>
-            <div
-              aria-hidden
-              className={cn("w-full rounded-t-control", i === diaSemana ? "bg-primary" : "bg-surface-mute")}
-              style={{ height: `${Math.max(4, (porDia[i] / max) * 100)}%` }}
-            />
-            <span className={cn("text-2xs", i === diaSemana ? "font-bold text-ink" : "text-ink-2")}>{d}</span>
-          </div>
-        ))}
+      <p className="mt-1 text-sm text-ink-2">
+        <b className="tabular font-display text-xl text-ink">{total}</b> {total === 1 ? "treino registrado" : "treinos registrados"}
+        {variacao != null && variacao !== 0 && <span className="text-ink-3"> · contra {anterior} na semana passada</span>}
+      </p>
+      {/*
+        AS BARRAS NÃO APARECIAM, e o motivo era de CSS, não de dado.
+        A altura de cada barra era um percentual, e o pai dela (a coluna do dia) não tinha
+        altura definida: percentual de altura sobre pai de altura automática resolve para
+        automático, ou seja, zero. O cartão mostrava os números em cima e os dias embaixo, com
+        nada no meio. A coluna agora ocupa a altura toda do gráfico e empilha pelo fundo.
+      */}
+      <div className="mt-3 flex h-[92px] items-end gap-2" role="img" aria-label={DIAS.map((d, i) => `${d}: ${porDia[i]}`).join(", ")}>
+        {DIAS.map((d, i) => {
+          const n = porDia[i];
+          // Como o protótipo: os dias que já passaram em turquesa, hoje em azul, o resto
+          // da semana em cinza. Dia sem treino fica cinza em qualquer posição: turquesa
+          // num zero pareceria valor.
+          const cor = n === 0 || i > diaSemana ? "bg-surface-mute" : i === diaSemana ? "bg-primary" : "bg-analysis-fill";
+          return (
+            <div key={d} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
+              <span className="tabular text-2xs font-bold text-ink-2">{n || ""}</span>
+              <div aria-hidden className={cn("w-full rounded-t-[6px] rounded-b-[3px]", cor)} style={{ height: `${Math.max(6, (n / max) * 100)}%` }} />
+              <span className={cn("text-2xs", i === diaSemana ? "font-bold text-ink" : "text-ink-3")}>{d}</span>
+            </div>
+          );
+        })}
       </div>
+      {total === 0 && (
+        <p className="mt-3 text-xs leading-relaxed text-ink-3">
+          Nenhum treino registrado ainda nesta semana. Cada dia em que um aluno registra no app aparece aqui.
+        </p>
+      )}
     </Card>
   );
 }

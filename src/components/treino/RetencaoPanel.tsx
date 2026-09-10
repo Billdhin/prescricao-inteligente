@@ -16,21 +16,36 @@ import { cn } from "@/lib/utils";
 /**
  * "Reativar alunos": lê a execução real e aponta quem esfriou, com o texto de
  * WhatsApp pronto para o profissional enviar. O profissional envia; a gente não
- * dispara nada. Só aparece quando há alguém para reativar.
+ * dispara nada.
+ *
+ * ## No formato do protótipo: UM aluno em destaque, e a lista sob demanda
+ *
+ * O cartão abria com a lista inteira, cada linha com pílula, tempo e botão, e na coluna
+ * estreita do Meu dia isso empurrava os atalhos para longe. O protótipo mostra uma frase sobre
+ * o aluno mais parado e um botão. O resto da lista continua a um toque ("e mais N").
+ *
+ * ## Ele aparece sempre, e diz a verdade quando não há ninguém
+ *
+ * Com `return null` a coluna mudava de forma de um dia para o outro, e o profissional não sabia
+ * que a leitura existia. São dois vazios diferentes e o texto separa os dois: ninguém parado, ou
+ * parados que já estão na rota de hoje (a rota tem precedência, cada aluno aparece uma vez).
  */
 export function RetencaoPanel({
   alunos,
   execucoes,
   nomeProfissional,
+  paradosNaRota = 0,
 }: {
   alunos: Aluno[];
   execucoes: Execucao[];
   nomeProfissional?: string;
+  /** alunos parados que ficaram fora daqui porque já são parada da rota de hoje */
+  paradosNaRota?: number;
 }) {
   const sinais = React.useMemo(() => alunosParaReativar(alunos, execucoes), [alunos, execucoes]);
   const [aberto, setAberto] = React.useState<string | null>(null);
-
-  if (sinais.length === 0) return null;
+  const [lista, setLista] = React.useState(false);
+  const [destaque, ...resto] = sinais;
 
   return (
     // O cartão "Reativar" do protótipo: gradiente de papel turquesa autorado
@@ -39,30 +54,88 @@ export function RetencaoPanel({
       className="border p-5"
       style={{ background: "linear-gradient(135deg,var(--analysis-tint),var(--bg))", borderColor: "#CFE7E4" }}
     >
-      <div className="mb-3 flex items-center gap-2.5">
-        <span className="grid h-8 w-8 place-items-center rounded-control bg-surface text-analysis">
-          <HeartPulse className="h-4 w-4" />
-        </span>
-        <div>
-          <h2 className="text-2xs font-semibold uppercase tracking-[0.12em] text-analysis">Reativar</h2>
-          <p className="text-sm text-ink-2">
-            {sinais.length} aluno{sinais.length > 1 ? "s" : ""} sem registro recente
-          </p>
-        </div>
-      </div>
+      <h2 className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.12em] text-analysis">
+        <HeartPulse className="h-3.5 w-3.5" aria-hidden /> Reativar
+      </h2>
 
-      <div className="space-y-2.5">
-        {sinais.map((s) => (
-          <LinhaRetencao
-            key={s.aluno.id}
-            sinal={s}
-            nomeProfissional={nomeProfissional}
-            aberto={aberto === s.aluno.id}
-            onToggle={() => setAberto((a) => (a === s.aluno.id ? null : s.aluno.id))}
-          />
-        ))}
-      </div>
+      {!destaque ? (
+        <p className="mt-2 text-sm leading-relaxed text-ink-2">
+          {paradosNaRota > 0
+            ? `${paradosNaRota === 1 ? "O aluno parado já está" : `Os ${paradosNaRota} alunos parados já estão`} na sua rota de hoje.`
+            : "Ninguém parado: todos os alunos ativos registraram treino nos últimos dias."}
+        </p>
+      ) : (
+        <>
+          <p className="mt-2 text-[15px] leading-relaxed text-ink">
+            <Link to={`/alunos/${destaque.aluno.id}`} className="font-bold hover:underline">
+              {destaque.aluno.nome}
+            </Link>{" "}
+            {destaque.semRegistro
+              ? `foi cadastrado há ${destaque.diasSemTreinar} ${destaque.diasSemTreinar === 1 ? "dia" : "dias"} e ainda não registrou treino.`
+              : `não registra treino há ${destaque.diasSemTreinar} ${destaque.diasSemTreinar === 1 ? "dia" : "dias"}.`}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <button
+              type="button"
+              onClick={() => setAberto((a) => (a === destaque.aluno.id ? null : destaque.aluno.id))}
+              aria-expanded={aberto === destaque.aluno.id}
+              className="inline-flex h-10 items-center gap-2 rounded-control bg-ink px-3.5 text-sm font-semibold text-surface transition-opacity hover:opacity-90"
+            >
+              <MessageCircle className="h-4 w-4" aria-hidden /> Mandar mensagem
+            </button>
+            {resto.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setLista((v) => !v)}
+                aria-expanded={lista}
+                className="text-sm font-semibold text-analysis hover:underline"
+              >
+                {lista ? "Esconder os outros" : `e mais ${resto.length} ${resto.length === 1 ? "aluno" : "alunos"}`}
+              </button>
+            )}
+          </div>
+          {aberto === destaque.aluno.id && (
+            <div className="mt-3">
+              <Mensagens sinal={destaque} nomeProfissional={nomeProfissional} />
+            </div>
+          )}
+          {lista && (
+            <div className="mt-3 space-y-2.5">
+              {resto.map((s) => (
+                <LinhaRetencao
+                  key={s.aluno.id}
+                  sinal={s}
+                  nomeProfissional={nomeProfissional}
+                  aberto={aberto === s.aluno.id}
+                  onToggle={() => setAberto((a) => (a === s.aluno.id ? null : s.aluno.id))}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </Card>
+  );
+}
+
+/** Os textos prontos de um aluno, com o aviso de quando falta o WhatsApp no cadastro. */
+function Mensagens({ sinal, nomeProfissional }: { sinal: SinalRetencao; nomeProfissional?: string }) {
+  const mensagens = React.useMemo(() => mensagensDeRetorno(sinal, nomeProfissional), [sinal, nomeProfissional]);
+  return (
+    <div className="space-y-2">
+      {!sinal.aluno.telefone && (
+        <p className="text-xs text-ink-3">
+          Sem WhatsApp no cadastro. Você pode copiar o texto e enviar pelo seu canal, ou{" "}
+          <Link to={`/alunos/${sinal.aluno.id}`} className="font-semibold text-primary hover:underline">
+            adicionar o número
+          </Link>{" "}
+          para abrir a conversa direto.
+        </p>
+      )}
+      {mensagens.map((m) => (
+        <ScriptCard key={m.titulo} titulo={m.titulo} texto={m.texto} telefone={sinal.aluno.telefone} />
+      ))}
+    </div>
   );
 }
 
@@ -77,10 +150,6 @@ function LinhaRetencao({
   aberto: boolean;
   onToggle: () => void;
 }) {
-  const mensagens = React.useMemo(
-    () => mensagensDeRetorno(sinal, nomeProfissional),
-    [sinal, nomeProfissional],
-  );
   const tempo = sinal.semRegistro
     ? `Cadastrado há ${sinal.diasSemTreinar} dia${sinal.diasSemTreinar === 1 ? "" : "s"}, sem registro`
     : `${sinal.diasSemTreinar} dia${sinal.diasSemTreinar === 1 ? "" : "s"} sem treinar`;
@@ -111,19 +180,8 @@ function LinhaRetencao({
       </div>
 
       {aberto && (
-        <div className="space-y-2 border-t border-border p-3">
-          {!sinal.aluno.telefone && (
-            <p className="text-xs text-ink-3">
-              Sem WhatsApp no cadastro. Você pode copiar o texto e enviar pelo seu canal, ou{" "}
-              <Link to={`/alunos/${sinal.aluno.id}`} className="font-semibold text-primary hover:underline">
-                adicionar o número
-              </Link>{" "}
-              para abrir a conversa direto.
-            </p>
-          )}
-          {mensagens.map((m) => (
-            <ScriptCard key={m.titulo} titulo={m.titulo} texto={m.texto} telefone={sinal.aluno.telefone} />
-          ))}
+        <div className="border-t border-border p-3">
+          <Mensagens sinal={sinal} nomeProfissional={nomeProfissional} />
         </div>
       )}
     </div>
