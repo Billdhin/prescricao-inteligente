@@ -184,12 +184,57 @@ function SeloOrigem({ ctx, bloco }: { ctx: ContextoFaixa; bloco: BlocoSessao }) 
  */
 const SERIE_NAVY: Record<string, string> = { vol: "#7FE3D8", int: "#E8A317", cpx: "#8FA0B5" };
 
-/** Famílias das faixas de fase, cicladas na ordem do protótipo. */
-const FAIXA_FASE = [
-  { bg: "rgba(20,179,186,.18)", borda: "rgba(20,179,186,.4)", tinta: "#7FE3D8" },
-  { bg: "rgba(32,100,236,.22)", borda: "rgba(32,100,236,.5)", tinta: "#9DBAFF" },
-  { bg: "rgba(232,163,23,.16)", borda: "rgba(232,163,23,.4)", tinta: "#F0B429" },
+/**
+ * AS CORES DAS FASES, uma fonte só para o gráfico, o calendário e a régua do editor.
+ *
+ * ## Por que quatro, e por que por FASE e não por bloco
+ *
+ * Eram três cores cicladas por BLOCO. Num plano de 12 semanas (três blocos) isso bastava.
+ * Num plano de um ano a jornada clínica tem quatro fases e a última se estende em blocos de
+ * continuação: com três cores por bloco, a Fase 4 saía em azul-petróleo (a cor da Fase 1),
+ * a primeira continuação dela em azul e a segunda em âmbar, como se fossem as Fases 2 e 3.
+ * A legenda repetia "Fase 4: Autonomia" três vezes, cada uma de uma cor.
+ *
+ * Agora a cor é da FASE (`faseJornada`, quando o bloco nasce de uma), então a continuação
+ * herda a cor de quem ela continua, e há quatro famílias para as quatro fases. Bloco
+ * genérico, sem fase, continua levando uma cor por bloco.
+ *
+ * Os tons são fixos, e não a cor de marca do profissional: o gráfico vive num painel navy
+ * de cores fixas, e o calendário precisa falar a mesma língua dele. Com `--primary` no
+ * calendário, quem tem marca coral via a Fase 2 coral no calendário e azul na curva. Para
+ * o texto continuar legível nos dois temas, as células escrevem em tinta (`--ink`) e a
+ * fase aparece no fundo e nos pontos.
+ */
+export const CORES_DAS_FASES = [
+  { rgb: "20,179,186", forte: "#14B3BA", navy: "#7FE3D8" },
+  { rgb: "32,100,236", forte: "#2064EC", navy: "#9DBAFF" },
+  { rgb: "232,163,23", forte: "#E8A317", navy: "#F0B429" },
+  { rgb: "122,58,237", forte: "#7A3AED", navy: "#C4B5FD" },
 ] as const;
+
+/** A fase a que o bloco pertence: continuação conta como a mesma fase. */
+export function chaveDaFase(meso: Mesociclo): string {
+  return meso.faseJornada ? `fase-${meso.faseJornada}` : meso.id;
+}
+
+/** O nome da fase, sem o "(continuação)": é assim que ela aparece na legenda. */
+export function nomeDaFase(meso: Mesociclo): string {
+  return rotuloMeso(meso).replace(/\s*\(continuação\)\s*$/i, "");
+}
+
+/** Índice de cor de cada fase, na ordem em que as fases aparecem no plano. */
+export function indicesDeCorDasFases(mesos: Mesociclo[]): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const meso of mesos) {
+    const k = chaveDaFase(meso);
+    if (!m.has(k)) m.set(k, m.size);
+  }
+  return m;
+}
+
+export function corDaFase(indice: number) {
+  return CORES_DAS_FASES[indice % CORES_DAS_FASES.length];
+}
 
 export function GraficoProgressao({
   macro,
@@ -216,6 +261,31 @@ export function GraficoProgressao({
    * sairiam deformados. `pontos` (progressao.ts) dá a coordenada já projetada de
    * cada semana, então a bandeira e os pontos caem exatamente sobre a curva.
    */
+  /*
+   * UMA FAIXA POR FASE, E NÃO POR BLOCO. Blocos seguidos da mesma fase (a Fase 4 de um plano
+   * anual e as continuações dela) viram uma faixa só, do começo do primeiro ao fim do último.
+   * Eram três faixas iguais, "Fase 4: Autonomia", lado a lado e cada uma de uma cor.
+   */
+  const coresDasFases = indicesDeCorDasFases(macro.mesociclos);
+  const faixasDaFase = g.fases.reduce<(typeof g.fases[number] & { chave: string; cor: number })[]>((acc, f) => {
+    const meso = macro.mesociclos[f.indice];
+    const chave = meso ? chaveDaFase(meso) : String(f.indice);
+    const ultima = acc[acc.length - 1];
+    if (ultima && ultima.chave === chave) {
+      acc[acc.length - 1] = {
+        ...ultima,
+        x1: f.x1,
+        cx: (ultima.x0 + f.x1) / 2,
+        focos: ultima.focos,
+        spanSemanas: `${ultima.spanSemanas.split(" a ")[0]} a ${f.spanSemanas.split(" ").pop()}`,
+      };
+      return acc;
+    }
+    const nome = meso ? nomeDaFase(meso).split(" · ")[0] : f.nome;
+    acc.push({ ...f, nome, chave, cor: coresDasFases.get(chave) ?? f.indice });
+    return acc;
+  }, []);
+
   const vbTop = g.plot.top - 12;
   const vbAltura = g.plot.bottom - g.plot.top + 24;
   const pctX = (x: number) => (x / g.largura) * 100;
@@ -225,6 +295,8 @@ export function GraficoProgressao({
   const grade = [0.25, 0.5, 0.75].map((f) => g.plot.top + (g.plot.bottom - g.plot.top) * f);
   const passoSemana = g.microTicks.length > 1 ? g.microTicks[1].x - g.microTicks[0].x : 24;
   const larguraChip = Math.max(pctX(passoSemana) - 0.35, 0.6);
+  // Abaixo de ~3,5% da largura por semana (mais de ~26 semanas), "S13" não cabe no chip.
+  const estreita = larguraChip < 3.5;
   // Só os tipos de semana que aparecem no plano entram na legenda (nunca "Teste" quando
   // não há semana de teste).
   const tiposPresentes = new Set(g.microTicks.map((t) => t.tipo));
@@ -320,10 +392,14 @@ export function GraficoProgressao({
           que se treina mais nela (só quando a faixa é larga o bastante para eles
           não espremerem o nome). */}
       <div className="relative mt-4 h-8 min-w-[560px]" aria-hidden>
-        {g.fases.map((f) => {
-          const fam = FAIXA_FASE[f.indice % FAIXA_FASE.length];
+        {faixasDaFase.map((f) => {
+          const c = corDaFase(f.cor);
+          const fam = { bg: `rgba(${c.rgb},.18)`, borda: `rgba(${c.rgb},.45)`, tinta: c.navy };
           const largura = pctX(f.x1) - pctX(f.x0);
-          const focos = largura > 14 ? posicoesFocos(f, 0, 12, 5) : [];
+          // Os ícones só entram quando sobra largura DEPOIS do nome: num plano anual a faixa da
+          // Fase 2 tem uns 16% do gráfico, e com os ícones o nome saía "Fase 2: Construção de cap…".
+          const cabeNomeInteiro = largura > 6 + f.nome.length * 0.55;
+          const focos = largura > 14 && cabeNomeInteiro ? posicoesFocos(f, 0, 12, 5) : [];
           return (
             <div
               key={f.indice}
@@ -451,6 +527,35 @@ export function GraficoProgressao({
                 ? "rgba(20,179,186,.2)"
                 : "rgba(255,255,255,.06)";
           const tinta = t.tipo === "deload" ? "#F0B429" : t.tipo === "teste" ? "#7FE3D8" : "#B9C6D6";
+          /*
+           * SEMANA ESTREITA NÃO CABE "S13" DENTRO DO CHIP. Num plano de um ano cada semana tem
+           * cerca de 2% da largura, e o rótulo saía "S..." e o tipo "D...". Aí o chip vira uma
+           * pílula fina na cor do tipo, e o rótulo (um a cada quatro semanas) fica embaixo
+           * dela, inteiro. O tipo por extenso sai: a legenda logo abaixo diz o que é o âmbar.
+           */
+          if (estreita) {
+            return (
+              <div
+                key={i}
+                className="absolute top-0 -translate-x-1/2 text-center"
+                style={{ left: `${pctX(t.x)}%`, width: `${larguraChip}%` }}
+                title={`Semana ${t.semana} · ${TIPO_LABEL[t.tipo]}`}
+              >
+                <span
+                  className="mx-auto block h-2 rounded-full"
+                  style={ehAtual ? { background: "#F3F1EA" } : { background: t.tipo === "carga" ? "rgba(255,255,255,.14)" : fundo.replace(".2)", ".6)") }}
+                />
+                {(t.rotular || ehAtual) && (
+                  <span
+                    className="tabular absolute left-1/2 top-3 -translate-x-1/2 whitespace-nowrap text-2xs font-semibold"
+                    style={{ color: ehAtual ? "#F3F1EA" : tinta }}
+                  >
+                    S{t.semana}
+                  </span>
+                )}
+              </div>
+            );
+          }
           return (
             <div
               key={i}
@@ -567,8 +672,6 @@ export const VARIAVEL_LABEL: Record<VariavelTravavel, string> = {
   complexidade: "Complexidade",
 };
 
-/** Famílias da faixa do topo do cartão, na mesma ordem das faixas de fase do gráfico. */
-const TOPO_FASE = ["bg-analysis-fill", "bg-primary", "bg-warning-fill"] as const;
 
 /** Uma linha "rótulo, barra, tendência". A barra é proporcional; o número não é impresso
  *  porque ele não tem unidade: o que se lê é a comparação com o maior bloco do plano. */

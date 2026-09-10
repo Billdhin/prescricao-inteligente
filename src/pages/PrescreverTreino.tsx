@@ -32,6 +32,10 @@ import {
   PainelDoBloco,
   SessaoBloco,
   tetosDoPlano,
+  chaveDaFase,
+  corDaFase,
+  indicesDeCorDasFases,
+  nomeDaFase,
   type ContextoFaixa,
 } from "@/components/treino/PlanoEditor";
 import { efeitoDaEdicao, type EfeitoDaEdicao } from "@/lib/gps/efeitoDaEdicao";
@@ -1694,18 +1698,6 @@ function ModeloCardEscolha({
  * inventada aqui: se um dia o motor mudar onde ela cai, a barra acompanha.
  */
 /**
- * As famílias por FASE, na mesma ordem em que o gráfico cicla as faixas: quem viu a fase 2
- * em azul na curva encontra a semana da fase 2 em azul no calendário e na régua do editor.
- * Fonte única de propósito: três listas iguais em três arquivos é como uma delas fica para
- * trás na próxima mudança de paleta.
- */
-const CORES_DE_FASE = [
-  { bg: "var(--analysis-tint)", tinta: "var(--analysis)", ponto: "var(--analysis-fill)" },
-  { bg: "var(--primary-tint)", tinta: "var(--primary)", ponto: "var(--primary)" },
-  { bg: "var(--warning-tint)", tinta: "var(--warning)", ponto: "var(--warning-fill)" },
-];
-
-/**
  * O CALENDÁRIO DO PLANO (protótipo da periodização).
  *
  * ## O que ele substitui, e por quê
@@ -1731,13 +1723,30 @@ function CalendarioDoPlano({
   corrente?: number;
   onFocar: (n: number) => void;
 }) {
-  // As famílias por FASE, na mesma ordem em que o gráfico cicla as faixas: quem viu a fase 2
-  // em azul na curva encontra a semana da fase 2 em azul aqui.
-  const familia = (indice: number) => CORES_DE_FASE[indice % CORES_DE_FASE.length];
+  // A cor é da FASE, a mesma do gráfico (fonte única em PlanoEditor): quem viu a fase 2 em
+  // azul na curva encontra a semana da fase 2 em azul aqui, e a continuação da Fase 4 fica
+  // na cor da Fase 4.
+  const mesos = [...new Map(semanas.map(({ meso }) => [meso.id, meso])).values()];
+  const corPorFase = indicesDeCorDasFases(mesos);
+  const familia = (meso: Mesociclo) => {
+    const c = corDaFase(corPorFase.get(chaveDaFase(meso)) ?? 0);
+    return { bg: `rgba(${c.rgb},.16)`, ponto: c.forte };
+  };
+  // Legenda: uma entrada por FASE, com o nome sem "(continuação)".
+  const fases = [...new Map(mesos.map((m) => [chaveDaFase(m), m])).values()];
 
-  const indiceDoMeso = new Map<string, number>();
-  let i = 0;
-  for (const { meso } of semanas) if (!indiceDoMeso.has(meso.id)) indiceDoMeso.set(meso.id, i++);
+  /*
+   * NO MÁXIMO DOZE SEMANAS POR LINHA (protótipo das 24 semanas).
+   *
+   * O calendário punha o plano INTEIRO numa linha. Com 12 semanas, doze quadrados; com um
+   * ano, 48 colunas de 36px, e "S12" virava "S1", "S:" e "S", a última célula vazava do
+   * cartão com o ponto de reavaliação do lado de fora. Doze por linha é um trimestre por
+   * linha, que é também como o profissional pensa um plano anual. Com mais de uma linha a
+   * célula deixa de ser quadrada (quatro linhas de quadrados de 140px seriam 600px de
+   * calendário) e fica baixa, com o mesmo alvo de toque.
+   */
+  const colunas = Math.min(semanas.length, 12);
+  const variasLinhas = semanas.length > 12;
 
   return (
     <Card className="p-4">
@@ -1756,10 +1765,10 @@ function CalendarioDoPlano({
           "grid grid-cols-6 gap-1.5",
           "sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]",
         )}
-        style={{ ["--cols" as string]: String(semanas.length) } as React.CSSProperties}
+        style={{ ["--cols" as string]: String(colunas) } as React.CSSProperties}
       >
         {semanas.map(({ micro, meso }) => {
-          const fam = familia(indiceDoMeso.get(meso.id) ?? 0);
+          const fam = familia(meso);
           const descarga = micro.tipo === "deload";
           const emFoco = micro.semana === foco;
           const ehCorrente = micro.semana === corrente;
@@ -1776,12 +1785,12 @@ function CalendarioDoPlano({
                 reavalia ? " · reavaliação" : ""
               } · ${nSessoes} ${nSessoes === 1 ? "sessão" : "sessões"}`}
               className={cn(
-                "relative flex aspect-square min-h-[44px] flex-col items-center justify-center gap-1 rounded-control border transition-colors",
+                "relative flex min-h-[44px] flex-col items-center justify-center gap-1 rounded-control border text-ink transition-colors",
+                variasLinhas ? "h-[52px]" : "aspect-square",
                 emFoco ? "border-ink" : ehCorrente ? "border-ink/40" : "border-transparent",
               )}
               style={{
                 background: fam.bg,
-                color: fam.tinta,
                 // A descarga é hachurada, e não só de outra cor: no plano ela é uma exceção
                 // de forma, e a hachura sobrevive ao daltonismo e à impressão em cinza.
                 backgroundImage: descarga
@@ -1810,15 +1819,12 @@ function CalendarioDoPlano({
 
       {/* A legenda diz o que cada marca significa. Sem ela as cores viram enfeite. */}
       <div className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 text-2xs text-ink-2">
-        {[...indiceDoMeso.entries()].map(([id, idx]) => {
-          const meso = semanas.find((x) => x.meso.id === id)!.meso;
-          return (
-            <span key={id} className="inline-flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: familia(idx).ponto }} />
-              {rotuloMeso(meso)}
-            </span>
-          );
-        })}
+        {fases.map((meso) => (
+          <span key={chaveDaFase(meso)} className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: familia(meso).ponto }} />
+            {nomeDaFase(meso)}
+          </span>
+        ))}
         <span className="inline-flex items-center gap-1.5">
           <span
             className="h-2.5 w-2.5 rounded-[3px]"
@@ -2537,9 +2543,11 @@ function ReguaDoEditor({
   atual: number;
   onFocar: (n: number) => void;
 }) {
-  const indiceDoMeso = new Map<string, number>();
-  let i = 0;
-  for (const { meso } of semanas) if (!indiceDoMeso.has(meso.id)) indiceDoMeso.set(meso.id, i++);
+  const mesos = [...new Map(semanas.map(({ meso }) => [meso.id, meso])).values()];
+  const corPorFase = indicesDeCorDasFases(mesos);
+  // Num plano longo, "S37" não cabe numa barra de 22px: o rótulo sai a cada quatro semanas
+  // (e sempre na semana aberta), e a barra continua lá para ser tocada.
+  const longo = semanas.length > 24;
   const posicao = semanas.findIndex((s) => s.micro.semana === atual);
   const passoAnterior = posicao > 0 ? semanas[posicao - 1] : undefined;
   const passoProximo = posicao >= 0 && posicao < semanas.length - 1 ? semanas[posicao + 1] : undefined;
@@ -2577,7 +2585,7 @@ function ReguaDoEditor({
       <div className="grid min-w-0 flex-1 grid-cols-6 gap-1 sm:[grid-template-columns:repeat(var(--cols),minmax(0,1fr))]">
         {semanas.map(({ micro, meso }) => {
           const ehAtual = micro.semana === atual;
-          const cor = CORES_DE_FASE[(indiceDoMeso.get(meso.id) ?? 0) % CORES_DE_FASE.length];
+          const cor = { ponto: corDaFase(corPorFase.get(chaveDaFase(meso)) ?? 0).forte };
           return (
             <button
               key={micro.id}
@@ -2598,7 +2606,7 @@ function ReguaDoEditor({
                 }}
               />
               <span className={cn("tabular text-2xs", ehAtual ? "font-bold text-ink" : "text-ink-3")}>
-                S{micro.semana}
+                {!longo || ehAtual || (micro.semana - 1) % 4 === 0 ? `S${micro.semana}` : "\u00a0"}
               </span>
             </button>
           );
