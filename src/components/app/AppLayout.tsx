@@ -2,7 +2,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bell, CheckCheck, MoreHorizontal, Search, Eye, Plus, LogOut } from "lucide-react";
-import { Logo, MarcaPino } from "@/components/brand/Logo";
+import { Logo, TelaCarregando } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
 import { PRIMARIOS, MAIS, BOTTOM, CONTA, itemAtivo } from "@/components/app/nav";
 import { notificacoes } from "@/lib/notificacoes";
@@ -180,21 +180,9 @@ export function AppLayout() {
  * porque quem usa leitor de tela precisa ouvir que há uma espera, e não ver uma animação.
  */
 function SplashCarregando() {
-  return (
-    <div className="fixed inset-0 grid place-items-center bg-bg">
-      <div role="status" aria-live="polite" className="flex flex-col items-center gap-4">
-        <MarcaPino animado className="h-16 w-16" />
-        <span className="font-display text-base font-bold leading-none text-ink">
-          Mapa da{" "}
-          <span className="relative inline-block">
-            Prescrição
-            <span aria-hidden className="absolute inset-x-0 -bottom-[0.18em] h-[0.1em] rounded-full bg-[#10B7C0]" />
-          </span>
-        </span>
-        <span className="sr-only">Carregando</span>
-      </div>
-    </div>
-  );
+  // A tela de espera da casa inteira (TelaCarregando): o mesmo pino, no mesmo tamanho e no
+  // mesmo lugar do quadro do index.html, para a passagem entre os dois não dar um salto.
+  return <TelaCarregando />;
 }
 
 /** Fallback de carregamento das páginas lazy (Aprender). */

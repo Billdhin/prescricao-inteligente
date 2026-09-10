@@ -16,6 +16,7 @@ import {
 } from "@/features/learning/pages";
 import NaoEncontrado from "@/pages/NaoEncontrado";
 import { NovaSenhaPeloLink } from "@/components/app/NovaSenhaPeloLink";
+import { TelaCarregando } from "@/components/brand/Logo";
 
 /*
  * SÓ A LANDING É EAGER. TODO O RESTO DO APP CHEGA SOB DEMANDA.
@@ -146,10 +147,12 @@ export default function App() {
       <ScrollToTop />
       <TemaForaDaLanding />
       <NovaSenhaPeloLink />
-      {/* Fallback NEUTRO de propósito: o chunk de uma página chega em dezenas de ms no
-          segundo acesso (cache) e um spinner piscando a cada navegação seria pior que o
-          vazio. O fundo segue o tema, então não há flash branco no escuro. */}
-      <Suspense fallback={<div style={{ minHeight: "100vh", background: "rgb(var(--bg-rgb, 247 246 243))" }} />}>
+      {/* A MESMA marca do index.html. Era um fundo vazio, pensado para não piscar a cada
+          navegação; mas as navegações já são transições (v7_startTransition: a tela anterior
+          fica até a próxima chegar), e o fallback só aparece de fato na PRIMEIRA carga. No
+          celular com rede lenta ela durava segundos de tela em branco, logo depois de o pino
+          do index.html sumir. */}
+      <Suspense fallback={<TelaCarregando />}>
       <Routes>
         {/* Público */}
         <Route path="/" element={<Landing />} />

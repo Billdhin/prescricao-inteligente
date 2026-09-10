@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useBrand, iniciaisDaMarca } from "@/lib/brand/BrandContext";
 
@@ -105,6 +106,32 @@ export function MarcaCarregando({
       <MarcaPino animado className={cn("h-12 w-12", className)} />
       <span className="sr-only">{rotulo}</span>
     </span>
+  );
+}
+
+/**
+ * A TELA DE ESPERA, a mesma do começo ao fim do carregamento.
+ *
+ * O `index.html` mostra o pino se traçando enquanto o pacote baixa, e o React apaga esse
+ * quadro no primeiro render. Depois dele vinham telas de espera DIFERENTES: o Suspense das
+ * rotas era um fundo vazio, o portal do aluno era uma barrinha de 1 px quase invisível, e o
+ * painel era o pino menor com o nome embaixo. No celular, com a rede lenta, isso dava vários
+ * segundos de tela em branco (medido: de ~3 s a ~5 s em 4G fraco) e o aviso "o ícone de
+ * carregar não aparece". Agora é um componente só, no mesmo tamanho e no mesmo lugar do
+ * quadro do `index.html`, então a passagem de um para o outro nem se vê.
+ *
+ * `children` entra abaixo do pino: é onde o portal do aluno oferece "recarregar" quando a
+ * espera passa do normal.
+ */
+export function TelaCarregando({ children, rotulo = "Carregando" }: { children?: ReactNode; rotulo?: string }) {
+  return (
+    <div className="fixed inset-0 z-[60] grid place-items-center bg-bg p-4">
+      <div role="status" aria-live="polite" className="flex flex-col items-center gap-5">
+        <MarcaPino animado className="h-[72px] w-[72px]" />
+        <span className="sr-only">{rotulo}</span>
+        {children}
+      </div>
+    </div>
   );
 }
 

@@ -6,7 +6,7 @@ import { CampoSenha, ATRIBUTOS_EMAIL } from "@/components/app/CampoSenha";
 import { reivindicarConvite, salvarExecucao, apagarExecucao, salvarSessaoFeedback, salvarDeclaracao } from "@/lib/backend/supabaseRepo";
 import { useAlunos } from "@/lib/store";
 import { StudentApp } from "@/components/student/StudentApp";
-import { Logo } from "@/components/brand/Logo";
+import { Logo, TelaCarregando } from "@/components/brand/Logo";
 import { Toasts } from "@/components/app/Toasts";
 import { toast, toastFalha } from "@/lib/toast";
 import { buttonClasses } from "@/components/ui/primitives";
@@ -380,9 +380,11 @@ function Splash() {
     return () => window.clearTimeout(t);
   }, []);
 
+  // A marca se traçando, a mesma do index.html e do painel. Era uma barrinha de 1 px que no
+  // celular quase não se via: o aluno olhava uma tela vazia durante o carregamento do treino.
   return (
-    <div className="grid min-h-[100dvh] place-items-center bg-bg p-4">
-      {demorou ? (
+    <TelaCarregando rotulo="Carregando o seu treino">
+      {demorou && (
         <div className="max-w-sm space-y-3 text-center">
           <p className="text-sm text-ink-2">Está demorando mais que o normal para carregar o seu treino.</p>
           <div className="flex justify-center gap-2">
@@ -394,11 +396,7 @@ function Splash() {
             </button>
           </div>
         </div>
-      ) : (
-        <div className="h-1 w-24 overflow-hidden rounded-full bg-surface-soft">
-          <div className="h-full w-1/2 animate-pulse rounded-full gradient-brand" />
-        </div>
       )}
-    </div>
+    </TelaCarregando>
   );
 }
