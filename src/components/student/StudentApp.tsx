@@ -273,7 +273,9 @@ export function StudentApp({
 
   return (
     <BrandProvider marca={marca}>
-      <div ref={rootRef} className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col bg-bg">
+      {/* Na prévia o app vive dentro da tela de um celular com altura fixa: 100dvh ali seria
+          a altura da JANELA do profissional, e sobrava uma faixa vazia no fim do conteúdo. */}
+      <div ref={rootRef} className={cn("mx-auto flex w-full max-w-md flex-col bg-bg", preview ? "min-h-full" : "min-h-[100dvh]")}>
         {guiado && plano ? (
           <TreinoGuiado
             sessao={guiado}
