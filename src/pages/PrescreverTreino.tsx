@@ -84,6 +84,7 @@ import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
 import { parValido, linhaObjetivos } from "@/lib/gps/objetivos";
 import { useDialog } from "@/lib/useDialog";
 import { toast, toastDesfazer } from "@/lib/toast";
+import { AvatarAluno } from "@/components/alunos/FotoAluno";
 
 const NIVEIS: Nivel[] = ["Iniciante", "Intermediário", "Avançado"];
 // A lista vive em src/data/periodizacao.ts: o PDF e o cabeçalho do plano nomeiam o mesmo
@@ -649,12 +650,11 @@ export function PrescreverTreino() {
                           sel ? "border-primary bg-primary-tint" : "border-border hover:bg-surface-soft",
                         )}
                       >
-                        <span
+                        <AvatarAluno
+                          aluno={a}
                           className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
                           style={{ background: "#0B1628", color: "#F3F1EA" }}
-                        >
-                          {a.iniciais}
-                        </span>
+                        />
                         <span className="min-w-0">
                           <b className="block truncate text-sm font-semibold text-ink">{a.nome}</b>
                           <span className="block truncate text-xs text-ink-2">

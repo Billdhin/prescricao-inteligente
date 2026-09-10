@@ -7,6 +7,7 @@ import { specialGroups, getSpecialGroup } from "@/data/specialGroups";
 import { useAlunos, useUser, isPremiumUnlocked } from "@/lib/store";
 import { estadoSemaforo, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { cn } from "@/lib/utils";
+import { AvatarAluno } from "@/components/alunos/FotoAluno";
 
 /**
  * /semaforo é o "Semáforo do dia": o painel operacional da carteira. Quem já fez o
@@ -119,12 +120,11 @@ export function Semaforo() {
                     to={`/alunos/${aluno.id}?aba=semaforo`}
                     className="flex items-center gap-3 rounded-card p-3 transition-colors hover:bg-surface-soft"
                   >
-                    <span
+                    <AvatarAluno
+                      aluno={aluno}
                       className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] font-display text-xs font-bold"
                       style={{ background: "#0B1628", color: "#F3F1EA" }}
-                    >
-                      {aluno.iniciais}
-                    </span>
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-semibold text-ink">{aluno.nome}</div>
                       <div className="mt-1 flex items-center gap-1.5">

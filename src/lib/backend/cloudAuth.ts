@@ -96,14 +96,16 @@ let hydratedFor: string | null = null;
  *  execucoes) e a marca do profissional dele. O shell do aluno renderiza a partir
  *  destes stores. */
 async function hydrateAluno(professionalId: string | null) {
-  const [alunos, planos, avaliacoes, execucoes, sessaoFeedbacks, declaracoes] = await Promise.all([
+  const [alunosSemFoto, planos, avaliacoes, execucoes, sessaoFeedbacks, declaracoes, fotos] = await Promise.all([
     repo.listarAlunos("meuTreino"),
     repo.listarPlanos(),
     repo.listarAvaliacoes(),
     repo.listarExecucoes(),
     repo.listarSessaoFeedbacks(),
     repo.listarDeclaracoes(),
+    repo.listarFotosAluno(),
   ]);
+  const alunos = repo.comFotos(alunosSemFoto, fotos);
   // Liberações do próprio aluno: alimentam o alerta de "treino em pausa" no app.
   // A leitura depende da policy `liberacoes_aluno_read` (migração 0006). Enquanto
   // ela não estiver aplicada, a RLS filtra e o select volta vazio (sem erro), então
@@ -152,7 +154,7 @@ async function hydrate(userId: string) {
     }
     useCloudAuth.setState({ role: "profissional", alunoId: null, professionalId: null, marca: null });
 
-    const [alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, declaracoes] = await Promise.all([
+    const [alunosSemFoto, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, declaracoes, fotos] = await Promise.all([
       repo.listarAlunos("carteira"),
       repo.listarAvaliacoes(),
       repo.listarPrescricoes(),
@@ -161,7 +163,9 @@ async function hydrate(userId: string) {
       repo.listarExecucoes(),
       repo.listarSessaoFeedbacks(),
       repo.listarDeclaracoes(),
+      repo.listarFotosAluno(),
     ]);
+    const alunos = repo.comFotos(alunosSemFoto, fotos);
 
     const nuvemVazia = alunos.length === 0;
     const local = useAlunos.getState();
@@ -182,6 +186,8 @@ async function hydrate(userId: string) {
         }
       };
       for (const a of local.alunos) await subir(() => repo.salvarAluno(a));
+      for (const a of local.alunos)
+        if (a.fotoDataUrl) await subir(() => repo.salvarFotoAluno(a.id, a.fotoDataUrl!, "profissional"));
       for (const av of local.avaliacoes) await subir(() => repo.salvarAvaliacao(av));
       for (const p of local.prescricoes) await subir(() => repo.salvarPrescricao(p));
       for (const p of local.planos) await subir(() => repo.salvarPlano(p));
@@ -201,6 +207,17 @@ async function hydrate(userId: string) {
       // A nuvem manda, mas RECONCILIA: preserva o que só existe no local (ex.: o
       // que falhou de subir antes) e re-sobe esses registros, em vez de apagá-los.
       const ma = unirPorId(alunos, local.alunos);
+      // A nuvem manda na ficha, mas a foto mora em outra tabela: se ela não veio da nuvem e
+      // existe aqui (trocada sem rede), fica a daqui e sobe de novo.
+      const fotosSoLocais: Aluno[] = [];
+      ma.merged = ma.merged.map((a) => {
+        if (a.fotoDataUrl) return a;
+        const daqui = local.alunos.find((l) => l.id === a.id && l.fotoDataUrl);
+        if (!daqui) return a;
+        fotosSoLocais.push(daqui);
+        return { ...a, fotoDataUrl: daqui.fotoDataUrl };
+      });
+      for (const a of ma.soLocais) if (a.fotoDataUrl) fotosSoLocais.push(a);
       const mav = unirPorId(avaliacoes, local.avaliacoes);
       const mp = unirPorId(prescricoes, local.prescricoes);
       const mpl = unirPorId(planos, local.planos);
@@ -216,6 +233,7 @@ async function hydrate(userId: string) {
         declaracoes,
       });
       for (const a of ma.soLocais) await repo.salvarAluno(a).catch(() => {});
+      for (const a of fotosSoLocais) await repo.salvarFotoAluno(a.id, a.fotoDataUrl!, "profissional").catch(() => {});
       for (const av of mav.soLocais) await repo.salvarAvaliacao(av).catch(() => {});
       for (const p of mp.soLocais) await repo.salvarPrescricao(p).catch(() => {});
       for (const p of mpl.soLocais) await repo.salvarPlano(p).catch(() => {});

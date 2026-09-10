@@ -22,6 +22,7 @@ import {
   type EtapaCiclo,
 } from "@/lib/gps/proximoPasso";
 import { cn } from "@/lib/utils";
+import { AvatarAluno } from "@/components/alunos/FotoAluno";
 
 const DIA = 86_400_000;
 
@@ -357,12 +358,11 @@ function LinhaTabela({
         to={`/alunos/${aluno.id}`}
         className="flex min-w-0 items-center gap-3 outline-none before:absolute before:inset-0 focus-visible:before:ring-2 focus-visible:before:ring-inset focus-visible:before:ring-primary"
       >
-        <span
+        <AvatarAluno
+          aluno={aluno}
           className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
           style={{ background: "#0B1628", color: "#F3F1EA" }}
-        >
-          {aluno.iniciais}
-        </span>
+        />
         <span className="min-w-0">
           <span className="flex items-center gap-2">
             <b className="truncate text-sm font-semibold text-ink">{aluno.nome}</b>

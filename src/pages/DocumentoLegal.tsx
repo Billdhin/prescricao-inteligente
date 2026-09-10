@@ -55,7 +55,7 @@ import { COBRANCA_ATIVA } from "@/data/planos";
 
 type Secao = { titulo: string; paragrafos: string[]; lista?: string[] };
 
-const ATUALIZADO_EM = "11 de agosto de 2026";
+const ATUALIZADO_EM = "10 de setembro de 2026";
 
 /* ============================== TERMOS DE USO ============================== */
 
@@ -179,10 +179,11 @@ const PRIVACIDADE: Secao[] = [
   {
     titulo: "4. O que coletamos dos SEUS ALUNOS, e é aqui que mora o dado sensível",
     paragrafos: [
-      "Tudo abaixo é digitado por você. O aluno não preenche nada disto, e por isso é você quem precisa informá-lo e obter o consentimento dele.",
+      "Quase tudo abaixo é digitado por você. No app dele, o aluno pode registrar os treinos, informar dados sobre si (que você revisa antes de entrarem na ficha) e enviar a própria foto de perfil. Como é você quem cadastra o aluno na plataforma, é você quem precisa informá-lo e obter o consentimento dele.",
     ],
     lista: [
       "identificação e contato: nome, idade, sexo e telefone, quando você o preenche",
+      "foto de perfil do aluno, enviada por você na ficha ou pelo próprio aluno no app, reduzida a uma miniatura antes de sair do aparelho",
       "condição de saúde declarada e condições adicionais de atenção (por exemplo hipertensão, diabetes, gestação)",
       "classes de medicação em uso, quando declaradas",
       "restrições físicas e limitações declaradas",
@@ -199,7 +200,7 @@ const PRIVACIDADE: Secao[] = [
   {
     titulo: "5. Onde cada coisa fica, com honestidade",
     paragrafos: [
-      "SINCRONIZA COM A NUVEM, vinculado à sua conta: cadastro de alunos (com telefone e controle de mensalidade, quando preenchidos), avaliações (incluindo as FOTOS anexadas), prescrições, planos de treino, liberações do semáforo e registros de execução. Ficam no banco de dados do nosso provedor de infraestrutura, isolados por conta, e você os acessa de qualquer aparelho ao entrar na sua conta. Sobre o país onde esse banco fica, veja a seção 8.",
+      "SINCRONIZA COM A NUVEM, vinculado à sua conta: cadastro de alunos (com telefone, foto de perfil e controle de mensalidade, quando preenchidos), avaliações (incluindo as FOTOS anexadas), prescrições, planos de treino, liberações do semáforo e registros de execução. Ficam no banco de dados do nosso provedor de infraestrutura, isolados por conta, e você os acessa de qualquer aparelho ao entrar na sua conta. Sobre o país onde esse banco fica, veja a seção 8.",
       "FICA SOMENTE NO SEU APARELHO, sem cópia na nuvem: a avaliação postural por visão computacional. A imagem é processada no seu próprio navegador e não é enviada para nenhum servidor.",
       "Se em algum ponto da plataforma você ler algo diferente disto, o correto é este documento, e o texto divergente é erro nosso: avise pelo suporte.",
     ],

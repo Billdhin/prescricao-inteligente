@@ -46,6 +46,22 @@ export function cloudSaveAluno(a: Aluno) {
 export function cloudRemoveAluno(id: string) {
   if (cloudOn) mirror(repo.removerAluno(id), "a remoção do aluno");
 }
+/**
+ * A foto do aluno vai para `fotos_aluno`, nunca na linha da ficha (ver migração 0011). Do
+ * lado do aluno, o portal passa o `professionalId` dele e `enviadaPor: "aluno"`.
+ */
+export function cloudSaveFotoAluno(
+  alunoId: string,
+  foto: string | null,
+  enviadaPor: "aluno" | "profissional",
+  professionalId?: string,
+) {
+  if (!cloudOn) return;
+  mirror(
+    foto ? repo.salvarFotoAluno(alunoId, foto, enviadaPor, professionalId) : repo.removerFotoAluno(alunoId, professionalId),
+    "a foto",
+  );
+}
 export function cloudSaveAvaliacao(av: Avaliacao) {
   if (cloudOn) mirror(repo.salvarAvaliacao(av), "a avaliação");
 }

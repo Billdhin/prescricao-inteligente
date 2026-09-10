@@ -196,6 +196,9 @@ export async function removerAluno(id: string): Promise<void> {
   await sb.from("liberacoes").delete().eq("user_id", u).eq("aluno_id", id);
   await sb.from("planos").delete().eq("user_id", u).eq("aluno_id", id);
   await sb.from("execucoes").delete().eq("professional_id", u).eq("aluno_id", id);
+  // A foto é dado pessoal como os outros: sai junto. Sem a tabela (0011 não aplicada), o
+  // delete falha sozinho e não impede a exclusão da ficha.
+  await sb.from("fotos_aluno").delete().eq("professional_id", u).eq("aluno_id", id);
   const { error } = await sb.from("alunos").delete().eq("user_id", u).eq("id", id);
   if (error) throw error;
 }
@@ -614,6 +617,53 @@ function feedbackFromRow(r: Record<string, any>): SessaoFeedback {
 export async function salvarSessaoFeedback(f: SessaoFeedback, professionalId: string): Promise<void> {
   const { error } = await getSupabase().from("sessao_feedbacks").upsert(feedbackToRow(f, professionalId));
   if (error) throw error;
+}
+
+/* ----------------------------- Foto do aluno ----------------------------- */
+
+/**
+ * Grava (ou troca) a foto do aluno em `fotos_aluno` (migração 0011). Uma linha por aluno: a
+ * mais recente vale, venha de quem vier. Do lado do aluno, `professionalId` é o do
+ * profissional dele (o portal passa); do lado do profissional, é o próprio uid.
+ */
+export async function salvarFotoAluno(
+  alunoId: string,
+  foto: string,
+  enviadaPor: "aluno" | "profissional",
+  professionalId?: string,
+): Promise<void> {
+  const dono = professionalId ?? (await uid());
+  const { error } = await getSupabase().from("fotos_aluno").upsert({
+    aluno_id: alunoId,
+    professional_id: dono,
+    foto,
+    enviada_por: enviadaPor,
+    atualizada_em: new Date().toISOString(),
+  });
+  if (error) throw error;
+}
+
+export async function removerFotoAluno(alunoId: string, professionalId?: string): Promise<void> {
+  const dono = professionalId ?? (await uid());
+  const { error } = await getSupabase().from("fotos_aluno").delete().eq("professional_id", dono).eq("aluno_id", alunoId);
+  if (error) throw error;
+}
+
+/**
+ * As fotos visíveis pela RLS: a do próprio aluno, ou as da carteira do profissional. Sem a
+ * tabela (migração ainda não aplicada) devolve vazio, e o app segue com as iniciais.
+ */
+export async function listarFotosAluno(): Promise<{ alunoId: string; foto: string }[]> {
+  const { data, error } = await getSupabase().from("fotos_aluno").select("aluno_id,foto");
+  if (error) return [];
+  return (data ?? []).map((r: Record<string, any>) => ({ alunoId: r.aluno_id, foto: r.foto }));
+}
+
+/** Põe as fotos nas fichas, por id. A ficha sem foto segue como veio. */
+export function comFotos(alunos: Aluno[], fotos: { alunoId: string; foto: string }[]): Aluno[] {
+  if (!fotos.length) return alunos;
+  const porId = new Map(fotos.map((f) => [f.alunoId, f.foto]));
+  return alunos.map((a) => (porId.has(a.id) ? { ...a, fotoDataUrl: porId.get(a.id) } : a));
 }
 
 /* ------------------------- Declarações do aluno ------------------------- */

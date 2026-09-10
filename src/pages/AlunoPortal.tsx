@@ -61,6 +61,7 @@ function PortalApp() {
   const addSessaoFeedback = useAlunos((s) => s.addSessaoFeedback);
   const declaracoes = useAlunos((s) => s.declaracoes);
   const addDeclaracao = useAlunos((s) => s.addDeclaracao);
+  const setFotoAluno = useAlunos((s) => s.setFotoAluno);
   const { marca, professionalId } = useCloudAuth();
 
   const aluno = alunos[0];
@@ -118,6 +119,14 @@ function PortalApp() {
     addDeclaracao(d);
     if (professionalId) void salvarDeclaracao(d, professionalId).catch(() => toastFalha(AVISO_SEM_REDE));
   };
+  // A foto não é declaração: não há o que o professor confirmar numa foto de perfil. Ela
+  // grava direto em fotos_aluno (migração 0011), com a policy que deixa o aluno escrever só
+  // a própria. O aviso de falha é o mesmo das outras gravações do app.
+  const trocarFoto = (foto: string | null) => {
+    setFotoAluno(aluno.id, foto, { enviadaPor: "aluno", professionalId: professionalId ?? undefined });
+    vibrar(12);
+    toast(foto ? "Foto atualizada. Seu professor também vai ver." : "Foto removida.");
+  };
   const dataDaPrescricao = (pid: string) => {
     const p = prescricoes.find((x) => x.id === pid);
     return p ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(p.data)) : undefined;
@@ -144,6 +153,7 @@ function PortalApp() {
         onFeedback={registrarFeedback}
         declaracoes={declaracoes}
         onDeclarar={declarar}
+        onFoto={trocarFoto}
         abrirSobreVoce={abrirSobreVoce}
         onSair={() => void signOut()}
       />

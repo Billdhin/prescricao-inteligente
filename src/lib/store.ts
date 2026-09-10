@@ -19,6 +19,7 @@ import {
   cloudSaveLiberacao,
   cloudSavePerfil,
   cloudSaveDeclaracao,
+  cloudSaveFotoAluno,
 } from "@/lib/backend/cloudSync";
 
 /* ----------------------------- Usuário / plano ---------------------------- */
@@ -354,6 +355,12 @@ interface AlunosState {
   declaracoes: DeclaracaoAluno[];
   addAluno: (a: Aluno) => void;
   updateAluno: (id: string, patch: Partial<Aluno>) => void;
+  /**
+   * Põe, troca ou tira (null) a foto do aluno. Não passa por `updateAluno`: a foto não vai
+   * na linha da ficha, vai em `fotos_aluno`. O portal do aluno passa o profissional dele e
+   * `"aluno"`; o profissional chama só com id e foto.
+   */
+  setFotoAluno: (id: string, foto: string | null, quem?: { enviadaPor: "aluno" | "profissional"; professionalId?: string }) => void;
   removeAluno: (id: string) => void;
   addAvaliacao: (av: Avaliacao) => void;
   addPrescricao: (p: Prescricao) => void;
@@ -442,6 +449,10 @@ export const useAlunos = create<AlunosState>()(
         set((s) => ({ alunos: s.alunos.map((a) => (a.id === id ? { ...a, ...patch } : a)) }));
         const atual = get().alunos.find((a) => a.id === id);
         if (atual) cloudSaveAluno(atual);
+      },
+      setFotoAluno: (id, foto, quem) => {
+        set((s) => ({ alunos: s.alunos.map((a) => (a.id === id ? { ...a, fotoDataUrl: foto ?? undefined } : a)) }));
+        cloudSaveFotoAluno(id, foto, quem?.enviadaPor ?? "profissional", quem?.professionalId);
       },
       removeAluno: (id) => {
         set((s) => ({

@@ -79,6 +79,7 @@ import { ConfirmarAcao } from "@/components/app/ConfirmarAcao";
 import { DeclaracoesDoAluno } from "@/components/app/DeclaracoesDoAluno";
 import { toast, toastDesfazer } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { AvatarAluno, TrocarFotoAluno } from "@/components/alunos/FotoAluno";
 
 const DIA = 86_400_000;
 const fmtData = (ts: number) =>
@@ -379,7 +380,7 @@ function AlunoTabs({ aba, onAba, contagens }: { aba: Aba; onAba: (a: Aba) => voi
 
 export function AlunoDetail() {
   const { id = "" } = useParams();
-  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, declaracoes, revisarDeclaracao, addAvaliacao, updateAluno, updatePlano, removeAluno, archivePrescricao, unarchivePrescricao } =
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, sessaoFeedbacks, declaracoes, revisarDeclaracao, addAvaliacao, updateAluno, setFotoAluno, updatePlano, removeAluno, archivePrescricao, unarchivePrescricao } =
     useAlunos();
   const navigate = useNavigate();
   const [confirmarExclusao, setConfirmarExclusao] = React.useState(false);
@@ -646,13 +647,23 @@ export function AlunoDetail() {
               vez de ao lado do nome. Em telas largas o bloco e baixo e o centro volta a ser
               o lugar certo. */}
           <div className="flex min-w-0 items-start gap-4 sm:items-center">
-            <span
-              aria-hidden
-              className="grid h-[68px] w-[68px] shrink-0 place-items-center rounded-[22px] font-display text-2xl font-bold"
-              style={{ background: "#E8A317", color: "#0B1628" }}
+            {/* A foto entra no mesmo quadrado âmbar das iniciais, e a câmera no canto troca.
+                A frase da autorização abre antes da escolha: é o profissional pondo a imagem
+                de outra pessoa num sistema, e o aluno vai vê-la no app dele. */}
+            <TrocarFotoAluno
+              aluno={aluno}
+              aviso="Use uma foto que o aluno autorizou. Ela aparece para ele no app e aqui na sua carteira."
+              onFoto={(foto) => {
+                setFotoAluno(aluno.id, foto);
+                toast(foto ? "Foto do aluno atualizada." : "Foto removida.");
+              }}
             >
-              {aluno.iniciais}
-            </span>
+              <AvatarAluno
+                aluno={aluno}
+                className="grid h-[68px] w-[68px] shrink-0 place-items-center rounded-[22px] font-display text-2xl font-bold"
+                style={{ background: "#E8A317", color: "#0B1628" }}
+              />
+            </TrocarFotoAluno>
             <div className="min-w-0">
               <h1 className="font-display text-2xl font-bold tracking-[-0.03em] md:text-3xl">{aluno.nome}</h1>
               <p className="mt-1 text-sm" style={{ color: "#B9C6D6" }}>

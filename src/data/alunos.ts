@@ -48,6 +48,12 @@ export interface Aluno {
   observacoes?: string;
   /** telefone/WhatsApp (livre; usado para gerar o link de contato de retenção) */
   telefone?: string;
+  /**
+   * Foto de perfil (data URL JPEG 160 x 160), enviada pelo próprio aluno no app ou pelo
+   * profissional na ficha. NÃO vai na linha de `alunos`: mora em `fotos_aluno` (migração 0011),
+   * porque a ficha é regravada inteira a cada edição e apagaria a foto que o aluno mandou.
+   */
+  fotoDataUrl?: string;
   /** mensalidade do aluno (gestão financeira; ausente = sem cobrança configurada) */
   cobranca?: CobrancaAluno;
   status: "ativo" | "inativo";

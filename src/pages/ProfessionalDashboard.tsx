@@ -23,6 +23,7 @@ import {
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { EspinhaSelo } from "@/components/ui/EspinhaSelo";
 import { RetencaoPanel } from "@/components/treino/RetencaoPanel";
+import { AvatarAluno } from "@/components/alunos/FotoAluno";
 import { useUser, useAlunos, isPremiumUnlocked, planLabel } from "@/lib/store";
 import { avisosDoAluno, type CicloCtx } from "@/lib/gps/proximoPasso";
 import { rotaDoDia, type RotaDoDia, type ParadaDoDia } from "@/lib/gps/rotaDoDia";
@@ -489,18 +490,6 @@ function EmptyPro({ onExemplos }: { onExemplos: () => void }) {
   );
 }
 
-/** Avatar de iniciais no vocabulário do protótipo: quadrado navy de canto 12px,
- *  tinta clara, título em Bricolage. */
-function Avatar({ iniciais }: { iniciais: string }) {
-  return (
-    <span
-      className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
-      style={{ background: "#0B1628", color: "#F3F1EA" }}
-    >
-      {iniciais}
-    </span>
-  );
-}
 
 /*
  * O CARTÃO DE QUEM ESTÁ EM DIA, no formato do protótipo: nome, objetivo e a SEMANA do plano
@@ -518,12 +507,11 @@ function AlunoCard({ aluno, temTreino, semana }: { aluno: Aluno; temTreino: bool
       to={`/alunos/${aluno.id}`}
       className="flex items-center gap-3 rounded-[14px] border border-border bg-surface px-3.5 py-3 transition-colors hover:bg-surface-soft"
     >
-      <span
+      <AvatarAluno
+        aluno={aluno}
         className="grid h-9 w-9 shrink-0 place-items-center rounded-[11px] font-display text-xs font-bold"
         style={{ background: "#0B1628", color: "#F3F1EA" }}
-      >
-        {aluno.iniciais}
-      </span>
+      />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold text-ink">{aluno.nome}</div>
         <div className="truncate text-xs text-ink-2">
@@ -642,11 +630,10 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
                 {/* Filete de urgência na cor de PREENCHIMENTO da família, como o protótipo
                     desenha: a tinta de texto (âmbar escuro) saía marrom numa faixa de 4px. */}
                 <span aria-hidden className="w-1 self-stretch rounded-r-full" style={{ background: cor.filete }} />
-                <span
+                <AvatarAluno
+                  aluno={p.aluno}
                   className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold", cor.avatar)}
-                >
-                  {p.aluno.iniciais}
-                </span>
+                />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold text-ink">{p.aluno.nome}</div>
                   <div className="truncate text-sm text-ink-2">{p.frase}</div>

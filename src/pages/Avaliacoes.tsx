@@ -9,6 +9,7 @@ import { dataReavaliacao } from "@/lib/gps/proximoPasso";
 import { toast } from "@/lib/toast";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { cn } from "@/lib/utils";
+import { AvatarAluno } from "@/components/alunos/FotoAluno";
 
 const DIA = 86_400_000;
 /** "29 ago", como no protótipo: dia + mês curto, sem "de" e sem ponto. */
@@ -354,16 +355,15 @@ export function Avaliacoes() {
                         to={`/alunos/${a.id}?aba=avaliacoes`}
                         className="col-span-2 grid min-w-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3.5 py-3"
                       >
-                        <span
+                        <AvatarAluno
+                          aluno={a}
                           className={cn(
                             "grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold",
                             tipo === "chegando" && "bg-analysis-tint text-analysis-text",
                             tipo === "primeira" && "bg-primary-tint text-primary",
                           )}
                           style={tipo === "vencida" ? { background: "#E8A317", color: "#0B1628" } : undefined}
-                        >
-                          {a.iniciais}
-                        </span>
+                        />
                         <span className="min-w-0">
                           <b className="block truncate text-sm font-semibold text-ink">{a.nome}</b>
                           <span className={cn("block truncate text-sm", tipo === "vencida" ? "text-danger" : "text-ink-2")}>
@@ -451,12 +451,11 @@ export function Avaliacoes() {
                       className="block px-5 py-4 transition-colors hover:bg-surface-soft md:px-6"
                     >
                       <div className="flex items-center gap-3.5">
-                        <span
+                        <AvatarAluno
+                          aluno={l.aluno}
                           className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
                           style={{ background: "#0B1628", color: "#F3F1EA" }}
-                        >
-                          {l.aluno.iniciais}
-                        </span>
+                        />
                         <div className="min-w-0 flex-1">
                           <b className="block truncate text-[15px] font-semibold text-ink">{l.aluno.nome}</b>
                           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-3">

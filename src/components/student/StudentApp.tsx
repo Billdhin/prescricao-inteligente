@@ -69,6 +69,7 @@ import { iniciaisDe, type Aluno, type Avaliacao, type Liberacao } from "@/data/a
 import type { Execucao, SessaoFeedback } from "@/data/execucao";
 import { formatBRL, statusEfetivo, ROTULO_STATUS_COBRANCA } from "@/data/cobranca";
 import { sequenciaDias } from "@/lib/gamificacao";
+import { AvatarAluno, TrocarFotoAluno } from "@/components/alunos/FotoAluno";
 import {
   type PlanoTreino,
   type Microciclo,
@@ -163,6 +164,7 @@ export function StudentApp({
   rodapeDoPerfil,
   declaracoes = [],
   onDeclarar,
+  onFoto,
   abrirSobreVoce = false,
 }: {
   aluno: Aluno;
@@ -172,6 +174,8 @@ export function StudentApp({
   declaracoes?: DeclaracaoAluno[];
   /** grava uma resposta do aluno; ausente = prévia (a tela mostra, não grava) */
   onDeclarar?: (d: DeclaracaoAluno) => void;
+  /** o aluno põe, troca ou tira (null) a própria foto; ausente = prévia (a câmera não aparece) */
+  onFoto?: (foto: string | null) => void;
   /** primeiro acesso: abre "Conte sobre você" por cima do app */
   abrirSobreVoce?: boolean;
   avaliacoes?: Avaliacao[];
@@ -408,6 +412,7 @@ export function StudentApp({
                   preview={preview}
                   declaracoes={declaracoes}
                   onSobreVoce={() => setSobreVoce(true)}
+                  onFoto={preview ? undefined : onFoto}
                   tema={tema}
                   onTema={trocarTema}
                 />
@@ -2138,9 +2143,12 @@ function AbaPerfil({
   preview,
   declaracoes = [],
   onSobreVoce,
+  onFoto,
   tema,
   onTema,
 }: {
+  /** o aluno troca a própria foto; ausente na prévia do profissional */
+  onFoto?: (foto: string | null) => void;
   /** tema escolhido pelo aluno, e como trocar (a escolha vive no aparelho dele) */
   tema: TemaAluno;
   onTema: (t: TemaAluno) => void;
@@ -2170,12 +2178,23 @@ function AbaPerfil({
 
       <Card className="p-4">
         <div className="flex items-center gap-3">
-          <span
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-control font-display text-base font-bold"
-            style={{ background: cor, color: tinta }}
-          >
-            {aluno.iniciais}
-          </span>
+          {/* O aluno põe a própria foto aqui, e ela aparece para o professor na carteira. Na
+              prévia do profissional a câmera não aparece: a prévia mostra, não grava. */}
+          {onFoto ? (
+            <TrocarFotoAluno aluno={aluno} onFoto={onFoto}>
+              <AvatarAluno
+                aluno={aluno}
+                className="grid h-12 w-12 shrink-0 place-items-center rounded-control font-display text-base font-bold"
+                style={{ background: cor, color: tinta }}
+              />
+            </TrocarFotoAluno>
+          ) : (
+            <AvatarAluno
+              aluno={aluno}
+              className="grid h-12 w-12 shrink-0 place-items-center rounded-control font-display text-base font-bold"
+              style={{ background: cor, color: tinta }}
+            />
+          )}
           <div className="min-w-0">
             <div className="truncate font-display text-lg font-bold text-ink">{aluno.nome}</div>
             <div className="text-sm text-ink-2">

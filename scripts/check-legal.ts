@@ -186,6 +186,14 @@ const INVENTARIO: { oque: string; gravado: boolean; declarado: RegExp; onde: str
     declarado: /medica[çc][ãa]o/i,
     onde: "supabaseRepo grava `farmacos` no blob `jornada` da tabela alunos",
   },
+  {
+    // "foto de perfil", e NÃO "foto": a palavra solta já aparece nas FOTOS do corpo da
+    // avaliação, e com ela no padrão este item passaria mesmo sem a foto de perfil declarada.
+    oque: "a foto de perfil do aluno (enviada pelo profissional ou pelo próprio aluno)",
+    gravado: /from\("fotos_aluno"\)\.upsert/.test(REPO),
+    declarado: /foto de perfil/i,
+    onde: "supabaseRepo grava a foto em `fotos_aluno` (migração 0011)",
+  },
 ];
 for (const item of INVENTARIO) {
   if (item.gravado && !item.declarado.test(DOC_VISIVEL))
