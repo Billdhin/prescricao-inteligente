@@ -5,6 +5,8 @@ import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
 import { AlunoFormModal } from "@/components/app/AlunoFormModal";
+import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
+import { useCloudAuth } from "@/lib/backend/cloudAuth";
 
 import type { Aluno } from "@/data/alunos";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -57,6 +59,9 @@ export function Alunos() {
   );
   const setQ = React.useCallback((v: string) => trocarParam("busca", v, ""), [trocarParam]);
   const [novo, setNovo] = React.useState(params.get("novo") === "1");
+  // O aluno recém-criado cujo cadastro o PRÓPRIO aluno vai completar, pelo convite.
+  const [convidado, setConvidado] = React.useState<Aluno | null>(null);
+  const acessoOnline = useCloudAuth((s) => s.configured);
 
   // Reage a MUDANÇA de params (não só ao mount): clicar em "Cadastrar aluno" no
   // menu já estando em /alunos precisa reabrir o modal.
@@ -271,13 +276,32 @@ export function Alunos() {
 
       {novo && (
         <AlunoFormModal
+          conviteDisponivel={acessoOnline}
           onClose={() => setNovo(false)}
-          onSave={(a) => {
+          onSave={(a, proximo) => {
             addAluno(a);
             setNovo(false);
-            // O botão promete "Criar e abrir perfil": ele abre o perfil, e na seção
-            // que de fato falta (a saúde), não numa tela de boas-vindas.
+            // "Criar e gerar o link": o convite abre com o link pronto, e ao fechar o
+            // profissional cai na ficha do aluno, onde as respostas vão chegar.
+            if (proximo === "convite") {
+              setConvidado(a);
+              return;
+            }
+            // "Criar e abrir perfil": abre o perfil, na seção que de fato falta (a saúde),
+            // não numa tela de boas-vindas.
             navigate(`/alunos/${a.id}/perfil`, { state: { recemCriado: true } });
+          }}
+        />
+      )}
+
+      {convidado && (
+        <ConviteAlunoModal
+          aluno={convidado}
+          origem="cadastro"
+          onClose={() => {
+            const id = convidado.id;
+            setConvidado(null);
+            navigate(`/alunos/${id}`);
           }}
         />
       )}

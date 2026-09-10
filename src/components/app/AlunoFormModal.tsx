@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
-import { X, MapPin, ArrowRight } from "lucide-react";
+import { X, ArrowRight, Send, ClipboardList } from "lucide-react";
 import { buttonClasses } from "@/components/ui/primitives";
 import { uid } from "@/lib/store";
 import { OBJETIVOS, type GpsObjetivo } from "@/lib/gps/engine";
@@ -24,6 +24,9 @@ const OBJETIVOS_VISIVEIS = 4;
  *  e até lá a régua de completude conta a seção como pendente, não como conferida. */
 const KIT_PADRAO = ["Máquina", "Barra", "Halter", "Polia", "Peso corporal"];
 
+/** Para onde o cadastro leva: o perfil, preenchido agora, ou o convite ao aluno. */
+export type ProximoDoCadastro = "perfil" | "convite";
+
 /**
  * CRIAR ALUNO EM QUATRO CAMPOS.
  *
@@ -39,26 +42,47 @@ const KIT_PADRAO = ["Máquina", "Barra", "Halter", "Polia", "Peso corporal"];
  *
  * O que NÃO mudou: o objetivo continua obrigatório (é ele que dá sentido a tudo o
  * que vem depois) e a idade continua validada na faixa de 12 a 100.
+ *
+ * ## Quem completa o resto do cadastro (10/09/2026)
+ *
+ * O modal levava sempre ao perfil, para o profissional preencher saúde, remédios, rotina e
+ * equipamentos na hora. Isso serve quando o aluno está na frente dele. Quando não está, o
+ * caminho natural é mandar um link e deixar o aluno responder, e esse caminho JÁ EXISTIA: o
+ * convite abre o app do aluno, e o primeiro acesso abre sozinho o "Conte sobre você" (cinco
+ * telas, idade, objetivo, semana, onde treina, saúde e remédios), que chega ao profissional
+ * como declaração para revisar. Só que nada no cadastro dizia isso, e o Dilton criou um aluno
+ * esperando esse link e foi jogado no formulário.
+ *
+ * Agora a escolha é explícita e fica ANTES do botão, e o botão diz o que vai acontecer.
  */
 export function AlunoFormModal({
   onClose,
   onSave,
+  conviteDisponivel = true,
 }: {
   onClose: () => void;
-  onSave: (a: Aluno) => void;
+  onSave: (a: Aluno, proximo: ProximoDoCadastro) => void;
+  /**
+   * O link de acesso depende do acesso online ligado. Sem ele (uso local, demonstração) a
+   * opção aparece desligada e diz o porquê, em vez de levar a um convite que não se gera.
+   */
+  conviteDisponivel?: boolean;
 }) {
   const [nome, setNome] = React.useState("");
   const [idade, setIdade] = React.useState("");
+  const [telefone, setTelefone] = React.useState("");
   const [nivel, setNivel] = React.useState<Nivel>("Iniciante");
   // Padrão alinhado ao posicionamento (condições/emagrecimento), não "Hipertrofia".
   const [objetivo, setObjetivo] = React.useState<GpsObjetivo>("Emagrecimento");
   const [objetivoSecundario, setObjetivoSecundario] = React.useState<GpsObjetivo | undefined>();
   const [todosObjetivos, setTodosObjetivos] = React.useState(false);
+  const [proximo, setProximo] = React.useState<ProximoDoCadastro>(conviteDisponivel ? "convite" : "perfil");
   const dialogRef = useDialog<HTMLDivElement>(onClose);
 
   const idadeNum = idade ? Number(idade) : undefined;
   const idadeForaDaFaixa = idadeNum != null && (idadeNum < 12 || idadeNum > 100);
   const podeSalvar = Boolean(nome.trim()) && !idadeForaDaFaixa;
+  const primeiroNome = nome.trim().split(/\s+/)[0] || "o aluno";
 
   const objetivosMostrados = todosObjetivos ? OBJETIVOS : OBJETIVOS.slice(0, OBJETIVOS_VISIVEIS);
   const ocultos = OBJETIVOS.length - OBJETIVOS_VISIVEIS;
@@ -81,7 +105,10 @@ export function AlunoFormModal({
       // que a régua do perfil vai lê-los. Nada aqui afirma nada sobre o aluno.
       restricoes: [],
       equipamentos: KIT_PADRAO,
-    });
+      // O WhatsApp só é perguntado no caminho do convite, onde ele serve para abrir a
+      // conversa do aluno direto, com o link já escrito.
+      telefone: proximo === "convite" && telefone.trim() ? telefone.trim() : undefined,
+    }, proximo);
   };
 
   return (
@@ -104,7 +131,7 @@ export function AlunoFormModal({
         <div className="mb-5 flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="font-display text-xl font-bold text-ink">Novo aluno</h2>
-            <p className="mt-0.5 text-sm text-ink-2">Só o essencial agora. Saúde e restrições no perfil.</p>
+            <p className="mt-0.5 text-sm text-ink-2">Só o essencial agora. O resto você completa, ou o aluno responde pelo app.</p>
           </div>
           <button
             onClick={onClose}
@@ -202,14 +229,55 @@ export function AlunoFormModal({
           </fieldset>
 
           {/* Para onde este cadastro leva. Dizer isso aqui é o que autoriza o modal a
-              ser tão curto: o profissional sabe que não está deixando nada para trás. */}
-          <div className="flex gap-2.5 rounded-card bg-analysis-tint p-3.5 text-sm text-ink">
-            <MapPin aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-analysis-text" />
-            <p>
-              Depois de criar, o próximo passo já aparece: <strong className="font-semibold">completar a saúde</strong>,
-              ou avaliar direto.
-            </p>
-          </div>
+              ser tão curto: o profissional sabe que não está deixando nada para trás, e
+              escolhe QUEM completa o resto. */}
+          <fieldset>
+            <legend className="mb-1.5 text-xs font-bold uppercase tracking-wider text-ink-2">
+              Quem completa o resto do cadastro?
+            </legend>
+            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup">
+              <OpcaoCaminho
+                ativo={proximo === "convite"}
+                desabilitado={!conviteDisponivel}
+                onClick={() => setProximo("convite")}
+                icone={<Send className="h-4 w-4" aria-hidden />}
+                titulo={`${primeiroNome === "o aluno" ? "O aluno" : primeiroNome}, pelo app`}
+                texto={
+                  conviteDisponivel
+                    ? "Você manda um link. Saúde, remédios, rotina e onde treina chegam para você revisar."
+                    : "Precisa do acesso online ligado neste aparelho."
+                }
+              />
+              <OpcaoCaminho
+                ativo={proximo === "perfil"}
+                onClick={() => setProximo("perfil")}
+                icone={<ClipboardList className="h-4 w-4" aria-hidden />}
+                titulo="Eu, agora"
+                texto="Abre o perfil para você preencher com o aluno na sua frente."
+              />
+            </div>
+          </fieldset>
+
+          {proximo === "convite" && (
+            <div>
+              <label htmlFor="novo-aluno-fone" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-ink-2">
+                WhatsApp <span className="font-medium normal-case tracking-normal text-ink-3">(opcional)</span>
+              </label>
+              <input
+                id="novo-aluno-fone"
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value.replace(/[^\d()+\s-]/g, "").slice(0, 20))}
+                inputMode="tel"
+                autoComplete="off"
+                placeholder="(11) 98765-4321"
+                aria-describedby="novo-aluno-fone-dica"
+                className="input h-12 text-base"
+              />
+              <p id="novo-aluno-fone-dica" className="mt-1 text-xs text-ink-3">
+                Com o número, o link já abre na conversa de {primeiroNome}. Sem ele, você escolhe o contato no WhatsApp.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="mt-5 flex items-center justify-between gap-2">
@@ -217,11 +285,56 @@ export function AlunoFormModal({
             Cancelar
           </button>
           <button onClick={submit} disabled={!podeSalvar} className={cn(buttonClasses("primary"), "gap-2")}>
-            Criar e abrir perfil <ArrowRight aria-hidden className="h-4 w-4" />
+            {proximo === "convite" ? "Criar e gerar o link" : "Criar e abrir perfil"}
+            <ArrowRight aria-hidden className="h-4 w-4" />
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+/** Um dos dois caminhos depois de criar: cartão de rádio com título e uma linha do que acontece. */
+function OpcaoCaminho({
+  ativo,
+  desabilitado,
+  onClick,
+  icone,
+  titulo,
+  texto,
+}: {
+  ativo: boolean;
+  desabilitado?: boolean;
+  onClick: () => void;
+  icone: React.ReactNode;
+  titulo: string;
+  texto: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={ativo}
+      disabled={desabilitado}
+      onClick={onClick}
+      className={cn(
+        "flex min-h-[44px] items-start gap-2.5 rounded-card border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+        ativo ? "border-primary bg-primary-tint" : "border-border bg-surface hover:bg-surface-soft",
+      )}
+    >
+      <span
+        className={cn(
+          "mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full",
+          ativo ? "bg-primary text-on-primary" : "bg-surface-soft text-ink-3",
+        )}
+      >
+        {icone}
+      </span>
+      <span className="min-w-0">
+        <span className={cn("block text-sm font-semibold", ativo ? "text-primary" : "text-ink")}>{titulo}</span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-ink-2">{texto}</span>
+      </span>
+    </button>
   );
 }
 

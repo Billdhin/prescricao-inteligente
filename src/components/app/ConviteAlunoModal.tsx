@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { buttonClasses } from "@/components/ui/primitives";
 import { useDialog } from "@/lib/useDialog";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
-import { criarConvite, statusAcessoAluno, revogarConvites, type ConviteAluno } from "@/lib/backend/supabaseRepo";
+import { criarConvite, statusAcessoAluno, revogarConvites, salvarAluno, type ConviteAluno } from "@/lib/backend/supabaseRepo";
 import { iniciaisDe, type Aluno } from "@/data/alunos";
 import { useUser } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -30,11 +30,26 @@ import { cn } from "@/lib/utils";
  *     coluna que a RLS usa para liberar a leitura do treino. Se está preenchida,
  *     o aluno entrou de verdade.
  */
-export function ConviteAlunoModal({ aluno, onClose }: { aluno: Aluno; onClose: () => void }) {
+export function ConviteAlunoModal({
+  aluno,
+  onClose,
+  origem,
+}: {
+  aluno: Aluno;
+  onClose: () => void;
+  /**
+   * "cadastro": o profissional acabou de criar o aluno e escolheu que o ALUNO completa o
+   * resto. Muda o que a tela promete (o aluno responde sobre si, e não só "recebe o treino",
+   * que ainda nem existe) e gera o link sozinha, porque foi exatamente isso que o botão do
+   * cadastro disse que ia acontecer.
+   */
+  origem?: "cadastro";
+}) {
   const dialogRef = useDialog<HTMLDivElement>(onClose);
   const configured = useCloudAuth((s) => s.configured);
   const user = useUser();
   const primeiroNome = aluno.nome.split(" ")[0];
+  const doCadastro = origem === "cadastro";
 
   const [carregando, setCarregando] = React.useState(true);
   const [gerando, setGerando] = React.useState(false);
@@ -64,22 +79,44 @@ export function ConviteAlunoModal({ aluno, onClose }: { aluno: Aluno; onClose: (
     void carregar();
   }, [carregar]);
 
-  const gerar = async (substituindo: boolean) => {
-    setGerando(true);
-    setErro(null);
-    try {
-      // Link novo invalida o anterior: dois links vivos para o mesmo aluno é
-      // superfície de vazamento sem nenhum ganho.
-      if (substituindo) await revogarConvites(aluno.id);
-      const convite = await criarConvite(aluno.id);
-      setStatus((s) => ({ ...s, convite }));
-      setCopiado(false);
-    } catch (e) {
-      setErro((e as Error)?.message ?? "Não consegui gerar o link agora.");
-    } finally {
-      setGerando(false);
-    }
-  };
+  const gerar = React.useCallback(
+    async (substituindo: boolean) => {
+      setGerando(true);
+      setErro(null);
+      try {
+        /*
+         * O ALUNO RECÉM-CRIADO PRECISA EXISTIR NO SERVIDOR ANTES DO CONVITE.
+         *
+         * O cadastro grava o aluno no servidor em segundo plano, sem esperar, e o convite é
+         * uma linha que aponta para ele. Vindo direto do cadastro, o convite podia chegar
+         * antes do aluno e ser recusado. Gravar de novo aqui é inofensivo (é um upsert da
+         * mesma ficha) e tira a corrida do caminho.
+         */
+        if (doCadastro) await salvarAluno(aluno);
+        // Link novo invalida o anterior: dois links vivos para o mesmo aluno é
+        // superfície de vazamento sem nenhum ganho.
+        if (substituindo) await revogarConvites(aluno.id);
+        const convite = await criarConvite(aluno.id);
+        setStatus((s) => ({ ...s, convite }));
+        setCopiado(false);
+      } catch (e) {
+        setErro((e as Error)?.message ?? "Não consegui gerar o link agora.");
+      } finally {
+        setGerando(false);
+      }
+    },
+    [aluno, doCadastro],
+  );
+
+  // Vindo do cadastro, o botão já disse "Criar e gerar o link": a tela abre com o link pronto,
+  // sem pedir um segundo clique para a mesma coisa. Só uma vez, e só se não houver link válido.
+  const jaGerou = React.useRef(false);
+  React.useEffect(() => {
+    if (!doCadastro || !configured || carregando || jaGerou.current) return;
+    if (status.vinculado || status.convite) return;
+    jaGerou.current = true;
+    void gerar(false);
+  }, [doCadastro, configured, carregando, status.vinculado, status.convite, gerar]);
 
   const base = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
   const link = status.convite ? `${window.location.origin}${base}/aluno?convite=${status.convite.token}` : null;
@@ -94,8 +131,11 @@ export function ConviteAlunoModal({ aluno, onClose }: { aluno: Aluno; onClose: (
 
   // WhatsApp com a mensagem pronta. Com telefone no cadastro, abre a conversa
   // dele; sem telefone, abre o seletor de contato do próprio WhatsApp.
+  // Do cadastro, ainda não há treino: o convite pede as respostas que vão montá-lo.
   const texto = link
-    ? `Oi, ${primeiroNome}! Seu treino está no app. Toque no link, crie sua conta com o seu e-mail e uma senha sua, e o treino aparece lá: ${link}`
+    ? doCadastro
+      ? `Oi, ${primeiroNome}! Para eu montar o seu treino, toque no link, crie sua conta com o seu e-mail e uma senha sua e responda umas perguntas rápidas sobre você (leva uns dois minutos): ${link}`
+      : `Oi, ${primeiroNome}! Seu treino está no app. Toque no link, crie sua conta com o seu e-mail e uma senha sua, e o treino aparece lá: ${link}`
     : "";
   const fone = (aluno.telefone ?? "").replace(/\D/g, "");
   const whats = link
@@ -119,13 +159,17 @@ export function ConviteAlunoModal({ aluno, onClose }: { aluno: Aluno; onClose: (
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-1 flex items-start justify-between gap-3">
-          <h2 className="font-display text-lg font-bold text-ink">Convidar {primeiroNome} para o app</h2>
+          <h2 className="font-display text-lg font-bold text-ink">
+            {doCadastro ? `${primeiroNome} está na sua carteira` : `Convidar ${primeiroNome} para o app`}
+          </h2>
           <button onClick={onClose} aria-label="Fechar" className="-mt-1 rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />
           </button>
         </div>
         <p className="text-sm text-ink-2">
-          {primeiroNome} recebe o treino no celular pelo link, com a sua marca.
+          {doCadastro
+            ? `Pelo link, ${primeiroNome} responde no celular o que falta: idade, rotina, onde treina, saúde e remédios. Tudo chega para você revisar, e nada entra no treino sem você confirmar.`
+            : `${primeiroNome} recebe o treino no celular pelo link, com a sua marca.`}
         </p>
 
         {!configured ? (
@@ -156,7 +200,7 @@ export function ConviteAlunoModal({ aluno, onClose }: { aluno: Aluno; onClose: (
                 </p>
               </div>
             </div>
-            <PassoAPasso primeiroNome={primeiroNome} host={`${window.location.host}${base}`} />
+            <PassoAPasso primeiroNome={primeiroNome} host={`${window.location.host}${base}`} doCadastro={doCadastro} />
             <Link to={`/alunos/${aluno.id}/preview`} className={buttonClasses("secondary", "sm")}>
               <Smartphone className="h-4 w-4" /> Ver o que {primeiroNome} vê
             </Link>
@@ -201,11 +245,11 @@ export function ConviteAlunoModal({ aluno, onClose }: { aluno: Aluno; onClose: (
                   </p>
                 )}
 
-                <PassoAPasso primeiroNome={primeiroNome} host={`${window.location.host}${base}`} />
+                <PassoAPasso primeiroNome={primeiroNome} host={`${window.location.host}${base}`} doCadastro={doCadastro} />
               </>
             ) : (
               <>
-                <PassoAPasso primeiroNome={primeiroNome} host={`${window.location.host}${base}`} />
+                <PassoAPasso primeiroNome={primeiroNome} host={`${window.location.host}${base}`} doCadastro={doCadastro} />
                 <button onClick={() => void gerar(false)} disabled={gerando} className={buttonClasses("primary")}>
                   {gerando ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                   {gerando ? "Gerando..." : "Gerar o link de acesso"}
@@ -218,11 +262,15 @@ export function ConviteAlunoModal({ aluno, onClose }: { aluno: Aluno; onClose: (
         {erro && <p className="mt-3 text-sm text-danger">{erro}</p>}
 
         {/* "O que o aluno vê": a mesma pele escura do app do aluno, com a marca do
-            profissional aplicada de verdade (nome e cor saem do perfil dele). */}
+            profissional aplicada de verdade (nome e cor saem do perfil dele).
+            Some no convite do cadastro: o aluno recém-criado ainda não tem treino, e o
+            primeiro acesso dele abre o questionário, não o "Treino de hoje" da miniatura. */}
+        {!doCadastro && (
         <div className="mt-5">
           <div className="mb-2 text-2xs font-semibold uppercase tracking-wide text-ink-3">O que {primeiroNome} vê</div>
           <PreviaMini nomeAluno={primeiroNome} marcaNome={user.empresa || user.name || "Seu treino"} cor={user.corPrimaria || "#2064EC"} />
         </div>
+        )}
       </div>
     </div>
   );
@@ -230,14 +278,21 @@ export function ConviteAlunoModal({ aluno, onClose }: { aluno: Aluno; onClose: (
 
 /** Os três passos do ciclo, com a resposta sobre a senha no passo em que ela
  *  aparece. É a informação que faltava e que fazia o link parecer quebrado. */
-function PassoAPasso({ primeiroNome, host }: { primeiroNome: string; host: string }) {
+function PassoAPasso({ primeiroNome, host, doCadastro }: { primeiroNome: string; host: string; doCadastro?: boolean }) {
   const passos = [
     { t: "Você envia o link", d: "Pelo WhatsApp, e-mail ou como preferir." },
     {
       t: `${primeiroNome} cria a conta`,
       d: "Com o próprio e-mail e uma senha escolhida na hora. Você nunca vê essa senha.",
     },
-    { t: "O treino aparece no celular", d: `Depois disso a entrada é direto em ${host}/aluno.` },
+    // Do cadastro, o terceiro passo é o questionário, que abre sozinho no primeiro acesso, e
+    // o que volta é declaração para revisar: é o que o profissional precisa saber que vem.
+    doCadastro
+      ? {
+          t: `${primeiroNome} responde sobre si`,
+          d: "Cinco telas, uns dois minutos. As respostas aparecem na ficha para você revisar e montar o treino.",
+        }
+      : { t: "O treino aparece no celular", d: `Depois disso a entrada é direto em ${host}/aluno.` },
   ];
   return (
     <ol className="space-y-2.5 rounded-card border border-border bg-surface-soft p-4">
