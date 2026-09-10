@@ -43,7 +43,16 @@ const AGREGACAO = "maior carga da semana";
 
 const W = 600;
 const H = 200;
-const PLOT_TOP = 12;
+/**
+ * A FAIXA DOS NOMES DAS FASES, no alto do gráfico, é só deles.
+ *
+ * O plot começava em 12 (de 200) e os nomes das fases moravam em cima dele: a semana de
+ * maior carga caía exatamente na altura do texto, e a linha passava por cima de "FASE 3:
+ * DESENVOLVIMENTO". A linha de "Hoje" também atravessava o nome da fase corrente. Agora o
+ * plot começa abaixo da faixa, e a linha de hoje também.
+ */
+const FAIXA_ROTULO = 24;
+const PLOT_TOP = FAIXA_ROTULO + 10;
 /** Sem barras de diferença o plot ocupa a caixa inteira; com elas, cede a base. */
 const PLOT_BOT_COM_DELTA = 138;
 const PLOT_BOT_SEM_DELTA = 186;
@@ -243,6 +252,9 @@ export function EvolucaoExercicio({
 
   const fases = plano.macrociclo.mesociclos.map((m, i) => ({
     nome: rotuloMeso(m, i),
+    // Na faixa cabe o nome da fase, não a descrição inteira: "Fase 1: Entrada · segurança ·
+    // adaptação" saía cortado em "FASE 1: ENTRADA · SE...". O nome inteiro fica no title.
+    curto: rotuloMeso(m, i).split(" · ")[0],
     x0: (W * (m.semanaInicio - 1)) / total,
     x1: (W * m.semanaFim) / total,
     fam: FASE[i % FASE.length],
@@ -399,7 +411,7 @@ export function EvolucaoExercicio({
               {/* a semana de hoje */}
               <line
                 x1={x(semanaHoje)}
-                y1={0}
+                y1={FAIXA_ROTULO}
                 x2={x(semanaHoje)}
                 y2={plotBot}
                 stroke="var(--ink)"
@@ -481,10 +493,12 @@ export function EvolucaoExercicio({
                   // O nome da fase e mais largo que a faixa dela no celular, entao ele
                   // trunca. O title devolve o nome inteiro, que sem isso ficaria perdido.
                   title={f.nome}
-                  className="absolute top-1 truncate text-2xs font-bold uppercase tracking-[0.06em]"
+                  // Sem caixa alta: em maiúsculas espaçadas "Fase 3: Desenvolvimento" não cabia
+                  // nas três semanas da faixa e saía cortado.
+                  className="absolute top-1 truncate text-2xs font-bold"
                   style={{ left: `calc(${pctX(f.x0)}% + 6px)`, maxWidth: `calc(${pctX(f.x1 - f.x0)}% - 12px)`, color: f.fam.tinta }}
                 >
-                  {f.nome}
+                  {f.curto}
                 </span>
               ) : null,
             )}

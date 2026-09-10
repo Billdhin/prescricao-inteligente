@@ -270,8 +270,14 @@ export function GraficoProgressao({
     return acc;
   }, []);
 
-  const vbTop = g.plot.top - 12;
-  const vbAltura = g.plot.bottom - g.plot.top + 24;
+  /*
+   * FOLGA PARA OS TEXTOS DO PLOT. A bandeira "Você está aqui" e o "maior" moram no alto do
+   * plot, e o "menor" na base. Com 12 de folga a curva de esforço chegava à altura deles e
+   * passava por cima das letras sempre que a semana de pico era a de hoje. A folga agora é
+   * maior que a altura de uma linha de texto nas duas pontas.
+   */
+  const vbTop = g.plot.top - 36;
+  const vbAltura = g.plot.bottom - g.plot.top + 36 + 28;
   const pctX = (x: number) => (x / g.largura) * 100;
   const pctY = (y: number) => ((y - vbTop) / vbAltura) * 100;
 

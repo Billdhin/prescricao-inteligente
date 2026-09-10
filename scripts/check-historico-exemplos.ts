@@ -11,7 +11,8 @@
  *     nenhuma avaliação, sessão ou semáforo novo;
  *  D. inventar registro no futuro, ou travessão em texto que aparece na tela;
  *  E. treinar em mais dias por semana do que o plano prevê (a sessão isométrica da pressão é
- *     complemento do dia, também nos planos antigos que não a marcam assim).
+ *     complemento do dia, também nos planos antigos que não a marcam assim);
+ *  F. inventar carga que destoa da que o aluno já registrou no mesmo exercício.
  */
 import { seedAlunos, seedAvaliacoes, type Aluno } from "../src/data/alunos";
 import { semearDemoVSL } from "../src/data/semearDemo";
@@ -116,6 +117,21 @@ for (const diasDepois of [0, 9, 23, 45]) {
   };
   for (const [k, n] of Object.entries(novosNaSegunda))
     if (n > 0) problemas.push(`[+${diasDepois}d] C: rodar de novo gerou ${n} ${k} novos; a segunda rodada tem de ser vazia.`);
+  /* ---- F. a carga continua a do aluno ----
+     Semana nova escrita por esta função, num exercício que a demo já registrou, tem de ficar
+     perto do que o aluno levantava: sem a âncora a Helena caiu de 34 kg para 11 kg. */
+  for (const a of depois.alunos) {
+    const deles = depois.execucoes.filter((e) => e.alunoId === a.id && e.cargaFeita != null);
+    for (const slug of new Set(deles.filter((e) => e.id.startsWith("ex-")).map((e) => e.exercicioSlug))) {
+      const antes = deles.filter((e) => e.exercicioSlug === slug && !e.id.startsWith("ex-")).map((e) => e.cargaFeita as number);
+      const agoraC = deles.filter((e) => e.exercicioSlug === slug && e.id.startsWith("ex-")).map((e) => e.cargaFeita as number);
+      if (!antes.length) continue;
+      const razao = Math.max(...agoraC) / Math.max(...antes);
+      if (razao < 0.6 || razao > 1.7)
+        problemas.push(`[+${diasDepois}d] F: ${a.nome}, ${slug}: a carga gerada (${Math.max(...agoraC)} kg) destoa da registrada (${Math.max(...antes)} kg).`);
+    }
+  }
+
   const ids = h.execucoes.map((e) => e.id);
   if (new Set(ids).size !== ids.length) problemas.push(`[+${diasDepois}d] C: ids de execução repetidos na mesma rodada.`);
 

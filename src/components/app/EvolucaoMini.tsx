@@ -277,7 +277,13 @@ function caminhoSuave(pts: { x: number; y: number }[]): string {
  *  - Rótulos com defesa de colisão: valor e data somem quando ficariam um sobre o outro, e
  *    todo texto é grampeado na área útil (a última data saía cortada na borda direita).
  */
-function Curva({ pontos, escala, sexo }: { pontos: { data: number; valor: number }[]; escala?: EscalaAvaliacao; sexo?: Sexo }) {
+/**
+ * Contorno da cor do fundo atrás de todo texto que mora dentro do plot: onde a curva ou a
+ * borda de uma faixa cruza o texto, ela passa POR TRÁS das letras em vez de riscá-las.
+ */
+const HALO = { stroke: "var(--surface)", strokeWidth: 3.5, strokeLinejoin: "round", paintOrder: "stroke" } as const;
+
+function Curva({ pontos, escala, sexo }:{ pontos: { data: number; valor: number }[]; escala?: EscalaAvaliacao; sexo?: Sexo }) {
   const uid = React.useId().replace(/:/g, "");
   const L = 46; // gutter do eixo y
   const R = 14;
@@ -345,6 +351,18 @@ function Curva({ pontos, escala, sexo }: { pontos: { data: number; valor: number
   const mostraValor = visiveis(42);
   const mostraData = visiveis(60);
 
+  /*
+   * O RÓTULO VAI PARA O LADO DE FORA DA CURVA. Acima do ponto por padrão; num VALE (os
+   * vizinhos estão mais altos), a linha que desce até o ponto e sobe de novo passava por
+   * cima do número. Aí ele desce, desde que caiba antes do eixo das datas.
+   */
+  const rotuloAbaixo = (i: number) => {
+    const y = py(pontos[i].valor);
+    const vizinhos = [pontos[i - 1], pontos[i + 1]].filter(Boolean).map((p) => py(p!.valor));
+    const vale = vizinhos.length > 0 && vizinhos.every((yv) => yv < y - 4);
+    return vale && y + 24 < y1;
+  };
+
   const pts = pontos.map((p, i) => ({ x: xs[i], y: py(p.valor) }));
   const linha = caminhoSuave(pts);
   const area = `${linha} L ${xs[ultimoI]} ${y1} L ${xs[0]} ${y1} Z`;
@@ -373,6 +391,7 @@ function Curva({ pontos, escala, sexo }: { pontos: { data: number; valor: number
               letterSpacing="0.5"
               opacity="0.85"
               fill={TEXTO_FAIXA[b.f.tom]}
+              {...HALO}
             >
               {b.f.rotulo.toUpperCase()}
             </text>
@@ -416,7 +435,16 @@ function Curva({ pontos, escala, sexo }: { pontos: { data: number; valor: number
               <circle cx={xs[i]} cy={py(p.valor)} r="4" fill="var(--surface)" stroke="var(--primary)" strokeWidth="2.5" />
             )}
             {mostraValor[i] && (
-              <text x={grampo(xs[i], 16)} y={py(p.valor) - (atual ? 15 : 12)} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)" className="tabular">
+              <text
+                x={grampo(xs[i], 16)}
+                y={rotuloAbaixo(i) ? py(p.valor) + (atual ? 23 : 20) : py(p.valor) - (atual ? 15 : 12)}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="600"
+                fill="var(--ink)"
+                className="tabular"
+                {...HALO}
+              >
                 {fmtValor(p.valor)}
               </text>
             )}

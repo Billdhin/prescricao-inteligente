@@ -502,6 +502,19 @@ function viverPlano(
   const dia0 = new Date(plano.data);
   dia0.setHours(0, 0, 0, 0);
   const hora = (hash(a.id) % 2 ? 7 : 18) * HORA + (hash(a.id) % 3) * 30 * MIN;
+  /*
+   * A CARGA PARTE DO QUE O ALUNO JÁ LEVANTOU. Com registros de outra fonte no mesmo exercício
+   * (a demo do VSL grava `exec-...`), a carga-base é a mediana deles; sem isso a curva saltava
+   * de 34 kg para 11 kg na primeira semana escrita por esta função. Os registros que ela mesma
+   * grava (`ex-...`) ficam de fora da conta, senão cada rodada mudaria a base da seguinte.
+   */
+  const ancoraDeCarga = (slug: string): number | undefined => {
+    const cargas = estado.execucoes
+      .filter((e) => e.alunoId === a.id && e.exercicioSlug === slug && e.cargaFeita != null && !e.id.startsWith("ex-"))
+      .map((e) => e.cargaFeita as number)
+      .sort((x, y) => x - y);
+    return cargas.length ? cargas[Math.floor(cargas.length / 2)] : undefined;
+  };
   const execPorId = new Map(estado.execucoes.map((e) => [e.id, e] as const));
   const fbPorId = new Map(estado.sessaoFeedbacks.map((f) => [f.id, f] as const));
   // Comparação sem depender da ordem das chaves nem de campo `undefined`: o registro que volta
@@ -565,7 +578,7 @@ function viverPlano(
           // a mesma contagem do app: dose em faixa se registra de uma vez, sem série inventada
           const series = totalSeriesDe(b);
           const reps = b.repsAlvo ?? numeroDaFaixa(b.reps) ?? 10;
-          const base = cargaBase(a, b.exercicioSlug, ex?.equipamento);
+          const base = ancoraDeCarga(b.exercicioSlug) ?? cargaBase(a, b.exercicioSlug, ex?.equipamento);
           const fator = descarga ? 0.85 : 1 + 0.02 * Math.max(0, cargasVividas - 1);
           const passo = passoDaCarga(ex?.equipamento);
           for (let s = 1; s <= series; s++) {
