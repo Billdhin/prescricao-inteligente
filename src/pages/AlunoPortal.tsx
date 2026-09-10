@@ -1,7 +1,8 @@
 import * as React from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useCloudAuth, recarregarSessao } from "@/lib/backend/cloudAuth";
-import { signIn, signUp, signOut } from "@/lib/backend/supabaseAuth";
+import { signIn, signUp, signOut, resetPassword, traduzErroAuth, limparEmail } from "@/lib/backend/supabaseAuth";
+import { CampoSenha, ATRIBUTOS_EMAIL } from "@/components/app/CampoSenha";
 import { reivindicarConvite, salvarExecucao, apagarExecucao, salvarSessaoFeedback, salvarDeclaracao } from "@/lib/backend/supabaseRepo";
 import { useAlunos } from "@/lib/store";
 import { StudentApp } from "@/components/student/StudentApp";
@@ -178,6 +179,19 @@ function StudentAuthGate({ convite }: { convite?: string }) {
   const [aviso, setAviso] = React.useState<string | null>(null);
   const [carregando, setCarregando] = React.useState(false);
 
+  // O aluno não tinha "esqueci a senha": quem esquecia ficava sem entrar e sem saída.
+  const esqueci = async () => {
+    setErro(null);
+    setAviso(null);
+    if (!email.trim()) {
+      setErro("Digite o seu e-mail acima para receber o link de nova senha.");
+      return;
+    }
+    const r = await resetPassword(limparEmail(email));
+    if (r.error) setErro(traduzErroAuth(r.error));
+    else setAviso("Enviamos um link para o seu e-mail. Abra o link neste celular para criar uma senha nova.");
+  };
+
   const enviar = async (ev: React.FormEvent) => {
     ev.preventDefault();
     setErro(null);
@@ -189,9 +203,12 @@ function StudentAuthGate({ convite }: { convite?: string }) {
     }
     setCarregando(true);
     try {
-      const r = modo === "criar" ? await signUp(email, senha, nome) : await signIn(email, senha);
+      // E-mail limpo: o teclado do celular deixa espaço no fim e maiúscula no começo, e o
+      // aluno recebia "e-mail ou senha incorretos" digitando o endereço certo.
+      const r =
+        modo === "criar" ? await signUp(limparEmail(email), senha, nome.trim()) : await signIn(limparEmail(email), senha);
       if (r.error) {
-        setErro(r.error);
+        setErro(traduzErroAuth(r.error));
         return;
       }
       // Confirmação de e-mail ligada no Supabase: signUp volta SEM sessão. O convite
@@ -214,7 +231,7 @@ function StudentAuthGate({ convite }: { convite?: string }) {
       }
       await recarregarSessao();
     } catch (e) {
-      setErro((e as Error)?.message ?? "Algo deu errado.");
+      setErro(traduzErroAuth((e as Error)?.message));
     } finally {
       setCarregando(false);
     }
@@ -233,15 +250,40 @@ function StudentAuthGate({ convite }: { convite?: string }) {
           <p className="text-center text-xs text-ink-3">Você foi convidado pelo seu profissional. Crie a conta para ver o seu treino.</p>
         )}
         {modo === "criar" && (
-          <Campo label="Seu nome" value={nome} onChange={setNome} type="text" />
+          <Campo label="Seu nome">
+            {(id) => (
+              <input id={id} value={nome} onChange={(e) => setNome(e.target.value)} required autoComplete="name" autoCapitalize="words" className={CLASSE_CAMPO} />
+            )}
+          </Campo>
         )}
-        <Campo label="E-mail" value={email} onChange={setEmail} type="email" />
-        <Campo label="Senha" value={senha} onChange={setSenha} type="password" />
+        <Campo label="E-mail">
+          {(id) => (
+            <input id={id} {...ATRIBUTOS_EMAIL} value={email} onChange={(e) => setEmail(e.target.value)} required className={CLASSE_CAMPO} />
+          )}
+        </Campo>
+        <Campo label="Senha">
+          {(id) => (
+            <CampoSenha
+              id={id}
+              value={senha}
+              onChange={setSenha}
+              required
+              autoComplete={modo === "criar" ? "new-password" : "current-password"}
+              placeholder={modo === "criar" ? "Pelo menos 6 caracteres" : undefined}
+              className={CLASSE_CAMPO}
+            />
+          )}
+        </Campo>
         {aviso && <p className="rounded-lg bg-primary-tint px-3 py-2 text-sm text-ink">{aviso}</p>}
         {erro && <p className="text-sm text-[color:var(--cta-text,#b91c1c)]">{erro}</p>}
         <button type="submit" disabled={carregando} className={cn(buttonClasses("primary"), "w-full justify-center")}>
           {carregando ? "Aguarde..." : modo === "criar" ? "Criar conta" : "Entrar"}
         </button>
+        {modo === "entrar" && (
+          <button type="button" onClick={() => void esqueci()} className="w-full text-center text-sm font-semibold text-ink-2 hover:text-ink">
+            Esqueci a senha
+          </button>
+        )}
         {convite ? (
           // Com convite, o aluno pode alternar entre criar e entrar.
           <button
@@ -262,31 +304,20 @@ function StudentAuthGate({ convite }: { convite?: string }) {
   );
 }
 
-function Campo({
-  label,
-  value,
-  onChange,
-  type,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type: string;
-}) {
+/** Altura de toque de 48 px e letra de 16 px: abaixo disso o iPhone dá zoom na tela ao tocar. */
+const CLASSE_CAMPO =
+  "h-12 w-full rounded-lg border border-border bg-surface px-3 text-base text-ink focus:outline-none focus:ring-2 focus:ring-primary";
+
+/** Rótulo e campo. O campo vem por render prop para cada um levar os atributos do teclado certo. */
+function Campo({ label, children }: { label: string; children: (id: string) => React.ReactNode }) {
   const id = React.useId();
   return (
-    <label htmlFor={id} className="block">
-      <span className="mb-1 block text-sm font-semibold text-ink">{label}</span>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required
-        autoComplete={type === "password" ? "current-password" : type === "email" ? "email" : "name"}
-        className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-ink focus:outline-none focus:ring-2 focus:ring-primary"
-      />
-    </label>
+    <div>
+      <label htmlFor={id} className="mb-1 block text-sm font-semibold text-ink">
+        {label}
+      </label>
+      {children(id)}
+    </div>
   );
 }
 

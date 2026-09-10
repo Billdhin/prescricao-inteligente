@@ -329,3 +329,18 @@ main .grid > * {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+ * CAMPO DE TEXTO NO CELULAR: NUNCA ABAIXO DE 16 PX.
+ *
+ * O Safari do iPhone dá zoom na página inteira ao tocar num campo com letra menor que 16 px,
+ * e a pessoa fica digitando numa tela ampliada e deslocada, que só volta com pinça. Os campos
+ * do produto usam 14 px (`.input`, `text-sm`) porque no computador é o tamanho certo; no
+ * toque eles sobem para 16. Fora de camada e com seletor de elemento + classe de propósito,
+ * para vencer o utilitário `text-sm` sem `!important`.
+ */
+@media (pointer: coarse) {
+  :is(input, textarea, select):is(.input, .text-sm, .text-xs, .text-2xs) {
+    font-size: 16px;
+  }
+}

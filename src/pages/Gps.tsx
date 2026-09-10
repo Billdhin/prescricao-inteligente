@@ -2121,7 +2121,9 @@ function Results({
       c.includes(slug) ? c.filter((x) => x !== slug) : c.length < 3 ? [...c, slug] : c,
     );
 
-  const BotaoSelecao = ({ r, grande }: { r: Recommendation; grande?: boolean }) => {
+  // Função de render, e não componente declarado aqui dentro: como `<BotaoSelecao />` o botão
+  // era outro elemento a cada render, e o foco do teclado sumia depois de cada clique.
+  const botaoSelecao = (r: Recommendation, grande?: boolean) => {
     const dentro = selecionados.includes(r.exercise.slug);
     const jaEsta = jaNaSessao.includes(r.exercise.slug);
     // Aparelho de cardio não entra na sessão como exercício de força (ver itensSemeaveis): o
@@ -2181,7 +2183,7 @@ function Results({
               </div>
             </div>
           </div>
-          <BotaoSelecao r={r} />
+          {botaoSelecao(r)}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button onClick={() => onJustify(r)} className="text-sm font-semibold text-primary hover:underline">
@@ -2355,7 +2357,7 @@ function Results({
                     ranking; quem escolhe é o profissional, no botão ao lado. */}
                 <Pill tone="primary">Mais adequado</Pill>
                 <span className="ml-auto">
-                  <BotaoSelecao r={best} grande />
+                  {botaoSelecao(best, true)}
                 </span>
               </div>
               <p className="mt-2 text-ink-2">{best.exercise.resumoPratico}</p>

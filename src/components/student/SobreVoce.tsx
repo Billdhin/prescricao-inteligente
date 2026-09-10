@@ -84,7 +84,14 @@ export function SobreVoce({
     else setTela(tela + 1);
   };
 
-  const Campo = ({ campo }: { campo: CampoDeclaracao }) => {
+  /*
+   * FUNÇÃO DE RENDER, NÃO COMPONENTE. Isto era `const Campo = () => ...` usado como
+   * `<Campo />`: a cada letra o React recebia uma função nova, desmontava o campo e montava
+   * outro, e no celular o teclado fechava a cada tecla (relato de aluno, 10/09/2026). Chamada
+   * como função, o JSX entra direto na árvore desta tela e o <input> é sempre o mesmo.
+   * `check:foco` trava a volta.
+   */
+  const campoDaTela = (campo: CampoDeclaracao) => {
     const r = get(campo);
     const naoSei = (
       <button
@@ -258,7 +265,7 @@ export function SobreVoce({
             </h2>
             <div className="space-y-5">
               {atual.campos.map((c) => (
-                <Campo key={c} campo={c} />
+                <React.Fragment key={c}>{campoDaTela(c)}</React.Fragment>
               ))}
             </div>
 

@@ -1003,6 +1003,20 @@ function PassosDaPrescricao({ atual }: { atual: 1 | 2 | 3 }) {
   );
 }
 
+/** Uma linha do painel "O que o Mapa já sabe": marcador colorido e o texto. No nível do
+ *  módulo, e não dentro do painel, para não remontar a cada render (ver check:foco). */
+function Linha({ marcador, cor, children }: { marcador: string; cor: string; children: React.ReactNode }) {
+  return (
+    <p className="m-0 flex gap-2.5">
+      <span aria-hidden style={{ color: cor }}>
+        {marcador}
+      </span>
+      <span className="min-w-0">{children}</span>
+    </p>
+  );
+}
+
+
 /**
  * O cartão navy fixo do protótipo: "O que o Mapa já sabe".
  *
@@ -1047,15 +1061,6 @@ function MapaJaSabe({
   }, [aluno?.restricoes, slugs]);
   const nome = aluno ? aluno.nome.split(" ")[0] : "Plano avulso";
   const nomesCondicoes = slugs.map((s) => groupGpsRules[s]?.nome ?? s);
-
-  const Linha = ({ marcador, cor, children }: { marcador: string; cor: string; children: React.ReactNode }) => (
-    <p className="m-0 flex gap-2.5">
-      <span aria-hidden style={{ color: cor }}>
-        {marcador}
-      </span>
-      <span className="min-w-0">{children}</span>
-    </p>
-  );
 
   return (
     <aside

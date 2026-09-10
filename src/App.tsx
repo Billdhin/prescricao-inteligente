@@ -15,6 +15,7 @@ import {
   Progresso as AprenderProgresso,
 } from "@/features/learning/pages";
 import NaoEncontrado from "@/pages/NaoEncontrado";
+import { NovaSenhaPeloLink } from "@/components/app/NovaSenhaPeloLink";
 
 /*
  * SÓ A LANDING É EAGER. TODO O RESTO DO APP CHEGA SOB DEMANDA.
@@ -144,6 +145,7 @@ export default function App() {
     >
       <ScrollToTop />
       <TemaForaDaLanding />
+      <NovaSenhaPeloLink />
       {/* Fallback NEUTRO de propósito: o chunk de uma página chega em dezenas de ms no
           segundo acesso (cache) e um spinner piscando a cada navegação seria pior que o
           vazio. O fundo segue o tema, então não há flash branco no escuro. */}

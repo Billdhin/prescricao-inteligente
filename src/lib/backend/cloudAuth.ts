@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { Session, User } from "@supabase/supabase-js";
-import { isSupabaseConfigured } from "./supabaseClient";
+import { isSupabaseConfigured, getSupabase } from "./supabaseClient";
 import { onAuthChange, getSession } from "./supabaseAuth";
 import * as repo from "./supabaseRepo";
 import { setCloudOn } from "./cloudSync";
@@ -62,6 +62,12 @@ interface CloudAuthState {
   /** true enquanto hidrata os dados do usuário logo após o login */
   hydrating: boolean;
   /**
+   * A pessoa chegou pelo link de "esqueci a senha". O link abre a sessão, mas quem clicou
+   * ainda não tem senha que saiba: enquanto isto for true, a tela de senha nova aparece por
+   * cima de qualquer rota (ver NovaSenhaPeloLink).
+   */
+  recuperandoSenha: boolean;
+  /**
    * O ESPAÇO EM USO, não a identidade da conta: define qual app renderizar. A mesma conta
    * pode ter os dois vínculos e alternar entre eles sem perder nenhum (ver alternarEspaco).
    */
@@ -82,6 +88,9 @@ export const useCloudAuth = create<CloudAuthState>(() => ({
   session: null,
   user: null,
   hydrating: false,
+  // O link de redefinição chega com "type=recovery" no endereço; o cliente do Supabase limpa
+  // o endereço ao ler a sessão, então a marca é lida aqui, antes dele.
+  recuperandoSenha: typeof window !== "undefined" && /type=recovery/.test(window.location.hash + window.location.search),
   role: null,
   temVinculoDeAluno: false,
   temCarteiraPropria: false,
@@ -337,4 +346,7 @@ if (isSupabaseConfigured()) {
     .then(aplicarSessao)
     .catch(() => useCloudAuth.setState({ status: "signed-out" }));
   onAuthChange(aplicarSessao);
+  getSupabase().auth.onAuthStateChange((evento) => {
+    if (evento === "PASSWORD_RECOVERY") useCloudAuth.setState({ recuperandoSenha: true });
+  });
 }

@@ -2,7 +2,8 @@ import * as React from "react";
 import { LogIn, UserPlus, Mail, CheckCircle2, Cloud } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { buttonClasses } from "@/components/ui/primitives";
-import { signIn, signUp, resetPassword } from "@/lib/backend/supabaseAuth";
+import { signIn, signUp, resetPassword, traduzErroAuth, limparEmail } from "@/lib/backend/supabaseAuth";
+import { CampoSenha, ATRIBUTOS_EMAIL } from "@/components/app/CampoSenha";
 import { cn } from "@/lib/utils";
 
 /**
@@ -15,23 +16,7 @@ import { cn } from "@/lib/utils";
 
 type Aba = "entrar" | "criar";
 
-/** Traduz as mensagens mais comuns do Supabase para um português claro. */
-function traduzErro(msg: string | undefined): string {
-  if (!msg) return "Não foi possível concluir. Tente de novo.";
-  const m = msg.toLowerCase();
-  if (m.includes("invalid login")) return "E-mail ou senha incorretos.";
-  if (m.includes("already registered") || m.includes("already been registered"))
-    return "Este e-mail já tem conta. Tente entrar.";
-  if (m.includes("password should be at least"))
-    return "A senha precisa de pelo menos 6 caracteres.";
-  if (m.includes("email not confirmed"))
-    return "Confirme seu e-mail antes de entrar (veja sua caixa de entrada).";
-  if (m.includes("unable to validate email") || m.includes("invalid email"))
-    return "E-mail inválido.";
-  if (m.includes("rate limit") || m.includes("too many"))
-    return "Muitas tentativas. Espere um instante e tente de novo.";
-  return msg;
-}
+const traduzErro = traduzErroAuth;
 
 export function CloudAuthGate() {
   const [aba, setAba] = React.useState<Aba>("entrar");
@@ -68,11 +53,11 @@ export function CloudAuthGate() {
     setCarregando(true);
     try {
       if (aba === "entrar") {
-        const r = await signIn(email.trim(), senha);
+        const r = await signIn(limparEmail(email), senha);
         if (r.error) setErro(traduzErro(r.error));
         // sucesso: onAuthChange fecha o portão automaticamente
       } else {
-        const r = await signUp(email.trim(), senha, nome.trim(), cref.trim());
+        const r = await signUp(limparEmail(email), senha, nome.trim(), cref.trim());
         if (r.error) {
           setErro(traduzErro(r.error));
         } else if (!r.session) {
@@ -94,7 +79,7 @@ export function CloudAuthGate() {
       setErro("Digite seu e-mail acima para receber o link de redefinição.");
       return;
     }
-    const r = await resetPassword(email.trim());
+    const r = await resetPassword(limparEmail(email));
     if (r.error) setErro(traduzErro(r.error));
     else setAviso("Enviamos um link de redefinição de senha para o seu e-mail.");
   };
@@ -158,20 +143,18 @@ export function CloudAuthGate() {
             <label className="block">
               <span className="mb-1.5 block text-sm font-semibold text-ink">E-mail</span>
               <input
-                type="email"
+                {...ATRIBUTOS_EMAIL}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input"
-                autoComplete="email"
                 placeholder="voce@exemplo.com"
               />
             </label>
             <label className="block">
               <span className="mb-1.5 block text-sm font-semibold text-ink">Senha</span>
-              <input
-                type="password"
+              <CampoSenha
                 value={senha}
-                onChange={(e) => setSenha(e.target.value)}
+                onChange={setSenha}
                 className="input"
                 autoComplete={aba === "entrar" ? "current-password" : "new-password"}
                 placeholder={aba === "criar" ? "Pelo menos 6 caracteres" : ""}

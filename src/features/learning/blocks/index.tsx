@@ -696,14 +696,9 @@ function NucleosAtlas({ title, steps }: { title?: string; steps: NucleoStep[] })
   );
 }
 
-function Comparison({
-  title,
-  content,
-}: {
-  title?: string;
-  content: { leftTitle: string; rightTitle: string; leftItems: string[]; rightItems: string[]; note?: string };
-}) {
-  const Col = ({ head, items, tone }: { head: string; items: string[]; tone: "primary" | "analysis" }) => (
+/** Uma coluna da comparação. Fora de `Comparison` para não remontar a cada render. */
+function Col({ head, items, tone }: { head: string; items: string[]; tone: "primary" | "analysis" }) {
+  return (
     <div className={cn("rounded-xl border p-4", tone === "primary" ? "border-primary/30 bg-primary-tint" : "border-analysis/30 bg-analysis-tint")}>
       <div className={cn("mb-2 font-display font-bold", tone === "primary" ? "text-primary" : "text-analysis")}>{head}</div>
       <ul className="space-y-1.5 text-sm text-ink-2">
@@ -716,6 +711,15 @@ function Comparison({
       </ul>
     </div>
   );
+}
+
+function Comparison({
+  title,
+  content,
+}: {
+  title?: string;
+  content: { leftTitle: string; rightTitle: string; leftItems: string[]; rightItems: string[]; note?: string };
+}) {
   return (
     <section>
       {title && (
