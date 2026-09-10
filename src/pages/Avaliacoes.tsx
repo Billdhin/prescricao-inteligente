@@ -1,16 +1,16 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3, CheckCircle2, Plus } from "lucide-react";
-import { Card, SectionHeader, buttonClasses } from "@/components/ui/primitives";
+import { ArrowRight, CheckCircle2, Plus } from "lucide-react";
+import { Card } from "@/components/ui/primitives";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
+import { METRICAS_EVOLUCAO, type DirMetrica } from "@/components/app/EvolucaoMini";
 import { useAlunos } from "@/lib/store";
 import { dataReavaliacao } from "@/lib/gps/proximoPasso";
 import { toast } from "@/lib/toast";
+import type { Aluno, Avaliacao } from "@/data/alunos";
 import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
-const fmtData = (ts: number) =>
-  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(ts));
 /** "29 ago", como no protótipo: dia + mês curto, sem "de" e sem ponto. */
 const fmtDataCurta = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" })
@@ -18,8 +18,14 @@ const fmtDataCurta = (ts: number) =>
     .replace(/ de /g, " ")
     .replace(".", "");
 const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
-const fmtDelta = (n: number, unidade: string) => `${n > 0 ? "+" : ""}${n.toFixed(1).replace(".", ",")} ${unidade}`;
-const fmtNum = (n: number) => String(n).replace(".", ",");
+const fmtNum = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
+/**
+ * Variação com sinal de verdade (o hífen não é sinal de menos e some na leitura rápida) e,
+ * nas medidas contínuas, SEMPRE com uma casa: "−2,0" ao lado de "−1,6" alinha a leitura, e
+ * "−2" solto parece arredondamento de outra escala. A dor é inteira por natureza.
+ */
+const fmtVar = (n: number, casas = 1) =>
+  `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toFixed(casas).replace(".", ",")}`;
 
 /**
  * Tinta do avatar quadrado por FAMÍLIA de cor, como no protótipo (fundo tint +
@@ -34,10 +40,130 @@ const TINTAS_AVATAR = [
 const tintaDe = (id: string) =>
   TINTAS_AVATAR[[...id].reduce((s, c) => s + c.charCodeAt(0), 0) % TINTAS_AVATAR.length];
 
+/**
+ * A pílula do objetivo. Emagrecimento em azul e Resistência em turquesa, como o protótipo; o
+ * roxo que ele usa para Hipertrofia não existe na paleta do produto, e criar um token só para
+ * uma pílula pediria validar contraste nos dois temas por nada, então ela usa a família quente.
+ */
+const PILULA_OBJETIVO: Record<string, string> = {
+  Emagrecimento: "bg-primary-tint text-primary",
+  Hipertrofia: "bg-cta-tint text-cta-text",
+  "Resistência muscular": "bg-analysis-tint text-analysis-text",
+};
+const ROTULO_OBJETIVO: Record<string, string> = { "Resistência muscular": "Resistência" };
+
+/* ============================ A leitura da evolução ============================ */
+
+/**
+ * A MESMA VARIAÇÃO SIGNIFICA COISAS OPOSTAS CONFORME O OBJETIVO.
+ *
+ * Esta tela mostrava o delta NEUTRO de propósito, com um comentário honesto: sem leitura de
+ * objetivo, pintar de verde diria "melhorou" sem saber o que o aluno busca. O protótipo pede a
+ * leitura ("lida contra o objetivo de cada aluno"), e ela só é honesta com a regra à vista:
+ *
+ *  - GORDURA e DOR: cair é a favor em qualquer objetivo. A direção da gordura vem da tabela de
+ *    métricas do produto (`METRICAS_EVOLUCAO`), não de uma cópia.
+ *  - PESO: depende. Emagrecimento (ou condição de obesidade declarada) quer menos; Hipertrofia
+ *    quer mais; nos outros objetivos o peso não tem direção, e a tela não inventa uma. É por
+ *    isso que a tabela de métricas o marca como neutro: a direção do peso é do OBJETIVO.
+ *
+ * TOLERÂNCIA DE LEITURA, e não número clínico: abaixo de 1 kg e de 1 ponto percentual a tela
+ * diz "estável", porque variação desse tamanho cabe na oscilação normal entre duas medidas de
+ * balança ou de gordura, e pintar isso de verde ou de âmbar seria ler ruído como resultado.
+ */
+type Leitura = "favor" | "atencao" | "estavel";
+const TOLERANCIA_PESO_KG = 1;
+const TOLERANCIA_GORDURA_PP = 1;
+const DIR_GORDURA: DirMetrica = METRICAS_EVOLUCAO.find((m) => m.key === "percentualGordura")?.dir ?? "menor";
+
+function direcaoDoPeso(a: Aluno): DirMetrica {
+  if (a.objetivo === "Emagrecimento" || (a.grupoEspecial ?? "").startsWith("obesidade")) return "menor";
+  if (a.objetivo === "Hipertrofia") return "maior";
+  return "neutro";
+}
+
+function ler(delta: number, dir: DirMetrica, tolerancia: number): Leitura {
+  if (dir === "neutro" || Math.abs(delta) < tolerancia) return "estavel";
+  return (dir === "menor" ? delta < 0 : delta > 0) ? "favor" : "atencao";
+}
+
+interface Medida {
+  rotulo: string;
+  valor: string;
+  variacao: string;
+  leitura: Leitura;
+}
+
+interface LinhaEvolucao {
+  aluno: Aluno;
+  n: number;
+  dias: number;
+  medidas: Medida[];
+  /** série de peso, da primeira à última avaliação que tem peso */
+  pesos: number[];
+  leituraPeso?: Leitura;
+}
+
+function lerEvolucao(a: Aluno, avs: Avaliacao[]): LinhaEvolucao | null {
+  if (avs.length < 2) return null;
+  const primeira = avs[0];
+  const ultima = avs[avs.length - 1];
+  const medidas: Medida[] = [];
+  const pesos = avs.map((av) => av.medidas.peso).filter((p): p is number => p != null);
+
+  let leituraPeso: Leitura | undefined;
+  if (primeira.medidas.peso != null && ultima.medidas.peso != null) {
+    const d = ultima.medidas.peso - primeira.medidas.peso;
+    leituraPeso = ler(d, direcaoDoPeso(a), TOLERANCIA_PESO_KG);
+    medidas.push({ rotulo: "Peso", valor: `${fmtNum(ultima.medidas.peso)} kg`, variacao: fmtVar(d), leitura: leituraPeso });
+  }
+  const g0 = primeira.medidas.percentualGordura;
+  const g1 = ultima.medidas.percentualGordura;
+  if (g0 != null && g1 != null) {
+    const d = g1 - g0;
+    medidas.push({ rotulo: "Gordura", valor: `${fmtNum(g1)}%`, variacao: `${fmtVar(d)} pp`, leitura: ler(d, DIR_GORDURA, TOLERANCIA_GORDURA_PP) });
+  }
+  // Dor: a última registrada contra a primeira registrada, na escala de 0 a 10.
+  const dores = avs.map((av) => av.dorEscala).filter((d): d is number => d != null);
+  if (dores.length >= 1) {
+    const d0 = dores[0];
+    const d1 = dores[dores.length - 1];
+    const d = d1 - d0;
+    medidas.push({
+      rotulo: "Dor",
+      valor: `${d1}/10`,
+      variacao: d1 === 0 ? "sem dor" : d === 0 ? "estável" : fmtVar(d, 0),
+      leitura: d1 === 0 ? "favor" : d === 0 ? "estavel" : d < 0 ? "favor" : "atencao",
+    });
+  }
+  if (!medidas.length) return null;
+  return {
+    aluno: a,
+    n: avs.length,
+    dias: Math.max(1, Math.round((ultima.data - primeira.data) / DIA)),
+    medidas,
+    pesos,
+    leituraPeso,
+  };
+}
+
+const COR_LEITURA: Record<Leitura, { caixa: string; variacao: string; ponto: string }> = {
+  favor: { caixa: "border-success/25 bg-success-tint", variacao: "text-success", ponto: "bg-success-fill" },
+  atencao: { caixa: "border-warning/30 bg-warning-tint", variacao: "text-warning", ponto: "bg-warning-fill" },
+  estavel: { caixa: "border-border bg-surface", variacao: "text-ink-3", ponto: "bg-ink-3" },
+};
+
+type Filtro = "favor" | "atencao" | "todos";
+const LINHAS_VISIVEIS = 4;
+
+/* =================================== A tela =================================== */
+
 export function Avaliacoes() {
   const { alunos, avaliacoes, planos, addAvaliacao } = useAlunos();
   // null = fechado. String vazia = escolhendo o aluno. Id = modal aberto naquele aluno.
   const [avaliando, setAvaliando] = React.useState<string | null>(null);
+  const [filtro, setFiltro] = React.useState<Filtro>("favor");
+  const [carteiraToda, setCarteiraToda] = React.useState(false);
   const ativos = alunos.filter((a) => a.status === "ativo");
   const alunoEmAvaliacao = ativos.find((a) => a.id === avaliando);
   const avalsDoAluno = React.useMemo(
@@ -59,8 +185,7 @@ export function Avaliacoes() {
    * macrociclo, então com plano ativo ela mostrava uma data e o perfil do aluno
    * mostrava outra.
    */
-  const precisamAgora = alunos
-    .filter((a) => a.status === "ativo")
+  const precisamAgora = ativos
     .map((a) => {
       const planoAtivo = planos.find((p) => p.alunoId === a.id && p.status === "ativo");
       const temAval = avaliacoes.some((av) => av.alunoId === a.id);
@@ -74,39 +199,40 @@ export function Avaliacoes() {
     })
     .filter(Boolean)
     .sort((x, y) => {
-      const peso = { primeira: 0, vencida: 1, chegando: 2 } as const;
+      const peso = { vencida: 0, chegando: 1, primeira: 2 } as const;
       return peso[x!.tipo] - peso[y!.tipo] || x!.em - y!.em;
-    }) as { aluno: (typeof alunos)[number]; tipo: "primeira" | "vencida" | "chegando"; em: number; acao: string }[];
+    }) as { aluno: Aluno; tipo: "primeira" | "vencida" | "chegando"; em: number; acao: string }[];
 
-  const recentes = [...avaliacoes].sort((a, b) => b.data - a.data).slice(0, 12);
+  // Cinco bastam para "o que aconteceu por último"; o histórico inteiro vive na ficha.
+  const recentes = [...avaliacoes].sort((a, b) => b.data - a.data).slice(0, 5);
 
-  // Evolução da carteira: delta da primeira à última avaliação, por aluno (2+ registros).
-  const evolucao = alunos
-    .filter((a) => a.status === "ativo")
-    .map((a) => {
-      const avs = avaliacoes.filter((av) => av.alunoId === a.id).sort((x, y) => x.data - y.data);
-      if (avs.length < 2) return null;
-      const primeira = avs[0];
-      const ultima = avs[avs.length - 1];
-      const dPeso =
-        primeira.medidas.peso != null && ultima.medidas.peso != null
-          ? ultima.medidas.peso - primeira.medidas.peso
-          : undefined;
-      const dGord =
-        primeira.medidas.percentualGordura != null && ultima.medidas.percentualGordura != null
-          ? ultima.medidas.percentualGordura - primeira.medidas.percentualGordura
-          : undefined;
-      const dias = Math.max(1, Math.round((ultima.data - primeira.data) / DIA));
-      return { aluno: a, dPeso, dGord, dias, n: avs.length };
-    })
-    .filter(Boolean) as { aluno: (typeof alunos)[number]; dPeso?: number; dGord?: number; dias: number; n: number }[];
-
-  // Largura das barras de delta: |delta| normalizado pelo maior |delta| da
-  // carteira em cada métrica, para as barras serem comparáveis entre alunos.
-  const maxDPeso = Math.max(0, ...evolucao.map((e) => Math.abs(e.dPeso ?? 0)));
-  const maxDGord = Math.max(0, ...evolucao.map((e) => Math.abs(e.dGord ?? 0)));
-  const larguraDelta = (d: number | undefined, max: number) =>
-    d == null || max === 0 ? 0 : Math.round((Math.abs(d) / max) * 100);
+  const evolucao = React.useMemo(
+    () =>
+      ativos
+        .map((a) =>
+          lerEvolucao(
+            a,
+            avaliacoes.filter((av) => av.alunoId === a.id).sort((x, y) => x.data - y.data),
+          ),
+        )
+        .filter((x): x is LinhaEvolucao => x != null),
+    // `ativos` é derivado de `alunos` a cada render; a dependência real é a lista de alunos.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [alunos, avaliacoes],
+  );
+  /*
+   * As abas contam por MEDIDA, não por aluno inteiro: um aluno pode ter o peso a favor e a dor
+   * pedindo conversa, e ele aparece nas duas abas. Escondê-lo de "Atenção" porque o peso foi
+   * bem seria justamente perder a medida que pede conversa.
+   */
+  const temLeitura = (l: LinhaEvolucao, leitura: Leitura) => l.medidas.some((m) => m.leitura === leitura);
+  const contagem = {
+    favor: evolucao.filter((l) => temLeitura(l, "favor")).length,
+    atencao: evolucao.filter((l) => temLeitura(l, "atencao")).length,
+    todos: evolucao.length,
+  };
+  const filtradas = evolucao.filter((l) => filtro === "todos" || temLeitura(l, filtro));
+  const visiveis = carteiraToda ? filtradas : filtradas.slice(0, LINHAS_VISIVEIS);
 
   /**
    * ESTE MÊS: contagens REAIS de avaliações dos últimos 6 meses, derivadas de
@@ -128,19 +254,24 @@ export function Avaliacoes() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <SectionHeader
-        eyebrow="Atendimento"
-        icon={<BarChart3 className="h-3 w-3" />}
-        title="Avaliar e reavaliar"
-        subtitle="Acompanhe as reavaliações, veja o histórico de medidas e registre uma avaliação nova aqui mesmo."
-        right={
-          ativos.length > 0 ? (
-            <button onClick={() => setAvaliando("")} className={buttonClasses("primary", "sm")}>
-              <Plus className="h-4 w-4" /> Registrar avaliação
-            </button>
-          ) : undefined
-        }
-      />
+      {/* Cabeçalho do protótipo: sobretítulo, título grande e a ação escura à direita. */}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">Atendimento</p>
+          <h1 className="mt-2 font-display text-[clamp(26px,3vw,36px)] font-bold leading-[1.05] tracking-[-0.03em] text-ink">
+            Avaliar e reavaliar
+          </h1>
+        </div>
+        {ativos.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setAvaliando("")}
+            className="inline-flex h-11 items-center gap-1.5 rounded-control bg-ink px-4 text-sm font-semibold text-surface transition-opacity hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" aria-hidden /> Registrar avaliação
+          </button>
+        )}
+      </div>
 
       {avaliando === "" && (
         <Card className="border-2 border-ink p-5 md:p-6">
@@ -160,7 +291,10 @@ export function Avaliacoes() {
                 {a.nome}
               </button>
             ))}
-            <button onClick={() => setAvaliando(null)} className={buttonClasses("ghost", "sm")}>
+            <button
+              onClick={() => setAvaliando(null)}
+              className="rounded-full px-3.5 py-2 text-sm font-semibold text-ink-3 hover:text-ink"
+            >
               Cancelar
             </button>
           </div>
@@ -184,9 +318,9 @@ export function Avaliacoes() {
         />
       )}
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         {/* ---------------- Coluna principal ---------------- */}
-        <div className="grid gap-4">
+        <div className="grid gap-5">
           {/* Quem precisa agora */}
           <Card className="p-5 md:p-6">
             <h2 className="font-display text-lg font-bold tracking-[-0.02em] text-ink">Quem precisa agora</h2>
@@ -195,14 +329,6 @@ export function Avaliacoes() {
                 <p className="text-sm text-ink-2">
                   Ninguém com avaliação pendente ou reavaliação nas próximas duas semanas.
                 </p>
-                {ativos.length > 0 && (
-                  <button
-                    onClick={() => setAvaliando("")}
-                    className={cn(buttonClasses("secondary", "sm"), "mt-3")}
-                  >
-                    Registrar uma avaliação assim mesmo
-                  </button>
-                )}
               </div>
             ) : (
               <div className="mt-3.5 space-y-2">
@@ -214,14 +340,10 @@ export function Avaliacoes() {
                       ? "Primeira avaliação pendente"
                       : tipo === "vencida"
                         ? `Vencida há ${Math.abs(d)} ${Math.abs(d) === 1 ? "dia" : "dias"}`
-                        : `Reavaliação em ${d} ${d === 1 ? "dia" : "dias"} · ${fmtData(em)}`;
+                        : `Reavaliação em ${d} ${d === 1 ? "dia" : "dias"} · ${fmtDataCurta(em)}`;
                   // Filete 4px na cor da urgência + avatar tintado pela mesma família.
                   const filete =
-                    tipo === "vencida"
-                      ? "var(--danger-fill)"
-                      : tipo === "chegando"
-                        ? "var(--warning-fill)"
-                        : "var(--primary)";
+                    tipo === "vencida" ? "var(--danger-fill)" : tipo === "chegando" ? "var(--warning-fill)" : "var(--primary)";
                   return (
                     <div
                       key={a.id}
@@ -244,12 +366,7 @@ export function Avaliacoes() {
                         </span>
                         <span className="min-w-0">
                           <b className="block truncate text-sm font-semibold text-ink">{a.nome}</b>
-                          <span
-                            className={cn(
-                              "block truncate text-xs",
-                              tipo === "vencida" ? "text-danger" : "text-ink-2",
-                            )}
-                          >
+                          <span className={cn("block truncate text-sm", tipo === "vencida" ? "text-danger" : "text-ink-2")}>
                             {motivo}
                           </span>
                         </span>
@@ -258,10 +375,8 @@ export function Avaliacoes() {
                       <Link
                         to={`/alunos/${a.id}?avaliar=1`}
                         className={cn(
-                          "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-[background-color,filter]",
-                          tipo === "vencida"
-                            ? "bg-ink text-surface hover:brightness-[1.15]"
-                            : "bg-bg text-ink hover:bg-surface-mute",
+                          "rounded-full px-3.5 py-2 text-sm font-semibold transition-[background-color,filter]",
+                          tipo === "vencida" ? "bg-ink text-surface hover:brightness-[1.15]" : "bg-bg text-ink hover:bg-surface-mute",
                         )}
                       >
                         {acao}
@@ -273,108 +388,164 @@ export function Avaliacoes() {
             )}
           </Card>
 
-          {/* Evolução da carteira: a visão agregada prometida no painel */}
-          <Card className="p-5 md:p-6">
-            <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+          {/* Evolução da carteira */}
+          <Card className="overflow-hidden p-0">
+            <div className="p-5 pb-4 md:p-6 md:pb-4">
               <h2 className="font-display text-lg font-bold tracking-[-0.02em] text-ink">Evolução da carteira</h2>
-              <span className="text-xs text-ink-3">primeira → última avaliação</span>
-            </div>
-            {evolucao.length === 0 ? (
-              <p className="py-6 text-center text-sm text-ink-2">
-                A evolução aparece quando um aluno tiver 2 ou mais avaliações registradas.
+              <p className="mt-1 text-sm text-ink-2">
+                Variação da primeira à última avaliação, lida contra o objetivo de cada aluno
               </p>
-            ) : (
-              <div className="mt-4 space-y-2">
-                {evolucao.map(({ aluno: a, dPeso, dGord, dias, n }) => (
-                  <Link
-                    key={a.id}
-                    to={`/alunos/${a.id}?aba=avaliacoes`}
-                    className="grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3.5 rounded-[14px] p-2 transition-colors hover:bg-surface-soft"
-                  >
-                    <span
+              {evolucao.length > 0 && (
+                <div role="tablist" aria-label="Filtrar a evolução" className="mt-4 inline-flex gap-1 rounded-full bg-surface-soft p-1">
+                  {(
+                    [
+                      ["favor", "A favor"],
+                      ["atencao", "Atenção"],
+                      ["todos", "Todos"],
+                    ] as const
+                  ).map(([id, rotulo]) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={filtro === id}
+                      onClick={() => {
+                        setFiltro(id);
+                        setCarteiraToda(false);
+                      }}
                       className={cn(
-                        "grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold",
-                        tintaDe(a.id),
+                        "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
+                        filtro === id ? "bg-surface text-ink shadow-sm" : "text-ink-2 hover:text-ink",
                       )}
                     >
-                      {a.iniciais}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                        <b className="truncate text-sm font-semibold text-ink">{a.nome}</b>
-                        <span className="text-xs text-ink-3">
-                          {a.objetivo} · {n} avaliações em {dias} dias
+                      {rotulo}
+                      {/* A contagem de Atenção fica sempre à vista: o filtro padrão é "A favor",
+                          como no protótipo, e quem pede conversa não pode sumir sem aviso. */}
+                      {id === "atencao" && contagem.atencao > 0 && (
+                        <span className="tabular ml-1.5 rounded-full bg-warning-tint px-1.5 text-2xs font-bold text-warning">
+                          {contagem.atencao}
                         </span>
-                      </div>
-                      {/* Delta NEUTRO de propósito: sem leitura de objetivo no motor,
-                          verde diria "melhorou" sem saber o que o aluno busca. */}
-                      <div className="mt-2 grid gap-2.5 sm:grid-cols-2">
-                        {dPeso != null && (
-                          <div>
-                            <span className="text-xs text-ink-2">
-                              Peso <b className="tabular font-semibold text-ink">{fmtDelta(dPeso, "kg")}</b>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {evolucao.length === 0 ? (
+              <p className="border-t border-border px-5 py-6 text-center text-sm text-ink-2">
+                A evolução aparece quando um aluno tiver 2 ou mais avaliações registradas.
+              </p>
+            ) : filtradas.length === 0 ? (
+              <p className="border-t border-border px-5 py-6 text-center text-sm text-ink-2">
+                {filtro === "atencao"
+                  ? "Nenhuma medida andando contra o objetivo na carteira."
+                  : "Nenhuma medida a favor do objetivo por enquanto."}
+              </p>
+            ) : (
+              <ol>
+                {visiveis.map((l) => (
+                  <li key={l.aluno.id} className="border-t border-border even:bg-surface-soft/60">
+                    <Link
+                      to={`/alunos/${l.aluno.id}?aba=avaliacoes`}
+                      className="block px-5 py-4 transition-colors hover:bg-surface-soft md:px-6"
+                    >
+                      <div className="flex items-center gap-3.5">
+                        <span
+                          className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
+                          style={{ background: "#0B1628", color: "#F3F1EA" }}
+                        >
+                          {l.aluno.iniciais}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <b className="block truncate text-[15px] font-semibold text-ink">{l.aluno.nome}</b>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-3">
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 font-semibold",
+                                PILULA_OBJETIVO[l.aluno.objetivo] ?? "bg-surface-mute text-ink-2",
+                              )}
+                            >
+                              {ROTULO_OBJETIVO[l.aluno.objetivo] ?? l.aluno.objetivo}
                             </span>
-                            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-mute">
-                              <div
-                                className="h-full rounded-full bg-ink-2"
-                                style={{ width: `${larguraDelta(dPeso, maxDPeso)}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
-                        {dGord != null && (
-                          <div>
-                            <span className="text-xs text-ink-2">
-                              Gordura <b className="tabular font-semibold text-ink">{fmtDelta(dGord, "pp")}</b>
+                            <span className="tabular">
+                              {l.n} avaliações · {l.dias} dias
                             </span>
-                            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-mute">
-                              <div
-                                className="h-full rounded-full bg-ink-2"
-                                style={{ width: `${larguraDelta(dGord, maxDGord)}%` }}
-                              />
-                            </div>
                           </div>
-                        )}
+                        </div>
+                        {l.pesos.length >= 2 && <SeriePeso pesos={l.pesos} leitura={l.leituraPeso ?? "estavel"} />}
                       </div>
-                    </div>
-                  </Link>
+                      <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-2.5">
+                        {l.medidas.map((m) => (
+                          <div key={m.rotulo} className={cn("min-w-0 rounded-xl border px-3 py-2.5", COR_LEITURA[m.leitura].caixa)}>
+                            <p className="text-2xs font-semibold uppercase tracking-[0.08em] text-ink-3">{m.rotulo}</p>
+                            <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
+                              <b className="tabular text-base font-bold text-ink">{m.valor}</b>
+                              <span className={cn("tabular text-xs font-semibold", COR_LEITURA[m.leitura].variacao)}>
+                                {m.variacao}
+                              </span>
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </Link>
+                  </li>
                 ))}
+              </ol>
+            )}
+
+            {evolucao.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3.5 md:px-6">
+                <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2" aria-label="Legenda das cores">
+                  {(
+                    [
+                      ["favor", "a favor do objetivo"],
+                      ["atencao", "merece conversa"],
+                      ["estavel", "estável"],
+                    ] as const
+                  ).map(([id, rotulo]) => (
+                    <li key={id} className="flex items-center gap-1.5">
+                      <span aria-hidden className={cn("h-2 w-2 rounded-full", COR_LEITURA[id].ponto)} />
+                      {rotulo}
+                    </li>
+                  ))}
+                </ul>
+                {filtradas.length > LINHAS_VISIVEIS && (
+                  <button
+                    type="button"
+                    onClick={() => setCarteiraToda((v) => !v)}
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                  >
+                    {carteiraToda ? "Mostrar menos" : `Ver carteira completa (${filtradas.length})`}
+                    {!carteiraToda && <ArrowRight className="h-4 w-4" aria-hidden />}
+                  </button>
+                )}
               </div>
             )}
-            <p className="mt-3.5 text-xs leading-relaxed text-ink-3">
-              Delta da primeira à última avaliação registrada. A leitura depende do objetivo: em
-              hipertrofia, ganhar peso pode ser o esperado.
-            </p>
           </Card>
         </div>
 
         {/* ---------------- Coluna lateral ---------------- */}
-        <div className="grid gap-4">
+        <div className="grid gap-5">
           {/* Este mês: contagem real do mês corrente + colunas dos últimos 6 meses */}
-          <div
-            className="relative overflow-hidden rounded-card p-5 md:p-6"
-            style={{ background: "#0B1628", color: "#F3F1EA" }}
-          >
+          <div className="relative overflow-hidden rounded-card p-5 md:p-6" style={{ background: "#0B1628", color: "#F3F1EA" }}>
             <div
               aria-hidden
               className="pointer-events-none absolute -right-[60px] -top-[80px] h-[220px] w-[220px] rounded-full"
               style={{ background: "radial-gradient(circle,rgba(232,163,23,.3),rgba(232,163,23,0) 65%)" }}
             />
-            <p
-              className="relative m-0 text-xs font-semibold uppercase tracking-[0.12em]"
-              style={{ color: "#7FE3D8" }}
-            >
+            <p className="relative m-0 text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
               Este mês
             </p>
-            <p className="relative mb-0 mt-2.5 font-display text-4xl font-bold leading-none tracking-[-0.03em]">
+            <p className="relative mb-0 mt-2.5 font-display text-5xl font-bold leading-none tracking-[-0.03em]">
               {noMes}{" "}
-              <span className="text-sm font-medium" style={{ color: "#8FA0B5" }}>
+              <span className="text-base font-medium tracking-normal" style={{ color: "#8FA0B5" }}>
                 {noMes === 1 ? "avaliação" : "avaliações"}
               </span>
             </p>
             {maxMes > 0 && (
               <>
-                <div className="relative mt-3.5 flex h-10 items-end gap-[3px]">
+                <div className="relative mt-4 flex h-12 items-end gap-[3px]">
                   {meses.map((m, i) => (
                     <span
                       key={i}
@@ -382,10 +553,7 @@ export function Avaliacoes() {
                       style={
                         m.total === 0
                           ? { height: 3, background: "#24406A", opacity: 0.5 }
-                          : {
-                              height: `${Math.round((m.total / maxMes) * 100)}%`,
-                              background: m.atual ? "#7FE3D8" : "#24406A",
-                            }
+                          : { height: `${Math.round((m.total / maxMes) * 100)}%`, background: m.atual ? "#7FE3D8" : "#24406A" }
                       }
                       title={`${m.label}: ${m.total}`}
                     />
@@ -417,8 +585,7 @@ export function Avaliacoes() {
                   // Só campos que EXISTEM no registro entram na linha.
                   const partes = [fmtDataCurta(av.data)];
                   if (av.medidas.peso != null) partes.push(`${fmtNum(av.medidas.peso)} kg`);
-                  if (av.medidas.percentualGordura != null)
-                    partes.push(`${fmtNum(av.medidas.percentualGordura)}% gordura`);
+                  if (av.medidas.percentualGordura != null) partes.push(`${fmtNum(av.medidas.percentualGordura)}% gordura`);
                   if (av.dorEscala != null) partes.push(`dor ${av.dorEscala}`);
                   return (
                     <li key={av.id} className="border-b border-surface-mute last:border-b-0">
@@ -429,11 +596,11 @@ export function Avaliacoes() {
                            padrão, e a avaliação que ele acabou de clicar ficava duas ações adiante.
                            `?av=` leva o link até o registro exato, não só até a aba dele. */
                         to={`/alunos/${av.alunoId}?aba=avaliacoes&av=${av.id}`}
-                        className="flex items-center gap-2.5 rounded-[10px] py-2.5 transition-colors hover:bg-surface-soft"
+                        className="flex items-center gap-2.5 rounded-[10px] py-3 transition-colors hover:bg-surface-soft"
                       >
                         <span
                           className={cn(
-                            "grid h-8 w-8 shrink-0 place-items-center rounded-[10px] font-display text-2xs font-bold",
+                            "grid h-9 w-9 shrink-0 place-items-center rounded-[10px] font-display text-2xs font-bold",
                             tintaDe(av.alunoId),
                           )}
                         >
@@ -453,6 +620,36 @@ export function Avaliacoes() {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * A série de peso em barrinhas, como o protótipo desenha ao lado do nome, com a primeira e a
+ * última medida escritas: "78,5 → 75,2 kg". A escala é a do PRÓPRIO aluno (do menor ao maior
+ * valor dele), porque o que se lê aqui é a forma da trajetória, não a comparação entre alunos.
+ * Só a última barra ganha cor, na mesma leitura do quadro de peso logo abaixo.
+ */
+function SeriePeso({ pesos, leitura }: { pesos: number[]; leitura: Leitura }) {
+  const serie = pesos.slice(-5);
+  const min = Math.min(...serie);
+  const max = Math.max(...serie);
+  const altura = (v: number) => (max === min ? 60 : 30 + ((v - min) / (max - min)) * 70);
+  const corUltima = leitura === "favor" ? "bg-success-fill" : leitura === "atencao" ? "bg-warning-fill" : "bg-ink-3";
+  return (
+    <div className="flex shrink-0 items-end gap-2.5" aria-label={`Peso de ${fmtNum(pesos[0])} para ${fmtNum(pesos[pesos.length - 1])} kg`}>
+      <div aria-hidden className="flex h-9 items-end gap-[3px]">
+        {serie.map((v, i) => (
+          <span
+            key={i}
+            className={cn("w-[7px] rounded-[2px]", i === serie.length - 1 ? corUltima : "bg-surface-mute")}
+            style={{ height: `${altura(v)}%` }}
+          />
+        ))}
+      </div>
+      <span className="tabular hidden whitespace-nowrap text-xs text-ink-3 sm:inline">
+        {fmtNum(pesos[0])} → {fmtNum(pesos[pesos.length - 1])} kg
+      </span>
     </div>
   );
 }
