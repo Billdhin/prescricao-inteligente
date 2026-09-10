@@ -3,11 +3,11 @@ import { AlertTriangle, Check, ChevronDown, Lock } from "lucide-react";
 import { Card, buttonClasses } from "@/components/ui/primitives";
 import { exercises } from "@/data/exercises";
 import type { Macrociclo, PlanoTreino, VariavelTravavel } from "@/data/periodizacao";
-import type { Execucao, SessaoFeedback } from "@/data/execucao";
+import { semCargaExterna, type Execucao, type SessaoFeedback } from "@/data/execucao";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { ajustarCarga, faixaDeReps, incrementoDoExercicio, type AcaoCarga, type AjusteCarga, type CtxSeguranca, type ModProgressaoAjuste } from "@/lib/gps/autorregulacao";
 import { renovarMicrociclo, aplicarRenovacao, type RenovacaoSugerida, type SugestaoRenovacao } from "@/lib/gps/renovarMicrociclo";
-import { modProgressaoDoPerfil } from "@/lib/gps/farmacos";
+import { modAjusteDaForca } from "@/lib/gps/farmacos";
 import type { EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { cn } from "@/lib/utils";
 
@@ -59,12 +59,12 @@ function ctxSeguranca(estado?: EstadoSemaforo, ultimaAvaliacao?: Avaliacao): Ctx
 }
 
 /**
- * "Reduzir para 20 kg", "Progredir para 24 kg", "Encaminhar". Exercício por tempo (prancha,
- * isométrico) não tem quilo que faça sentido: o verbo sai sozinho.
+ * "Reduzir para 20 kg", "Progredir para 24 kg", "Encaminhar". Sem carga externa (peso do
+ * corpo, elástico) o motor não devolve quilo nenhum, e o verbo sai sozinho.
  */
-function rotuloDaAcao(ajuste: AjusteCarga, porTempo: boolean): string {
+function rotuloDaAcao(ajuste: AjusteCarga): string {
   const meta = ACAO[ajuste.acao];
-  if (porTempo || ajuste.proximaCarga == null || ajuste.acao === "manter" || ajuste.acao === "encaminhar") return meta.verbo;
+  if (ajuste.proximaCarga == null || ajuste.acao === "manter" || ajuste.acao === "encaminhar") return meta.verbo;
   return `${meta.verbo} para ${String(ajuste.proximaCarga).replace(".", ",")} kg`;
 }
 
@@ -99,14 +99,15 @@ export function AjustesSugeridos({
   const [verMantidos, setVerMantidos] = React.useState(false);
 
   const seg = ctxSeguranca(estadoSemaforo, ultimaAvaliacao);
-  const mod = aluno
-    ? modProgressaoDoPerfil({
+  // O teto de esforço da FORÇA e o passo do perfil (condição e idade), e não o teto do aeróbio.
+  const modPerfil: ModProgressaoAjuste | undefined = aluno
+    ? modAjusteDaForca({
         grupos: [aluno.grupoEspecial, ...(aluno.condicoesAtencao ?? [])],
         farmacos: aluno.farmacos,
         farmacosNaoInformado: aluno.farmacosNaoInformado,
+        idade: aluno.idade,
       })
     : undefined;
-  const modPerfil: ModProgressaoAjuste | undefined = mod ? { pseTeto: mod.pseTeto, fatorIncremento: mod.fatorIncremento } : undefined;
 
   // Só os registros DESTE plano: registro de um plano arquivado não decide a semana deste.
   const execs = plano ? execucoes.filter((e) => e.planoId === plano.id) : execucoes;
@@ -117,14 +118,12 @@ export function AjustesSugeridos({
     plano && ultimaSemana > 0 ? renovarMicrociclo(plano, ultimaSemana, execs, fbs, seg, { modPerfil }) : undefined;
 
   const faixaPorSlug = new Map<string, ReturnType<typeof faixaDeReps>>();
-  const porTempo = new Set<string>();
   plano?.macrociclo.mesociclos
     .flatMap((m) => m.microciclos)
     .flatMap((mc) => mc.sessoes)
     .flatMap((s) => s.blocos)
     .forEach((b) => {
       if (b.exercicioSlug && !faixaPorSlug.has(b.exercicioSlug)) faixaPorSlug.set(b.exercicioSlug, faixaDeReps(b.reps));
-      if (b.exercicioSlug && b.tipo === "isometrico") porTempo.add(b.exercicioSlug);
     });
 
   const linhas: Linha[] = renovacao
@@ -138,7 +137,7 @@ export function AjustesSugeridos({
           ajuste: ajustarCarga(
             execs.filter((e) => e.exercicioSlug === slug),
             faixaPorSlug.get(slug) ?? { min: 8, max: 12 },
-            { seguranca: seg, incrementoPct: incrementoDoExercicio(slug).pct, modPerfil },
+            { seguranca: seg, incrementoPct: incrementoDoExercicio(slug).pct, modPerfil, semCargaExterna: semCargaExterna(exercises.find((e) => e.slug === slug)?.equipamento) },
           ),
         }))
         .filter((s) => s.ajuste.acao !== "sem-dado");
@@ -178,6 +177,8 @@ export function AjustesSugeridos({
       <p className="mt-1 text-sm text-ink-2">
         Leitura do que o aluno registrou{renovacao ? ` na semana ${renovacao.semanaBase}` : ""}. A decisão é sua
         {renovacao?.semanaAlvo != null ? `: aplicar leva a mudança para a semana ${renovacao.semanaAlvo}.` : "."}
+        {renovacao && renovacao.puladas.length > 0 &&
+          ` ${renovacao.puladas.length === 1 ? `A semana ${renovacao.puladas[0]} é de descarga no plano e fica como está` : `As semanas ${renovacao.puladas.join(" e ")} são de descarga no plano e ficam como estão`}.`}
       </p>
 
       {seg && (
@@ -203,7 +204,7 @@ export function AjustesSugeridos({
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold text-ink">{l.nome}</span>
                     <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold", meta.chip)}>
-                      {rotuloDaAcao(l.ajuste, porTempo.has(l.slug))}
+                      {rotuloDaAcao(l.ajuste)}
                     </span>
                     {l.travadas && l.travadas.length > 0 && (
                       <span className="inline-flex items-center gap-1 text-2xs font-medium text-ink-2">
@@ -220,7 +221,7 @@ export function AjustesSugeridos({
                       ? `Aplicar muda a semana ${renovacao?.semanaAlvo} para ${mudancaEmTexto(l.sugestao.mudancaAlvo)}.`
                       : l.ajuste.acao === "encaminhar"
                         ? "O plano segue igual até a sua decisão."
-                        : `O plano segue igual: vale como orientação${porTempo.has(l.slug) ? "" : " de carga"} para a próxima sessão.`}
+                        : `O plano segue igual: vale como orientação${l.ajuste.proximaCarga != null ? " de carga" : ""} para a próxima sessão.`}
                   </p>
                 </div>
                 <div className="flex shrink-0 gap-1.5">

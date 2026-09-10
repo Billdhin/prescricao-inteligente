@@ -17,22 +17,25 @@
  *    a demo É o produto.
  *
  * 2. AS CARGAS EM KG SÃO DADO DO ALUNO DE EXEMPLO, não afirmação do produto. O motor não
- *    prescreve carga absoluta; quem registra quilos é o aluno. Os números daqui são
- *    plausíveis e determinísticos (derivados do slug), sobem nas semanas de carga e caem na
- *    descarga, como um registro real se pareceria.
+ *    prescreve carga absoluta; quem registra quilos é o aluno, e só onde existe carga externa
+ *    (peso do corpo, elástico e isométrico não têm kg). Os números são plausíveis e
+ *    determinísticos (derivados do aluno e do exercício), sobem nas semanas de carga e caem
+ *    na descarga, como um registro real se pareceria.
  *
  * O espelho na nuvem: alunos, avaliações, planos e liberações sobem pela conta logada no
  * clique de "Carregar exemplos" (mesmo caminho de sempre). Execuções e PSE ficam locais,
  * porque o espelho deles na nuvem pertence à conta do ALUNO, que não existe para um demo.
  */
 import type { Aluno, Avaliacao, Liberacao } from "@/data/alunos";
-import type { BlocoSessao, PlanoTreino } from "@/data/periodizacao";
+import { semanaAtual, type BlocoSessao, type PlanoTreino } from "@/data/periodizacao";
 import type { Execucao, SessaoFeedback } from "@/data/execucao";
 import type { FarmacoSelecionado } from "@/data/farmacos";
 import { gerarPlano } from "@/lib/gps/periodizacao";
 import { parametrosInvalidosDe } from "@/lib/gps/farmacos";
 import { criarRestricao } from "@/lib/gps/restricoes";
 import { avaliarSemaforo, montarChecklist, type ChecklistSemaforo } from "@/data/semaforo";
+import { getExercise } from "@/data/exercises";
+import { agendaDaSemana, cargaPlausivel, fatorDaSemana, registrosDoBloco } from "@/data/registroSimulado";
 
 const DIA = 24 * 60 * 60 * 1000;
 const dias = (n: number) => Date.now() + n * DIA;
@@ -113,63 +116,74 @@ export function planoDoAluno(
 }
 
 /**
- * O histórico de execução: as semanas já vividas do plano, série a série.
+ * O histórico de execução: as semanas já vividas do plano, série a série, com os MESMOS campos
+ * que o app grava (registroSimulado.ts): o aeróbio como conclusão, o isométrico e a prancha
+ * com o esforço de cada série, o peso do corpo com repetições, e quilos só onde existe carga
+ * externa. A carga plausível vem do aluno e do exercício, sobe a cada semana de carga e cai
+ * na descarga. Cada sessão cai num dia da semana do plano, com o complemento no dia de uma
+ * sessão principal.
  *
- * A carga-base vem do slug (determinística), sobe ~2,5% a cada semana de CARGA já cumprida
- * e cai 30% na descarga, que é o desenho da própria descarga. Repetições seguem o alvo da
- * semana (`repsAlvo`), com o tropeço ocasional de uma repetição a menos, porque histórico
- * perfeito demais não parece histórico.
+ * Até 10/09/2026 esta função gravava um registro por exercício com quilos em tudo (flexão de
+ * braço com 28 kg, prancha com "26 kg x 10"), pulava o aeróbio e espalhava as seis sessões da
+ * semana em dias alternados, empurrando a sessão isométrica para a semana seguinte.
  */
 function executarSemanas(
+  aluno: Aluno,
   plano: PlanoTreino,
   semanasConcluidas: number,
-  esforcoBase: number,
 ): { execucoes: Execucao[]; feedbacks: SessaoFeedback[] } {
   const execucoes: Execucao[] = [];
   const feedbacks: SessaoFeedback[] = [];
+  const dia0 = new Date(plano.data);
+  dia0.setHours(0, 0, 0, 0);
+  const HORA = 60 * 60 * 1000;
   let cargasVividas = 0;
   for (const meso of plano.macrociclo.mesociclos) {
     for (const micro of meso.microciclos) {
       if (micro.semana > semanasConcluidas) continue;
-      const deload = micro.tipo !== "carga";
-      if (!deload) cargasVividas++;
+      const descarga = micro.tipo !== "carga";
+      if (!descarga) cargasVividas++;
+      const agenda = agendaDaSemana(micro);
       micro.sessoes.forEach((sessao, si) => {
-        // Dias alternados dentro da semana (seg/qua/sex), fim de tarde. A sessão cujo dia
-        // natural ainda não chegou NÃO ganha registro: clampar para "agora" empilhava três
-        // treinos em "hoje" na linha do tempo, e sessão futura sem registro é exatamente o
-        // que um histórico real teria.
-        const diaDaSessao = plano.data + (micro.semana - 1) * 7 * DIA + si * 2 * DIA + 18 * 60 * 60 * 1000;
-        if (diaDaSessao > Date.now() - 12 * 60 * 60 * 1000) return;
-        const forca = sessao.blocos.filter((b: BlocoSessao) => b.tipo !== "aerobio" && b.exercicioSlug);
-        for (const b of forca) {
-          const base = 8 + (hash(b.exercicioSlug!) % 15) * 2; // 8 a 36 kg, estável por exercício
-          const fator = deload ? 0.7 : 1 + 0.025 * Math.max(0, cargasVividas - 1);
-          const tropeco = (hash(b.id) + micro.semana) % 5 === 0 ? 1 : 0;
-          execucoes.push({
-            id: `exec-${plano.alunoId}-${micro.semana}-${b.id}`,
+        const lugar = agenda.get(sessao.id)!;
+        // Fim de tarde. A sessão cujo dia ainda não chegou NÃO ganha registro: clampar para
+        // "agora" empilhava treinos em "hoje", e sessão futura sem registro é o que um
+        // histórico real teria.
+        const quando = dia0.getTime() + ((micro.semana - 1) * 7 + lugar.dia) * DIA + 18 * HORA + lugar.depoisMin * 60_000;
+        if (quando > Date.now() - 12 * HORA) return;
+        const rpes: number[] = [];
+        sessao.blocos.forEach((b: BlocoSessao, bi) => {
+          const ex = b.exercicioSlug ? getExercise(b.exercicioSlug) : undefined;
+          const base = b.exercicioSlug ? cargaPlausivel(aluno, b.exercicioSlug, ex?.equipamento) : undefined;
+          const r = registrosDoBloco({
+            bloco: b,
             alunoId: plano.alunoId,
             planoId: plano.id,
             semana: micro.semana,
             sessaoRef: sessao.id,
-            blocoRef: b.id,
-            exercicioSlug: b.exercicioSlug,
-            cargaFeita: Math.max(4, Math.round(base * fator)),
-            repsFeitas: Math.max(4, (b.repsAlvo ?? 10) - tropeco),
-            rpe: deload ? 6 : esforcoBase + ((hash(b.id) + micro.semana) % 2),
-            concluidoEm: diaDaSessao,
+            idBase: `exec-${plano.alunoId}-${micro.semana}-${b.id}`,
+            inicio: quando + bi * 7 * 60_000,
+            descarga,
+            carga: base != null ? base * fatorDaSemana(descarga, cargasVividas) : undefined,
           });
-        }
+          execucoes.push(...r.execucoes);
+          rpes.push(...r.rpes);
+        });
+        if (!rpes.length) return;
+        const media = rpes.reduce((x, y) => x + y, 0) / rpes.length;
         feedbacks.push({
           id: `fb-${plano.alunoId}-${micro.semana}-${sessao.id}`,
           alunoId: plano.alunoId,
           planoId: plano.id,
           semana: micro.semana,
           sessaoRef: sessao.id,
-          pse: deload ? 4 : Math.min(8, esforcoBase - 1 + ((hash(sessao.id) + micro.semana) % 3)),
-          duracaoMin: 46 + (hash(sessao.id) % 16),
+          // A PSE da sessão acompanha o esforço das séries (um ponto abaixo da média, com
+          // variação de semana para semana), e não um número à parte.
+          pse: Math.min(9, Math.max(3, Math.round(media - 1) + ((hash(sessao.id) + micro.semana) % 3) - 1)),
+          duracaoMin: lugar.complemento ? 12 + (hash(sessao.id) % 6) : 46 + (hash(sessao.id) % 16),
           observacao:
             micro.semana === semanasConcluidas && si === 0 ? "Semana boa. Senti firmeza nos exercícios guiados." : undefined,
-          concluidaEm: diaDaSessao + 55 * 60 * 1000,
+          concluidaEm: quando + (lugar.complemento ? 15 : 55) * 60_000,
         });
       });
     }
@@ -209,7 +223,17 @@ export function responderSemaforo(
   };
 }
 
-export function semearDemoVSL(): DemoVSL {
+/**
+ * `planosExistentes`: os planos que a conta JÁ tem. Os ids dos blocos de um plano gerado mudam a
+ * cada geração, então o treino da demo tem de ser registrado sobre o plano que a conta guarda,
+ * senão cada registro novo apontaria para um bloco que não existe nela. Sem plano da demo na
+ * conta, o plano nasce aqui, pelo motor.
+ */
+export function semearDemoVSL(opts: { planosExistentes?: PlanoTreino[] } = {}): DemoVSL {
+  const jaNaConta = (alunoId: string) =>
+    opts.planosExistentes?.find((p) => p.id === `plano-demo-${alunoId}` && p.alunoId === alunoId);
+  // As semanas vividas são as que já passaram no calendário do plano.
+  const vividas = (p: PlanoTreino) => Math.min(p.semanas, semanaAtual(p) - 1);
   /* ------------------- Helena, o caso de abertura do VSL ------------------- */
   const helena: Aluno = {
     id: "al-vsl-helena",
@@ -265,13 +289,13 @@ export function semearDemoVSL(): DemoVSL {
   ];
 
   // 12 semanas geradas há 9: a demo abre com o plano VIVO, na semana 10.
-  const planoHelena = planoDoAluno(helena, avaliacoesHelena, {
+  const planoHelena = jaNaConta(helena.id) ?? planoDoAluno(helena, avaliacoesHelena, {
     semanas: 12,
     frequencia: 3,
     dataMs: dias(-63),
     disponibilidade: "Seg, qua e sex, cerca de 55 min",
   });
-  const vividoHelena = executarSemanas(planoHelena, 9, 7);
+  const vividoHelena = executarSemanas(helena, planoHelena, vividas(planoHelena));
 
   const checklistHelena = montarChecklist(helena.grupoEspecial!, helena.farmacos);
   const liberacoesHelena = checklistHelena
@@ -327,13 +351,13 @@ export function semearDemoVSL(): DemoVSL {
     },
   ];
 
-  const planoAntonio = planoDoAluno(antonio, avaliacoesAntonio, {
+  const planoAntonio = jaNaConta(antonio.id) ?? planoDoAluno(antonio, avaliacoesAntonio, {
     semanas: 12,
     frequencia: 3,
     dataMs: dias(-35),
     disponibilidade: "Ter, qui e sáb pela manhã, 50 min",
   });
-  const vividoAntonio = executarSemanas(planoAntonio, 5, 6);
+  const vividoAntonio = executarSemanas(antonio, planoAntonio, vividas(planoAntonio));
 
   const checklistAntonio = montarChecklist(antonio.grupoEspecial!, antonio.farmacos);
   const liberacoesAntonio = checklistAntonio

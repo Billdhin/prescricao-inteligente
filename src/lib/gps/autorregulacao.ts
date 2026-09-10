@@ -57,8 +57,16 @@ export interface CtxSeguranca {
 
 /** Modificador de progressão por perfil clínico (teto de esforço menor e passo reduzido). */
 export interface ModProgressaoAjuste {
-  /** teto de RPE na mesma escala do registro do aluno, que é 0 a 10 */
-  pseTeto?: number;
+  /**
+   * Teto de RPE DA FORÇA, na escala do registro do aluno (0 a 10). Sai do piso de reserva que o
+   * perfil impõe à força (`rirMinimo` da condição e da idade): RIR 2 de reserva é RPE 8.
+   *
+   * NÃO é o `pseTeto` da regra clínica, que é o teto do AERÓBIO. Até 10/09/2026 a tela
+   * passava o teto do aeróbio aqui, e todo aluno com hipertensão que fazia a força com a folga
+   * prescrita (RIR 4, esforço 6 a 7) recebia "esforço percebido muito alto, descarregue" em
+   * todos os exercícios. Ver `modAjusteDaForca` em farmacos.ts.
+   */
+  rpeTeto?: number;
   /** fração do incremento normal (0..1): perfil que progride num passo menor */
   fatorIncremento?: number;
 }
@@ -71,6 +79,13 @@ export interface OpcoesAjuste {
   seguranca?: CtxSeguranca;
   /** modificador do perfil clínico do aluno (teto de esforço menor, passo reduzido) */
   modPerfil?: ModProgressaoAjuste;
+  /**
+   * Exercício sem carga externa em quilos (peso do corpo, elástico; ver `semCargaExterna`).
+   * A dupla progressão decide pelas REPETIÇÕES e pelo esforço, e nenhum quilo sai na
+   * sugestão: um quilo registrado ali (dado antigo, de quando o app pedia kg em tudo) é
+   * ignorado, em vez de virar "Flexão de braço: progredir para 31 kg".
+   */
+  semCargaExterna?: boolean;
 }
 
 const DEFAULTS = {
@@ -194,7 +209,7 @@ function aplicarGateSeguranca(base: AjusteCarga, seg: CtxSeguranca | undefined, 
       base.acao === "descarregar"
         ? base.proximaCarga
         : base.cargaBase != null
-          ? arredondarMeioKg(base.cargaBase * (1 - descargaPct))
+          ? Math.min(arredondarMeioKg(base.cargaBase * (1 - descargaPct)), Math.max(0.5, base.cargaBase - 0.5))
           : undefined;
     return { cargaBase: base.cargaBase, proximaCarga: prox, delta: -descargaPct, acao, motivo: aviso };
   }
@@ -210,12 +225,13 @@ export function ajustarCarga(
 ): AjusteCarga {
   // O modificador do perfil clínico aperta o gate ANTES da decisão: teto de esforço menor e
   // passo reduzido (idoso/obeso/hipertenso progridem mais devagar e com margem maior).
-  const rpeAlvoMax = Math.min(opts.rpeAlvoMax ?? DEFAULTS.rpeAlvoMax, opts.modPerfil?.pseTeto ?? Infinity);
+  const rpeAlvoMax = Math.min(opts.rpeAlvoMax ?? DEFAULTS.rpeAlvoMax, opts.modPerfil?.rpeTeto ?? Infinity);
   const incrementoPct = (opts.incrementoPct ?? DEFAULTS.incrementoPct) * (opts.modPerfil?.fatorIncremento ?? 1);
   const descargaPct = opts.descargaPct ?? DEFAULTS.descargaPct;
 
+  const semCarga = Boolean(opts.semCargaExterna);
   const comCarga = execucoesDoExercicio
-    .filter((e) => e.cargaFeita != null && e.repsFeitas != null)
+    .filter((e) => e.repsFeitas != null && (semCarga || e.cargaFeita != null))
     .sort((a, b) => a.concluidoEm - b.concluidoEm);
 
   if (comCarga.length === 0) {
@@ -236,8 +252,8 @@ export function ajustarCarga(
    * representa o trabalho é a mais frequente do microciclo; no empate, a maior.
    */
   const contagem = new Map<number, number>();
-  for (const e of doMicro) contagem.set(e.cargaFeita as number, (contagem.get(e.cargaFeita as number) ?? 0) + 1);
-  const cargaBase = [...contagem.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
+  if (!semCarga) for (const e of doMicro) contagem.set(e.cargaFeita as number, (contagem.get(e.cargaFeita as number) ?? 0) + 1);
+  const cargaBase = semCarga ? undefined : [...contagem.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
   const cumpriuTopo = doMicro.every((e) => (e.repsFeitas ?? 0) >= faixa.max);
   // RPE alvo é o teto: acima dele (não "acima+1") já é esforço alto demais.
   const rpeAlto = doMicro.some((e) => (e.rpe ?? 0) > rpeAlvoMax);
@@ -249,13 +265,40 @@ export function ajustarCarga(
   const abaixoDaBase = doMicro.some((e) => (e.repsFeitas ?? 0) < faixa.min);
 
   let base: AjusteCarga;
-  if (cumpriuTopo && !rpeAlto && rpeRegistrado) {
+  if (semCarga) {
+    // Sem quilos a mexer: a progressão é de repetição, de alvo da semana ou de variação.
+    const acaoReps: AcaoCarga =
+      cumpriuTopo && !rpeAlto ? (rpeRegistrado ? "subir" : "manter") : abaixoDaBase || rpeAlto ? "descarregar" : "manter";
+    const motivo =
+      acaoReps === "subir"
+        ? `Cumpriu ${faixa.max} repetições em todas as séries com esforço controlado. Sem carga externa em quilos, a progressão vem pelo alvo da semana ou por uma variação mais difícil.`
+        : acaoReps === "descarregar"
+          ? abaixoDaBase
+            ? `Repetições abaixo de ${faixa.min} em ao menos uma série. Mais folga antes de progredir.`
+            : "Esforço percebido muito alto. Mais folga para recuperar antes de progredir."
+          : cumpriuTopo
+            ? `Cumpriu ${faixa.max} repetições, mas sem o esforço percebido registrado. Confirme o PSE do aluno antes de progredir.`
+            : `Dentro da faixa de ${faixa.min} a ${faixa.max}. Mantém a dose para acumular repetições antes de progredir.`;
+    base = { delta: acaoReps === "subir" ? incrementoPct : acaoReps === "descarregar" ? -descargaPct : 0, acao: acaoReps, motivo };
+  } else if (cumpriuTopo && !rpeAlto && rpeRegistrado) {
+    /*
+     * O PASSO NUNCA SOME NO ARREDONDAMENTO. Em carga leve, o incremento percentual cabe
+     * dentro do meio quilo: 6 kg + 1,2% arredonda para 6 kg, e a tela dizia "Elevação lateral:
+     * progredir para 6 kg" com o aluno já nos 6 kg. Quando isso acontece, a subida é o menor
+     * passo prático (0,5 kg), e o motivo diz qual dos dois valeu.
+     */
+    const cb = cargaBase as number;
+    const pelaRegra = arredondarMeioKg(cb * (1 + incrementoPct));
+    const proxima = pelaRegra > cb ? pelaRegra : cb + 0.5;
     base = {
       cargaBase,
-      proximaCarga: arredondarMeioKg(cargaBase * (1 + incrementoPct)),
+      proximaCarga: proxima,
       delta: incrementoPct,
       acao: "subir",
-      motivo: `Cumpriu ${faixa.max} repetições em todas as séries com esforço controlado. A carga sobe pelo menor incremento (${fmtPct(incrementoPct)}).`,
+      motivo:
+        pelaRegra > cb
+          ? `Cumpriu ${faixa.max} repetições em todas as séries com esforço controlado. A carga sobe pelo menor incremento (${fmtPct(incrementoPct)}).`
+          : `Cumpriu ${faixa.max} repetições em todas as séries com esforço controlado. Nesta carga o incremento de ${fmtPct(incrementoPct)} some no arredondamento, então a subida é o menor passo prático, 0,5 kg.`,
     };
   } else if (cumpriuTopo && !rpeAlto && !rpeRegistrado) {
     base = {
@@ -266,9 +309,12 @@ export function ajustarCarga(
       motivo: `Cumpriu ${faixa.max} repetições, mas sem o esforço percebido registrado. Mantém a carga e confirma o PSE do aluno antes de subir.`,
     };
   } else if (abaixoDaBase || rpeAlto) {
+    // A mesma guarda do lado de baixo: descarga que arredonda de volta à carga atual não é descarga.
+    const cb = cargaBase as number;
+    const pelaRegra = arredondarMeioKg(cb * (1 - descargaPct));
     base = {
       cargaBase,
-      proximaCarga: arredondarMeioKg(cargaBase * (1 - descargaPct)),
+      proximaCarga: pelaRegra < cb ? pelaRegra : Math.max(0.5, cb - 0.5),
       delta: -descargaPct,
       acao: "descarregar",
       motivo: abaixoDaBase

@@ -31,6 +31,8 @@ import {
   type FarmacoSelecionado,
 } from "@/data/farmacos";
 import type { ParamMonitorId } from "@/data/monitoringParameters";
+import type { ModProgressaoAjuste } from "@/lib/gps/autorregulacao";
+import { doseDoPerfilComIdade } from "@/lib/gps/esforco";
 import {
   combineRules,
   fundirModProgressao,
@@ -109,6 +111,23 @@ export function regraDoPerfil(perfil: PerfilFarmacos): GroupGpsRule | undefined 
   if (!doFarmaco.length) return combineRules(slugs);
   const doGrupo = slugs.map(getGroupRule).filter((r): r is GroupGpsRule => Boolean(r));
   return fundirRegras([...doGrupo, ...doFarmaco]);
+}
+
+/**
+ * O MODIFICADOR QUE A AUTORREGULAÇÃO DA FORÇA CONSOME: o teto de esforço e o passo.
+ *
+ * O teto vem da dose de FORÇA do perfil (`rirMinimo` da condição fundida com a idade, a mesma
+ * chamada que o gerador do plano faz), e não do `pseTeto` da regra, que é o teto do aeróbio.
+ * Quem não tem piso de reserva declarado fica com o teto geral do ajuste. O passo é o
+ * `fatorIncremento` do modificador de progressão, que já era da força.
+ */
+export function modAjusteDaForca(perfil: PerfilFarmacos & { idade?: number }): ModProgressaoAjuste | undefined {
+  const slugs = (perfil.grupos ?? []).filter((s): s is string => Boolean(s));
+  const regra = slugs.length > 1 ? combineRules(slugs) : slugs.length ? getGroupRule(slugs[0]) : undefined;
+  const rirMinimo = doseDoPerfilComIdade(regra, perfil.idade)?.rirMinimo;
+  const fatorIncremento = modProgressaoDoPerfil(perfil)?.fatorIncremento;
+  if (rirMinimo == null && fatorIncremento == null) return undefined;
+  return { rpeTeto: rirMinimo != null ? 10 - rirMinimo : undefined, fatorIncremento };
 }
 
 /**

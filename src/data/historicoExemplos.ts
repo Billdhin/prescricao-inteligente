@@ -29,7 +29,8 @@
 import type { Aluno, Avaliacao, AvaliacaoPerimetro, AvaliacaoTeste, Liberacao } from "@/data/alunos";
 import { seedAlunos } from "@/data/alunos";
 import type { BlocoSessao, PlanoTreino } from "@/data/periodizacao";
-import { totalSeriesDe, type Execucao, type SessaoFeedback } from "@/data/execucao";
+import type { Execucao, SessaoFeedback } from "@/data/execucao";
+import { agendaDaSemana, cargaPlausivel, fatorDaSemana, registrosDoBloco } from "@/data/registroSimulado";
 import { criarFarmaco, type FarmacoClasseId, type FarmacoSelecionado } from "@/data/farmacos";
 import { getExercise } from "@/data/exercises";
 import { montarChecklist } from "@/data/semaforo";
@@ -449,8 +450,6 @@ function inicioDoPlano(a: Aluno, agora: number): number {
   return d.getTime();
 }
 
-/** Dias da semana (a partir do primeiro dia do plano) em que cada sessão cai. */
-const DIAS_DA_SESSAO: Record<number, number[]> = { 1: [0], 2: [0, 3], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 3, 4] };
 
 const OBS_SESSAO = [
   "Consegui manter a carga em todas as séries.",
@@ -460,24 +459,6 @@ const OBS_SESSAO = [
   "Subi a carga no último exercício.",
   "Treino tranquilo, sem desconforto.",
 ];
-
-const numeroDaFaixa = (txt?: string) => {
-  const m = /(\d+)/.exec(txt ?? "");
-  return m ? Number(m[1]) : undefined;
-};
-
-/** Carga-base por equipamento, estável por aluno e exercício. Peso corporal não tem kg. */
-function cargaBase(a: Aluno, slug: string, equipamento?: string): number | undefined {
-  if (!equipamento || equipamento === "Peso corporal") return undefined;
-  const f = a.sexo === "F";
-  const escala = (f ? 0.7 : 1) * (a.nivel === "Intermediário" ? 1.3 : a.nivel === "Avançado" ? 1.6 : 1) * ((a.idade ?? 40) > 60 ? 0.8 : 1);
-  const h = hash(`${a.id}|${slug}`);
-  const faixa: Record<string, [number, number]> = { Máquina: [25, 60], Barra: [20, 50], Halter: [6, 16], Polia: [10, 30] };
-  const [min, max] = faixa[equipamento] ?? [8, 24];
-  return (min + (h % (max - min + 1))) * escala;
-}
-
-const passoDaCarga = (equipamento?: string) => (equipamento === "Halter" ? 1 : equipamento === "Máquina" ? 5 : 2.5);
 
 interface SessaoVivida {
   quando: number;
@@ -536,70 +517,41 @@ function viverPlano(
        * COMPLEMENTO É O QUE CABE NO DIA DE OUTRA SESSÃO. Plano novo marca isso em `complemento`;
        * plano gerado antes do campo não marca, e a sessão isométrica da pressão (só blocos
        * isométricos de protocolo) virava um dia de treino próprio: Antônio e Helena saíram
-       * com "6 treinos, prevê 3". A regra de reconhecer a sessão isométrica é a mesma de
-       * `rotuloFrequencia` em periodizacao.ts.
+       * com "6 treinos, prevê 3". A agenda (registroSimulado.ts) reconhece os dois casos e põe
+       * o k-ésimo complemento no dia da k-ésima sessão principal.
        */
-      const ehComplemento = (s: (typeof micro.sessoes)[number]) =>
-        Boolean(s.complemento) || (s.blocos.length > 0 && s.blocos.every((b) => b.tipo === "isometrico" && !b.sustentado));
-      const principais = micro.sessoes.filter((s) => !ehComplemento(s));
-      const dias = DIAS_DA_SESSAO[principais.length] ?? principais.map((_, i) => i);
+      const agenda = agendaDaSemana(micro);
       micro.sessoes.forEach((sessao) => {
-        const complemento = ehComplemento(sessao);
-        // o complemento cabe no dia da primeira sessão principal da semana
-        const idx = complemento ? 0 : principais.indexOf(sessao);
-        const quando = dia0.getTime() + ((micro.semana - 1) * 7 + (dias[idx] ?? idx)) * DIA + hora + (complemento ? 70 * MIN : 0);
+        const lugar = agenda.get(sessao.id)!;
+        const complemento = lugar.complemento;
+        const quando = dia0.getTime() + ((micro.semana - 1) * 7 + lugar.dia) * DIA + hora + lugar.depoisMin * MIN;
         if (quando > agora - 2 * HORA) return;
         const faltou = hash(`${a.id}|${micro.semana}|${sessao.id}`) % 12 === 0 && quando < agora - 14 * DIA;
         if (faltou) return;
         sessoes.push({ quando, semana: micro.semana, sessaoId: sessao.id });
 
+        // Cada bloco registrado com os MESMOS campos do app (registroSimulado.ts): conclusão no
+        // aeróbio, esforço por série no isométrico, repetições no peso do corpo e no elástico,
+        // e quilos só onde existe carga externa.
         const execucoesDaSessao: Execucao[] = [];
         const rpes: number[] = [];
         sessao.blocos.forEach((b: BlocoSessao, bi) => {
-          const inicioBloco = quando + bi * 7 * MIN;
-          if (b.tipo === "aerobio") {
-            // O aeróbio se conclui, não se dosa: o app grava só que ele foi feito, sem série,
-            // carga nem esforço, e o registro daqui é igual ao do app.
-            rpes.push(descarga ? 5 : 6);
-            execucoesDaSessao.push({
-              id: `ex-${b.id}-s${micro.semana}`,
-              alunoId: a.id,
-              planoId: plano.id,
-              semana: micro.semana,
-              sessaoRef: sessao.id,
-              blocoRef: b.id,
-              exercicioSlug: b.exercicioSlug,
-              concluidoEm: inicioBloco + 20 * MIN,
-            });
-            return;
-          }
-          if (!b.exercicioSlug) return;
-          const ex = getExercise(b.exercicioSlug);
-          // a mesma contagem do app: dose em faixa se registra de uma vez, sem série inventada
-          const series = totalSeriesDe(b);
-          const reps = b.repsAlvo ?? numeroDaFaixa(b.reps) ?? 10;
-          const base = ancoraDeCarga(b.exercicioSlug) ?? cargaBase(a, b.exercicioSlug, ex?.equipamento);
-          const fator = descarga ? 0.85 : 1 + 0.02 * Math.max(0, cargasVividas - 1);
-          const passo = passoDaCarga(ex?.equipamento);
-          for (let s = 1; s <= series; s++) {
-            const tropeco = s === series && hash(`${b.id}|${micro.semana}`) % 4 === 0 ? 1 : 0;
-            const rpe = entre(10 - (b.rirAlvo ?? 3) + (s === series ? 1 : 0) - (descarga ? 1 : 0), 5, 10);
-            rpes.push(rpe);
-            execucoesDaSessao.push({
-              id: `ex-${b.id}-s${micro.semana}` + (series > 1 ? `-r${s}` : ""),
-              alunoId: a.id,
-              planoId: plano.id,
-              semana: micro.semana,
-              sessaoRef: sessao.id,
-              blocoRef: b.id,
-              exercicioSlug: b.exercicioSlug,
-              serie: series > 1 ? s : undefined,
-              cargaFeita: base != null ? Math.max(passo, Math.round((base * fator) / passo) * passo) : undefined,
-              repsFeitas: Math.max(1, reps - tropeco),
-              rpe,
-              concluidoEm: inicioBloco + s * 2 * MIN,
-            });
-          }
+          const ex = b.exercicioSlug ? getExercise(b.exercicioSlug) : undefined;
+          const base = b.exercicioSlug ? (ancoraDeCarga(b.exercicioSlug) ?? cargaPlausivel(a, b.exercicioSlug, ex?.equipamento)) : undefined;
+          const fator = fatorDaSemana(descarga, cargasVividas);
+          const r = registrosDoBloco({
+            bloco: b,
+            alunoId: a.id,
+            planoId: plano.id,
+            semana: micro.semana,
+            sessaoRef: sessao.id,
+            idBase: `ex-${b.id}-s${micro.semana}`,
+            inicio: quando + bi * 7 * MIN,
+            descarga,
+            carga: base != null ? base * fator : undefined,
+          });
+          execucoesDaSessao.push(...r.execucoes);
+          rpes.push(...r.rpes);
         });
         if (!rpes.length) return;
         const media = rpes.reduce((x, y) => x + y, 0) / rpes.length;

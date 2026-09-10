@@ -129,3 +129,34 @@ export const porExercicio = (execucoes: Execucao[]): Execucao[] => {
   }
   return [...ultimo.values()];
 };
+
+/* ------------------------- O que se registra em cada bloco ------------------------- */
+
+/**
+ * Exercício sem carga externa medida em quilos: o peso é o do próprio corpo, ou a
+ * resistência é de um elástico (medida pela cor e pela tensão, não em kg).
+ */
+export const semCargaExterna = (equipamento?: string): boolean =>
+  equipamento === "Peso corporal" || equipamento === "Elástico";
+
+/**
+ * O QUE O ALUNO REGISTRA NESTE BLOCO, numa resposta só para o app, o motor e os geradores.
+ *
+ * Até 10/09/2026 o registro pedia "kg" e "repetições" em TODO bloco que não fosse aeróbio,
+ * inclusive prancha, agachamento isométrico na parede e flexão de braço. O aluno digitava
+ * quilos numa prancha, e o motor de ajuste devolvia "Prancha alta: reduzir para 25 kg" e
+ * "Flexão de braço: progredir para 31 kg", que é número sem sentido com cara de conduta.
+ *
+ * - "conclusao": aeróbio. Ele se conclui, não se dosa por série.
+ * - "tempo": isométrico e sustentado (prancha, parede, equilíbrio). A dose é o TEMPO e o
+ *   plano já o prescreve; registra-se cada série feita e o esforço, sem kg nem repetição.
+ * - "reps": força sem carga externa em kg (peso do corpo, elástico). Repetições e esforço.
+ * - "carga-e-reps": o resto, quilos e repetições por série.
+ */
+export type ModoDeRegistro = "conclusao" | "tempo" | "reps" | "carga-e-reps";
+
+export function modoDeRegistro(bloco: Pick<BlocoSessao, "tipo">, equipamento?: string): ModoDeRegistro {
+  if (bloco.tipo === "aerobio") return "conclusao";
+  if (bloco.tipo === "isometrico") return "tempo";
+  return semCargaExterna(equipamento) ? "reps" : "carga-e-reps";
+}

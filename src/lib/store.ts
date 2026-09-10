@@ -411,7 +411,7 @@ export const useAlunos = create<AlunosState>()(
          * avaliações em série). Gerar na hora, e não de um literal, é o que garante que a
          * demo mostra o comportamento ATUAL do motor (ver src/data/semearDemo.ts).
          */
-        const demo = semearDemoVSL();
+        const demo = semearDemoVSL({ planosExistentes: get().planos });
         /*
          * MESCLA, nunca substitui. O botão nasceu na carteira vazia, onde trocar a lista
          * inteira era inofensivo; agora ele também existe para carteiras com alunos reais
@@ -423,14 +423,23 @@ export const useAlunos = create<AlunosState>()(
           const ids = new Set(atuais.map((x) => x.id));
           return [...novos.filter((n) => !ids.has(n.id)), ...atuais];
         };
+        /*
+         * O TREINO DA DEMO É DO GERADOR, e se renova. Execução e PSE com o prefixo da demo
+         * (`exec-<aluno>-`, `fb-<aluno>-`) só nascem em semearDemo.ts: o app grava `ex-`. Até
+         * 10/09/2026 a demo gravava quilos em flexão de braço e em prancha e deixava o aeróbio
+         * sem registro; quem carregou antes ficaria com esse histórico para sempre, porque a
+         * mescla preserva o que já existe. Para esses registros, e só para eles, o gerador novo
+         * substitui o antigo inteiro.
+         */
+        const daDemo = (id: string) => demo.alunos.some((a) => id.startsWith(`exec-${a.id}-`) || id.startsWith(`fb-${a.id}-`));
         set((s) => ({
           alunos: mesclar([...demo.alunos, ...seedAlunos], s.alunos),
           avaliacoes: mesclar([...demo.avaliacoes, ...seedAvaliacoes], s.avaliacoes),
           prescricoes: mesclar(seedPrescricoes, s.prescricoes),
           planos: mesclar(demo.planos, s.planos),
           liberacoes: mesclar(demo.liberacoes, s.liberacoes),
-          execucoes: mesclar(demo.execucoes, s.execucoes),
-          sessaoFeedbacks: mesclar(demo.feedbacks, s.sessaoFeedbacks),
+          execucoes: [...demo.execucoes, ...s.execucoes.filter((e) => !daDemo(e.id))],
+          sessaoFeedbacks: [...demo.feedbacks, ...s.sessaoFeedbacks.filter((f) => !daDemo(f.id))],
         }));
         // sobe os exemplos p/ a nuvem quando há sessão (no-op no modo local)
         [...demo.alunos, ...seedAlunos].forEach(cloudSaveAluno);
@@ -689,7 +698,7 @@ export const useAlunos = create<AlunosState>()(
     //      valor no backfill seria afirmar sobre o aluno algo que ninguém perguntou.
     {
       name: "pi-alunos",
-      version: 15,
+      version: 16,
       migrate: (persisted) => {
         const p = persisted as Partial<AlunosState> | null | undefined;
         // sem estado válido → primeira carga: usa o seed.
@@ -761,6 +770,31 @@ export const useAlunos = create<AlunosState>()(
           return out;
         };
         const seedById = new Map(seedAlunos.map((a) => [a.id, a]));
+        const planosMigrados = (Array.isArray(p.planos) ? p.planos : []).map((pl) => ({
+          ...pl,
+          objetivo: remapObjetivo(pl.objetivo) as PlanoTreino["objetivo"],
+          grupoEspecial: remapGrupo(pl.grupoEspecial, pl.alunoId) as string | undefined,
+        }));
+        /*
+         * v16: O TREINO DA DEMO DO VSL É REFEITO. Até 10/09/2026 o gerador gravava quilos em
+         * flexão de braço e em prancha, deixava o aeróbio sem registro e empurrava a sessão
+         * isométrica para a semana seguinte, e a aba Treino devolvia isso como conduta
+         * ("Flexão de braço: progredir para 31 kg"). Os registros com o prefixo da demo
+         * (`exec-al-vsl-`, `fb-al-vsl-`) só nascem no gerador, então trocá-los pelos do
+         * gerador novo, sobre o plano que a conta já tem, não toca em dado de ninguém.
+         */
+        const execucoesV15 = Array.isArray(p.execucoes) ? p.execucoes : [];
+        const feedbacksV15 = Array.isArray(p.sessaoFeedbacks) ? p.sessaoFeedbacks : [];
+        const daDemoVsl = (id: string) => id.startsWith("exec-al-vsl-") || id.startsWith("fb-al-vsl-");
+        const temDemo = execucoesV15.some((e) => daDemoVsl(e.id)) || feedbacksV15.some((f) => daDemoVsl(f.id));
+        const demoNova = temDemo ? semearDemoVSL({ planosExistentes: planosMigrados }) : undefined;
+        const alunosDaConta = new Set(p.alunos.map((a) => a.id));
+        const execucoesV16 = demoNova
+          ? [...demoNova.execucoes.filter((e) => alunosDaConta.has(e.alunoId)), ...execucoesV15.filter((e) => !daDemoVsl(e.id))]
+          : execucoesV15;
+        const feedbacksV16 = demoNova
+          ? [...demoNova.feedbacks.filter((f) => alunosDaConta.has(f.alunoId)), ...feedbacksV15.filter((f) => !daDemoVsl(f.id))]
+          : feedbacksV15;
         return {
           ...p,
           // { ...seed, ...usuário }: edições do usuário vencem; campos novos do seed
@@ -815,15 +849,12 @@ export const useAlunos = create<AlunosState>()(
           // v13: remapeia o objetivo renomeado nos planos já salvos.
           // v14: remapeia o grupoEspecial do plano por nível (o rotuloAluno impresso é
           // o mesmo por condição, então o texto já salvo do plano segue coerente).
-          planos: (Array.isArray(p.planos) ? p.planos : []).map((pl) => ({
-            ...pl,
-            objetivo: remapObjetivo(pl.objetivo) as PlanoTreino["objetivo"],
-            grupoEspecial: remapGrupo(pl.grupoEspecial, pl.alunoId) as string | undefined,
-          })),
+          planos: planosMigrados,
           // v9: execuções do aluno (base da autorregulação). Aditivo.
-          execucoes: Array.isArray(p.execucoes) ? p.execucoes : [],
+          // v16: com o treino da demo do VSL refeito pelo gerador novo.
+          execucoes: execucoesV16,
           // v12: feedback da sessão (PSE + duração + recado). Aditivo.
-          sessaoFeedbacks: Array.isArray(p.sessaoFeedbacks) ? p.sessaoFeedbacks : [],
+          sessaoFeedbacks: feedbacksV16,
           // v10: rastreios posturais (locais). Aditivo.
           posturais: Array.isArray(p.posturais) ? p.posturais : [],
         } as unknown as AlunosState;

@@ -28,7 +28,8 @@ import {
   type PlanoTreino,
   type VariavelTravavel,
 } from "@/data/periodizacao";
-import type { Execucao, SessaoFeedback } from "@/data/execucao";
+import { semCargaExterna, type Execucao, type SessaoFeedback } from "@/data/execucao";
+import { getExercise } from "@/data/exercises";
 import { intervaloDe } from "@/lib/gps/faixasParse";
 import { lerFaixaRIR } from "@/lib/gps/alvo";
 import {
@@ -67,6 +68,11 @@ export interface RenovacaoSugerida {
   /** próxima semana no plano; ausente quando a base é a última semana */
   semanaAlvo?: number;
   sugestoes: SugestaoRenovacao[];
+  /**
+   * Semanas de descarga ou teste entre a base e o alvo, que a renovação PULA: a progressão
+   * vale para a próxima semana de carga, e a descarga fica como o plano a desenhou.
+   */
+  puladas: number[];
   /** true quando ao menos uma sugestão muda o alvo da próxima semana (habilita "Aplicar") */
   temAplicavel: boolean;
 }
@@ -135,15 +141,38 @@ function mudancaAlvoDe(
  * Calcula a sugestão de renovação da próxima semana a partir da execução da semana-base. NÃO grava
  * nada: a aplicação é por `aplicarRenovacao`, sob o clique do profissional.
  */
+/*
+ * A DESCARGA NÃO É SEMANA DE PROGRESSÃO, NEM DE BASE.
+ *
+ * A renovação olhava sempre para "a semana seguinte". Quando a seguinte era de descarga, o
+ * "Aplicar" de um exercício que progrediu tirava a folga que o plano tinha dado de propósito
+ * (medido no Antônio: semana 6 de descarga, "Aplicar muda a semana 6 para RIR 4"). E quando a
+ * última semana registrada era a própria descarga, a dupla progressão lia cargas de 85% com
+ * esforço baixo e sugeria subir a partir delas. Agora a base é a última semana DE CARGA com
+ * registro, e o alvo é a próxima semana de carga; as de descarga e teste ficam como estão.
+ */
+const ehCarga = (plano: PlanoTreino, semana: number) => microDaSemana(plano, semana)?.tipo === "carga";
+
+/** A última semana de carga, até a pedida, que tem registro. Sem nenhuma, a própria pedida. */
+export function semanaBaseDaRenovacao(plano: PlanoTreino, semanaPedida: number, execucoes: Execucao[]): number {
+  for (let w = semanaPedida; w >= 1; w--) {
+    if (ehCarga(plano, w) && execucoes.some((e) => e.semana === w && e.exercicioSlug)) return w;
+  }
+  return semanaPedida;
+}
+
 export function renovarMicrociclo(
   plano: PlanoTreino,
-  semanaBase: number,
+  semanaPedida: number,
   execucoes: Execucao[],
   feedbacks: SessaoFeedback[],
   seguranca?: CtxSeguranca,
   opts: OpcoesRenovacao = {},
 ): RenovacaoSugerida {
-  const semanaAlvoNum = semanaBase + 1;
+  const semanaBase = semanaBaseDaRenovacao(plano, semanaPedida, execucoes);
+  const puladas: number[] = [];
+  let semanaAlvoNum = semanaBase + 1;
+  while (microDaSemana(plano, semanaAlvoNum) && !ehCarga(plano, semanaAlvoNum)) puladas.push(semanaAlvoNum++);
   const microAlvo = microDaSemana(plano, semanaAlvoNum);
   const travas = mesoDaSemana(plano, semanaAlvoNum)?.variaveisTravadas ?? [];
   const nota = getFaixa(plano.objetivo).intensidade.nota;
@@ -164,7 +193,11 @@ export function renovarMicrociclo(
     return undefined;
   };
 
-  const sugestoes: SugestaoRenovacao[] = slugs.map((slug) => {
+  // Isométrico e sustentado (prancha, parede) progridem pelo TEMPO e pela tarefa, decisão do
+  // profissional; a dupla progressão de carga e repetição não se aplica a eles.
+  const sugestoes: SugestaoRenovacao[] = slugs
+    .filter((slug) => blocoDoSlug(slug)?.tipo !== "isometrico")
+    .map((slug) => {
     const execs = daBase.filter((e) => e.exercicioSlug === slug);
     const bloco = blocoDoSlug(slug);
     const faixa = faixaDeReps(bloco?.reps) ?? { min: 8, max: 12 };
@@ -172,6 +205,7 @@ export function renovarMicrociclo(
       seguranca,
       incrementoPct: incrementoDoExercicio(slug).pct,
       modPerfil: opts.modPerfil,
+      semCargaExterna: semCargaExterna(getExercise(slug)?.equipamento),
     });
     // Sessão exaustiva rebaixa "subir" para "manter" (fadiga da sessão), sem tocar nos casos de
     // segurança/descarga (mais conservadores) que o gate já decidiu.
@@ -189,7 +223,7 @@ export function renovarMicrociclo(
   });
 
   const temAplicavel = microAlvo != null && sugestoes.some((s) => s.mudancaAlvo && Object.keys(s.mudancaAlvo).length > 0);
-  return { planoId: plano.id, semanaBase, semanaAlvo: microAlvo ? semanaAlvoNum : undefined, sugestoes, temAplicavel };
+  return { planoId: plano.id, semanaBase, semanaAlvo: microAlvo ? semanaAlvoNum : undefined, puladas: microAlvo ? puladas : [], sugestoes, temAplicavel };
 }
 
 /**

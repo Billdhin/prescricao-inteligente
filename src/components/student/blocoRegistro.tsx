@@ -8,7 +8,7 @@ import { getModalidade } from "@/data/modalities";
 import type { BlocoSessao, Sessao } from "@/data/periodizacao";
 import { tokensAlvoForca, temAlvoForca, fmtIntervalo } from "@/lib/gps/alvoResumo";
 import { tirosDaSemana } from "@/lib/gps/formatoAerobio";
-import type { Execucao } from "@/data/execucao";
+import { modoDeRegistro, type Execucao } from "@/data/execucao";
 import { soNumero } from "@/lib/numeroDigitado";
 
 /**
@@ -281,9 +281,19 @@ import { totalSeriesDe, seriesFeitas, blocoCompleto } from "@/data/execucao";
  * é a informação que o modelo por série existe para guardar.
  */
 export const resumoDasSeries = (feitas: Execucao[]): string => {
+  // Sem quilos, a linha é das repetições ("12 reps"), e não "sem carga x 12": em peso do
+  // corpo e elástico não existe carga a declarar ausente.
   const linha = (e: Execucao) =>
-    `${e.cargaFeita != null ? `${e.cargaFeita} kg` : "sem carga"}${e.repsFeitas != null ? ` x ${e.repsFeitas}` : ""}`;
+    e.cargaFeita != null
+      ? `${e.cargaFeita} kg${e.repsFeitas != null ? ` x ${e.repsFeitas}` : ""}`
+      : e.repsFeitas != null
+        ? `${e.repsFeitas} reps`
+        : "";
   if (!feitas.length) return "sem registro";
+  const rpes = feitas.map((e) => e.rpe).filter((r): r is number => r != null);
+  const sufixo = rpes.length ? ` · RPE ${rpes.every((r) => r === rpes[0]) ? rpes[0] : rpes.join("/")}` : "";
+  // Série por tempo (prancha, isométrico) não tem quilo nem repetição: conta as séries.
+  if (feitas.every((e) => !linha(e))) return `${feitas.length} ${feitas.length === 1 ? "série" : "séries"}${sufixo}`;
   const partes: string[] = [];
   let atual = linha(feitas[0]);
   let n = 1;
@@ -297,9 +307,7 @@ export const resumoDasSeries = (feitas: Execucao[]): string => {
     }
   }
   partes.push(n > 1 ? `${n}x ${atual}` : atual);
-  const rpes = feitas.map((e) => e.rpe).filter((r): r is number => r != null);
-  const sufixoRpe = rpes.length ? ` · RPE ${rpes.every((r) => r === rpes[0]) ? rpes[0] : rpes.join("/")}` : "";
-  return partes.join(" · ") + sufixoRpe;
+  return partes.join(" · ") + sufixo;
 };
 
 // A sessão está concluída na semana dada? Todos os blocos com as séries prescritas
@@ -345,6 +353,10 @@ export function RegistroBloco({
   sempreMostrar?: boolean;
 }) {
   const aerobio = bloco.tipo === "aerobio";
+  // Quilos só onde existe carga externa; repetição só onde a dose não é tempo.
+  const modo = modoDeRegistro(bloco, bloco.exercicioSlug ? getExercise(bloco.exercicioSlug)?.equipamento : undefined);
+  const pedeCarga = modo === "carga-e-reps";
+  const pedeReps = modo === "carga-e-reps" || modo === "reps";
   // Pré-preenche só o que o plano prescreve de forma objetiva E numérica: as Reps.
   // A dose textual ("6 a 12") num campo numérico truncaria; então só pré-preenche
   // número puro. Carga e RPE entram vazios (a intensidade é relativa).
@@ -420,8 +432,8 @@ export function RegistroBloco({
       blocoRef: bloco.id,
       exercicioSlug: bloco.exercicioSlug,
       serie: totalSeries > 1 ? serieAtual : undefined,
-      cargaFeita: carga ? numOuUndef(carga, parseFloat) : undefined,
-      repsFeitas: reps ? numOuUndef(reps, (s) => parseInt(s, 10)) : undefined,
+      cargaFeita: pedeCarga && carga ? numOuUndef(carga, parseFloat) : undefined,
+      repsFeitas: pedeReps && reps ? numOuUndef(reps, (s) => parseInt(s, 10)) : undefined,
       rpe: rpe ? numOuUndef(rpe, (s) => parseInt(s, 10)) : undefined,
       concluidoEm: Date.now(),
     });
@@ -512,10 +524,14 @@ export function RegistroBloco({
             </div>
           )}
 
-          <div className="flex flex-wrap gap-2">
-            <Stepper label="kg" value={carga} onChange={setCarga} passo={2.5} />
-            <Stepper label="repetições" value={reps} onChange={setReps} passo={1} inteiro />
-          </div>
+          {pedeReps ? (
+            <div className="flex flex-wrap gap-2">
+              {pedeCarga && <Stepper label="kg" value={carga} onChange={setCarga} passo={2.5} />}
+              <Stepper label="repetições" value={reps} onChange={setReps} passo={1} inteiro />
+            </div>
+          ) : (
+            <p className="text-xs text-ink-2">Segure o tempo prescrito e registre a série quando terminar.</p>
+          )}
 
           <RpeSelect value={rpe} onChange={setRpe} />
 
