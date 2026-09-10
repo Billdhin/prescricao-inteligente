@@ -39,7 +39,11 @@ function CompletarHistoricoDosExemplos() {
     setRodando(true);
     try {
       const r = await completarHistoricoDosExemplosNaConta();
-      const base = `Histórico dos exemplos completo: ${r.avaliacoes} avaliações, ${r.sessoes} sessões registradas e ${r.semaforos} semáforos.`;
+      const n = (q: number, um: string, varios: string) => `${q} ${q === 1 ? um : varios}`;
+      const fotos = r.fotos ? `${n(r.fotos, "foto", "fotos")}, ` : "";
+      const base =
+        `Histórico dos exemplos completo: ${fotos}${n(r.avaliacoes, "avaliação", "avaliações")}, ` +
+        `${n(r.sessoes, "sessão registrada", "sessões registradas")} e ${n(r.semaforos, "semáforo", "semáforos")}.`;
       if (r.nuvem === "treinos-locais") {
         toastFalha(`${base} Os treinos registrados ficaram só neste aparelho: a conta ainda não aceita gravá-los.`);
       } else if (r.falhas > 0) {

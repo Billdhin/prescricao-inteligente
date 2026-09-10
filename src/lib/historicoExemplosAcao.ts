@@ -1,10 +1,14 @@
 import { useAlunos, REAVALIACAO_DIAS } from "@/lib/store";
-import { completarHistoricoDosExemplos } from "@/data/historicoExemplos";
+import { completarHistoricoDosExemplos, ehAlunoDeExemplo } from "@/data/historicoExemplos";
+import { arquivoParaDataUrl } from "@/lib/imagem";
+import { withBase } from "@/lib/utils";
 import { isCloudOn } from "@/lib/backend/cloudSync";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import * as repo from "@/lib/backend/supabaseRepo";
 
 export interface ResumoHistorico {
+  /** fotos de perfil postas agora (só em exemplo que ainda não tinha foto) */
+  fotos: number;
   alunos: number;
   avaliacoes: number;
   planos: number;
@@ -14,6 +18,34 @@ export interface ResumoHistorico {
   /** "local": sem conta; "ok": tudo na nuvem; "treinos-locais": o resto subiu, os treinos não */
   nuvem: "local" | "ok" | "treinos-locais";
   falhas: number;
+}
+
+/**
+ * A FOTO DE PERFIL DE CADA EXEMPLO. São retratos gerados (Lovable, 10/09/2026) de pessoas que
+ * não existem, servidos de `public/exemplos/fotos/<id>.jpg`, e passam pelo mesmo caminho da
+ * foto posta à mão na ficha: reduzidos ao quadrado de 160 px pela função do app e gravados
+ * por `setFotoAluno`, que espelha em `fotos_aluno`.
+ *
+ * Só entra em exemplo SEM foto: se alguém trocou a foto de um exemplo, a troca manda.
+ */
+async function porFotosDosExemplos(): Promise<number> {
+  const { alunos, setFotoAluno } = useAlunos.getState();
+  let postas = 0;
+  for (const a of alunos) {
+    if (!ehAlunoDeExemplo(a.id) || a.fotoDataUrl) continue;
+    try {
+      const resposta = await fetch(withBase(`exemplos/fotos/${a.id}.jpg`));
+      if (!resposta.ok) continue;
+      const blob = await resposta.blob();
+      const arquivo = new File([blob], `${a.id}.jpg`, { type: blob.type || "image/jpeg" });
+      const foto = await arquivoParaDataUrl(arquivo, { maxW: 160, maxH: 160, modo: "cover-quadrado", qualidade: 0.82 });
+      setFotoAluno(a.id, foto);
+      postas++;
+    } catch {
+      // Sem a foto o exemplo segue com as iniciais, que é o que ele sempre teve.
+    }
+  }
+  return postas;
 }
 
 /** Roda `fn` sobre a lista com no máximo `n` gravações ao mesmo tempo. */
@@ -55,7 +87,10 @@ export async function completarHistoricoDosExemplosNaConta(): Promise<ResumoHist
       .slice(0, 1500),
   }));
 
+  const fotos = await porFotosDosExemplos();
+
   const resumo: ResumoHistorico = {
+    fotos,
     alunos: h.alunos.length,
     avaliacoes: h.avaliacoes.length,
     planos: h.planos.length,
