@@ -502,27 +502,45 @@ function viverPlano(
   const dia0 = new Date(plano.data);
   dia0.setHours(0, 0, 0, 0);
   const hora = (hash(a.id) % 2 ? 7 : 18) * HORA + (hash(a.id) % 3) * 30 * MIN;
-  const jaRegistrada = (semana: number, sessaoId: string) =>
-    estado.execucoes.some((e) => e.planoId === plano.id && e.semana === semana && e.sessaoRef === sessaoId) ||
-    estado.sessaoFeedbacks.some((f) => f.planoId === plano.id && f.semana === semana && f.sessaoRef === sessaoId);
+  const execPorId = new Map(estado.execucoes.map((e) => [e.id, e] as const));
+  const fbPorId = new Map(estado.sessaoFeedbacks.map((f) => [f.id, f] as const));
+  // Comparação sem depender da ordem das chaves nem de campo `undefined`: o registro que volta
+  // da nuvem é remontado campo a campo por outro código.
+  const canon = (o: object) =>
+    JSON.stringify(
+      Object.entries(o)
+        .filter(([, v]) => v !== undefined)
+        .sort(([x], [y]) => x.localeCompare(y)),
+    );
+  const mudou = (novo: object, velho?: object) => !velho || canon(novo) !== canon(velho);
 
   let cargasVividas = 0;
   for (const meso of plano.macrociclo.mesociclos) {
     for (const micro of meso.microciclos) {
       const descarga = micro.tipo !== "carga";
       if (!descarga) cargasVividas++;
-      const principais = micro.sessoes.filter((s) => !s.complemento);
+      /*
+       * COMPLEMENTO É O QUE CABE NO DIA DE OUTRA SESSÃO. Plano novo marca isso em `complemento`;
+       * plano gerado antes do campo não marca, e a sessão isométrica da pressão (só blocos
+       * isométricos de protocolo) virava um dia de treino próprio: Antônio e Helena saíram
+       * com "6 treinos, prevê 3". A regra de reconhecer a sessão isométrica é a mesma de
+       * `rotuloFrequencia` em periodizacao.ts.
+       */
+      const ehComplemento = (s: (typeof micro.sessoes)[number]) =>
+        Boolean(s.complemento) || (s.blocos.length > 0 && s.blocos.every((b) => b.tipo === "isometrico" && !b.sustentado));
+      const principais = micro.sessoes.filter((s) => !ehComplemento(s));
       const dias = DIAS_DA_SESSAO[principais.length] ?? principais.map((_, i) => i);
       micro.sessoes.forEach((sessao) => {
-        // o complemento cabe no dia da sessão principal de mesmo índice
-        const idx = sessao.complemento ? 0 : principais.indexOf(sessao);
-        const quando = dia0.getTime() + ((micro.semana - 1) * 7 + (dias[idx] ?? idx)) * DIA + hora + (sessao.complemento ? 70 * MIN : 0);
+        const complemento = ehComplemento(sessao);
+        // o complemento cabe no dia da primeira sessão principal da semana
+        const idx = complemento ? 0 : principais.indexOf(sessao);
+        const quando = dia0.getTime() + ((micro.semana - 1) * 7 + (dias[idx] ?? idx)) * DIA + hora + (complemento ? 70 * MIN : 0);
         if (quando > agora - 2 * HORA) return;
         const faltou = hash(`${a.id}|${micro.semana}|${sessao.id}`) % 12 === 0 && quando < agora - 14 * DIA;
         if (faltou) return;
         sessoes.push({ quando, semana: micro.semana, sessaoId: sessao.id });
-        if (jaRegistrada(micro.semana, sessao.id)) return;
 
+        const execucoesDaSessao: Execucao[] = [];
         const rpes: number[] = [];
         sessao.blocos.forEach((b: BlocoSessao, bi) => {
           const inicioBloco = quando + bi * 7 * MIN;
@@ -530,7 +548,7 @@ function viverPlano(
             // O aeróbio se conclui, não se dosa: o app grava só que ele foi feito, sem série,
             // carga nem esforço, e o registro daqui é igual ao do app.
             rpes.push(descarga ? 5 : 6);
-            execucoes.push({
+            execucoesDaSessao.push({
               id: `ex-${b.id}-s${micro.semana}`,
               alunoId: a.id,
               planoId: plano.id,
@@ -554,7 +572,7 @@ function viverPlano(
             const tropeco = s === series && hash(`${b.id}|${micro.semana}`) % 4 === 0 ? 1 : 0;
             const rpe = entre(10 - (b.rirAlvo ?? 3) + (s === series ? 1 : 0) - (descarga ? 1 : 0), 5, 10);
             rpes.push(rpe);
-            execucoes.push({
+            execucoesDaSessao.push({
               id: `ex-${b.id}-s${micro.semana}` + (series > 1 ? `-r${s}` : ""),
               alunoId: a.id,
               planoId: plano.id,
@@ -573,17 +591,32 @@ function viverPlano(
         if (!rpes.length) return;
         const media = rpes.reduce((x, y) => x + y, 0) / rpes.length;
         const temRecado = hash(`${sessao.id}|${micro.semana}|obs`) % 6 === 0;
-        feedbacks.push({
+        const feedback: SessaoFeedback = {
           id: `fb-${sessao.id}-s${micro.semana}`,
           alunoId: a.id,
           planoId: plano.id,
           semana: micro.semana,
           sessaoRef: sessao.id,
           pse: entre(Math.round(media - 1 + ruido(`${sessao.id}${micro.semana}`)), 3, 9),
-          duracaoMin: sessao.complemento ? 12 + (hash(sessao.id) % 6) : 46 + (hash(`${sessao.id}${micro.semana}`) % 18),
+          duracaoMin: complemento ? 12 + (hash(sessao.id) % 6) : 46 + (hash(`${sessao.id}${micro.semana}`) % 18),
           observacao: temRecado ? OBS_SESSAO[hash(`${a.id}${micro.semana}${sessao.id}`) % OBS_SESSAO.length] : undefined,
-          concluidaEm: quando + (sessao.complemento ? 15 : 60) * MIN,
-        });
+          concluidaEm: quando + (complemento ? 15 : 60) * MIN,
+        };
+
+        /*
+         * O QUE JÁ EXISTE NESTA SESSÃO. Registro com id que esta função NÃO geraria é de outra
+         * fonte (a demo do VSL, ou o próprio app), e a sessão fica como está. Registro com o id
+         * que esta função gera é dela mesma numa rodada anterior: ele é reescrito quando a regra
+         * mudou (foi assim que o dia errado das sessões isométricas se corrigiu) e ignorado
+         * quando já está igual, para a segunda rodada seguir vazia.
+         */
+        const nossos = new Set([...execucoesDaSessao.map((e) => e.id), feedback.id]);
+        const deOutraFonte =
+          estado.execucoes.some((e) => e.planoId === plano.id && e.semana === micro.semana && e.sessaoRef === sessao.id && !nossos.has(e.id)) ||
+          estado.sessaoFeedbacks.some((f) => f.planoId === plano.id && f.semana === micro.semana && f.sessaoRef === sessao.id && !nossos.has(f.id));
+        if (deOutraFonte) return;
+        execucoes.push(...execucoesDaSessao.filter((e) => mudou(e, execPorId.get(e.id))));
+        if (mudou(feedback, fbPorId.get(feedback.id))) feedbacks.push(feedback);
       });
     }
   }

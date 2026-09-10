@@ -9,7 +9,9 @@
  *     pode estar vencida e o plano não pode estar "parado de registrar";
  *  C. duplicar ao rodar de novo: a segunda rodada, logo depois da primeira, não pode gerar
  *     nenhuma avaliação, sessão ou semáforo novo;
- *  D. inventar registro no futuro, ou travessão em texto que aparece na tela.
+ *  D. inventar registro no futuro, ou travessão em texto que aparece na tela;
+ *  E. treinar em mais dias por semana do que o plano prevê (a sessão isométrica da pressão é
+ *     complemento do dia, também nos planos antigos que não a marcam assim).
  */
 import { seedAlunos, seedAvaliacoes, type Aluno } from "../src/data/alunos";
 import { semearDemoVSL } from "../src/data/semearDemo";
@@ -127,6 +129,36 @@ for (const diasDepois of [0, 9, 23, 45]) {
     resumo =
       `${h.alunos.length} exemplos, ${h.avaliacoes.length} avaliações, ${h.planos.length} planos novos, ` +
       `${h.feedbacks.length} sessões, ${h.execucoes.length} séries, ${h.liberacoes.length} semáforos`;
+}
+
+/* ---- E. dias de treino nunca passam da frequência do plano ----
+   Plano gerado antes do campo `complemento` não marca a sessão isométrica da pressão como
+   complemento do dia. Na primeira versão ela virou dia próprio, e Antônio e Helena apareceram
+   na produção com "6 treinos, prevê 3". O caso é montado tirando a marca de um plano novo. */
+{
+  const semMarca = demo.planos.map((p) => ({
+    ...p,
+    macrociclo: {
+      ...p.macrociclo,
+      mesociclos: p.macrociclo.mesociclos.map((m) => ({
+        ...m,
+        microciclos: m.microciclos.map((mc) => ({ ...mc, sessoes: mc.sessoes.map(({ complemento: _c, ...s }) => s) })),
+      })),
+    },
+  }));
+  const antigo: EstadoDaCarteira = { ...estado, planos: semMarca, execucoes: [], sessaoFeedbacks: [] };
+  const h = completarHistoricoDosExemplos(antigo, { reavaliacaoDias: 60, agora: hoje });
+  for (const p of semMarca) {
+    const porSemana = new Map<number, Set<string>>();
+    for (const e of h.execucoes.filter((x) => x.planoId === p.id)) {
+      const dias = porSemana.get(e.semana) ?? new Set<string>();
+      dias.add(new Date(e.concluidoEm).toDateString());
+      porSemana.set(e.semana, dias);
+    }
+    const pior = Math.max(0, ...[...porSemana.values()].map((d) => d.size));
+    if (pior > p.frequenciaSemanal)
+      problemas.push(`E: plano sem a marca de complemento saiu com ${pior} dias de treino numa semana; o plano prevê ${p.frequenciaSemanal}.`);
+  }
 }
 
 if (problemas.length) {
