@@ -2,6 +2,7 @@ import type { Aluno, Sexo } from "@/data/alunos";
 import type { GpsObjetivo } from "@/lib/gps/engine";
 import { EQUIPAMENTOS } from "@/lib/gps/engine";
 import { CATALOGO_FARMACOS, type FarmacoSelecionado } from "@/data/farmacos";
+import { completudeAluno } from "@/lib/gps/perfilAluno";
 
 /**
  * O QUE O ALUNO INFORMA SOBRE SI, ANTES DE O PROFISSIONAL CONFIRMAR.
@@ -29,7 +30,17 @@ export type CampoDeclaracao =
   | "equipamentos"
   | "remedios"
   | "saude"
-  | "liberacao";
+  | "liberacao"
+  /**
+   * O PEDIDO DE TREINO. Não é dado sobre o aluno, é um recado: "terminei de contar sobre
+   * mim, pode montar o meu treino". Mora na mesma tabela (0010) porque ela já tem tudo o que
+   * ele precisa: o aluno escreve a própria linha pela RLS, o profissional lê e fecha, e o
+   * status diz se foi atendido. O `valor` é o recado opcional do aluno.
+   */
+  | "pedido_treino";
+
+/** Os campos que são dado do aluno (tudo, menos o pedido de treino). */
+export type CampoDeDado = Exclude<CampoDeclaracao, "pedido_treino">;
 
 export type StatusDeclaracao = "pendente" | "confirmada" | "dispensada";
 
@@ -75,14 +86,21 @@ export const EQUIPAMENTOS_DO_ALUNO: { id: (typeof EQUIPAMENTOS)[number]; rotulo:
   { id: "Piscina", rotulo: "Piscina" },
 ];
 
-/** As cinco telas, uma pergunta principal por tela. A ordem é do fácil ao sensível. */
-export const TELAS_SOBRE_VOCE: { titulo: string; campos: CampoDeclaracao[] }[] = [
-  { titulo: "Sobre você", campos: ["idade", "sexo", "telefone"] },
-  { titulo: "O que você quer", campos: ["objetivo"] },
-  { titulo: "Sua semana", campos: ["disponibilidade"] },
-  { titulo: "Onde você treina", campos: ["equipamentos"] },
-  { titulo: "Sua saúde", campos: ["remedios", "saude", "liberacao"] },
+/**
+ * As cinco etapas, do fácil ao sensível. Cada uma diz ao aluno POR QUE pergunta (`porque`):
+ * quem entende para que serve a pergunta responde melhor, e a saúde deixa de parecer
+ * formulário de hospital. `curto` é o nome da etapa no indicador de passos.
+ */
+export const TELAS_SOBRE_VOCE: { titulo: string; curto: string; porque: string; campos: CampoDeDado[] }[] = [
+  { titulo: "Sobre você", curto: "Você", porque: "O básico para o seu professor te conhecer.", campos: ["idade", "sexo", "telefone"] },
+  { titulo: "O que você quer", curto: "Objetivo", porque: "O seu objetivo decide o tipo de treino.", campos: ["objetivo"] },
+  { titulo: "Sua semana", curto: "Rotina", porque: "O treino é montado para caber na sua rotina.", campos: ["disponibilidade"] },
+  { titulo: "Onde você treina", curto: "Local", porque: "Só entra exercício que dá para fazer onde você treina.", campos: ["equipamentos"] },
+  { titulo: "Sua saúde", curto: "Saúde", porque: "Para o treino ser seguro para você. Só o seu professor vê.", campos: ["remedios", "saude", "liberacao"] },
 ];
+
+/** Todos os campos de dado, na ordem das etapas. */
+export const CAMPOS_DE_DADO: CampoDeDado[] = TELAS_SOBRE_VOCE.flatMap((t) => t.campos);
 
 export const ROTULO_CAMPO: Record<CampoDeclaracao, string> = {
   idade: "Idade",
@@ -94,23 +112,71 @@ export const ROTULO_CAMPO: Record<CampoDeclaracao, string> = {
   remedios: "Remédios de uso contínuo",
   saude: "Diagnósticos, dores, cirurgias e histórico",
   liberacao: "Liberação médica",
+  pedido_treino: "Pedido de treino",
 };
+
+/** Resposta do aluno que diz "não tomo remédio nenhum", distinta de "não sei" e de vazio. */
+export const NENHUM_REMEDIO = "Não tomo remédio de uso contínuo";
 
 /* --------------------------- Leitura do que veio --------------------------- */
 
 const fmtData = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(ts));
 
-/** As declarações de um aluno, a mais nova de cada campo. */
+export const ehPedidoTreino = (d: { campo?: string }) => d.campo === "pedido_treino";
+
+/** As declarações de DADO de um aluno, a mais nova primeiro (o pedido de treino fica fora). */
 export const declaracoesDe = (todas: DeclaracaoAluno[], alunoId: string): DeclaracaoAluno[] =>
-  todas.filter((d) => d.alunoId === alunoId).sort((a, b) => b.declaradaEm - a.declaradaEm);
+  todas.filter((d) => d.alunoId === alunoId && !ehPedidoTreino(d)).sort((a, b) => b.declaradaEm - a.declaradaEm);
 
 export const pendentesDe = (todas: DeclaracaoAluno[], alunoId: string): DeclaracaoAluno[] =>
   declaracoesDe(todas, alunoId).filter((d) => d.status === "pendente");
+
+/* ------------------------------ Pedido de treino ------------------------------ */
+
+/** O pedido de treino deste aluno, se houver (uma linha por aluno, como os campos). */
+export const pedidoTreinoDe = (todas: DeclaracaoAluno[], alunoId: string): DeclaracaoAluno | undefined =>
+  todas.find((d) => d.alunoId === alunoId && ehPedidoTreino(d));
+
+/**
+ * O pedido que ainda espera o professor: enviado, não fechado, e o aluno sem plano ativo.
+ * O plano ativo basta para dar o pedido por atendido mesmo antes de o status ser gravado
+ * (o aluno vê o treino chegar pela hidratação, e a tela não pode dizer "aguardando" com o
+ * treino já na mão).
+ */
+export function pedidoTreinoEmAberto(todas: DeclaracaoAluno[], alunoId: string, temPlanoAtivo: boolean): DeclaracaoAluno | undefined {
+  if (temPlanoAtivo) return undefined;
+  const p = pedidoTreinoDe(todas, alunoId);
+  return p && p.status === "pendente" ? p : undefined;
+}
+
+export function novoPedidoTreino(alunoId: string, recado = "", agora = Date.now()): DeclaracaoAluno {
+  return {
+    id: idDeclaracao(alunoId, "pedido_treino"),
+    alunoId,
+    campo: "pedido_treino",
+    valor: recado.trim(),
+    status: "pendente",
+    declaradaEm: agora,
+  };
+}
+
+/**
+ * O PERFIL AINDA PRECISA DO QUE SÓ O ALUNO SABE? Decide se "Conte sobre você" abre sozinha
+ * no primeiro acesso. Se o profissional já preencheu idade, saúde e medicamentos (ou deu as
+ * seções por encerradas), pedir tudo de novo ao aluno seria burocracia: o app abre direto
+ * no treino, e a tela continua a um toque, no Perfil e no início.
+ */
+export function perfilPedeDadosDoAluno(aluno: Aluno): boolean {
+  const c = completudeAluno(aluno);
+  return c.secoes.some((s) => !s.feita && (s.secao.id === "basicos" || s.secao.id === "saude" || s.secao.id === "medicamentos"));
+}
 
 /** O valor legível de uma declaração, para a tela do profissional e para o app do aluno. */
 export function valorLegivel(d: DeclaracaoAluno): string {
   if (d.naoSei) return "Não soube informar";
   switch (d.campo) {
+    case "pedido_treino":
+      return d.valor ? `Recado: ${d.valor}` : "Pediu o treino";
     case "objetivo":
       return OBJETIVOS_DO_ALUNO.find((o) => o.id === d.valor)?.rotulo ?? d.valor;
     case "equipamentos": {
@@ -194,6 +260,9 @@ export function aplicarDeclaracao(aluno: Aluno, d: DeclaracaoAluno, agora = Date
       return { equipamentos: ids };
     }
     case "remedios": {
+      // "Não tomo nenhum" vira nota, e não estado da ficha: a ficha não tem "nenhuma
+      // medicação" de propósito (FarmacosSelector), e quem fecha a seção é o profissional.
+      if (d.valor.trim() === NENHUM_REMEDIO) return nota("Remédios: disse que não toma remédio de uso contínuo");
       const { reconhecidos, desconhecidos } = classesDosRemedios(d.valor);
       const iso = new Date(agora).toISOString();
       const jaTem = new Set((aluno.farmacos ?? []).map((f) => f.classe));
@@ -218,5 +287,8 @@ export function aplicarDeclaracao(aluno: Aluno, d: DeclaracaoAluno, agora = Date
       return nota(`Saúde relatada: ${d.valor}`);
     case "liberacao":
       return nota(`Liberação médica: ${d.valor}`);
+    case "pedido_treino":
+      // Recado, não dado: não muda a ficha. Quem o fecha é o plano publicado.
+      return {};
   }
 }

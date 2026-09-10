@@ -12,6 +12,7 @@ import { toast, toastFalha } from "@/lib/toast";
 import { buttonClasses } from "@/components/ui/primitives";
 import { cn } from "@/lib/utils";
 import { AlternarEspaco } from "@/components/app/AlternarEspaco";
+import { perfilPedeDadosDoAluno } from "@/data/declaracoes";
 
 /**
  * Confirmação tátil. Um toque curto no celular é o sinal que atravessa a academia
@@ -95,8 +96,10 @@ function PortalApp() {
   // Selo "Personalizado em DD/MM" nas sessões que nasceram de uma prescrição. Se a
   // conta do aluno não carregou as prescrições, o selo aparece sem a data (ainda útil).
   // "Conte sobre você" abre sozinha UMA vez: no primeiro acesso, enquanto o aluno não
-  // respondeu nada. Depois vive no cartão do Perfil. O marcador fica no aparelho para a
-  // tela não voltar a cada abertura de quem pulou.
+  // respondeu nada, e só se o professor ainda não preencheu o que só o aluno sabe (idade,
+  // saúde, remédios). Com a ficha completa, pedir tudo de novo seria burocracia: o app abre
+  // no início, onde a mesma tela está a um toque. O marcador fica no aparelho para a tela
+  // não voltar a cada abertura de quem pulou.
   const chaveSobreVoce = `pi-sobre-voce-${aluno.id}`;
   const jaOfereceu = (() => {
     try {
@@ -105,7 +108,8 @@ function PortalApp() {
       return true;
     }
   })();
-  const abrirSobreVoce = !jaOfereceu && !declaracoes.some((d) => d.alunoId === aluno.id);
+  const abrirSobreVoce =
+    !jaOfereceu && !declaracoes.some((d) => d.alunoId === aluno.id) && perfilPedeDadosDoAluno(aluno);
   React.useEffect(() => {
     if (abrirSobreVoce) {
       try {
@@ -116,9 +120,20 @@ function PortalApp() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // O pedido de treino ganha o próprio aviso: é a única gravação desta tela que o aluno
+  // espera ver chegar do outro lado.
   const declarar = (d: Parameters<typeof addDeclaracao>[0]) => {
     addDeclaracao(d);
-    if (professionalId) void salvarDeclaracao(d, professionalId).catch(() => toastFalha(AVISO_SEM_REDE));
+    const pedido = d.campo === "pedido_treino";
+    if (pedido) vibrar([18, 60, 18]);
+    if (!professionalId) return;
+    void salvarDeclaracao(d, professionalId)
+      .then(() => {
+        if (pedido) toast("Pedido enviado ao seu professor.");
+      })
+      .catch(() =>
+        toastFalha(pedido ? "Seu pedido ficou salvo aqui, mas ainda não chegou ao seu professor. Tente de novo com internet." : AVISO_SEM_REDE),
+      );
   };
   // A foto não é declaração: não há o que o professor confirmar numa foto de perfil. Ela
   // grava direto em fotos_aluno (migração 0011), com a policy que deixa o aluno escrever só

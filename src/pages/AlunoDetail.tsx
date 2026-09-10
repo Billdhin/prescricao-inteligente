@@ -863,6 +863,7 @@ export function AlunoDetail() {
             <DeclaracoesDoAluno
               aluno={aluno}
               declaracoes={declaracoes}
+              temPlanoAtivo={!!planoAtivo}
               onConfirmar={(d, patch) => {
                 if (Object.keys(patch).length) updateAluno(aluno.id, patch);
                 revisarDeclaracao(d.id, "confirmada");

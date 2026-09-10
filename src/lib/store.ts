@@ -540,6 +540,12 @@ export const useAlunos = create<AlunosState>()(
           const x = atuais.find((y) => y.id === pid);
           if (x) cloudSavePlano(x);
         });
+        // O plano publicado ATENDE o pedido de treino do aluno, se havia um aberto: o sino e
+        // a fila param de cobrar, e o registro guarda quando foi atendido.
+        const pedido = p.status === "ativo"
+          ? get().declaracoes.find((d) => d.alunoId === p.alunoId && d.campo === "pedido_treino" && d.status === "pendente")
+          : undefined;
+        if (pedido) get().revisarDeclaracao(pedido.id, "confirmada");
       },
       updatePlano: (id, patch) => {
         set((s) => ({ planos: s.planos.map((p) => (p.id === id ? { ...p, ...patch } : p)) }));
@@ -621,8 +627,11 @@ export const useAlunos = create<AlunosState>()(
       },
       addDeclaracao: (d) => {
         // Uma linha por aluno+campo (o id já é isso): a resposta nova substitui a antiga.
+        // SEM espelho aqui, como execuções e feedbacks: quem declara é o aluno, e o
+        // AlunoPortal grava pelo repo com o professionalId dele. O espelho genérico gravava
+        // uma SEGUNDA vez com o uid do próprio aluno como dono, a RLS recusava, e cada
+        // resposta mostrava ao aluno um aviso de falha que não era verdade.
         set((s) => ({ declaracoes: [d, ...s.declaracoes.filter((x) => x.id !== d.id)].slice(0, 2000) }));
-        cloudSaveDeclaracao(d);
       },
       revisarDeclaracao: (id, status) => {
         set((s) => ({ declaracoes: s.declaracoes.map((d) => (d.id === id ? { ...d, status, revisadaEm: Date.now() } : d)) }));

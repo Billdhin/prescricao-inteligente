@@ -53,6 +53,8 @@ export interface ParadaDoDia {
    */
   to?: string;
   tone: "primary" | "warning" | "cta" | "success";
+  /** o aluno pediu o treino pelo app e está esperando (ver `proximoPasso`) */
+  pediuTreino?: boolean;
 }
 
 export interface RotaDoDia {
@@ -133,9 +135,17 @@ export function rotaDoDia(alunos: Aluno[], ctx: CicloCtx): RotaDoDia {
       acaoCurta: verboDaParada(passo, aluno.id),
       to: passo.cta.to,
       tone: passo.tone,
+      pediuTreino: passo.chip?.label === "Pediu o treino" || undefined,
     });
   }
 
-  paradas.sort((a, b) => ORDEM[a.etapa] - ORDEM[b.etapa] || a.aluno.nome.localeCompare(b.aluno.nome, "pt-BR"));
+  // Na mesma etapa, quem pediu o treino vem antes: é a única parada com alguém esperando
+  // do outro lado. A etapa continua mandando (liberar antes de planejar é segurança).
+  paradas.sort(
+    (a, b) =>
+      ORDEM[a.etapa] - ORDEM[b.etapa] ||
+      Number(!!b.pediuTreino) - Number(!!a.pediuTreino) ||
+      a.aluno.nome.localeCompare(b.aluno.nome, "pt-BR"),
+  );
   return { paradas, feitas, total: feitas + paradas.length, agora: paradas[0] };
 }

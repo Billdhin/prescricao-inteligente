@@ -16,6 +16,10 @@
  *     única do próximo passo.
  *  6. A tela do aluno tem "Pular por agora" em toda tela e "Não sei informar" onde cabe, e
  *     nunca mostra rótulo clínico ao aluno.
+ *  7. O pedido de treino é recado, não dado: vira alerta (chip, sino, ficha) e o plano ativo o fecha.
+ *  8. "Não tomo nenhum remédio" vira nota, nunca estado inventado na ficha.
+ *  9. A tela só abre sozinha quando a ficha ainda pede o que só o aluno sabe.
+ * 10. A declaração do aluno é gravada uma vez, pelo portal (sem o aviso de falha falso).
  *
  * Roda em `npm run check`.
  */
@@ -23,8 +27,18 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Aluno } from "@/data/alunos";
 import type { PlanoTreino } from "@/data/periodizacao";
-import { aplicarDeclaracao, classesDosRemedios, idDeclaracao, type DeclaracaoAluno } from "@/data/declaracoes";
+import {
+  aplicarDeclaracao,
+  classesDosRemedios,
+  idDeclaracao,
+  novoPedidoTreino,
+  pedidoTreinoEmAberto,
+  perfilPedeDadosDoAluno,
+  NENHUM_REMEDIO,
+  type DeclaracaoAluno,
+} from "@/data/declaracoes";
 import { proximoPasso, type CicloCtx } from "@/lib/gps/proximoPasso";
+import { notificacoes } from "@/lib/notificacoes";
 import { rotaDoDia } from "@/lib/gps/rotaDoDia";
 import { gerarPlano } from "@/lib/gps/periodizacao";
 
@@ -148,6 +162,90 @@ const decl = (campo: DeclaracaoAluno["campo"], valor: string, naoSei?: boolean):
   else ok("a tela do aluno não mostra rótulo clínico");
   if (!/Nada entra no seu treino sem ele confirmar/.test(tela)) falha("o fim da tela não diz que nada entra sem o professor confirmar");
   else ok("o fim da tela diz que nada entra no treino sem o professor confirmar");
+  if (!/BotaoVoltar/.test(tela) || !/Confira e envie/.test(tela)) falha("a tela do aluno perdeu o Voltar ou a revisão antes de enviar");
+  else ok("a tela do aluno tem Voltar em todo passo e a revisão antes de enviar");
+}
+
+/*
+ * 7. O PEDIDO DE TREINO (10/09/2026): o aluno termina "Conte sobre você" e pede o treino; o
+ *    profissional recebe o alerta no sino, na lista e na ficha, e o plano publicado o fecha.
+ */
+{
+  const agora = Date.now();
+  const DIA = 86_400_000;
+  const pedido = novoPedidoTreino("a1", "prefiro de manhã", agora - DIA);
+  const base: CicloCtx = {
+    avaliacoes: [{ alunoId: "a1", data: agora - 5 * DIA } as never],
+    prescricoes: [],
+    planos: [],
+    liberacoes: [],
+    execucoes: [],
+    declaracoes: [pedido],
+  };
+
+  if (Object.keys(aplicarDeclaracao(aluno, pedido)).length) falha("o pedido de treino escreveu na ficha");
+  else ok("o pedido de treino é recado: não escreve nada na ficha");
+
+  const passo = proximoPasso(aluno, base);
+  if (passo.chip?.label !== "Pediu o treino") falha(`pedido aberto sem plano não virou o chip “Pediu o treino” (chip: ${passo.chip?.label ?? "nenhum"})`);
+  else ok("pedido aberto vira o chip “Pediu o treino” na lista e na rota");
+  if (/informou/i.test(passo.frase)) falha("o pedido de treino foi contado como dado a revisar");
+  else ok("o pedido não entra na conta de dados a revisar");
+
+  const macro = gerarPlano({ objetivo: "Hipertrofia", nivel: "Iniciante", semanas: 12, frequencia: 3 }).principal;
+  const plano = { id: "p1", alunoId: "a1", status: "ativo", data: agora, frequenciaSemanal: 3, semanas: 12, macrociclo: macro } as unknown as PlanoTreino;
+  const comPlano = proximoPasso(aluno, { ...base, planos: [plano], liberacoes: [{ alunoId: "a1", data: agora, resultado: "liberado" } as never] });
+  if (comPlano.chip?.label === "Pediu o treino") falha("com plano ativo o pedido continuou cobrando");
+  else ok("com plano ativo, o pedido para de cobrar");
+
+  const sino = notificacoes({ alunos: [aluno], planos: [], liberacoes: [], sessaoFeedbacks: [], declaracoes: [pedido] });
+  const aviso = sino.find((n) => n.tipo === "pedido");
+  if (!aviso) falha("o pedido de treino não chegou ao sino do profissional");
+  else if (aviso.to !== "/alunos/a1") falha(`o aviso do pedido leva a ${aviso.to}, e não à ficha do aluno`);
+  else ok(`o sino avisa: “${aviso.texto}”`);
+  const sinoComPlano = notificacoes({ alunos: [aluno], planos: [plano], liberacoes: [], sessaoFeedbacks: [], declaracoes: [pedido] });
+  if (sinoComPlano.some((n) => n.tipo === "pedido")) falha("com plano ativo o sino continuou avisando do pedido");
+  else ok("com plano ativo, o aviso do pedido sai do sino");
+
+  if (pedidoTreinoEmAberto([{ ...pedido, status: "confirmada" }], "a1", false)) falha("pedido já atendido continuou em aberto");
+  else ok("pedido atendido não fica em aberto");
+}
+
+/* 8. "Não tomo nenhum remédio" é resposta, e vira nota, nunca estado inventado na ficha. */
+{
+  const p = aplicarDeclaracao(aluno, decl("remedios", NENHUM_REMEDIO));
+  if (p.farmacos?.length || p.farmacosNaoInformado != null) falha("“não tomo nenhum” mexeu nos fármacos da ficha");
+  else if (!/não toma remédio/.test(p.observacoes ?? "")) falha("“não tomo nenhum” não virou nota para o profissional");
+  else if (/classificar/.test(p.observacoes ?? "")) falha("“não tomo nenhum” virou remédio desconhecido a classificar");
+  else ok("“não tomo nenhum” vira nota com a origem, e a seção quem fecha é o profissional");
+}
+
+/* 9. A tela abre sozinha só quando a ficha ainda pede o que só o aluno sabe. */
+{
+  if (!perfilPedeDadosDoAluno(aluno)) falha("aluno sem idade, saúde e remédios não pediu os dados");
+  else ok("ficha sem idade, saúde e remédios: a tela abre sozinha no primeiro acesso");
+  const completo = {
+    ...aluno,
+    idade: 40,
+    semCondicaoDeclarada: true,
+    restricoes: ["nenhuma"],
+    farmacosNaoInformado: true,
+  } as unknown as Aluno;
+  if (perfilPedeDadosDoAluno(completo)) falha("ficha já preenchida pelo professor ainda abriu a tela sozinha");
+  else ok("ficha já preenchida pelo professor: o app abre no início, sem pedir tudo de novo");
+}
+
+/*
+ * 10. A gravação dupla não volta: o aluno grava pelo portal (com o professionalId dele) e o
+ *     espelho da store não grava de novo com o uid do aluno, que a RLS recusava com um aviso
+ *     de falha falso a cada resposta.
+ */
+{
+  const store = fs.readFileSync(path.resolve(process.cwd(), "src/lib/store.ts"), "utf8");
+  const bloco = store.match(/addDeclaracao: \(d\) => \{[\s\S]*?\n {6}\},/)?.[0] ?? "";
+  if (!bloco) falha("não achei addDeclaracao na store para conferir o espelho");
+  else if (/cloudSaveDeclaracao/.test(bloco)) falha("addDeclaracao voltou a espelhar na nuvem: o aluno veria aviso de falha falso");
+  else ok("addDeclaracao não espelha: quem grava a declaração do aluno é o portal");
 }
 
 if (falhas.length) {

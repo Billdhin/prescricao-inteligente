@@ -4,6 +4,7 @@ import type { PlanoTreino } from "@/data/periodizacao";
 import { estadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { dataReavaliacao, linkDoPasso } from "@/lib/gps/proximoPasso";
 import { rotuloFaixaPse } from "@/lib/pse";
+import { pedidoTreinoEmAberto, pendentesDe, type DeclaracaoAluno } from "@/data/declaracoes";
 
 /**
  * NOTIFICAÇÕES DO PROFISSIONAL, todas DERIVADAS.
@@ -18,13 +19,14 @@ import { rotuloFaixaPse } from "@/lib/pse";
  *   1. vermelho pendente do semáforo (`semaforoDiario.ts`);
  *   2. reavaliação vencida (`dataReavaliacao`, a mesma do macrociclo);
  *   3. sessão concluída pelo aluno, com o esforço FORMATADO por `rotuloFaixaPse`
- *      (nunca um número solto nem um rótulo inventado).
+ *      (nunca um número solto nem um rótulo inventado);
+ *   4. pedido de treino do aluno, enquanto ninguém publicou o plano (`declaracoes.ts`).
  *
  * O ÚNICO estado novo é lido/não lido, e ele vive na store (`pi-notificacoes`).
  * Por isso o `id` é determinístico, montado a partir do registro de origem: se
  * fosse sorteado, "lida" não grudaria entre recarregamentos.
  */
-export type NotifTipo = "semaforo" | "reavaliacao" | "sessao";
+export type NotifTipo = "semaforo" | "reavaliacao" | "sessao" | "pedido";
 
 export interface Notificacao {
   /** determinístico: tipo + registro de origem. Nunca sorteado. */
@@ -47,6 +49,8 @@ export interface NotifCtx {
   planos: PlanoTreino[];
   liberacoes: Liberacao[];
   sessaoFeedbacks: SessaoFeedback[];
+  /** o que o aluno informou e pediu no app; opcional porque chegou depois */
+  declaracoes?: DeclaracaoAluno[];
 }
 
 const DIA = 86_400_000;
@@ -106,6 +110,28 @@ export function notificacoes(ctx: NotifCtx): Notificacao[] {
             : `A reavaliação de ${aluno.nome} venceu ${quando(reav.em)}.`,
         ts: reav.em,
         to: linkDoPasso(aluno.id, "reavaliar"),
+        tone: "warning",
+      });
+    }
+
+    // 4. Pedido de treino em aberto. Fica no sino até o plano ser publicado (o plano
+    //    ativo fecha o pedido), e a frase diz se há dados do aluno para revisar antes,
+    //    porque é por eles que o treino começa. O id leva a data do pedido: pedir de
+    //    novo depois de um plano arquivado vira notificação nova, não uma já lida.
+    const pedido = pedidoTreinoEmAberto(ctx.declaracoes ?? [], aluno.id, !!planoAtivo);
+    if (pedido) {
+      const dados = pendentesDe(ctx.declaracoes ?? [], aluno.id).length;
+      out.push({
+        id: `pedido:${aluno.id}:${pedido.declaradaEm}`,
+        tipo: "pedido",
+        alunoId: aluno.id,
+        alunoNome: aluno.nome,
+        texto:
+          dados > 0
+            ? `${aluno.nome} preencheu os dados e pediu o treino ${quando(pedido.declaradaEm)}. Revise as respostas e monte o plano.`
+            : `${aluno.nome} pediu o treino ${quando(pedido.declaradaEm)}.`,
+        ts: pedido.declaradaEm,
+        to: `/alunos/${aluno.id}`,
         tone: "warning",
       });
     }

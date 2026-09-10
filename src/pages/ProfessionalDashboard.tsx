@@ -676,14 +676,18 @@ const POR_EXTENSO_F = ["", "uma", "duas", "três", "quatro", "cinco", "seis", "s
 function resumoDaRota(rota: RotaDoDia): string {
   if (rota.total === 0) return "Comece pelo que precisa de atenção e resolva o próximo passo de cada aluno.";
   if (rota.paradas.length === 0) return "Todos os alunos ativos estão em dia hoje.";
+  // Quem pediu o treino abre a frase: é gente esperando do outro lado, e a parada dele não
+  // entra de novo na conta do verbo (seria contar o mesmo aluno duas vezes).
+  const pedidos = rota.paradas.filter((p) => p.pediuTreino).length;
   const contagem = new Map<string, number>();
-  for (const p of rota.paradas) contagem.set(p.acaoCurta, (contagem.get(p.acaoCurta) ?? 0) + 1);
+  for (const p of rota.paradas) if (!p.pediuTreino) contagem.set(p.acaoCurta, (contagem.get(p.acaoCurta) ?? 0) + 1);
   const partes = [...contagem.entries()].map(([verbo, n]) => {
     const def = PARTE_DO_RESUMO[verbo];
     if (!def) return `${n} ${verbo.toLowerCase()}`;
     const numero = n <= 10 ? (def.feminino ? POR_EXTENSO_F : POR_EXTENSO_M)[n] : String(n);
     return `${numero} ${n === 1 ? def.um : def.varios}`;
   });
+  if (pedidos) partes.unshift(pedidos === 1 ? "um aluno pediu o treino" : `${pedidos <= 10 ? POR_EXTENSO_M[pedidos] : pedidos} alunos pediram o treino`);
   const lista = partes.length === 1 ? partes[0] : `${partes.slice(0, -1).join(", ")} e ${partes[partes.length - 1]}`;
   return `${lista.charAt(0).toUpperCase()}${lista.slice(1)}. Comece pelo que precisa de você.`;
 }

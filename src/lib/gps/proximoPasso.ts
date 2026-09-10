@@ -79,7 +79,7 @@ export interface CicloCtx {
    * chegou depois: quem não passar segue como antes. Com uma pendente, o próximo passo é
    * revisá-la, antes de qualquer outra coisa, porque ela pode mudar a avaliação e o plano.
    */
-  declaracoes?: { alunoId?: string; status?: string }[];
+  declaracoes?: { alunoId?: string; status?: string; campo?: string; declaradaEm?: number }[];
 }
 
 /**
@@ -108,7 +108,30 @@ export function dataReavaliacao(aluno: Aluno, planoAtivo?: PlanoTreino): { em: n
   return null;
 }
 
+/**
+ * O PEDIDO DE TREINO não é uma etapa nova do ciclo: o aluno sem plano já está em "planejar"
+ * (ou antes, em avaliar ou revisar o que informou). O pedido muda a URGÊNCIA e o nome do
+ * chip, não o caminho: o passo continua o mesmo, com o mesmo destino, e a frase ganha a
+ * data do pedido na frente. Assim o profissional vê "Pediu o treino" na lista e na rota,
+ * e o botão continua levando ao que de fato destrava o treino.
+ */
 export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
+  const passo = passoDoCiclo(aluno, ctx);
+  const temPlano = ctx.planos.some((p) => p.alunoId === aluno.id && p.status === "ativo");
+  const pedido = temPlano
+    ? undefined
+    : (ctx.declaracoes ?? []).find((d) => d.alunoId === aluno.id && d.campo === "pedido_treino" && d.status === "pendente");
+  if (!pedido) return passo;
+  const quando = pedido.declaradaEm ? ` em ${fmtDDMM(pedido.declaradaEm)}` : "";
+  return {
+    ...passo,
+    tone: "cta",
+    frase: `Pediu o treino${quando}. ${passo.frase}`,
+    chip: { label: "Pediu o treino", tone: "cta" },
+  };
+}
+
+function passoDoCiclo(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
   const avals = ctx.avaliacoes.filter((a) => a.alunoId === aluno.id);
   const planoAtivo = ctx.planos.find((p) => p.alunoId === aluno.id && p.status === "ativo");
   const libs = ctx.liberacoes.filter((l) => l.alunoId === aluno.id);
@@ -116,8 +139,11 @@ export function proximoPasso(aluno: Aluno, ctx: CicloCtx): ProximoPasso {
 
   // 0) O aluno informou algo que ainda não foi revisado. Vem antes de tudo: "pressão
   //    alta desde 2022" digitado pelo aluno muda a avaliação, o plano e o semáforo, e é
-  //    o profissional quem traduz isso em conduta. Tarefa curta, chip próprio.
-  const pendentes = (ctx.declaracoes ?? []).filter((d) => d.alunoId === aluno.id && d.status === "pendente").length;
+  //    o profissional quem traduz isso em conduta. Tarefa curta, chip próprio. O pedido
+  //    de treino mora na mesma tabela mas não é dado a revisar: fica fora da conta.
+  const pendentes = (ctx.declaracoes ?? []).filter(
+    (d) => d.alunoId === aluno.id && d.status === "pendente" && d.campo !== "pedido_treino",
+  ).length;
   if (pendentes > 0) {
     return {
       etapa: "planejar",

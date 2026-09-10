@@ -1088,6 +1088,7 @@ function NotificationsMenu() {
   const planos = useAlunos((s) => s.planos);
   const liberacoes = useAlunos((s) => s.liberacoes);
   const sessaoFeedbacks = useAlunos((s) => s.sessaoFeedbacks);
+  const declaracoes = useAlunos((s) => s.declaracoes);
   const [open, setOpen] = React.useState(false);
   // "Lidas até": o carimbo de quando o sino foi aberto pela última vez. Como o
   // id da notificação é determinístico e o `ts` é o do fato, comparar por tempo
@@ -1098,8 +1099,8 @@ function NotificationsMenu() {
   const ref = React.useRef<HTMLDivElement>(null);
 
   const itens = React.useMemo(
-    () => notificacoes({ alunos, planos, liberacoes, sessaoFeedbacks }),
-    [alunos, planos, liberacoes, sessaoFeedbacks],
+    () => notificacoes({ alunos, planos, liberacoes, sessaoFeedbacks, declaracoes }),
+    [alunos, planos, liberacoes, sessaoFeedbacks, declaracoes],
   );
   const unseen = itens.filter((n) => n.ts > seenAt).length;
 

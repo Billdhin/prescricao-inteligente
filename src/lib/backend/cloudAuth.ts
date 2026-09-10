@@ -7,6 +7,7 @@ import { setCloudOn } from "./cloudSync";
 import { useAlunos, useUser } from "@/lib/store";
 import { toast, toastFalha } from "@/lib/toast";
 import type { Aluno } from "@/data/alunos";
+import type { DeclaracaoAluno } from "@/data/declaracoes";
 
 // Marcador de "dono" dos stores locais: a conta a que os dados neste navegador
 // pertencem. Impede que a base de um profissional suba para a conta de outro que
@@ -340,7 +341,64 @@ function aplicarSessao(session: Session | null) {
   }
 }
 
+/**
+ * O QUE O OUTRO LADO FEZ CHEGA SEM RECARREGAR A PÁGINA.
+ *
+ * Os dados vinham só no login. O aluno que terminava "Conte sobre você" e pedia o treino não
+ * aparecia para o professor com a tela aberta, e o alerta que existe justamente para isso só
+ * chegava no dia seguinte, quando ele recarregasse. Do outro lado, o aluno esperando o treino
+ * não o via chegar.
+ *
+ * Então, ao voltar para a aba e a cada dois minutos com ela visível, busca de novo o que o
+ * OUTRO lado escreve: para o profissional, as respostas e os pedidos dos alunos e o fim de
+ * cada treino; para o aluno, os planos. Nunca o que este lado escreve, para uma edição em
+ * andamento não ser atropelada pela cópia da nuvem.
+ */
+function unirDeclaracoes(nuvem: DeclaracaoAluno[], local: DeclaracaoAluno[]): DeclaracaoAluno[] {
+  const porId = new Map(local.map((d) => [d.id, d]));
+  const vencedora = (n: DeclaracaoAluno) => {
+    const l = porId.get(n.id);
+    if (!l) return n;
+    // A resposta mais nova vence; na mesma resposta, vence a revisão mais nova (a daqui pode
+    // ainda estar a caminho da nuvem).
+    if (l.declaradaEm !== n.declaradaEm) return l.declaradaEm > n.declaradaEm ? l : n;
+    return (l.revisadaEm ?? 0) > (n.revisadaEm ?? 0) ? l : n;
+  };
+  return unirPorId(nuvem.map(vencedora), local).merged;
+}
+
+let atualizando = false;
+async function atualizarDoOutroLado() {
+  if (atualizando || document.visibilityState !== "visible") return;
+  const { status, role, hydrating } = useCloudAuth.getState();
+  if (status !== "signed-in" || hydrating || !role) return;
+  atualizando = true;
+  try {
+    const declaracoes = await repo.listarDeclaracoes();
+    if (role === "profissional") {
+      const feedbacks = await repo.listarSessaoFeedbacks();
+      const s = useAlunos.getState();
+      useAlunos.setState({
+        declaracoes: unirDeclaracoes(declaracoes, s.declaracoes),
+        sessaoFeedbacks: unirPorId(feedbacks, s.sessaoFeedbacks).merged,
+      });
+    } else {
+      const planos = await repo.listarPlanos().catch(() => []);
+      const s = useAlunos.getState();
+      useAlunos.setState({ declaracoes: unirDeclaracoes(declaracoes, s.declaracoes), ...(planos.length ? { planos } : {}) });
+    }
+  } catch {
+    /* sem rede: tenta de novo na próxima volta à aba ou no próximo intervalo */
+  } finally {
+    atualizando = false;
+  }
+}
+
 // Inicialização única no carregamento do módulo (SPA). Sem credenciais, não faz nada.
+if (isSupabaseConfigured() && typeof window !== "undefined") {
+  window.setInterval(() => void atualizarDoOutroLado(), 120_000);
+  document.addEventListener("visibilitychange", () => void atualizarDoOutroLado());
+}
 if (isSupabaseConfigured()) {
   getSession()
     .then(aplicarSessao)

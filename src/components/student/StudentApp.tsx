@@ -22,12 +22,13 @@ import {
   FileText,
   Moon,
   Sun,
+  Send,
 } from "lucide-react";
 import { Card, Pill, LinhaDeTokens, TokenRotulado, ParDado } from "@/components/ui/primitives";
 import { cn, withBase } from "@/lib/utils";
 import { BrandProvider, type Marca } from "@/lib/brand/BrandContext";
-import { SobreVoce, resumoSobreVoce } from "@/components/student/SobreVoce";
-import type { DeclaracaoAluno } from "@/data/declaracoes";
+import { SobreVoce, resumoSobreVoce, LinhaDoTempo, etapasDoPedido } from "@/components/student/SobreVoce";
+import { pedidoTreinoEmAberto, type DeclaracaoAluno } from "@/data/declaracoes";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
 import {
   aplicarPaleta,
@@ -233,8 +234,13 @@ export function StudentApp({
     () => ajustarParaContraste(corMarca, fundoDoTema, 4.5),
     [corMarca, fundoDoTema],
   );
-  // "Conte sobre você": abre sozinha no primeiro acesso, e depois pelo cartão do Perfil.
+  // "Conte sobre você": abre sozinha no primeiro acesso, e depois pelo cartão do Perfil e
+  // pelo início, enquanto não houver treino.
   const [sobreVoce, setSobreVoce] = React.useState(abrirSobreVoce);
+  // O pedido de treino ainda sem resposta. Com ele aberto, a tela não pede de novo; sem
+  // treino e sem pedido, o envio final da tela também pede o treino.
+  const pedidoAberto = pedidoTreinoEmAberto(declaracoes, aluno.id, !!plano);
+  const pedirTreino = !plano && !pedidoAberto;
 
   const semanaGuiado = plano ? semanaAtual(plano) : 1;
 
@@ -306,10 +312,15 @@ export function StudentApp({
               <SobreVoce
                 aluno={aluno}
                 cor={cor}
+                tinta={tintaDaMarca}
+                marca={marca}
+                professor={apelidoProfissional(marca)}
                 declaracoes={declaracoes}
                 onDeclarar={onDeclarar}
                 onFechar={() => setSobreVoce(false)}
                 primeiraVez={abrirSobreVoce}
+                pedirTreino={pedirTreino}
+                pedidoEnviadoEm={pedidoAberto?.declaradaEm}
               />
             )}
             <CabecalhoAluno
@@ -375,6 +386,9 @@ export function StudentApp({
                   onAbrir={setSessaoAberta}
                   dataDaPrescricao={dataDaPrescricao}
                   preview={preview}
+                  declaracoes={declaracoes}
+                  pedidoAberto={pedidoAberto}
+                  onSobreVoce={() => setSobreVoce(true)}
                 />
               )}
               {aba === "treinos" && (
@@ -733,6 +747,9 @@ function AbaHoje({
   onAbrir,
   dataDaPrescricao,
   preview,
+  declaracoes = [],
+  pedidoAberto,
+  onSobreVoce,
 }: {
   plano?: PlanoTreino;
   cor: string;
@@ -742,6 +759,12 @@ function AbaHoje({
   execucoes: Execucao[];
   sessaoFeedbacks: SessaoFeedback[];
   liberacoes: Liberacao[];
+  /** o que o aluno já respondeu (o cartão sem treino sabe se ele parou no meio) */
+  declaracoes?: DeclaracaoAluno[];
+  /** o pedido de treino ainda sem resposta, se houver */
+  pedidoAberto?: DeclaracaoAluno;
+  /** abre "Conte sobre você" */
+  onSobreVoce?: () => void;
   onRegistrar?: (e: Execucao) => void;
   onDesfazer?: (execId: string) => void;
   /** inicia o modo guiado para uma sessão (abre o treino guiado no lugar das abas) */
@@ -761,7 +784,15 @@ function AbaHoje({
     return (
       <div className="space-y-4">
         {alerta}
-        <SemPlano />
+        <TreinoACaminho
+          aluno={aluno}
+          marca={marca}
+          cor={cor}
+          tinta={tinta}
+          declaracoes={declaracoes}
+          pedidoAberto={pedidoAberto}
+          onSobreVoce={onSobreVoce}
+        />
         <FalarComProfessor marca={marca} cor={cor} />
       </div>
     );
@@ -2419,6 +2450,85 @@ function PixCopia({ chave, cor, tinta }: { chave: string; cor: string; tinta: st
       </button>
       <p className="mt-1.5 break-all text-center text-2xs text-ink-2">{chave}</p>
     </div>
+  );
+}
+
+/**
+ * O INÍCIO SEM TREINO: em que ponto o aluno está e o que fazer agora.
+ *
+ * Era uma frase ("Seu professor ainda não publicou um plano") e nenhuma ação: quem acabava de
+ * entrar não sabia se devia esperar, avisar alguém ou fazer algo. Agora a tela mostra as três
+ * etapas do combinado (a mesma linha do tempo de "Conte sobre você") e a ação que destrava a
+ * próxima. Sem pedido: contar sobre si e pedir o treino. Com pedido: a data em que ele saiu,
+ * que é a vez do professor, e a porta para atualizar as respostas.
+ */
+function TreinoACaminho({
+  aluno,
+  marca,
+  cor,
+  tinta,
+  declaracoes,
+  pedidoAberto,
+  onSobreVoce,
+}: {
+  aluno: Aluno;
+  marca: Marca;
+  cor: string;
+  tinta: string;
+  declaracoes: DeclaracaoAluno[];
+  pedidoAberto?: DeclaracaoAluno;
+  onSobreVoce?: () => void;
+}) {
+  const professor = apelidoProfissional(marca);
+  const Prof = professor.charAt(0).toUpperCase() + professor.slice(1);
+  const respondidas = resumoSobreVoce(declaracoes, aluno.id).respondidas;
+  const enviadoEm = pedidoAberto
+    ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(pedidoAberto.declaradaEm))
+    : null;
+
+  return (
+    <Card className="overflow-hidden p-0">
+      <div className="p-4 pb-3">
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-2xs font-bold uppercase tracking-wider"
+          style={{ background: `${cor}1f`, color: "var(--ink)" }}
+        >
+          {enviadoEm ? <Send className="h-3 w-3" aria-hidden /> : <CalendarDays className="h-3 w-3" aria-hidden />}
+          {enviadoEm ? `Pedido enviado em ${enviadoEm}` : "Seu treino começa aqui"}
+        </span>
+        <h2 className="mt-2.5 font-display text-xl font-bold leading-tight tracking-[-0.01em] text-ink">
+          {enviadoEm ? `${Prof} está montando o seu treino` : "Conte sobre você e peça o seu treino"}
+        </h2>
+        <p className="mt-1 text-sm leading-relaxed text-ink-2">
+          {enviadoEm
+            ? "Quando ficar pronto, ele aparece aqui. Se algo mudou na sua rotina ou na sua saúde, atualize as respostas."
+            : `${Prof} precisa te conhecer para montar o treino. São 5 passos rápidos.`}
+        </p>
+      </div>
+      <div className="border-t border-border bg-surface-soft/60 px-4 py-3.5">
+        <LinhaDoTempo etapas={etapasDoPedido(Prof)} feitas={enviadoEm ? 1 : 0} cor={cor} tinta={tinta} professor={Prof} />
+      </div>
+      {onSobreVoce && (
+        <div className="p-4 pt-3">
+          {enviadoEm ? (
+            <button
+              onClick={onSobreVoce}
+              className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full border border-border bg-surface text-sm font-bold text-ink hover:bg-surface-soft"
+            >
+              Atualizar minhas respostas
+            </button>
+          ) : (
+            <button
+              onClick={onSobreVoce}
+              className="inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-full text-base font-bold"
+              style={{ background: cor, color: tinta }}
+            >
+              {respondidas > 0 ? "Continuar e pedir o treino" : "Começar agora"} <ChevronRight className="h-5 w-5" aria-hidden />
+            </button>
+          )}
+        </div>
+      )}
+    </Card>
   );
 }
 
