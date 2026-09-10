@@ -15,7 +15,9 @@ import { temAlvoForca, tokensAlvoForca, temAlvoAerobio, tokensAlvoAerobio } from
 import { assinaturaSemana } from "@/lib/gps/assinaturaSemana";
 import { topicosDoRaciocinio } from "@/lib/gps/raciocinioTopicos";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
+import { chaveDaFase, nomeDaFase, indicesDeCorDasFases } from "@/lib/gps/fasesDoPlano";
 import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
+import { semPontoFinal } from "@/lib/pdfTexto";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -53,7 +55,7 @@ const rotuloSemanas = (semanas: number[]) =>
  * variável na sua linha. Cardio se lê por formato, duração e intensidade (percentual da
  * FCmáx, watts ou pace), não por séries e carga, então não cabe na mesma tabela da força.
  */
-function sessaoHtml(s: Sessao) {
+function sessaoHtml(s: Sessao, anotar = false) {
   /*
    * TRÊS QUADROS, E NÃO DOIS, desde que existe a família isométrica.
    *
@@ -73,7 +75,7 @@ function sessaoHtml(s: Sessao) {
   const alvoForcaHtml = (b: (typeof forca)[number]) =>
     temAlvoForca(b)
       ? `<div class="alvo-forca">Alvo: ${tokensAlvoForca(b)
-          .map((t) => `${t.label === "Alvo" ? "" : esc(t.label) + " "}${esc(t.value)}`)
+          .map((t) => `<span class="nw">${t.label === "Alvo" ? "" : esc(t.label) + " "}${esc(t.value)}</span>`)
           .join(" · ")}</div>`
       : "";
 
@@ -106,6 +108,14 @@ function sessaoHtml(s: Sessao) {
         .join(" · ")
     : "";
 
+  /*
+   * A coluna do rótulo na ficha do cardio e do isométrico cabe o rótulo mais longo da ficha.
+   * Com largura fixa, "Descanso entre contrações" estourava a coluna, o valor encostava no
+   * rótulo e cada linha começava num ponto diferente.
+   */
+  const larguraDoRotulo = (linhas: [string, string | undefined][]) =>
+    Math.round(Math.max(68, ...linhas.filter(([, v]) => v && v !== "-").map(([r]) => r.length * 5.8 + 4)));
+
   /** O grupo muscular do exercício, do catálogo. Ausente para bloco sem slug (avulso). */
   const grupoDe = (b: (typeof forca)[number]) =>
     b.exercicioSlug ? (exercises.find((e) => e.slug === b.exercicioSlug)?.grupoMuscular ?? "") : "";
@@ -114,7 +124,7 @@ function sessaoHtml(s: Sessao) {
   const doseDaSemana = (b: (typeof forca)[number]) =>
     temAlvoForca(b)
       ? tokensAlvoForca(b)
-          .map((t) => `${t.label === "Alvo" ? "" : esc(t.label) + " "}${esc(t.value)}`)
+          .map((t) => `<span class="nw">${t.label === "Alvo" ? "" : esc(t.label) + " "}${esc(t.value)}</span>`)
           .join(" · ")
       : "";
 
@@ -165,7 +175,7 @@ function sessaoHtml(s: Sessao) {
     .join("");
 
   const tabelaForca = forca.length
-    ? `<div class="quadro">
+    ? `<div class="quadro quadro-forca">
         <p class="quadro-tit">Musculação</p>
         ${faixaNoCabecalho ? `<p class="faixa-sessao"><b>Faixa citada, igual para todos os exercícios desta sessão:</b> ${faixaNoCabecalho}</p>` : ""}
         <table class="blocos">
@@ -195,15 +205,15 @@ function sessaoHtml(s: Sessao) {
               ["Recuperação", b.recuperacao && b.recuperacao !== "-" ? b.recuperacao : undefined],
             ];
             const alvoCardio = temAlvoAerobio(b)
-              ? `<p class="cardio-linha"><span class="cardio-rot">Alvo</span> ${tokensAlvoAerobio(b)
-                  .map((t) => `${t.label === "Alvo" ? "" : esc(t.label) + " "}${esc(t.value)}`)
-                  .join(" · ")}</p>`
+              ? `<p class="cardio-linha"><span class="cardio-rot">Alvo</span><span>${tokensAlvoAerobio(b)
+                  .map((t) => `<span class="nw">${t.label === "Alvo" ? "" : esc(t.label) + " "}${esc(t.value)}</span>`)
+                  .join(" · ")}</span></p>`
               : "";
-            return `<div class="cardio">
+            return `<div class="cardio" style="--rot:${larguraDoRotulo(linhas)}px">
               <p class="cardio-nome">${esc(atividade ?? b.nome ?? "Aeróbio")}</p>
               ${linhas
                 .filter(([, v]) => v)
-                .map(([rot, v]) => `<p class="cardio-linha"><span class="cardio-rot">${rot}</span> ${esc(v as string)}</p>`)
+                .map(([rot, v]) => `<p class="cardio-linha"><span class="cardio-rot">${rot}</span><span>${esc(v as string)}</span></p>`)
                 .join("")}
               ${alvoCardio}
               ${b.observacao ? `<p class="cardio-obs">${esc(b.observacao)}</p>` : ""}
@@ -237,11 +247,11 @@ function sessaoHtml(s: Sessao) {
               [b.sustentado ? "Descanso" : "Descanso entre contrações", b.intervalo && b.intervalo !== "-" ? b.intervalo : b.recuperacao],
               ["Intensidade", b.intensidade],
             ];
-            return `<div class="cardio">
+            return `<div class="cardio" style="--rot:${larguraDoRotulo(linhas)}px">
               <p class="cardio-nome">${esc(b.nome ?? "Isométrico")}</p>
               ${linhas
                 .filter(([, v]) => v && v !== "-")
-                .map(([rot, v]) => `<p class="cardio-linha"><span class="cardio-rot">${rot}</span> ${esc(v as string)}</p>`)
+                .map(([rot, v]) => `<p class="cardio-linha"><span class="cardio-rot">${rot}</span><span>${esc(v as string)}</span></p>`)
                 .join("")}
               ${b.observacao ? `<p class="cardio-obs">${esc(b.observacao)}</p>` : ""}
             </div>`;
@@ -256,10 +266,11 @@ function sessaoHtml(s: Sessao) {
       <p class="sessao-nome">${esc(s.nome)}${s.foco ? ` <span class="foco">${esc(s.foco)}</span>` : ""}</p>
       ${s.blocos.length ? `<div class="quadros">${tabelaForca}${fichaIsometrico}${fichaCardio}</div>` : `<p class="vazio">Sessão sem exercícios definidos.</p>`}
       ${fechoHtml}
+      ${anotar ? `<div class="anotar"><span>Data:</span><span>Esforço da sessão (0 a 10):</span></div>` : ""}
     </div>`;
 }
 
-function mesoHtml(m: Mesociclo, i: number) {
+function mesoHtml(m: Mesociclo, i: number, folha = false) {
   const params = m.parametros
     .map((id) => getParam(id)?.nome)
     .filter(Boolean)
@@ -290,7 +301,7 @@ function mesoHtml(m: Mesociclo, i: number) {
         ${g.micro.objetivo ? `<p class="objetivo-sem"><b>Objetivo da semana:</b> ${esc(g.micro.objetivo)}</p>` : ""}
         ${reducao}
         ${g.micro.nota ? `<p class="nota">${esc(g.micro.nota)}</p>` : ""}
-        ${g.micro.sessoes.map(sessaoHtml).join("")}
+        ${g.micro.sessoes.map((s) => sessaoHtml(s, folha)).join("")}
       </div>`;
     })
     .join("");
@@ -306,18 +317,28 @@ function mesoHtml(m: Mesociclo, i: number) {
 
   return `
   <section class="meso">
-    <h2 class="meso-tit"><span class="num">${i + 1}</span> ${esc(m.nome)}
-      <span class="range">semanas ${m.semanaInicio} a ${m.semanaFim}</span></h2>
-    <p class="meso-foco">${esc(m.foco)}</p>
-    <p class="tend">Volume ${TEND_LABEL[m.tendenciaVolume]} · Intensidade ${TEND_LABEL[m.tendenciaIntensidade]} · Complexidade ${TEND_LABEL[m.tendenciaComplexidade]}${
-      m.reavaliacao ? ` · reavaliar ao fim da semana ${m.semanaFim}` : ""
-    }</p>
+    <div class="meso-cab">
+      <h2 class="meso-tit"><span class="num">${i + 1}</span> ${esc(m.nome)}
+        <span class="range">semanas ${m.semanaInicio} a ${m.semanaFim}</span></h2>
+      <p class="meso-foco">${esc(m.foco)}</p>
+      ${
+        /* Na folha da semana o bloco é só CONTEXTO: nome, foco e o que acompanhar. As
+           capacidades, os tipos de exercício e os critérios de progressão são leitura do
+           profissional e ocupavam a primeira página inteira de uma folha que existe para ir
+           à academia na mão do aluno. */
+        folha
+          ? (params ? `<p class="rot">Acompanhar</p><div class="tags">${params}</div>` : "")
+          : `<p class="tend">Volume ${TEND_LABEL[m.tendenciaVolume]} · Intensidade ${TEND_LABEL[m.tendenciaIntensidade]} · Complexidade ${TEND_LABEL[m.tendenciaComplexidade]}${
+              m.reavaliacao ? ` · reavaliar ao fim da semana ${m.semanaFim}` : ""
+            }</p>
     ${tags("Capacidades priorizadas", m.capacidades)}
     ${tags("Modalidades em foco", modalidades)}
     ${tags("Tipos de exercício", m.tiposExercicio)}
     ${params ? `<p class="rot">Acompanhar</p><div class="tags">${params}</div>` : ""}
     ${lista("Progredir quando", m.criteriosProgressao)}
-    ${lista("Regredir ou revisar se", m.criteriosRegressao)}
+    ${lista("Regredir ou revisar se", m.criteriosRegressao)}`
+      }
+    </div>
     ${semanas}
   </section>`;
 }
@@ -334,6 +355,7 @@ const FAIXA_FASE_PAPEL = [
   { bg: C.analiseTint, borda: C.analise, tinta: C.analise },
   { bg: C.marcaTint, borda: C.marca, tinta: C.marca },
   { bg: C.alertaTint, borda: C.alerta, tinta: C.alerta },
+  { bg: C.fase4Tint, borda: C.fase4, tinta: C.fase4 },
 ] as const;
 
 function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
@@ -380,14 +402,48 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
    * retângulo com a cor da própria família, borda e nome dentro, na mesma ordem de cores em
    * que a tela as cicla.
    */
-  const fases = g.fases
+  /*
+   * UMA FAIXA POR FASE, na cor da fase, igual à tela. Num plano anual a Fase 4 se estende em
+   * blocos de continuação: eram três faixas "Fase 4: Autonomia" lado a lado, e a primeira
+   * saía na cor da Fase 1. Blocos seguidos da mesma fase viram uma faixa só.
+   */
+  const corPorFase = indicesDeCorDasFases(macro.mesociclos);
+  const fasesFundidas = g.fases.reduce<(typeof g.fases[number] & { chave: string; cor: number })[]>((acc, f) => {
+    const meso = macro.mesociclos[f.indice];
+    const chave = meso ? chaveDaFase(meso) : String(f.indice);
+    const ultima = acc[acc.length - 1];
+    if (ultima && ultima.chave === chave) {
+      const fim = f.spanSemanas.split(" ").pop();
+      acc[acc.length - 1] = {
+        ...ultima,
+        x1: f.x1,
+        cx: (ultima.x0 + f.x1) / 2,
+        temDescarga: ultima.temDescarga || f.temDescarga,
+        spanSemanas: `${ultima.spanSemanas.split(" a ")[0]} a ${fim}`,
+      };
+      return acc;
+    }
+    const nome = meso ? nomeDaFase(meso).split(" · ")[0] : f.nome;
+    acc.push({ ...f, nome, chave, cor: corPorFase.get(chave) ?? f.indice });
+    return acc;
+  }, []);
+
+  const fases = fasesFundidas
     .map((f) => {
-      const fam = FAIXA_FASE_PAPEL[f.indice % FAIXA_FASE_PAPEL.length];
+      const fam = FAIXA_FASE_PAPEL[f.cor % FAIXA_FASE_PAPEL.length];
       const largura = f.x1 - f.x0;
+      /*
+       * O NOME CABE NA FAIXA. Num plano anual a Fase 1 ocupa 8 de 48 semanas, e "Fase 2:
+       * Construção de capacidade" atravessava a faixa vizinha. Tenta o nome inteiro, depois
+       * só "Fase 2", depois só o número: o nome completo está na seção de cada bloco.
+       */
+      const cabe = (t: string) => t.length * 5.8 + 10 <= largura;
+      const curto = f.nome.split(":")[0];
+      const rotulo = cabe(f.nome) ? f.nome : cabe(curto) ? curto : curto.replace(/\D+/g, "");
       return `
       <rect x="${(f.x0 + 1).toFixed(1)}" y="0" width="${Math.max(0, largura - 2).toFixed(1)}" height="16" rx="5"
             fill="${fam.bg}" stroke="${fam.borda}" stroke-width="0.75" />
-      <text x="${f.cx.toFixed(1)}" y="11.5" text-anchor="middle" fill="${fam.tinta}" font-size="9.5" font-weight="700">${esc(f.nome)}</text>
+      <text x="${f.cx.toFixed(1)}" y="11.5" text-anchor="middle" fill="${fam.tinta}" font-size="9.5" font-weight="700">${esc(rotulo)}</text>
       ${iconesFase(f)}
       <text x="${f.cx.toFixed(1)}" y="${(g.faixaTop + 12).toFixed(1)}" text-anchor="middle" fill="${C.ink2}" font-size="10">${esc(f.spanSemanas)}${f.temDescarga ? " · descarga" : ""}</text>`;
     })
@@ -434,11 +490,12 @@ function graficoHtml(macro: Macrociclo, nivel?: Nivel) {
           // A amostra da legenda é um pedaço da PRÓPRIA linha (mesma cor e mesmo traço),
           // e não um disco de cor: com três luminâncias iguais, o disco não identificava
           // nada em preto e branco.
+          // A amostra da linha é SVG com o mesmo tracejado da curva. Era gradiente de fundo,
+          // e fundo decorativo some na impressão: "Esforço médio" e "Complexidade" saíam na
+          // legenda sem traço nenhum ao lado.
           const d = traco[s.id];
-          const estilo = d
-            ? `background: repeating-linear-gradient(90deg, ${cor[s.id]} 0 ${d.split(" ")[0]}px, transparent ${d.split(" ")[0]}px ${Number(d.split(" ")[0]) + Number(d.split(" ")[1])}px)`
-            : `background:${cor[s.id] ?? cor.area}`;
-          return `<span><i class="linha" style="${estilo}"></i>${s.nome}</span>`;
+          const amostra = `<svg class="amostra" width="22" height="6" viewBox="0 0 22 6" aria-hidden="true"><line x1="1" y1="3" x2="21" y2="3" stroke="${cor[s.id] ?? cor.area}" stroke-width="2.5" stroke-linecap="round"${d ? ` stroke-dasharray="${d}"` : ""}/></svg>`;
+          return `<span>${amostra}${s.nome}</span>`;
         })
         .join("")}
     </div>
@@ -513,6 +570,7 @@ export function exportPlanoPDF({
    * Filtrar aqui, e não em cada lugar que imprime, garante que folha e plano completo saiam
    * do MESMO caminho de renderização: o que valer num vale no outro.
    */
+  const folha = somenteSemana != null;
   const mesosImpressos =
     somenteSemana == null
       ? plano.macrociclo.mesociclos
@@ -543,17 +601,32 @@ ${PAPEL_BASE_CSS}
     .legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 11px; color: ${C.ink2}; margin-top: 4px; }
     .legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
     .legenda i.tick { width: 3px; height: 11px; border-radius: 2px; }
-    .legenda i.linha { width: 20px; height: 3px; border-radius: 2px; }
+    .legenda svg.amostra { margin-right: 5px; vertical-align: middle; }
     .legenda-semanas { gap: 12px; margin-top: 2px; }
     .legenda .lg-rot { color: ${C.ink2}; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 10px; }
     .legenda-nota { font-size: 11px; color: ${C.ink2}; margin: 0 0 4px; }
-    .meso { margin: 18px 0; padding-top: 12px; border-top: 1px solid ${C.borda}; page-break-inside: avoid; }
+    /*
+     * QUEBRA DE PÁGINA POR SESSÃO, e não por bloco nem por semana.
+     *
+     * \`.meso\` e \`.semana\` pediam \`page-break-inside: avoid\`. Um bloco tem várias páginas e uma
+     * semana tem mais de uma: o navegador não consegue evitar a quebra, então empurra o
+     * bloco inteiro para a página seguinte e deixa a anterior em branco. Era de onde saíam
+     * as 38 páginas do plano de 12 semanas, várias com dois terços vazios. O que cabe numa
+     * página, e não deve partir, é a SESSÃO e o cabeçalho do bloco.
+     */
+    .meso { margin: 18px 0; padding-top: 12px; border-top: 1px solid ${C.borda}; }
+    .meso-cab { break-inside: avoid; }
+    .sessao { break-inside: avoid; }
+    .semana-tit, .sessao-nome, .objetivo-sem, .rot { break-after: avoid; }
+    /* Espaço de anotação da folha da semana: a data e o esforço percebido da sessão. */
+    .anotar { display: flex; gap: 18px; font-size: 11px; color: ${C.ink2}; margin: 6px 2px 0; }
+    .anotar span { flex: 1; border-bottom: 1px solid ${C.borda}; padding-bottom: 10px; }
     .meso-tit { font-size: 15px; margin: 0 0 2px; color: ${C.ink}; text-transform: none; letter-spacing: 0; }
     .meso-tit .num { display: inline-flex; width: 20px; height: 20px; border-radius: 6px; background: ${corMarca}; color: ${C.sobreMarca}; font-size: 12px; align-items: center; justify-content: center; margin-right: 6px; }
     .meso-tit .range { font-size: 12px; font-weight: 400; color: ${C.ink2}; margin-left: 6px; }
     .meso-foco { font-size: 13px; color: ${C.ink2}; margin: 2px 0 6px; }
     .tend { font-size: 12px; color: ${C.ink2}; margin: 0 0 6px; }
-    .semana { margin: 10px 0 0; page-break-inside: avoid; }
+    .semana { margin: 10px 0 0; }
     .semana-tit { font-size: 13px; font-weight: 700; margin: 10px 0 4px; }
     .semana-tit .tipo { font-size: 11px; font-weight: 600; color: ${C.alerta}; background: ${C.alertaTint}; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
     .semana-tit .estado { font-size: 11px; font-weight: 600; border-radius: 999px; padding: 1px 8px; margin-left: 4px; }
@@ -575,16 +648,26 @@ ${PAPEL_BASE_CSS}
     table.blocos td.ex { color: ${C.ink}; font-weight: 600; }
     table.blocos tr.grupo-metodo td { background: ${C.papelSuave}; color: ${C.ink}; font-size: 11px; padding-top: 5px; }
     table.blocos tr.grupo-metodo .grupo-desc { color: ${C.ink2}; font-weight: 400; }
+    /*
+     * A MUSCULAÇÃO OCUPA A LARGURA INTEIRA; cardio e isométrico dividem a linha de baixo.
+     * A tabela de força disputava meia folha com o cartão de cardio, e com a dose em
+     * \`nowrap\` e o quadro em \`overflow: hidden\` o papel DECEPAVA as duas últimas colunas: a
+     * reserva de repetições e a "Carga usada", que é justamente onde o aluno anota o peso.
+     * Medido no PDF: "2 x 15 · Carga 41,7% 1RM · RI", e fim.
+     */
     .quadros { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
-    .quadro { flex: 1 1 260px; min-width: 240px; border: 1px solid ${C.borda}; border-radius: 6px; overflow: hidden; }
-    .quadro-tit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; background: ${C.papelSuave}; margin: 0; padding: 4px 8px; border-bottom: 1px solid ${C.borda}; }
+    .quadro { flex: 1 1 240px; min-width: 220px; border: 1px solid ${C.borda}; border-radius: 6px; break-inside: avoid; }
+    .quadro-forca { flex: 1 1 100%; }
+    .quadro-tit { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; background: ${C.papelSuave}; margin: 0; padding: 4px 8px; border-bottom: 1px solid ${C.borda}; border-radius: 6px 6px 0 0; }
     /* A faixa citada, dita uma vez por sessão quando ela é a mesma em todos os exercícios. */
     .faixa-sessao { font-size: 10.5px; color: ${C.ink2}; margin: 0; padding: 5px 8px; border-bottom: 1px solid ${C.borda}; }
     .faixa-sessao b { color: ${C.ink}; font-weight: 600; }
     .blocos td.c-num { width: 18px; color: ${C.ink2}; text-align: right; padding-right: 2px; }
     .blocos th.c-num { width: 18px; }
     .blocos .c-grupo { color: ${C.ink2}; white-space: nowrap; }
-    .blocos .c-dose { font-weight: 700; white-space: nowrap; }
+    .blocos .c-dose { font-weight: 700; }
+    /* cada item da dose inteiro numa linha: a quebra cai entre itens, nunca entre "1,5" e "min" */
+    .nw { white-space: nowrap; }
     /* A coluna de carga sai VAZIA de propósito: é a linha em que o aluno anota o peso que
        usou. O papel existe para ir à academia, e essa era a única coisa que ele não tinha. */
     .blocos th.c-carga { width: 88px; }
@@ -594,13 +677,13 @@ ${PAPEL_BASE_CSS}
     .cardio { padding: 5px 8px; border-bottom: 1px solid ${C.linha}; }
     .cardio:last-child { border-bottom: 0; }
     .cardio-nome { font-size: 11px; font-weight: 700; color: ${C.ink}; margin: 0 0 2px; }
-    .cardio-linha { font-size: 11px; color: ${C.ink2}; margin: 1px 0; }
-    .cardio-rot { display: inline-block; min-width: 68px; color: ${C.ink2}; }
+    .cardio-linha { font-size: 11px; color: ${C.ink2}; margin: 1px 0; display: grid; grid-template-columns: var(--rot, 68px) 1fr; column-gap: 8px; }
+    .cardio-rot { color: ${C.ink2}; }
     .cardio-obs { font-size: 10px; color: ${C.ink2}; margin: 3px 0 0; }
     .vazio { font-size: 11px; color: ${C.ink2}; }
     .foot { margin-top: 24px; border-top: 1px solid ${C.borda}; padding-top: 12px; font-size: 11px; color: ${C.ink2}; }
     ol.refs { font-size: 11px; color: ${C.ink2}; padding-left: 18px; margin: 4px 0; }
-    @media print { .page { padding: 0; } @page { margin: 16mm; } }
+    @media print { .page { padding: 0; max-width: none; } }
   </style></head><body>
   <div class="page">
     ${cabecalhoHtml({
@@ -618,8 +701,14 @@ ${PAPEL_BASE_CSS}
       }</div>`,
     })}
 
-    <h1>${esc(tituloDoc)}</h1>
-    <div class="meta">${rotuloHorizonte(plano.semanas) ? esc(rotuloHorizonte(plano.semanas)!) + " · " : ""}${plano.semanas} semanas · ${esc(rotuloFrequencia(plano))} · ${esc(modelo.nome)}</div>
+    <h1>${folha ? `Semana ${somenteSemana}` : esc(tituloDoc)}</h1>
+    <div class="meta">${
+      // Na folha, o título do plano já diz a duração ("...: 12 semanas"); repetir o horizonte
+      // e as semanas ao lado dele imprimia "12 semanas" duas vezes na mesma linha.
+      folha
+        ? `${esc(tituloDoc)} · ${esc(rotuloFrequencia(plano))}`
+        : `${rotuloHorizonte(plano.semanas) ? esc(rotuloHorizonte(plano.semanas)!) + " · " : ""}${plano.semanas} semanas · ${esc(rotuloFrequencia(plano))} · ${esc(modelo.nome)}`
+    }</div>
 
     <div class="aluno">
       <strong>${esc(aluno.nome)}</strong>${aluno.idade ? ` · ${aluno.idade} anos` : ""}<br>
@@ -627,47 +716,57 @@ ${PAPEL_BASE_CSS}
       ${plano.disponibilidade ? `<br>Disponibilidade: ${esc(plano.disponibilidade)}` : ""}
     </div>
 
-    ${graficoHtml(plano.macrociclo, plano.nivel)}
+    ${
+      /*
+       * A FOLHA DA SEMANA É UMA FOLHA.
+       *
+       * Ela saía com o gráfico do macrociclo e as duas páginas de "Por que este plano" antes
+       * da semana: seis páginas para o aluno levar à academia uma semana de treino. O
+       * gráfico, o raciocínio e a bibliografia são do plano completo, que continua tendo
+       * tudo; a folha fica com o que se usa no dia.
+       */
+      folha ? "" : graficoHtml(plano.macrociclo, plano.nivel)
+    }
 
-    <section class="bloco">
-      <h2>Por que este plano</h2>
+    ${folha ? "" : `<section class="bloco">
+      <h2>Por que este plano</h2>`}
       ${/*
         O raciocínio impresso segue os mesmos tópicos da tela. Um parágrafo de vinte linhas
         num PDF assinado é ainda pior que na tela: no papel não há aba nem rolagem para
         recuperar o assunto que se perdeu no meio.
       */ ""}
-      ${topicosDoRaciocinio(plano.raciocinio)
+      ${folha ? "" : topicosDoRaciocinio(plano.raciocinio)
         .map((t) =>
           t.titulo
             ? `<p class="rot">${esc(t.titulo)}</p><p style="font-size:13px;margin:0">${esc(t.texto)}</p>`
             : `<p style="font-size:13px">${esc(t.texto)}</p>`,
         )
         .join("")}
-      <p class="rot">Como o modelo funciona</p>
+      ${folha ? "" : `<p class="rot">Como o modelo funciona</p>
       <p style="font-size:13px;color:${C.ink2}">${esc(modelo.comoFunciona)}</p>
       <p class="rot">Racional científico</p>
-      <p style="font-size:13px;color:${C.ink2}">${esc(modelo.racionalCientifico)}</p>
+      <p style="font-size:13px;color:${C.ink2}">${esc(modelo.racionalCientifico)}</p>`}
       ${
-        reavaliacoes.length
+        !folha && reavaliacoes.length
           ? `<p class="rot">Reavaliação prevista</p><p style="font-size:13px;color:${C.ink2}">Ao fim das semanas ${reavaliacoes.join(", ")}.</p>`
           : ""
       }
-    </section>
+    ${folha ? "" : "</section>"}
 
     <section class="bloco">
-      <h2>Macrociclo: ${esc(plano.macrociclo.objetivoGeral)}</h2>
-      ${mesosImpressos.map(mesoHtml).join("")}
+      ${folha ? "" : `<h2>Macrociclo: ${esc(plano.macrociclo.objetivoGeral)}</h2>`}
+      ${mesosImpressos.map((m, i) => mesoHtml(m, plano.macrociclo.mesociclos.findIndex((x) => x.id === m.id) ?? i, folha)).join("")}
     </section>
 
     ${
-      biblio.length
+      !folha && biblio.length
         ? `<section class="bloco">
             <h2>Base científica</h2>
             <ol class="refs">
               ${biblio
                 .map(
                   (b) =>
-                    `<li>${esc(b.ref.autores)}. ${esc(b.ref.titulo)}. ${esc(b.ref.fonte)}, ${b.ref.ano}.${
+                    `<li>${esc(semPontoFinal(b.ref.autores))}. ${esc(semPontoFinal(b.ref.titulo))}. ${esc(b.ref.fonte)}, ${b.ref.ano}.${
                       b.ref.doi ? ` doi:${esc(b.ref.doi)}` : ""
                     }</li>`,
                 )

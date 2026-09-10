@@ -293,7 +293,7 @@ const specialGroupsBase: SpecialGroup[] = [
         criteriosAvancar: [
           "Completa as sessões sem dor crescente",
           "PSE leve e teste da fala confortável",
-          "Boa adesão (2–3x/semana) por algumas semanas",
+          "Boa adesão (2 a 3x/semana) por algumas semanas",
         ],
         criteriosRegredir: [
           "Dor articular aumentando entre sessões",
@@ -301,7 +301,7 @@ const specialGroupsBase: SpecialGroup[] = [
           "Adesão caindo por dificuldade da sessão",
         ],
         estruturaSemanal:
-          "2–3 sessões curtas de baixo impacto (ex.: hidroginástica ou bike) + mobilidade; blocos leves com pausas.",
+          "2 a 3 sessões curtas de baixo impacto (ex.: hidroginástica ou bike) + mobilidade; blocos leves com pausas.",
         justificativa:
           "Baixo impacto reduz sobrecarga articular e dispneia, favorecendo adesão, a base de qualquer progressão.",
       },
@@ -319,7 +319,7 @@ const specialGroupsBase: SpecialGroup[] = [
         ],
         criteriosRegredir: ["Fadiga acumulada", "Dor ao subir volume", "Recuperação insuficiente"],
         estruturaSemanal:
-          "2–3 aeróbios de baixo impacto (tempo crescente) + 1–2 sessões de força em máquinas guiadas + mobilidade.",
+          "2 a 3 aeróbios de baixo impacto (tempo crescente) + 1 a 2 sessões de força em máquinas guiadas + mobilidade.",
         justificativa:
           "Volume gradual melhora a capacidade sem picos de intensidade; força em máquinas dá função com baixo risco.",
       },
@@ -403,7 +403,7 @@ const specialGroupsBase: SpecialGroup[] = [
         parametros: ["p-rpe", "p-fala", "p-pa", "p-adesao"],
         criteriosAvancar: ["Esforço leve confortável", "Força sem apneia", "Sem sintomas de alerta"],
         criteriosRegredir: ["Sintomas ao esforço", "PA de contexto muito alterada"],
-        estruturaSemanal: "2–3 aeróbios leves + 1–2 sessões de força em máquinas com respiração guiada.",
+        estruturaSemanal: "2 a 3 aeróbios leves + 1 a 2 sessões de força em máquinas com respiração guiada.",
         justificativa: "Adaptação gradual e técnica respiratória reduzem picos de esforço.",
       },
       {
@@ -532,7 +532,7 @@ const specialGroupsBase: SpecialGroup[] = [
         parametros: ["p-rpe", "p-fala", "p-adesao"],
         criteriosAvancar: ["Consistência semanal", "Esforço confortável", "Sem sintomas"],
         criteriosRegredir: ["Sintomas de hipoglicemia recorrentes", "Adesão baixa"],
-        estruturaSemanal: "2–3 aeróbios moderados + 1–2 sessões de força em máquinas.",
+        estruturaSemanal: "2 a 3 aeróbios moderados + 1 a 2 sessões de força em máquinas.",
         justificativa: "A regularidade é o principal motor de resultado neste perfil.",
       },
       {
@@ -619,7 +619,7 @@ const specialGroupsBase: SpecialGroup[] = [
         parametros: ["p-rpe", "p-dor", "p-adesao"],
         criteriosAvancar: ["Executa força com técnica e sem dor", "Equilíbrio com apoio estável"],
         criteriosRegredir: ["Dor nova", "Desequilíbrio", "Fadiga excessiva"],
-        estruturaSemanal: "2–3 sessões de força em máquinas + equilíbrio com apoio + mobilidade.",
+        estruturaSemanal: "2 a 3 sessões de força em máquinas + equilíbrio com apoio + mobilidade.",
         justificativa: "Força e equilíbrio são o alicerce da função e da prevenção de quedas.",
       },
       {

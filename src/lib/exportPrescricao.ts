@@ -123,7 +123,9 @@ ${PAPEL_BASE_CSS}
     .ex-series { font-size: 12px; color: ${C.ink2}; margin: 4px 0 0; }
     .rot { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; margin: 10px 0 4px; }
     .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { background: ${C.marcaTint}; color: ${cor}; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+    /* Chip neutro: a lavada era do azul do produto e o texto na cor da marca, e com marca
+       coral o papel saía com texto coral sobre fundo azul. */
+    .tag { background: ${C.papelSuave}; color: ${C.ink}; border: 1px solid ${C.borda}; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
     ul.crit { margin: 4px 0; padding-left: 18px; font-size: 13px; }
     .foot { margin-top: 24px; border-top: 1px solid ${C.borda}; padding-top: 12px; font-size: 11px; color: ${C.ink2}; }
     @media print { .page { padding: 0; } @page { margin: 16mm; } }

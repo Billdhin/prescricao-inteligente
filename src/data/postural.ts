@@ -123,7 +123,8 @@ export function montarLaudo(av: AvaliacaoPostural, nomeAluno: string): string {
       linhas.push("");
       linhas.push(`${ROTULO_VISTA[v]}:`);
       for (const d of daVista) {
-        const nota = d.o.nota ? ` (${d.o.nota})` : "";
+        // A nota do profissional costuma terminar em ponto: "(sem calçado.)." saía com dois.
+        const nota = d.o.nota ? ` (${d.o.nota.trim().replace(/\.+$/, "")})` : "";
         linhas.push(`- ${d.cp.regiao}: ${d.o.achado}${nota}.`);
       }
     }

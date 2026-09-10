@@ -9,6 +9,7 @@ import { abrirDocumento } from "@/lib/abrirDocumento";
 import { getReferencia } from "@/data/referencias";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
+import { semPontoFinal } from "@/lib/pdfTexto";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -28,7 +29,14 @@ export function printSemaforo(
   profissional?: string,
   cref?: string,
   logoDataUrl?: string,
+  /**
+   * A cor da marca do profissional. Sem ela o semáforo era o ÚNICO documento em azul do
+   * produto enquanto o plano, a evolução e o prontuário saíam na cor dele: dois papéis do
+   * mesmo profissional, na mesma pasta, com duas identidades.
+   */
+  corPrimaria?: string,
 ) {
+  const acento = corPrimaria || C.marca;
   const cor = COR[resultado.cor];
 
   const linhas = checklist.itens
@@ -48,7 +56,7 @@ export function printSemaforo(
   const refs = resultado.refs
     .map(getReferencia)
     .filter(Boolean)
-    .map((r) => `<li>${esc(r!.autores)}. ${esc(r!.titulo)}. ${esc(r!.fonte)}, ${r!.ano}.</li>`)
+    .map((r) => `<li>${esc(semPontoFinal(r!.autores))}. ${esc(semPontoFinal(r!.titulo))}. ${esc(r!.fonte)}, ${r!.ano}.</li>`)
     .join("");
 
   const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
@@ -58,7 +66,7 @@ export function printSemaforo(
 ${PAPEL_BASE_CSS}
     body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
     .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-    ${cabecalhoCss(C.marca)}
+    ${cabecalhoCss(acento)}
     h1 { font-size: 20px; margin: 18px 0 2px; }
     .meta { font-size: 13px; color: ${C.ink2}; margin-bottom: 14px; }
     .resultado { border-radius: 12px; padding: 14px 16px; margin: 14px 0; background: ${cor.bg}; border: 1px solid ${cor.hex}44; }
@@ -67,12 +75,12 @@ ${PAPEL_BASE_CSS}
     th, td { border: 1px solid ${C.borda}; padding: 7px 10px; font-size: 13px; text-align: left; }
     th { background: ${C.papelSuave}; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; }
     .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
-    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${C.marca}; margin: 16px 0 6px; }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${acento}; margin: 16px 0 6px; }
     ul { margin: 4px 0; padding-left: 20px; font-size: 13px; }
     ul li { margin-bottom: 4px; }
     .refs li { font-size: 11px; color: ${C.ink2}; }
     .foot { margin-top: 20px; border-top: 1px solid ${C.borda}; padding-top: 10px; font-size: 10.5px; color: ${C.ink2}; }
-    .ciencia { margin-top: 26px; padding: 10px 12px; background: ${C.papelSuave}; border-left: 3px solid ${C.marca}; font-size: 11.5px; color: ${C.ink2}; page-break-inside: avoid; }
+    .ciencia { margin-top: 26px; padding: 10px 12px; background: ${C.papelSuave}; border-left: 3px solid ${acento}; font-size: 11.5px; color: ${C.ink2}; page-break-inside: avoid; }
     .assinatura { margin-top: 34px; page-break-inside: avoid; display: flex; justify-content: space-between; gap: 24px; }
     .assinatura .linha { border-top: 1.5px solid ${C.ink}; flex: 1; padding-top: 6px; }
     .assinatura .quem { font-weight: 800; font-size: 12px; }
@@ -82,6 +90,7 @@ ${PAPEL_BASE_CSS}
   </style></head><body>
   <div class="page">
     ${cabecalhoHtml({
+      cor: acento,
       logoDataUrl,
       logoAltura: 38,
       profissional: profissional || "Motor RCD · Raciocínio Clínico Documentado",

@@ -38,9 +38,28 @@ const T = tokensDe(PALETA_ROTA, false);
  * garante o papel mesmo quando a preferência do sistema é escura. Papel é papel: o documento
  * não segue o modo que o profissional escolheu para a tela, e muito menos o do leitor.
  */
+/*
+ * O PAPEL É A4, E AS CORES IMPRIMEM (10/09/2026).
+ *
+ * Nenhum documento dizia o tamanho do papel. Sem `@page { size }`, o navegador escolhe, e o
+ * Chrome escolhe Carta: medido, os onze documentos saíam em 612 x 792 pontos, e não nos
+ * 595 x 842 do A4 que o profissional brasileiro põe na impressora. O conteúdo era desenhado
+ * para uma folha e impresso em outra.
+ *
+ * E nenhum pedia para as cores saírem. A caixa de impressão do navegador vem com "gráficos
+ * de plano de fundo" DESLIGADO: sem `print-color-adjust: exact`, as faixas de fase, o selo
+ * da semana, a caixa do aluno e a legenda do gráfico saíam brancas no papel de quem não sabe
+ * dessa opção, que é quase todo mundo.
+ *
+ * A margem daqui é o padrão; um documento que precise de outra declara o próprio @page.
+ */
 export const PAPEL_BASE_CSS = `
     :root { color-scheme: light; }
     html, body { background: #ffffff; }
+    @page { size: A4; margin: 14mm 14mm 16mm; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    a { color: inherit; text-decoration: none; }
+    @media print { h1, h2, h3, h4 { break-after: avoid; break-inside: avoid; } tr, img, svg, figure { break-inside: avoid; } }
 `;
 
 export const CORES_PDF = {
@@ -104,4 +123,12 @@ export const CORES_PDF = {
 
   /** série de intensidade do gráfico de progressão (mesma cor de dado da tela). */
   intensidade: T["data-intensidade"],
+
+  /**
+   * A QUARTA FAMÍLIA DE FASE. A jornada clínica tem quatro fases, e o papel tinha três
+   * cores: a Fase 4 saía na cor da Fase 1. É o violeta das faixas da tela (#7A3AED), com
+   * a tinta escurecida para escrever sobre a lavada com folga de contraste.
+   */
+  fase4: "#5B2FB3",
+  fase4Tint: "#EFE6FD",
 } as const;

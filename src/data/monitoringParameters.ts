@@ -66,7 +66,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     nome: "Percepção subjetiva de esforço",
     sigla: "PSE / RPE",
     categoria: "perceptivo",
-    resumo: "O quanto o aluno sente que está se esforçando (ex.: escala de 0–10).",
+    resumo: "O quanto o aluno sente que está se esforçando (ex.: escala de 0 a 10).",
     quandoUsar:
       "Quase sempre útil, especialmente quando medir frequência cardíaca não é viável (meio aquático, iniciantes, ausência de equipamento).",
     menosConfiavel:
@@ -81,15 +81,15 @@ export const monitoringParameters: MonitoringParameter[] = [
       "Apresente a escala antes da sessão: 0 = repouso total, 10 = esforço máximo.",
       "Ao fim da série ou do bloco, pergunte: “De 0 a 10, quão intenso foi?”",
       "Registre o número junto do exercício/bloco e acompanhe a tendência entre sessões.",
-      "Nas fases iniciais, mire esforços percebidos leves a moderados (em geral 3–5).",
+      "Nas fases iniciais, mire esforços percebidos leves a moderados (em geral 3 a 5).",
     ],
     escala: [
       { valor: "0", rotulo: "Repouso" },
       { valor: "1", rotulo: "Muito leve" },
-      { valor: "2–3", rotulo: "Leve" },
-      { valor: "4–5", rotulo: "Moderado: faixa comum de trabalho inicial" },
-      { valor: "6–7", rotulo: "Intenso" },
-      { valor: "8–9", rotulo: "Muito intenso" },
+      { valor: "2 a 3", rotulo: "Leve" },
+      { valor: "4 a 5", rotulo: "Moderado: faixa comum de trabalho inicial" },
+      { valor: "6 a 7", rotulo: "Intenso" },
+      { valor: "8 a 9", rotulo: "Muito intenso" },
       { valor: "10", rotulo: "Máximo" },
     ],
     referencia:
@@ -193,15 +193,15 @@ export const monitoringParameters: MonitoringParameter[] = [
     comoAplicar: [
       "Apresente a escala: 0 = nenhuma falta de ar, 10 = máxima.",
       "Pergunte durante e logo após os blocos de esforço.",
-      "Observe se a falta de ar cede com 1–2 minutos de pausa.",
+      "Observe se a falta de ar cede com 1 a 2 minutos de pausa.",
       "Registre o pico da sessão e compare entre sessões.",
     ],
     escala: [
       { valor: "0", rotulo: "Nenhuma" },
-      { valor: "1–2", rotulo: "Leve: esperada no esforço" },
-      { valor: "3–4", rotulo: "Moderada: observe a recuperação na pausa" },
-      { valor: "5–6", rotulo: "Intensa: reduza o ritmo" },
-      { valor: "7–9", rotulo: "Muito intensa: pausa imediata" },
+      { valor: "1 a 2", rotulo: "Leve: esperada no esforço" },
+      { valor: "3 a 4", rotulo: "Moderada: observe a recuperação na pausa" },
+      { valor: "5 a 6", rotulo: "Intensa: reduza o ritmo" },
+      { valor: "7 a 9", rotulo: "Muito intensa: pausa imediata" },
       { valor: "10", rotulo: "Máxima: interromper e reavaliar" },
     ],
     referencia:
@@ -224,18 +224,18 @@ export const monitoringParameters: MonitoringParameter[] = [
     comoAplicar: [
       "Pergunte antes, durante e depois: “De 0 a 10, quanto dói agora?”",
       "Registre onde dói e em qual movimento/exercício apareceu.",
-      "Compare com as 24–48h seguintes: dor que aumenta depois da sessão também conta.",
+      "Compare com as 24 a 48h seguintes: dor que aumenta depois da sessão também conta.",
       "Regra prática prudente: dor leve (≤3) que não piora tende a ser tolerável; dor crescente pede ajuste.",
     ],
     escala: [
       { valor: "0", rotulo: "Sem dor" },
-      { valor: "1–3", rotulo: "Leve: em geral tolerável se não piora" },
-      { valor: "4–6", rotulo: "Moderada: ajuste amplitude/carga" },
-      { valor: "7–9", rotulo: "Intensa: interrompa o exercício que provoca" },
+      { valor: "1 a 3", rotulo: "Leve: em geral tolerável se não piora" },
+      { valor: "4 a 6", rotulo: "Moderada: ajuste amplitude/carga" },
+      { valor: "7 a 9", rotulo: "Intensa: interrompa o exercício que provoca" },
       { valor: "10", rotulo: "Pior dor imaginável: interromper e reavaliar" },
     ],
     referencia:
-      "Escala numérica de dor 0–10 (END/NRS), amplamente usada na clínica e na fisioterapia. Valide com a diretriz do seu contexto.",
+      "Escala numérica de dor 0 a 10 (END/NRS), amplamente usada na clínica e na fisioterapia. Valide com a diretriz do seu contexto.",
     ficha: "escala",
   },
   {
@@ -252,7 +252,7 @@ export const monitoringParameters: MonitoringParameter[] = [
     gruposRelevantes: ["idoso-destreinado", "obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3", "diabetes-tipo-2"],
     modalidadesUteis: ["m-musculacao", "m-combinado", "m-caminhada"],
     comoAplicar: [
-      "Na sessão seguinte, pergunte: “Como ficou o cansaço nas 24–48h depois do treino?”",
+      "Na sessão seguinte, pergunte: “Como ficou o cansaço nas 24 a 48h depois do treino?”",
       "Classifique em 3 níveis: recuperado · cansado mas treinável · exausto.",
       "Fadiga que não se resolve até a próxima sessão sugere reduzir a dose (volume/intensidade).",
     ],
@@ -289,10 +289,10 @@ export const monitoringParameters: MonitoringParameter[] = [
     gruposRelevantes: ["obesidade-grau-1", "obesidade-grau-2", "obesidade-grau-3", "idoso-destreinado", "diabetes-tipo-2", "hipertensao-estagio-1", "hipertensao-estagio-2"],
     modalidadesUteis: ["m-caminhada", "m-hidro", "m-musculacao"],
     comoAplicar: [
-      "Combine com o aluno uma meta semanal realista (ex.: 2–3 sessões).",
+      "Combine com o aluno uma meta semanal realista (ex.: 2 a 3 sessões).",
       "Registre TODA sessão realizada na ficha semanal, inclusive as feitas sem supervisão.",
-      "Reveja a cada 2–4 semanas: se a adesão cair, simplifique o plano antes de intensificar.",
-      "Imprima a ficha de registro (botão abaixo) e use como combinado visível com o aluno.",
+      "Reveja a cada 2 a 4 semanas: se a adesão cair, simplifique o plano antes de intensificar.",
+      "Imprima a ficha de registro e use como combinado visível com o aluno.",
     ],
     referencia:
       "Na prática, a adesão é um dos preditores mais fortes de resultado e de abandono a longo prazo.",

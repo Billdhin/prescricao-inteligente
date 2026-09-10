@@ -1,6 +1,6 @@
 /**
  * SEMÁFORO DE LIBERAÇÃO — gate de segurança pré-sessão do Motor RCD.
- * Checklist de 30–60 segundos, específico por grupo/condição, com resultado
+ * Checklist de 30 a 60 segundos, específico por grupo/condição, com resultado
  * determinístico: VERDE (liberado) · AMARELO (liberado com ajuste) · VERMELHO
  * (não liberado hoje — reavaliar/considerar encaminhamento).
  *
@@ -75,10 +75,10 @@ function mkObesidadeSemaforo(slug: string, grau: 1 | 2 | 3): ChecklistSemaforo {
         pergunta: "Dor articular (joelho/lombar) hoje, de 0 a 10?",
         porque: "A dor do dia decide o impacto tolerável: a modalidade se adapta ao corpo, não o contrário.",
         opcoes: [
-          { valor: "leve", rotulo: "0–3 (leve)", cor: "verde" },
+          { valor: "leve", rotulo: "0 a 3 (leve)", cor: "verde" },
           {
             valor: "moderada",
-            rotulo: "4–6 (moderada)",
+            rotulo: "4 a 6 (moderada)",
             cor: "amarelo",
             acao:
               grau === 1
@@ -87,7 +87,7 @@ function mkObesidadeSemaforo(slug: string, grau: 1 | 2 | 3): ChecklistSemaforo {
           },
           {
             valor: "alta",
-            rotulo: "7–10 (intensa)",
+            rotulo: "7 a 10 (intensa)",
             cor: "vermelho",
             acao: "Não carregue essa articulação hoje; considere sessão só de mobilidade/aquático e reavaliação.",
           },
@@ -379,7 +379,7 @@ export const semaforos: ChecklistSemaforo[] = [
       },
       {
         id: "alimentacao",
-        pergunta: "Alimentou-se nas últimas 2–3 horas?",
+        pergunta: "Alimentou-se nas últimas 2 a 3 horas?",
         porque: "Treinar em jejum prolongado aumenta o risco de hipoglicemia durante a sessão.",
         opcoes: [
           { valor: "sim", rotulo: "Sim", cor: "verde" },
@@ -513,16 +513,16 @@ export const semaforos: ChecklistSemaforo[] = [
         pergunta: "Dor lombar agora, de 0 a 10?",
         porque: "A dor do dia calibra amplitude e carga: movimento tolerável costuma ajudar na recuperação; dor crescente atrapalha.",
         opcoes: [
-          { valor: "leve", rotulo: "0–3 (leve)", cor: "verde" },
+          { valor: "leve", rotulo: "0 a 3 (leve)", cor: "verde" },
           {
             valor: "moderada",
-            rotulo: "4–6 (moderada)",
+            rotulo: "4 a 6 (moderada)",
             cor: "amarelo",
             acao: "Reduza amplitude/carga nos padrões que provocam; priorize exercícios que aliviam (ex.: core no solo).",
           },
           {
             valor: "alta",
-            rotulo: "7–10 (intensa)",
+            rotulo: "7 a 10 (intensa)",
             cor: "vermelho",
             acao: "Sessão de alívio apenas (mobilidade suave, posições confortáveis); se persistir, oriente avaliação.",
           },
@@ -567,16 +567,16 @@ export const semaforos: ChecklistSemaforo[] = [
         pergunta: "Dor no joelho agora, de 0 a 10?",
         porque: "A dor do dia escolhe a modalidade: baixo impacto quando ela sobe, progressão quando dá trégua.",
         opcoes: [
-          { valor: "leve", rotulo: "0–3 (leve)", cor: "verde" },
+          { valor: "leve", rotulo: "0 a 3 (leve)", cor: "verde" },
           {
             valor: "moderada",
-            rotulo: "4–6 (moderada)",
+            rotulo: "4 a 6 (moderada)",
             cor: "amarelo",
             acao: "Troque para baixo impacto (bike, aquático, força sentado) e reduza amplitude nos ângulos que doem.",
           },
           {
             valor: "alta",
-            rotulo: "7–10 (intensa)",
+            rotulo: "7 a 10 (intensa)",
             cor: "vermelho",
             acao: "Sem descarga no joelho hoje; considere sessão alternativa e reavaliação se recorrente.",
           },
@@ -585,8 +585,8 @@ export const semaforos: ChecklistSemaforo[] = [
       },
       {
         id: "resposta-24h",
-        pergunta: "Após a última sessão, a dor voltou ao normal em até 24–48h?",
-        porque: "É a régua clássica de dose na OA: dor que não assenta em 24–48h = dose alta demais.",
+        pergunta: "Após a última sessão, a dor voltou ao normal em até 24 a 48h?",
+        porque: "É a régua clássica de dose na OA: dor que não assenta em 24 a 48h = dose alta demais.",
         opcoes: [
           { valor: "sim", rotulo: "Sim", cor: "verde" },
           {

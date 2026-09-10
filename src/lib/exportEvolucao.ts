@@ -5,6 +5,7 @@ import { METRICAS_EVOLUCAO, type DirMetrica } from "@/components/app/EvolucaoMin
 import { getSpecialGroup } from "@/data/specialGroups";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
+import { numeroBR } from "@/lib/pdfTexto";
 
 /**
  * Tabela de evolução do aluno em PDF, no estilo de um resultado de exame: cada
@@ -78,14 +79,14 @@ export function montarEvolucaoHtml({ aluno, avaliacoes, profissional, cref, marc
       const celulas = serie
         .map((v) =>
           v != null
-            ? `<td style="padding:6px 8px;text-align:right;color:${C.ink};border-bottom:1px solid ${C.linha}">${v}<span style="color:${C.ink2}">${esc(m.unit)}</span></td>`
+            ? `<td style="padding:6px 8px;text-align:right;color:${C.ink};border-bottom:1px solid ${C.linha}">${numeroBR(v)}<span style="color:${C.ink2}">${m.unit.trim() === "%" ? "" : " "}${esc(m.unit.trim())}</span></td>`
             : `<td style="padding:6px 8px;text-align:right;color:${C.ink2};border-bottom:1px solid ${C.linha}">·</td>`,
         )
         .join("");
 
       const celDelta =
         delta != null
-          ? `<td style="padding:6px 8px;text-align:right;font-weight:700;color:${corDeltaPdf(m.dir, delta)};border-bottom:1px solid ${C.linha}">${delta > 0 ? "+" : ""}${delta}<span style="opacity:.7">${esc(m.unit)}</span></td>`
+          ? `<td style="padding:6px 8px;text-align:right;font-weight:700;color:${corDeltaPdf(m.dir, delta)};border-bottom:1px solid ${C.linha}">${delta > 0 ? "+" : ""}${numeroBR(delta)}<span style="opacity:.7">${m.unit.trim() === "%" ? "" : " "}${esc(m.unit.trim())}</span></td>`
           : `<td style="padding:6px 8px;text-align:right;color:${C.ink2};border-bottom:1px solid ${C.linha}">·</td>`;
 
       return `<tr><th style="padding:6px 8px;text-align:left;font-weight:600;color:${C.ink2};border-bottom:1px solid ${C.linha};white-space:nowrap">${esc(m.label)}</th>${celulas}${celDelta}</tr>`;

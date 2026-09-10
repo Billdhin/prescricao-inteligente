@@ -17,19 +17,19 @@ const esc = (s: string) =>
 const AVISO =
   "Conteúdo educacional de apoio à decisão do profissional de Educação Física: não é conduta médica e não substitui avaliação profissional individualizada. Gerado pelo Mapa da Prescrição.";
 
-const CSS = `
+const css = (acento: string) => `
   * { box-sizing: border-box; }
 ${PAPEL_BASE_CSS}
   body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
   .page { max-width: 720px; margin: 0 auto; padding: 32px; }
-  ${cabecalhoCss(C.marca)}
+  ${cabecalhoCss(acento)}
   h1 { font-size: 22px; margin: 20px 0 2px; }
   .meta { font-size: 13px; color: ${C.ink2}; margin-bottom: 18px; }
-  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${C.marca}; margin: 18px 0 8px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${acento}; margin: 18px 0 8px; }
   table { width: 100%; border-collapse: collapse; }
   th, td { border: 1px solid ${C.borda}; padding: 8px 10px; font-size: 13px; text-align: left; vertical-align: top; }
   th { background: ${C.papelSuave}; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; }
-  td.v { font-weight: 800; white-space: nowrap; width: 110px; color: ${C.marca}; }
+  td.v { font-weight: 800; white-space: nowrap; width: 110px; color: ${acento}; }
   ol { margin: 4px 0; padding-left: 20px; font-size: 13px; }
   ol li { margin-bottom: 4px; }
   .ref { font-size: 11px; color: ${C.ink2}; margin-top: 14px; border-top: 1px solid ${C.borda}; padding-top: 10px; }
@@ -47,9 +47,10 @@ function abrir(html: string) {
 
 function shell(titulo: string, corpo: string, ident?: IdentProf) {
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-  <title>${esc(titulo)}</title><style>${CSS}</style></head><body>
+  <title>${esc(titulo)}</title><style>${css(ident?.corPrimaria || C.marca)}</style></head><body>
   <div class="page">
     ${cabecalhoHtml({
+      cor: ident?.corPrimaria || C.marca,
       logoDataUrl: ident?.logoDataUrl,
       logoAltura: 36,
       profissional: ident?.nome || "Mapa da Prescrição",
@@ -69,6 +70,8 @@ export interface IdentProf {
   nome?: string;
   cref?: string;
   logoDataUrl?: string;
+  /** a cor da marca do profissional: sem ela as fichas saíam no azul do produto */
+  corPrimaria?: string;
 }
 
 /** Cartão de escala (PSE, dispneia, dor, teste da fala) + como aplicar. */

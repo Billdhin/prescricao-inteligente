@@ -76,6 +76,7 @@ import { sugerirTroca, type ContextoTroca } from "@/lib/gps/sugerirTroca";
 import type { RestricaoSelecionada } from "@/lib/gps/restricoes";
 import type { Nivel } from "@/data/types";
 import { getParam } from "@/data/monitoringParameters";
+import { chaveDaFase, nomeDaFase, indicesDeCorDasFases } from "@/lib/gps/fasesDoPlano";
 import { getModalidade } from "@/data/modalities";
 import { refCurta } from "@/data/referencias";
 import { exercises } from "@/data/exercises";
@@ -212,25 +213,8 @@ export const CORES_DAS_FASES = [
   { rgb: "122,58,237", forte: "#7A3AED", navy: "#C4B5FD" },
 ] as const;
 
-/** A fase a que o bloco pertence: continuação conta como a mesma fase. */
-export function chaveDaFase(meso: Mesociclo): string {
-  return meso.faseJornada ? `fase-${meso.faseJornada}` : meso.id;
-}
-
-/** O nome da fase, sem o "(continuação)": é assim que ela aparece na legenda. */
-export function nomeDaFase(meso: Mesociclo): string {
-  return rotuloMeso(meso).replace(/\s*\(continuação\)\s*$/i, "");
-}
-
-/** Índice de cor de cada fase, na ordem em que as fases aparecem no plano. */
-export function indicesDeCorDasFases(mesos: Mesociclo[]): Map<string, number> {
-  const m = new Map<string, number>();
-  for (const meso of mesos) {
-    const k = chaveDaFase(meso);
-    if (!m.has(k)) m.set(k, m.size);
-  }
-  return m;
-}
+// A regra de fase vive em lib/gps/fasesDoPlano: o documento impresso usa a mesma.
+export { chaveDaFase, nomeDaFase, indicesDeCorDasFases };
 
 export function corDaFase(indice: number) {
   return CORES_DAS_FASES[indice % CORES_DAS_FASES.length];

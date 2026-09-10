@@ -18,6 +18,7 @@ import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
 import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
+import { numeroBR, semPontoFinal } from "@/lib/pdfTexto";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -71,8 +72,8 @@ export function exportProntuarioPDF({
       const criterios = e.breakdown
         .map(
           (b) =>
-            `<tr><td class="crit">${esc(b.criterio)}</td><td class="pts">${b.peso > 0 ? "+" : ""}${b.peso.toFixed(1)}${
-              b.pontosPossiveis > 0 ? ` / ${b.pontosPossiveis.toFixed(1)}` : ""
+            `<tr><td class="crit">${esc(b.criterio)}</td><td class="pts">${b.peso > 0 ? "+" : ""}${numeroBR(b.peso, 1)}${
+              b.pontosPossiveis > 0 ? ` / ${numeroBR(b.pontosPossiveis, 1)}` : ""
             }</td><td>${esc(b.detalhe)}</td></tr>`,
         )
         .join("");
@@ -168,7 +169,7 @@ export function exportProntuarioPDF({
     ? `<section class="bloco"><h2>Referências</h2><ol class="refs">${biblio
         .map(
           (b) =>
-            `<li>${esc(b.ref.autores)}. ${esc(b.ref.titulo)}. ${esc(b.ref.fonte)}, ${b.ref.ano}.${
+            `<li>${esc(semPontoFinal(b.ref.autores))}. ${esc(semPontoFinal(b.ref.titulo))}. ${esc(b.ref.fonte)}, ${b.ref.ano}.${
               b.ref.doi ? ` <a href="https://doi.org/${esc(b.ref.doi)}">doi:${esc(b.ref.doi)}</a>` : ""
             }</li>`,
         )
@@ -250,7 +251,7 @@ ${PAPEL_BASE_CSS}
     ${cabecalhoHtml({
       cor: C.analise,
       nomeCor: C.ink,
-      espinhaCor: C.marca,
+      espinhaCor: marca?.corPrimaria || C.marca,
       logoDataUrl: marca?.logoDataUrl,
       profissional,
       cref,
@@ -313,7 +314,7 @@ ${PAPEL_BASE_CSS}
     </div>
 
     <div class="foot">
-      Documento de apoio à decisão gerado pelo Mapa da Prescrição (Motor RCD ${esc(prontuario.motorVersao)}),
+      Documento de apoio à decisão gerado pelo Mapa da Prescrição (Motor ${esc(prontuario.motorVersao)}),
       documento ${docId}. Conteúdo educacional: registra e fundamenta o raciocínio do profissional de
       Educação Física habilitado, que é o responsável pela decisão. Não é conduta médica, diagnóstica ou
       terapêutica e não substitui avaliação médica.

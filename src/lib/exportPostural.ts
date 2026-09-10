@@ -61,7 +61,7 @@ export function exportPosturalPDF({
           return `<tr><td style="padding:3px 6px;border-bottom:1px solid ${C.linha}">${esc(cp.regiao)}</td><td style="padding:3px 6px;border-bottom:1px solid ${C.linha}">${cell}${nota}</td></tr>`;
         })
         .join("");
-      return `<h2 style="font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:${cor};margin:16px 0 6px">${esc(ROTULO_VISTA[v])}</h2><table style="width:100%;border-collapse:collapse;font-size:12px">${linhas}</table>`;
+      return `<h2 style="font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:${cor};margin:16px 0 6px">${esc(ROTULO_VISTA[v])}</h2><table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed"><colgroup><col style="width:34%"><col></colgroup>${linhas}</table>`;
     })
     .join("");
 

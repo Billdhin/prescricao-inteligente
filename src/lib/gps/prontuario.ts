@@ -84,11 +84,21 @@ export function montarProntuario({
 
   // Descartados relevantes: os próximos do ranking (o profissional consideraria)
   // — com o critério que mais pesou contra cada um.
+  /*
+   * EMPATE NÃO É DESCARTE POR CRITÉRIO. Quando o descartado tem a mesma adequação do último
+   * escolhido, nenhum critério pesou contra ele: ficou fora pelo tamanho da seleção. Antes o
+   * documento apontava o critério com a menor folga, e o papel dizia "Critério decisivo:
+   * Restrição: Sem restrição declarada", um motivo que é elogio, repetido em cinco linhas.
+   */
+  const corte = escolhidos.length ? Math.round(escolhidos[escolhidos.length - 1].score) : null;
   const descartados = results.slice(topN, topN + 5).map((r) => ({
     slug: r.exercise.slug,
     nome: r.exercise.nome,
     score: r.score,
-    motivoPrincipal: motivoPrincipal(r),
+    motivoPrincipal:
+      corte != null && Math.round(r.score) >= corte
+        ? `Mesma adequação dos escolhidos: ficou de fora pelo limite de ${topN} exercícios da seleção.`
+        : motivoPrincipal(r),
   }));
 
   // Bibliografia: regras do grupo + parâmetros monitorados + semáforo do dia.

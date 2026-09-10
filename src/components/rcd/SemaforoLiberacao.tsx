@@ -93,7 +93,7 @@ export function SemaforoLiberacao({
   const nomeDocumento = grupo?.rotuloAluno ?? "Checklist geral do dia";
   const addLiberacao = useAlunos((s) => s.addLiberacao);
   const registrarDecisaoContraria = useAlunos((s) => s.registrarDecisaoContraria);
-  const { name: profNome, cref, logoDataUrl } = useUser();
+  const { name: profNome, cref, logoDataUrl, corPrimaria } = useUser();
   const [respostas, setRespostas] = React.useState<Record<string, string>>({});
   const [registrado, setRegistrado] = React.useState(false);
   // Id da liberação que acabou de ser gravada: é nela que a conduta divergente se pendura.
@@ -360,7 +360,7 @@ export function SemaforoLiberacao({
                 <Pill tone="success">Registrado no histórico, entra no prontuário</Pill>
                 <button
                   // impresso pode chegar ao aluno: usa o nome de programa digno, não o rótulo clínico
-                  onClick={() => printSemaforo(nomeDocumento, checklist, respostas, resultado, alunoNome, profNome, cref, logoDataUrl || undefined)}
+                  onClick={() => printSemaforo(nomeDocumento, checklist, respostas, resultado, alunoNome, profNome, cref, logoDataUrl || undefined, corPrimaria || undefined)}
                   className={buttonClasses("outline", "sm")}
                 >
                   <Printer className="h-4 w-4" /> Imprimir
