@@ -24,10 +24,11 @@ import {
  * - **Grupos abertos, e não acordeão.** Três dos quatro grupos nasciam fechados, e a pergunta
  *   "o aluno toma alguma coisa para o coração?" exigia abrir o grupo para ver que opções havia.
  *   São 11 classes ao todo: cabem abertas, e fechar um grupo só esconde a resposta.
- * - **O cartão mostra o que reconhece a classe.** Na hora de marcar, o profissional está com a
+ * - **A linha mostra o que reconhece a classe.** Na hora de marcar, o profissional está com a
  *   receita ou com a fala do aluno ("ele toma losartana"), e o que casa com isso é o PRINCÍPIO
- *   ATIVO, não o parágrafo sobre a classe. O parágrafo foi para o (i), que abre sem desmarcar,
- *   e para o `title`; o que muda no treino aparece na coluna da direita, que é quando importa.
+ *   ATIVO, não o parágrafo sobre a classe. O parágrafo foi para o (i), que abre dentro da linha
+ *   sem desmarcar; o que muda no treino aparece na coluna da direita, que é quando importa.
+ *   (Até 11/09/2026 eram cartões numa grade de três; ver `LinhaClasse` para o porquê da troca.)
  * - **O que foi marcado fica no topo, em fichas removíveis.** "Selecionados" era um resumo no
  *   rodapé, abaixo de onze cartões e das perguntas de contexto: para conferir o que tinha sido
  *   declarado era preciso rolar até o fim. Agora a resposta está na primeira linha.
@@ -71,10 +72,10 @@ export function MedicamentosDoPerfil({
 }) {
   const [busca, setBusca] = React.useState("");
   const [soMarcadas, setSoMarcadas] = React.useState(false);
+  // Um (i) aberto por vez: abrir outro fecha este, e a lista não vira um folheto.
   const [infoAberta, setInfoAberta] = React.useState<FarmacoClasseId | null>(null);
 
   const selMap = React.useMemo(() => new Map(value.map((f) => [f.classe, f])), [value]);
-  const ativos = farmacosAtivos(value);
 
   const toggle = (classe: FarmacoClasseId) => {
     if (selMap.has(classe)) {
@@ -110,27 +111,6 @@ export function MedicamentosDoPerfil({
     grupo: g,
     itens: CATALOGO_FARMACOS.filter((it) => it.grupo === g.id && casa(it)),
   })).filter((x) => x.itens.length > 0);
-
-  const comDetalhe = ativos
-    .map((f) => ({ f, item: CATALOGO_FARMACOS.find((it) => it.classe === f.classe) }))
-    .filter((x): x is { f: FarmacoSelecionado; item: FarmacoCatalogoItem } => Boolean(x.item));
-
-  // Fecha o (i) com Escape ou com um toque fora do cartão dele. Tocar em OUTRO cartão fecha
-  // este e segue o gesto normalmente (marca aquele), sem exigir dois toques.
-  React.useEffect(() => {
-    if (!infoAberta) return;
-    const aoTeclar = (e: KeyboardEvent) => e.key === "Escape" && setInfoAberta(null);
-    const aoTocar = (e: PointerEvent) => {
-      const cartao = (e.target as Element | null)?.closest?.("[data-cartao-classe]");
-      if (cartao?.getAttribute("data-cartao-classe") !== infoAberta) setInfoAberta(null);
-    };
-    window.addEventListener("keydown", aoTeclar);
-    window.addEventListener("pointerdown", aoTocar);
-    return () => {
-      window.removeEventListener("keydown", aoTeclar);
-      window.removeEventListener("pointerdown", aoTocar);
-    };
-  }, [infoAberta]);
 
   return (
     <div className="space-y-4">
@@ -245,52 +225,26 @@ export function MedicamentosDoPerfil({
                   : `${itens.length} classe${itens.length === 1 ? "" : "s"}`}
               </span>
             </div>
-            <div className="mt-2 grid items-stretch gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
-              {itens.map((it) => (
-                <CartaoClasse
-                  key={it.classe}
-                  item={it}
-                  marcada={selMap.has(it.classe)}
-                  onToggle={() => toggle(it.classe)}
-                  infoAberta={infoAberta === it.classe}
-                  onInfo={() => setInfoAberta((a) => (a === it.classe ? null : it.classe))}
-                  idBase={idBase}
-                />
-              ))}
-            </div>
+            <ul className="mt-2 divide-y divide-border overflow-hidden rounded-control border border-border bg-surface">
+              {itens.map((it) => {
+                const f = selMap.get(it.classe);
+                return (
+                  <LinhaClasse
+                    key={it.classe}
+                    item={it}
+                    selecionado={f}
+                    onToggle={() => toggle(it.classe)}
+                    onPatch={(p) => patch(it.classe, p)}
+                    infoAberta={infoAberta === it.classe}
+                    onInfo={() => setInfoAberta((a) => (a === it.classe ? null : it.classe))}
+                    idBase={idBase}
+                  />
+                );
+              })}
+            </ul>
           </section>
         );
       })}
-
-      {/* Detalhe das marcadas: as duas perguntas de contexto. Ficam depois da lista porque
-          só existem para o que foi marcado, e respondê-las não é condição para marcar. */}
-      {comDetalhe.length > 0 && (
-        <div className="space-y-3 border-t border-surface-mute pt-4">
-          <h4 className="text-2xs font-bold uppercase tracking-[0.12em] text-ink-3">Sobre o que foi marcado</h4>
-          {comDetalhe.map(({ f, item }) => (
-            <div key={f.classe} className="space-y-3 rounded-control border border-border bg-surface p-3.5">
-              <p className="font-semibold text-ink">{item.titulo}</p>
-              <Pergunta rotulo="De onde veio essa informação?">
-                <Radios
-                  rotulo={`${item.titulo}: de onde veio essa informação`}
-                  opcoes={FONTE_INFORMACAO_OPCOES}
-                  valor={f.fonte}
-                  onChange={(v) => patch(f.classe, { fonte: v })}
-                />
-              </Pergunta>
-              <Pergunta rotulo="Houve mudança recente no tratamento?">
-                <Radios
-                  rotulo={`${item.titulo}: houve mudança recente no tratamento`}
-                  opcoes={MUDANCA_RECENTE_OPCOES}
-                  valor={f.mudancaRecente}
-                  onChange={(v) => patch(f.classe, { mudancaRecente: v })}
-                />
-              </Pergunta>
-              <p className="text-2xs leading-relaxed text-ink-3">{item.devolucao}</p>
-            </div>
-          ))}
-        </div>
-      )}
 
       <p className="text-xs leading-relaxed text-ink-3">
         Registre apenas a classe em uso. O sistema não pede nem guarda quantidade, esquema de uso, marca ou
@@ -301,104 +255,142 @@ export function MedicamentosDoPerfil({
   );
 }
 
-/* ------------------------------ O cartão ------------------------------ */
+/* ------------------------------ A linha ------------------------------ */
+
+/** Rótulos curtos das perguntas de contexto: dentro da linha da classe, a frase inteira do
+ *  catálogo ("Vi na receita ou no relatório médico") empurrava cada ficha para duas linhas.
+ *  A frase inteira continua no nome acessível e no que o resto do sistema imprime. */
+const FONTE_CURTA: Record<string, string> = {
+  receita: "Receita ou relatório",
+  relato_aluno: "O aluno relatou",
+  relato_responsavel: "Familiar relatou",
+  nao_sei: "Não sei",
+};
+const MUDANCA_CURTA: Record<string, string> = { sim: "Sim", nao: "Não", nao_sei: "Não sei" };
 
 /**
- * Um cartão por classe: marcar é o cartão inteiro, e o (i) abre o que a classe é sem marcar.
+ * UMA LINHA POR CLASSE, e não um cartão numa grade de três.
  *
- * São DOIS botões irmãos, e não um dentro do outro: botão dentro de botão é HTML inválido e o
- * leitor de tela anunciaria o (i) como parte do "marcar". A borda da marcada engrossa por
- * `ring`, e não por `border-2`, para o cartão não crescer um pixel e empurrar a grade.
+ * O cartão falhava de três jeitos, todos vistos na tela do Filipe em 11/09/2026: em três
+ * colunas o nome da classe quebrava em três linhas e os princípios ativos (o que casa com a
+ * receita) saíam cortados em "carve..."; o (i) abria um balão flutuante que cobria os grupos de
+ * baixo inteiros; e as perguntas sobre o que foi marcado moravam no fim da página, longe da
+ * classe a que se referem.
+ *
+ * Na linha:
+ * - os princípios ativos aparecem inteiros ao lado do nome (quebram para baixo se faltar espaço);
+ * - o (i) abre o detalhe DENTRO da linha, empurrando o resto em vez de cobrir;
+ * - a classe marcada ganha, logo abaixo, as duas perguntas de contexto em fichas curtas.
+ *
+ * Marcar e abrir o (i) são DOIS botões irmãos, e não um dentro do outro: botão dentro de botão
+ * é HTML inválido e o leitor de tela anunciaria o (i) como parte do "marcar".
  */
-function CartaoClasse({
+function LinhaClasse({
   item,
-  marcada,
+  selecionado,
   onToggle,
+  onPatch,
   infoAberta,
   onInfo,
   idBase,
 }: {
   item: FarmacoCatalogoItem;
-  marcada: boolean;
+  selecionado?: FarmacoSelecionado;
   onToggle: () => void;
+  onPatch: (p: Partial<FarmacoSelecionado>) => void;
   infoAberta: boolean;
   onInfo: () => void;
   idBase: string;
 }) {
+  const marcada = Boolean(selecionado);
   const idInfo = `${idBase}-${item.classe}-info`;
   return (
-    <div className="relative" data-cartao-classe={item.classe}>
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={marcada}
-        onClick={onToggle}
-        title={item.descricao}
-        className={cn(
-          // Compacto como no protótipo (46 px, raio 12): onze cartões de 64 px empilhados numa
-          // coluna de celular eram três telas de rolagem para responder uma pergunta. O cartão
-          // de opção fica no raio de controle; rounded-card é da família permitida, mas 20 px
-          // num cartão de 46 px vira pílula.
-          "flex h-full min-h-[46px] w-full items-center gap-2.5 rounded-control border py-2.5 pl-3 pr-11 text-left transition-colors",
-          marcada
-            ? "border-primary bg-primary-tint/50 ring-1 ring-primary"
-            : "border-border bg-surface hover:border-ink-4",
-        )}
-      >
-        <Caixa marcada={marcada} />
-        <span className="min-w-0">
+    <li className={cn("transition-colors", marcada && "bg-primary-tint/40")}>
+      <div className="flex items-stretch">
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={marcada}
+          onClick={onToggle}
+          className={cn(
+            "flex min-h-[48px] min-w-0 flex-1 items-start gap-3 py-3 pl-3.5 text-left transition-colors",
+            !marcada && "hover:bg-surface-soft",
+          )}
+        >
+          {/* A caixa acompanha a primeira linha do nome, e não o centro: no celular a linha
+              chega a três andares e a caixa no meio parecia marcar os princípios ativos. */}
+          <span className="mt-px">
+            <Caixa marcada={marcada} />
+          </span>
+          <span className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className={cn("text-[13.5px] font-semibold leading-snug", marcada ? "text-primary-texto" : "text-ink")}>
+              {item.titulo}
+            </span>
+            {item.exemplos.length > 0 && (
+              <span className="text-xs leading-snug text-ink-2">{item.exemplos.join(", ")}</span>
+            )}
+          </span>
+        </button>
+        {/* Círculo de 22 px à vista, 48 px de toque em volta. */}
+        <button
+          type="button"
+          onClick={onInfo}
+          aria-expanded={infoAberta}
+          aria-controls={idInfo}
+          aria-label={`${infoAberta ? "Fechar" : "Abrir"} o que é ${item.titulo}`}
+          className="group flex w-12 shrink-0 justify-center pt-2.5"
+        >
           <span
             className={cn(
-              "block text-[13.5px] font-semibold leading-[1.3]",
-              marcada ? "text-primary-texto" : "text-ink",
+              "grid h-[22px] w-[22px] place-items-center rounded-full transition-colors",
+              infoAberta ? "bg-ink text-surface" : "bg-bg text-ink-2 ring-1 ring-inset ring-border group-hover:text-ink",
             )}
           >
-            {item.titulo}
+            <Info aria-hidden className="h-3 w-3" />
           </span>
-          {item.exemplos.length > 0 && (
-            <span className="block truncate text-xs text-ink-2">{item.exemplos.join(", ")}</span>
-          )}
-        </span>
-      </button>
-      {/* O (i) tem o desenho de 22 px do protótipo; o `before` guarda 32 px de toque. */}
-      <button
-        type="button"
-        onClick={onInfo}
-        aria-expanded={infoAberta}
-        aria-controls={idInfo}
-        aria-label={`O que é ${item.titulo}`}
-        className={cn(
-          "absolute right-3 top-1/2 grid h-[22px] w-[22px] -translate-y-1/2 place-items-center rounded-full transition-colors before:absolute before:-inset-[5px] before:content-['']",
-          infoAberta ? "bg-ink text-surface" : "bg-bg text-ink-2 ring-1 ring-inset ring-border hover:text-ink",
-        )}
-      >
-        <Info aria-hidden className="h-3 w-3" />
-      </button>
+        </button>
+      </div>
+
       {infoAberta && (
-        <div
-          id={idInfo}
-          role="note"
-          className="absolute left-0 right-0 top-full z-20 mt-2 space-y-2 rounded-control border border-border bg-surface p-4 text-sm shadow-lift"
-        >
-          <p className="leading-relaxed text-ink-2">{item.descricao}</p>
-          {item.exemplos.length > 0 && (
-            <p className="text-xs leading-relaxed text-ink-3">
-              <b className="font-semibold text-ink-2">Princípios ativos:</b> {item.exemplos.join(", ")}.
-            </p>
-          )}
+        <div id={idInfo} className="space-y-2 pb-3 pl-[44px] pr-4 text-[13px] leading-relaxed">
+          <p className="text-ink-2">{item.descricao}</p>
           {item.efeitos.length > 0 && (
-            <ul className="space-y-1 border-t border-border pt-2">
+            <ul className="space-y-1">
               {item.efeitos.map((e) => (
                 <li key={e} className="flex gap-2 text-xs leading-relaxed text-ink-2">
-                  <span aria-hidden className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
+                  <span aria-hidden className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-ink-3" />
                   {e}
                 </li>
               ))}
             </ul>
           )}
+          <p className="text-2xs leading-relaxed text-ink-3">{item.devolucao}</p>
         </div>
       )}
-    </div>
+
+      {/* As duas perguntas de contexto só existem para o que foi marcado, e respondê-las não é
+          condição para marcar: ficam logo abaixo da classe, em fichas curtas e opcionais. */}
+      {selecionado && (
+        <div className="grid gap-x-3 gap-y-2 pb-3 pl-[44px] pr-4 sm:grid-cols-[auto_1fr] sm:items-center">
+          <span className="text-xs font-semibold text-ink-2">De onde veio a informação</span>
+          <Radios
+            rotulo={`${item.titulo}: de onde veio essa informação`}
+            opcoes={FONTE_INFORMACAO_OPCOES}
+            curtos={FONTE_CURTA}
+            valor={selecionado.fonte}
+            onChange={(v) => onPatch({ fonte: v })}
+          />
+          <span className="text-xs font-semibold text-ink-2">Mudança recente no tratamento</span>
+          <Radios
+            rotulo={`${item.titulo}: houve mudança recente no tratamento`}
+            opcoes={MUDANCA_RECENTE_OPCOES}
+            curtos={MUDANCA_CURTA}
+            valor={selecionado.mudancaRecente}
+            onChange={(v) => onPatch({ mudancaRecente: v })}
+          />
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -481,24 +473,18 @@ function Caixa({ marcada }: { marcada: boolean }) {
   );
 }
 
-function Pergunta({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div className="mb-1.5 text-xs font-semibold text-ink-2">{rotulo}</div>
-      {children}
-    </div>
-  );
-}
-
 function Radios<T extends string>({
   rotulo,
   opcoes,
+  curtos,
   valor,
   onChange,
 }: {
   /** o nome do grupo para leitor de tela: a pergunta visível fica fora do grupo */
   rotulo: string;
   opcoes: readonly { id: T; rotulo: string }[];
+  /** rótulo visível mais curto; a frase inteira do catálogo fica no nome acessível */
+  curtos?: Record<string, string>;
   valor?: T;
   onChange: (v: T) => void;
 }) {
@@ -506,19 +492,23 @@ function Radios<T extends string>({
     <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={rotulo}>
       {opcoes.map((o) => {
         const on = valor === o.id;
+        const curto = curtos?.[o.id];
         return (
           <button
             key={o.id}
             type="button"
             role="radio"
             aria-checked={on}
+            // O nome acessível fica sendo o texto visível (quem dita por voz fala o que vê);
+            // a frase inteira aparece no `title`, e a pergunta vem do nome do grupo.
+            title={curto ? o.rotulo : undefined}
             onClick={() => onChange(o.id)}
             className={cn(
-              "min-h-[36px] rounded-full border px-3 text-xs font-medium transition-colors",
+              "min-h-[32px] rounded-full border px-3 text-xs font-medium transition-colors",
               on ? "border-primary bg-primary text-on-primary" : "border-border bg-surface text-ink-2 hover:border-primary/50",
             )}
           >
-            {o.rotulo}
+            {curto ?? o.rotulo}
           </button>
         );
       })}
