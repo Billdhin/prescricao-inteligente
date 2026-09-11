@@ -56,6 +56,7 @@ import { linhaObjetivos } from "@/lib/gps/objetivos";
 import { estadoSemaforo, type EstadoSemaforo } from "@/lib/gps/semaforoDiario";
 import { sequenciaDias } from "@/lib/gamificacao";
 import { SemaforoLiberacao } from "@/components/rcd/SemaforoLiberacao";
+import { HistoricoSemaforo } from "@/components/rcd/HistoricoSemaforo";
 import { useCloudAuth } from "@/lib/backend/cloudAuth";
 import { statusAcessoAluno, type ConviteAluno } from "@/lib/backend/supabaseRepo";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -2015,56 +2016,9 @@ function SemaforoAba({
 
         <Ultimos30DiasCard dias={dias30} />
 
-        {/* Histórico completo */}
-        <Card className="p-5 md:p-6">
-          <h2 className="mb-3 font-display text-lg font-bold text-ink">
-            Histórico {historico.length > 0 && <span className="text-ink-3">· {historico.length}</span>}
-          </h2>
-          {historico.length === 0 ? (
-            <p className="py-6 text-center text-sm text-ink-2">Nenhum semáforo registrado ainda.</p>
-          ) : (
-            <ol className="space-y-3">
-              {historico.map((l) => {
-                const c = COR_SEMAFORO[l.resultado];
-                const bordaL =
-                  l.resultado === "verde" ? "border-l-success" : l.resultado === "amarelo" ? "border-l-warning" : "border-l-danger";
-                return (
-                  <li key={l.id} className={cn("rounded-xl border border-l-4 border-border p-3", bordaL)}>
-                    <div className="flex items-center gap-2">
-                      <span aria-hidden className={cn("h-2.5 w-2.5 shrink-0 rounded-full", c.dot)} />
-                      <span className="font-semibold text-ink">{rotuloResultado(l.resultado)}</span>
-                      <span className="tabular ml-auto text-xs text-ink-3">{fmtData(l.data)}</span>
-                    </div>
-                    {l.ajustes.length > 0 && (
-                      <ul className="mt-2 space-y-1.5 border-t border-border pt-2">
-                        {l.ajustes.map((a) => (
-                          <li key={a.pergunta} className="flex gap-2 text-sm text-ink-2">
-                            <span aria-hidden className={cn("mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full", c.dot)} />
-                            <span>
-                              <span className="font-semibold text-ink">{a.acao}</span>{" "}
-                              <span className="text-xs text-ink-3">({a.pergunta})</span>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {/* A conduta divergente fica LADO A LADO com o resultado, e não numa aba
-                        separada: é a distância entre os dois que documenta a decisão. */}
-                    {l.decisaoContraria && (
-                      <div className="mt-2 rounded-control border border-border bg-surface-soft p-2.5">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-ink-3">
-                          Conduta do profissional
-                        </p>
-                        <p className="mt-1 text-sm text-ink">{l.decisaoContraria.justificativa}</p>
-                        <p className="mt-1 text-xs text-ink-3">Registrada em {fmtData(l.decisaoContraria.em)}</p>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-        </Card>
+        {/* O histórico por mês: o mês corrente aberto, os anteriores em uma linha de resumo e
+            o detalhe (ajustes, conduta) só na linha que tem. */}
+        <HistoricoSemaforo historico={historico} fmtData={fmtData} />
       </div>
 
       {/* Coluna de apoio */}
