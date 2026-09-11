@@ -260,8 +260,8 @@ export function aplicarDeclaracao(aluno: Aluno, d: DeclaracaoAluno, agora = Date
       return { equipamentos: ids };
     }
     case "remedios": {
-      // "Não tomo nenhum" vira nota, e não estado da ficha: a ficha não tem "nenhuma
-      // medicação" de propósito (FarmacosSelector), e quem fecha a seção é o profissional.
+      // "Não tomo nenhum" vira nota, e não estado da ficha: o "Nenhuma medicação" da ficha
+      // (`farmacosNenhum`) é resposta do profissional, e quem fecha a seção é ele.
       if (d.valor.trim() === NENHUM_REMEDIO) return nota("Remédios: disse que não toma remédio de uso contínuo");
       const { reconhecidos, desconhecidos } = classesDosRemedios(d.valor);
       const iso = new Date(agora).toISOString();
@@ -273,6 +273,9 @@ export function aplicarDeclaracao(aluno: Aluno, d: DeclaracaoAluno, agora = Date
       if (novos.length || reconhecidos.length) {
         patch.farmacos = [...(aluno.farmacos ?? []), ...novos];
         patch.farmacosNaoInformado = false;
+        // A classe confirmada desfaz um "Nenhuma medicação" antigo: os dois juntos seriam a
+        // ficha dizendo que ele não toma nada e listando o que ele toma.
+        patch.farmacosNenhum = undefined;
       }
       const partes = [
         reconhecidos.length ? `Remédios ${origem}: ${reconhecidos.map((r) => r.nome).join(", ")}` : "",

@@ -105,20 +105,26 @@ export function MedicamentosDoPerfil({
   const estado: EstadoMedicacao = { farmacos: value, naoInformado, nenhum, descartados };
   const mudar = (p: Partial<EstadoMedicacao>) => onChange({ ...estado, ...p });
 
-  const modo: Modo | null = nenhum ? "nenhum" : naoInformado ? "naosei" : value.length > 0 || vouMarcar ? "marcar" : null;
+  // Classe marcada vence as duas flags: se um dado antigo trouxer as duas coisas juntas (uma
+  // declaração do aluno confirmada depois de um "Nenhuma"), a tela mostra o que está marcado.
+  const modo: Modo | null =
+    value.length > 0 ? "marcar" : nenhum ? "nenhum" : naoInformado ? "naosei" : vouMarcar ? "marcar" : null;
 
   const escolher = (m: Modo) => {
+    // Rádio de verdade: tocar na opção que já está escolhida não faz nada. Ela alternava (a
+    // segunda batida voltava ao branco), e um toque duplo desfazia a resposta que acabou de dar.
+    if (m === modo) return;
     if (m === "marcar") {
       setVouMarcar(true);
       mudar({ nenhum: false, naoInformado: false });
       return;
     }
     // "Nenhuma" e "não sei" apagam as classes marcadas: a declaração contrária venceria em
-    // silêncio, então o aviso traz o Desfazer. Tocar de novo na mesma opção volta ao branco.
+    // silêncio, então o aviso traz o Desfazer.
     const antes = estado;
     setVouMarcar(false);
-    if (m === "nenhum") mudar({ farmacos: [], naoInformado: false, nenhum: !nenhum });
-    else mudar({ farmacos: [], nenhum: false, naoInformado: !naoInformado });
+    if (m === "nenhum") mudar({ farmacos: [], naoInformado: false, nenhum: true });
+    else mudar({ farmacos: [], nenhum: false, naoInformado: true });
     if (value.length > 0) {
       toastDesfazer(
         value.length === 1 ? "1 classe desmarcada." : `${value.length} classes desmarcadas.`,
@@ -141,11 +147,15 @@ export function MedicamentosDoPerfil({
   };
   const desmarcar = (classe: FarmacoClasseId) => mudar({ farmacos: value.filter((f) => f.classe !== classe) });
   const toggle = (classe: FarmacoClasseId) => (selMap.has(classe) ? desmarcar(classe) : marcar(classe));
-  const naoUsa = (classe: FarmacoClasseId) =>
+  // "Usa" e "Não usa" são um par de rádios: repetir a resposta dada não a desfaz (um toque
+  // duplo no "Usa" marcava e desmarcava). Para voltar atrás, a outra opção ou o "×" da ficha.
+  const naoUsa = (classe: FarmacoClasseId) => {
+    if (descartados.includes(classe) && !selMap.has(classe)) return;
     mudar({
       farmacos: value.filter((f) => f.classe !== classe),
-      descartados: descartados.includes(classe) ? descartados.filter((c) => c !== classe) : [...descartados, classe],
+      descartados: descartados.includes(classe) ? descartados : [...descartados, classe],
     });
+  };
   const patch = (classe: FarmacoClasseId, p: Partial<FarmacoSelecionado>) =>
     mudar({ farmacos: value.map((f) => (f.classe === classe ? { ...f, ...p, atualizadoEm: agora() } : f)) });
 
@@ -276,7 +286,7 @@ export function MedicamentosDoPerfil({
                         type="button"
                         role="radio"
                         aria-checked={usa}
-                        onClick={() => (usa ? desmarcar(it.classe) : marcar(it.classe))}
+                        onClick={() => marcar(it.classe)}
                         className={cn(
                           "h-10 rounded-control border px-4 text-[13.5px] font-semibold transition-colors",
                           usa ? "border-primary bg-primary text-on-primary" : "border-border bg-surface text-ink hover:border-ink-3",

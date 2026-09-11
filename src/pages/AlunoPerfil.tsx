@@ -67,8 +67,16 @@ export function AlunoPerfil() {
   // A SEÇÃO VIVE NA URL, pelo mesmo motivo da aba do aluno: guardada só em estado local,
   // ela se perdia toda vez que o profissional saía e voltava, no meio de um formulário de
   // saúde que ele estava preenchendo.
+  //
+  // Sem `?secao=` (logo depois do cadastro, ou pelo "Completar perfil" da ficha), a tela abre
+  // no primeiro passo que falta. Esse passo de ENTRADA é decidido uma vez só: ele era
+  // recalculado a cada resposta, e a resposta que completava o passo (um "Usa" no
+  // betabloqueador) fazia a tela pular sozinha para o seguinte, no meio do preenchimento.
+  // Quem troca de passo é o profissional, pelo trilho ou pelo rodapé.
   const secaoNaUrl = params.get("secao");
-  const secaoPadrao: SecaoPerfilId = aluno ? secaoInicial(aluno) : "basicos";
+  const entrada = React.useRef<{ id: string; secao: SecaoPerfilId } | null>(null);
+  if (aluno && entrada.current?.id !== aluno.id) entrada.current = { id: aluno.id, secao: secaoInicial(aluno) };
+  const secaoPadrao: SecaoPerfilId = entrada.current?.secao ?? "basicos";
   const secao: SecaoPerfilId = secaoNaUrl && ehSecaoPerfil(secaoNaUrl) ? secaoNaUrl : secaoPadrao;
   const setSecao = React.useCallback(
     (nova: SecaoPerfilId) => {
@@ -83,6 +91,12 @@ export function AlunoPerfil() {
     },
     [setParams],
   );
+
+  // E vai para a URL: recarregar a página ou voltar do passo seguinte cai no mesmo lugar, e
+  // não no "primeiro que falta" de agora.
+  React.useEffect(() => {
+    if (!secaoNaUrl && entrada.current) setSecao(entrada.current.secao);
+  }, [secaoNaUrl, setSecao, id]);
 
   if (!aluno) return <Navigate to="/alunos" replace />;
 
