@@ -99,6 +99,8 @@ export class MapaVsl extends HTMLElement {
   private porAba = false;
   private miniFechado = false;
   private observador: IntersectionObserver | null = null;
+  private vigia = { t: 0, quadros: -1, desde: 0 };
+  private ultimaRecuperacao = 0;
   private limpar: (() => void)[] = [];
 
   /** Configuração direta (sem passar pelo registro de vídeos). */
@@ -213,10 +215,18 @@ export class MapaVsl extends HTMLElement {
     this.montado = false;
   }
 
+  /**
+   * Quem toca o HLS. O Chrome e o Edge de computador passaram a responder "maybe" para HLS
+   * nativo, mas esse tocador perde a imagem ao retomar depois de uma pausa longa: o áudio
+   * segue e o quadro congela (medido em 11/09/2026, Chrome 152, pausa de 25 s). O nativo fica
+   * só na Apple, onde é o padrão e o sólido; no resto, hls.js pelo Media Source. Sem nenhum
+   * dos dois, o nativo ainda é melhor que tela de erro.
+   */
   private async carregarFonte() {
     const v = this.video;
-    if (v.canPlayType("application/vnd.apple.mpegurl")) {
-      v.src = this.cfg.src; // Safari e iPhone tocam HLS sozinhos
+    const nativo = !!v.canPlayType("application/vnd.apple.mpegurl");
+    if (nativo && ehApple()) {
+      v.src = this.cfg.src;
       return;
     }
     try {
@@ -233,8 +243,33 @@ export class MapaVsl extends HTMLElement {
       hls.attachMedia(v);
       this.hls = hls;
     } catch {
-      this.mudar("erro");
+      if (nativo) v.src = this.cfg.src;
+      else this.mudar("erro");
     }
+  }
+
+  /**
+   * Vigia da imagem: se o tempo anda (o áudio toca) e quase nenhum quadro novo é mostrado,
+   * o decodificador de vídeo travou. Recupera sem tirar a pessoa do ponto em que está. Só com
+   * a aba visível: em aba escondida o próprio navegador desliga a imagem de propósito.
+   */
+  private vigiarImagem(t: number) {
+    const agora = performance.now();
+    if (agora - this.vigia.desde < 1500) return;
+    const quadros = this.video.getVideoPlaybackQuality?.().totalVideoFrames ?? -1;
+    const travou =
+      quadros >= 0 && document.visibilityState === "visible" && !this.video.paused &&
+      t - this.vigia.t > 1 && quadros - this.vigia.quadros < 3 && agora - this.ultimaRecuperacao > 5000;
+    if (travou) {
+      this.ultimaRecuperacao = agora;
+      if (this.hls) this.hls.recoverMediaError();
+      else this.video.currentTime = t; // obriga o decodificador a buscar o quadro de novo
+    }
+    this.vigia = { t, quadros, desde: agora };
+  }
+
+  private zerarVigia() {
+    this.vigia = { t: this.video.currentTime, quadros: this.video.getVideoPlaybackQuality?.().totalVideoFrames ?? -1, desde: performance.now() };
   }
 
   private decidirInicio() {
@@ -289,6 +324,7 @@ export class MapaVsl extends HTMLElement {
     v.muted = false;
     v.playbackRate = this.cfg.turbo || 1;
     this.porAba = false;
+    this.zerarVigia();
     this.mudar("assistindo");
     void v.play().catch(() => this.mudar("pausado"));
     this.emitir("player:play");
@@ -324,6 +360,7 @@ export class MapaVsl extends HTMLElement {
     const v = this.video, cfg = this.cfg, t = v.currentTime;
     if (this.estado !== "retomar") this.el.barraI.style.transform = `scaleX(${barraExibida(t / cfg.duracao, cfg.barra.modo, cfg.barra.forca).toFixed(4)})`;
     if (this.estado !== "assistindo") return;
+    this.vigiarImagem(t);
 
     if (Math.abs(t - this.ultimoSalvo) >= 2) {
       memoria.salvarPonto(cfg.id, t);
@@ -478,6 +515,14 @@ export class MapaVsl extends HTMLElement {
   private emitir(nome: string, detail: Record<string, unknown> = {}) {
     this.dispatchEvent(new CustomEvent(nome, { detail: { video: this.cfg.id, variante: this.variante, ...detail } }));
   }
+}
+
+/** iPhone, iPad e Safari (inclusive o Chrome do iPhone, que é Safari por dentro). */
+function ehApple(): boolean {
+  const ua = navigator.userAgent;
+  if (/iP(hone|ad|od)/.test(ua)) return true;
+  if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) return true; // iPad em modo computador
+  return /Safari\//.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Android|Firefox/.test(ua);
 }
 
 /** Registra <mapa-vsl> uma vez (idempotente: a landing e a página de apresentação chamam). */
