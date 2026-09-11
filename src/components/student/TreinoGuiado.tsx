@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight, Clock, Check, Maximize2, Dumbbell, Flame, Lightbulb } from "lucide-react";
+import { ChevronLeft, ChevronRight, Timer, Check, Maximize2, Dumbbell, Flame, Lightbulb } from "lucide-react";
 import { cn, withBase } from "@/lib/utils";
 import { ExercicioSheet } from "@/components/student/ExercicioSheet";
 import {
@@ -10,7 +10,7 @@ import {
   iconeModalidade,
   modalidadeDoBloco,
   RegistroBloco,
-  textoDeChipDoAluno,
+  chipsDoGuiado,
   seriesFeitas,
   blocoCompleto,
 } from "@/components/student/blocoRegistro";
@@ -44,6 +44,7 @@ export function TreinoGuiado({
   sessao,
   semana,
   cor,
+  tinta: tintaDada,
   planoId,
   alunoId,
   execucoes,
@@ -59,6 +60,8 @@ export function TreinoGuiado({
   sessao: Sessao;
   semana: number;
   cor: string;
+  /** a tinta do par verificado da marca (parDeMarca); sem ela, calcula por luminância */
+  tinta?: string;
   planoId: string;
   alunoId: string;
   execucoes: Execucao[];
@@ -75,9 +78,20 @@ export function TreinoGuiado({
   onSair: () => void;
 }) {
   const segmentos = agruparBlocosPorMetodo(sessao.blocos);
-  const [idx, setIdx] = React.useState(0);
+  /*
+   * O GUIADO ABRE ONDE O ALUNO PAROU, e não sempre no exercício 1. O início agora diz
+   * "Continuar · 1 de 5 feitos"; abrir no primeiro exercício, já feito, desmentiria o botão
+   * que acabou de ser tocado. O segmento pendente é o primeiro com algum bloco incompleto
+   * (um bi-set só está feito quando os dois estão). Tudo feito: volta ao começo, para revisar.
+   */
+  const [idx, setIdx] = React.useState(() => {
+    const i = segmentos.findIndex((seg) =>
+      (seg.tipo === "grupo" ? seg.blocos : [seg.bloco]).some((b) => !blocoCompleto(b, execucoes, semana)),
+    );
+    return i < 0 ? 0 : i;
+  });
   const [fase, setFase] = React.useState<"guiado" | "conclusao">("guiado");
-  const tinta = corDeContraste(cor);
+  const tinta = tintaDada ?? corDeContraste(cor);
   const primeiroNomeProf = (marcaNome ?? "").split(" ")[0];
 
   // Cronômetro real a partir do "Começar": vira a duração MEDIDA no feedback. Roda só
@@ -119,6 +133,13 @@ export function TreinoGuiado({
   if (fase === "conclusao") {
     const registrados = sessao.blocos.filter((b) => blocoCompleto(b, execucoes, semana)).length;
     const total = sessao.blocos.length;
+    // SÉRIES registradas nesta sessão e nesta semana: cada linha de execução é uma série
+    // gravada (bloco de série única e aeróbio contam uma). É contagem do que foi feito, não do
+    // que foi prescrito.
+    const idsDaSessao = new Set(sessao.blocos.map((b) => b.id));
+    const seriesRegistradas = execucoes.filter(
+      (e) => e.alunoId === alunoId && e.semana === semana && idsDaSessao.has(e.blocoRef),
+    ).length;
     const duracaoMin = Math.max(1, Math.round(((fimMs ?? Date.now()) - inicioRef.current) / 60000));
     const faixaSel = pse != null ? rotuloFaixaPse(pse) : null;
 
@@ -141,42 +162,53 @@ export function TreinoGuiado({
 
     return (
       <div className="min-h-[100dvh] w-full overflow-y-auto bg-bg">
-        <div className="animate-surgir px-4 py-8">
+        <div className="animate-surgir px-3.5 pb-3.5 pt-[18px]">
           <div className="text-center">
-            <span className="mx-auto grid h-20 w-20 place-items-center rounded-full" style={{ background: cor, color: tinta }}>
-              <Check className="h-10 w-10" />
+            <span className="mx-auto mt-1.5 grid h-16 w-16 place-items-center rounded-full" style={{ background: cor, color: tinta }}>
+              <Check className="h-7 w-7" strokeWidth={3} aria-hidden />
             </span>
-            <h2 className="mt-4 font-display text-2xl font-bold text-ink">Treino concluído!</h2>
-            <p className="mt-1 text-sm text-ink-2">
-              {sessao.nome}
+            <h2 className="mt-3 font-display text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink">Treino concluído!</h2>
+            <p className="mt-1 inline-flex flex-wrap items-center justify-center gap-x-1 text-xs text-ink-2">
+              <span>{sessao.nome}</span>
               {/* A sequência só é anunciada quando já existe: "vai a 1" no primeiro
                   treino da vida seria confete sem conteúdo. */}
-              {streakAtual && streakAtual > 0 ? ` · sequência de ${streakAtual} ${streakAtual === 1 ? "dia" : "dias"}` : ""}
+              {streakAtual && streakAtual > 0 ? (
+                <span className="inline-flex items-center gap-1">
+                  · <Flame className="h-3 w-3 text-warning" aria-hidden /> {streakAtual} {streakAtual === 1 ? "dia seguido" : "dias seguidos"}
+                </span>
+              ) : null}
             </p>
           </div>
 
-          {/* Fecho de flexibilidade (onda F): lembrete curto ao encerrar a sessão. */}
+          {/* Fecho de flexibilidade (onda F): lembrete curto ao encerrar a sessão, com o nome
+              do que ele é na frente, como no protótipo. Sem o rótulo, a frase chegava solta. */}
           {sessao.fecho && (
             <div
-              className="mx-auto mt-4 max-w-md rounded-card border border-border bg-surface-soft p-3 text-left"
+              className="mt-3 rounded-control border border-border bg-surface px-3 py-[9px] text-left"
               style={{ borderLeftColor: cor, borderLeftWidth: 3 }}
             >
-              <p className="text-xs text-ink-2">{sessao.fecho}</p>
+              {/* O texto do plano às vezes já abre com o rótulo; ele não se repete. */}
+              <p className="text-2xs leading-[1.45] text-ink-2">
+                <b className="text-ink">Fecho de flexibilidade:</b> {sessao.fecho.replace(/^\s*fecho de flexibilidade\s*:\s*/i, "")}
+              </p>
             </div>
           )}
 
-          {/* Números reais da sessão: o que foi registrado e quanto tempo levou.
-              Pontuação saiu a pedido do Filipe: a proposta é registro clínico,
-              não jogo. */}
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            <NumeroCard valor={`${registrados}/${total}`} rotulo="exercícios" />
-            <NumeroCard valor={`${duracaoMin} min`} rotulo="duração real" />
+          {/* Números reais da sessão: o que foi registrado, quantas séries e quanto tempo
+              levou. "Medidos" porque é o cronômetro, não uma estimativa. Pontuação saiu a
+              pedido do Filipe: a proposta é registro clínico, não jogo. */}
+          <div className="mt-2.5 grid grid-cols-3 gap-1.5">
+            <NumeroCard valor={`${registrados}/${total}`} rotulo={total === 1 ? "exercício" : "exercícios"} />
+            <NumeroCard valor={String(seriesRegistradas)} rotulo={seriesRegistradas === 1 ? "série" : "séries"} />
+            <NumeroCard valor={String(duracaoMin)} rotulo={duracaoMin === 1 ? "minuto medido" : "minutos medidos"} />
           </div>
 
-          {/* Percepção de esforço da SESSÃO (rótulos de p-rpe, escala de Borg). */}
-          <section className="mt-6">
-            <h3 className="font-display text-base font-bold text-ink">Como foi o esforço de hoje?</h3>
-            <div className="mt-3 grid grid-cols-6 gap-2">
+          {/* Percepção de esforço da SESSÃO (rótulos de p-rpe, escala de Borg). As cores por
+              faixa são as de `bandaPse`, compartilhadas com o painel do profissional ("Como o
+              aluno sentiu"): trocar só aqui partiria o "Intenso" em duas cores. */}
+          <section className="mt-3.5">
+            <h3 className="font-display text-sm font-bold text-ink">Como foi o esforço de hoje?</h3>
+            <div className="mt-2 grid grid-cols-6 gap-[5px]">
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => {
                 const sel = pse === n;
                 const { familia, forte } = bandaPse(n);
@@ -189,7 +221,7 @@ export function TreinoGuiado({
                     aria-pressed={sel}
                     aria-label={`Esforço ${n}${rot.rotulo ? ` · ${rot.rotulo}` : ""}`}
                     className={cn(
-                      "flex min-h-[44px] items-center justify-center rounded-full text-base font-bold",
+                      "tabular flex min-h-[44px] items-center justify-center rounded-full text-[12.5px] font-bold",
                       !sel && TINT_PSE[familia],
                       !sel && forte && cn("ring-1 ring-inset", RING_PSE[familia]),
                     )}
@@ -202,34 +234,35 @@ export function TreinoGuiado({
                 );
               })}
             </div>
-            {faixaSel && (
-              <p className="mt-2 text-center text-sm font-semibold text-ink">
-                {faixaSel.faixa} {faixaSel.rotulo}
+            {pse != null && faixaSel && (
+              <p className="mt-1.5 text-center text-[11.5px] font-semibold text-ink">
+                {pse}
+                {faixaSel.rotulo ? ` · ${faixaSel.rotulo}` : ""}
               </p>
             )}
-            <p className="mt-2 text-2xs text-ink-2">
+            <p className="mt-1.5 text-2xs text-ink-2">
               Escala de esforço percebido: {refCurta("borg-1982")}; carga da sessão: {refCurta("foster-2001")}
             </p>
           </section>
 
           {/* Recado opcional ao professor. */}
-          <section className="mt-5">
-            <label htmlFor={obsId} className="block text-sm font-semibold text-ink">
+          <section className="mt-3">
+            <label htmlFor={obsId} className="block text-xs font-semibold text-ink">
               Recado para {primeiroNomeProf || "o seu professor"} <span className="font-normal text-ink-2">(opcional)</span>
             </label>
             <textarea
               id={obsId}
               value={obs}
               onChange={(e) => setObs(e.target.value)}
-              rows={3}
+              rows={2}
               placeholder="Senti o joelho na última série..."
-              className="mt-1.5 w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="mt-1.5 min-h-[52px] w-full rounded-[10px] border border-border bg-surface px-2.5 py-2 text-[11.5px] text-ink placeholder:text-ink-2 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </section>
 
           <button
             onClick={enviar}
-            className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full px-4 text-base font-bold"
+            className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-full px-4 text-sm font-bold"
             style={{ background: cor, color: tinta }}
           >
             Enviar e fechar
@@ -247,36 +280,37 @@ export function TreinoGuiado({
   return (
     <div className="flex h-[100dvh] w-full flex-col bg-bg">
       {/* Cabeçalho: sessão em eyebrow, posição, cronômetro e sair. */}
-      <header className="shrink-0 px-4 pb-3 pt-4">
+      <header className="shrink-0 px-3.5 pb-2.5 pt-4">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <div className="truncate text-2xs font-bold uppercase tracking-wider text-ink-2">{sessao.nome}</div>
-            <div className="font-display text-xl font-bold text-ink">
+            <div className="truncate text-2xs font-bold uppercase tracking-[0.1em] text-ink-2">{sessao.nome}</div>
+            <div className="font-display text-lg font-bold leading-tight tracking-[-0.01em] text-ink">
               Exercício {idx + 1} de {N}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <span className="tabular flex items-center gap-1 text-sm font-semibold text-ink-2">
-              <Clock className="h-4 w-4" aria-hidden />
+            <span className="tabular flex items-center gap-1 text-xs font-semibold text-ink-2">
+              <Timer className="h-3.5 w-3.5" aria-hidden />
+              <span className="sr-only">Tempo de treino </span>
               {mmss}
             </span>
             <button
               onClick={sair}
-              className="inline-flex min-h-[44px] items-center rounded-full px-3 text-sm font-semibold text-ink hover:bg-surface-soft"
+              className="inline-flex min-h-[44px] items-center rounded-full px-2.5 text-xs font-semibold text-ink hover:bg-surface-soft"
             >
               Sair
             </button>
           </div>
         </div>
-        <div className="mt-2.5 h-2 overflow-hidden rounded-full bg-surface-soft" role="img" aria-label={`Exercício ${idx + 1} de ${N}`}>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-[3px] bg-surface-soft" role="img" aria-label={`Exercício ${idx + 1} de ${N}`}>
           <div
-            className="h-full rounded-full transition-[width] duration-500"
+            className="h-full rounded-[3px] transition-[width] duration-500"
             style={{ width: `${progresso}%`, backgroundImage: `linear-gradient(90deg, ${cor} 0%, var(--brand-turquesa) 100%)` }}
           />
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+      <main className="min-h-0 flex-1 overflow-y-auto px-3.5 pb-4">
         {seg.tipo === "grupo" ? (
           <div className="rounded-card border-2 p-2" style={{ borderColor: cor }}>
             <div className="mb-2 flex flex-wrap items-center gap-2 px-1">
@@ -294,25 +328,28 @@ export function TreinoGuiado({
             </div>
           </div>
         ) : (
-          <BlocoGuiado bloco={seg.bloco} {...blocoProps} />
+          /* A CHAVE É O BLOCO. Sem ela o React reaproveitava o mesmo registro de um exercício
+             para o outro, e os campos chegavam ao exercício 2 com a carga do exercício 1 (e
+             sem as repetições do alvo, que só entram quando o campo nasce). */
+          <BlocoGuiado key={seg.bloco.id} bloco={seg.bloco} {...blocoProps} />
         )}
       </main>
 
       {/* Navegação: Anterior / Pular / Próximo (vira Concluir no último). */}
-      <nav className="flex shrink-0 items-center gap-2 border-t border-border bg-surface px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+      <nav className="flex shrink-0 items-center gap-2 border-t border-border bg-surface px-3.5 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-2.5">
         <button
           onClick={voltar}
           disabled={idx === 0}
-          className="inline-flex h-12 items-center gap-1 rounded-full px-3 text-sm font-semibold text-ink-2 hover:bg-surface-soft disabled:opacity-40 disabled:hover:bg-transparent"
+          className="inline-flex h-11 items-center gap-0.5 rounded-full px-2 text-[12.5px] font-semibold text-ink-2 hover:bg-surface-soft disabled:opacity-40 disabled:hover:bg-transparent"
         >
-          <ChevronLeft className="h-4 w-4" /> Anterior
+          <ChevronLeft className="h-4 w-4" aria-hidden /> Anterior
         </button>
-        <button onClick={avancar} className="inline-flex h-12 items-center px-3 text-sm font-medium text-ink-2 hover:text-ink">
+        <button onClick={avancar} className="inline-flex h-11 items-center rounded-full px-2 text-[12.5px] font-medium text-ink-2 hover:text-ink">
           Pular
         </button>
         <button
           onClick={avancar}
-          className="ml-auto inline-flex h-12 items-center gap-1.5 rounded-full px-5 text-sm font-bold"
+          className="ml-auto inline-flex h-11 items-center gap-1.5 rounded-full px-[18px] text-[13px] font-bold"
           style={{ background: cor, color: tinta }}
         >
           {ultimo ? (
@@ -380,9 +417,10 @@ function BlocoGuiado({
 
   const temFotoForca = !aerobio && !!ex?.imagem && imgOk;
   const temFotoModalidade = aerobio && !!modalidade && modOk;
+  const chips = chipsDoGuiado(bloco);
 
   return (
-    <div className="rounded-card border border-border bg-surface p-3">
+    <div className="mt-2.5 rounded-[18px] border border-border bg-surface p-2.5">
       {/* Visual grande, com o gesto de ampliar no canto (como no mockup). */}
       {temFolha && temFotoForca ? (
         <button
@@ -391,9 +429,9 @@ function BlocoGuiado({
           onClick={() => setSheetAberto(true)}
           aria-haspopup="dialog"
           aria-label={`Ver o exercício ${nomeDoBloco(bloco)}`}
-          className="group relative block w-full overflow-hidden rounded-card"
+          className="group relative block w-full overflow-hidden rounded-control"
         >
-          <div className="aspect-[4/3] w-full overflow-hidden rounded-card border border-border bg-surface-soft">
+          <div className="aspect-[4/3] w-full overflow-hidden rounded-control bg-surface-soft">
             <img
               src={withBase(ex!.imagem!)}
               alt={nomeDoBloco(bloco)}
@@ -404,13 +442,13 @@ function BlocoGuiado({
           </div>
           <span
             aria-hidden
-            className="absolute bottom-3 right-3 grid h-10 w-10 place-items-center rounded-full bg-surface/90 text-ink backdrop-blur"
+            className="absolute bottom-2.5 right-2.5 grid h-[34px] w-[34px] place-items-center rounded-full bg-surface/90 text-ink backdrop-blur"
           >
-            <Maximize2 className="h-4 w-4" />
+            <Maximize2 className="h-3.5 w-3.5" />
           </span>
         </button>
       ) : temFotoModalidade ? (
-        <div className="aspect-[4/3] w-full overflow-hidden rounded-card border border-border bg-surface-soft">
+        <div className="aspect-[4/3] w-full overflow-hidden rounded-control bg-surface-soft">
           <img
             src={withBase(modalidadeImagem(modalidade!.id))}
             alt={modalidade!.nome}
@@ -420,42 +458,44 @@ function BlocoGuiado({
           />
         </div>
       ) : (
-        <div className="grid aspect-[4/3] w-full place-items-center rounded-card border border-border bg-surface-soft">
+        <div className="grid aspect-[4/3] w-full place-items-center rounded-control bg-surface-soft">
           <span className="grid h-16 w-16 place-items-center rounded-card" style={{ background: cor, color: tinta }}>
             {aerobio ? <IconeAerobio className="h-8 w-8" /> : <Dumbbell className="h-8 w-8" />}
           </span>
         </div>
       )}
 
-      {/* Nome + "ver como fazer" (abre a folha quando há conteúdo). */}
-      <div className="mt-3 flex items-start justify-between gap-3">
-        <h2 className="min-w-0 flex-1 font-display text-xl font-bold leading-tight text-ink">{nomeDoBloco(bloco)}</h2>
+      {/* Nome + "ver como fazer" (abre a folha quando há conteúdo). O link ESCREVE na cor da
+          marca, então usa a versão dela que passa 4,5:1 (`--primary-texto`). */}
+      <div className="mt-2 flex items-start justify-between gap-2">
+        <h2 className="min-w-0 flex-1 pt-0.5 font-display text-[17px] font-bold leading-[1.15] tracking-[-0.01em] text-ink">
+          {nomeDoBloco(bloco)}
+        </h2>
         {temFolha && (
           <button
             type="button"
             onClick={() => setSheetAberto(true)}
             aria-haspopup="dialog"
-            className="inline-flex min-h-[44px] shrink-0 items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
+            className="-my-2.5 inline-flex min-h-[44px] shrink-0 items-center gap-0.5 rounded-full text-[11.5px] font-semibold text-primary-texto"
           >
-            ver como fazer <ChevronRight className="h-4 w-4" aria-hidden />
+            ver como fazer <ChevronRight className="h-3.5 w-3.5" aria-hidden />
           </button>
         )}
       </div>
 
       {/* Chips de dose: o primeiro na cor da análise (a dose principal), os outros
-          neutros, como no mockup. */}
-      {tokens.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {tokens.map((t, i) => (
+          neutros, como no mockup. Série e repetição em chips separados (chipsDoGuiado). */}
+      {chips.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-[5px]">
+          {chips.map((c, i) => (
             <span
-              key={t.label}
+              key={c.texto + i}
               className={cn(
-                "rounded-full px-3 py-1 text-sm font-semibold",
-                i === 0 ? "bg-analysis-tint text-analysis-text" : "bg-surface-soft text-ink-2",
+                "rounded-full px-[9px] py-1 text-[11.5px]",
+                c.principal ? "bg-analysis-tint font-bold text-analysis-text" : "bg-surface-soft font-semibold text-ink-2",
               )}
-              title={t.label}
             >
-              {textoDeChipDoAluno(t, i === 0)}
+              {c.texto}
             </span>
           ))}
         </div>
@@ -464,6 +504,7 @@ function BlocoGuiado({
       <RegistroBloco
         bloco={bloco}
         cor={cor}
+        tinta={tinta}
         semana={semana}
         planoId={planoId}
         alunoId={alunoId}
@@ -479,9 +520,9 @@ function BlocoGuiado({
           destacada em âmbar. Sem observação, nada aparece (não existe dica
           genérica inventada pelo app). */}
       {bloco.observacao && (
-        <div className="mt-3 rounded-card border border-warning/40 bg-warning-tint p-3">
-          <p className="flex gap-2 text-sm text-warning">
-            <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        <div className="mt-2 rounded-control border border-warning/35 bg-warning-tint px-2.5 py-2">
+          <p className="flex gap-1.5 text-2xs leading-[1.4] text-warning">
+            <Lightbulb className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
             <span>
               {professor ? <strong>Dica de {professor}: </strong> : null}
               {bloco.observacao}
@@ -491,7 +532,15 @@ function BlocoGuiado({
       )}
 
       {sheetAberto && ex && (
-        <ExercicioSheet exercicioSlug={ex.slug} nome={nomeDoBloco(bloco)} tokens={tokens} cor={cor} onClose={fechar} />
+        <ExercicioSheet
+          exercicioSlug={ex.slug}
+          nome={nomeDoBloco(bloco)}
+          tokens={tokens}
+          cor={cor}
+          tinta={tinta}
+          observacao={bloco.observacao}
+          onClose={fechar}
+        />
       )}
     </div>
   );
@@ -499,9 +548,9 @@ function BlocoGuiado({
 
 function NumeroCard({ valor, rotulo }: { valor: string; rotulo: string }) {
   return (
-    <div className="rounded-card border border-border bg-surface-soft p-3 text-center">
-      <div className="tabular font-display text-lg font-bold text-ink">{valor}</div>
-      <div className="text-2xs text-ink-2">{rotulo}</div>
+    <div className="rounded-control border border-border bg-surface px-1.5 py-2.5 text-center">
+      <div className="tabular font-display text-[17px] font-bold leading-tight text-ink">{valor}</div>
+      <div className="mt-0.5 text-2xs leading-tight text-ink-2">{rotulo}</div>
     </div>
   );
 }

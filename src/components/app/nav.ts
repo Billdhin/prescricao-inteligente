@@ -1,21 +1,27 @@
 import type * as React from "react";
 import {
-  Sunrise,
+  Clock,
   Users,
   UserPlus,
-  ClipboardCheck,
-  ShieldCheck,
-  CalendarRange,
+  Ruler,
+  AlignLeft,
   Dumbbell,
-  GraduationCap,
+  BookOpen,
   HeartPulse,
-  ClipboardList,
-  FlaskConical,
+  Eye,
   Scale,
   Search,
-  LifeBuoy,
+  CircleHelp,
   Settings,
 } from "lucide-react";
+import { IconeSemaforo } from "@/components/app/IconeSemaforo";
+
+/*
+ * OS ÍCONES SÃO OS DO PROTÓTIPO (10/09/2026): relógio para o dia, régua para avaliar, lista
+ * para os treinos, o semáforo de verdade para liberar, livro para estudar, olho para o
+ * laboratório. Vivem aqui, e não na barra, para a lateral, a barra inferior, a folha "Mais"
+ * e a busca mostrarem o mesmo desenho para o mesmo lugar.
+ */
 
 // Filho de um item: aparece indentado sob o pai no menu "Mais" e na busca (nunca
 // na barra superior, que só carrega os primários). `acao: true` marca link de
@@ -62,7 +68,7 @@ export const PRIMARIOS: NavItem[] = [
   {
     to: "/dashboard",
     label: "Meu dia",
-    icon: Sunrise,
+    icon: Clock,
     short: "Meu dia",
     hint: "O que precisa de você hoje.",
   },
@@ -77,14 +83,14 @@ export const PRIMARIOS: NavItem[] = [
   {
     to: "/assessments",
     label: "Avaliar e reavaliar",
-    icon: ClipboardCheck,
+    icon: Ruler,
     short: "Avaliar",
     hint: "Medidas, postura e quem já venceu o prazo.",
   },
   {
     to: "/prescrever-treino",
     label: "Prescrever treino",
-    icon: CalendarRange,
+    icon: AlignLeft,
     short: "Treinos",
     // A aba acende também no Treino do dia (/gps), que é a visão diária do mesmo
     // treino: em /gps o usuário continua "em Prescrever treino".
@@ -95,7 +101,7 @@ export const PRIMARIOS: NavItem[] = [
   {
     to: "/semaforo",
     label: "Semáforo do dia",
-    icon: ShieldCheck,
+    icon: IconeSemaforo,
     short: "Semáforo",
     hint: "Liberar, ajustar ou segurar o treino de hoje.",
   },
@@ -122,7 +128,7 @@ export const MAIS: NavItem[] = [
   {
     to: "/aprender",
     label: "Estudar",
-    icon: GraduationCap,
+    icon: BookOpen,
     match: ["/aprender", "/tracks"],
     short: "Estudar",
     hint: "Disciplinas, casos e o mapa do conhecimento.",
@@ -144,7 +150,7 @@ export const MAIS: NavItem[] = [
   {
     to: "/movement-lab",
     label: "Laboratório Visual",
-    icon: FlaskConical,
+    icon: Eye,
     hint: "Execução, músculos e erros de cada exercício.",
     children: [
       {
@@ -158,7 +164,7 @@ export const MAIS: NavItem[] = [
   {
     to: "/protocols",
     label: "Protocolos",
-    icon: ClipboardList,
+    icon: AlignLeft,
     hint: "Rotinas prontas com respaldo para adaptar.",
   },
 ];
@@ -173,7 +179,7 @@ export const CONTA: NavItem[] = [
   {
     to: "/tutorial",
     label: "Ajuda",
-    icon: LifeBuoy,
+    icon: CircleHelp,
     match: ["/tutorial", "/suporte"],
     hint: "Passo a passo do sistema e fale com a gente.",
   },

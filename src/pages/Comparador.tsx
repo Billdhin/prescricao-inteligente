@@ -203,8 +203,10 @@ function ForcaBloco({ base, slugs }: { base: string | null; slugs: string[] }) {
   const buscaRef = React.useRef<HTMLInputElement>(null);
   const colunasCartoes = Math.min(selected.length + (selected.length < MAX ? 1 : 0), MAX);
 
+  // Blocos a 12 px um do outro, como no protótipo: a 24 px, cada cartão virava uma ilha e o
+  // celular levava o dobro de rolagem para ler a mesma comparação.
   return (
-    <>
+    <div className="space-y-3 lg:space-y-5">
       <BuscaESugestoes pool={forcaPool} selected={selected} sel={sel} onToggle={toggle} inputRef={buscaRef} />
 
       {selected.length === 0 ? (
@@ -216,7 +218,7 @@ function ForcaBloco({ base, slugs }: { base: string | null; slugs: string[] }) {
           {/* Os cartões dos escolhidos, e a vaga para o próximo (protótipo). */}
           <div
             className={cn(
-              "grid gap-4",
+              "!mt-3.5 grid gap-3",
               colunasCartoes >= 2 && "sm:grid-cols-2",
               colunasCartoes === 3 && "lg:grid-cols-3",
               colunasCartoes === 4 && "lg:grid-cols-4",
@@ -229,16 +231,14 @@ function ForcaBloco({ base, slugs }: { base: string | null; slugs: string[] }) {
               <button
                 type="button"
                 onClick={() => buscaRef.current?.focus()}
-                className="flex min-h-[140px] items-center gap-4 rounded-card border-2 border-dashed border-border px-6 text-left transition-colors hover:border-primary hover:bg-surface-soft"
+                className="flex min-h-[112px] items-center gap-3 rounded-card border-2 border-dashed border-border p-4 text-left transition-colors hover:border-primary hover:bg-surface-soft"
               >
-                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-control bg-surface-soft text-ink-2">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-surface-mute text-ink">
                   <Plus className="h-5 w-5" aria-hidden />
                 </span>
                 <span>
-                  <span className="block font-display text-base font-bold text-ink">
-                    Adicionar {selected.length + 1}ª opção
-                  </span>
-                  <span className="block text-sm text-ink-3">até {MAX} lado a lado</span>
+                  <span className="block text-sm font-bold text-ink">Adicionar {selected.length + 1}ª opção</span>
+                  <span className="block text-[12.5px] text-ink-2">até {MAX} lado a lado</span>
                 </span>
               </button>
             )}
@@ -246,32 +246,32 @@ function ForcaBloco({ base, slugs }: { base: string | null; slugs: string[] }) {
 
           {selected.length >= 2 && <OQueOsNumerosDizem selected={selected} />}
 
-          <div className="grid items-start gap-5 lg:grid-cols-2">
+          <div className="grid items-start gap-3 lg:grid-cols-2 lg:gap-5">
             <AtivacaoComparada selected={selected} />
             <MarcadoresDeDecisao selected={selected} />
           </div>
 
-          {/* Quando usar / evitar, um cartão por exercício, na cor da coluna dele. */}
+          {/* Quando usar / evitar, um cartão por exercício, com o fio de 3 px na cor da coluna. */}
           <div
             className={cn(
-              "grid gap-4",
+              "grid gap-3",
               selected.length >= 2 && "sm:grid-cols-2",
               selected.length === 3 && "lg:grid-cols-3",
               selected.length === 4 && "lg:grid-cols-4",
             )}
           >
             {selected.map((e, i) => (
-              <Card key={e.slug} className="relative overflow-hidden p-5">
-                <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", COR_COLUNA[i].barra)} />
-                <h4 className="font-display text-lg font-bold text-ink">{e.nome}</h4>
-                <ListaMini titulo="Quando usar" itens={e.blocos.quandoUsar.slice(0, 2)} tone="success" className="mt-3" />
-                <ListaMini titulo="Quando evitar" itens={e.blocos.quandoEvitar.slice(0, 2)} tone="danger" className="mt-4" />
+              <Card key={e.slug} className="relative overflow-hidden rounded-[18px] px-5 py-[18px] lg:shadow-none">
+                <span aria-hidden className={cn("absolute inset-x-0 top-0 h-[3px]", COR_COLUNA[i].barra)} />
+                <h4 className="font-display text-base font-bold tracking-[-0.02em] text-ink">{e.nome}</h4>
+                <ListaMini titulo="Quando usar" itens={e.blocos.quandoUsar.slice(0, 2)} tone="success" className="mt-3.5" />
+                <ListaMini titulo="Quando evitar" itens={e.blocos.quandoEvitar.slice(0, 2)} tone="danger" className="mt-3.5" />
               </Card>
             ))}
           </div>
         </>
       )}
-    </>
+    </div>
   );
 }
 
@@ -336,10 +336,10 @@ function BuscaESugestoes({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" aria-hidden />
+    <div className="space-y-2.5">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="relative min-w-0 flex-1 basis-[260px]">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" aria-hidden />
           <input
             ref={inputRef}
             value={q}
@@ -347,7 +347,7 @@ function BuscaESugestoes({
             disabled={cheio}
             placeholder={cheio ? `Limite de ${MAX} alcançado: remova um para trocar` : "Buscar exercício por nome, músculo ou equipamento..."}
             aria-label="Buscar exercício para comparar"
-            className="h-12 w-full rounded-card border border-border bg-surface pl-11 pr-4 text-sm text-ink placeholder:text-ink-3 focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-11 w-full rounded-control border border-border bg-surface pl-10 pr-4 text-[13.5px] text-ink placeholder:text-ink-3 focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           />
           {resultados.length > 0 && (
             <ul className="absolute inset-x-0 top-full z-20 mt-1 max-h-80 overflow-auto rounded-card border border-border bg-surface p-1 shadow-elevated">
@@ -372,14 +372,14 @@ function BuscaESugestoes({
             </ul>
           )}
         </div>
-        <span className="shrink-0 text-sm text-ink-2">
-          <b className="font-semibold text-ink">{sel.length}</b> de {MAX} escolhidos
+        <span className="shrink-0 whitespace-nowrap text-[12.5px] font-semibold text-ink-2">
+          {sel.length} de {MAX} escolhidos
         </span>
       </div>
 
       {!cheio && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-ink-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-0.5 text-xs font-semibold text-ink-2">
             Sugestões{grupo ? ` para ${grupo.toLowerCase()}` : ""}:
           </span>
           {sugestoes.map((e) => (
@@ -387,7 +387,7 @@ function BuscaESugestoes({
               key={e.slug}
               type="button"
               onClick={() => onToggle(e.slug)}
-              className="inline-flex min-h-[36px] items-center gap-1 rounded-full border border-border bg-surface px-3 text-sm font-semibold text-ink hover:border-primary hover:text-primary"
+              className="inline-flex min-h-[34px] items-center gap-1 rounded-full border border-border bg-surface px-3 text-[12.5px] font-semibold text-ink hover:border-primary hover:text-primary-texto"
             >
               <Plus className="h-3.5 w-3.5" aria-hidden /> {e.nome}
             </button>
@@ -396,7 +396,7 @@ function BuscaESugestoes({
             type="button"
             onClick={() => setCatalogo((v) => !v)}
             aria-expanded={catalogo}
-            className="inline-flex items-center gap-1 rounded-full px-2 text-sm font-semibold text-primary hover:underline"
+            className="inline-flex min-h-[34px] items-center gap-1 rounded-full px-2 text-[12.5px] font-semibold text-primary-texto hover:underline"
           >
             {catalogo ? "fechar catálogo" : `ver catálogo (${pool.length})`}
             <ArrowRight className={cn("h-3.5 w-3.5 transition-transform", catalogo && "rotate-90")} aria-hidden />
@@ -440,50 +440,65 @@ function BuscaESugestoes({
 /** O cartão de um exercício escolhido (protótipo): foto, grupo, eficiência em número e barra. */
 function CartaoEscolhido({ e, i, onRemover }: { e: Exercise; i: number; onRemover: () => void }) {
   const cor = COR_COLUNA[i];
+  // Etiqueta neutra do protótipo (raio 8, fundo papel), com o fio que a casa exige em
+  // forma neutra: só com fundo ela some sobre o branco na pele clínica.
+  const etiqueta = "whitespace-nowrap rounded-lg bg-bg px-2 py-1 text-[11.5px] font-semibold text-ink-2 ring-1 ring-inset ring-border";
   return (
-    <Card className="relative overflow-hidden p-4">
+    <Card className="relative overflow-hidden p-4 lg:shadow-none">
       <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1", cor.barra)} />
-      <button
-        type="button"
-        onClick={onRemover}
-        aria-label={`Remover ${e.nome}`}
-        className="absolute right-3 top-3 rounded-full p-1 text-ink-3 hover:bg-surface-soft hover:text-ink"
-      >
-        <X className="h-4 w-4" aria-hidden />
-      </button>
-      <div className="flex gap-4">
+      {/* Foto de 76 px e barra DENTRO da coluna de texto, como no protótipo: com a foto de
+          96 px e a barra embaixo do cartão inteiro, o nome quebrava em três linhas numa
+          coluna de celular e a barra parecia medir a foto. */}
+      <div className="flex items-center gap-3.5">
         {e.imagem ? (
-          <img src={withBase(e.imagem)} alt="" className="h-24 w-24 shrink-0 rounded-card object-cover" />
+          <img src={withBase(e.imagem)} alt="" className="h-[76px] w-[76px] shrink-0 rounded-[14px] bg-bg object-cover" />
         ) : (
-          <span className="grid h-24 w-24 shrink-0 place-items-center rounded-card bg-surface-soft text-ink-3">
+          <span className="grid h-[76px] w-[76px] shrink-0 place-items-center rounded-[14px] bg-bg text-ink-3">
             <Dumbbell className="h-6 w-6" aria-hidden />
           </span>
         )}
-        <div className="min-w-0 flex-1 pr-6">
-          {/* O nome leva ao Laboratório: é onde vivem a análise e as fontes deste exercício. */}
-          <Link
-            to={`/movement-lab/${e.slug}`}
-            className="block font-display text-lg font-bold leading-tight text-ink hover:underline"
-          >
-            {e.nome}
-          </Link>
-          <p className="mt-0.5 text-sm text-ink-3">
+        <div className="min-w-0 flex-1">
+          {/* Título e ação na mesma linha: aqui o vão separa o nome do botão de remover, não
+              um rótulo do seu valor. */}
+          <div className="flex items-start justify-between gap-2">
+            {/* O nome leva ao Laboratório: é onde vivem a análise e as fontes deste exercício. */}
+            <Link
+              to={`/movement-lab/${e.slug}`}
+              className="min-w-0 font-display text-[17px] font-bold leading-[1.15] tracking-[-0.02em] text-ink hover:underline"
+            >
+              {e.nome}
+            </Link>
+            <button
+              type="button"
+              onClick={onRemover}
+              aria-label={`Remover ${e.nome}`}
+              className="-m-2 shrink-0 rounded-full p-2 text-ink-2 hover:bg-surface-soft hover:text-ink"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          </div>
+          <p className="mt-0.5 text-[12.5px] text-ink-2">
             {e.grupoMuscular} · {e.equipamento.toLowerCase()}
           </p>
-          <p className="mt-2 flex items-baseline gap-1.5">
-            <span className={cn("tabular font-display text-3xl font-bold leading-none", cor.texto)}>
-              {e.indiceEficiencia.score}
+          <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
+            <p className="flex items-baseline gap-1">
+              <span className={cn("tabular font-display text-[26px] font-bold leading-none tracking-[-0.03em]", cor.texto)}>
+                {e.indiceEficiencia.score}
+              </span>
+              <span className="text-[11.5px] text-ink-2">/100 eficiência</span>
+            </p>
+            <span className="flex flex-wrap gap-[5px]">
+              <span className={etiqueta}>{e.equipamento}</span>
+              <span className={etiqueta}>{e.nivel}</span>
             </span>
-            <span className="text-sm text-ink-3">/100 eficiência</span>
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <Pill tone="neutral">{e.equipamento}</Pill>
-            <Pill tone="neutral">{e.nivel}</Pill>
+          </div>
+          <div className="mt-2.5 h-1.5 overflow-hidden rounded-[3px] bg-surface-mute">
+            <div
+              className={cn("h-full origin-left animate-cresce rounded-[3px]", cor.barra)}
+              style={{ width: `${e.indiceEficiencia.score}%` }}
+            />
           </div>
         </div>
-      </div>
-      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-mute">
-        <div className={cn("h-full rounded-full", cor.barra)} style={{ width: `${e.indiceEficiencia.score}%` }} />
       </div>
     </Card>
   );
@@ -539,20 +554,20 @@ function OQueOsNumerosDizem({ selected }: { selected: Exercise[] }) {
 
   return (
     <section
-      className="relative overflow-hidden rounded-card p-5 md:p-6"
+      className="relative overflow-hidden rounded-card p-[18px] md:p-6"
       style={{ background: "#0B1628", color: "#F3F1EA" }}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full"
+        className="pointer-events-none absolute -right-[70px] -top-[90px] h-60 w-60 rounded-full"
         style={{ background: "radial-gradient(circle, rgba(20,179,186,.30), rgba(20,179,186,0) 65%)" }}
       />
-      <div className="relative grid items-center gap-5 lg:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="relative grid items-center gap-3.5 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-5">
         <div>
           <p className="text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
             O que os números dizem
           </p>
-          <p className="mt-2 text-base leading-relaxed md:text-lg" style={{ color: "#D6DFEA" }}>
+          <p className="mt-2 text-[15px] leading-normal md:text-lg" style={{ color: "#D6DFEA" }}>
             {comFato.length ? (
               comFato.map((f, k) => (
                 <React.Fragment key={f.e.slug}>
@@ -570,11 +585,15 @@ function OQueOsNumerosDizem({ selected }: { selected: Exercise[] }) {
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        {/* Dois destaques lado a lado TAMBÉM no celular, como no protótipo: empilhados, eles
+            viravam dois cartões altos com uma palavra cada. Sem vencedor de demanda, o único
+            destaque ocupa a linha inteira. */}
+        <div className="grid grid-cols-2 gap-2.5 lg:min-w-[26rem]">
           <DestaqueNavy
             rotulo="Maior eficiência"
             nome={vEfic ? selected[vEfic.idx].nome : "Empate técnico"}
             valor={vEfic ? `${efic.get(selected[vEfic.idx])} · +${vEfic.margem}` : `diferença abaixo de ${LIMIAR_MARCADOR}`}
+            className={destaqueDemanda ? undefined : "col-span-2"}
           />
           {destaqueDemanda && (
             <DestaqueNavy
@@ -589,17 +608,27 @@ function OQueOsNumerosDizem({ selected }: { selected: Exercise[] }) {
   );
 }
 
-function DestaqueNavy({ rotulo, nome, valor }: { rotulo: string; nome: string; valor: string }) {
+function DestaqueNavy({
+  rotulo,
+  nome,
+  valor,
+  className,
+}: {
+  rotulo: string;
+  nome: string;
+  valor: string;
+  className?: string;
+}) {
   return (
     <div
-      className="min-w-[13rem] rounded-card p-4"
-      style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)" }}
+      className={cn("min-w-0 rounded-[14px] p-3", className)}
+      style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.12)" }}
     >
-      <p className="text-xs" style={{ color: "#8FA0B5" }}>
+      <p className="text-2xs" style={{ color: "#8FA0B5" }}>
         {rotulo}
       </p>
-      <p className="mt-1 font-display text-base font-bold text-white">{nome}</p>
-      <p className="tabular mt-0.5 text-sm font-semibold" style={{ color: "#7FE3D8" }}>
+      <p className="mt-1 text-[13.5px] font-bold leading-snug text-white">{nome}</p>
+      <p className="tabular mt-0.5 text-[11.5px] font-bold" style={{ color: "#7FE3D8" }}>
         {valor}
       </p>
     </div>
@@ -628,36 +657,47 @@ function AtivacaoComparada({ selected }: { selected: Exercise[] }) {
   const pctDe = (e: Exercise, m: string) => e.ativacao.find((a) => a.musculo === m)?.percentual;
 
   return (
-    <Card className="overflow-hidden">
-      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 p-5 pb-3">
-        <div>
-          <h3 className="font-display text-xl font-bold text-ink">Ativação muscular</h3>
-          <p className="mt-0.5 text-sm text-ink-3">0 a 100 dentro de cada músculo · não somam entre si</p>
+    <Card className="overflow-hidden lg:shadow-none">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2 border-b border-surface-mute px-5 pb-3.5 pt-[18px]">
+        <div className="min-w-0">
+          <h3 className="font-display text-[19px] font-bold tracking-[-0.02em] text-ink">Ativação muscular</h3>
+          <p className="mt-1 text-[12.5px] text-ink-2">0 a 100 dentro de cada músculo · não somam entre si</p>
         </div>
         <Legenda selected={selected} />
       </div>
 
-      <ul className="divide-y divide-border border-t border-border">
+      {/* Zebra no lugar do fio entre linhas, como no protótipo: com duas barras por linha, a
+          faixa alternada diz de relance quais barras são do mesmo músculo. */}
+      <ul>
         {musculos.map((m) => {
           const vals = selected.map((e) => pctDe(e, m));
           const comDado = vals.map((v, i) => ({ v, i })).filter((x): x is { v: number; i: number } => x.v !== undefined);
           let selo: { texto: string; i?: number } | null = null;
+          // O número ganha a cor da coluna só quando é o maior da linha E passa o limiar: pintar
+          // todos na cor de cada um fazia a linha "parecido" parecer ter um vencedor.
+          let lider: number | null = null;
           if (selected.length >= 2) {
             if (comDado.length === 1) selo = { texto: `apenas ${selected[comDado[0].i].nome}`, i: comDado[0].i };
             else if (comDado.length >= 2) {
               const ord = [...comDado].sort((a, b) => b.v - a.v);
               const diff = ord[0].v - ord[1].v;
+              if (diff >= LIMIAR_ATIVA_MAIS) lider = ord[0].i;
               selo = diff >= LIMIAR_ATIVA_MAIS ? { texto: `${selected[ord[0].i].nome} +${diff}`, i: ord[0].i } : { texto: "parecido" };
             }
           }
           return (
-            <li key={m} className="grid grid-cols-[minmax(0,9.5rem)_minmax(0,1fr)] items-center gap-x-4 gap-y-1 px-5 py-3.5">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold leading-tight text-ink">{m}</p>
+            // No celular o nome fica EM CIMA das barras (protótipo): lado a lado, o nome comia
+            // 150 px e as barras ficavam com menos da metade de uma tela de 375.
+            <li
+              key={m}
+              className="grid grid-cols-1 items-center gap-x-4 gap-y-2 border-b border-surface-mute px-5 py-[11px] odd:bg-surface even:bg-surface-soft sm:grid-cols-[minmax(0,9.5rem)_minmax(0,1fr)]"
+            >
+              <div className="flex min-w-0 flex-wrap items-center gap-2 sm:block">
+                <p className="text-[13.5px] font-semibold leading-tight text-ink">{m}</p>
                 {selo && (
                   <span
                     className={cn(
-                      "mt-1 inline-block max-w-full truncate rounded-full px-2 py-0.5 text-2xs font-semibold",
+                      "inline-block max-w-full truncate rounded-full px-[7px] py-[3px] text-2xs font-bold sm:mt-1",
                       selo.i != null ? cn(COR_COLUNA[selo.i].tinta, COR_COLUNA[selo.i].texto) : "bg-surface-mute text-ink-2",
                     )}
                     title={selo.texto}
@@ -666,21 +706,27 @@ function AtivacaoComparada({ selected }: { selected: Exercise[] }) {
                   </span>
                 )}
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-[5px]">
                 {selected.map((e, i) => {
                   const v = vals[i];
                   return (
-                    <div key={e.slug} className="grid grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-3">
+                    <div key={e.slug} className="grid grid-cols-[minmax(0,1fr)_52px] items-center gap-2.5">
                       {v === undefined ? (
                         // Ausência não é zero: a trilha tracejada diz "sem dado", e não "0".
-                        <div className="h-2 rounded-full border border-dashed border-border" aria-hidden />
+                        <div className="h-[9px] rounded-[5px] border border-dashed border-border" aria-hidden />
                       ) : (
-                        <div className="h-2 overflow-hidden rounded-full bg-surface-mute">
-                          <div className={cn("h-full rounded-full", COR_COLUNA[i].barra)} style={{ width: `${v}%` }} />
+                        <div className="h-[9px] overflow-hidden rounded-[5px] bg-surface-mute">
+                          <div
+                            className={cn("h-full origin-left animate-cresce rounded-[5px]", COR_COLUNA[i].barra)}
+                            style={{ width: `${v}%` }}
+                          />
                         </div>
                       )}
                       <span
-                        className={cn("tabular text-right text-sm font-semibold", v === undefined ? "text-ink-3" : COR_COLUNA[i].texto)}
+                        className={cn(
+                          "tabular text-right text-[12.5px] font-bold",
+                          v === undefined ? "font-semibold text-ink-3" : lider === i ? COR_COLUNA[i].texto : "text-ink-2",
+                        )}
                         title={v === undefined ? `${e.nome} não declara ${m} entre os alvos (não quer dizer ativação zero)` : `${e.nome}: ${m} ${v} de 100`}
                       >
                         {v ?? "n/d"}
@@ -694,7 +740,7 @@ function AtivacaoComparada({ selected }: { selected: Exercise[] }) {
         })}
       </ul>
 
-      <p className="border-t border-border px-5 py-3.5 text-xs leading-relaxed text-ink-3">
+      <p className="px-5 pb-4 pt-3 text-[11.5px] leading-normal text-ink-2">
         Síntese de estudos de EMG comparada (Boeckh-Behrens &amp; Buskies 2000; Contreras et al. 2015; Andersen et al. 2014;
         Rodríguez-Ridao et al. 2020; Ekstrom et al. 2007). Comparam a ênfase entre exercícios; não medem o seu aluno.{" "}
         <b className="font-semibold text-ink-2">n/d</b> quer dizer que o músculo não está entre os alvos declarados daquele
@@ -729,40 +775,45 @@ function MarcadoresDeDecisao({ selected }: { selected: Exercise[] }) {
   const mostraCadeia = articulacoes.some((a) => a.length > 0);
 
   return (
-    <Card className="overflow-hidden">
-      <div className="p-5 pb-3">
-        <h3 className="font-display text-xl font-bold text-ink">Marcadores de decisão</h3>
-        <p className="mt-0.5 text-sm text-ink-3">0 a 100 · cada marcador diz para que lado o critério pesa</p>
+    <Card className="overflow-hidden lg:shadow-none">
+      <div className="border-b border-surface-mute px-5 pb-3.5 pt-[18px]">
+        <h3 className="font-display text-[19px] font-bold tracking-[-0.02em] text-ink">Marcadores de decisão</h3>
+        <p className="mt-1 text-[12.5px] text-ink-2">0 a 100 · cada marcador diz para que lado o critério pesa</p>
       </div>
 
-      <ul className="divide-y divide-border border-t border-border">
+      <ul>
         {visiveis.map((m) => {
           const win = vencedorDoMarcador(m, selected);
           return (
-            <li key={m.key} className="px-5 py-3.5">
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <MetricaInfo nome={m.label} valor={m.get(selected[0])} className="text-sm font-semibold text-ink" />
-                <span className="text-2xs text-ink-3">
+            <li key={m.key} className="border-b border-surface-mute px-5 py-[11px] odd:bg-surface even:bg-surface-soft">
+              {/* A regra ("menor é melhor") fica COLADA ao nome, e não empurrada para a borda
+                  como no protótipo: é a leitura do marcador, e longe dele vira rodapé solto. */}
+              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                <MetricaInfo nome={m.label} valor={m.get(selected[0])} className="text-[13.5px] font-semibold text-ink" />
+                <span className="text-2xs text-ink-2">
                   {m.melhor === "maior" ? "maior é melhor" : m.melhor === "menor" ? "menor é melhor" : "depende do objetivo"}
                 </span>
               </div>
-              <div className="mt-2 space-y-1.5">
+              <div className="mt-2 space-y-[5px]">
                 {selected.map((e, i) => {
                   const v = m.get(e);
                   const venceu = win?.idx === i;
                   const faixa = v !== undefined ? faixaTexto(m.label, v) : null;
                   return (
-                    <div key={e.slug} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+                    <div key={e.slug} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5">
                       {v === undefined ? (
-                        <div className="h-2 rounded-full border border-dashed border-border" aria-hidden />
+                        <div className="h-[9px] rounded-[5px] border border-dashed border-border" aria-hidden />
                       ) : (
-                        <div className="h-2 overflow-hidden rounded-full bg-surface-mute">
-                          <div className={cn("h-full rounded-full", COR_COLUNA[i].barra)} style={{ width: `${v}%` }} />
+                        <div className="h-[9px] overflow-hidden rounded-[5px] bg-surface-mute">
+                          <div
+                            className={cn("h-full origin-left animate-cresce rounded-[5px]", COR_COLUNA[i].barra)}
+                            style={{ width: `${v}%` }}
+                          />
                         </div>
                       )}
                       <span
                         className={cn(
-                          "tabular min-w-[7.5rem] text-right text-sm",
+                          "tabular min-w-[6rem] whitespace-nowrap text-right text-xs font-semibold",
                           v === undefined ? "text-ink-3" : venceu ? cn("font-bold", COR_COLUNA[i].texto) : "text-ink-2",
                         )}
                         title={`${e.nome}: ${m.label}${v === undefined ? ", sem dado medido" : ` ${v} de 100`}`}
@@ -786,10 +837,10 @@ function MarcadoresDeDecisao({ selected }: { selected: Exercise[] }) {
           depende do objetivo.
         */}
         {mostraCadeia && (
-          <li className="px-5 py-3.5">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-              <span className="text-sm font-semibold text-ink">Cadeia envolvida</span>
-              <span className="text-2xs text-ink-3">depende do objetivo</span>
+          <li className="px-5 py-[11px] odd:bg-surface even:bg-surface-soft">
+            <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+              <span className="text-[13.5px] font-semibold text-ink">Cadeia envolvida</span>
+              <span className="text-2xs text-ink-2">depende do objetivo</span>
             </div>
             <ul className="mt-2 space-y-1">
               {selected.map((e, i) => {
@@ -1288,16 +1339,18 @@ function ListaMini({
 }) {
   const usar = tone === "success";
   const head = usar ? "text-success" : "text-danger";
+  // O ✓ e o ✕ são só marca (aria-hidden, o título em cima já diz o lado), então vão no tom
+  // de PREENCHIMENTO, como no protótipo; o texto do item fica em tinta cheia para ser lido.
   return (
     <div className={className}>
-      <div className={cn("mb-1.5 text-2xs font-bold uppercase tracking-[0.12em]", head)}>{titulo}</div>
+      <div className={cn("mb-1.5 text-2xs font-bold uppercase tracking-[0.1em]", head)}>{titulo}</div>
       <ul className="space-y-1.5">
         {itens.map((it) => (
-          <li key={it} className="flex gap-2 text-sm text-ink-2">
+          <li key={it} className="flex gap-2 text-[13px] leading-normal text-ink">
             {usar ? (
-              <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden />
+              <Check className="mt-[3px] h-3.5 w-3.5 shrink-0 text-success-fill" strokeWidth={3} aria-hidden />
             ) : (
-              <X className="mt-0.5 h-4 w-4 shrink-0 text-danger" aria-hidden />
+              <X className="mt-[3px] h-3.5 w-3.5 shrink-0 text-danger-fill" strokeWidth={3} aria-hidden />
             )}
             {it}
           </li>
@@ -1320,32 +1373,38 @@ export function Comparador() {
   const [bloco, setBloco] = React.useState<Bloco>("forca");
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-[18px] lg:space-y-6">
       {/*
         CABEÇALHO DO PROTÓTIPO. A trilha "Laboratório Visual / Comparar" virou o eyebrow, e o
         pedaço do Laboratório continua sendo link: comparar é a aba de decisão do
-        Laboratório, não uma ilha. O alternador de bloco sobe para a direita do título, na
-        pílula escura do Design System (a ação escolhida é a pílula navy).
+        Laboratório, não uma ilha. O eyebrow é teal, a cor do Laboratório no protótipo. O
+        alternador de bloco é um segmentado: no celular ele desce para baixo do subtítulo.
+        Título de 24 px no celular: em 30 px ele ocupava três linhas e empurrava a busca para
+        fora da primeira dobra.
       */}
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 max-w-3xl">
-          <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-primary">
+        <div className="min-w-0 flex-1 basis-[340px]">
+          <p className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-analysis-text">
             <Link to="/movement-lab" className="hover:underline">
               Laboratório visual
             </Link>{" "}
             · Comparador
           </p>
-          <h1 className="mt-2 font-display text-3xl font-bold leading-tight text-ink md:text-4xl">
+          <h1 className="mt-1.5 font-display text-2xl font-bold leading-[1.08] tracking-[-0.03em] text-ink md:text-4xl">
             {bloco === "forca" ? "Dois exercícios, um critério de cada vez" : "Duas modalidades, um critério de cada vez"}
           </h1>
-          <p className="mt-2 text-base text-ink-2">
+          <p className="mt-2 max-w-[620px] text-sm leading-[1.55] text-ink-2">
             {bloco === "forca"
               ? "Compare até 4 opções e decida com a evidência à vista: ativação por músculo, eficiência e demandas. Números relativos entre exercícios, não medidas do seu aluno."
               : "Compare até 4 modalidades e decida com a evidência à vista: gasto estimado, impacto, técnica e praticidade. Estimativas de referência, não medidas do seu aluno."}
           </p>
         </div>
 
-        <div role="tablist" aria-label="Bloco de comparação" className="inline-flex shrink-0 rounded-full border border-border bg-surface p-1">
+        <div
+          role="tablist"
+          aria-label="Bloco de comparação"
+          className="inline-flex shrink-0 flex-wrap gap-0.5 rounded-[15px] bg-surface-mute p-[3px]"
+        >
           <BlocoTab ativo={bloco === "forca"} onClick={() => setBloco("forca")}>
             Treino de força
           </BlocoTab>
@@ -1381,18 +1440,21 @@ export function Comparador() {
         </Card>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
-        <p className="max-w-2xl text-xs leading-relaxed text-ink-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-[620px] text-[11.5px] leading-normal text-ink-2">
           {bloco === "forca"
             ? "Estimativas relativas sintetizadas da literatura de EMG e biomecânica; as fontes completas de cada exercício ficam na aba Biomecânica do Laboratório. Conteúdo educacional; não substitui avaliação profissional individualizada."
             : "Estimativas de referência; conteúdo educacional. Não substitui avaliação profissional individualizada."}
         </p>
         <div className="flex flex-wrap gap-2">
-          <Link to="/movement-lab" className={buttonClasses("secondary", "md")}>
+          <Link to="/movement-lab" className={cn(buttonClasses("secondary", "md"), "h-[42px] px-4 text-[13.5px]")}>
             Ir ao Laboratório
           </Link>
-          <Link to="/gps" className={buttonClasses("primary", "md")}>
-            Usar no Treino do dia <ArrowRight className="h-4 w-4" />
+          {/* "Abrir", e não "Usar no Treino do dia": o Treino do dia não lê a seleção desta
+              tela (Gps.tsx não recebe `slugs`), e o rótulo antigo prometia levar os
+              exercícios escolhidos para lá. Quando o GPS aceitar a seleção, o rótulo volta. */}
+          <Link to="/gps" className={cn(buttonClasses("primary", "md"), "h-[42px] px-[18px] text-[13.5px] font-bold")}>
+            Abrir o Treino do dia <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
@@ -1413,8 +1475,8 @@ function BlocoTab({
       aria-selected={ativo}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-[44px] items-center rounded-full px-4 text-sm font-semibold transition-colors",
-        ativo ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft",
+        "inline-flex min-h-[40px] items-center whitespace-nowrap rounded-control px-3.5 text-[13px] transition-colors",
+        ativo ? "bg-ink font-bold text-surface" : "font-semibold text-ink-2 hover:bg-surface hover:text-ink",
       )}
     >
       {children}

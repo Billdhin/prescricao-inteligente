@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { HeartPulse, MessageCircle, Copy, Check, ArrowRight } from "lucide-react";
+import { MessageCircle, Copy, Check, ArrowRight } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import type { Aluno } from "@/data/alunos";
 import type { Execucao } from "@/data/execucao";
@@ -51,12 +51,12 @@ export function RetencaoPanel({
     // O cartão "Reativar" do protótipo: gradiente de papel turquesa autorado
     // (analysis-tint para o fundo da página), rótulo em caixa alta turquesa.
     <Card
-      className="border p-5"
-      style={{ background: "linear-gradient(135deg,var(--analysis-tint),var(--bg))", borderColor: "#CFE7E4" }}
+      // A borda segue o tema (no escuro o #CFE7E4 literal virava um contorno claro sobre o
+      // navy). Sem ícone no rótulo e 14 px de respiro no celular, como o protótipo.
+      className="border border-analysis/25 p-3.5 lg:p-5"
+      style={{ background: "linear-gradient(135deg,var(--analysis-tint),var(--bg))" }}
     >
-      <h2 className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.12em] text-analysis">
-        <HeartPulse className="h-3.5 w-3.5" aria-hidden /> Reativar
-      </h2>
+      <h2 className="text-2xs font-semibold uppercase tracking-[0.12em] text-analysis">Reativar</h2>
 
       {!destaque ? (
         <p className="mt-2 text-sm leading-relaxed text-ink-2">
@@ -66,7 +66,7 @@ export function RetencaoPanel({
         </p>
       ) : (
         <>
-          <p className="mt-2 text-[15px] leading-relaxed text-ink">
+          <p className="mt-2 text-[14.5px] leading-[1.5] text-ink">
             <Link to={`/alunos/${destaque.aluno.id}`} className="font-bold hover:underline">
               {destaque.aluno.nome}
             </Link>{" "}
@@ -79,9 +79,9 @@ export function RetencaoPanel({
               type="button"
               onClick={() => setAberto((a) => (a === destaque.aluno.id ? null : destaque.aluno.id))}
               aria-expanded={aberto === destaque.aluno.id}
-              className="inline-flex h-10 items-center gap-2 rounded-control bg-ink px-3.5 text-sm font-semibold text-surface transition-opacity hover:opacity-90"
+              className="inline-flex h-[38px] items-center gap-2 rounded-control bg-ink px-3.5 text-[13px] font-semibold text-surface transition-opacity hover:opacity-90"
             >
-              <MessageCircle className="h-4 w-4" aria-hidden /> Mandar mensagem
+              Mandar mensagem
             </button>
             {resto.length > 0 && (
               <button

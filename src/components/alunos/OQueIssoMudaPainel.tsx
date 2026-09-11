@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 /** Cor da barra por origem: condição é semáforo, restrição é limite, medicação é
  *  leitura de intensidade. Estado nunca só por cor: cada item também traz a fonte escrita. */
 const BARRA: Record<OrigemMudanca, string> = {
-  condicao: "bg-danger",
+  condicao: "bg-danger-fill",
   restricao: "bg-warning-fill",
   medicacao: "bg-primary",
 };
@@ -49,69 +49,77 @@ export function OQueIssoMudaPainel({ aluno, secao }: { aluno: Aluno; secao?: Sec
 
   return (
     <aside aria-label="O que isso muda" className="min-w-0 space-y-3 lg:sticky lg:top-6 lg:self-start">
-      <h2 className="text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">O que isso muda</h2>
+      {/* O protótipo pinta este rótulo de cinza claro (#8FA0B5), que como texto não passa AA;
+          fica no cinza de texto da casa. */}
+      <h2 className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">O que isso muda</h2>
 
       {vazio && (
-        <p className="rounded-card border border-dashed border-border p-4 text-sm leading-relaxed text-ink-2">
+        <p className="rounded-[16px] border border-dashed border-border p-4 text-[13px] leading-normal text-ink-2">
           Nada declarado ainda. Assim que a condição de saúde, uma restrição ou uma classe de
           medicação entrar, esta coluna mostra o que muda no treino, no semáforo e no app do aluno.
         </p>
       )}
 
+      {/* Títulos em Instrument 13,5 px e não em Bricolage: no protótipo a fonte de display é
+          do título da tela e do cartão do passo; aqui, nove cartões em display gritavam mais
+          alto que a pergunta que o profissional está respondendo. */}
       {emFoco.map((it) => (
-        <div key={it.id} className="rounded-card border border-warning-fill/40 bg-warning-tint p-4">
-          <div className="flex items-center gap-2 font-display font-bold text-warning-text">
-            <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-warning-fill" />
+        <div key={it.id} className="rounded-[16px] border border-warning-fill/40 bg-warning-tint p-4">
+          <div className="flex items-center gap-2 text-[13.5px] font-bold text-ink">
+            <span aria-hidden className="h-[9px] w-[9px] shrink-0 rounded-full bg-warning-fill" />
             {it.fonte}
           </div>
-          <Efeitos efeitos={it.efeitos} className="mt-1.5 text-ink" />
+          <Efeitos efeitos={it.efeitos} className="mt-2 text-[13px] leading-normal text-warning" />
         </div>
       ))}
 
       {(muda.semaforo || demais.length > 0) && (
-        <div className="space-y-4 rounded-card border border-border bg-surface p-4">
+        <div className="rounded-[16px] border border-border bg-surface p-4">
           {muda.semaforo && (
             <div>
-              <div className="flex items-center gap-2 font-display font-bold text-ink">
-                <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-danger" />
-                Semáforo diário ligado
-              </div>
+              <div className="text-[13.5px] font-bold text-ink">Semáforo diário ligado</div>
               {/* A pergunta entra entre aspas, como ela aparece no checklist: é frase inteira,
                   com a própria maiúscula e a própria interrogação. Costurada no meio da nossa
                   frase ela saía "começando por o joelho doeu?." */}
-              <p className="mt-1 text-sm leading-relaxed text-ink-2">
+              <p className="mt-1.5 text-[13px] leading-normal text-ink-2">
                 {muda.semaforo.grupo}: {muda.semaforo.perguntas} pergunta
-                {muda.semaforo.perguntas === 1 ? "" : "s"} antes de cada sessão, começando por “
-                {muda.semaforo.primeira}”
+                {muda.semaforo.perguntas === 1 ? "" : "s"} antes de cada sessão, começando por{" "}
+                <i>“{muda.semaforo.primeira}”</i>
               </p>
             </div>
           )}
-          {demais.map((it) => (
-            <ItemComBarra key={it.id} item={it} />
-          ))}
+          {/* As demais consequências sob um fio, como no protótipo: o semáforo é a frase do
+              cartão e a lista é o que alimenta o semáforo. */}
+          {demais.length > 0 && (
+            <div className={cn("space-y-2", muda.semaforo && "mt-3 border-t border-surface-mute pt-3")}>
+              {demais.map((it) => (
+                <ItemComBarra key={it.id} item={it} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {muda.catalogo && <p className="px-1 text-sm leading-relaxed text-ink-3">{muda.catalogo}</p>}
+      {muda.catalogo && <p className="px-1 text-[12.5px] leading-normal text-ink-2">{muda.catalogo}</p>}
 
       {muda.noAppDoAluno.length > 0 && (
-        <div className="rounded-card bg-surface-soft p-4">
-          <div className="mb-1 text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">No app do aluno</div>
-          <Efeitos efeitos={muda.noAppDoAluno} className="text-ink-2" />
+        <div className="rounded-[16px] border border-border bg-surface-soft p-4">
+          <div className="mb-1 text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">No app do aluno</div>
+          <Efeitos efeitos={muda.noAppDoAluno} className="text-[12.5px] leading-normal text-ink-2" />
         </div>
       )}
 
       {muda.protocolo && (
         <Link
           to={`/special-groups/${muda.protocolo.slug}`}
-          className="group block rounded-card border border-border bg-surface p-4 transition-colors hover:bg-surface-soft"
+          className="group block rounded-[16px] border border-border bg-surface p-4 transition-colors hover:bg-surface-soft"
         >
-          <span className="block text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Protocolo sugerido</span>
-          <span className="mt-1.5 flex items-center justify-between gap-2 font-display font-bold text-ink">
+          <span className="block text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">Protocolo sugerido</span>
+          <span className="mt-2 flex items-center gap-1.5 text-[13.5px] font-bold text-ink">
             {muda.protocolo.nome}
             <ChevronRight aria-hidden className="h-4 w-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5" />
           </span>
-          <span className="mt-1 block text-sm leading-relaxed text-ink-2">
+          <span className="mt-1 block text-[12.5px] leading-normal text-ink-2">
             Entra pela fase {muda.protocolo.fase.toLowerCase()}. {muda.protocolo.estrutura}
           </span>
         </Link>
@@ -119,7 +127,7 @@ export function OQueIssoMudaPainel({ aluno, secao }: { aluno: Aluno; secao?: Sec
 
       {/* A ressalva vive junto da consequência, não numa página de termos: quem lê
           "o motor evita isso" precisa ler ali mesmo que isto não é diagnóstico. */}
-      <p className="flex items-start gap-2 px-1 text-xs leading-relaxed text-ink-3">
+      <p className="flex items-start gap-2 px-1 text-[11.5px] leading-normal text-ink-3">
         <ShieldCheck aria-hidden className="mt-0.5 h-3.5 w-3.5 shrink-0 text-analysis-text" />
         Apoio à decisão do profissional habilitado. Não é diagnóstico nem substitui avaliação de saúde.
       </p>
@@ -129,23 +137,22 @@ export function OQueIssoMudaPainel({ aluno, secao }: { aluno: Aluno; secao?: Sec
 
 function ItemComBarra({ item }: { item: ItemMudanca }) {
   return (
-    <div className="flex gap-3">
-      <span aria-hidden className={cn("w-1 shrink-0 rounded-full", BARRA[item.origem])} />
-      <div className="min-w-0">
-        <div className="text-sm font-bold text-ink">{item.fonte}</div>
-        <Efeitos efeitos={item.efeitos} className="mt-0.5 text-ink-2" />
+    <div className="flex gap-2.5">
+      <span aria-hidden className={cn("w-[3px] shrink-0 rounded-[2px]", BARRA[item.origem])} />
+      <div className="min-w-0 text-[12.5px] leading-[1.45]">
+        <div className="font-bold text-ink">{item.fonte}</div>
+        <Efeitos efeitos={item.efeitos} className="text-ink-2" />
       </div>
     </div>
   );
 }
 
+/** A lista de efeitos herda tamanho e entrelinha de quem a chama: cada cartão tem a sua. */
 function Efeitos({ efeitos, className }: { efeitos: string[]; className?: string }) {
   return (
     <ul className={cn("space-y-1", className)}>
       {efeitos.map((e) => (
-        <li key={e} className="text-sm leading-relaxed">
-          {e}
-        </li>
+        <li key={e}>{e}</li>
       ))}
     </ul>
   );

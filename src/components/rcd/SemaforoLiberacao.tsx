@@ -165,16 +165,19 @@ export function SemaforoLiberacao({
         </div>
       )}
 
-      <div className="space-y-4">
+      {/* Cada pergunta numa caixa própria, como as linhas do checklist do protótipo. A
+          resposta NÃO vai para o lado da pergunta como lá: as respostas reais são frases
+          ("Sim, com dor ao subir escada"), não "2/4/6", e em 326 px não caberiam. */}
+      <div className="space-y-2.5">
         {checklist.itens.map((item, idx) => (
-          <fieldset key={item.id}>
-            <legend className="mb-0.5 flex gap-2 text-sm font-semibold text-ink">
+          <fieldset key={item.id} className="min-w-0 rounded-control border border-border px-3.5 py-3">
+            <legend className="float-left mb-0.5 flex w-full gap-2 text-[13.5px] font-semibold text-ink">
               <span className="tabular grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary-tint text-2xs font-bold text-primary">
                 {idx + 1}
               </span>
               {item.pergunta}
             </legend>
-            <p className="mb-1.5 pl-7 text-xs text-ink-3">
+            <p className="clear-both mb-1.5 pl-7 text-xs text-ink-3">
               {item.porque}
               {item.refs?.length ? (
                 <span className="ml-1 text-ink-3/80">[{item.refs.map(refCurta).join("; ")}]</span>
@@ -215,7 +218,7 @@ export function SemaforoLiberacao({
         <div
           role="status"
           className={cn(
-            "mt-5 rounded-xl border p-4",
+            "mt-5 rounded-[14px] border p-4",
             COR_UI[resultado.cor].bg,
             COR_UI[resultado.cor].border,
           )}
@@ -253,7 +256,7 @@ export function SemaforoLiberacao({
 
           {!registrado ? (
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3">
-              <button onClick={registrar} className={buttonClasses("primary", "sm")}>
+              <button onClick={registrar} className={cn(buttonClasses("primary", "sm"), "h-[38px] px-3.5 text-[13px]")}>
                 <Save className="h-4 w-4" /> Registrar liberação
               </button>
               <span className="text-xs text-ink-3">Registre para guardar no histórico e seguir.</span>
@@ -318,7 +321,7 @@ export function SemaforoLiberacao({
                         Decidiu diferente do que o semáforo indicou? A decisão é sua. Registre o
                         motivo para ele ficar no prontuário junto com o resultado.
                       </span>
-                      <button onClick={() => setAbrindoConduta(true)} className={buttonClasses("secondary", "sm")}>
+                      <button onClick={() => setAbrindoConduta(true)} className={cn(buttonClasses("secondary", "sm"), "h-[38px] px-3.5 text-[13px]")}>
                         Registrar a minha conduta
                       </button>
                     </div>

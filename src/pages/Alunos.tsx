@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { UserPlus, Search, CheckCircle2 } from "lucide-react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { UserPlus, Search, Plus } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { useAlunos } from "@/lib/store";
 import { rotuloRestricao } from "@/lib/gps/restricoes";
@@ -61,7 +61,7 @@ function CompletarHistoricoDosExemplos() {
     <button
       onClick={completar}
       disabled={rodando}
-      className="mx-auto block text-sm text-ink-2 underline decoration-border underline-offset-4 transition-colors hover:text-primary disabled:opacity-60"
+      className="mx-auto block text-[13px] text-ink-2 underline decoration-ink-3/25 underline-offset-4 transition-colors hover:text-primary disabled:opacity-60"
     >
       {rodando ? "Completando o histórico dos exemplos..." : "Completar o histórico dos exemplos até hoje"}
     </button>
@@ -192,18 +192,22 @@ export function Alunos() {
     });
 
   return (
-    <div className="space-y-5">
+    <div>
       {/* Cabeçalho do protótipo: sobrelinha "Carteira", H1 grande com a contagem
           colada em cinza, busca à direita. */}
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">Carteira</p>
-          <h1 className="mt-1.5 font-display text-3xl font-bold tracking-[-0.03em] text-ink md:text-4xl">
+          <h1 className="mt-2 font-display text-[26px] font-bold leading-[1.05] tracking-[-0.03em] text-ink md:text-4xl">
             Meus alunos{" "}
             {alunos.length > 0 && <span className="tabular font-semibold text-ink-3">· {ativos}</span>}
           </h1>
         </div>
-        <div className="relative w-full sm:w-64">
+        {/* No celular a busca da página só aparece com um termo já na URL (quem volta de
+            uma ficha precisa ver e limpar o que filtrou). Sem termo, a lupa da barra de
+            topo acha o aluno, e uma segunda caixa de 44 px entre o título e os chips só
+            empurrava a lista para baixo da dobra. */}
+        <div className={cn("relative w-full sm:block sm:w-64", q.trim() ? "block" : "hidden")}>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-2" />
           <input
             value={q}
@@ -213,24 +217,23 @@ export function Alunos() {
             className="h-11 w-full rounded-control border border-border bg-surface pl-10 pr-4 text-sm outline-none focus-visible:border-primary"
           />
         </div>
-        {/* Só no mobile: a topbar já mostra "Cadastrar aluno" a partir de sm, e dois
-            primários escuros idênticos na mesma dobra eram ruído. Abaixo de sm a topbar
-            esconde o dela, então este cobre o vão. */}
-        <button onClick={() => setNovo(true)} className={cn(buttonClasses("primary"), "sm:hidden")}>
-          <UserPlus className="h-4 w-4" /> Cadastrar aluno
-        </button>
+        {/* O "Cadastrar aluno" do celular saiu daqui: o botão flutuante da casca e a linha
+            que fecha a lista já abrem o cadastro, e três portas na mesma dobra eram ruído. */}
       </div>
 
       {alunos.length === 0 ? (
-        <EmptyAlunos onNovo={() => setNovo(true)} onExemplos={loadExamples} />
+        <div className="mt-5">
+          <EmptyAlunos onNovo={() => setNovo(true)} onExemplos={loadExamples} />
+        </div>
       ) : (
         <>
           {/* Filtro por etapa: responde "quem estou atendendo agora" sem abrir
               aluno por aluno. Só aparecem as etapas que existem hoje na carteira;
               filtro com zero é botão que promete e entrega tela vazia. */}
-          <div role="group" aria-label="Filtrar por etapa do cuidado" className="flex flex-wrap gap-1.5">
+          <div role="group" aria-label="Filtrar por etapa do cuidado" className="mt-4 flex flex-wrap gap-1.5">
+            {/* "Todos" conta a carteira inteira, pausados incluídos: é o que o filtro mostra. */}
             <ChipFiltro ativo={filtro === "todos"} onClick={() => setFiltro("todos")}>
-              Todos
+              Todos · {alunos.length}
             </ChipFiltro>
             {ETAPAS.filter((e) => (contagem.get(e) ?? 0) > 0).map((e) => (
               <ChipFiltro key={e} ativo={filtro === e} onClick={() => setFiltro(e)}>
@@ -245,7 +248,7 @@ export function Alunos() {
           </div>
 
           {filtrados.length === 0 ? (
-            <Card className="grid place-items-center gap-3 p-10 text-center">
+            <Card className="mt-[22px] grid place-items-center gap-3 p-10 text-center">
               {/* A frase diz o que de fato esvaziou a lista: com filtro ligado, o
                   culpado é o filtro, e "nenhum aluno encontrado para ''" mentiria. */}
               <p className="text-ink-2">
@@ -264,7 +267,7 @@ export function Alunos() {
               {/* A TABELA do protótipo: um cartão só, cabeçalho de colunas em
                   caixa alta (desktop), uma linha por aluno e a porta de cadastro
                   fechando a lista. */}
-              <Card className="overflow-hidden p-0">
+              <Card className="mt-[22px] overflow-hidden p-0">
                 <div
                   className="hidden gap-3.5 border-b border-surface-mute px-5 py-3 text-2xs font-semibold uppercase tracking-[0.1em] text-ink-3 lg:grid"
                   style={{ gridTemplateColumns: COLUNAS_LISTA }}
@@ -290,14 +293,14 @@ export function Alunos() {
                   onClick={() => setNovo(true)}
                   className="flex w-full items-center gap-3 bg-surface-soft px-5 py-3.5 text-left transition-colors hover:bg-bg"
                 >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control border-2 border-dashed border-border text-lg text-ink-2">
-                    +
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control border-2 border-dashed border-ink-3/30 text-ink-2">
+                    <Plus className="h-5 w-5" aria-hidden />
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-ink">Cadastrar aluno</span>
+                    <span className="block text-[14.5px] font-semibold text-ink">Cadastrar aluno</span>
                     {/* O que o modal de fato pergunta hoje. A condição de saúde saiu
                         daqui e foi para o perfil, então prometê-la seria mentir na porta. */}
-                    <span className="block text-xs text-ink-2">Nome, idade, nível e objetivo. Leva 20 segundos.</span>
+                    <span className="block text-[12.5px] text-ink-2">Nome, idade, nível e objetivo. Leva 20 segundos.</span>
                   </span>
                 </button>
               </Card>
@@ -305,16 +308,18 @@ export function Alunos() {
                   também precisa dos dois casos de demonstração (gravação, apresentação).
                   Carregar MESCLA sem tocar no que existe, e a linha some quando os
                   exemplos já estão aqui, porque botão que não faz nada é ruído. */}
-              {!alunos.some((a) => a.id.startsWith("al-vsl-")) ? (
-                <button
-                  onClick={loadExamples}
-                  className="mx-auto block text-sm text-ink-2 underline decoration-border underline-offset-4 transition-colors hover:text-primary"
-                >
-                  Carregar alunos de exemplo
-                </button>
-              ) : (
-                <CompletarHistoricoDosExemplos />
-              )}
+              <div className="mt-3.5">
+                {!alunos.some((a) => a.id.startsWith("al-vsl-")) ? (
+                  <button
+                    onClick={loadExamples}
+                    className="mx-auto block text-[13px] text-ink-2 underline decoration-ink-3/25 underline-offset-4 transition-colors hover:text-primary"
+                  >
+                    Carregar alunos de exemplo
+                  </button>
+                ) : (
+                  <CompletarHistoricoDosExemplos />
+                )}
+              </div>
             </>
           )}
         </>
@@ -361,8 +366,10 @@ const COLUNAS_LISTA = "minmax(0,2fr) minmax(0,1.6fr) 90px 90px 110px minmax(90px
 /**
  * Uma linha da tabela do protótipo. A linha inteira abre o aluno; a coluna
  * "Próximo passo" mostra a MESMA frase de `proximoPasso()` que manda no chip e
- * na ordenação (fonte única), com o ponto na cor da urgência. No mobile as
- * colunas de dado somem e a frase desce para debaixo do nome.
+ * na ordenação (fonte única), com o ponto na cor da urgência. No celular a linha
+ * é a do protótipo mobile, duas colunas: o aluno à esquerda e o CHIP do passo à
+ * direita, que ali faz o papel da frase (as colunas de dado e a frase ficam no
+ * desktop, onde há largura para elas).
  */
 function LinhaTabela({
   aluno,
@@ -379,9 +386,19 @@ function LinhaTabela({
   treinos7d: number;
 }) {
   const publicarAgora = usePublicarAgora();
+  // A ficha volta para a lista COM o filtro e a busca que estavam ligados: o "Meus alunos"
+  // de lá lê este endereço em vez de adivinhar pelo histórico do navegador.
+  const { search } = useLocation();
   // Treino novo pronto e sem nenhum no app: publica da própria linha. Com treino no app, a
   // versão nova passa pelo quadro de diferenças do editor, e a linha só avisa.
   const publicaDaqui = !planoAtivo && passo.chip?.label === CHIP_NAO_PUBLICADO;
+  /*
+   * O SEMÁFORO DE HOJE NÃO É "EM DIA". A etapa "liberar" é parada da rota sem chip de atenção
+   * (é rotina, não problema), e a linha caía no "Em dia". No desktop a frase ao lado desmentia
+   * o chip; no celular a frase some e o chip é o único sinal, então ele dizia uma coisa falsa
+   * de quem ainda precisa do semáforo antes de treinar.
+   */
+  const chip = passo.chip ?? (passo.etapa === "liberar" ? { label: "Semáforo de hoje", tone: "primary" as const } : null);
   const restr = aluno.restricoes;
   const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
   const reav = dataReavaliacao(aluno, planoAtivo);
@@ -401,34 +418,48 @@ function LinhaTabela({
           : "var(--analysis-fill)";
 
   return (
-    <div className="relative grid items-center gap-x-3.5 gap-y-1.5 border-b border-surface-mute px-5 py-3.5 transition-colors hover:bg-surface-soft lg:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_90px_90px_110px_minmax(90px,auto)]">
+    <div className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3.5 gap-y-1.5 border-b border-surface-mute px-5 py-3.5 transition-colors duration-200 hover:bg-surface-soft lg:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_90px_90px_110px_minmax(90px,auto)]">
       {/* A linha inteira abre o aluno (link esticado pelo before); o CHIP da
           direita é um segundo link, para o DESTINO do próximo passo
           (passo.cta.to quando o passo declara um; senão o lugar padrão da ação).
           A lista nunca sugere sem levar. */}
       <Link
         to={`/alunos/${aluno.id}`}
+        state={{ voltarPara: `/alunos${search}` }}
         className="flex min-w-0 items-center gap-3 outline-none before:absolute before:inset-0 focus-visible:before:ring-2 focus-visible:before:ring-inset focus-visible:before:ring-primary"
       >
         <AvatarAluno
           aluno={aluno}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-[13px] font-bold"
           style={{ background: "#0B1628", color: "#F3F1EA" }}
         />
         <span className="min-w-0">
           <span className="flex items-center gap-2">
-            <b className="truncate text-sm font-semibold text-ink">{aluno.nome}</b>
+            <b className="truncate text-[14.5px] font-semibold text-ink">{aluno.nome}</b>
             {aluno.status !== "ativo" && <Pill tone="neutral">Saiu</Pill>}
-            {planoAtivo && temRascunho && <Pill tone="cta">Alterações não publicadas</Pill>}
+            {planoAtivo && temRascunho && (
+              <Pill tone="cta" className="hidden shrink-0 lg:inline-flex">
+                Alterações não publicadas
+              </Pill>
+            )}
           </span>
-          <span className="block truncate text-xs text-ink-2">
+          <span className="block truncate text-[12.5px] text-ink-2">
             {aluno.objetivo} · {aluno.nivel}
             {grupo ? ` · ${grupo.nome}` : ""}
             {restr.length > 0 ? ` · ${restr.length} ${restr.length === 1 ? "restrição" : "restrições"}` : ""}
           </span>
+          {/* No celular a pílula desce para debaixo da meta: ao lado do nome ela o
+              cortava em poucas letras, e o nome é o que se procura na lista. */}
+          {planoAtivo && temRascunho && (
+            <span className="mt-1 flex lg:hidden">
+              <Pill tone="cta" className="text-2xs">
+                Alterações não publicadas
+              </Pill>
+            </span>
+          )}
         </span>
       </Link>
-      <span className="flex min-w-0 items-center gap-2 pl-[52px] lg:pl-0">
+      <span className="hidden min-w-0 items-center gap-2 lg:flex">
         <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: pontoCor }} />
         <span className="truncate text-[13px] text-ink">{passo.frase}</span>
       </span>
@@ -464,25 +495,32 @@ function LinhaTabela({
         {reavTexto ?? "·"}
       </span>
       {/* O botão fica ACIMA do link esticado da linha (relative + z) e aparece também no
-          celular, onde as outras colunas somem: é a ação que falta, não um dado. */}
+          celular, no lugar do chip: é a ação que falta, não um dado. */}
       {publicaDaqui ? (
-        <span className="relative z-[1] justify-self-start pl-[52px] lg:justify-self-end lg:pl-0">
-          <BotaoPublicar onClick={() => publicarAgora(aluno)} className="h-9 px-3.5">
+        <span className="relative z-[1] justify-self-end">
+          <BotaoPublicar onClick={() => publicarAgora(aluno)} className="h-9 px-3">
             Publicar
           </BotaoPublicar>
         </span>
       ) : (
-      <span className="relative hidden justify-self-end lg:block">
-        {passo.chip ? (
+      <span className="relative z-[1] block justify-self-end">
+        {chip ? (
           <Link
             to={passo.cta.to ?? linkDoPasso(aluno.id, passo.cta.kind)}
             title={passo.cta.label}
-            className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="block rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <Pill tone={passo.chip.tone}>{passo.chip.label}</Pill>
+            {/* 26 px de altura: o chip é um segundo alvo de toque na linha, e 24 px é o
+                piso do WCAG 2.2 para alvo pequeno. O rótulo é o estado MEDIDO
+                ("Reavaliação vencida", "Sem treino"), não um verbo: o verbo esconderia o motivo. */}
+            <Pill tone={chip.tone} className="whitespace-nowrap px-2.5 py-1.5 text-xs font-semibold">
+              {chip.label}
+            </Pill>
           </Link>
         ) : (
-          <Pill tone="success" icon={<CheckCircle2 className="h-3 w-3" />}>
+          // Em dia é o estado de repouso da carteira: neutro e sem ícone, para o olho
+          // correr a lista e parar só no que tem cor.
+          <Pill tone="neutral" className="whitespace-nowrap bg-bg px-2.5 py-1.5 text-xs font-semibold ring-0">
             Em dia
           </Pill>
         )}
@@ -500,9 +538,9 @@ function ChipFiltro({ ativo, onClick, children }: { ativo: boolean; onClick: () 
       onClick={onClick}
       aria-pressed={ativo}
       className={cn(
-        "min-h-[36px] rounded-full border px-3 text-sm font-semibold transition-colors",
+        "min-h-[34px] rounded-full border px-3.5 py-2 text-[13px] font-semibold leading-none transition-colors",
         ativo
-          ? "border-ink bg-ink text-surface"
+          ? "border-transparent bg-ink text-surface"
           : "border-border bg-surface text-ink-2 hover:bg-surface-soft hover:text-ink",
       )}
     >
@@ -520,7 +558,7 @@ function textoReav(em: number): string {
 
 function EmptyAlunos({ onNovo, onExemplos }: { onNovo: () => void; onExemplos: () => void }) {
   return (
-    <Card variant="raised" className="flex flex-col items-center gap-4 p-8 text-center md:p-12">
+    <Card className="flex flex-col items-center gap-4 p-8 text-center md:p-12">
       <span className="grid h-16 w-16 place-items-center rounded-card bg-primary-tint text-primary">
         <UserPlus className="h-8 w-8" />
       </span>

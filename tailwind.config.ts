@@ -83,10 +83,33 @@ export default {
           "0%,100%": { transform: "scale(1)", opacity: "1" },
           "50%": { transform: "scale(1.35)", opacity: ".6" },
         },
+        // As animações do protótipo (10/09/2026). "entra" TERMINA em `transform: none` de
+        // propósito: a tela inteira anima, e um transform que ficasse aplicado viraria o bloco
+        // de contenção de todo `position: fixed` das páginas (modais e barras presas).
+        entra: {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "none" },
+        },
+        sobe: {
+          "0%": { transform: "scaleY(0)" },
+          "100%": { transform: "none" },
+        },
+        pulso: {
+          "0%,100%": { opacity: "1" },
+          "50%": { opacity: ".35" },
+        },
+        cresce: {
+          "0%": { transform: "scaleX(0)" },
+          "100%": { transform: "none" },
+        },
       },
       animation: {
         "fade-up": "fade-up .4s ease both",
         pulseDot: "pulseDot 1.8s ease-in-out infinite",
+        entra: "entra .35s ease both",
+        sobe: "sobe .8s cubic-bezier(.2,.8,.2,1) both",
+        pulso: "pulso 1.6s ease infinite",
+        cresce: "cresce .9s cubic-bezier(.2,.8,.2,1) both",
       },
     },
   },

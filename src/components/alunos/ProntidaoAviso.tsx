@@ -56,7 +56,7 @@ export function ProntidaoAviso({
       {bloqueios.length > 0 && (
         <Card tone="warning" className="p-4 sm:p-5" role="alert">
           <div className="mb-1 flex items-center gap-2">
-            <Lock aria-hidden className="h-4 w-4 shrink-0 text-warning-text" />
+            <Lock aria-hidden className="h-4 w-4 shrink-0 text-warning" />
             <h3 className="font-display font-bold text-ink">
               {bloqueios.length === 1
                 ? "Falta uma definição antes de prescrever"

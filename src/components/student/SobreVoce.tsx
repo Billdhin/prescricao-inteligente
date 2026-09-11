@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Check, ChevronLeft, ChevronRight, Lock, Pencil, Send } from "lucide-react";
-import { iniciaisDe, type Aluno } from "@/data/alunos";
+import { Check, ChevronLeft, ChevronRight, Pencil, Send } from "lucide-react";
+import type { Aluno } from "@/data/alunos";
 import type { Marca } from "@/lib/brand/BrandContext";
 import {
   TELAS_SOBRE_VOCE,
@@ -14,7 +14,7 @@ import {
   type CampoDeDado,
   type DeclaracaoAluno,
 } from "@/data/declaracoes";
-import { corDeContraste } from "@/lib/theme/palettes";
+import { ajustarParaContraste, corDeContraste } from "@/lib/theme/palettes";
 import { cn } from "@/lib/utils";
 import { soNumero } from "@/lib/numeroDigitado";
 
@@ -59,6 +59,7 @@ export function SobreVoce({
   primeiraVez,
   pedirTreino = false,
   pedidoEnviadoEm,
+  origem,
 }: {
   aluno: Aluno;
   cor: string;
@@ -79,6 +80,8 @@ export function SobreVoce({
   pedirTreino?: boolean;
   /** já existe pedido aberto (a data dele): a tela diz isso em vez de pedir de novo */
   pedidoEnviadoEm?: number;
+  /** de onde a tela foi aberta ("Perfil", "Hoje"): vira o rótulo do voltar do topo */
+  origem?: string;
 }) {
   const tinta = tintaDada ?? corDeContraste(cor);
   const Prof = professor.charAt(0).toUpperCase() + professor.slice(1);
@@ -198,11 +201,17 @@ export function SobreVoce({
     );
   };
 
-  const campoDaTela = (campo: CampoDeDado) => {
+  /*
+   * SOLTO: o passo tem UMA pergunta, e ela já é o título da tela (protótipo, tela 10). Aí o
+   * campo vem sem o cartão em volta e sem repetir a pergunta; só a dica, quando houver.
+   */
+  const campoDaTela = (campo: CampoDeDado, solto = false) => {
     const r = get(campo);
-    const pergunta = (
+    const pergunta = solto ? (
+      DICA[campo] ? <p className="mb-3 text-xs leading-relaxed text-ink-2">{DICA[campo]}</p> : null
+    ) : (
       <div className="mb-3">
-        <div className="text-[15px] font-semibold leading-snug text-ink">{PERGUNTA[campo]}</div>
+        <div className="text-sm font-semibold leading-snug text-ink">{PERGUNTA[campo]}</div>
         {DICA[campo] && <p className="mt-1 text-xs leading-relaxed text-ink-2">{DICA[campo]}</p>}
       </div>
     );
@@ -262,7 +271,7 @@ export function SobreVoce({
     }
     if (campo === "objetivo") {
       return (
-        <Bloco>
+        <Bloco solto={solto}>
           {pergunta}
           <div className="grid gap-2" role="radiogroup" aria-label={PERGUNTA.objetivo}>
             {OBJETIVOS_DO_ALUNO.map((o) => {
@@ -344,7 +353,7 @@ export function SobreVoce({
       const alternar = (id: string) => set(campo, JSON.stringify(ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
       const todosDeAcademia = DE_ACADEMIA.every((id) => ids.includes(id));
       return (
-        <Bloco>
+        <Bloco solto={solto}>
           {pergunta}
           <button
             type="button"
@@ -357,11 +366,13 @@ export function SobreVoce({
           >
             {todosDeAcademia ? "Desmarcar os de academia" : "Treino numa academia completa"}
           </button>
-          <div className="flex flex-wrap gap-2">
+          {/* Marcar vários: caixinhas em grade de dois (protótipo, tela 10), e não pílulas que
+              enchem na cor da marca. A pílula cheia lia como "escolhido" de escolha única. */}
+          <div className="grid grid-cols-2 gap-1.5">
             {EQUIPAMENTOS_DO_ALUNO.map((e) => (
-              <Opcao key={e.id} ativa={ids.includes(e.id)} onClick={() => alternar(e.id)} cor={cor} tinta={tinta} marcador>
+              <OpcaoMarcar key={e.id} ativa={ids.includes(e.id)} onClick={() => alternar(e.id)} cor={cor} tinta={tinta}>
                 {e.rotulo}
-              </Opcao>
+              </OpcaoMarcar>
             ))}
           </div>
           <p className="mt-2.5 text-xs text-ink-2">
@@ -431,14 +442,14 @@ export function SobreVoce({
       return (
         <Bloco>
           {pergunta}
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {[...QUEIXAS, NADA_DE_SAUDE].map((q) => (
-              <Opcao key={q} ativa={!r.naoSei && s.itens.includes(q)} onClick={() => alternar(q)} cor={cor} tinta={tinta} marcador>
+              <OpcaoMarcar key={q} ativa={!r.naoSei && s.itens.includes(q)} onClick={() => alternar(q)} cor={cor} tinta={tinta}>
                 {q}
-              </Opcao>
+              </OpcaoMarcar>
             ))}
-            {botaoNaoSei(campo)}
           </div>
+          <div className="mt-2">{botaoNaoSei(campo)}</div>
           {!r.naoSei && (
             <div className="mt-3">
               <label htmlFor="sv-saude" className="mb-1.5 block text-xs font-semibold text-ink-2">
@@ -481,61 +492,96 @@ export function SobreVoce({
   let rodape: React.ReactNode;
 
   if (fase === "inicio") {
+    /*
+     * A ABERTURA DO PRIMEIRO ACESSO (protótipo, tela 11): a logo do professor em papel
+     * branco, de quem é o convite, o "bem-vindo" e as cinco etapas do que vem, cada uma com o
+     * porquê. A linha do tempo do combinado (você conta, ele revisa, o treino aparece) fica
+     * para quando já existe pedido, que é quando ela diz em que ponto a pessoa está; aqui ela
+     * vira uma frase no fim da lista.
+     */
+    const saudacao =
+      aluno.sexo === "F" ? `Bem-vinda, ${primeiroNome}` : aluno.sexo === "M" ? `Bem-vindo, ${primeiroNome}` : `Olá, ${primeiroNome}`;
     corpo = (
-      <div className="space-y-5 pb-4 pt-2">
-        <CartaoDoProfessor marca={marca} cor={cor} tinta={tinta} />
-        <div>
-          <h2 ref={tituloRef} tabIndex={-1} id="sobre-voce-titulo" className="font-display text-[26px] font-bold leading-[1.1] tracking-[-0.02em] text-ink outline-none">
-            {pedidoEnviadoEm ? `Seu treino está a caminho, ${primeiroNome}` : `Vamos montar o seu treino, ${primeiroNome}`}
-          </h2>
-          <p className="mt-2 text-[15px] leading-relaxed text-ink-2">
-            {pedidoEnviadoEm
-              ? `${Prof} já recebeu o seu pedido. Se algo mudou, atualize as respostas: elas vão junto.`
-              : `Antes do primeiro treino, ${professor} precisa te conhecer. São ${total} passos rápidos, e dá para parar e continuar depois.`}
-          </p>
-        </div>
-        <div className="rounded-card border border-border bg-surface p-4">
-          <div className="mb-3 text-2xs font-bold uppercase tracking-[0.12em] text-ink-3">Como funciona</div>
-          <LinhaDoTempo etapas={etapas} feitas={pedidoEnviadoEm ? 1 : 0} cor={cor} tinta={tinta} professor={Prof} />
-        </div>
-        {primeiraVez && (
-          <p className="flex gap-2.5 rounded-card bg-surface-soft p-3 text-xs leading-relaxed text-ink-2">
-            <Lock className="mt-0.5 h-4 w-4 shrink-0 text-ink-3" aria-hidden />
-            <span>
-              Só {professor} vê o que você responder. Serve para montar a sua prescrição, e você pode mudar depois na aba Perfil.
-            </span>
-          </p>
+      <div className="pb-4 pt-5">
+        <PainelDaMarca marca={marca} cor={cor} />
+        {marca && <p className="mt-4 text-2xs text-ink-2">Convite de {marca.nome}</p>}
+        <h2
+          ref={tituloRef}
+          tabIndex={-1}
+          id="sobre-voce-titulo"
+          className="mt-2 font-display text-2xl font-bold leading-[1.1] tracking-[-0.02em] text-ink outline-none"
+        >
+          {pedidoEnviadoEm ? `Seu treino está a caminho, ${primeiroNome}` : saudacao}
+        </h2>
+        <p className="mt-2.5 text-[12.5px] leading-[1.5] text-ink-2">
+          {pedidoEnviadoEm
+            ? `${Prof} já recebeu o seu pedido. Se algo mudou, atualize as respostas: elas vão junto.`
+            : `Conte sobre você para ${professor} montar o seu treino. Leva uns 3 minutos. O que você responder fica visível só para ${professor}.`}
+        </p>
+        {pedidoEnviadoEm ? (
+          <div className="mt-4 rounded-[16px] border border-border bg-surface p-3.5">
+            <LinhaDoTempo etapas={etapas} feitas={1} cor={cor} tinta={tinta} professor={Prof} />
+          </div>
+        ) : (
+          <>
+            <ol className="mt-4 space-y-1.5">
+              {TELAS_SOBRE_VOCE.map((t, i) => (
+                <li key={t.titulo} className="flex items-start gap-2.5 rounded-control border border-border bg-surface px-3 py-[9px]">
+                  <span className="tabular mt-px grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full bg-surface-soft text-2xs font-bold text-ink-2">
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold text-ink">{t.titulo}</span>
+                    <span className="block text-2xs leading-snug text-ink-2">{t.porque}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-3 text-2xs text-ink-2">Depois, {professor} revisa e o treino aparece aqui no app.</p>
+          </>
         )}
       </div>
     );
     rodape = (
       <>
-        <BotaoPrincipal cor={cor} tinta={tinta} onClick={() => setFase(jaRespondeu ? "revisao" : 0)}>
-          {jaRespondeu ? "Revisar as respostas" : "Começar"} <ChevronRight className="h-5 w-5" aria-hidden />
+        <BotaoPrincipal cor={cor} tinta={tinta} onClick={() => setFase(jaRespondeu ? "revisao" : 0)} className="h-12">
+          {jaRespondeu ? "Revisar as respostas" : "Começar"} <ChevronRight className="h-4 w-4" aria-hidden />
         </BotaoPrincipal>
-        <button type="button" onClick={onFechar} className="mt-1 min-h-[44px] w-full text-sm font-semibold text-ink-2 hover:text-ink">
-          Agora não
+        <button
+          type="button"
+          onClick={onFechar}
+          className="mt-1 min-h-[44px] w-full rounded-full text-[11.5px] text-ink-2 hover:text-ink"
+        >
+          Responder depois
         </button>
       </>
     );
   } else if (tela) {
+    // Passo de UMA pergunta: a pergunta é o título (protótipo). A rotina tem três perguntas
+    // dentro de um campo só, e os passos de várias perguntas ficam com o nome do passo.
+    const unica = tela.campos.length === 1 && tela.campos[0] !== "disponibilidade";
     corpo = (
-      <div className="space-y-3 pb-4 pt-5">
+      <div className="space-y-3 pb-4">
         <div className="pb-1">
-          <div className="text-2xs font-bold uppercase tracking-[0.12em] text-ink-2">
-            Passo {passo + 1} de {total}
-          </div>
-          <h2 ref={tituloRef} tabIndex={-1} id="sobre-voce-titulo" className="mt-1 font-display text-[24px] font-bold leading-tight tracking-[-0.02em] text-ink outline-none">
-            {tela.titulo}
+          <div className="mt-[18px] text-2xs font-bold uppercase tracking-[0.1em] text-primary-texto">{tela.curto}</div>
+          <h2
+            ref={tituloRef}
+            tabIndex={-1}
+            id="sobre-voce-titulo"
+            className="mt-1 font-display text-xl font-bold leading-[1.15] tracking-[-0.02em] text-ink outline-none"
+          >
+            {unica ? PERGUNTA[tela.campos[0]] : tela.titulo}
           </h2>
-          <p className="mt-1 flex items-start gap-1.5 text-sm leading-relaxed text-ink-2">
-            {passo === total - 1 && <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />}
-            {tela.porque}
-          </p>
+          <p className="mt-1 text-[11.5px] leading-relaxed text-ink-2">{tela.porque}</p>
         </div>
         {tela.campos.map((c) => (
-          <React.Fragment key={c}>{campoDaTela(c)}</React.Fragment>
+          <React.Fragment key={c}>{campoDaTela(c, unica)}</React.Fragment>
         ))}
+        {onDeclarar && (
+          <p className="pt-1 text-2xs leading-relaxed text-ink-2">
+            O que você responder fica visível só para o seu professor. Cada “Continuar” já grava.
+          </p>
+        )}
       </div>
     );
     rodape = (
@@ -543,25 +589,30 @@ export function SobreVoce({
         <BotaoVoltar onClick={voltar} />
         <BotaoPrincipal cor={cor} tinta={tinta} onClick={avancar} className="flex-1">
           {passoVazio ? "Pular este passo" : passo + 1 >= total ? "Revisar respostas" : "Continuar"}
-          <ChevronRight className="h-5 w-5" aria-hidden />
+          <ChevronRight className="h-4 w-4" aria-hidden />
         </BotaoPrincipal>
       </div>
     );
   } else if (fase === "revisao") {
     corpo = (
-      <div className="space-y-3 pb-4 pt-5">
+      <div className="space-y-2.5 pb-4">
         <div className="pb-1">
-          <div className="text-2xs font-bold uppercase tracking-[0.12em] text-ink-2">Último passo</div>
-          <h2 ref={tituloRef} tabIndex={-1} id="sobre-voce-titulo" className="mt-1 font-display text-[24px] font-bold leading-tight tracking-[-0.02em] text-ink outline-none">
+          <div className="mt-[18px] text-2xs font-bold uppercase tracking-[0.1em] text-primary-texto">Último passo</div>
+          <h2
+            ref={tituloRef}
+            tabIndex={-1}
+            id="sobre-voce-titulo"
+            className="mt-1 font-display text-xl font-bold leading-[1.15] tracking-[-0.02em] text-ink outline-none"
+          >
             Confira e envie
           </h2>
-          <p className="mt-1 text-sm leading-relaxed text-ink-2">
+          <p className="mt-1 text-[11.5px] leading-relaxed text-ink-2">
             {respondidas} de {CAMPOS_DE_DADO.length} perguntas respondidas. Toque em Editar para mudar qualquer resposta.
           </p>
         </div>
 
         {saudeVazia && (
-          <div className="rounded-card border border-warning/40 bg-warning-tint p-3.5">
+          <div className="rounded-[16px] border border-warning/35 bg-warning-tint p-3.5">
             <p className="text-sm font-semibold text-ink">A parte de saúde ficou sem resposta</p>
             <p className="mt-0.5 text-xs leading-relaxed text-ink-2">Ela ajuda {professor} a montar um treino seguro para você. Leva menos de um minuto.</p>
             <button
@@ -575,12 +626,12 @@ export function SobreVoce({
         )}
 
         {TELAS_SOBRE_VOCE.map((t, i) => (
-          <section key={t.titulo} className="rounded-card border border-border bg-surface p-4" aria-labelledby={`sv-rev-${i}`}>
-            <div className="mb-2.5 flex items-center gap-2">
+          <section key={t.titulo} className="rounded-[16px] border border-border bg-surface px-3.5 py-3" aria-labelledby={`sv-rev-${i}`}>
+            <div className="mb-2 flex items-center gap-2">
               <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-2xs font-bold tabular" style={{ background: `${cor}1f`, color: "var(--ink)" }}>
                 {i + 1}
               </span>
-              <h3 id={`sv-rev-${i}`} className="text-[15px] font-bold text-ink">
+              <h3 id={`sv-rev-${i}`} className="text-sm font-bold text-ink">
                 {t.titulo}
               </h3>
               <button
@@ -595,8 +646,8 @@ export function SobreVoce({
             <dl className="space-y-2 pl-8">
               {t.campos.map((c) => (
                 <div key={c}>
-                  <dt className="text-2xs font-semibold uppercase tracking-wider text-ink-3">{ROTULO_REVISAO[c]}</dt>
-                  <dd className={cn("text-sm leading-snug", respondido(c) ? "text-ink" : "italic text-ink-3")}>
+                  <dt className="text-2xs font-semibold uppercase tracking-[0.08em] text-ink-2">{ROTULO_REVISAO[c]}</dt>
+                  <dd className={cn("text-[13px] leading-snug", respondido(c) ? "text-ink" : "italic text-ink-2")}>
                     {respondido(c) ? legivel(aluno.id, c, get(c)) : "Sem resposta"}
                   </dd>
                 </div>
@@ -606,9 +657,9 @@ export function SobreVoce({
         ))}
 
         {pedirTreino && (
-          <div className="rounded-card border border-border bg-surface p-4">
-            <label htmlFor="sv-recado" className="mb-3 block">
-              <span className="block text-[15px] font-semibold text-ink">Quer deixar um recado para {professor}?</span>
+          <div className="rounded-[16px] border border-border bg-surface p-3.5">
+            <label htmlFor="sv-recado" className="mb-2.5 block">
+              <span className="block text-sm font-semibold text-ink">Quer deixar um recado para {professor}?</span>
               <span className="mt-1 block text-xs text-ink-2">Opcional. Vai junto com o pedido do treino.</span>
             </label>
             <textarea
@@ -635,15 +686,20 @@ export function SobreVoce({
   } else {
     const pediu = pedirTreino || !!pedidoEnviadoEm;
     corpo = (
-      <div className="space-y-5 pb-4 pt-6">
+      <div className="space-y-4 pb-4 pt-8">
         <div className="text-center">
           <span className="mx-auto grid h-16 w-16 place-items-center rounded-full" style={{ background: cor, color: tinta }}>
-            <Check className="h-8 w-8" strokeWidth={2.5} aria-hidden />
+            <Check className="h-7 w-7" strokeWidth={3} aria-hidden />
           </span>
-          <h2 ref={tituloRef} tabIndex={-1} id="sobre-voce-titulo" className="mt-4 font-display text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink outline-none">
+          <h2
+            ref={tituloRef}
+            tabIndex={-1}
+            id="sobre-voce-titulo"
+            className="mt-3 font-display text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink outline-none"
+          >
             {pedirTreino ? "Pedido enviado" : "Respostas enviadas"}
           </h2>
-          <p className="mx-auto mt-2 max-w-[34ch] text-[15px] leading-relaxed text-ink-2">
+          <p className="mx-auto mt-1.5 max-w-[34ch] text-[12.5px] leading-[1.5] text-ink-2">
             {pediu
               ? `${Prof} vai revisar o que você contou e montar o seu treino. Quando ficar pronto, ele aparece no início do app.`
               : `${Prof} vai revisar o que mudou.`}{" "}
@@ -651,11 +707,11 @@ export function SobreVoce({
           </p>
         </div>
         {pediu && (
-          <div className="rounded-card border border-border bg-surface p-4">
+          <div className="rounded-[16px] border border-border bg-surface p-3.5">
             <LinhaDoTempo etapas={etapas} feitas={1} cor={cor} tinta={tinta} professor={Prof} />
           </div>
         )}
-        <p className="text-center text-xs text-ink-3">Você pode atualizar essas respostas quando algo mudar, na aba Perfil.</p>
+        <p className="text-center text-2xs text-ink-2">Você pode atualizar essas respostas quando algo mudar, na aba Perfil.</p>
       </div>
     );
     rodape = (
@@ -669,41 +725,48 @@ export function SobreVoce({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg" role="dialog" aria-modal="true" aria-labelledby="sobre-voce-titulo" style={estiloMarca}>
-      {/* Topo: fechar sempre à mão e, nos passos, o indicador com o nome de cada um. */}
-      <header className="shrink-0 border-b border-border bg-bg/95 backdrop-blur">
-        <div className="mx-auto max-w-md px-4 pb-3 pt-3">
-          <div className="flex min-h-[40px] items-center gap-2">
-            {comPassos ? (
+      {/* Topo dos passos (protótipo, tela 10): à esquerda, sair para onde a pessoa estava
+          ("‹ Perfil"); no primeiro acesso não há de onde ter vindo, e o mesmo lugar diz
+          "Pular por agora". À direita, em que passo ela está. Voltar um passo mora no rodapé. */}
+      {comPassos && (
+        <header className="shrink-0 bg-bg">
+          <div className="mx-auto max-w-md px-3.5 pt-1">
+            <div className="flex min-h-[44px] items-center justify-between gap-2">
               <button
                 type="button"
-                onClick={voltar}
-                aria-label="Voltar"
-                className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-ink-2 hover:bg-surface-soft hover:text-ink"
+                onClick={onFechar}
+                className="-ml-1 inline-flex min-h-[44px] items-center gap-0.5 rounded-full pl-0.5 pr-2 text-xs text-ink-2 hover:text-ink"
               >
-                <ChevronLeft className="h-5 w-5" aria-hidden />
+                {origem ? (
+                  <>
+                    <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> {origem}
+                  </>
+                ) : (
+                  "Pular por agora"
+                )}
               </button>
-            ) : (
-              <span className="text-2xs font-bold uppercase tracking-[0.12em] text-ink-3">{fase === "fim" ? "Tudo certo" : "Conte sobre você"}</span>
-            )}
-            {comPassos && <span className="text-sm font-bold text-ink">Conte sobre você</span>}
-            {comPassos && (
-              <button type="button" onClick={onFechar} className="ml-auto min-h-[40px] px-1 text-xs font-semibold text-ink-2 underline-offset-2 hover:text-ink hover:underline">
-                Pular por agora
-              </button>
-            )}
+              <span className="tabular text-2xs text-ink-2" aria-hidden>
+                {passo >= 0 ? `${passo + 1} de ${total}` : "Revisão"}
+              </span>
+            </div>
+            <IndicadorDePassos
+              atual={passo >= 0 ? passo : total}
+              cor={cor}
+              onIr={irPara}
+              respondidos={TELAS_SOBRE_VOCE.map((t) => t.campos.some(respondido))}
+            />
           </div>
-          {comPassos && <IndicadorDePassos atual={passo >= 0 ? passo : total} cor={cor} onIr={irPara} respondidos={TELAS_SOBRE_VOCE.map((t) => t.campos.some(respondido))} />}
-        </div>
-      </header>
+        </header>
+      )}
 
       <div ref={rolagemRef} className="flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto max-w-md px-4">{corpo}</div>
+        <div className="mx-auto max-w-md px-3.5">{corpo}</div>
       </div>
 
-      <footer className="shrink-0 border-t border-border bg-bg px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+      <footer className="shrink-0 bg-bg px-3.5 pb-[max(0.875rem,env(safe-area-inset-bottom))] pt-2.5">
         <div className="mx-auto max-w-md">
           {rodape}
-          {!onDeclarar && <p className="mt-2 text-center text-2xs text-ink-3">Prévia: aqui o aluno grava as respostas.</p>}
+          {!onDeclarar && <p className="mt-2 text-center text-2xs text-ink-2">Prévia: aqui o aluno grava as respostas.</p>}
         </div>
       </footer>
     </div>
@@ -715,11 +778,16 @@ export function SobreVoce({
 const CLASSE_CAMPO =
   "h-12 w-full rounded-control border border-border bg-bg px-3.5 text-base text-ink placeholder:text-ink-3 focus:outline-none focus:ring-2 focus:ring-[color:var(--marca)] disabled:opacity-50";
 
-/** Uma pergunta, no cartão de superfície do app. */
-function Bloco({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-card border border-border bg-surface p-4">{children}</div>;
+/**
+ * Uma pergunta, no cartão de superfície do app. `solto`: o passo de uma pergunta só, em que
+ * a pergunta já é o título da tela e o cartão em volta seria moldura sem conteúdo.
+ */
+function Bloco({ children, solto }: { children: React.ReactNode; solto?: boolean }) {
+  if (solto) return <div>{children}</div>;
+  return <div className="rounded-[16px] border border-border bg-surface p-3.5">{children}</div>;
 }
 
+/** Escolha ÚNICA (e o "Não sei informar"): pílula que enche na cor da marca. */
 function Opcao({
   ativa,
   onClick,
@@ -756,7 +824,7 @@ function Opcao({
       aria-checked={radio ? ativa : undefined}
       aria-pressed={radio ? undefined : ativa}
       className={cn(
-        "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold transition-colors",
+        "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3.5 text-[13px] font-semibold transition-colors",
         larga && "w-full justify-start rounded-control text-left",
         centro && "justify-center px-2",
         ativa ? "border-transparent" : discreta ? "border-dashed border-ink-3/60 bg-transparent text-ink-2" : "border-border bg-bg text-ink hover:border-ink-3",
@@ -765,6 +833,48 @@ function Opcao({
     >
       {marcador && ativa && <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} aria-hidden />}
       {children}
+    </button>
+  );
+}
+
+/**
+ * Escolha MÚLTIPLA (protótipo, tela 10): caixinha de marcar e a borda na cor da marca, com o
+ * fundo só tingido. Encher a opção inteira de cor era a linguagem da escolha única, e o aluno
+ * que marcava "Halteres" achava que tinha trocado a resposta em vez de somar uma.
+ */
+function OpcaoMarcar({
+  ativa,
+  onClick,
+  cor,
+  tinta,
+  children,
+}: {
+  ativa: boolean;
+  onClick: () => void;
+  cor: string;
+  tinta: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      role="checkbox"
+      aria-checked={ativa}
+      className={cn(
+        "flex min-h-[44px] w-full items-center gap-2 rounded-control border-[1.5px] px-3 py-2.5 text-left text-xs font-semibold text-ink transition-colors",
+        !ativa && "border-border bg-surface hover:border-ink-3",
+      )}
+      style={ativa ? { borderColor: cor, background: `${cor}1a` } : undefined}
+    >
+      <span
+        aria-hidden
+        className={cn("grid h-3.5 w-3.5 shrink-0 place-items-center rounded-[4px]", !ativa && "border-[1.5px] border-ink-3")}
+        style={ativa ? { background: cor, color: tinta } : undefined}
+      >
+        {ativa && <Check className="h-2.5 w-2.5" strokeWidth={3.5} />}
+      </span>
+      <span className="min-w-0">{children}</span>
     </button>
   );
 }
@@ -786,7 +896,7 @@ function BotaoPrincipal({
     <button
       type="button"
       onClick={onClick}
-      className={cn("inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-full px-5 text-base font-bold transition-transform active:scale-[0.99]", className)}
+      className={cn("inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-full px-5 text-sm font-bold transition-transform active:scale-[0.99]", className)}
       style={{ background: cor, color: tinta }}
     >
       {children}
@@ -794,22 +904,27 @@ function BotaoPrincipal({
   );
 }
 
+/** Voltar um passo: o círculo de 44 px ao lado do Continuar (protótipo, tela 10). */
 function BotaoVoltar({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-12 shrink-0 items-center gap-1 rounded-full border border-border bg-surface px-4 text-sm font-bold text-ink hover:bg-surface-soft"
+      aria-label="Voltar"
+      className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-surface text-ink-2 hover:bg-surface-soft hover:text-ink"
     >
-      <ChevronLeft className="h-4 w-4" aria-hidden /> Voltar
+      <ChevronLeft className="h-4 w-4" aria-hidden />
     </button>
   );
 }
 
 /**
- * O indicador: cinco segmentos com o nome de cada passo embaixo. O segmento enche com a cor
- * da marca quando o passo tem resposta, e o atual ganha o nome em negrito. Tocar num nome
- * leva ao passo: nenhum é obrigatório, então a ordem é sugestão, não trilho.
+ * O indicador: cinco traços finos (protótipo, tela 10). Respondido enche na cor da marca, o
+ * atual na versão da marca que ESCREVE (mais forte), e o que falta fica no cinza da borda. O
+ * nome de cada passo saiu de baixo dos traços porque ele agora é o rótulo acima do título.
+ *
+ * Cada traço continua tocável, com 44 px de altura invisível: nenhum passo é obrigatório,
+ * então a ordem é sugestão, não trilho.
  */
 function IndicadorDePassos({
   atual,
@@ -823,26 +938,23 @@ function IndicadorDePassos({
   respondidos: boolean[];
 }) {
   return (
-    <ol className="mt-2 grid grid-cols-5 gap-1.5" aria-label="Passos">
+    <ol className="-mb-2.5 -mt-2.5 flex gap-[3px]" aria-label="Passos">
       {TELAS_SOBRE_VOCE.map((t, i) => {
         const aqui = i === atual;
         return (
-          <li key={t.curto}>
+          <li key={t.curto} className="flex-1">
             <button
               type="button"
               onClick={() => onIr(i)}
               aria-current={aqui ? "step" : undefined}
               aria-label={`Passo ${i + 1}: ${t.titulo}${respondidos[i] ? ", respondido" : ""}`}
-              className="group block w-full pt-1 text-left"
+              className="flex h-11 w-full items-center rounded-full"
             >
               <span
                 aria-hidden
-                className="block h-1.5 rounded-full bg-surface-soft transition-colors"
-                style={respondidos[i] ? { background: cor } : aqui ? { background: cor, opacity: 0.45 } : undefined}
+                className={cn("block h-1 w-full rounded-[2px] transition-colors", aqui ? "bg-primary-texto" : !respondidos[i] && "bg-border")}
+                style={!aqui && respondidos[i] ? { background: cor } : undefined}
               />
-              <span className={cn("mt-1.5 block truncate text-2xs leading-none", aqui ? "font-bold text-ink" : "font-medium text-ink-3 group-hover:text-ink-2")}>
-                {t.curto}
-              </span>
             </button>
           </li>
         );
@@ -851,25 +963,29 @@ function IndicadorDePassos({
   );
 }
 
-/** Quem vai montar o treino: a mesma faixa na cor da marca que abre o app. */
-function CartaoDoProfessor({ marca, cor, tinta }: { marca?: Marca; cor: string; tinta: string }) {
+/**
+ * O PAINEL DA MARCA na abertura (protótipo, tela 11): a logo do professor em papel branco,
+ * grande, porque é o convite dele. Sem logo, a foto dele em círculo; sem as duas, a letra da
+ * marca na cor dela puxada até 4,5:1 contra o BRANCO (a tinta da marca, que o protótipo usa,
+ * some no papel quando é branca).
+ */
+function PainelDaMarca({ marca, cor }: { marca?: Marca; cor: string }) {
   if (!marca) return null;
-  const imagem = marca.fotoDataUrl ?? marca.logoDataUrl;
   return (
-    <div className="flex items-center gap-3 rounded-card p-3.5" style={{ background: cor, color: tinta }}>
-      {imagem ? (
-        <span className={cn("grid h-12 min-w-[48px] shrink-0 place-items-center overflow-hidden rounded-control bg-white", !marca.fotoDataUrl && "px-2 py-1")}>
-          <img src={imagem} alt="" className={marca.fotoDataUrl ? "h-12 w-12 object-cover" : "max-h-10 max-w-[96px] object-contain"} />
-        </span>
+    <div className="grid h-[120px] w-full place-items-center overflow-hidden rounded-card bg-white p-3.5">
+      {marca.logoDataUrl ? (
+        <img src={marca.logoDataUrl} alt={marca.nome} className="h-full w-full object-contain" />
+      ) : marca.fotoDataUrl ? (
+        <img src={marca.fotoDataUrl} alt={marca.nome} className="h-[72px] w-[72px] rounded-full object-cover" />
       ) : (
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-control bg-white font-display text-lg font-bold" style={{ color: cor }}>
-          {iniciaisDe(marca.nome)}
+        <span
+          aria-hidden
+          className="font-display text-[30px] font-bold"
+          style={{ color: ajustarParaContraste(marca.corPrimaria || cor, "#FFFFFF", 4.5) }}
+        >
+          {marca.nome.trim().charAt(0).toUpperCase()}
         </span>
       )}
-      <span className="min-w-0 flex-1">
-        <span className="block text-2xs opacity-90">Quem vai montar o seu treino</span>
-        <b className="block truncate text-[15px] font-bold leading-tight">{marca.nome}</b>
-      </span>
     </div>
   );
 }

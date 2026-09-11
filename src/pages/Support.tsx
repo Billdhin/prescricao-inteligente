@@ -1,15 +1,6 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
-import {
-  LifeBuoy,
-  Mail,
-  GraduationCap,
-  MessageSquare,
-  CheckCircle2,
-  Send,
-  ArrowRight,
-  ShieldCheck,
-} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { LifeBuoy, Mail, GraduationCap, MessageSquare, CheckCircle2, Send, ArrowRight } from "lucide-react";
 import { Card, Pill, SectionHeader, buttonClasses } from "@/components/ui/primitives";
 import { Accordion } from "@/components/ui/disclosure";
 import { useUser } from "@/lib/store";
@@ -80,6 +71,17 @@ export function Support() {
 
   const valido = nome.trim().length > 1 && /.+@.+\..+/.test(email) && mensagem.trim().length > 4;
 
+  // "Enviar mensagem" na Ajuda chega aqui como /suporte#form. O roteador troca a tela mas não
+  // rola até a âncora, e o botão prometia o formulário e entregava o topo da página. O
+  // `setTimeout` é o que faz funcionar: o ScrollToTop do App.tsx roda DEPOIS deste efeito na
+  // mesma troca de rota e devolvia a página ao topo.
+  const { hash } = useLocation();
+  React.useEffect(() => {
+    if (!hash) return;
+    const t = window.setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ block: "start" }), 0);
+    return () => window.clearTimeout(t);
+  }, [hash]);
+
   const enviar = () => {
     if (!valido) return;
     const protocolo = "PI-" + Date.now().toString(36).slice(-6).toUpperCase();
@@ -108,7 +110,7 @@ export function Support() {
     encodeURIComponent(`${mensagem}\n\n${nome} (${email})`);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto max-w-5xl space-y-[22px] lg:space-y-8">
       <SectionHeader
         eyebrow="Estamos aqui"
         icon={<LifeBuoy className="h-3 w-3" />}
@@ -117,7 +119,7 @@ export function Support() {
       />
 
       {/* Canais rápidos */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
         <Canal
           icon={<GraduationCap className="h-5 w-5" />}
           titulo="Tutoriais"
@@ -155,7 +157,7 @@ export function Support() {
         </section>
 
         {/* Formulário */}
-        <section id="form">
+        <section id="form" className="scroll-mt-20 lg:scroll-mt-6">
           <h2 className="mb-3 font-display text-lg font-bold text-ink">Fale conosco</h2>
           {enviado ? (
             <Card tone="success" className="p-6 text-center">
@@ -239,12 +241,11 @@ export function Support() {
         </section>
       </div>
 
-      {/* Status / versão */}
+      {/* Versão. Aqui havia um selo verde "Sistemas operacionais" que nada verificava: um
+          estado de sistema afirmado por texto fixo, verde até no dia em que algo caísse. Sem
+          uma checagem real por trás, a linha diz só o que sabe. */}
       <Card variant="soft" className="flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-3 text-sm">
-        <span className="inline-flex items-center gap-2 font-semibold text-ink">
-          <ShieldCheck className="h-4 w-4 text-success" /> Sistemas operacionais
-        </span>
-        <span className="text-ink-3">Versão 1.0</span>
+        <span className="text-ink-2">Versão 1.0</span>
         <Link to="/tutorial" className="ml-auto inline-flex items-center gap-1 font-semibold text-primary hover:underline">
           Ver tutoriais <ArrowRight className="h-4 w-4" />
         </Link>
@@ -280,7 +281,8 @@ function Canal({
       <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
     </>
   );
-  const cls = "flex items-center gap-3 rounded-card border border-border bg-surface p-4 shadow-soft transition-colors hover:bg-surface-soft";
+  // Raio 16 e sem sombra, como os cartões-link da Ajuda no protótipo: é a mesma família.
+  const cls = "flex items-center gap-3 rounded-[16px] border border-border bg-surface p-4 transition-colors hover:bg-surface-soft";
   if (to) return <Link to={to} className={cls} aria-label={cta}>{inner}</Link>;
   if (href) return <a href={href} className={cls} aria-label={cta}>{inner}</a>;
   return (

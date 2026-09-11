@@ -1,10 +1,11 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, MoreHorizontal, Search, Eye, Plus, LogOut } from "lucide-react";
-import { Logo, TelaCarregando } from "@/components/brand/Logo";
+import { Bell, CheckCheck, MoreHorizontal, Search, Eye, Plus, LogOut, LayoutGrid } from "lucide-react";
+import { Logo, MarcaPino, TelaCarregando } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
-import { PRIMARIOS, MAIS, BOTTOM, CONTA, itemAtivo } from "@/components/app/nav";
+import { AlternarTema } from "@/components/theme/AlternarTema";
+import { PRIMARIOS, MAIS, BOTTOM, CONTA, itemAtivo, type NavItem } from "@/components/app/nav";
 import { notificacoes } from "@/lib/notificacoes";
 import { contagensDoMenu, alunoParaPrevia } from "@/lib/gps/pendencias";
 import type { CicloCtx } from "@/lib/gps/proximoPasso";
@@ -155,10 +156,15 @@ export function AppLayout() {
               as telas no redesign (protótipo de 08/09/2026): é ferramenta, não
               navegação, e cada página continua dona do próprio cabeçalho. */}
           <Topbar />
-          <main className="mx-auto w-full min-w-0 max-w-[1180px] flex-1 p-4 pb-24 md:p-6 lg:p-8 lg:pb-10">
+          {/* No celular o respiro é o do protótipo (18 px em cima, 14 nos lados) e o fim da
+              página desconta a barra inferior fixa (73 px) mais a área segura do iPhone. */}
+          <main className="mx-auto w-full min-w-0 max-w-[1180px] flex-1 px-3.5 pb-[calc(97px+env(safe-area-inset-bottom))] pt-[18px] lg:p-8 lg:pb-10">
             <ErrorBoundary chaveDeReset={pathname}>
               <React.Suspense fallback={<RouteFallback />}>
-                <Outlet />
+                {/* Cada tela entra com o mesmo gesto curto do protótipo (sobe 8 px e aparece). */}
+                <div key={pathname} className="animate-entra">
+                  <Outlet />
+                </div>
               </React.Suspense>
             </ErrorBoundary>
           </main>
@@ -390,6 +396,10 @@ const CASCA = {
   ativoTinta: "#FFFFFF",
   ponto: "#E8A317",
   pontoInativo: "rgba(255,255,255,.25)",
+  // A barra inferior do protótipo: o ativo se lê pela pílula âmbar translúcida atrás do
+  // ícone e pela tinta âmbar clara (#F0B429 dá 9,9:1 sobre o navy).
+  barraAtiva: "#F0B429",
+  barraPilula: "rgba(232,163,23,.18)",
 } as const;
 
 /** Largura da lateral. Vive aqui e no padding da coluna de conteúdo. */
@@ -776,8 +786,10 @@ function Topbar() {
   const titulo = tituloDaRota(pathname);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur">
-      <div className="flex h-16 w-full items-center gap-2 px-3 md:gap-3 md:px-6">
+    <header className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur-md">
+      {/* No celular a barra tem a altura dos botões de 42 px mais 10 px de cada lado, como o
+          protótipo; do desktop para cima volta aos 64 px da lateral. */}
+      <div className="flex w-full items-center gap-2 px-3.5 py-2.5 min-[360px]:gap-3 lg:h-16 lg:px-6 lg:py-0">
         {/*
           NO MOBILE, A BARRA DIZ ONDE VOCÊ ESTÁ (protótipo mobile de 09/09/2026).
           No desktop a lateral responde isso com o item aceso; no celular ela não existe, e
@@ -790,7 +802,7 @@ function Topbar() {
           aria-label="Mapa da Prescrição, ir para Meu dia"
           className="flex min-w-0 flex-1 items-center gap-2.5 lg:hidden"
         >
-          <Logo showWord={false} />
+          <MarcaPino className="h-7 w-7 shrink-0" />
           <span className="min-w-0">
             <span className="block text-2xs font-semibold uppercase leading-none tracking-[0.12em] text-ink-3">
               Mapa da Prescrição
@@ -801,19 +813,22 @@ function Topbar() {
           </span>
         </Link>
 
-        <div className="hidden min-w-0 flex-1 md:block md:max-w-xl">
+        {/* O campo largo é do desktop; no celular a lupa em quadro abre a mesma busca numa
+            segunda linha. A troca é em lg, junto com a lateral: entre 640 e 1023 o resto da
+            casca ainda é a do celular. */}
+        <div className="hidden min-w-0 flex-1 lg:block lg:max-w-xl">
           <GlobalSearch />
         </div>
-        <button
-          onClick={() => setBusca((v) => !v)}
-          aria-label="Buscar"
-          aria-expanded={busca}
-          className="grid h-11 w-11 place-items-center rounded-control text-ink-2 hover:bg-surface-soft md:hidden"
-        >
-          <Search className="h-[18px] w-[18px]" />
-        </button>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2 min-[360px]:gap-3 lg:gap-2">
+          <button
+            onClick={() => setBusca((v) => !v)}
+            aria-label="Buscar"
+            aria-expanded={busca}
+            className="grid h-[42px] w-[42px] place-items-center rounded-control border border-border bg-surface text-ink-2 transition-colors hover:text-ink lg:hidden"
+          >
+            <Search className="h-4 w-4" aria-hidden />
+          </button>
           {previa && (
             <Link
               to={`/alunos/${previa.id}/preview`}
@@ -828,15 +843,17 @@ function Topbar() {
             conviviam na mesma tela abrindo a mesma folha. Duas portas para o mesmo lugar,
             a dois centímetros uma da outra.
           */}
+          <AlternarTema />
           <NotificationsMenu />
-          <Link to="/alunos?novo=1" className={cn(buttonClasses("primary", "sm"), "hidden sm:inline-flex")}>
+          {/* No celular quem cadastra é o botão flutuante do Meu dia e da carteira. */}
+          <Link to="/alunos?novo=1" className={cn(buttonClasses("primary", "sm"), "hidden lg:inline-flex")}>
             <Plus className="h-4 w-4" /> Cadastrar aluno
           </Link>
         </div>
       </div>
 
       {busca && (
-        <div className="border-t border-border px-3 pb-3 pt-2 md:hidden">
+        <div className="border-t border-border px-3.5 pb-3 pt-2 lg:hidden">
           <GlobalSearch />
         </div>
       )}
@@ -845,21 +862,30 @@ function Topbar() {
 }
 
 /**
- * "Mais" no MOBILE: folha de baixo com os destinos que não cabem na barra
- * inferior de 5. No desktop ele não existe, porque a lateral já lista tudo.
+ * "Mais" no MOBILE: a folha de baixo com o que não cabe nos 5 destinos da barra.
+ *
+ * O DESENHO É O DO PROTÓTIPO (10/09/2026): era uma lista plana de onze linhas iguais, e
+ * virou o que ela de fato é, três portas de referência e a conta. O cartão de quem está
+ * usando abre a folha; Estudar e Laboratório Visual lado a lado, com os filhos (Grupos
+ * Especiais, Consultar, Comparador) como pílulas que LEVAM a eles (no protótipo eram
+ * enfeite dentro de um botão só); Protocolos em faixa; e Ajuda, Configurações e Sair em
+ * três quadrados. Tudo continua saindo de `MAIS` e `CONTA` (nav.ts), para a busca e o
+ * check:menu verem a mesma lista que a folha desenha.
  */
-/**
- * "Mais" existe em duas superfícies porque o gatilho vivia SÓ dentro da Topbar, e a Topbar
- * só renderiza no Meu dia. Fora dele, no celular, ficavam inalcançáveis Estudar, Laboratório
- * Visual, Protocolos, Comparador, Consultar, Grupos Especiais, Ajuda, Configurações e o
- * próprio SAIR. Num produto usado entre atendimentos, isso é a maior parte das sessões.
- * A folha é a mesma; o que muda é só a casca do botão.
- */
-function MaisMenu({ variante = "topbar" }: { variante?: "topbar" | "barra-inferior" }) {
+const FAMILIA_DO_MAIS: Record<string, { fundo: string; tinta: string; descricao: string }> = {
+  "/aprender": { fundo: "bg-primary-tint", tinta: "text-primary", descricao: "text-ink-2" },
+  "/movement-lab": { fundo: "bg-analysis-tint", tinta: "text-analysis", descricao: "text-ink-2" },
+  "/protocols": { fundo: "bg-warning-tint", tinta: "text-warning", descricao: "text-warning" },
+};
+const FAMILIA_PADRAO = { fundo: "bg-surface", tinta: "text-ink", descricao: "text-ink-2" };
+
+function MaisMenu() {
   const [open, setOpen] = React.useState(false);
   const { pathname } = useLocation();
   const botaoRef = React.useRef<HTMLButtonElement>(null);
+  const folhaRef = React.useRef<HTMLDivElement>(null);
   const cloud = useCloudAuth();
+  const { name, plan, cref, fotoDataUrl } = useUser();
   const sairDaConta = async () => {
     if (cloud.configured) await signOut();
     else {
@@ -873,7 +899,9 @@ function MaisMenu({ variante = "topbar" }: { variante?: "topbar" | "barra-inferi
 
   React.useEffect(() => {
     if (!open) return;
-    // Esc fecha E DEVOLVE O FOCO ao botão, senão o foco cai no início da página.
+    // O foco entra na folha (ela é um diálogo agora, não uma lista de menu) e Esc fecha
+    // DEVOLVENDO o foco ao botão, senão ele cai no início da página.
+    folhaRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       setOpen(false);
@@ -883,7 +911,9 @@ function MaisMenu({ variante = "topbar" }: { variante?: "topbar" | "barra-inferi
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const algumAtivo = MAIS.some((i) => itemAtivo(i, pathname));
+  const algumAtivo = MAIS.some((i) => itemAtivo(i, pathname)) || CONTA.some((i) => itemAtivo(i, pathname));
+  const aceso = algumAtivo || open;
+  const [largos, faixas] = [MAIS.filter((i) => i.to !== "/protocols"), MAIS.filter((i) => i.to === "/protocols")];
 
   return (
     <>
@@ -891,35 +921,18 @@ function MaisMenu({ variante = "topbar" }: { variante?: "topbar" | "barra-inferi
         ref={botaoRef}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-haspopup="menu"
-        className={cn(
-          "transition-colors lg:hidden",
-          variante === "barra-inferior"
-            ? "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 px-1 py-2 text-2xs font-semibold leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
-            : "inline-flex h-10 items-center gap-1.5 rounded-control px-3 text-sm font-semibold " +
-              (algumAtivo ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft hover:text-ink"),
-        )}
-        style={
-          variante === "barra-inferior"
-            ? { color: algumAtivo || open ? CASCA.ativoTinta : CASCA.tinta2 }
-            : undefined
-        }
+        aria-haspopup="dialog"
+        className="relative flex min-h-[52px] min-w-0 flex-col items-center gap-1 py-1.5 text-2xs font-semibold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:hidden"
+        style={{ color: aceso ? CASCA.barraAtiva : CASCA.tinta2 }}
       >
-        {variante === "barra-inferior" ? (
-          <>
-            <span
-              aria-hidden
-              className="h-1 w-[22px] rounded-full transition-colors"
-              style={{ background: algumAtivo || open ? CASCA.ponto : CASCA.pontoInativo }}
-            />
-            <span className="max-w-full">Mais</span>
-          </>
-        ) : (
-          <>
-            <MoreHorizontal className="h-[18px] w-[18px]" aria-hidden />
-            <span className="hidden sm:inline">Mais</span>
-          </>
-        )}
+        <span
+          aria-hidden
+          className="grid h-[26px] w-10 place-items-center rounded-full transition-colors"
+          style={{ background: aceso ? CASCA.barraPilula : "transparent" }}
+        >
+          <LayoutGrid className="h-4 w-4" />
+        </span>
+        <span>Mais</span>
       </button>
 
       {/* Folha de baixo POR PORTAL. A barra superior tem backdrop-blur, e um
@@ -929,68 +942,81 @@ function MaisMenu({ variante = "topbar" }: { variante?: "topbar" | "barra-inferi
       {open &&
         createPortal(
           <>
+            <div aria-hidden onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-[#0B1628]/55 lg:hidden" />
             <div
-              aria-hidden
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] lg:hidden"
-            />
-            <div
-              role="menu"
-              aria-label="Mais destinos"
-              className="fixed inset-x-0 bottom-0 z-50 max-h-[80dvh] overflow-y-auto rounded-t-card border-t border-border bg-surface p-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-overlay lg:hidden"
+              ref={folhaRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Mais"
+              tabIndex={-1}
+              className="fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] animate-subir-folha overflow-y-auto rounded-t-[24px] bg-bg px-3.5 pb-[calc(28px+env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-20px_50px_-30px_rgba(0,0,0,.5)] outline-none lg:hidden"
             >
-              <div className="px-2.5 pb-1 pt-1.5 text-2xs font-semibold uppercase tracking-wider text-ink-2">
-                Mais destinos
+              <span aria-hidden className="mx-auto mb-3 block h-1 w-10 rounded-full bg-border" />
+
+              {/* Quem está usando: a mesma pessoa do rodapé da lateral no desktop. Sem selo de
+                  plano inventado: a conta mostra o plano e o CREF que de fato tem. */}
+              <div className="flex items-center gap-3 rounded-[18px] px-3.5 py-3" style={{ background: CASCA.fundo, color: CASCA.tinta }}>
+                {fotoDataUrl ? (
+                  <img src={fotoDataUrl} alt="" className="h-11 w-11 shrink-0 rounded-[14px] object-cover" />
+                ) : (
+                  <span
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] text-sm font-bold"
+                    style={{ background: "var(--primary)", color: "var(--on-primary)" }}
+                  >
+                    {iniciaisDe(name || "Profissional")}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <b className="block truncate text-[14.5px] font-bold">{name || "Seu perfil"}</b>
+                  <span className="block truncate text-xs" style={{ color: CASCA.tinta3 }}>
+                    {planLabel[plan]}
+                    {cref ? ` · CREF ${cref}` : ""}
+                  </span>
+                </span>
               </div>
-              {/* No mobile a folha lista os destinos e os FILHOS logo abaixo do pai,
-                  mais a conta e a ajuda: aqui não existe rodapé de usuário para
-                  abrigá-las, e destino sem porta é destino perdido. */}
-              <ul className="space-y-0.5">
-                {[...MAIS.flatMap((i) => [i, ...(i.children ?? []).map((c) => ({ ...c, filho: true }))]), ...CONTA].map((item: any) => {
-                  const ativo = item.filho ? pathname === item.to : itemAtivo(item, pathname);
+
+              <p className="mb-2 mt-4 px-0.5 text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Aprender e consultar</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {largos.map((item) => (
+                  <CartaoDoMais key={item.to} item={item} pathname={pathname} />
+                ))}
+              </div>
+              {faixas.map((item) => (
+                <CartaoDoMais key={item.to} item={item} pathname={pathname} faixa />
+              ))}
+
+              <p className="mb-2 mt-4 px-0.5 text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Conta</p>
+              <div className="flex gap-2">
+                {CONTA.map((item) => {
+                  const ativo = itemAtivo(item, pathname);
                   return (
-                    <li key={item.to} className={item.filho ? "pl-6" : undefined}>
-                      <Link
-                        to={item.to}
-                        aria-current={ativo ? "page" : undefined}
-                        className={cn(
-                          "flex min-h-[44px] items-start gap-3 rounded-control px-2.5 py-2 transition-colors",
-                          ativo ? "bg-surface-soft" : "hover:bg-surface-soft",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full",
-                            ativo ? "bg-ink text-surface" : "bg-surface-mute text-ink-2",
-                          )}
-                        >
-                          <item.icon className="h-[18px] w-[18px]" aria-hidden />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-ink">{item.label}</span>
-                          {item.hint && <span className="block text-xs leading-tight text-ink-2">{item.hint}</span>}
-                        </span>
-                      </Link>
-                    </li>
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      aria-current={ativo ? "page" : undefined}
+                      className={cn(
+                        "flex flex-1 flex-col items-center gap-2 rounded-[14px] border bg-surface px-1.5 py-3 text-xs font-semibold text-ink",
+                        ativo ? "border-ink" : "border-border",
+                      )}
+                    >
+                      <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-bg">
+                        <item.icon className="h-[18px] w-[18px]" aria-hidden />
+                      </span>
+                      {item.label}
+                    </Link>
                   );
                 })}
-                <li>
-                  <button
-                    onClick={() => void sairDaConta()}
-                    className="flex min-h-[44px] w-full items-start gap-3 rounded-card px-2.5 py-2 text-left transition-colors hover:bg-surface-soft"
-                  >
-                    <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-mute text-ink-2">
-                      <LogOut className="h-[18px] w-[18px]" aria-hidden />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-ink">Sair</span>
-                      <span className="block text-xs leading-tight text-ink-2">
-                        Encerra a sessão neste aparelho.
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              </ul>
+                <button
+                  type="button"
+                  onClick={() => void sairDaConta()}
+                  className="flex flex-1 flex-col items-center gap-2 rounded-control border border-border bg-surface px-1.5 py-3 text-xs font-semibold text-danger"
+                >
+                  <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-bg">
+                    <LogOut className="h-[18px] w-[18px]" aria-hidden />
+                  </span>
+                  Sair
+                </button>
+              </div>
             </div>
           </>,
           document.body,
@@ -1000,15 +1026,79 @@ function MaisMenu({ variante = "topbar" }: { variante?: "topbar" | "barra-inferi
 }
 
 /**
- * O BOTÃO FLUTUANTE DE CADASTRAR ALUNO (protótipo mobile de 09/09/2026).
+ * Um cartão da folha "Mais": o destino inteiro é tocável (link esticado), e os filhos são
+ * pílulas que levam a eles, por cima do link do pai. `faixa` é o formato largo de uma linha
+ * (Protocolos), com "Abrir" à direita.
+ */
+function CartaoDoMais({ item, pathname, faixa }: { item: NavItem; pathname: string; faixa?: boolean }) {
+  const f = FAMILIA_DO_MAIS[item.to] ?? FAMILIA_PADRAO;
+  const ativo = pathname === item.to || pathname.startsWith(item.to + "/") || (item.match?.some((p) => pathname.startsWith(p)) ?? false);
+  const icone = (
+    <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-control bg-surface/70", f.tinta)}>
+      <item.icon className="h-[18px] w-[18px]" aria-hidden />
+    </span>
+  );
+  const principal = (
+    <Link
+      to={item.to}
+      aria-current={ativo ? "page" : undefined}
+      className="after:absolute after:inset-0 after:rounded-[18px] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ink"
+    >
+      <b className="block font-display text-base font-bold tracking-[-0.02em] text-ink">{item.label}</b>
+    </Link>
+  );
+
+  if (faixa) {
+    return (
+      <div className={cn("relative mt-2.5 flex items-center gap-3 rounded-[18px] p-3.5", f.fundo, ativo && "ring-2 ring-ink")}>
+        {icone}
+        <span className="min-w-0 flex-1">
+          {principal}
+          <span className={cn("mt-0.5 block text-xs leading-[1.4]", f.descricao)}>{item.hint}</span>
+        </span>
+        <span aria-hidden className={cn("shrink-0 text-xs font-bold", f.tinta)}>
+          Abrir ›
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("relative flex min-h-[150px] flex-col gap-2.5 rounded-[18px] p-3.5", f.fundo, ativo && "ring-2 ring-ink")}>
+      {icone}
+      <span className="min-w-0">
+        {principal}
+        <span className="mt-[3px] block text-xs leading-[1.4] text-ink-2">{item.hint}</span>
+      </span>
+      {item.children && item.children.length > 0 && (
+        <span className="relative z-10 mt-auto flex flex-wrap gap-1.5">
+          {item.children.map((c) => {
+            const filhoAceso = pathname === c.to;
+            return (
+              <Link
+                key={c.to}
+                to={c.to}
+                aria-current={filhoAceso ? "page" : undefined}
+                className={cn("rounded-full bg-surface/75 px-[9px] py-1 text-2xs font-semibold", f.tinta, filhoAceso && "ring-2 ring-ink")}
+              >
+                {c.label}
+              </Link>
+            );
+          })}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * O BOTÃO FLUTUANTE DE CADASTRAR ALUNO (protótipo mobile).
  *
  * No celular a ação primária do produto ficava escondida: a barra superior só mostra
- * "Cadastrar aluno" a partir de sm, e abaixo disso ela sumia inteira. O botão âmbar resolve
- * isso onde a ação de fato cabe, que é onde se olha para a carteira: o Meu dia e a lista de
- * alunos. Em qualquer outra tela ele não aparece, porque ali a ação primária é outra e um
- * botão flutuante permanente vira mobília por cima do conteúdo.
- *
- * Ele fica acima da barra inferior (bottom-[86px]) para não cobrir os destinos.
+ * "Cadastrar aluno" no desktop. O botão âmbar resolve isso onde a ação de fato cabe, que é
+ * onde se olha para a carteira: o Meu dia e a lista de alunos. Em qualquer outra tela ele
+ * não aparece, porque ali a ação primária é outra e um botão flutuante permanente vira
+ * mobília por cima do conteúdo. Fica acima da barra inferior (bottom-[86px]).
  */
 function BotaoCadastrarAluno() {
   const { pathname } = useLocation();
@@ -1019,7 +1109,7 @@ function BotaoCadastrarAluno() {
     <Link
       to="/alunos?novo=1"
       aria-label="Cadastrar aluno"
-      className="fixed bottom-[86px] right-4 z-30 grid place-items-center rounded-card lg:hidden"
+      className="fixed bottom-[calc(86px+env(safe-area-inset-bottom))] right-4 z-30 grid place-items-center rounded-[16px] lg:hidden"
       style={{
         width: 52,
         height: 52,
@@ -1028,51 +1118,70 @@ function BotaoCadastrarAluno() {
         boxShadow: "0 14px 28px -12px rgba(232,163,23,.8)",
       }}
     >
-      <Plus className="h-6 w-6" aria-hidden />
+      <Plus className="h-6 w-6" strokeWidth={2.5} aria-hidden />
     </Link>
   );
 }
 
 /**
- * Barra inferior do mobile: os MESMOS 5 primários da barra superior (identidade
- * referencial em nav.ts), na ordem do ciclo do cuidado, à mão com o polegar.
- * SEM truncate no rótulo: overflow aqui é bug visível de propósito, conferido a
- * 320px. O ativo se vê pela FORMA (pílula atrás do ícone), não só pela cor.
+ * Barra inferior do mobile: os MESMOS 5 primários da lateral (identidade referencial em
+ * nav.ts), na ordem do ciclo do cuidado, à mão com o polegar, mais o "Mais".
+ *
+ * NO DESENHO DO PROTÓTIPO: ícone numa pílula de 40 x 26 que acende em âmbar translúcido no
+ * ativo, rótulo âmbar, e os CONTADORES que a lateral já tinha (Avaliar e Semáforo, da mesma
+ * `contagensDoMenu`). Antes a barra só tinha um tracinho de 4 px sobre o rótulo e nenhum
+ * número: o celular não dizia que havia três avaliações esperando. SEM truncate no rótulo:
+ * overflow aqui é bug visível de propósito, conferido a 320 px.
  */
 function BottomBar() {
   const { pathname } = useLocation();
+  const { alunos, avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos } = useAlunos();
+  const ctx: CicloCtx = { avaliacoes, prescricoes, planos, liberacoes, execucoes, declaracoes, rascunhos };
+  const contagens = contagensDoMenu(alunos, ctx);
+  const contadorDe = (to: string) => (to === "/assessments" ? contagens.avaliar : to === "/semaforo" ? contagens.semaforo : 0);
+
   return (
     <nav
       aria-label="Atalhos do dia"
-      className="fixed inset-x-0 bottom-0 z-30 flex border-t pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden"
-      style={{ background: "rgba(11,22,40,.96)", borderColor: CASCA.borda }}
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t px-1 pb-[max(14px,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-md lg:hidden"
+      style={{ background: "rgba(11,22,40,.97)", borderColor: "rgba(255,255,255,.06)" }}
     >
       {BOTTOM.map((item) => {
         const ativo = itemAtivo(item, pathname);
+        const n = contadorDe(item.to);
         return (
           <Link
             key={item.to}
             to={item.to}
             aria-current={ativo ? "page" : undefined}
             className={cn(
-              "flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1.5 px-1 py-2 text-2xs font-semibold leading-none transition-colors",
+              "relative flex min-h-[52px] min-w-0 flex-col items-center gap-1 py-1.5 text-2xs font-semibold leading-none transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
             )}
-            style={{ color: ativo ? CASCA.ativoTinta : CASCA.tinta2 }}
+            style={{ color: ativo ? CASCA.barraAtiva : CASCA.tinta2 }}
           >
-            {/* O indicador do protótipo: uma barra de 4px acesa em âmbar no ativo. */}
             <span
               aria-hidden
-              className="h-1 w-[22px] rounded-full transition-colors"
-              style={{ background: ativo ? CASCA.ponto : CASCA.pontoInativo }}
-            />
-            <span className="max-w-full">{item.short ?? item.label}</span>
+              className="relative grid h-[26px] w-10 place-items-center rounded-full transition-colors"
+              style={{ background: ativo ? CASCA.barraPilula : "transparent" }}
+            >
+              <item.icon className="h-4 w-4" />
+              {n > 0 && (
+                <span
+                  className="absolute -right-0.5 -top-[3px] grid h-[15px] min-w-[15px] place-items-center rounded-full px-[3px] text-2xs font-bold leading-none"
+                  style={{ background: "#E8A317", color: "#0B1628" }}
+                >
+                  {n}
+                </span>
+              )}
+            </span>
+            <span>{item.short ?? item.label}</span>
+            {n > 0 && <span className="sr-only">{`, ${n} pendentes`}</span>}
           </Link>
         );
       })}
-      {/* Sexto item: o desenho da casca sempre foi "5 destinos mais Mais", e no celular
-          era justamente o "Mais" que faltava fora do Meu dia. */}
-      <MaisMenu variante="barra-inferior" />
+      {/* Sexto item: o desenho da casca sempre foi "5 destinos mais Mais". */}
+      <MaisMenu />
     </nav>
   );
 }
@@ -1131,23 +1240,28 @@ function NotificationsMenu() {
         onClick={openMenu}
         aria-label={`Notificações${unseen ? ` (${unseen} novas)` : ""}`}
         aria-expanded={open}
-        className="relative grid h-10 w-10 place-items-center rounded-control border border-border bg-surface text-ink-2 transition-colors hover:text-ink"
+        className="relative grid h-[42px] w-[42px] place-items-center rounded-control border border-border bg-surface text-ink-2 transition-colors hover:text-ink"
       >
-        <Bell className="h-[18px] w-[18px]" />
-        {/* O contador é danger-fill (o vermelho de preenchimento da identidade),
-            com a tinta escolhida para ele; era bg-cta com branco, herança do coral. */}
+        <Bell className="h-4 w-4" />
+        {/* O contador é danger-fill (o vermelho de preenchimento da identidade) com tinta
+            navy FIXA: o `text-ink` virava quase branco no escuro e perdia contraste sobre o
+            vermelho claro do tema escuro. */}
         {unseen > 0 && (
-          <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-danger-fill px-1 text-2xs font-bold text-ink">
+          <span className="absolute right-[5px] top-[5px] grid h-4 min-w-4 place-items-center rounded-full bg-danger-fill px-1 text-2xs font-bold leading-none text-[#0B1628]">
             {unseen}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-[336px] max-w-[calc(100vw-1.5rem)] rounded-card border border-border bg-surface p-1.5 shadow-overlay">
+        <div className="absolute right-0 z-50 mt-2 w-[336px] max-w-[calc(100vw-28px)] rounded-[16px] border border-border bg-surface p-2 shadow-overlay">
           <div data-par-dado="cabecalho-com-escopo" className="flex items-center justify-between px-2 py-1.5">
-            <span className="text-sm font-semibold text-ink">O que aconteceu</span>
-            <span className="text-xs text-ink-2">Últimos 7 dias</span>
+            <span className="text-[13.5px] font-semibold text-ink">O que aconteceu</span>
+            {/* Só as sessões concluídas têm janela de 7 dias; vermelho, reavaliação vencida e
+                pedido de treino ficam até serem resolvidos. O escopo diz isso. */}
+            <span className="text-xs text-ink-3">
+              {itens.some((n) => n.tipo !== "sessao") ? "Pendências e últimos 7 dias" : "Últimos 7 dias"}
+            </span>
           </div>
           <div className="max-h-80 overflow-y-auto">
             {itens.length === 0 ? (
@@ -1161,7 +1275,7 @@ function NotificationsMenu() {
                   key={n.id}
                   to={n.to}
                   onClick={() => setOpen(false)}
-                  className="flex gap-3 rounded-control px-2 py-2 hover:bg-surface-soft"
+                  className="flex gap-3 rounded-[10px] px-2.5 py-2 hover:bg-bg"
                 >
                   {/* Filete de urgência à esquerda, na cor da família: o Design
                       System usa a borda de 4px para "esta linha pede atenção". */}
@@ -1172,8 +1286,8 @@ function NotificationsMenu() {
                     )}
                   />
                   <div className="min-w-0">
-                    <div className="text-sm leading-snug text-ink">{n.texto}</div>
-                    <div className="tabular text-xs text-ink-2">{tempoRelativo(n.ts)}</div>
+                    <div className="text-[13px] leading-[1.4] text-ink">{n.texto}</div>
+                    <div className="tabular text-xs text-ink-3">{tempoRelativo(n.ts)}</div>
                   </div>
                 </Link>
               ))

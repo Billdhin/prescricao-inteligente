@@ -5,7 +5,7 @@ import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import { GavetaSelecao, type GrupoGaveta, type ItemGaveta } from "@/components/alunos/GavetaSelecao";
 import { ObjetivoDuplo } from "@/components/gps/ObjetivoDuplo";
 import { parValido } from "@/lib/gps/objetivos";
-import { MedicamentosDoPerfil } from "@/components/alunos/MedicamentosDoPerfil";
+import { MedicamentosDoPerfil, SelecionadosFarmacos } from "@/components/alunos/MedicamentosDoPerfil";
 import { DetalheRestricoes } from "@/components/gps/RestricoesSelector";
 import { OQueIssoMudaPainel } from "@/components/alunos/OQueIssoMudaPainel";
 import { useAlunos } from "@/lib/store";
@@ -13,7 +13,7 @@ import { toast } from "@/lib/toast";
 import { EQUIPAMENTOS, type GpsObjetivo } from "@/lib/gps/engine";
 import { descricaoOpcao } from "@/data/opcoes-wizard";
 import { specialGroups } from "@/data/specialGroups";
-import { farmacosAtivos } from "@/data/farmacos";
+import { farmacosAtivos, type FarmacoSelecionado } from "@/data/farmacos";
 import {
   CATALOGO_RESTRICOES,
   GRUPOS_RESTRICAO,
@@ -94,8 +94,12 @@ export function AlunoPerfil() {
 
   const nota = NOTA_DO_PASSO[secao];
 
+  // O botão do próximo passo no tamanho do protótipo (42 px, raio 12, 13,5 px em negrito):
+  // um degrau abaixo do botão de 44 da página, porque ele mora numa faixa de rodapé.
+  const botaoProximo = cn(buttonClasses("primary"), "h-[42px] px-[18px] text-[13.5px] font-bold");
+
   return (
-    <div className="mx-auto max-w-[1240px] space-y-5">
+    <div className="mx-auto max-w-[1240px] space-y-4">
       <CabecalhoPerfil aluno={aluno} />
       <TrilhoSecoes secaoAtiva={secao} onSecao={setSecao} completude={completude} />
 
@@ -103,56 +107,60 @@ export function AlunoPerfil() {
           isso muda" ao lado. O trilho vertical que ocupava a coluna da esquerda subiu para a
           bandeja horizontal logo acima: ele roubava 260 px de largura de um formulário que
           precisa de três colunas de cartões, para mostrar seis nomes. */}
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <Card className="min-w-0 space-y-5 p-5 sm:p-6">
-          <div className="space-y-1.5">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <h2 className="font-display text-xl font-bold text-ink sm:text-2xl">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* O cartão do passo em TRÊS FAIXAS, como no protótipo: a cabeça (pergunta, limite e
+            resumo) separada por um fio, o miolo, e o rodapé de navegação numa faixa cinza. Em
+            bloco único o botão "próximo" parecia mais um campo do formulário. Sem sombra também
+            no computador: o cartão é o assunto da tela, não um objeto flutuando sobre ela. */}
+        <Card className="min-w-0 overflow-hidden p-0 lg:shadow-none">
+          <div className="border-b border-surface-mute px-[22px] pb-4 pt-5">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <h2 className="font-display text-2xl font-bold tracking-[-0.025em] text-ink">
                 {TITULO_DO_CARTAO[secao] ?? atual.titulo}
               </h2>
-              {nota && <span className="text-sm text-ink-3">{nota}</span>}
+              {nota && <span className="text-[12.5px] text-ink-2">{nota}</span>}
             </div>
-            <p className="max-w-[68ch] text-sm leading-relaxed text-ink-2">{atual.resumo}</p>
+            <p className="mt-1.5 max-w-[620px] text-[13.5px] leading-[1.55] text-ink-2">{atual.resumo}</p>
+            {/* No passo da medicação, o que foi declarado mora NA CABEÇA do cartão: é a
+                resposta à pergunta do título, e fica à vista antes dos onze cartões. */}
+            {secao === "medicamentos" && <SelecionadosDoPerfil aluno={aluno} onPatch={patch} />}
           </div>
 
-          {secao === "basicos" && <SecaoBasicos aluno={aluno} onPatch={patch} />}
-          {secao === "objetivo" && <SecaoObjetivo aluno={aluno} onPatch={patch} />}
-          {secao === "saude" && <SecaoSaude aluno={aluno} onPatch={patch} onIrPara={setSecao} />}
-          {secao === "medicamentos" && <SecaoMedicamentos aluno={aluno} onPatch={patch} />}
-          {secao === "equipamentos" && <SecaoEquipamentos aluno={aluno} onPatch={patch} />}
-          {secao === "notas" && <SecaoNotas aluno={aluno} onPatch={patch} />}
+          <div className="px-[22px] pb-[18px] pt-3.5">
+            {secao === "basicos" && <SecaoBasicos aluno={aluno} onPatch={patch} />}
+            {secao === "objetivo" && <SecaoObjetivo aluno={aluno} onPatch={patch} />}
+            {secao === "saude" && <SecaoSaude aluno={aluno} onPatch={patch} onIrPara={setSecao} />}
+            {secao === "medicamentos" && <SecaoMedicamentos aluno={aluno} onPatch={patch} />}
+            {secao === "equipamentos" && <SecaoEquipamentos aluno={aluno} onPatch={patch} />}
+            {secao === "notas" && <SecaoNotas aluno={aluno} onPatch={patch} />}
+          </div>
 
-          {/* Rodapé de navegação: anterior, sair sem culpa, próxima */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
-            {anterior ? (
+          {/* Rodapé de navegação: anterior, sair sem culpa, próxima. No celular o anterior fica
+              na primeira linha e o par "Concluir depois" + próxima desce inteiro para a segunda. */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 border-t border-surface-mute bg-surface-soft px-[22px] py-3">
+            {anterior && (
               <button
                 type="button"
                 onClick={() => setSecao(anterior.id)}
-                className="inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
+                className="inline-flex min-h-[40px] items-center gap-1 text-[13.5px] font-semibold text-ink-2 hover:text-ink"
               >
                 <ChevronLeft aria-hidden className="h-4 w-4" /> {anterior.titulo}
               </button>
-            ) : (
-              <span />
             )}
-            <div className="ml-auto flex items-center gap-4">
+            <div className={cn("flex items-center gap-2.5", !anterior && "ml-auto")}>
               <button
                 type="button"
                 onClick={() => navigate(`/alunos/${aluno.id}`)}
-                className="text-sm font-semibold text-ink-2 hover:text-ink"
+                className="min-h-[40px] px-1 text-[13.5px] font-semibold text-primary-texto hover:underline"
               >
                 Concluir depois
               </button>
               {proxima ? (
-                <button type="button" onClick={() => setSecao(proxima.id)} className={buttonClasses("primary")}>
+                <button type="button" onClick={() => setSecao(proxima.id)} className={botaoProximo}>
                   {proxima.titulo} <ChevronRight aria-hidden className="h-4 w-4" />
                 </button>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => navigate(`/alunos/${aluno.id}`)}
-                  className={buttonClasses("primary")}
-                >
+                <button type="button" onClick={() => navigate(`/alunos/${aluno.id}`)} className={botaoProximo}>
                   Ver o aluno <ChevronRight aria-hidden className="h-4 w-4" />
                 </button>
               )}
@@ -186,25 +194,36 @@ const NOTA_DO_PASSO: Partial<Record<SecaoPerfilId, string>> = {
 
 function CabecalhoPerfil({ aluno }: { aluno: Aluno }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-      <Link
-        to={`/alunos/${aluno.id}`}
-        aria-label="Voltar para o aluno"
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-surface text-ink-2 transition-colors hover:bg-surface-soft hover:text-ink"
-      >
-        <ChevronLeft aria-hidden className="h-5 w-5" />
-      </Link>
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Perfil de {aluno.nome}</p>
-        <h1 className="mt-0.5 font-display text-2xl font-bold tracking-[-0.03em] text-ink md:text-[28px]">
-          O que o Mapa precisa saber
-        </h1>
+    <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+      <div className="flex min-w-0 flex-1 basis-[340px] items-start gap-3">
+        {/* O desenho é o círculo de 34 px do protótipo; o `before` estende a área de toque
+            para 44 px sem aumentar o círculo. */}
+        <Link
+          to={`/alunos/${aluno.id}`}
+          aria-label="Voltar para o aluno"
+          className="relative mt-1 grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full border border-border bg-surface text-ink-2 transition-colors before:absolute before:-inset-[5px] before:content-[''] hover:border-ink hover:text-ink"
+        >
+          <ChevronLeft aria-hidden className="h-4 w-4" />
+        </Link>
+        <div className="min-w-0">
+          <p className="truncate text-[11.5px] font-semibold uppercase tracking-[0.12em] text-primary-texto">
+            Perfil de {aluno.nome}
+          </p>
+          <h1 className="mt-1.5 font-display text-2xl font-bold leading-[1.08] tracking-[-0.03em] text-ink md:text-[28px]">
+            O que o Mapa precisa saber
+          </h1>
+        </div>
       </div>
-      <div className="flex w-full items-center justify-between gap-3 sm:ml-auto sm:gap-4 sm:w-auto sm:justify-end">
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold sm:text-sm text-success-text">
-          <Check aria-hidden className="h-4 w-4" strokeWidth={2.5} /> Salva a cada resposta
+      {/* No celular este bloco cai para a segunda linha colado à esquerda, como no protótipo:
+          espalhado pelas bordas, o selo e o botão pareciam duas coisas sem relação. */}
+      <div className="flex flex-wrap items-center gap-3 sm:self-center">
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] font-semibold text-success">
+          <Check aria-hidden className="h-4 w-4 text-success-fill" strokeWidth={2.5} /> Salva a cada resposta
         </span>
-        <Link to={`/alunos/${aluno.id}?avaliar=1`} className={cn(buttonClasses("primary"), "max-sm:h-10 max-sm:px-4")}>
+        <Link
+          to={`/alunos/${aluno.id}?avaliar=1`}
+          className={cn(buttonClasses("primary"), "h-10 px-4 text-[13.5px]")}
+        >
           Registrar avaliação <ChevronRight aria-hidden className="h-4 w-4" />
         </Link>
       </div>
@@ -219,10 +238,13 @@ function CabecalhoPerfil({ aluno }: { aluno: Aluno }) {
  * passo em foco e o número nos que faltam.
  *
  * Todo passo é clicável, feito ou não: o perfil não é um assistente que obriga a ordem, e
- * quem voltou só para trocar a medicação vai direto nela. No celular os nomes dos passos que
- * não estão em foco somem (os números bastam para achar o lugar), e a bandeja rola na
- * horizontal em vez de quebrar em duas linhas, que é o que fazia o passo em foco pular de
- * lugar a cada clique.
+ * quem voltou só para trocar a medicação vai direto nela. A bandeja rola na horizontal em vez
+ * de quebrar em duas linhas, que é o que fazia o passo em foco pular de lugar a cada clique.
+ *
+ * No celular os SEIS NOMES aparecem (protótipo mobile de 10/09/2026). Antes só o passo em
+ * foco tinha nome e os outros viravam número solto: "4" não diz a ninguém que ali é a
+ * medicação, e o check verde sem nome não dizia O QUE estava feito. A rolagem já resolvia
+ * a largura; esconder os nomes só tirava a leitura.
  */
 function TrilhoSecoes({
   secaoAtiva,
@@ -233,8 +255,10 @@ function TrilhoSecoes({
   onSecao: (s: SecaoPerfilId) => void;
   completude: ReturnType<typeof completudeAluno>;
 }) {
-  // Quando a bandeja não cabe (celular), o passo em foco é trazido para dentro dela. Mexe só
-  // no `scrollLeft` da própria bandeja: `scrollIntoView` rolaria a página inteira junto.
+  // Quando a bandeja não cabe (celular), o passo em foco é trazido para dentro dela, encostado
+  // a 12 px da borda esquerda como no protótipo: assim os passos SEGUINTES ficam à vista, que
+  // é para onde o profissional vai. Mexe só no `scrollLeft` da própria bandeja:
+  // `scrollIntoView` rolaria a página inteira junto.
   const bandeja = React.useRef<HTMLOListElement>(null);
   React.useEffect(() => {
     const ol = bandeja.current;
@@ -242,59 +266,62 @@ function TrilhoSecoes({
     if (!ol || !ativo) return;
     const esquerda = ativo.offsetLeft; // relativo à bandeja, que é o ancestral posicionado
     if (esquerda < ol.scrollLeft || esquerda + ativo.offsetWidth > ol.scrollLeft + ol.clientWidth)
-      ol.scrollLeft = esquerda - (ol.clientWidth - ativo.offsetWidth) / 2;
+      ol.scrollLeft = Math.max(0, esquerda - 12);
   }, [secaoAtiva]);
 
   return (
-    <nav
-      aria-label="Passos do perfil"
-      className="flex items-center gap-3 rounded-card bg-surface-soft p-2 ring-1 ring-inset ring-border"
-    >
-      {/* `relative` não é enfeite: os nomes escondidos no celular são `sr-only`, que é
-          posição absoluta, e sem um ancestral posicionado eles escapavam da rolagem da
-          bandeja e alargavam a página inteira em 70 px. */}
+    <nav aria-label="Passos do perfil" className="!mt-[18px] flex flex-wrap items-center gap-x-2.5 gap-y-2">
+      {/* `relative` não é enfeite: o "(preenchida)" de cada passo é `sr-only`, que é posição
+          absoluta, e sem um ancestral posicionado ele escapava da rolagem da bandeja e
+          alargava a página inteira. */}
       <ol
         ref={bandeja}
-        className="relative flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative flex min-w-0 flex-1 basis-full items-center gap-1.5 overflow-x-auto rounded-full bg-surface-mute p-1.5 [scrollbar-width:none] sm:basis-[420px] [&::-webkit-scrollbar]:hidden"
       >
         {completude.secoes.map((s, i) => {
           const ativo = s.secao.id === secaoAtiva;
+          const ultimo = i === completude.secoes.length - 1;
           return (
-            <li key={s.secao.id} className="flex shrink-0 items-center gap-1">
-              {i > 0 && <span aria-hidden className="h-px w-3 bg-ink-3/30 sm:w-5" />}
+            <li key={s.secao.id} className="flex shrink-0 items-center gap-2.5">
               <button
                 type="button"
                 onClick={() => onSecao(s.secao.id)}
                 aria-current={ativo ? "step" : undefined}
                 title={s.feita ? `${s.secao.titulo}: preenchida` : `${s.secao.titulo}: ${s.falta}`}
                 className={cn(
-                  "flex min-h-[40px] items-center gap-2 rounded-full px-2.5 text-sm transition-colors",
+                  "flex min-h-[36px] items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3 text-[13px] transition-colors",
                   ativo
-                    ? "bg-surface font-bold text-ink shadow-soft ring-1 ring-ink/80"
-                    : "font-semibold text-ink-2 hover:bg-surface hover:text-ink",
+                    ? "border-ink bg-surface font-bold text-ink shadow-[0_10px_22px_-18px_rgba(11,22,40,.8)]"
+                    : s.feita
+                      ? "border-transparent font-semibold text-ink hover:bg-surface"
+                      : "border-transparent font-semibold text-ink-2 hover:bg-surface hover:text-ink",
                 )}
               >
+                {/* Pendente é CONTORNADA e feita é tinta verde com check: a diferença entre as
+                    duas não pode depender de o olho distinguir dois cinzas chapados. O ativo
+                    que também está feito mostra o número, porque o foco manda na leitura. */}
                 <span
                   aria-hidden
                   className={cn(
-                    "grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold",
+                    "grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full text-2xs font-bold",
                     ativo
                       ? "bg-ink text-surface"
                       : s.feita
-                        ? "bg-success-tint text-success-text"
-                        : "bg-surface-mute text-ink-2",
+                        ? "bg-success-tint text-success"
+                        : "border-[1.5px] border-ink-4 text-ink-2",
                   )}
                 >
-                  {s.feita && !ativo ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : i + 1}
+                  {s.feita && !ativo ? <Check className="h-3 w-3" strokeWidth={3.5} /> : i + 1}
                 </span>
-                <span className={cn("whitespace-nowrap", !ativo && "sr-only md:not-sr-only")}>{s.secao.titulo}</span>
+                <span className="whitespace-nowrap">{s.secao.titulo}</span>
                 {s.feita && <span className="sr-only">(preenchida)</span>}
               </button>
+              {!ultimo && <span aria-hidden className="h-[1.5px] w-[18px] shrink-0 bg-border" />}
             </li>
           );
         })}
       </ol>
-      <span className="hidden shrink-0 whitespace-nowrap pr-2 text-sm text-ink-3 sm:block">
+      <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-ink-2">
         {completude.feitas} de {completude.total} concluídas
       </span>
     </nav>
@@ -394,7 +421,7 @@ function SecaoObjetivo({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<
     <div className="space-y-3">
       <ObjetivoDuplo objetivo={par.o} objetivoSecundario={par.s} onChange={trocar} />
       {!valido && (
-        <p className="rounded-card border border-danger/30 bg-danger-tint p-3 text-sm text-danger-text" role="alert">
+        <p className="rounded-card border border-danger/30 bg-danger-tint p-3 text-sm text-danger" role="alert">
           Este par não foi salvo. O objetivo do aluno segue{" "}
           <strong className="font-bold">{aluno.objetivo}</strong>
           {aluno.objetivoSecundario ? ` com ${aluno.objetivoSecundario.toLowerCase()}` : " sozinho"}. Escolha
@@ -443,7 +470,7 @@ function SecaoSaude({
               role="checkbox"
               aria-checked={Boolean(aluno.farmacosNaoInformado)}
               onClick={() => onPatch({ farmacosNaoInformado: aluno.farmacosNaoInformado ? undefined : true })}
-              className={cn(buttonClasses("ghost", "sm"), aluno.farmacosNaoInformado && "text-success-text")}
+              className={cn(buttonClasses("ghost", "sm"), aluno.farmacosNaoInformado && "text-success")}
             >
               {aluno.farmacosNaoInformado && <Check aria-hidden className="h-4 w-4" />}
               {aluno.farmacosNaoInformado ? "Não informado" : "Não sei / não informar"}
@@ -682,8 +709,8 @@ function RestricoesFisicas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
               className={cn(
                 "inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold",
                 r.tag === "nenhuma_restricao"
-                  ? "border-success/40 bg-success-tint text-success-text"
-                  : "border-warning/40 bg-warning-tint text-warning-text",
+                  ? "border-success/40 bg-success-tint text-success"
+                  : "border-warning/40 bg-warning-tint text-warning",
               )}
             >
               {rotuloRestricao(r.tag)}
@@ -789,13 +816,30 @@ function RestricoesFisicas({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Part
   );
 }
 
+/** A mesma gravação para as fichas da cabeça e para o miolo: os dois campos mudam juntos. */
+const gravarFarmacos =
+  (onPatch: (p: Partial<Aluno>) => void) => (f: FarmacoSelecionado[], naoSei: boolean) =>
+    onPatch({ farmacos: f.length ? f : undefined, farmacosNaoInformado: naoSei || undefined });
+
+function SelecionadosDoPerfil({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Aluno>) => void }) {
+  return (
+    <SelecionadosFarmacos
+      value={aluno.farmacos ?? []}
+      naoInformado={Boolean(aluno.farmacosNaoInformado)}
+      onChange={gravarFarmacos(onPatch)}
+      className="mt-3.5"
+    />
+  );
+}
+
 function SecaoMedicamentos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Aluno>) => void }) {
   return (
     <MedicamentosDoPerfil
       value={aluno.farmacos ?? []}
       naoInformado={Boolean(aluno.farmacosNaoInformado)}
-      onChange={(f, naoSei) => onPatch({ farmacos: f.length ? f : undefined, farmacosNaoInformado: naoSei || undefined })}
+      onChange={gravarFarmacos(onPatch)}
       idBase="perfil-farm"
+      semSelecionados
     />
   );
 }

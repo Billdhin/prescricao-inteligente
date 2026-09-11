@@ -48,6 +48,7 @@ export function MedicamentosDoPerfil({
   naoInformado = false,
   onChange,
   idBase = "perfil-farm",
+  semSelecionados = false,
 }: {
   value: FarmacoSelecionado[];
   /** o profissional declarou que não sabe ou prefere não informar */
@@ -62,6 +63,11 @@ export function MedicamentosDoPerfil({
    */
   onChange: (farmacos: FarmacoSelecionado[], naoInformado: boolean) => void;
   idBase?: string;
+  /**
+   * Quem desenha as fichas de "Selecionados" em outro lugar (a cabeça do cartão do perfil,
+   * no desenho de 10/09/2026) liga isto para a linha não aparecer duas vezes.
+   */
+  semSelecionados?: boolean;
 }) {
   const [busca, setBusca] = React.useState("");
   const [soMarcadas, setSoMarcadas] = React.useState(false);
@@ -127,56 +133,45 @@ export function MedicamentosDoPerfil({
   }, [infoAberta]);
 
   return (
-    <div className="space-y-5">
-      {/* O QUE FOI DECLARADO, na primeira linha: fichas escuras e removíveis. */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-ink-2">Selecionados:</span>
-        {ativos.length > 0 ? (
-          ativos.map((f) => (
-            <span
-              key={f.classe}
-              className="inline-flex min-h-[36px] items-center gap-2 rounded-full bg-ink pl-3.5 pr-1.5 text-sm font-semibold text-surface"
-            >
-              {rotuloFarmaco(f.classe)}
-              <button
-                type="button"
-                onClick={() => toggle(f.classe)}
-                aria-label={`Remover ${rotuloFarmaco(f.classe)}`}
-                className="grid h-6 w-6 place-items-center rounded-full transition-colors hover:bg-surface/15"
-              >
-                <X aria-hidden className="h-3.5 w-3.5" />
-              </button>
-            </span>
-          ))
-        ) : (
-          <span className="text-sm text-ink-3">{naoInformado ? "não informado" : "nenhuma classe marcada"}</span>
-        )}
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={naoInformado}
-          onClick={marcarNaoInformado}
-          title="Responder isto é melhor que deixar em branco."
-          className={cn(
-            "ml-auto inline-flex min-h-[36px] items-center gap-2 rounded-full border px-3 text-sm font-semibold transition-colors",
-            naoInformado
-              ? "border-primary bg-primary-tint text-primary"
-              : "border-border bg-surface text-ink-2 hover:bg-surface-soft hover:text-ink",
-          )}
-        >
-          <Caixa marcada={naoInformado} />
-          Não sei ou prefere não informar
-        </button>
-      </div>
-      {naoInformado && (
-        <p className="-mt-2 text-xs leading-relaxed text-ink-2">
-          Registrado. Com condição de risco no perfil, o sistema passa a guiar a intensidade pelo esforço
-          percebido e pelo teste da fala, sem afirmar nada sobre o aluno.
-        </p>
-      )}
+    <div className="space-y-4">
+      {!semSelecionados && <SelecionadosFarmacos value={value} naoInformado={naoInformado} onChange={onChange} />}
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-border pt-5">
-        <label className="relative min-w-[14rem] flex-1">
+      {/*
+        "NÃO SEI" NO DESENHO DO PROTÓTIPO, MAS NO TOPO.
+        O protótipo desenha a caixa tracejada no FIM da lista. Ela fica aqui em cima, antes da
+        busca, porque a regra 2 deste componente vale mais que o leiaute: com condição de risco
+        o "não sei" leva o sistema para o lado seguro, e no fim de onze cartões ele vira a letra
+        miúda que ninguém lê. Do protótipo vem o formato (caixa com título e a explicação à
+        vista antes do clique); a frase continua CONDICIONAL, porque o motor só troca o
+        instrumento quando há condição de risco no perfil.
+      */}
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={naoInformado}
+        onClick={marcarNaoInformado}
+        className={cn(
+          "flex w-full items-start gap-2.5 rounded-control border px-3.5 py-3 text-left transition-colors",
+          naoInformado
+            ? "border-primary bg-primary-tint/50"
+            : "border-dashed border-ink-4 hover:border-ink-3 hover:bg-surface-soft",
+        )}
+      >
+        <span className="mt-px">
+          <Caixa marcada={naoInformado} />
+        </span>
+        <span className="min-w-0">
+          <span className="block text-[13.5px] font-semibold text-ink">Não sei, ou o aluno prefere não informar</span>
+          <span className="mt-0.5 block text-[12.5px] leading-normal text-ink-2">
+            {naoInformado ? "Registrado." : "Melhor do que deixar em branco."} Com condição de risco no perfil, o
+            Mapa passa a guiar a intensidade pelo esforço percebido e pelo teste da fala, sem afirmar nada sobre o
+            aluno.
+          </span>
+        </span>
+      </button>
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <label className="relative min-w-0 flex-1 basis-[240px]">
           <span className="sr-only">Buscar classe ou princípio ativo</span>
           <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-3" />
           <input
@@ -184,10 +179,16 @@ export function MedicamentosDoPerfil({
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar classe ou princípio ativo..."
-            className="h-12 w-full rounded-control border border-border bg-surface-soft pl-10 pr-3 text-sm text-ink outline-none placeholder:text-ink-3 focus-visible:border-primary focus-visible:bg-surface"
+            className="h-[42px] w-full rounded-[11px] border border-border bg-surface-soft pl-10 pr-3 text-[13.5px] text-ink outline-none placeholder:text-ink-3 focus-visible:border-primary focus-visible:bg-surface"
           />
         </label>
-        <div role="radiogroup" aria-label="Como listar" className="inline-flex shrink-0 gap-1 rounded-[16px] bg-surface-soft p-1">
+        {/* Segmentado do protótipo. O botão fica no raio de controle (a família de botão da
+            casa), e o trilho sobe para 15 px para acompanhar a curva com o respiro de 3 px. */}
+        <div
+          role="radiogroup"
+          aria-label="Como listar"
+          className="inline-flex shrink-0 gap-0.5 rounded-[15px] bg-bg p-[3px] ring-1 ring-inset ring-border"
+        >
           {[
             { v: false, rotulo: "Por sistema" },
             { v: true, rotulo: "Só marcadas" },
@@ -199,8 +200,10 @@ export function MedicamentosDoPerfil({
               aria-checked={soMarcadas === o.v}
               onClick={() => setSoMarcadas(o.v)}
               className={cn(
-                "h-10 rounded-control px-4 text-sm font-semibold transition-colors",
-                soMarcadas === o.v ? "bg-surface text-ink shadow-soft" : "text-ink-2 hover:text-ink",
+                "h-[34px] rounded-control px-3 text-[12.5px] transition-colors",
+                soMarcadas === o.v
+                  ? "bg-surface font-bold text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]"
+                  : "font-semibold text-ink-2 hover:text-ink",
               )}
             >
               {o.rotulo}
@@ -210,7 +213,7 @@ export function MedicamentosDoPerfil({
       </div>
 
       {grupos.length === 0 && (
-        <p className="rounded-card border border-dashed border-border p-4 text-sm text-ink-2">
+        <p className="rounded-control border border-dashed border-border p-4 text-sm text-ink-2">
           {soMarcadas && !q
             ? "Nenhuma classe marcada ainda. Em \"Por sistema\" aparecem todas."
             : `Nenhuma classe encontrada para "${busca.trim()}". A busca olha o nome da classe e os princípios ativos.`}
@@ -221,22 +224,28 @@ export function MedicamentosDoPerfil({
         const marcadasNoGrupo = itens.filter((it) => selMap.has(it.classe)).length;
         const icone = ICONE_GRUPO[grupo.id];
         return (
-          <section key={grupo.id} aria-labelledby={`${idBase}-g-${grupo.id}`} className="space-y-3">
-            <div className="flex items-center gap-3">
-              <span aria-hidden className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-lg", icone.fundo, icone.cor)}>
+          <section key={grupo.id} aria-labelledby={`${idBase}-g-${grupo.id}`}>
+            <div className="flex items-center gap-2.5">
+              <span
+                aria-hidden
+                className={cn("grid h-[26px] w-[26px] shrink-0 place-items-center rounded-[9px]", icone.fundo, icone.cor)}
+              >
                 {icone.desenho}
               </span>
-              <h4 id={`${idBase}-g-${grupo.id}`} className="shrink-0 font-semibold text-ink">
+              <h4
+                id={`${idBase}-g-${grupo.id}`}
+                className="shrink-0 text-[13.5px] font-bold tracking-[-0.01em] text-ink"
+              >
                 {grupo.titulo}
               </h4>
-              <span aria-hidden className="h-px min-w-4 flex-1 bg-border" />
-              <span className="shrink-0 text-xs text-ink-3">
+              <span aria-hidden className="h-px min-w-4 flex-1 bg-surface-mute" />
+              <span className="shrink-0 whitespace-nowrap text-[11.5px] text-ink-2">
                 {marcadasNoGrupo > 0
                   ? `${marcadasNoGrupo} marcada${marcadasNoGrupo === 1 ? "" : "s"}`
                   : `${itens.length} classe${itens.length === 1 ? "" : "s"}`}
               </span>
             </div>
-            <div className="grid items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-2 grid items-stretch gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
               {itens.map((it) => (
                 <CartaoClasse
                   key={it.classe}
@@ -256,10 +265,10 @@ export function MedicamentosDoPerfil({
       {/* Detalhe das marcadas: as duas perguntas de contexto. Ficam depois da lista porque
           só existem para o que foi marcado, e respondê-las não é condição para marcar. */}
       {comDetalhe.length > 0 && (
-        <div className="space-y-3 border-t border-border pt-5">
+        <div className="space-y-3 border-t border-surface-mute pt-4">
           <h4 className="text-2xs font-bold uppercase tracking-[0.12em] text-ink-3">Sobre o que foi marcado</h4>
           {comDetalhe.map(({ f, item }) => (
-            <div key={f.classe} className="space-y-3 rounded-xl border border-border bg-surface p-4">
+            <div key={f.classe} className="space-y-3 rounded-control border border-border bg-surface p-3.5">
               <p className="font-semibold text-ink">{item.titulo}</p>
               <Pergunta rotulo="De onde veio essa informação?">
                 <Radios
@@ -286,7 +295,7 @@ export function MedicamentosDoPerfil({
       <p className="text-xs leading-relaxed text-ink-3">
         Registre apenas a classe em uso. O sistema não pede nem guarda quantidade, esquema de uso, marca ou
         horário, e usa a informação só para escolher por qual instrumento guiar o esforço e quais conferências
-        fazer antes da sessão.
+        fazer antes da sessão. A conduta sobre a medicação é do profissional de saúde que a prescreveu.
       </p>
     </div>
   );
@@ -326,20 +335,32 @@ function CartaoClasse({
         onClick={onToggle}
         title={item.descricao}
         className={cn(
-          "flex h-full min-h-[64px] w-full items-center gap-3 rounded-card border bg-surface py-3 pl-3.5 pr-12 text-left transition-colors",
-          marcada ? "border-primary ring-1 ring-primary" : "border-border hover:border-ink-3/40 hover:bg-surface-soft",
+          // Compacto como no protótipo (46 px, raio 12): onze cartões de 64 px empilhados numa
+          // coluna de celular eram três telas de rolagem para responder uma pergunta. O cartão
+          // de opção fica no raio de controle; rounded-card é da família permitida, mas 20 px
+          // num cartão de 46 px vira pílula.
+          "flex h-full min-h-[46px] w-full items-center gap-2.5 rounded-control border py-2.5 pl-3 pr-11 text-left transition-colors",
+          marcada
+            ? "border-primary bg-primary-tint/50 ring-1 ring-primary"
+            : "border-border bg-surface hover:border-ink-4",
         )}
       >
         <Caixa marcada={marcada} />
         <span className="min-w-0">
-          <span className={cn("block text-[15px] font-semibold leading-snug", marcada ? "text-primary" : "text-ink")}>
+          <span
+            className={cn(
+              "block text-[13.5px] font-semibold leading-[1.3]",
+              marcada ? "text-primary-texto" : "text-ink",
+            )}
+          >
             {item.titulo}
           </span>
           {item.exemplos.length > 0 && (
-            <span className="block truncate text-sm text-ink-3">{item.exemplos.join(", ")}</span>
+            <span className="block truncate text-xs text-ink-2">{item.exemplos.join(", ")}</span>
           )}
         </span>
       </button>
+      {/* O (i) tem o desenho de 22 px do protótipo; o `before` guarda 32 px de toque. */}
       <button
         type="button"
         onClick={onInfo}
@@ -347,17 +368,17 @@ function CartaoClasse({
         aria-controls={idInfo}
         aria-label={`O que é ${item.titulo}`}
         className={cn(
-          "absolute right-3 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full transition-colors",
-          infoAberta ? "bg-ink text-surface" : "bg-surface-soft text-ink-3 hover:bg-surface-mute hover:text-ink",
+          "absolute right-3 top-1/2 grid h-[22px] w-[22px] -translate-y-1/2 place-items-center rounded-full transition-colors before:absolute before:-inset-[5px] before:content-['']",
+          infoAberta ? "bg-ink text-surface" : "bg-bg text-ink-2 ring-1 ring-inset ring-border hover:text-ink",
         )}
       >
-        <Info aria-hidden className="h-3.5 w-3.5" />
+        <Info aria-hidden className="h-3 w-3" />
       </button>
       {infoAberta && (
         <div
           id={idInfo}
           role="note"
-          className="absolute left-0 right-0 top-full z-20 mt-2 space-y-2 rounded-xl border border-border bg-surface p-4 text-sm shadow-lift"
+          className="absolute left-0 right-0 top-full z-20 mt-2 space-y-2 rounded-control border border-border bg-surface p-4 text-sm shadow-lift"
         >
           <p className="leading-relaxed text-ink-2">{item.descricao}</p>
           {item.exemplos.length > 0 && (
@@ -388,19 +409,74 @@ const ICONE_GRUPO: Record<FarmacoGrupo, { desenho: React.ReactNode; cor: string;
   cardiovascular: { desenho: <Heart className="h-3.5 w-3.5" fill="currentColor" />, cor: "text-danger", fundo: "bg-danger-tint" },
   glicemia: { desenho: <Circle className="h-3 w-3" fill="currentColor" />, cor: "text-primary", fundo: "bg-primary-tint" },
   lipidios: { desenho: <Diamond className="h-3.5 w-3.5" fill="currentColor" />, cor: "text-analysis-text", fundo: "bg-analysis-tint" },
-  dor_inflamacao: { desenho: <Plus className="h-4 w-4" strokeWidth={3} />, cor: "text-warning-text", fundo: "bg-warning-tint" },
+  dor_inflamacao: { desenho: <Plus className="h-3.5 w-3.5" strokeWidth={3} />, cor: "text-warning", fundo: "bg-warning-tint" },
 };
+
+/**
+ * "SELECIONADOS": o que foi declarado, em fichas escuras e removíveis.
+ *
+ * Exportada porque, no perfil, a linha mora na CABEÇA do cartão do passo (protótipo de
+ * 10/09/2026), fora do miolo que este componente desenha. A remoção é a mesma do cartão:
+ * tirar uma classe nunca liga o "não sei".
+ */
+export function SelecionadosFarmacos({
+  value,
+  naoInformado = false,
+  onChange,
+  className,
+}: {
+  value: FarmacoSelecionado[];
+  naoInformado?: boolean;
+  onChange: (farmacos: FarmacoSelecionado[], naoInformado: boolean) => void;
+  className?: string;
+}) {
+  const ativos = farmacosAtivos(value);
+  return (
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      <span className="text-xs font-semibold text-ink-2">Selecionados:</span>
+      {ativos.length > 0 ? (
+        ativos.map((f) => (
+          <span
+            key={f.classe}
+            className="inline-flex min-h-[32px] items-center gap-[7px] rounded-full bg-ink pl-3 pr-1 text-[12.5px] font-semibold text-surface"
+          >
+            {rotuloFarmaco(f.classe)}
+            {/* O círculo de 16 px fica sempre à vista (é o que diz "isto sai"); o botão em
+                volta guarda os 24 px de toque. */}
+            <button
+              type="button"
+              onClick={() =>
+                onChange(
+                  value.filter((x) => x.classe !== f.classe),
+                  false,
+                )
+              }
+              aria-label={`Remover ${rotuloFarmaco(f.classe)}`}
+              className="grid h-6 w-6 place-items-center rounded-full"
+            >
+              <span className="grid h-4 w-4 place-items-center rounded-full bg-surface/15 transition-colors hover:bg-surface/30">
+                <X aria-hidden className="h-2.5 w-2.5" strokeWidth={3} />
+              </span>
+            </button>
+          </span>
+        ))
+      ) : (
+        <span className="text-[12.5px] text-ink-3">{naoInformado ? "não informado" : "nenhuma classe marcada ainda"}</span>
+      )}
+    </div>
+  );
+}
 
 function Caixa({ marcada }: { marcada: boolean }) {
   return (
     <span
       aria-hidden
       className={cn(
-        "grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 transition-colors",
-        marcada ? "border-primary bg-primary text-on-primary" : "border-ink-3/50 bg-surface",
+        "grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[5px] transition-colors",
+        marcada ? "border-2 border-primary bg-primary text-on-primary" : "border-[1.5px] border-ink-4 bg-surface",
       )}
     >
-      {marcada && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+      {marcada && <Check className="h-[11px] w-[11px]" strokeWidth={3.5} />}
     </span>
   );
 }

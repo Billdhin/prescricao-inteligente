@@ -1,5 +1,6 @@
 import * as React from "react";
-import { CheckCircle2, Footprints, Bike, Waves, HeartPulse } from "lucide-react";
+import { Check, CheckCircle2, ChevronDown, Footprints, Bike, Waves, HeartPulse, Minus, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { exercises, getExercise } from "@/data/exercises";
 import { corDeContraste } from "@/lib/theme/palettes";
 import { getFasePose } from "@/data/fase-poses";
@@ -315,6 +316,78 @@ export const resumoDasSeries = (feitas: Execucao[]): string => {
 export const sessaoConcluida = (sessao: Sessao, semana: number, execucoes: Execucao[]): boolean =>
   sessao.blocos.length > 0 && sessao.blocos.every((b) => blocoCompleto(b, execucoes, semana));
 
+/** O último registro de uma sessão numa semana (o momento em que ela fechou), ou undefined. */
+export function ultimoRegistroDaSessao(sessao: Sessao, semana: number, execucoes: Execucao[]): number | undefined {
+  const ids = new Set(sessao.blocos.map((b) => b.id));
+  let ultimo: number | undefined;
+  for (const e of execucoes) {
+    if (e.semana !== semana || !ids.has(e.blocoRef)) continue;
+    if (ultimo == null || e.concluidoEm > ultimo) ultimo = e.concluidoEm;
+  }
+  return ultimo;
+}
+
+const mesmoDiaCivil = (a: number, b: number): boolean => {
+  const da = new Date(a);
+  const db = new Date(b);
+  return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate();
+};
+
+/**
+ * A SESSÃO QUE O ALUNO FECHOU HOJE (protótipo, tela 06), se houver.
+ *
+ * Sem isto o início pulava direto para a próxima sessão no instante em que a de hoje
+ * fechava: o aluno terminava a Sessão B e a tela já o chamava para "Começar" a C, sem nenhum
+ * "feito" do que ele acabou de fazer. Fechar hoje é uma de duas coisas, as duas registradas:
+ * o fechamento do modo guiado (`SessaoFeedback.concluidaEm` no dia de hoje) ou, para quem
+ * registrou pela lista sem passar pelo guiado, a sessão completa cujo último registro é de
+ * hoje. Mais de uma no mesmo dia: vale a que fechou por último.
+ */
+export function sessaoConcluidaHoje(
+  sessoes: Sessao[],
+  semana: number,
+  execucoes: Execucao[],
+  feedbacks: { sessaoRef: string; semana: number; concluidaEm: number }[],
+  agora = Date.now(),
+): Sessao | undefined {
+  let achada: { sessao: Sessao; em: number } | undefined;
+  for (const s of sessoes) {
+    const fb = feedbacks.find((f) => f.sessaoRef === s.id && f.semana === semana);
+    let em: number | undefined;
+    if (fb && mesmoDiaCivil(fb.concluidaEm, agora)) em = fb.concluidaEm;
+    else if (!fb && sessaoConcluida(s, semana, execucoes)) {
+      const ultimo = ultimoRegistroDaSessao(s, semana, execucoes);
+      if (ultimo != null && mesmoDiaCivil(ultimo, agora)) em = ultimo;
+    }
+    if (em != null && (!achada || em > achada.em)) achada = { sessao: s, em };
+  }
+  return achada?.sessao;
+}
+
+/**
+ * Os chips de dose do modo guiado, na voz do aluno (protótipo, tela 03).
+ *
+ * A dose central ("3 x 12") vira DOIS chips, "3 séries" e "12 reps": são dois números com
+ * papéis diferentes, e juntos num chip só o aluno precisava saber que o primeiro é a série. A
+ * faixa citada ("Referência") sai daqui: no meio da série ela é ruído, e continua na folha do
+ * exercício, em "Sua dose de hoje". O resto sai de `textoDeChipDoAluno`, a mesma frase da
+ * lista do dia ("pare com 3 repetições de sobra"), nunca um "esforço moderado" inventado.
+ */
+export function chipsDoGuiado(bloco: BlocoSessao): { texto: string; principal: boolean }[] {
+  const out: { texto: string; principal: boolean }[] = [];
+  tokensDoBloco(bloco)
+    .filter((t) => t.label !== "Referência")
+    .forEach((t, i) => {
+      const par = i === 0 && t.label === "Série" ? t.value.match(/^(\d+)\s*x\s*(.+)$/) : null;
+      if (par) {
+        const n = Number(par[1]);
+        out.push({ texto: `${n} ${n === 1 ? "série" : "séries"}`, principal: true });
+        out.push({ texto: `${par[2].trim()} reps`, principal: false });
+      } else out.push({ texto: textoDeChipDoAluno(t, i === 0), principal: i === 0 });
+    });
+  return out;
+}
+
 /**
  * O miolo de registro de um bloco: os mesmos campos e a mesma gravação do BlocoRow,
  * extraídos para o modo guiado reusar sem duplicar. O id é estável por bloco+semana
@@ -337,9 +410,12 @@ export function RegistroBloco({
   onDesfazer,
   preview,
   sempreMostrar,
+  tinta: tintaDada,
 }: {
   bloco: BlocoSessao;
   cor: string;
+  /** a tinta que passa sobre `cor` (o app já calcula pelo par verificado; sem ela, calcula aqui) */
+  tinta?: string;
   semana: number;
   planoId: string;
   alunoId: string;
@@ -402,7 +478,11 @@ export function RegistroBloco({
    * série) cobraria digitação três vezes e empurraria o aluno a fechar tudo de uma vez,
    * que é justamente o comportamento que este modelo veio desfazer.
    */
-  const [carga, setCarga] = React.useState(base?.cargaFeita != null ? String(base.cargaFeita) : "");
+  // Vale também para quem volta ao app no meio do exercício: o campo nasce com a carga da
+  // última série gravada, e não vazio.
+  const [carga, setCarga] = React.useState(
+    base?.cargaFeita != null ? String(base.cargaFeita) : ultimaFeita?.cargaFeita != null ? String(ultimaFeita.cargaFeita) : "",
+  );
   const [reps, setReps] = React.useState(base?.repsFeitas != null ? String(base.repsFeitas) : repsPrescrito);
   const [rpe, setRpe] = React.useState(base?.rpe != null ? String(base.rpe) : "");
   const podeRegistrar = !!onRegistrar;
@@ -413,7 +493,21 @@ export function RegistroBloco({
    * única mantém o id antigo, então nada do que já foi gravado muda de identidade.
    */
   const execId = `ex-${bloco.id}-s${semana}` + (totalSeries > 1 ? `-r${serieAtual}` : "");
-  const tintaDaCor = corDeContraste(cor);
+  const tintaDaCor = tintaDada ?? corDeContraste(cor);
+  const rpeId = React.useId();
+
+  /*
+   * EDITAR TRAZ OS NÚMEROS DA SÉRIE QUE SE CORRIGE. Os campos nascem uma vez só (useState), e
+   * antes o "Editar" apenas trocava o alvo: o aluno via nos campos o que tinha digitado para a
+   * PRÓXIMA série, e salvar gravava isso por cima da série certa.
+   */
+  const editarUltima = () => {
+    if (!ultimaFeita) return;
+    setCarga(ultimaFeita.cargaFeita != null ? String(ultimaFeita.cargaFeita) : "");
+    setReps(ultimaFeita.repsFeitas != null ? String(ultimaFeita.repsFeitas) : repsPrescrito);
+    setRpe(ultimaFeita.rpe != null ? String(ultimaFeita.rpe) : "");
+    setEditando(true);
+  };
 
   // Só grava número quando é número de verdade; texto ("6 a 12") vira undefined
   // em vez de piso truncado ou NaN, que envenenaria o histórico do aluno.
@@ -456,134 +550,206 @@ export function RegistroBloco({
   if (!podeRegistrar) return null;
   if (preview && !sempreMostrar) return null;
 
+  /*
+   * A TABELA DE SÉRIES (protótipo, tela 03). Uma linha por série prescrita, e cada linha é o
+   * espelho do dado: a gravada mostra os números que foram GRAVADOS (não os do campo), a
+   * atual abre os controles, e as que faltam ficam apagadas com hífen. Antes era uma fileira
+   * de discos e UM formulário: o aluno via que tinha feito duas séries, mas não o quê.
+   *
+   * O protótipo desenha os controles da série atual numa linha só, com botões de 18 px. Isso
+   * reprova o alvo de toque de 44 px e não cabe com dois campos e o esforço, então a linha
+   * atual cresce para baixo: é a mesma linha realçada, só mais alta.
+   */
+  const rotuloDaSerie = (n: number) => (totalSeries > 1 ? `Série ${n} de ${totalSeries}` : "Sua série");
+  const emEdicao = editando && ultimaFeita != null;
+  const linhaAtual = !completo || emEdicao ? serieAtual : null;
+
   return (
-    <div className="mt-2">
-      {completo && !editando ? (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: cor }}>
-            <CheckCircle2 className="h-4 w-4" />
-            {aerobio ? "Concluído" : `Feito: ${resumoDasSeries(feitas)}`}
-          </span>
-          {!aerobio && (
-            <button
-              onClick={() => setEditando(true)}
-              className="inline-flex min-h-[44px] items-center px-1 text-xs font-semibold text-ink-2 underline-offset-2 hover:underline"
-            >
-              Editar
-            </button>
-          )}
-          {onDesfazer && (
-            <button
-              onClick={desfazer}
-              className="inline-flex min-h-[44px] items-center px-1 text-xs font-medium text-ink-3 underline-offset-2 hover:underline"
-            >
-              Desfazer
-            </button>
-          )}
-        </div>
-      ) : aerobio ? (
-        <button
-          onClick={concluirAerobio}
-          className="inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-sm font-bold text-on-primary"
-          style={{ background: cor }}
-        >
-          <CheckCircle2 className="h-4 w-4" /> Concluí
-        </button>
-      ) : (
-        <div className="space-y-3">
-          {/* SÉRIES: um disco por série prescrita, e cada disco aceso é uma série que
-              JÁ ESTÁ GRAVADA, não um contador de tela. Era o contrário até 01/09/2026,
-              e por isso a carga da segunda série morria: só a última chegava ao banco.
-              Agora o disco é o espelho do dado. */}
-          {totalSeries > 1 && (
-            <div className="flex items-center gap-2">
-              <span className="text-2xs font-bold uppercase tracking-wider text-ink-2">Séries</span>
-              <div className="flex flex-wrap gap-1.5" role="img" aria-label={`Série ${serieAtual} de ${totalSeries}`}>
-                {Array.from({ length: totalSeries }, (_, i) => {
-                  const n = i + 1;
-                  const feita = n < serieAtual;
-                  const atual = n === serieAtual;
-                  return (
-                    <span
-                      key={n}
-                      aria-hidden
-                      className="tabular grid h-9 w-9 place-items-center rounded-full text-sm font-bold"
-                      style={
-                        feita
-                          ? { background: "var(--analysis-fill)", color: "var(--on-analysis-fill)" }
-                          : atual
-                            ? { background: cor, color: tintaDaCor }
-                            : { boxShadow: "inset 0 0 0 1.5px var(--border)", color: "var(--ink-2)" }
-                      }
-                    >
-                      {feita ? <CheckCircle2 className="h-4 w-4" /> : n}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {pedeReps ? (
-            <div className="flex flex-wrap gap-2">
-              {pedeCarga && <Stepper label="kg" value={carga} onChange={setCarga} passo={2.5} />}
-              <Stepper label="repetições" value={reps} onChange={setReps} passo={1} inteiro />
-            </div>
-          ) : (
-            <p className="text-xs text-ink-2">Segure o tempo prescrito e registre a série quando terminar.</p>
-          )}
-
-          <RpeSelect value={rpe} onChange={setRpe} />
-
+    <div className="mt-2.5">
+      {aerobio ? (
+        completo ? (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-success">
+              <CheckCircle2 className="h-4 w-4" aria-hidden /> Concluído
+            </span>
+            {onDesfazer && (
+              <button
+                onClick={desfazer}
+                className="inline-flex min-h-[44px] items-center rounded-full px-1 text-xs font-medium text-ink-2 underline-offset-2 hover:underline"
+              >
+                Desfazer
+              </button>
+            )}
+          </div>
+        ) : (
           <button
-            onClick={registrar}
-            className="inline-flex h-12 w-full items-center justify-center rounded-full px-4 text-base font-bold"
+            onClick={concluirAerobio}
+            className="inline-flex h-11 items-center gap-1.5 rounded-full px-4 text-sm font-bold"
             style={{ background: cor, color: tintaDaCor }}
           >
-            {editando ? "Salvar" : totalSeries > 1 ? `Registrar série ${serieAtual}` : "Registrar"}
+            <CheckCircle2 className="h-4 w-4" aria-hidden /> Concluí
           </button>
+        )
+      ) : (
+        <>
+          <div className="text-2xs font-bold uppercase tracking-[0.1em] text-ink-2">
+            {totalSeries > 1 ? "Séries" : "Série"}
+          </div>
+          <ol className="mt-1.5 space-y-1" aria-label={`${feitas.length} de ${totalSeries} registradas`}>
+            {Array.from({ length: totalSeries }, (_, i) => {
+              const n = i + 1;
+              const gravada = feitas.find((e) => (e.serie ?? 1) === n) ?? (totalSeries === 1 ? feitas[0] : undefined);
+              const ehUltima = !!gravada && gravada.id === ultimaFeita?.id;
+
+              if (n === linhaAtual) {
+                return (
+                  <li
+                    key={n}
+                    className="rounded-[10px] bg-bg px-2 py-2"
+                    style={{ boxShadow: `inset 0 0 0 1.5px ${cor}` }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        aria-hidden
+                        className="tabular grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full text-2xs font-bold text-primary-texto"
+                        style={{ boxShadow: `inset 0 0 0 1.5px ${cor}` }}
+                      >
+                        {n}
+                      </span>
+                      <span className="min-w-0 flex-1 text-xs font-bold text-ink">
+                        {emEdicao ? `Corrigir a série ${n}` : rotuloDaSerie(n)}
+                      </span>
+                      <label htmlFor={rpeId} className="sr-only">
+                        Esforço da série (RPE)
+                      </label>
+                      <RpeSelect id={rpeId} value={rpe} onChange={setRpe} />
+                    </div>
+                    {pedeReps ? (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {pedeCarga && <Stepper label="kg" value={carga} onChange={setCarga} passo={2.5} />}
+                        <Stepper label="repetições" curto="reps" value={reps} onChange={setReps} passo={1} inteiro />
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-ink-2">Segure o tempo prescrito e registre a série quando terminar.</p>
+                    )}
+                    <button
+                      onClick={registrar}
+                      className="mt-2 inline-flex h-11 w-full items-center justify-center rounded-full px-4 text-sm font-bold"
+                      style={{ background: cor, color: tintaDaCor }}
+                    >
+                      {emEdicao ? "Salvar" : totalSeries > 1 ? `Registrar série ${serieAtual}` : "Registrar"}
+                    </button>
+                    {emEdicao && (
+                      <button
+                        onClick={() => setEditando(false)}
+                        className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full text-xs font-medium text-ink-2 hover:text-ink"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                  </li>
+                );
+              }
+
+              if (gravada) {
+                return (
+                  <li key={n} className="flex min-h-[32px] items-center gap-2 rounded-[10px] bg-bg px-2 py-1.5 text-2xs">
+                    <span
+                      className="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full bg-success-fill text-on-success-fill"
+                      aria-label={`Série ${n} registrada`}
+                    >
+                      <Check className="h-2.5 w-2.5" strokeWidth={3.5} aria-hidden />
+                    </span>
+                    <span className="tabular flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2.5">
+                      {pedeCarga && (
+                        <span>
+                          <span className="text-ink-2">kg</span> <b className="text-ink">{gravada.cargaFeita ?? "-"}</b>
+                        </span>
+                      )}
+                      {pedeReps && (
+                        <span>
+                          <span className="text-ink-2">reps</span> <b className="text-ink">{gravada.repsFeitas ?? "-"}</b>
+                        </span>
+                      )}
+                      {!pedeReps && <span className="text-ink-2">feita</span>}
+                    </span>
+                    {gravada.rpe != null && <span className="tabular shrink-0 text-ink-2">RPE {gravada.rpe}</span>}
+                    {/* Só a última gravada se corrige (a regra de sempre): corrigir a primeira
+                        depois de gravar as outras mudaria uma série no meio da sequência. */}
+                    {ehUltima && !emEdicao && (
+                      <button
+                        onClick={editarUltima}
+                        className="-my-1.5 inline-flex min-h-[44px] shrink-0 items-center rounded-full px-1.5 text-2xs font-bold text-primary-texto"
+                        aria-label={`Editar a série ${n}`}
+                      >
+                        Editar
+                      </button>
+                    )}
+                  </li>
+                );
+              }
+
+              return (
+                <li key={n} className="flex min-h-[32px] items-center gap-2 rounded-[10px] bg-bg px-2 py-1.5 text-2xs opacity-50">
+                  <span
+                    className="tabular grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full font-bold text-ink-2"
+                    style={{ boxShadow: "inset 0 0 0 1.5px var(--border)" }}
+                    aria-label={`Série ${n}, por fazer`}
+                  >
+                    {n}
+                  </span>
+                  <span aria-hidden className="flex min-w-0 flex-1 gap-x-2.5 text-ink-2">
+                    {pedeCarga && <span>kg -</span>}
+                    {pedeReps && <span>reps -</span>}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+
           {/* Corrigir no meio do exercício: sem isto, quem errou a série 1 só teria como
               consertar depois de gravar as outras duas por cima do erro. */}
-          {!editando && feitas.length > 0 && onDesfazer && (
+          {!emEdicao && feitas.length > 0 && onDesfazer && (
             <button
               onClick={desfazer}
-              className="inline-flex min-h-[44px] w-full items-center justify-center text-xs font-medium text-ink-3 underline-offset-2 hover:underline"
+              className="inline-flex min-h-[44px] w-full items-center justify-center rounded-full text-xs font-medium text-ink-2 underline-offset-2 hover:underline"
             >
               Desfazer a série {ultimaFeita?.serie ?? feitas.length}
             </button>
           )}
-          {editando && (
-            <button
-              onClick={() => setEditando(false)}
-              className="inline-flex h-11 w-full items-center justify-center text-sm font-medium text-ink-2 hover:text-ink"
-            >
-              Cancelar
-            </button>
-          )}
-          <p className="text-2xs text-ink-2">RPE é o seu esforço de 0 a 10 (7 = difícil, 9 = quase a falha).</p>
-        </div>
+          <p className={cn("text-2xs text-ink-2", !(feitas.length > 0 && onDesfazer) && "mt-2")}>
+            RPE é o seu esforço de 0 a 10 (7 = difícil, 9 = quase a falha).
+          </p>
+        </>
       )}
     </div>
   );
 }
 
-// Seletor de RPE de 0 a 10 (esforço percebido), com âncoras nas notas que mais
-// importam. Substitui o campo livre para o aluno não digitar um valor sem sentido.
-function RpeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const id = React.useId();
+/*
+ * Seletor de RPE de 0 a 10 (esforço percebido), com âncoras nas notas que mais importam.
+ * Substitui o campo livre para o aluno não digitar um valor sem sentido.
+ *
+ * Compacto, dentro da linha da série (protótipo: "RPE ▾"). A FACE mostra só "RPE 7"; o
+ * `<select>` nativo fica por cima, transparente, e é ele que abre a lista com as âncoras
+ * ("7 · difícil"). Um select estreito com a âncora no texto cortava a frase no meio ("RPE 9 ·
+ * qua"), e tirar as âncoras tirava do aluno a régua de o que cada número quer dizer.
+ */
+function RpeSelect({ id, value, onChange }: { id: string; value: string; onChange: (v: string) => void }) {
   const ancora: Record<number, string> = { 5: "moderado", 7: "difícil", 9: "quase a falha", 10: "falha" };
   return (
-    <div className="w-24">
-      <label htmlFor={id} className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-ink-3">
-        RPE
-      </label>
+    <span className="relative inline-flex h-11 w-[76px] shrink-0 items-center justify-between rounded-control border border-border bg-surface pl-2.5 pr-1.5 focus-within:ring-2 focus-within:ring-primary">
+      <span aria-hidden className="tabular text-xs font-bold text-ink">
+        RPE {value || "-"}
+      </span>
+      <ChevronDown aria-hidden className="h-3.5 w-3.5 shrink-0 text-primary-texto" />
       <select
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full rounded-md border border-border bg-surface px-1.5 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary"
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
       >
-        <option value="">-</option>
+        <option value="">Sem esforço marcado</option>
         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
           <option key={n} value={n}>
             {n}
@@ -591,26 +757,30 @@ function RpeSelect({ value, onChange }: { value: string; onChange: (v: string) =
           </option>
         ))}
       </select>
-    </div>
+    </span>
   );
 }
-
 
 /**
  * Controle de número em passo (menos, valor, mais), como no mockup: o aluno na
  * academia ajusta com o polegar, sem abrir o teclado. O campo continua digitável
  * para quem prefere escrever; os botões apenas somam e subtraem o passo.
  *
- * Alvos de 44px nos dois botões (regra de toque do Design System).
+ * Alvos de 44px nos dois botões (regra de toque do Design System). Numa tela de 320 px os
+ * dois controles lado a lado não cabem com folga: `min-w` faz o segundo descer para a linha
+ * de baixo em vez de espremer o número.
  */
 function Stepper({
   label,
+  curto,
   value,
   onChange,
   passo,
   inteiro,
 }: {
   label: string;
+  /** o rótulo visível, quando o por extenso não cabe sob o número (o leitor de tela ouve o `label`) */
+  curto?: string;
   value: string;
   onChange: (v: string) => void;
   passo: number;
@@ -628,14 +798,14 @@ function Stepper({
     onChange(v);
   };
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-1 rounded-card border border-border bg-surface-soft p-1.5">
+    <div className="flex min-w-[136px] flex-1 items-center gap-1 rounded-control border border-border bg-surface p-1">
       <button
         type="button"
         onClick={() => aplica(-passo)}
         aria-label={`Diminuir ${label}`}
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-surface text-lg font-bold text-ink"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-control bg-surface-soft text-ink"
       >
-        &minus;
+        <Minus className="h-4 w-4" aria-hidden />
       </button>
       <div className="min-w-0 flex-1 text-center">
         <input
@@ -645,19 +815,19 @@ function Stepper({
           placeholder="0"
           onChange={(e) => onChange(soNumero(e.target.value))}
           aria-label={label}
-          className="tabular w-full bg-transparent text-center font-display text-xl font-bold text-ink placeholder:text-ink-2 focus:outline-none"
+          className="tabular w-full bg-transparent text-center font-display text-lg font-bold leading-tight text-ink placeholder:text-ink-2 focus:outline-none"
         />
-        <label htmlFor={id} className="block text-2xs text-ink-2">
-          {label}
+        <label htmlFor={id} className="block text-2xs leading-none text-ink-2">
+          {curto ?? label}
         </label>
       </div>
       <button
         type="button"
         onClick={() => aplica(passo)}
         aria-label={`Aumentar ${label}`}
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-surface text-lg font-bold text-ink"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-control bg-surface-soft text-ink"
       >
-        +
+        <Plus className="h-4 w-4" aria-hidden />
       </button>
     </div>
   );

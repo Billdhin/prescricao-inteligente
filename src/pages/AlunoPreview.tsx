@@ -1,7 +1,8 @@
 import * as React from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
-import { ArrowLeft, Smartphone, MousePointerClick } from "lucide-react";
+import { ArrowLeft, Smartphone, MousePointerClick, Send } from "lucide-react";
 import { StudentApp } from "@/components/student/StudentApp";
+import { ConviteAlunoModal } from "@/components/app/ConviteAlunoModal";
 import { useAlunos, useUser } from "@/lib/store";
 import { aplicarPaleta, PALETA_ALUNO, temaAlunoSalvo } from "@/lib/theme/palettes";
 
@@ -12,9 +13,9 @@ import { aplicarPaleta, PALETA_ALUNO, temaAlunoSalvo } from "@/lib/theme/palette
  * navegável em tela cheia, e o profissional tinha a impressão de estar usando o
  * app de verdade: qualquer coisa que se comportasse diferente do esperado lia como
  * "bug", quando na verdade era só a prévia. Agora mostra a TELA INICIAL dentro de
- * uma moldura de celular, sem toque no conteúdo. A única ação fica fora do aparelho:
- * voltar para o perfil do aluno. O acesso real do aluno (conta própria via Supabase)
- * usa o mesmo StudentApp, aí sim interativo.
+ * uma moldura de celular, sem toque no conteúdo. As ações ficam fora do aparelho:
+ * voltar para o perfil do aluno e convidá-lo para o app. O acesso real do aluno (conta
+ * própria via Supabase) usa o mesmo StudentApp, aí sim interativo.
  */
 export function AlunoPreview() {
   const { id } = useParams();
@@ -27,6 +28,7 @@ export function AlunoPreview() {
   const liberacoes = useAlunos((s) => s.liberacoes);
   const prescricoes = useAlunos((s) => s.prescricoes);
   const user = useUser();
+  const [convidar, setConvidar] = React.useState(false);
 
   if (!aluno) return <Navigate to="/alunos" replace />;
 
@@ -67,7 +69,18 @@ export function AlunoPreview() {
 
       {/* Palco: o aparelho à esquerda, e o que se está vendo explicado ao lado. */}
       <div className="flex-1 px-4 py-6 md:py-8">
-        <div className="mx-auto grid w-full max-w-5xl items-center justify-items-center gap-8 lg:grid-cols-[auto_minmax(0,24rem)]">
+        <div className="mx-auto grid w-full max-w-5xl items-center justify-items-center gap-x-8 gap-y-[22px] lg:grid-cols-[auto_minmax(0,24rem)] lg:gap-y-5">
+          {/* O título do protótipo. No celular ele vem ANTES do aparelho, porque é o que diz o
+              que é aquela moldura; no computador ele sobe para a coluna do texto, ao lado, e o
+              aparelho continua cabendo inteiro na altura da janela. */}
+          <div className="w-full max-w-md justify-self-start lg:col-start-2 lg:row-start-1 lg:self-end">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary-texto">Prévia · somente leitura</p>
+            <h1 className="mt-2 font-display text-[26px] font-bold leading-[1.05] tracking-[-0.03em] text-ink md:text-4xl">
+              O que {primeiroNome} vê no app
+            </h1>
+          </div>
+
+          <div className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
           <Aparelho corMarca={marca.corPrimaria}>
             <StudentApp
               aluno={aluno}
@@ -83,10 +96,11 @@ export function AlunoPreview() {
               preview
             />
           </Aparelho>
+          </div>
 
-          <div className="w-full max-w-md rounded-card border border-border bg-surface p-5 shadow-soft">
+          <div className="w-full max-w-md rounded-card border border-border bg-surface p-5 lg:col-start-2 lg:row-start-2 lg:self-start">
             <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">Como funciona</p>
-            <p className="mt-2 text-sm leading-relaxed text-ink">
+            <p className="mt-2 text-sm leading-[1.6] text-ink">
               É assim que {primeiroNome} vê o treino de hoje no celular, com a sua marca. Esta prévia é somente
               leitura: as demais telas (Treinos, Progresso e Perfil) e o registro série a série aparecem quando o
               aluno entra na conta dele, criada pelo convite.
@@ -96,13 +110,16 @@ export function AlunoPreview() {
               Role a tela do celular para ver o dia inteiro, como o aluno faria com o dedo.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
+              {/* A ação que o texto acima pede: o convite. O "Voltar" já mora no topo, e dois
+                  botões de voltar na mesma tela deixavam a prévia sem próximo passo. O modal é
+                  o mesmo da ficha do aluno, e ele sabe dizer quando o aluno já tem conta. */}
               <button
                 type="button"
-                onClick={voltar}
+                onClick={() => setConvidar(true)}
                 className="inline-flex min-h-[44px] items-center gap-2 rounded-control px-4 text-sm font-semibold transition-[filter] hover:brightness-[1.15]"
                 style={{ background: "#0B1628", color: "#F3F1EA" }}
               >
-                Voltar para {primeiroNome}
+                <Send className="h-4 w-4" aria-hidden /> Convidar {primeiroNome} para o app
               </button>
               <button
                 type="button"
@@ -115,6 +132,7 @@ export function AlunoPreview() {
           </div>
         </div>
       </div>
+      {convidar && <ConviteAlunoModal aluno={aluno} onClose={() => setConvidar(false)} />}
     </div>
   );
 }
@@ -241,7 +259,10 @@ const APARELHO_A = TELA_A + 22;
 function useEscalaQueCabe(): number {
   const calcular = () => {
     if (typeof window === "undefined") return 1;
-    const altura = (window.innerHeight - 140) / APARELHO_A;
+    // Abaixo de `lg` o título da prévia fica ACIMA do aparelho (até duas linhas e o respiro,
+    // ~100 px) e entra no desconto; no computador ele mora na coluna ao lado e não conta.
+    const titulo = window.innerWidth < 1024 ? 100 : 0;
+    const altura = (window.innerHeight - 140 - titulo) / APARELHO_A;
     const largura = (window.innerWidth - 32) / APARELHO_L;
     return Math.max(0.7, Math.min(1, altura, largura));
   };

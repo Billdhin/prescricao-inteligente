@@ -283,10 +283,10 @@ const COR_DELTA: Record<TomDelta, string> = {
 function Numero({ rotulo, valor, sufixo, tom }: { rotulo: string; valor: string; sufixo?: string; tom?: string }) {
   return (
     <div className="min-w-0">
-      <div className="text-2xs font-semibold uppercase tracking-wide text-ink-2">{rotulo}</div>
+      <div className="text-2xs font-semibold uppercase tracking-[0.08em] text-ink-2">{rotulo}</div>
       <div className={cn("tabular font-display text-xl font-bold tracking-tight", tom ?? "text-ink")}>
         {valor}
-        {sufixo && <span className="ml-1 font-sans text-sm font-medium text-ink-2">{sufixo}</span>}
+        {sufixo && <span className="ml-1 font-sans text-[13px] font-medium tracking-normal text-ink-2">{sufixo}</span>}
       </div>
     </div>
   );
@@ -329,17 +329,30 @@ function PrescricaoDaSessao({ sessao, rodape }: { sessao: Sessao; rodape?: React
   );
 }
 
-function Avatar({ marca, realizada, complemento }: { marca: string; realizada: boolean; complemento?: boolean }) {
+function Avatar({
+  marca,
+  realizada,
+  complemento,
+  recente,
+}: {
+  marca: string;
+  realizada: boolean;
+  complemento?: boolean;
+  /** a sessão feita mais recente leva o avatar escuro; as anteriores, o claro */
+  recente?: boolean;
+}) {
   return (
     <span
       aria-hidden
       className={cn(
-        "grid h-9 w-9 shrink-0 place-items-center rounded-control font-display text-sm font-bold",
+        "grid h-9 w-9 shrink-0 place-items-center rounded-[11px] font-display text-[13px] font-bold",
         realizada
           ? complemento
             ? "bg-analysis-tint text-analysis-text"
-            : "bg-ink text-surface"
-          : "border-[1.5px] border-dashed border-border text-ink-2",
+            : recente
+              ? "bg-ink text-surface"
+              : "bg-bg text-ink"
+          : "border-[1.5px] border-dashed border-ink-3/25 text-ink-2",
       )}
     >
       {marca}
@@ -347,32 +360,36 @@ function Avatar({ marca, realizada, complemento }: { marca: string; realizada: b
   );
 }
 
-function SessaoRealizada({ s }: { s: SessaoDaSemana }) {
+/**
+ * Uma sessão feita. Só a MAIS RECENTE ganha o fundo e o avatar escuro, como no protótipo:
+ * com todas destacadas, nenhuma estava, e o olho não achava a última sessão da semana.
+ */
+function SessaoRealizada({ s, recente }: { s: SessaoDaSemana; recente?: boolean }) {
   const nota = s.feedback?.observacao;
   return (
-    <li className="border-b border-border">
-      <div className="flex flex-wrap items-center gap-3 bg-surface-soft px-5 py-3.5">
-        <Avatar marca={s.marca} realizada complemento={s.sessao.complemento} />
+    <li className="border-b border-surface-mute">
+      <div className={cn("flex flex-wrap items-center gap-3 px-5 py-3.5", recente && "bg-surface-soft")}>
+        <Avatar marca={s.marca} realizada complemento={s.sessao.complemento} recente={recente} />
         <div className="min-w-0 flex-1 basis-48">
-          <p className="truncate text-sm font-semibold text-ink">{s.sessao.nome}</p>
-          <p className="text-xs text-ink-2">
+          <p className="truncate text-[14.5px] font-bold text-ink">{s.sessao.nome}</p>
+          <p className="text-[12.5px] text-ink-2">
             {s.quando != null ? diaDaSessao(s.quando) : "data não registrada"}
             {s.feedback?.duracaoMin != null && ` · ${s.feedback.duracaoMin} min`}
             {s.sessao.complemento && " · complemento"}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {s.feedback?.pse != null && <PseBadge pse={s.feedback.pse} prefixo />}
+          {s.feedback?.pse != null && <PseBadge pse={s.feedback.pse} prefixo className="px-[9px] py-1 text-[11.5px]" />}
           {s.abaixo > 0 ? (
-            <span className="inline-flex items-center rounded-full bg-warning-tint px-2.5 py-0.5 text-xs font-bold text-warning">
+            <span className="inline-flex items-center rounded-full bg-warning-tint px-[9px] py-1 text-[11.5px] font-bold text-warning">
               {s.abaixo} abaixo do prescrito
             </span>
           ) : s.completa ? (
-            <span className="inline-flex items-center rounded-full bg-success-tint px-2.5 py-0.5 text-xs font-bold text-success">
+            <span className="inline-flex items-center rounded-full bg-success-tint px-[9px] py-1 text-[11.5px] font-bold text-success">
               em dia
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-full bg-surface px-2.5 py-0.5 text-xs font-bold text-ink-2 ring-1 ring-inset ring-border">
+            <span className="inline-flex items-center rounded-full bg-surface px-[9px] py-1 text-[11.5px] font-bold text-ink-2 ring-1 ring-inset ring-border">
               registro parcial
             </span>
           )}
@@ -382,7 +399,7 @@ function SessaoRealizada({ s }: { s: SessaoDaSemana }) {
       <div className="px-5 pb-3.5">
         {/* Quatro colunas a partir de sm; no celular, o executado leva o prescrito e a
             diferença embaixo dele, como no protótipo, em vez de espremer quatro colunas. */}
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 border-b border-border py-1.5 text-2xs font-semibold uppercase tracking-wide text-ink-2 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_88px]">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 border-b border-surface-mute py-1.5 text-2xs font-semibold uppercase tracking-[0.06em] text-ink-2 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_88px]">
           <span>Exercício</span>
           <span className="text-right sm:hidden">Executado · Δ</span>
           <span className="hidden sm:block">Prescrito</span>
@@ -395,11 +412,11 @@ function SessaoRealizada({ s }: { s: SessaoDaSemana }) {
           {s.linhas.map((l) => (
             <li
               key={l.bloco.id}
-              className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 border-b border-border/60 py-2 text-sm last:border-b-0 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_88px]"
+              className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 border-b border-surface-mute/60 py-[9px] text-[13px] last:border-b-0 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_88px]"
             >
               <span className="min-w-0">
                 <span className="block truncate font-semibold text-ink">{l.nome}</span>
-                <span className="block truncate text-xs text-ink-2">{l.detalhe}</span>
+                <span className="block truncate text-[11.5px] text-ink-2">{l.detalhe}</span>
               </span>
               <span className="tabular hidden text-ink-2 sm:block">{l.prescrito}</span>
               <span className={cn("tabular hidden font-semibold sm:block", l.executado ? "text-ink" : "font-normal text-ink-3")}>
@@ -410,7 +427,7 @@ function SessaoRealizada({ s }: { s: SessaoDaSemana }) {
                 <span className={cn("block font-semibold", l.executado ? "text-ink" : "font-normal text-ink-3")}>
                   {l.executado ?? "não registrado"}
                 </span>
-                <span className="block text-xs text-ink-2">
+                <span className="block text-[11.5px] text-ink-2">
                   de {l.prescrito} · <b className={cn("font-bold", COR_DELTA[l.delta.tom])}>{l.delta.texto}</b>
                 </span>
               </span>
@@ -418,9 +435,9 @@ function SessaoRealizada({ s }: { s: SessaoDaSemana }) {
           ))}
         </ul>
         {nota && (
-          <blockquote className="mt-3 rounded-r-control border-l-[3px] border-primary bg-primary-tint px-3 py-2.5 text-sm text-ink">
+          <blockquote className="mt-3 rounded-r-[10px] border-l-[3px] border-primary bg-primary-tint/50 px-3 py-2.5 text-[13px] leading-normal text-ink">
             “{nota}”
-            <span className="mt-1 block text-xs text-ink-2">recado do aluno</span>
+            <span className="mt-1 block text-[11.5px] text-ink-2">recado do aluno</span>
           </blockquote>
         )}
       </div>
@@ -445,19 +462,19 @@ function SessaoPendente({
 }) {
   const id = React.useId();
   return (
-    <li className="border-b border-border">
+    <li className="border-b border-surface-mute">
       <div className="flex flex-wrap items-center gap-3 px-5 py-3.5">
         <Avatar marca={marca} realizada={false} />
         <div className="min-w-0 flex-1 basis-48">
-          <p className="truncate text-sm font-semibold text-ink">{titulo}</p>
-          <p className="text-xs text-ink-2">{subtitulo}</p>
+          <p className="truncate text-[14.5px] font-semibold text-ink">{titulo}</p>
+          <p className="text-[12.5px] text-ink-2">{subtitulo}</p>
         </div>
         <button
           type="button"
           onClick={onAlternar}
           aria-expanded={aberta}
           aria-controls={id}
-          className="inline-flex min-h-[36px] items-center gap-1 rounded-control px-2 text-sm font-semibold text-primary hover:bg-primary-tint"
+          className="inline-flex min-h-[36px] items-center gap-1 rounded-control px-2 text-[12.5px] font-semibold text-primary hover:bg-primary-tint"
         >
           {aberta ? "Esconder" : "Ver o que está prescrito"}
           <ChevronDown className={cn("h-4 w-4 transition-transform", aberta && "rotate-180")} aria-hidden />
@@ -512,9 +529,9 @@ export function SemanaExecutada({
 
   return (
     <Card className="overflow-hidden p-0">
-      <div className="border-b border-border px-5 pb-4 pt-5">
+      <div className="border-b border-surface-mute px-5 pb-4 pt-5">
         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <h2 className="font-display text-lg font-bold text-ink">O que o aluno executou</h2>
+          <h2 className="font-display text-[17px] font-bold text-ink">O que o aluno executou</h2>
           {/* A navegação de semanas É o histórico: a semana passada fica a um toque, com a
               mesma leitura, em vez de uma lista corrida de registros soltos. */}
           <div className="flex items-center gap-1">
@@ -527,7 +544,7 @@ export function SemanaExecutada({
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <span className="tabular min-w-0 text-sm text-ink-2">
+            <span className="tabular min-w-0 text-[12.5px] text-ink-2">
               <b className="font-semibold text-ink">Semana {semana}</b> · {faixaDeDatas(r.inicio, r.fim)}
             </span>
             <button
@@ -577,7 +594,7 @@ export function SemanaExecutada({
                 key={d.ts}
                 className={cn(
                   "rounded-control border px-1 py-2 text-center",
-                  d.hoje ? "border-primary bg-primary-tint" : d.feito ? "border-success/30 bg-success-tint" : "border-border bg-surface",
+                  d.hoje ? "border-primary bg-primary-tint/50" : d.feito ? "border-success-fill/20 bg-success-tint/60" : "border-border bg-surface",
                 )}
               >
                 <span className="block text-2xs font-bold tracking-wide text-ink-2">{DIAS[data.getDay()]}</span>
@@ -597,8 +614,8 @@ export function SemanaExecutada({
       </div>
 
       <ul>
-        {feitas.map((s) => (
-          <SessaoRealizada key={s.sessao.id} s={s} />
+        {feitas.map((s, i) => (
+          <SessaoRealizada key={s.sessao.id} s={s} recente={i === 0} />
         ))}
         {pendentes.map((s) => (
           <SessaoPendente
@@ -641,7 +658,7 @@ export function SemanaExecutada({
         )}
       </ul>
 
-      <p className="px-5 py-3 text-xs text-ink-2">
+      <p className="border-t border-surface-mute px-5 pb-4 pt-3 text-xs text-ink-2">
         Δ compara o executado com o prescrito da semana, em séries e repetições. O plano não prescreve quilos, então a
         carga aparece como dado.
       </p>
@@ -660,11 +677,9 @@ export function AtencaoDaSemana({ resumo }: { resumo: ResumoSemana }) {
   const alto = pse != null && pse >= 6;
   const nomes = resumo.abaixoDoPrescrito.slice(0, 3).join(", ") + (n > 3 ? ` e mais ${n - 3}` : "");
   return (
-    <div className="rounded-card border border-warning/30 bg-warning-tint p-5">
-      <p className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-[0.12em] text-warning">
-        <AlertTriangle className="h-3.5 w-3.5" aria-hidden /> Atenção da semana {resumo.semana}
-      </p>
-      <p className="mt-2 text-sm leading-relaxed text-ink">
+    <div className="rounded-card border border-warning-fill/40 bg-warning-tint p-5">
+      <p className="text-2xs font-bold uppercase tracking-[0.12em] text-warning">Atenção da semana {resumo.semana}</p>
+      <p className="mt-2 text-[13.5px] leading-normal text-ink">
         O executado ficou <b>abaixo do prescrito em {n} {n === 1 ? "exercício" : "exercícios"}</b>
         {alto && (
           <>

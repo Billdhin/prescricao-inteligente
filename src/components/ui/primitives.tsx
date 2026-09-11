@@ -8,9 +8,12 @@ import { cn } from "@/lib/utils";
 export type CardVariant = "base" | "raised" | "soft";
 export type CardTone = "warning" | "success" | "primary" | "danger";
 
+// No CELULAR o cartão é plano, como o protótipo mobile (10/09/2026): borda e papel, sem
+// sombra. A sombra é hierarquia de tela larga; empilhados numa coluna de 360 px, cartões
+// flutuando uns sobre os outros viravam uma pilha de relevos disputando o olho.
 const cardVariants: Record<CardVariant, string> = {
-  base: "border border-border bg-surface shadow-soft",
-  raised: "border border-border bg-surface shadow-elevated",
+  base: "border border-border bg-surface lg:shadow-soft",
+  raised: "border border-border bg-surface lg:shadow-elevated",
   soft: "border border-border bg-surface-soft",
 };
 
@@ -355,7 +358,9 @@ export function SectionHeader({
             </Eyebrow>
           ))}
         {level === 1 ? (
-          <h1 className="font-display text-3xl font-bold tracking-[-0.03em] text-ink md:text-4xl">{title}</h1>
+          // 26 px no celular, o título de página do protótipo mobile; o tamanho grande volta
+          // junto com a lateral, em lg.
+          <h1 className="font-display text-[26px] font-bold leading-[1.05] tracking-[-0.03em] text-ink lg:text-4xl">{title}</h1>
         ) : (
           <h2 className="font-display text-xl font-semibold text-ink md:text-2xl">{title}</h2>
         )}

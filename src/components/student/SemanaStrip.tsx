@@ -44,6 +44,7 @@ export function SemanaStrip({
   cor,
   agora = Date.now(),
   compacto = false,
+  semLegenda = false,
 }: {
   alunoId: string;
   execucoes: Execucao[];
@@ -53,6 +54,12 @@ export function SemanaStrip({
   agora?: number;
   /** versão menor e sem legenda (lado do profissional) */
   compacto?: boolean;
+  /**
+   * Faixa de RECAPITULAÇÃO (protótipo, telas 06 e 13): no fim do Hoje, depois do treino ou
+   * durante a pausa, a faixa só lembra a semana. A legenda já foi lida no topo da tela nos
+   * outros dias; repetida aqui, ela disputaria a leitura com o que importa naquele estado.
+   */
+  semLegenda?: boolean;
 }) {
   const inicio = inicioSemanaCivil(agora);
   const hojeIdx = (new Date(agora).getDay() + 6) % 7;
@@ -68,7 +75,7 @@ export function SemanaStrip({
 
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1.5">
+      <div className={cn("grid grid-cols-7", compacto ? "gap-1.5" : "gap-1")}>
         {DIAS_CURTO.map((lbl, i) => {
           const diaNum = new Date(inicio + i * DIA_MS).getDate();
           const ehHoje = i === hojeIdx;
@@ -84,7 +91,7 @@ export function SemanaStrip({
           if (!treino && !sem) partes.push(futuro ? "ainda por vir" : "sem registro");
           const rotulo = partes.join(", ");
 
-          const dot = compacto ? "h-1 w-1" : "h-1.5 w-1.5";
+          const dot = compacto ? "h-1 w-1" : "h-[5px] w-[5px]";
 
           return (
             <div
@@ -92,27 +99,33 @@ export function SemanaStrip({
               role="img"
               aria-label={rotulo}
               className={cn(
-                "flex flex-col items-center rounded-lg border border-border bg-surface",
-                compacto ? "gap-0 px-0.5 py-1" : "gap-0.5 px-1 py-1.5",
+                "flex flex-col items-center border border-border bg-surface",
+                compacto ? "gap-0 rounded-lg px-0.5 py-1" : "gap-0.5 rounded-[10px] px-0.5 py-1.5",
                 futuro && "opacity-50",
               )}
               // Anel na cor da marca via box-shadow (não empurra o layout como mudar a borda faria).
               style={ehHoje ? { boxShadow: `0 0 0 2px ${cor}` } : undefined}
             >
+              {/* O rótulo de hoje ESCREVE na cor da marca, então usa a versão dela puxada até
+                  4,5:1 (`--primary-texto`). O anel logo acima continua na cor de preenchimento,
+                  que só precisa de 3:1 por não ser texto. */}
               <span
                 aria-hidden
-                className={cn("font-semibold uppercase tracking-wide", compacto ? "text-2xs" : "text-2xs", !ehHoje && "text-ink-3")}
-                style={ehHoje ? { color: cor } : undefined}
+                className={cn(
+                  "uppercase",
+                  compacto ? "text-2xs font-semibold tracking-wide" : "text-2xs font-bold tracking-[0.04em]",
+                  ehHoje ? "text-primary-texto" : compacto ? "text-ink-3" : "text-ink-2",
+                )}
               >
                 {lbl}
               </span>
-              <span aria-hidden className={cn("tabular font-bold text-ink", compacto ? "text-xs" : "text-sm")}>
+              <span aria-hidden className={cn("tabular font-bold text-ink", compacto ? "text-xs" : "text-xs leading-tight")}>
                 {diaNum}
               </span>
               {/* O treino é TIQUE e o semáforo é PONTO. Antes os dois eram ponto verde, e
                   no mesmo dia apareciam lado a lado sem como distinguir um do outro. */}
-              <div aria-hidden className={cn("flex items-center gap-1", compacto ? "mt-0.5 h-2.5" : "mt-1 h-3")}>
-                {treino && <Check className={cn("shrink-0", compacto ? "h-2.5 w-2.5" : "h-3 w-3")} style={{ color: cor }} />}
+              <div aria-hidden className={cn("flex items-center gap-1", compacto ? "mt-0.5 h-2.5" : "h-2")}>
+                {treino && <Check className={cn("shrink-0", compacto ? "h-2.5 w-2.5" : "h-2.5 w-2.5")} strokeWidth={3} style={{ color: cor }} />}
                 {sem && <span className={cn("shrink-0 rounded-full", dot, SEMAFORO_DOT[sem])} />}
               </div>
             </div>
@@ -120,27 +133,28 @@ export function SemanaStrip({
         })}
       </div>
 
-      {!compacto && (
-        <div className="mt-2 space-y-1 text-2xs text-ink-3">
-          <span className="inline-flex items-center gap-1.5">
-            <Check aria-hidden className="h-3 w-3 shrink-0" style={{ color: cor }} />
+      {/* A LEGENDA NUMA LINHA SÓ (protótipo, tela 01). Em duas linhas, com o prefixo
+          "Semáforo do dia:", ela pesava quase o mesmo que a própria faixa. O tique continua
+          separado dos pontos pela forma, e os três pontos seguem na ordem do semáforo. */}
+      {!compacto && !semLegenda && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-2xs leading-tight text-ink-2">
+          <span className="inline-flex items-center gap-1">
+            <Check aria-hidden className="h-3 w-3 shrink-0" strokeWidth={3} style={{ color: cor }} />
             treino registrado
           </span>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-ink-3">Semáforo do dia:</span>
-            <span className="inline-flex items-center gap-1">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-success" />
-              liberado
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warning-fill" />
-              com ajuste
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-danger-fill" />
-              não liberado
-            </span>
-          </div>
+          <span aria-hidden>·</span>
+          <span className="inline-flex items-center gap-1">
+            <span aria-hidden className="h-[5px] w-[5px] rounded-full bg-success" />
+            liberado
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span aria-hidden className="h-[5px] w-[5px] rounded-full bg-warning-fill" />
+            com ajuste
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span aria-hidden className="h-[5px] w-[5px] rounded-full bg-danger-fill" />
+            não liberado
+          </span>
         </div>
       )}
     </div>

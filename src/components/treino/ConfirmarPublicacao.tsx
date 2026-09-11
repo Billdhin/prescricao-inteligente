@@ -104,20 +104,27 @@ export function ConfirmarPublicacao({
     });
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-3 backdrop-blur-sm sm:p-4" onClick={onCancelar}>
+    // No celular, folha que sobe de baixo (como o "Gerar o plano de novo?" da mesma tela): o
+    // polegar alcança os botões, e os dois diálogos da tela se comportam igual.
+    <div
+      className="fixed inset-0 z-50 grid place-items-end bg-black/40 p-0 backdrop-blur-sm sm:place-items-center sm:p-4"
+      onClick={onCancelar}
+    >
       <div
         ref={dialogRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={`O que muda para ${primeiro}`}
-        className="flex max-h-modal w-full max-w-lg flex-col overflow-hidden rounded-card bg-surface shadow-overlay outline-none"
+        className="flex max-h-modal w-full max-w-lg flex-col overflow-hidden rounded-t-card bg-surface shadow-overlay outline-none sm:rounded-card"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.key === "Escape" && onCancelar()}
       >
         <div className="border-b border-border p-5">
           <h2 className="font-display text-lg font-bold text-ink">O que muda para {primeiro}</h2>
-          <p className="mt-0.5 text-sm text-ink-2">Ela recebe isto no app assim que você publicar.</p>
+          {/* Pelo nome, e não "Ela recebe": o cadastro não diz o gênero do aluno, e com o
+              Antônio da demonstração a frase saía errada. */}
+          <p className="mt-0.5 text-sm text-ink-2">{primeiro} recebe isto no app assim que você publicar.</p>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
@@ -160,17 +167,17 @@ export function ConfirmarPublicacao({
               <b>
                 {primeiro} está na semana {diferenca.semanaDoAluno} de {diferenca.totalDoAnterior} do treino atual.
               </b>{" "}
-              Publicar arquiva esse treino e a contagem recomeça na semana 1. O histórico de execução dela fica
+              Publicar arquiva esse treino e a contagem recomeça na semana 1. O histórico de execução fica
               guardado.
             </p>
           </Card>
         </div>
 
-        <div className="flex flex-wrap justify-end gap-2 border-t border-border bg-surface-soft p-4">
-          <button onClick={onCancelar} className={buttonClasses("secondary", "sm")}>
+        <div className="flex flex-col-reverse gap-2 border-t border-border bg-surface-soft p-4 sm:flex-row sm:flex-wrap sm:justify-end">
+          <button onClick={onCancelar} className={cn(buttonClasses("secondary", "sm"), "h-11 sm:h-9")}>
             Voltar e ajustar
           </button>
-          <button onClick={onConfirmar} className={cn(buttonClasses("primary", "sm"), "gradient-publicar text-white")}>
+          <button onClick={onConfirmar} className={cn(buttonClasses("primary", "sm"), "gradient-publicar h-11 text-white sm:h-9")}>
             Publicar para {primeiro} <ArrowRight className="h-4 w-4" />
           </button>
         </div>

@@ -79,11 +79,14 @@ export function CartaoRascunho({
   situacao,
   onPublicado,
   id,
+  faixa,
 }: {
   aluno: Aluno;
   situacao: SituacaoDoTreino;
   onPublicado?: (p: PlanoTreino) => void;
   id?: string;
+  /** desenho das semanas do rascunho, abaixo do título (opcional) */
+  faixa?: React.ReactNode;
 }) {
   const publicarAgora = usePublicarAgora();
   const guardarRascunho = useAlunos((s) => s.guardarRascunho);
@@ -98,16 +101,23 @@ export function CartaoRascunho({
     toastDesfazer(novo ? "Rascunho descartado." : "Alterações descartadas.", () => guardarRascunho(r));
   };
 
+  // Na régua âmbar dos cartões de ação do protótipo (Próximo passo, Atenção): borda no tom
+  // de preenchimento, título de 17 px e botões de 38 px. O gradiente continua só no Publicar.
   return (
-    <Card id={id} className="scroll-mt-24 border-cta/40 bg-cta-tint p-5">
+    <Card id={id} className="scroll-mt-24 border-warning-fill/40 bg-warning-tint p-5">
       <div className="flex flex-wrap items-center gap-2">
-        <Pill tone="cta">{novo ? "Não publicado" : situacao.substitui ? "Treino novo não publicado" : "Alterações não publicadas"}</Pill>
+        <Pill tone="cta" className="px-[9px] py-1 text-[11.5px] font-bold">
+          {novo ? "Não publicado" : situacao.substitui ? "Treino novo não publicado" : "Alterações não publicadas"}
+        </Pill>
         <span className="text-xs text-ink-2">{novo || situacao.substitui ? `Gerado em ${fmt(r.data)}` : "Editado e não publicado"}</span>
       </div>
-      <div className="mt-2 font-display text-lg font-bold text-ink">
+      <div className="mt-2 font-display text-[17px] font-bold text-ink">
         {r.objetivo} · {r.semanas} semanas · {r.frequenciaSemanal}×/sem
       </div>
-      <p className="mt-1 text-sm text-ink-2">
+      {/* As semanas do treino pronto, quando quem monta o cartão as desenha. Vem de fora para
+          esta peça, que a lista de alunos também importa, não arrastar o editor do plano. */}
+      {faixa && <div className="mt-3">{faixa}</div>}
+      <p className="mt-3 text-[13.5px] leading-normal text-ink-2">
         {novo
           ? `${nome} ainda não vê este treino. Ele só chega ao app depois que você publicar.`
           : `${nome} continua vendo a versão atual até você publicar ${situacao.substitui ? "o treino novo" : "as alterações"}.`}
@@ -115,18 +125,23 @@ export function CartaoRascunho({
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {novo ? (
           <>
-            <BotaoPublicar onClick={() => publicarAgora(aluno, onPublicado)}>Publicar no app de {nome}</BotaoPublicar>
-            <Link to={linkDoRascunho(situacao, aluno.id)} className={buttonClasses("secondary", "sm")}>
+            <BotaoPublicar onClick={() => publicarAgora(aluno, onPublicado)} className="h-[38px] px-3.5 text-[13px]">
+              Publicar no app de {nome}
+            </BotaoPublicar>
+            <Link to={linkDoRascunho(situacao, aluno.id)} className={cn(buttonClasses("secondary", "sm"), "h-[38px] px-3.5 text-[13px]")}>
               Revisar antes
             </Link>
           </>
         ) : (
           // Com treino no app, publicar passa pelo quadro do que muda, no editor.
-          <Link to={linkDoRascunho(situacao, aluno.id)} className={cn(buttonClasses("primary", "sm"), "gradient-publicar text-white")}>
+          <Link
+            to={linkDoRascunho(situacao, aluno.id)}
+            className={cn(buttonClasses("primary", "sm"), "gradient-publicar h-[38px] px-3.5 text-[13px] text-white")}
+          >
             <Send className="h-4 w-4" aria-hidden /> Revisar e publicar
           </Link>
         )}
-        <button type="button" onClick={descartar} className="min-h-[36px] px-2 text-sm font-semibold text-ink-2 hover:text-ink">
+        <button type="button" onClick={descartar} className="min-h-[38px] rounded-control px-2.5 text-[13px] font-semibold text-ink-2 hover:text-ink">
           {novo ? "Descartar" : "Descartar alterações"}
         </button>
       </div>

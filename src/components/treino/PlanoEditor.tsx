@@ -5,6 +5,8 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Repeat,
   TrendingUp,
   Target,
@@ -220,23 +222,50 @@ export function corDaFase(indice: number) {
   return CORES_DAS_FASES[indice % CORES_DAS_FASES.length];
 }
 
+/*
+ * TELA ESTREITA (abaixo de `sm`, 640 px), lida do navegador e não do CSS.
+ *
+ * O gráfico de plano longo muda de FORMA no celular (janela de doze semanas, rótulo em toda
+ * semana, chip largo), e isso não se resolve com classe responsiva: a decisão de quais rótulos
+ * imprimir e de quanto deslocar o trilho é conta. `useSyncExternalStore` assina a media query
+ * e re-renderiza só quando ela vira, sem guardar cópia do estado.
+ */
+const MQ_ESTREITA = "(max-width: 639.98px)";
+function assinarTelaEstreita(avisar: () => void) {
+  if (typeof window === "undefined" || !window.matchMedia) return () => {};
+  const mq = window.matchMedia(MQ_ESTREITA);
+  mq.addEventListener("change", avisar);
+  return () => mq.removeEventListener("change", avisar);
+}
+const lerTelaEstreita = () => typeof window !== "undefined" && Boolean(window.matchMedia?.(MQ_ESTREITA).matches);
+export function useTelaEstreita(): boolean {
+  return React.useSyncExternalStore(assinarTelaEstreita, lerTelaEstreita, () => false);
+}
+
+/** Quantas semanas cabem de uma vez no gráfico do celular (protótipo de 24 semanas). */
+const SEMANAS_POR_JANELA = 12;
+
 export function GraficoProgressao({
   macro,
   nivel,
   modeloId,
   semanaAtual,
+  semanaFoco,
 }: {
   macro: Macrociclo;
   nivel?: Nivel;
   modeloId?: ModeloPeriodizacaoId;
   /** semana corrente do plano; só quem tem plano SALVO passa (senão "você está aqui" mentiria) */
   semanaAtual?: number;
+  /** a semana aberta no resto da tela: no celular, a janela do gráfico vai atrás dela */
+  semanaFoco?: number;
 }) {
   const ordemAberta = modeloId === "flexivel" || modeloId === "autorregulada";
   // 1200x200 é o enquadramento do protótipo. As contas não mudam: `desenharProgressao`
   // projeta a mesma série em qualquer moldura.
   const g = desenharProgressao(macro, 1200, 200, nivel);
   const gid = React.useId().replace(/:/g, "");
+  const telaEstreita = useTelaEstreita();
 
   /*
    * O SVG desenha SÓ a geometria do plot, esticada na largura (preserveAspectRatio
@@ -284,17 +313,96 @@ export function GraficoProgressao({
   const atual = semanaAtual != null ? g.pontos.find((p) => p.semana === semanaAtual) : undefined;
   const grade = [0.25, 0.5, 0.75].map((f) => g.plot.top + (g.plot.bottom - g.plot.top) * f);
   const passoSemana = g.microTicks.length > 1 ? g.microTicks[1].x - g.microTicks[0].x : 24;
+
+  /*
+   * O GRÁFICO INTEIRO NO CELULAR, E NUNCA CORTADO.
+   *
+   * As três fileiras (faixas, plot e régua) tinham `min-w-[560px]` dentro de uma seção com
+   * `overflow-hidden`. A 375 px elas ficavam com 560 e o excesso era decepado: medido no plano
+   * de 12 semanas, S8 a S12 não apareciam, e no plano publicado da Helena (semana 10) a
+   * bandeira "Você está aqui" e os dois pontos caíam inteiros fora da tela. O gráfico que
+   * existe para mostrar o plano mostrava 58% dele, e sem nenhum sinal de que faltava o resto.
+   *
+   * Até 12 semanas ele simplesmente encolhe: são 26 px por semana a 311 px, e "S10" em 11 px
+   * ocupa uns 18. Acima de 12, no celular, ele vira JANELA de 12 semanas, como no protótipo
+   * de 24. O plano continua sendo desenhado INTEIRO, com a mesma normalização de sempre, e o
+   * que se move é o trilho por baixo de uma moldura de 12 semanas. Cortar o macro em pedaços e
+   * desenhar cada pedaço reescalaria as curvas por janela: o pico da segunda metade pareceria
+   * tão alto quanto o da primeira, e a comparação entre elas mentiria.
+   */
+  const nSemanas = g.microTicks.length;
+  const janelado = telaEstreita && nSemanas > SEMANAS_POR_JANELA;
+  const nJanelas = janelado ? Math.ceil(nSemanas / SEMANAS_POR_JANELA) : 1;
+  // A última janela encosta no fim do plano (num plano de 16 semanas ela é S5 a S16), para
+  // toda janela ter o mesmo tamanho e a mesma escala: janela curta esticaria as semanas.
+  const inicioDaJanela = (k: number) => Math.max(0, Math.min(k * SEMANAS_POR_JANELA, nSemanas - SEMANAS_POR_JANELA));
+  const janelaDaSemana = (semana?: number) => {
+    const i = semana != null ? g.microTicks.findIndex((t) => t.semana === semana) : -1;
+    return i < 0 ? 0 : Math.min(Math.floor(i / SEMANAS_POR_JANELA), nJanelas - 1);
+  };
+  // Abre na janela da semana aberta (ou da semana de hoje, no plano publicado), para a
+  // bandeira e a semana que o resto da tela mostra estarem à vista; trocar a semana no
+  // calendário leva a janela junto.
+  const semanaDeReferencia = semanaFoco ?? semanaAtual;
+  const [janela, setJanela] = React.useState(() => janelaDaSemana(semanaDeReferencia));
+  React.useEffect(() => {
+    setJanela(janelaDaSemana(semanaDeReferencia));
+    // a janela só segue a semana de referência e o tamanho do plano; o resto é derivado
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semanaDeReferencia, nSemanas, nJanelas]);
+  const janelaAtiva = Math.min(janela, nJanelas - 1);
+  const i0 = inicioDaJanela(janelaAtiva);
+  const xJanela0 = janelado ? g.microTicks[i0].x - passoSemana / 2 : 0;
+  const larguraJanela = janelado ? passoSemana * SEMANAS_POR_JANELA : g.largura;
+  // O trilho tem a largura do plano inteiro na escala da janela, e anda para a esquerda até a
+  // primeira semana dela. `translateX` em % é da largura do próprio trilho.
+  const trilho: React.CSSProperties | undefined = janelado
+    ? {
+        width: `${(g.largura / larguraJanela) * 100}%`,
+        transform: `translateX(-${(xJanela0 / g.largura) * 100}%)`,
+      }
+    : undefined;
+  const rotuloJanela = (k: number) => {
+    const a = inicioDaJanela(k);
+    const z = Math.min(a + SEMANAS_POR_JANELA - 1, nSemanas - 1);
+    return `S${g.microTicks[a].semana} a S${g.microTicks[z].semana}`;
+  };
+  // Quanto do VISOR um trecho ocupa (em %): com a janela, o trilho é mais largo que o visor.
+  const noVisor = (pctDoTrilho: number) => (janelado ? pctDoTrilho * (g.largura / larguraJanela) : pctDoTrilho);
+
   const larguraChip = Math.max(pctX(passoSemana) - 0.35, 0.6);
-  // Abaixo de ~3,5% da largura por semana (mais de ~26 semanas), "S13" não cabe no chip.
-  const estreita = larguraChip < 3.5;
+  // Abaixo de ~3,5% da largura por semana (mais de ~26 semanas), "S13" não cabe no chip. Na
+  // janela do celular cada semana tem 1/12 do visor, e aí o chip volta a caber inteiro.
+  const estreita = !janelado && larguraChip < 3.5;
   // Só os tipos de semana que aparecem no plano entram na legenda (nunca "Teste" quando
   // não há semana de teste).
   const tiposPresentes = new Set(g.microTicks.map((t) => t.tipo));
   const tiposSemana = (["carga", "deload", "teste"] as TipoMicrociclo[]).filter((t) => tiposPresentes.has(t));
 
+  // A bandeira "Você está aqui" tem ~120 px: centrada numa semana da borda, metade dela saía
+  // do visor. Perto das bordas ela ancora no ponto pelo lado de dentro.
+  const posAtualNoVisor = atual ? (atual.x - xJanela0) / larguraJanela : 0.5;
+  const ancoraBandeira =
+    posAtualNoVisor < 0.18 ? "translateX(-12px)" : posAtualNoVisor > 0.82 ? "translateX(calc(-100% + 12px))" : "translateX(-50%)";
+
+  /*
+   * COMO LER O GRÁFICO. O texto é o mesmo nos dois tamanhos e não sai de lugar nenhum: é a
+   * explicação de soma x média que evitou o erro de leitura do professor (ver o comentário
+   * logo abaixo). No celular ele vem recolhido, porque 137 px de parágrafo entre a legenda e
+   * as curvas empurravam o gráfico para fora da primeira tela.
+   */
+  const comoLer = (
+    <>
+      Valores relativos, calculados das sessões (sem unidade absoluta). O nome de cada linha já diz como
+      ela é calculada: <b style={{ color: "#F3F1EA" }}>volume é soma</b>, então acrescentar exercício ou série sobe a linha;{" "}
+      <b style={{ color: "#F3F1EA" }}>esforço médio é média</b>, então ele sobe quando o treino fica mais pesado, e não quando fica mais
+      longo. As faixas acima do gráfico mostram cada fase e quantas semanas ela dura.
+    </>
+  );
+
   return (
     <section
-      className="relative overflow-hidden rounded-[24px] p-4 md:p-6"
+      className="relative overflow-hidden rounded-[24px] px-[18px] py-[22px] md:p-6"
       style={{ background: "#0B1628", color: "#F3F1EA" }}
     >
       <div
@@ -308,12 +416,20 @@ export function GraficoProgressao({
           WebkitMaskImage: "linear-gradient(180deg,transparent,#000 40%)",
         }}
       />
-      <div className="relative flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+      <div className="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="m-0 flex items-center gap-2 text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
-          <TrendingUp className="h-3.5 w-3.5" aria-hidden />
+          <TrendingUp className="h-3.5 w-3.5 shrink-0" aria-hidden />
           Macrociclo · volume, esforço e complexidade por semana
         </p>
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs" style={{ color: "#B9C6D6" }}>
+        {janelado && (
+          <PagerDaJanela
+            n={nJanelas}
+            ativa={janelaAtiva}
+            rotulo={rotuloJanela}
+            onEscolher={setJanela}
+          />
+        )}
+        <div className="flex w-full flex-wrap gap-x-4 gap-y-1.5 text-[12.5px] sm:w-auto" style={{ color: "#B9C6D6" }}>
           {g.series.map((s) => (
             <span key={s.id} className="flex items-center gap-1.5">
               <span
@@ -342,12 +458,20 @@ export function GraficoProgressao({
         essa leitura. Soma e média reagem de formas opostas ao mesmo gesto, e quem lê precisa
         saber disso antes de olhar.
       */}
-      <p className="relative mt-2 text-xs leading-relaxed" style={{ color: "#B9C6D6" }}>
-        Valores relativos, calculados das sessões (sem unidade absoluta). O nome de cada linha já diz como
-        ela é calculada: <b style={{ color: "#F3F1EA" }}>volume é soma</b>, então acrescentar exercício ou série sobe a linha;{" "}
-        <b style={{ color: "#F3F1EA" }}>esforço médio é média</b>, então ele sobe quando o treino fica mais pesado, e não quando fica mais
-        longo. As faixas acima do gráfico mostram cada fase e quantas semanas ela dura.
+      <p className="relative mt-2 hidden text-xs leading-relaxed lg:block" style={{ color: "#B9C6D6" }}>
+        {comoLer}
       </p>
+      <details className="group relative mt-1 lg:hidden">
+        <summary
+          className="inline-flex min-h-[44px] cursor-pointer list-none items-center text-xs underline decoration-dotted underline-offset-4 [&::-webkit-details-marker]:hidden"
+          style={{ color: "#B9C6D6" }}
+        >
+          Como ler este gráfico
+        </summary>
+        <p className="pb-1 text-xs leading-relaxed" style={{ color: "#B9C6D6" }}>
+          {comoLer}
+        </p>
+      </details>
       {/*
         POR QUE A CURVA NÃO MUDOU, dito antes de o profissional olhar para ela.
         O Filipe: "se deixa só o mesmo gráfico para o profissional é como se você não alterou
@@ -381,15 +505,23 @@ export function GraficoProgressao({
           Cada faixa é um mesociclo real: nome, intervalo de semanas e os ícones do
           que se treina mais nela (só quando a faixa é larga o bastante para eles
           não espremerem o nome). */}
-      <div className="relative mt-4 h-8 min-w-[560px]" aria-hidden>
+      <div className="relative mt-4 overflow-hidden" aria-hidden>
+      <div className="relative h-8 transition-transform duration-300 ease-out motion-reduce:transition-none" style={trilho}>
         {faixasDaFase.map((f) => {
           const c = corDaFase(f.cor);
           const fam = { bg: `rgba(${c.rgb},.18)`, borda: `rgba(${c.rgb},.45)`, tinta: c.navy };
           const largura = pctX(f.x1) - pctX(f.x0);
           // Os ícones só entram quando sobra largura DEPOIS do nome: num plano anual a faixa da
           // Fase 2 tem uns 16% do gráfico, e com os ícones o nome saía "Fase 2: Construção de cap…".
-          const cabeNomeInteiro = largura > 6 + f.nome.length * 0.55;
-          const focos = largura > 14 && cabeNomeInteiro ? posicoesFocos(f, 0, 12, 5) : [];
+          // A conta é sobre o que aparece no VISOR: na janela do celular a faixa é mais larga.
+          // No celular os ícones não entram: a régua em % foi medida num gráfico de ~1000 px, e a
+          // 311 px uma faixa de 25% tem 78 px, onde os ícones deixavam do nome só "F...".
+          const larguraVisivel = noVisor(largura);
+          const cabeNomeInteiro = larguraVisivel > 6 + f.nome.length * 0.55;
+          const focos = !telaEstreita && larguraVisivel > 14 && cabeNomeInteiro ? posicoesFocos(f, 0, 12, 5) : [];
+          // Fase que começou na janela anterior: o nome dela ficaria do lado de fora do visor.
+          // O recuo o traz para a borda esquerda da janela (padding em % é do trilho).
+          const recuo = janelado && f.x0 < xJanela0 && f.x1 > xJanela0 ? pctX(xJanela0 - f.x0) : 0;
           return (
             <div
               key={f.indice}
@@ -400,6 +532,7 @@ export function GraficoProgressao({
                 background: fam.bg,
                 borderColor: fam.borda,
                 color: fam.tinta,
+                ...(recuo ? { paddingLeft: `calc(${recuo}% + 10px)` } : null),
               }}
             >
               {/* Só o NOME na faixa: o intervalo de semanas já está escrito na régua
@@ -426,11 +559,14 @@ export function GraficoProgressao({
           );
         })}
       </div>
+      </div>
 
       {/* O PLOT. O SVG leva só geometria (esticada na largura); texto, bandeira e
           pontos são HTML por cima, posicionados pelas coordenadas reais de cada
-          semana. */}
-      <div className="relative mt-2 h-[200px] min-w-[560px]">
+          semana. O eixo "maior/menor" fica FORA do trilho: ele é do visor, não de
+          uma semana, e não pode sair andando junto com a janela. */}
+      <div className="relative mt-2 h-[200px] overflow-hidden">
+      <div className="relative h-full transition-transform duration-300 ease-out motion-reduce:transition-none" style={trilho}>
         <svg
           viewBox={`0 ${vbTop} ${g.largura} ${vbAltura}`}
           preserveAspectRatio="none"
@@ -473,14 +609,6 @@ export function GraficoProgressao({
           ))}
         </svg>
 
-        {/* eixo qualitativo: os valores são relativos, então o que orienta é o sentido */}
-        <span className="absolute left-0 top-1 text-2xs" style={{ color: "#8FA0B5" }}>
-          maior
-        </span>
-        <span className="absolute bottom-1 left-0 text-2xs" style={{ color: "#8FA0B5" }}>
-          menor
-        </span>
-
         {atual && (
           <>
             {/* os dois pontos do protótipo, sobre volume e esforço da semana de hoje */}
@@ -495,8 +623,8 @@ export function GraficoProgressao({
               style={{ left: `${pctX(atual.x)}%`, top: `${pctY(atual.int)}%`, background: "#0B1628", boxShadow: `0 0 0 3px ${SERIE_NAVY.int}` }}
             />
             <span
-              className="absolute -translate-x-1/2 whitespace-nowrap rounded-[8px] px-2 py-1 text-2xs font-bold"
-              style={{ left: `${pctX(atual.x)}%`, top: 0, background: "#FFFFFF", color: "#0B1628" }}
+              className="absolute whitespace-nowrap rounded-[8px] px-2 py-1 text-2xs font-bold"
+              style={{ left: `${pctX(atual.x)}%`, top: 0, transform: ancoraBandeira, background: "#FFFFFF", color: "#0B1628" }}
             >
               Você está aqui · S{atual.semana}
             </span>
@@ -504,12 +632,24 @@ export function GraficoProgressao({
         )}
       </div>
 
+        {/* eixo qualitativo: os valores são relativos, então o que orienta é o sentido */}
+        <span className="absolute left-0 top-1 text-2xs" style={{ color: "#8FA0B5" }}>
+          maior
+        </span>
+        <span className="absolute bottom-1 left-0 text-2xs" style={{ color: "#8FA0B5" }}>
+          menor
+        </span>
+      </div>
+
       {/* RÉGUA DE SEMANAS: um chip por microciclo, alinhado com a curva. O rótulo
           "S1..Sn" é espaçado (num plano anual, um a cada quatro) e o tipo só
           aparece quando a semana NÃO é de carga, que é o que muda a leitura. */}
-      <div className="relative mt-3 h-9 min-w-[560px]">
+      <div className="relative mt-3 overflow-hidden">
+      <div className="relative h-7 transition-transform duration-300 ease-out motion-reduce:transition-none lg:h-9" style={trilho}>
         {g.microTicks.map((t, i) => {
           const ehAtual = atual != null && t.semana === atual.semana;
+          // Na janela do celular cabem doze chips largos: toda semana leva o rótulo.
+          const rotular = janelado || t.rotular;
           const fundo =
             t.tipo === "deload"
               ? "rgba(232,163,23,.2)"
@@ -561,10 +701,13 @@ export function GraficoProgressao({
                 }
                 title={`Semana ${t.semana} · ${TIPO_LABEL[t.tipo]}`}
               >
-                {t.rotular ? `S${t.semana}` : " "}
+                {rotular ? `S${t.semana}` : " "}
               </span>
-              {t.tipo !== "carga" && t.rotular && (
-                <span className="mt-0.5 block truncate text-2xs" style={{ color: "#8FA0B5" }}>
+              {/* O tipo por extenso só no desktop (o `data-desk` do protótipo): no celular ele
+                  espremia "Descarga" em 26 px, e a cor do chip com a legenda "Semanas" logo
+                  abaixo já dizem o tipo. */}
+              {t.tipo !== "carga" && rotular && (
+                <span className="mt-0.5 hidden truncate text-2xs lg:block" style={{ color: "#8FA0B5" }}>
                   {TIPO_LABEL[t.tipo]}
                 </span>
               )}
@@ -572,6 +715,20 @@ export function GraficoProgressao({
           );
         })}
       </div>
+      </div>
+
+      {/* Onde a janela está no plano: um traço por janela, o da janela aberta mais longo. */}
+      {janelado && (
+        <div aria-hidden className="relative mt-3 flex justify-center gap-1.5">
+          {Array.from({ length: nJanelas }, (_, k) => (
+            <span
+              key={k}
+              className={cn("h-[5px] rounded-[3px] transition-[width] duration-300", k === janelaAtiva ? "w-[22px]" : "w-1.5")}
+              style={{ background: k === janelaAtiva ? "#7FE3D8" : "rgba(255,255,255,.25)" }}
+            />
+          ))}
+        </div>
+      )}
 
       {tiposSemana.length > 1 && (
         <div className="relative mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -594,6 +751,88 @@ export function GraficoProgressao({
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * O PAGER DA JANELA do gráfico no celular (protótipo de 24 semanas: "S1 a S12 | S13 a S24").
+ *
+ * Até três janelas (36 semanas) cada uma é um segmento com o intervalo escrito. Com quatro
+ * (o plano anual) os segmentos não cabem ao lado do título: vira anterior, intervalo e
+ * próxima. O botão tem 32 px de desenho e 44 de toque (o `before:` estende a área para cima e
+ * para baixo), para o trilho do protótipo não virar uma barra gorda no meio do navy.
+ */
+function PagerDaJanela({
+  n,
+  ativa,
+  rotulo,
+  onEscolher,
+}: {
+  n: number;
+  ativa: number;
+  rotulo: (k: number) => string;
+  onEscolher: (k: number) => void;
+}) {
+  const toque = "relative before:absolute before:inset-x-0 before:-inset-y-1.5 before:content-['']";
+  if (n <= 3) {
+    return (
+      <div
+        role="group"
+        aria-label="Semanas exibidas no gráfico"
+        className="flex gap-0.5 rounded-[12px] p-[3px]"
+        style={{ background: "rgba(255,255,255,.08)" }}
+      >
+        {Array.from({ length: n }, (_, k) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => onEscolher(k)}
+            aria-pressed={k === ativa}
+            className={cn(toque, "h-8 whitespace-nowrap rounded-control px-3 text-xs font-bold transition-colors")}
+            style={k === ativa ? { background: "#FFFFFF", color: "#0B1628" } : { color: "#B9C6D6" }}
+          >
+            {rotulo(k)}
+          </button>
+        ))}
+      </div>
+    );
+  }
+  const seta = "grid h-8 w-8 place-items-center rounded-control transition-opacity disabled:opacity-40";
+  return (
+    <div
+      role="group"
+      aria-label="Semanas exibidas no gráfico"
+      className="flex items-center gap-0.5 rounded-[12px] p-[3px]"
+      style={{ background: "rgba(255,255,255,.08)" }}
+    >
+      <button
+        type="button"
+        onClick={() => onEscolher(Math.max(0, ativa - 1))}
+        disabled={ativa === 0}
+        aria-label={ativa > 0 ? `Ver ${rotulo(ativa - 1)}` : "Não há semanas antes"}
+        className={cn(toque, seta)}
+        style={{ color: "#F3F1EA" }}
+      >
+        <ChevronLeft className="h-4 w-4" aria-hidden />
+      </button>
+      <span
+        className="tabular whitespace-nowrap rounded-[8px] px-3 py-1.5 text-xs font-bold"
+        style={{ background: "#FFFFFF", color: "#0B1628" }}
+        aria-live="polite"
+      >
+        {rotulo(ativa)}
+      </span>
+      <button
+        type="button"
+        onClick={() => onEscolher(Math.min(n - 1, ativa + 1))}
+        disabled={ativa === n - 1}
+        aria-label={ativa < n - 1 ? `Ver ${rotulo(ativa + 1)}` : "Não há semanas depois"}
+        className={cn(toque, seta)}
+        style={{ color: "#F3F1EA" }}
+      >
+        <ChevronRight className="h-4 w-4" aria-hidden />
+      </button>
+    </div>
   );
 }
 
@@ -670,26 +909,106 @@ function LinhaMagnitude({
   pct,
   tendencia,
   fill,
+  tomTendencia,
 }: {
   rotulo: string;
   pct: number;
   tendencia: string;
   fill: string;
+  /** cor da palavra da tendência (protótipo: "sobe" na cor da série); o resto fica em tinta */
+  tomTendencia?: string;
 }) {
   return (
-    <div className="grid grid-cols-[minmax(0,auto)_minmax(2.5rem,1fr)_auto] items-center gap-2">
-      <span className="text-xs text-ink-2">{rotulo}</span>
+    <div className="grid grid-cols-[96px_minmax(0,1fr)_auto] items-center gap-2">
+      <span className="text-[12.5px] text-ink-2">{rotulo}</span>
       <span
         role="img"
         aria-label={`${rotulo} deste bloco: ${pct}% do maior bloco deste plano`}
         className="block h-1.5 overflow-hidden rounded-full bg-surface-mute"
       >
-        <span className={cn("block h-full rounded-full", fill)} style={{ width: `${pct}%` }} />
+        {/* A barra cresce da esquerda ao aparecer (protótipo); com movimento reduzido, não. */}
+        <span className={cn("block h-full origin-left rounded-full motion-safe:animate-cresce", fill)} style={{ width: `${pct}%` }} />
       </span>
-      <b className="text-xs text-ink">{tendencia}</b>
+      <b className={cn("text-[12.5px]", tomTendencia ?? "text-ink-2")}>{tendencia}</b>
     </div>
   );
 }
+
+/**
+ * A ASSINATURA DO BLOCO: as duas barras comparam ESTE bloco com o maior bloco do MESMO plano,
+ * que é a única comparação que quer dizer alguma coisa (normalizar cada bloco contra ele mesmo
+ * daria três barras cheias). O rótulo carrega a agregação (soma x média), porque as duas
+ * reagem de formas opostas ao mesmo gesto de edição.
+ *
+ * ESFORÇO EM ÂMBAR, e não em azul. O gráfico logo acima desenha o esforço médio em âmbar;
+ * o cartão pintava a mesma variável de azul, e a mesma coisa em duas cores na mesma tela é
+ * lida como duas coisas. Uma peça só, usada no cartão e no painel do bloco (quando a grade
+ * compacta do celular não tem espaço para ela).
+ */
+function AssinaturaDoBloco({ meso, tetos }: { meso: Mesociclo; tetos: TetosDoPlano }) {
+  const mag = React.useMemo(() => magnitudeDoMeso(meso), [meso]);
+  return (
+    <div className="space-y-2">
+      <LinhaMagnitude
+        rotulo="Volume (soma)"
+        pct={pctDoTeto(mag.volume, tetos.volume)}
+        tendencia={TEND_LABEL[meso.tendenciaVolume]}
+        fill="bg-analysis-fill"
+        tomTendencia={meso.tendenciaVolume === "sobe" ? "text-analysis" : undefined}
+      />
+      {mag.esforco != null ? (
+        <LinhaMagnitude
+          rotulo="Esforço médio"
+          pct={pctDoTeto(mag.esforco, tetos.esforco)}
+          tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
+          fill="bg-warning-fill"
+          tomTendencia={meso.tendenciaIntensidade === "sobe" ? "text-warning" : undefined}
+        />
+      ) : (
+        <LinhaSemBarra
+          rotulo="Esforço médio"
+          tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
+          porque="as semanas deste bloco não declaram carga relativa, reserva de repetições nem esforço percebido, então não há o que medir"
+        />
+      )}
+      <LinhaSemBarra
+        rotulo="Complexidade"
+        tendencia={TEND_LABEL[meso.tendenciaComplexidade]}
+        porque="o plano declara a direção da complexidade, e o motor não produz uma magnitude por bloco para ela"
+      />
+    </div>
+  );
+}
+
+/** "Fase 2" só quando o bloco nasce de uma fase da jornada; bloco genérico é "Bloco 2". */
+function sobrelinhaDoBloco(meso: Mesociclo, indice: number): string {
+  return meso.faseJornada ? `Fase ${meso.faseJornada}` : `Bloco ${indice + 1}`;
+}
+
+/** O nome sem o "Fase N:" do começo, que a sobrelinha já diz. */
+function nomeSemFase(meso: Mesociclo, indice: number): string {
+  return rotuloMeso(meso, indice).replace(/^Fase \d+:\s*/, "");
+}
+
+/*
+ * O ESTADO DO BLOCO, pelo CALENDÁRIO do plano publicado. "Encerrado" e não "Concluído": o
+ * que se sabe aqui é que as semanas do bloco já passaram, não que o aluno fez as sessões. Num
+ * rascunho nada começou, e o chip não aparece.
+ */
+function estadoDoBloco(meso: Mesociclo, atual: boolean | undefined, semanaCorrente?: number) {
+  if (semanaCorrente == null) return null;
+  if (atual) return { rotulo: `Em curso · S${semanaCorrente}`, tom: "primary" as PillTone };
+  if (meso.semanaFim < semanaCorrente) return { rotulo: "Encerrado", tom: "neutral" as PillTone };
+  return { rotulo: "Planejado", tom: "neutral" as PillTone };
+}
+
+const SELO_BLOCO =
+  "inline-flex items-center rounded-[8px] bg-surface-soft px-2 py-1 text-[11.5px] font-semibold text-ink-2 ring-1 ring-inset ring-border";
+const TRAVADA_LABEL: Record<VariavelTravavel, string> = {
+  volume: "volume travado",
+  intensidade: "esforço travado",
+  complexidade: "complexidade travada",
+};
 
 /**
  * Linha de variável SEM magnitude: mesma grade das outras, com um TRAÇO no lugar da barra.
@@ -701,8 +1020,8 @@ function LinhaMagnitude({
  */
 function LinhaSemBarra({ rotulo, tendencia, porque }: { rotulo: string; tendencia: string; porque: string }) {
   return (
-    <div className="grid grid-cols-[minmax(0,auto)_minmax(2.5rem,1fr)_auto] items-center gap-2">
-      <span className="text-xs text-ink-2">{rotulo}</span>
+    <div className="grid grid-cols-[96px_minmax(0,1fr)_auto] items-center gap-2">
+      <span className="text-[12.5px] text-ink-2">{rotulo}</span>
       <span
         role="img"
         aria-label={`${rotulo}: sem barra, ${porque}`}
@@ -711,7 +1030,7 @@ function LinhaSemBarra({ rotulo, tendencia, porque }: { rotulo: string; tendenci
       >
         <span aria-hidden className="block h-px w-full rounded-full bg-border" />
       </span>
-      <b className="text-xs text-ink">{tendencia}</b>
+      <b className="text-[12.5px] text-ink-2">{tendencia}</b>
     </div>
   );
 }
@@ -742,17 +1061,29 @@ function LinhaSemBarra({ rotulo, tendencia, porque }: { rotulo: string; tendenci
 export function MesocicloCard({
   meso,
   indice,
+  enxuto,
+  cor,
   emFoco,
   atual,
+  semanaCorrente,
   tetos,
   onFocar,
 }: {
   meso: Mesociclo;
   indice: number;
+  /**
+   * Cartão curto, para a coluna ao lado do trilho: nome, semanas, estado e as barras. A frase
+   * do bloco, os selos e o critério de progressão ficam no painel do bloco em foco.
+   */
+  enxuto?: boolean;
+  /** índice da cor da FASE (`indicesDeCorDasFases`): a faixa do topo é a cor dela no gráfico */
+  cor?: number;
   /** este é o bloco que o resto da tela está mostrando */
   emFoco?: boolean;
   /** este é o bloco em que o plano está hoje (pelo calendário) */
   atual?: boolean;
+  /** semana corrente do plano PUBLICADO; ausente num rascunho (e aí o bloco não tem estado) */
+  semanaCorrente?: number;
   /**
    * Os tetos do plano inteiro (`tetosDoPlano`), para as barras compararem bloco com bloco.
    * Sem eles não há com o que comparar, e o cartão volta às tendências em palavra: barra
@@ -761,8 +1092,10 @@ export function MesocicloCard({
   tetos?: TetosDoPlano;
   onFocar: (meso: Mesociclo) => void;
 }) {
-  // O que este bloco pesa, da MESMA fonte do gráfico e do calendário.
-  const mag = React.useMemo(() => magnitudeDoMeso(meso), [meso]);
+  const estado = estadoDoBloco(meso, atual, semanaCorrente);
+  const semanaDaDescarga = meso.microciclos.find((w) => w.tipo === "deload")?.semana;
+  const travadas = meso.variaveisTravadas ?? [];
+  const criterio = meso.criteriosProgressao[0];
 
   return (
     <button
@@ -770,68 +1103,148 @@ export function MesocicloCard({
       onClick={() => onFocar(meso)}
       aria-pressed={emFoco}
       className={cn(
-        "flex w-full flex-col rounded-card border bg-surface p-4 text-left transition-colors",
+        "relative flex w-full flex-col overflow-hidden rounded-card border bg-surface text-left transition-colors",
+        enxuto ? "p-4" : "p-5",
         emFoco ? "border-ink shadow-soft" : "border-border hover:bg-surface-soft",
       )}
     >
-      <div className="flex items-start gap-3">
-        {/* Identidade de fase: quadrado navy com o número, no vocabulário do redesign. */}
-        <span
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-control font-display text-sm font-bold"
-          style={{ background: "#0B1628", color: "#F3F1EA" }}
-        >
-          {indice + 1}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-display font-bold text-ink">{rotuloMeso(meso, indice)}</span>
-            <span className="text-xs text-ink-3">
-              semanas {meso.semanaInicio} a {meso.semanaFim}
-            </span>
-            {/* Teto de 3 selos: "em curso", "com descarga", "reavaliar ao fim". */}
-            {atual && <Pill tone="primary">em curso</Pill>}
-            {meso.deload && <Pill tone="neutral">com descarga</Pill>}
-            {meso.reavaliacao && <Pill tone="analysis">reavaliar ao fim</Pill>}
-          </div>
-          <p className="mt-0.5 text-sm text-ink-2">{meso.foco}</p>
+      {/* A faixa de 4 px na cor da FASE (protótipo): é o que liga o cartão à faixa da mesma
+          fase no gráfico e às células dela no calendário, sem precisar ler o nome. */}
+      {cor != null && (
+        <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: corDaFase(cor).forte }} />
+      )}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">
+            {sobrelinhaDoBloco(meso, indice)}
+            {atual && semanaCorrente != null ? " · atual" : ""}
+          </p>
+          <p className="mt-0.5 font-display text-lg font-bold leading-tight tracking-[-0.02em] text-ink">
+            {nomeSemFase(meso, indice)}
+          </p>
+          <p className="mt-0.5 text-[12.5px] text-ink-2">
+            semanas {meso.semanaInicio} a {meso.semanaFim}
+            {semanaDaDescarga != null ? ` · descarga na ${semanaDaDescarga}` : ""}
+          </p>
         </div>
+        {estado && (
+          <Pill tone={estado.tom} className="shrink-0">
+            {estado.rotulo}
+          </Pill>
+        )}
       </div>
+      {!enxuto && <p className="mt-2.5 text-[13.5px] leading-[1.5] text-ink">{meso.foco}</p>}
 
-      {/*
-        A ASSINATURA DO BLOCO. As duas barras comparam ESTE bloco com o maior bloco do MESMO
-        plano, que é a única comparação que quer dizer alguma coisa: normalizar cada bloco
-        contra ele mesmo daria três barras cheias. O rótulo carrega a agregação (soma x
-        média), porque as duas reagem de formas opostas ao mesmo gesto de edição.
-      */}
       {tetos && (
-        <div className="mt-3 space-y-2 border-t border-border pt-3">
-          <LinhaMagnitude
-            rotulo="Volume (soma)"
-            pct={pctDoTeto(mag.volume, tetos.volume)}
-            tendencia={TEND_LABEL[meso.tendenciaVolume]}
-            fill="bg-analysis-fill"
-          />
-          {mag.esforco != null ? (
-            <LinhaMagnitude
-              rotulo="Esforço médio"
-              pct={pctDoTeto(mag.esforco, tetos.esforco)}
-              tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
-              fill="bg-primary"
-            />
-          ) : (
-            <LinhaSemBarra
-              rotulo="Esforço médio"
-              tendencia={TEND_LABEL[meso.tendenciaIntensidade]}
-              porque="as semanas deste bloco não declaram carga relativa, reserva de repetições nem esforço percebido, então não há o que medir"
-            />
-          )}
-          <LinhaSemBarra
-            rotulo="Complexidade"
-            tendencia={TEND_LABEL[meso.tendenciaComplexidade]}
-            porque="o plano declara a direção da complexidade, e o motor não produz uma magnitude por bloco para ela"
-          />
+        <div className="mt-3.5">
+          <AssinaturaDoBloco meso={meso} tetos={tetos} />
         </div>
       )}
+
+      {/* Os selos numa fileira própria, como o protótipo: na linha do nome eles espremiam o
+          título. As travas entram aqui porque mudam o que o bloco faz. */}
+      {!enxuto && (meso.deload || meso.reavaliacao || travadas.length > 0) && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {meso.deload && <span className={SELO_BLOCO}>com descarga</span>}
+          {meso.reavaliacao && <span className={SELO_BLOCO}>reavaliar ao fim</span>}
+          {travadas.map((v) => (
+            <span key={v} className={SELO_BLOCO}>
+              {TRAVADA_LABEL[v]}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* O primeiro critério REAL de progressão do bloco; a lista inteira e a edição dela
+          continuam no painel do bloco. */}
+      {criterio && !enxuto && (
+        <p className="mt-3 border-t border-border pt-3 text-[12.5px] text-ink-2">
+          <span className="font-semibold text-ink">Progride quando:</span> {comInicialMinuscula(criterio)}
+        </p>
+      )}
+    </button>
+  );
+}
+
+/** "Sessões concluídas" vira "sessões concluídas" depois de dois-pontos (sigla fica como está). */
+function comInicialMinuscula(t: string): string {
+  if (!t || /^[A-ZÀ-Ý]{2}/.test(t)) return t;
+  return t.charAt(0).toLowerCase() + t.slice(1);
+}
+
+/**
+ * O CARTÃO COMPACTO do bloco (protótipo de 24 semanas, abaixo de `lg` com mais de três blocos).
+ *
+ * Mesmo seletor do cartão completo, sem as barras: uma mini-barra por SEMANA real do bloco
+ * (não fixo em quatro), a descarga em âmbar hachurado, a semana de hoje em tinta, as passadas
+ * na cor da fase e as futuras na cor apagada. "Passada" é calendário do plano publicado; num
+ * rascunho todas são futuras, porque nada começou.
+ */
+export function MesocicloCompacto({
+  meso,
+  indice,
+  cor,
+  emFoco,
+  atual,
+  semanaCorrente,
+  onFocar,
+}: {
+  meso: Mesociclo;
+  indice: number;
+  cor: number;
+  emFoco?: boolean;
+  atual?: boolean;
+  semanaCorrente?: number;
+  onFocar: (meso: Mesociclo) => void;
+}) {
+  const c = corDaFase(cor);
+  const estado = estadoDoBloco(meso, atual, semanaCorrente);
+  return (
+    <button
+      type="button"
+      onClick={() => onFocar(meso)}
+      aria-pressed={emFoco}
+      className={cn(
+        "relative flex min-h-[44px] w-full flex-col overflow-hidden rounded-card bg-surface px-3.5 pb-3 pt-3.5 text-left transition-colors",
+        emFoco ? "border-[1.5px] border-ink" : "border-[1.5px] border-border hover:bg-surface-soft",
+      )}
+    >
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: c.forte }} />
+      <span className="flex items-baseline justify-between gap-1.5">
+        <span className="text-2xs font-bold uppercase tracking-[0.1em] text-ink-3">{sobrelinhaDoBloco(meso, indice)}</span>
+        {estado && (
+          <span className={cn("truncate text-2xs font-bold", estado.tom === "primary" ? "text-primary" : "text-ink-3")}>
+            {atual ? "em curso" : estado.rotulo.toLowerCase()}
+          </span>
+        )}
+      </span>
+      <span className="mt-1 line-clamp-2 font-display text-[15px] font-bold leading-tight text-ink">{nomeSemFase(meso, indice)}</span>
+      <span className="mt-0.5 text-xs text-ink-2">
+        S{meso.semanaInicio} a S{meso.semanaFim}
+      </span>
+      <span aria-hidden className="mt-2 flex gap-[3px]">
+        {meso.microciclos.map((w) => {
+          const descarga = w.tipo === "deload";
+          const hoje = semanaCorrente != null && w.semana === semanaCorrente;
+          const passou = semanaCorrente != null && w.semana < semanaCorrente;
+          return (
+            <span
+              key={w.id}
+              className={cn("h-1.5 flex-1 rounded-[3px]", hoje && "bg-ink")}
+              style={
+                hoje
+                  ? undefined
+                  : {
+                      background: descarga ? "var(--warning-fill)" : passou ? c.forte : `rgba(${c.rgb},.33)`,
+                      backgroundImage: descarga
+                        ? "repeating-linear-gradient(135deg, rgba(255,255,255,.55) 0 1.5px, transparent 1.5px 4px)"
+                        : undefined,
+                    }
+              }
+            />
+          );
+        })}
+      </span>
     </button>
   );
 }
@@ -864,6 +1277,7 @@ export function PainelDoBloco({
   onChange,
   reavaliarHref,
   semanaCorrente,
+  tetosNoCelular,
 }: {
   meso: Mesociclo;
   indice: number;
@@ -874,6 +1288,12 @@ export function PainelDoBloco({
   reavaliarHref?: string;
   /** semana corrente do plano, para saber se a reavaliação deste bloco já está à porta */
   semanaCorrente?: number;
+  /**
+   * Os tetos do plano quando a fileira de blocos está na grade COMPACTA do celular: os
+   * cartões compactos não têm as barras, e elas vêm para cá (só abaixo de `lg`), senão a
+   * comparação entre blocos sumiria da tela.
+   */
+  tetosNoCelular?: TetosDoPlano;
 }) {
   // Cadeado por variável (onda MP-6): travar/destravar volume/intensidade/complexidade. Uma
   // variável travada NÃO progride; ao travar/destravar, recalcula os alvos das semanas do bloco
@@ -920,6 +1340,12 @@ export function PainelDoBloco({
           semanas {meso.semanaInicio} a {meso.semanaFim}
         </span>
       </div>
+
+      {tetosNoCelular && (
+        <div className="mt-3.5 border-b border-border pb-3.5 lg:hidden">
+          <AssinaturaDoBloco meso={meso} tetos={tetosNoCelular} />
+        </div>
+      )}
 
       <div className="mt-4 grid gap-x-6 gap-y-5 lg:grid-cols-3">
         <section>
@@ -1015,7 +1441,8 @@ export function PainelDoBloco({
                           onClick={() => toggleTrava(v)}
                           aria-pressed={on}
                           className={cn(
-                            "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
+                            // 44 px de toque no celular: a trava muda o plano inteiro do bloco.
+                            "inline-flex min-h-[44px] items-center gap-1 rounded-full border px-3.5 py-1 text-xs font-semibold transition-colors lg:min-h-0 lg:px-2.5",
                             on ? "border-primary bg-primary-tint text-primary" : "border-border text-ink-2 hover:bg-surface",
                           )}
                         >
@@ -1119,7 +1546,9 @@ export function ControlesDaSemana({
                   }
                   aria-pressed={micro.tipo === t}
                   className={cn(
-                    "rounded-full px-3 py-1 text-xs font-semibold transition-colors",
+                    // 24 px de desenho; no celular o `before:` estende o toque a 44 px sem
+                    // engordar o trilho (é onde a descarga se marca e se desfaz).
+                    "relative rounded-full px-3 py-1 text-xs font-semibold transition-colors before:absolute before:inset-x-0 before:-inset-y-2.5 before:content-[''] lg:before:hidden",
                     micro.tipo === t ? "bg-ink text-surface" : "text-ink-2 hover:bg-surface-soft",
                   )}
                 >
@@ -1193,7 +1622,8 @@ export function EfeitoDaEdicaoCard({ efeito, onDispensar }: { efeito: EfeitoDaEd
         <p className="text-xs font-semibold text-ink">O que a sua edição mudou na semana {efeito.semana}</p>
         <button
           onClick={onDispensar}
-          className="rounded p-0.5 text-ink-3 hover:bg-surface hover:text-ink"
+          // 44 px de toque no celular, recolhido com margem negativa para o cartão não crescer.
+          className="-m-3 rounded-control p-[15px] text-ink-3 hover:bg-surface hover:text-ink lg:m-0 lg:p-0.5"
           aria-label="Dispensar o resumo da edição"
         >
           <X className="h-3.5 w-3.5" aria-hidden />
@@ -1974,12 +2404,15 @@ function BlocoRow({
         fichas. Fechada ela se LÊ; aberta ela se edita. Era só a forma aberta, sempre, para
         todos os exercícios ao mesmo tempo.
       */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-[18px] py-4">
         {numero != null && (
           <span
             className={cn(
-              "grid h-[38px] w-[38px] shrink-0 place-items-center rounded-control font-display text-sm font-bold",
-              aerobio ? "bg-analysis-tint text-analysis-text" : "bg-primary-tint text-primary",
+              // Número neutro, como o protótipo: o azul cheio em cada linha competia com o
+              // selo de decisão, que é a cor que diz alguma coisa. O cardio mantém o teal,
+              // porque ali a cor é informação de tipo.
+              "grid h-[38px] w-[38px] shrink-0 place-items-center rounded-control font-display text-[13px] font-bold",
+              aerobio ? "bg-analysis-tint text-analysis-text" : "bg-surface-soft text-ink ring-1 ring-inset ring-border",
             )}
             aria-hidden
           >
@@ -2013,9 +2446,9 @@ function BlocoRow({
             // para caber as fichas na mesma linha. Com piso, as fichas é que descem de linha.
             className="min-w-[9rem] flex-1 rounded-control px-1 py-0.5 text-left"
           >
-            <span className="block truncate text-sm font-semibold text-ink">{bloco.nome}</span>
+            <span className="block truncate text-[15px] font-semibold text-ink">{bloco.nome}</span>
             {!aerobio && exAtual?.grupoMuscular && (
-              <span className="block truncate text-2xs text-ink-3">{exAtual.grupoMuscular}</span>
+              <span className="block truncate text-[12.5px] text-ink-2">{exAtual.grupoMuscular}</span>
             )}
           </button>
         )}
@@ -2061,7 +2494,9 @@ function BlocoRow({
           onClick={onAlternar}
           aria-expanded={aberto}
           aria-label={aberto ? `Fechar ${bloco.nome}` : `Ajustar ${bloco.nome}`}
-          className="shrink-0 rounded-control p-1 text-ink-3 hover:bg-surface-soft hover:text-ink"
+          // O chevron media 24 px de alvo (medido a 375 px): 44 agora, com a margem negativa
+          // devolvendo o espaço para a linha do exercício não crescer.
+          className="-m-2.5 shrink-0 rounded-control p-3.5 text-ink-3 hover:bg-surface-soft hover:text-ink"
         >
           <ChevronDown className={cn("h-4 w-4 transition-transform", aberto && "rotate-180")} aria-hidden />
         </button>

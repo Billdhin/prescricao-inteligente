@@ -4,7 +4,7 @@ import {
   Users,
   UserPlus,
   Navigation,
-  CalendarPlus,
+  ChevronRight,
   AlertTriangle,
   ArrowRight,
   Crown,
@@ -35,11 +35,15 @@ import type { Aluno } from "@/data/alunos";
 import { cn } from "@/lib/utils";
 
 const DIA = 86_400_000;
-const fmtData = (ts: number) =>
-  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(new Date(ts));
 const fmtHoje = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "long" }).format(new Date(ts));
 const diasAte = (ts: number) => Math.round((ts - Date.now()) / DIA);
+/** "19 ago": o Intl devolve "19 de ago." em pt-BR, que come espaço na ponta do cartão. */
+const MESES_CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const fmtDiaMes = (ts: number) => {
+  const d = new Date(ts);
+  return `${String(d.getDate()).padStart(2, "0")} ${MESES_CURTOS[d.getMonth()]}`;
+};
 
 export function ProfessionalDashboard() {
   const { name, plan } = useUser();
@@ -86,6 +90,8 @@ export function ProfessionalDashboard() {
   // Deduplicação na CAMADA DE APRESENTAÇÃO (motor intocado): cada aluno aparece
   // uma vez, na sua pendência mais forte. Precedência: rota/atenção > reativar > seus.
   const atencaoIds = new Set(atencao.map((x) => x.aluno.id));
+  // Quem tem semáforo vermelho pendente: a rota pinta a parada dele de vermelho.
+  const vermelhos = new Set(atencao.filter((x) => temAlertaVermelho(x.motivos)).map((x) => x.aluno.id));
   // Quem está numa parada da rota de hoje (inclui a etapa "liberar", que não gera
   // aviso porque tem chip null) NÃO pode reaparecer em "Em dia": era a contradição
   // de o mesmo aluno estar na rota e listado como em dia na mesma tela.
@@ -119,7 +125,7 @@ export function ProfessionalDashboard() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-[18px] lg:space-y-4">
       {/* O HERÓI NAVY do protótipo: saudação, resumo da rota e os três números
           do dia dentro do mesmo cartão escuro. */}
       <HeroDoDia
@@ -148,10 +154,10 @@ export function ProfessionalDashboard() {
 
       {/* O corpo em duas colunas do protótipo: a rota de hoje à esquerda (o
           bloco-assinatura) e a coluna de apoio à direita. */}
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
-        <RotaDeHojeCard rota={rota} reavaliamSemana={reavaliamSemana} />
+      <div className="grid items-start gap-[18px] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-4">
+        <RotaDeHojeCard rota={rota} reavaliamSemana={reavaliamSemana} vermelhos={vermelhos} />
 
-        <div className="space-y-4">
+        <div className="space-y-[18px] lg:space-y-4">
           <SemanaDosAlunos execucoes={execucoes} />
           <RetencaoPanel
             alunos={alunosSemAtencao}
@@ -171,8 +177,8 @@ export function ProfessionalDashboard() {
       {seusAlunos.length > 0 && (
         <section>
           <div className="mb-2.5 flex items-center justify-between">
-            <h2 className="font-display text-base font-bold text-ink">Em dia</h2>
-            <Link to="/alunos" className="text-sm font-semibold text-primary hover:underline">
+            <h2 className="font-display text-[17px] font-bold text-ink">Em dia</h2>
+            <Link to="/alunos" className="text-[13px] font-semibold text-primary hover:underline">
               Ver todos
             </Link>
           </div>
@@ -216,15 +222,18 @@ function HeroDoDia({
   avaliacoesMes: number;
 }) {
   const restantes = rota.total - rota.feitas;
+  // Por extenso até dez, como o protótipo ("Quatro paradas"): no título, número em
+  // algarismo lê como planilha.
+  const quantas = restantes <= 10 ? POR_EXTENSO_F[restantes] : String(restantes);
   const fraseRota =
     restantes > 0
-      ? `${restantes} ${restantes === 1 ? "parada" : "paradas"} na rota de hoje.`
+      ? `${quantas.charAt(0).toUpperCase()}${quantas.slice(1)} ${restantes === 1 ? "parada" : "paradas"} na sua rota de hoje.`
       : rota.total > 0
         ? "Rota de hoje concluída."
         : "Seu dia começa por aqui.";
   return (
     <section
-      className="relative overflow-hidden rounded-[24px] p-5 md:p-8"
+      className="relative overflow-hidden rounded-[24px] px-[18px] py-[22px] lg:px-8 lg:py-[30px]"
       style={{ background: "#0B1628", color: "#F3F1EA" }}
     >
       <div
@@ -254,20 +263,23 @@ function HeroDoDia({
             className="m-0 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em]"
             style={{ color: "#7FE3D8" }}
           >
-            <span aria-hidden className="h-2 w-2 animate-pulseDot rounded-full" style={{ background: "#7FE3D8" }} />
-            <span className="capitalize">{fmtHoje(Date.now())}</span>
+            <span aria-hidden className="h-2 w-2 animate-pulso rounded-full" style={{ background: "#7FE3D8" }} />
+            {/* "Terça, 08 de setembro", em caixa alta pelo CSS. Havia um `capitalize` no
+                filho que anulava o `uppercase` do pai: saía "Terça-Feira, 08 De Setembro". */}
+            <span>{fmtHoje(Date.now()).replace("-feira", "")}</span>
           </p>
-          <h1 className="m-0 mt-3 font-display text-[clamp(28px,3.4vw,42px)] font-bold leading-[1.05] tracking-[-0.03em]">
+          <h1 className="m-0 mt-3 font-display text-[24px] font-bold leading-[1.05] tracking-[-0.03em] lg:text-[clamp(28px,3.4vw,42px)]">
             {saudacao}. {fraseRota}
           </h1>
-          <p className="m-0 mt-3 max-w-[560px] text-[15px] leading-relaxed" style={{ color: "#B9C6D6" }}>
+          {/* No celular a lista da rota logo abaixo diz o mesmo; o resumo fica para a tela larga. */}
+          <p className="m-0 mt-3 hidden max-w-[560px] text-[15px] leading-relaxed lg:block" style={{ color: "#B9C6D6" }}>
             {resumoDaRota(rota)}
           </p>
-          <div className="mt-5 flex flex-wrap gap-2.5">
+          <div className="mt-4 flex flex-wrap gap-2.5 lg:mt-5">
             {rota.agora && (
               <Link
                 to={destinoDaParada(rota.agora)}
-                className="inline-flex h-11 items-center gap-2 rounded-control px-5 text-sm font-bold transition-[filter] hover:brightness-110"
+                className="inline-flex h-[46px] flex-[1_1_140px] items-center justify-center gap-2 rounded-control px-5 text-[14.5px] font-bold transition-colors hover:bg-[#F0B429] lg:flex-none"
                 style={{ background: "#E8A317", color: "#0B1628", boxShadow: "0 12px 24px -12px rgba(232,163,23,.7)" }}
               >
                 Abrir o dia <ArrowRight className="h-4 w-4" aria-hidden />
@@ -275,10 +287,10 @@ function HeroDoDia({
             )}
             <Link
               to="/assessments"
-              className="inline-flex h-11 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              className="inline-flex h-[46px] flex-[1_1_140px] items-center justify-center whitespace-nowrap rounded-control border px-[18px] text-[14.5px] font-semibold text-white transition-colors hover:bg-white/[.08] lg:flex-none"
               style={{ borderColor: "rgba(255,255,255,.2)" }}
             >
-              <CalendarPlus className="h-4 w-4" aria-hidden /> Registrar avaliação
+              Registrar avaliação
             </Link>
           </div>
         </div>
@@ -286,7 +298,7 @@ function HeroDoDia({
           <AzulejoDoDia valor={String(ativos)} rotulo={ativos === 1 ? "aluno ativo" : "alunos ativos"} />
           <AzulejoDoDia valor={String(comTreino)} rotulo="com treino ativo" cor="#7FE3D8" />
           {pendentesCentavos > 0 ? (
-            <AzulejoDoDia valor={formatBRL(pendentesCentavos)} rotulo="pendentes" tom="ambar" />
+            <AzulejoDoDia valor={brlCurto(pendentesCentavos)} titulo={formatBRL(pendentesCentavos)} rotulo="pendentes" tom="ambar" />
           ) : (
             <AzulejoDoDia valor={String(avaliacoesMes)} rotulo="avaliações em 30 dias" />
           )}
@@ -298,11 +310,12 @@ function HeroDoDia({
 
 /** Um azulejo do herói: número grande e rótulo, translúcido sobre o navy. O tom
  *  âmbar é o do dinheiro parado, literal do protótipo. */
-function AzulejoDoDia({ valor, rotulo, cor, tom }: { valor: string; rotulo: string; cor?: string; tom?: "ambar" }) {
+function AzulejoDoDia({ valor, rotulo, cor, tom, titulo }: { valor: string; rotulo: string; cor?: string; tom?: "ambar"; titulo?: string }) {
   const ambar = tom === "ambar";
   return (
     <div
-      className="rounded-card border p-3.5"
+      className="min-w-0 rounded-[16px] border px-2 py-2.5 lg:p-3.5"
+      title={titulo}
       style={
         ambar
           ? { background: "rgba(232,163,23,.14)", borderColor: "rgba(232,163,23,.3)" }
@@ -310,8 +323,9 @@ function AzulejoDoDia({ valor, rotulo, cor, tom }: { valor: string; rotulo: stri
       }
     >
       <p
-        className="tabular m-0 font-display text-3xl font-bold leading-none tracking-[-0.03em]"
+        className="tabular m-0 whitespace-nowrap font-display text-[22px] font-bold leading-none tracking-[-0.03em] lg:text-3xl"
         style={{ color: ambar ? "#F0B429" : cor ?? "#F3F1EA" }}
+        aria-label={titulo}
       >
         {valor}
       </p>
@@ -320,6 +334,17 @@ function AzulejoDoDia({ valor, rotulo, cor, tom }: { valor: string; rotulo: stri
       </p>
     </div>
   );
+}
+
+/**
+ * Dinheiro no tamanho do azulejo: sem centavos quando o valor é inteiro ("R$ 590") e em mil
+ * acima de dez mil ("R$ 12,4 mil"). O valor exato fica no `title` e no rótulo acessível.
+ */
+function brlCurto(centavos: number): string {
+  const reais = centavos / 100;
+  if (reais >= 10_000) return `R$ ${(reais / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mil`;
+  if (centavos % 100 === 0) return `R$ ${reais.toLocaleString("pt-BR")}`;
+  return formatBRL(centavos);
 }
 
 /* ------------------------------- Auxiliares ------------------------------- */
@@ -397,23 +422,66 @@ function MolduraBoasVindas({
     );
   }
 
+  const celebracao = mostrarCelebracao && (
+    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-success/30 bg-success-tint/50 p-3">
+      <PartyPopper className="h-5 w-5 shrink-0 text-success" />
+      <p className="min-w-0 flex-1 text-sm text-ink-2">
+        <span className="font-semibold text-ink">
+          Primeiro caso real resolvido{min ? ` em ${min} min` : ""}.
+        </span>{" "}
+        Vincule a um aluno para salvar e exportar o prontuário; é assim que cada caso vira defesa
+        técnica sua.
+      </p>
+      <button onClick={fecharCelebracao} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+  const atual = passos[atualIdx];
+  const restam = passos.length - feitos;
+  const pct = Math.round((feitos / passos.length) * 100);
+
   return (
-    <Card className="px-5 py-4">
-      {mostrarCelebracao && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-success/30 bg-success-tint/50 p-3">
-          <PartyPopper className="h-5 w-5 shrink-0 text-success" />
-          <p className="min-w-0 flex-1 text-sm text-ink-2">
-            <span className="font-semibold text-ink">
-              Primeiro caso real resolvido{min ? ` em ${min} min` : ""}.
-            </span>{" "}
-            Vincule a um aluno para salvar e exportar o prontuário; é assim que cada caso vira defesa
-            técnica sua.
-          </p>
-          <button onClick={fecharCelebracao} aria-label="Fechar" className="rounded-full p-2.5 text-ink-3 hover:bg-surface-soft">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+    <>
+    {/*
+      NO CELULAR, UM CARTÃO DE UMA LINHA (protótipo mobile de 10/09/2026): as cinco pílulas
+      quebravam em três ou quatro linhas numa tela de 360 px e viravam o bloco mais alto do
+      Meu dia. O anel diz quantos passos foram, e a frase diz o próximo. "Falta" só quando
+      resta um; com vários, "Próximo", porque "Falta: acompanhe a evolução" com três passos
+      pela frente seria mentira. Toque leva ao passo, como as pílulas.
+    */}
+    <div className="space-y-3 lg:hidden">
+      {celebracao}
+      {atual && (
+        <Link
+          to={atual.to}
+          className="flex items-center gap-3 rounded-[16px] border border-border bg-surface px-3.5 py-3 transition-colors hover:border-ink"
+        >
+          <span
+            role="img"
+            aria-label={`${feitos} de ${passos.length} passos feitos`}
+            className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full"
+            style={{ background: `conic-gradient(var(--primary) 0 ${pct}%, var(--border) ${pct}% 100%)` }}
+          >
+            <span className="tabular grid h-7 w-7 place-items-center rounded-full bg-surface text-2xs font-bold text-ink">
+              {feitos}/{passos.length}
+            </span>
+          </span>
+          <span className="min-w-0 flex-1">
+            <b className="block text-[13.5px] font-bold text-ink">Seu passo a passo</b>
+            <span className="block truncate text-xs text-ink-2">
+              {restam === 1 ? "Falta: " : "Próximo: "}
+              {atual.label.charAt(0).toLowerCase()}
+              {atual.label.slice(1)}
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
+        </Link>
       )}
+    </div>
+
+    <Card className="hidden px-5 py-4 lg:block">
+      {celebracao && <div className="mb-4">{celebracao}</div>}
 
       {/* A linha de chips do protótipo: título, contador e um chip-pílula por
           passo. O feito risca e apaga; o atual acende em azul. */}
@@ -459,6 +527,7 @@ function MolduraBoasVindas({
         </button>
       </div>
     </Card>
+    </>
   );
 }
 
@@ -514,13 +583,13 @@ function AlunoCard({ aluno, temTreino, semana }: { aluno: Aluno; temTreino: bool
       />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold text-ink">{aluno.nome}</div>
-        <div className="truncate text-xs text-ink-2">
+        <div className="truncate text-[12.5px] text-ink-2">
           {aluno.objetivo} · {temTreino && semana ? `S${semana}` : temTreino ? aluno.nivel : "sem treino"}
         </div>
       </div>
       {aluno.ultimaAvaliacaoEm && (
         <span className="shrink-0 whitespace-nowrap text-xs text-ink-3">
-          aval. {fmtData(aluno.ultimaAvaliacaoEm)}
+          aval. {fmtDiaMes(aluno.ultimaAvaliacaoEm)}
           {dias !== null && dias < 0 ? " · reavaliar" : ""}
         </span>
       )}
@@ -539,14 +608,18 @@ function AlunoCard({ aluno, temTreino, semana }: { aluno: Aluno; temTreino: bool
  * próximo passo, então a tela nunca sugere uma coisa e a lista outra.
  */
 /** A família de cor de cada parada, lida do tom da fonte única (nunca de outra conta). */
-const COR_DA_PARADA: Record<ParadaDoDia["tone"], { chip: string; avatar: string; filete: string }> = {
+const COR_DA_PARADA: Record<ParadaDoDia["tone"] | "danger", { chip: string; avatar: string; filete: string }> = {
+  // Vermelho só para o aluno com semáforo VERMELHO pendente (o dado existe, e o protótipo
+  // desenha exatamente esse caso): "não treine hoje até você olhar" não é a mesma cor de
+  // "complete o perfil".
+  danger: { chip: "bg-danger-tint text-danger", avatar: "bg-danger-tint text-danger", filete: "var(--danger-fill)" },
   warning: { chip: "bg-warning-tint text-warning", avatar: "bg-warning-tint text-warning", filete: "var(--warning-fill)" },
   cta: { chip: "bg-warning-tint text-warning", avatar: "bg-warning-tint text-warning", filete: "var(--warning-fill)" },
   success: { chip: "bg-analysis-tint text-analysis", avatar: "bg-analysis-tint text-analysis", filete: "var(--analysis-fill)" },
   primary: { chip: "bg-primary-tint text-primary", avatar: "bg-primary-tint text-primary", filete: "var(--primary)" },
 };
 
-function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamSemana: number }) {
+function RotaDeHojeCard({ rota, reavaliamSemana, vermelhos }: { rota: RotaDoDia; reavaliamSemana: number; vermelhos: Set<string> }) {
   if (rota.total === 0) return null;
 
   if (rota.paradas.length === 0) {
@@ -577,17 +650,18 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
   }
 
   return (
-    <Card variant="raised" className="p-5 md:p-6">
+    <Card variant="raised" className="p-4 lg:p-6">
       {/* O botão "Abrir o dia" que morava aqui saiu: ele repetia o do herói, logo acima,
           com o mesmo destino. O lugar dele é dos chips, como no protótipo. */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-bold text-ink">Sua rota de hoje</h2>
-          <p className="tabular text-sm text-ink-2">
+          <p className="tabular mt-1 text-[13.5px] text-ink-2">
             {rota.feitas} de {rota.total} paradas feitas
           </p>
         </div>
-        <div className="flex flex-wrap gap-1.5 sm:justify-end">
+        {/* No celular os chips somem, como no protótipo: a lista logo abaixo já agrupa. */}
+        <div className="hidden flex-wrap gap-1.5 lg:flex lg:justify-end">
           {[...grupos.entries()].map(([verbo, ps]) => (
             <span key={verbo} className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", COR_DA_PARADA[ps[0].tone].chip)}>
               {verbo} · {ps.length === 1 ? ps[0].aluno.nome.split(" ")[0] : `${ps.length} alunos`}
@@ -597,12 +671,12 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
       </div>
 
       {/* Trilho de progresso: uma marca por parada, acesa nas já feitas. */}
-      <div className="mt-4 flex gap-1.5" role="img" aria-label={`${rota.feitas} de ${rota.total} paradas feitas`}>
+      <div className="mt-4 flex gap-[5px]" role="img" aria-label={`${rota.feitas} de ${rota.total} paradas feitas`}>
         {Array.from({ length: rota.total }, (_, i) => (
           <span
             key={i}
             aria-hidden
-            className={cn("h-1.5 flex-1 rounded-full", i < rota.feitas ? "bg-analysis-fill" : "bg-surface-mute")}
+            className={cn("h-1.5 flex-1 rounded-[3px]", i < rota.feitas ? "bg-analysis-fill" : "bg-border")}
           />
         ))}
       </div>
@@ -617,7 +691,7 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
 
       <ol className="mt-4 space-y-2">
         {rota.paradas.map((p) => {
-          const cor = COR_DA_PARADA[p.tone];
+          const cor = COR_DA_PARADA[vermelhos.has(p.aluno.id) ? "danger" : p.tone];
           return (
             <li key={p.aluno.id}>
               <Link
@@ -625,25 +699,23 @@ function RotaDeHojeCard({ rota, reavaliamSemana }: { rota: RotaDoDia; reavaliamS
                 // A frase inteira do botão continua disponível: é o nome acessível e a dica.
                 aria-label={`${p.aluno.nome}: ${p.frase} ${p.acao}`}
                 title={p.acao}
-                className="flex items-center gap-3.5 overflow-hidden rounded-[14px] border border-border bg-surface py-3 pr-3.5 transition-colors hover:border-ink hover:bg-surface-soft"
+                className="flex items-center gap-2.5 overflow-hidden rounded-[14px] border border-border bg-surface py-3 pr-3.5 transition-all duration-[180ms] hover:border-ink hover:bg-surface-soft lg:gap-3.5"
               >
                 {/* Filete de urgência na cor de PREENCHIMENTO da família, como o protótipo
                     desenha: a tinta de texto (âmbar escuro) saía marrom numa faixa de 4px. */}
                 <span aria-hidden className="w-1 self-stretch rounded-r-full" style={{ background: cor.filete }} />
                 <AvatarAluno
                   aluno={p.aluno}
-                  className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold", cor.avatar)}
+                  className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-[13px] font-bold", cor.avatar)}
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold text-ink">{p.aluno.nome}</div>
-                  <div className="truncate text-sm text-ink-2">{p.frase}</div>
+                  <div className="truncate text-[14.5px] font-semibold text-ink">{p.aluno.nome}</div>
+                  <div className="mt-0.5 truncate text-[13px] text-ink-2">{p.frase}</div>
                 </div>
-                <span className="hidden shrink-0 whitespace-nowrap rounded-full bg-bg px-3 py-1.5 text-xs font-semibold text-ink sm:inline">
+                <span className="hidden shrink-0 whitespace-nowrap rounded-full bg-bg px-3 py-1.5 text-[13px] font-semibold text-ink lg:inline">
                   {p.acaoCurta} →
                 </span>
-                <span aria-hidden className="shrink-0 text-ink-3 sm:hidden">
-                  ›
-                </span>
+                <ChevronRight aria-hidden className="h-4 w-4 shrink-0 text-ink-3 lg:hidden" />
               </Link>
             </li>
           );
@@ -711,10 +783,10 @@ function AtalhoRef({ to, titulo, hint }: { to: string; titulo: string; hint: str
   return (
     <Link
       to={to}
-      className="rounded-[14px] border border-border bg-surface px-2 py-3 text-center transition-colors hover:bg-surface-soft"
+      className="rounded-[14px] border border-border bg-surface px-2 py-3 text-center transition-colors hover:border-ink"
     >
-      <span className="block truncate text-sm font-semibold text-ink">{titulo}</span>
-      <span className="block truncate text-xs text-ink-3">{hint}</span>
+      <span className="block truncate text-[13px] font-semibold text-ink">{titulo}</span>
+      <span className="block truncate text-[11.5px] text-ink-3">{hint}</span>
     </Link>
   );
 }
@@ -757,22 +829,28 @@ function SemanaDosAlunos({ execucoes }: { execucoes: { alunoId?: string; conclui
    */
 
   return (
-    <Card className="p-5">
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="font-display text-base font-bold text-ink">Semana dos seus alunos</h2>
-        {variacao != null && variacao !== 0 && (
-          <span
-            className={cn("tabular text-sm font-bold", variacao > 0 ? "text-analysis" : "text-warning")}
-            title={`${anterior} ${anterior === 1 ? "treino" : "treinos"} na semana passada`}
-          >
-            {variacao > 0 ? "+" : "−"}
-            {Math.abs(variacao)}%
-          </span>
-        )}
+    <Card className="p-4 lg:p-5">
+      <div>
+        <h2 className="font-display text-[17px] font-bold text-ink">Semana dos seus alunos</h2>
       </div>
-      <p className="mt-1 text-sm text-ink-2">
+      {/* A VARIAÇÃO COLADA AO TOTAL. O protótipo põe o "+18%" na ponta direita do título,
+          longe do número a que ele se refere: é o par separado que a régua da casa proíbe.
+          Aqui ele vem logo depois de "treinos registrados", com a base ao lado. */}
+      <p className="mt-1 text-[13px] text-ink-2">
         <b className="tabular font-display text-xl text-ink">{total}</b> {total === 1 ? "treino registrado" : "treinos registrados"}
-        {variacao != null && variacao !== 0 && <span className="text-ink-3"> · contra {anterior} na semana passada</span>}
+        {variacao != null && variacao !== 0 && (
+          <>
+            {" · "}
+            <b
+              className={cn("tabular font-bold", variacao > 0 ? "text-analysis" : "text-warning")}
+              title={`${anterior} ${anterior === 1 ? "treino" : "treinos"} na semana passada`}
+            >
+              {variacao > 0 ? "+" : "−"}
+              {Math.abs(variacao)}%
+            </b>
+            <span className="text-ink-3"> contra {anterior} na semana passada</span>
+          </>
+        )}
       </p>
       {/*
         AS BARRAS NÃO APARECIAM, e o motivo era de CSS, não de dado.
@@ -781,17 +859,17 @@ function SemanaDosAlunos({ execucoes }: { execucoes: { alunoId?: string; conclui
         automático, ou seja, zero. O cartão mostrava os números em cima e os dias embaixo, com
         nada no meio. A coluna agora ocupa a altura toda do gráfico e empilha pelo fundo.
       */}
-      <div className="mt-3 flex h-[92px] items-end gap-2" role="img" aria-label={DIAS.map((d, i) => `${d}: ${porDia[i]}`).join(", ")}>
+      <div className="mt-3.5 flex h-[90px] items-end gap-2" role="img" aria-label={DIAS.map((d, i) => `${d}: ${porDia[i]}`).join(", ")}>
         {DIAS.map((d, i) => {
           const n = porDia[i];
           // Como o protótipo: os dias que já passaram em turquesa, hoje em azul, o resto
           // da semana em cinza. Dia sem treino fica cinza em qualquer posição: turquesa
           // num zero pareceria valor.
-          const cor = n === 0 || i > diaSemana ? "bg-surface-mute" : i === diaSemana ? "bg-primary" : "bg-analysis-fill";
+          const cor = n === 0 || i > diaSemana ? "bg-border" : i === diaSemana ? "bg-primary" : "bg-analysis-fill";
           return (
-            <div key={d} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1">
+            <div key={d} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
               <span className="tabular text-2xs font-bold text-ink-2">{n || ""}</span>
-              <div aria-hidden className={cn("w-full rounded-t-[6px] rounded-b-[3px]", cor)} style={{ height: `${Math.max(6, (n / max) * 100)}%` }} />
+              <div aria-hidden className={cn("w-full origin-bottom animate-sobe rounded-t-[6px] rounded-b-[3px]", cor)} style={{ height: `${Math.max(6, (n / max) * 100)}%` }} />
               <span className={cn("text-2xs", i === diaSemana ? "font-bold text-ink" : "text-ink-3")}>{d}</span>
             </div>
           );

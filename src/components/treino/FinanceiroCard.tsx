@@ -1,6 +1,8 @@
 import * as React from "react";
-import { Wallet, Check, Pencil, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
+import { linkWhatsApp } from "@/lib/retencao";
+import { cn } from "@/lib/utils";
 import type { Aluno } from "@/data/alunos";
 import {
   type CobrancaAluno,
@@ -49,53 +51,72 @@ export function FinanceiroCard({
       },
     });
 
+  // Cobrar pelo WhatsApp só existe com telefone: sem número, o wa.me abre uma conversa em
+  // branco, e o botão prometeria um contato que não sabe com quem é.
+  const primeiro = aluno.nome.split(" ")[0];
+  const whatsapp =
+    efetivo === "pendente"
+      ? linkWhatsApp(
+          aluno.telefone,
+          `Oi, ${primeiro}! Passando para lembrar da mensalidade de ${formatBRL(c!.valorCentavos)}, que vence no dia ${c!.diaVencimento}.` +
+            (c!.linkPagamento ? ` Você pode pagar por aqui: ${c!.linkPagamento}` : ""),
+        )
+      : null;
+  const fmtDiaMes = (ts: number) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(ts));
+
+  /*
+   * O cartão "Mensalidade" do protótipo: o valor grande, o selo do mês com o vencimento e as
+   * ações lado a lado. Nada do que o protótipo mostra sem dado entra aqui: o produto não
+   * manda lembrete automático e não guarda histórico mês a mês (só o status do mês corrente
+   * e a data do último recebimento), então não há "lembrete no dia 8" nem lista de meses.
+   */
   return (
     <Card className="p-5">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary-tint text-primary">
-            <Wallet className="h-5 w-5" />
-          </span>
-          <h2 className="font-display text-base font-bold text-ink">Financeiro</h2>
-        </div>
-        <button onClick={() => setEditando(true)} className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-          <Pencil className="h-3.5 w-3.5" /> Editar
-        </button>
+      <div className="flex flex-wrap items-center gap-2.5">
+        <h2 className="font-display text-[17px] font-bold text-ink">Mensalidade</h2>
+        <Pill tone={TONE[efetivo]} className="px-[9px] py-1 text-[11.5px] font-bold">
+          {ROTULO_STATUS_COBRANCA[efetivo]}
+          {efetivo !== "isento" ? ` · vence dia ${c!.diaVencimento}` : ""}
+        </Pill>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-        <div>
-          <div className="text-xs text-ink-3">Mensalidade</div>
-          <div className="font-display text-xl font-bold text-ink">{formatBRL(c!.valorCentavos)}</div>
-        </div>
-        <div>
-          <div className="text-xs text-ink-3">Vencimento</div>
-          <div className="text-sm font-semibold text-ink">dia {c!.diaVencimento}</div>
-        </div>
-        <div>
-          <div className="text-xs text-ink-3">Status do mês</div>
-          <Pill tone={TONE[efetivo]}>{ROTULO_STATUS_COBRANCA[efetivo]}</Pill>
-        </div>
+      <div className="mt-3.5 flex flex-wrap items-end gap-x-4 gap-y-1.5">
+        <p className="tabular font-display text-4xl font-bold leading-none tracking-[-0.03em] text-ink">
+          {formatBRL(c!.valorCentavos)}
+          <span className="font-sans text-sm font-medium tracking-normal text-ink-3">/mês</span>
+        </p>
+        {c!.linkPagamento && (
+          <p className="min-w-0 max-w-full truncate text-[12.5px] text-ink-2">
+            Meio de pagamento: <span className="font-semibold text-ink">{c!.linkPagamento}</span>
+          </p>
+        )}
       </div>
-
-      {c!.linkPagamento && (
-        <p className="mt-3 truncate text-xs text-ink-3">
-          Meio de pagamento: <span className="text-ink-2">{c!.linkPagamento}</span>
+      {c!.pagoEm && (
+        <p className="mt-2 text-[12.5px] text-ink-2">
+          Último recebimento: <span className="tabular font-semibold text-ink">{fmtDiaMes(c!.pagoEm)}</span>
         </p>
       )}
 
       <div className="mt-4 flex flex-wrap gap-2">
         {efetivo !== "pago" ? (
-          <button onClick={() => marcar("pago")} className={buttonClasses("primary", "sm")}>
-            <Check className="h-4 w-4" /> Marcar como pago
+          <button onClick={() => marcar("pago")} className={cn(buttonClasses("primary", "sm"), BOTAO)}>
+            Marcar como pago
           </button>
         ) : (
-          <button onClick={() => marcar("pendente")} className={buttonClasses("secondary", "sm")}>
+          <button onClick={() => marcar("pendente")} className={cn(buttonClasses("secondary", "sm"), BOTAO)}>
             Marcar pendente
           </button>
         )}
+        {whatsapp && (
+          <a href={whatsapp} target="_blank" rel="noopener noreferrer" className={cn(buttonClasses("secondary", "sm"), BOTAO)}>
+            Cobrar pelo WhatsApp
+          </a>
+        )}
+        <button onClick={() => setEditando(true)} className={cn(buttonClasses("secondary", "sm"), BOTAO)}>
+          Editar valor
+        </button>
         {efetivo !== "isento" && (
-          <button onClick={() => marcar("isento")} className={buttonClasses("ghost", "sm")}>
+          <button onClick={() => marcar("isento")} className={cn(buttonClasses("ghost", "sm"), BOTAO)}>
             Isentar
           </button>
         )}
@@ -106,6 +127,9 @@ export function FinanceiroCard({
     </Card>
   );
 }
+
+/** Os botões do cartão, na medida do protótipo: 38 px e 13 px. */
+const BOTAO = "h-[38px] px-3.5 text-[13px]";
 
 function FinanceiroForm({
   inicial,
@@ -137,12 +161,7 @@ function FinanceiroForm({
   return (
     <Card className="p-5">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary-tint text-primary">
-            <Wallet className="h-5 w-5" />
-          </span>
-          <h2 className="font-display text-base font-bold text-ink">Financeiro</h2>
-        </div>
+        <h2 className="font-display text-[17px] font-bold text-ink">Mensalidade</h2>
         {onCancel && (
           <button onClick={onCancel} aria-label="Cancelar" className="rounded-full p-2 text-ink-3 hover:bg-surface-soft">
             <X className="h-4 w-4" />

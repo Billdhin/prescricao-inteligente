@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2, Plus } from "lucide-react";
-import { Card } from "@/components/ui/primitives";
+import { ArrowRight, ClipboardList, Plus } from "lucide-react";
+import { Card, buttonClasses } from "@/components/ui/primitives";
 import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
 import { METRICAS_EVOLUCAO, type DirMetrica } from "@/components/app/EvolucaoMini";
 import { useAlunos } from "@/lib/store";
@@ -10,6 +10,7 @@ import { toast } from "@/lib/toast";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { cn } from "@/lib/utils";
 import { AvatarAluno } from "@/components/alunos/FotoAluno";
+import { tintaDoAluno } from "@/components/alunos/tintaAvatar";
 
 const DIA = 86_400_000;
 /** "29 ago", como no protótipo: dia + mês curto, sem "de" e sem ponto. */
@@ -27,19 +28,6 @@ const fmtNum = (n: number) => String(Math.round(n * 10) / 10).replace(".", ",");
  */
 const fmtVar = (n: number, casas = 1) =>
   `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n).toFixed(casas).replace(".", ",")}`;
-
-/**
- * Tinta do avatar quadrado por FAMÍLIA de cor, como no protótipo (fundo tint +
- * texto da família). A escolha é determinística pelo id, para o mesmo aluno
- * carregar sempre a mesma tinta em todas as listas desta tela.
- */
-const TINTAS_AVATAR = [
-  "bg-primary-tint text-primary",
-  "bg-analysis-tint text-analysis-text",
-  "bg-warning-tint text-warning",
-] as const;
-const tintaDe = (id: string) =>
-  TINTAS_AVATAR[[...id].reduce((s, c) => s + c.charCodeAt(0), 0) % TINTAS_AVATAR.length];
 
 /**
  * A pílula do objetivo. Emagrecimento em azul e Resistência em turquesa, como o protótipo; o
@@ -148,10 +136,20 @@ function lerEvolucao(a: Aluno, avs: Avaliacao[]): LinhaEvolucao | null {
   };
 }
 
+/**
+ * As caixas de métrica no tom CLARO do protótipo (tint a 55% com borda do preenchimento): o
+ * tint cheio deixava três caixas saturadas por linha, e a tela inteira gritava. A cor da
+ * leitura continua dita pela variação escrita, na tinta da família.
+ *
+ * O `ponto` só existe na legenda. O protótipo pinta a amostra na cor de TEXTO da família;
+ * aqui ela fica no PREENCHIMENTO, por duas razões: a régua da casa (`check:contraste`) guarda
+ * `warning` para escrever, e o que a legenda explica são as barras da série de peso, que já
+ * acendem em `*-fill`. Amostra e barra na mesma cor é o que faz a legenda servir.
+ */
 const COR_LEITURA: Record<Leitura, { caixa: string; variacao: string; ponto: string }> = {
-  favor: { caixa: "border-success/25 bg-success-tint", variacao: "text-success", ponto: "bg-success-fill" },
-  atencao: { caixa: "border-warning/30 bg-warning-tint", variacao: "text-warning", ponto: "bg-warning-fill" },
-  estavel: { caixa: "border-border bg-surface", variacao: "text-ink-3", ponto: "bg-ink-3" },
+  favor: { caixa: "border-success-fill/20 bg-success-tint/55", variacao: "text-success", ponto: "bg-success-fill" },
+  atencao: { caixa: "border-warning-fill/30 bg-warning-tint/55", variacao: "text-warning", ponto: "bg-warning-fill" },
+  estavel: { caixa: "border-surface-mute bg-surface-soft", variacao: "text-ink-3", ponto: "bg-ink-3" },
 };
 
 type Filtro = "favor" | "atencao" | "todos";
@@ -254,10 +252,12 @@ export function Avaliacoes() {
   const maxMes = Math.max(...meses.map((m) => m.total));
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      {/* Cabeçalho do protótipo: sobretítulo, título grande e a ação escura à direita. */}
+    <div className="mx-auto max-w-6xl space-y-[22px]">
+      {/* Cabeçalho do protótipo: sobretítulo, título grande e a ação escura à direita. O bloco
+          do título tem base de 320px: no celular isso empurra o botão para a linha de baixo,
+          alinhado à esquerda, em vez de espremer o título ao lado dele. */}
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-[1_1_320px]">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">Atendimento</p>
           <h1 className="mt-2 font-display text-[clamp(26px,3vw,36px)] font-bold leading-[1.05] tracking-[-0.03em] text-ink">
             Avaliar e reavaliar
@@ -267,7 +267,7 @@ export function Avaliacoes() {
           <button
             type="button"
             onClick={() => setAvaliando("")}
-            className="inline-flex h-11 items-center gap-1.5 rounded-control bg-ink px-4 text-sm font-semibold text-surface transition-opacity hover:opacity-90"
+            className="inline-flex h-[42px] items-center gap-1.5 rounded-control bg-ink px-[18px] text-[13.5px] font-semibold text-surface transition-opacity hover:opacity-90"
           >
             <Plus className="h-4 w-4" aria-hidden /> Registrar avaliação
           </button>
@@ -275,10 +275,10 @@ export function Avaliacoes() {
       </div>
 
       {avaliando === "" && (
-        <Card className="border-2 border-ink p-5 md:p-6">
+        <Card className="border-2 border-ink p-[22px]">
           <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
             <h2 className="font-display text-lg font-bold tracking-[-0.02em] text-ink">De qual aluno?</h2>
-            <p className="m-0 text-sm text-ink-2">
+            <p className="m-0 text-[12.5px] text-ink-2">
               A avaliação entra no perfil dele e passa a valer como gate para a próxima prescrição.
             </p>
           </div>
@@ -287,15 +287,16 @@ export function Avaliacoes() {
               <button
                 key={a.id}
                 onClick={() => setAvaliando(a.id)}
-                className="rounded-full border border-border bg-surface px-3.5 py-2 text-sm font-semibold text-ink-2 transition-colors hover:bg-surface-soft hover:text-ink"
+                className="rounded-full border border-border bg-surface px-3.5 py-2 text-[13px] font-semibold text-ink-2 transition-colors hover:bg-surface-soft hover:text-ink"
               >
                 {a.nome}
               </button>
             ))}
-            <button
-              onClick={() => setAvaliando(null)}
-              className="rounded-full px-3.5 py-2 text-sm font-semibold text-ink-3 hover:text-ink"
-            >
+          </div>
+          {/* Cancelar numa linha própria, como botão: no fim da fileira ele se lia como
+              mais um aluno, e um toque errado ali fechava a escolha sem querer. */}
+          <div className="mt-4">
+            <button type="button" onClick={() => setAvaliando(null)} className={buttonClasses("outline", "sm")}>
               Cancelar
             </button>
           </div>
@@ -319,11 +320,11 @@ export function Avaliacoes() {
         />
       )}
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className="grid items-start gap-[18px] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         {/* ---------------- Coluna principal ---------------- */}
-        <div className="grid gap-5">
+        <div className="grid gap-[18px]">
           {/* Quem precisa agora */}
-          <Card className="p-5 md:p-6">
+          <Card className="p-4 lg:p-[22px]">
             <h2 className="font-display text-lg font-bold tracking-[-0.02em] text-ink">Quem precisa agora</h2>
             {precisamAgora.length === 0 ? (
               <div className="py-6 text-center">
@@ -348,25 +349,28 @@ export function Avaliacoes() {
                   return (
                     <div
                       key={a.id}
-                      className="grid grid-cols-[4px_40px_minmax(0,1fr)_auto] items-center gap-3.5 overflow-hidden rounded-[14px] border border-border pr-3 transition-colors hover:bg-surface-soft"
+                      className="grid grid-cols-[4px_40px_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-[14px] border border-border pr-3.5 transition-colors hover:bg-surface-soft lg:gap-3.5"
                     >
                       <span aria-hidden className="self-stretch rounded-r-[3px]" style={{ background: filete }} />
                       <Link
                         to={`/alunos/${a.id}?aba=avaliacoes`}
-                        className="col-span-2 grid min-w-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3.5 py-3"
+                        className="col-span-2 grid min-w-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-2.5 py-3 lg:gap-3.5"
                       >
                         <AvatarAluno
                           aluno={a}
                           className={cn(
-                            "grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold",
+                            "grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-[13px] font-bold",
                             tipo === "chegando" && "bg-analysis-tint text-analysis-text",
                             tipo === "primeira" && "bg-primary-tint text-primary",
                           )}
                           style={tipo === "vencida" ? { background: "#E8A317", color: "#0B1628" } : undefined}
                         />
                         <span className="min-w-0">
-                          <b className="block truncate text-sm font-semibold text-ink">{a.nome}</b>
-                          <span className={cn("block truncate text-sm", tipo === "vencida" ? "text-danger" : "text-ink-2")}>
+                          <b className="block truncate text-[14.5px] font-semibold text-ink">{a.nome}</b>
+                          {/* O motivo QUEBRA em vez de cortar: truncado, "Reavaliação em 3 dias ·
+                              11 set" virava "Reavaliação em 3 ..." no celular, e a data, que é a
+                              informação que a linha existe para dar, sumia. */}
+                          <span className={cn("block text-[13px] leading-snug", tipo === "vencida" ? "text-danger" : "text-ink-2")}>
                             {motivo}
                           </span>
                         </span>
@@ -375,7 +379,7 @@ export function Avaliacoes() {
                       <Link
                         to={`/alunos/${a.id}?avaliar=1`}
                         className={cn(
-                          "rounded-full px-3.5 py-2 text-sm font-semibold transition-[background-color,filter]",
+                          "whitespace-nowrap rounded-full px-3 py-[7px] text-[13px] font-semibold transition-[background-color,filter]",
                           tipo === "vencida" ? "bg-ink text-surface hover:brightness-[1.15]" : "bg-bg text-ink hover:bg-surface-mute",
                         )}
                       >
@@ -390,13 +394,17 @@ export function Avaliacoes() {
 
           {/* Evolução da carteira */}
           <Card className="overflow-hidden p-0">
-            <div className="p-5 pb-4 md:p-6 md:pb-4">
+            <div className="p-4 pb-3.5 lg:p-[22px] lg:pb-3.5">
               <h2 className="font-display text-lg font-bold tracking-[-0.02em] text-ink">Evolução da carteira</h2>
-              <p className="mt-1 text-sm text-ink-2">
+              <p className="mt-1 text-[12.5px] text-ink-2">
                 Variação da primeira à última avaliação, lida contra o objetivo de cada aluno
               </p>
               {evolucao.length > 0 && (
-                <div role="tablist" aria-label="Filtrar a evolução" className="mt-4 inline-flex gap-1 rounded-full bg-surface-soft p-1">
+                /* Segmentado do protótipo: trilho cinza e o ativo em papel branco com sombra fina.
+                   É um GRUPO de botões com aria-pressed, e não uma lista de abas: as abas pediam
+                   um painel ligado a cada uma (tabpanel), e o que muda aqui é um filtro da
+                   mesma lista. */
+                <div role="group" aria-label="Filtrar a evolução" className="mt-2.5 inline-flex gap-0.5 rounded-[15px] bg-bg p-[3px]">
                   {(
                     [
                       ["favor", "A favor"],
@@ -407,15 +415,16 @@ export function Avaliacoes() {
                     <button
                       key={id}
                       type="button"
-                      role="tab"
-                      aria-selected={filtro === id}
+                      aria-pressed={filtro === id}
                       onClick={() => {
                         setFiltro(id);
                         setCarteiraToda(false);
                       }}
                       className={cn(
-                        "rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
-                        filtro === id ? "bg-surface text-ink shadow-sm" : "text-ink-2 hover:text-ink",
+                        "whitespace-nowrap rounded-control px-[11px] py-1.5 text-xs transition-colors",
+                        filtro === id
+                          ? "bg-surface font-bold text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]"
+                          : "font-semibold text-ink-2 hover:text-ink",
                       )}
                     >
                       {rotulo}
@@ -433,11 +442,11 @@ export function Avaliacoes() {
             </div>
 
             {evolucao.length === 0 ? (
-              <p className="border-t border-border px-5 py-6 text-center text-sm text-ink-2">
+              <p className="border-t border-surface-mute px-4 py-6 text-center text-sm text-ink-2 lg:px-[22px]">
                 A evolução aparece quando um aluno tiver 2 ou mais avaliações registradas.
               </p>
             ) : filtradas.length === 0 ? (
-              <p className="border-t border-border px-5 py-6 text-center text-sm text-ink-2">
+              <p className="border-t border-surface-mute px-4 py-6 text-center text-sm text-ink-2 lg:px-[22px]">
                 {filtro === "atencao"
                   ? "Nenhuma medida andando contra o objetivo na carteira."
                   : "Nenhuma medida a favor do objetivo por enquanto."}
@@ -445,47 +454,56 @@ export function Avaliacoes() {
             ) : (
               <ol>
                 {visiveis.map((l) => (
-                  <li key={l.aluno.id} className="border-t border-border even:bg-surface-soft/60">
+                  <li key={l.aluno.id} className="border-t border-surface-mute even:bg-surface-soft">
                     <Link
                       to={`/alunos/${l.aluno.id}?aba=avaliacoes`}
-                      className="block px-5 py-4 transition-colors hover:bg-surface-soft md:px-6"
+                      className="block px-4 py-3.5 transition-colors hover:bg-surface-soft lg:px-[22px]"
                     >
-                      <div className="flex items-center gap-3.5">
-                        <AvatarAluno
-                          aluno={l.aluno}
-                          className="grid h-10 w-10 shrink-0 place-items-center rounded-control font-display text-xs font-bold"
-                          style={{ background: "#0B1628", color: "#F3F1EA" }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <b className="block truncate text-[15px] font-semibold text-ink">{l.aluno.nome}</b>
-                          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-3">
-                            <span
-                              className={cn(
-                                "rounded-full px-2 py-0.5 font-semibold",
-                                PILULA_OBJETIVO[l.aluno.objetivo] ?? "bg-surface-mute text-ink-2",
-                              )}
-                            >
-                              {ROTULO_OBJETIVO[l.aluno.objetivo] ?? l.aluno.objetivo}
-                            </span>
-                            <span className="tabular">
-                              {l.n} avaliações · {l.dias} dias
-                            </span>
+                      {/* TRÊS FAIXAS QUE SE ACOMODAM, como no protótipo: identidade (base 210px),
+                          série de peso (tamanho próprio) e métricas (base 330px). No celular cada
+                          uma cai numa linha, e a série ganha espaço para mostrar o trajeto escrito
+                          ("78,5 → 75,2 kg"), que antes ficava escondido abaixo de 640px. Na tela
+                          larga identidade e série dividem a linha e as métricas vêm embaixo. */}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                        <div className="flex min-w-0 flex-[1_1_210px] items-center gap-3">
+                          <AvatarAluno
+                            aluno={l.aluno}
+                            className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-control font-display text-[12.5px] font-bold"
+                            style={{ background: "#0B1628", color: "#F3F1EA" }}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <b className="block truncate text-[14.5px] font-semibold text-ink">{l.aluno.nome}</b>
+                            <div className="mt-[3px] flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-[3px] text-2xs font-bold",
+                                  PILULA_OBJETIVO[l.aluno.objetivo] ?? "bg-surface-mute text-ink-2",
+                                )}
+                              >
+                                {ROTULO_OBJETIVO[l.aluno.objetivo] ?? l.aluno.objetivo}
+                              </span>
+                              <span className="tabular text-[11.5px] text-ink-3">
+                                {l.n} avaliações · {l.dias} dias
+                              </span>
+                            </div>
                           </div>
                         </div>
                         {l.pesos.length >= 2 && <SeriePeso pesos={l.pesos} leitura={l.leituraPeso ?? "estavel"} />}
-                      </div>
-                      <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-2.5">
-                        {l.medidas.map((m) => (
-                          <div key={m.rotulo} className={cn("min-w-0 rounded-xl border px-3 py-2.5", COR_LEITURA[m.leitura].caixa)}>
-                            <p className="text-2xs font-semibold uppercase tracking-[0.08em] text-ink-3">{m.rotulo}</p>
-                            <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
-                              <b className="tabular text-base font-bold text-ink">{m.valor}</b>
-                              <span className={cn("tabular text-xs font-semibold", COR_LEITURA[m.leitura].variacao)}>
-                                {m.variacao}
-                              </span>
-                            </p>
-                          </div>
-                        ))}
+                        <div className="grid min-w-0 flex-[1_1_330px] grid-cols-3 gap-2">
+                          {l.medidas.map((m) => (
+                            <div key={m.rotulo} className={cn("min-w-0 rounded-xl border px-2.5 py-2", COR_LEITURA[m.leitura].caixa)}>
+                              <p className="text-2xs font-semibold uppercase tracking-[0.06em] text-ink-3">{m.rotulo}</p>
+                              <p className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5">
+                                <b className="tabular whitespace-nowrap font-display text-base font-bold tracking-[-0.01em] text-ink">
+                                  {m.valor}
+                                </b>
+                                <span className={cn("tabular whitespace-nowrap text-[11.5px] font-bold", COR_LEITURA[m.leitura].variacao)}>
+                                  {m.variacao}
+                                </span>
+                              </p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </Link>
                   </li>
@@ -494,8 +512,8 @@ export function Avaliacoes() {
             )}
 
             {evolucao.length > 0 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3.5 md:px-6">
-                <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2" aria-label="Legenda das cores">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface-mute px-4 pb-4 pt-3 lg:px-[22px]">
+                <ul className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11.5px] text-ink-2" aria-label="Legenda das cores">
                   {(
                     [
                       ["favor", "a favor do objetivo"],
@@ -504,7 +522,7 @@ export function Avaliacoes() {
                     ] as const
                   ).map(([id, rotulo]) => (
                     <li key={id} className="flex items-center gap-1.5">
-                      <span aria-hidden className={cn("h-2 w-2 rounded-full", COR_LEITURA[id].ponto)} />
+                      <span aria-hidden className={cn("h-[9px] w-[9px] rounded-[3px]", COR_LEITURA[id].ponto)} />
                       {rotulo}
                     </li>
                   ))}
@@ -513,10 +531,10 @@ export function Avaliacoes() {
                   <button
                     type="button"
                     onClick={() => setCarteiraToda((v) => !v)}
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                    className="inline-flex items-center gap-1 whitespace-nowrap text-[12.5px] font-semibold text-primary hover:underline"
                   >
                     {carteiraToda ? "Mostrar menos" : `Ver carteira completa (${filtradas.length})`}
-                    {!carteiraToda && <ArrowRight className="h-4 w-4" aria-hidden />}
+                    {!carteiraToda && <ArrowRight className="h-3.5 w-3.5" aria-hidden />}
                   </button>
                 )}
               </div>
@@ -525,30 +543,35 @@ export function Avaliacoes() {
         </div>
 
         {/* ---------------- Coluna lateral ---------------- */}
-        <div className="grid gap-5">
+        <div className="grid gap-[18px]">
           {/* Este mês: contagem real do mês corrente + colunas dos últimos 6 meses */}
-          <div className="relative overflow-hidden rounded-card p-5 md:p-6" style={{ background: "#0B1628", color: "#F3F1EA" }}>
+          <div className="relative overflow-hidden rounded-card p-4 lg:p-[22px]" style={{ background: "#0B1628", color: "#F3F1EA" }}>
             <div
               aria-hidden
               className="pointer-events-none absolute -right-[60px] -top-[80px] h-[220px] w-[220px] rounded-full"
               style={{ background: "radial-gradient(circle,rgba(232,163,23,.3),rgba(232,163,23,0) 65%)" }}
             />
-            <p className="relative m-0 text-xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
+            <p className="relative m-0 text-2xs font-semibold uppercase tracking-[0.12em]" style={{ color: "#7FE3D8" }}>
               Este mês
             </p>
-            <p className="relative mb-0 mt-2.5 font-display text-5xl font-bold leading-none tracking-[-0.03em]">
+            <p className="relative mb-0 mt-2.5 font-display text-[40px] font-bold leading-none tracking-[-0.03em]">
               {noMes}{" "}
-              <span className="text-base font-medium tracking-normal" style={{ color: "#8FA0B5" }}>
+              <span className="text-[15px] font-medium tracking-normal" style={{ color: "#8FA0B5" }}>
                 {noMes === 1 ? "avaliação" : "avaliações"}
               </span>
             </p>
             {maxMes > 0 && (
               <>
-                <div className="relative mt-4 flex h-12 items-end gap-[3px]">
+                {/* As barras são desenho; o leitor de tela recebe a mesma série por escrito. */}
+                <p className="sr-only">
+                  {meses.map((m) => `${m.total} ${m.total === 1 ? "avaliação" : "avaliações"} em ${m.label}`).join(", ")}
+                </p>
+                <div aria-hidden className="relative mt-3.5 flex h-10 items-end gap-[3px]">
                   {meses.map((m, i) => (
                     <span
                       key={i}
-                      className="flex-1 rounded-[3px]"
+                      // Crescem de baixo, uma vez, ao abrir a tela (animação `sobe` do protótipo).
+                      className="flex-1 origin-bottom rounded-[3px] motion-safe:animate-sobe"
                       style={
                         m.total === 0
                           ? { height: 3, background: "#24406A", opacity: 0.5 }
@@ -558,7 +581,7 @@ export function Avaliacoes() {
                     />
                   ))}
                 </div>
-                <p className="relative mb-0 mt-2 text-xs" style={{ color: "#8FA0B5" }}>
+                <p aria-hidden className="relative mb-0 mt-2 text-xs" style={{ color: "#8FA0B5" }}>
                   {meses.map((m, i) => (
                     <React.Fragment key={i}>
                       {m.atual ? <b style={{ color: "#7FE3D8" }}>{m.label}</b> : m.label}
@@ -571,15 +594,16 @@ export function Avaliacoes() {
           </div>
 
           {/* Últimas avaliações */}
-          <Card className="p-5">
+          <Card className="p-3.5 lg:p-5">
             <h2 className="font-display text-base font-bold tracking-[-0.02em] text-ink">Últimas avaliações</h2>
             {recentes.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-6 text-center">
-                <CheckCircle2 className="h-6 w-6 text-success" />
+                {/* Ícone neutro: o check verde que estava aqui lia "nada registrado" como sucesso. */}
+                <ClipboardList className="h-6 w-6 text-ink-3" aria-hidden />
                 <p className="text-sm text-ink-2">Nenhuma avaliação registrada ainda.</p>
               </div>
             ) : (
-              <ol className="mt-2">
+              <ol className="mt-3 flex flex-col gap-2.5">
                 {recentes.map((av) => {
                   // Só campos que EXISTEM no registro entram na linha.
                   const partes = [fmtDataCurta(av.data)];
@@ -595,18 +619,18 @@ export function Avaliacoes() {
                            padrão, e a avaliação que ele acabou de clicar ficava duas ações adiante.
                            `?av=` leva o link até o registro exato, não só até a aba dele. */
                         to={`/alunos/${av.alunoId}?aba=avaliacoes&av=${av.id}`}
-                        className="flex items-center gap-2.5 rounded-[10px] py-3 transition-colors hover:bg-surface-soft"
+                        className="flex items-center gap-2.5 rounded-[10px] py-2.5 transition-colors hover:bg-surface-soft"
                       >
                         <span
                           className={cn(
-                            "grid h-9 w-9 shrink-0 place-items-center rounded-[10px] font-display text-2xs font-bold",
-                            tintaDe(av.alunoId),
+                            "grid h-8 w-8 shrink-0 place-items-center rounded-[10px] text-[11.5px] font-bold",
+                            tintaDoAluno(av.alunoId),
                           )}
                         >
                           {iniciais(av.alunoId)}
                         </span>
                         <span className="min-w-0 flex-1">
-                          <b className="block truncate text-sm font-semibold text-ink">{nomeAluno(av.alunoId)}</b>
+                          <b className="block truncate text-[13.5px] font-semibold text-ink">{nomeAluno(av.alunoId)}</b>
                           <span className="block truncate text-xs text-ink-3">{partes.join(" · ")}</span>
                         </span>
                         <ArrowRight className="h-4 w-4 shrink-0 text-ink-3" />
@@ -628,25 +652,34 @@ export function Avaliacoes() {
  * última medida escritas: "78,5 → 75,2 kg". A escala é a do PRÓPRIO aluno (do menor ao maior
  * valor dele), porque o que se lê aqui é a forma da trajetória, não a comparação entre alunos.
  * Só a última barra ganha cor, na mesma leitura do quadro de peso logo abaixo.
+ *
+ * Alturas em px como no protótipo (de 12 a 32 px num trilho de 34), e o trajeto escrito
+ * SEMPRE à vista, também no celular. O que NÃO se copia do protótipo é a inversão: ele
+ * desenha a série de cabeça para baixo quando o objetivo é perder peso, e 78,5 → 75,2 kg
+ * aparecia como barras SUBINDO, desmentido pelo trajeto escrito ao lado. Aqui a barra é o
+ * peso literal, e quem diz "a favor" é a cor da última.
  */
 function SeriePeso({ pesos, leitura }: { pesos: number[]; leitura: Leitura }) {
   const serie = pesos.slice(-5);
   const min = Math.min(...serie);
   const max = Math.max(...serie);
-  const altura = (v: number) => (max === min ? 60 : 30 + ((v - min) / (max - min)) * 70);
+  const altura = (v: number) => (max === min ? 12 : 12 + ((v - min) / (max - min)) * 20);
   const corUltima = leitura === "favor" ? "bg-success-fill" : leitura === "atencao" ? "bg-warning-fill" : "bg-ink-3";
   return (
-    <div className="flex shrink-0 items-end gap-2.5" aria-label={`Peso de ${fmtNum(pesos[0])} para ${fmtNum(pesos[pesos.length - 1])} kg`}>
-      <div aria-hidden className="flex h-9 items-end gap-[3px]">
+    // No celular a série ocupa a linha inteira, SEMPRE: deixada à própria sorte ela cabia ao
+    // lado do nome quando o aluno tinha 2 ou 3 medidas e caía para baixo quando tinha 5, e a
+    // mesma lista ficava com duas diagramações.
+    <div role="img" className="flex w-full flex-none items-end gap-1.5 sm:w-auto" aria-label={`Peso de ${fmtNum(pesos[0])} para ${fmtNum(pesos[pesos.length - 1])} kg`}>
+      <div aria-hidden className="flex h-[34px] items-end gap-[3px]">
         {serie.map((v, i) => (
           <span
             key={i}
-            className={cn("w-[7px] rounded-[2px]", i === serie.length - 1 ? corUltima : "bg-surface-mute")}
-            style={{ height: `${altura(v)}%` }}
+            className={cn("w-[9px] rounded-[3px]", i === serie.length - 1 ? corUltima : "bg-border")}
+            style={{ height: altura(v) }}
           />
         ))}
       </div>
-      <span className="tabular hidden whitespace-nowrap text-xs text-ink-3 sm:inline">
+      <span aria-hidden className="tabular self-center whitespace-nowrap text-2xs text-ink-3">
         {fmtNum(pesos[0])} → {fmtNum(pesos[pesos.length - 1])} kg
       </span>
     </div>

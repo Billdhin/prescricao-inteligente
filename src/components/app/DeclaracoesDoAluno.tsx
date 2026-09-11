@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { MessageSquareText, Check, X, PencilLine, Send, Dumbbell } from "lucide-react";
+import { ArrowRight, Check, Send } from "lucide-react";
 import { Card, Pill } from "@/components/ui/primitives";
 import type { Aluno } from "@/data/alunos";
 import {
@@ -65,12 +65,12 @@ export function DeclaracoesDoAluno({
   if (!minhas.length && !pedido) return null;
 
   return (
-    <Card className="p-4">
+    <Card className="p-3.5 md:p-5">
       {/* O PEDIDO DE TREINO abre o cartão: é a razão de o aluno ter preenchido tudo, e o
           que ele espera de volta. A ordem do trabalho fica escrita na própria faixa:
-          revisar as respostas, depois montar. */}
+          revisar as respostas, depois montar. Na régua âmbar do "Próximo passo". */}
       {pedido && (
-        <div className="mb-4 rounded-card border border-cta/30 bg-cta-tint p-3">
+        <div className={cn("rounded-[14px] border border-warning-fill/40 bg-warning-tint p-3", minhas.length > 0 && "mb-4")}>
           <div className="flex items-start gap-2.5">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-surface text-cta-text">
               <Send className="h-4 w-4" aria-hidden />
@@ -79,7 +79,7 @@ export function DeclaracoesDoAluno({
               <div className="text-sm font-bold text-ink">
                 {aluno.nome.split(" ")[0]} pediu o treino em {fmt(pedido.declaradaEm)}
               </div>
-              <p className="mt-0.5 text-xs text-ink-2">
+              <p className="mt-0.5 text-[12.5px] leading-snug text-ink-2">
                 {pendentes.length > 0
                   ? `Revise ${pendentes.length === 1 ? "a resposta abaixo" : `as ${pendentes.length} respostas abaixo`} e monte o plano. Ele aparece no app do aluno assim que você publicar.`
                   : "Monte o plano quando puder. Ele aparece no app do aluno assim que você publicar."}
@@ -89,18 +89,20 @@ export function DeclaracoesDoAluno({
               )}
             </div>
           </div>
-          <div className="mt-2.5 flex flex-wrap gap-1.5 pl-[46px]">
+          {/* No celular os botões ocupam a largura toda da faixa: recuados para alinhar ao
+              texto, os dois não cabiam lado a lado em 326 px. */}
+          <div className="mt-3 flex flex-wrap gap-2 sm:pl-[46px]">
             <Link
               to={`/prescrever-treino?aluno=${aluno.id}`}
-              className="inline-flex min-h-[40px] items-center gap-1 rounded-full bg-ink px-3.5 text-xs font-bold text-surface"
+              className="inline-flex h-10 items-center gap-1.5 rounded-control bg-ink px-4 text-[13.5px] font-semibold text-surface transition-[filter] hover:brightness-[1.15]"
             >
-              <Dumbbell className="h-3.5 w-3.5" aria-hidden /> Montar o treino
+              Montar o treino <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
             <button
               onClick={() => onDispensar(pedido)}
-              className="inline-flex min-h-[40px] items-center gap-1 rounded-full px-3 text-xs font-medium text-ink-3 hover:text-ink"
+              className="inline-flex h-10 items-center rounded-control border border-border bg-surface px-3.5 text-[13px] font-semibold text-ink-2 transition-colors hover:text-ink"
             >
-              <X className="h-3.5 w-3.5" aria-hidden /> Dispensar o pedido
+              Dispensar o pedido
             </button>
           </div>
         </div>
@@ -108,12 +110,11 @@ export function DeclaracoesDoAluno({
 
       {minhas.length > 0 && (
         <>
-      <div className="mb-2 flex items-center gap-2">
-        <MessageSquareText className="h-4 w-4 text-primary" aria-hidden />
-        <h3 className="font-display text-base font-bold text-ink">O que o aluno informou</h3>
+      <div className="mb-1.5 flex flex-wrap items-center gap-2">
+        <h3 className="font-display text-[17px] font-bold text-ink">O que o aluno informou</h3>
         {pendentes.length > 0 && <Pill tone="cta">{pendentes.length} a revisar</Pill>}
       </div>
-      <p className="mb-3 text-xs text-ink-2">
+      <p className="mb-3 text-[12.5px] leading-snug text-ink-2">
         Respostas do próprio aluno no app. Nada entra na ficha sem você confirmar; nível, condição e restrição continuam sendo decisão sua.
       </p>
 
@@ -123,7 +124,7 @@ export function DeclaracoesDoAluno({
             const patch = aplicarDeclaracao(aluno, d);
             const mudaFicha = Object.keys(patch).some((k) => k !== "observacoes");
             return (
-              <li key={d.id} className="rounded-card border border-border bg-surface-soft p-3">
+              <li key={d.id} className="rounded-[14px] border border-border bg-surface-soft px-3.5 py-3">
                 <div className="text-2xs font-bold uppercase tracking-wider text-ink-3">
                   {ROTULO_CAMPO[d.campo]} · {fmt(d.declaradaEm)}
                 </div>
@@ -131,24 +132,26 @@ export function DeclaracoesDoAluno({
                 {!mudaFicha && !d.naoSei && (
                   <div className="mt-1 text-2xs text-ink-3">Confirmar guarda isto nas notas com a origem; a decisão sobre o que muda no plano é na seção do perfil.</div>
                 )}
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                {/* "Confirmar" no primário escuro da casa: o azul fica para o pino da rota e o
+                    anel de foco. Os três com 34 px, o tamanho das ações de linha do protótipo. */}
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
                   <button
                     onClick={() => onConfirmar(d, patch)}
-                    className="inline-flex min-h-[40px] items-center gap-1 rounded-full bg-primary px-3 text-xs font-bold text-on-primary"
+                    className="inline-flex h-[34px] items-center gap-1 rounded-control bg-ink px-3 text-[12.5px] font-semibold text-surface transition-[filter] hover:brightness-[1.15]"
                   >
-                    <Check className="h-3.5 w-3.5" /> Confirmar
+                    <Check className="h-3.5 w-3.5" aria-hidden /> Confirmar
                   </button>
                   <Link
                     to={`/alunos/${aluno.id}/perfil?secao=${SECAO_DE[d.campo as CampoDeDado]}`}
-                    className="inline-flex min-h-[40px] items-center gap-1 rounded-full border border-border px-3 text-xs font-semibold text-ink"
+                    className="inline-flex h-[34px] items-center rounded-control border border-border bg-surface px-3 text-[12.5px] font-semibold text-ink-2 transition-colors hover:text-ink"
                   >
-                    <PencilLine className="h-3.5 w-3.5" /> Ajustar no perfil
+                    Ajustar no perfil
                   </Link>
                   <button
                     onClick={() => onDispensar(d)}
-                    className="inline-flex min-h-[40px] items-center gap-1 rounded-full px-3 text-xs font-medium text-ink-3 hover:text-ink"
+                    className="inline-flex h-[34px] items-center rounded-control px-3 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink"
                   >
-                    <X className="h-3.5 w-3.5" /> Dispensar
+                    Dispensar
                   </button>
                 </div>
               </li>

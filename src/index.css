@@ -128,14 +128,18 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-.font-display {
-  font-family: "Bricolage Grotesque", "Instrument Sans", sans-serif;
-  /* A Bricolage é mais larga que a Plus Jakarta que estava aqui; o design pede
-     -0.02em nos títulos grandes ("Olá, Ricardo" 34px no mockup). */
-  letter-spacing: -0.02em;
-  /* A Bricolage variável tem eixos opsz e wdth além do peso. Sem fixar, o
-     browser pode escolher uma largura que não é a do mockup. */
-  font-variation-settings: "wdth" 100;
+/* EM @layer components, e não solto: solto ele vinha depois dos utilitários e anulava
+   todo `tracking-*` escrito ao lado (o título que pedia -0.03em saía com -0.02em). */
+@layer components {
+  .font-display {
+    font-family: "Bricolage Grotesque", "Instrument Sans", sans-serif;
+    /* A Bricolage é mais larga que a Plus Jakarta que estava aqui; o design pede
+       -0.02em nos títulos grandes ("Olá, Ricardo" 34px no mockup). */
+    letter-spacing: -0.02em;
+    /* A Bricolage variável tem eixos opsz e wdth além do peso. Sem fixar, o
+       browser pode escolher uma largura que não é a do mockup. */
+    font-variation-settings: "wdth" 100;
+  }
 }
 
 .tabular {

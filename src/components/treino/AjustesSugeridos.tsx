@@ -28,10 +28,12 @@ const nomeEx = (slug?: string) => (slug ? exercises.find((e) => e.slug === slug)
 
 const VAR_LABEL: Record<VariavelTravavel, string> = { volume: "volume", intensidade: "intensidade", complexidade: "complexidade" };
 
+// As bordas da linha nos tons de PREENCHIMENTO com alpha, como o protótipo (verde, âmbar e
+// vermelho claros); o texto do chip segue nos tons de texto, que são os que passam AA.
 const ACAO: Record<AcaoCarga, { verbo: string; chip: string; linha: string }> = {
-  subir: { verbo: "Progredir", chip: "bg-success-tint text-success", linha: "border-success/30 bg-success-tint/40" },
-  descarregar: { verbo: "Reduzir", chip: "bg-warning-tint text-warning", linha: "border-warning/30 bg-warning-tint/40" },
-  encaminhar: { verbo: "Encaminhar", chip: "bg-danger-tint text-danger", linha: "border-danger/30 bg-danger-tint/40" },
+  subir: { verbo: "Progredir", chip: "bg-success-tint text-success", linha: "border-success-fill/30 bg-success-tint/40" },
+  descarregar: { verbo: "Reduzir", chip: "bg-warning-tint text-warning", linha: "border-warning-fill/40 bg-warning-tint/40" },
+  encaminhar: { verbo: "Encaminhar", chip: "bg-danger-tint text-danger", linha: "border-danger-fill/30 bg-danger-tint/40" },
   manter: { verbo: "Manter", chip: "bg-surface-soft text-ink-2 ring-1 ring-inset ring-border", linha: "border-border" },
   "sem-dado": { verbo: "Sem dado", chip: "bg-surface-soft text-ink-2 ring-1 ring-inset ring-border", linha: "border-border" },
 };
@@ -162,19 +164,19 @@ export function AjustesSugeridos({
   return (
     <Card className="p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="font-display text-lg font-bold text-ink">
+        <h2 className="font-display text-[17px] font-bold text-ink">
           Ajustes sugeridos{" "}
           <span className="text-xs font-semibold text-ink-2">
             · {mudam.length === 0 ? "nenhuma mudança" : `${mudam.length} de ${linhas.length} ${linhas.length === 1 ? "exercício" : "exercícios"}`}
           </span>
         </h2>
         {podeAplicar && aplicaveis.length > 1 && (
-          <button type="button" onClick={() => aplicar(aplicaveis)} className="text-sm font-semibold text-primary hover:underline">
+          <button type="button" onClick={() => aplicar(aplicaveis)} className="min-h-[32px] text-[12.5px] font-semibold text-primary hover:underline">
             Aplicar os {aplicaveis.length}
           </button>
         )}
       </div>
-      <p className="mt-1 text-sm text-ink-2">
+      <p className="mt-1 text-[13px] leading-normal text-ink-2">
         Leitura do que o aluno registrou{renovacao ? ` na semana ${renovacao.semanaBase}` : ""}. A decisão é sua
         {renovacao?.semanaAlvo != null ? `: aplicar leva a mudança para a semana ${renovacao.semanaAlvo}.` : "."}
         {renovacao && renovacao.puladas.length > 0 &&
@@ -199,11 +201,11 @@ export function AjustesSugeridos({
           {mudam.map((l) => {
             const meta = ACAO[l.ajuste.acao];
             return (
-              <li key={l.slug} className={cn("flex flex-wrap items-center gap-3 rounded-card border px-3.5 py-3", meta.linha)}>
+              <li key={l.slug} className={cn("flex flex-wrap items-center gap-3 rounded-[14px] border px-3.5 py-3", meta.linha)}>
                 <div className="min-w-0 flex-1 basis-64">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-ink">{l.nome}</span>
-                    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold", meta.chip)}>
+                    <span className="text-sm font-bold text-ink">{l.nome}</span>
+                    <span className={cn("inline-flex items-center rounded-full px-2 py-[3px] text-[11.5px] font-bold", meta.chip)}>
                       {rotuloDaAcao(l.ajuste)}
                     </span>
                     {l.travadas && l.travadas.length > 0 && (
@@ -212,7 +214,7 @@ export function AjustesSugeridos({
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-xs leading-relaxed text-ink-2">{l.ajuste.motivo}</p>
+                  <p className="mt-1 text-[12.5px] leading-[1.45] text-ink-2">{l.ajuste.motivo}</p>
                   {/* O que o botão faz, dito antes do clique. O plano prescreve séries,
                       repetições e esforço, não quilos: quando a sugestão é só de carga, não há
                       o que aplicar, e a linha diz isso em vez de esconder o botão calada. */}
@@ -226,14 +228,14 @@ export function AjustesSugeridos({
                 </div>
                 <div className="flex shrink-0 gap-1.5">
                   {podeAplicar && aplicavel(l) && (
-                    <button type="button" onClick={() => aplicar([l])} className={buttonClasses("primary", "sm")}>
+                    <button type="button" onClick={() => aplicar([l])} className={cn(buttonClasses("primary", "sm"), "h-[34px] px-3 text-[12.5px]")}>
                       Aplicar
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => setDispensados((s) => new Set([...s, l.slug]))}
-                    className={buttonClasses("secondary", "sm")}
+                    className={cn(buttonClasses("secondary", "sm"), "h-[34px] px-3 text-[12.5px] text-ink-2")}
                   >
                     Dispensar
                   </button>

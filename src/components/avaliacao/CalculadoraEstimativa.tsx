@@ -180,7 +180,7 @@ export function CalculadoraEstimativa({
               </span>{" "}
               {est.unidade}
             </p>
-            {r.ressalva && <p className="mt-1 text-sm text-warning-text">{r.ressalva}</p>}
+            {r.ressalva && <p className="mt-1 text-sm text-warning">{r.ressalva}</p>}
             <button
               type="button"
               onClick={registrar}

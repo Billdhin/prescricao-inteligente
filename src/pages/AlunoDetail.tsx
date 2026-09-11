@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -32,9 +33,13 @@ import {
   Plus,
   ClipboardList,
   ChevronDown,
+  ChevronRight,
+  Circle,
   CircleDashed,
   Send,
 } from "lucide-react";
+import { BarrasDoPlano, LinhaDoTempoDoPlano } from "@/components/treino/LinhaDoTempoDoPlano";
+import { completudeAluno } from "@/lib/gps/perfilAluno";
 import { Card, Pill, buttonClasses, ParDado, TokenRotulado, Eyebrow, type PillTone } from "@/components/ui/primitives";
 import { useAlunos, useUser, isPremiumUnlocked, marcaDoUsuario, prescricaoAplicadaEm } from "@/lib/store";
 import { AplicarNoTreinoDialog } from "@/components/treino/AplicarNoTreinoDialog";
@@ -106,12 +111,12 @@ const TIPO_AVAL_LABEL: Record<string, string> = {
 // Quebrar as duas em abas próprias numa tela desta altura custaria mais navegação
 // do que entrega.
 type Aba = "visao" | "treino" | "avaliacoes" | "semaforo" | "conta";
-const ABAS: { id: Aba; label: string; Icon: typeof UserCheck }[] = [
-  { id: "visao", label: "Visão", Icon: LayoutGrid },
-  { id: "avaliacoes", label: "Avaliações", Icon: Activity },
-  { id: "treino", label: "Treino", Icon: Dumbbell },
-  { id: "semaforo", label: "Semáforo", Icon: ShieldCheck },
-  { id: "conta", label: "Cobrança", Icon: Wallet },
+const ABAS: { id: Aba; label: string }[] = [
+  { id: "visao", label: "Visão" },
+  { id: "avaliacoes", label: "Avaliações" },
+  { id: "treino", label: "Treino" },
+  { id: "semaforo", label: "Semáforo" },
+  { id: "conta", label: "Cobrança" },
 ];
 const ABA_IDS = new Set<string>(ABAS.map((a) => a.id));
 
@@ -141,55 +146,134 @@ const fmtDiaMesCurto = (ts: number) => {
   return `${String(d.getDate()).padStart(2, "0")} ${MESES_ABREV[d.getMonth()]}`;
 };
 
-/** Menu "..." do cabeçalho do aluno: as ações menos frequentes (editar perfil,
- *  inativar/reativar) num só lugar, para o topo mostrar só Convidar e Exportar. */
-function MenuAcoes({ ativo, onEditar, onToggleStatus }: { ativo: boolean; onEditar: () => void; onToggleStatus: () => void }) {
+/**
+ * O "Mais" do herói: as ações menos frequentes da ficha (ver como o aluno vê, exportar a
+ * evolução, inativar e excluir) num lugar só, para o herói mostrar só o que se faz toda
+ * semana. Editar perfil não entra: ele já é botão do herói.
+ *
+ * O MENU VAI PARA O BODY, preso à posição do botão. O herói é navy com `overflow-hidden`
+ * (a textura de pontos precisa dele) e um menu absoluto desenhado dentro dele saía cortado
+ * na borda: a mesma lição da câmera da foto (FotoAluno.tsx).
+ */
+function MenuMais({
+  ativo,
+  previewTo,
+  onExportar,
+  onToggleStatus,
+  onExcluir,
+}: {
+  ativo: boolean;
+  previewTo: string;
+  onExportar: () => void;
+  onToggleStatus: () => void;
+  onExcluir: () => void;
+}) {
   const [aberto, setAberto] = React.useState(false);
-  const ref = React.useRef<HTMLDivElement>(null);
+  const botaoRef = React.useRef<HTMLButtonElement>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+  const [pos, setPos] = React.useState<{ top: number; left: number } | null>(null);
+  const LARGURA = 240;
+
+  // Alinha a borda direita do menu à do botão e, se não couber embaixo (a barra inferior
+  // do celular ocupa o pé da tela), abre para cima.
+  const posicionar = React.useCallback(() => {
+    const r = botaoRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const altura = menuRef.current?.offsetHeight ?? 200;
+    const left = Math.max(8, Math.min(r.right - LARGURA, window.innerWidth - LARGURA - 8));
+    const cabeEmbaixo = r.bottom + 8 + altura <= window.innerHeight - 8;
+    setPos({ top: cabeEmbaixo ? r.bottom + 8 : Math.max(8, r.top - 8 - altura), left });
+  }, []);
+
+  // Fecha ao clicar fora e com Esc (o foco volta ao botão). Rolar ou redimensionar
+  // reposiciona em vez de fechar, pelo mesmo motivo da câmera: no celular a barra de
+  // endereço some e volta durante a rolagem, e cada vez é um "resize".
   React.useEffect(() => {
     if (!aberto) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setAberto(false);
+    posicionar();
+    // O foco entra no primeiro item já (o menu está montado quando o efeito roda); o quadro
+    // seguinte só remede, porque a primeira medida sai antes de a posição ser aplicada.
+    menuRef.current?.querySelector<HTMLElement>("[role=menuitem]")?.focus({ preventScroll: true });
+    const quadro = requestAnimationFrame(posicionar);
+    const fora = (e: MouseEvent) => {
+      const alvo = e.target as Node;
+      if (botaoRef.current?.contains(alvo) || menuRef.current?.contains(alvo)) return;
+      setAberto(false);
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setAberto(false);
-    document.addEventListener("mousedown", onDoc);
-    document.addEventListener("keydown", onKey);
+    const tecla = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setAberto(false);
+        botaoRef.current?.focus();
+        return;
+      }
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const itens = [...(menuRef.current?.querySelectorAll<HTMLElement>("[role=menuitem]") ?? [])];
+      if (!itens.length) return;
+      e.preventDefault();
+      const i = itens.indexOf(document.activeElement as HTMLElement);
+      const prox = e.key === "ArrowDown" ? (i + 1) % itens.length : (i - 1 + itens.length) % itens.length;
+      itens[prox].focus();
+    };
+    document.addEventListener("mousedown", fora);
+    document.addEventListener("keydown", tecla);
+    window.addEventListener("scroll", posicionar, true);
+    window.addEventListener("resize", posicionar);
     return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
+      cancelAnimationFrame(quadro);
+      document.removeEventListener("mousedown", fora);
+      document.removeEventListener("keydown", tecla);
+      window.removeEventListener("scroll", posicionar, true);
+      window.removeEventListener("resize", posicionar);
     };
-  }, [aberto]);
+  }, [aberto, posicionar]);
+
+  const fechar = (acao: () => void) => () => {
+    setAberto(false);
+    acao();
+  };
+  const item =
+    "block w-full rounded-control px-3 py-2.5 text-left text-[13.5px] font-semibold text-ink outline-none hover:bg-bg focus-visible:bg-bg";
+
   return (
-    <div className="relative" ref={ref}>
+    <>
       <button
+        ref={botaoRef}
         type="button"
         onClick={() => setAberto((o) => !o)}
         aria-label="Mais ações"
         aria-expanded={aberto}
         aria-haspopup="menu"
-        className="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface text-ink-2 hover:text-ink"
+        className="inline-flex h-11 items-center gap-2 rounded-control border px-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+        style={{ borderColor: "rgba(255,255,255,.2)" }}
       >
-        <MoreHorizontal className="h-4 w-4" />
+        <MoreHorizontal className="h-4 w-4" aria-hidden /> Mais
       </button>
-      {aberto && (
-        <div role="menu" className="absolute right-0 z-30 mt-2 w-52 rounded-card border border-border bg-surface p-1.5 shadow-elevated">
-          <button
-            role="menuitem"
-            onClick={() => { setAberto(false); onEditar(); }}
-            className="block w-full rounded-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
+      {aberto &&
+        createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            aria-label="Mais ações do aluno"
+            style={{ position: "fixed", top: pos?.top ?? -9999, left: pos?.left ?? 0, width: LARGURA }}
+            className="z-[60] rounded-[14px] border border-border bg-surface p-1.5 text-ink shadow-overlay"
           >
-            Editar perfil
-          </button>
-          <button
-            role="menuitem"
-            onClick={() => { setAberto(false); onToggleStatus(); }}
-            className="block w-full rounded-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-soft"
-          >
-            {ativo ? "Marcar como inativo" : "Reativar aluno"}
-          </button>
-        </div>
-      )}
-    </div>
+            <Link role="menuitem" to={previewTo} onClick={() => setAberto(false)} className={item}>
+              Ver como o aluno vê
+            </Link>
+            <button type="button" role="menuitem" onClick={fechar(onExportar)} className={item}>
+              Exportar evolução (PDF)
+            </button>
+            <button type="button" role="menuitem" onClick={fechar(onToggleStatus)} className={item}>
+              {ativo ? "Marcar como inativo" : "Reativar aluno"}
+            </button>
+            <div role="separator" className="mx-2 my-1 h-px bg-surface-mute" />
+            <button type="button" role="menuitem" onClick={fechar(onExcluir)} className={cn(item, "text-danger")}>
+              Excluir aluno
+            </button>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 
@@ -250,7 +334,7 @@ function LinhaDoTempo({
   for (const f of feedbacks) {
     eventos.push({
       ts: f.concluidaEm,
-      dot: "bg-analysis-fill",
+      dot: "bg-success-fill",
       titulo: "Treino concluído no app",
       sub: f.observacao || undefined,
       chip: f.pse != null ? { label: `esforço ${f.pse}`, tone: "warning" } : undefined,
@@ -278,52 +362,53 @@ function LinhaDoTempo({
   }
   eventos.sort((x, y) => y.ts - x.ts);
 
+  const sobrelinha = <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">Linha do cuidado</p>;
+
   if (eventos.length === 0) {
     return (
-      <Card className="p-6 text-center">
-        <p className="text-sm text-ink-2">Ainda sem histórico. As avaliações, os treinos e os semáforos aparecem aqui em ordem.</p>
+      <Card className="p-3.5 md:p-5">
+        {sobrelinha}
+        <p className="mt-2 text-[13.5px] text-ink-2">Ainda sem histórico. As avaliações, os treinos e os semáforos aparecem aqui em ordem.</p>
       </Card>
     );
   }
 
+  // Três no celular e seis no desktop, como o protótipo: na coluna de 360 px cada evento a
+  // mais empurra para baixo o que pede ação. O resto fica a um toque.
   const vis = tudo ? eventos : eventos.slice(0, 6);
   return (
-    <div className="space-y-2">
-      {vis.map((e, i) => {
-        const { dia, hora } = rotuloDiaTempo(e.ts);
-        return (
-          <div
-            key={i}
-            className={cn(
-              "flex items-start gap-3 rounded-card border border-border bg-surface p-3",
-              e.destaque && "border-l-4 border-l-danger-fill",
-            )}
-          >
-            <div className="w-14 shrink-0 pt-0.5 text-right">
-              <div className="text-xs font-semibold text-ink">{dia}</div>
-              <div className="tabular text-2xs text-ink-3">{hora}</div>
-            </div>
-            <span aria-hidden className={cn("mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full", e.dot)} />
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-ink">{e.titulo}</span>
-                {e.chip && <Pill tone={e.chip.tone}>{e.chip.label}</Pill>}
-              </div>
-              {e.sub && <p className="mt-0.5 text-sm text-ink-2">{e.sub}</p>}
-            </div>
-          </div>
-        );
-      })}
-      {eventos.length > 6 && (
+    <Card className="p-3.5 md:p-5">
+      {sobrelinha}
+      <ol className="mt-3 space-y-3">
+        {vis.map((e, i) => {
+          const { dia, hora } = rotuloDiaTempo(e.ts);
+          // A data desce para a linha de baixo, junto do detalhe: o título é o que se lê
+          // primeiro, e o esforço continua escrito "esforço 7" (PSE da sessão, não RPE).
+          const detalhe = [dia, hora, e.chip?.label, e.sub].filter(Boolean).join(" · ");
+          return (
+            <li key={i} className={cn("flex gap-3", !tudo && i >= 3 && "hidden lg:flex")}>
+              <span aria-hidden className={cn("mt-[5px] h-2.5 w-2.5 shrink-0 rounded-full", e.dot)} />
+              <p className="min-w-0 text-[13.5px] leading-[1.45] text-ink">
+                <b className={cn("font-semibold", e.destaque && "text-danger")}>{e.titulo}</b>
+                <span className="block text-[12.5px] text-ink-3">{detalhe}</span>
+              </p>
+            </li>
+          );
+        })}
+      </ol>
+      {eventos.length > 3 && (
         <button
           type="button"
           onClick={() => setTudo((v) => !v)}
-          className="text-sm font-semibold text-primary hover:underline"
+          className={cn(
+            "mt-3 min-h-[32px] text-[13px] font-semibold text-primary hover:underline",
+            !tudo && eventos.length <= 6 && "lg:hidden",
+          )}
         >
           {tudo ? "Ver menos" : `Ver os ${eventos.length} registros`}
         </button>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -331,6 +416,20 @@ function LinhaDoTempo({
  *  poucos destinos claros, no espírito do painel de atleta do ION. */
 function AlunoTabs({ aba, onAba, contagens }: { aba: Aba; onAba: (a: Aba) => void; contagens?: Partial<Record<Aba, number>> }) {
   const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
+  const listaRef = React.useRef<HTMLDivElement>(null);
+  // A aba ativa entra na vista da tira. Em 390 px "Cobrança" nasce fora da tela, e quem
+  // chegava por ?aba=conta via um sublinhado em lugar nenhum. Rola só a TIRA, de lado:
+  // `scrollIntoView` rolaria também a página, e a tira mora abaixo do herói.
+  React.useEffect(() => {
+    const lista = listaRef.current;
+    const el = refs.current[ABAS.findIndex((a) => a.id === aba)];
+    if (!lista || !el) return;
+    // A tira é `relative`, então ela é o offsetParent das abas e o offsetLeft já é interno.
+    const inicio = el.offsetLeft;
+    const fim = inicio + el.offsetWidth;
+    if (fim > lista.scrollLeft + lista.clientWidth) lista.scrollLeft = fim - lista.clientWidth + 16;
+    else if (inicio < lista.scrollLeft) lista.scrollLeft = Math.max(0, inicio - 16);
+  }, [aba]);
   const onKey = (e: React.KeyboardEvent, i: number) => {
     const n = ABAS.length;
     let alvo = -1;
@@ -345,12 +444,14 @@ function AlunoTabs({ aba, onAba, contagens }: { aba: Aba; onAba: (a: Aba) => voi
   };
   return (
     <div
+      ref={listaRef}
       role="tablist"
       aria-label="Seções do aluno"
-      className="flex gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="relative flex gap-1 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
-      {/* Abas em sublinhado de 2px, o vocabulário do protótipo. */}
-      {ABAS.map(({ id, label, Icon }, i) => {
+      {/* Abas em sublinhado de 2px na tinta, sem ícone: o vocabulário do protótipo. A
+          palavra já diz o destino, e o ícone de 16 px só alargava a tira no celular. */}
+      {ABAS.map(({ id, label }, i) => {
         const ativo = id === aba;
         return (
           <button
@@ -364,15 +465,14 @@ function AlunoTabs({ aba, onAba, contagens }: { aba: Aba; onAba: (a: Aba) => voi
             onClick={() => onAba(id)}
             onKeyDown={(e) => onKey(e, i)}
             className={cn(
-              "inline-flex flex-none items-center justify-center gap-2 whitespace-nowrap border-b-2 px-3 pb-2.5 pt-2 text-sm font-semibold transition-colors",
+              "inline-flex flex-none items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-3.5 py-2.5 text-sm font-semibold transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-              ativo ? "border-primary text-ink" : "border-transparent text-ink-2 hover:text-ink",
+              ativo ? "border-ink text-ink" : "border-transparent text-ink-2 hover:text-ink",
             )}
           >
-            <Icon className="h-4 w-4" aria-hidden />
             {label}
             {contagens?.[id] != null && contagens[id]! > 0 && (
-              <span className={cn("tabular text-xs font-bold", ativo ? "text-primary" : "text-ink-3")}>{contagens[id]}</span>
+              <span className={cn("tabular text-xs font-bold", ativo ? "text-ink-2" : "text-ink-3")}>{contagens[id]}</span>
             )}
           </button>
         );
@@ -406,6 +506,10 @@ export function AlunoDetail() {
   const planoSalvo = Boolean((location.state as { planoSalvo?: boolean } | null)?.planoSalvo);
   // Retorno do tubo "Aplicar no treino": {n} exercícios aplicados na Sessão X até o fim do bloco.
   const aplicado = (location.state as { aplicado?: { n: number; sessao: string; bloco: number; semanas: number } } | null)?.aplicado;
+  // De onde o "Meus alunos" volta: a lista com o filtro e a busca que estavam ligados, quando
+  // se chegou por ela. Só aceita endereço da própria lista; qualquer outra coisa cai nela crua.
+  const voltarBruto = (location.state as { voltarPara?: unknown } | null)?.voltarPara;
+  const voltarPara = typeof voltarBruto === "string" && /^\/alunos(\?|$)/.test(voltarBruto) ? voltarBruto : "/alunos";
   const [params, setParams] = useSearchParams();
   // A ABA VIVE NA URL. Ver o bloco de comentário do efeito abaixo: guardá-la só em
   // estado local fazia o profissional perder o lugar toda vez que saía e voltava.
@@ -597,29 +701,32 @@ export function AlunoDetail() {
   const faseAtual = mesoDeHoje ? rotuloMeso(mesoDeHoje) : null;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      {/* Cabeçalho PRÓPRIO da tela (a barra global vive só no Meu dia): voltar,
-          trilha, paginação da carteira e as ações do aluno. */}
+    <div className="mx-auto max-w-6xl space-y-[18px]">
+      {/* Cabeçalho PRÓPRIO da tela: voltar, trilha (desktop) e a paginação da carteira.
+          As ações do aluno moram no herói, logo abaixo. */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <button
-          type="button"
-          onClick={() => (window.history.length > 1 ? navigate(-1) : navigate("/alunos"))}
-          aria-label="Voltar para Alunos"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-ink-2 transition-colors hover:text-ink"
+        {/* "Meus alunos" leva à LISTA, com o filtro e a busca de onde se veio. Antes era
+            `navigate(-1)` com o rótulo "Alunos", e quem chegou pelo Meu dia voltava ao
+            Meu dia: o rótulo prometia um lugar e o botão levava a outro. */}
+        <Link
+          to={voltarPara}
+          className="inline-flex min-h-[40px] items-center gap-1.5 text-[13.5px] text-ink-2 transition-colors hover:text-ink"
         >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <nav aria-label="Trilha" className="flex min-w-0 items-center gap-1.5 text-sm font-medium">
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Meus alunos
+        </Link>
+        <nav aria-label="Trilha" className="hidden min-w-0 items-center gap-1.5 text-sm font-medium lg:flex">
           <Link to="/alunos" className="text-ink-2 hover:text-ink">Alunos</Link>
           <span aria-hidden className="text-ink-3">›</span>
           <span className="truncate font-semibold text-ink">{aluno.nome}</span>
         </nav>
+        {/* O paginador não existe no protótipo, e fica: é navegação real na ordem da
+            carteira, e leva a aba junto. */}
         {alunos.length > 1 && idxAluno >= 0 && (
-          <div className="inline-flex items-center gap-0.5 rounded-full border border-border bg-surface p-1 text-xs font-semibold text-ink-2">
+          <div className="ml-auto inline-flex items-center gap-0.5 rounded-full border border-border bg-surface p-1 text-xs font-semibold text-ink-2">
             <button
               type="button"
               disabled={!prevAlunoId}
-              onClick={() => prevAlunoId && navigate(`/alunos/${prevAlunoId}${sufixoDaAba}`)}
+              onClick={() => prevAlunoId && navigate(`/alunos/${prevAlunoId}${sufixoDaAba}`, { state: { voltarPara } })}
               aria-label="Aluno anterior"
               className="grid h-6 w-6 place-items-center rounded-full hover:bg-surface-soft disabled:opacity-30"
             >
@@ -629,7 +736,7 @@ export function AlunoDetail() {
             <button
               type="button"
               disabled={!nextAlunoId}
-              onClick={() => nextAlunoId && navigate(`/alunos/${nextAlunoId}${sufixoDaAba}`)}
+              onClick={() => nextAlunoId && navigate(`/alunos/${nextAlunoId}${sufixoDaAba}`, { state: { voltarPara } })}
               aria-label="Próximo aluno"
               className="grid h-6 w-6 place-items-center rounded-full hover:bg-surface-soft disabled:opacity-30"
             >
@@ -637,24 +744,13 @@ export function AlunoDetail() {
             </button>
           </div>
         )}
-        <div className="ml-auto">
-          <MenuAcoes
-            ativo={aluno.status === "ativo"}
-            onEditar={() => navigate(`/alunos/${aluno.id}/perfil`)}
-            onToggleStatus={() => {
-              const eraAtivo = aluno.status === "ativo";
-              updateAluno(aluno.id, { status: eraAtivo ? "inativo" : "ativo" });
-              toast(eraAtivo ? `${aluno.nome} marcado(a) como inativo(a)` : `${aluno.nome} reativado(a)`);
-            }}
-          />
-        </div>
       </div>
 
       {/* O HERÓI DO ALUNO do protótipo: cartão navy em gradiente com textura de
           pontos, avatar âmbar, os chips clínicos e as ações da ficha. Superfície
           fixa (navy da casca), fora do tema claro/escuro. */}
       <section
-        className="relative overflow-hidden rounded-[24px] p-5 md:p-7"
+        className="relative !mt-3.5 overflow-hidden rounded-[24px] px-[18px] py-[22px] md:p-7"
         style={{ background: "linear-gradient(120deg,#0B1628 0%,#13233B 70%,#1A3A5C 100%)", color: "#F3F1EA" }}
       >
         <div
@@ -667,12 +763,12 @@ export function AlunoDetail() {
             WebkitMaskImage: "radial-gradient(ellipse 45% 80% at 85% 40%,#000 0%,transparent 100%)",
           }}
         />
-        <div className="relative grid items-end gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <div className="relative grid items-end gap-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
           {/* items-start no celular: com o nome, a meta em duas linhas e os chips embaixo, o
               centro do bloco cai na altura dos chips, e o avatar aparecia ao lado deles em
               vez de ao lado do nome. Em telas largas o bloco e baixo e o centro volta a ser
               o lugar certo. */}
-          <div className="flex min-w-0 items-start gap-4 sm:items-center">
+          <div className="flex min-w-0 items-start gap-[18px] sm:items-center">
             {/* A foto entra no mesmo quadrado âmbar das iniciais, e a câmera no canto troca.
                 A frase da autorização abre antes da escolha: é o profissional pondo a imagem
                 de outra pessoa num sistema, e o aluno vai vê-la no app dele. */}
@@ -691,8 +787,8 @@ export function AlunoDetail() {
               />
             </TrocarFotoAluno>
             <div className="min-w-0">
-              <h1 className="font-display text-2xl font-bold tracking-[-0.03em] md:text-3xl">{aluno.nome}</h1>
-              <p className="mt-1 text-sm" style={{ color: "#B9C6D6" }}>
+              <h1 className="font-display text-[26px] font-bold leading-[1.05] tracking-[-0.03em] md:text-3xl">{aluno.nome}</h1>
+              <p className="mt-1.5 text-sm" style={{ color: "#B9C6D6" }}>
                 {[
                   aluno.idade ? `${aluno.idade} anos` : null,
                   aluno.objetivo,
@@ -704,13 +800,13 @@ export function AlunoDetail() {
               </p>
               <div className="mt-2.5 flex flex-wrap gap-1.5">
                 {grupo && (
-                  <span className="rounded-full px-2.5 py-1 text-2xs font-semibold text-white" style={{ background: "rgba(255,255,255,.1)" }}>
+                  <span className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold text-white" style={{ background: "rgba(255,255,255,.1)" }}>
                     {grupo.nome}
                   </span>
                 )}
                 {aluno.restricoes.length > 0 && (
                   <span
-                    className="rounded-full px-2.5 py-1 text-2xs font-semibold"
+                    className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
                     style={{ background: "rgba(232,163,23,.2)", color: "#F0B429" }}
                     title={aluno.restricoes.map((r) => rotuloRestricao(r.tag)).join(", ")}
                   >
@@ -721,14 +817,14 @@ export function AlunoDetail() {
                 )}
                 {faseAtual && (
                   <span
-                    className="rounded-full px-2.5 py-1 text-2xs font-semibold"
+                    className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
                     style={{ background: "rgba(127,227,216,.16)", color: "#7FE3D8" }}
                   >
                     {faseAtual}
                   </span>
                 )}
                 {aluno.status !== "ativo" && (
-                  <span className="rounded-full px-2.5 py-1 text-2xs font-semibold text-white" style={{ background: "rgba(255,255,255,.1)" }}>
+                  <span className="rounded-full px-2.5 py-1 text-[11.5px] font-semibold text-white" style={{ background: "rgba(255,255,255,.1)" }}>
                     Inativo
                   </span>
                 )}
@@ -736,7 +832,7 @@ export function AlunoDetail() {
                     profissional faz depois de gerar, e a resposta morava só no editor. */}
                 {situacao.estado !== "sem-treino" && (
                   <span
-                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-2xs font-semibold"
+                    className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-semibold"
                     style={
                       pendentePublicar
                         ? { background: "rgba(232,163,23,.2)", color: "#F0B429" }
@@ -750,7 +846,7 @@ export function AlunoDetail() {
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 xl:justify-end">
+          <div className="flex flex-wrap gap-2.5 xl:justify-end">
             {/* PUBLICAR, ao lado do aluno, sempre que há treino pronto esperando. O treino
                 novo publica daqui (Desfazer no aviso); o que substitui um treino em uso
                 passa pelo quadro de diferenças do editor. */}
@@ -778,8 +874,8 @@ export function AlunoDetail() {
             <button
               onClick={() => setAvaliar(true)}
               className={cn(
-                "inline-flex h-11 items-center gap-2 rounded-control px-4 text-sm transition-[filter] hover:brightness-110",
-                pendentePublicar ? "border font-semibold text-white hover:bg-white/10" : "font-bold",
+                "inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-control text-sm transition-[filter] hover:brightness-110",
+                pendentePublicar ? "border px-4 font-semibold text-white hover:bg-white/10" : "px-[18px] font-bold",
               )}
               style={pendentePublicar ? { borderColor: "rgba(255,255,255,.2)" } : { background: "#E8A317", color: "#0B1628" }}
             >
@@ -794,20 +890,26 @@ export function AlunoDetail() {
             </button>
             <button
               onClick={() => setConvidar(true)}
-              className="inline-flex h-11 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+              className="inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
               style={{ borderColor: "rgba(255,255,255,.2)" }}
             >
-              <Smartphone className="h-4 w-4" /> Convidar
+              Convidar para o app
             </button>
-            <button
-              onClick={() =>
+            {/* Exportar, ver como o aluno vê, inativar e excluir: o que se faz de vez em
+                quando fica atrás do "Mais", e o herói cabe em duas linhas no celular. */}
+            <MenuMais
+              ativo={aluno.status === "ativo"}
+              previewTo={`/alunos/${aluno.id}/preview`}
+              onExportar={() =>
                 exportEvolucaoPDF({ aluno, avaliacoes: avals, profissional: profNome, cref: cref || undefined, marca: marcaDoUsuario(usuario) })
               }
-              className="inline-flex h-11 items-center gap-2 rounded-control border px-4 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-              style={{ borderColor: "rgba(255,255,255,.2)" }}
-            >
-              <FileDown className="h-4 w-4" /> Exportar
-            </button>
+              onToggleStatus={() => {
+                const eraAtivo = aluno.status === "ativo";
+                updateAluno(aluno.id, { status: eraAtivo ? "inativo" : "ativo" });
+                toast(eraAtivo ? `${aluno.nome} marcado(a) como inativo(a)` : `${aluno.nome} reativado(a)`);
+              }}
+              onExcluir={() => setConfirmarExclusao(true)}
+            />
           </div>
         </div>
       </section>
@@ -887,106 +989,170 @@ export function AlunoDetail() {
         contagens={{ avaliacoes: avals.length, semaforo: libsAlunoDesc.length }}
       />
 
-      {/* VISÃO: a linha do tempo à esquerda (o que aconteceu, em ordem) e o estado
-          atual à direita (treino ativo, medidas e engajamento no app), como no desenho.
-          O semáforo do dia não repete aqui: ele é o cartão escuro do ciclo, acima. */}
+      {/*
+        VISÃO, no desenho do protótipo: à esquerda a evolução e a linha do tempo do plano; à
+        direita o que se confere (o que o aluno informou, o rascunho, os últimos 30 dias, a
+        linha do cuidado, o perfil e as medidas).
+
+        NO CELULAR A ORDEM É OUTRA, e é por isso que as colunas são `contents` abaixo de lg:
+        os cartões viram filhos diretos da grade e cada um recebe a sua `order`. Empilhando
+        coluna por coluna, o que PEDE AÇÃO (o pedido de treino do aluno, o treino pronto e
+        não publicado) caía depois do gráfico e de seis eventos, a três telas de rolagem.
+        `empty:hidden` apaga o invólucro de um cartão que decidiu não aparecer, senão ele
+        ocuparia uma linha vazia com o espaçamento da grade.
+      */}
       {aba === "visao" && (
-        <div role="tabpanel" id="aba-painel-visao" aria-labelledby="aba-tab-visao" className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-          <div className="space-y-3">
+        <div
+          role="tabpanel"
+          id="aba-painel-visao"
+          aria-labelledby="aba-tab-visao"
+          className="grid gap-[18px] motion-safe:animate-entra lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start"
+        >
+          <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-[18px]">
             {/* A evolução de CARGA por exercício abre a coluna: é o único lugar da tela
                 onde o que o aluno registrou no app encosta no que o plano pediu. */}
-            <EvolucaoExercicio
-              plano={planoAtivo}
-              execucoes={execucoesDoAluno}
-              primeiroNome={aluno.nome.split(" ")[0]}
-            />
-            <h2 className="text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Linha do tempo</h2>
-            <LinhaDoTempo avaliacoes={avals} planos={planosDoAluno} feedbacks={feedbacksDoAluno} liberacoes={libsAlunoDesc} />
+            <div className="order-3 min-w-0 empty:hidden lg:order-none">
+              <EvolucaoExercicio
+                plano={planoAtivo}
+                execucoes={execucoesDoAluno}
+                primeiroNome={aluno.nome.split(" ")[0]}
+              />
+            </div>
+            {/* Com um treino pronto esperando, o "Sem treino montado" mentiria: o cartão
+                do rascunho já diz o que há e o que falta. */}
+            {situacao.estado !== "nao-publicado" && (
+              <div className="order-4 min-w-0 lg:order-none">
+                <LinhaDoTempoDoPlano plano={planoAtivo} alunoId={aluno.id} podeTreino={podeTreino} onAbrir={() => setAba("treino")} />
+              </div>
+            )}
           </div>
-          <div className="space-y-4">
+          <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-[18px]">
             {/* O que o aluno informou no app vem ANTES do treino e da avaliação: é a
                 primeira parada do próximo passo, porque pode mudar as duas. */}
-            <DeclaracoesDoAluno
-              aluno={aluno}
-              declaracoes={declaracoes}
-              temPlanoAtivo={!!planoAtivo}
-              onConfirmar={(d, patch) => {
-                if (Object.keys(patch).length) updateAluno(aluno.id, patch);
-                revisarDeclaracao(d.id, "confirmada");
-                toast("Confirmado. A ficha registra que veio do aluno.");
-              }}
-              onDispensar={(d) => {
-                revisarDeclaracao(d.id, "dispensada");
-                toast("Dispensado.");
-              }}
-            />
-            {pendentePublicar && (
-              <CartaoRascunho
+            <div className="order-1 min-w-0 empty:hidden lg:order-none">
+              <DeclaracoesDoAluno
                 aluno={aluno}
-                situacao={situacao}
-                onPublicado={() => {
-                  setPublicadoAgora(true);
-                  setAvisoPublicadoFechado(false);
+                declaracoes={declaracoes}
+                temPlanoAtivo={!!planoAtivo}
+                onConfirmar={(d, patch) => {
+                  if (Object.keys(patch).length) updateAluno(aluno.id, patch);
+                  revisarDeclaracao(d.id, "confirmada");
+                  toast("Confirmado. A ficha registra que veio do aluno.");
+                }}
+                onDispensar={(d) => {
+                  revisarDeclaracao(d.id, "dispensada");
+                  toast("Dispensado.");
                 }}
               />
+            </div>
+            {pendentePublicar && (
+              <div className="order-2 min-w-0 empty:hidden lg:order-none">
+                <CartaoRascunho
+                  aluno={aluno}
+                  situacao={situacao}
+                  faixa={situacao.rascunho && <BarrasDoPlano plano={situacao.rascunho} rotulos={false} />}
+                  onPublicado={() => {
+                    setPublicadoAgora(true);
+                    setAvisoPublicadoFechado(false);
+                  }}
+                />
+              </div>
             )}
-            {/* Com um treino pronto esperando, o "Sem treino montado" mentiria: o cartão
-                acima já diz o que há e o que falta. */}
-            {!(situacao.estado === "nao-publicado") && (
-              <VisaoTreino aluno={aluno} plano={planoAtivo} alunoId={aluno.id} onVer={() => setAba("treino")} podeTreino={podeTreino} />
-            )}
-            <VisaoAvaliacao aluno={aluno} avals={avals} reav={reav} vencida={reavaliacaoVencida} onVer={() => setAba("avaliacoes")} onAvaliar={() => setAvaliar(true)} />
-            <VisaoNoApp
-              aluno={aluno}
-              execucoes={execucoesDoAluno}
-              feedbacks={feedbacksDoAluno}
-              metaSemanal={planoAtivo?.frequenciaSemanal}
-              onVer={() => navigate(`/alunos/${aluno.id}/preview`)}
-            />
+            <div className="order-5 min-w-0 lg:order-none">
+              <UltimosTrintaDias
+                aluno={aluno}
+                execucoes={execucoesDoAluno}
+                feedbacks={feedbacksDoAluno}
+                liberacoes={libsAlunoDesc}
+                avals={avals}
+                plano={planoAtivo}
+                previewTo={`/alunos/${aluno.id}/preview`}
+              />
+            </div>
+            <div className="order-6 min-w-0 lg:order-none">
+              <LinhaDoTempo avaliacoes={avals} planos={planosDoAluno} feedbacks={feedbacksDoAluno} liberacoes={libsAlunoDesc} />
+            </div>
+            <div className="order-7 min-w-0 lg:order-none">
+              <PerfilSecoesCard aluno={aluno} />
+            </div>
+            <div className="order-8 min-w-0 lg:order-none">
+              <VisaoAvaliacao aluno={aluno} avals={avals} reav={reav} vencida={reavaliacaoVencida} onVer={() => setAba("avaliacoes")} onAvaliar={() => setAvaliar(true)} />
+            </div>
           </div>
         </div>
       )}
 
-      {/* AVALIAÇÕES: a evolução e o histórico à esquerda; a ação de registrar, o
-          prazo da reavaliação e a leitura da evolução na coluna de apoio à direita. */}
+      {/* AVALIAÇÕES: a evolução, todas as medidas e o histórico (com a ação de registrar e
+          o prazo da reavaliação DENTRO dele) à esquerda; a leitura da evolução à direita.
+          No celular a ação de registrar ficava no fim da aba, depois de tudo; agora ela
+          está no cabeçalho do histórico, onde se decide registrar. */}
       {aba === "avaliacoes" && (
         <div
           role="tabpanel"
           id="aba-painel-avaliacoes"
           aria-labelledby="aba-tab-avaliacoes"
-          className="grid gap-4 lg:grid-cols-[1.6fr_1fr]"
+          className="grid gap-[18px] motion-safe:animate-entra lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start"
         >
           {/* Coluna principal */}
-          <div className="space-y-4">
-            <Card className="p-5 md:p-6">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-analysis-tint text-analysis">
-                  <Activity className="h-4 w-4" />
-                </span>
-                <h2 className="font-display text-lg font-bold text-ink">Evolução</h2>
+          <div className="min-w-0 space-y-3.5">
+            <Card className="p-4 md:p-6">
+              <h2 className="font-display text-lg font-bold text-ink">Evolução</h2>
+              {avals.length >= 2 && (
+                <p className="tabular mt-0.5 text-[13px] text-ink-2">
+                  {avals.length} avaliações em {Math.max(1, Math.round((avals[avals.length - 1].data - avals[0].data) / DIA))} dias
+                </p>
+              )}
+              <div className="mt-3">
+                <EvolucaoMini avals={avals} sexo={aluno.sexo} />
               </div>
-              <EvolucaoMini avals={avals} sexo={aluno.sexo} />
             </Card>
 
             {avals.length > 0 && (
-              <Card className="p-5 md:p-6">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-ink-2">Tabela comparativa por data</h3>
-                  <button
-                    onClick={() =>
-                      exportEvolucaoPDF({ aluno, avaliacoes: avals, profissional: profNome, cref: cref || undefined, marca: marcaDoUsuario(usuario) })
-                    }
-                    className={buttonClasses("secondary", "sm")}
-                  >
-                    <FileDown className="h-4 w-4" /> Exportar evolução (PDF)
-                  </button>
-                </div>
+              <Card className="p-4 md:p-6">
+                <h2 className="mb-3 font-display text-[17px] font-bold text-ink">Todas as medidas</h2>
                 <TabelaEvolucao avals={avals} />
               </Card>
             )}
 
-            <Card className="p-5 md:p-6">
-              <h2 className="mb-4 font-display text-lg font-bold text-ink">Histórico de avaliações</h2>
+            <Card className="p-3.5 md:p-5">
+              <div className="mb-3 flex items-center gap-3">
+                <h2 className="font-display text-[17px] font-bold text-ink">Histórico</h2>
+                <button
+                  onClick={() => setAvaliar(true)}
+                  className={cn(buttonClasses("primary", "sm"), "ml-auto h-[38px] px-3.5 text-[13px]")}
+                >
+                  <Plus className="h-4 w-4" aria-hidden /> {temAvaliacao ? "Registrar" : "Registrar avaliação"}
+                </button>
+              </div>
+              {/* O prazo da reavaliação abre o histórico: vencida, é a caixa tracejada com o
+                  botão; dentro do prazo, uma linha neutra com a data. */}
+              {reav && reavaliacaoVencida && (
+                <div className="mb-3 rounded-[14px] border border-dashed border-danger-fill bg-danger-tint px-3.5 py-3">
+                  <p className="text-sm font-bold text-danger">
+                    Reavaliação vencida
+                    {(() => {
+                      const d = Math.floor((Date.now() - reav.em) / DIA);
+                      return d >= 1 ? ` há ${d} ${d === 1 ? "dia" : "dias"}` : "";
+                    })()}
+                  </p>
+                  <p className="mt-0.5 text-[12.5px] text-ink-2">{legendaReavaliacao(reav, true, planoAtivo)}</p>
+                  <button
+                    onClick={() => setAvaliar(true)}
+                    className="mt-2.5 inline-flex h-9 items-center rounded-control bg-danger px-3 text-[13px] font-semibold text-white transition-[filter] hover:brightness-110"
+                  >
+                    Reavaliar
+                  </button>
+                </div>
+              )}
+              {reav && !reavaliacaoVencida && (
+                <p className="mb-3 flex items-start gap-2 text-[12.5px] text-ink-2">
+                  <span aria-hidden className="mt-[5px] h-2 w-2 shrink-0 rounded-full bg-warning-fill" />
+                  <span>
+                    <b className="font-semibold text-ink">Reavaliar em {fmtDiaMes(reav.em)}.</b>{" "}
+                    {legendaReavaliacao(reav, false, planoAtivo)}
+                  </span>
+                </p>
+              )}
               <HistoricoAvaliacoes
                 avalsDesc={avalsDesc}
                 realce={realce}
@@ -995,33 +1161,14 @@ export function AlunoDetail() {
               />
             </Card>
 
+            <TambemRegistrado avals={avals} />
+
             {/* Análise postural por foto: é um tipo de avaliação, então vive aqui. */}
             <PosturalCard aluno={aluno} />
           </div>
 
           {/* Coluna de apoio */}
-          <div className="space-y-4">
-            <button
-              onClick={() => setAvaliar(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-card bg-ink px-5 py-4 text-sm font-bold text-surface shadow-soft transition hover:brightness-[1.15] active:brightness-95"
-            >
-              <Plus className="h-4 w-4" /> {temAvaliacao ? "Registrar reavaliação" : "Registrar avaliação"}
-            </button>
-
-            {reav && (
-              <Card tone="warning" className="p-4">
-                <div className="flex items-start gap-3">
-                  <span aria-hidden className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-warning-fill" />
-                  <div className="min-w-0">
-                    <p className="font-semibold text-ink">
-                      {reavaliacaoVencida ? "Reavaliação vencida" : `Reavaliar em ${fmtDiaMes(reav.em)}`}
-                    </p>
-                    <p className="mt-0.5 text-sm text-ink-2">{legendaReavaliacao(reav, reavaliacaoVencida, planoAtivo)}</p>
-                  </div>
-                </div>
-              </Card>
-            )}
-
+          <div className="min-w-0 space-y-3.5">
             <LeituraEvolucaoCard avals={avals} />
           </div>
         </div>
@@ -1029,7 +1176,7 @@ export function AlunoDetail() {
 
       {/* SEMÁFORO: estado do dia, o checklist inline e o histórico completo por aluno. */}
       {aba === "semaforo" && (
-        <div role="tabpanel" id="aba-painel-semaforo" aria-labelledby="aba-tab-semaforo">
+        <div role="tabpanel" id="aba-painel-semaforo" aria-labelledby="aba-tab-semaforo" className="motion-safe:animate-entra">
           <SemaforoAba aluno={aluno} planoAtivo={planoAtivo} estado={estadoSem} historico={libsAlunoDesc} />
         </div>
       )}
@@ -1038,14 +1185,14 @@ export function AlunoDetail() {
           no cabeçalho (Convidar) e no cartão "No app" da Visão, então esta aba fica
           só com o financeiro, como no desenho. */}
       {aba === "conta" && (
-        <div role="tabpanel" id="aba-painel-conta" aria-labelledby="aba-tab-conta">
+        <div role="tabpanel" id="aba-painel-conta" aria-labelledby="aba-tab-conta" className="motion-safe:animate-entra">
           <FinanceiroCard aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
         </div>
       )}
 
       {/* PLANO E TREINO: o core, na ordem do ciclo. Fase, periodização, prescrição, execução. */}
       {aba === "treino" && (
-        <div role="tabpanel" id="aba-painel-treino" aria-labelledby="aba-tab-treino" className="space-y-4">
+        <div role="tabpanel" id="aba-painel-treino" aria-labelledby="aba-tab-treino" className="space-y-4 motion-safe:animate-entra">
           {/*
             A ABA TREINO ABRE NO TREINO.
 
@@ -1072,6 +1219,7 @@ export function AlunoDetail() {
                 id={situacao.estado === "nao-publicado" ? "treino-card" : undefined}
                 aluno={aluno}
                 situacao={situacao}
+                faixa={situacao.rascunho && <BarrasDoPlano plano={situacao.rascunho} rotulos={false} />}
                 onPublicado={() => {
                   setPublicadoAgora(true);
                   setAvisoPublicadoFechado(false);
@@ -1079,7 +1227,14 @@ export function AlunoDetail() {
               />
             )}
             {situacao.estado !== "nao-publicado" && (
-              <PlanoCard aluno={aluno} planos={planosDoAluno} podeTreino={podeTreino} prontidao={prontidao} onAvaliar={() => setAvaliar(true)} />
+              <PlanoCard
+                aluno={aluno}
+                planos={planosDoAluno}
+                podeTreino={podeTreino}
+                prontidao={prontidao}
+                onAvaliar={() => setAvaliar(true)}
+                alteracoesPendentes={situacao.estado === "alteracoes" ? rotuloDaPublicacao(situacao) : undefined}
+              />
             )}
 
             {planoAtivo && (
@@ -1105,15 +1260,15 @@ export function AlunoDetail() {
 
           <Card id="prescricoes-card" className="scroll-mt-24 p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="font-display text-lg font-bold text-ink">Prescrições</h2>
+              <h2 className="font-display text-[17px] font-bold text-ink">Prescrições</h2>
               {/* A escolha de exercícios com o perfil do aluno. Com plano, ela termina
                   dentro de uma sessão do plano; sem plano, fica salva aqui. */}
               {podeTreino.ok ? (
-                <Link to={`/gps?aluno=${aluno.id}`} className={buttonClasses("secondary", "sm")}>
+                <Link to={`/gps?aluno=${aluno.id}`} className={cn(buttonClasses("secondary", "sm"), "h-[38px] px-3.5 text-[13px]")}>
                   Nova prescrição
                 </Link>
               ) : (
-                <button disabled className={buttonClasses("secondary", "sm")}>
+                <button disabled className={cn(buttonClasses("secondary", "sm"), "h-[38px] px-3.5 text-[13px]")}>
                   Nova prescrição
                 </button>
               )}
@@ -1124,7 +1279,7 @@ export function AlunoDetail() {
             )}
             {prescs.length === 0 ? (
               podeTreino.ok && (
-                <p className="rounded-card border border-dashed border-border p-4 text-center text-sm text-ink-2">
+                <p className="rounded-[14px] border border-dashed border-border p-4 text-center text-[13px] text-ink-2">
                   Sem prescrição ainda. Cada escolha de exercícios fica registrada aqui, com o prontuário da decisão.
                 </p>
               )
@@ -1135,16 +1290,16 @@ export function AlunoDetail() {
                   const local = prescricaoAplicadaEm(planosDoAluno, p.id);
                   const podeColocar = Boolean(planoAtivo) && p.status === "ativa" && !local;
                   return (
-                  <div key={p.id} className="rounded-card border border-border px-3.5 py-3">
+                  <div key={p.id} className="rounded-[14px] border border-border px-3.5 py-3">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-                      <span className="min-w-0 truncate text-sm font-semibold text-ink">{p.titulo}</span>
+                      <span className="min-w-0 truncate text-sm font-bold text-ink">{p.titulo}</span>
                       <span className="tabular text-xs text-ink-2">
                         {fmtDiaMesCurto(p.data)} · {p.status}
                       </span>
                     </div>
                     {/* O protótipo: os exercícios numa linha corrida, cada nome colado à
                         própria dose ("Leg press 45° 3x15 · Cadeira extensora 2x15"). */}
-                    <p className="mt-1 text-xs leading-relaxed text-ink-2">
+                    <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-2">
                       {p.itens.map((it, i) => (
                         <React.Fragment key={it.slug}>
                           {i > 0 && " · "}
@@ -1167,21 +1322,23 @@ export function AlunoDetail() {
                         <p className="mt-1">{p.raciocinio}</p>
                       </details>
                     )}
-                    <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+                    {/* As ações em texto, sem ícone, como no protótipo: a palavra já diz o que
+                        faz. O cadeado fica só no que explica um BLOQUEIO. */}
+                    <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">
                       {podeColocar && (
                         <button
                           onClick={() => setAplicarPresc(p)}
-                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                          className="min-h-[32px] font-semibold text-primary hover:underline"
                         >
-                          <CalendarRange className="h-4 w-4" /> Colocar no treino
+                          Colocar no treino
                         </button>
                       )}
                       {p.prontuario && (
                         <button
                           onClick={() => setProntuarioDe(p.id)}
-                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-analysis hover:underline"
+                          className="min-h-[32px] font-semibold text-primary hover:underline"
                         >
-                          <FileText className="h-4 w-4" /> Ver prontuário
+                          Ver prontuário
                         </button>
                       )}
                       {premium ? (
@@ -1191,14 +1348,14 @@ export function AlunoDetail() {
                               ? exportProntuarioPDF({ aluno, presc: p, prontuario: p.prontuario, profissional: profNome, cref, marca: marcaDoUsuario(usuario) })
                               : exportPrescricaoPDF({ aluno, presc: p, profissional: profNome, cref, marca: marcaDoUsuario(usuario) })
                           }
-                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                          className="min-h-[32px] font-semibold text-primary hover:underline"
                         >
-                          <FileDown className="h-4 w-4" /> Baixar PDF
+                          Baixar PDF
                         </button>
                       ) : (
                         <Link
                           to="/pricing"
-                          className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-3 hover:text-ink"
+                          className="inline-flex min-h-[32px] items-center gap-1.5 font-medium text-ink-3 hover:text-ink"
                         >
                           <Lock className="h-3.5 w-3.5" /> PDF no plano Profissional
                         </Link>
@@ -1211,7 +1368,7 @@ export function AlunoDetail() {
                             // desfazer é o que separa "organizei" de "perdi".
                             toastDesfazer("Prescrição arquivada", () => unarchivePrescricao(p.id));
                           }}
-                          className="text-sm font-medium text-ink-2 hover:text-ink"
+                          className="min-h-[32px] font-semibold text-ink-2 hover:text-ink"
                         >
                           Arquivar
                         </button>
@@ -1224,23 +1381,6 @@ export function AlunoDetail() {
             )}
           </Card>
 
-            {/*
-              PLANEJAMENTO E SUGESTOES, depois do treino e nao antes dele.
-
-              Nada some: a jornada continua na aba, com a fase atual e o mesmo card de
-              sempre, e as duas sugestoes tambem. O que muda e a ordem, que era o pedido.
-              As duas sugestoes ja devolvem null quando nao ha o que sugerir, entao esta
-              secao so ocupa espaco quando tem conteudo de verdade.
-            */}
-            <div className="space-y-4 border-t border-border pt-4">
-              <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Planejamento e sugestões</p>
-
-              <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
-
-              <SugestaoGrupoCard aluno={aluno} avaliacoes={avals} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
-
-              <SugestaoNivel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
-            </div>
           </div>
 
           <div className="min-w-0 space-y-4">
@@ -1257,15 +1397,31 @@ export function AlunoDetail() {
             />
           </div>
           </div>
+
+          {/*
+            PLANEJAMENTO E SUGESTOES, depois do treino e nao antes dele, e FORA das duas
+            colunas. Dentro da coluna da esquerda ele entrava no celular ANTES do semáforo de
+            hoje e do prontuário, que moram na da direita; aqui ele é o último da aba em
+            qualquer largura, que é o "com menos foco, mais abaixo" do pedido.
+
+            Nada some: a jornada continua na aba, com a fase atual e o mesmo card de
+            sempre, e as duas sugestoes tambem. As duas sugestoes ja devolvem null quando
+            nao ha o que sugerir, entao esta secao so ocupa espaco quando tem conteudo.
+          */}
+          <div className="space-y-4 border-t border-border pt-4">
+            <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">Planejamento e sugestões</p>
+
+            <JornadaCard aluno={aluno} planoAtivo={planoAtivo} onFase={(n) => updateAluno(aluno.id, { faseJornada: n })} />
+
+            <SugestaoGrupoCard aluno={aluno} avaliacoes={avals} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+
+            <SugestaoNivel aluno={aluno} onUpdate={(patch) => updateAluno(aluno.id, patch)} />
+          </div>
         </div>
       )}
 
-      {/* Ação administrativa: excluir (o status ativo/saiu fica em Acompanhamento) */}
-      <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4 text-sm">
-        <button onClick={() => setConfirmarExclusao(true)} className="font-medium text-danger hover:underline">
-          Excluir aluno
-        </button>
-      </div>
+      {/* "Excluir aluno" mora no fim do menu Mais do herói, com a mesma confirmação: a
+          linha vermelha no pé de toda aba era um destrutivo à vista em todas as telas. */}
 
       {convidar && <ConviteAlunoModal aluno={aluno} onClose={() => setConvidar(false)} />}
 
@@ -1340,7 +1496,7 @@ export function AlunoDetail() {
             updatePlano(planoAtualizado.id, planoAtualizado);
             setAplicarPresc(null);
             // Reusa o banner de retorno: atualiza o state da própria rota.
-            navigate(`/alunos/${id}`, { state: { aplicado: resumo }, replace: true });
+            navigate(`/alunos/${id}`, { state: { aplicado: resumo, voltarPara }, replace: true });
           }}
         />
       )}
@@ -1696,6 +1852,37 @@ function HistoricoAvaliacoes({
   );
 }
 
+/**
+ * TAMBÉM REGISTRADO: o que as avaliações guardam além das medidas de composição, somado no
+ * histórico inteiro, para o profissional saber que existe sem abrir registro por registro.
+ * Só entra o que tem dado; sem nada, o cartão não aparece.
+ */
+function TambemRegistrado({ avals }: { avals: Avaliacao[] }) {
+  const regioesPerimetro = new Set(avals.flatMap((a) => (a.perimetros ?? []).map((p) => p.regiao)));
+  const testes = avals.reduce((s, a) => s + (a.testes?.length ?? 0), 0);
+  const datasComFoto = new Set(avals.filter((a) => a.fotos?.length).map((a) => new Date(a.data).toDateString())).size;
+  const dor = [...new Set(avals.flatMap((a) => a.regioesDor ?? []))];
+  const chips: string[] = [];
+  if (regioesPerimetro.size)
+    chips.push(`Perímetros · ${regioesPerimetro.size} ${regioesPerimetro.size === 1 ? "região" : "regiões"}`);
+  if (testes) chips.push(`Testes · ${testes}`);
+  if (datasComFoto) chips.push(`Fotos · ${datasComFoto} ${datasComFoto === 1 ? "data" : "datas"}`);
+  if (dor.length) chips.push(`Regiões com dor · ${dor.slice(0, 2).join(", ")}${dor.length > 2 ? ` e mais ${dor.length - 2}` : ""}`);
+  if (!chips.length) return null;
+  return (
+    <div className="rounded-card border border-border bg-bg p-[18px]">
+      <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">Também registrado</p>
+      <ul className="mt-2.5 flex flex-wrap gap-1.5">
+        {chips.map((c) => (
+          <li key={c} className="rounded-[8px] border border-border bg-surface px-2 py-1 text-xs font-semibold text-ink">
+            {c}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /** Cartão de apoio "Leitura da evolução" (Resumo/Na prática/Ciência). */
 function LeituraEvolucaoCard({ avals }: { avals: Avaliacao[] }) {
   const { itens, refs } = leituraEvolucao(avals);
@@ -1721,7 +1908,7 @@ function LeituraEvolucaoCard({ avals }: { avals: Avaliacao[] }) {
     </p>
   );
   return (
-    <Card className="p-4">
+    <Card className="p-4 md:p-5">
       <TresCamadas resumo={resumo} pratica={pratica} refs={refs} initial="resumo" ariaLabel="Leitura da evolução" />
     </Card>
   );
@@ -1761,30 +1948,58 @@ function distribuicaoSemaforo(historico: Liberacao[]) {
   };
 }
 
-/** Banner do estado de hoje: escuro com "Fazer semáforo" (pendente) ou colorido (já feito). */
+/** Borda e fundo do resultado do dia, nos tons de preenchimento do protótipo. */
+const CAIXA_RESULTADO: Record<"verde" | "amarelo" | "vermelho", string> = {
+  verde: "border-success-fill/30 bg-success-tint",
+  amarelo: "border-warning-fill/40 bg-warning-tint",
+  vermelho: "border-danger-fill/30 bg-danger-tint",
+};
+const PONTO_RESULTADO: Record<"verde" | "amarelo" | "vermelho", string> = {
+  verde: "bg-success-fill",
+  amarelo: "bg-warning-fill",
+  vermelho: "bg-danger-fill",
+};
+
+/**
+ * O estado de hoje, no desenho do protótipo: pendente, é o cartão branco "Checklist de hoje"
+ * com o botão escuro (o banner navy com o ponto pulsando e o botão teal era uma segunda
+ * linguagem visual dentro da ficha); feito, é a caixa na cor do resultado com o ajuste.
+ */
 function BannerSemaforo({
   estado,
   nItens,
   grupoNome,
+  fazendo,
   onFazer,
 }: {
   estado: EstadoSemaforo;
   nItens: number;
   grupoNome?: string;
+  /** o checklist está aberto logo abaixo */
+  fazendo: boolean;
   onFazer: () => void;
 }) {
   const [confirmarRefazer, setConfirmarRefazer] = React.useState(false);
   if (estado.hoje) {
-    const c = COR_SEMAFORO[estado.hoje.resultado];
+    const r = estado.hoje.resultado;
+    const ajustes = estado.hoje.ajustes.map((a) => a.acao).filter(Boolean);
     return (
-      <div className={cn("flex flex-wrap items-center gap-3 rounded-card border p-4", c.bg, c.border)}>
-        <c.Icon className={cn("h-6 w-6 shrink-0", c.text)} />
-        <div className="min-w-0 flex-1">
-          <div className={cn("font-display text-base font-bold", c.text)}>{rotuloResultado(estado.hoje.resultado)} hoje</div>
-          <p className="text-sm text-ink-2">Semáforo de hoje já registrado. Refazer substitui o registro do dia.</p>
+      <div className={cn("rounded-card border p-4 md:p-5", CAIXA_RESULTADO[r])}>
+        <div className="flex items-start gap-2.5">
+          <span aria-hidden className={cn("mt-[3px] h-3.5 w-3.5 shrink-0 rounded-full", PONTO_RESULTADO[r])} />
+          <p className="min-w-0 text-[13.5px] leading-normal text-ink">
+            <b className={cn("font-bold", COR_SEMAFORO[r].text)}>{rotuloResultado(r)} hoje.</b>{" "}
+            {ajustes.length ? ajustes.join(" ") : "Semáforo de hoje já registrado."}
+            <span className="mt-0.5 block text-xs text-ink-2">
+              Registrado às {fmtHora(estado.hoje.data)}. Refazer substitui o registro do dia.
+            </span>
+          </p>
         </div>
-        <button onClick={() => setConfirmarRefazer(true)} className={buttonClasses("secondary", "sm")}>
-          <ShieldCheck className="h-4 w-4" /> Refazer o semáforo de hoje
+        <button
+          onClick={() => setConfirmarRefazer(true)}
+          className={cn(buttonClasses("secondary", "sm"), "mt-3 h-[38px] px-3.5 text-[13px]")}
+        >
+          Refazer o semáforo de hoje
         </button>
         {confirmarRefazer && (
           <ConfirmarAcao
@@ -1810,28 +2025,26 @@ function BannerSemaforo({
   }
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3 rounded-card px-4 py-3.5" style={{ background: "#0D1524" }}>
-        <span aria-hidden className="relative grid h-3 w-3 shrink-0 place-items-center">
-          <span className="animate-halo absolute inset-0 rounded-full" style={{ background: "rgba(226,84,62,.5)" }} />
-          <span className="relative h-2.5 w-2.5 rounded-full" style={{ background: "var(--danger-fill)" }} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold" style={{ color: "#F2F6FC" }}>Você ainda não avaliou hoje</p>
-          <p className="mt-0.5 text-2xs" style={{ color: "#8FA1BD" }}>
-            {nItens} pergunta{nItens === 1 ? "" : "s"} · cerca de 40 segundos · checklist{" "}
-            {grupoNome ? `de ${grupoNome.toLowerCase()}` : "geral"}
-          </p>
+      <Card className="p-5">
+        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+          <h2 className="font-display text-[17px] font-bold text-ink">
+            Checklist de hoje · {grupoNome ? grupoNome.toLowerCase() : "geral"}
+          </h2>
+          <span className="tabular text-xs text-ink-3">{fmtDiaMesCurto(Date.now())}</span>
         </div>
+        <p className="mt-1 text-[13.5px] text-ink-2">
+          Você ainda não avaliou hoje. {nItens} {nItens === 1 ? "pergunta" : "perguntas"}, cerca de 40 segundos.
+        </p>
         <button
           onClick={onFazer}
-          className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-opacity hover:opacity-90"
-          style={{ background: "#14B3BA", color: "#06231F" }}
+          aria-expanded={fazendo}
+          className="mt-3 inline-flex h-[38px] items-center rounded-control bg-ink px-3.5 text-[13px] font-semibold text-surface transition-[filter] hover:brightness-[1.15]"
         >
-          <ShieldCheck className="h-4 w-4" /> Fazer semáforo
+          {fazendo ? "Fechar o checklist" : "Fazer o semáforo de hoje"}
         </button>
-      </div>
+      </Card>
       {estado.vermelhoPendente && (
-        <div className={cn("flex items-start gap-2.5 rounded-card border p-3", COR_SEMAFORO.vermelho.bg, COR_SEMAFORO.vermelho.border)}>
+        <div className={cn("flex items-start gap-2.5 rounded-[14px] border p-3", COR_SEMAFORO.vermelho.bg, COR_SEMAFORO.vermelho.border)}>
           <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-danger" />
           <p className="text-sm text-ink-2">
             <span className="font-semibold text-danger">Não liberado em aberto</span> desde{" "}
@@ -1843,50 +2056,53 @@ function BannerSemaforo({
   );
 }
 
-/** Régua dos últimos 30 dias, com legenda e o dia de hoje destacado. */
+/**
+ * Régua dos últimos 30 dias, no desenho do protótipo: um quadrado por dia (o de hoje
+ * tracejado enquanto não há registro) e, embaixo, a CONTAGEM escrita, que também é a
+ * legenda das cores. Cor sozinha não é dado para quem não distingue verde de vermelho.
+ */
 function Ultimos30DiasCard({ dias }: { dias: (Liberacao["resultado"] | undefined)[] }) {
-  const legenda: { cor: Liberacao["resultado"]; label: string }[] = [
-    { cor: "verde", label: "liberada" },
-    { cor: "amarelo", label: "com ajuste" },
-    { cor: "vermelho", label: "não liberada" },
+  const conta = (cor: Liberacao["resultado"]) => dias.filter((r) => r === cor).length;
+  const semRegistro = dias.filter((r) => !r).length;
+  const itens: { cor?: Liberacao["resultado"]; n: number; um: string; varios: string }[] = [
+    { cor: "verde", n: conta("verde"), um: "liberada", varios: "liberadas" },
+    { cor: "amarelo", n: conta("amarelo"), um: "com ajuste", varios: "com ajuste" },
+    { cor: "vermelho", n: conta("vermelho"), um: "não liberada", varios: "não liberadas" },
+    { n: semRegistro, um: "sem registro", varios: "sem registro" },
   ];
   return (
-    <Card className="p-5 md:p-6">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <h2 className="text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Últimos 30 dias</h2>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          {legenda.map((l) => (
-            <span key={l.cor} className="flex items-center gap-1.5 text-2xs text-ink-2">
-              <span aria-hidden className={cn("h-2 w-2 rounded-full", COR_SEMAFORO[l.cor].dot)} />
-              {l.label}
-            </span>
-          ))}
-          <span className="flex items-center gap-1.5 text-2xs text-ink-2">
-            <span aria-hidden className="h-2 w-2 rounded-full bg-surface-soft ring-1 ring-inset ring-border" />
-            sem sessão
-          </span>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
+    <Card className="p-5">
+      <h2 className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">Últimos 30 dias</h2>
+      <div className="mt-3 flex flex-wrap gap-1" aria-hidden>
         {dias.map((r, i) => {
           const hoje = i === dias.length - 1;
           return (
             <span
               key={i}
-              aria-hidden
               className={cn(
-                "h-3 w-3 rounded-full",
-                r
-                  ? COR_SEMAFORO[r].dot
-                  : hoje
-                    ? "border-2 border-dashed border-ink-3"
-                    : "bg-surface-soft ring-1 ring-inset ring-border",
+                "h-[22px] w-[22px] rounded-[6px]",
+                r ? PONTO_RESULTADO[r] : hoje ? "border-2 border-dashed border-ink-3/50" : "bg-surface-mute",
               )}
             />
           );
         })}
       </div>
-      <p className="mt-3 text-xs text-ink-3">Cada ponto é um dia; o mais recente é hoje. Registrar por dia é opcional.</p>
+      <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[12.5px] text-ink-2">
+        {itens
+          .filter((it) => it.n > 0)
+          .map((it) => (
+            <li key={it.um} className="inline-flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className={cn("h-2.5 w-2.5 rounded-[3px]", it.cor ? PONTO_RESULTADO[it.cor] : "bg-surface-mute ring-1 ring-inset ring-border")}
+              />
+              <span className="tabular">
+                {it.n} {it.n === 1 ? it.um : it.varios}
+              </span>
+            </li>
+          ))}
+      </ul>
+      <p className="mt-2 text-xs text-ink-3">Cada quadrado é um dia; o último é hoje. Registrar por dia é opcional.</p>
     </Card>
   );
 }
@@ -1996,11 +2212,9 @@ function SemaforoAba({
     <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
       {/* Coluna principal */}
       <div className="space-y-4">
-        <BannerSemaforo estado={estado} nItens={nItens} grupoNome={grupo?.nome} onFazer={() => setFazendo((v) => !v)} />
+        <BannerSemaforo estado={estado} nItens={nItens} grupoNome={grupo?.nome} fazendo={fazendo} onFazer={() => setFazendo((v) => !v)} />
 
-        {estado.hoje && !fazendo && (
-          <p className="px-1 text-xs text-ink-3">O semáforo de hoje já foi registrado; refazer substitui o registro do dia.</p>
-        )}
+        {/* O "refazer substitui o registro do dia" agora mora dentro da caixa do resultado. */}
 
         {/* Checklist inline (o próprio componente é um Card, então fica como irmão). */}
         {fazendo && (
@@ -2242,15 +2456,21 @@ function JornadaCard({
  * diz isso. O sistema não registra presença, então afirmar "o aluno está na semana 6"
  * como fato seria inventar o que não foi medido.
  */
+/** Os botões dos cartões da aba Treino no protótipo: 38 px, 13 px, um passo abaixo do "sm". */
+const BOTAO_38 = "h-[38px] px-3.5 text-[13px]";
+
 function PlanoCard({
   aluno,
   planos,
   podeTreino,
   prontidao,
   onAvaliar,
+  alteracoesPendentes,
 }: {
   aluno: Aluno;
   planos: PlanoTreino[];
+  /** o rótulo da edição que espera publicação ("Alterações não publicadas"), se houver */
+  alteracoesPendentes?: string;
   /** gate duro do trilho: sem prontidão, "Montar treino" fica desabilitado */
   podeTreino: { ok: boolean; motivo?: string };
   /** o detalhe do que falta, para o card explicar em vez de só desabilitar */
@@ -2263,8 +2483,8 @@ function PlanoCard({
   if (!ativo) {
     return (
       <Card id="treino-card" className="scroll-mt-24 p-5">
-        <h2 className="mb-3 font-display text-lg font-bold text-ink">Plano de treino</h2>
-        <div className="rounded-card border border-dashed border-border p-4 text-center">
+        <h2 className="mb-3 font-display text-[17px] font-bold text-ink">Plano de treino</h2>
+        <div className="rounded-[14px] border border-dashed border-border p-4 text-center">
           <p className="text-sm text-ink-2">
             Sem treino montado ainda. O treino organiza os meses de {aluno.nome.split(" ")[0]} em macrociclo,
             mesociclos e semanas, com a progressão justificada.
@@ -2309,13 +2529,22 @@ function PlanoCard({
 
   return (
     <Card id="treino-card" className="scroll-mt-24 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-display text-lg font-bold text-ink">Plano em curso</h2>
-        {/* O plano ativo é o que o app do aluno abre: não existe publicar à parte. */}
-        <Pill tone="success">Ativo no app do aluno</Pill>
+      <div className="flex flex-wrap items-baseline justify-between gap-2.5">
+        <h2 className="font-display text-[17px] font-bold text-ink">Plano em curso</h2>
+        {/* O plano ativo é o que o app do aluno abre. Com uma edição esperando, o selo diz
+            que o aluno ainda vê a versão anterior: a mesma frase de rotuloDaPublicacao. */}
+        {alteracoesPendentes ? (
+          <Pill tone="cta" className="px-[9px] py-1 text-[11.5px] font-bold">
+            Ativo · {alteracoesPendentes.toLowerCase()}
+          </Pill>
+        ) : (
+          <Pill tone="success" className="px-[9px] py-1 text-[11.5px] font-bold">
+            Ativo · publicado no app
+          </Pill>
+        )}
       </div>
       <p className="mt-1.5 text-sm font-semibold text-ink">{ativo.titulo}</p>
-      <p className="mt-0.5 text-sm text-ink-2">
+      <p className="mt-0.5 text-[13.5px] text-ink-2">
         {modelo.nome} · {ativo.semanas} semanas · {rotuloFrequencia(ativo)} ·{" "}
         <b className="font-semibold text-ink">semana {semana}</b>
         {meso && <> · {rotuloMeso(meso)}</>}
@@ -2350,14 +2579,14 @@ function PlanoCard({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Link to={`/prescrever-treino?plano=${ativo.id}`} className={buttonClasses("primary", "sm")}>
+        <Link to={`/prescrever-treino?plano=${ativo.id}`} className={cn(buttonClasses("primary", "sm"), BOTAO_38)}>
           Abrir plano
         </Link>
-        <Link to={`/prescrever-treino?plano=${ativo.id}&semana=${semana}&editar=1`} className={buttonClasses("secondary", "sm")}>
+        <Link to={`/prescrever-treino?plano=${ativo.id}&semana=${semana}&editar=1`} className={cn(buttonClasses("secondary", "sm"), BOTAO_38)}>
           Editar semana {semana}
         </Link>
         {/* Exceção diária: personalizar a sessão desta semana sem remontar o treino. */}
-        <Link to={`/gps?aluno=${aluno.id}&modo=dia`} className={buttonClasses("secondary", "sm")}>
+        <Link to={`/gps?aluno=${aluno.id}&modo=dia`} className={cn(buttonClasses("secondary", "sm"), BOTAO_38)}>
           Treino do dia
         </Link>
       </div>
@@ -2430,11 +2659,13 @@ function SemaforoDeHojeCard({ estado, onAbrir }: { estado: EstadoSemaforo; onAbr
   const ajustes = hoje?.ajustes.map((a) => a.acao).filter(Boolean) ?? [];
   return (
     <Card className="p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
         <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-2">Semáforo de hoje</p>
-        <Pill tone={tom}>{resultado ? rotuloResultado(resultado) : "Ainda não feito"}</Pill>
+        <Pill tone={tom} className="px-[9px] py-1 text-[11.5px] font-bold">
+          {resultado ? rotuloResultado(resultado) : "Ainda não feito"}
+        </Pill>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-ink">
+      <p className="mt-2 text-[13.5px] leading-normal text-ink">
         {hoje ? (
           <>
             Registrado às {fmtHora(hoje.data)}
@@ -2453,8 +2684,8 @@ function SemaforoDeHojeCard({ estado, onAbrir }: { estado: EstadoSemaforo; onAbr
           <>Nenhum semáforo registrado. Faça o de hoje antes da sessão.</>
         )}
       </p>
-      <button type="button" onClick={onAbrir} className={cn(buttonClasses("secondary", "sm"), "mt-3")}>
-        <ShieldCheck className="h-4 w-4" /> {hoje ? "Ver checklist" : "Fazer o semáforo de hoje"}
+      <button type="button" onClick={onAbrir} className={cn(buttonClasses("secondary", "sm"), "mt-3 h-9 px-3.5 text-[12.5px]")}>
+        {hoje ? "Ver checklist" : "Fazer o semáforo de hoje"}
       </button>
     </Card>
   );
@@ -2482,19 +2713,26 @@ function ProntuarioResumoCard({
     prescricoes.find((x) => x.prontuario && x.status === "ativa") ?? prescricoes.find((x) => x.prontuario);
   const pr = p?.prontuario;
   return (
-    <div className="rounded-card border border-analysis/25 bg-analysis-tint p-5">
+    <div className="rounded-card border border-analysis-fill/25 bg-analysis-tint p-5">
       <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-analysis-text">Prontuário de decisão técnica</p>
       {pr && p ? (
         <>
-          <p className="mt-2 text-sm leading-relaxed text-ink">
+          <p className="mt-2 text-[13.5px] leading-[1.55] text-ink">
             Cada escolha e cada descarte com o motivo, o semáforo do dia e a bibliografia numerada. Da escolha de{" "}
             {fmtDiaMesCurto(p.data)}:
           </p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            <TokenRotulado label="Escolhidos" value={pr.escolhidos.length} />
-            <TokenRotulado label="Descartados" value={pr.descartados.length} />
-            <TokenRotulado label="Referências" value={pr.refIds.length} />
-          </div>
+          {/* O número colado à palavra ("3 escolhidos"), em chips de papel sobre o teal. */}
+          <ul className="mt-3 flex flex-wrap gap-1.5">
+            {[
+              [pr.escolhidos.length, "escolhido", "escolhidos"],
+              [pr.descartados.length, "descartado", "descartados"],
+              [pr.refIds.length, "referência", "referências"],
+            ].map(([n, um, varios]) => (
+              <li key={String(varios)} className="tabular rounded-[8px] bg-surface px-2 py-1 text-xs font-semibold text-ink">
+                {n} {n === 1 ? um : varios}
+              </li>
+            ))}
+          </ul>
           <button
             type="button"
             onClick={() => onVer(p.id)}
@@ -2505,7 +2743,7 @@ function ProntuarioResumoCard({
         </>
       ) : (
         <>
-          <p className="mt-2 text-sm leading-relaxed text-ink">
+          <p className="mt-2 text-[13.5px] leading-[1.55] text-ink">
             Quando você escolher exercícios para {primeiroNome}, cada escolha e cada descarte ficam registrados com o
             motivo, o semáforo do dia e a bibliografia numerada.
           </p>
@@ -2604,14 +2842,14 @@ function proximoVencimento(dia: number): string {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(d);
 }
 
-/** Linha de mensalidade do card "Estado atual": selo verde quando em dia. */
+/** Linha de mensalidade do rodapé de "Últimos 30 dias": selo verde quando em dia. */
 function MensalidadeLinha({ aluno }: { aluno: Aluno }) {
   const c = aluno.cobranca;
   if (!c) return null;
   const st = statusEfetivo(c);
   const emDia = st === "pago" || st === "isento";
   return (
-    <div className="mt-3 flex items-center gap-2.5 border-t border-border pt-3">
+    <div className="flex items-center gap-2.5">
       <span
         className={cn(
           "grid h-7 w-7 shrink-0 place-items-center rounded-lg",
@@ -2627,106 +2865,6 @@ function MensalidadeLinha({ aluno }: { aluno: Aluno }) {
         </div>
       </div>
     </div>
-  );
-}
-
-/** 2) Estado atual: treino ativo com barra de progresso da semana + mensalidade. */
-function VisaoTreino({
-  aluno,
-  plano,
-  alunoId,
-  onVer,
-  podeTreino,
-}: {
-  aluno: Aluno;
-  plano?: PlanoTreino;
-  alunoId: string;
-  onVer: () => void;
-  podeTreino: { ok: boolean; motivo?: string };
-}) {
-  if (!plano) {
-    return (
-      <Card className="flex flex-col p-5">
-        <Eyebrow>Estado atual</Eyebrow>
-        <div className="mt-1 font-display text-lg font-bold text-ink">Sem treino montado</div>
-        <p className="mt-0.5 text-sm text-ink-2">
-          {podeTreino.ok ? "A avaliação já está pronta; o próximo passo é montar o plano." : podeTreino.motivo}
-        </p>
-        {podeTreino.ok && (
-          <Link to={`/prescrever-treino?aluno=${alunoId}`} className={cn(buttonClasses("primary", "sm"), "mt-4 self-start")}>
-            <CalendarRange className="h-4 w-4" /> Montar treino
-          </Link>
-        )}
-        <MensalidadeLinha aluno={aluno} />
-      </Card>
-    );
-  }
-
-  const semana = semanaAtual(plano);
-  const total = plano.semanas;
-  const meso = mesocicloAtual(plano);
-  const micros = plano.macrociclo.mesociclos.flatMap((m) => m.microciclos);
-  const micro = micros.find((mc) => mc.semana === semana);
-  const sessoes = micro?.sessoes ?? [];
-  // Divisão em letras (A/B/C...), o "split" da semana — sem despejar o rótulo de
-  // cada mesociclo (era isso que virava "B... · D..." e poluía o card).
-  const split = sessoes.length ? sessoes.map((_, i) => String.fromCharCode(65 + i)).join("/") : null;
-
-  return (
-    <Card className="flex flex-col p-5">
-      <Eyebrow>Estado atual</Eyebrow>
-      <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span className="font-display text-lg font-bold text-ink">Treino ativo</span>
-        <span className="tabular text-sm text-ink-2">
-          semana {semana} de {total}
-        </span>
-      </div>
-      {/* A TIRA DE SEMANAS do protótipo, no lugar da barra lisa: uma marca por
-          semana do plano, na cor do que aquela semana é (carga, descarga, teste),
-          com a semana de hoje anelada. A barra de uma cor só dizia "quanto já
-          passou" e escondia justamente o que o profissional precisa antever, que é
-          quando vem a descarga. */}
-      <div
-        className="mt-2.5 flex gap-1"
-        role="img"
-        aria-label={`Semana ${semana} de ${total}. ${micros.filter((m) => m.tipo === "deload").length} semanas de descarga no plano.`}
-      >
-        {micros.map((m) => {
-          const passada = m.semana < semana;
-          const hoje = m.semana === semana;
-          const cor =
-            m.tipo === "deload"
-              ? "var(--warning-fill)"
-              : m.tipo === "teste"
-                ? "var(--analysis-fill)"
-                : passada || hoje
-                  ? "var(--primary)"
-                  : "var(--surface-mute)";
-          return (
-            <span
-              key={m.id}
-              title={`Semana ${m.semana} · ${m.tipo === "deload" ? "descarga" : m.tipo === "teste" ? "teste" : "carga"}`}
-              className="h-2 min-w-0 flex-1 rounded-full"
-              style={{
-                background: cor,
-                opacity: !passada && !hoje && m.tipo === "carga" ? 1 : passada || hoje ? 1 : 0.45,
-                boxShadow: hoje ? "0 0 0 2px var(--ink)" : undefined,
-              }}
-            />
-          );
-        })}
-      </div>
-      <div className="mt-2.5 flex items-center justify-between gap-2">
-        <p className="min-w-0 truncate text-sm text-ink-2">
-          {meso && <span className="font-semibold text-analysis">{rotuloMeso(meso)}</span>}
-          {split ? ` · ${split}` : ""} · {plano.frequenciaSemanal}×/sem
-        </p>
-        <button onClick={onVer} className="shrink-0 text-sm font-semibold text-primary hover:underline">
-          abrir
-        </button>
-      </div>
-      <MensalidadeLinha aluno={aluno} />
-    </Card>
   );
 }
 
@@ -2751,7 +2889,7 @@ function VisaoAvaliacao({
   const ultima = avals[avals.length - 1];
   if (!ultima) {
     return (
-      <Card className="flex flex-col p-5">
+      <Card className="flex flex-col p-3.5 md:p-5">
         <Eyebrow>Medidas</Eyebrow>
         <div className="mt-1 font-display text-lg font-bold text-ink">Nenhuma avaliação ainda</div>
         <p className="mt-0.5 text-sm text-ink-2">A avaliação inicial abre o resto do ciclo de cuidado.</p>
@@ -2795,14 +2933,14 @@ function VisaoAvaliacao({
   if (m.fcRepouso != null) linhas.push({ rotulo: "FC repouso", valor: `${m.fcRepouso} bpm`, pill: deltaPill(m.fcRepouso, p?.fcRepouso, "bpm") });
 
   return (
-    <Card className="flex flex-col p-5">
+    <Card className="flex flex-col p-3.5 md:p-5">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-baseline gap-2">
-          <span className="font-display text-base font-bold text-ink">Medidas de {aluno.nome.split(" ")[0]}</span>
+          <span className="font-display text-[17px] font-bold text-ink">Medidas de {aluno.nome.split(" ")[0]}</span>
           <span className="tabular text-xs text-ink-3">{fmtData(ultima.data)}</span>
         </div>
-        <button onClick={onVer} className="shrink-0 text-sm font-semibold text-primary hover:underline">
-          evolução ›
+        <button onClick={onVer} className="inline-flex min-h-[32px] shrink-0 items-center gap-0.5 text-[13px] font-semibold text-primary hover:underline">
+          evolução <ChevronRight className="h-3.5 w-3.5" aria-hidden />
         </button>
       </div>
 
@@ -2831,95 +2969,192 @@ function VisaoAvaliacao({
   );
 }
 
-/** 4) No app do aluno: cartão escuro (navy) com a sequência e três números:
- *  treinos da semana, esforço médio e o último acesso, como no desenho. */
-function VisaoNoApp({
+const fmtVirgula = (n: number) => n.toFixed(1).replace(".", ",");
+
+/**
+ * ÚLTIMOS 30 DIAS, o cartão do protótipo no lugar do navy "No app". Quatro números, todos
+ * com dado real e cada um dizendo a sua conta no rótulo:
+ *
+ *  - TREINOS REGISTRADOS: dias distintos com registro na janela, a mesma definição de
+ *    treino da lista e do painel (nunca execuções soltas, que inflariam o número). O "/M"
+ *    só existe com plano ativo: M é a frequência do plano nos dias da janela em que ele
+ *    valia. Sem plano não há "quantos deveriam ser".
+ *  - ESFORÇO MÉDIO (PSE): média das notas de esforço das sessões da janela.
+ *  - DOR NA AVALIAÇÃO: a escala da avaliação mais recente, com a data. O protótipo mostra
+ *    "dor no joelho" semanal, que o registro da sessão não guarda; por isso a fonte é a
+ *    avaliação, dita no rótulo, e o número some quando ela não registrou dor.
+ *  - SEMÁFOROS: um ponto por registro da janela, o mais recente à direita.
+ */
+function UltimosTrintaDias({
   aluno,
   execucoes,
   feedbacks,
-  metaSemanal,
-  onVer,
+  liberacoes,
+  avals,
+  plano,
+  previewTo,
 }: {
   aluno: Aluno;
   execucoes: Execucao[];
   /** feedbacks do aluno, do mais recente para o mais antigo */
   feedbacks: SessaoFeedback[];
-  /** meta de treinos por semana (frequência do plano ativo), para "N/meta" */
-  metaSemanal?: number;
-  onVer: () => void;
+  /** liberações do aluno, da mais recente para a mais antiga */
+  liberacoes: Liberacao[];
+  /** avaliações do aluno em ordem crescente de data */
+  avals: Avaliacao[];
+  plano?: PlanoTreino;
+  previewTo: string;
 }) {
-  const UM_DIA = 86_400_000;
-  const streak = sequenciaDias(execucoes);
-  const diaSemana = (new Date().getDay() + 6) % 7;
-  const inicio = new Date().setHours(0, 0, 0, 0) - diaSemana * UM_DIA;
-  const naSemana = new Set(
-    execucoes.filter((e) => e.concluidoEm >= inicio).map((e) => Math.floor(e.concluidoEm / UM_DIA)),
+  const agora = Date.now();
+  const corte = agora - 30 * DIA;
+  const dias = new Set(
+    execucoes.filter((e) => e.concluidoEm >= corte).map((e) => Math.floor(e.concluidoEm / DIA)),
   ).size;
-  const meta = metaSemanal ?? 3;
-  const notas = feedbacks.map((f) => f.pse).filter((n): n is number => n != null);
-  const media = notas.length ? Math.round(notas.reduce((s, n) => s + n, 0) / notas.length) : null;
-  const ultimoTs = execucoes.length ? Math.max(...execucoes.map((e) => e.concluidoEm)) : null;
-  const ultimoAcesso = ultimoTs != null ? rotuloDiaTempo(ultimoTs).dia : "sem registro";
+  // O alvo do plano na janela: a frequência semanal nos dias em que o plano valia (começou
+  // depois do corte? conta só dali; já terminou? conta até o fim dele).
+  let alvo: number | null = null;
+  if (plano) {
+    const inicio = Math.max(corte, plano.data);
+    const fim = Math.min(agora, plano.data + plano.semanas * 7 * DIA);
+    const diasDoPlano = Math.max(0, (fim - inicio) / DIA);
+    alvo = diasDoPlano > 0 ? Math.max(1, Math.round((plano.frequenciaSemanal * diasDoPlano) / 7)) : null;
+  }
+  const notas = feedbacks.filter((f) => f.concluidaEm >= corte && f.pse != null).map((f) => f.pse as number);
+  const pse = notas.length ? notas.reduce((s, n) => s + n, 0) / notas.length : null;
+  const ultimaAval = avals[avals.length - 1];
+  const dor = ultimaAval?.dorEscala != null ? { valor: ultimaAval.dorEscala, em: ultimaAval.data } : null;
+  const semaforos = liberacoes.filter((l) => l.data >= corte);
+  const pontos = semaforos.slice(0, 12).reverse();
+  const streak = sequenciaDias(execucoes);
   const recado = feedbacks.find((f) => f.observacao);
-  const semNada = execucoes.length === 0 && feedbacks.length === 0;
   const primeiro = aluno.nome.split(" ")[0];
+  const nada = execucoes.length === 0 && feedbacks.length === 0 && semaforos.length === 0 && !dor;
+  const COR_PONTO: Record<Liberacao["resultado"], string> = {
+    verde: "bg-success-fill",
+    amarelo: "bg-warning-fill",
+    vermelho: "bg-danger-fill",
+  };
 
   return (
-    <div className="rounded-card p-5" style={{ background: "#0D1524" }}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-2xs font-bold uppercase tracking-[0.14em]" style={{ color: "#8FA1BD" }}>
-          No app de {primeiro}
-        </span>
-        {streak.atual > 0 && (
-          <span className="tabular text-sm font-bold" style={{ color: "#E6B03C" }}>
-            🔥 {streak.atual} {streak.atual === 1 ? "dia" : "dias"}
-          </span>
-        )}
-      </div>
+    <Card className="p-3.5 md:p-5">
+      <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">Últimos 30 dias</p>
 
-      {semNada ? (
-        <p className="mt-2 text-sm" style={{ color: "#8FA1BD" }}>
-          Quando {primeiro} registrar o treino no celular, a sequência e o esforço aparecem aqui.
+      {nada ? (
+        <p className="mt-2 text-[13.5px] text-ink-2">
+          Quando {primeiro} registrar o treino no celular, os treinos, o esforço e os semáforos aparecem aqui.
         </p>
       ) : (
-        <>
-          <div className="mt-3 grid grid-cols-3 gap-3">
-            <StatApp valor={`${naSemana}/${meta}`} rotulo="treinos da semana" />
-            <StatApp valor={media != null ? String(media) : "sem dado"} rotulo="esforço médio" />
-            <StatApp valor={ultimoAcesso} rotulo="último acesso" />
-          </div>
-          {recado?.observacao && (
-            <p
-              className="mt-3 rounded-lg p-2.5 text-sm italic"
-              style={{ background: "rgba(148,170,210,.10)", color: "#C7D3E8" }}
-            >
-              {recado.observacao} <span className="not-italic text-xs">· {fmtData(recado.concluidaEm)}</span>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="min-w-0">
+            <div className="tabular font-display text-[28px] font-bold leading-none tracking-[-0.03em] text-ink">
+              {dias}
+              {alvo != null && <span className="font-sans text-sm font-medium tracking-normal text-ink-3">/{alvo}</span>}
+            </div>
+            <p className="mt-1 text-[12.5px] leading-snug text-ink-2">
+              {dias === 1 ? "treino registrado" : "treinos registrados"}
+              {alvo != null && <span className="sr-only">, o plano prevê cerca de {alvo} no período</span>}
+              {streak.atual > 1 && ` · ${streak.atual} dias seguidos`}
             </p>
+          </div>
+          <div className="min-w-0">
+            <div
+              className={cn(
+                "tabular font-display font-bold leading-none tracking-[-0.03em]",
+                pse != null ? "text-[28px] text-analysis" : "text-lg text-ink-3",
+              )}
+            >
+              {pse != null ? fmtVirgula(pse) : "sem dado"}
+            </div>
+            <p className="mt-1 text-[12.5px] leading-snug text-ink-2">esforço médio (PSE)</p>
+          </div>
+          {dor && (
+            <div className="min-w-0">
+              <div className="tabular font-display text-[28px] font-bold leading-none tracking-[-0.03em] text-ink">
+                {String(dor.valor).replace(".", ",")}
+                <span className="font-sans text-sm font-medium tracking-normal text-ink-3">/10</span>
+              </div>
+              <p className="mt-1 text-[12.5px] leading-snug text-ink-2">dor na avaliação de {fmtDiaMesCurto(dor.em)}</p>
+            </div>
           )}
-        </>
+          <div className="min-w-0">
+            {pontos.length > 0 ? (
+              <div className="flex h-7 flex-wrap items-center gap-[3px]" aria-hidden>
+                {pontos.map((l) => (
+                  <span key={l.id} className={cn("h-2.5 w-2.5 rounded-full", COR_PONTO[l.resultado])} />
+                ))}
+              </div>
+            ) : (
+              <div className="font-display text-lg font-bold leading-7 text-ink-3">nenhum</div>
+            )}
+            <p className="mt-1 text-[12.5px] leading-snug text-ink-2">
+              {semaforos.length === 0
+                ? "semáforo registrado"
+                : `${semaforos.length} ${semaforos.length === 1 ? "semáforo" : "semáforos"}${semaforos.length > 12 ? ", os 12 últimos" : ""}`}
+              <span className="sr-only">
+                {`: ${semaforos.filter((l) => l.resultado === "verde").length} liberados, ${semaforos.filter((l) => l.resultado === "amarelo").length} com ajuste, ${semaforos.filter((l) => l.resultado === "vermelho").length} não liberados`}
+              </span>
+            </p>
+          </div>
+        </div>
       )}
 
-      <button
-        onClick={onVer}
-        className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold hover:underline"
-        style={{ color: "#14B3BA" }}
-      >
-        <Smartphone className="h-4 w-4" /> Ver como o aluno vê
-      </button>
-    </div>
+      <div className="mt-3 space-y-2.5 border-t border-surface-mute pt-3">
+        {recado?.observacao && (
+          <p className="rounded-control bg-primary-tint/50 px-3 py-2 text-[13px] text-ink">
+            “{recado.observacao}”
+            <span className="mt-0.5 block text-xs text-ink-2">recado do aluno · {fmtDiaMesCurto(recado.concluidaEm)}</span>
+          </p>
+        )}
+        <MensalidadeLinha aluno={aluno} />
+        <Link to={previewTo} className="inline-flex min-h-[32px] items-center gap-1 text-[13px] font-semibold text-primary hover:underline">
+          Ver como o aluno vê <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        </Link>
+      </div>
+    </Card>
   );
 }
 
-/** Um número do cartão escuro "No app": valor grande claro + rótulo apagado. */
-function StatApp({ valor, rotulo }: { valor: string; rotulo: string }) {
+/**
+ * PERFIL · N DE 6 SEÇÕES, o cartão do protótipo, com a MESMA contagem da página do perfil
+ * (`completudeAluno`, os mesmos seis nomes). Cada seção leva direto a ela. Equipamentos e
+ * Notas só fecham por confirmação: silêncio não é resposta.
+ */
+function PerfilSecoesCard({ aluno }: { aluno: Aluno }) {
+  const c = completudeAluno(aluno);
   return (
-    <div className="min-w-0">
-      <div className="tabular font-display text-2xl font-bold leading-none" style={{ color: "#F2F6FC" }}>
-        {valor}
+    <Card className="p-5">
+      <div className="flex items-center gap-3">
+        <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">
+          Perfil · {c.feitas} de {c.total} seções
+        </p>
+        <Link to={`/alunos/${aluno.id}/perfil`} className="ml-auto text-[13px] font-semibold text-primary hover:underline">
+          Editar
+        </Link>
       </div>
-      <div className="mt-1 text-2xs leading-tight" style={{ color: "#8FA1BD" }}>
-        {rotulo}
-      </div>
-    </div>
+      <ul className="mt-2.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[13px]">
+        {c.secoes.map((s) => (
+          <li key={s.secao.id} className="min-w-0">
+            <Link
+              to={`/alunos/${aluno.id}/perfil?secao=${s.secao.id}`}
+              title={s.feita ? undefined : `Falta ${s.falta}`}
+              className={cn(
+                "flex min-h-[30px] items-center gap-1.5 rounded-control hover:underline",
+                s.feita ? "text-ink" : "text-warning",
+              )}
+            >
+              {/* O verde do "feito" é o de TEXTO (success), não o de preenchimento: como
+                  ícone de 14 px, o preenchimento dá 2,5:1 sobre o branco. */}
+              {s.feita ? (
+                <Check className="h-3.5 w-3.5 shrink-0 text-success" strokeWidth={3} aria-hidden />
+              ) : (
+                <Circle className="h-3.5 w-3.5 shrink-0 text-warning-fill" strokeWidth={2.5} aria-hidden />
+              )}
+              <span className="truncate">{s.secao.titulo}</span>
+              <span className="sr-only">{s.feita ? ", preenchida" : `, falta ${s.falta}`}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Card>
   );
 }

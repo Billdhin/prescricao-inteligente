@@ -26,7 +26,7 @@ import {
   CalendarPlus,
   AlertTriangle,
 } from "lucide-react";
-import { Card, Pill, ScoreRing, SectionHeader, buttonClasses, Progress, LinhaDeDose, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
+import { Card, Pill, SectionHeader, buttonClasses, Progress, LinhaDeDose, LinhaDeTokens, TokenRotulado } from "@/components/ui/primitives";
 import {
   rankExercises,
   OBJETIVOS,
@@ -83,6 +83,7 @@ import {
 import { substituirSessaoNaSemana, letraSessao, sessoesDaSemana, aplicarPrescricaoNoPlano, blocosForcaAtuais } from "@/lib/gps/semear";
 import { SessaoBloco, type ContextoFaixa } from "@/components/treino/PlanoEditor";
 import type { Prescricao } from "@/data/alunos";
+import { iniciaisDe } from "@/data/alunos";
 import { montarProntuario } from "@/lib/gps/prontuario";
 import { exportProntuarioPDF, idDocumento } from "@/lib/exportProntuario";
 import { ProntuarioView } from "@/components/rcd/ProntuarioView";
@@ -194,6 +195,9 @@ export function Gps() {
   );
 
   const [step, setStep] = React.useState(0);
+  // "Trocar aluno" mora na pílula do cabeçalho e abre o seletor no cartão de contexto: um
+  // estado só para os dois, senão a pílula abriria um seletor que o cartão não mostra.
+  const [trocandoAluno, setTrocandoAluno] = React.useState(false);
   const [answers, setAnswers] = React.useState<GpsAnswers>(() => ({
     objetivo: "Hipertrofia",
     grupoMuscular: "Membros inferiores",
@@ -627,8 +631,12 @@ export function Gps() {
           eyebrow={aluno && planoAtivo && !personalizarDia ? "Plano de treino" : "Treino do dia"}
           icon={<Navigation className="h-3 w-3" />}
           title={
+            // No modo dia o título é a SESSÃO de hoje, como no protótipo ("Sessão B ·
+            // Superiores, para hoje"): o nome vem do plano, não de um texto fixo.
             personalizarDia
-              ? "Personalizar o treino do dia"
+              ? sessaoAlvoDia
+                ? `${sessaoAlvoDia.nome}, para hoje`
+                : "Personalizar o treino do dia"
               : aluno
                 ? `Escolher exercícios para ${aluno.nome.split(" ")[0]}`
                 : "Treino do dia"
@@ -640,7 +648,14 @@ export function Gps() {
                 ? `Escolha o grupo e adicione os exercícios. O perfil de ${aluno.nome.split(" ")[0]} já orienta o ranking.`
                 : "Diga para quem e receba exercícios ranqueados: cada decisão documentada com o porquê."
           }
-          right={<SeloRCD compacto explicavel />}
+          right={
+            <div className="flex flex-wrap items-center gap-2">
+              {aluno && !trocandoAluno && (
+                <PilulaDoAluno nome={aluno.nome} iniciais={aluno.iniciais} onTrocar={() => setTrocandoAluno(true)} />
+              )}
+              <SeloRCD compacto explicavel />
+            </div>
+          }
         />
       </div>
 
@@ -660,10 +675,14 @@ export function Gps() {
             <div className="mt-3 rounded-xl border border-border bg-surface-soft p-3">
               <div className="mb-1.5 flex items-center gap-1.5">
                 <Target className="h-3.5 w-3.5 text-primary" />
-                <p className="text-2xs font-semibold uppercase tracking-wide text-ink-3">Sessão de hoje a personalizar</p>
+                <p className="text-2xs font-semibold uppercase tracking-[0.12em] text-ink-3">Sessão de hoje a personalizar</p>
               </div>
-              <p className="text-sm font-semibold text-ink">{sessaoAlvoDia.nome}</p>
-              {sessaoAlvoDia.foco && <p className="text-xs text-ink-3">{sessaoAlvoDia.foco}</p>}
+              <p className="font-display text-xl font-bold tracking-[-0.02em] text-ink">{sessaoAlvoDia.nome}</p>
+              {/* O resumo do protótipo ("5 blocos · 13 séries") com o que a sessão de fato tem. */}
+              <p className="text-[13px] text-ink-2">
+                {sessaoAlvoDia.foco ? `${sessaoAlvoDia.foco} · ` : ""}
+                {sessaoAlvoDia.blocos.length} bloco{sessaoAlvoDia.blocos.length === 1 ? "" : "s"}
+              </p>
               {/* Modificar direto, aqui: trocar cada exercício pelas alternativas ranqueadas
                   no perfil e mexer à mão em séries, repetições, intensidade e intervalo.
                   É o mesmo editor do plano, para não existirem duas verdades sobre a dose. */}
@@ -726,6 +745,8 @@ export function Gps() {
         alunos={alunos}
         alunoId={alunoId}
         onAluno={onAluno}
+        trocando={trocandoAluno}
+        setTrocando={setTrocandoAluno}
         grupoSlug={grupoSlug}
         setGrupoSlug={mudarGrupo}
         condicoesExtras={condicoesExtras}
@@ -855,7 +876,7 @@ export function Gps() {
           ) : aluno ? (
             <Card variant="soft" className="flex flex-wrap items-center gap-3 p-4">
               <CalendarRange className="h-5 w-5 shrink-0 text-primary" aria-hidden />
-              <p className="min-w-0 flex-1 text-sm text-ink-2">
+              <p className="min-w-0 flex-1 basis-[220px] text-sm text-ink-2">
                 <span className="font-semibold text-ink">{aluno.nome.split(" ")[0]} ainda não tem plano de treino.</span> A
                 escolha fica salva no perfil. Para distribuir os exercícios em sessões e semanas, monte o treino.
               </p>
@@ -928,6 +949,33 @@ export function Gps() {
   );
 }
 
+/* ---------------------------- Pílula do aluno ----------------------------- */
+/**
+ * Quem está em contexto, no cabeçalho (protótipo de 10/09/2026): avatar, nome e "Trocar
+ * aluno" dentro da mesma pílula. A troca não navega para a lista: abre o seletor no cartão de
+ * contexto logo abaixo, com a "Prescrição geral (sem aluno)" que só ele oferece.
+ */
+function PilulaDoAluno({ nome, iniciais, onTrocar }: { nome: string; iniciais?: string; onTrocar: () => void }) {
+  return (
+    <span className="inline-flex max-w-full items-center gap-2.5 rounded-full border border-border bg-surface py-1.5 pl-1.5 pr-1.5 text-[13.5px] font-semibold text-ink">
+      <span
+        aria-hidden
+        className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-lg bg-warning-fill text-2xs font-bold text-on-warning-fill"
+      >
+        {iniciais || iniciaisDe(nome)}
+      </span>
+      <span className="min-w-0 truncate">{nome}</span>
+      <button
+        type="button"
+        onClick={onTrocar}
+        className="shrink-0 rounded-full bg-bg px-2.5 py-1.5 text-xs font-semibold text-ink-2 ring-1 ring-inset ring-border transition-colors hover:text-ink"
+      >
+        Trocar aluno
+      </button>
+    </span>
+  );
+}
+
 /* ------------------------- Mapa do fluxo (stepper) ------------------------ */
 // Torna o macro-caminho visível: 1 Para quem → 2 Perfil → 3 Recomendações.
 function FlowSteps({ atual }: { atual: 1 | 2 | 3 }) {
@@ -943,7 +991,7 @@ function FlowSteps({ atual }: { atual: 1 | 2 | 3 }) {
             <span
               aria-current={current ? "step" : undefined}
               className={cn(
-                "inline-flex items-center gap-2 text-sm font-semibold",
+                "inline-flex items-center gap-2 text-[13px] font-semibold",
                 done ? "text-success" : current ? "text-ink" : "text-ink-3",
               )}
             >
@@ -984,10 +1032,15 @@ function ContextoCard({
   unlocked,
   faixaEtaria,
   setFaixaEtaria,
+  trocando,
+  setTrocando,
 }: {
   alunos: { id: string; nome: string }[];
   alunoId: string;
   onAluno: (id: string) => void;
+  /** o seletor de aluno está aberto (a pílula do cabeçalho pediu a troca) */
+  trocando: boolean;
+  setTrocando: (v: boolean) => void;
   grupoSlug: string;
   setGrupoSlug: (s: string) => void;
   condicoesExtras: string[];
@@ -998,10 +1051,10 @@ function ContextoCard({
   faixaEtaria: string;
   setFaixaEtaria: (s: string) => void;
 }) {
-  const [trocando, setTrocando] = React.useState(false);
-  const alunoNome = alunos.find((a) => a.id === alunoId)?.nome;
   const temGrupo = grupoSlug !== "";
   const prescricaoGeral = alunoId === "";
+  /** com aluno em contexto e sem troca pedida, o cartão fica só com o ajuste do contexto */
+  const compacto = Boolean(alunoId) && !trocando;
   // Nome e foco de cada fase vêm da própria condição: o seletor deixa de ser "1,2,3,4" sem sentido.
   const fasesDoGrupo = (temGrupo ? getSpecialGroup(grupoSlug)?.fases : undefined) ?? [];
   const faseAtualObj = fasesDoGrupo[fase - 1];
@@ -1014,26 +1067,11 @@ function ContextoCard({
     .filter(Boolean)
     .join(" · ");
   return (
-    <Card className="p-5">
-      {alunoId && !trocando ? (
-        /* Já vim de um aluno: mostra o contexto, não um seletor que convida a re-escolher. */
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-tint text-primary">
-            <UserCheck className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <div className="text-xs text-ink-3">Prescrevendo para</div>
-            <div className="font-display font-bold text-ink">{alunoNome}</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setTrocando(true)}
-            className="ml-auto text-sm font-semibold text-primary hover:underline"
-          >
-            Trocar aluno
-          </button>
-        </div>
-      ) : (
+    <Card className={cn(compacto ? "overflow-hidden p-0" : "p-5")}>
+      {/* Já vim de um aluno: quem está em contexto aparece na PÍLULA do cabeçalho (protótipo),
+          com o "Trocar aluno" dentro dela. Aqui fica só o ajuste opcional do contexto; o
+          seletor volta quando a pílula pede a troca, ou quando não há aluno. */}
+      {!compacto && (
         <>
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-tint text-primary">
@@ -1047,6 +1085,9 @@ function ContextoCard({
             <span className="mb-1.5 block text-sm font-semibold text-ink">Aluno</span>
             <select
               value={alunoId}
+              // Aberto pela pílula do cabeçalho: o foco vem para cá, senão quem usa teclado ou
+              // leitor de tela tocaria em "Trocar aluno" e não saberia onde a troca acontece.
+              autoFocus={trocando}
               onChange={(e) => {
                 onAluno(e.target.value);
                 setTrocando(false);
@@ -1066,7 +1107,7 @@ function ContextoCard({
 
       {/* Grupo, fase e idade são herdados do aluno; ficam num ajuste opcional para
           não competir com a única escolha que importa aqui (o aluno). */}
-      <details className="mt-4 rounded-control border border-border bg-surface-soft">
+      <details className={cn("rounded-control border border-border bg-surface-soft", compacto ? "rounded-card border-0 bg-surface" : "mt-4")}>
         <summary className="flex cursor-pointer select-none items-center gap-2 p-3 text-sm font-semibold text-ink-2">
           <SlidersHorizontal className="h-4 w-4 text-ink-3" />
           Ajustar contexto (opcional)
@@ -1221,22 +1262,23 @@ function LinhaSemaforoDoDia({
   liberacao,
   alunoId,
 }: {
-  liberacao?: { resultado: "verde" | "amarelo" | "vermelho" };
+  liberacao?: { resultado: "verde" | "amarelo" | "vermelho"; data: number; ajustes?: { acao: string }[] };
   alunoId: string;
 }) {
   // A tira do protótipo: fundo na tint da família, borda suave e o PONTO cheio
-  // (o mesmo desenho do semáforo) no lugar de mais um ícone de escudo.
+  // (o mesmo desenho do semáforo) no lugar de mais um ícone de escudo. A cor segue o
+  // RESULTADO: o protótipo pinta de verde um "liberado com ajuste", e aqui ele é âmbar.
   const cores = {
-    verde: { bg: "bg-success-tint", borda: "border-success/30", ponto: "bg-success-fill", texto: "text-success", rotulo: "Liberado hoje" },
-    amarelo: { bg: "bg-warning-tint", borda: "border-warning/30", ponto: "bg-warning-fill", texto: "text-warning", rotulo: "Liberado com ajuste hoje" },
-    vermelho: { bg: "bg-danger-tint", borda: "border-danger/30", ponto: "bg-danger-fill", texto: "text-danger", rotulo: "Não liberado hoje" },
+    verde: { bg: "bg-success-tint", borda: "border-success/30", ponto: "bg-success-fill", rotulo: "liberado" },
+    amarelo: { bg: "bg-warning-tint", borda: "border-warning/30", ponto: "bg-warning-fill", rotulo: "liberado com ajuste" },
+    vermelho: { bg: "bg-danger-tint", borda: "border-danger/30", ponto: "bg-danger-fill", rotulo: "não liberado" },
   } as const;
 
   if (!liberacao) {
     return (
-      <Card variant="soft" className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3 text-sm">
+      <Card variant="soft" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[16px] px-4 py-3.5 text-[13.5px]">
         <ShieldCheck className="h-4 w-4 shrink-0 text-ink-3" aria-hidden />
-        <span className="min-w-0 flex-1 text-ink-2">
+        <span className="min-w-0 flex-1 basis-[220px] text-ink-2">
           Sem semáforo registrado hoje para este aluno. Você pode prescrever assim mesmo; a decisão é
           sua, e sem o registro ela não fica documentada.
         </span>
@@ -1248,16 +1290,28 @@ function LinhaSemaforoDoDia({
   }
 
   const c = cores[liberacao.resultado];
+  /*
+   * O protótipo mostra "dor 4/10 · RIR 4" ao lado do resultado, mas a liberação não guarda
+   * esses números como campo: guarda a HORA do registro e as AÇÕES sugeridas. Então a linha
+   * diz o que existe. A janela é de 24 h, e por isso a hora diz "ontem" quando for de ontem:
+   * "semáforo de hoje, às 22:10" de um registro da véspera seria uma mentira pequena.
+   */
+  const quando = new Date(liberacao.data);
+  const hora = quando.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const deHoje = quando.toDateString() === new Date().toDateString();
+  const ajuste = liberacao.resultado !== "verde" ? liberacao.ajustes?.[0]?.acao : undefined;
   return (
-    <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-card border p-3.5 text-sm", c.bg, c.borda)}>
+    <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[16px] border px-4 py-3.5 text-[13.5px]", c.bg, c.borda)}>
       <span aria-hidden className={cn("h-3 w-3 shrink-0 rounded-full", c.ponto)} />
-      <span className={cn("font-semibold", c.texto)}>{c.rotulo}</span>
-      <span className="min-w-0 flex-1 text-ink-2">
-        {liberacao.resultado === "vermelho"
-          ? "O semáforo de hoje não liberou. Se ainda assim for prescrever, registre o motivo no perfil."
-          : "Registrado no histórico e no prontuário."}
-      </span>
-      <Link to={`/alunos/${alunoId}?aba=semaforo`} className="shrink-0 text-sm font-semibold text-primary hover:underline">
+      <p className="min-w-0 flex-1 basis-[220px] text-ink-2">
+        <b className="font-bold text-ink">Semáforo {deHoje ? "de hoje" : "de ontem"}: {c.rotulo}</b>
+        {` · às ${hora}`}
+        {ajuste && ` · ${ajuste}`}
+        {liberacao.resultado === "vermelho" && (
+          <span className="mt-0.5 block">Se ainda assim for prescrever, registre o motivo no perfil.</span>
+        )}
+      </p>
+      <Link to={`/alunos/${alunoId}?aba=semaforo`} className="shrink-0 text-[13px] font-semibold text-primary-texto hover:underline">
         Ver o semáforo
       </Link>
     </div>
@@ -2044,7 +2098,8 @@ function BarraDaSelecao({
             type="button"
             onClick={onConfirmar}
             disabled={n === 0}
-            className="ml-auto inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-control px-5 text-sm font-bold transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            // Largura inteira no celular, como o botão âmbar do protótipo: é o polegar que alcança.
+            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-control px-5 py-2 text-center text-sm font-bold transition-[filter] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:ml-auto sm:w-auto sm:whitespace-nowrap"
             style={{ background: "#E8A317", color: "#0B1628" }}
           >
             {destino ? <CalendarRange className="h-4 w-4" aria-hidden /> : <Save className="h-4 w-4" aria-hidden />} {rotulo}
@@ -2105,7 +2160,15 @@ function Results({
   sessaoDestinoNome?: string;
 }) {
   const best = results[0];
-  const others = results.slice(1);
+  /*
+   * O QUE O PERFIL RETIROU NÃO É OPÇÃO.
+   * `rankExercises` devolve os exercícios incompatíveis com uma restrição declarada no FIM da
+   * lista, marcados `excluido` e com o motivo. Esta tela não lia a marca: depois de "Mostrar
+   * mais" eles apareciam como opções comuns, com nota 12 e botão "Adicionar", sem dizer por que
+   * tinham caído. Agora saem das opções e ficam numa seção própria, com o motivo à vista.
+   */
+  const others = results.slice(1).filter((r) => !r.excluido);
+  const retirados = results.slice(1).filter((r) => r.excluido);
   const composto = modRecs.length > 0;
   const [verTodas, setVerTodas] = React.useState(false);
   // vínculo equipamento -> exercício visível: separa o que dá para prescrever com o
@@ -2156,65 +2219,125 @@ function Results({
     );
   };
 
-  const renderOption = (r: Recommendation) => {
-    const inCompare = compare.includes(r.exercise.slug);
+  /*
+   * UM DESENHO SÓ PARA TODA RECOMENDAÇÃO (protótipo mobile de 10/09/2026).
+   *
+   * A melhor morava num cartão à parte, com faixa em gradiente, anel de 112 px e três botões:
+   * no celular ele ocupava a tela inteira antes da segunda opção aparecer, e o gradiente é
+   * reservado ao "Publicar no app do aluno". Agora todas usam o mesmo cartão, e o que separa a
+   * melhor é o quadrado da nota em navy e a etiqueta "Mais adequado". O "Por que" vem das
+   * razões do próprio motor (`r.reasons`), nunca de frase escrita aqui; no retirado, do
+   * motivo da retirada.
+   */
+  const cartaoRecomendacao = (r: Recommendation, melhor = false) => {
+    const slug = r.exercise.slug;
+    const inCompare = compare.includes(slug);
+    const dentro = selecionados.includes(slug);
+    // Uma casa decimal desempata visualmente exercícios que arredondariam para o mesmo
+    // inteiro (M4); com vírgula, que é como o número se escreve em português.
+    const nota = r.scoreExato.toFixed(1).replace(".", ",");
+    const porque = r.excluido ? r.motivoExclusao : r.reasons.join(" · ");
+    const etiqueta = r.excluido
+      ? { texto: "Descartado", cls: "bg-danger-tint text-danger" }
+      : melhor
+        ? // "Escolhido" dizia que a escolha já estava feita. É o mais adequado do ranking;
+          // quem escolhe é o profissional, no botão do cartão.
+          { texto: "Mais adequado", cls: "bg-primary-tint text-primary-texto" }
+        : null;
     return (
-      <Card key={r.exercise.slug} className="p-5">
+      <Card
+        key={slug}
+        className={cn(
+          "rounded-[18px] px-[18px] py-4 lg:shadow-none",
+          dentro ? "border-primary/50" : r.excluido && "bg-surface-soft",
+        )}
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            {/* Badge de score do protótipo: quadrado 44px na cor neutra; apagado quando
-                o exercício exige equipamento fora da lista. Uma casa decimal desempata
-                visualmente exercícios que arredondariam para o mesmo inteiro (M4). */}
+            {/* O quadrado de 44 px do protótipo: navy com a nota em turquesa na melhor (o
+                mesmo par das faixas navy), neutro nas demais e apagado quando o exercício
+                exige equipamento fora da lista ou foi retirado pelo perfil. */}
             <span
               className={cn(
-                "tabular grid h-11 w-11 shrink-0 place-items-center rounded-control bg-surface-mute font-display text-sm font-bold",
-                r.equipDisponivel ? "text-ink" : "text-ink-3",
+                "tabular grid h-11 w-11 shrink-0 place-items-center rounded-control font-display text-[15px] font-bold",
+                melhor && !r.excluido
+                  ? "bg-ink"
+                  : cn("bg-bg ring-1 ring-inset ring-border", r.equipDisponivel && !r.excluido ? "text-ink" : "text-ink-3"),
               )}
-              title={`Adequação ${r.scoreExato.toFixed(1)}/100 (${adequacaoLabel(r.score)})`}
-              aria-label={`Adequação ${r.scoreExato.toFixed(1)} de 100`}
+              style={melhor && !r.excluido ? { color: "#7FE3D8" } : undefined}
+              title={`Adequação ${nota}/100 (${adequacaoLabel(r.score)})`}
+              aria-label={`Adequação ${nota} de 100`}
             >
-              {r.scoreExato.toFixed(1)}
+              {nota}
             </span>
             <div className="min-w-0">
-              <h4 className="font-display font-bold text-ink">{r.exercise.nome}</h4>
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                <Pill tone="neutral">{r.exercise.grupoMuscular}</Pill>
-                <Pill tone={r.equipDisponivel ? "success" : "warning"}>{r.exercise.equipamento}</Pill>
-              </div>
+              <h4 className="text-[15.5px] font-semibold leading-snug text-ink">{r.exercise.nome}</h4>
+              <p className="mt-0.5 text-[12.5px] text-ink-2">
+                {r.exercise.grupoMuscular} · {r.exercise.equipamento.toLowerCase()}
+                {!r.equipDisponivel && <span className="font-semibold text-warning"> · não marcado</span>}
+              </p>
             </div>
           </div>
-          {botaoSelecao(r)}
+          {etiqueta && (
+            <span className={cn("shrink-0 whitespace-nowrap rounded-full px-[9px] py-1 text-[11.5px] font-bold", etiqueta.cls)}>
+              {etiqueta.texto}
+            </span>
+          )}
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button onClick={() => onJustify(r)} className="text-sm font-semibold text-primary hover:underline">
-            Justificativa
+
+        {porque && (
+          <p className="mt-2.5 text-[13.5px] leading-normal text-ink">
+            <b className="font-bold text-analysis-text">{r.excluido ? "Por que saiu:" : "Por que:"}</b> {porque}
+          </p>
+        )}
+        {melhor && r.exercise.resumoPratico && (
+          <p className="mt-1.5 hidden text-sm leading-normal text-ink-2 lg:block">{r.exercise.resumoPratico}</p>
+        )}
+        {melhor && r.cautions.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {r.cautions.map((c) => (
+              <li key={c} className="flex gap-2 text-xs text-warning">
+                <span aria-hidden className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-warning-fill" />
+                {c}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] font-semibold">
+          <button type="button" onClick={() => onJustify(r)} className="min-h-[32px] text-primary-texto hover:underline">
+            Justificativa completa
           </button>
-          <button
-            onClick={() => toggleCompare(r.exercise.slug)}
-            disabled={!inCompare && compare.length >= 3}
-            aria-pressed={inCompare}
-            className={cn(
-              "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors",
-              inCompare
-                ? "border-primary bg-primary-tint text-primary"
-                : !inCompare && compare.length >= 3
-                  ? "cursor-not-allowed border-border text-ink-3 opacity-50"
-                  : "border-border text-ink-2 hover:bg-surface-soft",
-            )}
-          >
-            {inCompare ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-            Comparar
-          </button>
-          <Link
-            to={`/movement-lab/${r.exercise.slug}`}
-            className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-ink-2 hover:text-ink"
-          >
-            Abrir <ArrowRight className="h-3.5 w-3.5" />
+          {!r.excluido && (
+            <button
+              type="button"
+              onClick={() => toggleCompare(slug)}
+              disabled={!inCompare && compare.length >= 3}
+              aria-pressed={inCompare}
+              className={cn(
+                "inline-flex min-h-[32px] items-center gap-1 transition-colors",
+                inCompare
+                  ? "text-primary-texto"
+                  : compare.length >= 3
+                    ? "cursor-not-allowed text-ink-3 opacity-60"
+                    : "text-ink-2 hover:text-ink",
+              )}
+            >
+              {inCompare && <Check className="h-3.5 w-3.5" aria-hidden />}
+              Comparar
+            </button>
+          )}
+          <Link to={`/movement-lab/${slug}`} className="inline-flex min-h-[32px] items-center gap-1 text-ink-2 hover:text-ink">
+            Laboratório <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
+          {/* Retirado pelo perfil não ganha "Adicionar": seria oferecer como opção o que o
+              motor acabou de declarar incompatível com a restrição do aluno. */}
+          {!r.excluido && <span className="ml-auto">{botaoSelecao(r)}</span>}
         </div>
       </Card>
     );
   };
+  const renderOption = (r: Recommendation) => cartaoRecomendacao(r);
 
   return (
     <div className="space-y-6">
@@ -2334,77 +2457,15 @@ function Results({
         </Card>
       )}
 
-      {/* Melhor recomendação — âncora */}
-      <Card variant="raised" className="overflow-hidden">
-        <div className="gradient-brand px-5 py-2 text-xs font-bold uppercase tracking-wider text-white">
-          <span className="inline-flex items-center gap-1">
-            <Sparkles className="h-3.5 w-3.5" />
-            {composto ? "Força complementar: melhor exercício" : "Melhor recomendação"}
-          </span>
-        </div>
-        <div className="p-6">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-            <div className="flex flex-col items-center">
-              <ScoreRing value={best.score} size={112} label="de 100" />
-              <span className="mt-1 text-xs font-semibold text-ink-2">
-                Adequação: {adequacaoLabel(best.score)}
-              </span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-display text-2xl font-bold text-ink">{best.exercise.nome}</h3>
-                {/* "Escolhido" dizia que a escolha já estava feita. É o mais adequado do
-                    ranking; quem escolhe é o profissional, no botão ao lado. */}
-                <Pill tone="primary">Mais adequado</Pill>
-                <span className="ml-auto">
-                  {botaoSelecao(best, true)}
-                </span>
-              </div>
-              <p className="mt-2 text-ink-2">{best.exercise.resumoPratico}</p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                <Pill tone={best.equipDisponivel ? "success" : "warning"} icon={best.equipDisponivel ? <Check className="h-3 w-3" /> : undefined}>
-                  {best.exercise.equipamento}{best.equipDisponivel ? " disponível" : " (não marcado)"}
-                </Pill>
-                {best.reasons.map((r) => (
-                  <Pill key={r} tone="primary">
-                    {r}
-                  </Pill>
-                ))}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button onClick={() => onJustify(best)} className={buttonClasses("secondary", "sm")}>
-                  <Info className="h-4 w-4" /> Ver justificativa
-                </button>
-                <Link to={`/movement-lab/${best.exercise.slug}`} className={buttonClasses("outline", "sm")}>
-                  Ver no Laboratório <ArrowRight className="h-4 w-4" />
-                </Link>
-                <button
-                  onClick={() => toggleCompare(best.exercise.slug)}
-                  disabled={!compare.includes(best.exercise.slug) && compare.length >= 3}
-                  aria-pressed={compare.includes(best.exercise.slug)}
-                  className={cn(
-                    buttonClasses(compare.includes(best.exercise.slug) ? "secondary" : "outline", "sm"),
-                    !compare.includes(best.exercise.slug) && compare.length >= 3 && "cursor-not-allowed opacity-50",
-                  )}
-                >
-                  {compare.includes(best.exercise.slug) ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                  Comparar
-                </button>
-              </div>
-              {best.cautions.length > 0 && (
-                <ul className="mt-3 space-y-1">
-                  {best.cautions.map((c) => (
-                    <li key={c} className="flex gap-2 text-xs text-warning">
-                      <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-warning-fill" />
-                      {c}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      </Card>
+      {/* Melhor recomendação: o mesmo cartão das outras, com a nota em navy. No plano
+          composto, a linha de cima diz que a força entra como complemento das modalidades. */}
+      <div>
+        <p className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-[0.12em] text-analysis-text">
+          <Sparkles aria-hidden className="h-3.5 w-3.5" />
+          {composto ? "Força complementar: melhor exercício" : "Melhor recomendação"}
+        </p>
+        {cartaoRecomendacao(best, true)}
+      </div>
 
       {/* O que a nota significa — evita a leitura errada de "% match" */}
       <p className="text-xs leading-relaxed text-ink-3">
@@ -2421,7 +2482,7 @@ function Results({
           <p className="mb-3 text-xs text-ink-3">
             Tudo aqui pode ser prescrito com o que {alunoNome ?? "o aluno"} já tem.
           </p>
-          <div className="grid gap-4 md:grid-cols-2">{disponiveisVisiveis.map(renderOption)}</div>
+          <div className="grid gap-3 md:grid-cols-2 md:gap-4">{disponiveisVisiveis.map(renderOption)}</div>
           {disponiveis.length > 6 && (
             <button
               onClick={() => setVerTodas((v) => !v)}
@@ -2441,12 +2502,37 @@ function Results({
             Estes exercícios pedem algo fora da lista marcada; a nota fica limitada a 65 até o
             equipamento entrar. Úteis se você puder adaptar o ambiente.
           </p>
-          <div className="grid gap-4 md:grid-cols-2">{foraEquip.slice(0, 4).map(renderOption)}</div>
+          <div className="grid gap-3 md:grid-cols-2 md:gap-4">{foraEquip.slice(0, 4).map(renderOption)}</div>
         </div>
       )}
 
+      {/* RETIRADOS PELO PERFIL: à vista, com o motivo, e fechados por padrão. Somem das
+          opções (não são alternativa), mas não somem da tela: o profissional precisa saber
+          que o motor viu a restrição e o que ela tirou. */}
+      {retirados.length > 0 && (
+        <details className="group rounded-card border border-border bg-surface">
+          <summary className="flex min-h-[48px] cursor-pointer select-none flex-wrap items-center gap-x-2 gap-y-1 px-4 py-3 text-sm font-semibold text-ink">
+            <ShieldAlert aria-hidden className="h-4 w-4 shrink-0 text-danger" />
+            Retirados pelo perfil
+            <span className="font-normal text-ink-2">
+              ·{" "}
+              {retirados.length === 1
+                ? "1 exercício incompatível com a restrição declarada"
+                : `${retirados.length} exercícios incompatíveis com a restrição declarada`}
+            </span>
+          </summary>
+          <div className="grid gap-3 border-t border-surface-mute p-3 md:grid-cols-2">
+            {retirados.map((r) => cartaoRecomendacao(r))}
+          </div>
+        </details>
+      )}
+
       {/* só os mais recomendados no picker — o pool inteiro viraria um paredão de chips */}
-      <Comparador compare={compare} setCompare={setCompare} candidatos={[best, ...others].slice(0, 6)} />
+      <Comparador
+        compare={compare}
+        setCompare={setCompare}
+        candidatos={[best, ...others].filter((r) => !r.excluido).slice(0, 6)}
+      />
     </div>
   );
 }
