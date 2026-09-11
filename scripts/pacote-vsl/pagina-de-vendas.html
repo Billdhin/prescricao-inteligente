@@ -24,12 +24,13 @@
     * { box-sizing: border-box; }
     body { margin: 0; background: #0B1628; color: #F3F1EA; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
     main { width: min(980px, 100% - 32px); margin: 0 auto; padding: 48px 0 64px; text-align: center; }
-    .selo { font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: #F0B429; margin: 0; }
-    h1 { font-size: clamp(28px, 4.4vw, 48px); line-height: 1.08; margin: 14px auto 0; max-width: 18em; text-wrap: balance; }
+    /* Escala de tipo: 12 (rótulo curto) · 16 (texto e botão) · 20 · título · preço */
+    .selo { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: #F0B429; margin: 0; }
+    h1 { font-size: clamp(28px, 4.4vw, 48px); line-height: 1.08; margin: 0 auto; max-width: 18em; text-wrap: balance; }
     h1 em { font-style: normal; color: #F0B429; }
     .sub { color: #B9C6D6; max-width: 40em; margin: 16px auto 0; }
     .moldura { margin-top: 32px; border-radius: 18px; box-shadow: 0 60px 110px -40px rgba(0,0,0,.9), 0 0 0 1px rgba(232,163,23,.35); --vsl-raio: 18px; }
-    .dica { color: #8FA0B5; font-size: 14px; margin-top: 14px; }
+    .dica { color: #8FA0B5; margin-top: 14px; }
 
     /* ===== CÓDIGO DE DELAY (igual ao da VTurb): tudo com a classe "esconder" fica oculto ===== */
     .esconder { display: none !important; }
@@ -38,15 +39,15 @@
 
     .oferta { margin: 40px auto 0; max-width: 560px; background: #0E1A2E; border: 1px solid rgba(232,163,23,.35); border-radius: 20px; padding: 32px 28px; }
     .preco { font-size: clamp(44px, 7vw, 64px); font-weight: 800; margin: 6px 0 0; }
-    .preco small { font-size: .4em; color: #B9C6D6; }
+    .preco small { font-size: 20px; color: #B9C6D6; }
     .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 58px; padding: 0 34px; margin-top: 16px; width: 100%; max-width: 380px;
-           border-radius: 14px; background: #E8A317; color: #17202E; font-weight: 800; font-size: 17px; text-decoration: none; }
+           border-radius: 14px; background: #E8A317; color: #17202E; font-weight: 800; font-size: 16px; text-decoration: none; }
     .cta:hover { background: #F0B429; }
   </style>
 </head>
 <body>
   <main>
-    <p class="selo">Headline da VTurb: o que a pessoa ganha</p>
+    <!-- Headline no modelo da VTurb: o que a pessoa ganha, em uma frase, antes do play. -->
     <h1>Um título que prende <em>antes do play.</em></h1>
     <p class="sub">Uma linha dizendo por que vale assistir até o fim.</p>
 
