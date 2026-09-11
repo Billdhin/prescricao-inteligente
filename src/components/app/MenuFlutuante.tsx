@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
  * do que não cabe nos cinco destinos da barra: ao tocar, ele gira e vira um "×", a tela escurece
  * e os atalhos sobem um a um, cada um com o rótulo numa pílula e o ícone num círculo colorido.
  *
- * - Cadastrar aluno fica colado ao botão, que é onde o polegar já está e a ação mais usada.
+ * - A ordem é do mais usado (topo) para o menos usado (junto do botão): ver `ORDEM`.
  * - Estudar, Laboratório Visual e Protocolos vêm de `MAIS`; Ajuda e Configurações, de `CONTA`
  *   (nav.ts), a mesma lista que a lateral, a busca e o check:menu leem. "Sair da conta" mora em
  *   Configurações, longe de um toque acidental num leque.
@@ -37,12 +37,32 @@ const CIRCULO: Record<string, string> = {
 };
 const CIRCULO_NEUTRO = "bg-surface text-ink ring-1 ring-inset ring-border";
 
+/**
+ * A ORDEM DO LEQUE, de cima para baixo, do que se usa mais para o que se usa menos.
+ *
+ * O leque se lê como uma lista, de cima para baixo (foi a leitura do Filipe em 11/09/2026):
+ * a primeira versão punha o mais usado colado ao botão, e Configurações e Ajuda acabavam no
+ * topo, como se fossem o destaque. Agora:
+ * 1. Cadastrar aluno: a ação que faz a carteira crescer, e a que o "+" fazia sozinho antes.
+ * 2. Laboratório Visual: consultado no meio do trabalho, ao montar e explicar o treino.
+ * 3. Protocolos: o ponto de partida quando chega um aluno com condição.
+ * 4. Estudar: estudo tem hora marcada, não é gesto do dia a dia.
+ * 5 e 6. Ajuda e Configurações: quase nunca, e por isso embaixo, junto do "×".
+ * Destino que entrar em MAIS ou CONTA e não estiver aqui vai para antes de Ajuda.
+ */
+const ORDEM = ["/alunos?novo=1", "/movement-lab", "/protocols", "/aprender", "/tutorial", "/account"];
+
 function montarAtalhos(): Atalho[] {
   const cadastrar = PRIMARIOS.flatMap((i) => i.children ?? []).find((c) => c.to === "/alunos?novo=1");
-  // Da mais distante do polegar (topo) para a mais próxima (colada ao botão).
-  const lista: NavItem[] = [...CONTA].reverse().concat([...MAIS].reverse());
-  if (cadastrar) lista.push(cadastrar as NavItem);
-  return lista.map((item) => ({ item, circulo: CIRCULO[item.to] ?? CIRCULO_NEUTRO }));
+  const todos: NavItem[] = [...(cadastrar ? [cadastrar as NavItem] : []), ...MAIS, ...CONTA];
+  const posicao = (to: string) => {
+    const i = ORDEM.indexOf(to);
+    return i >= 0 ? i : ORDEM.indexOf("/tutorial") - 0.5;
+  };
+  return todos
+    .slice()
+    .sort((a, b) => posicao(a.to) - posicao(b.to))
+    .map((item) => ({ item, circulo: CIRCULO[item.to] ?? CIRCULO_NEUTRO }));
 }
 
 const DURACAO = 280;
@@ -169,7 +189,8 @@ export function MenuFlutuante() {
                       style={{ transitionDelay: `${atraso}ms`, transformOrigin: "right center" }}
                     >
                       <Link
-                        ref={doBotao === 0 ? primeiroRef : undefined}
+                        // O foco do teclado entra no primeiro da lista, que é o mais usado.
+                        ref={i === 0 ? primeiroRef : undefined}
                         to={item.to}
                         tabIndex={aberto ? undefined : -1}
                         aria-current={ativo ? "page" : undefined}
