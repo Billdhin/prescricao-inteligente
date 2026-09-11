@@ -106,7 +106,11 @@ export default {
       animation: {
         "fade-up": "fade-up .4s ease both",
         pulseDot: "pulseDot 1.8s ease-in-out infinite",
-        entra: "entra .35s ease both",
+        // `backwards`, e não `both`: o Chrome guarda o fim de "translateY(8px) -> none" como
+        // matrix(1,0,0,1,0,0), e esse transform de identidade ainda prende o `position: fixed`.
+        // O prontuário abria em y=961 numa janela de 720 na página rolada. Sem preencher o fim,
+        // a animação some quando acaba e o transform volta a ser `none`.
+        entra: "entra .35s ease backwards",
         sobe: "sobe .8s cubic-bezier(.2,.8,.2,1) both",
         pulso: "pulso 1.6s ease infinite",
         cresce: "cresce .9s cubic-bezier(.2,.8,.2,1) both",
