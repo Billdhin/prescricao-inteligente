@@ -66,7 +66,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;backgr
 .hotspot{position:absolute;z-index:2;border-radius:999px;cursor:pointer;display:block}
 .hotspot:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .barra{position:absolute;left:0;right:0;bottom:0;z-index:2;height:var(--altura,5px);background:rgba(255,255,255,.18);pointer-events:none}
-.barra i{display:block;height:100%;width:0;background:var(--vsl-destaque,#E8A317);transition:width .25s linear}
+.barra i{display:block;height:100%;width:100%;transform-origin:0 50%;transform:scaleX(0);background:var(--vsl-destaque,#E8A317);transition:transform .25s linear}
 .icone{appearance:none;border:0;cursor:pointer;position:absolute;z-index:4;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
   background:rgba(5,8,15,.55);color:#fff}
 .icone.cheia{right:10px;bottom:14px}
@@ -322,7 +322,7 @@ export class MapaVsl extends HTMLElement {
 
   private tick() {
     const v = this.video, cfg = this.cfg, t = v.currentTime;
-    if (this.estado !== "retomar") this.el.barraI.style.width = `${(barraExibida(t / cfg.duracao, cfg.barra.modo, cfg.barra.forca) * 100).toFixed(2)}%`;
+    if (this.estado !== "retomar") this.el.barraI.style.transform = `scaleX(${barraExibida(t / cfg.duracao, cfg.barra.modo, cfg.barra.forca).toFixed(4)})`;
     if (this.estado !== "assistindo") return;
 
     if (Math.abs(t - this.ultimoSalvo) >= 2) {
