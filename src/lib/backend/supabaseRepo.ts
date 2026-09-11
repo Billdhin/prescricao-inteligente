@@ -119,6 +119,9 @@ function alunoToRow(a: Aluno, userId: string) {
       // de uso porque o TIPO não comporta.
       farmacos: a.farmacos,
       farmacosNaoInformado: a.farmacosNaoInformado,
+      // "nenhuma medicação" e as sugestões descartadas: no mesmo blob, pelo mesmo motivo.
+      farmacosNenhum: a.farmacosNenhum,
+      farmacosDescartados: a.farmacosDescartados,
     },
   };
 }
@@ -158,6 +161,8 @@ function rowToAluno(r: Record<string, any>): Aluno {
     // "não declarou" (undefined), que é o estado válido e não vira lista vazia.
     farmacos: Array.isArray(j.farmacos) ? j.farmacos : undefined,
     farmacosNaoInformado: j.farmacosNaoInformado ?? undefined,
+    farmacosNenhum: j.farmacosNenhum ?? undefined,
+    farmacosDescartados: Array.isArray(j.farmacosDescartados) ? j.farmacosDescartados : undefined,
   };
 }
 

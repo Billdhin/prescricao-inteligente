@@ -118,7 +118,8 @@ function temDado(aluno: Aluno, id: SecaoPerfilId): boolean {
         (Boolean(aluno.grupoEspecial) || aluno.semCondicaoDeclarada === true) && aluno.restricoes.length > 0
       );
     case "medicamentos":
-      return farmacosAtivos(aluno.farmacos).length > 0 || aluno.farmacosNaoInformado === true;
+      // "Nenhuma medicação" é resposta, como a classe marcada e o "não sei".
+      return farmacosAtivos(aluno.farmacos).length > 0 || aluno.farmacosNaoInformado === true || aluno.farmacosNenhum === true;
     case "equipamentos":
       return false;
     case "notas":

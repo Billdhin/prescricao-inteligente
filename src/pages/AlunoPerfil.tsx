@@ -454,22 +454,26 @@ function SecaoSaude({
           <p className="text-sm text-ink-2">
             {classesMarcadas > 0
               ? `${classesMarcadas} classe${classesMarcadas === 1 ? "" : "s"} marcada${classesMarcadas === 1 ? "" : "s"}.`
-              : "Só a classe. Ajuda a ler frequência cardíaca e glicemia."}
+              : aluno.farmacosNenhum
+                ? "Registrado: nenhuma medicação contínua."
+                : "Só a classe. Ajuda a ler frequência cardíaca e glicemia."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => onIrPara("medicamentos")} className={buttonClasses("secondary", "sm")}>
-            {classesMarcadas > 0 ? "Ver" : "Preencher"}
+            {classesMarcadas > 0 || aluno.farmacosNenhum ? "Ver" : "Preencher"}
           </button>
           {/* O atalho só existe enquanto não há classe marcada: com classe declarada, "não
               sei" apagaria a declaração daqui, sem mostrar o que estava sendo apagado. E ele
               desmarca no segundo clique, como o do passo de medicamentos. */}
-          {classesMarcadas === 0 && (
+          {classesMarcadas === 0 && !aluno.farmacosNenhum && (
             <button
               type="button"
               role="checkbox"
               aria-checked={Boolean(aluno.farmacosNaoInformado)}
-              onClick={() => onPatch({ farmacosNaoInformado: aluno.farmacosNaoInformado ? undefined : true })}
+              onClick={() =>
+                onPatch({ farmacosNaoInformado: aluno.farmacosNaoInformado ? undefined : true, farmacosNenhum: undefined })
+              }
               className={cn(buttonClasses("ghost", "sm"), aluno.farmacosNaoInformado && "text-success")}
             >
               {aluno.farmacosNaoInformado && <Check aria-hidden className="h-4 w-4" />}
@@ -826,6 +830,7 @@ function SelecionadosDoPerfil({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: P
     <SelecionadosFarmacos
       value={aluno.farmacos ?? []}
       naoInformado={Boolean(aluno.farmacosNaoInformado)}
+      nenhum={Boolean(aluno.farmacosNenhum)}
       onChange={gravarFarmacos(onPatch)}
       className="mt-3.5"
     />
@@ -833,13 +838,26 @@ function SelecionadosDoPerfil({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: P
 }
 
 function SecaoMedicamentos({ aluno, onPatch }: { aluno: Aluno; onPatch: (p: Partial<Aluno>) => void }) {
+  const grupos = [aluno.grupoEspecial, ...(aluno.condicoesAtencao ?? [])].filter((g): g is string => Boolean(g));
   return (
     <MedicamentosDoPerfil
       value={aluno.farmacos ?? []}
       naoInformado={Boolean(aluno.farmacosNaoInformado)}
-      onChange={gravarFarmacos(onPatch)}
+      nenhum={Boolean(aluno.farmacosNenhum)}
+      descartados={aluno.farmacosDescartados ?? []}
+      grupos={grupos}
+      nomeAluno={aluno.nome}
+      linkSaude={`/alunos/${aluno.id}/perfil?secao=saude`}
+      // Os quatro campos são um estado só e gravam juntos; vazio volta a "não declarado".
+      onChange={(e) =>
+        onPatch({
+          farmacos: e.farmacos.length ? e.farmacos : undefined,
+          farmacosNaoInformado: e.naoInformado || undefined,
+          farmacosNenhum: e.nenhum || undefined,
+          farmacosDescartados: e.descartados.length ? e.descartados : undefined,
+        })
+      }
       idBase="perfil-farm"
-      semSelecionados
     />
   );
 }

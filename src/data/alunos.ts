@@ -1,7 +1,7 @@
 import type { Nivel } from "./types";
 import type { GpsAnswers, GpsObjetivo } from "@/lib/gps/engine";
 import { criarRestricao, type RestricaoSelecionada } from "@/lib/gps/restricoes";
-import type { FarmacoSelecionado } from "./farmacos";
+import type { FarmacoClasseId, FarmacoSelecionado } from "./farmacos";
 import type { CobrancaAluno } from "./cobranca";
 
 /**
@@ -43,6 +43,19 @@ export interface Aluno {
    * aluno.
    */
   farmacosNaoInformado?: boolean;
+  /**
+   * O profissional respondeu que o aluno NÃO usa medicação contínua (11/09/2026, "Nenhuma
+   * medicação" do protótipo). Estado declarado, irmão de `farmacosNaoInformado` e de
+   * `semCondicaoDeclarada`: a lista vazia não servia para dizer isso, porque ao gravar ela vira
+   * "não declarado" (ausente), e silêncio não é resposta. Exclui `farmacos` e o "não sei".
+   */
+  farmacosNenhum?: boolean;
+  /**
+   * Classes que o sistema sugeriu pelo perfil ("Prováveis pelo perfil dele") e o profissional
+   * respondeu "Não usa". Guardadas para a sugestão não voltar como pergunta aberta; não
+   * afirmam nada sobre o aluno além de que aquela classe foi descartada.
+   */
+  farmacosDescartados?: FarmacoClasseId[];
   /** equipamentos disponíveis no local de treino */
   equipamentos: string[];
   observacoes?: string;

@@ -146,7 +146,7 @@ export function prontidaoParaPrescrever(aluno: Aluno, ctx: CtxProntidao): Pronti
   }
 
   /* 4. Medicação: classe declarada, ou "não sei / não informar" declarado. */
-  if (farmacosAtivos(aluno.farmacos).length === 0 && aluno.farmacosNaoInformado !== true) {
+  if (farmacosAtivos(aluno.farmacos).length === 0 && aluno.farmacosNaoInformado !== true && aluno.farmacosNenhum !== true) {
     bloqueios.push({
       motivo: "medicacao-nao-decidida",
       titulo: "Pergunte sobre medicação",
