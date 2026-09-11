@@ -16,6 +16,7 @@
  */
 import * as React from "react";
 import { Card } from "@/components/ui/primitives";
+import { GrupoRecolhivel, ItemRecolhivel } from "@/components/ui/camadas";
 import { combineRules, getGroupRule, type OrigemDoNumero } from "@/lib/gps/groupRules";
 import { doseDoPerfilComIdade } from "@/lib/gps/esforco";
 import { getSpecialGroup } from "@/data/specialGroups";
@@ -37,21 +38,20 @@ function LinhaDoLimite({
   origem: OrigemDoNumero;
 }) {
   const refs = origem.refId.map(refCurta).filter(Boolean).join(" · ");
+  // Recolhível como a Ciência: o limite e quem o impôs à vista; referências e a regra que
+  // perdeu a disputa a um toque. O que perdeu continua dito: só deixou de ocupar o trilho.
   return (
-    <li className="border-l-2 border-primary pl-3">
-      <p className="text-sm font-semibold text-ink">
-        {titulo} {unidade(origem.valor)}
-      </p>
-      <p className="text-xs text-ink-2">
+    <ItemRecolhivel tom="primary" titulo={`${titulo} ${unidade(origem.valor)}`}>
+      <span className="block text-xs text-ink-2">
         Imposto por {rotuloDaOrigem(origem.de)}
         {refs ? ` · ${refs}` : ""}
-      </p>
+      </span>
       {origem.preteridos.map((p) => (
-        <p key={p.de} className="mt-0.5 text-xs text-ink-3">
+        <span key={p.de} className="mt-0.5 block text-xs text-ink-3">
           {rotuloDaOrigem(p.de)} pedia {unidade(p.valorPedido)}. Prevaleceu o mais conservador.
-        </p>
+        </span>
       ))}
-    </li>
+    </ItemRecolhivel>
   );
 }
 
@@ -89,7 +89,8 @@ export function DeOndeVemOLimite({
   return (
     <Card className="p-4">
       <h3 className="text-2xs font-semibold uppercase tracking-wide text-ink-3">De onde vem cada limite</h3>
-      <ul className="mt-2 space-y-2.5">
+      <GrupoRecolhivel className="mt-2">
+      <ul className="space-y-1.5">
         {p.cargaRelativaMax && (
           <LinhaDoLimite titulo="Carga até" unidade={(v) => `${v}% de 1RM`} origem={p.cargaRelativaMax} />
         )}
@@ -103,6 +104,7 @@ export function DeOndeVemOLimite({
           />
         )}
       </ul>
+      </GrupoRecolhivel>
       <p className="mt-2 text-2xs leading-snug text-ink-3">
         Quando duas condições pedem coisas diferentes, o limite mais conservador prevalece. A palavra final
         sobre a conduta continua sendo sua.

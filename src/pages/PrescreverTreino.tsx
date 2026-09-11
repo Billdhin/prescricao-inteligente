@@ -44,7 +44,7 @@ import {
 import { efeitoDaEdicao, type EfeitoDaEdicao } from "@/lib/gps/efeitoDaEdicao";
 import { getParam } from "@/data/monitoringParameters";
 import { DeOndeVemOLimite } from "@/components/treino/DeOndeVemOLimite";
-import { TresCamadas } from "@/components/ui/camadas";
+import { TresCamadas, GrupoRecolhivel, ItemRecolhivel } from "@/components/ui/camadas";
 import { letraSessao } from "@/lib/gps/semear";
 import { exercises } from "@/data/exercises";
 import { cn } from "@/lib/utils";
@@ -2841,7 +2841,8 @@ function TrilhoDoPlano({
   }, [plano]);
 
   const resumo = (
-    <ul className="space-y-2.5">
+    <GrupoRecolhivel>
+    <ul className="space-y-1.5">
       <ItemPorque tom="analysis" titulo={`${faixa.reps.valor}, ${faixa.intensidade.valor}`}>
         A faixa de {plano.objetivo.toLowerCase()} para nível {plano.nivel.toLowerCase()}. O alvo de cada
         semana sai de dentro dela, nunca fora.
@@ -2917,6 +2918,7 @@ function TrilhoDoPlano({
           " O catálogo não tem exercícios seguros suficientes para esta frequência: vale rever equipamentos ou restrições."}
       </ItemPorque>
     </ul>
+    </GrupoRecolhivel>
   );
 
   /*
@@ -2934,14 +2936,16 @@ function TrilhoDoPlano({
 
   const pratica = (
     <div className="space-y-3 text-sm text-ink-2">
-      <ul className="space-y-2.5">
-        {topicos.map((t, i) => (
-          <li key={i} className="border-l-2 border-analysis pl-3">
-            {t.titulo && <p className="text-sm font-semibold text-ink">{t.titulo}</p>}
-            <p className="text-sm text-ink-2">{t.texto}</p>
-          </li>
-        ))}
-      </ul>
+      <GrupoRecolhivel>
+        <ul className="space-y-1.5">
+          {topicos.map((t, i) => (
+            // Sem título próprio, o tópico usa a primeira oração como título da linha.
+            <ItemRecolhivel key={i} titulo={t.titulo || t.texto.split(/[.:;]/)[0]}>
+              {t.texto}
+            </ItemRecolhivel>
+          ))}
+        </ul>
+      </GrupoRecolhivel>
       {/* Saiu daqui o item "Este bloco" e o aviso sobre onde a edição vale: o painel do
           bloco em foco diz a mesma coisa logo acima, com mais detalhe, e a edição deixou
           de acontecer nesta tela. */}
@@ -3315,12 +3319,11 @@ function ItemPorque({
   titulo: string;
   children: React.ReactNode;
 }) {
-  const cor = tom === "analysis" ? "border-analysis" : tom === "primary" ? "border-primary" : "border-warning";
+  // Recolhível como a Ciência: título e a primeira linha à vista, a seta abre o resto.
   return (
-    <li className={cn("border-l-2 pl-3", cor)}>
-      <p className="text-sm font-semibold text-ink">{titulo}</p>
-      <p className="text-sm text-ink-2">{children}</p>
-    </li>
+    <ItemRecolhivel tom={tom} titulo={titulo}>
+      {children}
+    </ItemRecolhivel>
   );
 }
 

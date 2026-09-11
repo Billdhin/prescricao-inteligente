@@ -188,6 +188,115 @@ export function ListaReferencias({ ids, className }: { ids: string[]; className?
   );
 }
 
+/*
+ * O MESMO "ABRE E FECHA" DA CIÊNCIA, PARA O RESTO DO TRILHO.
+ *
+ * A Ciência ficou enxuta (uma linha por referência, a seta abre o resto, "Abrir todas" no
+ * alto), e o Resumo, o Na prática e o "De onde vem cada limite", logo ao lado, continuaram
+ * imprimindo cada parágrafo inteiro: o trilho ficava mais alto que a coluna do plano e
+ * deixava meia tela vazia do outro lado (pedido do Dilton, 10/09/2026). Agora cada item
+ * mostra o título e a primeira linha do texto; a seta abre o resto.
+ *
+ * `GrupoRecolhivel` é o "Abrir todas / Recolher todas" do grupo; `ItemRecolhivel` é cada
+ * linha. Os itens contam ao grupo se estão abertos, e o botão do grupo diz o que vai fazer.
+ */
+type ComandoDoGrupo = { abrir: boolean; n: number } | null;
+const GrupoCtx = React.createContext<{
+  comando: ComandoDoGrupo;
+  informar: (id: string, aberto: boolean | null) => void;
+} | null>(null);
+
+export function GrupoRecolhivel({ children, className }: { children: React.ReactNode; className?: string }) {
+  const [comando, setComando] = React.useState<ComandoDoGrupo>(null);
+  const [estado, setEstado] = React.useState<Record<string, boolean>>({});
+  const informar = React.useCallback((id: string, aberto: boolean | null) => {
+    setEstado((s) => {
+      if (aberto === null) {
+        if (!(id in s)) return s;
+        const { [id]: _saiu, ...resto } = s;
+        return resto;
+      }
+      return s[id] === aberto ? s : { ...s, [id]: aberto };
+    });
+  }, []);
+  const valor = React.useMemo(() => ({ comando, informar }), [comando, informar]);
+  const ids = Object.keys(estado);
+  const todasAbertas = ids.length > 0 && ids.every((k) => estado[k]);
+  return (
+    <GrupoCtx.Provider value={valor}>
+      <div className={className}>
+        {ids.length > 1 && (
+          <div className="mb-1.5 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setComando((c) => ({ abrir: !todasAbertas, n: (c?.n ?? 0) + 1 }))}
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              {todasAbertas ? "Recolher todas" : "Abrir todas"}
+            </button>
+          </div>
+        )}
+        {children}
+      </div>
+    </GrupoCtx.Provider>
+  );
+}
+
+const BORDA_DO_TOM = {
+  analysis: "border-analysis",
+  primary: "border-primary",
+  warning: "border-warning",
+  danger: "border-danger",
+} as const;
+
+export function ItemRecolhivel({
+  titulo,
+  tom = "analysis",
+  children,
+}: {
+  titulo: React.ReactNode;
+  tom?: keyof typeof BORDA_DO_TOM;
+  /** o texto do item: fechado, só a primeira linha aparece */
+  children: React.ReactNode;
+}) {
+  const id = React.useId();
+  const grupo = React.useContext(GrupoCtx);
+  const [aberto, setAberto] = React.useState(false);
+  const comando = grupo?.comando;
+  React.useEffect(() => {
+    if (comando) setAberto(comando.abrir);
+  }, [comando]);
+  const informar = grupo?.informar;
+  React.useEffect(() => {
+    informar?.(id, aberto);
+  }, [informar, id, aberto]);
+  React.useEffect(() => () => informar?.(id, null), [informar, id]);
+  return (
+    <li className={cn("border-l-2", BORDA_DO_TOM[tom])}>
+      <button
+        type="button"
+        onClick={() => setAberto((a) => !a)}
+        aria-expanded={aberto}
+        aria-controls={`${id}-corpo`}
+        className="flex w-full items-start gap-2 py-1 pl-3 pr-1 text-left transition-colors hover:bg-surface-soft"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-ink">{titulo}</span>
+          {/* Fechado, a primeira linha do texto segue à vista como prévia, igual ao título da
+              referência na Ciência. Aberto, o texto inteiro. O leitor de tela lê tudo nos dois. */}
+          <span id={`${id}-corpo`} className={cn("block text-sm text-ink-2", !aberto && "line-clamp-1")}>
+            {children}
+          </span>
+        </span>
+        <ChevronDown
+          className={cn("mt-0.5 h-4 w-4 shrink-0 text-ink-2 transition-transform", aberto && "rotate-180")}
+          aria-hidden
+        />
+      </button>
+    </li>
+  );
+}
+
 /** Cabeçalho da camada Ciência quando ela aparece fora de abas (bloco solto). */
 export function SeloCiencia({ children }: { children?: React.ReactNode }) {
   return (
