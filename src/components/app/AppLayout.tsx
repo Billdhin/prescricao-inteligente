@@ -1,9 +1,10 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, MoreHorizontal, Search, Eye, Plus, LogOut, LayoutGrid } from "lucide-react";
+import { Bell, CheckCheck, MoreHorizontal, Search, Eye, Plus, LogOut } from "lucide-react";
 import { Logo, MarcaPino, TelaCarregando } from "@/components/brand/Logo";
 import { GlobalSearch } from "@/components/app/GlobalSearch";
+import { MenuFlutuante } from "@/components/app/MenuFlutuante";
 import { AlternarTema } from "@/components/theme/AlternarTema";
 import { PRIMARIOS, MAIS, BOTTOM, CONTA, itemAtivo, type NavItem } from "@/components/app/nav";
 import { notificacoes } from "@/lib/notificacoes";
@@ -157,8 +158,10 @@ export function AppLayout() {
               navegação, e cada página continua dona do próprio cabeçalho. */}
           <Topbar />
           {/* No celular o respiro é o do protótipo (18 px em cima, 14 nos lados) e o fim da
-              página desconta a barra inferior fixa (73 px) mais a área segura do iPhone. */}
-          <main className="mx-auto w-full min-w-0 max-w-[1180px] flex-1 px-3.5 pb-[calc(97px+env(safe-area-inset-bottom))] pt-[18px] lg:p-8 lg:pb-10">
+              página desconta a barra inferior fixa (73 px), o "+" flutuante que fica acima dela
+              (56 px) e a área segura do iPhone: sem isso o último botão da página morava
+              embaixo do "+". */}
+          <main className="mx-auto w-full min-w-0 max-w-[1180px] flex-1 px-3.5 pb-[calc(160px+env(safe-area-inset-bottom))] pt-[18px] lg:p-8 lg:pb-10">
             <ErrorBoundary chaveDeReset={pathname}>
               <React.Suspense fallback={<RouteFallback />}>
                 {/* Cada tela entra com o mesmo gesto curto do protótipo (sobe 8 px e aparece). */}
@@ -170,7 +173,7 @@ export function AppLayout() {
           </main>
         </div>
       </div>
-      <BotaoCadastrarAluno />
+      <MenuFlutuante />
       <BottomBar />
       {mostrarOnboarding && <OnboardingGate onDone={() => setOnboarding(false)} />}
       <Toasts />
@@ -862,270 +865,10 @@ function Topbar() {
 }
 
 /**
- * "Mais" no MOBILE: a folha de baixo com o que não cabe nos 5 destinos da barra.
- *
- * O DESENHO É O DO PROTÓTIPO (10/09/2026): era uma lista plana de onze linhas iguais, e
- * virou o que ela de fato é, três portas de referência e a conta. O cartão de quem está
- * usando abre a folha; Estudar e Laboratório Visual lado a lado, com os filhos (Grupos
- * Especiais, Consultar, Comparador) como pílulas que LEVAM a eles (no protótipo eram
- * enfeite dentro de um botão só); Protocolos em faixa; e Ajuda, Configurações e Sair em
- * três quadrados. Tudo continua saindo de `MAIS` e `CONTA` (nav.ts), para a busca e o
- * check:menu verem a mesma lista que a folha desenha.
- */
-const FAMILIA_DO_MAIS: Record<string, { fundo: string; tinta: string; descricao: string }> = {
-  "/aprender": { fundo: "bg-primary-tint", tinta: "text-primary", descricao: "text-ink-2" },
-  "/movement-lab": { fundo: "bg-analysis-tint", tinta: "text-analysis", descricao: "text-ink-2" },
-  "/protocols": { fundo: "bg-warning-tint", tinta: "text-warning", descricao: "text-warning" },
-};
-const FAMILIA_PADRAO = { fundo: "bg-surface", tinta: "text-ink", descricao: "text-ink-2" };
-
-function MaisMenu() {
-  const [open, setOpen] = React.useState(false);
-  const { pathname } = useLocation();
-  const botaoRef = React.useRef<HTMLButtonElement>(null);
-  const folhaRef = React.useRef<HTMLDivElement>(null);
-  const cloud = useCloudAuth();
-  const { name, plan, cref, fotoDataUrl } = useUser();
-  const sairDaConta = async () => {
-    if (cloud.configured) await signOut();
-    else {
-      encerrarSessao();
-      window.location.reload();
-    }
-  };
-
-  // Fecha ao trocar de rota (o destino já foi alcançado).
-  React.useEffect(() => setOpen(false), [pathname]);
-
-  React.useEffect(() => {
-    if (!open) return;
-    // O foco entra na folha (ela é um diálogo agora, não uma lista de menu) e Esc fecha
-    // DEVOLVENDO o foco ao botão, senão ele cai no início da página.
-    folhaRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      setOpen(false);
-      botaoRef.current?.focus();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
-
-  const algumAtivo = MAIS.some((i) => itemAtivo(i, pathname)) || CONTA.some((i) => itemAtivo(i, pathname));
-  const aceso = algumAtivo || open;
-  const [largos, faixas] = [MAIS.filter((i) => i.to !== "/protocols"), MAIS.filter((i) => i.to === "/protocols")];
-
-  return (
-    <>
-      <button
-        ref={botaoRef}
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        className="relative flex min-h-[52px] min-w-0 flex-col items-center gap-1 py-1.5 text-2xs font-semibold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary lg:hidden"
-        style={{ color: aceso ? CASCA.barraAtiva : CASCA.tinta2 }}
-      >
-        <span
-          aria-hidden
-          className="grid h-[26px] w-10 place-items-center rounded-full transition-colors"
-          style={{ background: aceso ? CASCA.barraPilula : "transparent" }}
-        >
-          <LayoutGrid className="h-4 w-4" />
-        </span>
-        <span>Mais</span>
-      </button>
-
-      {/* Folha de baixo POR PORTAL. A barra superior tem backdrop-blur, e um
-          ancestral com backdrop-filter vira bloco de contenção de
-          `position: fixed`: sem o portal a folha ancorava dentro do cabeçalho de
-          64px em vez do rodapé da tela (a mesma armadilha do popover de métrica). */}
-      {open &&
-        createPortal(
-          <>
-            <div aria-hidden onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-[#0B1628]/55 lg:hidden" />
-            <div
-              ref={folhaRef}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Mais"
-              tabIndex={-1}
-              className="fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] animate-subir-folha overflow-y-auto rounded-t-[24px] bg-bg px-3.5 pb-[calc(28px+env(safe-area-inset-bottom))] pt-2.5 shadow-[0_-20px_50px_-30px_rgba(0,0,0,.5)] outline-none lg:hidden"
-            >
-              <span aria-hidden className="mx-auto mb-3 block h-1 w-10 rounded-full bg-border" />
-
-              {/* Quem está usando: a mesma pessoa do rodapé da lateral no desktop. Sem selo de
-                  plano inventado: a conta mostra o plano e o CREF que de fato tem. */}
-              <div className="flex items-center gap-3 rounded-[18px] px-3.5 py-3" style={{ background: CASCA.fundo, color: CASCA.tinta }}>
-                {fotoDataUrl ? (
-                  <img src={fotoDataUrl} alt="" className="h-11 w-11 shrink-0 rounded-[14px] object-cover" />
-                ) : (
-                  <span
-                    className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] text-sm font-bold"
-                    style={{ background: "var(--primary)", color: "var(--on-primary)" }}
-                  >
-                    {iniciaisDe(name || "Profissional")}
-                  </span>
-                )}
-                <span className="min-w-0 flex-1">
-                  <b className="block truncate text-[14.5px] font-bold">{name || "Seu perfil"}</b>
-                  <span className="block truncate text-xs" style={{ color: CASCA.tinta3 }}>
-                    {planLabel[plan]}
-                    {cref ? ` · CREF ${cref}` : ""}
-                  </span>
-                </span>
-              </div>
-
-              <p className="mb-2 mt-4 px-0.5 text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Aprender e consultar</p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {largos.map((item) => (
-                  <CartaoDoMais key={item.to} item={item} pathname={pathname} />
-                ))}
-              </div>
-              {faixas.map((item) => (
-                <CartaoDoMais key={item.to} item={item} pathname={pathname} faixa />
-              ))}
-
-              <p className="mb-2 mt-4 px-0.5 text-2xs font-bold uppercase tracking-[0.14em] text-ink-3">Conta</p>
-              <div className="flex gap-2">
-                {CONTA.map((item) => {
-                  const ativo = itemAtivo(item, pathname);
-                  return (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      aria-current={ativo ? "page" : undefined}
-                      className={cn(
-                        "flex flex-1 flex-col items-center gap-2 rounded-[14px] border bg-surface px-1.5 py-3 text-xs font-semibold text-ink",
-                        ativo ? "border-ink" : "border-border",
-                      )}
-                    >
-                      <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-bg">
-                        <item.icon className="h-[18px] w-[18px]" aria-hidden />
-                      </span>
-                      {item.label}
-                    </Link>
-                  );
-                })}
-                <button
-                  type="button"
-                  onClick={() => void sairDaConta()}
-                  className="flex flex-1 flex-col items-center gap-2 rounded-control border border-border bg-surface px-1.5 py-3 text-xs font-semibold text-danger"
-                >
-                  <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-bg">
-                    <LogOut className="h-[18px] w-[18px]" aria-hidden />
-                  </span>
-                  Sair
-                </button>
-              </div>
-            </div>
-          </>,
-          document.body,
-        )}
-    </>
-  );
-}
-
-/**
- * Um cartão da folha "Mais": o destino inteiro é tocável (link esticado), e os filhos são
- * pílulas que levam a eles, por cima do link do pai. `faixa` é o formato largo de uma linha
- * (Protocolos), com "Abrir" à direita.
- */
-function CartaoDoMais({ item, pathname, faixa }: { item: NavItem; pathname: string; faixa?: boolean }) {
-  const f = FAMILIA_DO_MAIS[item.to] ?? FAMILIA_PADRAO;
-  const ativo = pathname === item.to || pathname.startsWith(item.to + "/") || (item.match?.some((p) => pathname.startsWith(p)) ?? false);
-  const icone = (
-    <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-control bg-surface/70", f.tinta)}>
-      <item.icon className="h-[18px] w-[18px]" aria-hidden />
-    </span>
-  );
-  const principal = (
-    <Link
-      to={item.to}
-      aria-current={ativo ? "page" : undefined}
-      className="after:absolute after:inset-0 after:rounded-[18px] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-ink"
-    >
-      <b className="block font-display text-base font-bold tracking-[-0.02em] text-ink">{item.label}</b>
-    </Link>
-  );
-
-  if (faixa) {
-    return (
-      <div className={cn("relative mt-2.5 flex items-center gap-3 rounded-[18px] p-3.5", f.fundo, ativo && "ring-2 ring-ink")}>
-        {icone}
-        <span className="min-w-0 flex-1">
-          {principal}
-          <span className={cn("mt-0.5 block text-xs leading-[1.4]", f.descricao)}>{item.hint}</span>
-        </span>
-        <span aria-hidden className={cn("shrink-0 text-xs font-bold", f.tinta)}>
-          Abrir ›
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("relative flex min-h-[150px] flex-col gap-2.5 rounded-[18px] p-3.5", f.fundo, ativo && "ring-2 ring-ink")}>
-      {icone}
-      <span className="min-w-0">
-        {principal}
-        <span className="mt-[3px] block text-xs leading-[1.4] text-ink-2">{item.hint}</span>
-      </span>
-      {item.children && item.children.length > 0 && (
-        <span className="relative z-10 mt-auto flex flex-wrap gap-1.5">
-          {item.children.map((c) => {
-            const filhoAceso = pathname === c.to;
-            return (
-              <Link
-                key={c.to}
-                to={c.to}
-                aria-current={filhoAceso ? "page" : undefined}
-                className={cn("rounded-full bg-surface/75 px-[9px] py-1 text-2xs font-semibold", f.tinta, filhoAceso && "ring-2 ring-ink")}
-              >
-                {c.label}
-              </Link>
-            );
-          })}
-        </span>
-      )}
-    </div>
-  );
-}
-
-/**
- * O BOTÃO FLUTUANTE DE CADASTRAR ALUNO (protótipo mobile).
- *
- * No celular a ação primária do produto ficava escondida: a barra superior só mostra
- * "Cadastrar aluno" no desktop. O botão âmbar resolve isso onde a ação de fato cabe, que é
- * onde se olha para a carteira: o Meu dia e a lista de alunos. Em qualquer outra tela ele
- * não aparece, porque ali a ação primária é outra e um botão flutuante permanente vira
- * mobília por cima do conteúdo. Fica acima da barra inferior (bottom-[86px]).
- */
-function BotaoCadastrarAluno() {
-  const { pathname } = useLocation();
-  // Só nas duas telas da carteira, e nunca sobre a ficha de um aluno (/alunos/:id).
-  const cabe = pathname === "/dashboard" || pathname === "/alunos";
-  if (!cabe) return null;
-  return (
-    <Link
-      to="/alunos?novo=1"
-      aria-label="Cadastrar aluno"
-      className="fixed bottom-[calc(86px+env(safe-area-inset-bottom))] right-4 z-30 grid place-items-center rounded-[16px] lg:hidden"
-      style={{
-        width: 52,
-        height: 52,
-        background: "var(--warning-fill)",
-        color: "var(--on-warning-fill)",
-        boxShadow: "0 14px 28px -12px rgba(232,163,23,.8)",
-      }}
-    >
-      <Plus className="h-6 w-6" strokeWidth={2.5} aria-hidden />
-    </Link>
-  );
-}
-
-/**
  * Barra inferior do mobile: os MESMOS 5 primários da lateral (identidade referencial em
- * nav.ts), na ordem do ciclo do cuidado, à mão com o polegar, mais o "Mais".
+ * nav.ts), na ordem do ciclo do cuidado, à mão com o polegar. O que não cabe nos cinco
+ * (Estudar, Laboratório, Protocolos, Ajuda, Configurações) abre no "+" flutuante
+ * (MenuFlutuante.tsx), que desde 11/09/2026 substitui o sexto slot "Mais".
  *
  * NO DESENHO DO PROTÓTIPO: ícone numa pílula de 40 x 26 que acende em âmbar translúcido no
  * ativo, rótulo âmbar, e os CONTADORES que a lateral já tinha (Avaliar e Semáforo, da mesma
@@ -1143,7 +886,7 @@ function BottomBar() {
   return (
     <nav
       aria-label="Atalhos do dia"
-      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t px-1 pb-[max(14px,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t px-1 pb-[max(14px,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-md lg:hidden"
       style={{ background: "rgba(11,22,40,.97)", borderColor: "rgba(255,255,255,.06)" }}
     >
       {BOTTOM.map((item) => {
@@ -1180,8 +923,6 @@ function BottomBar() {
           </Link>
         );
       })}
-      {/* Sexto item: o desenho da casca sempre foi "5 destinos mais Mais". */}
-      <MaisMenu />
     </nav>
   );
 }
