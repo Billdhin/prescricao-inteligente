@@ -96,6 +96,14 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_9qlzoZgQeRe__8kbVQVDfQ_aHlgOb6H' }}
         run: npm run build
 
+      # O vídeo do VSL (~280 MB em HLS) mora no ramo vsl-midia, não na main: toda clonagem do
+      # código baixaria o vídeo sem precisar. Ele entra no dist aqui, depois do build (o Vite
+      # esvazia o dist) e antes da publicação. O wrangler só reenvia arquivo que mudou.
+      - name: Trazer a mídia do VSL
+        run: |
+          node scripts/vsl-midia.mjs dist/vsl
+          ls dist/vsl/*/master.m3u8 > /dev/null || { echo "::error::a mídia do VSL não chegou ao dist"; exit 1; }
+
       # Confere que os dois arquivos que fazem a migração valer a pena chegaram ao dist.
       # Sem eles o Cloudflare serviria o site com os mesmos 404 do GitHub Pages, e a
       # migração teria custo sem retorno.

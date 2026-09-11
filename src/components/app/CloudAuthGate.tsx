@@ -19,7 +19,10 @@ type Aba = "entrar" | "criar";
 const traduzErro = traduzErroAuth;
 
 export function CloudAuthGate() {
-  const [aba, setAba] = React.useState<Aba>("entrar");
+  // O botão "Criar minha conta" do VSL chega com ?criar: abre direto na aba de cadastro.
+  const [aba, setAba] = React.useState<Aba>(() =>
+    typeof location !== "undefined" && new URLSearchParams(location.search).has("criar") ? "criar" : "entrar",
+  );
   const [nome, setNome] = React.useState("");
   const [cref, setCref] = React.useState("");
   const [email, setEmail] = React.useState("");

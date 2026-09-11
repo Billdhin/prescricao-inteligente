@@ -51,3 +51,6 @@ npm-debug.log*
 
 # Scripts de bancada temporarios de agente: nunca versionados.
 scripts/tmp-*.ts
+
+# Mídia do VSL: mora no ramo vsl-midia (npm run vsl:midia traz para cá)
+public/vsl/

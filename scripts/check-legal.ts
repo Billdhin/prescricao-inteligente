@@ -187,6 +187,14 @@ const INVENTARIO: { oque: string; gravado: boolean; declarado: RegExp; onde: str
     onde: "supabaseRepo grava `farmacos` no blob `jornada` da tabela alunos",
   },
   {
+    // O player do VSL grava uma sessão anônima por visita (migração 0014). A frase exigida é a
+    // do nome do vídeo, e NÃO "anônimo" ou "medição", que outras seções já poderiam conter.
+    oque: "a medição anônima do vídeo de apresentação (sessão, aparelho, origem e o quanto foi assistido)",
+    gravado: /vsl_registrar/.test(lerCru("src/vsl/metricas.ts")),
+    declarado: /v[íi]deo de apresenta[çc][ãa]o/i,
+    onde: "src/vsl/metricas.ts chama a função vsl_registrar, que grava em vsl_sessoes",
+  },
+  {
     // "foto de perfil", e NÃO "foto": a palavra solta já aparece nas FOTOS do corpo da
     // avaliação, e com ela no padrão este item passaria mesmo sem a foto de perfil declarada.
     oque: "a foto de perfil do aluno (enviada pelo profissional ou pelo próprio aluno)",

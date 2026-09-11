@@ -75,6 +75,8 @@ const Semaforo = pagina(() => import("@/pages/Semaforo"), "Semaforo");
 const Roi = pagina(() => import("@/pages/Roi"), "Roi");
 const CasosRcd = pagina(() => import("@/pages/CasosRcd"), "CasosRcd");
 const CasoRcdDetail = pagina(() => import("@/pages/CasoRcdDetail"), "CasoRcdDetail");
+const Apresentacao = pagina(() => import("@/pages/Apresentacao"), "Apresentacao");
+const PainelVsl = pagina(() => import("@/pages/PainelVsl"), "PainelVsl");
 /*
  * O APRENDER NÃO PASSA PELO `pagina()`, E ISSO NÃO É INCONSISTÊNCIA: É A CORREÇÃO DE UM BUG.
  *
@@ -102,7 +104,8 @@ const CasoRcdDetail = pagina(() => import("@/pages/CasoRcdDetail"), "CasoRcdDeta
  */
 function TemaForaDaLanding() {
   const { pathname } = useLocation();
-  if (pathname === "/") return null;
+  // A página do VSL é escura e autossuficiente como a landing: não precisa da cadeia do tema.
+  if (pathname === "/" || pathname === "/apresentacao") return null;
   return (
     <Suspense fallback={null}>
       <ThemeApplier />
@@ -167,6 +170,9 @@ export default function App() {
         <Route path="/roi" element={<Roi />} />
         <Route path="/casos-rcd" element={<CasosRcd />} />
         <Route path="/casos-rcd/:slug" element={<CasoRcdDetail />} />
+        {/* Página do VSL (player no modelo da VTurb). Pública, mas atrás da cobrança: sem
+            COBRANCA_ATIVA ela só abre com ?previa=1 (ver Apresentacao.tsx). */}
+        <Route path="/apresentacao" element={<Apresentacao />} />
 
         {/* Portal do aluno em tela cheia (prévia do profissional; sem o shell). */}
         <Route path="/alunos/:id/preview" element={<AlunoPreview />} />
@@ -176,6 +182,7 @@ export default function App() {
         {/* App (dentro do shell) */}
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/painel-vsl" element={<PainelVsl />} />
           <Route path="/gps" element={<Gps />} />
           <Route path="/prescrever-treino" element={<PrescreverTreino />} />
           <Route path="/movement-lab" element={<MovementLabList />} />

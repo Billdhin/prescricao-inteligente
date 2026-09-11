@@ -90,6 +90,10 @@ const CSP = [
   // 'unsafe-inline' em style-src é estrutural aqui. Estilo inline não executa código.
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
+  // O player do VSL toca HLS pelo Media Source (hls.js): o vídeo chega ao <video> como blob:,
+  // e o hls.js pode rodar o demuxer num worker criado de blob:.
+  "media-src 'self' blob:",
+  "worker-src 'self' blob:",
   "font-src 'self'",
   `connect-src ${CONEXOES.join(" ")}`,
   // O app não embute ninguém e ninguém deve embutir o app: trava clickjacking.
@@ -126,6 +130,11 @@ const conteudo = `# GERADO POR scripts/gerar-headers.mjs. Não edite à mão: o 
   Cache-Control: public, max-age=31536000, immutable
 
 /fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Mídia do VSL: cada versão do vídeo mora numa pasta própria (a data), então nada ali muda
+# de conteúdo e o cache pode ser eterno. Trocar o vídeo = pasta nova (ver src/vsl/videos.ts).
+/vsl/*
   Cache-Control: public, max-age=31536000, immutable
 
 # O HTML precisa ser revalidado sempre, senão um deploy novo não chega a quem já

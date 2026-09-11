@@ -20,6 +20,10 @@ import {
 import { renderizarComEstados, cssDosEstados, ATTR_ACAO, type Valores } from "./landing/renderizar";
 import "./landing/prototipo.css";
 import template from "./landing/prototipo.html?raw";
+import { VSL_APRESENTACAO } from "@/vsl/videos";
+
+/** O VSL entra na landing no mesmo dia em que a cobrança liga. */
+const VSL_NA_LANDING = COBRANCA_ATIVA;
 
 // O CSS dos hovers/focus autorados no template depende SÓ do template: uma vez por módulo.
 const CSS_ESTADOS = cssDosEstados(template);
@@ -79,6 +83,7 @@ export function Landing() {
   useProgressoRolagem(ref);
   usePreservarFaq(ref, html);
   const ilhaAluno = useIlha(ref, html, "vitrine-aluno");
+  useVslNaLanding(ref, html);
 
   return (
     <>
@@ -88,6 +93,32 @@ export function Landing() {
         createPortal(<VitrineDoAluno marca={marcaDemo} onChange={setMarcaDemo} mobile={st.mobile} />, ilhaAluno)}
     </>
   );
+}
+
+/**
+ * O PLAYER DO VSL NA LANDING, E POR QUE ELE NÃO É UMA ILHA COMO A VITRINE.
+ *
+ * Cada mudança de estado re-injeta o HTML inteiro. Uma ilha React seria recriada, e recriar um
+ * <video> reinicia o vídeo: girar o celular ou abrir o menu mandaria quem assiste de volta ao
+ * zero. Então o <mapa-vsl> é criado UMA vez e só é devolvido ao novo buraco, no layout effect,
+ * na mesma tarefa da re-injeção: o navegador não chega a pausar um vídeo que sai e volta à
+ * página antes do próximo ciclo. O código do player só é baixado se o VSL estiver no ar.
+ */
+function useVslNaLanding(ref: React.RefObject<HTMLDivElement | null>, html: string) {
+  const player = React.useRef<HTMLElement | null>(null);
+  React.useLayoutEffect(() => {
+    if (!VSL_NA_LANDING) return;
+    const buraco = ref.current?.querySelector<HTMLElement>("[data-ilha=\"vsl\"]");
+    if (!buraco) return;
+    if (!player.current) {
+      const el = document.createElement("mapa-vsl");
+      el.setAttribute("video", VSL_APRESENTACAO.id);
+      el.tabIndex = 0;
+      player.current = el;
+      void import("@/vsl/player").then(({ registrarVsl }) => registrarVsl());
+    }
+    if (player.current.parentElement !== buraco) buraco.appendChild(player.current);
+  }, [ref, html]);
 }
 
 /**
@@ -257,6 +288,9 @@ function construirValores(st: Estado, mudar: (p: Partial<Estado>) => void): Valo
 
     cobrancaAtiva: COBRANCA_ATIVA,
     semCobranca: !COBRANCA_ATIVA,
+    // O VSL promete sete dias com reembolso: vai ao ar junto com a cobrança (check:vsl).
+    vslNoAr: VSL_NA_LANDING,
+    vslEmBreve: !VSL_NA_LANDING,
 
     // Responsivo do canvas: atributo de aparelho + colunas por faixa de largura.
     mobileAttr: String(st.mobile),
