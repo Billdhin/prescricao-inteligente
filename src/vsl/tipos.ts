@@ -67,6 +67,11 @@ export type ConfigVsl = {
   cores: { destaque: string; textoDestaque: string };
   /** Variantes do teste A/B: cada uma sobrescreve parte da configuração. */
   variantes?: { nome: string; patch: Partial<Pick<ConfigVsl, "autoplay" | "turbo" | "barra">> }[];
+  /**
+   * Para onde vão as métricas (projeto Supabase com o banco/supabase.sql aplicado). Sem este
+   * campo, usa o Supabase do próprio site (variáveis VITE_SUPABASE_*); `false` desliga a medição.
+   */
+  metricas?: { url: string; chave: string; funcao?: string } | false;
 };
 
 /** Eventos que o elemento dispara (mesmos nomes da VTurb). */

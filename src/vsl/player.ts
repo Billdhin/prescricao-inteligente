@@ -95,6 +95,8 @@ export class MapaVsl extends HTMLElement {
   private pixel = 0;
   private pitchFeito = false;
   private ultimoSalvo = 0;
+  private ultimoT = 0;
+  private assistido = 0;
   private ocultos: Oculto[] = [];
   private porAba = false;
   private miniFechado = false;
@@ -145,10 +147,8 @@ export class MapaVsl extends HTMLElement {
 
   private montar() {
     const base = this.externo ?? VIDEOS[this.getAttribute("video") ?? ""];
-    if (!base) {
-      console.warn("[mapa-vsl] vídeo não encontrado:", this.getAttribute("video"));
-      return;
-    }
+    // Sem configuração ainda: espera. MapaVsl.configurar (ou a propriedade `config`) monta depois.
+    if (!base) return;
     this.montado = true;
     const { cfg, variante } = aplicarVariante(base, memoria.sorteio(base.id));
     this.cfg = cfg;
@@ -200,7 +200,7 @@ export class MapaVsl extends HTMLElement {
       this.el.hotspots.appendChild(a);
     }
 
-    this.sessao = new Sessao(cfg.id, variante);
+    this.sessao = new Sessao(cfg.id, variante, cfg.turbo || 1, cfg.metricas);
     this.ligarEventos();
     void this.carregarFonte().then(() => this.decidirInicio());
     this.observar();
@@ -325,6 +325,8 @@ export class MapaVsl extends HTMLElement {
     v.playbackRate = this.cfg.turbo || 1;
     this.porAba = false;
     this.zerarVigia();
+    this.ultimoT = de;
+    this.sessao?.marcar({ segundo_inicio: de });
     this.mudar("assistindo");
     void v.play().catch(() => this.mudar("pausado"));
     this.emitir("player:play");
@@ -332,6 +334,7 @@ export class MapaVsl extends HTMLElement {
 
   private pausar() {
     if (this.estado !== "assistindo") return;
+    if (this.sessao) this.sessao.marcar({ pausas: this.sessao.atual.pausas + 1 });
     this.video.pause();
     this.mudar("pausado");
     this.emitir("player:pause");
@@ -350,7 +353,7 @@ export class MapaVsl extends HTMLElement {
   }
 
   private cliqueCta() {
-    this.sessao?.marcar({ clicou_cta: true });
+    this.sessao?.marcar({ clicou_cta: true, cta_em: this.video.currentTime });
     eventoPixel("VSL_CTA", { video: this.cfg.id, tempo: Math.floor(this.video.currentTime) });
   }
 
@@ -366,7 +369,12 @@ export class MapaVsl extends HTMLElement {
       memoria.salvarPonto(cfg.id, t);
       this.ultimoSalvo = t;
     }
-    this.sessao?.marcar({ segundo_max: t });
+    // Tempo de fato assistido: soma só avanços normais entre dois ticks (pausa, busca e aba
+    // escondida não entram), então retomar não conta o mesmo trecho duas vezes.
+    const passo = t - this.ultimoT;
+    if (passo > 0 && passo < 2) this.assistido += passo;
+    this.ultimoT = t;
+    this.sessao?.marcar({ segundo_max: t, tempo_assistido: this.assistido });
 
     const d = degrauPixel(t, cfg.duracao);
     for (let p = this.pixel + 5; p <= d; p += 5) eventoPixel(`View${p}%`, { video: cfg.id });
@@ -433,8 +441,15 @@ export class MapaVsl extends HTMLElement {
     };
     on(v, "timeupdate", () => this.tick());
     on(v, "ended", () => this.fim());
-    on(v, "waiting", () => (el.carregando.hidden = this.estado !== "assistindo"));
-    on(v, "playing", () => (el.carregando.hidden = true));
+    on(v, "waiting", () => {
+      el.carregando.hidden = this.estado !== "assistindo";
+      // travamento = parar para carregar no meio de quem já estava assistindo com som
+      if (this.estado === "assistindo" && this.assistido > 1 && this.sessao) this.sessao.marcar({ travamentos: this.sessao.atual.travamentos + 1 });
+    });
+    on(v, "playing", () => {
+      el.carregando.hidden = true;
+      this.sessao?.marcar({ carregamento_ms: performance.now() }); // só o primeiro fica
+    });
     on(v, "contextmenu", (e) => e.preventDefault());
     on(el.clique, "click", () => this.cliqueNoPalco());
     on(this.raiz.querySelector(".cartao")!, "click", () => this.ativarSom());
@@ -486,6 +501,7 @@ export class MapaVsl extends HTMLElement {
       return;
     }
     this.classList.add("cheia");
+    this.sessao?.marcar({ tela_cheia: true });
     if (palco.requestFullscreen) void palco.requestFullscreen().catch(() => {});
   }
 
@@ -499,6 +515,7 @@ export class MapaVsl extends HTMLElement {
         if (e.intersectionRatio > 0.35) this.soltarMini();
         else if (this.estado === "assistindo" && !this.miniFechado) {
           this.classList.add("flutuante");
+          this.sessao?.marcar({ mini_player: true });
           this.el.fechar.hidden = false;
         }
       },

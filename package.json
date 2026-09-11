@@ -56,7 +56,8 @@
     "check:declaracoes": "tsx scripts/check-declaracoes.ts",
     "check:acervo": "tsx scripts/check-acervo.ts",
     "check:vsl": "tsx scripts/check-vsl.ts",
-    "vsl:midia": "node scripts/vsl-midia.mjs"
+    "vsl:midia": "node scripts/vsl-midia.mjs",
+    "vsl:pacote": "node scripts/vsl-pacote.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

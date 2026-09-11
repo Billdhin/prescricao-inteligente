@@ -134,8 +134,11 @@ const conteudo = `# GERADO POR scripts/gerar-headers.mjs. Não edite à mão: o 
 
 # Mídia do VSL: cada versão do vídeo mora numa pasta própria (a data), então nada ali muda
 # de conteúdo e o cache pode ser eterno. Trocar o vídeo = pasta nova (ver src/vsl/videos.ts).
+# O CORS aberto é para o exemplo do pacote do player (npm run vsl:pacote), que toca este vídeo
+# de outro endereço: o hls.js busca os pedaços por fetch. O vídeo já é público.
 /vsl/*
   Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
 
 # O HTML precisa ser revalidado sempre, senão um deploy novo não chega a quem já
 # visitou o site.

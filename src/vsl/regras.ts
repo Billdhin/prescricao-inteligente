@@ -69,19 +69,52 @@ export function tipoAparelho(ua: string, largura: number): "celular" | "tablet" 
 }
 
 /**
- * De onde veio a visita: o `utm_source` do link quando existe, senão o domínio de quem
- * indicou, senão "direto". Só o domínio, nunca o endereço inteiro de quem indicou.
+ * De onde veio a visita, como a VTurb separa: o `utm_source` do link quando existe, senão o
+ * domínio de quem indicou, senão "direto" (só o domínio, nunca o endereço inteiro de quem
+ * indicou, que pode carregar dado da pessoa). Os outros UTMs vão junto para separar mídia,
+ * campanha, criativo (`utm_content`) e termo.
  */
-export function origemDaVisita(busca: string, referrer: string, host: string): { origem: string; campanha: string | null } {
+export type Origem = { origem: string; midia: string | null; campanha: string | null; conteudo: string | null; termo: string | null };
+export function origemDaVisita(busca: string, referrer: string, host: string): Origem {
   const q = new URLSearchParams(busca);
-  const utm = q.get("utm_source");
-  const campanha = q.get("utm_campaign");
-  if (utm) return { origem: utm.slice(0, 60), campanha: campanha?.slice(0, 80) ?? null };
+  const corta = (k: string, n: number) => q.get(k)?.trim().slice(0, n) || null;
+  const utms = { midia: corta("utm_medium", 60), campanha: corta("utm_campaign", 80), conteudo: corta("utm_content", 80), termo: corta("utm_term", 80) };
+  const utm = corta("utm_source", 60);
+  if (utm) return { origem: utm, ...utms };
   try {
     const r = referrer ? new URL(referrer).hostname.replace(/^www\./, "") : "";
-    if (r && r !== host.replace(/^www\./, "")) return { origem: r.slice(0, 60), campanha: campanha?.slice(0, 80) ?? null };
+    if (r && r !== host.replace(/^www\./, "")) return { origem: r.slice(0, 60), ...utms };
   } catch {
     /* referrer inválido: trata como direto */
   }
-  return { origem: "direto", campanha: campanha?.slice(0, 80) ?? null };
+  return { origem: "direto", ...utms };
+}
+
+/** Sistema do aparelho, só o nome (sem versão: não serve para medir o vídeo e ajuda a identificar). */
+export function sistemaOperacional(ua: string): string {
+  if (/iPhone|iPad|iPod/.test(ua)) return "iOS";
+  if (/Android/.test(ua)) return "Android";
+  if (/CrOS/.test(ua)) return "ChromeOS";
+  if (/Windows/.test(ua)) return "Windows";
+  if (/Macintosh|Mac OS X/.test(ua)) return "macOS";
+  if (/Linux/.test(ua)) return "Linux";
+  return "outro";
+}
+
+/**
+ * Navegador, só o nome. Os navegadores internos do Instagram, do Facebook e do TikTok vêm
+ * separados de propósito: é por eles que chega quase todo o tráfego de anúncio, e o vídeo se
+ * comporta diferente lá (autoplay, som, tela cheia).
+ */
+export function navegadorDe(ua: string): string {
+  if (/Instagram/.test(ua)) return "Instagram";
+  if (/FBAN|FBAV|FB_IAB|FBIOS/.test(ua)) return "Facebook";
+  if (/musical_ly|TikTok|BytedanceWebview/.test(ua)) return "TikTok";
+  if (/SamsungBrowser/.test(ua)) return "Samsung";
+  if (/Edg\//.test(ua)) return "Edge";
+  if (/OPR\/|Opera/.test(ua)) return "Opera";
+  if (/Firefox|FxiOS/.test(ua)) return "Firefox";
+  if (/CriOS|Chrome\//.test(ua)) return "Chrome";
+  if (/Safari\//.test(ua)) return "Safari";
+  return "outro";
 }

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exemplo de página de VSL</title>
+  <!--
+    PÁGINA DE EXEMPLO DO PLAYER DE VSL (modelo VTurb)
+
+    Abra este arquivo no navegador e o vídeo de demonstração já toca. Para usar com o SEU vídeo:
+      1. gere a pasta HLS do seu vídeo (ferramentas/gerar-hls.mjs) e hospede;
+      2. troque src, capa, duracao e pitch em MapaVsl.configurar (lá embaixo);
+      3. troque o link do botão da oferta pelo seu checkout.
+
+    O vídeo de demonstração é o do Mapa da Prescrição e só serve para testar o player. As
+    métricas estão DESLIGADAS aqui (metricas: false). Para ligar, veja o LEIA-ME, seção 5.
+  -->
+
+  <!-- "Código de velocidade" da VTurb: adianta a conexão com o servidor do vídeo. -->
+  <link rel="preconnect" href="https://mapadaprescricao.com.br" crossorigin>
+
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0B1628; color: #F3F1EA; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { width: min(980px, 100% - 32px); margin: 0 auto; padding: 48px 0 64px; text-align: center; }
+    .selo { font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; color: #F0B429; margin: 0; }
+    h1 { font-size: clamp(28px, 4.4vw, 48px); line-height: 1.08; margin: 14px auto 0; max-width: 18em; text-wrap: balance; }
+    h1 em { font-style: normal; color: #F0B429; }
+    .sub { color: #B9C6D6; max-width: 40em; margin: 16px auto 0; }
+    .moldura { margin-top: 32px; border-radius: 18px; box-shadow: 0 60px 110px -40px rgba(0,0,0,.9), 0 0 0 1px rgba(232,163,23,.35); --vsl-raio: 18px; }
+    .dica { color: #8FA0B5; font-size: 14px; margin-top: 14px; }
+
+    /* ===== CÓDIGO DE DELAY (igual ao da VTurb): tudo com a classe "esconder" fica oculto ===== */
+    .esconder { display: none !important; }
+    .vsl-revelado { animation: entra .6s ease both; }
+    @keyframes entra { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+    .oferta { margin: 40px auto 0; max-width: 560px; background: #0E1A2E; border: 1px solid rgba(232,163,23,.35); border-radius: 20px; padding: 32px 28px; }
+    .preco { font-size: clamp(44px, 7vw, 64px); font-weight: 800; margin: 6px 0 0; }
+    .preco small { font-size: .4em; color: #B9C6D6; }
+    .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 58px; padding: 0 34px; margin-top: 16px; width: 100%; max-width: 380px;
+           border-radius: 14px; background: #E8A317; color: #17202E; font-weight: 800; font-size: 17px; text-decoration: none; }
+    .cta:hover { background: #F0B429; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="selo">Headline da VTurb: o que a pessoa ganha</p>
+    <h1>Um título que prende <em>antes do play.</em></h1>
+    <p class="sub">Uma linha dizendo por que vale assistir até o fim.</p>
+
+    <!-- ===== O PLAYER (equivale ao <vturb-smartplayer> da VTurb) ===== -->
+    <div class="moldura">
+      <mapa-vsl video="meu-vsl"></mapa-vsl>
+    </div>
+    <p class="dica">Ative o som. O botão aparece durante o vídeo.</p>
+
+    <!-- ===== CONTEÚDO OCULTO: aparece no pitch (e direto em visitas futuras) ===== -->
+    <section class="oferta esconder">
+      <p class="selo">A oferta</p>
+      <p class="preco">R$ 000<small>/ano</small></p>
+      <p class="sub">Troque este bloco pelo seu preço, garantia e condições.</p>
+      <a class="cta" href="https://seu-checkout.com/produto">Quero garantir a minha vaga</a>
+    </section>
+  </main>
+
+  <!-- ===== O ARQUIVO DO PLAYER (um só, ~125 KB comprimido na rede) ===== -->
+  <script src="../player/mapa-vsl.min.js"></script>
+  <script>
+    MapaVsl.configurar({
+      id: "meu-vsl",                                                   // o mesmo do atributo video=""
+      src: "https://mapadaprescricao.com.br/vsl/2026-09-11/master.m3u8", // TROQUE pela sua pasta HLS
+      capa: "https://mapadaprescricao.com.br/vsl/2026-09-11/capa.webp",  // TROQUE pela sua capa
+      duracao: 466,                                                    // duração real, em segundos
+      pitch: 394,                                                      // segundo em que o preço aparece
+      fim: { titulo: "Pronto para começar?", botao: "Quero garantir a minha vaga", href: "https://seu-checkout.com/produto" },
+      cores: { destaque: "#E8A317", textoDestaque: "#0B1628" },
+      metricas: false                                                  // ver LEIA-ME, seção 5
+    });
+
+    // ===== CÓDIGO DE DELAY, o mesmo da VTurb (só muda o seletor do player) =====
+    var delaySeconds = 394; // 6:34 → (6 × 60) + 34
+    var player = document.querySelector("mapa-vsl");
+    player.addEventListener("player:ready", function () {
+      player.displayHiddenElements(delaySeconds, [".esconder"], { persist: true });
+    });
+
+    // ===== OPCIONAL: repassar os UTMs da página para o link do checkout (como a VTurb recomenda) =====
+    (function () {
+      var utms = new URLSearchParams(location.search);
+      document.querySelectorAll("a.cta").forEach(function (a) {
+        var destino = new URL(a.href);
+        utms.forEach(function (valor, chave) { if (/^utm_|^src$|^sck$/.test(chave)) destino.searchParams.set(chave, valor); });
+        a.href = destino.toString();
+      });
+    })();
+  </script>
+</body>
+</html>

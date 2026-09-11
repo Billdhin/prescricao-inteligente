@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel do VSL</title>
+  <!--
+    PAINEL DE MÉTRICAS DO VSL (o "Analytics" da VTurb), em uma página só.
+
+    Precisa do banco criado com banco/supabase-completo.sql e do seu e-mail em vsl_admins
+    (LEIA-ME, seção 5). Abra este arquivo no navegador, preencha a conexão uma vez (fica
+    guardada neste navegador) e entre com o e-mail e a senha de um usuário do seu Supabase.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <style>
+    :root { --fundo: #F6F5F0; --cartao: #fff; --tinta: #17202E; --tinta2: #4A5566; --tinta3: #5B6779; --linha: #E3E4DF; --cor: #1E5CDD; }
+    @media (prefers-color-scheme: dark) { :root { --fundo: #0B1220; --cartao: #121B2C; --tinta: #EEF2F7; --tinta2: #B6C0CE; --tinta3: #8A96A8; --linha: #243248; --cor: #5B8DEF; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--fundo); color: var(--tinta); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { width: min(1120px, 100% - 32px); margin: 0 auto; padding: 32px 0 64px; }
+    h1 { margin: 0; font-size: 28px; } h2 { margin: 0 0 8px; font-size: 17px; }
+    .sub { color: var(--tinta2); margin: 4px 0 0; }
+    .cartao { background: var(--cartao); border: 1px solid var(--linha); border-radius: 16px; padding: 18px; }
+    .grade { display: grid; gap: 12px; }
+    .g4 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .g3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .rotulo { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tinta3); margin: 0; }
+    .valor { font-size: 30px; font-weight: 800; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
+    .nota { font-size: 12.5px; color: var(--tinta2); margin: 2px 0 0; }
+    form { display: grid; gap: 10px; }
+    label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--tinta2); }
+    input { font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--linha); background: var(--fundo); color: var(--tinta); }
+    button { font: inherit; font-weight: 700; padding: 10px 16px; border-radius: 10px; border: 0; background: var(--cor); color: #fff; cursor: pointer; min-height: 42px; }
+    button.fantasma { background: transparent; color: var(--tinta); border: 1px solid var(--linha); }
+    button:focus-visible, input:focus-visible { outline: 3px solid var(--cor); outline-offset: 2px; }
+    .topo { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; justify-content: space-between; margin-bottom: 20px; }
+    .acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+    .erro { color: #C0392B; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+    th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--tinta3); padding: 4px 6px 4px 0; }
+    td { border-top: 1px solid var(--linha); padding: 7px 6px 7px 0; }
+    td:first-child { font-weight: 600; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rolagem { overflow-x: auto; }
+    svg text { fill: var(--tinta3); font-size: 11px; }
+    [hidden] { display: none !important; }
+    section { margin-top: 16px; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="topo">
+    <div>
+      <h1>Métricas do VSL</h1>
+      <p class="sub">Visitas, play rate, engajamento, retenção, conversão e de onde vem cada visita.</p>
+    </div>
+    <div class="acoes" id="acoes" hidden>
+      <button class="fantasma" data-dias="7">7 dias</button>
+      <button class="fantasma" data-dias="30">30 dias</button>
+      <button class="fantasma" data-dias="90">90 dias</button>
+      <button class="fantasma" id="exportar">Exportar planilha</button>
+      <button class="fantasma" id="sair">Sair</button>
+    </div>
+  </div>
+
+  <section class="cartao" id="conexao">
+    <h2>Conexão</h2>
+    <form id="form-conexao">
+      <label>Endereço do projeto Supabase <input name="url" placeholder="https://xxxx.supabase.co" required></label>
+      <label>Chave pública (anon / publishable) <input name="chave" required></label>
+      <label>Identificador do vídeo (o mesmo do MapaVsl.configurar) <input name="video" required></label>
+      <label>Duração do vídeo, em segundos <input name="duracao" type="number" min="1" required></label>
+      <label>Segundo do pitch <input name="pitch" type="number" min="0" required></label>
+      <label>E-mail <input name="email" type="email" autocomplete="username" required></label>
+      <label>Senha <input name="senha" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Entrar</button>
+      <p class="erro" id="erro-conexao" hidden></p>
+    </form>
+  </section>
+
+  <div id="painel" hidden>
+    <p class="erro" id="erro" hidden></p>
+    <div class="grade g4" id="numeros"></div>
+    <section class="cartao">
+      <h2>Retenção</h2>
+      <p class="sub">Dos que ativaram o som, a parte que continuava assistindo em cada momento. Onde a curva cai rápido é lugar de mini-gancho.</p>
+      <div id="retencao"></div>
+    </section>
+    <section class="grade g3">
+      <div class="cartao"><h2>Plays por dia</h2><div id="dias"></div></div>
+      <div class="cartao"><h2>Melhores horários (Brasília)</h2><div id="horas"></div></div>
+      <div class="cartao"><h2>Dias da semana</h2><div id="semana"></div></div>
+    </section>
+    <section class="grade g3" id="tabelas"></section>
+  </div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var GUARDA = "painel-vsl:conexao";
+  var DIMS = [
+    ["origem", "Origem (utm_source)"], ["midia", "Mídia (utm_medium)"], ["campanha", "Campanha (utm_campaign)"],
+    ["conteudo", "Criativo (utm_content)"], ["variante", "Teste A/B"], ["aparelho", "Aparelho"],
+    ["sistema", "Sistema"], ["navegador", "Navegador"], ["fuso", "Fuso horário"],
+  ];
+  var DIAS_SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+  var sb = null, cfg = null, dias = 30;
+  var $ = function (id) { return document.getElementById(id); };
+  var pct = function (a, b) { return b > 0 ? Math.round((a / b) * 100) + "%" : "sem dados"; };
+  var mmss = function (s) { s = Math.floor(s || 0); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+
+  // conexão guardada (sem a senha)
+  try {
+    var salvo = JSON.parse(localStorage.getItem(GUARDA) || "null");
+    if (salvo) ["url", "chave", "video", "duracao", "pitch", "email"].forEach(function (k) { if (salvo[k] != null) $("form-conexao")[k].value = salvo[k]; });
+  } catch (e) { /* sem armazenamento: preenche de novo */ }
+
+  $("form-conexao").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    var f = ev.target;
+    cfg = { url: f.url.value.trim(), chave: f.chave.value.trim(), video: f.video.value.trim(), duracao: +f.duracao.value, pitch: +f.pitch.value, email: f.email.value.trim() };
+    try { localStorage.setItem(GUARDA, JSON.stringify(cfg)); } catch (e) {}
+    sb = supabase.createClient(cfg.url, cfg.chave);
+    var r = await sb.auth.signInWithPassword({ email: cfg.email, password: f.senha.value });
+    f.senha.value = "";
+    if (r.error) { $("erro-conexao").textContent = "Não entrou: " + r.error.message; $("erro-conexao").hidden = false; return; }
+    $("conexao").hidden = true; $("painel").hidden = false; $("acoes").hidden = false;
+    carregar();
+  });
+
+  document.querySelectorAll("[data-dias]").forEach(function (b) {
+    b.addEventListener("click", function () { dias = +b.getAttribute("data-dias"); carregar(); });
+  });
+  $("sair").addEventListener("click", async function () { if (sb) await sb.auth.signOut(); location.reload(); });
+  $("exportar").addEventListener("click", async function () {
+    var r = await sb.rpc("vsl_exportar", { p_video: cfg.video, p_dias: dias });
+    if (r.error) return mostrarErro(r.error);
+    var linhas = r.data || [];
+    if (!linhas.length) return;
+    var cols = Object.keys(linhas[0]);
+    var cel = function (v) { var s = v == null ? "" : String(v); return /[;"\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    var csv = [cols.join(";")].concat(linhas.map(function (l) { return cols.map(function (c) { return cel(l[c]); }).join(";"); })).join("\r\n");
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" }));
+    a.download = "vsl-sessoes-" + dias + "-dias.csv";
+    a.click();
+  });
+
+  function mostrarErro(e) {
+    $("erro").textContent = /sem_acesso/.test(e.message)
+      ? "Este e-mail não está na tabela vsl_admins (LEIA-ME, seção 5)."
+      : /function|column/i.test(e.message) ? "O banco ainda não tem as funções do VSL: rode banco/supabase-completo.sql." : "Erro: " + e.message;
+    $("erro").hidden = false;
+  }
+
+  async function carregar() {
+    $("erro").hidden = true;
+    document.querySelectorAll("[data-dias]").forEach(function (b) { b.style.background = +b.getAttribute("data-dias") === dias ? "var(--cor)" : ""; b.style.color = +b.getAttribute("data-dias") === dias ? "#fff" : ""; });
+    var r = await sb.rpc("vsl_painel", { p_video: cfg.video, p_duracao: cfg.duracao, p_dias: dias });
+    if (r.error) return mostrarErro(r.error);
+    desenhar(r.data);
+  }
+
+  function desenhar(d) {
+    var num = [
+      ["Visitas", d.sessoes, d.visitantes + " pessoas diferentes"],
+      ["Play rate", pct(d.plays, d.sessoes), d.plays + " ativaram o som"],
+      ["Engajamento", d.engajamento != null ? Math.round(d.engajamento) + "%" : "sem dados", "do vídeo, em média · " + mmss(d.tempo_medio) + " assistidos"],
+      ["Retenção no pitch", pct(d.pitch, d.plays), d.pitch + " chegaram ao preço (" + mmss(cfg.pitch) + ")"],
+      ["Conversão", pct(d.cta, d.plays), d.cta + " cliques no botão" + (d.cta_mediana != null ? " · metade até " + mmss(d.cta_mediana) : "")],
+      ["Até o fim", pct(d.terminaram, d.plays), d.terminaram + " assistiram inteiro · " + d.retomadas + " retomaram"],
+      ["Carregamento", d.carregamento_mediana != null ? (d.carregamento_mediana / 1000).toFixed(1) + " s" : "sem dados", "até o 1º quadro · " + (d.travamentos_por_play || 0) + " travamentos por play"],
+      ["Ao vivo agora", d.ao_vivo, "assistindo nos últimos 2 min · " + (d.horas_assistidas || 0) + " h no total"],
+    ];
+    $("numeros").innerHTML = num.map(function (n) {
+      return '<div class="cartao"><p class="rotulo">' + esc(n[0]) + '</p><p class="valor">' + esc(n[1]) + '</p><p class="nota">' + esc(n[2]) + "</p></div>";
+    }).join("");
+    $("retencao").innerHTML = retencao(d.retencao || []);
+    $("dias").innerHTML = barras((d.por_dia || []).map(function (x) { return [String(x.dia).slice(8, 10) + "/" + String(x.dia).slice(5, 7), x.plays, x.sessoes + " visitas, " + x.plays + " plays, " + x.cta + " cliques"]; }));
+    $("horas").innerHTML = barras(Array.from({ length: 24 }, function (_, h) { var x = (d.por_hora || []).find(function (y) { return y.hora === h; }); return [String(h).padStart(2, "0"), x ? x.plays : 0, h + "h: " + (x ? x.plays + " plays, " + pct(x.cta, x.plays) + " de conversão" : "sem visitas")]; }));
+    $("semana").innerHTML = barras(DIAS_SEMANA.map(function (nome, w) { var x = (d.por_semana || []).find(function (y) { return y.dia === w; }); return [nome, x ? x.plays : 0, nome + ": " + (x ? x.plays + " plays, " + pct(x.cta, x.plays) + " de conversão" : "sem visitas")]; }));
+    $("tabelas").innerHTML = DIMS.map(function (dim) {
+      var g = (d.grupos || []).filter(function (x) { return x.dim === dim[0]; }).slice(0, 10);
+      var corpo = g.length ? g.map(function (x) {
+        return "<tr><td title=\"" + esc(x.chave) + "\">" + esc(x.chave) + "</td><td>" + x.sessoes + "</td><td>" + pct(x.plays, x.sessoes) + "</td><td>" + (x.engajamento != null ? Math.round(x.engajamento) + "%" : "·") + "</td><td>" + pct(x.pitch, x.plays) + "</td><td>" + pct(x.cta, x.plays) + "</td></tr>";
+      }).join("") : '<tr><td colspan="6">Sem dados no período.</td></tr>';
+      return '<div class="cartao rolagem"><h2>' + esc(dim[1]) + "</h2><table><thead><tr><th>Grupo</th><th>Visitas</th><th>Play</th><th>Engaj.</th><th>Pitch</th><th>Clique</th></tr></thead><tbody>" + corpo + "</tbody></table></div>";
+    }).join("");
+  }
+
+  function retencao(serie) {
+    var base = Math.max.apply(null, [0].concat(serie));
+    if (!base) return '<p class="sub">Ainda não há plays neste período.</p>';
+    var W = 760, H = 240, e = 44, dd = 12, t = 12, b = 28;
+    var x = function (i) { return e + (i / 100) * (W - e - dd); };
+    var y = function (v) { return t + (1 - v / base) * (H - t - b); };
+    var linha = serie.map(function (v, i) { return (i ? "L" : "M") + x(i).toFixed(1) + "," + y(v).toFixed(1); }).join("");
+    var ip = Math.round((cfg.pitch / cfg.duracao) * 100);
+    var grade = [0, 25, 50, 75, 100].map(function (g) { var yy = y(base * g / 100); return '<line x1="' + e + '" x2="' + (W - dd) + '" y1="' + yy + '" y2="' + yy + '" stroke="var(--linha)"/><text x="' + (e - 8) + '" y="' + (yy + 4) + '" text-anchor="end">' + g + "%</text>"; }).join("");
+    var eixo = [0, .25, .5, .75, 1].map(function (f) { return '<text x="' + x(f * 100) + '" y="' + (H - 8) + '" text-anchor="middle">' + mmss(f * cfg.duracao) + "</text>"; }).join("");
+    var pontos = serie.map(function (v, i) { return '<rect x="' + (x(i) - 3.5) + '" y="' + t + '" width="7" height="' + (H - t - b) + '" fill="transparent"><title>' + mmss(i / 100 * cfg.duracao) + ": " + pct(v, base) + " dos plays (" + v + ")</title></rect>"; }).join("");
+    return '<svg viewBox="0 0 ' + W + " " + H + '" style="width:100%;height:auto" role="img" aria-label="Curva de retenção">' + grade + eixo +
+      '<path d="' + linha + "L" + x(100) + "," + y(0) + "L" + x(0) + "," + y(0) + 'Z" fill="var(--cor)" opacity=".14"/>' +
+      '<path d="' + linha + '" fill="none" stroke="var(--cor)" stroke-width="2"/>' +
+      '<line x1="' + x(ip) + '" x2="' + x(ip) + '" y1="' + t + '" y2="' + (H - b) + '" stroke="var(--tinta3)" stroke-dasharray="4 4"/>' +
+      '<text x="' + (x(ip) - 6) + '" y="' + (t + 12) + '" text-anchor="end">Pitch ' + mmss(cfg.pitch) + "</text>" + pontos + "</svg>";
+  }
+
+  function barras(itens) {
+    if (!itens.length || itens.every(function (i) { return !i[1]; })) return '<p class="sub">Sem dados no período.</p>';
+    var W = 640, H = 150, e = 8, b = 22, t = 8;
+    var max = Math.max.apply(null, [1].concat(itens.map(function (i) { return i[1]; })));
+    var passo = (W - 2 * e) / itens.length, larg = Math.max(2, passo - 2);
+    var cada = Math.ceil(itens.length / 12);
+    return '<svg viewBox="0 0 ' + W + " " + H + '" style="width:100%;height:auto" role="img">' +
+      '<line x1="' + e + '" x2="' + (W - e) + '" y1="' + (H - b) + '" y2="' + (H - b) + '" stroke="var(--linha)"/>' +
+      itens.map(function (it, i) {
+        var h = (H - t - b) * it[1] / max, xx = e + i * passo + 1;
+        return "<g><title>" + esc(it[2]) + "</title>" +
+          (it[1] > 0 ? '<rect x="' + xx + '" y="' + (H - b - h) + '" width="' + larg + '" height="' + h + '" rx="' + Math.min(4, larg / 2) + '" fill="var(--cor)"/>' : "") +
+          '<rect x="' + (xx - 1) + '" y="' + t + '" width="' + passo + '" height="' + (H - t - b) + '" fill="transparent"/>' +
+          (i % cada === 0 ? '<text x="' + (xx + larg / 2) + '" y="' + (H - 6) + '" text-anchor="middle">' + esc(it[0]) + "</text>" : "") + "</g>";
+      }).join("") + "</svg>";
+  }
+})();
+</script>
+</body>
+</html>

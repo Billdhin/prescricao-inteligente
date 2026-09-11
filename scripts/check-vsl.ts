@@ -12,7 +12,7 @@
  * E. O deploy leva a mídia e o CSP deixa o vídeo tocar.
  */
 import { readFileSync } from "node:fs";
-import { barraExibida, podeRetomar, textoGancho, degrauPixel, aplicarVariante, origemDaVisita, tipoAparelho } from "../src/vsl/regras";
+import { barraExibida, podeRetomar, textoGancho, degrauPixel, aplicarVariante, origemDaVisita, tipoAparelho, navegadorDe, sistemaOperacional } from "../src/vsl/regras";
 import { VSL_APRESENTACAO as V } from "../src/vsl/videos";
 
 const falhas: string[] = [];
@@ -65,6 +65,32 @@ if (origemDaVisita("", "https://mapadaprescricao.com.br/pricing", "www.mapadapre
   reprovar("A", "navegação interna conta como origem externa.");
 if (tipoAparelho("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)", 390) !== "celular" || tipoAparelho("Mozilla/5.0 (Windows NT 10.0)", 1440) !== "computador")
   reprovar("A", "a classificação de aparelho está errada.");
+const o2 = origemDaVisita("?utm_source=facebook&utm_medium=cpc&utm_campaign=frio&utm_content=criativo-3&utm_term=hipertensao", "", "mapadaprescricao.com.br");
+if (o2.midia !== "cpc" || o2.conteudo !== "criativo-3" || o2.termo !== "hipertensao" || o2.campanha !== "frio")
+  reprovar("A", "os UTMs de mídia, conteúdo (criativo) ou termo não chegam separados.");
+// Tráfego de anúncio chega pelos navegadores internos: se eles virarem "Chrome"/"Safari", o
+// painel esconde justamente onde o vídeo mais se comporta diferente.
+const UA = {
+  instagram: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 330.0.0.0",
+  facebook: "Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/460.0]",
+  edge: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 Edg/124.0",
+  safari: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+  chromeAndroid: "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36",
+};
+const nav = Object.fromEntries(Object.entries(UA).map(([k, v]) => [k, navegadorDe(v)]));
+if (nav.instagram !== "Instagram" || nav.facebook !== "Facebook" || nav.edge !== "Edge" || nav.safari !== "Safari" || nav.chromeAndroid !== "Chrome")
+  reprovar("A", `navegador mal classificado: ${JSON.stringify(nav)}`);
+if (sistemaOperacional(UA.instagram) !== "iOS" || sistemaOperacional(UA.facebook) !== "Android" || sistemaOperacional(UA.safari) !== "macOS" || sistemaOperacional(UA.edge) !== "Windows")
+  reprovar("A", "sistema operacional mal classificado.");
+
+// A 0015 guarda campos que precisam continuar NULOS até terem valor (greatest/least ignoram
+// nulo e transformariam "ainda não começou" em "começou no segundo 0").
+const M15 = ler("supabase/migrations/0015_vsl_metricas_completas.sql");
+for (const campo of ["segundo_inicio", "carregamento_ms", "cta_em"])
+  if (!new RegExp(`jsonb_typeof\\(p->'${campo}'\\) = 'number'`).test(M15))
+    reprovar("A", `a 0015 converte ${campo} sem checar se veio número: nulo viraria 0 no banco.`);
+if (!/segundo_inicio\s*=\s*coalesce\(s\.segundo_inicio, excluded\.segundo_inicio\)/.test(M15))
+  reprovar("A", "a 0015 deixa um envio atrasado reescrever onde a pessoa começou a assistir.");
 
 /* --- B. Configuração -------------------------------------------------------- */
 
