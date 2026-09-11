@@ -31,7 +31,10 @@ export function Tutorial() {
             o fluxo completo (do cadastro à prescrição em PDF) em poucos minutos.
           </p>
         </div>
-        <Link to={`/tutorial/${tutorials[0].slug}`} className={buttonClasses("primary")}>
+        {/* O card promete "Prescreva para um aluno", então o botão abre ESSE guia pelo slug. Ele
+            abria `tutorials[0]`, que é "Do semáforo ao prontuário assinado": prometia um guia e
+            entregava outro. */}
+        <Link to="/tutorial/prescrever-para-aluno" className={buttonClasses("primary")}>
           Começar <ArrowRight className="h-4 w-4" />
         </Link>
       </Card>

@@ -95,7 +95,9 @@ export function DeOndeVemOLimite({
         )}
         {p.rirMinimo && (
           <LinhaDoLimite
-            titulo="Nunca passar de"
+            // "Nunca passar de 3 repetições de reserva" dizia o CONTRÁRIO da regra: soa como "no
+            // máximo 3", e o piso de reserva é "no mínimo 3" (parar a série com 3 ou mais sobrando).
+            titulo="Parar a série com pelo menos"
             unidade={(v) => `${v} ${v === 1 ? "repetição" : "repetições"} de reserva`}
             origem={p.rirMinimo}
           />
