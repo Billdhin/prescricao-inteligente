@@ -4,6 +4,7 @@ import { CheckCircle2, AlertTriangle, XCircle, Printer, RotateCcw, Save, Navigat
 import { Card, Pill, buttonClasses } from "@/components/ui/primitives";
 import {
   getSemaforo,
+  fraseResultado,
   montarChecklist,
   avaliarSemaforo,
   type ChecklistSemaforo,
@@ -98,6 +99,7 @@ export function SemaforoLiberacao({
   const [registrado, setRegistrado] = React.useState(false);
   // Id da liberação que acabou de ser gravada: é nela que a conduta divergente se pendura.
   const [liberacaoId, setLiberacaoId] = React.useState<string | null>(null);
+  const [registradoEm, setRegistradoEm] = React.useState<number | null>(null);
   const [abrindoConduta, setAbrindoConduta] = React.useState(false);
   const [justificativa, setJustificativa] = React.useState("");
   const [condutaGravada, setCondutaGravada] = React.useState(false);
@@ -110,12 +112,14 @@ export function SemaforoLiberacao({
   const registrar = () => {
     if (!resultado) return;
     const id = uid();
+    const quando = Date.now();
     setLiberacaoId(id);
+    setRegistradoEm(quando);
     addLiberacao({
       id,
       alunoId,
       grupoSlug,
-      data: Date.now(),
+      data: quando,
       respostas,
       resultado: resultado.cor,
       ajustes: resultado.ajustes,
@@ -229,14 +233,8 @@ export function SemaforoLiberacao({
               <div className={cn("font-display text-lg font-bold", COR_UI[resultado.cor].text)}>
                 {resultado.rotulo}
               </div>
-              <p className="text-xs text-ink-2">
-                {resultado.cor === "verde" &&
-                  "Nenhum sinal de alerta nos itens verificados; registre e siga para a sessão."}
-                {resultado.cor === "amarelo" &&
-                  "A sessão pode acontecer COM os ajustes abaixo; registre o racional."}
-                {resultado.cor === "vermelho" &&
-                  "Hoje não é dia de treinar: os motivos abaixo pedem reavaliação e, se persistirem, encaminhamento."}
-              </p>
+              {/* a frase vem de data/semaforo: a tela e o documento impresso leem do mesmo lugar */}
+              <p className="text-xs text-ink-2">{fraseResultado(resultado.cor)}</p>
             </div>
           </div>
 
@@ -363,7 +361,12 @@ export function SemaforoLiberacao({
                 <Pill tone="success">Registrado no histórico, entra no prontuário</Pill>
                 <button
                   // impresso pode chegar ao aluno: usa o nome de programa digno, não o rótulo clínico
-                  onClick={() => printSemaforo(nomeDocumento, checklist, respostas, resultado, alunoNome, profNome, cref, logoDataUrl || undefined, corPrimaria || undefined)}
+                  onClick={() =>
+                    printSemaforo(nomeDocumento, checklist, respostas, resultado, alunoNome, profNome, cref, logoDataUrl || undefined, corPrimaria || undefined, {
+                      registradoEm: registradoEm ?? undefined,
+                      conduta: condutaGravada ? justificativa : undefined,
+                    })
+                  }
                   className={buttonClasses("outline", "sm")}
                 >
                   <Printer className="h-4 w-4" /> Imprimir

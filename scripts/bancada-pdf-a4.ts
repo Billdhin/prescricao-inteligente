@@ -68,7 +68,7 @@ async function main() {
   const { recommendModalidades } = await import("@/lib/gps/modalidadeRules");
   const { exercises } = await import("@/data/exercises");
   const { monitoringParameters } = await import("@/data/monitoringParameters");
-  const { getSemaforo, avaliarSemaforo } = await import("@/data/semaforo");
+  const { montarChecklist, avaliarSemaforo } = await import("@/data/semaforo");
   const { CHECKPOINTS_POSTURAIS } = await import("@/data/postural");
   const { getSpecialGroup } = await import("@/data/specialGroups");
 
@@ -157,7 +157,12 @@ async function main() {
     titulo: grupo ? `${grupo.rotuloAluno} · Fase 2` : `${answers.objetivo} · Membros inferiores`,
     answers,
     prontuario,
-    itens: results.slice(0, 3).map((x) => ({ slug: x.exercise.slug, score: x.score, series: "3 séries · 10 a 12 reps" })),
+    // como o app grava: aeróbio não carrega dose de força (ver Gps.tsx e gps/prontuario.ts)
+    itens: results.slice(0, 3).map((x) => ({
+      slug: x.exercise.slug,
+      score: x.score,
+      series: x.exercise.doseAerobia ? undefined : "3 séries · 10 a 12 reps",
+    })),
     status: "ativa",
     grupoEspecial: grupo?.slug,
     modalidadePrincipal: faseObj?.modalidades?.[0] ?? modRecs[0]?.modalidade.id,
@@ -189,14 +194,17 @@ async function main() {
 
   /* --- 5. semáforo do dia --- */
   const slugSem = aluno.grupoEspecial ?? "hipertensao-estagio-1";
-  const checklist = getSemaforo(slugSem);
+  // montarChecklist, e não getSemaforo: os itens que a classe de medicação acrescenta
+  // (prefixo "farmaco:") só existem por aqui, e são justamente os que nunca foram vistos no papel.
+  const checklist = montarChecklist(slugSem, aluno.farmacos);
   if (checklist) {
     const respostas = Object.fromEntries(
       checklist.itens.map((it, i) => [it.id, it.opcoes[i === 1 && it.opcoes.length > 1 ? 1 : 0].valor]),
     );
     const resultado = avaliarSemaforo(checklist, respostas);
     gravar("semaforo", () =>
-      printSemaforo(grupo?.nome ?? slugSem, checklist, respostas, resultado, aluno.nome, profissional, cref, undefined, marca.corPrimaria),
+      // nome de PROGRAMA no papel (o app passa rotuloAluno); o rótulo clínico não vai para o documento
+      printSemaforo(grupo?.rotuloAluno ?? slugSem, checklist, respostas, resultado, aluno.nome, profissional, cref, undefined, marca.corPrimaria),
     );
   }
 

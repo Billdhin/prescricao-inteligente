@@ -1,5 +1,6 @@
 import * as React from "react";
 import type { Avaliacao, Sexo } from "@/data/alunos";
+import { desenharEvolucao } from "@/lib/avaliacao/desenharEvolucao";
 import {
   getEscala,
   faixasDe,
@@ -637,22 +638,10 @@ function Sparkline({
   cor: string;
   rotulo: string;
 }) {
-  const W = 132;
-  const H = 26;
-  const P = 3.5;
+  // A conta mora em lib/avaliacao/desenharEvolucao: o documento impresso desenha a mesma
+  // curva, e uma conta em dois lugares é a deriva que a paleta do papel já ensinou a evitar.
   const n = pontos.length;
-  const vals = pontos.map((p) => p.valor);
-  const vmin = Math.min(...vals);
-  const vmax = Math.max(...vals);
-  const t0 = pontos[0].data;
-  const tN = pontos[n - 1].data;
-  const px = (p: { data: number }, i: number) =>
-    tN === t0 ? P + (i / Math.max(n - 1, 1)) * (W - 2 * P) : P + ((p.data - t0) / (tN - t0)) * (W - 2 * P);
-  // Série plana desenha no meio da caixa: colar no topo ou no piso sugeriria uma variação
-  // que a medida não teve.
-  const py = (v: number) => (vmax === vmin ? H / 2 : H - P - ((v - vmin) / (vmax - vmin)) * (H - 2 * P));
-
-  const d = pontos.map((p, i) => `${i === 0 ? "M" : "L"} ${px(p, i).toFixed(1)} ${py(p.valor).toFixed(1)}`).join(" ");
+  const { largura: W, altura: H, d, pontos: coords } = desenharEvolucao(pontos);
 
   return (
     <svg
@@ -664,11 +653,11 @@ function Sparkline({
       aria-label={`${rotulo}: série de ${n} medidas, da primeira à mais recente`}
     >
       <path d={d} fill="none" stroke={cor} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
-      {pontos.map((p, i) => (
+      {coords.map((c, i) => (
         <circle
           key={i}
-          cx={px(p, i)}
-          cy={py(p.valor)}
+          cx={c.x}
+          cy={c.y}
           r={i === n - 1 ? 2.75 : 1.6}
           fill={i === n - 1 ? cor : "var(--surface)"}
           stroke={cor}

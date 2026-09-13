@@ -17,8 +17,11 @@ import { rotuloRestricao, GATILHOS_OPCOES, LADO_OPCOES, LIBERACAO_OPCOES } from 
 import { getParam } from "@/data/monitoringParameters";
 import { getSpecialGroup } from "@/data/specialGroups";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
-import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
+import { CORES_PDF as C } from "@/lib/pdfCores";
+import { escapar as escP, folhaHtml, rotulo } from "@/lib/pdfPapel";
 import { numeroBR, semPontoFinal } from "@/lib/pdfTexto";
+import { rotuloSemaforo } from "@/data/semaforo";
+import { farmacosAtivos, rotuloFarmaco } from "@/data/farmacos";
 
 const esc = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -26,11 +29,12 @@ const esc = (s: string) =>
 const fmt = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(ts));
 
-const SEMAFORO_LABEL = {
-  verde: { nome: "LIBERADO", hex: C.sucesso },
-  amarelo: { nome: "LIBERADO COM AJUSTE", hex: C.alerta },
-  vermelho: { nome: "NÃO LIBERADO NO DIA", hex: C.perigo },
-} as const;
+/**
+ * A COR de cada resultado; o NOME vem de `data/semaforo` (rotuloSemaforo). Aqui havia uma
+ * quarta cópia do vocabulário, e ela já tinha divergido: dizia "NÃO LIBERADO NO DIA" enquanto
+ * a tela, o histórico e o PDF do semáforo diziam "Não liberado hoje".
+ */
+const SEMAFORO_COR = { verde: C.sucesso, amarelo: C.alerta, vermelho: C.perigo } as const;
 
 /** ID legível e estável do documento (deriva do id da prescrição). */
 export function idDocumento(prescId: string) {
@@ -102,35 +106,36 @@ export function exportProntuarioPDF({
     .join("");
 
   const modalidadesHtml = prontuario.modalidades?.length
-    ? `<section class="bloco"><h2>Base da semana: modalidades</h2><ul>${prontuario.modalidades
+    ? `${rotulo("Base da semana: modalidades")}<ul>${prontuario.modalidades
         .map((m) => `<li><strong>${esc(m.nome)}</strong>: ${esc(m.motivo)}</li>`)
-        .join("")}</ul></section>`
+        .join("")}</ul>`
     : "";
 
   // Dois objetivos: sai no papel só quando existe secundário. O texto vem pronto da matriz
   // (linhaObjetivos), para o PDF nunca reescrever a regra por conta própria.
   const objetivosHtml = prontuario.objetivos
-    ? `<section class="bloco"><h2>Dois objetivos (${esc(prontuario.objetivos.estado)})</h2>
-       <p>${esc(prontuario.objetivos.linha)}</p></section>`
+    ? `${rotulo(`Dois objetivos (${prontuario.objetivos.estado})`)}<p>${esc(prontuario.objetivos.linha)}</p>`
     : "";
 
   // Sem o rótulo clínico do grupo no cabeçalho: o documento vai para o aluno.
+  // A referência é do CONJUNTO de regras, não de cada bala: repetida linha a linha, ela
+  // ensinava o leitor a ignorar o marcador. Vai uma vez, no fim do bloco.
   const cuidadosHtml = prontuario.cuidadosGrupo
-    ? `<section class="bloco"><h2>Cuidados considerados neste perfil</h2>
-       <ul>${prontuario.cuidadosGrupo.cuidados
-         .map(
-           (c) =>
-             `<li>${esc(c)}${prontuario.cuidadosGrupo!.refs.length ? ` <span class="refn">[${prontuario.cuidadosGrupo!.refs.map(refN).filter(Boolean).join(",")}]</span>` : ""}</li>`,
-         )
-         .join("")}</ul></section>`
+    ? `${rotulo("Cuidados considerados neste perfil")}
+       <ul>${prontuario.cuidadosGrupo.cuidados.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>
+       ${prontuario.cuidadosGrupo.refs.length
+         ? `<p class="mut">Base destes cuidados: <span class="refn">[${prontuario.cuidadosGrupo.refs.map(refN).filter(Boolean).join(",")}]</span></p>`
+         : ""}`
     : "";
 
   const sem = prontuario.semaforo;
+  const fmtHora = (ts: number) =>
+    new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(ts));
   const semaforoHtml = sem
-    ? `<section class="bloco"><h2>Semáforo de liberação do dia</h2>
-       <p><strong style="color:${SEMAFORO_LABEL[sem.resultado].hex}">${SEMAFORO_LABEL[sem.resultado].nome}</strong>
-       <span class="mut"> · checklist respondido em ${fmt(sem.data)}</span></p>
-       ${sem.ajustes.length ? `<ul>${sem.ajustes.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}</section>`
+    ? `${rotulo("Semáforo de liberação do dia")}
+       <p><b style="color:${SEMAFORO_COR[sem.resultado]}">${esc(rotuloSemaforo(sem.resultado))}</b>
+       <span class="mut"> · checklist respondido em ${fmtHora(sem.data)}</span></p>
+       ${sem.ajustes.length ? `<ul>${sem.ajustes.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}`
     : "";
 
   // Qual instrumento saiu de guia e qual entrou. Só sai no papel quando algo de fato mudou; um
@@ -139,7 +144,7 @@ export function exportProntuarioPDF({
   const nomeParam = (id: string) => esc(getParam(id)?.nome ?? id);
   const monitoramentoHtml =
     mon && mon.saiu.length
-      ? `<section class="bloco"><h2>Como a intensidade foi guiada neste aluno</h2>
+      ? `${rotulo("Como a intensidade foi guiada neste aluno")}
          <p><strong>Deixou de guiar:</strong> ${mon.saiu.map(nomeParam).join(", ")}.
          <strong>Passou a guiar:</strong> ${mon.entrou.map(nomeParam).join(", ")}.${
            mon.refIds.length ? ` <span class="refn">[${mon.refIds.map(refN).filter(Boolean).join(",")}]</span>` : ""
@@ -151,29 +156,57 @@ export function exportProntuarioPDF({
          }</section>`
       : "";
 
+  /*
+   * A MEDICAÇÃO DECLARADA. O motor já usa a classe para escolher o instrumento de intensidade
+   * e para acrescentar cuidado, mas o documento assinável não dizia que havia medicação: o
+   * cuidado saía como bala anônima. Os três estados do perfil são diferentes e todos importam
+   * aqui: classes declaradas, "nenhuma medicação contínua" e "não sei informar" (silêncio não
+   * é resposta). Só a CLASSE, nunca dose, marca ou horário: é o que o dado comporta.
+   */
+  const classes = farmacosAtivos(aluno.farmacos);
+  const medicacaoHtml = (() => {
+    if (classes.length) {
+      return `${rotulo("Medicação declarada no perfil")}
+        <p>${classes.map((f) => `<span class="tagp">${esc(rotuloFarmaco(f.classe))}</span>`).join(" ")}</p>
+        <p class="mut">Classe de uso contínuo declarada pelo profissional. O documento registra a classe porque ela participa das decisões acima; a conduta sobre a medicação é do profissional de saúde que a prescreveu.</p>`;
+    }
+    if (aluno.farmacosNenhum) return `${rotulo("Medicação declarada no perfil")}<p>Nenhuma medicação contínua declarada.</p>`;
+    if (aluno.farmacosNaoInformado)
+      return `${rotulo("Medicação declarada no perfil")}<p>Não informada. As decisões acima foram tomadas sem esse dado.</p>`;
+    return "";
+  })();
+
   const params = prontuario.parametros
     .map((id) => getParam(id))
     .filter(Boolean)
     .map(
       (p) =>
-        `<li><strong>${esc(p!.nome)}</strong>: ${esc(p!.comoInterpretar)}${
+        `<li><b>${esc(p!.nome)}</b>: ${esc(p!.comoInterpretar)}${
           p!.refIds?.length ? ` <span class="refn">[${p!.refIds.map(refN).filter(Boolean).join(",")}]</span>` : ""
-        }</li>`,
+        }<div class="mut">Se estiver alterado: ${esc(p!.seAlterado)}</div></li>`,
     )
     .join("");
 
   const criterios = (presc.criteriosProgressao ?? []).map((c) => `<li>${esc(c)}</li>`).join("");
   const regressao = (presc.criteriosRegressao ?? []).map((c) => `<li>${esc(c)}</li>`).join("");
 
+  /*
+   * A BIBLIOGRAFIA PARTE, E A ASSINATURA VAI COM A ÚLTIMA REFERÊNCIA.
+   *
+   * Como bloco fechado ela media ~117 mm e não cabia no vão de ~113 mm que sobrava: o
+   * conjunto inteiro pulava para uma quarta folha e deixava 44% da terceira em branco.
+   * Tentei encurtar a altura em duas colunas, primeiro por `column-count` e depois por
+   * tabela, e medi a MESMA quebra nas duas: na impressão o Chrome não encaixa um bloco de
+   * múltiplas colunas (nem um container flex) no que resta da folha, ele empurra inteiro.
+   * O que resolve é deixar a lista partir como qualquer texto e prender a assinatura à
+   * parte de baixo dela (`break-before: avoid`), que era o medo original: assinatura sozinha.
+   */
+  const itemRef = (b: (typeof biblio)[number]) =>
+    `<li>${esc(semPontoFinal(b.ref.autores))}. ${esc(semPontoFinal(b.ref.titulo))}. ${esc(b.ref.fonte)}, ${b.ref.ano}.${
+      b.ref.doi ? ` <a href="https://doi.org/${esc(b.ref.doi)}">doi:${esc(b.ref.doi)}</a>` : ""
+    }</li>`;
   const biblioHtml = biblio.length
-    ? `<section class="bloco"><h2>Referências</h2><ol class="refs">${biblio
-        .map(
-          (b) =>
-            `<li>${esc(semPontoFinal(b.ref.autores))}. ${esc(semPontoFinal(b.ref.titulo))}. ${esc(b.ref.fonte)}, ${b.ref.ano}.${
-              b.ref.doi ? ` <a href="https://doi.org/${esc(b.ref.doi)}">doi:${esc(b.ref.doi)}</a>` : ""
-            }</li>`,
-        )
-        .join("")}</ol></section>`
+    ? `${rotulo("Referências")}<ol class="refs">${biblio.map(itemRef).join("")}</ol>`
     : "";
 
   // O documento é assinável: ele só pode afirmar o que o motor de fato considerou.
@@ -202,52 +235,71 @@ export function exportProntuarioPDF({
     ? ` (declaradas no cadastro e não aplicadas ao ranqueamento: ${naoAplicadas.map((r) => esc(rotuloRestricao(r.tag))).join(", ")})`
     : "";
 
-  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-  <title>Prontuário de Decisão · ${esc(aluno.nome)} · ${docId}</title>
-  <style>
+  const css = `
     * { box-sizing: border-box; }
-${PAPEL_BASE_CSS}
-    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; font-size: 13px; }
-    .page { max-width: 760px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(C.analise)}
-    .motor { display: inline-block; background: ${C.analiseTint}; color: ${C.analise}; border: 1px solid ${C.analiseFill}55; border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; }
-    .docid { font-size: 11px; color: ${C.ink2}; }
-    h1 { font-size: 20px; margin: 18px 0 2px; }
-    .meta { font-size: 12px; color: ${C.ink2}; margin-bottom: 14px; }
-    .aluno { background: ${C.papelSuave}; border-radius: 10px; padding: 11px 14px; margin-bottom: 14px; }
-    .bloco { margin: 14px 0; }
-    /* O PDF circula sozinho e leva a assinatura: a escala precisa estar definida
-       DENTRO dele, e não só na tela de onde ele saiu. */
-    .escala-nota { font-size: 10px; line-height: 1.5; color: ${C.ink2}; margin: 0 0 10px; }
-    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${C.analise}; margin: 0 0 6px; }
-    .ex { border: 1px solid ${C.borda}; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; page-break-inside: avoid; }
-    .ex-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
-    .ex-num { width: 22px; height: 22px; border-radius: 50%; background: ${C.analise}; color: ${C.sobreMarca}; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+    .motor { display: inline-block; background: ${C.analiseTint}; color: ${C.analise}; border: 1px solid ${C.analiseFill}55; border-radius: 999px; padding: 2px 8px; font-size: 7.5pt; font-weight: 800; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; }
+    .docid { font-size: 8pt; color: ${C.ink2}; }
+    .aluno { display: flex; flex-wrap: wrap; gap: 2mm 6mm; background: ${C.papelSuave}; border-radius: 10px; padding: 3mm 4mm; margin: 0 0 4mm; font-size: 9.5pt; }
+    .escala-nota { font-size: 8.5pt; line-height: 1.45; color: ${C.ink2}; margin: 0 0 3mm; }
+    /* O cartão do exercício pode partir entre folhas: como bloco atômico ele empurrava
+       tudo e deixava um terço da folha em branco (medido). O que não parte é a LINHA de
+       critério e o cabeçalho, que segue junto das primeiras linhas. */
+    .ex { border: 1px solid ${C.borda}; border-radius: 10px; padding: 3mm 3.5mm; margin-bottom: 2.5mm; break-inside: auto; }
+    .ex-head { break-after: avoid; }
+    table.criterios tr { break-inside: avoid; }
+    .ex-head { display: flex; align-items: center; gap: 2.5mm; flex-wrap: wrap; margin-bottom: 1.5mm; }
+    .ex-num { width: 6mm; height: 6mm; border-radius: 50%; background: ${C.analise}; color: ${C.sobreMarca}; font-size: 8pt; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
     .ex-nome { font-weight: 800; flex: 1; }
-    .ex-series { font-size: 11px; color: ${C.ink2}; }
-    .ex-score { font-size: 12px; font-weight: 800; color: ${C.sucesso}; }
+    .ex-series { font-size: 8.5pt; color: ${C.ink2}; }
+    .ex-score { font-size: 9pt; font-weight: 800; color: ${C.sucesso}; font-variant-numeric: tabular-nums; }
     table.criterios { width: 100%; border-collapse: collapse; }
-    table.criterios td { border-top: 1px solid ${C.linha}; padding: 4px 6px; font-size: 11.5px; vertical-align: top; }
-    td.crit { font-weight: 700; width: 160px; }
-    td.pts { white-space: nowrap; width: 84px; color: ${C.analise}; font-weight: 700; }
-    td.d-nome { font-weight: 700; width: 190px; }
-    .caut { font-size: 11px; color: ${C.alerta}; margin: 6px 0 0; }
-    table.desc { width: 100%; border-collapse: collapse; }
-    table.desc td, table.desc th { border: 1px solid ${C.borda}; padding: 6px 8px; font-size: 11.5px; text-align: left; vertical-align: top; }
-    table.desc th { background: ${C.papelSuave}; font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: ${C.ink2}; }
-    ul, ol { margin: 4px 0; padding-left: 20px; }
-    li { margin-bottom: 3px; }
-    .refn { color: ${C.analise}; font-weight: 700; font-size: 10.5px; }
-    .refs li { font-size: 11px; color: ${C.ink2}; }
-    .mut { color: ${C.ink2}; }
-    .assinatura { margin-top: 34px; page-break-inside: avoid; display: flex; justify-content: space-between; gap: 24px; align-items: flex-end; }
-    .assinatura .linha { border-top: 1.5px solid ${C.ink}; width: 320px; padding-top: 6px; font-size: 12px; }
-    .assinatura .quem { font-weight: 800; }
-    .assinatura .data { font-size: 12px; color: ${C.ink2}; }
-    .foot { margin-top: 20px; border-top: 1px solid ${C.borda}; padding-top: 10px; font-size: 10px; color: ${C.ink2}; }
-    @media print { .page { padding: 0; } @page { margin: 14mm; } }
-  </style></head><body>
-  <div class="page">
+    table.criterios td { border-top: 1px solid ${C.linha}; padding: 1.2mm 2mm; font-size: 8.5pt; vertical-align: top; }
+    td.crit { font-weight: 700; width: 38mm; }
+    td.pts { white-space: nowrap; width: 22mm; color: ${C.analise}; font-weight: 700; font-variant-numeric: tabular-nums; }
+    td.d-nome { font-weight: 700; width: 48mm; }
+    .caut { font-size: 8.5pt; color: ${C.alerta}; margin: 1.5mm 0 0; }
+    ul, ol { margin: 0 0 2mm; padding-left: 5mm; }
+    li { margin-bottom: 1mm; }
+    .refn { color: ${C.analise}; font-weight: 700; font-size: 8pt; }
+    /*
+     * DUAS COLUNAS EM TABELA, e não em flex. Medido no Chrome: um container flex não é
+     * encaixado no que resta da folha, ele é EMPURRADO inteiro para a próxima, mesmo cabendo
+     * (104 mm de bloco em 113 mm de vão). Trocando só o flex por tabela, o mesmo conteúdo
+     * fecha em três folhas em vez de quatro. Tabela fragmenta; flex, na impressão, não.
+     */
+    .refs li { font-size: 8pt; line-height: 1.4; color: ${C.ink2}; margin-bottom: 0.6mm; break-inside: avoid; }
+    /*
+     * O PASSO DAS SEÇÕES, medido contra a folha. Com o espaçamento padrão do papel o
+     * prontuário fechava em quatro folhas com a terceira 44% vazia: a bibliografia mais a
+     * assinatura mediam 117 mm e sobravam 105 mm. São dez rótulos de seção e trinta itens de
+     * lista, então o que devolve a folha é o passo, não uma margem isolada.
+     */
+    .rotulo { margin: 3.5mm 0 1.5mm; }
+    .assinaturas { margin-top: 4mm; }
+    ul li, ol li { margin-bottom: 0.7mm; }
+    .mut { color: ${C.ink2}; font-size: 8.5pt; }
+    .tagp { display: inline-block; border: 1px solid ${C.analiseFill}66; background: ${C.analiseTint}; color: ${C.analise}; border-radius: 999px; padding: 1px 8px; font-size: 8.5pt; font-weight: 700; margin: 0 3px 3px 0; }
+    /*
+     * Referências e assinatura andam juntas, mas o que não parte é a BIBLIOGRAFIA, não o
+     * fecho inteiro. Com \`break-inside: avoid\` no fecho, o Chrome se recusa a encaixar o
+     * bloco de múltiplas colunas no vão que sobrou e empurrava o conjunto para uma folha
+     * nova, deixando metade da anterior em branco. Preso o bloco de referências (que cabe em
+     * duas colunas), a assinatura vem logo abaixo, na mesma folha.
+     */
+    .assinaturas { break-before: avoid; }
+  `;
+
+  const html = folhaHtml({
+    titulo: `Prontuário de Decisão · ${aluno.nome} · ${docId}`,
+    cor: C.analise,
+    css,
+    corridoEsq: `<b>Prontuário de Decisão Técnica</b> · ${escP(aluno.nome)}`,
+    corridoDir: `${escP(profissional)}${cref ? ` · CREF ${escP(cref)}` : ""} · ${docId}`,
+    rodapeEsq: `Documento ${docId} · decisão de ${escP(fmt(prontuario.geradoEm))}`,
+    rodapeDir: `Impresso em ${escP(fmt(Date.now()))}`,
+    rodapeLegal: `Documento de apoio à decisão gerado pelo Mapa da Prescrição (Motor ${escP(prontuario.motorVersao)}). Conteúdo educacional: registra e fundamenta o raciocínio do profissional de Educação Física habilitado, que é o responsável pela decisão. Não é conduta médica, diagnóstica ou terapêutica e não substitui avaliação médica.`,
+    corpo: `
     ${cabecalhoHtml({
       cor: C.analise,
       nomeCor: C.ink,
@@ -258,7 +310,7 @@ ${PAPEL_BASE_CSS}
       empresa: marca?.empresa,
       docTipo: "Prontuário de Decisão Técnica: prescrição de exercício",
       no: 1,
-      carimbo: `<span class="motor">Motor RCD · Raciocínio Clínico Documentado · ${esc(prontuario.motorVersao)}</span>`,
+      carimbo: `<span class="motor">Motor RCD · ${esc(prontuario.motorVersao)}</span>`,
       direita:
         `<div class="docid">Documento ${docId} · ${fmt(prontuario.geradoEm)}</div>` +
         (marca && (marca.site || marca.email || marca.telefone)
@@ -267,61 +319,59 @@ ${PAPEL_BASE_CSS}
     })}
 
     <h1>${esc(tituloDoc)}</h1>
-    <div class="meta">Registro do raciocínio de decisão: o que foi escolhido, o que foi descartado e por quê.</div>
+    <p class="sub">Registro do raciocínio de decisão: o que foi escolhido, o que foi descartado e por quê.</p>
 
     <div class="aluno">
-      <strong>${esc(aluno.nome)}</strong>${aluno.idade ? ` · ${aluno.idade} anos` : ""} ·
-      Objetivo: ${esc(rotuloObjetivoPar(aluno.objetivo, aluno.objetivoSecundario))} · Nível: ${esc(aluno.nivel)} · Restrições consideradas: ${restr}${restrNota}
+      <span><b>${esc(aluno.nome)}</b>${aluno.idade ? ` · ${aluno.idade} anos` : ""}</span>
+      <span>Objetivo: <b>${esc(rotuloObjetivoPar(aluno.objetivo, aluno.objetivoSecundario))}</b></span>
+      <span>Nível: <b>${esc(aluno.nivel)}</b></span>
+      <span>Restrições consideradas: <b>${restr}</b>${restrNota}</span>
     </div>
 
     ${semaforoHtml}
+    ${medicacaoHtml}
     ${objetivosHtml}
     ${cuidadosHtml}
     ${monitoramentoHtml}
     ${modalidadesHtml}
 
-    <section class="bloco">
-      <h2>Exercícios escolhidos: o porquê de cada critério</h2>
-      <p class="escala-nota">
-        A adequação vai de 0 a 100 e mede o quanto cada exercício combina com o contexto
-        declarado acima (objetivo, nível, equipamento disponível, restrições e cuidados da
-        condição). Não é nota do exercício em si nem medida do aluno: o mesmo exercício
-        recebe adequação diferente para outro contexto. Os critérios que compõem a nota
-        estão abertos exercício a exercício abaixo.
-      </p>
-      ${escolhidosHtml}
-    </section>
+    ${rotulo("Exercícios escolhidos: o porquê de cada critério")}
+    <p class="escala-nota">
+      A adequação vai de 0 a 100 e mede o quanto cada exercício combina com o contexto
+      declarado acima (objetivo, nível, equipamento disponível, restrições e cuidados da
+      condição). Não é nota do exercício em si nem medida do aluno: o mesmo exercício
+      recebe adequação diferente para outro contexto.
+    </p>
+    ${escolhidosHtml}
 
     ${
       descartadosHtml
-        ? `<section class="bloco"><h2>Considerados e descartados, e por quê</h2>
-           <table class="desc"><tr><th>Exercício</th><th>Adequação</th><th>Critério decisivo</th></tr>${descartadosHtml}</table></section>`
+        ? `${rotulo("Considerados e descartados, e por quê")}
+           <table class="dados"><thead><tr><th>Exercício</th><th class="num">Adequação</th><th>Critério decisivo</th></tr></thead><tbody>${descartadosHtml}</tbody></table>`
         : ""
     }
 
-    ${params ? `<section class="bloco"><h2>Parâmetros de acompanhamento</h2><ul>${params}</ul></section>` : ""}
-    ${criterios ? `<section class="bloco"><h2>Critérios para avançar</h2><ul>${criterios}</ul></section>` : ""}
-    ${regressao ? `<section class="bloco"><h2>Critérios para regredir</h2><ul>${regressao}</ul></section>` : ""}
-    ${presc.raciocinio ? `<section class="bloco"><h2>Raciocínio da fase</h2><p>${esc(presc.raciocinio)}</p></section>` : ""}
-    ${biblioHtml}
+    ${params ? `${rotulo("Parâmetros de acompanhamento")}<ul>${params}</ul>` : ""}
+    ${criterios ? `${rotulo("Critérios para avançar")}<ul>${criterios}</ul>` : ""}
+    ${regressao ? `${rotulo("Critérios para regredir")}<ul>${regressao}</ul>` : ""}
+    ${presc.raciocinio ? `${rotulo("Raciocínio da fase")}<div class="destaque">${esc(presc.raciocinio)}</div>` : ""}
 
-    <div class="assinatura">
-      <div class="linha">
-        <div class="quem">${esc(profissional)}${cref ? ` · CREF ${esc(cref)}` : ""}</div>
-        <div>Assinatura do profissional responsável</div>
+    <div class="fecho">
+      ${biblioHtml}
+      <div class="assinaturas">
+        <div>
+          <div class="linha-ass"></div>
+          <b>${esc(profissional)}${cref ? ` · CREF ${esc(cref)}` : ""}</b>
+          <div class="mini">Assinatura do profissional responsável</div>
+        </div>
+        <div>
+          <div class="linha-ass"></div>
+          <b>Decisão registrada em ${esc(fmt(prontuario.geradoEm))}</b>
+          <div class="mini">Documento ${docId}</div>
+        </div>
       </div>
-      <div class="data">${fmt(Date.now())}</div>
-    </div>
-
-    <div class="foot">
-      Documento de apoio à decisão gerado pelo Mapa da Prescrição (Motor ${esc(prontuario.motorVersao)}),
-      documento ${docId}. Conteúdo educacional: registra e fundamenta o raciocínio do profissional de
-      Educação Física habilitado, que é o responsável pela decisão. Não é conduta médica, diagnóstica ou
-      terapêutica e não substitui avaliação médica.
-    </div>
-  </div>
-  <script>window.onload = function () { window.print(); };</script>
-  </body></html>`;
+    </div>`,
+  });
 
   abrirDocumento(html);
 }

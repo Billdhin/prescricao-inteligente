@@ -3,39 +3,66 @@ import { abrirDocumento } from "@/lib/abrirDocumento";
 import type { Aluno, Avaliacao } from "@/data/alunos";
 import { METRICAS_EVOLUCAO, type DirMetrica } from "@/components/app/EvolucaoMini";
 import { getSpecialGroup } from "@/data/specialGroups";
+import { getEscala, classificarNaEscala } from "@/data/escalasAvaliacao";
+import { getReferencia } from "@/data/referencias";
+import { desenharEvolucao } from "@/lib/avaliacao/desenharEvolucao";
 import { cabecalhoCss, cabecalhoHtml } from "@/lib/pdfCabecalho";
-import { CORES_PDF as C, PAPEL_BASE_CSS } from "@/lib/pdfCores";
-import { numeroBR } from "@/lib/pdfTexto";
+import { CORES_PDF as C } from "@/lib/pdfCores";
+import { escapar as esc, faixaNumeros, folhaHtml, rotulo } from "@/lib/pdfPapel";
+import { numeroBR, semPontoFinal } from "@/lib/pdfTexto";
 
 /**
- * Tabela de evolução do aluno em PDF, no estilo de um resultado de exame: cada
- * variável nas linhas, cada avaliação em uma coluna cronológica, e a última coluna
- * com o quanto mudou do primeiro ao último exame. O profissional imprime para
- * mostrar ao aluno e o aluno leva para casa.
+ * A EVOLUÇÃO DO ALUNO no papel: o documento que o profissional mostra e o aluno leva para
+ * casa (e que o próprio aluno baixa pelo app).
  *
- * Documento honesto: as medidas dependem do método e do dia; a evolução é
- * tendência, não valor exato. Cores literais (o papel não tem as variáveis do
- * tema), todas vindas do mapa `pdfCores`. Sem travessão. O rótulo clínico do grupo
- * NUNCA entra: se o aluno tem grupo, imprime o `rotuloAluno` (linguagem digna),
- * nunca o nome clínico.
+ * O que mudou em 12/09/2026, medindo o papel contra a tela:
+ *
+ * - TINHA METADE DA FOLHA EM BRANCO e nenhum gráfico, enquanto a tela desenha a curva de
+ *   cada medida. Agora cada linha traz a minicurva, desenhada pela mesma função da tela
+ *   (`desenharEvolucao`), e o topo traz as três leituras principais em corpo grande.
+ * - A matriz de datas estourava a largura na QUARTA avaliação (medido: 639 px de 656). O
+ *   papel agora imprime primeira, última e a curva inteira, com as intermediárias na própria
+ *   curva, então a folha não muda de forma quando o acompanhamento cresce.
+ * - CLASSIFICAÇÃO: a tela diz em que faixa o valor cai (escala publicada, com fonte); o papel
+ *   imprimia o número cru.
+ * - Direção da mudança em PALAVRA, não só em cor: documento impresso costuma sair em tons de
+ *   cinza, e a cor sozinha não é dado.
+ * - Variação de percentual sai em PONTO PERCENTUAL ("p.p."), como na tela; antes saía "-0,9%",
+ *   que é outra coisa.
+ * - Cobertura: "medida em 2 das 3 avaliações" quando a medida faltou em alguma.
+ * - Período coberto, identificação do aluno e linha de assinatura, que não existiam.
+ *
+ * Documento honesto: as medidas dependem do método e do dia; a evolução é tendência, não
+ * valor exato. O rótulo clínico do grupo NUNCA entra: imprime o `rotuloAluno`.
  */
 
-const esc = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
 const fmtLongo = (ts: number) =>
   new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(ts));
+/** "25 jul 26": sem o "de" e sem o ponto, que só alargam a coluna (mesma regra da tela). */
 const fmtCurto = (ts: number) =>
-  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "2-digit" }).format(new Date(ts));
+  new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "2-digit" })
+    .format(new Date(ts))
+    .replace(/\./g, "")
+    .replace(/ de /g, " ");
 
-// Mesma regra do EvolucaoMini (corDelta), em cores literais do papel: nunca
-// inverte o sinal; a direção desejável da métrica decide o que é bom. Verde e
-// vermelho vêm do mapa do papel, portanto são os mesmos dos demais documentos
-// (exportProntuario/printSemaforo) e da tela.
+/** Mesma regra do EvolucaoMini (corDelta), em cores do papel. */
 function corDeltaPdf(dir: DirMetrica, delta: number): string {
   if (dir === "neutro" || delta === 0) return C.ink2;
   const bom = dir === "menor" ? delta < 0 : delta > 0;
   return bom ? C.sucesso : C.perigo;
 }
+
+/** A palavra que acompanha a cor: "na direção certa", "na direção oposta", "sem juízo". */
+function palavraDelta(dir: DirMetrica, delta: number): string {
+  if (delta === 0) return "sem mudança";
+  if (dir === "neutro") return "variação registrada";
+  const bom = dir === "menor" ? delta < 0 : delta > 0;
+  return bom ? "na direção certa" : "na direção oposta";
+}
+
+/** Unidade da VARIAÇÃO: variação de percentual é ponto percentual, e não por cento. */
+const unidadeDelta = (unit: string) => (unit.trim() === "%" ? " p.p." : unit.trim() ? ` ${unit.trim()}` : "");
+const unidadeValor = (unit: string) => (unit.trim() === "%" ? "%" : unit.trim() ? ` ${unit.trim()}` : "");
 
 export interface EvolucaoPdfOpts {
   aluno: Aluno;
@@ -53,87 +80,139 @@ export function montarEvolucaoHtml({ aluno, avaliacoes, profissional, cref, marc
   const cor = marca?.corPrimaria || C.marca;
   const cols = [...avaliacoes].sort((a, b) => a.data - b.data);
   const linhas = METRICAS_EVOLUCAO.filter((m) => cols.some((a) => a.medidas[m.key] != null));
+  const sexo = aluno.sexo;
 
-  // Se o aluno tem grupo, o papel mostra o programa em linguagem digna
-  // (rotuloAluno). O nome clínico do grupo NUNCA vai para o documento do aluno.
+  // Se o aluno tem grupo, o papel mostra o programa em linguagem digna (rotuloAluno).
   const grupo = aluno.grupoEspecial ? getSpecialGroup(aluno.grupoEspecial) : undefined;
   const programa = grupo?.rotuloAluno;
 
-  const cabProg = programa
-    ? `<div class="meta">Programa: <strong style="color:${cor}">${esc(programa)}</strong></div>`
-    : "";
+  const dias = cols.length >= 2 ? Math.round((cols[cols.length - 1].data - cols[0].data) / 86_400_000) : 0;
 
-  const cabDatas = cols
-    .map((a) => `<th style="padding:6px 8px;text-align:right;font-weight:700;color:${cor};border-bottom:2px solid ${C.borda}">${esc(fmtCurto(a.data))}</th>`)
-    .join("");
+  /** Uma linha da tabela: valores, curva, classificação e a variação por extenso. */
+  const linhaHtml = (m: (typeof METRICAS_EVOLUCAO)[number]) => {
+    const pontos = cols
+      .filter((a) => a.medidas[m.key] != null)
+      .map((a) => ({ data: a.data, valor: a.medidas[m.key] as number }));
+    const primeiro = pontos[0];
+    const ultimo = pontos[pontos.length - 1];
+    const delta = pontos.length >= 2 ? +(ultimo.valor - primeiro.valor).toFixed(1) : null;
 
-  const corpo = linhas
-    .map((m) => {
-      const serie = cols.map((a) => a.medidas[m.key]);
-      const presentes = serie.filter((v): v is number => v != null);
-      const primeiro = presentes[0];
-      const ultimo = presentes[presentes.length - 1];
-      const delta =
-        presentes.length >= 2 && primeiro != null && ultimo != null ? +(ultimo - primeiro).toFixed(1) : null;
-
-      const celulas = serie
-        .map((v) =>
-          v != null
-            ? `<td style="padding:6px 8px;text-align:right;color:${C.ink};border-bottom:1px solid ${C.linha}">${numeroBR(v)}<span style="color:${C.ink2}">${m.unit.trim() === "%" ? "" : " "}${esc(m.unit.trim())}</span></td>`
-            : `<td style="padding:6px 8px;text-align:right;color:${C.ink2};border-bottom:1px solid ${C.linha}">·</td>`,
+    const curva = (() => {
+      if (pontos.length < 2) return `<span class="mini">série de 1 medida</span>`;
+      const g = desenharEvolucao(pontos, { largura: 120, altura: 22, margem: 3 });
+      const bolinhas = g.pontos
+        .map(
+          (p, i) =>
+            `<circle cx="${p.x}" cy="${p.y}" r="${i === g.pontos.length - 1 ? 2.6 : 1.5}" fill="${
+              i === g.pontos.length - 1 ? cor : "#ffffff"
+            }" stroke="${cor}" stroke-width="${i === g.pontos.length - 1 ? 0 : 1.1}" />`,
         )
         .join("");
+      return `<svg width="${g.largura}" height="${g.altura}" viewBox="0 0 ${g.largura} ${g.altura}" role="img" aria-label="curva de ${esc(
+        m.label,
+      )}"><path d="${g.d}" fill="none" stroke="${cor}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />${bolinhas}</svg>`;
+    })();
 
-      const celDelta =
+    const escala = getEscala(m.key);
+    const faixa = escala && ultimo ? classificarNaEscala(escala, ultimo.valor, sexo) : undefined;
+    const faixaIni = escala && primeiro ? classificarNaEscala(escala, primeiro.valor, sexo) : undefined;
+    const classificacao = faixa
+      ? `<div class="mini">${esc(faixa.rotulo)}${
+          faixaIni && faixaIni.rotulo !== faixa.rotulo ? ` (era ${esc(faixaIni.rotulo)})` : ""
+        }</div>`
+      : "";
+
+    const cobertura =
+      pontos.length < cols.length ? `<div class="mini">medida em ${pontos.length} de ${cols.length} avaliações</div>` : "";
+
+    return `<tr>
+      <td><b>${esc(m.label)}</b>${classificacao}${cobertura}</td>
+      <td class="num">${numeroBR(primeiro.valor)}<span class="sub">${esc(unidadeValor(m.unit))}</span><div class="mini">${esc(
+        fmtCurto(primeiro.data),
+      )}</div></td>
+      <td class="curva">${curva}</td>
+      <td class="num"><b>${numeroBR(ultimo.valor)}<span class="sub">${esc(unidadeValor(m.unit))}</span></b><div class="mini">${esc(
+        fmtCurto(ultimo.data),
+      )}</div></td>
+      <td class="num">${
         delta != null
-          ? `<td style="padding:6px 8px;text-align:right;font-weight:700;color:${corDeltaPdf(m.dir, delta)};border-bottom:1px solid ${C.linha}">${delta > 0 ? "+" : ""}${numeroBR(delta)}<span style="opacity:.7">${m.unit.trim() === "%" ? "" : " "}${esc(m.unit.trim())}</span></td>`
-          : `<td style="padding:6px 8px;text-align:right;color:${C.ink2};border-bottom:1px solid ${C.linha}">·</td>`;
+          ? `<b style="color:${corDeltaPdf(m.dir, delta)}">${delta > 0 ? "+" : ""}${numeroBR(delta)}${esc(
+              unidadeDelta(m.unit),
+            )}</b><div class="mini">${esc(palavraDelta(m.dir, delta))}</div>`
+          : `<span class="sub">sem comparação</span>`
+      }</td>
+    </tr>`;
+  };
 
-      return `<tr><th style="padding:6px 8px;text-align:left;font-weight:600;color:${C.ink2};border-bottom:1px solid ${C.linha};white-space:nowrap">${esc(m.label)}</th>${celulas}${celDelta}</tr>`;
-    })
-    .join("");
+  const tabela = linhas.length
+    ? `<table class="dados">
+        <thead><tr>
+          <th>Medida</th>
+          <th class="num" style="width:22mm">Primeira</th>
+          <th style="width:34mm">Ao longo do tempo</th>
+          <th class="num" style="width:24mm">Última</th>
+          <th class="num" style="width:30mm">Variação</th>
+        </tr></thead>
+        <tbody>${linhas.map(linhaHtml).join("")}</tbody>
+      </table>`
+    : `<p class="sub">Nenhuma medida numérica registrada ainda.</p>`;
 
-  const tabela =
-    linhas.length && cols.length
-      ? `<table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead>
-            <tr>
-              <th style="padding:6px 8px;text-align:left;font-weight:700;color:${cor};border-bottom:2px solid ${C.borda}">Medida</th>
-              ${cabDatas}
-              <th style="padding:6px 8px;text-align:right;font-weight:700;color:${cor};border-bottom:2px solid ${C.borda}">Evolução</th>
-            </tr>
-          </thead>
-          <tbody>${corpo}</tbody>
-        </table>`
-      : `<p class="meta">Nenhuma medida numérica registrada ainda.</p>`;
+  // As três leituras que orientam a maioria das decisões, quando existem.
+  const destaques = ["peso", "percentualGordura", "pressaoSistolica", "fcRepouso"]
+    .map((k) => linhas.find((m) => m.key === k))
+    .filter((m): m is (typeof METRICAS_EVOLUCAO)[number] => Boolean(m))
+    .slice(0, 3)
+    .map((m) => {
+      const pts = cols.filter((a) => a.medidas[m.key] != null).map((a) => a.medidas[m.key] as number);
+      const delta = pts.length >= 2 ? +(pts[pts.length - 1] - pts[0]).toFixed(1) : null;
+      return {
+        rot: m.label,
+        valor: `${numeroBR(pts[pts.length - 1])}${unidadeValor(m.unit)}`,
+        obs: delta != null ? `${delta > 0 ? "+" : ""}${numeroBR(delta)}${unidadeDelta(m.unit)} ${palavraDelta(m.dir, delta)}` : "primeira medida",
+      };
+    });
 
-  // Anotações livres do profissional por avaliação (entram no papel como escritas).
   const anotacoes = cols
     .filter((a) => a.observacoes?.trim())
+    .map((a) => `<li><b style="color:${cor}">${esc(fmtLongo(a.data))}:</b> ${esc(a.observacoes!.trim())}</li>`)
+    .join("");
+
+  // As escalas usadas na classificação, com a fonte de cada uma.
+  const fontes = [...new Set(linhas.map((m) => m.key))]
+    .map((k) => getEscala(k))
+    .filter((e): e is NonNullable<typeof e> => Boolean(e))
     .map(
-      (a) =>
-        `<li><span style="color:${cor};font-weight:700">${esc(fmtLongo(a.data))}:</span> ${esc(a.observacoes!.trim())}</li>`,
+      (e) =>
+        `<li><b>${esc(e.nome)}</b>: ${esc(e.oQueMede)} Limite: ${esc(e.limite)} ${e.refIds
+          .map((id) => getReferencia(id))
+          .filter((r): r is NonNullable<typeof r> => Boolean(r))
+          .map((r) => esc(`${semPontoFinal(r.autores)}. ${semPontoFinal(r.titulo)}. ${semPontoFinal(r.fonte)}, ${r.ano}.`))
+          .join(" ")}</li>`,
     )
     .join("");
 
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
-  <title>Evolução · ${esc(aluno.nome)}</title>
-  <style>
+  const css = `
     * { box-sizing: border-box; }
-${PAPEL_BASE_CSS}
-    body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: ${C.ink}; margin: 0; }
-    .page { max-width: 820px; margin: 0 auto; padding: 32px; }
     ${cabecalhoCss(cor)}
-    h1 { font-size: 22px; margin: 20px 0 2px; }
-    .meta { font-size: 13px; color: ${C.ink2}; margin-bottom: 8px; }
-    .tabela-wrap { overflow-x: auto; margin: 14px 0 4px; }
-    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: ${cor}; margin: 20px 0 6px; }
-    .notas { font-size: 12px; color: ${C.ink2}; padding-left: 18px; margin: 6px 0 0; }
-    .notas li { margin: 3px 0; }
-    .foot { margin-top: 24px; border-top: 1px solid ${C.borda}; padding-top: 12px; font-size: 11px; color: ${C.ink2}; }
-    @media print { .page { padding: 0; } @page { margin: 16mm; } }
-  </style></head><body>
-  <div class="page">
+    td.curva { vertical-align: middle; }
+    .aluno { display: flex; flex-wrap: wrap; gap: 2mm 6mm; background: ${C.papelSuave}; border-radius: 10px; padding: 3mm 4mm; margin: 0 0 4mm; font-size: 9.5pt; }
+    ul.notas { margin: 0; padding-left: 5mm; }
+    ul.notas li { margin-bottom: 1.5mm; }
+  `;
+
+  return folhaHtml({
+    titulo: `Evolução · ${aluno.nome}`,
+    cor,
+    css,
+    corridoEsq: `<b>Evolução do aluno</b> · ${esc(aluno.nome)}`,
+    corridoDir: `${esc(profissional)}${cref ? ` · CREF ${esc(cref)}` : ""}`,
+    rodapeEsq: cols.length
+      ? `${cols.length} ${cols.length === 1 ? "avaliação" : "avaliações"}${dias ? ` em ${dias} dias` : ""}`
+      : "sem avaliações",
+    rodapeDir: `Emitido em ${esc(fmtLongo(Date.now()))}`,
+    rodapeLegal:
+      "As medidas dependem do método e das condições de cada dia; leia a evolução como tendência, não como valor exato. Documento de apoio à conduta do profissional responsável. Não constitui diagnóstico. Gerado pelo Mapa da Prescrição.",
+    corpo: `
     ${cabecalhoHtml({
       cor,
       logoDataUrl: marca?.logoDataUrl,
@@ -141,26 +220,46 @@ ${PAPEL_BASE_CSS}
       cref,
       empresa: marca?.empresa,
       docTipo: "Evolução do aluno",
-      no: 0,
+      no: 4,
       direita: `<div class="sub">${esc(fmtLongo(Date.now()))}</div>`,
     })}
 
     <h1>Evolução de ${esc(aluno.nome)}</h1>
-    <div class="meta">Comparativo das medidas registradas ao longo do acompanhamento.</div>
-    ${cabProg}
+    <p class="sub">Comparativo das medidas registradas ao longo do acompanhamento.</p>
 
-    <div class="tabela-wrap">${tabela}</div>
-
-    ${anotacoes ? `<h2>Anotações por avaliação</h2><ul class="notas">${anotacoes}</ul>` : ""}
-
-    <div class="foot">
-      As medidas dependem do método e das condições de cada dia; leia a evolução como
-      tendência, não como valor exato. Documento de apoio à conduta do profissional
-      responsável. Não constitui diagnóstico. Gerado pelo Mapa da Prescrição.
+    <div class="aluno">
+      <span><b>${esc(aluno.nome)}</b>${aluno.idade ? ` · ${aluno.idade} anos` : ""}</span>
+      ${programa ? `<span>Programa: <b style="color:${cor}">${esc(programa)}</b></span>` : ""}
+      ${
+        cols.length
+          ? `<span>Período: <b>${esc(fmtCurto(cols[0].data))}</b> a <b>${esc(fmtCurto(cols[cols.length - 1].data))}</b>${
+              dias ? ` (${dias} dias)` : ""
+            }</span>`
+          : ""
+      }
     </div>
-  </div>
-  <script>window.onload = function () { window.print(); };</script>
-  </body></html>`;
+
+    ${destaques.length ? faixaNumeros(destaques) : ""}
+
+    ${rotulo("Medidas registradas")}
+    ${tabela}
+
+    ${anotacoes ? `${rotulo("Anotações por avaliação")}<ul class="notas">${anotacoes}</ul>` : ""}
+    ${fontes ? `${rotulo("Escalas usadas na classificação")}<ul class="notas legal">${fontes}</ul>` : ""}
+
+    <div class="assinaturas">
+      <div>
+        <div class="linha-ass"></div>
+        <b>${esc(profissional)}</b>
+        <div class="mini">Profissional de Educação Física${cref ? ` · CREF ${esc(cref)}` : ""}</div>
+      </div>
+      <div>
+        <div class="linha-ass"></div>
+        <b>Data</b>
+        <div class="mini">Conversado com o aluno</div>
+      </div>
+    </div>`,
+  });
 }
 
 export function exportEvolucaoPDF(opts: EvolucaoPdfOpts) {

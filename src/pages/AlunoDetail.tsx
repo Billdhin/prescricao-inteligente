@@ -81,7 +81,7 @@ import { AvaliacaoModal } from "@/components/app/AvaliacaoModal";
 import { EvolucaoMini, TabelaEvolucao, comUnidade, type DirMetrica } from "@/components/app/EvolucaoMini";
 import { EvolucaoExercicio } from "@/components/app/EvolucaoExercicio";
 import { TresCamadas } from "@/components/ui/camadas";
-import { montarChecklist } from "@/data/semaforo";
+import { montarChecklist, rotuloSemaforo } from "@/data/semaforo";
 import { exportEvolucaoPDF } from "@/lib/exportEvolucao";
 import { useDialog } from "@/lib/useDialog";
 import { ConfirmarAcao } from "@/components/app/ConfirmarAcao";
@@ -120,9 +120,8 @@ const ABAS: { id: Aba; label: string }[] = [
 ];
 const ABA_IDS = new Set<string>(ABAS.map((a) => a.id));
 
-/** Vocabulário único do resultado do semáforo (mesmo de src/data/semaforo.ts). */
-const rotuloResultado = (r: "verde" | "amarelo" | "vermelho") =>
-  r === "verde" ? "Liberado" : r === "amarelo" ? "Liberado com ajuste" : "Não liberado hoje";
+/** Vocabulário único do resultado do semáforo: a tabela mora em src/data/semaforo.ts. */
+const rotuloResultado = rotuloSemaforo;
 
 /** Acabamento por cor do semáforo, com os tokens success/warning/danger. */
 const COR_SEMAFORO: Record<

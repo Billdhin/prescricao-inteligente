@@ -1301,6 +1301,29 @@ const ROTULOS: Record<CorSemaforo, string> = {
   vermelho: "Não liberado hoje",
 };
 
+/**
+ * O que o resultado SIGNIFICA, em uma frase. Estava literal dentro da tela
+ * (SemaforoLiberacao), e por isso o documento impresso saía com a faixa colorida e nenhuma
+ * explicação: quem lê o papel na pasta não tinha como saber o que fazer com a cor.
+ */
+const FRASES: Record<CorSemaforo, string> = {
+  verde: "Nenhum sinal de alerta nos itens verificados; registre e siga para a sessão.",
+  amarelo: "A sessão pode acontecer COM os ajustes abaixo; registre o racional.",
+  vermelho:
+    "Hoje não é dia de treinar: os motivos abaixo pedem reavaliação e, se persistirem, encaminhamento.",
+};
+
+/** A frase do resultado, para a tela e para o papel lerem do mesmo lugar. */
+export const fraseResultado = (cor: CorSemaforo) => FRASES[cor];
+
+/**
+ * O RÓTULO do resultado ("Liberado", "Liberado com ajuste", "Não liberado hoje").
+ * Havia quatro cópias desta tabela: aqui, no PDF do semáforo, no prontuário e no histórico da
+ * tela; o do prontuário já tinha divergido ("NÃO LIBERADO NO DIA"). Quem precisa do rótulo
+ * sem passar por `avaliarSemaforo` (um registro antigo, que guarda só a cor) chama isto.
+ */
+export const rotuloSemaforo = (cor: CorSemaforo) => ROTULOS[cor];
+
 /** Avalia as respostas {itemId: valor} — a pior cor vence; ações acumulam. */
 export function avaliarSemaforo(
   checklist: ChecklistSemaforo,

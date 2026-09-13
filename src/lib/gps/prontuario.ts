@@ -76,7 +76,10 @@ export function montarProntuario({
     slug: r.exercise.slug,
     nome: r.exercise.nome,
     score: r.score,
-    series,
+    // Dose de FORÇA não se carimba em exercício de dose aeróbia: no documento assinado, a
+    // caminhada saía com "3 séries de 10 a 12 repetições", que não é como aeróbio se prescreve
+    // (formato, duração e intensidade). Sem dose é melhor do que com a dose errada.
+    series: r.exercise.doseAerobia ? undefined : series,
     reasons: r.reasons,
     cautions: r.cautions,
     breakdown: r.breakdown.map((b) => ({ ...b })),

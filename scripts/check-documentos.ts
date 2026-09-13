@@ -212,6 +212,7 @@ const GERADORES = [
   "src/lib/printSemaforo.ts",
   "src/lib/pdfCabecalho.ts",
   "src/lib/pdfSelo.ts",
+  "src/lib/pdfPapel.ts",
 ];
 // Branco e preto puros são papel e tinta, não escolha de identidade: seguem liberados.
 const HEX_LIVRES = new Set(["#ffffff", "#fff", "#000000", "#000"]);
@@ -232,10 +233,24 @@ for (const arq of GERADORES) {
 // A INJECAO, nao a mencao: testar a simples presenca do nome passava com o arquivo so
 // importando a base e nunca a usando, que e justamente o defeito. A falsificacao desta
 // regra pegou isso: removi a injecao do exportEvolucao e ela continuou verde.
+//
+// Desde 12/09/2026 os sete documentos montam a folha A4 por `folhaHtml` (src/lib/pdfPapel),
+// e e `papelCss` que injeta a base. A regra aceita os DOIS caminhos e cobra de pdfPapel a
+// injecao de verdade: sem essa segunda metade, mover a base para la deixaria a regra verde
+// com nenhum documento declarando o papel, que e o defeito que ela existe para pegar.
+const INJETA = "$" + "{PAPEL_BASE_CSS}";
 for (const arq of GERADORES.filter((a) => /\/(export|print)/.test(a))) {
-  if (!fs.readFileSync(arq, "utf8").includes("$" + "{PAPEL_BASE_CSS}")) {
-    erros.push(`${arq}: não injeta PAPEL_BASE_CSS. Sem color-scheme e fundo explícitos, o documento sai ilegível em aparelho no modo escuro.`);
+  const fonte = fs.readFileSync(arq, "utf8");
+  if (!fonte.includes(INJETA) && !/folhaHtml\(/.test(fonte)) {
+    erros.push(
+      `${arq}: não declara o papel. Monte o documento por folhaHtml (pdfPapel) ou injete PAPEL_BASE_CSS; sem color-scheme e fundo explícitos, ele sai ilegível em aparelho no modo escuro.`,
+    );
   }
+}
+if (!fs.readFileSync("src/lib/pdfPapel.ts", "utf8").includes(INJETA)) {
+  erros.push(
+    "src/lib/pdfPapel.ts: não injeta PAPEL_BASE_CSS. É a folha compartilhada dos sete documentos: sem ela, nenhum deles declara fundo nem color-scheme.",
+  );
 }
 
 

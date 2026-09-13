@@ -515,7 +515,12 @@ export function Gps() {
       titulo: grupo ? `${grupo.rotuloAluno} · Fase ${fase}` : `${answers.objetivo} · ${answers.grupoMuscular}`,
       answers,
       prontuario: gerarProntuario() ?? undefined,
-      itens: selecao.map((x) => ({ slug: x.slug, score: x.score, series: seriesSugerida(answers.objetivo) })),
+      itens: selecao.map((x) => ({
+        slug: x.slug,
+        score: x.score,
+        // exercício de dose aeróbia não leva série e repetição (ver montarProntuario)
+        series: exercises.find((e) => e.slug === x.slug)?.doseAerobia ? undefined : seriesSugerida(answers.objetivo),
+      })),
       status: "ativa",
       grupoEspecial: grupo?.slug,
       modalidadePrincipal: faseObj?.modalidades[0] ?? modRecs[0]?.modalidade.id,

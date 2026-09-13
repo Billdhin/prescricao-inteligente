@@ -100,6 +100,15 @@ export function ehReferencia(cp: CheckpointPostural, achado: string): boolean {
 }
 
 /**
+ * As RESSALVAS do rastreio, em fonte única: o laudo em texto as usa, e o documento impresso
+ * também, sem precisar repetir a lista de achados que já sai em tabela.
+ */
+export const RESSALVA_ACHADOS =
+  "Achados de rastreio visual, sem medição instrumental. Servem para orientar a observação e a conduta do profissional; não constituem diagnóstico.";
+export const RESSALVA_MEDIDAS =
+  "As medidas vêm de detecção automática de marcos numa foto única, sem calibração nem plano de referência. São estimativas de triagem, revisadas pelo profissional, e não medição clínica.";
+
+/**
  * Monta um rascunho de laudo a partir SÓ do que foi observado. Lista os achados
  * fora do padrão por vista; se nada foge do padrão, registra isso. Linguagem
  * prudente e não diagnóstica. O profissional revisa, ajusta e assina.
@@ -129,9 +138,7 @@ export function montarLaudo(av: AvaliacaoPostural, nomeAluno: string): string {
       }
     }
     linhas.push("");
-    linhas.push(
-      "Achados de rastreio visual, sem medição instrumental. Servem para orientar a observação e a conduta do profissional; não constituem diagnóstico.",
-    );
+    linhas.push(RESSALVA_ACHADOS);
   }
 
   // Medidas estimadas por visão computacional, quando houve análise.
@@ -148,9 +155,7 @@ export function montarLaudo(av: AvaliacaoPostural, nomeAluno: string): string {
       }
     }
     linhas.push("");
-    linhas.push(
-      "As medidas vêm de detecção automática de marcos numa foto única, sem calibração nem plano de referência. São estimativas de triagem, revisadas pelo profissional, e não medição clínica.",
-    );
+    linhas.push(RESSALVA_MEDIDAS);
   }
   return linhas.join("\n");
 }

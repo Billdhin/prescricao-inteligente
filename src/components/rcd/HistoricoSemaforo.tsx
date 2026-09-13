@@ -1,4 +1,5 @@
 import * as React from "react";
+import { rotuloSemaforo } from "@/data/semaforo";
 import { ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/primitives";
 import type { Liberacao } from "@/data/alunos";
@@ -24,7 +25,8 @@ import { cn } from "@/lib/utils";
 
 type Resultado = Liberacao["resultado"];
 
-const ROTULO: Record<Resultado, string> = { verde: "Liberado", amarelo: "Liberado com ajuste", vermelho: "Não liberado" };
+// o rótulo vem de data/semaforo: aqui ele já tinha divergido (faltava o "hoje")
+const ROTULO: Record<Resultado, string> = { verde: rotuloSemaforo("verde"), amarelo: rotuloSemaforo("amarelo"), vermelho: rotuloSemaforo("vermelho") };
 const PONTO: Record<Resultado, string> = { verde: "bg-success", amarelo: "bg-warning-fill", vermelho: "bg-danger-fill" };
 const TEXTO: Record<Resultado, string> = { verde: "text-ink", amarelo: "text-warning", vermelho: "text-danger" };
 
